@@ -1,21 +1,28 @@
-import { Injectable } from "@angular/core";
-import createAuth0Client from "@auth0/auth0-spa-js";
-import Auth0Client from "@auth0/auth0-spa-js/dist/typings/Auth0Client";
-import { from, of, Observable, BehaviorSubject, combineLatest, throwError } from "rxjs";
-import { tap, catchError, concatMap, shareReplay } from "rxjs/operators";
-import { Router } from "@angular/router";
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import createAuth0Client from '@auth0/auth0-spa-js';
+import Auth0Client from '@auth0/auth0-spa-js/dist/typings/Auth0Client';
+import {
+  BehaviorSubject,
+  combineLatest,
+  from,
+  Observable,
+  of,
+  throwError,
+} from 'rxjs';
+import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class AuthService {
   // Create an observable of Auth0 instance of client
   auth0Client$ = (from(
     createAuth0Client({
-      domain: "dev-3dprintlog.auth0.com",
-      client_id: "Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ",
+      domain: 'dev-3dprintlog.auth0.com',
+      client_id: 'Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ',
       redirect_uri: `${window.location.origin}/callback`,
-      audience: "https://dev.3dprintlog.com/api",
+      audience: 'https://dev.3dprintlog.com/api',
     })
   ) as Observable<Auth0Client>).pipe(
     shareReplay(1), // Every subscription receives the same shared value
@@ -51,13 +58,15 @@ export class AuthService {
   }
 
   getTokenSilently$(options?): Observable<string> {
-    return this.auth0Client$.pipe(concatMap((client: Auth0Client) => from(client.getTokenSilently(options))));
+    return this.auth0Client$.pipe(
+      concatMap((client: Auth0Client) => from(client.getTokenSilently(options)))
+    );
   }
 
   localAuthSetup() {
     // This should only be called on app initialization
     // Set up local authentication streams
-    console.log("localAuthSetup");
+    console.log('localAuthSetup');
     const checkAuth$ = this.isAuthenticated$.pipe(
       concatMap((loggedIn: boolean) => {
         if (loggedIn) {
@@ -76,13 +85,13 @@ export class AuthService {
     });
   }
 
-  login(redirectPath: string = "/") {
-    console.log("test");
+  login(redirectPath: string = '/') {
+    console.log('test');
     // A desired redirect path can be passed to login method
     // (e.g., from a route guard)
     // Ensure Auth0 client instance exists
     this.auth0Client$.subscribe((client: Auth0Client) => {
-      console.log("subscribe");
+      console.log('subscribe');
       // Call method to log in
       client.loginWithRedirect({
         redirect_uri: `${window.location.origin}/callback`,
@@ -99,7 +108,8 @@ export class AuthService {
       // Have client, now call method to handle auth callback redirect
       tap(cbRes => {
         // Get and set target redirect route from callback results
-        targetRoute = cbRes.appState && cbRes.appState.target ? cbRes.appState.target : "/";
+        targetRoute =
+          cbRes.appState && cbRes.appState.target ? cbRes.appState.target : '/';
       }),
       concatMap(() => {
         // Redirect callback complete; get user and login status
@@ -119,7 +129,7 @@ export class AuthService {
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log out
       client.logout({
-        client_id: "Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ",
+        client_id: 'Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ',
         returnTo: `${window.location.origin}`,
       });
     });

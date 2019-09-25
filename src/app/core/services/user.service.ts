@@ -9,6 +9,6 @@ export class UserService {
   constructor(private http: HttpClient) {}
 
   ping$(): Observable<any> {
-    return this.http.get<any>('https://localhost:44378/api/Prints');
+    return this.http.get<any>('https://localhost:44378/api/Prints/summary');
   }
 }

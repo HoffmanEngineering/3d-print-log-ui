@@ -1,0 +1,21 @@
+<div>
+  <table>
+    <th scope="col">Title</th>
+    <th scope="col">Printer</th>
+    <th scope="col">Start Date</th>
+    <th scope="col">Status</th>
+    <tr *ngFor="let print of prints">
+      <td>{{ print.title }}</td>
+      <td>{{ print.printer.make }} {{ print.printer.model }}</td>
+      <td>{{ print.startDate | date }}</td>
+      <td *ngIf="print.status === this.printStatusTypes.Pending">Pending</td>
+      <td *ngIf="print.status === this.printStatusTypes.Printing">Printing</td>
+      <td *ngIf="print.status === this.printStatusTypes.Success">Success</td>
+      <td *ngIf="print.status === this.printStatusTypes.Cancelled">
+        Cancelled
+      </td>
+      <td *ngIf="print.status === this.printStatusTypes.Failed">Failed</td>
+    </tr>
+  </table>
+</div>
+>

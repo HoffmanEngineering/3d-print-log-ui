@@ -3,5 +3,6 @@
   <button (click)="auth.logout()" *ngIf="auth.loggedIn">Log Out</button>
 
   <a routerLink="/">Home</a>&nbsp;
+  <a routerLink="prints" *ngIf="auth.loggedIn">Prints</a>
   <a routerLink="profile" *ngIf="auth.loggedIn">Profile</a>
 </header>

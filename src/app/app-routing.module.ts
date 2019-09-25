@@ -14,6 +14,7 @@ const routes: Routes = [
     component: UserProfileComponent,
     canActivate: [AuthGuard],
   },
+  { path: 'prints', loadChildren: () => import('./print/print.module').then(m => m.PrintModule) },
 ];
 
 @NgModule({

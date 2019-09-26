@@ -4,7 +4,7 @@
     <th scope="col">Printer</th>
     <th scope="col">Start Date</th>
     <th scope="col">Status</th>
-    <tr *ngFor="let print of prints">
+    <tr *ngFor="let print of prints" [routerLink]="print.id">
       <td>{{ print.title }}</td>
       <td>{{ print.printer.make }} {{ print.printer.model }}</td>
       <td>{{ print.startDate | date }}</td>

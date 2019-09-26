@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { PrintDetailComponent } from './print-detail/print-detail.component';
 import { PrintListComponent } from './print-list/print-list.component';
 
 const routes: Routes = [
@@ -8,7 +9,7 @@ const routes: Routes = [
     path: '',
     children: [
       { path: '', component: PrintListComponent },
-      { path: ':id', component: PrintListComponent },
+      { path: ':id', component: PrintDetailComponent },
     ],
   },
 ];

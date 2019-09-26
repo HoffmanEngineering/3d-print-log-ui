@@ -25,6 +25,21 @@ export interface PrintSummary {
   status: PrintStatus;
 }
 
+export interface PrintDetailDTO {
+  id: number;
+  title: string;
+  printer: PrinterSummary;
+  startDate?: Date;
+  estimatedPrintTimeInSeconds?: number;
+  estimatedFilamentUsageMg?: number;
+  printTimeInSeconds?: number;
+  filamentUsageMg?: number;
+  filamentType: string;
+  notes: string;
+  url: string;
+  status: PrintStatus;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -36,5 +51,10 @@ export class PrintService {
   getPrintSummaries(): Observable<PrintSummary[]> {
     const url = `${this.baseApi}/api/Prints/summary`;
     return this.http.get<PrintSummary[]>(url);
+  }
+
+  getPrintDetail(id: number): Observable<PrintDetailDTO> {
+    const url = `${this.baseApi}/api/Prints/${id}`;
+    return this.http.get<PrintDetailDTO>(url);
   }
 }

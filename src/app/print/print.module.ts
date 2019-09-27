@@ -7,10 +7,16 @@ import { PrintListComponent } from './print-list/print-list.component';
 import { PrintRoutingModule } from './print-routing.module';
 import { PrintComponent } from './print.component';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
+import { PrintListResolverService } from './resolvers/print-list-resolver.service';
+import { PrintService } from './services/print.service';
 
 @NgModule({
   declarations: [PrintComponent, PrintListComponent, PrintDetailComponent],
   imports: [CommonModule, PrintRoutingModule, FormsModule, ReactiveFormsModule],
-  providers: [PrintDetailResolverService],
+  providers: [
+    PrintDetailResolverService,
+    PrintListResolverService,
+    PrintService,
+  ],
 })
 export class PrintModule {}

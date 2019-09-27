@@ -1,0 +1,12 @@
+import { TestBed } from '@angular/core/testing';
+
+import { PrintListResolverService } from './print-list-resolver.service';
+
+describe('PrintListResolverService', () => {
+  beforeEach(() => TestBed.configureTestingModule({}));
+
+  it('should be created', () => {
+    const service: PrintListResolverService = TestBed.get(PrintListResolverService);
+    expect(service).toBeTruthy();
+  });
+});

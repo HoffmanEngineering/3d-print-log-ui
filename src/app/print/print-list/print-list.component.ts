@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   PrintService,
   PrintStatus,
@@ -15,11 +16,11 @@ export class PrintListComponent implements OnInit {
 
   public printStatusTypes = PrintStatus;
 
-  constructor(private printService: PrintService) {}
+  constructor(private activatedRoute: ActivatedRoute) {}
 
   ngOnInit() {
-    this.printService.getPrintSummaries().subscribe(prints => {
-      this.prints = prints;
+    this.activatedRoute.data.subscribe(data => {
+      this.prints = data.printList;
     });
   }
 }

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { PrinterSummary } from 'src/app/core/services/printer.service';
 
 export enum PrintStatus {
   Pending,
@@ -9,12 +10,6 @@ export enum PrintStatus {
   Success,
   Cancelled,
   Failed,
-}
-
-export interface PrinterSummary {
-  id: number;
-  make: string;
-  model: string;
 }
 
 export interface PrintSummary {
@@ -28,7 +23,7 @@ export interface PrintSummary {
 export interface PrintDetailDTO {
   id: number;
   title: string;
-  printerID: number;
+  printerId: number;
   startDate?: Date;
   estimatedPrintTimeInSeconds?: number;
   estimatedFilamentUsageMg?: number;
@@ -72,9 +67,7 @@ export interface AddPrintDTO {
   status: PrintStatus;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable()
 export class PrintService {
   private readonly baseApi = 'https://localhost:44378';
 
@@ -97,7 +90,7 @@ export class PrintService {
           filamentUsageMg: newPrint.filamentUsageMg,
           notes: newPrint.notes,
           printTimeInSeconds: newPrint.printTimeInSeconds,
-          printerId: newPrint.printerID,
+          printerId: newPrint.printerId,
           startDate: newPrint.startDate,
           status: newPrint.status,
           title: newPrint.title,
@@ -142,7 +135,7 @@ export class PrintService {
       filamentUsageMg: print.filamentUsageMg,
       notes: print.notes,
       printTimeInSeconds: print.printTimeInSeconds,
-      printerID: print.printerId,
+      printerId: print.printerId,
       startDate: print.startDate,
       status: print.status,
       title: print.title,

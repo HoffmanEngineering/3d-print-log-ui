@@ -36,8 +36,12 @@
     <input type="text" formControlName="filamentType" />
   </label>
   <label>
-    Printer ID (FAKE, REMOVE)
-    <input type="number" formControlName="printerId" />
+    Printer
+    <select formControlName="printerId">
+      <option *ngFor="let printer of printers" [ngValue]="printer.id"
+        >{{ printer.make }} {{ printer.model }}</option
+      >
+    </select>
   </label>
   <label>
     Status

@@ -5,6 +5,7 @@ import {
   ActivatedRouteSnapshot,
   Router,
 } from '@angular/router';
+import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
   PrintDetail,
   PrintDetailDTO,
@@ -18,7 +19,7 @@ import {
   styleUrls: ['./print-detail.component.scss'],
 })
 export class PrintDetailComponent implements OnInit {
-  print: PrintDetail;
+  public printers: PrinterSummary[] = [];
 
   public printForm: FormGroup;
 
@@ -34,9 +35,9 @@ export class PrintDetailComponent implements OnInit {
   ngOnInit() {
     this.activatedRoute.data.subscribe(data => {
       console.log('data changed');
-      this.print = data.print;
+      this.printers = data.printers;
 
-      this.printForm = this.buildFormFromPrintDetail(this.print);
+      this.printForm = this.buildFormFromPrintDetail(data.print);
     });
   }
   buildFormFromPrintDetail(print: PrintDetail): FormGroup {

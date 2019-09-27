@@ -1,3 +1,58 @@
-<div>
-  {{ print | json }}
-</div>
+<form [formGroup]="printForm" (ngSubmit)="onSubmit()">
+  <label>
+    Title
+    <input type="text" formControlName="title" />
+  </label>
+  <label>
+    Notes
+    <input type="text" formControlName="notes" />
+  </label>
+  <label>
+    Start Date
+    <input type="date" formControlName="startDate" />
+  </label>
+  <label>
+    Thing URL
+    <input type="url" formControlName="url" />
+  </label>
+  <label>
+    Estimated Print Time
+    <input type="text" formControlName="estimatedPrintTimeInSeconds" />
+  </label>
+  <label>
+    Estimated Filament Usage
+    <input type="text" formControlName="estimatedFilamentUsageMg" />
+  </label>
+  <label>
+    Actual Print Time
+    <input type="text" formControlName="printTimeInSeconds" />
+  </label>
+  <label>
+    Actual Filament Usage
+    <input type="text" formControlName="filamentUsageMg" />
+  </label>
+  <label>
+    Filament Type
+    <input type="text" formControlName="filamentType" />
+  </label>
+  <label>
+    Printer ID (FAKE, REMOVE)
+    <input type="number" formControlName="printerId" />
+  </label>
+  <label>
+    Status
+    <select formControlName="status">
+      <option [ngValue]="printStatusTypes.Pending">Pending</option>
+      <option [ngValue]="printStatusTypes.Printing">Printing</option>
+      <option [ngValue]="printStatusTypes.Success">Success</option>
+      <option [ngValue]="printStatusTypes.Cancelled">Cancelled</option>
+      <option [ngValue]="printStatusTypes.Failed">Failed</option>
+    </select>
+  </label>
+
+  <button type="submit" [disabled]="!printForm.valid">Submit</button>
+
+  <div>
+    {{ this.printForm.getRawValue() | json }}
+  </div>
+</form>

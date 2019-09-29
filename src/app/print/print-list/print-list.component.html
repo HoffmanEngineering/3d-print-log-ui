@@ -3,22 +3,53 @@
     <button type="button">Add New Print</button>
   </div>
 
-  <table>
-    <th scope="col">Title</th>
-    <th scope="col">Printer</th>
-    <th scope="col">Start Date</th>
-    <th scope="col">Status</th>
-    <tr *ngFor="let print of prints" [routerLink]="print.id">
-      <td>{{ print.title }}</td>
-      <td>{{ print.printer.make }} {{ print.printer.model }}</td>
-      <td>{{ print.startDate | date }}</td>
-      <td *ngIf="print.status === this.printStatusTypes.Pending">Pending</td>
-      <td *ngIf="print.status === this.printStatusTypes.Printing">Printing</td>
-      <td *ngIf="print.status === this.printStatusTypes.Success">Success</td>
-      <td *ngIf="print.status === this.printStatusTypes.Cancelled">
+  <table class="mat-table">
+    <tr class="mat-header-row">
+      <th scope="col" class="mat-header-cell">Title</th>
+      <th scope="col" class="mat-header-cell">Printer</th>
+      <th scope="col" class="mat-header-cell">Start Date</th>
+      <th scope="col" class="mat-header-cell">Status</th>
+    </tr>
+    <tr
+      class="mat-header-row"
+      *ngFor="let print of prints"
+      [routerLink]="print.id"
+    >
+      <td class="mat-cell">{{ print.title }}</td>
+      <td class="mat-cell">
+        {{ print.printer.make }} {{ print.printer.model }}
+      </td>
+      <td class="mat-cell">{{ print.startDate | date }}</td>
+      <td
+        *ngIf="print.status === this.printStatusTypes.Pending"
+        class="mat-cell"
+      >
+        Pending
+      </td>
+      <td
+        *ngIf="print.status === this.printStatusTypes.Printing"
+        class="mat-cell"
+      >
+        Printing
+      </td>
+      <td
+        *ngIf="print.status === this.printStatusTypes.Success"
+        class="mat-cell"
+      >
+        Success
+      </td>
+      <td
+        *ngIf="print.status === this.printStatusTypes.Cancelled"
+        class="mat-cell"
+      >
         Cancelled
       </td>
-      <td *ngIf="print.status === this.printStatusTypes.Failed">Failed</td>
+      <td
+        *ngIf="print.status === this.printStatusTypes.Failed"
+        class="mat-cell"
+      >
+        Failed
+      </td>
     </tr>
   </table>
 </div>

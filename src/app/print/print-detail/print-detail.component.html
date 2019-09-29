@@ -1,62 +1,101 @@
-<form [formGroup]="printForm" (ngSubmit)="onSubmit()">
-  <label>
-    Title
-    <input type="text" formControlName="title" />
-  </label>
-  <label>
-    Notes
-    <input type="text" formControlName="notes" />
-  </label>
-  <label>
-    Start Date
-    <input type="date" formControlName="startDate" />
-  </label>
-  <label>
-    Thing URL
-    <input type="url" formControlName="url" />
-  </label>
-  <label>
-    Estimated Print Time
-    <input type="text" formControlName="estimatedPrintTimeInSeconds" />
-  </label>
-  <label>
-    Estimated Filament Usage
-    <input type="text" formControlName="estimatedFilamentUsageMg" />
-  </label>
-  <label>
-    Actual Print Time
-    <input type="text" formControlName="printTimeInSeconds" />
-  </label>
-  <label>
-    Actual Filament Usage
-    <input type="text" formControlName="filamentUsageMg" />
-  </label>
-  <label>
-    Filament Type
-    <input type="text" formControlName="filamentType" />
-  </label>
-  <label>
-    Printer
-    <select formControlName="printerId">
-      <option *ngFor="let printer of printers" [ngValue]="printer.id"
-        >{{ printer.make }} {{ printer.model }}</option
-      >
-    </select>
-  </label>
-  <label>
-    Status
-    <select formControlName="status">
-      <option [ngValue]="printStatusTypes.Pending">Pending</option>
-      <option [ngValue]="printStatusTypes.Printing">Printing</option>
-      <option [ngValue]="printStatusTypes.Success">Success</option>
-      <option [ngValue]="printStatusTypes.Cancelled">Cancelled</option>
-      <option [ngValue]="printStatusTypes.Failed">Failed</option>
-    </select>
-  </label>
-
-  <button type="submit" [disabled]="!printForm.valid">Submit</button>
-
-  <div>
-    {{ this.printForm.getRawValue() | json }}
-  </div>
-</form>
+<section fxLayout="row wrap" fxLayoutAlign="center center">
+  <mat-card fxFlex="500px" fxFlex.xs="100%">
+    <form
+      [formGroup]="printForm"
+      (ngSubmit)="onSubmit()"
+      fxLayout="column wrap"
+      fxLayoutAlign="center center"
+      fxLayoutGap="10px"
+    >
+      <mat-card-content align="center">
+        <mat-form-field
+          ><mat-label> Title</mat-label>
+          <input matInput type="text" formControlName="title" />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Notes</mat-label>
+          <input matInput type="text" formControlName="notes" />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Start Date</mat-label>
+          <input matInput type="date" formControlName="startDate" />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Thing URL</mat-label>
+          <input matInput type="url" formControlName="url" />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Estimated Print Time</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="estimatedPrintTimeInSeconds"
+          />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Estimated Filament Usage</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="estimatedFilamentUsageMg"
+          />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Actual Print Time</mat-label>
+          <input matInput type="text" formControlName="printTimeInSeconds" />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Actual Filament Usage</mat-label>
+          <input matInput type="text" formControlName="filamentUsageMg" />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Filament Type</mat-label>
+          <input matInput type="text" formControlName="filamentType" />
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Printer</mat-label>
+          <mat-select formControlName="printerId">
+            <mat-option *ngFor="let printer of printers" [value]="printer.id"
+              >{{ printer.make }} {{ printer.model }}</mat-option
+            >
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field
+          ><mat-label> Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
+            <mat-option [value]="printStatusTypes.Printing"
+              >Printing</mat-option
+            >
+            <mat-option [value]="printStatusTypes.Success">Success</mat-option>
+            <mat-option [value]="printStatusTypes.Cancelled"
+              >Cancelled</mat-option
+            >
+            <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </mat-card-content>
+      <mat-card-actions align="center">
+        <button
+          mat-raised-button
+          type="submit"
+          [disabled]="!printForm.valid"
+          color="primary"
+        >
+          Submit
+        </button>
+        <button
+          mat-raised-button
+          class="close"
+          (click)="handleClose()"
+          color="warn"
+        >
+          Cancel
+        </button>
+      </mat-card-actions>
+      <div>
+        {{ this.printForm.getRawValue() | json }}
+      </div>
+    </form>
+  </mat-card>
+</section>

@@ -77,6 +77,11 @@ export class PrintDetailComponent implements OnInit {
       });
     }
   }
+
+  handleClose() {
+    this.router.navigate(['/prints']);
+  }
+
   getPrintFromForm(): PrintDetail {
     const print: PrintDetail = {
       id: this.printForm.controls.id.value,

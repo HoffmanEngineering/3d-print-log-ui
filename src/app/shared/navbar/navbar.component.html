@@ -1,8 +1,27 @@
-<header>
+<!-- <header>
   <button (click)="auth.login()" *ngIf="!auth.loggedIn">Log In</button>
   <button (click)="auth.logout()" *ngIf="auth.loggedIn">Log Out</button>
 
   <a routerLink="/">Home</a>&nbsp;
-  <a routerLink="prints" *ngIf="auth.loggedIn">Prints</a>
-  <a routerLink="profile" *ngIf="auth.loggedIn">Profile</a>
-</header>
+  <a routerLink="/prints" *ngIf="auth.loggedIn">Prints</a>&nbsp;
+  <a routerLink="/profile" *ngIf="auth.loggedIn">Profile</a>
+</header> -->
+
+<mat-toolbar color="primary">
+  <mat-toolbar-row>
+    <button mat-icon-button>
+      <mat-icon (click)="sidenav.toggle()">menu</mat-icon>
+    </button>
+    <div>
+      <a mat-button routerLink="/">Home</a>
+
+      <a mat-button routerLink="/prints" *ngIf="auth.loggedIn">Prints</a>
+
+      <a mat-button routerLink="/profile" *ngIf="auth.loggedIn">Profile</a>
+    </div>
+    <div style="float:right">
+      <button (click)="auth.login()" *ngIf="!auth.loggedIn">Log In</button>
+      <button (click)="auth.logout()" *ngIf="auth.loggedIn">Log Out</button>
+    </div>
+  </mat-toolbar-row>
+</mat-toolbar>

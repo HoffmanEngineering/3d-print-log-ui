@@ -5,6 +5,7 @@ import {
   ActivatedRouteSnapshot,
   Router,
 } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
   PrintDetail,
@@ -29,7 +30,8 @@ export class PrintDetailComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private formBuilder: FormBuilder,
-    private printService: PrintService
+    private printService: PrintService,
+    private toastr: ToastrService
   ) {}
 
   ngOnInit() {
@@ -67,12 +69,12 @@ export class PrintDetailComponent implements OnInit {
       this.printService.addPrint(newPrint).subscribe(createdPrint => {
         console.log('redirect to new id', createdPrint);
         this.router.navigate(['/prints', createdPrint.id]).then(() => {
-          // this.print = createdPrint;
-          // this.printForm = this.buildFormFromPrintDetail(this.print);
+          this.toastr.success('Save successful!');
         });
       });
     } else {
       this.printService.updatePrint(newPrint).subscribe(updatedPrint => {
+        this.toastr.success('Save successful!');
         this.printForm = this.buildFormFromPrintDetail(updatedPrint);
       });
     }

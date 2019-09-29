@@ -24,6 +24,7 @@
     "@angular/router": "~8.2.7",
     "@auth0/auth0-spa-js": "^1.2.4",
     "hammerjs": "^2.0.8",
+    "ngx-toastr": "^11.0.0",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
     "zone.js": "~0.9.1"

@@ -1,0 +1,27 @@
+<div>
+  <div routerLink="new">
+    <button type="button">Add New Printer</button>
+  </div>
+
+  <table class="mat-table">
+    <tr class="mat-header-row">
+      <th scope="col" class="mat-header-cell">ID</th>
+      <th scope="col" class="mat-header-cell">Make</th>
+      <th scope="col" class="mat-header-cell">Model</th>
+    </tr>
+    <tr
+      class="mat-header-row"
+      *ngFor="let printer of printers"
+      [routerLink]="printer.id"
+    >
+      <td class="mat-cell">{{ printer.id }}</td>
+      <td class="mat-cell">
+        {{ printer.make }}
+      </td>
+      <td class="mat-cell">
+        {{ printer.model }}
+      </td>
+    </tr>
+  </table>
+</div>
+>

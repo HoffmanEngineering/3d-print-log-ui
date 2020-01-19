@@ -14,7 +14,15 @@ const routes: Routes = [
     component: UserProfileComponent,
     canActivate: [AuthGuard],
   },
-  { path: 'prints', loadChildren: () => import('./print/print.module').then(m => m.PrintModule) },
+  {
+    path: 'prints',
+    loadChildren: () => import('./print/print.module').then(m => m.PrintModule),
+  },
+  {
+    path: 'printers',
+    loadChildren: () =>
+      import('./printer/printer.module').then(m => m.PrinterModule),
+  },
 ];
 
 @NgModule({

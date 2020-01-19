@@ -4,6 +4,7 @@
 
 export const environment = {
   production: false,
+  printLogApiUrl: 'https://localhost:44378',
 };
 
 /*

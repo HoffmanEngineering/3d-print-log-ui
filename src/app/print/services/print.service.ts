@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import { environment } from 'src/environments/environment';
 
 export enum PrintStatus {
   Pending,
@@ -69,7 +70,7 @@ export interface AddPrintDTO {
 
 @Injectable()
 export class PrintService {
-  private readonly baseApi = 'https://localhost:44378';
+  private readonly baseApi = environment.printLogApiUrl;
 
   constructor(private http: HttpClient) {}
 

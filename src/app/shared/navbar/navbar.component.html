@@ -12,14 +12,15 @@
     <button mat-icon-button>
       <mat-icon (click)="sidenav.toggle()">menu</mat-icon>
     </button>
-    <div>
+    <div style="flex: 1 1 auto;">
       <a mat-button routerLink="/">Home</a>
 
       <a mat-button routerLink="/prints" *ngIf="auth.loggedIn">Prints</a>
-
-      <a mat-button routerLink="/profile" *ngIf="auth.loggedIn">Profile</a>
+      <a mat-button routerLink="/printers" *ngIf="auth.loggedIn">Printers</a>
     </div>
-    <div style="float:right">
+    <div>
+      <a mat-button routerLink="/profile" *ngIf="auth.loggedIn">Profile</a>
+
       <button (click)="auth.login()" *ngIf="!auth.loggedIn">Log In</button>
       <button (click)="auth.logout()" *ngIf="auth.loggedIn">Log Out</button>
     </div>

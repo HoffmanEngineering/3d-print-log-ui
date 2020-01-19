@@ -1,10 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {
-  PrintService,
-  PrintStatus,
-  PrintSummary,
-} from '../services/print.service';
+import { PrintStatus, PrintSummary } from '../services/print.service';
 
 @Component({
   selector: 'app-print-list',
@@ -13,6 +9,12 @@ import {
 })
 export class PrintListComponent implements OnInit {
   public prints: PrintSummary[] = [];
+  public displayedColumns: string[] = [
+    'title',
+    'printer',
+    'start-date',
+    'status',
+  ];
 
   public printStatusTypes = PrintStatus;
 
@@ -22,5 +24,21 @@ export class PrintListComponent implements OnInit {
     this.activatedRoute.data.subscribe(data => {
       this.prints = data.printList;
     });
+  }
+
+  getStatus(print: PrintSummary) {
+    if (print.status === PrintStatus.Cancelled) {
+      return 'Cancelled';
+    } else if (print.status === PrintStatus.Failed) {
+      return 'Failed';
+    } else if (print.status === PrintStatus.Pending) {
+      return 'Pending';
+    } else if (print.status === PrintStatus.Printing) {
+      return 'Printing';
+    } else if (print.status === PrintStatus.Success) {
+      return 'Success';
+    } else {
+      return 'Unknown';
+    }
   }
 }

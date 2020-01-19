@@ -3,54 +3,34 @@
     <button type="button">Add New Print</button>
   </div>
 
-  <table class="mat-table">
-    <tr class="mat-header-row">
-      <th scope="col" class="mat-header-cell">Title</th>
-      <th scope="col" class="mat-header-cell">Printer</th>
-      <th scope="col" class="mat-header-cell">Start Date</th>
-      <th scope="col" class="mat-header-cell">Status</th>
-    </tr>
-    <tr
-      class="mat-header-row"
-      *ngFor="let print of prints"
-      [routerLink]="print.id"
-    >
-      <td class="mat-cell">{{ print.title }}</td>
-      <td class="mat-cell">
+  <table mat-table [dataSource]="prints">
+    <ng-container matColumnDef="title">
+      <th mat-header-cell *matHeaderCellDef>Title</th>
+      <td mat-cell *matCellDef="let print">{{ print.title }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="printer">
+      <th mat-header-cell *matHeaderCellDef>Printer</th>
+      <td mat-cell *matCellDef="let print">
         {{ print.printer.make }} {{ print.printer.model }}
       </td>
-      <td class="mat-cell">{{ print.startDate | date }}</td>
-      <td
-        *ngIf="print.status === this.printStatusTypes.Pending"
-        class="mat-cell"
-      >
-        Pending
-      </td>
-      <td
-        *ngIf="print.status === this.printStatusTypes.Printing"
-        class="mat-cell"
-      >
-        Printing
-      </td>
-      <td
-        *ngIf="print.status === this.printStatusTypes.Success"
-        class="mat-cell"
-      >
-        Success
-      </td>
-      <td
-        *ngIf="print.status === this.printStatusTypes.Cancelled"
-        class="mat-cell"
-      >
-        Cancelled
-      </td>
-      <td
-        *ngIf="print.status === this.printStatusTypes.Failed"
-        class="mat-cell"
-      >
-        Failed
-      </td>
-    </tr>
+    </ng-container>
+
+    <ng-container matColumnDef="start-date">
+      <th mat-header-cell *matHeaderCellDef>Start Date</th>
+      <td mat-cell *matCellDef="let print">{{ print.startDate | date }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let print">{{ getStatus(print) }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns"
+      [routerLink]="row.id"
+    ></tr>
   </table>
 </div>
->

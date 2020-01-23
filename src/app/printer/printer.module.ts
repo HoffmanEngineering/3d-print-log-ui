@@ -1,6 +1,6 @@
-import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 
+import { SharedModule } from '../shared/shared.module';
 import { PrinterDetailComponent } from './printer-detail/printer-detail.component';
 import { PrinterListComponent } from './printer-list/printer-list.component';
 import { PrinterRoutingModule } from './printer-routing.module';
@@ -9,7 +9,7 @@ import { PrinterService } from './services/printer.service';
 
 @NgModule({
   declarations: [PrinterListComponent, PrinterDetailComponent],
-  imports: [CommonModule, PrinterRoutingModule],
+  imports: [SharedModule, PrinterRoutingModule],
   providers: [PrinterService, PrinterListResolverService],
 })
 export class PrinterModule {}

@@ -10,6 +10,8 @@ import { PrinterSummary } from '../services/printer.service';
 export class PrinterListComponent implements OnInit {
   public printers: PrinterSummary[] = [];
 
+  public displayedColumns: string[] = ['id', 'make', 'model'];
+
   constructor(private activatedRoute: ActivatedRoute) {}
 
   ngOnInit() {

@@ -3,25 +3,37 @@
     <button type="button">Add New Printer</button>
   </div>
 
-  <table class="mat-table">
-    <tr class="mat-header-row">
-      <th scope="col" class="mat-header-cell">ID</th>
-      <th scope="col" class="mat-header-cell">Make</th>
-      <th scope="col" class="mat-header-cell">Model</th>
-    </tr>
-    <tr
-      class="mat-header-row"
-      *ngFor="let printer of printers"
-      [routerLink]="printer.id"
-    >
-      <td class="mat-cell">{{ printer.id }}</td>
-      <td class="mat-cell">
+  <table mat-table [dataSource]="printers">
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef>ID</th>
+      <td mat-cell *matCellDef="let printer">{{ printer.id }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="make">
+      <th mat-header-cell *matHeaderCellDef>Make</th>
+      <td mat-cell *matCellDef="let printer">
         {{ printer.make }}
       </td>
-      <td class="mat-cell">
-        {{ printer.model }}
-      </td>
-    </tr>
+    </ng-container>
+
+    <ng-container matColumnDef="model">
+      <th mat-header-cell *matHeaderCellDef>Model</th>
+      <td mat-cell *matCellDef="let printer">{{ printer.model }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns"
+      [routerLink]="row.id"
+    ></tr>
   </table>
+
+  <!-- <mat-paginator
+    [length]="totalCount"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5, 10, 25, 100]"
+    (page)="pageChange($event)"
+  >
+  </mat-paginator> -->
 </div>
->

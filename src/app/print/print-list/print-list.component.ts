@@ -1,6 +1,12 @@
 import { Component, OnInit } from '@angular/core';
+import { PageEvent } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
-import { PrintStatus, PrintSummary } from '../services/print.service';
+import { PagedList } from 'src/app/core/types/paging';
+import {
+  PrintService,
+  PrintStatus,
+  PrintSummary,
+} from '../services/print.service';
 
 @Component({
   selector: 'app-print-list',
@@ -9,6 +15,10 @@ import { PrintStatus, PrintSummary } from '../services/print.service';
 })
 export class PrintListComponent implements OnInit {
   public prints: PrintSummary[] = [];
+  public pageSize: number;
+  public currentPage: number;
+  public totalCount: number;
+
   public displayedColumns: string[] = [
     'title',
     'printer',
@@ -18,12 +28,35 @@ export class PrintListComponent implements OnInit {
 
   public printStatusTypes = PrintStatus;
 
-  constructor(private activatedRoute: ActivatedRoute) {}
+  constructor(
+    private activatedRoute: ActivatedRoute,
+    private printService: PrintService
+  ) {}
 
   ngOnInit() {
     this.activatedRoute.data.subscribe(data => {
-      this.prints = data.printList;
+      const pagedResponse: PagedList<PrintSummary> = data.printList;
+      this.handlePagedList(pagedResponse);
     });
+  }
+
+  public pageChange(pageEvent: PageEvent) {
+    const newPageNumber = pageEvent.pageIndex + 1;
+    const newPageSize = pageEvent.pageSize;
+
+    this.printService
+      .getPrintSummaries(newPageNumber, newPageSize)
+      .subscribe(response => {
+        this.handlePagedList(response);
+      });
+  }
+
+  private handlePagedList(response: PagedList<PrintSummary>) {
+    this.prints = response.items;
+
+    this.currentPage = response.paging.currentPage;
+    this.pageSize = response.paging.pageSize;
+    this.totalCount = response.paging.totalCount;
   }
 
   getStatus(print: PrintSummary) {

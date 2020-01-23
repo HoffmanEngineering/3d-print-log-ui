@@ -1,9 +1,12 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { environment } from 'src/environments/environment';
+
+import * as moment from 'moment';
+import { PagedList } from 'src/app/core/types/paging';
 
 export enum PrintStatus {
   Pending,
@@ -74,9 +77,17 @@ export class PrintService {
 
   constructor(private http: HttpClient) {}
 
-  getPrintSummaries(): Observable<PrintSummary[]> {
+  getPrintSummaries(
+    pageNumber: number = 1,
+    pageSize: number = 10
+  ): Observable<PagedList<PrintSummary>> {
     const url = `${this.baseApi}/api/Prints/summary`;
-    return this.http.get<PrintSummary[]>(url);
+
+    const params = new HttpParams()
+      .set('PageNumber', pageNumber.toString(10))
+      .set('PageSize', pageSize.toString(10));
+
+    return this.http.get<PagedList<PrintSummary>>(url, { params });
   }
 
   getPrintDetail(id: number): Observable<PrintDetail> {
@@ -92,7 +103,9 @@ export class PrintService {
           notes: newPrint.notes,
           printTimeInSeconds: newPrint.printTimeInSeconds,
           printerId: newPrint.printerId,
-          startDate: newPrint.startDate,
+          startDate: newPrint.startDate
+            ? moment(newPrint.startDate).toDate()
+            : null,
           status: newPrint.status,
           title: newPrint.title,
           url: newPrint.url,

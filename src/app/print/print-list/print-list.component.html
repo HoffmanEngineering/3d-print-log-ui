@@ -33,4 +33,12 @@
       [routerLink]="row.id"
     ></tr>
   </table>
+
+  <mat-paginator
+    [length]="totalCount"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5, 10, 25, 100]"
+    (page)="pageChange($event)"
+  >
+  </mat-paginator>
 </div>

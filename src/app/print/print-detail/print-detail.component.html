@@ -8,60 +8,70 @@
       fxLayoutGap="10px"
     >
       <mat-card-content align="center">
-        <mat-form-field
-          ><mat-label> Title</mat-label>
+        <mat-form-field>
+          <mat-label> Title</mat-label>
           <input matInput type="text" formControlName="title" />
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Notes</mat-label>
+        <mat-form-field>
+          <mat-label> Notes</mat-label>
           <input matInput type="text" formControlName="notes" />
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Start Date</mat-label>
-          <input matInput type="date" formControlName="startDate" />
+        <mat-form-field>
+          <mat-label> Start Date</mat-label>
+          <input
+            matInput
+            [matDatepicker]="picker"
+            placeholder="Choose a date"
+            formControlName="startDate"
+          />
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="picker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Thing URL</mat-label>
+        <mat-form-field>
+          <mat-label> Thing URL</mat-label>
           <input matInput type="url" formControlName="url" />
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Estimated Print Time</mat-label>
+        <mat-form-field>
+          <mat-label> Estimated Print Time</mat-label>
           <input
             matInput
             type="text"
             formControlName="estimatedPrintTimeInSeconds"
           />
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Estimated Filament Usage</mat-label>
+        <mat-form-field>
+          <mat-label> Estimated Filament Usage</mat-label>
           <input
             matInput
             type="text"
             formControlName="estimatedFilamentUsageMg"
           />
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Actual Print Time</mat-label>
+        <mat-form-field>
+          <mat-label> Actual Print Time</mat-label>
           <input matInput type="text" formControlName="printTimeInSeconds" />
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Actual Filament Usage</mat-label>
+        <mat-form-field>
+          <mat-label> Actual Filament Usage</mat-label>
           <input matInput type="text" formControlName="filamentUsageMg" />
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Filament Type</mat-label>
+        <mat-form-field>
+          <mat-label> Filament Type</mat-label>
           <input matInput type="text" formControlName="filamentType" />
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Printer</mat-label>
+        <mat-form-field>
+          <mat-label> Printer</mat-label>
           <mat-select formControlName="printerId">
             <mat-option *ngFor="let printer of printers" [value]="printer.id"
               >{{ printer.make }} {{ printer.model }}</mat-option
             >
           </mat-select>
         </mat-form-field>
-        <mat-form-field
-          ><mat-label> Status</mat-label>
+        <mat-form-field>
+          <mat-label> Status</mat-label>
           <mat-select formControlName="status">
             <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
             <mat-option [value]="printStatusTypes.Printing"

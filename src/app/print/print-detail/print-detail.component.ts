@@ -1,15 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {
-  ActivatedRoute,
-  ActivatedRouteSnapshot,
-  Router,
-} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import * as moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
+import parse from 'parse-duration';
+
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
   PrintDetail,
-  PrintDetailDTO,
   PrintService,
   PrintStatus,
 } from '../services/print.service';
@@ -47,12 +45,20 @@ export class PrintDetailComponent implements OnInit {
       id: [print ? print.id : null],
       title: [print ? print.title : '', Validators.required],
       printerId: [print ? print.printerId : null],
-      startDate: [print ? print.startDate : null],
+      startDate: [
+        print
+          ? print.startDate
+            ? moment(print.startDate).toDate()
+            : null
+          : null,
+      ],
       estimatedPrintTimeInSeconds: [
-        print ? print.estimatedPrintTimeInSeconds : null,
+        print ? this.parseIntoString(print.estimatedPrintTimeInSeconds) : null,
       ],
       estimatedFilamentUsageMg: [print ? print.estimatedFilamentUsageMg : null],
-      printTimeInSeconds: [print ? print.printTimeInSeconds : null],
+      printTimeInSeconds: [
+        print ? this.parseIntoString(print.printTimeInSeconds) : null,
+      ],
       filamentUsageMg: [print ? print.filamentUsageMg : null],
       filamentType: [print ? print.filamentType : ''],
       notes: [print ? print.notes : ''],
@@ -89,12 +95,15 @@ export class PrintDetailComponent implements OnInit {
       id: this.printForm.controls.id.value,
       estimatedFilamentUsageMg: this.printForm.controls.estimatedFilamentUsageMg
         .value,
-      estimatedPrintTimeInSeconds: this.printForm.controls
-        .estimatedPrintTimeInSeconds.value,
+      estimatedPrintTimeInSeconds: this.parseAsSeconds(
+        this.printForm.controls.estimatedPrintTimeInSeconds.value
+      ),
       filamentType: this.printForm.controls.filamentType.value,
       filamentUsageMg: this.printForm.controls.filamentUsageMg.value,
       notes: this.printForm.controls.notes.value,
-      printTimeInSeconds: this.printForm.controls.printTimeInSeconds.value,
+      printTimeInSeconds: this.parseAsSeconds(
+        this.printForm.controls.printTimeInSeconds.value
+      ),
       printerId: this.printForm.controls.printerId.value,
       startDate: this.printForm.controls.startDate.value,
       status: this.printForm.controls.status.value,
@@ -103,5 +112,44 @@ export class PrintDetailComponent implements OnInit {
     };
 
     return print;
+  }
+
+  parseAsSeconds(input: string): number | null {
+    if (input == null || input.trim() === '') {
+      return null;
+    }
+    const durationAsMs = parse(input);
+    const durationAsSeconds = durationAsMs / 1000;
+    return Math.floor(durationAsSeconds);
+  }
+
+  parseIntoString(seconds: number | null): string {
+    if (seconds == null) {
+      return '';
+    }
+
+    const duration = moment.duration(seconds, 'seconds');
+    let result = '';
+
+    if (duration.days() > 0) {
+      result += `${duration.days()}d `;
+    }
+
+    if (duration.hours() > 0) {
+      result += `${duration.hours()}h `;
+    }
+
+    if (duration.minutes() > 0) {
+      result += `${duration.minutes()}m `;
+    }
+
+    if (duration.seconds() > 0) {
+      result += `${duration.seconds()}s `;
+    }
+
+    if (duration.milliseconds() > 0) {
+      result += `${duration.milliseconds()}ms `;
+    }
+    return result;
   }
 }

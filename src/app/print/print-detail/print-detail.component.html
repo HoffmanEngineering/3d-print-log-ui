@@ -10,7 +10,7 @@
       <mat-card-content align="center">
         <mat-form-field>
           <mat-label> Title</mat-label>
-          <input matInput type="text" formControlName="title" />
+          <input matInput type="text" formControlName="title" required />
         </mat-form-field>
         <mat-form-field>
           <mat-label> Notes</mat-label>
@@ -101,7 +101,7 @@
           (click)="handleClose()"
           color="warn"
         >
-          Cancel
+          {{ printForm.dirty ? 'Cancel' : 'Close' }}
         </button>
       </mat-card-actions>
       <div>

@@ -38,6 +38,7 @@ export class PrintDetailComponent implements OnInit {
       this.printers = data.printers;
 
       this.printForm = this.buildFormFromPrintDetail(data.print);
+      console.log({ ...this.printForm });
     });
   }
   buildFormFromPrintDetail(print: PrintDetail): FormGroup {

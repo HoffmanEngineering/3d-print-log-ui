@@ -10,6 +10,18 @@ export interface PrinterSummary {
   model: string;
 }
 
+export interface PrinterDetail {
+  id: number;
+  make: string;
+  model: string;
+
+  description: string;
+
+  nozzleDiameter: number | null;
+
+  filamentDiameter: number | null;
+}
+
 @Injectable()
 export class PrinterService {
   private readonly baseApi = environment.printLogApiUrl;
@@ -27,5 +39,22 @@ export class PrinterService {
       .set('PageSize', pageSize.toString(10));
 
     return this.http.get<PagedList<PrinterSummary>>(url, { params });
+  }
+
+  getPrinterDetail(id: number): Observable<PrinterDetail> {
+    const url = `${this.baseApi}/api/Printers/${id}`;
+    return this.http.get<PrinterDetail>(url);
+  }
+
+  addPrinter(newPrinter: PrinterDetail): Observable<PrinterDetail> {
+    const url = `${this.baseApi}/api/Printers/`;
+
+    return this.http.post<PrinterDetail>(url, newPrinter);
+  }
+
+  updatePrinter(printer: PrinterDetail): Observable<PrinterDetail> {
+    const url = `${this.baseApi}/api/Printers/${printer.id}`;
+
+    return this.http.put<PrinterDetail>(url, printer);
   }
 }

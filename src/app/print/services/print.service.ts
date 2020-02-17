@@ -1,7 +1,15 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { forkJoin, fromEvent, Observable, of } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  map,
+  mergeMap,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { environment } from 'src/environments/environment';
 
@@ -14,6 +22,16 @@ export enum PrintStatus {
   Success,
   Cancelled,
   Failed,
+}
+
+export interface PrintImage {
+  id: number;
+  isDefault: boolean;
+
+  /**
+   * base64 encoded URLs.
+   */
+  url?: string;
 }
 
 export interface PrintSummary {
@@ -37,6 +55,7 @@ export interface PrintDetailDTO {
   notes: string;
   url: string;
   status: PrintStatus;
+  images?: PrintImage[];
 }
 
 export interface PrintDetail {
@@ -52,6 +71,8 @@ export interface PrintDetail {
   notes: string;
   url: string;
   status: PrintStatus;
+
+  images?: PrintImage[];
 }
 
 /**
@@ -109,8 +130,29 @@ export class PrintService {
           status: newPrint.status,
           title: newPrint.title,
           url: newPrint.url,
+          images: newPrint.images || [],
         };
         return print;
+      }),
+      mergeMap(print => {
+        if (print.images.length === 0) {
+          return of(print);
+        }
+
+        const imageRequests: Observable<string>[] = [];
+        for (const image of print.images) {
+          imageRequests.push(this.getPrintImage(print.id, image.id));
+        }
+
+        return forkJoin(imageRequests).pipe(
+          tap(request => console.log(request)),
+          map(images => {
+            for (let i = 0; i < print.images.length; i++) {
+              print.images[i].url = images[i];
+            }
+            return print;
+          })
+        );
       })
     );
   }
@@ -158,5 +200,31 @@ export class PrintService {
     };
 
     return this.http.put<any>(url, printDto);
+  }
+
+  /**
+   * Returns the print's image as a base64 encoded dataUrl
+   */
+  public getPrintImage(printId: number, imageId: number): Observable<string> {
+    const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
+
+    console.log(url);
+
+    return this.http.get(url, { responseType: 'blob' }).pipe(
+      concatMap(image => {
+        console.log({ image });
+        const reader = new FileReader();
+        reader.readAsDataURL(image);
+        return fromEvent(reader, 'load');
+      }),
+      take(1),
+      map(e => {
+        // result includes identifier 'data:image/png;base64,' plus the base64 data
+        const data = (e.target as FileReader).result as string;
+        console.log({ data });
+        return data;
+      }),
+      catchError(err => of(''))
+    );
   }
 }

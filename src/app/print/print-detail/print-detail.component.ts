@@ -1,5 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
@@ -24,24 +30,61 @@ export class PrintDetailComponent implements OnInit {
 
   public printStatusTypes = PrintStatus;
 
+  public printImage = '';
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private formBuilder: FormBuilder,
     private printService: PrintService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.activatedRoute.data.subscribe(data => {
-      console.log('data changed');
+      console.log('data changed', data);
       this.printers = data.printers;
 
       this.printForm = this.buildFormFromPrintDetail(data.print);
       console.log({ ...this.printForm });
     });
+
+    // this.printService.getPrintImage(41, 8).subscribe(image => {
+    //   this.printImage = image;
+    // });
+  }
+
+  onFileChange(event) {
+    const reader = new FileReader();
+
+    if (event.target.files && event.target.files.length) {
+      const [file] = event.target.files;
+      reader.readAsDataURL(file);
+
+      reader.onload = () => {
+        this.printForm.patchValue({
+          file: reader.result,
+        });
+
+        // need to run CD since file load runs outside of zone
+        this.cd.markForCheck();
+      };
+    }
   }
   buildFormFromPrintDetail(print: PrintDetail): FormGroup {
+    const imageArray = this.formBuilder.array([]);
+
+    print.images.forEach(image => {
+      imageArray.push(
+        this.createItem({
+          url: image.url,
+        })
+      );
+    });
+
+    console.log(imageArray);
+
     return this.formBuilder.group({
       id: [print ? print.id : null],
       title: [print ? print.title : '', Validators.required],
@@ -65,12 +108,52 @@ export class PrintDetailComponent implements OnInit {
       notes: [print ? print.notes : ''],
       url: [print ? print.url : ''],
       status: [print ? print.status : PrintStatus.Pending],
+      images: imageArray,
     });
   }
+
+  // We will create multiple form controls inside defined form controls photos.
+  createItem(data): FormControl {
+    const newItem = this.formBuilder.control(data);
+
+    return newItem;
+  }
+
+  // Help to get all photos controls as form array.
+  get images(): FormArray {
+    return this.printForm.get('images') as FormArray;
+  }
+
+  detectFiles(event) {
+    const files = event.target.files;
+    if (files) {
+      for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          const newItem = this.createItem({
+            file,
+            url: e.target.result, // Base64 string for preview image
+          });
+
+          newItem.markAllAsTouched();
+          newItem.markAsDirty();
+          this.images.push(newItem);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  }
+
   onSubmit() {
     console.log(this.printForm.getRawValue());
 
     const newPrint: PrintDetail = this.getPrintFromForm();
+
+    const modifiedImages = this.images.controls.filter(
+      control => control.dirty
+    );
+
+    console.log(modifiedImages);
 
     if (newPrint.id === null) {
       this.printService.addPrint(newPrint).subscribe(createdPrint => {

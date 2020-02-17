@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface PrinterSummary {
   id: number;
+  name: string;
   make: string;
   model: string;
 }

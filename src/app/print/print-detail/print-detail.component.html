@@ -65,9 +65,9 @@
         <mat-form-field>
           <mat-label> Printer</mat-label>
           <mat-select formControlName="printerId">
-            <mat-option *ngFor="let printer of printers" [value]="printer.id"
-              >{{ printer.make }} {{ printer.model }}</mat-option
-            >
+            <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
+              getPrinterLabel(printer)
+            }}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field>

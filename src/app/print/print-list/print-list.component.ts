@@ -59,6 +59,17 @@ export class PrintListComponent implements OnInit {
     this.totalCount = response.paging.totalCount;
   }
 
+  getPrinterLabel(print: PrintSummary) {
+    if (print.printer.name && print.printer.name !== '') {
+      return `${print.printer.name} - (${(
+        print.printer.make +
+        ' ' +
+        print.printer.model
+      ).trim()})`;
+    } else {
+      return `${(print.printer.make + ' ' + print.printer.model).trim()}`;
+    }
+  }
   getStatus(print: PrintSummary) {
     if (print.status === PrintStatus.Cancelled) {
       return 'Cancelled';

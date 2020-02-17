@@ -16,7 +16,16 @@ export class PrinterListComponent implements OnInit {
   public currentPage: number;
   public totalCount: number;
 
-  public displayedColumns: string[] = ['id', 'make', 'model'];
+  public includeInactive = false;
+  public searchText = '';
+
+  public displayedColumns: string[] = [
+    'id',
+    'name',
+    'make',
+    'model',
+    'isActive',
+  ];
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -35,7 +44,25 @@ export class PrinterListComponent implements OnInit {
     const newPageSize = pageEvent.pageSize;
 
     this.printerService
-      .getCurrentUserPrinterSummaries(newPageNumber, newPageSize)
+      .getCurrentUserPrinterSummaries(
+        newPageNumber,
+        newPageSize,
+        this.searchText,
+        this.includeInactive
+      )
+      .subscribe(response => {
+        this.handlePagedList(response);
+      });
+  }
+
+  public updateFilter() {
+    this.printerService
+      .getCurrentUserPrinterSummaries(
+        this.currentPage,
+        this.pageSize,
+        this.searchText,
+        this.includeInactive
+      )
       .subscribe(response => {
         this.handlePagedList(response);
       });

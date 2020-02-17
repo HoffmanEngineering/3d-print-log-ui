@@ -153,4 +153,16 @@ export class PrintDetailComponent implements OnInit {
     }
     return result;
   }
+
+  getPrinterLabel(printer: PrinterSummary) {
+    if (printer.name && printer.name !== '') {
+      return `${printer.name} - (${(
+        printer.make +
+        ' ' +
+        printer.model
+      ).trim()})`;
+    } else {
+      return `${(printer.make + ' ' + printer.model).trim()}`;
+    }
+  }
 }

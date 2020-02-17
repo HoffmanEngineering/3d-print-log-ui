@@ -14,7 +14,7 @@
     <ng-container matColumnDef="printer">
       <th mat-header-cell *matHeaderCellDef>Printer</th>
       <td mat-cell *matCellDef="let print">
-        {{ print.printer.make }} {{ print.printer.model }}
+        {{ getPrinterLabel(print) }}
       </td>
     </ng-container>
 

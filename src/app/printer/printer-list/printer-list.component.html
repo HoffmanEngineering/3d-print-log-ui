@@ -5,10 +5,34 @@
     </button>
   </div>
 
+  <mat-form-field>
+    <mat-label>
+      Search: </mat-label
+    ><input
+      matInput
+      type="text"
+      [(ngModel)]="searchText"
+      (ngModelChange)="updateFilter()"
+  /></mat-form-field>
+
+  <mat-checkbox
+    type="checkbox"
+    [(ngModel)]="includeInactive"
+    (ngModelChange)="updateFilter()"
+    >Include Inactive</mat-checkbox
+  >
+
   <table mat-table [dataSource]="printers">
     <ng-container matColumnDef="id">
       <th mat-header-cell *matHeaderCellDef>ID</th>
       <td mat-cell *matCellDef="let printer">{{ printer.id }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let printer">
+        {{ printer.name }}
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="make">
@@ -21,6 +45,11 @@
     <ng-container matColumnDef="model">
       <th mat-header-cell *matHeaderCellDef>Model</th>
       <td mat-cell *matCellDef="let printer">{{ printer.model }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="isActive">
+      <th mat-header-cell *matHeaderCellDef>Is Active</th>
+      <td mat-cell *matCellDef="let printer">{{ printer.isActive }}</td>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

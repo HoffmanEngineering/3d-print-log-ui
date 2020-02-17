@@ -31,6 +31,7 @@ export class PrinterDetailComponent implements OnInit {
   buildFormFromPrinterDetail(printer: PrinterDetail): FormGroup {
     const form = this.formBuilder.group({
       id: [printer ? printer.id : null],
+      name: [printer && printer.name ? printer.name : '', Validators.required],
       make: [printer && printer.make ? printer.make : '', Validators.required],
       model: [
         printer && printer.make ? printer.model : '',
@@ -44,6 +45,11 @@ export class PrinterDetailComponent implements OnInit {
       filamentDiameter: [
         printer && printer.filamentDiameter ? printer.filamentDiameter : 0,
         Validators.required,
+      ],
+      isActive: [
+        printer && printer.isActive !== null && printer.isActive !== undefined
+          ? printer.isActive
+          : true,
       ],
     });
 
@@ -79,11 +85,13 @@ export class PrinterDetailComponent implements OnInit {
   private getPrinterFromForm(): PrinterDetail {
     const printer: PrinterDetail = {
       id: this.printerForm.controls.id.value,
+      name: this.printerForm.controls.name.value,
       make: this.printerForm.controls.make.value,
       model: this.printerForm.controls.model.value,
       description: this.printerForm.controls.description.value,
       nozzleDiameter: this.printerForm.controls.nozzleDiameter.value,
       filamentDiameter: this.printerForm.controls.filamentDiameter.value,
+      isActive: this.printerForm.controls.isActive.value,
     };
 
     return printer;

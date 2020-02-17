@@ -6,8 +6,10 @@ import { environment } from 'src/environments/environment';
 
 export interface PrinterSummary {
   id: number;
+  name: string;
   make: string;
   model: string;
+  isActive: boolean;
 }
 
 export interface PrinterDetail {
@@ -15,11 +17,15 @@ export interface PrinterDetail {
   make: string;
   model: string;
 
+  name: string;
+
   description: string;
 
   nozzleDiameter: number | null;
 
   filamentDiameter: number | null;
+
+  isActive: boolean;
 }
 
 @Injectable()
@@ -30,13 +36,20 @@ export class PrinterService {
 
   getCurrentUserPrinterSummaries(
     pageNumber: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    searchText: string = '',
+    includeInactive: boolean = false
   ): Observable<PagedList<PrinterSummary>> {
     const url = `${this.baseApi}/api/printers/summary`;
 
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('PageNumber', pageNumber.toString(10))
-      .set('PageSize', pageSize.toString(10));
+      .set('PageSize', pageSize.toString(10))
+      .set('includeInactive', includeInactive.toString());
+
+    if (searchText !== '') {
+      params = params.set('searchText', searchText);
+    }
 
     return this.http.get<PagedList<PrinterSummary>>(url, { params });
   }

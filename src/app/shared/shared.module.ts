@@ -4,6 +4,7 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import {
   MatButtonModule,
   MatCardModule,
+  MatCheckboxModule,
   MatDatepickerModule,
   MatFormFieldModule,
   MatIconModule,
@@ -40,6 +41,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatPaginatorModule,
     FlexLayoutModule,
     MatCardModule,
+    MatCheckboxModule,
     RouterModule.forChild([]),
   ],
   exports: [
@@ -61,6 +63,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatPaginatorModule,
     FlexLayoutModule,
     MatCardModule,
+    MatCheckboxModule,
   ],
 })
 export class SharedModule {}

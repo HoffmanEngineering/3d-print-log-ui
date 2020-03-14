@@ -4,3 +4,18 @@ mat-form-field {
 mat-card-title {
   text-align: center;
 }
+
+.image-preview {
+  max-width: 50px;
+}
+
+.isSelected {
+  -webkit-box-shadow: inset 0px 0px 0px 9px rgba(115, 138, 255, 1);
+  -moz-box-shadow: inset 0px 0px 0px 9px rgba(115, 138, 255, 1);
+  box-shadow: inset 0px 0px 0px 9px rgba(115, 138, 255, 1);
+}
+
+.isDefault:after {
+  content: '*';
+  color: green;
+}

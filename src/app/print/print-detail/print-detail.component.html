@@ -6,6 +6,7 @@
       fxLayout="column wrap"
       fxLayoutAlign="center center"
       fxLayoutGap="10px"
+      autocomplete="off"
     >
       <input
         type="file"
@@ -13,23 +14,38 @@
         id="files"
         (change)="detectFiles($event)"
       />
+      <img
+        *ngIf="selectedImage && selectedImage.value"
+        mat-card-image
+        [src]="this.selectedImage.value.url"
+        class="card-img-top"
+        alt="Image Preview"
+      />
+
       <div class="images-preview mt-2" *ngIf="images.length">
         <div
           formArrayName="images"
           *ngFor="let image of images.controls; let i = index"
         >
-          <div [formGroupName]="i">
+          <div
+            [formGroupName]="i"
+            [ngClass]="{
+              isDefault: image?.value?.isDefault === true
+            }"
+          >
             <img
-              mat-card-image
               [src]="$any(image).value.url"
-              class="card-img-top"
+              class="image-preview"
+              [ngClass]="{
+                isSelected: selectedImage === image
+              }"
               alt="Image Preview"
+              (click)="selectImage(image)"
             />
           </div>
         </div>
       </div>
 
-      <img mat-card-image [src]="printImage" />
       <mat-card-content align="center">
         <mat-form-field>
           <mat-label> Title</mat-label>
@@ -46,6 +62,7 @@
             [matDatepicker]="picker"
             placeholder="Choose a date"
             formControlName="startDate"
+            required
           />
           <mat-datepicker-toggle
             matSuffix
@@ -127,7 +144,7 @@
           {{ printForm.dirty ? 'Cancel' : 'Close' }}
         </button>
       </mat-card-actions>
-      <div>
+      <div style="width: 100%;">
         {{ this.printForm.getRawValue() | json }}
       </div>
     </form>

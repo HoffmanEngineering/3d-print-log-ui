@@ -1,22 +1,33 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { MatDatepickerInputEvent } from '@angular/material/datepicker';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
+import { forkJoin, of } from 'rxjs';
+import { map, mergeMap, take } from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
   PrintDetail,
   PrintService,
   PrintStatus,
 } from '../services/print.service';
+
+export interface PrintImageValue {
+  id?: number;
+  url?: string;
+  file?: File;
+  isDefault: boolean;
+}
 
 @Component({
   selector: 'app-print-detail',
@@ -30,7 +41,9 @@ export class PrintDetailComponent implements OnInit {
 
   public printStatusTypes = PrintStatus;
 
-  public printImage = '';
+  public selectedImage: FormControl;
+
+  public defaultImageIdOnLoad: number | null = null;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -49,10 +62,6 @@ export class PrintDetailComponent implements OnInit {
       this.printForm = this.buildFormFromPrintDetail(data.print);
       console.log({ ...this.printForm });
     });
-
-    // this.printService.getPrintImage(41, 8).subscribe(image => {
-    //   this.printImage = image;
-    // });
   }
 
   onFileChange(event) {
@@ -75,13 +84,24 @@ export class PrintDetailComponent implements OnInit {
   buildFormFromPrintDetail(print: PrintDetail): FormGroup {
     const imageArray = this.formBuilder.array([]);
 
-    print.images.forEach(image => {
-      imageArray.push(
-        this.createItem({
+    if (print && print.images) {
+      print.images.forEach(image => {
+        const newImage: PrintImageValue = {
+          id: image.id,
           url: image.url,
-        })
-      );
-    });
+          file: null,
+          isDefault: image.isDefault,
+        };
+        if (newImage.isDefault) {
+          const newControl = this.createItem(newImage);
+          imageArray.insert(0, newControl);
+          this.selectedImage = newControl;
+          this.defaultImageIdOnLoad = image.id;
+        } else {
+          imageArray.push(this.createItem(newImage));
+        }
+      });
+    }
 
     console.log(imageArray);
 
@@ -95,6 +115,7 @@ export class PrintDetailComponent implements OnInit {
             ? moment(print.startDate).toDate()
             : null
           : null,
+        Validators.required,
       ],
       estimatedPrintTimeInSeconds: [
         print ? this.parseIntoString(print.estimatedPrintTimeInSeconds) : null,
@@ -113,7 +134,7 @@ export class PrintDetailComponent implements OnInit {
   }
 
   // We will create multiple form controls inside defined form controls photos.
-  createItem(data): FormControl {
+  createItem(data: PrintImageValue): FormControl {
     const newItem = this.formBuilder.control(data);
 
     return newItem;
@@ -133,6 +154,8 @@ export class PrintDetailComponent implements OnInit {
           const newItem = this.createItem({
             file,
             url: e.target.result, // Base64 string for preview image
+            isDefault: false,
+            id: undefined,
           });
 
           newItem.markAllAsTouched();
@@ -144,29 +167,105 @@ export class PrintDetailComponent implements OnInit {
     }
   }
 
+  selectImage(image: FormControl) {
+    this.selectedImage = image;
+    this.setAsDefault(image); // TODO: Get right-click menu to make default
+  }
+
+  setAsDefault(image: FormControl) {
+    this.images.controls.forEach(control => {
+      control.value.isDefault = false;
+    });
+
+    image.value.isDefault = true;
+  }
+
   onSubmit() {
     console.log(this.printForm.getRawValue());
 
     const newPrint: PrintDetail = this.getPrintFromForm();
 
-    const modifiedImages = this.images.controls.filter(
-      control => control.dirty
+    const newImages = this.images.controls.filter(
+      control => control.dirty && control.value.id === undefined
     );
 
-    console.log(modifiedImages);
+    // Check the selected default.
+    const selectedDefaultImage = this.images.controls.filter(
+      control => control.value.isDefault
+    );
+
+    let newDefaultImageId = null;
+    // If the default image changed to another previously-saved image, then update the default.
+    if (selectedDefaultImage.length > 0) {
+      const defaultImage = selectedDefaultImage[0];
+      if (
+        defaultImage.value.id !== undefined &&
+        defaultImage.value.id !== this.defaultImageIdOnLoad
+      ) {
+        newDefaultImageId = defaultImage.value.id;
+      }
+    }
+
+    console.log('newDefaultImageId', newDefaultImageId);
 
     if (newPrint.id === null) {
-      this.printService.addPrint(newPrint).subscribe(createdPrint => {
-        console.log('redirect to new id', createdPrint);
-        this.router.navigate(['/prints', createdPrint.id]).then(() => {
-          this.toastr.success('Save successful!');
+      this.printService
+        .addPrint(newPrint)
+        .pipe(
+          mergeMap((createdPrint: PrintDetail) => {
+            if (newImages.length === 0) {
+              of(createdPrint);
+            }
+
+            const imagesToUpload = newImages.map(image => {
+              return this.printService.uploadPrintImage(
+                createdPrint.id,
+                image.value.file
+              );
+            });
+
+            return forkJoin(imagesToUpload).pipe(map(() => createdPrint));
+          })
+        )
+        .subscribe(createdPrint => {
+          console.log('redirect to new id', createdPrint);
+          this.router.navigate(['/prints', createdPrint.id]).then(() => {
+            this.toastr.success('Save successful!');
+          });
         });
-      });
     } else {
-      this.printService.updatePrint(newPrint).subscribe(updatedPrint => {
-        this.toastr.success('Save successful!');
-        this.printForm = this.buildFormFromPrintDetail(updatedPrint);
-      });
+      this.printService
+        .updatePrint(newPrint)
+        .pipe(
+          mergeMap((createdPrint: PrintDetail) => {
+            if (newImages.length === 0) {
+              return of(createdPrint);
+            }
+
+            const imagesToUpload = newImages.map(image => {
+              return this.printService.uploadPrintImage(
+                createdPrint.id,
+                image.value.file
+              );
+            });
+
+            return forkJoin(imagesToUpload).pipe(
+              take(1),
+              map(() => createdPrint)
+            );
+          }),
+          mergeMap(updatedPrint => {
+            if (newDefaultImageId) {
+              return this.printService
+                .setImageAsDefault(updatedPrint.id, newDefaultImageId)
+                .pipe(map(() => updatedPrint));
+            }
+          })
+        )
+        .subscribe(updatedPrint => {
+          this.toastr.success('Save successful!');
+          this.printForm = this.buildFormFromPrintDetail(updatedPrint);
+        });
     }
   }
 
@@ -175,6 +274,15 @@ export class PrintDetailComponent implements OnInit {
   }
 
   getPrintFromForm(): PrintDetail {
+    const existingPrintImages = this.images.controls
+      .filter(control => control.value.id !== undefined)
+      .map(control => {
+        return {
+          id: control.value.id,
+          isDefault: control.value.isDefault,
+        };
+      });
+
     const print: PrintDetail = {
       id: this.printForm.controls.id.value,
       estimatedFilamentUsageMg: this.printForm.controls.estimatedFilamentUsageMg
@@ -193,9 +301,15 @@ export class PrintDetailComponent implements OnInit {
       status: this.printForm.controls.status.value,
       title: this.printForm.controls.title.value,
       url: this.printForm.controls.url.value,
+      images: existingPrintImages,
     };
 
     return print;
+  }
+
+  setDateToNoon(control: AbstractControl) {
+    const date = control.value;
+    console.log('setDateToNoon', date);
   }
 
   parseAsSeconds(input: string): number | null {

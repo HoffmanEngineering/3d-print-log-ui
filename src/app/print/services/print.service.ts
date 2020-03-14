@@ -40,6 +40,8 @@ export interface PrintSummary {
   printer: PrinterSummary;
   startDate?: Date;
   status: PrintStatus;
+
+  defaultPrintImageId: number;
 }
 
 export interface PrintDetailDTO {
@@ -197,9 +199,19 @@ export class PrintService {
       title: print.title,
       url: print.url,
       id: print.id,
+      images: print.images,
     };
 
     return this.http.put<any>(url, printDto);
+  }
+
+  public uploadPrintImage(printId: number, file: File) {
+    const url = `${this.baseApi}/api/Prints/${printId}/image`;
+
+    const formData: FormData = new FormData();
+    formData.append('image', file, file.name);
+
+    return this.http.post(url, formData);
   }
 
   /**
@@ -226,5 +238,11 @@ export class PrintService {
       }),
       catchError(err => of(''))
     );
+  }
+
+  public setImageAsDefault(printId: number, imageId: number) {
+    const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}/set-as-default`;
+
+    return this.http.post(url, {});
   }
 }

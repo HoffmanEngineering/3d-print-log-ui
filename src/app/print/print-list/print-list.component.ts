@@ -20,6 +20,7 @@ export class PrintListComponent implements OnInit {
   public totalCount: number;
 
   public displayedColumns: string[] = [
+    'image',
     'title',
     'printer',
     'start-date',

@@ -10,9 +10,10 @@ import { PrintComponent } from './print.component';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
 import { PrintService } from './services/print.service';
+import { PrintImageComponent } from './print-image/print-image.component';
 
 @NgModule({
-  declarations: [PrintComponent, PrintListComponent, PrintDetailComponent],
+  declarations: [PrintComponent, PrintListComponent, PrintDetailComponent, PrintImageComponent],
   imports: [
     CommonModule,
     PrintRoutingModule,

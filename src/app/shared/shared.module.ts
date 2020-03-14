@@ -18,6 +18,7 @@ import {
   MatTableModule,
   MatToolbarModule,
 } from '@angular/material';
+import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { RouterModule } from '@angular/router';
 import { CallbackComponent } from './callback/callback.component';
 import { NavbarComponent } from './navbar/navbar.component';
@@ -59,7 +60,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatNativeDateModule,
+    MatMomentDateModule,
     MatPaginatorModule,
     FlexLayoutModule,
     MatCardModule,

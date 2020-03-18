@@ -135,27 +135,27 @@ export class PrintService {
           images: newPrint.images || [],
         };
         return print;
-      }),
-      mergeMap(print => {
-        if (print.images.length === 0) {
-          return of(print);
-        }
-
-        const imageRequests: Observable<string>[] = [];
-        for (const image of print.images) {
-          imageRequests.push(this.getPrintImage(print.id, image.id));
-        }
-
-        return forkJoin(imageRequests).pipe(
-          tap(request => console.log(request)),
-          map(images => {
-            for (let i = 0; i < print.images.length; i++) {
-              print.images[i].url = images[i];
-            }
-            return print;
-          })
-        );
       })
+      // mergeMap(print => {
+      //   if (print.images.length === 0) {
+      //     return of(print);
+      //   }
+
+      //   const imageRequests: Observable<string>[] = [];
+      //   for (const image of print.images) {
+      //     imageRequests.push(this.getPrintImage(print.id, image.id));
+      //   }
+
+      //   return forkJoin(imageRequests).pipe(
+      //     tap(request => console.log(request)),
+      //     map(images => {
+      //       for (let i = 0; i < print.images.length; i++) {
+      //         print.images[i].url = images[i];
+      //       }
+      //       return print;
+      //     })
+      //   );
+      // })
     );
   }
 

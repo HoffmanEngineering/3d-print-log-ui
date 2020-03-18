@@ -88,7 +88,7 @@ export class PrintDetailComponent implements OnInit {
       print.images.forEach(image => {
         const newImage: PrintImageValue = {
           id: image.id,
-          url: image.url,
+          url: null,
           file: null,
           isDefault: image.isDefault,
         };
@@ -168,6 +168,7 @@ export class PrintDetailComponent implements OnInit {
   }
 
   selectImage(image: FormControl) {
+    console.log('Image selected');
     this.selectedImage = image;
     this.setAsDefault(image); // TODO: Get right-click menu to make default
   }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { PrintService } from '../services/print.service';
 
 @Component({
@@ -10,15 +10,18 @@ export class PrintImageComponent implements OnInit {
   @Input() printId: number;
   @Input() imageId: number;
 
-  public imageData: string;
+  @Input() imageData: string = null;
+  @Output() imageDataChange = new EventEmitter<string>();
+
   constructor(private printService: PrintService) {}
 
   ngOnInit() {
-    if (this.printId > 0 && this.imageId > 0) {
+    if (this.imageData === null && this.printId > 0 && this.imageId > 0) {
       this.printService
         .getPrintImage(this.printId, this.imageId)
         .subscribe(data => {
           this.imageData = data;
+          this.imageDataChange.emit(data);
         });
     }
   }

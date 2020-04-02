@@ -215,7 +215,7 @@ export class PrintDetailComponent implements OnInit {
         .pipe(
           mergeMap((createdPrint: PrintDetail) => {
             if (newImages.length === 0) {
-              of(createdPrint);
+              return of(createdPrint);
             }
 
             const imagesToUpload = newImages.map(image => {
@@ -225,7 +225,10 @@ export class PrintDetailComponent implements OnInit {
               );
             });
 
-            return forkJoin(imagesToUpload).pipe(map(() => createdPrint));
+            return forkJoin(imagesToUpload).pipe(
+              take(1),
+              map(() => createdPrint)
+            );
           })
         )
         .subscribe(createdPrint => {
@@ -260,6 +263,8 @@ export class PrintDetailComponent implements OnInit {
               return this.printService
                 .setImageAsDefault(updatedPrint.id, newDefaultImageId)
                 .pipe(map(() => updatedPrint));
+            } else {
+              return of(updatedPrint);
             }
           })
         )

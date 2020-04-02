@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export interface PrinterSummary {
   id: number;
@@ -13,7 +14,7 @@ export interface PrinterSummary {
   providedIn: 'root',
 })
 export class PrinterService {
-  private readonly baseApi = 'https://localhost:44378';
+  private readonly baseApi = environment.printLogApiUrl;
 
   constructor(private http: HttpClient) {}
 

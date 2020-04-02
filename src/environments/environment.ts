@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  printLogApiUrl: 'https://localhost:44378',
+  printLogApiUrl: 'https://3d-print-log-staging.azurewebsites.net', // 'https://localhost:5001',
 };
 
 /*

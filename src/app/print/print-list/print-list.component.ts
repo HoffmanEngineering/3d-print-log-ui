@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
+import { debounce } from 'lodash';
 import { PagedList } from 'src/app/core/types/paging';
 import {
   PrintService,
@@ -27,12 +28,21 @@ export class PrintListComponent implements OnInit {
     'status',
   ];
 
+  public includeInactive = false;
+  public searchText = '';
+
+  public filterByStatus: PrintStatus | null = -1;
+
   public printStatusTypes = PrintStatus;
+
+  public debouncedUpdateFilter;
 
   constructor(
     private activatedRoute: ActivatedRoute,
     private printService: PrintService
-  ) {}
+  ) {
+    this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+  }
 
   ngOnInit() {
     this.activatedRoute.data.subscribe(data => {
@@ -46,7 +56,12 @@ export class PrintListComponent implements OnInit {
     const newPageSize = pageEvent.pageSize;
 
     this.printService
-      .getPrintSummaries(newPageNumber, newPageSize)
+      .getPrintSummaries(
+        newPageNumber,
+        newPageSize,
+        this.searchText,
+        this.filterByStatus
+      )
       .subscribe(response => {
         this.handlePagedList(response);
       });
@@ -58,6 +73,19 @@ export class PrintListComponent implements OnInit {
     this.currentPage = response.paging.currentPage;
     this.pageSize = response.paging.pageSize;
     this.totalCount = response.paging.totalCount;
+  }
+
+  public updateFilter() {
+    this.printService
+      .getPrintSummaries(
+        this.currentPage,
+        this.pageSize,
+        this.searchText,
+        this.filterByStatus
+      )
+      .subscribe(response => {
+        this.handlePagedList(response);
+      });
   }
 
   getPrinterLabel(print: PrintSummary) {

@@ -6,13 +6,13 @@
   </div>
 
   <mat-form-field>
-    <mat-label>
-      Search: </mat-label
+    <mat-label> Search: </mat-label
     ><input
       matInput
       type="text"
       [(ngModel)]="searchText"
-      (ngModelChange)="updateFilter()"
+      (ngModelChange)="debouncedUpdateFilter()"
+      autocomplete="off"
   /></mat-form-field>
 
   <mat-checkbox

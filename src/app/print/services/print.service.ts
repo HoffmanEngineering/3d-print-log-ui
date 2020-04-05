@@ -14,6 +14,7 @@ import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { environment } from 'src/environments/environment';
 
 import * as moment from 'moment';
+
 import { PagedList } from 'src/app/core/types/paging';
 
 export enum PrintStatus {
@@ -102,13 +103,23 @@ export class PrintService {
 
   getPrintSummaries(
     pageNumber: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    searchText: string = '',
+    filterByStatus: PrintStatus | null = null
   ): Observable<PagedList<PrintSummary>> {
     const url = `${this.baseApi}/api/Prints/summary`;
 
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('PageNumber', pageNumber.toString(10))
       .set('PageSize', pageSize.toString(10));
+
+    if (searchText !== '') {
+      params = params.set('searchText', searchText);
+    }
+
+    if (filterByStatus !== null && filterByStatus >= 0) {
+      params = params.set('filterByStatus', filterByStatus.toString(10));
+    }
 
     return this.http.get<PagedList<PrintSummary>>(url, { params });
   }

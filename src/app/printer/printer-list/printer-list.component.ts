@@ -4,6 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
 import { PrinterService, PrinterSummary } from '../services/printer.service';
 
+import { debounce } from 'lodash';
+
 @Component({
   selector: 'app-printer-list',
   templateUrl: './printer-list.component.html',
@@ -27,10 +29,14 @@ export class PrinterListComponent implements OnInit {
     'isActive',
   ];
 
+  public debouncedUpdateFilter;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private printerService: PrinterService
-  ) {}
+  ) {
+    this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+  }
 
   ngOnInit() {
     this.activatedRoute.data.subscribe(data => {

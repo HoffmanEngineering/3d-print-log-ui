@@ -27,13 +27,6 @@
     </mat-select>
   </mat-form-field>
 
-  <mat-checkbox
-    type="checkbox"
-    [(ngModel)]="includeInactive"
-    (ngModelChange)="updateFilter()"
-    >Include Inactive</mat-checkbox
-  >
-
   <table mat-table [dataSource]="prints">
     <ng-container matColumnDef="image">
       <th mat-header-cell *matHeaderCellDef>Image</th>

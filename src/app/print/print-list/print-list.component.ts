@@ -28,7 +28,6 @@ export class PrintListComponent implements OnInit {
     'status',
   ];
 
-  public includeInactive = false;
   public searchText = '';
 
   public filterByStatus: PrintStatus | null = -1;

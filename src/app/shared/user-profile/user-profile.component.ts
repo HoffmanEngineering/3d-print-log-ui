@@ -8,14 +8,7 @@ import { UserService } from 'src/app/core/services/user.service';
   styleUrls: ['./user-profile.component.scss'],
 })
 export class UserProfileComponent implements OnInit {
-  constructor(public auth: AuthService, public user: UserService) {}
+  constructor(public auth: AuthService) {}
 
-  public test;
-
-  ngOnInit() {
-    this.user.ping$().subscribe(data => {
-      console.log('data', { data });
-      this.test = data;
-    });
-  }
+  ngOnInit() {}
 }

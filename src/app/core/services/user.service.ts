@@ -9,8 +9,4 @@ import { environment } from 'src/environments/environment';
 export class UserService {
   private readonly baseApiUrl = environment.printLogApiUrl;
   constructor(private http: HttpClient) {}
-
-  ping$(): Observable<any> {
-    return this.http.get<any>(`${this.baseApiUrl}/api/Prints/summary`);
-  }
 }

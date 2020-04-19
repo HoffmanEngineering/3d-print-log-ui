@@ -4,7 +4,10 @@ import {
   Resolve,
   RouterStateSnapshot,
 } from '@angular/router';
-import { PrinterDetail, PrinterService } from '../services/printer.service';
+import {
+  PrinterDetail,
+  PrinterService,
+} from '../../core/services/printer.service';
 
 @Injectable()
 export class PrinterDetailResolverService implements Resolve<PrinterDetail> {

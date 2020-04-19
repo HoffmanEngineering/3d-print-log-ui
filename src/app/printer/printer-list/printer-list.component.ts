@@ -2,7 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
-import { PrinterService, PrinterSummary } from '../services/printer.service';
+import {
+  PrinterService,
+  PrinterSummary,
+} from '../../core/services/printer.service';
 
 import { debounce } from 'lodash';
 

@@ -5,7 +5,10 @@ import {
   RouterStateSnapshot,
 } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
-import { PrinterService, PrinterSummary } from '../services/printer.service';
+import {
+  PrinterService,
+  PrinterSummary,
+} from '../../core/services/printer.service';
 
 @Injectable()
 export class PrinterListResolverService

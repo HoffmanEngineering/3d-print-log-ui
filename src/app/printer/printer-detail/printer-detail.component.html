@@ -10,15 +10,42 @@
       <mat-card-content align="center">
         <mat-form-field>
           <mat-label>Name</mat-label>
-          <input matInput type="text" formControlName="name" required />
+          <input
+            matInput
+            type="text"
+            formControlName="name"
+            required
+            maxlength="100"
+          />
+          <mat-error *ngIf="printerForm.controls['name'].hasError('required')">
+            A Name is <strong>required</strong>
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Make</mat-label>
-          <input matInput type="text" formControlName="make" required />
+          <input
+            matInput
+            type="text"
+            formControlName="make"
+            required
+            maxlength="50"
+          />
+          <mat-error *ngIf="printerForm.controls['make'].hasError('required')">
+            A Make is <strong>required</strong>
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Model</mat-label>
-          <input matInput type="text" formControlName="model" required />
+          <input
+            matInput
+            type="text"
+            formControlName="model"
+            required
+            maxlength="50"
+          />
+          <mat-error *ngIf="printerForm.controls['model'].hasError('required')">
+            A Model is <strong>required</strong>
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Description</mat-label>
@@ -26,6 +53,7 @@
             matInput
             type="textarea"
             formControlName="description"
+            maxlength="1000"
           ></textarea>
         </mat-form-field>
         <mat-form-field>

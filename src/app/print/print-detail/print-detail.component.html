@@ -70,7 +70,13 @@
       <mat-card-content align="center">
         <mat-form-field>
           <mat-label> Title</mat-label>
-          <input matInput type="text" formControlName="title" required />
+          <input
+            matInput
+            type="text"
+            formControlName="title"
+            required
+            maxlength="100"
+          />
           <mat-error *ngIf="printForm.controls['title'].hasError('required')">
             A Title is <strong>required</strong>
           </mat-error>
@@ -111,7 +117,7 @@
         </mat-form-field>
         <mat-form-field>
           <mat-label> Thing URL</mat-label>
-          <input matInput type="url" formControlName="url" />
+          <input matInput type="url" formControlName="url" maxlength="1000" />
         </mat-form-field>
         <mat-form-field>
           <mat-label> Estimated Print Time</mat-label>
@@ -145,12 +151,22 @@
         </mat-form-field>
         <mat-form-field>
           <mat-label> Filament Type</mat-label>
-          <input matInput type="text" formControlName="filamentType" />
+          <input
+            matInput
+            type="text"
+            formControlName="filamentType"
+            maxlength="100"
+          />
         </mat-form-field>
 
         <mat-form-field>
           <mat-label> Notes</mat-label>
-          <textarea matInput type="text" formControlName="notes"></textarea>
+          <textarea
+            matInput
+            type="text"
+            formControlName="notes"
+            maxlength="1000"
+          ></textarea>
         </mat-form-field>
 
         <mat-form-field>

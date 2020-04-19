@@ -100,6 +100,7 @@
           <input
             matInput
             type="text"
+            placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
             formControlName="estimatedPrintTimeInSeconds"
           />
         </mat-form-field>
@@ -125,7 +126,7 @@
         </mat-form-field>
         <mat-form-field>
           <mat-label> Printer</mat-label>
-          <mat-select formControlName="printerId">
+          <mat-select formControlName="printerId" required>
             <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
               getPrinterLabel(printer)
             }}</mat-option>

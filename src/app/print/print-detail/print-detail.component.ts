@@ -108,7 +108,7 @@ export class PrintDetailComponent implements OnInit {
     return this.formBuilder.group({
       id: [print ? print.id : null],
       title: [print ? print.title : '', Validators.required],
-      printerId: [print ? print.printerId : null],
+      printerId: [print ? print.printerId : null, Validators.required],
       startDate: [
         print
           ? print.startDate

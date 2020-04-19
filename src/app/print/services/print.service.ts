@@ -18,11 +18,11 @@ import * as moment from 'moment';
 import { PagedList } from 'src/app/core/types/paging';
 
 export enum PrintStatus {
-  Pending,
-  Printing,
-  Success,
-  Cancelled,
-  Failed,
+  Pending = 1,
+  Printing = 2,
+  Success = 3,
+  Cancelled = 4,
+  Failed = 5,
 }
 
 export interface PrintImage {

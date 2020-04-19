@@ -18,21 +18,49 @@
       <a mat-button routerLink="/prints" *ngIf="auth.loggedIn">Prints</a>
       <a mat-button routerLink="/printers" *ngIf="auth.loggedIn">Printers</a>
 
-      <button mat-button [matMenuTriggerFor]="menu" *ngIf="auth.loggedIn">
+      <button mat-button [matMenuTriggerFor]="aboutMenu" *ngIf="auth.loggedIn">
         About
       </button>
-      <mat-menu #menu="matMenu">
+      <mat-menu #aboutMenu="matMenu">
         <!-- <button mat-menu-item>Fee</button> -->
-        <a style="color: rgba(0,0,0,.87);" mat-menu-item routerLink="/feedback"
+        <a class="menu-link" mat-menu-item routerLink="/feedback"
           >Send Feedback</a
         >
       </mat-menu>
     </div>
     <div>
-      <a mat-button routerLink="/profile" *ngIf="auth.loggedIn">Profile</a>
+      <button
+        class="transparent"
+        [matMenuTriggerFor]="profileMenu"
+        *ngIf="auth.loggedIn"
+      >
+        <img
+          class="profile-picture"
+          *ngIf="profilePictureUrl"
+          [src]="profilePictureUrl"
+        />
+
+        <img
+          class="profile-picture"
+          *ngIf="!profilePictureUrl"
+          src="/assets/user.svg"
+        />
+      </button>
+      <mat-menu #profileMenu="matMenu">
+        <!-- <button mat-menu-item>Fee</button> -->
+        <a
+          class="menu-link"
+          mat-menu-item
+          routerLink="/profile"
+          *ngIf="auth.loggedIn"
+          >Profile</a
+        >
+        <button mat-menu-item (click)="auth.logout()" *ngIf="auth.loggedIn">
+          Log Out
+        </button>
+      </mat-menu>
 
       <button (click)="auth.login()" *ngIf="!auth.loggedIn">Log In</button>
-      <button (click)="auth.logout()" *ngIf="auth.loggedIn">Log Out</button>
     </div>
   </mat-toolbar-row>
 </mat-toolbar>

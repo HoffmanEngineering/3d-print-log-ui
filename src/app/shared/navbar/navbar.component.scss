@@ -1,17 +1,29 @@
-a {
+a:not([mat-menu-item]) {
   text-decoration: none;
   color: white;
-}
 
-a:hover,
-a:active {
-  color: lightgray;
+  :hover,
+  :active {
+    color: lightgray;
+  }
 }
 
 .navigation-items {
   list-style-type: none;
   padding: 0;
   margin: 0;
+}
+
+.transparent {
+  background: transparent;
+  border: none !important;
+}
+
+.profile-picture {
+  vertical-align: middle;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
 }
 
 mat-toolbar {

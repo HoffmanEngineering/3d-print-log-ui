@@ -7,7 +7,17 @@ import { AuthService } from 'src/app/core/services/auth.service';
   styleUrls: ['./navbar.component.scss'],
 })
 export class NavbarComponent implements OnInit {
+  public profilePictureUrl: string | null = null;
+
   constructor(public auth: AuthService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.auth.userProfile$.subscribe(user => {
+      if (user && user.picture) {
+        this.profilePictureUrl = user.picture;
+      } else {
+        this.profilePictureUrl = null;
+      }
+    });
+  }
 }

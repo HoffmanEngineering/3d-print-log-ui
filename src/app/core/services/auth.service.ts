@@ -11,6 +11,7 @@ import {
   throwError,
 } from 'rxjs';
 import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -19,10 +20,10 @@ export class AuthService {
   // Create an observable of Auth0 instance of client
   auth0Client$ = (from(
     createAuth0Client({
-      domain: 'dev-3dprintlog.auth0.com',
-      client_id: 'Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ',
+      domain: environment.authentication.domain,
+      client_id: environment.authentication.client_id,
       redirect_uri: `${window.location.origin}/callback`,
-      audience: 'https://dev.3dprintlog.com/api',
+      audience: environment.authentication.audience,
     })
   ) as Observable<Auth0Client>).pipe(
     shareReplay(1), // Every subscription receives the same shared value
@@ -129,7 +130,7 @@ export class AuthService {
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log out
       client.logout({
-        client_id: 'Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ',
+        client_id: environment.authentication.client_id,
         returnTo: `${window.location.origin}`,
       });
     });

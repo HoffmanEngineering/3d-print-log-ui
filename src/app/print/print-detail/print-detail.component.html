@@ -129,12 +129,20 @@
           />
         </mat-form-field>
         <mat-form-field>
-          <mat-label> Estimated Filament Usage</mat-label>
+          <mat-label> Estimated Filament Usage (grams)</mat-label>
           <input
             matInput
             type="text"
-            formControlName="estimatedFilamentUsageMg"
+            pattern="^\d*(\.\d{0,3})?$"
+            formControlName="estimatedFilamentUsageG"
           />
+          <mat-error
+            *ngIf="
+              printForm.controls['estimatedFilamentUsageG'].hasError('pattern')
+            "
+          >
+            Numbers (up to 3-decimal places) only.
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label> Actual Print Time</mat-label>
@@ -146,8 +154,18 @@
           />
         </mat-form-field>
         <mat-form-field>
-          <mat-label> Actual Filament Usage</mat-label>
-          <input matInput type="text" formControlName="filamentUsageMg" />
+          <mat-label> Actual Filament Usage (grams)</mat-label>
+          <input
+            matInput
+            type="text"
+            pattern="^\d*(\.\d{0,3})?$"
+            formControlName="filamentUsageG"
+          />
+          <mat-error
+            *ngIf="printForm.controls['filamentUsageG'].hasError('pattern')"
+          >
+            Numbers (up to 3-decimal places) only.
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label> Filament Type</mat-label>

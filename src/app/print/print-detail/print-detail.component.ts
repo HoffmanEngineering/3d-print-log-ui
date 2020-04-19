@@ -120,11 +120,13 @@ export class PrintDetailComponent implements OnInit {
       estimatedPrintTimeInSeconds: [
         print ? this.parseIntoString(print.estimatedPrintTimeInSeconds) : null,
       ],
-      estimatedFilamentUsageMg: [print ? print.estimatedFilamentUsageMg : null],
+      estimatedFilamentUsageG: [
+        print ? print.estimatedFilamentUsageMg / 1000 : null,
+      ],
       printTimeInSeconds: [
         print ? this.parseIntoString(print.printTimeInSeconds) : null,
       ],
-      filamentUsageMg: [print ? print.filamentUsageMg : null],
+      filamentUsageG: [print ? print.filamentUsageMg / 1000 : null],
       filamentType: [print ? print.filamentType : ''],
       notes: [print ? print.notes : ''],
       url: [print ? print.url : ''],
@@ -291,13 +293,13 @@ export class PrintDetailComponent implements OnInit {
 
     const print: PrintDetail = {
       id: this.printForm.controls.id.value,
-      estimatedFilamentUsageMg: this.printForm.controls.estimatedFilamentUsageMg
-        .value,
+      estimatedFilamentUsageMg:
+        this.printForm.controls.estimatedFilamentUsageG.value * 1000,
       estimatedPrintTimeInSeconds: this.parseAsSeconds(
         this.printForm.controls.estimatedPrintTimeInSeconds.value
       ),
       filamentType: this.printForm.controls.filamentType.value,
-      filamentUsageMg: this.printForm.controls.filamentUsageMg.value,
+      filamentUsageMg: this.printForm.controls.filamentUsageG.value * 1000,
       notes: this.printForm.controls.notes.value,
       printTimeInSeconds: this.parseAsSeconds(
         this.printForm.controls.printTimeInSeconds.value

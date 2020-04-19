@@ -48,8 +48,12 @@
     </ng-container>
 
     <ng-container matColumnDef="isActive">
-      <th mat-header-cell *matHeaderCellDef>Is Active</th>
-      <td mat-cell *matCellDef="let printer">{{ printer.isActive }}</td>
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let printer">
+        <mat-chip-list *ngIf="!printer.isActive">
+          <mat-chip color="accent" selected>Inactive</mat-chip>
+        </mat-chip-list>
+      </td>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

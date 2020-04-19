@@ -6,6 +6,7 @@ import {
   MatButtonModule,
   MatCardModule,
   MatCheckboxModule,
+  MatChipsModule,
   MatDatepickerModule,
   MatDividerModule,
   MatFormFieldModule,
@@ -17,6 +18,7 @@ import {
   MatPaginatorModule,
   MatSelectModule,
   MatSliderModule,
+  MatSortModule,
   MatTableModule,
   MatToolbarModule,
 } from '@angular/material';
@@ -54,6 +56,8 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     RouterModule.forChild([]),
     FormsModule,
     ReactiveFormsModule,
+    MatChipsModule,
+    MatSortModule,
   ],
   exports: [
     NavbarComponent,
@@ -78,6 +82,8 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatCheckboxModule,
     FormsModule,
     ReactiveFormsModule,
+    MatChipsModule,
+    MatSortModule,
   ],
 })
 export class SharedModule {}

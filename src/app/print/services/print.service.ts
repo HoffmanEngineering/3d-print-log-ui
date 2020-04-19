@@ -16,6 +16,12 @@ import { environment } from 'src/environments/environment';
 import * as moment from 'moment';
 
 import { PagedList } from 'src/app/core/types/paging';
+import { SortDirection } from 'src/app/core/types/sort-request';
+
+export enum PrintSummarySortColumn {
+  Title = 1,
+  StartDate = 2,
+}
 
 export enum PrintStatus {
   Pending = 1,
@@ -105,13 +111,17 @@ export class PrintService {
     pageNumber: number = 1,
     pageSize: number = 10,
     searchText: string = '',
-    filterByStatus: PrintStatus | null = null
+    filterByStatus: PrintStatus | null = null,
+    sortDirection = SortDirection.Desc,
+    sortColumn = PrintSummarySortColumn.StartDate
   ): Observable<PagedList<PrintSummary>> {
     const url = `${this.baseApi}/api/Prints/summary`;
 
     let params = new HttpParams()
       .set('PageNumber', pageNumber.toString(10))
-      .set('PageSize', pageSize.toString(10));
+      .set('PageSize', pageSize.toString(10))
+      .set('SortColumn', sortColumn.toString(10))
+      .set('SortDirection', sortDirection.toString(10));
 
     if (searchText !== '') {
       params = params.set('searchText', searchText);

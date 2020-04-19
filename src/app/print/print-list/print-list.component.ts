@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { PageEvent } from '@angular/material';
+import { PageEvent, Sort } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 import { debounce } from 'lodash';
 import { PagedList } from 'src/app/core/types/paging';
+import { SortDirection } from 'src/app/core/types/sort-request';
 import {
   PrintService,
   PrintStatus,
   PrintSummary,
+  PrintSummarySortColumn,
 } from '../services/print.service';
 
 @Component({
@@ -34,7 +36,12 @@ export class PrintListComponent implements OnInit {
 
   public printStatusTypes = PrintStatus;
 
+  public printSummarySortColumns = PrintSummarySortColumn;
+
   public debouncedUpdateFilter;
+
+  public sortColumn = PrintSummarySortColumn.StartDate;
+  public sortDirection = SortDirection.Desc;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -51,19 +58,10 @@ export class PrintListComponent implements OnInit {
   }
 
   public pageChange(pageEvent: PageEvent) {
-    const newPageNumber = pageEvent.pageIndex + 1;
-    const newPageSize = pageEvent.pageSize;
+    this.currentPage = pageEvent.pageIndex + 1;
+    this.pageSize = pageEvent.pageSize;
 
-    this.printService
-      .getPrintSummaries(
-        newPageNumber,
-        newPageSize,
-        this.searchText,
-        this.filterByStatus
-      )
-      .subscribe(response => {
-        this.handlePagedList(response);
-      });
+    this.updateFilter();
   }
 
   private handlePagedList(response: PagedList<PrintSummary>) {
@@ -74,13 +72,25 @@ export class PrintListComponent implements OnInit {
     this.totalCount = response.paging.totalCount;
   }
 
+  public sortData(sort: Sort) {
+    console.log(sort);
+    this.sortColumn = +sort.active;
+
+    this.sortDirection =
+      sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc;
+
+    this.updateFilter();
+  }
+
   public updateFilter() {
     this.printService
       .getPrintSummaries(
         this.currentPage,
         this.pageSize,
         this.searchText,
-        this.filterByStatus
+        this.filterByStatus,
+        this.sortDirection,
+        this.sortColumn
       )
       .subscribe(response => {
         this.handlePagedList(response);

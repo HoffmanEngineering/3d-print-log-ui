@@ -17,6 +17,7 @@ import {
   MatSliderModule,
   MatTableModule,
   MatToolbarModule,
+  MatDividerModule,
 } from '@angular/material';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { RouterModule } from '@angular/router';
@@ -62,6 +63,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatDatepickerModule,
     MatMomentDateModule,
     MatPaginatorModule,
+    MatDividerModule,
     FlexLayoutModule,
     MatCardModule,
     MatCheckboxModule,

@@ -71,11 +71,24 @@
         <mat-form-field>
           <mat-label> Title</mat-label>
           <input matInput type="text" formControlName="title" required />
+          <mat-error *ngIf="printForm.controls['title'].hasError('required')">
+            A Title is <strong>required</strong>
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
-          <mat-label> Notes</mat-label>
-          <input matInput type="text" formControlName="notes" />
+          <mat-label> Printer</mat-label>
+          <mat-select formControlName="printerId" required>
+            <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
+              getPrinterLabel(printer)
+            }}</mat-option>
+          </mat-select>
+          <mat-error
+            *ngIf="printForm.controls['printerId'].hasError('required')"
+          >
+            A Printer is <strong>required</strong>
+          </mat-error>
         </mat-form-field>
+
         <mat-form-field>
           <mat-label> Start Date</mat-label>
           <input
@@ -90,6 +103,11 @@
             [for]="picker"
           ></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
+          <mat-error
+            *ngIf="printForm.controls['startDate'].hasError('required')"
+          >
+            A Start Date is <strong>required</strong>
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label> Thing URL</mat-label>
@@ -114,7 +132,12 @@
         </mat-form-field>
         <mat-form-field>
           <mat-label> Actual Print Time</mat-label>
-          <input matInput type="text" formControlName="printTimeInSeconds" />
+          <input
+            matInput
+            type="text"
+            formControlName="printTimeInSeconds"
+            placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
+          />
         </mat-form-field>
         <mat-form-field>
           <mat-label> Actual Filament Usage</mat-label>
@@ -124,14 +147,12 @@
           <mat-label> Filament Type</mat-label>
           <input matInput type="text" formControlName="filamentType" />
         </mat-form-field>
+
         <mat-form-field>
-          <mat-label> Printer</mat-label>
-          <mat-select formControlName="printerId" required>
-            <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
-              getPrinterLabel(printer)
-            }}</mat-option>
-          </mat-select>
+          <mat-label> Notes</mat-label>
+          <textarea matInput type="text" formControlName="notes"></textarea>
         </mat-form-field>
+
         <mat-form-field>
           <mat-label> Status</mat-label>
           <mat-select formControlName="status">

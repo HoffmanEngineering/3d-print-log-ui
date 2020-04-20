@@ -21,11 +21,7 @@ steps:
     ng build --prod
   displayName: 'npm install and build'
 
-- task: ArchiveFiles@2
+- task: PublishPipelineArtifact@1
   inputs:
-    rootFolderOrFile: '$(Build.SourcesDirectory)/dist/print-log-ui'
-    includeRootFolder: true
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-    replaceExistingArchive: true
-    
+    targetPath: '$(Build.SourcesDirectory)/dist/print-log-ui'
+    publishLocation: 'pipeline'

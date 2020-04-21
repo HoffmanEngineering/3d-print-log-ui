@@ -7,6 +7,7 @@ import {
   PrinterSummary,
 } from '../../core/services/printer.service';
 
+import { Title } from '@angular/platform-browser';
 import { debounce } from 'lodash';
 
 @Component({
@@ -36,12 +37,15 @@ export class PrinterListComponent implements OnInit {
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private printerService: PrinterService
+    private printerService: PrinterService,
+    private titleService: Title
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
 
   ngOnInit() {
+    this.titleService.setTitle('My Printers - 3D Print Log');
+
     this.activatedRoute.data.subscribe(data => {
       const pagedResponse: PagedList<PrinterSummary> = data.printerList;
       this.handlePagedList(pagedResponse);

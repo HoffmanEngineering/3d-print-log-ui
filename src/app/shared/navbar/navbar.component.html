@@ -38,16 +38,17 @@
           class="profile-picture"
           *ngIf="profilePictureUrl"
           [src]="profilePictureUrl"
+          alt="User's Profile Picture"
         />
 
         <img
           class="profile-picture"
           *ngIf="!profilePictureUrl"
           src="/assets/user.svg"
+          alt="Default Profile Picture"
         />
       </button>
       <mat-menu #profileMenu="matMenu">
-        <!-- <button mat-menu-item>Fee</button> -->
         <a
           class="menu-link"
           mat-menu-item

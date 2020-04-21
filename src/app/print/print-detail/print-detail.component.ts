@@ -13,15 +13,16 @@ import * as moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
+import { Title } from '@angular/platform-browser';
 import { forkJoin, of } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import { environment } from 'src/environments/environment';
 import {
   PrintDetail,
   PrintService,
   PrintStatus,
 } from '../services/print.service';
-import { environment } from 'src/environments/environment';
 
 export interface PrintImageValue {
   id?: number;
@@ -53,10 +54,13 @@ export class PrintDetailComponent implements OnInit {
     private formBuilder: FormBuilder,
     private printService: PrintService,
     private toastr: ToastrService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private titleService: Title
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Print Details - 3D Print Log');
+
     this.activatedRoute.data.subscribe(data => {
       console.log('data changed', data);
       this.printers = data.printers;

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import {
@@ -20,10 +21,13 @@ export class PrinterDetailComponent implements OnInit {
     private router: Router,
     private formBuilder: FormBuilder,
     private printerService: PrinterService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private titleService: Title
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Printer Details - 3D Print Log');
+
     this.activatedRoute.data.subscribe(data => {
       console.log('data changed', { data });
       this.printerForm = this.buildFormFromPrinterDetail(data.printer);

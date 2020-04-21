@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent, Sort } from '@angular/material';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { debounce } from 'lodash';
 import { PagedList } from 'src/app/core/types/paging';
@@ -45,12 +46,15 @@ export class PrintListComponent implements OnInit {
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private printService: PrintService
+    private printService: PrintService,
+    private titleService: Title
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
 
   ngOnInit() {
+    this.titleService.setTitle('My Prints - 3D Print Log');
+
     this.activatedRoute.data.subscribe(data => {
       const pagedResponse: PagedList<PrintSummary> = data.printList;
       this.handlePagedList(pagedResponse);

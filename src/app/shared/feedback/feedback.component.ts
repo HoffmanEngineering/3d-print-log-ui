@@ -5,6 +5,7 @@ import {
   FormGroupDirective,
   Validators,
 } from '@angular/forms';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import {
@@ -26,14 +27,16 @@ export class FeedbackComponent implements OnInit {
   public readonly feedbackTypes = FeedbackType;
 
   constructor(
-    private activatedRoute: ActivatedRoute,
     private router: Router,
     private formBuilder: FormBuilder,
     private feedbackService: FeedbackService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private titleService: Title
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Send Feedback - 3D Print Log');
+
     this.form = this.formBuilder.group({
       type: [FeedbackType.Suggestion, Validators.required],
       email: ['', Validators.email],

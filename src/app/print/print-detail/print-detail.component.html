@@ -13,19 +13,12 @@
           *ngIf="images.length < 1"
           mat-raised-button
           type="file"
+          accept="image/*"
           class="custom-file-input form-control"
           id="files"
           (change)="detectFiles($event)"
         />
-        <!-- <img
-          *ngIf="
-            selectedImage && selectedImage.value && this.selectedImage.value.url
-          "
-          mat-card-image
-          [src]="this.selectedImage.value.url"
-          class="card-img-top"
-          alt="Image Preview"
-        /> -->
+
         <div
           class="card-img-top main-image"
           *ngIf="selectedImage && selectedImage.value"

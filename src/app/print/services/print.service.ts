@@ -242,12 +242,8 @@ export class PrintService {
       maxSize: this.IMAGE_MAX_SIZE_PX,
     };
 
-    console.log(`Image Size Before: ${file.size}`);
-
     return from(this.resizeImage(settings)).pipe(
       switchMap(reducedImage => {
-        console.log(`Image Size After: ${reducedImage.size}`);
-
         const formData: FormData = new FormData();
         formData.append('image', reducedImage, file.name);
         formData.append('isDefault', isDefault.toString());
@@ -263,11 +259,8 @@ export class PrintService {
   public getPrintImage(printId: number, imageId: number): Observable<string> {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
 
-    console.log(url);
-
     return this.http.get(url, { responseType: 'blob' }).pipe(
       concatMap(image => {
-        console.log({ image });
         const reader = new FileReader();
         reader.readAsDataURL(image);
         return fromEvent(reader, 'load');
@@ -276,7 +269,7 @@ export class PrintService {
       map(e => {
         // result includes identifier 'data:image/png;base64,' plus the base64 data
         const data = (e.target as FileReader).result as string;
-        console.log({ data });
+
         return data;
       }),
       catchError(err => of(''))

@@ -77,7 +77,6 @@ export class PrintListComponent implements OnInit {
   }
 
   public sortData(sort: Sort) {
-    console.log(sort);
     this.sortColumn = +sort.active;
 
     this.sortDirection =

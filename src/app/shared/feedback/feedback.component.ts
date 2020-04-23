@@ -45,8 +45,6 @@ export class FeedbackComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log(this.form.getRawValue());
-
     const newFeedback: AddFeedback = this.getFeedbackFromForm();
 
     this.feedbackService.addFeedback(newFeedback).subscribe(

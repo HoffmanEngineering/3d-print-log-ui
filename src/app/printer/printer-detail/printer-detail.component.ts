@@ -29,9 +29,7 @@ export class PrinterDetailComponent implements OnInit {
     this.titleService.setTitle('Printer Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe(data => {
-      console.log('data changed', { data });
       this.printerForm = this.buildFormFromPrinterDetail(data.printer);
-      console.log({ ...this.printerForm });
     });
   }
 
@@ -64,13 +62,10 @@ export class PrinterDetailComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log(this.printerForm.getRawValue());
-
     const newPrinter: PrinterDetail = this.getPrinterFromForm();
 
     if (newPrinter.id === null) {
       this.printerService.addPrinter(newPrinter).subscribe(createdPrinter => {
-        console.log('redirect to new id', createdPrinter);
         this.router.navigate(['/printers', createdPrinter.id]).then(() => {
           this.toastr.success('Save successful!');
         });

@@ -37,7 +37,6 @@ export interface PrintImageValue {
   styleUrls: ['./print-detail.component.scss'],
 })
 export class PrintDetailComponent implements OnInit {
-  public showImageSelection = !environment.production; // Only show image selection if we aren't in production yet....
   public printers: PrinterSummary[] = [];
 
   public printForm: FormGroup;

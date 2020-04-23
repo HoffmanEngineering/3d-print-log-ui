@@ -63,11 +63,9 @@ export class PrintDetailComponent implements OnInit {
     this.titleService.setTitle('Print Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe(data => {
-      console.log('data changed', data);
       this.printers = data.printers;
 
       this.printForm = this.buildFormFromPrintDetail(data.print);
-      console.log({ ...this.printForm });
     });
   }
 
@@ -109,8 +107,6 @@ export class PrintDetailComponent implements OnInit {
         }
       });
     }
-
-    console.log(imageArray);
 
     return this.formBuilder.group({
       id: [print ? print.id : null],
@@ -178,7 +174,6 @@ export class PrintDetailComponent implements OnInit {
   }
 
   selectImage(image: FormControl) {
-    console.log('Image selected');
     this.selectedImage = image;
     this.setAsDefault(image); // TODO: Get right-click menu to make default
   }
@@ -211,8 +206,6 @@ export class PrintDetailComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log(this.printForm.getRawValue());
-
     const newPrint: PrintDetail = this.getPrintFromForm();
 
     const newImages = this.images.controls.filter(
@@ -235,8 +228,6 @@ export class PrintDetailComponent implements OnInit {
         newDefaultImageId = defaultImage.value.id;
       }
     }
-
-    console.log('newDefaultImageId', newDefaultImageId);
 
     if (newPrint.id === null) {
       this.printService
@@ -383,7 +374,6 @@ export class PrintDetailComponent implements OnInit {
 
   setDateToNoon(control: AbstractControl) {
     const date = control.value;
-    console.log('setDateToNoon', date);
   }
 
   parseAsSeconds(input: string): number | null {

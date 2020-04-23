@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { forkJoin, fromEvent, Observable, of } from 'rxjs';
+import { forkJoin, from, fromEvent, Observable, of } from 'rxjs';
 import {
   catchError,
   concatMap,
@@ -101,9 +101,17 @@ export interface AddPrintDTO {
   status: PrintStatus;
 }
 
+interface IResizeImageOptions {
+  maxSize: number;
+  file: File;
+}
+
 @Injectable()
 export class PrintService {
   private readonly baseApi = environment.printLogApiUrl;
+
+  private readonly IMAGE_QUALITY = 0.9;
+  private readonly IMAGE_MAX_SIZE_PX = 1280;
 
   constructor(private http: HttpClient) {}
 
@@ -229,11 +237,20 @@ export class PrintService {
   public uploadPrintImage(printId: number, file: File, isDefault = false) {
     const url = `${this.baseApi}/api/Prints/${printId}/image`;
 
-    const formData: FormData = new FormData();
-    formData.append('image', file, file.name);
-    formData.append('isDefault', isDefault.toString());
+    const settings: IResizeImageOptions = {
+      file,
+      maxSize: this.IMAGE_MAX_SIZE_PX,
+    };
 
-    return this.http.post(url, formData);
+    return from(this.resizeImage(settings)).pipe(
+      switchMap(reducedImage => {
+        const formData: FormData = new FormData();
+        formData.append('image', reducedImage, file.name);
+        formData.append('isDefault', isDefault.toString());
+
+        return this.http.post(url, formData);
+      })
+    );
   }
 
   /**
@@ -242,11 +259,8 @@ export class PrintService {
   public getPrintImage(printId: number, imageId: number): Observable<string> {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
 
-    console.log(url);
-
     return this.http.get(url, { responseType: 'blob' }).pipe(
       concatMap(image => {
-        console.log({ image });
         const reader = new FileReader();
         reader.readAsDataURL(image);
         return fromEvent(reader, 'load');
@@ -255,7 +269,7 @@ export class PrintService {
       map(e => {
         // result includes identifier 'data:image/png;base64,' plus the base64 data
         const data = (e.target as FileReader).result as string;
-        console.log({ data });
+
         return data;
       }),
       catchError(err => of(''))
@@ -273,4 +287,63 @@ export class PrintService {
 
     return this.http.delete(url);
   }
+
+  resizeImage = (settings: IResizeImageOptions): Promise<Blob> => {
+    const file = settings.file;
+    const maxSize = settings.maxSize;
+    const reader = new FileReader();
+    const image = new Image();
+    const canvas = document.createElement('canvas');
+    const dataURItoBlob = (dataURI: string) => {
+      const bytes =
+        dataURI.split(',')[0].indexOf('base64') >= 0
+          ? atob(dataURI.split(',')[1])
+          : unescape(dataURI.split(',')[1]);
+      const mime = dataURI
+        .split(',')[0]
+        .split(':')[1]
+        .split(';')[0];
+      const max = bytes.length;
+      const ia = new Uint8Array(max);
+      for (let i = 0; i < max; i++) {
+        ia[i] = bytes.charCodeAt(i);
+      }
+      return new Blob([ia], { type: mime });
+    };
+    const resize = () => {
+      let width = image.width;
+      let height = image.height;
+
+      if (width > height) {
+        if (width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', this.IMAGE_QUALITY);
+      return dataURItoBlob(dataUrl);
+    };
+
+    return new Promise((ok, no) => {
+      if (!file.type.match(/image.*/)) {
+        no(new Error('Not an image'));
+        return;
+      }
+
+      reader.onload = (readerEvent: any) => {
+        image.onload = () => ok(resize());
+        image.src = readerEvent.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 }

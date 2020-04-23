@@ -24,11 +24,6 @@ export class FeedbackService {
 
   constructor(private http: HttpClient) {}
 
-  // getCurrentUserPrinterSummaries(): Observable<PrinterSummary[]> {
-  //   const url = `${this.baseApi}/api/Users/me/printers`;
-  //   return this.http.get<PrinterSummary[]>(url);
-  // }
-
   addFeedback(feedback: AddFeedback) {
     const url = `${this.baseApi}/api/Feedbacks`;
     return this.http.post<never>(url, feedback);

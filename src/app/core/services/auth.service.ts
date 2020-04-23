@@ -67,7 +67,7 @@ export class AuthService {
   localAuthSetup() {
     // This should only be called on app initialization
     // Set up local authentication streams
-    console.log('localAuthSetup');
+
     const checkAuth$ = this.isAuthenticated$.pipe(
       concatMap((loggedIn: boolean) => {
         if (loggedIn) {
@@ -87,12 +87,10 @@ export class AuthService {
   }
 
   login(redirectPath: string = '/') {
-    console.log('test');
     // A desired redirect path can be passed to login method
     // (e.g., from a route guard)
     // Ensure Auth0 client instance exists
     this.auth0Client$.subscribe((client: Auth0Client) => {
-      console.log('subscribe');
       // Call method to log in
       client.loginWithRedirect({
         redirect_uri: `${window.location.origin}/callback`,

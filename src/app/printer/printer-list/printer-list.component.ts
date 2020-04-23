@@ -25,13 +25,7 @@ export class PrinterListComponent implements OnInit {
   public includeInactive = false;
   public searchText = '';
 
-  public displayedColumns: string[] = [
-    'id',
-    'name',
-    'make',
-    'model',
-    'isActive',
-  ];
+  public displayedColumns: string[] = ['name', 'make', 'model', 'isActive'];
 
   public debouncedUpdateFilter;
 

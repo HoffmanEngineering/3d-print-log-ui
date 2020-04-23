@@ -1,1 +1,20 @@
-<img *ngIf="imageData" class="center" [src]="imageData" alt="Image Preview" />
+<div
+  (mouseenter)="imageHovered = true"
+  (mouseleave)="imageHovered = false"
+  (click)="imageHovered = !imageHovered"
+>
+  <button
+    *ngIf="showDeleteOnHover && imageHovered"
+    mat-raised-button
+    aria-hidden="false"
+    aria-label="Remove Image"
+    title="Remove Image"
+    class="overlay pointable"
+    color="warn"
+    (click)="handleDeleteClick($event)"
+  >
+    <mat-icon>delete</mat-icon>Remove
+  </button>
+
+  <img *ngIf="imageData" class="center" [src]="imageData" alt="Image Preview" />
+</div>

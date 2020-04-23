@@ -9,9 +9,13 @@ import { PrintService } from '../services/print.service';
 export class PrintImageComponent implements OnInit {
   @Input() printId: number;
   @Input() imageId: number;
-
   @Input() imageData: string = null;
+  @Input() showDeleteOnHover = false;
+
   @Output() imageDataChange = new EventEmitter<string>();
+  @Output() delete = new EventEmitter();
+
+  public imageHovered = false;
 
   constructor(private printService: PrintService) {}
 
@@ -24,5 +28,12 @@ export class PrintImageComponent implements OnInit {
           this.imageDataChange.emit(data);
         });
     }
+  }
+
+  handleDeleteClick(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    this.delete.emit();
   }
 }

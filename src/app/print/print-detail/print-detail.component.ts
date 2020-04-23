@@ -48,6 +48,8 @@ export class PrintDetailComponent implements OnInit {
 
   public defaultImageIdOnLoad: number | null = null;
 
+  private imageIdsToDelete = [];
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -169,6 +171,7 @@ export class PrintDetailComponent implements OnInit {
           newItem.markAllAsTouched();
           newItem.markAsDirty();
           this.images.push(newItem);
+          this.selectImage(newItem);
         };
         reader.readAsDataURL(file);
       }
@@ -179,6 +182,25 @@ export class PrintDetailComponent implements OnInit {
     console.log('Image selected');
     this.selectedImage = image;
     this.setAsDefault(image); // TODO: Get right-click menu to make default
+  }
+
+  removeImage(image: FormControl) {
+    const imageId = image.value.id;
+    if (imageId) {
+      this.imageIdsToDelete.push(imageId);
+    }
+
+    const controlIndex = this.images.value.findIndex(
+      value => value === image.value
+    );
+
+    if (controlIndex > -1) {
+      this.images.removeAt(controlIndex);
+    }
+
+    if (image === this.selectedImage) {
+      this.selectedImage = null;
+    }
   }
 
   setAsDefault(image: FormControl) {
@@ -229,7 +251,8 @@ export class PrintDetailComponent implements OnInit {
             const imagesToUpload = newImages.map(image => {
               return this.printService.uploadPrintImage(
                 createdPrint.id,
-                image.value.file
+                image.value.file,
+                image.value.isDefault
               );
             });
 
@@ -237,11 +260,33 @@ export class PrintDetailComponent implements OnInit {
               take(1),
               map(() => createdPrint)
             );
+          }),
+          mergeMap(createdPrint => {
+            if (newDefaultImageId) {
+              return this.printService
+                .setImageAsDefault(createdPrint.id, newDefaultImageId)
+                .pipe(map(() => createdPrint));
+            } else {
+              return of(createdPrint);
+            }
+          }),
+          mergeMap((createdPrint: PrintDetail) => {
+            if (this.imageIdsToDelete.length === 0) {
+              return of(createdPrint);
+            }
+
+            const imagesToDelete = this.imageIdsToDelete.map(imageId => {
+              return this.printService.deleteImage(createdPrint.id, imageId);
+            });
+
+            return forkJoin(imagesToDelete).pipe(
+              take(1),
+              map(() => createdPrint)
+            );
           })
         )
         .subscribe(createdPrint => {
-          console.log('redirect to new id', createdPrint);
-          this.router.navigate(['/prints', createdPrint.id]).then(() => {
+          this.router.navigate(['/prints']).then(() => {
             this.toastr.success('Save successful!');
           });
         });
@@ -249,21 +294,22 @@ export class PrintDetailComponent implements OnInit {
       this.printService
         .updatePrint(newPrint)
         .pipe(
-          mergeMap((createdPrint: PrintDetail) => {
+          mergeMap((updatedPrint: PrintDetail) => {
             if (newImages.length === 0) {
-              return of(createdPrint);
+              return of(updatedPrint);
             }
 
             const imagesToUpload = newImages.map(image => {
               return this.printService.uploadPrintImage(
-                createdPrint.id,
-                image.value.file
+                updatedPrint.id,
+                image.value.file,
+                image.value.isDefault
               );
             });
 
             return forkJoin(imagesToUpload).pipe(
               take(1),
-              map(() => createdPrint)
+              map(() => updatedPrint)
             );
           }),
           mergeMap(updatedPrint => {
@@ -274,11 +320,26 @@ export class PrintDetailComponent implements OnInit {
             } else {
               return of(updatedPrint);
             }
+          }),
+          mergeMap((updatedPrint: PrintDetail) => {
+            if (this.imageIdsToDelete.length === 0) {
+              return of(updatedPrint);
+            }
+
+            const imagesToDelete = this.imageIdsToDelete.map(imageId => {
+              return this.printService.deleteImage(updatedPrint.id, imageId);
+            });
+
+            return forkJoin(imagesToDelete).pipe(
+              take(1),
+              map(() => updatedPrint)
+            );
           })
         )
         .subscribe(updatedPrint => {
-          this.toastr.success('Save successful!');
-          this.printForm = this.buildFormFromPrintDetail(updatedPrint);
+          this.router.navigate(['/prints']).then(() => {
+            this.toastr.success('Save successful!');
+          });
         });
     }
   }

@@ -1,4 +1,5 @@
 <div
+  class="wrapper"
   (mouseenter)="imageHovered = true"
   (mouseleave)="imageHovered = false"
   (click)="imageHovered = !imageHovered"
@@ -16,5 +17,5 @@
     <mat-icon>delete</mat-icon>Remove
   </button>
 
-  <img *ngIf="imageData" class="center" [src]="imageData" alt="Image Preview" />
+  <img *ngIf="imageData" [src]="imageData" alt="Image Preview" />
 </div>

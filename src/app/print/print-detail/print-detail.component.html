@@ -10,12 +10,14 @@
     >
       <div *ngIf="showImageSelection">
         <input
+          *ngIf="images.length < 1"
+          mat-raised-button
           type="file"
           class="custom-file-input form-control"
           id="files"
           (change)="detectFiles($event)"
         />
-        <img
+        <!-- <img
           *ngIf="
             selectedImage && selectedImage.value && this.selectedImage.value.url
           "
@@ -23,11 +25,25 @@
           [src]="this.selectedImage.value.url"
           class="card-img-top"
           alt="Image Preview"
-        />
+        /> -->
+        <div
+          class="card-img-top main-image"
+          *ngIf="selectedImage && selectedImage.value"
+        >
+          <app-print-image
+            fxFlex
+            [printId]="printForm.get('id').value"
+            [imageId]="selectedImage.value.id"
+            [imageData]="selectedImage.value.url"
+            [showDeleteOnHover]="true"
+            (delete)="removeImage(selectedImage)"
+            (imageDataChange)="selectedImage.value.url = $event"
+          ></app-print-image>
+        </div>
 
         <div
           class="images-preview mt-2"
-          *ngIf="images.length"
+          *ngIf="false"
           fxLayout
           fxLayoutAlign="center center"
         >

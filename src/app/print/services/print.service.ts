@@ -226,11 +226,12 @@ export class PrintService {
     return this.http.put<any>(url, printDto);
   }
 
-  public uploadPrintImage(printId: number, file: File) {
+  public uploadPrintImage(printId: number, file: File, isDefault = false) {
     const url = `${this.baseApi}/api/Prints/${printId}/image`;
 
     const formData: FormData = new FormData();
     formData.append('image', file, file.name);
+    formData.append('isDefault', isDefault.toString());
 
     return this.http.post(url, formData);
   }
@@ -265,5 +266,11 @@ export class PrintService {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}/set-as-default`;
 
     return this.http.post(url, {});
+  }
+
+  public deleteImage(printId: number, imageId: number) {
+    const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
+
+    return this.http.delete(url);
   }
 }

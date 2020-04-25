@@ -30,6 +30,7 @@ import { CallbackComponent } from './callback/callback.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import { SidebarComponent } from './sidebar/sidebar.component';
 
 @NgModule({
   declarations: [
@@ -37,6 +38,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     CallbackComponent,
     UserProfileComponent,
     FeedbackComponent,
+    SidebarComponent,
   ],
   imports: [
     CommonModule,
@@ -90,6 +92,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatSortModule,
     MatSidenavModule,
     MatListModule,
+    SidebarComponent,
   ],
 })
 export class SharedModule {}

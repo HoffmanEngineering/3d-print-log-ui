@@ -1,10 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-
-export interface INavData {
-  name?: string;
-  url?: string;
-  divider?: boolean;
-}
+import { INavData } from 'src/app/shared/sidebar/types';
 
 @Component({
   selector: 'app-doc-sidebar',

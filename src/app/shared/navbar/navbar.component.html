@@ -9,13 +9,6 @@
 
 <mat-toolbar color="primary">
   <mat-toolbar-row>
-    <button
-      mat-icon-button
-      *ngIf="this.navbarService.showHamburgerMenuIcon$ | async"
-      (click)="this.navbarService.menuClicked()"
-    >
-      <mat-icon>menu</mat-icon>
-    </button>
     <div style="flex: 1 1 auto;">
       <a mat-button routerLink="/" *ngIf="!auth.loggedIn">Home</a>
 

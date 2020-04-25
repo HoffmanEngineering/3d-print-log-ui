@@ -7,7 +7,6 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { NavbarService } from '../core/services/navbar.service';
 
 @Component({
   selector: 'app-documentation',
@@ -33,11 +32,7 @@ export class DocumentationComponent
        cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`
   );
 
-  constructor(
-    changeDetectorRef: ChangeDetectorRef,
-    media: MediaMatcher,
-    private navbarService: NavbarService
-  ) {
+  constructor(changeDetectorRef: ChangeDetectorRef, media: MediaMatcher) {
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
 
     this.mobileQueryListener = () => {
@@ -46,14 +41,9 @@ export class DocumentationComponent
       } else {
         this.snav.close();
       }
-      this.navbarService.showMenuIcon(this.mobileQuery.matches); // show the menu if we are less than the max width
       changeDetectorRef.detectChanges();
     };
     this.mobileQuery.addEventListener('change', this.mobileQueryListener);
-
-    this.navbarService.hamburgerMenuIconClick$.subscribe(() => {
-      this.snav.toggle();
-    });
   }
 
   ngAfterViewInit() {

@@ -4,3 +4,9 @@ mat-form-field {
 mat-card-title {
   text-align: center;
 }
+
+@media (max-width: 400px) {
+  mat-form-field {
+    width: 300px;
+  }
+}

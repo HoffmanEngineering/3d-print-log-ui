@@ -23,6 +23,7 @@ import {
   MatTableModule,
   MatToolbarModule,
   MatListModule,
+  MatSlideToggleModule,
 } from '@angular/material';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { RouterModule } from '@angular/router';
@@ -64,6 +65,8 @@ import { SidebarComponent } from './sidebar/sidebar.component';
     MatSortModule,
     MatSidenavModule,
     MatListModule,
+    MatSliderModule,
+    MatSlideToggleModule,
   ],
   exports: [
     NavbarComponent,
@@ -93,6 +96,8 @@ import { SidebarComponent } from './sidebar/sidebar.component';
     MatSidenavModule,
     MatListModule,
     SidebarComponent,
+    MatSliderModule,
+    MatSlideToggleModule,
   ],
 })
 export class SharedModule {}

@@ -1,0 +1,156 @@
+:host {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.container {
+  min-width: 350px;
+  width: 60vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  background-color: transparent;
+  .title {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 2rem;
+    font-family: 'Roboto';
+    height: 2rem;
+    width: 100%;
+    margin: 0 auto 1rem auto;
+
+    .left {
+      height: 3rem;
+      font-size: 3rem;
+      cursor: pointer;
+    }
+    .span {
+      height: 3rem;
+      line-height: 3rem;
+    }
+    .right {
+      height: 3rem;
+      font-size: 3rem;
+      cursor: pointer;
+      margin-right: 20px;
+    }
+  }
+
+  #ordersByStatus {
+    height: 50vh;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    position: relative;
+
+    mat-select {
+      position: absolute;
+      top: 0;
+      right: 0px;
+      width: 20%;
+      padding: 5px;
+      font-size: 1rem;
+      font-family: 'Roboto';
+      z-index: 100;
+    }
+
+    #chartAndDataContainer {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: transparent;
+      height: 100%;
+      width: 100%;
+      #chartContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 1;
+        height: 100%;
+        width: 100%;
+        app-donut-chart {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100%;
+          width: 100%;
+        }
+      }
+      .half {
+        height: 50%;
+      }
+      #ordersByStatusTable {
+        display: flex;
+        height: 50%;
+        width: 100%;
+        max-width: 400px;
+        table {
+          width: 100%;
+          .Pending {
+            color: #1f77b4;
+            font-size: 2rem;
+          }
+          .Printing {
+            color: #ff7f0e;
+            font-size: 2rem;
+          }
+          .Success {
+            color: #2ca02c;
+            font-size: 2rem;
+          }
+          .Cancelled {
+            color: #8c8c8c8a;
+            font-size: 2rem;
+          }
+          .Failed {
+            color: #d62728;
+            font-size: 2rem;
+          }
+          .mat-column-legend {
+            width: 20%;
+          }
+          tr.mat-header-row {
+            height: 48px !important;
+          }
+          .table-row {
+            height: 20px !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+.show-data {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+mat-option ::ng-deep .city {
+  font-size: 1rem;
+  font-family: 'Roboto';
+}
+
+@media screen and (max-width: 767px) {
+  .container {
+    .title {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+@media screen and (max-width: 414px) {
+  .container {
+    .title {
+      font-size: 1rem;
+    }
+  }
+}

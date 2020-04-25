@@ -17,10 +17,12 @@ import {
   MatPaginator,
   MatPaginatorModule,
   MatSelectModule,
+  MatSidenavModule,
   MatSliderModule,
   MatSortModule,
   MatTableModule,
   MatToolbarModule,
+  MatListModule,
 } from '@angular/material';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { RouterModule } from '@angular/router';
@@ -28,6 +30,7 @@ import { CallbackComponent } from './callback/callback.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import { SidebarComponent } from './sidebar/sidebar.component';
 
 @NgModule({
   declarations: [
@@ -35,6 +38,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     CallbackComponent,
     UserProfileComponent,
     FeedbackComponent,
+    SidebarComponent,
   ],
   imports: [
     CommonModule,
@@ -58,6 +62,8 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     ReactiveFormsModule,
     MatChipsModule,
     MatSortModule,
+    MatSidenavModule,
+    MatListModule,
   ],
   exports: [
     NavbarComponent,
@@ -84,6 +90,9 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     ReactiveFormsModule,
     MatChipsModule,
     MatSortModule,
+    MatSidenavModule,
+    MatListModule,
+    SidebarComponent,
   ],
 })
 export class SharedModule {}

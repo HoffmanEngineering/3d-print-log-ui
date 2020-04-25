@@ -35,6 +35,13 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: 'docs',
+    loadChildren: () =>
+      import('./documentation/documentation.module').then(
+        m => m.DocumentationModule
+      ),
+  },
+  {
     path: '',
     canActivate: [HomepageRedirectGuard],
     redirectTo: '/home',

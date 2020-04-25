@@ -27,7 +27,8 @@ a:not([mat-menu-item]) {
 }
 
 mat-toolbar {
-  border-radius: 3px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
 }
 
 @media (max-width: 959px) {

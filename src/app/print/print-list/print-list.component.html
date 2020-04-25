@@ -1,31 +1,37 @@
 <div>
-  <div routerLink="new">
-    <button mat-raised-button type="button" color="accent">
+  <div class="header">
+    <button mat-raised-button routerLink="new" type="button" color="accent">
       Add New Print
     </button>
+    <div class="search-fields">
+      <mat-form-field>
+        <mat-label> Search: </mat-label
+        ><input
+          matInput
+          type="text"
+          [(ngModel)]="searchText"
+          (ngModelChange)="debouncedUpdateFilter()"
+          autocomplete="off"
+      /></mat-form-field>
+
+      <mat-form-field>
+        <mat-label> Status</mat-label>
+        <mat-select
+          [(ngModel)]="filterByStatus"
+          (ngModelChange)="updateFilter()"
+        >
+          <mat-option [value]="-1">All</mat-option>
+          <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
+          <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
+          <mat-option [value]="printStatusTypes.Success">Success</mat-option>
+          <mat-option [value]="printStatusTypes.Cancelled"
+            >Cancelled</mat-option
+          >
+          <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </div>
-
-  <mat-form-field>
-    <mat-label> Search: </mat-label
-    ><input
-      matInput
-      type="text"
-      [(ngModel)]="searchText"
-      (ngModelChange)="debouncedUpdateFilter()"
-      autocomplete="off"
-  /></mat-form-field>
-
-  <mat-form-field>
-    <mat-label> Status</mat-label>
-    <mat-select [(ngModel)]="filterByStatus" (ngModelChange)="updateFilter()">
-      <mat-option [value]="-1">All</mat-option>
-      <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
-      <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
-      <mat-option [value]="printStatusTypes.Success">Success</mat-option>
-      <mat-option [value]="printStatusTypes.Cancelled">Cancelled</mat-option>
-      <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
-    </mat-select>
-  </mat-form-field>
 
   <table
     mat-table

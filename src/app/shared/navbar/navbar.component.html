@@ -9,21 +9,23 @@
 
 <mat-toolbar color="primary">
   <mat-toolbar-row>
-    <!-- <button mat-icon-button>
-      <mat-icon (click)="sidenav.toggle()">menu</mat-icon>
-    </button> -->
     <div style="flex: 1 1 auto;">
       <a mat-button routerLink="/" *ngIf="!auth.loggedIn">Home</a>
 
       <a mat-button routerLink="/prints" *ngIf="auth.loggedIn">Prints</a>
       <a mat-button routerLink="/printers" *ngIf="auth.loggedIn">Printers</a>
 
-      <button mat-button [matMenuTriggerFor]="aboutMenu" *ngIf="auth.loggedIn">
+      <button mat-button [matMenuTriggerFor]="aboutMenu">
         About
       </button>
       <mat-menu #aboutMenu="matMenu">
         <!-- <button mat-menu-item>Fee</button> -->
-        <a class="menu-link" mat-menu-item routerLink="/feedback"
+        <a class="menu-link" mat-menu-item routerLink="/docs">Documentation</a>
+        <a
+          class="menu-link"
+          *ngIf="auth.loggedIn"
+          mat-menu-item
+          routerLink="/feedback"
           >Send Feedback</a
         >
       </mat-menu>

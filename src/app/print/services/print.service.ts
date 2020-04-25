@@ -70,7 +70,7 @@ export interface PrintDetailDTO {
 export interface PrintDetail {
   id: number;
   title: string;
-  printerId;
+  printerId: number;
   startDate?: Date;
   estimatedPrintTimeInSeconds?: number;
   estimatedFilamentUsageMg?: number;
@@ -89,7 +89,7 @@ export interface PrintDetail {
  */
 export interface AddPrintDTO {
   title: string;
-  printerId: PrinterSummary;
+  printerId: number;
   startDate?: Date;
   estimatedPrintTimeInSeconds?: number;
   estimatedFilamentUsageMg?: number;

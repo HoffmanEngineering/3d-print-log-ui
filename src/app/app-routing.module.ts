@@ -42,6 +42,11 @@ const routes: Routes = [
       ),
   },
   {
+    path: 'analytics',
+    loadChildren: () =>
+      import('./analytics/analytics.module').then(m => m.AnalyticsModule),
+  },
+  {
     path: '',
     canActivate: [HomepageRedirectGuard],
     redirectTo: '/home',

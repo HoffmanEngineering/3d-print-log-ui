@@ -1,5 +1,9 @@
 <section fxLayout="row wrap" fxLayoutAlign="center center">
   <mat-card fxFlex="500px" fxFlex.xs="100%">
+    <mat-card-title fxLayoutAlign="start "
+      >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
+      Print</mat-card-title
+    >
     <form
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"

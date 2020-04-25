@@ -12,26 +12,25 @@ import {
   MatFormFieldModule,
   MatIconModule,
   MatInputModule,
+  MatListModule,
   MatMenuModule,
   MatNativeDateModule,
-  MatPaginator,
   MatPaginatorModule,
   MatSelectModule,
   MatSidenavModule,
   MatSliderModule,
+  MatSlideToggleModule,
   MatSortModule,
   MatTableModule,
   MatToolbarModule,
-  MatListModule,
-  MatSlideToggleModule,
 } from '@angular/material';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { RouterModule } from '@angular/router';
 import { CallbackComponent } from './callback/callback.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { NavbarComponent } from './navbar/navbar.component';
-import { UserProfileComponent } from './user-profile/user-profile.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
+import { UserProfileComponent } from './user-profile/user-profile.component';
 
 @NgModule({
   declarations: [

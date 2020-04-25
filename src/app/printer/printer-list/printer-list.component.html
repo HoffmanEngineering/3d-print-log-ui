@@ -1,26 +1,27 @@
 <div>
-  <div routerLink="new">
-    <button mat-raised-button type="button" color="accent">
+  <div class="header">
+    <button mat-raised-button routerLink="new" type="button" color="accent">
       Add New Printer
     </button>
+    <div class="search-fields">
+      <mat-form-field>
+        <mat-label> Search: </mat-label
+        ><input
+          matInput
+          type="text"
+          [(ngModel)]="searchText"
+          (ngModelChange)="debouncedUpdateFilter()"
+          autocomplete="off"
+      /></mat-form-field>
+
+      <mat-checkbox
+        type="checkbox"
+        [(ngModel)]="includeInactive"
+        (ngModelChange)="updateFilter()"
+        >Include Inactive</mat-checkbox
+      >
+    </div>
   </div>
-
-  <mat-form-field>
-    <mat-label> Search: </mat-label
-    ><input
-      matInput
-      type="text"
-      [(ngModel)]="searchText"
-      (ngModelChange)="debouncedUpdateFilter()"
-      autocomplete="off"
-  /></mat-form-field>
-
-  <mat-checkbox
-    type="checkbox"
-    [(ngModel)]="includeInactive"
-    (ngModelChange)="updateFilter()"
-    >Include Inactive</mat-checkbox
-  >
 
   <table mat-table [dataSource]="printers">
     <ng-container matColumnDef="id">

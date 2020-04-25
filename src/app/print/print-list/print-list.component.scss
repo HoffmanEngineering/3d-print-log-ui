@@ -2,6 +2,11 @@ table {
   width: 100%;
 }
 
+.header {
+  margin-left: 5px;
+  margin-top: 5px;
+}
+
 .print-image {
   display: flex;
   justify-content: center; /* align horizontal */
@@ -10,4 +15,9 @@ table {
   max-width: 50px;
   margin: 3px;
   overflow: hidden;
+}
+
+.search-fields {
+  display: inline;
+  margin-left: 10px;
 }

@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { Observable } from 'rxjs';
 import {
   PrinterDetail,
   PrinterService,
@@ -64,20 +65,19 @@ export class PrinterDetailComponent implements OnInit {
   onSubmit() {
     const newPrinter: PrinterDetail = this.getPrinterFromForm();
 
+    let savePrinter: Observable<PrinterDetail>;
+
     if (newPrinter.id === null) {
-      this.printerService.addPrinter(newPrinter).subscribe(createdPrinter => {
-        this.router.navigate(['/printers', createdPrinter.id]).then(() => {
-          this.toastr.success('Save successful!');
-        });
-      });
+      savePrinter = this.printerService.addPrinter(newPrinter);
     } else {
-      this.printerService
-        .updatePrinter(newPrinter)
-        .subscribe(updatedPrinter => {
-          this.toastr.success('Save successful!');
-          this.printerForm = this.buildFormFromPrinterDetail(updatedPrinter);
-        });
+      savePrinter = this.printerService.updatePrinter(newPrinter);
     }
+
+    savePrinter.subscribe(printer => {
+      this.router.navigate(['/printers']).then(() => {
+        this.toastr.success('Save successful!');
+      });
+    });
   }
 
   handleClose() {

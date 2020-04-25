@@ -52,15 +52,6 @@
           </mat-error>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>Description</mat-label>
-          <textarea
-            matInput
-            type="textarea"
-            formControlName="description"
-            maxlength="1000"
-          ></textarea>
-        </mat-form-field>
-        <mat-form-field>
           <mat-label>Filament Diameter (mm)</mat-label>
           <input
             matInput
@@ -77,6 +68,17 @@
             formControlName="nozzleDiameter"
             required
           />
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Description</mat-label>
+          <textarea
+            matInput
+            type="textarea"
+            formControlName="description"
+            maxlength="1000"
+            rows="3"
+          ></textarea>
         </mat-form-field>
 
         <mat-checkbox formControlName="isActive">Is Active</mat-checkbox>

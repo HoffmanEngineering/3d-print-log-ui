@@ -16,3 +16,10 @@ app-navbar {
   right: 0;
   z-index: 2;
 }
+
+.docs-markdown ol,
+.docs-markdown p,
+.docs-markdown ul {
+  font-size: 16px;
+  line-height: 28px;
+}

@@ -56,7 +56,6 @@ export class DonutChartComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.data) {
-      console.log('Updating Chart with:', changes.data.currentValue);
       this.updateChart(changes.data.currentValue);
     }
     if (changes.color) {

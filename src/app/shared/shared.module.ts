@@ -17,10 +17,12 @@ import {
   MatPaginator,
   MatPaginatorModule,
   MatSelectModule,
+  MatSidenavModule,
   MatSliderModule,
   MatSortModule,
   MatTableModule,
   MatToolbarModule,
+  MatListModule,
 } from '@angular/material';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { RouterModule } from '@angular/router';
@@ -58,6 +60,8 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     ReactiveFormsModule,
     MatChipsModule,
     MatSortModule,
+    MatSidenavModule,
+    MatListModule,
   ],
   exports: [
     NavbarComponent,
@@ -84,6 +88,8 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     ReactiveFormsModule,
     MatChipsModule,
     MatSortModule,
+    MatSidenavModule,
+    MatListModule,
   ],
 })
 export class SharedModule {}

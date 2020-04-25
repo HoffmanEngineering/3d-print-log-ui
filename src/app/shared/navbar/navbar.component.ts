@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { NavbarService } from 'src/app/core/services/navbar.service';
 
 @Component({
   selector: 'app-navbar',
@@ -9,7 +10,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
 export class NavbarComponent implements OnInit {
   public profilePictureUrl: string | null = null;
 
-  constructor(public auth: AuthService) {}
+  constructor(public auth: AuthService, public navbarService: NavbarService) {}
 
   ngOnInit() {
     this.auth.userProfile$.subscribe(user => {

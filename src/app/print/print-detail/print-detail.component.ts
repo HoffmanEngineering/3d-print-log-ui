@@ -154,6 +154,14 @@ export class PrintDetailComponent implements OnInit {
     const files = event.target.files;
     if (files) {
       for (const file of files) {
+        if (!file.type.match(/image.*/)) {
+          this.toastr.error(
+            'Please select an image.',
+            'Selected file is not an Image'
+          );
+          continue;
+        }
+
         const reader = new FileReader();
         reader.onload = (e: any) => {
           const newItem = this.createItem({

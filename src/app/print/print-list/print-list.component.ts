@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent, Sort } from '@angular/material';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash';
+import { ToastrService } from 'ngx-toastr';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import {
@@ -11,6 +12,7 @@ import {
   PrintSummary,
   PrintSummarySortColumn,
 } from '../services/print.service';
+import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
 @Component({
   selector: 'app-print-list',
@@ -47,7 +49,10 @@ export class PrintListComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private printService: PrintService,
-    private titleService: Title
+    private printerRedirectPromptService: PrinterRedirectPromptService,
+    private toastrService: ToastrService,
+    private titleService: Title,
+    private router: Router
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
@@ -59,6 +64,28 @@ export class PrintListComponent implements OnInit {
       const pagedResponse: PagedList<PrintSummary> = data.printList;
       this.handlePagedList(pagedResponse);
     });
+
+    /**
+     * Show the Add Printer prompt if needed.
+     */
+    this.printerRedirectPromptService
+      .shouldShowAddPrinterPrompt()
+      .subscribe(shouldShowPrompt => {
+        if (shouldShowPrompt) {
+          const activeToast = this.toastrService.info(
+            'Click here to add a new 3D Printer before logging prints.',
+            'No Active Printers',
+            {
+              disableTimeOut: true,
+            }
+          );
+
+          const subscription = activeToast.onTap.subscribe(() => {
+            this.router.navigate(['printers', 'new']);
+            subscription.unsubscribe();
+          });
+        }
+      });
   }
 
   public pageChange(pageEvent: PageEvent) {

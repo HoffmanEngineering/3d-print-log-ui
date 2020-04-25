@@ -7,8 +7,15 @@
         of print status, print duration, filament usage and more.
       </p>
       <p>
-        <a href (click)="auth.login()" aria-label="Login or Create Free Account"
-          >Create a <strong>free</strong> account</a
+        <a [routerLink]="['/docs', 'getting-started']"
+          >View the quick start guide</a
+        >
+        , or jump to it and
+        <a
+          href
+          (click)="auth.login('/prints')"
+          aria-label="Login or Create Free Account"
+          >create a <strong>free</strong> account</a
         >
         today and start logging!
       </p>

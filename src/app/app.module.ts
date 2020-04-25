@@ -7,10 +7,7 @@ import { ToastrModule } from 'ngx-toastr';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AuthInterceptorService } from './core/http/auth-interceptor.service';
-import { CallbackComponent } from './shared/callback/callback.component';
-import { NavbarComponent } from './shared/navbar/navbar.component';
 import { SharedModule } from './shared/shared.module';
-import { UserProfileComponent } from './shared/user-profile/user-profile.component';
 
 @NgModule({
   bootstrap: [AppComponent],
@@ -21,7 +18,11 @@ import { UserProfileComponent } from './shared/user-profile/user-profile.compone
     BrowserAnimationsModule,
     SharedModule,
     HttpClientModule,
-    ToastrModule.forRoot(),
+    ToastrModule.forRoot({
+      timeOut: 5000,
+      positionClass: 'toast-bottom-right',
+      preventDuplicates: true,
+    }),
   ],
   providers: [
     {

@@ -52,19 +52,26 @@
         />
       </button>
       <mat-menu #profileMenu="matMenu">
-        <a
+        <!-- <a
           class="menu-link"
           mat-menu-item
           routerLink="/profile"
           *ngIf="auth.loggedIn"
           >Profile</a
-        >
+        > -->
         <button mat-menu-item (click)="auth.logout()" *ngIf="auth.loggedIn">
           Log Out
         </button>
       </mat-menu>
 
-      <button (click)="auth.login()" *ngIf="!auth.loggedIn">Log In</button>
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="auth.login('/prints')"
+        *ngIf="!auth.loggedIn"
+      >
+        Log In/Create Account
+      </button>
     </div>
   </mat-toolbar-row>
 </mat-toolbar>

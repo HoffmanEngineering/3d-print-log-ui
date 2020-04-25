@@ -47,15 +47,19 @@ const routes: Routes = [
       import('./analytics/analytics.module').then(m => m.AnalyticsModule),
   },
   {
-    path: '',
+    path: 'home-redirect',
     canActivate: [HomepageRedirectGuard],
-    redirectTo: '/home',
+    pathMatch: 'full',
+    children: [],
+  },
+  {
+    path: '',
+    redirectTo: '/home-redirect',
     pathMatch: 'full',
   },
   {
     path: '**',
-    canActivate: [HomepageRedirectGuard],
-    redirectTo: '/home',
+    redirectTo: '/home-redirect',
     pathMatch: 'full',
   },
 ];

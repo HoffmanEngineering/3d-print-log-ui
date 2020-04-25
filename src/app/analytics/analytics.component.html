@@ -28,14 +28,16 @@
       </mat-form-field>
 
       <div>
-        <app-total-print-count
+        <!-- <app-total-print-count
           [prints]="printStatistics"
-        ></app-total-print-count>
+        ></app-total-print-count> -->
+        <app-prints-by-status [prints]="printStatistics">
+        </app-prints-by-status>
       </div>
-
+      <!-- 
       <div>
         {{ printStatistics | json }}
-      </div>
+      </div> -->
     </mat-card-content>
   </mat-card>
 </section>

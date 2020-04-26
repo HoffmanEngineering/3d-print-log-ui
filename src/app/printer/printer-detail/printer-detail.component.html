@@ -10,6 +10,7 @@
       fxLayout="column wrap"
       fxLayoutAlign="center center"
       fxLayoutGap="10px"
+      autocomplete="off"
     >
       <mat-card-content align="center">
         <mat-form-field>
@@ -31,6 +32,7 @@
             matInput
             type="text"
             formControlName="make"
+            [matAutocomplete]="autoMake"
             required
             maxlength="50"
           />
@@ -38,12 +40,22 @@
             A Make is <strong>required</strong>
           </mat-error>
         </mat-form-field>
+
+        <mat-autocomplete #autoMake="matAutocomplete">
+          <mat-option
+            *ngFor="let option of filteredMakes | async"
+            [value]="option"
+            >{{ option }}</mat-option
+          >
+        </mat-autocomplete>
+
         <mat-form-field>
           <mat-label>Model</mat-label>
           <input
             matInput
             type="text"
             formControlName="model"
+            [matAutocomplete]="autoModel"
             required
             maxlength="50"
           />
@@ -51,6 +63,15 @@
             A Model is <strong>required</strong>
           </mat-error>
         </mat-form-field>
+
+        <mat-autocomplete #autoModel="matAutocomplete">
+          <mat-option
+            *ngFor="let option of filteredModels | async"
+            [value]="option"
+            >{{ option }}</mat-option
+          >
+        </mat-autocomplete>
+
         <mat-form-field>
           <mat-label>Filament Diameter (mm)</mat-label>
           <input

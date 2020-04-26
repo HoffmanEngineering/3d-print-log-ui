@@ -7,4 +7,7 @@ export const environment = {
     audience: 'https://3dprintlog.com/api',
   },
   googleAnalyticsId: 'UA-65004387-6',
+  appInsights: {
+    instrumentationKey: '3c9f6914-555b-4442-8724-0d5b706d115a',
+  },
 };

@@ -37,6 +37,11 @@
       <div class="card">
         <app-total-print-time [prints]="printStatistics"></app-total-print-time>
       </div>
+      <div class="card">
+        <app-total-filament-used
+          [prints]="printStatistics"
+        ></app-total-filament-used>
+      </div>
       <!-- 
       <div>
         {{ printStatistics | json }}

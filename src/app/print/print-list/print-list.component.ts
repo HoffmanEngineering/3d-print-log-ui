@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent, Sort } from '@angular/material';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash';
-import { ToastrService } from 'ngx-toastr';
+import { ActiveToast, ToastrService } from 'ngx-toastr';
+import { Subscription } from 'rxjs';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import {
@@ -19,7 +20,7 @@ import { PrinterRedirectPromptService } from '../services/printer-redirect-promp
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
 })
-export class PrintListComponent implements OnInit {
+export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
   public pageSize: number;
   public currentPage: number;
@@ -46,6 +47,9 @@ export class PrintListComponent implements OnInit {
   public sortColumn = PrintSummarySortColumn.StartDate;
   public sortDirection = SortDirection.Desc;
 
+  public printerRedirectToast: ActiveToast<any> | null = null;
+  public printerRedirectSubscription: Subscription;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private printService: PrintService,
@@ -55,6 +59,15 @@ export class PrintListComponent implements OnInit {
     private router: Router
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+  }
+  ngOnDestroy(): void {
+    if (this.printerRedirectToast) {
+      this.toastrService.remove(this.printerRedirectToast.toastId);
+    }
+
+    if (this.printerRedirectSubscription) {
+      this.printerRedirectSubscription.unsubscribe();
+    }
   }
 
   ngOnInit() {
@@ -72,7 +85,7 @@ export class PrintListComponent implements OnInit {
       .shouldShowAddPrinterPrompt()
       .subscribe(shouldShowPrompt => {
         if (shouldShowPrompt) {
-          const activeToast = this.toastrService.info(
+          this.printerRedirectToast = this.toastrService.info(
             'Click here to add a new 3D Printer before logging prints.',
             'No Active Printers',
             {
@@ -80,10 +93,12 @@ export class PrintListComponent implements OnInit {
             }
           );
 
-          const subscription = activeToast.onTap.subscribe(() => {
-            this.router.navigate(['printers', 'new']);
-            subscription.unsubscribe();
-          });
+          this.printerRedirectSubscription = this.printerRedirectToast.onTap.subscribe(
+            () => {
+              this.router.navigate(['printers', 'new']);
+              this.printerRedirectSubscription.unsubscribe();
+            }
+          );
         }
       });
   }

@@ -7,6 +7,7 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-documentation',
@@ -20,19 +21,11 @@ export class DocumentationComponent
 
   @ViewChild('snav', { static: true }) snav;
 
-  fillerNav = Array.from({ length: 50 }, (_, i) => `Nav Item ${i + 1}`);
-
-  fillerContent = Array.from(
-    { length: 50 },
-    () =>
-      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
-       labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-       laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
-       voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-       cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`
-  );
-
-  constructor(changeDetectorRef: ChangeDetectorRef, media: MediaMatcher) {
+  constructor(
+    changeDetectorRef: ChangeDetectorRef,
+    media: MediaMatcher,
+    private title: Title
+  ) {
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
 
     this.mobileQueryListener = () => {
@@ -58,5 +51,7 @@ export class DocumentationComponent
     this.mobileQuery.addEventListener('change', this.mobileQueryListener);
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.title.setTitle('Documentation - 3D Print Log');
+  }
 }

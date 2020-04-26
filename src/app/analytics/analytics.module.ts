@@ -8,6 +8,7 @@ import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component'
 import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
 import { PrintsByStatusComponent } from './prints-by-status/prints-by-status.component';
 import { TotalPrintCountComponent } from './total-print-count/total-print-count.component';
+import { TotalPrintTimeComponent } from './total-print-time/total-print-time.component';
 
 @NgModule({
   declarations: [
@@ -17,6 +18,7 @@ import { TotalPrintCountComponent } from './total-print-count/total-print-count.
     PrintsByStatusComponent,
     GraphPanelComponent,
     DonutChartComponent,
+    TotalPrintTimeComponent,
   ],
   imports: [SharedModule, AnalyticsRoutingModule],
 })

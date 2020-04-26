@@ -4,6 +4,7 @@ import {
   PrintStatisticsService,
 } from './services/print-statistics.service';
 
+import { Title } from '@angular/platform-browser';
 import * as moment from 'moment';
 
 export enum AnalyticTimeSelection {
@@ -27,9 +28,13 @@ export class AnalyticsComponent implements OnInit {
 
   public printStatistics: PrintStatistic[] = [];
 
-  constructor(private printStatService: PrintStatisticsService) {}
+  constructor(
+    private printStatService: PrintStatisticsService,
+    private title: Title
+  ) {}
 
   ngOnInit() {
+    this.title.setTitle('Analytics - 3D Print Log');
     this.refreshStatistics();
   }
 

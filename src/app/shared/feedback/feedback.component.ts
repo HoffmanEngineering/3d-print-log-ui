@@ -25,6 +25,7 @@ export class FeedbackComponent implements OnInit {
   public form: FormGroup;
 
   public readonly feedbackTypes = FeedbackType;
+  public saving = false;
 
   constructor(
     private router: Router,
@@ -45,15 +46,18 @@ export class FeedbackComponent implements OnInit {
   }
 
   onSubmit() {
+    this.saving = true;
     const newFeedback: AddFeedback = this.getFeedbackFromForm();
 
     this.feedbackService.addFeedback(newFeedback).subscribe(
       (_) => {
+        this.saving = false;
         this.toastr.success('Thank you for your feedback.', 'Feedback sent!');
 
         this.feedbackForm.resetForm({ type: FeedbackType.Suggestion });
       },
       (error) => {
+        this.saving = false;
         this.toastr.error(
           'Please try again in a few seconds.',
           'An error occurred.'

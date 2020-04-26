@@ -221,8 +221,9 @@
         <button
           mat-raised-button
           type="submit"
-          [disabled]="!printForm.valid"
+          [disabled]="!printForm.valid || saving"
           color="primary"
+          [class.spinner]="saving"
         >
           Submit
         </button>

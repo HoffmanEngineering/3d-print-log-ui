@@ -49,6 +49,11 @@ export class PrintDetailComponent implements OnInit {
 
   private imageIdsToDelete = [];
 
+  /**
+   * If the form is currently saving.
+   */
+  public saving = false;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -214,6 +219,8 @@ export class PrintDetailComponent implements OnInit {
   }
 
   onSubmit() {
+    this.saving = true;
+
     const newPrint: PrintDetail = this.getPrintFromForm();
 
     const newImages = this.images.controls.filter(
@@ -283,11 +290,17 @@ export class PrintDetailComponent implements OnInit {
             );
           })
         )
-        .subscribe((createdPrint) => {
-          this.router.navigate(['/prints']).then(() => {
-            this.toastr.success('Save successful!');
-          });
-        });
+        .subscribe(
+          (createdPrint) => {
+            this.saving = false;
+            this.router.navigate(['/prints']).then(() => {
+              this.toastr.success('Save successful!');
+            });
+          },
+          (err) => {
+            this.saving = false;
+          }
+        );
     } else {
       this.printService
         .updatePrint(newPrint)
@@ -334,11 +347,17 @@ export class PrintDetailComponent implements OnInit {
             );
           })
         )
-        .subscribe((updatedPrint) => {
-          this.router.navigate(['/prints']).then(() => {
-            this.toastr.success('Save successful!');
-          });
-        });
+        .subscribe(
+          (updatedPrint) => {
+            this.saving = false;
+            this.router.navigate(['/prints']).then(() => {
+              this.toastr.success('Save successful!');
+            });
+          },
+          (err) => {
+            this.saving = false;
+          }
+        );
     }
   }
 

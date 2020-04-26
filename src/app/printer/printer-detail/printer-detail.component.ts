@@ -16,6 +16,7 @@ import {
 })
 export class PrinterDetailComponent implements OnInit {
   public printerForm: FormGroup;
+  public saving = false;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -63,6 +64,8 @@ export class PrinterDetailComponent implements OnInit {
   }
 
   onSubmit() {
+    this.saving = true;
+
     const newPrinter: PrinterDetail = this.getPrinterFromForm();
 
     let savePrinter: Observable<PrinterDetail>;
@@ -73,11 +76,17 @@ export class PrinterDetailComponent implements OnInit {
       savePrinter = this.printerService.updatePrinter(newPrinter);
     }
 
-    savePrinter.subscribe((printer) => {
-      this.router.navigate(['/printers']).then(() => {
-        this.toastr.success('Save successful!');
-      });
-    });
+    savePrinter.subscribe(
+      (printer) => {
+        this.saving = false;
+        this.router.navigate(['/printers']).then(() => {
+          this.toastr.success('Save successful!');
+        });
+      },
+      (err) => {
+        this.saving = false;
+      }
+    );
   }
 
   handleClose() {

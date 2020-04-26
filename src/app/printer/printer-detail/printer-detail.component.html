@@ -87,8 +87,9 @@
         <button
           mat-raised-button
           type="submit"
-          [disabled]="!printerForm.valid"
+          [disabled]="!printerForm.valid || saving"
           color="primary"
+          [class.spinner]="saving"
         >
           Submit
         </button>

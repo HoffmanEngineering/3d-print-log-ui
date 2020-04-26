@@ -8,9 +8,8 @@ describe('GraphPanelComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ GraphPanelComponent ]
-    })
-    .compileComponents();
+      declarations: [GraphPanelComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

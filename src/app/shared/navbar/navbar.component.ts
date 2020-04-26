@@ -12,7 +12,7 @@ export class NavbarComponent implements OnInit {
   constructor(public auth: AuthService) {}
 
   ngOnInit() {
-    this.auth.userProfile$.subscribe(user => {
+    this.auth.userProfile$.subscribe((user) => {
       if (user && user.picture) {
         this.profilePictureUrl = user.picture;
       } else {

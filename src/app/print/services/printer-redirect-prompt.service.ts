@@ -22,7 +22,7 @@ export class PrinterRedirectPromptService {
     return this.printerService
       .getCurrentUserPrinterSummaries(1, 100, undefined, false)
       .pipe(
-        map(results => {
+        map((results) => {
           const hasPrinters = results.paging.totalCount > 0;
           const shouldShowPrompt = !hasPrinters;
 

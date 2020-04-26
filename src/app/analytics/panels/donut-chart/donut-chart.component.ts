@@ -117,10 +117,7 @@ export class DonutChartComponent implements OnInit, OnChanges {
   private setupArcGenerator() {
     this.innerRadius = 50;
     this.radius = 80;
-    this.arc = d3
-      .arc()
-      .innerRadius(this.innerRadius)
-      .outerRadius(this.radius);
+    this.arc = d3.arc().innerRadius(this.innerRadius).outerRadius(this.radius);
   }
 
   private addSlicesToTheDonut() {
@@ -153,7 +150,7 @@ export class DonutChartComponent implements OnInit, OnChanges {
   arcTween = (datum, index) => {
     const interpolation = d3.interpolate(this.pieDataPrevious[index], datum);
     this.pieDataPrevious[index] = interpolation(0);
-    return t => {
+    return (t) => {
       return this.arc(interpolation(t));
     };
   };
@@ -164,7 +161,7 @@ export class DonutChartComponent implements OnInit, OnChanges {
   labelTween = (datum, index) => {
     const interpolation = d3.interpolate(this.pieDataPrevious[index], datum);
     this.pieDataPrevious[index] = interpolation(0);
-    return t => {
+    return (t) => {
       return 'translate(' + this.arc.centroid(interpolation(t)) + ')';
     };
   };
@@ -184,10 +181,7 @@ export class DonutChartComponent implements OnInit, OnChanges {
 
   private updateSlices() {
     this.slices = this.slices.data(this.pieData);
-    this.slices
-      .transition()
-      .duration(750)
-      .attrTween('d', this.arcTween);
+    this.slices.transition().duration(750).attrTween('d', this.arcTween);
   }
 
   private updateLabels() {
@@ -211,9 +205,7 @@ export class DonutChartComponent implements OnInit, OnChanges {
     // Make sure not to do;
     //     d3.select('svg').remove();
     // That will clear all other SVG elements in the DOM
-    d3.select(this.hostElement)
-      .select('svg')
-      .remove();
+    d3.select(this.hostElement).select('svg').remove();
   }
 
   private addLabelsToTheDonut() {

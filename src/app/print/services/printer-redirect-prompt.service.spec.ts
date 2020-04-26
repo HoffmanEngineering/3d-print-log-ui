@@ -6,7 +6,9 @@ describe('PrinterRedirectPromptService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: PrinterRedirectPromptService = TestBed.get(PrinterRedirectPromptService);
+    const service: PrinterRedirectPromptService = TestBed.get(
+      PrinterRedirectPromptService
+    );
     expect(service).toBeTruthy();
   });
 });

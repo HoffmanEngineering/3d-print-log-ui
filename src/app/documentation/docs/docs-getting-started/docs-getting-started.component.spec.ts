@@ -8,9 +8,8 @@ describe('DocsGettingStartedComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DocsGettingStartedComponent ]
-    })
-    .compileComponents();
+      declarations: [DocsGettingStartedComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

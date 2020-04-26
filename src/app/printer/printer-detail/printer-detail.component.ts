@@ -29,7 +29,7 @@ export class PrinterDetailComponent implements OnInit {
   ngOnInit() {
     this.titleService.setTitle('Printer Details - 3D Print Log');
 
-    this.activatedRoute.data.subscribe(data => {
+    this.activatedRoute.data.subscribe((data) => {
       this.printerForm = this.buildFormFromPrinterDetail(data.printer);
     });
   }
@@ -73,7 +73,7 @@ export class PrinterDetailComponent implements OnInit {
       savePrinter = this.printerService.updatePrinter(newPrinter);
     }
 
-    savePrinter.subscribe(printer => {
+    savePrinter.subscribe((printer) => {
       this.router.navigate(['/printers']).then(() => {
         this.toastr.success('Save successful!');
       });

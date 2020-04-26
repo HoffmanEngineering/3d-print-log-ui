@@ -13,7 +13,12 @@ import { PrintService } from './services/print.service';
 import { PrintImageComponent } from './print-image/print-image.component';
 
 @NgModule({
-  declarations: [PrintComponent, PrintListComponent, PrintDetailComponent, PrintImageComponent],
+  declarations: [
+    PrintComponent,
+    PrintListComponent,
+    PrintDetailComponent,
+    PrintImageComponent,
+  ],
   imports: [
     CommonModule,
     PrintRoutingModule,

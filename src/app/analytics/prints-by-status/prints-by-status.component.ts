@@ -56,13 +56,13 @@ export class PrintsByStatusComponent implements OnChanges {
       // check also if property is not inherited from prototype
       if (groups.hasOwnProperty(group)) {
         this.orderStates.find(
-          state => state.status === PrintStatus[group]
+          (state) => state.status === PrintStatus[group]
         ).count = groups[group].length;
       }
     }
 
     this.chartData = [];
-    this.orderStates.forEach(state => {
+    this.orderStates.forEach((state) => {
       this.chartData.push(state.count);
     });
   }

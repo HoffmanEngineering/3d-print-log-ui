@@ -18,16 +18,17 @@ const routes: Routes = [
   },
   {
     path: 'prints',
-    loadChildren: () => import('./print/print.module').then(m => m.PrintModule),
+    loadChildren: () =>
+      import('./print/print.module').then((m) => m.PrintModule),
   },
   {
     path: 'printers',
     loadChildren: () =>
-      import('./printer/printer.module').then(m => m.PrinterModule),
+      import('./printer/printer.module').then((m) => m.PrinterModule),
   },
   {
     path: 'home',
-    loadChildren: () => import('./home/home.module').then(m => m.HomeModule),
+    loadChildren: () => import('./home/home.module').then((m) => m.HomeModule),
   },
   {
     path: 'feedback',
@@ -38,13 +39,13 @@ const routes: Routes = [
     path: 'docs',
     loadChildren: () =>
       import('./documentation/documentation.module').then(
-        m => m.DocumentationModule
+        (m) => m.DocumentationModule
       ),
   },
   {
     path: 'analytics',
     loadChildren: () =>
-      import('./analytics/analytics.module').then(m => m.AnalyticsModule),
+      import('./analytics/analytics.module').then((m) => m.AnalyticsModule),
   },
   {
     path: 'home-redirect',

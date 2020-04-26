@@ -6,7 +6,9 @@ describe('PrinterDetailResolverService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: PrinterDetailResolverService = TestBed.get(PrinterDetailResolverService);
+    const service: PrinterDetailResolverService = TestBed.get(
+      PrinterDetailResolverService
+    );
     expect(service).toBeTruthy();
   });
 });

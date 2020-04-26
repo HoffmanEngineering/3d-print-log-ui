@@ -74,7 +74,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.titleService.setTitle('My Prints - 3D Print Log');
 
-    this.activatedRoute.data.subscribe(data => {
+    this.activatedRoute.data.subscribe((data) => {
       const pagedResponse: PagedList<PrintSummary> = data.printList;
       this.handlePagedList(pagedResponse);
     });
@@ -84,7 +84,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
      */
     this.printerRedirectPromptService
       .shouldShowAddPrinterPrompt()
-      .subscribe(shouldShowPrompt => {
+      .subscribe((shouldShowPrompt) => {
         if (shouldShowPrompt) {
           this.printerRedirectToast = this.toastrService.info(
             'Click here to add a new 3D Printer before logging prints.',
@@ -138,7 +138,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.sortDirection,
         this.sortColumn
       )
-      .subscribe(response => {
+      .subscribe((response) => {
         this.handlePagedList(response);
       });
   }

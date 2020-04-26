@@ -5,11 +5,14 @@ import { HomepageRedirectGuard } from './homepage-redirect.guard';
 describe('HomepageRedirectGuard', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [HomepageRedirectGuard]
+      providers: [HomepageRedirectGuard],
     });
   });
 
-  it('should ...', inject([HomepageRedirectGuard], (guard: HomepageRedirectGuard) => {
-    expect(guard).toBeTruthy();
-  }));
+  it('should ...', inject(
+    [HomepageRedirectGuard],
+    (guard: HomepageRedirectGuard) => {
+      expect(guard).toBeTruthy();
+    }
+  ));
 });

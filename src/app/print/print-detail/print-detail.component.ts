@@ -62,7 +62,7 @@ export class PrintDetailComponent implements OnInit {
   ngOnInit() {
     this.titleService.setTitle('Print Details - 3D Print Log');
 
-    this.activatedRoute.data.subscribe(data => {
+    this.activatedRoute.data.subscribe((data) => {
       this.printers = data.printers;
 
       this.printForm = this.buildFormFromPrintDetail(data.print);
@@ -90,7 +90,7 @@ export class PrintDetailComponent implements OnInit {
     const imageArray = this.formBuilder.array([]);
 
     if (print && print.images) {
-      print.images.forEach(image => {
+      print.images.forEach((image) => {
         const newImage: PrintImageValue = {
           id: image.id,
           url: null,
@@ -193,7 +193,7 @@ export class PrintDetailComponent implements OnInit {
     }
 
     const controlIndex = this.images.value.findIndex(
-      value => value === image.value
+      (value) => value === image.value
     );
 
     if (controlIndex > -1) {
@@ -206,7 +206,7 @@ export class PrintDetailComponent implements OnInit {
   }
 
   setAsDefault(image: FormControl) {
-    this.images.controls.forEach(control => {
+    this.images.controls.forEach((control) => {
       control.value.isDefault = false;
     });
 
@@ -217,12 +217,12 @@ export class PrintDetailComponent implements OnInit {
     const newPrint: PrintDetail = this.getPrintFromForm();
 
     const newImages = this.images.controls.filter(
-      control => control.dirty && control.value.id === undefined
+      (control) => control.dirty && control.value.id === undefined
     );
 
     // Check the selected default.
     const selectedDefaultImage = this.images.controls.filter(
-      control => control.value.isDefault
+      (control) => control.value.isDefault
     );
 
     let newDefaultImageId = null;
@@ -246,7 +246,7 @@ export class PrintDetailComponent implements OnInit {
               return of(createdPrint);
             }
 
-            const imagesToUpload = newImages.map(image => {
+            const imagesToUpload = newImages.map((image) => {
               return this.printService.uploadPrintImage(
                 createdPrint.id,
                 image.value.file,
@@ -259,7 +259,7 @@ export class PrintDetailComponent implements OnInit {
               map(() => createdPrint)
             );
           }),
-          mergeMap(createdPrint => {
+          mergeMap((createdPrint) => {
             if (newDefaultImageId) {
               return this.printService
                 .setImageAsDefault(createdPrint.id, newDefaultImageId)
@@ -273,7 +273,7 @@ export class PrintDetailComponent implements OnInit {
               return of(createdPrint);
             }
 
-            const imagesToDelete = this.imageIdsToDelete.map(imageId => {
+            const imagesToDelete = this.imageIdsToDelete.map((imageId) => {
               return this.printService.deleteImage(createdPrint.id, imageId);
             });
 
@@ -283,7 +283,7 @@ export class PrintDetailComponent implements OnInit {
             );
           })
         )
-        .subscribe(createdPrint => {
+        .subscribe((createdPrint) => {
           this.router.navigate(['/prints']).then(() => {
             this.toastr.success('Save successful!');
           });
@@ -297,7 +297,7 @@ export class PrintDetailComponent implements OnInit {
               return of(updatedPrint);
             }
 
-            const imagesToUpload = newImages.map(image => {
+            const imagesToUpload = newImages.map((image) => {
               return this.printService.uploadPrintImage(
                 updatedPrint.id,
                 image.value.file,
@@ -310,7 +310,7 @@ export class PrintDetailComponent implements OnInit {
               map(() => updatedPrint)
             );
           }),
-          mergeMap(updatedPrint => {
+          mergeMap((updatedPrint) => {
             if (newDefaultImageId) {
               return this.printService
                 .setImageAsDefault(updatedPrint.id, newDefaultImageId)
@@ -324,7 +324,7 @@ export class PrintDetailComponent implements OnInit {
               return of(updatedPrint);
             }
 
-            const imagesToDelete = this.imageIdsToDelete.map(imageId => {
+            const imagesToDelete = this.imageIdsToDelete.map((imageId) => {
               return this.printService.deleteImage(updatedPrint.id, imageId);
             });
 
@@ -334,7 +334,7 @@ export class PrintDetailComponent implements OnInit {
             );
           })
         )
-        .subscribe(updatedPrint => {
+        .subscribe((updatedPrint) => {
           this.router.navigate(['/prints']).then(() => {
             this.toastr.success('Save successful!');
           });
@@ -348,8 +348,8 @@ export class PrintDetailComponent implements OnInit {
 
   getPrintFromForm(): PrintDetail {
     const existingPrintImages = this.images.controls
-      .filter(control => control.value.id !== undefined)
-      .map(control => {
+      .filter((control) => control.value.id !== undefined)
+      .map((control) => {
         return {
           id: control.value.id,
           isDefault: control.value.isDefault,

@@ -8,7 +8,9 @@
     "build": "ng build --prod",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "prettier": "prettier --check src/**/*.*",
+    "prettier:fix": "prettier --write src/**/*.*"
   },
   "private": true,
   "dependencies": {

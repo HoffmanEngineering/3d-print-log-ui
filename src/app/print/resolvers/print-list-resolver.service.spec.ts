@@ -6,7 +6,9 @@ describe('PrintListResolverService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: PrintListResolverService = TestBed.get(PrintListResolverService);
+    const service: PrintListResolverService = TestBed.get(
+      PrintListResolverService
+    );
     expect(service).toBeTruthy();
   });
 });

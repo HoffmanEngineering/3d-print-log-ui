@@ -9,7 +9,7 @@ import {
 import { DonutChartComponent } from '../panels/donut-chart/donut-chart.component';
 import { PrintStatistic } from '../services/print-statistics.service';
 
-import { MatSlideToggleChange } from '@angular/material';
+import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { groupBy } from 'lodash';
 import { PrintStatus } from 'src/app/print/services/print.service';
 

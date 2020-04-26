@@ -44,7 +44,7 @@ export class AnalyticsComponent implements OnInit {
     if (fromDate && toDate) {
       this.printStatService
         .getPrintStatistics(fromDate, toDate)
-        .subscribe(stats => {
+        .subscribe((stats) => {
           this.printStatistics = stats;
         });
     }
@@ -55,49 +55,24 @@ export class AnalyticsComponent implements OnInit {
 
     switch (this.dateSelection) {
       case AnalyticTimeSelection.Today:
-        toDate = moment()
-          .endOf('day')
-          .toDate();
-        fromDate = moment()
-          .startOf('day')
-          .toDate();
+        toDate = moment().endOf('day').toDate();
+        fromDate = moment().startOf('day').toDate();
         break;
       case AnalyticTimeSelection.Yesterday:
-        toDate = moment()
-          .subtract(1, 'days')
-          .endOf('day')
-          .toDate();
-        fromDate = moment()
-          .subtract(1, 'days')
-          .startOf('day')
-          .toDate();
+        toDate = moment().subtract(1, 'days').endOf('day').toDate();
+        fromDate = moment().subtract(1, 'days').startOf('day').toDate();
         break;
       case AnalyticTimeSelection.Last7Days:
-        toDate = moment()
-          .endOf('day')
-          .toDate();
-        fromDate = moment()
-          .subtract(6, 'days')
-          .startOf('day')
-          .toDate();
+        toDate = moment().endOf('day').toDate();
+        fromDate = moment().subtract(6, 'days').startOf('day').toDate();
         break;
       case AnalyticTimeSelection.Last30Days:
-        toDate = moment()
-          .endOf('day')
-          .toDate();
-        fromDate = moment()
-          .subtract(29, 'days')
-          .startOf('day')
-          .toDate();
+        toDate = moment().endOf('day').toDate();
+        fromDate = moment().subtract(29, 'days').startOf('day').toDate();
         break;
       case AnalyticTimeSelection.Last365Days:
-        toDate = moment()
-          .endOf('day')
-          .toDate();
-        fromDate = moment()
-          .subtract(364, 'days')
-          .startOf('day')
-          .toDate();
+        toDate = moment().endOf('day').toDate();
+        fromDate = moment().subtract(364, 'days').startOf('day').toDate();
         break;
     }
 

@@ -9,7 +9,7 @@ import {
 import { DonutChartComponent } from '../panels/donut-chart/donut-chart.component';
 import { PrintStatistic } from '../services/print-statistics.service';
 
-import { MatSlideToggleChange } from '@angular/material';
+import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { groupBy } from 'lodash';
 import { PrintStatus } from 'src/app/print/services/print.service';
 
@@ -56,13 +56,13 @@ export class PrintsByStatusComponent implements OnChanges {
       // check also if property is not inherited from prototype
       if (groups.hasOwnProperty(group)) {
         this.orderStates.find(
-          state => state.status === PrintStatus[group]
+          (state) => state.status === PrintStatus[group]
         ).count = groups[group].length;
       }
     }
 
     this.chartData = [];
-    this.orderStates.forEach(state => {
+    this.orderStates.forEach((state) => {
       this.chartData.push(state.count);
     });
   }

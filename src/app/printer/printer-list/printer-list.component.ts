@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { PageEvent } from '@angular/material';
+import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
 import {
@@ -40,7 +40,7 @@ export class PrinterListComponent implements OnInit {
   ngOnInit() {
     this.titleService.setTitle('My Printers - 3D Print Log');
 
-    this.activatedRoute.data.subscribe(data => {
+    this.activatedRoute.data.subscribe((data) => {
       const pagedResponse: PagedList<PrinterSummary> = data.printerList;
       this.handlePagedList(pagedResponse);
     });
@@ -57,7 +57,7 @@ export class PrinterListComponent implements OnInit {
         this.searchText,
         this.includeInactive
       )
-      .subscribe(response => {
+      .subscribe((response) => {
         this.handlePagedList(response);
       });
   }
@@ -70,7 +70,7 @@ export class PrinterListComponent implements OnInit {
         this.searchText,
         this.includeInactive
       )
-      .subscribe(response => {
+      .subscribe((response) => {
         this.handlePagedList(response);
       });
   }

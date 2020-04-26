@@ -8,9 +8,8 @@ describe('TotalPrintCountComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TotalPrintCountComponent ]
-    })
-    .compileComponents();
+      declarations: [TotalPrintCountComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -20,13 +20,13 @@ export class AuthInterceptorService implements HttpInterceptor {
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
     return this.auth.getTokenSilently$().pipe(
-      mergeMap(token => {
+      mergeMap((token) => {
         const tokenReq = req.clone({
           setHeaders: { Authorization: `Bearer ${token}` },
         });
         return next.handle(tokenReq);
       }),
-      catchError(err => throwError(err))
+      catchError((err) => throwError(err))
     );
   }
 }

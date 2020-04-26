@@ -145,7 +145,7 @@ export class PrintService {
   getPrintDetail(id: number): Observable<PrintDetail> {
     const url = `${this.baseApi}/api/Prints/${id}`;
     return this.http.get<PrintDetailDTO>(url).pipe(
-      map(newPrint => {
+      map((newPrint) => {
         const print: PrintDetail = {
           id: newPrint.id,
           estimatedFilamentUsageMg: newPrint.estimatedFilamentUsageMg,
@@ -243,7 +243,7 @@ export class PrintService {
     };
 
     return from(this.resizeImage(settings)).pipe(
-      switchMap(reducedImage => {
+      switchMap((reducedImage) => {
         const formData: FormData = new FormData();
         formData.append('image', reducedImage, file.name);
         formData.append('isDefault', isDefault.toString());
@@ -260,19 +260,19 @@ export class PrintService {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
 
     return this.http.get(url, { responseType: 'blob' }).pipe(
-      concatMap(image => {
+      concatMap((image) => {
         const reader = new FileReader();
         reader.readAsDataURL(image);
         return fromEvent(reader, 'load');
       }),
       take(1),
-      map(e => {
+      map((e) => {
         // result includes identifier 'data:image/png;base64,' plus the base64 data
         const data = (e.target as FileReader).result as string;
 
         return data;
       }),
-      catchError(err => of(''))
+      catchError((err) => of(''))
     );
   }
 
@@ -299,10 +299,7 @@ export class PrintService {
         dataURI.split(',')[0].indexOf('base64') >= 0
           ? atob(dataURI.split(',')[1])
           : unescape(dataURI.split(',')[1]);
-      const mime = dataURI
-        .split(',')[0]
-        .split(':')[1]
-        .split(';')[0];
+      const mime = dataURI.split(',')[0].split(':')[1].split(';')[0];
       const max = bytes.length;
       const ia = new Uint8Array(max);
       for (let i = 0; i < max; i++) {

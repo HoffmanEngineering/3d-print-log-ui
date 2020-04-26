@@ -8,9 +8,8 @@ describe('TotalPrintTimeComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TotalPrintTimeComponent ]
-    })
-    .compileComponents();
+      declarations: [TotalPrintTimeComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

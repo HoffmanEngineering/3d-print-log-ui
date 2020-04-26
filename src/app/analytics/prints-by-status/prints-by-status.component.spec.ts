@@ -8,9 +8,8 @@ describe('PrintsByStatusComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ PrintsByStatusComponent ]
-    })
-    .compileComponents();
+      declarations: [PrintsByStatusComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

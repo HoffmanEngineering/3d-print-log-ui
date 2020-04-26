@@ -6,7 +6,9 @@ describe('CurrentUserPrinterSummaryResolverService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: CurrentUserPrinterSummaryResolverService = TestBed.get(CurrentUserPrinterSummaryResolverService);
+    const service: CurrentUserPrinterSummaryResolverService = TestBed.get(
+      CurrentUserPrinterSummaryResolverService
+    );
     expect(service).toBeTruthy();
   });
 });

@@ -23,7 +23,7 @@ export class PrintImageComponent implements OnInit {
     if (this.imageData === null && this.printId > 0 && this.imageId > 0) {
       this.printService
         .getPrintImage(this.printId, this.imageId)
-        .subscribe(data => {
+        .subscribe((data) => {
           this.imageData = data;
           this.imageDataChange.emit(data);
         });

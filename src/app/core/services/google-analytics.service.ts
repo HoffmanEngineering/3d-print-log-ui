@@ -11,7 +11,7 @@ declare let gtag: Function;
 })
 export class GoogleAnalyticsService {
   constructor(public router: Router) {
-    this.router.events.subscribe(event => {
+    this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         gtag('config', environment.googleAnalyticsId, {
           page_path: event.urlAfterRedirects,

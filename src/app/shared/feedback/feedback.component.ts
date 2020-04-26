@@ -48,12 +48,12 @@ export class FeedbackComponent implements OnInit {
     const newFeedback: AddFeedback = this.getFeedbackFromForm();
 
     this.feedbackService.addFeedback(newFeedback).subscribe(
-      _ => {
+      (_) => {
         this.toastr.success('Thank you for your feedback.', 'Feedback sent!');
 
         this.feedbackForm.resetForm({ type: FeedbackType.Suggestion });
       },
-      error => {
+      (error) => {
         this.toastr.error(
           'Please try again in a few seconds.',
           'An error occurred.'

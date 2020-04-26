@@ -3,3 +3,7 @@ package-lock.json
 dist
 .angulardoc.json
 .vscode/*
+*.svg
+*.ico
+*.txt
+*.gitkeep

@@ -17,6 +17,6 @@ export class CurrentUserPrinterSummaryResolverService
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.printerService
       .getCurrentUserPrinterSummaries(1, 100, undefined, false)
-      .pipe(map(pagedResult => pagedResult.items));
+      .pipe(map((pagedResult) => pagedResult.items));
   }
 }

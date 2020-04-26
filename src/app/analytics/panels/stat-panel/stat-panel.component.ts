@@ -10,7 +10,7 @@ import { Component, Input, OnInit } from '@angular/core';
  */
 export class StatPanelComponent implements OnInit {
   @Input() title: string;
-  @Input() value: number;
+  @Input() value: number | string;
 
   constructor() {}
 

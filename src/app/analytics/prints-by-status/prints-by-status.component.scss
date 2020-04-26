@@ -41,7 +41,7 @@
 
   #ordersByStatus {
     height: 50vh;
-    min-height: 400px;
+    min-height: 470px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -132,11 +132,6 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-}
-
-mat-option ::ng-deep .city {
-  font-size: 1rem;
-  font-family: 'Roboto';
 }
 
 @media screen and (max-width: 767px) {

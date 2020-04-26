@@ -2,12 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
+import { uniq } from 'lodash';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
+import { map, startWith, tap } from 'rxjs/operators';
 import {
   PrinterDetail,
   PrinterService,
 } from '../../core/services/printer.service';
+import defaultPrinters from './cura-exported-printers';
 
 @Component({
   selector: 'app-printer-detail',
@@ -17,6 +20,14 @@ import {
 export class PrinterDetailComponent implements OnInit {
   public printerForm: FormGroup;
   public saving = false;
+
+  // public referencePrinter = defaultPrinters;
+
+  public autocompleteMakes: string[] = [];
+
+  filteredMakes: Observable<string[]>;
+
+  filteredModels: Observable<string[]>;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -30,9 +41,69 @@ export class PrinterDetailComponent implements OnInit {
   ngOnInit() {
     this.titleService.setTitle('Printer Details - 3D Print Log');
 
+    this.getReferencePrinterMakes();
+
     this.activatedRoute.data.subscribe((data) => {
       this.printerForm = this.buildFormFromPrinterDetail(data.printer);
+
+      this.filteredMakes = this.printerForm.controls.make.valueChanges.pipe(
+        startWith(''),
+        map((value) => this._filterMakes(value))
+      );
+
+      this.filteredModels = this.printerForm.valueChanges.pipe(
+        startWith({ make: '', model: '' }),
+        tap((value) => console.log(value)),
+        map((value) => this._filterModels(value))
+      );
     });
+  }
+
+  /**
+   * Get the uniq list of printer makes.
+   */
+  getReferencePrinterMakes() {
+    this.autocompleteMakes = uniq(defaultPrinters.printers.map((p) => p.make));
+  }
+
+  /**
+   * Filter the makes based on the user's input for use in autocomplete
+   */
+  private _filterMakes(value: string): string[] {
+    const filterValue = value.toLowerCase();
+
+    return this.autocompleteMakes.filter((option) =>
+      option.toLowerCase().includes(filterValue.toLowerCase())
+    );
+  }
+
+  /**
+   * Filter the models based on the supplied inputs to the form for use in autocomplete
+   */
+  private _filterModels({
+    make,
+    model,
+  }: {
+    make: string;
+    model: string;
+  }): string[] {
+    const models = this.findModelsForMake(make);
+
+    return models.filter((option) =>
+      option.toLowerCase().includes(model.toLowerCase())
+    );
+  }
+
+  /**
+   * Finds the models for the supplied make from the list of default printers.
+   */
+  private findModelsForMake(make: string) {
+    const modelsForMake = defaultPrinters.printers
+      .filter((printer) => printer.make.toLowerCase() === make.toLowerCase())
+      .map((printer) => printer.model);
+    const uniqueModels = uniq(modelsForMake);
+
+    return uniqueModels;
   }
 
   buildFormFromPrinterDetail(printer: PrinterDetail): FormGroup {

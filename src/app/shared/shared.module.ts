@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatMomentDateModule } from '@angular/material-moment-adapter';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -22,7 +24,6 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { RouterModule } from '@angular/router';
 import { CallbackComponent } from './callback/callback.component';
 import { FeedbackComponent } from './feedback/feedback.component';
@@ -64,6 +65,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatListModule,
     MatSliderModule,
     MatSlideToggleModule,
+    MatAutocompleteModule,
   ],
   exports: [
     NavbarComponent,
@@ -95,6 +97,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     SidebarComponent,
     MatSliderModule,
     MatSlideToggleModule,
+    MatAutocompleteModule,
   ],
 })
 export class SharedModule {}

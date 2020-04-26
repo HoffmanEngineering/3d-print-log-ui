@@ -26,8 +26,12 @@ export class LoggingService {
         trackPageView: () => {},
         trackEvent: () => {},
         trackMetric: () => {},
-        trackException: () => {},
-        trackTrace: () => {},
+        trackException: (exception: Error, severityLevel?: number) => {
+          console.error(exception);
+        },
+        trackTrace: (message: string, properties?: { [key: string]: any }) => {
+          console.log(message, { properties });
+        },
       } as unknown) as ApplicationInsights;
     }
   }

@@ -11,6 +11,9 @@ export const environment = {
     audience: 'https://dev.3dprintlog.com/api',
   },
   googleAnalyticsId: 'UA-65004387-7',
+  appInsights: {
+    instrumentationKey: '',
+  },
 };
 
 /*

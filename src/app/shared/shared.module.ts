@@ -24,6 +24,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import { CallbackComponent } from './callback/callback.component';
 import { FeedbackComponent } from './feedback/feedback.component';
@@ -66,6 +67,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatSliderModule,
     MatSlideToggleModule,
     MatAutocompleteModule,
+    MatTooltipModule,
   ],
   exports: [
     NavbarComponent,
@@ -97,6 +99,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     SidebarComponent,
     MatSliderModule,
     MatSlideToggleModule,
+    MatTooltipModule,
     MatAutocompleteModule,
   ],
 })

@@ -25,13 +25,11 @@
 
         <div
           fxFlex
-          fxFlexFill
           class="card-img-top main-image"
           *ngIf="selectedImage && selectedImage.value"
         >
           <app-print-image
             fxFlex
-            fxFlexFill
             [printId]="printForm.get('id').value"
             [imageId]="selectedImage.value.id"
             [imageData]="selectedImage.value.url"

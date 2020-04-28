@@ -82,18 +82,30 @@
           <input
             matInput
             type="number"
+            min="0"
             formControlName="filamentDiameter"
             required
           />
+          <mat-error
+            *ngIf="printerForm.controls['filamentDiameter'].hasError('min')"
+          >
+            Filament Diameter cannot be negative
+          </mat-error>
         </mat-form-field>
         <mat-form-field fxFlex fxFlexFill>
           <mat-label>Nozzle Diameter (mm)</mat-label>
           <input
             matInput
             type="number"
+            min="0"
             formControlName="nozzleDiameter"
             required
           />
+          <mat-error
+            *ngIf="printerForm.controls['nozzleDiameter'].hasError('min')"
+          >
+            Nozzle Diameter cannot be negative
+          </mat-error>
         </mat-form-field>
 
         <mat-form-field fxFlex fxFlexFill>

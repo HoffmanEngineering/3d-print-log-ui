@@ -118,11 +118,11 @@ export class PrinterDetailComponent implements OnInit {
       description: [printer && printer.description ? printer.description : ''],
       nozzleDiameter: [
         printer && printer.nozzleDiameter ? printer.nozzleDiameter : 0,
-        Validators.required,
+        [Validators.required, Validators.min(0)],
       ],
       filamentDiameter: [
         printer && printer.filamentDiameter ? printer.filamentDiameter : 0,
-        Validators.required,
+        [Validators.required, Validators.min(0)],
       ],
       isActive: [
         printer && printer.isActive !== null && printer.isActive !== undefined

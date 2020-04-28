@@ -1,12 +1,8 @@
 mat-form-field {
-  width: 400px;
-}
-mat-card-title {
-  text-align: center;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
-@media (max-width: 400px) {
-  mat-form-field {
-    width: 300px;
-  }
+mat-card-title {
+  text-align: center;
 }

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
+import { AdsenseModule } from 'ng2-adsense';
 import { SharedModule } from '../shared/shared.module';
 import { PrintDetailComponent } from './print-detail/print-detail.component';
 import { PrintImageComponent } from './print-image/print-image.component';
@@ -26,6 +27,7 @@ import { PrintService } from './services/print.service';
     FormsModule,
     ReactiveFormsModule,
     SharedModule,
+    AdsenseModule,
   ],
   providers: [
     PrintDetailResolverService,

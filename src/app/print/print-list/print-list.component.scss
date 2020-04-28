@@ -13,11 +13,16 @@ table {
   align-items: center; /* align vertical */
   max-height: 50px;
   max-width: 50px;
-  margin: 3px;
+  min-height: 50px;
+  min-width: 50px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  margin-right: 10px;
   overflow: hidden;
 }
 
-.search-fields {
-  display: inline;
-  margin-left: 10px;
+.no-prints {
+  font-size: 16px;
+  line-height: 28px;
+  margin-left: 20px;
 }

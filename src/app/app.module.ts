@@ -1,7 +1,8 @@
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { AdsenseModule } from 'ng2-adsense';
 import { ToastrModule } from 'ngx-toastr';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -23,6 +24,10 @@ import { SharedModule } from './shared/shared.module';
       timeOut: 5000,
       positionClass: 'toast-bottom-right',
       preventDuplicates: true,
+    }),
+    AdsenseModule.forRoot({
+      adClient: 'ca-pub-7759478851543974',
+      adSlot: 1448468680,
     }),
   ],
   providers: [

@@ -1,19 +1,24 @@
-<section fxLayout="row wrap" fxLayoutAlign="center center">
+<div fxLayout="row" fxLayoutAlign="center">
   <mat-card fxFlex="500px" fxFlex.xs="100%">
-    <mat-card-title fxLayoutAlign="start "
-      >{{ this.printerForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
-      Printer</mat-card-title
-    >
     <form
       [formGroup]="printerForm"
       (ngSubmit)="onSubmit()"
-      fxLayout="column wrap"
-      fxLayoutAlign="center center"
-      fxLayoutGap="10px"
       autocomplete="off"
+      fxLayout="column wrap"
+      fxLayoutAlign="start center"
+      fxLayoutGap="10px"
     >
-      <mat-card-content align="center">
-        <mat-form-field>
+      <mat-card-title fxFlex
+        >{{ this.printerForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
+        Printer</mat-card-title
+      >
+      <mat-card-content
+        fxFlex
+        fxFlexFill
+        fxLayout="column wrap"
+        fxLayoutAlign="space-evenly center"
+      >
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label>Name</mat-label>
           <input
             matInput
@@ -26,7 +31,7 @@
             A Name is <strong>required</strong>
           </mat-error>
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label>Make</mat-label>
           <input
             matInput
@@ -49,7 +54,7 @@
           >
         </mat-autocomplete>
 
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label>Model</mat-label>
           <input
             matInput
@@ -72,7 +77,7 @@
           >
         </mat-autocomplete>
 
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label>Filament Diameter (mm)</mat-label>
           <input
             matInput
@@ -81,7 +86,7 @@
             required
           />
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label>Nozzle Diameter (mm)</mat-label>
           <input
             matInput
@@ -91,7 +96,7 @@
           />
         </mat-form-field>
 
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label>Description</mat-label>
           <textarea
             matInput
@@ -102,9 +107,13 @@
           ></textarea>
         </mat-form-field>
 
-        <mat-checkbox formControlName="isActive">Is Active</mat-checkbox>
+        <mat-checkbox fxFlex formControlName="isActive">Is Active</mat-checkbox>
       </mat-card-content>
-      <mat-card-actions align="center">
+      <mat-card-actions
+        fxLayout
+        fxLayoutAlign="space-between center"
+        fxLayoutGap="15px"
+      >
         <button
           mat-raised-button
           type="submit"
@@ -126,4 +135,4 @@
       </mat-card-actions>
     </form>
   </mat-card>
-</section>
+</div>

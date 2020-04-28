@@ -1,18 +1,18 @@
-<section fxLayout="row wrap" fxLayoutAlign="center center">
+<div fxLayout="row" fxLayoutAlign="center">
   <mat-card fxFlex="500px" fxFlex.xs="100%">
-    <mat-card-title fxLayoutAlign="start "
-      >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
-      Print</mat-card-title
-    >
     <form
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"
-      fxLayout="column wrap"
-      fxLayoutAlign="center center"
-      fxLayoutGap="10px"
       autocomplete="off"
+      fxLayout="column wrap"
+      fxLayoutAlign="start center"
+      fxLayoutGap="10px"
     >
-      <div>
+      <mat-card-title fxFlex
+        >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
+        Print</mat-card-title
+      >
+      <div fxFlex>
         <input
           *ngIf="images.length < 1"
           mat-raised-button
@@ -24,11 +24,14 @@
         />
 
         <div
+          fxFlex
+          fxFlexFill
           class="card-img-top main-image"
           *ngIf="selectedImage && selectedImage.value"
         >
           <app-print-image
             fxFlex
+            fxFlexFill
             [printId]="printForm.get('id').value"
             [imageId]="selectedImage.value.id"
             [imageData]="selectedImage.value.url"
@@ -82,8 +85,13 @@
         </div>
       </div>
 
-      <mat-card-content align="center">
-        <mat-form-field>
+      <mat-card-content
+        fxFlex
+        fxFlexFill
+        fxLayout="column wrap"
+        fxLayoutAlign="space-evenly center"
+      >
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Title</mat-label>
           <input
             matInput
@@ -96,7 +104,7 @@
             A Title is <strong>required</strong>
           </mat-error>
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Printer</mat-label>
           <mat-select formControlName="printerId" required>
             <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
@@ -110,7 +118,7 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Start Date</mat-label>
           <input
             matInput
@@ -130,11 +138,11 @@
             A Start Date is <strong>required</strong>
           </mat-error>
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Thing URL</mat-label>
           <input matInput type="url" formControlName="url" maxlength="1000" />
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Estimated Print Time</mat-label>
           <input
             matInput
@@ -143,7 +151,7 @@
             formControlName="estimatedPrintTimeInSeconds"
           />
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Estimated Filament Usage (grams)</mat-label>
           <input
             matInput
@@ -159,7 +167,7 @@
             Numbers (up to 3-decimal places) only.
           </mat-error>
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Actual Print Time</mat-label>
           <input
             matInput
@@ -168,7 +176,7 @@
             placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
           />
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Actual Filament Usage (grams)</mat-label>
           <input
             matInput
@@ -182,7 +190,7 @@
             Numbers (up to 3-decimal places) only.
           </mat-error>
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Filament Type</mat-label>
           <input
             matInput
@@ -192,7 +200,7 @@
           />
         </mat-form-field>
 
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Notes</mat-label>
           <textarea
             matInput
@@ -202,7 +210,7 @@
           ></textarea>
         </mat-form-field>
 
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Status</mat-label>
           <mat-select formControlName="status">
             <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
@@ -268,4 +276,4 @@
       </mat-card-actions>
     </form>
   </mat-card>
-</section>
+</div>

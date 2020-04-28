@@ -1,10 +1,18 @@
 <div>
-  <div class="header">
-    <button mat-raised-button routerLink="new" type="button" color="accent">
+  <div class="header" fxLayout fxLayoutAlign="start center" fxLayoutGap="5px">
+    <button
+      fxFlex="150px"
+      fxFlex.xs="120px"
+      style="height: 36px;"
+      mat-raised-button
+      routerLink="new"
+      type="button"
+      color="accent"
+    >
       Add New Print
     </button>
-    <div class="search-fields">
-      <mat-form-field>
+    <div fxFlex class="search-fields" fxLayoutGap="10px">
+      <mat-form-field fxFlex="200px" fxFlex.xs="50%">
         <mat-label> Search: </mat-label
         ><input
           matInput
@@ -14,7 +22,7 @@
           autocomplete="off"
       /></mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field fxFlex="200px" fxFlex.xs="50%">
         <mat-label> Status</mat-label>
         <mat-select
           [(ngModel)]="filterByStatus"
@@ -94,6 +102,10 @@
     ></tr>
   </table>
 
+  <div class="no-prints" *ngIf="totalCount === 0">
+    No prints found. Try a different search.
+  </div>
+
   <mat-paginator
     [length]="totalCount"
     [pageSize]="pageSize"
@@ -101,4 +113,6 @@
     (page)="pageChange($event)"
   >
   </mat-paginator>
+
+  <ng-adsense></ng-adsense>
 </div>

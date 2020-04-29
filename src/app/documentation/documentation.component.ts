@@ -36,7 +36,8 @@ export class DocumentationComponent
       }
       changeDetectorRef.detectChanges();
     };
-    this.mobileQuery.addEventListener('change', this.mobileQueryListener);
+    // tslint:disable-next-line: deprecation
+    this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
   ngAfterViewInit() {
@@ -48,7 +49,8 @@ export class DocumentationComponent
   }
 
   ngOnDestroy(): void {
-    this.mobileQuery.addEventListener('change', this.mobileQueryListener);
+    // tslint:disable-next-line: deprecation
+    this.mobileQuery.removeListener(this.mobileQueryListener);
   }
 
   ngOnInit() {

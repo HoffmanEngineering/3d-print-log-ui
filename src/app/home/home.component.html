@@ -1,24 +1,96 @@
-<div fxLayout="row wrap" fxLayoutAlign="center center">
-  <mat-card fxFlex="1000px" fxFlex.xs="100%">
-    <section>
-      <h1>Welcome to 3D Print Log</h1>
-      <p>
-        3D Print Log is a simple tool for tracking 3D prints. Easily keep track
-        of print status, print duration, filament usage and more.
-      </p>
-      <p>
-        <a [routerLink]="['/docs', 'getting-started']"
-          >View the quick start guide</a
-        >
-        , or jump to it and
+<main fxLayout="column wrap" fxLayoutAlign="center center" fxFlex="100%">
+  <mat-toolbar fxFlex color="primary">
+    <div
+      class="docs-header-headline"
+      fxFlex
+      fxFlexFill
+      fxLayout="column"
+      fxLayoutAlign="start center"
+    >
+      <h1 fxFlex class="mat-h1">3D Print Log</h1>
+      <h2 fxFlex>Log and analyze your 3D Prints</h2>
+      <a
+        mat-raised-button
+        class="get-started"
+        routerLink="/docs/getting-started"
+        >Get started</a
+      >
+    </div>
+  </mat-toolbar>
+
+  <section fxFlex>
+    <p>
+      3D Print Log is a simple tool for tracking 3D prints. Easily record
+      details of your 3D printers, print status, print duration, filament usage
+      and more.
+    </p>
+    <p>
+      <a [routerLink]="['/docs', 'getting-started']"
+        >View the quick start guide</a
+      >, or jump into it by
+      <a
+        href
+        (click)="auth.login('/prints')"
+        aria-label="Login or Create Free Account"
+        >creating a <strong>free</strong> account</a
+      >
+      today and start logging!
+    </p>
+  </section>
+  <section fxFlex class="example-grid">
+    <div gdColumns="1fr 1fr" gdGap="16px" gdRows="auto">
+      <div class="section image">
+        <img src="/assets/Homepage_PrinterList.png" />
+      </div>
+      <div class="section homepage-desc">
+        <h2>Track Every 3D Print</h2>
+        <p>
+          Log details for every print. Upload pictures, track print times and
+          filament usage, save notes and more. Search through past prints so you
+          never forget a detail again.
+        </p>
+      </div>
+      <div class="section homepage-desc">
+        <h2>View Print Analytics</h2>
+        <p>
+          See statistics about your prints. Metrics like total print times,
+          filament usage, and how often your prints succeed are just a click
+          away.
+        </p>
+      </div>
+      <div class="section image">
+        <img src="/assets/Homepage_Analytics.png" />
+      </div>
+    </div>
+  </section>
+  <div fxFlex="150px">
+    <a
+      color="accent"
+      mat-raised-button
+      class="get-started"
+      routerLink="/docs/getting-started"
+      >Get started</a
+    >
+  </div>
+
+  <footer fxFlex fxFlexFill>
+    <mat-toolbar fxFlex color="primary">
+      <div
+        class="docs-header-headline"
+        fxFlex
+        fxFlexFill
+        fxLayout="column"
+        fxLayoutAlign="start center"
+      >
+        <h1 fxFlex class="mat-h1">3D Print Log</h1>
+        <h2 fxFlex>Log and analyze your 3D Prints</h2>
         <a
-          href
-          (click)="auth.login('/prints')"
-          aria-label="Login or Create Free Account"
-          >create a <strong>free</strong> account</a
+          mat-raised-button
+          class="get-started"
+          routerLink="/docs/getting-started"
+          >Get started</a
         >
-        today and start logging!
-      </p>
-    </section>
-  </mat-card>
-</div>
+      </div>
+    </mat-toolbar>
+  </footer>
+</main>

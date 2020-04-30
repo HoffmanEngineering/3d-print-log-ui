@@ -36,3 +36,13 @@ mat-toolbar {
     border-radius: 0px;
   }
 }
+
+@media (max-width: 450px) {
+  mat-toolbar-row {
+    height: 28px;
+  }
+  .profile-picture {
+    width: 28px;
+    height: 28px;
+  }
+}

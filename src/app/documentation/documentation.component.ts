@@ -3,6 +3,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
@@ -22,19 +23,22 @@ export class DocumentationComponent
   @ViewChild('snav', { static: true }) snav;
 
   constructor(
-    changeDetectorRef: ChangeDetectorRef,
+    private changeDetectorRef: ChangeDetectorRef,
     media: MediaMatcher,
-    private title: Title
+    private title: Title,
+    private ngZone: NgZone
   ) {
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
 
     this.mobileQueryListener = () => {
-      if (!this.mobileQuery.matches) {
-        this.snav.open();
-      } else {
-        this.snav.close();
-      }
-      changeDetectorRef.detectChanges();
+      this.ngZone.run(() => {
+        if (!this.mobileQuery.matches) {
+          this.snav.open();
+        } else {
+          this.snav.close();
+        }
+        this.changeDetectorRef.detectChanges();
+      });
     };
     // tslint:disable-next-line: deprecation
     this.mobileQuery.addListener(this.mobileQueryListener);
@@ -55,5 +59,11 @@ export class DocumentationComponent
 
   ngOnInit() {
     this.title.setTitle('Documentation - 3D Print Log');
+  }
+
+  handleSidebarClick() {
+    if (this.mobileQuery.matches) {
+      this.snav.toggle();
+    }
   }
 }

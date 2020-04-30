@@ -6,17 +6,14 @@
     <h1 class="example-app-name">Documentation</h1>
   </mat-toolbar>
 
-  <mat-sidenav-container
-    class="example-sidenav-container"
-    [style.marginTop.px]="mobileQuery.matches ? 56 : 0"
-  >
+  <mat-sidenav-container class="example-sidenav-container">
     <mat-sidenav
       #snav
       [mode]="mobileQuery.matches ? 'over' : 'side'"
       [fixedInViewport]="mobileQuery.matches"
       fixedTopGap="56"
     >
-      <app-doc-sidebar></app-doc-sidebar>
+      <app-doc-sidebar (click)="handleSidebarClick()"></app-doc-sidebar>
     </mat-sidenav>
 
     <mat-sidenav-content>

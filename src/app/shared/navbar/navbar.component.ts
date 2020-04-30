@@ -1,4 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { MediaMatcher } from '@angular/cdk/layout';
+import {
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
@@ -6,10 +13,18 @@ import { AuthService } from 'src/app/core/services/auth.service';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   public profilePictureUrl: string | null = null;
 
-  constructor(public auth: AuthService) {}
+  mobileQuery: MediaQueryList;
+  private mobileQueryListener: () => void;
+
+  constructor(
+    public auth: AuthService,
+    private media: MediaMatcher,
+    private changeDetectorRef: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit() {
     this.auth.userProfile$.subscribe((user) => {
@@ -19,5 +34,23 @@ export class NavbarComponent implements OnInit {
         this.profilePictureUrl = null;
       }
     });
+
+    this.setupMobileListener();
+  }
+  setupMobileListener() {
+    this.mobileQuery = this.media.matchMedia('(max-width: 450px)');
+
+    this.mobileQueryListener = () => {
+      this.ngZone.run(() => {
+        this.changeDetectorRef.detectChanges();
+      });
+    };
+    // tslint:disable-next-line: deprecation
+    this.mobileQuery.addListener(this.mobileQueryListener);
+  }
+
+  ngOnDestroy(): void {
+    // tslint:disable-next-line: deprecation
+    this.mobileQuery.removeListener(this.mobileQueryListener);
   }
 }

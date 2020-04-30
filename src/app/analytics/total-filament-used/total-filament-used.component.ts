@@ -24,11 +24,6 @@ export class TotalFilamentUsedComponent implements OnChanges {
   calculatePrintCount() {
     const totalFilamentUsedMg = this.prints.reduce(
       (accumulatedFilamentUsedMg, print) => {
-        console.log({
-          est: print.estimatedFilamentUsageMg,
-          act: print.filamentUsageMg,
-        });
-
         const filamentUsedMg =
           isFinite(print.filamentUsageMg) && print.filamentUsageMg > 0
             ? +print.filamentUsageMg
@@ -41,8 +36,6 @@ export class TotalFilamentUsedComponent implements OnChanges {
       },
       0
     );
-
-    console.log(totalFilamentUsedMg);
 
     const formattedFilament = this.decimalPipe.transform(
       totalFilamentUsedMg / 1000,

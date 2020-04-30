@@ -1,15 +1,20 @@
-<section fxLayout="row wrap" fxLayoutAlign="center center">
+<section fxLayout="row" fxLayoutAlign="center">
   <mat-card fxFlex="500px" fxFlex.xs="100%">
     <h1>Send Feedback</h1>
     <form
       [formGroup]="form"
       (ngSubmit)="onSubmit()"
       fxLayout="column wrap"
-      fxLayoutAlign="center center"
+      fxLayoutAlign="start center"
       fxLayoutGap="10px"
     >
-      <mat-card-content align="center">
-        <mat-form-field>
+      <mat-card-content
+        fxFlex
+        fxFlexFill
+        fxLayout="column wrap"
+        fxLayoutAlign="space-evenly center"
+      >
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label> Type</mat-label>
           <mat-select formControlName="type" required>
             <mat-option [value]="feedbackTypes.Suggestion"
@@ -21,7 +26,7 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label>Feedback</mat-label>
           <textarea
             matInput
@@ -36,7 +41,7 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
           <mat-label>Email (optional)</mat-label>
           <input
             matInput
@@ -47,7 +52,11 @@
           />
         </mat-form-field>
       </mat-card-content>
-      <mat-card-actions align="center">
+      <mat-card-actions
+        fxLayout
+        fxLayoutAlign="space-between center"
+        fxLayoutGap="15px"
+      >
         <button
           mat-raised-button
           type="submit"

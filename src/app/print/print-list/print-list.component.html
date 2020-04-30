@@ -11,8 +11,8 @@
     >
       Add New Print
     </button>
-    <div fxFlex class="search-fields" fxLayoutGap="10px">
-      <mat-form-field fxFlex="200px" fxFlex.xs="50%">
+    <div fxFlex fxLayoutGap="10px">
+      <mat-form-field>
         <mat-label> Search: </mat-label
         ><input
           matInput
@@ -22,7 +22,7 @@
           autocomplete="off"
       /></mat-form-field>
 
-      <mat-form-field fxFlex="200px" fxFlex.xs="50%">
+      <mat-form-field>
         <mat-label> Status</mat-label>
         <mat-select
           [(ngModel)]="filterByStatus"

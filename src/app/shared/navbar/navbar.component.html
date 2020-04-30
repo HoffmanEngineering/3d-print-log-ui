@@ -14,22 +14,29 @@
 
       <a mat-button routerLink="/prints" *ngIf="auth.loggedIn">Prints</a>
       <a mat-button routerLink="/printers" *ngIf="auth.loggedIn">Printers</a>
-      <a mat-button routerLink="/analytics" *ngIf="auth.loggedIn">Analytics</a>
 
-      <button mat-button [matMenuTriggerFor]="aboutMenu">
-        About
-      </button>
-      <mat-menu #aboutMenu="matMenu">
-        <!-- <button mat-menu-item>Fee</button> -->
-        <a class="menu-link" mat-menu-item routerLink="/docs">Documentation</a>
-        <a
-          class="menu-link"
-          *ngIf="auth.loggedIn"
-          mat-menu-item
-          routerLink="/feedback"
-          >Send Feedback</a
+      <ng-container *ngIf="!this.mobileQuery.matches">
+        <a mat-button routerLink="/analytics" *ngIf="auth.loggedIn"
+          >Analytics</a
         >
-      </mat-menu>
+
+        <button mat-button [matMenuTriggerFor]="aboutMenu">
+          About
+        </button>
+        <mat-menu #aboutMenu="matMenu">
+          <!-- <button mat-menu-item>Fee</button> -->
+          <a class="menu-link" mat-menu-item routerLink="/docs"
+            >Documentation</a
+          >
+          <a
+            class="menu-link"
+            *ngIf="auth.loggedIn"
+            mat-menu-item
+            routerLink="/feedback"
+            >Send Feedback</a
+          >
+        </mat-menu>
+      </ng-container>
     </div>
     <div>
       <button
@@ -74,4 +81,26 @@
       </button>
     </div>
   </mat-toolbar-row>
+  <mat-toolbar-row *ngIf="this.mobileQuery.matches">
+    <div>
+      <a mat-button routerLink="/analytics" *ngIf="auth.loggedIn">Analytics</a>
+
+      <button mat-button [matMenuTriggerFor]="aboutMenu">
+        About
+      </button>
+      <mat-menu #aboutMenu="matMenu">
+        <!-- <button mat-menu-item>Fee</button> -->
+        <a class="menu-link" mat-menu-item routerLink="/docs">Documentation</a>
+        <a
+          class="menu-link"
+          *ngIf="auth.loggedIn"
+          mat-menu-item
+          routerLink="/feedback"
+          >Send Feedback</a
+        >
+      </mat-menu>
+    </div>
+  </mat-toolbar-row>
 </mat-toolbar>
+
+<ng-template #links> </ng-template>

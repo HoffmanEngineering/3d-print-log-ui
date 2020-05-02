@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -6,8 +6,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { Observable } from 'rxjs';
+import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import {
   AddFeedback,
   FeedbackService,
@@ -19,7 +21,7 @@ import {
   templateUrl: './feedback.component.html',
   styleUrls: ['./feedback.component.scss'],
 })
-export class FeedbackComponent implements OnInit {
+export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
   @ViewChild(FormGroupDirective, { static: true })
   feedbackForm: FormGroupDirective;
   public form: FormGroup;
@@ -34,6 +36,11 @@ export class FeedbackComponent implements OnInit {
     private toastr: ToastrService,
     private titleService: Title
   ) {}
+
+  @HostListener('window:beforeunload')
+  canDeactivate(): boolean | Observable<boolean> {
+    return !this.form.dirty;
+  }
 
   ngOnInit() {
     this.titleService.setTitle('Send Feedback - 3D Print Log');

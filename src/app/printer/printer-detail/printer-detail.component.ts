@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { uniq } from 'lodash';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
+import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import {
   PrinterDetail,
   PrinterService,
@@ -17,7 +18,7 @@ import defaultPrinters from './cura-exported-printers';
   templateUrl: './printer-detail.component.html',
   styleUrls: ['./printer-detail.component.scss'],
 })
-export class PrinterDetailComponent implements OnInit {
+export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
   public printerForm: FormGroup;
   public saving = false;
 
@@ -37,6 +38,11 @@ export class PrinterDetailComponent implements OnInit {
     private toastr: ToastrService,
     private titleService: Title
   ) {}
+
+  @HostListener('window:beforeunload')
+  canDeactivate(): boolean | Observable<boolean> {
+    return !this.printerForm.dirty;
+  }
 
   ngOnInit() {
     this.titleService.setTitle('Printer Details - 3D Print Log');

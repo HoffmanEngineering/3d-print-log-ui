@@ -1,44 +1,86 @@
-<!-- <header>
-  <button (click)="auth.login()" *ngIf="!auth.loggedIn">Log In</button>
-  <button (click)="auth.logout()" *ngIf="auth.loggedIn">Log Out</button>
-
-  <a routerLink="/">Home</a>&nbsp;
-  <a routerLink="/prints" *ngIf="auth.loggedIn">Prints</a>&nbsp;
-  <a routerLink="/profile" *ngIf="auth.loggedIn">Profile</a>
-</header> -->
-
 <mat-toolbar color="primary">
-  <mat-toolbar-row>
-    <div style="flex: 1 1 auto;">
-      <a mat-button routerLink="/" *ngIf="!auth.loggedIn">Home</a>
+  <mat-toolbar-row fxLayout="row" fxLayoutAlign="space-between center">
+    <div fxFlex="grow">
+      <div fxLayout="column" fxLayoutAlign="center start" style="height: 56px;">
+        <div fxFlex fxLayout="row" fxLayoutAlign="center center">
+          <a class="link" mat-button routerLink="/" *ngIf="!auth.loggedIn"
+            >Home</a
+          >
 
-      <a mat-button routerLink="/prints" *ngIf="auth.loggedIn">Prints</a>
-      <a mat-button routerLink="/printers" *ngIf="auth.loggedIn">Printers</a>
-
-      <ng-container *ngIf="!this.mobileQuery.matches">
-        <a mat-button routerLink="/analytics" *ngIf="auth.loggedIn"
-          >Analytics</a
-        >
-
-        <button mat-button [matMenuTriggerFor]="aboutMenu">
-          About
-        </button>
-        <mat-menu #aboutMenu="matMenu">
-          <!-- <button mat-menu-item>Fee</button> -->
-          <a class="menu-link" mat-menu-item routerLink="/docs"
-            >Documentation</a
+          <a mat-button class="link" routerLink="/prints" *ngIf="auth.loggedIn"
+            >Prints</a
           >
           <a
-            class="menu-link"
+            mat-button
+            class="link"
+            routerLink="/printers"
             *ngIf="auth.loggedIn"
-            mat-menu-item
-            routerLink="/feedback"
-            >Send Feedback</a
+            >Printers</a
           >
-        </mat-menu>
-      </ng-container>
+
+          <ng-container *ngIf="!this.mobileQuery.matches">
+            <a
+              mat-button
+              class="link"
+              routerLink="/analytics"
+              *ngIf="auth.loggedIn"
+              >Analytics</a
+            >
+
+            <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
+              About
+            </button>
+            <mat-menu #aboutMenu="matMenu">
+              <!-- <button mat-menu-item>Fee</button> -->
+              <a class="menu-link" mat-menu-item routerLink="/docs"
+                >Documentation</a
+              >
+              <a
+                class="menu-link"
+                *ngIf="auth.loggedIn"
+                mat-menu-item
+                routerLink="/feedback"
+                >Send Feedback</a
+              >
+            </mat-menu>
+          </ng-container>
+        </div>
+        <div
+          fxFlex
+          fxLayout="row"
+          fxLayoutAlign="center center"
+          *ngIf="this.mobileQuery.matches"
+        >
+          <ng-container>
+            <a
+              mat-button
+              class="link"
+              routerLink="/analytics"
+              *ngIf="auth.loggedIn"
+              >Analytics</a
+            >
+
+            <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
+              About
+            </button>
+            <mat-menu #aboutMenu="matMenu">
+              <!-- <button mat-menu-item>Fee</button> -->
+              <a class="menu-link" mat-menu-item routerLink="/docs"
+                >Documentation</a
+              >
+              <a
+                class="menu-link"
+                *ngIf="auth.loggedIn"
+                mat-menu-item
+                routerLink="/feedback"
+                >Send Feedback</a
+              >
+            </mat-menu>
+          </ng-container>
+        </div>
+      </div>
     </div>
-    <div>
+    <div fxFlex>
       <button
         class="transparent"
         [matMenuTriggerFor]="profileMenu"
@@ -79,26 +121,6 @@
       >
         Log In/Create Account
       </button>
-    </div>
-  </mat-toolbar-row>
-  <mat-toolbar-row *ngIf="this.mobileQuery.matches">
-    <div>
-      <a mat-button routerLink="/analytics" *ngIf="auth.loggedIn">Analytics</a>
-
-      <button mat-button [matMenuTriggerFor]="aboutMenu">
-        About
-      </button>
-      <mat-menu #aboutMenu="matMenu">
-        <!-- <button mat-menu-item>Fee</button> -->
-        <a class="menu-link" mat-menu-item routerLink="/docs">Documentation</a>
-        <a
-          class="menu-link"
-          *ngIf="auth.loggedIn"
-          mat-menu-item
-          routerLink="/feedback"
-          >Send Feedback</a
-        >
-      </mat-menu>
     </div>
   </mat-toolbar-row>
 </mat-toolbar>

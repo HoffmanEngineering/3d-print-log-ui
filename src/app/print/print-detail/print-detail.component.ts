@@ -1,4 +1,9 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnInit,
+} from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -14,8 +19,9 @@ import { ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
 import { Title } from '@angular/platform-browser';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
+import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { environment } from 'src/environments/environment';
 import {
@@ -36,7 +42,7 @@ export interface PrintImageValue {
   templateUrl: './print-detail.component.html',
   styleUrls: ['./print-detail.component.scss'],
 })
-export class PrintDetailComponent implements OnInit {
+export class PrintDetailComponent implements OnInit, ComponentCanDeactivate {
   public printers: PrinterSummary[] = [];
 
   public printForm: FormGroup;
@@ -63,6 +69,11 @@ export class PrintDetailComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private titleService: Title
   ) {}
+
+  @HostListener('window:beforeunload')
+  canDeactivate(): boolean | Observable<boolean> {
+    return !this.printForm.dirty;
+  }
 
   ngOnInit() {
     this.titleService.setTitle('Print Details - 3D Print Log');

@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { HomepageRedirectGuard } from './core/guards/homepage-redirect.guard';
+import { PendingChangesGuard } from './core/guards/pending-changes.guard';
 import { CallbackComponent } from './shared/callback/callback.component';
 import { FeedbackComponent } from './shared/feedback/feedback.component';
 import { UserProfileComponent } from './shared/user-profile/user-profile.component';
@@ -34,6 +35,7 @@ const routes: Routes = [
     path: 'feedback',
     component: FeedbackComponent,
     canActivate: [AuthGuard],
+    canDeactivate: [PendingChangesGuard],
   },
   {
     path: 'docs',

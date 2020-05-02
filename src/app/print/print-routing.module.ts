@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/current-user-printer-summary-resolver.service';
 import { PrintDetailComponent } from './print-detail/print-detail.component';
 import { PrintListComponent } from './print-list/print-list.component';
@@ -24,6 +25,7 @@ const routes: Routes = [
           print: CopyPrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
         },
+        canDeactivate: [PendingChangesGuard],
       },
       {
         path: ':id',
@@ -32,6 +34,7 @@ const routes: Routes = [
           print: PrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
         },
+        canDeactivate: [PendingChangesGuard],
       },
     ],
   },

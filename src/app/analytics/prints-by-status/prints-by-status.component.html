@@ -23,7 +23,7 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="orderStatus">
-            <th mat-header-cell *matHeaderCellDef>Order Status</th>
+            <th mat-header-cell *matHeaderCellDef>Print Status</th>
             <td mat-cell *matCellDef="let element">
               {{ element.stateDisplayValue }}
             </td>
@@ -47,7 +47,7 @@
       [checked]="showData"
       (change)="toggleData($event)"
     >
-      Show data
+      View Legend
     </mat-slide-toggle>
   </mat-card-content>
 </mat-card>

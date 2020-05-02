@@ -11,6 +11,10 @@ export class DocSidebarComponent implements OnInit {
     { name: 'Getting Started', url: '/docs/getting-started' },
     { divider: true },
     { name: 'Printers', url: '/docs/printers' },
+    { name: 'Prints', url: '/docs/prints' },
+    { name: 'Analytics', url: '/docs/analytics' },
+    { divider: true },
+    { name: 'About', url: '/docs/about' },
   ];
 
   constructor() {}

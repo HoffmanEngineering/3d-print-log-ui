@@ -1,0 +1,60 @@
+<div class="docs-markdown">
+  <h2>Prints</h2>
+  <hr />
+  <p>
+    Navigate to the <a [routerLink]="['/prints']">Prints</a> section to manage
+    your list of 3D prints.
+  </p>
+  <h3>Prints List</h3>
+  <p>
+    By default, the list shows your last 10 prints, ordered by their Start
+    Dates. Use the
+    <strong>Search</strong> input at the top to filter the list by the print's
+    <strong>Title</strong> and <strong>Notes</strong> fields. Use the
+    <strong>Status</strong> dropdown to filter by a specific print status.
+  </p>
+  <hr />
+  <h3>Add a new 3D Printer</h3>
+  <p>
+    From the 3D Print list, click on the
+    <button mat-raised-button color="accent">Add New Print</button> button.
+  </p>
+  <p>
+    Give the print a <strong>Title</strong> and a <strong>Start Date</strong>,
+    and select an active <strong>Printer</strong>. Optionally, enter the URL for
+    where you found the 3D model. Use the
+    <strong>"Choose File" button</strong> to upload an image for the 3D print.
+    The <strong>Notes</strong> field can be used to record any additional
+    details you may want. Both the Title and Notes fields are searched in the
+    Print List, so use keywords in the notes to help make searching easier.
+  </p>
+  <p>
+    The Estimated and Actual <strong>Print Time</strong> fields accept
+    human-readable input, such a <em>6h 12m 25s</em>, or
+    <em>6 hours 12 minutes 25 seconds</em>. The Estimated and Actual
+    <strong>Filament Usage (Grams)</strong> fields record the amount of filament
+    used.
+  </p>
+  <p>
+    Prints can have one of 5 status:
+    <strong>Pending, Printing, Successful, Failed, or Cancelled</strong>. The
+    <strong>Status</strong> selection will default to Pending, but can be
+    changed by clicking the dropdown.
+  </p>
+  <p>
+    When ready, click
+    <button mat-raised-button type="button" color="primary">Submit</button> to
+    save your new 3D Print.
+  </p>
+  <hr />
+  <h3>Edit an existing 3D Print</h3>
+  <p>
+    Click on any row in the print list to view and edit an existing 3D print.
+  </p>
+  <p>
+    After making changes, click
+    <button mat-raised-button color="primary">Submit</button> to update that 3D
+    print.
+  </p>
+  <hr />
+</div>

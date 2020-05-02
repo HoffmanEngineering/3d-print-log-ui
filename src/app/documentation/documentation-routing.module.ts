@@ -1,8 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { DocsAboutComponent } from './docs/docs-about/docs-about.component';
+import { DocsAnalyticsComponent } from './docs/docs-analytics/docs-analytics.component';
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
 import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.component';
+import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
 import { DocumentationComponent } from './documentation.component';
 
 const routes: Routes = [
@@ -15,6 +18,9 @@ const routes: Routes = [
         component: DocsGettingStartedComponent,
       },
       { path: 'printers', component: DocsPrintersComponent },
+      { path: 'prints', component: DocsPrintsComponent },
+      { path: 'analytics', component: DocsAnalyticsComponent },
+      { path: 'about', component: DocsAboutComponent },
       { path: '', redirectTo: 'getting-started' },
     ],
   },

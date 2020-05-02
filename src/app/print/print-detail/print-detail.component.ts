@@ -304,6 +304,7 @@ export class PrintDetailComponent implements OnInit, ComponentCanDeactivate {
         .subscribe(
           (createdPrint) => {
             this.saving = false;
+            this.printForm.markAsPristine();
             this.router.navigate(['/prints']).then(() => {
               this.toastr.success('Save successful!');
             });
@@ -361,6 +362,7 @@ export class PrintDetailComponent implements OnInit, ComponentCanDeactivate {
         .subscribe(
           (updatedPrint) => {
             this.saving = false;
+            this.printForm.markAsPristine();
             this.router.navigate(['/prints']).then(() => {
               this.toastr.success('Save successful!');
             });

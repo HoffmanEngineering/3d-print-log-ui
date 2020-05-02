@@ -156,6 +156,7 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
     savePrinter.subscribe(
       (printer) => {
         this.saving = false;
+        this.printerForm.markAsPristine();
         this.router.navigate(['/printers']).then(() => {
           this.toastr.success('Save successful!');
         });

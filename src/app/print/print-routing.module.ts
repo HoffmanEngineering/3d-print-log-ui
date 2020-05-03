@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/current-user-printer-summary-resolver.service';
-import { PrintDetailComponent } from './print-detail/print-detail.component';
+import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintListComponent } from './print-list/print-list.component';
 import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-resolver.service';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
@@ -20,7 +20,7 @@ const routes: Routes = [
       },
       {
         path: 'copy/:id',
-        component: PrintDetailComponent,
+        component: EditPrintDetailComponent,
         resolve: {
           print: CopyPrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
@@ -28,8 +28,8 @@ const routes: Routes = [
         canDeactivate: [PendingChangesGuard],
       },
       {
-        path: ':id',
-        component: PrintDetailComponent,
+        path: ':id/edit',
+        component: EditPrintDetailComponent,
         resolve: {
           print: PrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,

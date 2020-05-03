@@ -39,10 +39,11 @@ export interface PrintImageValue {
 
 @Component({
   selector: 'app-print-detail',
-  templateUrl: './print-detail.component.html',
-  styleUrls: ['./print-detail.component.scss'],
+  templateUrl: './edit-print-detail.component.html',
+  styleUrls: ['./edit-print-detail.component.scss'],
 })
-export class PrintDetailComponent implements OnInit, ComponentCanDeactivate {
+export class EditPrintDetailComponent
+  implements OnInit, ComponentCanDeactivate {
   public printers: PrinterSummary[] = [];
 
   public printForm: FormGroup;

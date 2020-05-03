@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AdsenseModule } from 'ng2-adsense';
 import { SharedModule } from '../shared/shared.module';
-import { PrintDetailComponent } from './print-detail/print-detail.component';
+import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintListComponent } from './print-list/print-list.component';
 import { PrintRoutingModule } from './print-routing.module';
@@ -18,7 +18,7 @@ import { PrintService } from './services/print.service';
   declarations: [
     PrintComponent,
     PrintListComponent,
-    PrintDetailComponent,
+    EditPrintDetailComponent,
     PrintImageComponent,
   ],
   imports: [

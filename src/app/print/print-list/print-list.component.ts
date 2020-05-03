@@ -33,6 +33,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     'printer',
     'start-date',
     'status',
+    'more',
   ];
 
   public searchText = '';

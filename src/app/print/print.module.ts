@@ -13,6 +13,7 @@ import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-re
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
 import { PrintService } from './services/print.service';
+import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 
 @NgModule({
   declarations: [
@@ -20,6 +21,7 @@ import { PrintService } from './services/print.service';
     PrintListComponent,
     EditPrintDetailComponent,
     PrintImageComponent,
+    ViewPrintDetailComponent,
   ],
   imports: [
     CommonModule,

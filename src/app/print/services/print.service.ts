@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { forkJoin, from, fromEvent, Observable, of } from 'rxjs';
 import {
@@ -52,6 +52,23 @@ export interface PrintSummary {
 }
 
 export interface PrintDetailDTO {
+  id: number;
+  title: string;
+  printerId: number;
+  printer: PrinterSummary;
+  startDate?: Date;
+  estimatedPrintTimeInSeconds?: number;
+  estimatedFilamentUsageMg?: number;
+  printTimeInSeconds?: number;
+  filamentUsageMg?: number;
+  filamentType: string;
+  notes: string;
+  url: string;
+  status: PrintStatus;
+  images?: PrintImage[];
+}
+
+export interface PutPrintDetailDTO {
   id: number;
   title: string;
   printerId: number;
@@ -144,48 +161,52 @@ export class PrintService {
 
   getPrintDetail(id: number): Observable<PrintDetail> {
     const url = `${this.baseApi}/api/Prints/${id}`;
-    return this.http.get<PrintDetailDTO>(url).pipe(
-      map((newPrint) => {
-        const print: PrintDetail = {
-          id: newPrint.id,
-          estimatedFilamentUsageMg: newPrint.estimatedFilamentUsageMg,
-          estimatedPrintTimeInSeconds: newPrint.estimatedPrintTimeInSeconds,
-          filamentType: newPrint.filamentType,
-          filamentUsageMg: newPrint.filamentUsageMg,
-          notes: newPrint.notes,
-          printTimeInSeconds: newPrint.printTimeInSeconds,
-          printerId: newPrint.printerId,
-          startDate: newPrint.startDate
-            ? moment(newPrint.startDate).toDate()
-            : null,
-          status: newPrint.status,
-          title: newPrint.title,
-          url: newPrint.url,
-          images: newPrint.images || [],
-        };
-        return print;
-      })
-      // mergeMap(print => {
-      //   if (print.images.length === 0) {
-      //     return of(print);
-      //   }
+    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
 
-      //   const imageRequests: Observable<string>[] = [];
-      //   for (const image of print.images) {
-      //     imageRequests.push(this.getPrintImage(print.id, image.id));
-      //   }
+    return this.http
+      .get<PrintDetailDTO>(url, { headers })
+      .pipe(
+        map((newPrint) => {
+          const print: PrintDetail = {
+            id: newPrint.id,
+            estimatedFilamentUsageMg: newPrint.estimatedFilamentUsageMg,
+            estimatedPrintTimeInSeconds: newPrint.estimatedPrintTimeInSeconds,
+            filamentType: newPrint.filamentType,
+            filamentUsageMg: newPrint.filamentUsageMg,
+            notes: newPrint.notes,
+            printTimeInSeconds: newPrint.printTimeInSeconds,
+            printerId: newPrint.printerId,
+            startDate: newPrint.startDate
+              ? moment(newPrint.startDate).toDate()
+              : null,
+            status: newPrint.status,
+            title: newPrint.title,
+            url: newPrint.url,
+            images: newPrint.images || [],
+          };
+          return print;
+        })
+        // mergeMap(print => {
+        //   if (print.images.length === 0) {
+        //     return of(print);
+        //   }
 
-      //   return forkJoin(imageRequests).pipe(
-      //     tap(request => console.log(request)),
-      //     map(images => {
-      //       for (let i = 0; i < print.images.length; i++) {
-      //         print.images[i].url = images[i];
-      //       }
-      //       return print;
-      //     })
-      //   );
-      // })
-    );
+        //   const imageRequests: Observable<string>[] = [];
+        //   for (const image of print.images) {
+        //     imageRequests.push(this.getPrintImage(print.id, image.id));
+        //   }
+
+        //   return forkJoin(imageRequests).pipe(
+        //     tap(request => console.log(request)),
+        //     map(images => {
+        //       for (let i = 0; i < print.images.length; i++) {
+        //         print.images[i].url = images[i];
+        //       }
+        //       return print;
+        //     })
+        //   );
+        // })
+      );
   }
 
   addPrint(newPrint: PrintDetail): Observable<any> {
@@ -215,7 +236,7 @@ export class PrintService {
       id: print.printerId,
     };
 
-    const printDto: PrintDetailDTO = {
+    const printDto: PutPrintDetailDTO = {
       estimatedFilamentUsageMg: print.estimatedFilamentUsageMg,
       estimatedPrintTimeInSeconds: print.estimatedPrintTimeInSeconds,
       filamentType: print.filamentType,

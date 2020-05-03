@@ -8,6 +8,7 @@ import { PrintListComponent } from './print-list/print-list.component';
 import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-resolver.service';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
+import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 
 const routes: Routes = [
   {
@@ -35,6 +36,13 @@ const routes: Routes = [
           printers: CurrentUserPrinterSummaryResolverService,
         },
         canDeactivate: [PendingChangesGuard],
+      },
+      {
+        path: ':id',
+        component: ViewPrintDetailComponent,
+        resolve: {
+          print: PrintDetailResolverService,
+        },
       },
     ],
   },

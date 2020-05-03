@@ -1,0 +1,232 @@
+<div fxLayout="row" fxLayoutAlign="center">
+  <mat-card fxFlex="500px" fxFlex.xs="100%">
+    <form
+      [formGroup]="printForm"
+      autocomplete="off"
+      fxLayout="column wrap"
+      fxLayoutAlign="start center"
+      fxLayoutGap="10px"
+    >
+      <mat-card-title fxFlex
+        >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
+        Print</mat-card-title
+      >
+      <div fxFlex>
+        <div
+          fxFlex
+          class="card-img-top main-image"
+          *ngIf="selectedImage && selectedImage.value"
+        >
+          <app-print-image
+            fxFlex
+            [printId]="printForm.get('id').value"
+            [imageId]="selectedImage.value.id"
+            [imageData]="selectedImage.value.url"
+            [showDeleteOnHover]="true"
+            (imageDataChange)="selectedImage.value.url = $event"
+          ></app-print-image>
+        </div>
+
+        <div
+          class="images-preview mt-2"
+          *ngIf="false"
+          fxLayout
+          fxLayoutAlign="center center"
+        >
+          <div
+            fxFlex
+            formArrayName="images"
+            *ngFor="let image of images.controls; let i = index"
+          >
+            <div
+              [formGroupName]="i"
+              class="image-preview"
+              [ngClass]="{
+                isDefault: image?.value?.isDefault === true,
+                isSelected: selectedImage === image
+              }"
+            >
+              <!--
+              <img
+                [src]="$any(image).value.url"
+                
+                [ngClass]="{
+                
+                }"
+                alt="Image Preview"
+                (click)="selectImage(image)"
+              />
+              
+            -->
+              <app-print-image
+                fxFlex
+                [printId]="printForm.get('id').value"
+                [imageId]="image.value.id"
+                [imageData]="image.value.url"
+                (imageDataChange)="image.value.url = $event"
+              ></app-print-image>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <mat-card-content
+        fxFlex
+        fxFlexFill
+        fxLayout="column wrap"
+        fxLayoutAlign="space-evenly center"
+      >
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Title</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="title"
+            required
+            maxlength="100"
+          />
+          <mat-error *ngIf="printForm.controls['title'].hasError('required')">
+            A Title is <strong>required</strong>
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Printer</mat-label>
+          <mat-select formControlName="printerId" required>
+            <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
+              getPrinterLabel(printer)
+            }}</mat-option>
+          </mat-select>
+          <mat-error
+            *ngIf="printForm.controls['printerId'].hasError('required')"
+          >
+            A Printer is <strong>required</strong>
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Start Date</mat-label>
+          <input
+            matInput
+            [matDatepicker]="picker"
+            placeholder="Choose a date"
+            formControlName="startDate"
+            required
+          />
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="picker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          <mat-error
+            *ngIf="printForm.controls['startDate'].hasError('required')"
+          >
+            A Start Date is <strong>required</strong>
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Thing URL</mat-label>
+          <input matInput type="url" formControlName="url" maxlength="1000" />
+        </mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Estimated Print Time</mat-label>
+          <input
+            matInput
+            type="text"
+            placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
+            formControlName="estimatedPrintTimeInSeconds"
+          />
+        </mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Estimated Filament Usage (grams)</mat-label>
+          <input
+            matInput
+            type="text"
+            pattern="^\d*(\.\d{0,3})?$"
+            formControlName="estimatedFilamentUsageG"
+          />
+          <mat-error
+            *ngIf="
+              printForm.controls['estimatedFilamentUsageG'].hasError('pattern')
+            "
+          >
+            Numbers (up to 3-decimal places) only.
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Actual Print Time</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="printTimeInSeconds"
+            placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
+          />
+        </mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Actual Filament Usage (grams)</mat-label>
+          <input
+            matInput
+            type="text"
+            pattern="^\d*(\.\d{0,3})?$"
+            formControlName="filamentUsageG"
+          />
+          <mat-error
+            *ngIf="printForm.controls['filamentUsageG'].hasError('pattern')"
+          >
+            Numbers (up to 3-decimal places) only.
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Filament Type</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="filamentType"
+            maxlength="100"
+          />
+        </mat-form-field>
+
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Notes</mat-label>
+          <textarea
+            matInput
+            type="text"
+            formControlName="notes"
+            maxlength="1000"
+          ></textarea>
+        </mat-form-field>
+
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
+            <mat-option [value]="printStatusTypes.Printing"
+              >Printing</mat-option
+            >
+            <mat-option [value]="printStatusTypes.Success">Success</mat-option>
+            <mat-option [value]="printStatusTypes.Cancelled"
+              >Cancelled</mat-option
+            >
+            <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </mat-card-content>
+      <mat-card-actions
+        fxLayout
+        fxLayoutAlign="space-between center"
+        fxLayoutGap="15px"
+      >
+        <div fxFlex fxFlexFill>
+          <button
+            fxFlex
+            mat-raised-button
+            type="button"
+            (click)="handleClose()"
+            color="warn"
+          >
+            Close
+          </button>
+        </div>
+      </mat-card-actions>
+    </form>
+  </mat-card>
+</div>

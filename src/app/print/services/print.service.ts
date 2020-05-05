@@ -31,6 +31,12 @@ export enum PrintStatus {
   Failed = 5,
 }
 
+export enum PrintViewStatus {
+  Public = 1,
+  Unlisted = 2,
+  Private = 3,
+}
+
 export interface PrintImage {
   id: number;
   isDefault: boolean;
@@ -65,6 +71,8 @@ export interface PrintDetailDTO {
   notes: string;
   url: string;
   status: PrintStatus;
+
+  viewStatus: PrintViewStatus;
   images?: PrintImage[];
 }
 
@@ -81,6 +89,8 @@ export interface PutPrintDetailDTO {
   notes: string;
   url: string;
   status: PrintStatus;
+
+  viewStatus: PrintViewStatus;
   images?: PrintImage[];
 }
 
@@ -97,6 +107,8 @@ export interface PrintDetail {
   notes: string;
   url: string;
   status: PrintStatus;
+
+  viewStatus: PrintViewStatus;
 
   images?: PrintImage[];
 }
@@ -116,6 +128,8 @@ export interface AddPrintDTO {
   notes: string;
   url: string;
   status: PrintStatus;
+
+  viewStatus: PrintViewStatus;
 }
 
 interface IResizeImageOptions {
@@ -182,6 +196,7 @@ export class PrintService {
             status: newPrint.status,
             title: newPrint.title,
             url: newPrint.url,
+            viewStatus: newPrint.viewStatus,
             images: newPrint.images || [],
           };
           return print;
@@ -224,9 +239,10 @@ export class PrintService {
       status: newPrint.status,
       title: newPrint.title,
       url: newPrint.url,
+      viewStatus: newPrint.viewStatus,
     };
 
-    return this.http.post<any>(url, newPrint);
+    return this.http.post<any>(url, printDto);
   }
 
   updatePrint(print: PrintDetail): Observable<any> {
@@ -250,6 +266,7 @@ export class PrintService {
       url: print.url,
       id: print.id,
       images: print.images,
+      viewStatus: print.viewStatus,
     };
 
     return this.http.put<any>(url, printDto);
@@ -279,8 +296,9 @@ export class PrintService {
    */
   public getPrintImage(printId: number, imageId: number): Observable<string> {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
+    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
 
-    return this.http.get(url, { responseType: 'blob' }).pipe(
+    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
       concatMap((image) => {
         const reader = new FileReader();
         reader.readAsDataURL(image);

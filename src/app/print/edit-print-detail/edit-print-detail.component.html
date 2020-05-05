@@ -222,6 +222,20 @@
             <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
           </mat-select>
         </mat-form-field>
+        <mat-form-field fxFlex fxFlexFill>
+          <mat-label> Sharing To:</mat-label>
+          <mat-select formControlName="viewStatus">
+            <mat-option [value]="printViewStatusTypes.Public"
+              >Public (anyone can view)</mat-option
+            >
+            <mat-option [value]="printViewStatusTypes.Unlisted"
+              >Unlisted (anyone with link can view)</mat-option
+            >
+            <mat-option [value]="printViewStatusTypes.Private"
+              >Private (only you can view)</mat-option
+            >
+          </mat-select>
+        </mat-form-field>
       </mat-card-content>
       <mat-card-actions
         fxLayout

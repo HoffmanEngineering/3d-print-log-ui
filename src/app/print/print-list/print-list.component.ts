@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
+import { NavigatorShareService } from 'src/app/core/services/navigator-share.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import {
@@ -58,7 +59,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private printerRedirectPromptService: PrinterRedirectPromptService,
     private toastrService: ToastrService,
     private titleService: Title,
-    private router: Router
+    private router: Router,
+    private navigatorShareService: NavigatorShareService
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
@@ -141,6 +143,27 @@ export class PrintListComponent implements OnInit, OnDestroy {
       )
       .subscribe((response) => {
         this.handlePagedList(response);
+      });
+  }
+
+  public share(print: PrintSummary) {
+    if (!this.navigatorShareService.canShare()) {
+      console.error('Navigator Share is not supported by browser.');
+      alert(`This service/api is not supported in your Browser`);
+      return;
+    }
+
+    this.navigatorShareService
+      .share({
+        title: `${print.title} | 3D Print Log`,
+        text: 'View 3D print',
+        url: `https://www.3dprintlog.com/prints/${print.id}`,
+      })
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => {
+        console.log(error);
       });
   }
 

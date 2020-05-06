@@ -14,6 +14,7 @@ import { PrintDetailResolverService } from './resolvers/print-detail-resolver.se
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
 import { PrintService } from './services/print.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
+import { PrintShareDialogComponent } from './print-share-dialog/print-share-dialog.component';
 
 @NgModule({
   declarations: [
@@ -22,6 +23,7 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
     EditPrintDetailComponent,
     PrintImageComponent,
     ViewPrintDetailComponent,
+    PrintShareDialogComponent,
   ],
   imports: [
     CommonModule,

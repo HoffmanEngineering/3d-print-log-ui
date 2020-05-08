@@ -28,8 +28,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.auth.userProfile$.subscribe((user) => {
-      if (user && user.picture) {
-        this.profilePictureUrl = user.picture;
+      if (user && user.profilePicture) {
+        this.profilePictureUrl = user.profilePicture;
       } else {
         this.profilePictureUrl = null;
       }

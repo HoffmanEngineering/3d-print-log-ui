@@ -107,11 +107,13 @@
         <mat-menu #aboutMenu="matMenu">
           <!-- <button mat-menu-item>Fee</button> -->
           <a class="menu-link" mat-menu-item [routerLink]="[print.id, 'edit']"
-            >Edit</a
+            ><mat-icon>edit</mat-icon>Edit</a
           >
-          <a class="menu-link" mat-menu-item [routerLink]="[print.id]">View</a>
+          <a class="menu-link" mat-menu-item [routerLink]="[print.id]"
+            ><mat-icon>launch</mat-icon>View</a
+          >
           <button type="button" mat-menu-item (click)="share(print)">
-            Share
+            <mat-icon>share</mat-icon>Share
           </button>
         </mat-menu>
       </td>

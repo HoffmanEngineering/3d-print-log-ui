@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
@@ -15,6 +16,8 @@ import { AuthService } from 'src/app/core/services/auth.service';
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   public profilePictureUrl: string | null = null;
+
+  private userProfileSubscription: Subscription;
 
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;
@@ -27,7 +30,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.auth.userProfile$.subscribe((user) => {
+    this.userProfileSubscription = this.auth.userProfile$.subscribe((user) => {
       if (user && user.profilePicture) {
         this.profilePictureUrl = user.profilePicture;
       } else {
@@ -52,5 +55,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // tslint:disable-next-line: deprecation
     this.mobileQuery.removeListener(this.mobileQueryListener);
+
+    if (this.userProfileSubscription) {
+      this.userProfileSubscription.unsubscribe();
+    }
   }
 }

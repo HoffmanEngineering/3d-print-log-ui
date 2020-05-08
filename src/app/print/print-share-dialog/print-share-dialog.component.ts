@@ -7,6 +7,7 @@ import {
 } from '../services/print.service';
 
 import { Clipboard } from '@angular/cdk/clipboard';
+import { DOCUMENT } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { NavigatorShareService } from 'src/app/core/services/navigator-share.service';
 
@@ -32,11 +33,11 @@ export class PrintShareDialogComponent implements OnInit {
     private printService: PrintService,
     private clipboard: Clipboard,
     private toastrService: ToastrService,
-    public navigatorShareService: NavigatorShareService
+    public navigatorShareService: NavigatorShareService,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {}
 
   ngOnInit(): void {
-    console.log(this.data);
     this.printService.getPrintDetail(this.data.printId).subscribe((print) => {
       this.handlePrintChange(print);
     });
@@ -44,7 +45,7 @@ export class PrintShareDialogComponent implements OnInit {
 
   handlePrintChange(newPrint: PrintDetail) {
     this.print = newPrint;
-    this.printLink = `https://www.3dprintlog.com/prints/${newPrint.id}`;
+    this.printLink = `${this.document.location.origin}/prints/${newPrint.id}`;
   }
 
   public updatePrint(newViewStatus: PrintViewStatus) {

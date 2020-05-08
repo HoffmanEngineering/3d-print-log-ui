@@ -1,17 +1,39 @@
 <div fxLayout="row" fxLayoutAlign="center">
   <mat-card fxFlex="500px" fxFlex.xs="100%">
-    <form
-      [formGroup]="printForm"
-      autocomplete="off"
-      fxLayout="column wrap"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
-    >
-      <mat-card-title fxFlex
-        >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
-        Print</mat-card-title
+    <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
+      <mat-card-header fxFlex>
+        <img mat-card-avatar [src]="this.user.profilePicture" />
+        <mat-card-title>
+          {{ print.title }}
+        </mat-card-title>
+        <mat-card-subtitle>
+          Printed by
+          <a [routerLink]="['/users', user.id]">{{ user.displayName }}</a> on
+          {{ print.startDate | date: 'longDate' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content
+        fxLayout="column"
+        fxLayoutAlign="start center"
+        fxLayoutGap="10px"
       >
-      <div fxFlex>
+        <div fxLayout="row">
+          <div class="main-image">
+            <app-print-image
+              fxFlex
+              [printId]="print.id"
+              [imageId]="selectedImage.id"
+              [imageData]="selectedImage.url"
+              [showDeleteOnHover]="false"
+              (imageDataChange)="selectedImage.url = $event"
+            ></app-print-image>
+          </div>
+        </div>
+        <div></div>
+      </mat-card-content>
+
+      <!-- <div fxFlex>
         <div
           fxFlex
           class="card-img-top main-image"
@@ -46,18 +68,6 @@
                 isSelected: selectedImage === image
               }"
             >
-              <!--
-              <img
-                [src]="$any(image).value.url"
-                
-                [ngClass]="{
-                
-                }"
-                alt="Image Preview"
-                (click)="selectImage(image)"
-              />
-              
-            -->
               <app-print-image
                 fxFlex
                 [printId]="printForm.get('id').value"
@@ -68,7 +78,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <mat-card-content
         fxFlex
@@ -76,7 +86,7 @@
         fxLayout="column wrap"
         fxLayoutAlign="space-evenly center"
       >
-        <mat-form-field fxFlex fxFlexFill>
+        <!-- <mat-form-field fxFlex fxFlexFill>
           <mat-label> Title</mat-label>
           <input
             matInput
@@ -208,7 +218,7 @@
             >
             <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
           </mat-select>
-        </mat-form-field>
+        </mat-form-field> -->
       </mat-card-content>
       <mat-card-actions
         fxLayout
@@ -227,6 +237,6 @@
           </button>
         </div>
       </mat-card-actions>
-    </form>
+    </div>
   </mat-card>
 </div>

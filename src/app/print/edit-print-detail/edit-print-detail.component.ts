@@ -84,7 +84,7 @@ export class EditPrintDetailComponent
     this.activatedRoute.data.subscribe((data) => {
       this.printers = data.printers;
 
-      this.printForm = this.buildFormFromPrintDetail(data.print);
+      this.printForm = this.buildFormFromPrintDetail(data.print.print);
     });
   }
 
@@ -412,6 +412,7 @@ export class EditPrintDetailComponent
       title: this.printForm.controls.title.value,
       url: this.printForm.controls.url.value,
       images: existingPrintImages,
+      createdByUserId: null,
     };
 
     return print;

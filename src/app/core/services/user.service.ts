@@ -90,6 +90,12 @@ export class UserService {
     return this.http.get<UserDetailDto>(url);
   }
 
+  getUserDetail(id: number) {
+    const url = `${this.baseApiUrl}/${id}`;
+    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
+    return this.http.get<UserDetailDto>(url, { headers });
+  }
+
   updateCurrentUserDetail(newUserDetail: UpdateUserDetailDto) {
     const url = `${this.baseApiUrl}/me`;
     return this.http.put<UserDetailDto>(url, newUserDetail);

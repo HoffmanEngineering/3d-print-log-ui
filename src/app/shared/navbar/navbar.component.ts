@@ -16,6 +16,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   public profilePictureUrl: string | null = null;
+  public userId: number | null = null;
 
   private userProfileSubscription: Subscription;
 
@@ -33,8 +34,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.userProfileSubscription = this.auth.userProfile$.subscribe((user) => {
       if (user && user.profilePicture) {
         this.profilePictureUrl = user.profilePicture;
+        this.userId = user.id;
       } else {
         this.profilePictureUrl = null;
+        this.userId = null;
       }
     });
 

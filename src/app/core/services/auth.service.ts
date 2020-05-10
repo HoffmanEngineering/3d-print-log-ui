@@ -119,6 +119,20 @@ export class AuthService {
     // this.userProfileSubject$.next(user))
   }
 
+  updateCurrentUserCoverPicture(newUrl: string) {
+    this.userProfileSubject$.next({
+      ...this.userProfileSubject$.value,
+      coverPicture: newUrl,
+    });
+  }
+
+  updateCurrentUserProfilePicture(newUrl: string) {
+    this.userProfileSubject$.next({
+      ...this.userProfileSubject$.value,
+      profilePicture: newUrl,
+    });
+  }
+
   getTokenSilently$(options?): Observable<string> {
     return this.auth0Client$.pipe(
       concatMap((client: Auth0Client) => from(client.getTokenSilently(options)))

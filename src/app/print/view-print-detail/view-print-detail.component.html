@@ -19,7 +19,7 @@
         fxLayoutGap="10px"
       >
         <div fxLayout="row">
-          <div class="main-image">
+          <div class="main-image" *ngIf="selectedImage">
             <app-print-image
               fxFlex
               [printId]="print.id"

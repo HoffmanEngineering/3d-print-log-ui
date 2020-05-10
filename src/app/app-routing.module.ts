@@ -50,6 +50,11 @@ const routes: Routes = [
       import('./analytics/analytics.module').then((m) => m.AnalyticsModule),
   },
   {
+    path: 'users',
+    loadChildren: () =>
+      import('./users/users.module').then((m) => m.UsersModule),
+  },
+  {
     path: 'home-redirect',
     canActivate: [HomepageRedirectGuard],
     pathMatch: 'full',
@@ -60,6 +65,7 @@ const routes: Routes = [
     redirectTo: '/home-redirect',
     pathMatch: 'full',
   },
+
   {
     path: '**',
     redirectTo: '/home-redirect',

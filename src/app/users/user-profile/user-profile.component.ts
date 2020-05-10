@@ -1,0 +1,99 @@
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
+import { Subscription } from 'rxjs';
+import {
+  AuthService,
+  UserProfileInfo,
+} from 'src/app/core/services/auth.service';
+import { UserDetailDto, UserService } from 'src/app/core/services/user.service';
+
+@Component({
+  selector: 'app-user-profile',
+  templateUrl: './user-profile.component.html',
+  styleUrls: ['./user-profile.component.scss'],
+})
+export class UserProfileComponent implements OnInit {
+  public userDetail: UserDetailDto;
+
+  public currentUser: UserProfileInfo;
+
+  authServiceSubscription: Subscription;
+  activatedRouteSubscription: Subscription;
+
+  constructor(
+    private activatedRoute: ActivatedRoute,
+    private authService: AuthService,
+    private userService: UserService,
+    private toastrService: ToastrService
+  ) {}
+
+  ngOnInit(): void {
+    this.activatedRouteSubscription = this.activatedRoute.data.subscribe(
+      (data) => {
+        if (this.authServiceSubscription) {
+          this.authServiceSubscription.unsubscribe();
+        }
+
+        this.authServiceSubscription = this.authService.userProfile$.subscribe(
+          (user) => {
+            this.userDetail = data.userDetail;
+            this.currentUser = user;
+          }
+        );
+      }
+    );
+  }
+
+  addCoverPhoto(event) {
+    const files = event.target.files;
+    if (files) {
+      for (const file of files) {
+        if (!file.type.match(/image.*/)) {
+          this.toastrService.error(
+            'Please select an image.',
+            'Selected file is not an Image'
+          );
+          continue;
+        }
+
+        this.userService
+          .updateCurrentUserCoverPicture(file)
+          .subscribe((newPictureUrl) => {
+            this.userDetail = {
+              ...this.userDetail,
+              coverPicture: newPictureUrl,
+            };
+
+            this.authService.updateCurrentUserCoverPicture(newPictureUrl);
+          });
+      }
+    }
+  }
+
+  addProfilePicture(event) {
+    const files = event.target.files;
+    if (files) {
+      for (const file of files) {
+        if (!file.type.match(/image.*/)) {
+          this.toastrService.error(
+            'Please select an image.',
+            'Selected file is not an Image'
+          );
+          continue;
+        }
+
+        this.userService
+          .updateCurrentUserProfilePicture(file)
+          .subscribe((newPictureUrl) => {
+            this.userDetail = {
+              ...this.userDetail,
+              profilePicture: newPictureUrl,
+            };
+
+            this.authService.updateCurrentUserProfilePicture(newPictureUrl);
+          });
+      }
+    }
+  }
+}

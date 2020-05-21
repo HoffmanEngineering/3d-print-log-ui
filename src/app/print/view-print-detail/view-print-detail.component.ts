@@ -3,6 +3,7 @@ import {
   Component,
   HostListener,
   OnInit,
+  OnDestroy,
 } from '@angular/core';
 import {
   AbstractControl,
@@ -19,17 +20,21 @@ import { ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
 import { Title } from '@angular/platform-browser';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { environment } from 'src/environments/environment';
 import {
   PrintDetail,
   PrintService,
   PrintStatus,
 } from '../services/print.service';
-import { UserSummaryDto } from 'src/app/core/services/user.service';
+import {
+  AuthService,
+  UserProfileInfo,
+} from 'src/app/core/services/auth.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -43,7 +48,7 @@ export interface PrintImageValue {
   templateUrl: './view-print-detail.component.html',
   styleUrls: ['./view-print-detail.component.scss'],
 })
-export class ViewPrintDetailComponent implements OnInit {
+export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   public printers: PrinterSummary[] = [];
 
   public printForm: FormGroup;
@@ -56,15 +61,30 @@ export class ViewPrintDetailComponent implements OnInit {
 
   public printStatusTypes = PrintStatus;
 
+  public isUserProfileFeatureEnabled = environment.features.userProfile;
+  userProfileSubscription: Subscription;
+  currentUser: UserProfileInfo;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
-    private formBuilder: FormBuilder,
+    private authService: AuthService,
     private titleService: Title
   ) {}
+  ngOnDestroy(): void {
+    if (this.userProfileSubscription) {
+      this.userProfileSubscription.unsubscribe();
+    }
+  }
 
   ngOnInit() {
     this.titleService.setTitle('Viewing Print - 3D Print Log');
+
+    this.userProfileSubscription = this.authService.userProfile$.subscribe(
+      (currentUser) => {
+        this.currentUser = currentUser;
+      }
+    );
 
     this.activatedRoute.data.subscribe((data) => {
       this.printers = data.printers;

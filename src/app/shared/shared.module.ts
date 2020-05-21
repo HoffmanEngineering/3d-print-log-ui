@@ -33,6 +33,7 @@ import { FeedbackComponent } from './feedback/feedback.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import { DurationPipe } from './pipes/duration.pipe';
 
 @NgModule({
   declarations: [
@@ -41,6 +42,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     UserProfileComponent,
     FeedbackComponent,
     SidebarComponent,
+    DurationPipe,
   ],
   imports: [
     CommonModule,
@@ -107,6 +109,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MatAutocompleteModule,
     MatDialogModule,
     ClipboardModule,
+    DurationPipe,
   ],
 })
 export class SharedModule {}

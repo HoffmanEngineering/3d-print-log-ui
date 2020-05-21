@@ -1,4 +1,4 @@
-<div fxLayout="row" fxLayoutAlign="center">
+<div fxLayout="row" fxLayoutAlign="center" style="width: 100%;">
   <mat-card fxFlex="500px" fxFlex.xs="100%">
     <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
       <mat-card-header fxFlex>
@@ -6,9 +6,14 @@
         <mat-card-title>
           {{ print.title }}
         </mat-card-title>
-        <mat-card-subtitle>
+        <mat-card-subtitle *ngIf="isUserProfileFeatureEnabled">
           Printed by
           <a [routerLink]="['/users', user.id]">{{ user.displayName }}</a> on
+          {{ print.startDate | date: 'longDate' }}
+        </mat-card-subtitle>
+        <mat-card-subtitle *ngIf="!isUserProfileFeatureEnabled">
+          Printed by
+          {{ user.displayName }} on
           {{ print.startDate | date: 'longDate' }}
         </mat-card-subtitle>
       </mat-card-header>
@@ -86,6 +91,34 @@
         fxLayout="column wrap"
         fxLayoutAlign="space-evenly center"
       >
+        <section class="mat-typography grid-container">
+          <h3>Print Status:</h3>
+          <p>
+            {{ printStatusTypes[print.status] | titlecase }}
+          </p>
+          <h3>Printer:</h3>
+          <p>{{ print.printer.make }} {{ print.printer.model }}</p>
+          <h3>Thing URL:</h3>
+          <p>{{ print.url }}</p>
+          <h3>Estimated Print Time:</h3>
+          <p>{{ print.estimatedPrintTimeInSeconds | duration }}</p>
+          <h3>Estimated Filament Usage (grams)</h3>
+          <p>
+            {{
+              print.estimatedFilamentUsageMg
+                ? print.estimatedFilamentUsageMg / 1000
+                : ''
+            }}
+          </p>
+          <h3>Actual Print Time:</h3>
+          <p>{{ print.printTimeInSeconds | duration }}</p>
+          <h3>Actual Filament Usage (grams)</h3>
+          <p>{{ print.filamentUsageMg ? print.filamentUsageMg / 1000 : '' }}</p>
+          <h3>Filament Type:</h3>
+          <p>{{ print.filamentType }}</p>
+          <h3>Notes:</h3>
+          <p>{{ print.notes }}</p>
+        </section>
         <!-- <mat-form-field fxFlex fxFlexFill>
           <mat-label> Title</mat-label>
           <input
@@ -226,6 +259,16 @@
         fxLayoutGap="15px"
       >
         <div fxFlex fxFlexFill>
+          <button
+            *ngIf="currentUser.id === user.id"
+            fxFlex
+            mat-raised-button
+            type="button"
+            color="accent"
+            [routerLink]="['edit']"
+          >
+            Edit
+          </button>
           <button
             fxFlex
             mat-raised-button

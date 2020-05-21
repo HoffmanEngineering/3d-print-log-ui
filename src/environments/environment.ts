@@ -14,6 +14,15 @@ export const environment = {
   appInsights: {
     instrumentationKey: '',
   },
+  /**
+   * Feature Flags
+   */
+  features: {
+    /**
+     * Enable the UserProfile Feature
+     */
+    userProfile: false,
+  },
 };
 
 /*

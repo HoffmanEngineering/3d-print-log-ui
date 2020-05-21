@@ -103,6 +103,7 @@ export interface PrintDetail {
   id: number;
   title: string;
   printerId: number;
+  printer?: PrinterSummary;
   startDate?: Date;
   estimatedPrintTimeInSeconds?: number;
   estimatedFilamentUsageMg?: number;
@@ -194,6 +195,7 @@ export class PrintService {
             notes: newPrint.notes,
             printTimeInSeconds: newPrint.printTimeInSeconds,
             printerId: newPrint.printerId,
+            printer: newPrint.printer,
             startDate: newPrint.startDate
               ? moment(newPrint.startDate).toDate()
               : null,

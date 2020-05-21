@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-navbar',
@@ -19,6 +20,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   public userId: number | null = null;
 
   private userProfileSubscription: Subscription;
+
+  public isUserProfileFeatureEnabled = environment.features.userProfile;
 
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;

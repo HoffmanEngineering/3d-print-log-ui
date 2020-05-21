@@ -105,7 +105,7 @@
           class="menu-link"
           mat-menu-item
           [routerLink]="['users', userId]"
-          *ngIf="auth.loggedIn"
+          *ngIf="auth.loggedIn && isUserProfileFeatureEnabled"
           >My Profile</a
         >
         <button mat-menu-item (click)="auth.logout()" *ngIf="auth.loggedIn">

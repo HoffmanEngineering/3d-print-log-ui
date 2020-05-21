@@ -115,6 +115,9 @@
           <button type="button" mat-menu-item (click)="share(print)">
             <mat-icon>share</mat-icon>Share
           </button>
+          <a class="menu-link" mat-menu-item [routerLink]="['copy', print.id]"
+            ><mat-icon>file_copy</mat-icon>Duplicate</a
+          >
         </mat-menu>
       </td>
     </ng-container>

@@ -14,14 +14,23 @@
       >
       <div fxFlex>
         <input
-          *ngIf="images.length < 1"
-          mat-raised-button
+          #imgFileInput
+          style="display: none;"
           type="file"
           accept="image/*"
           class="custom-file-input form-control"
           id="files"
           (change)="detectFiles($event)"
         />
+        <button
+          *ngIf="images.length < 1"
+          type="button"
+          mat-raised-button
+          (click)="imgFileInput.click()"
+          color="accent"
+        >
+          Upload Picture
+        </button>
 
         <div
           fxFlex
@@ -253,7 +262,7 @@
                 ? 'Save changes before copying'
                 : 'Copy to a new print'
             }}"
-            [routerLink]="['..', 'copy', printForm.get('id').value]"
+            [routerLink]="['../..', 'copy', printForm.get('id').value]"
           >
             Copy
           </button>

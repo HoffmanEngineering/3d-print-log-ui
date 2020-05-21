@@ -1,5 +1,9 @@
 table {
   width: 100%;
+  th,
+  td {
+    padding-right: 5px;
+  }
 }
 
 .header {

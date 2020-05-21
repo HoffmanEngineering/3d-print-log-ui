@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { from, Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import {
   ImageResizerService,
@@ -67,6 +67,10 @@ export interface UpdateUserDetailDto {
   viewStatus: ProfileViewStatus;
 }
 
+export interface UserUrlDto {
+  url: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -114,7 +118,9 @@ export class UserService {
         const formData: FormData = new FormData();
         formData.append('image', reducedImage, file.name);
 
-        return this.http.post<string>(url, formData);
+        return this.http
+          .post<UserUrlDto>(url, formData)
+          .pipe(map((result) => result.url));
       })
     );
   }
@@ -132,7 +138,9 @@ export class UserService {
         const formData: FormData = new FormData();
         formData.append('image', reducedImage, file.name);
 
-        return this.http.post<string>(url, formData);
+        return this.http
+          .post<UserUrlDto>(url, formData)
+          .pipe(map((result) => result.url));
       })
     );
   }

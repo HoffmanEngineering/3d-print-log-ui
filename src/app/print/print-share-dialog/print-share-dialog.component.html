@@ -1,0 +1,49 @@
+<h1 mat-dialog-title>Share Print</h1>
+<div mat-dialog-content>
+  <mat-form-field>
+    <mat-label> Sharing To:</mat-label>
+    <mat-select
+      [ngModel]="print?.viewStatus"
+      (ngModelChange)="updatePrint($event)"
+    >
+      <mat-option [value]="printViewStatusTypes.Public"
+        >Public (anyone can view)</mat-option
+      >
+      <mat-option [value]="printViewStatusTypes.Unlisted"
+        >Unlisted (anyone with link can view)</mat-option
+      >
+      <mat-option [value]="printViewStatusTypes.Private"
+        >Private (only you can view)</mat-option
+      >
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label> Link to Print:</mat-label>
+    <input matInput readonly="true" [ngModel]="printLink" />
+  </mat-form-field>
+</div>
+<div mat-dialog-actions fxLayout fxLayoutAlign="space-around">
+  <button
+    *ngIf="!navigatorShareService.canShare()"
+    type="button"
+    mat-raised-button
+    color="primary"
+    (click)="copyToClipboard()"
+    cdkFocusInitial
+  >
+    Copy Link to Clipboard
+  </button>
+  <button
+    *ngIf="navigatorShareService.canShare()"
+    type="button"
+    mat-raised-button
+    color="primary"
+    (click)="share()"
+    cdkFocusInitial
+  >
+    Share <mat-icon>share</mat-icon>
+  </button>
+  <button type="button" mat-raised-button color="accent" mat-dialog-close>
+    Close
+  </button>
+</div>

@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { forkJoin, from, fromEvent, Observable, of } from 'rxjs';
 import {
@@ -15,6 +15,10 @@ import { environment } from 'src/environments/environment';
 
 import * as moment from 'moment';
 
+import {
+  ImageResizerService,
+  IResizeImageOptions,
+} from 'src/app/core/services/image-resizer.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 
@@ -29,6 +33,12 @@ export enum PrintStatus {
   Success = 3,
   Cancelled = 4,
   Failed = 5,
+}
+
+export enum PrintViewStatus {
+  Public = 1,
+  Unlisted = 2,
+  Private = 3,
 }
 
 export interface PrintImage {
@@ -49,9 +59,29 @@ export interface PrintSummary {
   status: PrintStatus;
 
   defaultPrintImageId: number;
+  createdByUserId: number;
 }
 
 export interface PrintDetailDTO {
+  id: number;
+  title: string;
+  printerId: number;
+  printer: PrinterSummary;
+  startDate?: Date;
+  estimatedPrintTimeInSeconds?: number;
+  estimatedFilamentUsageMg?: number;
+  printTimeInSeconds?: number;
+  filamentUsageMg?: number;
+  filamentType: string;
+  notes: string;
+  url: string;
+  status: PrintStatus;
+  viewStatus: PrintViewStatus;
+  images?: PrintImage[];
+  createdByUserId: number;
+}
+
+export interface PutPrintDetailDTO {
   id: number;
   title: string;
   printerId: number;
@@ -64,6 +94,8 @@ export interface PrintDetailDTO {
   notes: string;
   url: string;
   status: PrintStatus;
+
+  viewStatus: PrintViewStatus;
   images?: PrintImage[];
 }
 
@@ -71,6 +103,7 @@ export interface PrintDetail {
   id: number;
   title: string;
   printerId: number;
+  printer?: PrinterSummary;
   startDate?: Date;
   estimatedPrintTimeInSeconds?: number;
   estimatedFilamentUsageMg?: number;
@@ -81,7 +114,10 @@ export interface PrintDetail {
   url: string;
   status: PrintStatus;
 
+  viewStatus: PrintViewStatus;
+
   images?: PrintImage[];
+  createdByUserId: number;
 }
 
 /**
@@ -99,11 +135,8 @@ export interface AddPrintDTO {
   notes: string;
   url: string;
   status: PrintStatus;
-}
 
-interface IResizeImageOptions {
-  maxSize: number;
-  file: File;
+  viewStatus: PrintViewStatus;
 }
 
 @Injectable()
@@ -113,7 +146,10 @@ export class PrintService {
   private readonly IMAGE_QUALITY = 0.9;
   private readonly IMAGE_MAX_SIZE_PX = 1280;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private imageResizer: ImageResizerService
+  ) {}
 
   getPrintSummaries(
     pageNumber: number = 1,
@@ -144,48 +180,55 @@ export class PrintService {
 
   getPrintDetail(id: number): Observable<PrintDetail> {
     const url = `${this.baseApi}/api/Prints/${id}`;
-    return this.http.get<PrintDetailDTO>(url).pipe(
-      map((newPrint) => {
-        const print: PrintDetail = {
-          id: newPrint.id,
-          estimatedFilamentUsageMg: newPrint.estimatedFilamentUsageMg,
-          estimatedPrintTimeInSeconds: newPrint.estimatedPrintTimeInSeconds,
-          filamentType: newPrint.filamentType,
-          filamentUsageMg: newPrint.filamentUsageMg,
-          notes: newPrint.notes,
-          printTimeInSeconds: newPrint.printTimeInSeconds,
-          printerId: newPrint.printerId,
-          startDate: newPrint.startDate
-            ? moment(newPrint.startDate).toDate()
-            : null,
-          status: newPrint.status,
-          title: newPrint.title,
-          url: newPrint.url,
-          images: newPrint.images || [],
-        };
-        return print;
-      })
-      // mergeMap(print => {
-      //   if (print.images.length === 0) {
-      //     return of(print);
-      //   }
+    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
 
-      //   const imageRequests: Observable<string>[] = [];
-      //   for (const image of print.images) {
-      //     imageRequests.push(this.getPrintImage(print.id, image.id));
-      //   }
+    return this.http
+      .get<PrintDetailDTO>(url, { headers })
+      .pipe(
+        map((newPrint) => {
+          const print: PrintDetail = {
+            id: newPrint.id,
+            estimatedFilamentUsageMg: newPrint.estimatedFilamentUsageMg,
+            estimatedPrintTimeInSeconds: newPrint.estimatedPrintTimeInSeconds,
+            filamentType: newPrint.filamentType,
+            filamentUsageMg: newPrint.filamentUsageMg,
+            notes: newPrint.notes,
+            printTimeInSeconds: newPrint.printTimeInSeconds,
+            printerId: newPrint.printerId,
+            printer: newPrint.printer,
+            startDate: newPrint.startDate
+              ? moment(newPrint.startDate).toDate()
+              : null,
+            status: newPrint.status,
+            title: newPrint.title,
+            url: newPrint.url,
+            viewStatus: newPrint.viewStatus,
+            images: newPrint.images || [],
+            createdByUserId: newPrint.createdByUserId,
+          };
+          return print;
+        })
+        // mergeMap(print => {
+        //   if (print.images.length === 0) {
+        //     return of(print);
+        //   }
 
-      //   return forkJoin(imageRequests).pipe(
-      //     tap(request => console.log(request)),
-      //     map(images => {
-      //       for (let i = 0; i < print.images.length; i++) {
-      //         print.images[i].url = images[i];
-      //       }
-      //       return print;
-      //     })
-      //   );
-      // })
-    );
+        //   const imageRequests: Observable<string>[] = [];
+        //   for (const image of print.images) {
+        //     imageRequests.push(this.getPrintImage(print.id, image.id));
+        //   }
+
+        //   return forkJoin(imageRequests).pipe(
+        //     tap(request => console.log(request)),
+        //     map(images => {
+        //       for (let i = 0; i < print.images.length; i++) {
+        //         print.images[i].url = images[i];
+        //       }
+        //       return print;
+        //     })
+        //   );
+        // })
+      );
   }
 
   addPrint(newPrint: PrintDetail): Observable<any> {
@@ -203,9 +246,10 @@ export class PrintService {
       status: newPrint.status,
       title: newPrint.title,
       url: newPrint.url,
+      viewStatus: newPrint.viewStatus,
     };
 
-    return this.http.post<any>(url, newPrint);
+    return this.http.post<any>(url, printDto);
   }
 
   updatePrint(print: PrintDetail): Observable<any> {
@@ -215,7 +259,7 @@ export class PrintService {
       id: print.printerId,
     };
 
-    const printDto: PrintDetailDTO = {
+    const printDto: PutPrintDetailDTO = {
       estimatedFilamentUsageMg: print.estimatedFilamentUsageMg,
       estimatedPrintTimeInSeconds: print.estimatedPrintTimeInSeconds,
       filamentType: print.filamentType,
@@ -229,6 +273,7 @@ export class PrintService {
       url: print.url,
       id: print.id,
       images: print.images,
+      viewStatus: print.viewStatus,
     };
 
     return this.http.put<any>(url, printDto);
@@ -240,9 +285,10 @@ export class PrintService {
     const settings: IResizeImageOptions = {
       file,
       maxSize: this.IMAGE_MAX_SIZE_PX,
+      imageQuality: this.IMAGE_QUALITY,
     };
 
-    return from(this.resizeImage(settings)).pipe(
+    return from(this.imageResizer.resizeImage(settings)).pipe(
       switchMap((reducedImage) => {
         const formData: FormData = new FormData();
         formData.append('image', reducedImage, file.name);
@@ -258,8 +304,9 @@ export class PrintService {
    */
   public getPrintImage(printId: number, imageId: number): Observable<string> {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
+    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
 
-    return this.http.get(url, { responseType: 'blob' }).pipe(
+    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
       concatMap((image) => {
         const reader = new FileReader();
         reader.readAsDataURL(image);
@@ -287,60 +334,4 @@ export class PrintService {
 
     return this.http.delete(url);
   }
-
-  resizeImage = (settings: IResizeImageOptions): Promise<Blob> => {
-    const file = settings.file;
-    const maxSize = settings.maxSize;
-    const reader = new FileReader();
-    const image = new Image();
-    const canvas = document.createElement('canvas');
-    const dataURItoBlob = (dataURI: string) => {
-      const bytes =
-        dataURI.split(',')[0].indexOf('base64') >= 0
-          ? atob(dataURI.split(',')[1])
-          : unescape(dataURI.split(',')[1]);
-      const mime = dataURI.split(',')[0].split(':')[1].split(';')[0];
-      const max = bytes.length;
-      const ia = new Uint8Array(max);
-      for (let i = 0; i < max; i++) {
-        ia[i] = bytes.charCodeAt(i);
-      }
-      return new Blob([ia], { type: mime });
-    };
-    const resize = () => {
-      let width = image.width;
-      let height = image.height;
-
-      if (width > height) {
-        if (width > maxSize) {
-          height *= maxSize / width;
-          width = maxSize;
-        }
-      } else {
-        if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext('2d').drawImage(image, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', this.IMAGE_QUALITY);
-      return dataURItoBlob(dataUrl);
-    };
-
-    return new Promise((ok, no) => {
-      if (!file.type.match(/image.*/)) {
-        no(new Error('Not an image'));
-        return;
-      }
-
-      reader.onload = (readerEvent: any) => {
-        image.onload = () => ok(resize());
-        image.src = readerEvent.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  };
 }

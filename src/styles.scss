@@ -27,6 +27,11 @@ app-navbar {
   line-height: 28px;
 }
 
+.transparent {
+  background: transparent;
+  border: none !important;
+}
+
 @keyframes spinner {
   to {
     transform: rotate(360deg);

@@ -101,13 +101,13 @@
         />
       </button>
       <mat-menu #profileMenu="matMenu">
-        <!-- <a
+        <a
           class="menu-link"
           mat-menu-item
-          routerLink="/profile"
-          *ngIf="auth.loggedIn"
-          >Profile</a
-        > -->
+          [routerLink]="['users', userId]"
+          *ngIf="auth.loggedIn && isUserProfileFeatureEnabled"
+          >My Profile</a
+        >
         <button mat-menu-item (click)="auth.logout()" *ngIf="auth.loggedIn">
           Log Out
         </button>

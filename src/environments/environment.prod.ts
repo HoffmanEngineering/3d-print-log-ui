@@ -10,4 +10,13 @@ export const environment = {
   appInsights: {
     instrumentationKey: '3c9f6914-555b-4442-8724-0d5b706d115a',
   },
+  /**
+   * Feature Flags
+   */
+  features: {
+    /**
+     * Enable the UserProfile Feature
+     */
+    userProfile: false,
+  },
 };

@@ -26,7 +26,17 @@ export class AuthInterceptorService implements HttpInterceptor {
         });
         return next.handle(tokenReq);
       }),
-      catchError((err) => throwError(err))
+      catchError((err) => {
+        if (req.headers.get('allow-anonymous-request')) {
+          const tokenReq = req.clone({
+            headers: req.headers.delete('allow-anonymous-request'),
+          });
+
+          return next.handle(tokenReq);
+        }
+
+        return throwError(err);
+      })
     );
   }
 }

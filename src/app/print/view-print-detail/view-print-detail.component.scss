@@ -1,0 +1,25 @@
+.main-image {
+  position: relative;
+  max-width: 400px;
+  max-height: 400px;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-gap: 0.3em 0.6em;
+  grid-auto-flow: dense;
+  align-items: center;
+}
+h3 {
+  width: auto;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+p {
+  grid-column: 2;
+  width: auto;
+  margin: 0;
+}

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
@@ -8,6 +9,7 @@ import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
+import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
 import {
   PrintService,
   PrintStatus,
@@ -33,6 +35,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     'printer',
     'start-date',
     'status',
+    'more',
   ];
 
   public searchText = '';
@@ -57,7 +60,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private printerRedirectPromptService: PrinterRedirectPromptService,
     private toastrService: ToastrService,
     private titleService: Title,
-    private router: Router
+    private router: Router,
+    public dialog: MatDialog
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
@@ -141,6 +145,18 @@ export class PrintListComponent implements OnInit, OnDestroy {
       .subscribe((response) => {
         this.handlePagedList(response);
       });
+  }
+
+  public share(print: PrintSummary) {
+    const dialogRef = this.dialog.open(PrintShareDialogComponent, {
+      width: '300px',
+      minWidth: '300px',
+      data: { printId: print.id },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      console.log('The dialog was closed');
+    });
   }
 
   getPrinterLabel(print: PrintSummary) {

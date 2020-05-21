@@ -12,6 +12,26 @@ import {
 } from 'rxjs';
 import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
+
+export interface UserProfileInfo {
+  id: number;
+  /**
+   * The URL of the user's profile picture
+   */
+  profilePicture: string;
+
+  /**
+   * The URL of the user's cover picture
+   */
+  coverPicture: string;
+
+  displayName: string;
+
+  bio: string;
+
+  viewStatus: ProfileViewStatus;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -42,20 +62,75 @@ export class AuthService {
   );
 
   // Create subject and public observable of user profile data
-  private userProfileSubject$ = new BehaviorSubject<any>(null);
+  private userProfileSubject$ = new BehaviorSubject<UserProfileInfo>(null);
   userProfile$ = this.userProfileSubject$.asObservable();
   // Create a local property for login status
   loggedIn: boolean = null;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private userService: UserService) {
+    // this.userProfile$.subscribe((user) => {
+    //   if (user) {
+    //     console.log(user);
+    //     this.userService.getCurrentUserDetail().subscribe((currentUser) => {
+    //       if (currentUser.displayName === null) {
+    //         const userInfo: UserDetailDto = {
+    //           ...currentUser,
+    //           displayName: user.nickname,
+    //           profilePicture: user.picture,
+    //         };
+    //         this.userService
+    //           .updateCurrentUserDetail(userInfo)
+    //           .subscribe((updatedUser) => {
+    //             // TODO: Save this updated user back to the userProfile$ object.
+    //           });
+    //       }
+    //     });
+    //   }
+    // });
+  }
 
   // When calling, options can be passed if desired
   // https://auth0.github.io/auth0-spa-js/classes/auth0client.html#getuser
   getUser$(options?): Observable<any> {
     return this.auth0Client$.pipe(
       concatMap((client: Auth0Client) => from(client.getUser(options))),
-      tap((user) => this.userProfileSubject$.next(user))
+      tap((user) => {
+        this.userService.getCurrentUserDetail().subscribe((currentUser) => {
+          if (currentUser.displayName === null) {
+            const userInfo: UserDetailDto = {
+              ...currentUser,
+              displayName: user.nickname,
+              profilePicture: user.picture,
+            };
+
+            this.userService
+              .updateCurrentUserDetail(userInfo)
+              .subscribe((updatedUser) => {
+                // TODO: Save this updated user back to the userProfile$ object.
+                this.userProfileSubject$.next(updatedUser);
+              });
+          } else {
+            this.userProfileSubject$.next(currentUser);
+          }
+        });
+      })
     );
+
+    // this.userProfileSubject$.next(user))
+  }
+
+  updateCurrentUserCoverPicture(newUrl: string) {
+    this.userProfileSubject$.next({
+      ...this.userProfileSubject$.value,
+      coverPicture: newUrl,
+    });
+  }
+
+  updateCurrentUserProfilePicture(newUrl: string) {
+    this.userProfileSubject$.next({
+      ...this.userProfileSubject$.value,
+      profilePicture: newUrl,
+    });
   }
 
   getTokenSilently$(options?): Observable<string> {

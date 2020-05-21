@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { environment } from 'src/environments/environment';
 import { AuthGuard } from './core/guards/auth.guard';
 import { HomepageRedirectGuard } from './core/guards/homepage-redirect.guard';
 import { PendingChangesGuard } from './core/guards/pending-changes.guard';
@@ -49,6 +50,13 @@ const routes: Routes = [
     loadChildren: () =>
       import('./analytics/analytics.module').then((m) => m.AnalyticsModule),
   },
+  environment.features.userProfile
+    ? {
+        path: 'users',
+        loadChildren: () =>
+          import('./users/users.module').then((m) => m.UsersModule),
+      }
+    : { path: 'users', redirectTo: '/home-redirect' },
   {
     path: 'home-redirect',
     canActivate: [HomepageRedirectGuard],
@@ -60,6 +68,7 @@ const routes: Routes = [
     redirectTo: '/home-redirect',
     pathMatch: 'full',
   },
+
   {
     path: '**',
     redirectTo: '/home-redirect',

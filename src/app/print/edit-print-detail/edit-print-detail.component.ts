@@ -28,6 +28,7 @@ import {
   PrintDetail,
   PrintService,
   PrintStatus,
+  PrintViewStatus,
 } from '../services/print.service';
 
 export interface PrintImageValue {
@@ -39,15 +40,17 @@ export interface PrintImageValue {
 
 @Component({
   selector: 'app-print-detail',
-  templateUrl: './print-detail.component.html',
-  styleUrls: ['./print-detail.component.scss'],
+  templateUrl: './edit-print-detail.component.html',
+  styleUrls: ['./edit-print-detail.component.scss'],
 })
-export class PrintDetailComponent implements OnInit, ComponentCanDeactivate {
+export class EditPrintDetailComponent
+  implements OnInit, ComponentCanDeactivate {
   public printers: PrinterSummary[] = [];
 
   public printForm: FormGroup;
 
   public printStatusTypes = PrintStatus;
+  public printViewStatusTypes = PrintViewStatus;
 
   public selectedImage: FormControl;
 
@@ -81,7 +84,7 @@ export class PrintDetailComponent implements OnInit, ComponentCanDeactivate {
     this.activatedRoute.data.subscribe((data) => {
       this.printers = data.printers;
 
-      this.printForm = this.buildFormFromPrintDetail(data.print);
+      this.printForm = this.buildFormFromPrintDetail(data.print.print);
     });
   }
 
@@ -150,6 +153,7 @@ export class PrintDetailComponent implements OnInit, ComponentCanDeactivate {
       notes: [print ? print.notes : ''],
       url: [print ? print.url : ''],
       status: [print ? print.status : PrintStatus.Pending],
+      viewStatus: [print ? print.viewStatus : PrintViewStatus.Private],
       images: imageArray,
     });
   }
@@ -404,9 +408,11 @@ export class PrintDetailComponent implements OnInit, ComponentCanDeactivate {
       printerId: this.printForm.controls.printerId.value,
       startDate: this.printForm.controls.startDate.value,
       status: this.printForm.controls.status.value,
+      viewStatus: this.printForm.controls.viewStatus.value,
       title: this.printForm.controls.title.value,
       url: this.printForm.controls.url.value,
       images: existingPrintImages,
+      createdByUserId: null,
     };
 
     return print;

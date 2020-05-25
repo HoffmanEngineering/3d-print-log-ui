@@ -31,6 +31,14 @@ export class PrintDetailResolverService
     if (Number.isInteger(printId)) {
       return this.printService.getPrintDetail(printId).pipe(
         mergeMap((print) => {
+          if (print === null) {
+            const newDetails: PrintDetailWithUser = {
+              print,
+              user: null,
+            };
+
+            return of(newDetails);
+          }
           return this.userService.getUserSummary(print.createdByUserId).pipe(
             map((user) => {
               const newDetails: PrintDetailWithUser = {
@@ -44,7 +52,12 @@ export class PrintDetailResolverService
       );
     }
 
-    return null;
+    const emptyPrintDetail: PrintDetailWithUser = {
+      print: null,
+      user: null,
+    };
+
+    return emptyPrintDetail;
   }
 
   constructor(

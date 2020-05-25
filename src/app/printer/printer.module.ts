@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AdsenseModule } from 'ng2-adsense';
 import { SharedModule } from '../shared/shared.module';
 import { PrinterDetailComponent } from './printer-detail/printer-detail.component';
 import { PrinterListComponent } from './printer-list/printer-list.component';
@@ -15,6 +16,7 @@ import { PrinterListResolverService } from './resolvers/printer-list-resolver.se
     PrinterRoutingModule,
     FormsModule,
     ReactiveFormsModule,
+    AdsenseModule,
   ],
   providers: [PrinterListResolverService, PrinterDetailResolverService],
 })

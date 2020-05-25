@@ -28,6 +28,8 @@ import { SharedModule } from './shared/shared.module';
     AdsenseModule.forRoot({
       adClient: 'ca-pub-7759478851543974',
       adSlot: 1448468680,
+      adFormat: 'auto',
+      fullWidthResponsive: true,
     }),
   ],
   providers: [

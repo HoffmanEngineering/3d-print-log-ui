@@ -4,6 +4,7 @@ import { environment } from 'src/environments/environment';
 import { AuthGuard } from './core/guards/auth.guard';
 import { HomepageRedirectGuard } from './core/guards/homepage-redirect.guard';
 import { PendingChangesGuard } from './core/guards/pending-changes.guard';
+import { HomeComponent } from './home/home.component';
 import { CallbackComponent } from './shared/callback/callback.component';
 import { FeedbackComponent } from './shared/feedback/feedback.component';
 import { UserProfileComponent } from './shared/user-profile/user-profile.component';
@@ -65,7 +66,8 @@ const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: '/home-redirect',
+    canActivate: [HomepageRedirectGuard],
+    component: HomeComponent,
     pathMatch: 'full',
   },
 

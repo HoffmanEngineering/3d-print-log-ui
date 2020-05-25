@@ -67,7 +67,6 @@ export class PrintShareDialogComponent implements OnInit {
       this.navigatorShareService
         .share({
           title: `${this.print.title} | 3D Print Log`,
-          text: 'View 3D print',
           url: `https://www.3dprintlog.com/prints/${this.print.id}`,
         })
         .then((response) => {

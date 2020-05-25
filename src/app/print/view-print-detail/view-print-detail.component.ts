@@ -1,40 +1,18 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  HostListener,
-  OnInit,
-  OnDestroy,
-} from '@angular/core';
-import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
-import { MatDatepickerInputEvent } from '@angular/material/datepicker';
+import { DOCUMENT } from '@angular/common';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
-import { ToastrService } from 'ngx-toastr';
-import parse from 'parse-duration';
-
-import { Title } from '@angular/platform-browser';
-import { forkJoin, Observable, of, Subscription } from 'rxjs';
-import { map, mergeMap, take } from 'rxjs/operators';
-import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
-import { PrinterSummary } from 'src/app/core/services/printer.service';
-import { UserSummaryDto } from 'src/app/core/services/user.service';
-import { environment } from 'src/environments/environment';
-import {
-  PrintDetail,
-  PrintService,
-  PrintStatus,
-} from '../services/print.service';
+import { Subscription } from 'rxjs';
 import {
   AuthService,
   UserProfileInfo,
 } from 'src/app/core/services/auth.service';
+import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import { PrinterSummary } from 'src/app/core/services/printer.service';
+import { UserSummaryDto } from 'src/app/core/services/user.service';
+import { environment } from 'src/environments/environment';
+import { PrintDetail, PrintStatus } from '../services/print.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -56,7 +34,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   public print: PrintDetail;
   public user: UserSummaryDto;
 
-  public printImages: PrintImageValue[] = null;
+  public printImages: PrintImageValue[] = [];
   public selectedImage: PrintImageValue = null;
 
   public printStatusTypes = PrintStatus;
@@ -69,7 +47,8 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private authService: AuthService,
-    private titleService: Title
+    private readonly metaService: MetaTagService,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {}
   ngOnDestroy(): void {
     if (this.userProfileSubscription) {
@@ -78,8 +57,6 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.titleService.setTitle('Viewing Print - 3D Print Log');
-
     this.userProfileSubscription = this.authService.userProfile$.subscribe(
       (currentUser) => {
         this.currentUser = currentUser;
@@ -108,7 +85,24 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
           this.printImages.push(newImage);
         });
       }
+
+      this.metaService.setTitle(`${this.print.title} - 3D Print Log`);
+
+      this.setMetaTags();
     });
+  }
+
+  setMetaTags() {
+    const url = `${this.document.location.origin}/prints/${this.print.id}`;
+    const title = `${this.print.title} | 3D Print Log`;
+    const description = `${this.print.title} printed by ${
+      this.user.displayName
+    } on ${moment(this.print.startDate).format('LL')}`;
+    const imageUrl = this.selectedImage
+      ? `${environment.printLogApiUrl}/api/Prints/${this.print.id}/image/${this.selectedImage.id}`
+      : '';
+
+    this.metaService.setSocialMediaTags(url, title, description, imageUrl);
   }
 
   handleClose() {

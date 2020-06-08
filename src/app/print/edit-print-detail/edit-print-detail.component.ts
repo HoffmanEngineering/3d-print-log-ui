@@ -19,10 +19,15 @@ import { ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
 import { Title } from '@angular/platform-browser';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import {
+  UserSetting,
+  UserSettingService,
+  UserSettingType,
+} from 'src/app/core/services/user-setting.service';
 import { environment } from 'src/environments/environment';
 import {
   PrintDetail,
@@ -63,6 +68,9 @@ export class EditPrintDetailComponent
    */
   public saving = false;
 
+  public lastSelectedPrinterSetting: UserSetting | null = null;
+  printerIdValueChangesSub: Subscription;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -70,7 +78,8 @@ export class EditPrintDetailComponent
     private printService: PrintService,
     private toastr: ToastrService,
     private cd: ChangeDetectorRef,
-    private titleService: Title
+    private titleService: Title,
+    private readonly userSettingService: UserSettingService
   ) {}
 
   @HostListener('window:beforeunload')
@@ -78,14 +87,48 @@ export class EditPrintDetailComponent
     return !this.printForm.dirty;
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.titleService.setTitle('Print Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
       this.printers = data.printers;
 
+      this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
+
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
+
+      this.onChanges();
     });
+  }
+
+  private onChanges() {
+    this.SaveSettingWhenPrintIdChanges();
+  }
+
+  private SaveSettingWhenPrintIdChanges() {
+    if (this.printerIdValueChangesSub) {
+      this.printerIdValueChangesSub.unsubscribe();
+    }
+    this.printerIdValueChangesSub = this.printForm
+      .get('printerId')
+      .valueChanges.subscribe((newPrintId) => {
+        console.log(this.lastSelectedPrinterSetting);
+        if (this.lastSelectedPrinterSetting) {
+          this.userSettingService
+            .updateUserSetting(
+              this.lastSelectedPrinterSetting.id,
+              newPrintId.toString()
+            )
+            .subscribe();
+        } else {
+          this.userSettingService
+            .addUserSetting(
+              UserSettingType.Prints_LastSelectedPrinterId,
+              newPrintId.toString()
+            )
+            .subscribe();
+        }
+      });
   }
 
   onFileChange(event) {
@@ -130,7 +173,14 @@ export class EditPrintDetailComponent
     return this.formBuilder.group({
       id: [print ? print.id : null],
       title: [print ? print.title : '', Validators.required],
-      printerId: [print ? print.printerId : null, Validators.required],
+      printerId: [
+        print
+          ? print.printerId
+          : this.lastSelectedPrinterSetting
+          ? +this.lastSelectedPrinterSetting.value
+          : null,
+        Validators.required,
+      ],
       startDate: [
         print
           ? print.startDate

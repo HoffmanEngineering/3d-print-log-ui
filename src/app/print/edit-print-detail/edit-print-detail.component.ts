@@ -185,8 +185,8 @@ export class EditPrintDetailComponent
         print
           ? print.startDate
             ? moment(print.startDate).toDate()
-            : null
-          : null,
+            : moment().toDate()
+          : moment().toDate(),
         Validators.required,
       ],
       estimatedPrintTimeInSeconds: [

@@ -71,6 +71,9 @@ export class EditPrintDetailComponent
   public lastSelectedPrinterSetting: UserSetting | null = null;
   printerIdValueChangesSub: Subscription;
 
+  public defaultPrintViewStatusSetting: UserSetting | null = null;
+  viewStatusValueChangesSub: Subscription;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -94,6 +97,7 @@ export class EditPrintDetailComponent
       this.printers = data.printers;
 
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
+      this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
 
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
 
@@ -112,23 +116,48 @@ export class EditPrintDetailComponent
     this.printerIdValueChangesSub = this.printForm
       .get('printerId')
       .valueChanges.subscribe((newPrintId) => {
-        console.log(this.lastSelectedPrinterSetting);
         if (this.lastSelectedPrinterSetting) {
           this.userSettingService
             .updateUserSetting(
               this.lastSelectedPrinterSetting.id,
               newPrintId.toString()
             )
-            .subscribe();
+            .subscribe((setting) => {
+              this.lastSelectedPrinterSetting = setting;
+            });
         } else {
           this.userSettingService
             .addUserSetting(
               UserSettingType.Prints_LastSelectedPrinterId,
               newPrintId.toString()
             )
-            .subscribe();
+            .subscribe((setting) => {
+              this.lastSelectedPrinterSetting = setting;
+            });
         }
       });
+  }
+
+  changeDefaultViewStatus(newViewStatus: PrintViewStatus) {
+    if (this.defaultPrintViewStatusSetting) {
+      this.userSettingService
+        .updateUserSetting(
+          this.defaultPrintViewStatusSetting.id,
+          newViewStatus.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultPrintViewStatusSetting = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Prints_DefaultPrintViewStatus,
+          newViewStatus.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultPrintViewStatusSetting = setting;
+        });
+    }
   }
 
   onFileChange(event) {
@@ -203,7 +232,13 @@ export class EditPrintDetailComponent
       notes: [print ? print.notes : ''],
       url: [print ? print.url : ''],
       status: [print ? print.status : PrintStatus.Pending],
-      viewStatus: [print ? print.viewStatus : PrintViewStatus.Private],
+      viewStatus: [
+        print
+          ? print.viewStatus
+          : this.defaultPrintViewStatusSetting
+          ? +this.defaultPrintViewStatusSetting.value
+          : PrintViewStatus.Private,
+      ],
       images: imageArray,
     });
   }

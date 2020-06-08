@@ -8,13 +8,15 @@ import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintListComponent } from './print-list/print-list.component';
 import { PrintRoutingModule } from './print-routing.module';
+import { PrintShareDialogComponent } from './print-share-dialog/print-share-dialog.component';
 import { PrintComponent } from './print.component';
 import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-resolver.service';
+import { DefaultPrintViewStatusSettingResolverService } from './resolvers/default-print-view-status-setting-resolver.service';
+import { LastSelectedPrinterSettingResolverService } from './resolvers/last-selected-printer-setting-resolver.service';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
 import { PrintService } from './services/print.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
-import { PrintShareDialogComponent } from './print-share-dialog/print-share-dialog.component';
 
 @NgModule({
   declarations: [
@@ -38,6 +40,8 @@ import { PrintShareDialogComponent } from './print-share-dialog/print-share-dial
     PrintListResolverService,
     PrintService,
     CopyPrintDetailResolverService,
+    LastSelectedPrinterSettingResolverService,
+    DefaultPrintViewStatusSettingResolverService,
   ],
 })
 export class PrintModule {}

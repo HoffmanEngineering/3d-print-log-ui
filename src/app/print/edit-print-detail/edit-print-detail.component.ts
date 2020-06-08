@@ -19,10 +19,15 @@ import { ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
 import { Title } from '@angular/platform-browser';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import {
+  UserSetting,
+  UserSettingService,
+  UserSettingType,
+} from 'src/app/core/services/user-setting.service';
 import { environment } from 'src/environments/environment';
 import {
   PrintDetail,
@@ -63,6 +68,12 @@ export class EditPrintDetailComponent
    */
   public saving = false;
 
+  public lastSelectedPrinterSetting: UserSetting | null = null;
+  printerIdValueChangesSub: Subscription;
+
+  public defaultPrintViewStatusSetting: UserSetting | null = null;
+  viewStatusValueChangesSub: Subscription;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -70,7 +81,8 @@ export class EditPrintDetailComponent
     private printService: PrintService,
     private toastr: ToastrService,
     private cd: ChangeDetectorRef,
-    private titleService: Title
+    private titleService: Title,
+    private readonly userSettingService: UserSettingService
   ) {}
 
   @HostListener('window:beforeunload')
@@ -78,14 +90,74 @@ export class EditPrintDetailComponent
     return !this.printForm.dirty;
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.titleService.setTitle('Print Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
       this.printers = data.printers;
 
+      this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
+      this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
+
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
+
+      this.onChanges();
     });
+  }
+
+  private onChanges() {
+    this.SaveSettingWhenPrintIdChanges();
+  }
+
+  private SaveSettingWhenPrintIdChanges() {
+    if (this.printerIdValueChangesSub) {
+      this.printerIdValueChangesSub.unsubscribe();
+    }
+    this.printerIdValueChangesSub = this.printForm
+      .get('printerId')
+      .valueChanges.subscribe((newPrintId) => {
+        if (this.lastSelectedPrinterSetting) {
+          this.userSettingService
+            .updateUserSetting(
+              this.lastSelectedPrinterSetting.id,
+              newPrintId.toString()
+            )
+            .subscribe((setting) => {
+              this.lastSelectedPrinterSetting = setting;
+            });
+        } else {
+          this.userSettingService
+            .addUserSetting(
+              UserSettingType.Prints_LastSelectedPrinterId,
+              newPrintId.toString()
+            )
+            .subscribe((setting) => {
+              this.lastSelectedPrinterSetting = setting;
+            });
+        }
+      });
+  }
+
+  changeDefaultViewStatus(newViewStatus: PrintViewStatus) {
+    if (this.defaultPrintViewStatusSetting) {
+      this.userSettingService
+        .updateUserSetting(
+          this.defaultPrintViewStatusSetting.id,
+          newViewStatus.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultPrintViewStatusSetting = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Prints_DefaultPrintViewStatus,
+          newViewStatus.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultPrintViewStatusSetting = setting;
+        });
+    }
   }
 
   onFileChange(event) {
@@ -130,13 +202,20 @@ export class EditPrintDetailComponent
     return this.formBuilder.group({
       id: [print ? print.id : null],
       title: [print ? print.title : '', Validators.required],
-      printerId: [print ? print.printerId : null, Validators.required],
+      printerId: [
+        print
+          ? print.printerId
+          : this.lastSelectedPrinterSetting
+          ? +this.lastSelectedPrinterSetting.value
+          : null,
+        Validators.required,
+      ],
       startDate: [
         print
           ? print.startDate
             ? moment(print.startDate).toDate()
-            : null
-          : null,
+            : moment().toDate()
+          : moment().toDate(),
         Validators.required,
       ],
       estimatedPrintTimeInSeconds: [
@@ -153,7 +232,13 @@ export class EditPrintDetailComponent
       notes: [print ? print.notes : ''],
       url: [print ? print.url : ''],
       status: [print ? print.status : PrintStatus.Pending],
-      viewStatus: [print ? print.viewStatus : PrintViewStatus.Private],
+      viewStatus: [
+        print
+          ? print.viewStatus
+          : this.defaultPrintViewStatusSetting
+          ? +this.defaultPrintViewStatusSetting.value
+          : PrintViewStatus.Private,
+      ],
       images: imageArray,
     });
   }

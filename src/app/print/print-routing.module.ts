@@ -6,6 +6,8 @@ import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/curr
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintListComponent } from './print-list/print-list.component';
 import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-resolver.service';
+import { DefaultPrintViewStatusSettingResolverService } from './resolvers/default-print-view-status-setting-resolver.service';
+import { LastSelectedPrinterSettingResolverService } from './resolvers/last-selected-printer-setting-resolver.service';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
@@ -25,6 +27,8 @@ const routes: Routes = [
         resolve: {
           print: CopyPrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
+          lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
+          defaultPrintViewStatusSetting: DefaultPrintViewStatusSettingResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -34,6 +38,8 @@ const routes: Routes = [
         resolve: {
           print: PrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
+          lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
+          defaultPrintViewStatusSetting: DefaultPrintViewStatusSettingResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },

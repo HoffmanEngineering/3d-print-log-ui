@@ -3,10 +3,11 @@
     <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
       <mat-card-header fxFlex fxLayout="column" fxLayoutAlign="start center">
         <div fxFlex class="cover-photo-container">
-          <img [src]="this.userDetail.coverPicture" />
+          <img [src]="this.userDetail.coverPicture" class="cover-photo" />
           <button
+            *ngIf="userDetail.id === currentUser.id && !isEditingDescription"
             mat-button
-            class="transparent cover-photo-edit"
+            class="transparent btn-transparent cover-photo-edit"
             [matMenuTriggerFor]="coverPhotoMenu"
           >
             <mat-icon>photo</mat-icon> Cover Photo
@@ -33,11 +34,16 @@
           />
         </div>
         <div fxFlex class="profile-picture-container">
-          <img [src]="this.userDetail.profilePicture" />
+          <div class="profile-picture-wrapper">
+            <img
+              [src]="this.userDetail.profilePicture"
+              class="profile-picture"
+            />
+          </div>
           <button
-            *ngIf="userDetail.id === currentUser.id"
+            *ngIf="userDetail.id === currentUser.id && !isEditingDescription"
             type="button"
-            class="transparent profile-photo-edit"
+            class="transparent btn-transparent profile-photo-edit"
             (click)="profilephotoinput.click()"
           >
             <mat-icon>photo</mat-icon>
@@ -51,18 +57,68 @@
             (change)="addProfilePicture($event)"
           />
         </div>
-        <div fxFlex fxLayout="column" fxLayoutAlign="start center">
+        <div fxFlex fxFlexFill fxLayout="column" fxLayoutAlign="start center">
           <div fxFlex class="user-display-name">
-            {{ userDetail.displayName }}
-            <button *ngIf="userDetail.id === currentUser.id" type="button">
+            <h2 aria-label="User name">{{ userDetail.displayName }}</h2>
+            <!-- <button
+              *ngIf="userDetail.id === currentUser.id && !isEditingDescription"
+              type="button"
+            >
               <mat-icon>edit</mat-icon>Edit
-            </button>
+            </button> -->
           </div>
           <div fxFlex class="user-bio">
-            {{ userDetail.bio }}
-            <button *ngIf="userDetail.id === currentUser.id" type="button">
-              <mat-icon>edit</mat-icon>Edit
-            </button>
+            <span *ngIf="!isEditingDescription" style="white-space: pre-wrap;">
+              {{ userDetail.bio }}
+              <button
+                *ngIf="
+                  userDetail.id === currentUser.id && !isEditingDescription
+                "
+                type="button"
+                (click)="startEditingDescription()"
+              >
+                <mat-icon>edit</mat-icon>Edit
+              </button>
+            </span>
+            <div
+              *ngIf="isEditingDescription"
+              class="mat-elevation-z5"
+              style="padding: 10px;"
+            >
+              <mat-form-field style="width: 100%;">
+                <mat-label>Describe who you are:</mat-label>
+                <textarea
+                  matInput
+                  cdkTextareaAutosize
+                  [(ngModel)]="bio"
+                  maxlength="1000"
+                  cdkAutosizeMinRows="1"
+                  cdkAutosizeMaxRows="10"
+                ></textarea>
+                <mat-hint>
+                  {{ 1000 - bio.length }} characters remaining.</mat-hint
+                >
+              </mat-form-field>
+              <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                <button
+                  mat-raised-button
+                  type="submit"
+                  color="primary"
+                  (click)="saveDescription()"
+                >
+                  Submit
+                </button>
+                <button
+                  mat-raised-button
+                  type="button"
+                  class="close"
+                  (click)="cancelEditingDescription()"
+                  color="warn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </mat-card-header>

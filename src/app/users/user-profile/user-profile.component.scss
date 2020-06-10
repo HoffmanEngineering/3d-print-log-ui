@@ -1,21 +1,66 @@
 .cover-photo-container {
   width: 100%;
   height: auto;
+  position: relative;
+
+  .cover-photo {
+    width: 100%;
+  }
 
   .cover-photo-edit {
     position: absolute;
-    top: 0px;
-    right: 0px;
+    right: 5px;
+    bottom: 10px;
   }
 }
 
 .profile-picture-container {
-  width: 100%;
-  height: auto;
+  margin: -58px auto 0px;
+  width: 100px;
+  height: 100px;
+  position: relative;
+  border-radius: 50%;
+  background-color: #fff;
+
+  .profile-picture-wrapper {
+    width: 100px;
+    height: 100px;
+    background-color: transparent;
+
+    box-sizing: border-box;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    background-color: #fff;
+    display: inline-block;
+    vertical-align: middle;
+
+    img {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
 
   .profile-photo-edit {
     position: absolute;
+    border-radius: 10%;
 
     right: 0px;
   }
+}
+
+.user-display-name h2 {
+  margin-top: 0px;
+  padding-top: 0px;
+}
+
+.btn-transparent {
+  background-color: rgb(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.8rem;
+}
+
+.user-bio {
+  width: 80%;
 }

@@ -6,7 +6,6 @@ import { AdsenseModule } from 'ng2-adsense';
 import { PrintService } from '../core/services/print.service';
 import { SharedModule } from '../shared/shared.module';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
-import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintListComponent } from './print-list/print-list.component';
 import { PrintRoutingModule } from './print-routing.module';
 import { PrintShareDialogComponent } from './print-share-dialog/print-share-dialog.component';
@@ -23,7 +22,6 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
     PrintComponent,
     PrintListComponent,
     EditPrintDetailComponent,
-    PrintImageComponent,
     ViewPrintDetailComponent,
     PrintShareDialogComponent,
   ],

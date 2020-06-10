@@ -34,7 +34,7 @@ import {
   PrintService,
   PrintStatus,
   PrintViewStatus,
-} from '../services/print.service';
+} from '../../core/services/print.service';
 
 export interface PrintImageValue {
   id?: number;

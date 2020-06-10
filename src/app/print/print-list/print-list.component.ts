@@ -9,13 +9,13 @@ import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
-import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
 import {
   PrintService,
   PrintStatus,
   PrintSummary,
   PrintSummarySortColumn,
-} from '../services/print.service';
+} from '../../core/services/print.service';
+import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
 @Component({

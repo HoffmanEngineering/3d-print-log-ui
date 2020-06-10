@@ -15,7 +15,7 @@ import {
   PrintDetailDTO,
   PrintService,
   PrintStatus,
-} from '../services/print.service';
+} from '../../core/services/print.service';
 
 export interface PrintDetailWithUser {
   print: PrintDetail;

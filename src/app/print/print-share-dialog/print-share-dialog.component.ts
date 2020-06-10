@@ -4,7 +4,7 @@ import {
   PrintDetail,
   PrintService,
   PrintViewStatus,
-} from '../services/print.service';
+} from '../../core/services/print.service';
 
 import { Clipboard } from '@angular/cdk/clipboard';
 import { DOCUMENT } from '@angular/common';

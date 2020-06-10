@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AdsenseModule } from 'ng2-adsense';
+import { PrintService } from '../core/services/print.service';
 import { SharedModule } from '../shared/shared.module';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintImageComponent } from './print-image/print-image.component';
@@ -15,7 +16,6 @@ import { DefaultPrintViewStatusSettingResolverService } from './resolvers/defaul
 import { LastSelectedPrinterSettingResolverService } from './resolvers/last-selected-printer-setting-resolver.service';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
-import { PrintService } from './services/print.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 
 @NgModule({

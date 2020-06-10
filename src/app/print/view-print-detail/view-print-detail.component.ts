@@ -12,7 +12,7 @@ import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { environment } from 'src/environments/environment';
-import { PrintDetail, PrintStatus } from '../services/print.service';
+import { PrintDetail, PrintStatus } from '../../core/services/print.service';
 
 export interface PrintImageValue {
   id?: number;

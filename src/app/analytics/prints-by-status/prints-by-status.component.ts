@@ -11,7 +11,7 @@ import { PrintStatistic } from '../services/print-statistics.service';
 
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { groupBy } from 'lodash';
-import { PrintStatus } from 'src/app/print/services/print.service';
+import { PrintStatus } from 'src/app/core/services/print.service';
 
 export interface PrintStatusState {
   status: string;

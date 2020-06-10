@@ -1,15 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { forkJoin, from, fromEvent, Observable, of } from 'rxjs';
-import {
-  catchError,
-  concatMap,
-  map,
-  mergeMap,
-  switchMap,
-  take,
-  tap,
-} from 'rxjs/operators';
+import { from, fromEvent, Observable, of } from 'rxjs';
+import { catchError, concatMap, map, switchMap, take } from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { environment } from 'src/environments/environment';
 
@@ -139,7 +131,9 @@ export interface AddPrintDTO {
   viewStatus: PrintViewStatus;
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class PrintService {
   private readonly baseApi = environment.printLogApiUrl;
 
@@ -157,9 +151,11 @@ export class PrintService {
     searchText: string = '',
     filterByStatus: PrintStatus | null = null,
     sortDirection = SortDirection.Desc,
-    sortColumn = PrintSummarySortColumn.StartDate
+    sortColumn = PrintSummarySortColumn.StartDate,
+    userId?: number
   ): Observable<PagedList<PrintSummary>> {
     const url = `${this.baseApi}/api/Prints/summary`;
+    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
 
     let params = new HttpParams()
       .set('PageNumber', pageNumber.toString(10))
@@ -175,7 +171,11 @@ export class PrintService {
       params = params.set('filterByStatus', filterByStatus.toString(10));
     }
 
-    return this.http.get<PagedList<PrintSummary>>(url, { params });
+    if (userId !== undefined) {
+      params = params.set('userId', userId.toString(10));
+    }
+
+    return this.http.get<PagedList<PrintSummary>>(url, { params, headers });
   }
 
   getPrintDetail(id: number): Observable<PrintDetail> {

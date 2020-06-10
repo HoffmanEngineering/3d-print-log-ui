@@ -1,4 +1,4 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, Location } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -48,7 +48,8 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private readonly metaService: MetaTagService,
-    @Inject(DOCUMENT) private readonly document: Document
+    @Inject(DOCUMENT) private readonly document: Document,
+    private location: Location
   ) {}
   ngOnDestroy(): void {
     if (this.userProfileSubscription) {
@@ -106,7 +107,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   }
 
   handleClose() {
-    this.router.navigate(['/prints']);
+    this.location.back();
   }
 
   getPrinterLabel(printer: PrinterSummary) {

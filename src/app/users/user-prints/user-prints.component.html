@@ -1,0 +1,19 @@
+<div>
+  <div *ngFor="let print of prints" style="margin-bottom: 10px;">
+    <app-print-summary-card
+      [print]="print"
+      [userId]="userId"
+      [userName]="userName"
+      [userProfilePictureUrl]="userProfilePictureUrl"
+    >
+    </app-print-summary-card>
+  </div>
+  <button
+    *ngIf="showLoadMore"
+    mat-raised-button
+    color="accent"
+    (click)="loadNextPage()"
+  >
+    Load More
+  </button>
+</div>

@@ -128,8 +128,11 @@
         fxLayoutAlign="start center"
         fxLayoutGap="10px"
       >
-        <div fxLayout="row"></div>
-        <div></div>
+        <app-user-prints
+          [userId]="this.userDetail.id"
+          [userName]="this.userDetail.displayName"
+          [userProfilePictureUrl]="this.userDetail.profilePicture"
+        ></app-user-prints>
       </mat-card-content>
 
       <!-- <div fxFlex>

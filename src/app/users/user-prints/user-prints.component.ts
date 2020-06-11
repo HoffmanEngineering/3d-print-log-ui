@@ -1,7 +1,16 @@
-import { Component, Input, OnInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+} from '@angular/core';
+import { debounce } from 'lodash';
 import {
   PrintService,
+  PrintStatus,
   PrintSummary,
+  PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
 
 @Component({
@@ -9,7 +18,7 @@ import {
   templateUrl: './user-prints.component.html',
   styleUrls: ['./user-prints.component.scss'],
 })
-export class UserPrintsComponent implements OnInit {
+export class UserPrintsComponent implements OnChanges {
   @Input() userId: number;
   @Input() userProfilePictureUrl: string;
   @Input() userName: string;
@@ -19,17 +28,45 @@ export class UserPrintsComponent implements OnInit {
   public pageNumber = 1;
   public PAGE_SIZE = 10;
 
+  public searchText = '';
+
+  public filterByStatus: PrintStatus | null = -1;
+
+  public printStatusTypes = PrintStatus;
+
+  public printSummarySortColumns = PrintSummarySortColumn;
+
+  public debouncedUpdateFilter;
+
   public showLoadMore = true;
 
-  constructor(private readonly printService: PrintService) {}
+  constructor(private readonly printService: PrintService) {
+    this.debouncedUpdateFilter = debounce(() => {
+      // Clear the loaded prints, since we don't need them visible anymore
+      this.clearPrints();
+      this.updateFilter();
+    }, 400);
+  }
 
-  ngOnInit(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.userId || changes.userProfilePictureUrl || changes.userName) {
+      this.searchText = '';
+      this.filterByStatus = -1;
+      this.clearPrints();
+      this.updateFilter();
+    }
+  }
+
+  clearPrints() {
+    this.prints = [];
+  }
+  updateFilter(): any {
     this.printService
       .getPrintSummaries(
         this.pageNumber,
         this.PAGE_SIZE,
-        undefined,
-        undefined,
+        this.searchText,
+        this.filterByStatus,
         undefined,
         undefined,
         this.userId
@@ -45,21 +82,6 @@ export class UserPrintsComponent implements OnInit {
   loadNextPage() {
     this.pageNumber++;
 
-    this.printService
-      .getPrintSummaries(
-        this.pageNumber,
-        this.PAGE_SIZE,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        this.userId
-      )
-      .subscribe((response) => {
-        this.pageNumber = response.paging.currentPage;
-        this.prints = [...this.prints, ...response.items];
-
-        this.showLoadMore = this.pageNumber < response.paging.totalPages;
-      });
+    this.updateFilter();
   }
 }

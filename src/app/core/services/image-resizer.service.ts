@@ -1,7 +1,16 @@
 import { Injectable } from '@angular/core';
 
 export interface IResizeImageOptions {
-  maxSize: number;
+  /**
+   * Max Size (preserve aspect ratio)
+   */
+  maxSize?: number;
+
+  /**
+   * Forces a max height;
+   */
+  maxHeight?: number;
+
   imageQuality?: number;
   file: File;
 }
@@ -16,6 +25,7 @@ export class ImageResizerService {
   public resizeImage(settings: IResizeImageOptions): Promise<Blob> {
     const file = settings.file;
     const maxSize = settings.maxSize;
+    const maxHeight = settings.maxHeight;
     const reader = new FileReader();
     const image = new Image();
     const canvas = document.createElement('canvas');
@@ -36,15 +46,23 @@ export class ImageResizerService {
       let width = image.width;
       let height = image.height;
 
-      if (width > height) {
-        if (width > maxSize) {
-          height *= maxSize / width;
-          width = maxSize;
+      if (maxSize) {
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
         }
-      } else {
-        if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
+      }
+      if (maxHeight) {
+        if (height > maxHeight) {
+          width *= maxHeight / height;
+          height = maxHeight;
         }
       }
 

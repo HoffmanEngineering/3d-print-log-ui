@@ -70,12 +70,9 @@ export class PrintShareDialogComponent implements OnInit {
           url: `https://www.3dprintlog.com/prints/${this.print.id}`,
         })
         .then((response) => {
-          console.log(response);
           this.dialogRef.close();
         })
-        .catch((error) => {
-          console.log(error);
-        });
+        .catch((error) => {});
     }
   }
 }

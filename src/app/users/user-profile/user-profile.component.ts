@@ -73,8 +73,6 @@ export class UserProfileComponent implements OnInit {
               coverPicture: newPictureUrl,
             };
 
-            console.log({ ...this.userDetail });
-
             this.authService.updateCurrentUserCoverPicture(newPictureUrl);
           });
       }
@@ -113,8 +111,6 @@ export class UserProfileComponent implements OnInit {
         ...this.userDetail,
         coverPicture: null,
       };
-
-      console.log({ ...this.userDetail });
 
       this.authService.updateCurrentUserCoverPicture(null);
     });

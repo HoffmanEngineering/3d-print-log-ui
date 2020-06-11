@@ -154,9 +154,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       data: { printId: print.id },
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      console.log('The dialog was closed');
-    });
+    dialogRef.afterClosed().subscribe((result) => {});
   }
 
   getPrinterLabel(print: PrintSummary) {

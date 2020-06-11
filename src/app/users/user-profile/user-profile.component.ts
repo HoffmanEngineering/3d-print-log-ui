@@ -42,9 +42,10 @@ export class UserProfileComponent implements OnInit {
           this.authServiceSubscription.unsubscribe();
         }
 
+        this.userDetail = data.userDetail;
+
         this.authServiceSubscription = this.authService.userProfile$.subscribe(
           (user) => {
-            this.userDetail = data.userDetail;
             this.currentUser = user;
           }
         );
@@ -71,6 +72,8 @@ export class UserProfileComponent implements OnInit {
               ...this.userDetail,
               coverPicture: newPictureUrl,
             };
+
+            console.log({ ...this.userDetail });
 
             this.authService.updateCurrentUserCoverPicture(newPictureUrl);
           });
@@ -102,6 +105,19 @@ export class UserProfileComponent implements OnInit {
           });
       }
     }
+  }
+
+  public removeCoverPhoto() {
+    this.userService.removeCurrentUserCoverPicture().subscribe(() => {
+      this.userDetail = {
+        ...this.userDetail,
+        coverPicture: null,
+      };
+
+      console.log({ ...this.userDetail });
+
+      this.authService.updateCurrentUserCoverPicture(null);
+    });
   }
 
   public startEditingDescription() {

@@ -5,7 +5,7 @@ import {
   RouterStateSnapshot,
 } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
-import { PrintService, PrintSummary } from '../services/print.service';
+import { PrintService, PrintSummary } from '../../core/services/print.service';
 
 @Injectable()
 export class PrintListResolverService

@@ -21,7 +21,7 @@ export const environment = {
     /**
      * Enable the UserProfile Feature
      */
-    userProfile: false,
+    userProfile: true,
   },
 };
 

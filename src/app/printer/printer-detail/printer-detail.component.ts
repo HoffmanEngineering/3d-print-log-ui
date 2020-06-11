@@ -59,7 +59,7 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
 
       this.filteredModels = this.printerForm.valueChanges.pipe(
         startWith({ make: '', model: '' }),
-        tap((value) => console.log(value)),
+
         map((value) => this._filterModels(value))
       );
     });

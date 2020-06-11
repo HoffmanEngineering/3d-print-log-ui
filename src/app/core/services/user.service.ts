@@ -76,7 +76,9 @@ export interface UserUrlDto {
 })
 export class UserService {
   private readonly baseApiUrl = `${environment.printLogApiUrl}/api/Users`;
-  IMAGE_MAX_SIZE_PX = 1080;
+  private readonly PROFILE_IMAGE_MAX_SIZE_PX = 170;
+  private readonly COVER_PHOTO_MAX_HEIGHT_PX = 300;
+
   constructor(
     private http: HttpClient,
     private imageResizer: ImageResizerService
@@ -110,7 +112,7 @@ export class UserService {
 
     const settings: IResizeImageOptions = {
       file,
-      maxSize: this.IMAGE_MAX_SIZE_PX,
+      maxSize: this.PROFILE_IMAGE_MAX_SIZE_PX,
     };
 
     return from(this.imageResizer.resizeImage(settings)).pipe(
@@ -130,7 +132,7 @@ export class UserService {
 
     const settings: IResizeImageOptions = {
       file,
-      maxSize: this.IMAGE_MAX_SIZE_PX,
+      maxHeight: this.COVER_PHOTO_MAX_HEIGHT_PX,
     };
 
     return from(this.imageResizer.resizeImage(settings)).pipe(
@@ -143,5 +145,11 @@ export class UserService {
           .pipe(map((result) => result.url));
       })
     );
+  }
+
+  removeCurrentUserCoverPicture() {
+    const url = `${this.baseApiUrl}/me/cover-image`;
+
+    return this.http.delete(url);
   }
 }

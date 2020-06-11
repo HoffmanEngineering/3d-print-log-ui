@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { PrintStatus } from 'src/app/print/services/print.service';
+import { PrintStatus } from 'src/app/core/services/print.service';
 import { environment } from 'src/environments/environment';
 
 export interface PrintStatistic {

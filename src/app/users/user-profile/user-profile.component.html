@@ -1,12 +1,26 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card fxFlex="500px" fxFlex.xs="100%">
-    <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
-      <mat-card-header fxFlex fxLayout="column" fxLayoutAlign="start center">
+  <mat-card fxFlex="500px" fxFlex.xs="100%" fxFlex.gt-md="1200px">
+    <div
+      fxLayout="column wrap"
+      fxLayoutAlign="start center"
+      fxLayoutGap="10px"
+      fxLayout.gt-md="row"
+      fxLayoutAlign="space-around start"
+    >
+      <mat-card-header fxFlex fxLayout="column" fxLayoutAlign="start start">
         <div fxFlex class="cover-photo-container">
-          <img [src]="this.userDetail.coverPicture" />
+          <img
+            *ngIf="this.userDetail.coverPicture"
+            [src]="this.userDetail.coverPicture"
+            class="cover-photo"
+          />
+          <div *ngIf="!this.userDetail.coverPicture" class="empty-cover-photo">
+            &nbsp;
+          </div>
           <button
+            *ngIf="userDetail.id === currentUser?.id && !isEditingDescription"
             mat-button
-            class="transparent cover-photo-edit"
+            class="transparent btn-transparent cover-photo-edit"
             [matMenuTriggerFor]="coverPhotoMenu"
           >
             <mat-icon>photo</mat-icon> Cover Photo
@@ -19,7 +33,7 @@
             >
               <mat-icon>add_photo_alternate</mat-icon>Upload Photo
             </button>
-            <button type="button" mat-menu-item>
+            <button type="button" mat-menu-item (click)="removeCoverPhoto()">
               <mat-icon>delete</mat-icon>Remove
             </button>
           </mat-menu>
@@ -33,11 +47,16 @@
           />
         </div>
         <div fxFlex class="profile-picture-container">
-          <img [src]="this.userDetail.profilePicture" />
+          <div class="profile-picture-wrapper">
+            <img
+              [src]="this.userDetail.profilePicture"
+              class="profile-picture"
+            />
+          </div>
           <button
-            *ngIf="userDetail.id === currentUser.id"
+            *ngIf="userDetail.id === currentUser?.id && !isEditingDescription"
             type="button"
-            class="transparent profile-photo-edit"
+            class="transparent btn-transparent profile-photo-edit"
             (click)="profilephotoinput.click()"
           >
             <mat-icon>photo</mat-icon>
@@ -51,29 +70,102 @@
             (change)="addProfilePicture($event)"
           />
         </div>
-        <div fxFlex fxLayout="column" fxLayoutAlign="start center">
+        <div fxFlex fxFlexFill fxLayout="column" fxLayoutAlign="start center">
           <div fxFlex class="user-display-name">
-            {{ userDetail.displayName }}
-            <button *ngIf="userDetail.id === currentUser.id" type="button">
+            <h2 aria-label="User name">{{ userDetail.displayName }}</h2>
+            <!-- <button
+              *ngIf="userDetail.id === currentUser?.id && !isEditingDescription"
+              type="button"
+            >
               <mat-icon>edit</mat-icon>Edit
-            </button>
+            </button> -->
           </div>
           <div fxFlex class="user-bio">
-            {{ userDetail.bio }}
-            <button *ngIf="userDetail.id === currentUser.id" type="button">
-              <mat-icon>edit</mat-icon>Edit
-            </button>
+            <div
+              *ngIf="!isEditingDescription"
+              fxLayout="column"
+              fxLayoutAlign="start center"
+              fxLayoutGap="15px"
+            >
+              <div
+                *ngIf="!isEditingDescription"
+                style="white-space: pre-wrap;"
+                fxFlex
+              >
+                {{ userDetail.bio }}
+              </div>
+              <div fxFlex>
+                <button
+                  *ngIf="
+                    userDetail.id === currentUser?.id && !isEditingDescription
+                  "
+                  type="button"
+                  mat-raised-button
+                  color="accent"
+                  (click)="startEditingDescription()"
+                >
+                  <mat-icon>edit</mat-icon>Edit Bio
+                </button>
+              </div>
+            </div>
+
+            <div
+              *ngIf="isEditingDescription"
+              class="mat-elevation-z5"
+              style="padding: 10px;"
+            >
+              <mat-form-field style="width: 100%;">
+                <mat-label>Describe who you are:</mat-label>
+                <textarea
+                  matInput
+                  cdkTextareaAutosize
+                  [(ngModel)]="bio"
+                  maxlength="1000"
+                  cdkAutosizeMinRows="1"
+                  cdkAutosizeMaxRows="10"
+                ></textarea>
+                <mat-hint>
+                  {{ 1000 - bio.length }} characters remaining.</mat-hint
+                >
+              </mat-form-field>
+              <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                <button
+                  mat-raised-button
+                  type="submit"
+                  color="primary"
+                  (click)="saveDescription()"
+                >
+                  Submit
+                </button>
+                <button
+                  mat-raised-button
+                  type="button"
+                  class="close"
+                  (click)="cancelEditingDescription()"
+                  color="warn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
+        <div fxFlex>
+          <ng-adsense></ng-adsense>
         </div>
       </mat-card-header>
 
       <mat-card-content
+        fxFlex
         fxLayout="column"
         fxLayoutAlign="start center"
         fxLayoutGap="10px"
       >
-        <div fxLayout="row"></div>
-        <div></div>
+        <app-user-prints
+          [userId]="this.userDetail.id"
+          [userName]="this.userDetail.displayName"
+          [userProfilePictureUrl]="this.userDetail.profilePicture"
+        ></app-user-prints>
       </mat-card-content>
 
       <!-- <div fxFlex>
@@ -123,147 +215,7 @@
           </div>
         </div> -->
 
-      <mat-card-content
-        fxFlex
-        fxFlexFill
-        fxLayout="column wrap"
-        fxLayoutAlign="space-evenly center"
-      >
-        <!-- <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Title</mat-label>
-            <input
-              matInput
-              type="text"
-              formControlName="title"
-              required
-              maxlength="100"
-            />
-            <mat-error *ngIf="printForm.controls['title'].hasError('required')">
-              A Title is <strong>required</strong>
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Printer</mat-label>
-            <mat-select formControlName="printerId" required>
-              <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
-                getPrinterLabel(printer)
-              }}</mat-option>
-            </mat-select>
-            <mat-error
-              *ngIf="printForm.controls['printerId'].hasError('required')"
-            >
-              A Printer is <strong>required</strong>
-            </mat-error>
-          </mat-form-field>
-  
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Start Date</mat-label>
-            <input
-              matInput
-              [matDatepicker]="picker"
-              placeholder="Choose a date"
-              formControlName="startDate"
-              required
-            />
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="picker"
-            ></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-            <mat-error
-              *ngIf="printForm.controls['startDate'].hasError('required')"
-            >
-              A Start Date is <strong>required</strong>
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Thing URL</mat-label>
-            <input matInput type="url" formControlName="url" maxlength="1000" />
-          </mat-form-field>
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Estimated Print Time</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
-              formControlName="estimatedPrintTimeInSeconds"
-            />
-          </mat-form-field>
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Estimated Filament Usage (grams)</mat-label>
-            <input
-              matInput
-              type="text"
-              pattern="^\d*(\.\d{0,3})?$"
-              formControlName="estimatedFilamentUsageG"
-            />
-            <mat-error
-              *ngIf="
-                printForm.controls['estimatedFilamentUsageG'].hasError('pattern')
-              "
-            >
-              Numbers (up to 3-decimal places) only.
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Actual Print Time</mat-label>
-            <input
-              matInput
-              type="text"
-              formControlName="printTimeInSeconds"
-              placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
-            />
-          </mat-form-field>
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Actual Filament Usage (grams)</mat-label>
-            <input
-              matInput
-              type="text"
-              pattern="^\d*(\.\d{0,3})?$"
-              formControlName="filamentUsageG"
-            />
-            <mat-error
-              *ngIf="printForm.controls['filamentUsageG'].hasError('pattern')"
-            >
-              Numbers (up to 3-decimal places) only.
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Filament Type</mat-label>
-            <input
-              matInput
-              type="text"
-              formControlName="filamentType"
-              maxlength="100"
-            />
-          </mat-form-field>
-  
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Notes</mat-label>
-            <textarea
-              matInput
-              type="text"
-              formControlName="notes"
-              maxlength="1000"
-            ></textarea>
-          </mat-form-field>
-  
-          <mat-form-field fxFlex fxFlexFill>
-            <mat-label> Status</mat-label>
-            <mat-select formControlName="status">
-              <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
-              <mat-option [value]="printStatusTypes.Printing"
-                >Printing</mat-option
-              >
-              <mat-option [value]="printStatusTypes.Success">Success</mat-option>
-              <mat-option [value]="printStatusTypes.Cancelled"
-                >Cancelled</mat-option
-              >
-              <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
-            </mat-select>
-          </mat-form-field> -->
-      </mat-card-content>
-      <mat-card-actions
+      <!-- <mat-card-actions
         fxLayout
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
@@ -273,7 +225,7 @@
             Close
           </button>
         </div>
-      </mat-card-actions>
+      </mat-card-actions> -->
     </div>
   </mat-card>
 </div>

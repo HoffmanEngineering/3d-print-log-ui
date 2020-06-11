@@ -21,6 +21,13 @@ export class UserProfileComponent implements OnInit {
   authServiceSubscription: Subscription;
   activatedRouteSubscription: Subscription;
 
+  public isEditingDescription = false;
+
+  /**
+   * The ngModel used for updating the Bio.
+   */
+  public bio = '';
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private authService: AuthService,
@@ -35,9 +42,10 @@ export class UserProfileComponent implements OnInit {
           this.authServiceSubscription.unsubscribe();
         }
 
+        this.userDetail = data.userDetail;
+
         this.authServiceSubscription = this.authService.userProfile$.subscribe(
           (user) => {
-            this.userDetail = data.userDetail;
             this.currentUser = user;
           }
         );
@@ -95,5 +103,41 @@ export class UserProfileComponent implements OnInit {
           });
       }
     }
+  }
+
+  public removeCoverPhoto() {
+    this.userService.removeCurrentUserCoverPicture().subscribe(() => {
+      this.userDetail = {
+        ...this.userDetail,
+        coverPicture: null,
+      };
+
+      this.authService.updateCurrentUserCoverPicture(null);
+    });
+  }
+
+  public startEditingDescription() {
+    this.bio = this.userDetail.bio;
+    this.isEditingDescription = true;
+  }
+
+  public cancelEditingDescription() {
+    this.bio = this.userDetail.bio;
+    this.isEditingDescription = false;
+  }
+
+  public saveDescription() {
+    const newUserDetail: UserDetailDto = {
+      ...this.userDetail,
+      bio: this.bio.trim(),
+    };
+    this.userService
+      .updateCurrentUserDetail(newUserDetail)
+      .subscribe((user) => {
+        this.userDetail = user;
+
+        this.bio = '';
+        this.isEditingDescription = false;
+      });
   }
 }

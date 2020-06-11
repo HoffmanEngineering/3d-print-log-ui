@@ -4,7 +4,7 @@ import {
   PrintDetail,
   PrintService,
   PrintViewStatus,
-} from '../services/print.service';
+} from '../../core/services/print.service';
 
 import { Clipboard } from '@angular/cdk/clipboard';
 import { DOCUMENT } from '@angular/common';
@@ -70,12 +70,9 @@ export class PrintShareDialogComponent implements OnInit {
           url: `https://www.3dprintlog.com/prints/${this.print.id}`,
         })
         .then((response) => {
-          console.log(response);
           this.dialogRef.close();
         })
-        .catch((error) => {
-          console.log(error);
-        });
+        .catch((error) => {});
     }
   }
 }

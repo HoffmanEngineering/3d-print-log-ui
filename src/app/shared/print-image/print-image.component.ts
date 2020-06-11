@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { PrintService } from '../services/print.service';
+import { PrintService } from '../../core/services/print.service';
 
 @Component({
   selector: 'app-print-image',

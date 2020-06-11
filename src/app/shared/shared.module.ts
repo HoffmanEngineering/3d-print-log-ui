@@ -31,9 +31,11 @@ import { RouterModule } from '@angular/router';
 import { CallbackComponent } from './callback/callback.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { NavbarComponent } from './navbar/navbar.component';
+import { DurationPipe } from './pipes/duration.pipe';
+import { PrintImageComponent } from './print-image/print-image.component';
+import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
-import { DurationPipe } from './pipes/duration.pipe';
 
 @NgModule({
   declarations: [
@@ -43,6 +45,8 @@ import { DurationPipe } from './pipes/duration.pipe';
     FeedbackComponent,
     SidebarComponent,
     DurationPipe,
+    PrintSummaryCardComponent,
+    PrintImageComponent,
   ],
   imports: [
     CommonModule,
@@ -110,6 +114,8 @@ import { DurationPipe } from './pipes/duration.pipe';
     MatDialogModule,
     ClipboardModule,
     DurationPipe,
+    PrintSummaryCardComponent,
+    PrintImageComponent,
   ],
 })
 export class SharedModule {}

@@ -1,0 +1,26 @@
+<mat-card>
+  <mat-card-header>
+    <img
+      *ngIf="userProfilePictureUrl"
+      mat-card-avatar
+      [src]="this.userProfilePictureUrl"
+    />
+    <mat-card-title>
+      <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
+    </mat-card-title>
+    <mat-card-subtitle *ngIf="userId && userName">
+      Printed by
+      <a [routerLink]="['/users', userId]">{{ userName }}</a> on
+      {{ print.startDate | date: 'longDate' }}
+    </mat-card-subtitle>
+    <mat-card-subtitle *ngIf="!userId || !userName">
+      Printed on
+      {{ print.startDate | date: 'longDate' }}
+    </mat-card-subtitle>
+  </mat-card-header>
+  <app-print-image
+    *ngIf="print.defaultPrintImageId > 0"
+    [printId]="print.id"
+    [imageId]="print.defaultPrintImageId"
+  ></app-print-image>
+</mat-card>

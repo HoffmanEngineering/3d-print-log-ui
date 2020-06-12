@@ -12,6 +12,8 @@ export class StatPanelComponent implements OnInit {
   @Input() title: string;
   @Input() value: number | string;
 
+  @Input() invertDisplay = false;
+
   constructor() {}
 
   ngOnInit() {}

@@ -6,12 +6,12 @@ import {
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
-import { DonutChartComponent } from '../panels/donut-chart/donut-chart.component';
 import { PrintStatistic } from '../services/print-statistics.service';
 
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { groupBy } from 'lodash';
 import { PrintStatus } from 'src/app/core/services/print.service';
+import { DonutChartComponent } from 'src/app/shared/panels/donut-chart/donut-chart.component';
 
 export interface PrintStatusState {
   status: string;

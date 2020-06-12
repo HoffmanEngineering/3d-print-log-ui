@@ -31,6 +31,9 @@ import { RouterModule } from '@angular/router';
 import { CallbackComponent } from './callback/callback.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { NavbarComponent } from './navbar/navbar.component';
+import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
+import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component';
+import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
 import { DurationPipe } from './pipes/duration.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
@@ -47,6 +50,9 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     DurationPipe,
     PrintSummaryCardComponent,
     PrintImageComponent,
+    StatPanelComponent,
+    GraphPanelComponent,
+    DonutChartComponent,
   ],
   imports: [
     CommonModule,
@@ -116,6 +122,9 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     DurationPipe,
     PrintSummaryCardComponent,
     PrintImageComponent,
+    StatPanelComponent,
+    GraphPanelComponent,
+    DonutChartComponent,
   ],
 })
 export class SharedModule {}

@@ -1,0 +1,45 @@
+<div gdColumns="1fr 1fr 1fr" gdRows="1fr 1fr" gdGap="10px">
+  <app-stat-panel
+    gdColumn="1"
+    gdRow="1"
+    [title]="'Total Prints'"
+    [value]="printCountTotal"
+    [invertDisplay]="true"
+  ></app-stat-panel>
+  <app-stat-panel
+    gdColumn="2"
+    gdRow="1"
+    [title]="'Total Print Time'"
+    [value]="totalPrintTimeTotal"
+    [invertDisplay]="true"
+  ></app-stat-panel>
+  <app-stat-panel
+    gdColumn="3"
+    gdRow="1"
+    [title]="'Total Filament Usage'"
+    [value]="totalFilamentUsageInG"
+    [invertDisplay]="true"
+  ></app-stat-panel>
+
+  <app-stat-panel
+    gdColumn="1"
+    gdRow="2"
+    [title]="'Total Prints\n(last 30 Days)'"
+    [value]="printCountLast30Days"
+    [invertDisplay]="true"
+  ></app-stat-panel>
+  <app-stat-panel
+    gdColumn="2"
+    gdRow="2"
+    [title]="'Print Time\n(last 30 Days)'"
+    [value]="totalPrintTimeLast30Days"
+    [invertDisplay]="true"
+  ></app-stat-panel>
+  <app-stat-panel
+    gdColumn="3"
+    gdRow="2"
+    [title]="'Filament Usage\n(last 30 Days)'"
+    [value]="totalFilamentUsageLast30DaysInG"
+    [invertDisplay]="true"
+  ></app-stat-panel>
+</div>

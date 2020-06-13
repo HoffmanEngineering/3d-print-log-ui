@@ -3,10 +3,10 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/current-user-printer-summary-resolver.service';
+import { DefaultPrintViewStatusSettingResolverService } from '../core/resolvers/default-print-view-status-setting-resolver.service';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintListComponent } from './print-list/print-list.component';
 import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-resolver.service';
-import { DefaultPrintViewStatusSettingResolverService } from './resolvers/default-print-view-status-setting-resolver.service';
 import { LastSelectedPrinterSettingResolverService } from './resolvers/last-selected-printer-setting-resolver.service';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';

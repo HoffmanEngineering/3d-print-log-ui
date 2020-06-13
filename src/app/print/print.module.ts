@@ -11,7 +11,6 @@ import { PrintRoutingModule } from './print-routing.module';
 import { PrintShareDialogComponent } from './print-share-dialog/print-share-dialog.component';
 import { PrintComponent } from './print.component';
 import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-resolver.service';
-import { DefaultPrintViewStatusSettingResolverService } from './resolvers/default-print-view-status-setting-resolver.service';
 import { LastSelectedPrinterSettingResolverService } from './resolvers/last-selected-printer-setting-resolver.service';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
@@ -39,7 +38,6 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
     PrintService,
     CopyPrintDetailResolverService,
     LastSelectedPrinterSettingResolverService,
-    DefaultPrintViewStatusSettingResolverService,
   ],
 })
 export class PrintModule {}

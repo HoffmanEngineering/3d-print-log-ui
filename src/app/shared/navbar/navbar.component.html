@@ -108,6 +108,13 @@
           *ngIf="auth.loggedIn && isUserProfileFeatureEnabled"
           >My Profile</a
         >
+        <a
+          *ngIf="auth.loggedIn"
+          class="menu-link"
+          mat-menu-item
+          [routerLink]="['/settings']"
+          >Settings</a
+        >
         <button mat-menu-item (click)="auth.logout()" *ngIf="auth.loggedIn">
           Log Out
         </button>

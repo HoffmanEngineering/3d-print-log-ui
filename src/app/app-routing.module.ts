@@ -59,6 +59,11 @@ const routes: Routes = [
       }
     : { path: 'users', redirectTo: '/home-redirect' },
   {
+    path: 'settings',
+    loadChildren: () =>
+      import('./settings/settings.module').then((m) => m.SettingsModule),
+  },
+  {
     path: 'home-redirect',
     canActivate: [HomepageRedirectGuard],
     pathMatch: 'full',

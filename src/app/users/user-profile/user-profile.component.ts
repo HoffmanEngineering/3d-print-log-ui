@@ -6,7 +6,11 @@ import {
   AuthService,
   UserProfileInfo,
 } from 'src/app/core/services/auth.service';
-import { UserDetailDto, UserService } from 'src/app/core/services/user.service';
+import {
+  ProfileViewStatus,
+  UserDetailDto,
+  UserService,
+} from 'src/app/core/services/user.service';
 
 @Component({
   selector: 'app-user-profile',
@@ -18,6 +22,8 @@ export class UserProfileComponent implements OnInit {
 
   public currentUser: UserProfileInfo;
 
+  public profileViewStatusTypes = ProfileViewStatus;
+
   authServiceSubscription: Subscription;
   activatedRouteSubscription: Subscription;
 
@@ -27,6 +33,11 @@ export class UserProfileComponent implements OnInit {
    * The ngModel used for updating the Bio.
    */
   public bio = '';
+
+  /**
+   * The ngModel used for updating the Profile View Status.
+   */
+  public viewStatus: ProfileViewStatus = null;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -43,6 +54,8 @@ export class UserProfileComponent implements OnInit {
         }
 
         this.userDetail = data.userDetail;
+        this.viewStatus = this.userDetail.viewStatus;
+        console.log(this.profileViewStatusTypes[this.userDetail.viewStatus]);
 
         this.authServiceSubscription = this.authService.userProfile$.subscribe(
           (user) => {
@@ -114,6 +127,19 @@ export class UserProfileComponent implements OnInit {
 
       this.authService.updateCurrentUserCoverPicture(null);
     });
+  }
+
+  public saveProfileVisibility(newViewStatus: ProfileViewStatus) {
+    const newUserDetail: UserDetailDto = {
+      ...this.userDetail,
+      viewStatus: newViewStatus,
+    };
+    this.userService
+      .updateCurrentUserDetail(newUserDetail)
+      .subscribe((user) => {
+        this.userDetail = user;
+        this.viewStatus = this.userDetail.viewStatus;
+      });
   }
 
   public startEditingDescription() {

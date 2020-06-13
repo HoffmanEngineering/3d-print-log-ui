@@ -22,7 +22,7 @@ export class UserDetailResolverService implements Resolve<UserDetailDto> {
 
     if (Number.isInteger(userId)) {
       return this.userService.getUserDetail(userId).pipe(
-        catchError((error) => {
+        catchError(() => {
           this.router.navigate(['/users', 'not-found']);
           return EMPTY;
         })

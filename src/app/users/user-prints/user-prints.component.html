@@ -1,5 +1,5 @@
-<div>
-  <div fxLayout="row" style="padding: 0px 10px;" fxLayoutGap="10px">
+<div fxLayout="column">
+  <div fxFlex fxLayout="row" style="padding: 0px 10px;" fxLayoutGap="10px">
     <h3 style="margin-right: 10px;">Prints:</h3>
     <mat-form-field fxFlex>
       <mat-label> Search: </mat-label
@@ -37,6 +37,8 @@
       </app-print-summary-card>
     </div>
     <button
+      fxFlex
+      style="margin: 0 auto;"
       *ngIf="showLoadMore"
       mat-raised-button
       color="accent"
@@ -46,7 +48,7 @@
     </button>
   </ng-container>
   <ng-container *ngIf="prints.length === 0">
-    <mat-card>
+    <mat-card fxFlex>
       No Prints Found. The user shared any prints publicly that match the
       search.
     </mat-card>

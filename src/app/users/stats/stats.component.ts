@@ -47,8 +47,8 @@ export class StatsComponent implements OnChanges {
     this.userPrintsService
       .getUsersTotalFilamentUsage(
         this.userId,
-        moment().subtract(30, 'days').toDate(),
-        moment().toDate()
+        moment().startOf('day').subtract(30, 'days').toDate(),
+        moment().endOf('day').toDate()
       )
       .subscribe((result) => {
         const totalFilamentUsage = +(result ?? 0) / 1000;
@@ -57,7 +57,11 @@ export class StatsComponent implements OnChanges {
   }
   calculatePrintCountTotalFilamentUsage() {
     this.userPrintsService
-      .getUsersTotalFilamentUsage(this.userId, this.MIN_DATE, moment().toDate())
+      .getUsersTotalFilamentUsage(
+        this.userId,
+        this.MIN_DATE,
+        moment().endOf('day').toDate()
+      )
       .subscribe((result) => {
         const totalFilamentUsage = +(result ?? 0) / 1000;
         this.totalFilamentUsageInG = `${totalFilamentUsage} (g)`;
@@ -67,8 +71,8 @@ export class StatsComponent implements OnChanges {
     this.userPrintsService
       .getUsersTotalPrintTimeInSeconds(
         this.userId,
-        moment().subtract(30, 'days').toDate(),
-        moment().toDate()
+        moment().startOf('day').subtract(30, 'days').toDate(),
+        moment().endOf('day').toDate()
       )
       .subscribe((result) => {
         const duration = moment.duration(result, 'seconds');
@@ -83,7 +87,7 @@ export class StatsComponent implements OnChanges {
       .getUsersTotalPrintTimeInSeconds(
         this.userId,
         this.MIN_DATE,
-        moment().toDate()
+        moment().endOf('day').toDate()
       )
       .subscribe((result) => {
         const duration = moment.duration(result, 'seconds');
@@ -97,8 +101,8 @@ export class StatsComponent implements OnChanges {
     this.userPrintsService
       .getUsersPrintCount(
         this.userId,
-        moment().subtract(30, 'days').toDate(),
-        moment().toDate()
+        moment().startOf('day').subtract(30, 'days').toDate(),
+        moment().endOf('day').toDate()
       )
       .subscribe((result) => {
         this.printCountLast30Days = result;
@@ -117,7 +121,11 @@ export class StatsComponent implements OnChanges {
 
   calculatePrintCount() {
     this.userPrintsService
-      .getUsersPrintCount(this.userId, this.MIN_DATE, moment().toDate())
+      .getUsersPrintCount(
+        this.userId,
+        this.MIN_DATE,
+        moment().endOf('day').toDate()
+      )
       .subscribe((result) => {
         this.printCountTotal = result;
       });

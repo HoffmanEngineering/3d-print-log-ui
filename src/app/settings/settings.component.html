@@ -1,0 +1,143 @@
+<div fxLayout="row" fxLayoutAlign="center">
+  <mat-card fxFlex="500px" fxFlex.xs="100%">
+    <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
+      <div fxFlex fxFlexFill>
+        <h1>General Settings</h1>
+        <hr />
+      </div>
+
+      <div
+        fxFlex
+        fxFlexFill
+        [ngClass]="{
+          'mat-elevation-z5 editing-card':
+            profileViewStatus !== this.userDetailsOnLoad.viewStatus
+        }"
+      >
+        <div>
+          <label
+            for="profile-visibility"
+            style="margin-right: 10px;"
+            matTooltip="Controls who can view your user profile."
+            matTooltipPosition="right"
+          >
+            User Profile Visibility
+            <mat-icon inline>info</mat-icon>:</label
+          >
+          <select
+            id="profile-visibility"
+            name="profile-visibility"
+            [(ngModel)]="profileViewStatus"
+          >
+            <option [ngValue]="profileViewStatusTypes.Public"
+              >Public (anyone can view)</option
+            >
+            <option [ngValue]="profileViewStatusTypes.Unlisted"
+              >Unlisted (anyone with link can view)</option
+            >
+            <option [ngValue]="profileViewStatusTypes.Private"
+              >Private (only you can view)</option
+            >
+          </select>
+        </div>
+
+        <div *ngIf="profileViewStatus !== this.userDetailsOnLoad.viewStatus">
+          <div
+            style="margin-top: 10px;"
+            fxLayout
+            fxLayoutAlign="center center"
+            fxLayoutGap="15px"
+          >
+            <button
+              mat-raised-button
+              type="submit"
+              color="primary"
+              (click)="saveProfileVisibility(profileViewStatus)"
+            >
+              Save Visibility
+            </button>
+            <button
+              mat-raised-button
+              type="button"
+              class="close"
+              (click)="profileViewStatus = this.userDetailsOnLoad.viewStatus"
+              color="warn"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        fxFlex
+        fxFlexFill
+        [ngClass]="{
+          'mat-elevation-z5 editing-card':
+            printViewStatus.toString() !==
+            this.defaultPrintViewStatusSettingOnLoad?.value.toString()
+        }"
+      >
+        <div>
+          <label
+            for="print-visibility"
+            style="margin-right: 10px;"
+            matTooltip="The default View Status for new prints. You can change override this when adding a new print."
+            matTooltipPosition="right"
+          >
+            Default Print Visibility <mat-icon inline>info</mat-icon>:</label
+          >
+          <select
+            id="print-visibility"
+            name="print-visibility"
+            [(ngModel)]="printViewStatus"
+          >
+            <option [ngValue]="printViewStatusTypes.Public"
+              >Public (anyone can view)</option
+            >
+            <option [ngValue]="printViewStatusTypes.Unlisted"
+              >Unlisted (anyone with link can view)</option
+            >
+            <option [ngValue]="printViewStatusTypes.Private"
+              >Private (only you can view)</option
+            >
+          </select>
+        </div>
+
+        <div
+          *ngIf="
+            printViewStatus.toString() !==
+            this.defaultPrintViewStatusSettingOnLoad?.value.toString()
+          "
+        >
+          <div
+            style="margin-top: 10px;"
+            fxLayout
+            fxLayoutAlign="center center"
+            fxLayoutGap="15px"
+          >
+            <button
+              mat-raised-button
+              type="submit"
+              color="primary"
+              (click)="saveDefaultPrintViewStatus(printViewStatus)"
+            >
+              Save Visibility
+            </button>
+            <button
+              mat-raised-button
+              type="button"
+              class="close"
+              (click)="cancelDefaultPrintViewStatus()"
+              color="warn"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <hr />
+    </div>
+  </mat-card>
+</div>

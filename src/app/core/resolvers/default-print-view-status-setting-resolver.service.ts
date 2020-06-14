@@ -10,7 +10,9 @@ import {
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class DefaultPrintViewStatusSettingResolverService
   implements Resolve<UserSetting | null> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {

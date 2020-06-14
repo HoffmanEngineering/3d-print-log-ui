@@ -149,7 +149,59 @@
               </div>
             </div>
           </div>
+          <div fxFlex *ngIf="userDetail.id === currentUser?.id">
+            <hr />
+            <div>
+              <label for="profile-visibility" style="margin-right: 10px;">
+                Profile Visibility:</label
+              >
+              <select
+                id="profile-visibility"
+                name="profile-visibility"
+                [(ngModel)]="viewStatus"
+              >
+                <option [ngValue]="profileViewStatusTypes.Public"
+                  >Public (anyone can view)</option
+                >
+                <option [ngValue]="profileViewStatusTypes.Unlisted"
+                  >Unlisted (anyone with link can view)</option
+                >
+                <option [ngValue]="profileViewStatusTypes.Private"
+                  >Private (only you can view)</option
+                >
+              </select>
+            </div>
+
+            <div *ngIf="viewStatus !== this.userDetail.viewStatus">
+              <div
+                style="margin-top: 10px;"
+                fxLayout
+                fxLayoutAlign="center center"
+                fxLayoutGap="15px"
+              >
+                <button
+                  mat-raised-button
+                  type="submit"
+                  color="primary"
+                  (click)="saveProfileVisibility(viewStatus)"
+                >
+                  Save Visibility
+                </button>
+                <button
+                  mat-raised-button
+                  type="button"
+                  class="close"
+                  (click)="viewStatus = this.userDetail.viewStatus"
+                  color="warn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+            <hr />
+          </div>
         </div>
+
         <div fxFlex>
           <app-stats [userId]="this.userDetail.id"></app-stats>
         </div>

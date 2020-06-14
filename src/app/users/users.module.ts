@@ -8,6 +8,7 @@ import { UserPrintsComponent } from './user-prints/user-prints.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
+import { InvalidUserComponent } from './invalid-user/invalid-user.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { UsersComponent } from './users.component';
     UserProfileComponent,
     UserPrintsComponent,
     StatsComponent,
+    InvalidUserComponent,
   ],
   imports: [SharedModule, UsersRoutingModule, AdsenseModule],
   providers: [UserDetailResolverService],

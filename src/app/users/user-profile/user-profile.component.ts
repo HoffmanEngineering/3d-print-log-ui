@@ -143,12 +143,12 @@ export class UserProfileComponent implements OnInit {
   }
 
   public startEditingDescription() {
-    this.bio = this.userDetail.bio;
+    this.bio = this.userDetail.bio ?? '';
     this.isEditingDescription = true;
   }
 
   public cancelEditingDescription() {
-    this.bio = this.userDetail.bio;
+    this.bio = this.userDetail.bio ?? '';
     this.isEditingDescription = false;
   }
 

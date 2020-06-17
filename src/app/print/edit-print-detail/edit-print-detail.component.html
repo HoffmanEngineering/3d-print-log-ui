@@ -214,7 +214,14 @@
             type="text"
             formControlName="notes"
             maxlength="1000"
+            cdkTextareaAutosize
+            cdkAutosizeMinRows="2"
+            cdkAutosizeMaxRows="10"
           ></textarea>
+          <mat-hint align="end">
+            {{ 1000 - printForm.get('notes').value.length }} characters
+            remaining.</mat-hint
+          >
         </mat-form-field>
 
         <mat-form-field fxFlex fxFlexFill>

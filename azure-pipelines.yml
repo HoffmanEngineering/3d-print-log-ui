@@ -21,6 +21,9 @@ steps:
     ng build --prod
   displayName: 'npm install and build'
 
+- task: WhiteSource Bolt@20
+  displayName: 'WhiteSource Bolt'
+
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Build.SourcesDirectory)/dist/print-log-ui'

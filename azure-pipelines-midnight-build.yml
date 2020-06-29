@@ -25,6 +25,7 @@ steps:
 - script: |
     npm audit
   displayName: 'Npm Audit'
+  continueOnError: true
 
 - task: WhiteSource Bolt@20
   displayName: 'WhiteSource Bolt'

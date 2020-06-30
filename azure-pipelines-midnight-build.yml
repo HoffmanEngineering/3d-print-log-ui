@@ -1,11 +1,14 @@
 # Nightly build to run dependency checks
+pr: none
+
+trigger: none
 
 schedules:
 - cron: "0 0 * * *"
   displayName: 'Daily Midnight Build'
   branches:
     include:
-      - master
+    - master
 
 pool:
   vmImage: 'ubuntu-latest'

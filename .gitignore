@@ -46,3 +46,4 @@ testem.log
 Thumbs.db
 
 /cura-machine-def-parser/out
+/test_reports

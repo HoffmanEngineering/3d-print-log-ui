@@ -1,5 +1,10 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { MatMenuModule } from '@angular/material/menu';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of } from 'rxjs';
+import { AuthService } from 'src/app/core/services/auth.service';
 import { NavbarComponent } from './navbar.component';
 
 describe('NavbarComponent', () => {
@@ -7,8 +12,14 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
 
   beforeEach(async(() => {
+    const mockAuthService: Partial<AuthService> = {
+      userProfile$: of(null),
+    };
     TestBed.configureTestingModule({
       declarations: [NavbarComponent],
+      imports: [RouterTestingModule, MatMenuModule],
+      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
   }));
 

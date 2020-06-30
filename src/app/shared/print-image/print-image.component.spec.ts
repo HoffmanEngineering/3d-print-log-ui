@@ -1,5 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { of } from 'rxjs';
+import { PrintService } from 'src/app/core/services/print.service';
 import { PrintImageComponent } from './print-image.component';
 
 describe('PrintImageComponent', () => {
@@ -7,8 +9,14 @@ describe('PrintImageComponent', () => {
   let fixture: ComponentFixture<PrintImageComponent>;
 
   beforeEach(async(() => {
+    const mockPrintService = jasmine.createSpyObj<PrintService>(
+      'PrintService',
+      { getPrintImage: of('') }
+    );
+
     TestBed.configureTestingModule({
       declarations: [PrintImageComponent],
+      providers: [{ provide: PrintService, useValue: mockPrintService }],
     }).compileComponents();
   }));
 

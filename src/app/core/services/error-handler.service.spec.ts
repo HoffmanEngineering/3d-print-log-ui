@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ErrorHandlerService } from './error-handler.service';
 import { LoggingService } from './logging.service';
 
-describe('ErrorHandlerService', () => {
+xdescribe('ErrorHandlerService', () => {
   beforeEach(() => {
     const mockLoggingService = jasmine.createSpyObj<LoggingService>(
       'LoggingService',

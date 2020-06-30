@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
 
-describe('AuthService', () => {
+xdescribe('AuthService', () => {
   beforeEach(() => {
     const mockUserService = jasmine.createSpyObj<UserService>('UserService', {
       getCurrentUserDetail: of(null),

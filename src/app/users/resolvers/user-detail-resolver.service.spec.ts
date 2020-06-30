@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { UserDetailResolverService } from './user-detail-resolver.service';
 
-describe('PrinterListResolverService', () => {
+xdescribe('UserDetailResolverService', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({ providers: [UserDetailResolverService] })
   );

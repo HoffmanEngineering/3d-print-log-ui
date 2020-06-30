@@ -5,7 +5,7 @@ import {
   OnInit,
   SimpleChanges,
 } from '@angular/core';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 import {
   PrintService,
   PrintStatus,

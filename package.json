@@ -31,7 +31,7 @@
     "@microsoft/applicationinsights-web": "^2.5.5",
     "@types/lodash": "^4.14.157",
     "d3": "^5.16.0",
-    "lodash": "^4.17.15",
+    "lodash-es": "^4.17.15",
     "moment": "^2.27.0",
     "ng2-adsense": "^8.0.1",
     "ngx-toastr": "^12.1.0",

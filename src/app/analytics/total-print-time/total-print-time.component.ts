@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { isFinite } from 'lodash';
+import { isFinite } from 'lodash-es';
 import * as moment from 'moment';
 import { PrintStatistic } from '../services/print-statistics.service';
 

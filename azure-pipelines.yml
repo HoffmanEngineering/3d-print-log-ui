@@ -37,8 +37,8 @@ steps:
   condition: succeededOrFailed()
   inputs: 
     codeCoverageTool: 'Cobertura' 
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/SafetyCheckT4/cobertura-coverage.xml'
-    reportDirectory: '$(System.DefaultWorkingDirectory)/coverage/SafetyCheckT4'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui/cobertura-coverage.xml'
+    reportDirectory: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui'
 
 - task: PublishPipelineArtifact@1
   inputs:

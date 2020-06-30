@@ -8,7 +8,7 @@ import {
 } from '../../core/services/printer.service';
 
 import { Title } from '@angular/platform-browser';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 
 @Component({
   selector: 'app-printer-list',

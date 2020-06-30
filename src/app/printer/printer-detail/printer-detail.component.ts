@@ -2,7 +2,7 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { uniq } from 'lodash';
+import { uniq } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';

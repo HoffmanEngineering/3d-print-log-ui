@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
@@ -43,7 +44,8 @@ export class UserProfileComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private authService: AuthService,
     private userService: UserService,
-    private toastrService: ToastrService
+    private toastrService: ToastrService,
+    private titleService: Title
   ) {}
 
   ngOnInit(): void {
@@ -55,7 +57,10 @@ export class UserProfileComponent implements OnInit {
 
         this.userDetail = data.userDetail;
         this.viewStatus = this.userDetail.viewStatus;
-        console.log(this.profileViewStatusTypes[this.userDetail.viewStatus]);
+
+        this.titleService.setTitle(
+          `${this.userDetail.displayName} Profile - 3D Print Log`.trim()
+        );
 
         this.authServiceSubscription = this.authService.userProfile$.subscribe(
           (user) => {

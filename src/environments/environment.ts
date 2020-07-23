@@ -12,7 +12,7 @@ export const environment = {
   },
   googleAnalyticsId: 'UA-65004387-7',
   appInsights: {
-    instrumentationKey: '',
+    instrumentationKey: 'aea218c9-705c-4566-89ec-ec01aca375b4',
   },
   /**
    * Feature Flags

@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
-import { ApplicationInsights } from '@microsoft/applicationinsights-web';
+import {
+  ApplicationInsights,
+  DistributedTracingModes,
+} from '@microsoft/applicationinsights-web';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -17,7 +20,14 @@ export class LoggingService {
       this.appInsights = new ApplicationInsights({
         config: {
           instrumentationKey: environment.appInsights.instrumentationKey,
-          enableAutoRouteTracking: true, // option to log all route changes
+          enableAutoRouteTracking: true, // option to log all route changes,
+          disableFetchTracking: false,
+          disableCorrelationHeaders: false,
+          enableCorsCorrelation: true,
+          distributedTracingMode: DistributedTracingModes.AI,
+          correlationHeaderExcludedDomains: ['*.auth0.com'],
+          enableRequestHeaderTracking: false,
+          enableResponseHeaderTracking: true,
         },
       });
       this.appInsights.loadAppInsights();

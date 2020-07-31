@@ -71,7 +71,6 @@ const routes: Routes = [
   },
   {
     path: '',
-    canActivate: [HomepageRedirectGuard],
     component: HomeComponent,
     pathMatch: 'full',
   },

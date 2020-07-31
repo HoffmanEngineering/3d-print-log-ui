@@ -1,19 +1,46 @@
 <mat-toolbar color="primary">
   <mat-toolbar-row fxLayout="row" fxLayoutAlign="space-between center">
-    <div fxFlex="grow">
-      <div fxLayout="column" fxLayoutAlign="center start" style="height: 56px;">
+    <div fxFlex="50px" class="brand-img">
+      <a [routerLink]="['/']" style="height: 100%; width: 100%;">
+        <img
+          src="/assets/3d_brand_logo_b833b3f20dd.svg"
+          alt="3D Print Log Logo"
+        />
+        <span class="visually-hidden">Navigate to home page.</span>
+      </a>
+      <!-- <object
+        viewBox="0 0 100 100"
+        type="image/svg+xml"
+        data="/assets/small_logo.svg"
+      >
+        3D Print Log Logo
+      </object> -->
+    </div>
+    <div fxFlex fxFlexFill>
+      <div fxLayout="column" fxLayoutAlign="center start" style="height: 100%;">
         <div fxFlex fxLayout="row" fxLayoutAlign="center center">
-          <a class="link" mat-button routerLink="/" *ngIf="!auth.loggedIn"
+          <a
+            class="link"
+            mat-button
+            routerLink="/"
+            routerLinkActive="active"
+            *ngIf="!auth.loggedIn"
             >Home</a
           >
 
-          <a mat-button class="link" routerLink="/prints" *ngIf="auth.loggedIn"
+          <a
+            mat-button
+            class="link"
+            routerLink="/prints"
+            routerLinkActive="active"
+            *ngIf="auth.loggedIn"
             >Prints</a
           >
           <a
             mat-button
             class="link"
             routerLink="/printers"
+            routerLinkActive="active"
             *ngIf="auth.loggedIn"
             >Printers</a
           >
@@ -23,6 +50,7 @@
               mat-button
               class="link"
               routerLink="/analytics"
+              routerLinkActive="active"
               *ngIf="auth.loggedIn"
               >Analytics</a
             >
@@ -32,7 +60,11 @@
             </button>
             <mat-menu #aboutMenu="matMenu">
               <!-- <button mat-menu-item>Fee</button> -->
-              <a class="menu-link" mat-menu-item routerLink="/docs"
+              <a
+                class="menu-link"
+                mat-menu-item
+                routerLink="/docs"
+                routerLinkActive="active"
                 >Documentation</a
               >
               <a
@@ -40,6 +72,7 @@
                 *ngIf="auth.loggedIn"
                 mat-menu-item
                 routerLink="/feedback"
+                routerLinkActive="active"
                 >Send Feedback</a
               >
             </mat-menu>
@@ -56,6 +89,7 @@
               mat-button
               class="link"
               routerLink="/analytics"
+              routerLinkActive="active"
               *ngIf="auth.loggedIn"
               >Analytics</a
             >
@@ -65,7 +99,11 @@
             </button>
             <mat-menu #aboutMenu="matMenu">
               <!-- <button mat-menu-item>Fee</button> -->
-              <a class="menu-link" mat-menu-item routerLink="/docs"
+              <a
+                class="menu-link"
+                mat-menu-item
+                routerLink="/docs"
+                routerLinkActive="active"
                 >Documentation</a
               >
               <a
@@ -73,6 +111,7 @@
                 *ngIf="auth.loggedIn"
                 mat-menu-item
                 routerLink="/feedback"
+                routerLinkActive="active"
                 >Send Feedback</a
               >
             </mat-menu>
@@ -80,7 +119,7 @@
         </div>
       </div>
     </div>
-    <div fxFlex>
+    <div fxFlex="50px">
       <button
         class="transparent"
         [matMenuTriggerFor]="profileMenu"
@@ -105,6 +144,7 @@
           class="menu-link"
           mat-menu-item
           [routerLink]="['users', userId]"
+          routerLinkActive="active"
           *ngIf="auth.loggedIn && isUserProfileFeatureEnabled"
           >My Profile</a
         >
@@ -113,6 +153,7 @@
           class="menu-link"
           mat-menu-item
           [routerLink]="['/settings']"
+          routerLinkActive="active"
           >Settings</a
         >
         <button mat-menu-item (click)="auth.logout()" *ngIf="auth.loggedIn">

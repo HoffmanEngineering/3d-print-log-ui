@@ -31,6 +31,14 @@ You can run it by:
 
 After, copy the json from `cura-machine-def-parser/out/printers.json` and replace the `const printers= {...}` in `src/printer/printer-detail/cura-exported-printers.ts` with the new defaults.
 
+## Creating a hash
+
+To manually create a hash (for example, for homepage images), you can use the following powershell utility, which outputs an MD5 hash
+
+```
+CertUtil -hashfile .\3d_brand_logo.svg MD5
+```
+
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).

@@ -1,8 +1,13 @@
+.logo {
+  max-height: 300px;
+  padding-left: 50px;
+}
+
 h1 {
   text-align: center;
 }
 // The margin between two sections
-$margin-promotion-sections: 60px;
+$margin-promotion-sections: 40px;
 $margin-promotion-sections-small: 15px;
 
 .docs-header-background {

@@ -1,6 +1,6 @@
 .logo {
   max-height: 300px;
-  padding-left: 50px;
+  //padding-left: 50px;
 }
 
 h1 {
@@ -89,6 +89,77 @@ img {
 
 .example-grid {
   width: 1000px;
+}
+
+.wrapper {
+  display: inline-block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+}
+
+.wrapper img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+
+.overlay {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+
+.fade-in {
+  animation: fadeIn ease 2s;
+  -webkit-animation: fadeIn ease 2s;
+  -moz-animation: fadeIn ease 2s;
+  -o-animation: fadeIn ease 2s;
+  -ms-animation: fadeIn ease 2s;
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@-moz-keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@-o-keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@-ms-keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 1000px) {

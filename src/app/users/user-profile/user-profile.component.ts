@@ -40,6 +40,12 @@ export class UserProfileComponent implements OnInit {
    */
   public viewStatus: ProfileViewStatus = null;
 
+  /**
+   * The ngModel used for updating the user's Display name
+   */
+  public displayName = '';
+  public isEditingDisplayName = false;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private authService: AuthService,
@@ -169,6 +175,31 @@ export class UserProfileComponent implements OnInit {
 
         this.bio = '';
         this.isEditingDescription = false;
+      });
+  }
+
+  public startEditingDisplayName() {
+    this.displayName = this.userDetail.displayName ?? '';
+    this.isEditingDisplayName = true;
+  }
+
+  public cancelEditingDisplayName() {
+    this.displayName = this.userDetail.displayName ?? '';
+    this.isEditingDisplayName = false;
+  }
+
+  public saveDisplayName() {
+    const newUserDetail: UserDetailDto = {
+      ...this.userDetail,
+      displayName: this.displayName.trim(),
+    };
+    this.userService
+      .updateCurrentUserDetail(newUserDetail)
+      .subscribe((user) => {
+        this.userDetail = user;
+
+        this.displayName = '';
+        this.isEditingDisplayName = false;
       });
   }
 }

@@ -18,7 +18,11 @@
             &nbsp;
           </div>
           <button
-            *ngIf="userDetail.id === currentUser?.id && !isEditingDescription"
+            *ngIf="
+              userDetail.id === currentUser?.id &&
+              !isEditingDescription &&
+              !isEditingDisplayName
+            "
             mat-button
             class="transparent btn-transparent cover-photo-edit"
             [matMenuTriggerFor]="coverPhotoMenu"
@@ -54,7 +58,11 @@
             />
           </div>
           <button
-            *ngIf="userDetail.id === currentUser?.id && !isEditingDescription"
+            *ngIf="
+              userDetail.id === currentUser?.id &&
+              !isEditingDescription &&
+              !isEditingDisplayName
+            "
             type="button"
             class="transparent btn-transparent profile-photo-edit"
             (click)="profilephotoinput.click()"
@@ -72,14 +80,71 @@
         </div>
         <div fxFlex fxFlexFill fxLayout="column" fxLayoutAlign="start center">
           <div fxFlex class="user-display-name">
-            <h2 aria-label="User name">{{ userDetail.displayName }}</h2>
-            <!-- <button
-              *ngIf="userDetail.id === currentUser?.id && !isEditingDescription"
-              type="button"
+            <div
+              *ngIf="!isEditingDisplayName"
+              fxLayout="column"
+              fxLayoutAlign="start center"
+              fxLayoutGap="15px"
             >
-              <mat-icon>edit</mat-icon>Edit
-            </button> -->
+              <h2 fxFlex aria-label="User name">
+                {{ userDetail.displayName }}
+              </h2>
+              <div fxFlex>
+                <button
+                  *ngIf="
+                    userDetail.id === currentUser?.id && !isEditingDescription
+                  "
+                  mat-raised-button
+                  type="button"
+                  color="accent"
+                  style="margin-bottom: 10px;"
+                  (click)="startEditingDisplayName()"
+                >
+                  <mat-icon>edit</mat-icon>Edit Display Name
+                </button>
+              </div>
+            </div>
+            <div
+              *ngIf="isEditingDisplayName"
+              class="mat-elevation-z5 display-name"
+              style="padding: 10px;"
+            >
+              <mat-form-field style="width: 100%;">
+                <mat-label>Display name:</mat-label>
+                <textarea
+                  matInput
+                  cdkTextareaAutosize
+                  [(ngModel)]="displayName"
+                  maxlength="30"
+                  cdkAutosizeMinRows="2"
+                  cdkAutosizeMaxRows="2"
+                ></textarea>
+                <mat-hint>
+                  {{ 30 - displayName.length }} characters remaining.</mat-hint
+                >
+              </mat-form-field>
+              <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                <button
+                  mat-raised-button
+                  type="submit"
+                  color="primary"
+                  (click)="saveDisplayName()"
+                >
+                  Submit
+                </button>
+                <button
+                  mat-raised-button
+                  type="button"
+                  class="close"
+                  (click)="cancelEditingDisplayName()"
+                  color="warn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
+
           <div fxFlex class="user-bio">
             <div
               *ngIf="!isEditingDescription"
@@ -97,7 +162,7 @@
               <div fxFlex>
                 <button
                   *ngIf="
-                    userDetail.id === currentUser?.id && !isEditingDescription
+                    userDetail.id === currentUser?.id && !isEditingDisplayName
                   "
                   type="button"
                   mat-raised-button

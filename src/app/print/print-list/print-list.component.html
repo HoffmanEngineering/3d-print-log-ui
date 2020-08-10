@@ -102,12 +102,21 @@
         *matCellDef="let print"
         (click)="$event.preventDefault(); $event.stopPropagation()"
       >
-        <button mat-button class="transparent" [matMenuTriggerFor]="aboutMenu">
+        <button
+          mat-button
+          class="transparent"
+          [matMenuTriggerFor]="aboutMenu"
+          data-cy-more-button
+        >
           <mat-icon>more_horiz</mat-icon>
         </button>
         <mat-menu #aboutMenu="matMenu">
           <!-- <button mat-menu-item>Fee</button> -->
-          <a class="menu-link" mat-menu-item [routerLink]="[print.id, 'edit']"
+          <a
+            class="menu-link"
+            mat-menu-item
+            [routerLink]="[print.id, 'edit']"
+            data-cy-edit-menu-option
             ><mat-icon>edit</mat-icon>Edit</a
           >
           <a class="menu-link" mat-menu-item [routerLink]="[print.id]"

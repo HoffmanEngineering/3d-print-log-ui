@@ -1,5 +1,5 @@
 describe('Prints List', () => {
-  beforeEach(() => {
+  before(() => {
     cy.login('/prints');
   });
   it('should contain a "Add New Print" button', () => {
@@ -38,11 +38,6 @@ describe('Prints List', () => {
           .get('mat-option')
           .contains('Test Printer - (TEVO Tornado)')
           .click();
-        // cy.get('.mat-option-text span')
-        //     .contains('')
-        //     .then(option => {
-        //                 option[0].click();  // this is jquery click() not cypress click()
-        //             });
 
         cy.get('#edit-print-submit-btn').click();
 
@@ -56,5 +51,52 @@ describe('Prints List', () => {
             );
           }); // assertion
       });
+  });
+
+  it('should be able to edit an existing print', () => {
+    // const expectedSubtitle = 'Log and analyze your 3D Prints';
+    // cy.get('[cy-subtitle]').invoke('text').should('equal', expectedSubtitle);
+
+    cy.get('[cy-print-row]').first().as('firstRow');
+
+    cy.get('@firstRow').click();
+
+    const newPrintTitle = 'Edit Test Print - ' + new Date().getTime();
+
+    cy.get('button[data-cy-edit-btn]').click();
+
+    cy.get('#edit-print-title').clear().type(newPrintTitle);
+
+    cy.get('#edit-print-submit-btn').click();
+
+    cy.get('@firstRow').within(() => {
+      cy.get('.mat-column-title').invoke('text').should('equal', newPrintTitle);
+    });
+  });
+
+  it('should be able to edit an existing print through the dropdown menu', () => {
+    cy.get('[cy-print-row]').first().as('firstRow');
+
+    cy.get('@firstRow').within(() => {
+      cy.get('[data-cy-more-button]').click();
+    });
+
+    cy.get('[data-cy-edit-menu-option]').click();
+
+    const newPrintTitle = 'Edit from Menu Test Print - ' + new Date().getTime();
+
+    cy.get('#edit-print-title').clear().type(newPrintTitle);
+    cy.get('#edit-print-status')
+      .click()
+      .get('mat-option')
+      .contains('Success')
+      .click();
+
+    cy.get('#edit-print-submit-btn').click();
+
+    cy.get('@firstRow').within(() => {
+      cy.get('.mat-column-title').invoke('text').should('equal', newPrintTitle);
+      cy.get('.mat-column-status').invoke('text').should('equal', 'Success');
+    });
   });
 });

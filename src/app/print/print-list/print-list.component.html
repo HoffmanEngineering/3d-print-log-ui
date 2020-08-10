@@ -8,6 +8,7 @@
       routerLink="new/edit"
       type="button"
       color="accent"
+      id="add-new-print"
     >
       Add New Print
     </button>
@@ -127,6 +128,7 @@
       mat-row
       *matRowDef="let row; columns: displayedColumns"
       [routerLink]="row.id"
+      [attr.cy-print-row]="row.id"
     ></tr>
   </table>
 

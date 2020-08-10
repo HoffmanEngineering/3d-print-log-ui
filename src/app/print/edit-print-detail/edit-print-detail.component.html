@@ -101,6 +101,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Title</mat-label>
           <input
+            id="edit-print-title"
             matInput
             type="text"
             formControlName="title"
@@ -113,7 +114,11 @@
         </mat-form-field>
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Printer</mat-label>
-          <mat-select formControlName="printerId" required>
+          <mat-select
+            formControlName="printerId"
+            required
+            id="edit-print-printer"
+          >
             <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
               getPrinterLabel(printer)
             }}</mat-option>
@@ -129,6 +134,7 @@
           <mat-label> Start Date</mat-label>
           <input
             matInput
+            id="edit-print-start-date"
             [matDatepicker]="picker"
             placeholder="Choose a date"
             formControlName="startDate"
@@ -147,11 +153,18 @@
         </mat-form-field>
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Thing URL</mat-label>
-          <input matInput type="url" formControlName="url" maxlength="1000" />
+          <input
+            id="edit-print-url"
+            matInput
+            type="url"
+            formControlName="url"
+            maxlength="1000"
+          />
         </mat-form-field>
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Estimated Print Time</mat-label>
           <input
+            id="edit-print-estimated-print-time"
             matInput
             type="text"
             placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
@@ -161,6 +174,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Estimated Filament Usage (grams)</mat-label>
           <input
+            id="edit-print-estimated-filament-usage"
             matInput
             type="text"
             pattern="^\d*(\.\d{0,3})?$"
@@ -177,6 +191,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Actual Print Time</mat-label>
           <input
+            id="edit-print-actual-print-time"
             matInput
             type="text"
             formControlName="printTimeInSeconds"
@@ -186,6 +201,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Actual Filament Usage (grams)</mat-label>
           <input
+            id="edit-print-actual-filament-usage"
             matInput
             type="text"
             pattern="^\d*(\.\d{0,3})?$"
@@ -200,6 +216,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Filament Type</mat-label>
           <input
+            id="edit-print-filament-type"
             matInput
             type="text"
             formControlName="filamentType"
@@ -210,6 +227,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Notes</mat-label>
           <textarea
+            id="edit-print-notes"
             matInput
             type="text"
             formControlName="notes"
@@ -226,7 +244,7 @@
 
         <mat-form-field fxFlex fxFlexFill>
           <mat-label> Status</mat-label>
-          <mat-select formControlName="status">
+          <mat-select formControlName="status" id="edit-print-status">
             <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
             <mat-option [value]="printStatusTypes.Printing"
               >Printing</mat-option
@@ -241,7 +259,10 @@
         <div style="margin: 10 0 10;" fxFlex fxFlexFill>
           <mat-form-field style="margin: 0;" fxFlex>
             <mat-label> Sharing To:</mat-label>
-            <mat-select formControlName="viewStatus">
+            <mat-select
+              formControlName="viewStatus"
+              id="edit-print-view-status"
+            >
               <mat-option [value]="printViewStatusTypes.Public"
                 >Public (anyone can view)</mat-option
               >
@@ -283,6 +304,7 @@
       >
         <div fxFlex fxFlexFill *ngIf="printForm.get('id').value">
           <button
+            id="edit-print-copy-btn"
             mat-raised-button
             [disabled]="printForm.dirty || saving"
             type="button"
@@ -303,6 +325,7 @@
           [fxFlexOffset]="printForm.get('id').value ? '80px' : ''"
         >
           <button
+            id="edit-print-submit-btn"
             fxFlex
             mat-raised-button
             type="submit"
@@ -315,6 +338,7 @@
         </div>
         <div fxFlex fxFlexFill>
           <button
+            id="edit-print-cancel-btn"
             fxFlex
             mat-raised-button
             type="button"

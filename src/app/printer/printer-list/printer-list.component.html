@@ -1,12 +1,19 @@
 <div>
   <div class="header">
-    <button mat-raised-button routerLink="new" type="button" color="accent">
+    <button
+      mat-raised-button
+      routerLink="new"
+      type="button"
+      color="accent"
+      id="add-new-printer"
+    >
       Add New Printer
     </button>
     <div class="search-fields">
       <mat-form-field>
         <mat-label> Search: </mat-label
         ><input
+          id="printer-list-search-input"
           matInput
           type="text"
           [(ngModel)]="searchText"
@@ -62,6 +69,7 @@
       mat-row
       *matRowDef="let row; columns: displayedColumns"
       [routerLink]="row.id"
+      data-cy-printer-row
     ></tr>
   </table>
 

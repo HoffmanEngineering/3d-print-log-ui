@@ -21,6 +21,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label>Name</mat-label>
           <input
+            id="edit-printer-name"
             matInput
             type="text"
             formControlName="name"
@@ -34,6 +35,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label>Make</mat-label>
           <input
+            id="edit-printer-make"
             matInput
             type="text"
             formControlName="make"
@@ -57,6 +59,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label>Model</mat-label>
           <input
+            id="edit-printer-model"
             matInput
             type="text"
             formControlName="model"
@@ -80,6 +83,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label>Filament Diameter (mm)</mat-label>
           <input
+            id="edit-printer-filament-diameter"
             matInput
             type="number"
             min="0"
@@ -96,6 +100,7 @@
           <mat-label>Nozzle Diameter (mm)</mat-label>
           <input
             matInput
+            id="edit-printer-nozzle-diameter"
             type="number"
             min="0"
             formControlName="nozzleDiameter"
@@ -111,6 +116,7 @@
         <mat-form-field fxFlex fxFlexFill>
           <mat-label>Description</mat-label>
           <textarea
+            id="edit-printer-description"
             matInput
             type="textarea"
             formControlName="description"
@@ -132,10 +138,12 @@
           [disabled]="!printerForm.valid || saving"
           color="primary"
           [class.spinner]="saving"
+          id="edit-printer-submit-btn"
         >
           Submit
         </button>
         <button
+          id="edit-printer-cancel-btn"
           mat-raised-button
           type="button"
           class="close"

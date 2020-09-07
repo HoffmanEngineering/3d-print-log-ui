@@ -1,0 +1,38 @@
+<div>
+  <div class="comment" *ngFor="let comment of comments">
+    <app-comment [comment]="comment"> </app-comment>
+  </div>
+  <div>
+    <mat-card class="mat-elevation-z4">
+      <mat-card-content>
+        <img
+          *ngIf="currentUserProfilePicture !== ''"
+          mat-card-avatar
+          [src]="currentUserProfilePicture"
+        />
+        <mat-form-field style="width: 100%;">
+          <mat-label>Add Comment:</mat-label>
+          <textarea
+            matInput
+            cdkTextareaAutosize
+            [(ngModel)]="newComment"
+            cdkAutosizeMinRows="2"
+            cdkAutosizeMaxRows="10"
+          ></textarea>
+
+          <!-- <mat-hint>
+            {{ 30 - newComment.length }} characters remaining.</mat-hint
+          > -->
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="accent"
+          (click)="addComment()"
+          style="margin-left: auto;"
+        >
+          Send
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

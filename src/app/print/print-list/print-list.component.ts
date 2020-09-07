@@ -1,4 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { MediaMatcher } from '@angular/cdk/layout';
+import {
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -35,6 +42,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     'printer',
     'start-date',
     'status',
+    'commentCount',
     'more',
   ];
 
@@ -54,6 +62,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public printerRedirectToast: ActiveToast<any> | null = null;
   public printerRedirectSubscription: Subscription;
 
+  mobileQuery: MediaQueryList;
+  private mobileQueryListener: () => void;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private printService: PrintService,
@@ -61,9 +72,42 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private toastrService: ToastrService,
     private titleService: Title,
     private router: Router,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    media: MediaMatcher,
+    private ngZone: NgZone,
+    private changeDetectorRef: ChangeDetectorRef
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+
+    this.mobileQuery = media.matchMedia('(max-width: 600px)');
+
+    this.mobileQueryListener = () => {
+      this.ngZone.run(() => {
+        if (this.mobileQuery.matches) {
+          this.displayedColumns = [
+            'image',
+            'title',
+            'printer',
+            'start-date',
+            'status',
+            'more',
+          ];
+        } else {
+          this.displayedColumns = [
+            'image',
+            'title',
+            'printer',
+            'start-date',
+            'status',
+            'commentCount',
+            'more',
+          ];
+        }
+        this.changeDetectorRef.detectChanges();
+      });
+    };
+    // tslint:disable-next-line: deprecation
+    this.mobileQuery.addListener(this.mobileQueryListener);
   }
   ngOnDestroy(): void {
     if (this.printerRedirectToast) {

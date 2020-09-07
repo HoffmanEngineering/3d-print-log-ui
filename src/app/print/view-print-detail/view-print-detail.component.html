@@ -101,6 +101,12 @@
           </button>
         </div>
       </mat-card-actions>
+      <mat-card-content style="width: 100%;">
+        <app-print-comments
+          [comments]="print.comments"
+          (addNewComment)="addComment($event)"
+        ></app-print-comments>
+      </mat-card-content>
     </div>
     <ng-adsense></ng-adsense>
   </mat-card>

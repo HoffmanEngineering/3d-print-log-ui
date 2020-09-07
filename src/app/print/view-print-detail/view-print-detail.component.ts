@@ -12,7 +12,11 @@ import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { environment } from 'src/environments/environment';
-import { PrintDetail, PrintStatus } from '../../core/services/print.service';
+import {
+  PrintDetail,
+  PrintService,
+  PrintStatus,
+} from '../../core/services/print.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -46,6 +50,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
+    private printService: PrintService,
     private authService: AuthService,
     private readonly metaService: MetaTagService,
     @Inject(DOCUMENT) private readonly document: Document,
@@ -120,5 +125,13 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
     } else {
       return `${(printer.make + ' ' + printer.model).trim()}`;
     }
+  }
+
+  addComment(newComment: string) {
+    this.printService
+      .addPrintComment(this.print.id, newComment)
+      .subscribe((comment) => {
+        this.print.comments.push(comment);
+      });
   }
 }

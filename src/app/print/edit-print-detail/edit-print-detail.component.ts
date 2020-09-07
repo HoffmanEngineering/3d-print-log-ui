@@ -321,7 +321,7 @@ export class EditPrintDetailComponent
   onSubmit() {
     this.saving = true;
 
-    const newPrint: PrintDetail = this.getPrintFromForm();
+    const newPrint: Omit<PrintDetail, 'comments'> = this.getPrintFromForm();
 
     const newImages = this.images.controls.filter(
       (control) => control.dirty && control.value.id === undefined
@@ -467,7 +467,7 @@ export class EditPrintDetailComponent
     this.router.navigate(['/prints']);
   }
 
-  getPrintFromForm(): PrintDetail {
+  getPrintFromForm(): Omit<PrintDetail, 'comments'> {
     const existingPrintImages = this.images.controls
       .filter((control) => control.value.id !== undefined)
       .map((control) => {
@@ -477,7 +477,7 @@ export class EditPrintDetailComponent
         };
       });
 
-    const print: PrintDetail = {
+    const print: Omit<PrintDetail, 'comments'> = {
       id: this.printForm.controls.id.value,
       estimatedFilamentUsageMg:
         this.printForm.controls.estimatedFilamentUsageG.value * 1000,

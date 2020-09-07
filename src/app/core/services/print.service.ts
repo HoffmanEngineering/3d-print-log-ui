@@ -13,6 +13,7 @@ import {
 } from 'src/app/core/services/image-resizer.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
+import { AddCommentDto, Comment } from './comment.service';
 
 export enum PrintSummarySortColumn {
   Title = 1,
@@ -52,6 +53,11 @@ export interface PrintSummary {
 
   defaultPrintImageId: number;
   createdByUserId: number;
+
+  /**
+   * The number of comments on the print.
+   */
+  commentCount: number;
 }
 
 export interface PrintDetailDTO {
@@ -71,6 +77,8 @@ export interface PrintDetailDTO {
   viewStatus: PrintViewStatus;
   images?: PrintImage[];
   createdByUserId: number;
+
+  comments: Comment[];
 }
 
 export interface PutPrintDetailDTO {
@@ -110,6 +118,7 @@ export interface PrintDetail {
 
   images?: PrintImage[];
   createdByUserId: number;
+  comments: Comment[];
 }
 
 /**
@@ -186,6 +195,18 @@ export class PrintService {
       .get<PrintDetailDTO>(url, { headers })
       .pipe(
         map((newPrint) => {
+          const comments: Comment[] = [];
+          for (const comment of newPrint.comments) {
+            const formattedComment: Comment = { ...comment };
+            formattedComment.createdDate = moment
+              .utc(comment.createdDate)
+              .toDate();
+            formattedComment.updatedDate = moment
+              .utc(comment.updatedDate)
+              .toDate();
+            comments.push(formattedComment);
+          }
+
           const print: PrintDetail = {
             id: newPrint.id,
             estimatedFilamentUsageMg: newPrint.estimatedFilamentUsageMg,
@@ -205,6 +226,7 @@ export class PrintService {
             viewStatus: newPrint.viewStatus,
             images: newPrint.images || [],
             createdByUserId: newPrint.createdByUserId,
+            comments,
           };
           return print;
         })
@@ -231,7 +253,7 @@ export class PrintService {
       );
   }
 
-  addPrint(newPrint: PrintDetail): Observable<any> {
+  addPrint(newPrint: Omit<PrintDetail, 'comments'>): Observable<any> {
     const url = `${this.baseApi}/api/Prints/`;
 
     const printDto: AddPrintDTO = {
@@ -252,7 +274,7 @@ export class PrintService {
     return this.http.post<any>(url, printDto);
   }
 
-  updatePrint(print: PrintDetail): Observable<any> {
+  updatePrint(print: Omit<PrintDetail, 'comments'>): Observable<any> {
     const url = `${this.baseApi}/api/Prints/${print.id}`;
 
     const printer: any = {
@@ -333,5 +355,23 @@ export class PrintService {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
 
     return this.http.delete(url);
+  }
+
+  public addPrintComment(printId: number, commentBody: string) {
+    const url = `${this.baseApi}/api/Prints/${printId}/comment`;
+
+    const dto: AddCommentDto = {
+      body: commentBody,
+    };
+
+    return this.http.post<Comment>(url, dto).pipe(
+      map((comment) => {
+        const formattedComment: Comment = { ...comment };
+        formattedComment.createdDate = moment.utc(comment.createdDate).toDate();
+        formattedComment.updatedDate = moment.utc(comment.updatedDate).toDate();
+
+        return formattedComment;
+      })
+    );
   }
 }

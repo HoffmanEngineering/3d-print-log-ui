@@ -65,6 +65,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;
 
+  public printListSubscription: Subscription;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private printService: PrintService,
@@ -177,7 +179,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public updateFilter() {
-    this.printService
+    if (this.printListSubscription) {
+      this.printListSubscription.unsubscribe();
+    }
+
+    this.printListSubscription = this.printService
       .getPrintSummaries(
         this.currentPage,
         this.pageSize,

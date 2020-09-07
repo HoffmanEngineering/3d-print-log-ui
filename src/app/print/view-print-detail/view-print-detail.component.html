@@ -103,6 +103,7 @@
       </mat-card-actions>
       <mat-card-content style="width: 100%;">
         <app-print-comments
+          [allowComments]="print.allowComments"
           [comments]="print.comments"
           (addNewComment)="addComment($event)"
         ></app-print-comments>

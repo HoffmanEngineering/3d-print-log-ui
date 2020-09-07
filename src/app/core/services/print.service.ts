@@ -77,7 +77,7 @@ export interface PrintDetailDTO {
   viewStatus: PrintViewStatus;
   images?: PrintImage[];
   createdByUserId: number;
-
+  allowComments: boolean;
   comments: Comment[];
 }
 
@@ -96,6 +96,7 @@ export interface PutPrintDetailDTO {
   status: PrintStatus;
 
   viewStatus: PrintViewStatus;
+  allowComments: boolean;
   images?: PrintImage[];
 }
 
@@ -115,6 +116,7 @@ export interface PrintDetail {
   status: PrintStatus;
 
   viewStatus: PrintViewStatus;
+  allowComments: boolean;
 
   images?: PrintImage[];
   createdByUserId: number;
@@ -138,6 +140,7 @@ export interface AddPrintDTO {
   status: PrintStatus;
 
   viewStatus: PrintViewStatus;
+  allowComments: boolean;
 }
 
 @Injectable({
@@ -227,6 +230,7 @@ export class PrintService {
             images: newPrint.images || [],
             createdByUserId: newPrint.createdByUserId,
             comments,
+            allowComments: newPrint.allowComments,
           };
           return print;
         })
@@ -269,6 +273,7 @@ export class PrintService {
       title: newPrint.title,
       url: newPrint.url,
       viewStatus: newPrint.viewStatus,
+      allowComments: newPrint.allowComments,
     };
 
     return this.http.post<any>(url, printDto);
@@ -296,6 +301,7 @@ export class PrintService {
       id: print.id,
       images: print.images,
       viewStatus: print.viewStatus,
+      allowComments: print.allowComments,
     };
 
     return this.http.put<any>(url, printDto);

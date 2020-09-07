@@ -74,6 +74,9 @@ export class EditPrintDetailComponent
   public defaultPrintViewStatusSetting: UserSetting | null = null;
   viewStatusValueChangesSub: Subscription;
 
+  public lastAllowCommentsSetting: UserSetting | null = null;
+  lastAllowCommentsChangesSub: Subscription;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -98,6 +101,7 @@ export class EditPrintDetailComponent
 
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
       this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
+      this.lastAllowCommentsSetting = data.lastAllowCommentsSetting;
 
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
 
@@ -107,6 +111,7 @@ export class EditPrintDetailComponent
 
   private onChanges() {
     this.SaveSettingWhenPrintIdChanges();
+    this.SaveSettingWhenAllowCommentsChanges();
   }
 
   private SaveSettingWhenPrintIdChanges() {
@@ -133,6 +138,35 @@ export class EditPrintDetailComponent
             )
             .subscribe((setting) => {
               this.lastSelectedPrinterSetting = setting;
+            });
+        }
+      });
+  }
+
+  private SaveSettingWhenAllowCommentsChanges() {
+    if (this.lastAllowCommentsChangesSub) {
+      this.lastAllowCommentsChangesSub.unsubscribe();
+    }
+    this.lastAllowCommentsChangesSub = this.printForm
+      .get('allowComments')
+      .valueChanges.subscribe((allowComments) => {
+        if (this.lastAllowCommentsSetting) {
+          this.userSettingService
+            .updateUserSetting(
+              this.lastAllowCommentsSetting.id,
+              allowComments.toString()
+            )
+            .subscribe((setting) => {
+              this.lastAllowCommentsSetting = setting;
+            });
+        } else {
+          this.userSettingService
+            .addUserSetting(
+              UserSettingType.Prints_LastSelectedAllowComments,
+              allowComments.toString()
+            )
+            .subscribe((setting) => {
+              this.lastAllowCommentsSetting = setting;
             });
         }
       });
@@ -240,6 +274,13 @@ export class EditPrintDetailComponent
           : PrintViewStatus.Private,
       ],
       images: imageArray,
+      allowComments: [
+        print
+          ? print.allowComments
+          : this.lastAllowCommentsSetting
+          ? !!this.lastAllowCommentsSetting.value
+          : true,
+      ],
     });
   }
 
@@ -498,6 +539,7 @@ export class EditPrintDetailComponent
       url: this.printForm.controls.url.value,
       images: existingPrintImages,
       createdByUserId: null,
+      allowComments: this.printForm.controls.allowComments.value,
     };
 
     return print;

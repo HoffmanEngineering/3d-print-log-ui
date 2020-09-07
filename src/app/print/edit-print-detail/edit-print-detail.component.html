@@ -233,7 +233,7 @@
             formControlName="notes"
             maxlength="1000"
             cdkTextareaAutosize
-            cdkAutosizeMinRows="2"
+            cdkAutosizeMinRows="3"
             cdkAutosizeMaxRows="10"
           ></textarea>
           <mat-hint align="end">
@@ -256,6 +256,7 @@
             <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
           </mat-select>
         </mat-form-field>
+
         <div style="margin: 10 0 10;" fxFlex fxFlexFill>
           <mat-form-field style="margin: 0;" fxFlex>
             <mat-label> Sharing To:</mat-label>
@@ -296,6 +297,14 @@
             Save as Default View Status
           </button>
         </div>
+
+        <mat-checkbox
+          fxFlex
+          fxFlexFill
+          formControlName="allowComments"
+          id="edit-allow-comments"
+          >Allow Comments</mat-checkbox
+        >
       </mat-card-content>
       <mat-card-actions
         fxLayout

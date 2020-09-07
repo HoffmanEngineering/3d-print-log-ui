@@ -19,6 +19,7 @@
             <mat-label>Add Comment:</mat-label>
             <textarea
               #newCommentTextArea
+              id="add-comment-textarea"
               matInput
               maxlength="2000"
               cdkTextareaAutosize
@@ -32,6 +33,7 @@
             >
           </mat-form-field>
           <button
+            id="btn-add-print-comment"
             mat-raised-button
             color="accent"
             (click)="addComment()"

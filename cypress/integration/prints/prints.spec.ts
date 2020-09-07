@@ -99,4 +99,28 @@ describe('Prints List', () => {
       cy.get('.mat-column-status').invoke('text').should('equal', 'Success');
     });
   });
+  // it('should be able to add a new comment', () => {
+  //   cy.get('[cy-print-row]').first().as('firstRow');
+
+  //   cy.get('@firstRow')
+  //     .get('.mat-column-commentCount')
+  //     .invoke('text')
+  //     .should((initialCommentCount) => {
+  //       cy.get('@firstRow').click();
+
+  //       const newComment = 'This is a new test comment!';
+
+  //       cy.get('#add-comment-textarea').type(newComment);
+
+  //       cy.get('#btn-add-print-comment').click();
+
+  //       cy.get('[data-cy-close-btn]').click();
+
+  //       cy.get('@firstRow').within(() => {
+  //         cy.get('.mat-column-comment')
+  //           .invoke('text')
+  //           .should('equal', +initialCommentCount + 1);
+  //       });
+  //     });
+  // });
 });

@@ -39,7 +39,7 @@ export class PrintCommentsComponent implements OnInit {
       if (user) {
         this.isLoggedIn = true;
       }
-      this.currentUserProfilePicture = user.profilePicture ?? '';
+      this.currentUserProfilePicture = user?.profilePicture ?? '';
     });
   }
 

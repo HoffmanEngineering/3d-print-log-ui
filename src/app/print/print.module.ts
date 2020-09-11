@@ -15,6 +15,7 @@ import { LastSelectedPrinterSettingResolverService } from './resolvers/last-sele
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
+import { PrintCommentsComponent } from './print-comments/print-comments.component';
 
 @NgModule({
   declarations: [
@@ -23,6 +24,7 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
     EditPrintDetailComponent,
     ViewPrintDetailComponent,
     PrintShareDialogComponent,
+    PrintCommentsComponent,
   ],
   imports: [
     CommonModule,

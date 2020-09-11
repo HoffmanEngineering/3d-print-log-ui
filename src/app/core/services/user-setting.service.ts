@@ -13,6 +13,11 @@ export enum UserSettingType {
    * The Id of the printer that was last selected.
    */
   Prints_LastSelectedPrinterId = 2,
+
+  /**
+   * The value of the last changed Allow Comments on prints.
+   */
+  Prints_LastSelectedAllowComments = 3,
 }
 
 export interface UserSetting {

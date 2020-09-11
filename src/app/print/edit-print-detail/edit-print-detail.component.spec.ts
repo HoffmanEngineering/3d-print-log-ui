@@ -12,6 +12,7 @@ import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { EditPrintDetailComponent } from './edit-print-detail.component';
 
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -48,6 +49,7 @@ describe('EditPrintDetailComponent', () => {
         MatSelectModule,
         MatDatepickerModule,
         MatMomentDateModule,
+        MatCheckboxModule
       ],
       providers: [
         { provide: PrintService, useValue: mockPrintService },

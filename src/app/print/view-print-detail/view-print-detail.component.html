@@ -86,6 +86,7 @@
             type="button"
             color="accent"
             [routerLink]="['edit']"
+            data-cy-edit-btn
           >
             Edit
           </button>
@@ -95,11 +96,19 @@
             type="button"
             (click)="handleClose()"
             color="warn"
+            data-cy-close-btn
           >
             Close
           </button>
         </div>
       </mat-card-actions>
+      <mat-card-content style="width: 100%;">
+        <app-print-comments
+          [allowComments]="print.allowComments"
+          [comments]="print.comments"
+          (addNewComment)="addComment($event)"
+        ></app-print-comments>
+      </mat-card-content>
     </div>
     <ng-adsense></ng-adsense>
   </mat-card>

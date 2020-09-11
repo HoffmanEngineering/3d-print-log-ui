@@ -1,0 +1,26 @@
+<mat-card class="mat-elevation-z1">
+  <mat-card-header>
+    <img
+      *ngIf="comment.createdBy.profilePicture"
+      mat-card-avatar
+      [src]="comment.createdBy.profilePicture"
+    />
+    <!-- <mat-card-title>
+      <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
+    </mat-card-title> -->
+    <mat-card-subtitle>
+      <a [routerLink]="['/users', comment.createdBy.id]">{{
+        comment.createdBy.displayName
+      }}</a>
+
+      <span
+        matTooltip="{{ comment.createdDate | date: 'medium' }}"
+        style="padding-left: 5px;"
+        >{{ comment.createdDate | humanize }}</span
+      >
+    </mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <p style="padding-top: 5px; white-space: pre-wrap;">{{ comment.body }}</p>
+  </mat-card-content>
+</mat-card>

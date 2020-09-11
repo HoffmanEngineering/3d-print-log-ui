@@ -47,3 +47,6 @@ Thumbs.db
 
 /cura-machine-def-parser/out
 /test_reports
+
+# Ignores for Cypress
+cypress.env.json

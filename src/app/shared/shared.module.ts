@@ -29,12 +29,14 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import { CallbackComponent } from './callback/callback.component';
+import { CommentComponent } from './comments/comment/comment.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
 import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component';
 import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
 import { DurationPipe } from './pipes/duration.pipe';
+import { HumanizePipe } from './pipes/humanize.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
@@ -53,6 +55,8 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     StatPanelComponent,
     GraphPanelComponent,
     DonutChartComponent,
+    CommentComponent,
+    HumanizePipe,
   ],
   imports: [
     CommonModule,
@@ -125,6 +129,8 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     StatPanelComponent,
     GraphPanelComponent,
     DonutChartComponent,
+    CommentComponent,
+    HumanizePipe,
   ],
 })
 export class SharedModule {}

@@ -1,5 +1,6 @@
 import { MediaMatcher } from '@angular/cdk/layout';
 import {
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
   NgZone,
@@ -30,7 +31,7 @@ import { PrinterRedirectPromptService } from '../services/printer-redirect-promp
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
 })
-export class PrintListComponent implements OnInit, OnDestroy {
+export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   public prints: PrintSummary[] = [];
   public pageSize: number;
   public currentPage: number;
@@ -75,42 +76,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private titleService: Title,
     private router: Router,
     public dialog: MatDialog,
-    media: MediaMatcher,
+    private media: MediaMatcher,
     private ngZone: NgZone,
     private changeDetectorRef: ChangeDetectorRef
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
-
-    this.mobileQuery = media.matchMedia('(max-width: 600px)');
-
-    this.mobileQueryListener = () => {
-      this.ngZone.run(() => {
-        if (this.mobileQuery.matches) {
-          this.displayedColumns = [
-            'image',
-            'title',
-            'printer',
-            'start-date',
-            'status',
-            'more',
-          ];
-        } else {
-          this.displayedColumns = [
-            'image',
-            'title',
-            'printer',
-            'start-date',
-            'status',
-            'commentCount',
-            'more',
-          ];
-        }
-        this.changeDetectorRef.detectChanges();
-      });
-    };
-    // tslint:disable-next-line: deprecation
-    this.mobileQuery.addListener(this.mobileQueryListener);
   }
+
   ngOnDestroy(): void {
     if (this.printerRedirectToast) {
       this.toastrService.remove(this.printerRedirectToast.toastId);
@@ -152,6 +124,41 @@ export class PrintListComponent implements OnInit, OnDestroy {
           );
         }
       });
+
+    this.mobileQuery = this.media.matchMedia('(max-width: 800px)');
+
+    this.mobileQueryListener = () => {
+      this.ngZone.run(() => {
+        console.log('Query Listener: ', this.mobileQuery.matches);
+        if (this.mobileQuery.matches) {
+          this.displayedColumns = [
+            'image',
+            'title',
+            'printer',
+            'start-date',
+            'status',
+            'more',
+          ];
+        } else {
+          this.displayedColumns = [
+            'image',
+            'title',
+            'printer',
+            'start-date',
+            'status',
+            'commentCount',
+            'more',
+          ];
+        }
+        this.changeDetectorRef.detectChanges();
+      });
+    };
+    // tslint:disable-next-line: deprecation
+    this.mobileQuery.addListener(this.mobileQueryListener);
+  }
+
+  ngAfterViewInit() {
+    this.mobileQueryListener();
   }
 
   public pageChange(pageEvent: PageEvent) {

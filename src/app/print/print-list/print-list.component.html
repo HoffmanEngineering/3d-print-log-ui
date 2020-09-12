@@ -1,9 +1,15 @@
-<div>
-  <div class="header" fxLayout fxLayoutAlign="start center" fxLayoutGap="5px">
+<div fxLayout="column" fxLayoutAlign="center">
+  <div
+    class="header"
+    fxFlex
+    fxLayout
+    fxLayoutAlign="start center"
+    fxLayoutGap="5px"
+  >
     <button
       fxFlex="150px"
       fxFlex.xs="120px"
-      style="height: 36px;"
+      style="height: 36px"
       mat-raised-button
       routerLink="new/edit"
       type="button"
@@ -43,6 +49,7 @@
   </div>
 
   <table
+    fxFlex
     mat-table
     [dataSource]="prints"
     matSort

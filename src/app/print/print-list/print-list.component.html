@@ -18,7 +18,7 @@
     >
       Add New Print
     </button>
-    <div fxFlex fxLayoutGap="10px">
+    <div fxLayoutGap="10px">
       <mat-form-field>
         <mat-label> Search: </mat-label
         ><input
@@ -33,7 +33,7 @@
         <mat-label> Status</mat-label>
         <mat-select
           [(ngModel)]="filterByStatus"
-          (ngModelChange)="updateFilter()"
+          (ngModelChange)="this.currentPage = 1; updateFilter()"
         >
           <mat-option [value]="-1">All</mat-option>
           <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
@@ -46,6 +46,20 @@
         </mat-select>
       </mat-form-field>
     </div>
+    <button
+      fxFlex="120px"
+      fxFlex.xs="80px"
+      style="height: 36px"
+      [ngStyle.xs]="{
+        height: 'auto',
+        'white-space': 'normal',
+        'line-height': '26px'
+      }"
+      mat-raised-button
+      (click)="resetFilters()"
+    >
+      Reset Filters
+    </button>
   </div>
 
   <table
@@ -158,6 +172,7 @@
   </div>
 
   <mat-paginator
+    [pageIndex]="currentPage - 1"
     [length]="totalCount"
     [pageSize]="pageSize"
     [pageSizeOptions]="[5, 10, 25, 100]"

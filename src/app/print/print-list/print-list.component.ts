@@ -66,11 +66,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;
 
-  public printListSubscription: Subscription;
-
   constructor(
     private activatedRoute: ActivatedRoute,
-    private printService: PrintService,
     private printerRedirectPromptService: PrinterRedirectPromptService,
     private toastrService: ToastrService,
     private titleService: Title,
@@ -80,7 +77,10 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngZone: NgZone,
     private changeDetectorRef: ChangeDetectorRef
   ) {
-    this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+    this.debouncedUpdateFilter = debounce(() => {
+      this.currentPage = 1;
+      this.updateFilter();
+    }, 400);
   }
 
   ngOnDestroy(): void {
@@ -95,6 +95,21 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit() {
     this.titleService.setTitle('My Prints - 3D Print Log');
+
+    this.activatedRoute.queryParamMap.subscribe((params) => {
+      if (params.has('searchText')) {
+        this.searchText = params.get('searchText');
+      }
+      if (params.has('filterByStatus')) {
+        this.filterByStatus = +params.get('filterByStatus');
+      }
+      if (params.has('sortDirection')) {
+        this.sortDirection = +params.get('sortDirection');
+      }
+      if (params.has('sortColumn')) {
+        this.sortColumn = +params.get('sortColumn');
+      }
+    });
 
     this.activatedRoute.data.subscribe((data) => {
       const pagedResponse: PagedList<PrintSummary> = data.printList;
@@ -182,26 +197,34 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.sortDirection =
       sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc;
 
+    this.currentPage = 1;
+
+    this.updateFilter();
+  }
+
+  public resetFilters() {
+    this.currentPage = 1;
+    this.searchText = '';
+    this.filterByStatus = -1;
+
+    this.sortDirection = SortDirection.Desc;
+    this.sortColumn = PrintSummarySortColumn.StartDate;
+
     this.updateFilter();
   }
 
   public updateFilter() {
-    if (this.printListSubscription) {
-      this.printListSubscription.unsubscribe();
-    }
-
-    this.printListSubscription = this.printService
-      .getPrintSummaries(
-        this.currentPage,
-        this.pageSize,
-        this.searchText,
-        this.filterByStatus,
-        this.sortDirection,
-        this.sortColumn
-      )
-      .subscribe((response) => {
-        this.handlePagedList(response);
-      });
+    this.router.navigate(['.'], {
+      queryParams: {
+        pageNumber: this.currentPage,
+        pageSize: this.pageSize,
+        searchText: this.searchText || '',
+        filterByStatus: this.filterByStatus,
+        sortDirection: this.sortDirection,
+        sortColumn: this.sortColumn,
+      },
+      relativeTo: this.activatedRoute,
+    });
   }
 
   public share(print: PrintSummary) {
@@ -214,7 +237,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     dialogRef.afterClosed().subscribe((result) => {});
   }
 
-  getPrinterLabel(print: PrintSummary) {
+  public getPrinterLabel(print: PrintSummary) {
     if (print.printer.name && print.printer.name !== '') {
       return `${print.printer.name} - (${(
         print.printer.make +
@@ -225,7 +248,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
       return `${(print.printer.make + ' ' + print.printer.model).trim()}`;
     }
   }
-  getStatus(print: PrintSummary) {
+
+  public getStatus(print: PrintSummary) {
     if (print.status === PrintStatus.Cancelled) {
       return 'Cancelled';
     } else if (print.status === PrintStatus.Failed) {

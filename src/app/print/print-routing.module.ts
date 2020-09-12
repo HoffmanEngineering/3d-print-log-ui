@@ -20,6 +20,7 @@ const routes: Routes = [
         path: '',
         component: PrintListComponent,
         resolve: { printList: PrintListResolverService },
+        runGuardsAndResolvers: 'paramsOrQueryParamsChange',
       },
       {
         path: 'copy/:id',

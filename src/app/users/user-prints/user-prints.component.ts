@@ -5,7 +5,9 @@ import {
   OnInit,
   SimpleChanges,
 } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
+import { Subscription } from 'rxjs';
 import {
   PrintService,
   PrintStatus,
@@ -18,7 +20,7 @@ import {
   templateUrl: './user-prints.component.html',
   styleUrls: ['./user-prints.component.scss'],
 })
-export class UserPrintsComponent implements OnChanges {
+export class UserPrintsComponent implements OnChanges, OnInit {
   @Input() userId: number;
   @Input() userProfilePictureUrl: string;
   @Input() userName: string;
@@ -39,17 +41,38 @@ export class UserPrintsComponent implements OnChanges {
   public debouncedUpdateFilter;
 
   public showLoadMore = true;
+  printListSubscription: Subscription;
 
-  constructor(private readonly printService: PrintService) {
+  constructor(
+    private readonly printService: PrintService,
+    private readonly router: Router,
+    private readonly activatedRoute: ActivatedRoute
+  ) {
     this.debouncedUpdateFilter = debounce(() => {
-      // Clear the loaded prints, since we don't need them visible anymore
-      this.clearPrints();
-      this.updateFilter();
+      this.router.navigate(['.'], {
+        queryParams: {
+          searchText: this.searchText !== '' ? this.searchText : null,
+        },
+        relativeTo: this.activatedRoute,
+      });
     }, 400);
   }
 
+  ngOnInit() {
+    this.activatedRoute.queryParamMap.subscribe((params) => {
+      console.log(params);
+      if (params.has('searchText')) {
+        console.log('search');
+        this.searchText = params.get('searchText');
+        this.clearPrints();
+        this.pageNumber = 1;
+        this.updateFilter();
+      }
+    });
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.userId || changes.userProfilePictureUrl || changes.userName) {
+    if (changes.userId) {
       this.searchText = '';
       this.filterByStatus = -1;
       this.clearPrints();
@@ -61,7 +84,10 @@ export class UserPrintsComponent implements OnChanges {
     this.prints = [];
   }
   updateFilter(): any {
-    this.printService
+    if (this.printListSubscription) {
+      this.printListSubscription.unsubscribe();
+    }
+    this.printListSubscription = this.printService
       .getPrintSummaries(
         this.pageNumber,
         this.PAGE_SIZE,

@@ -44,7 +44,7 @@
           <input
             type="file"
             accept="image/*"
-            style="display: none;"
+            style="display: none"
             id="cover-photo-input"
             #coverphotoinput
             (change)="addCoverPhoto($event)"
@@ -72,7 +72,7 @@
           <input
             type="file"
             accept="image/*"
-            style="display: none;"
+            style="display: none"
             id="profile-photo-input"
             #profilephotoinput
             (change)="addProfilePicture($event)"
@@ -97,7 +97,7 @@
                   mat-raised-button
                   type="button"
                   color="accent"
-                  style="margin-bottom: 10px;"
+                  style="margin-bottom: 10px"
                   (click)="startEditingDisplayName()"
                 >
                   <mat-icon>edit</mat-icon>Edit Display Name
@@ -107,9 +107,9 @@
             <div
               *ngIf="isEditingDisplayName"
               class="mat-elevation-z5 display-name"
-              style="padding: 10px;"
+              style="padding: 10px"
             >
-              <mat-form-field style="width: 100%;">
+              <mat-form-field style="width: 100%">
                 <mat-label>Display name:</mat-label>
                 <textarea
                   matInput
@@ -154,7 +154,7 @@
             >
               <div
                 *ngIf="!isEditingDescription"
-                style="white-space: pre-wrap;"
+                style="white-space: pre-wrap"
                 fxFlex
               >
                 {{ userDetail.bio }}
@@ -177,9 +177,9 @@
             <div
               *ngIf="isEditingDescription"
               class="mat-elevation-z5"
-              style="padding: 10px;"
+              style="padding: 10px"
             >
-              <mat-form-field style="width: 100%;">
+              <mat-form-field style="width: 100%">
                 <mat-label>Describe who you are:</mat-label>
                 <textarea
                   matInput
@@ -217,7 +217,7 @@
           <div fxFlex *ngIf="userDetail.id === currentUser?.id">
             <hr />
             <div>
-              <label for="profile-visibility" style="margin-right: 10px;">
+              <label for="profile-visibility" style="margin-right: 10px">
                 Profile Visibility:</label
               >
               <select
@@ -225,21 +225,21 @@
                 name="profile-visibility"
                 [(ngModel)]="viewStatus"
               >
-                <option [ngValue]="profileViewStatusTypes.Public"
-                  >Public (anyone can view)</option
-                >
-                <option [ngValue]="profileViewStatusTypes.Unlisted"
-                  >Unlisted (anyone with link can view)</option
-                >
-                <option [ngValue]="profileViewStatusTypes.Private"
-                  >Private (only you can view)</option
-                >
+                <option [ngValue]="profileViewStatusTypes.Public">
+                  Public (anyone can view)
+                </option>
+                <option [ngValue]="profileViewStatusTypes.Unlisted">
+                  Unlisted (anyone with link can view)
+                </option>
+                <option [ngValue]="profileViewStatusTypes.Private">
+                  Private (only you can view)
+                </option>
               </select>
             </div>
 
             <div *ngIf="viewStatus !== this.userDetail.viewStatus">
               <div
-                style="margin-top: 10px;"
+                style="margin-top: 10px"
                 fxLayout
                 fxLayoutAlign="center center"
                 fxLayoutGap="15px"
@@ -278,7 +278,7 @@
       <mat-card-content
         fxFlex
         fxLayout="column"
-        fxLayoutAlign="start center"
+        fxLayoutAlign="start stretch"
         fxLayoutGap="10px"
       >
         <app-user-prints

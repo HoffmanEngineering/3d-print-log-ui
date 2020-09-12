@@ -1,33 +1,39 @@
 <div fxLayout="column">
-  <div fxFlex fxLayout="row" style="padding: 0px 10px;" fxLayoutGap="10px">
-    <h3 style="margin-right: 10px;">Prints:</h3>
-    <mat-form-field fxFlex>
-      <mat-label> Search: </mat-label
-      ><input
-        matInput
-        type="text"
-        [(ngModel)]="searchText"
-        (ngModelChange)="debouncedUpdateFilter()"
-        autocomplete="off"
-    /></mat-form-field>
+  <div fxFlex fxLayout="column" style="padding: 0px 10px">
+    <h3 fxFlex style="margin-right: 10px; margin-top: 5px; margin-bottom: 5px">
+      Prints:
+    </h3>
+    <div fxFlex fxLayout="row" fxLayoutGap="5px">
+      <mat-form-field fxFlex>
+        <mat-label> Search: </mat-label
+        ><input
+          matInput
+          type="text"
+          [(ngModel)]="searchText"
+          (ngModelChange)="debouncedUpdateFilter()"
+          autocomplete="off"
+      /></mat-form-field>
 
-    <mat-form-field fxFlex>
-      <mat-label> Status</mat-label>
-      <mat-select
-        [(ngModel)]="filterByStatus"
-        (ngModelChange)="clearPrints(); updateFilter()"
-      >
-        <mat-option [value]="-1">All</mat-option>
-        <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
-        <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
-        <mat-option [value]="printStatusTypes.Success">Success</mat-option>
-        <mat-option [value]="printStatusTypes.Cancelled">Cancelled</mat-option>
-        <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
-      </mat-select>
-    </mat-form-field>
+      <mat-form-field fxFlex>
+        <mat-label> Status</mat-label>
+        <mat-select
+          [(ngModel)]="filterByStatus"
+          (ngModelChange)="clearPrints(); updateFilter()"
+        >
+          <mat-option [value]="-1">All</mat-option>
+          <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
+          <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
+          <mat-option [value]="printStatusTypes.Success">Success</mat-option>
+          <mat-option [value]="printStatusTypes.Cancelled"
+            >Cancelled</mat-option
+          >
+          <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </div>
   <ng-container *ngIf="prints.length > 0">
-    <div *ngFor="let print of prints" style="margin-bottom: 10px;">
+    <div *ngFor="let print of prints" style="margin-bottom: 10px">
       <app-print-summary-card
         [print]="print"
         [userId]="userId"
@@ -38,7 +44,7 @@
     </div>
     <button
       fxFlex
-      style="margin: 0 auto;"
+      style="margin: 0 auto"
       *ngIf="showLoadMore"
       mat-raised-button
       color="accent"

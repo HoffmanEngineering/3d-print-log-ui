@@ -16,6 +16,7 @@ import {
   PrintService,
   PrintStatus,
 } from '../../core/services/print.service';
+import { CuraParserService } from '../services/integration/cura-parser.service';
 
 export interface PrintDetailWithUser {
   print: PrintDetail;
@@ -25,6 +26,12 @@ export interface PrintDetailWithUser {
 @Injectable()
 export class PrintDetailResolverService
   implements Resolve<PrintDetailWithUser> {
+  constructor(
+    private printService: PrintService,
+    private userService: UserService,
+    private curaParserService: CuraParserService
+  ) {}
+
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const printId = +route.paramMap.get('id');
 
@@ -52,16 +59,22 @@ export class PrintDetailResolverService
       );
     }
 
+    let defaultPrint: PrintDetail | null = null;
+    if (this.sentFromCura(route)) {
+      defaultPrint = this.curaParserService.parse(route.queryParamMap);
+    }
+
     const emptyPrintDetail: PrintDetailWithUser = {
-      print: null,
+      print: defaultPrint,
       user: null,
     };
 
     return emptyPrintDetail;
   }
-
-  constructor(
-    private printService: PrintService,
-    private userService: UserService
-  ) {}
+  sentFromCura(route: ActivatedRouteSnapshot) {
+    return (
+      route.queryParamMap.has('cura_version') &&
+      route.queryParamMap.has('plugin_version')
+    );
+  }
 }

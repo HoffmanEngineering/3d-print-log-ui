@@ -6,6 +6,7 @@ import { AdsenseModule } from 'ng2-adsense';
 import { PrintService } from '../core/services/print.service';
 import { SharedModule } from '../shared/shared.module';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
+import { PrintCommentsComponent } from './print-comments/print-comments.component';
 import { PrintListComponent } from './print-list/print-list.component';
 import { PrintRoutingModule } from './print-routing.module';
 import { PrintShareDialogComponent } from './print-share-dialog/print-share-dialog.component';
@@ -14,8 +15,8 @@ import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-re
 import { LastSelectedPrinterSettingResolverService } from './resolvers/last-selected-printer-setting-resolver.service';
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
+import { CuraParserService } from './services/integration/cura-parser.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
-import { PrintCommentsComponent } from './print-comments/print-comments.component';
 
 @NgModule({
   declarations: [
@@ -40,6 +41,7 @@ import { PrintCommentsComponent } from './print-comments/print-comments.componen
     PrintService,
     CopyPrintDetailResolverService,
     LastSelectedPrinterSettingResolverService,
+    CuraParserService,
   ],
 })
 export class PrintModule {}

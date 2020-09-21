@@ -45,6 +45,10 @@ const routes: Routes = [
         canDeactivate: [PendingChangesGuard],
       },
       {
+        path: 'new/cura',
+        redirectTo: 'new/edit',
+      },
+      {
         path: ':id',
         component: ViewPrintDetailComponent,
         resolve: {

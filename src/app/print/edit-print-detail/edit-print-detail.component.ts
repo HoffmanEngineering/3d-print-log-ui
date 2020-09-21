@@ -237,7 +237,7 @@ export class EditPrintDetailComponent
       id: [print ? print.id : null],
       title: [print ? print.title : '', Validators.required],
       printerId: [
-        print
+        print && print.printerId !== null
           ? print.printerId
           : this.lastSelectedPrinterSetting
           ? +this.lastSelectedPrinterSetting.value
@@ -267,7 +267,7 @@ export class EditPrintDetailComponent
       url: [print ? print.url : ''],
       status: [print ? print.status : PrintStatus.Pending],
       viewStatus: [
-        print
+        print && print.viewStatus !== null
           ? print.viewStatus
           : this.defaultPrintViewStatusSetting
           ? +this.defaultPrintViewStatusSetting.value
@@ -275,7 +275,7 @@ export class EditPrintDetailComponent
       ],
       images: imageArray,
       allowComments: [
-        print
+        print && print.allowComments !== null
           ? print.allowComments
           : this.lastAllowCommentsSetting
           ? !!this.lastAllowCommentsSetting.value

@@ -41,6 +41,7 @@ import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 
 @NgModule({
   declarations: [
@@ -57,6 +58,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     DonutChartComponent,
     CommentComponent,
     HumanizePipe,
+    SimpleDialogComponent,
   ],
   imports: [
     CommonModule,

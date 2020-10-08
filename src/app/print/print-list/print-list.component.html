@@ -154,6 +154,9 @@
           <a class="menu-link" mat-menu-item [routerLink]="['copy', print.id]"
             ><mat-icon>file_copy</mat-icon>Duplicate</a
           >
+          <button type="button" mat-menu-item (click)="deletePrint(print)">
+            <mat-icon>delete</mat-icon>Delete
+          </button>
         </mat-menu>
       </td>
     </ng-container>

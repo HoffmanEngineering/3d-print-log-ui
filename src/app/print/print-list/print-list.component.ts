@@ -17,6 +17,7 @@ import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
+import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   PrintService,
   PrintStatus,
@@ -75,7 +76,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     public dialog: MatDialog,
     private media: MediaMatcher,
     private ngZone: NgZone,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private printService: PrintService
   ) {
     this.debouncedUpdateFilter = debounce(() => {
       this.currentPage = 1;
@@ -214,7 +216,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public updateFilter() {
-    this.router.navigate(['.'], {
+    return this.router.navigate(['.'], {
       queryParams: {
         pageNumber: this.currentPage,
         pageSize: this.pageSize,
@@ -222,6 +224,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
         filterByStatus: this.filterByStatus,
         sortDirection: this.sortDirection,
         sortColumn: this.sortColumn,
+        t: new Date().getTime(),
       },
       relativeTo: this.activatedRoute,
     });
@@ -247,6 +250,30 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       return `${(print.printer.make + ' ' + print.printer.model).trim()}`;
     }
+  }
+
+  public deletePrint(print: PrintSummary) {
+    const dialogRef = this.dialog.open(SimpleDialogComponent, {
+      maxWidth: '350px',
+    });
+    (dialogRef.componentInstance as any).title = 'Delete?';
+    (dialogRef.componentInstance as any).body = `Are you sure you want to delete print "${print.title}"? \n\n This action cannot be undone.`;
+    (dialogRef.componentInstance as any).yesText = 'Delete';
+    (dialogRef.componentInstance as any).yesColor = 'warn';
+    (dialogRef.componentInstance as any).noText = 'Cancel';
+
+    dialogRef.afterClosed().subscribe((shouldDelete) => {
+      if (shouldDelete) {
+        this.printService.deletePrint(print.id).subscribe((_) => {
+          this.updateFilter().then(() => {
+            this.toastrService.success(
+              'Print removed successfully.',
+              'Success'
+            );
+          });
+        });
+      }
+    });
   }
 
   public getStatus(print: PrintSummary) {

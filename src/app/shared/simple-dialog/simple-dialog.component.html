@@ -1,0 +1,17 @@
+<h1 mat-dialog-title *ngIf="title">{{ title }}</h1>
+<div mat-dialog-content style="white-space: pre-wrap">
+  {{ body }}
+</div>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onNoClick()" [color]="noColor">
+    {{ noText }}
+  </button>
+  <button
+    mat-button
+    [mat-dialog-close]="true"
+    cdkFocusInitial
+    [color]="yesColor"
+  >
+    {{ yesText }}
+  </button>
+</mat-dialog-actions>

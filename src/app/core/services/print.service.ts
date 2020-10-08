@@ -307,6 +307,12 @@ export class PrintService {
     return this.http.put<any>(url, printDto);
   }
 
+  deletePrint(id: number): Observable<any> {
+    const url = `${this.baseApi}/api/Prints/${id}`;
+
+    return this.http.delete<any>(url);
+  }
+
   public uploadPrintImage(printId: number, file: File, isDefault = false) {
     const url = `${this.baseApi}/api/Prints/${printId}/image`;
 

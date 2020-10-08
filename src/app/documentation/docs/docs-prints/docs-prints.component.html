@@ -5,7 +5,7 @@
     Navigate to the <a [routerLink]="['/prints']">Prints</a> section to manage
     your list of 3D prints.
   </p>
-  <h3>Prints List</h3>
+  <h3 id="list">Prints List</h3>
   <p>
     By default, the list shows your last 10 prints, ordered by their Start
     Dates. Use the
@@ -14,7 +14,7 @@
     <strong>Status</strong> dropdown to filter by a specific print status.
   </p>
   <hr />
-  <h3>Add a new 3D Printer</h3>
+  <h3 id="add">Add a new 3D Print</h3>
   <p>
     From the 3D Print list, click on the
     <button mat-raised-button color="accent">Add New Print</button> button.
@@ -47,7 +47,7 @@
     save your new 3D Print.
   </p>
   <hr />
-  <h3>Edit an existing 3D Print</h3>
+  <h3 id="edit">Edit an existing 3D Print</h3>
   <p>
     Click on any row in the print list to view and edit an existing 3D print.
   </p>
@@ -57,4 +57,13 @@
     print.
   </p>
   <hr />
+  <h3 id="delete">Delete a Print</h3>
+  <p>
+    You can permanently delete a print by clicking on
+    <button aria-label="More Menu" mat-button>
+      <mat-icon>more_horiz</mat-icon></button
+    >, and selecting the "Delete" option. A confirmation dialog will appear, and
+    by clicking "Delete" the print (and all related comments and images) will be
+    deleted.
+  </p>
 </div>

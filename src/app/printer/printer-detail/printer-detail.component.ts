@@ -157,7 +157,10 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
       (printer) => {
         this.saving = false;
         this.printerForm.markAsPristine();
-        this.router.navigate(['/printers']).then(() => {
+
+        const url = this.getRedirectUrl();
+
+        this.router.navigateByUrl(url).then(() => {
           this.toastr.success('Save successful!');
         });
       },
@@ -165,6 +168,18 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
         this.saving = false;
       }
     );
+  }
+
+  /**
+   * Get the proper URL to redirect to.
+   */
+  getRedirectUrl(): string {
+    // Sometimes we want to redirect to a specific url after a printer is created (ie, the first printer)
+    if (this.activatedRoute.snapshot.queryParamMap.has('returnUrl')) {
+      return this.activatedRoute.snapshot.queryParamMap.get('returnUrl');
+    }
+
+    return '/printers';
   }
 
   handleClose() {

@@ -10,6 +10,8 @@ import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.compon
 import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocumentationComponent } from './documentation.component';
+import { DocsCuraPluginComponent } from './docs/docs-cura-plugin/docs-cura-plugin.component';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
   declarations: [
@@ -20,7 +22,13 @@ import { DocumentationComponent } from './documentation.component';
     DocsAnalyticsComponent,
     DocsPrintsComponent,
     DocsAboutComponent,
+    DocsCuraPluginComponent,
   ],
-  imports: [SharedModule, DocumentationRoutingModule, AdsenseModule],
+  imports: [
+    CommonModule,
+    SharedModule,
+    DocumentationRoutingModule,
+    AdsenseModule,
+  ],
 })
 export class DocumentationModule {}

@@ -40,8 +40,8 @@ import { HumanizePipe } from './pipes/humanize.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
-import { UserProfileComponent } from './user-profile/user-profile.component';
 import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
+import { UserProfileComponent } from './user-profile/user-profile.component';
 
 @NgModule({
   declarations: [
@@ -92,10 +92,10 @@ import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
     ClipboardModule,
   ],
   exports: [
+    CommonModule,
     NavbarComponent,
     CallbackComponent,
     UserProfileComponent,
-    CommonModule,
     MatMenuModule,
     MatSliderModule,
     MatToolbarModule,

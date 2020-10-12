@@ -16,6 +16,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
 describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
@@ -39,6 +40,12 @@ describe('EditPrintDetailComponent', () => {
       ['updateUserSetting']
     );
 
+    const mockPrinterPromptService = jasmine.createSpyObj<
+      PrinterRedirectPromptService
+    >('PrinterRedirectPromptService', {
+      shouldShowAddPrinterPrompt: of(false),
+    });
+
     TestBed.configureTestingModule({
       declarations: [EditPrintDetailComponent],
       imports: [
@@ -49,13 +56,17 @@ describe('EditPrintDetailComponent', () => {
         MatSelectModule,
         MatDatepickerModule,
         MatMomentDateModule,
-        MatCheckboxModule
+        MatCheckboxModule,
       ],
       providers: [
         { provide: PrintService, useValue: mockPrintService },
         { provide: ToastrService, useValue: mockToastrService },
         { provide: Title, useValue: mockTitleService },
         { provide: UserSettingService, useValue: mockUserSettingService },
+        {
+          provide: PrinterRedirectPromptService,
+          useValue: mockPrinterPromptService,
+        },
         {
           provide: ActivatedRoute,
           useValue: {

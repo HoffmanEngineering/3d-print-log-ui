@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from '../core/guards/auth.guard';
 
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/current-user-printer-summary-resolver.service';
@@ -42,10 +43,12 @@ const routes: Routes = [
           lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
           defaultPrintViewStatusSetting: DefaultPrintViewStatusSettingResolverService,
         },
+        canActivate: [AuthGuard],
         canDeactivate: [PendingChangesGuard],
       },
       {
         path: 'new/cura',
+
         redirectTo: 'new/edit',
       },
       {

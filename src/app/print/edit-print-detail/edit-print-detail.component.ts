@@ -2,6 +2,7 @@ import {
   ChangeDetectorRef,
   Component,
   HostListener,
+  OnDestroy,
   OnInit,
 } from '@angular/core';
 import {
@@ -15,7 +16,7 @@ import {
 import { MatDatepickerInputEvent } from '@angular/material/datepicker';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
-import { ToastrService } from 'ngx-toastr';
+import { ActiveToast, Toast, ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
 import { Title } from '@angular/platform-browser';
@@ -35,6 +36,7 @@ import {
   PrintStatus,
   PrintViewStatus,
 } from '../../core/services/print.service';
+import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -49,7 +51,7 @@ export interface PrintImageValue {
   styleUrls: ['./edit-print-detail.component.scss'],
 })
 export class EditPrintDetailComponent
-  implements OnInit, ComponentCanDeactivate {
+  implements OnInit, ComponentCanDeactivate, OnDestroy {
   public printers: PrinterSummary[] = [];
 
   public printForm: FormGroup;
@@ -76,6 +78,9 @@ export class EditPrintDetailComponent
 
   public lastAllowCommentsSetting: UserSetting | null = null;
   lastAllowCommentsChangesSub: Subscription;
+  printerRedirectPromptSubscription: Subscription;
+  printerRedirectToast: ActiveToast<any>;
+  printerRedirectSubscription: Subscription;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -85,8 +90,30 @@ export class EditPrintDetailComponent
     private toastr: ToastrService,
     private cd: ChangeDetectorRef,
     private titleService: Title,
-    private readonly userSettingService: UserSettingService
+    private readonly userSettingService: UserSettingService,
+    private printerRedirectPromptService: PrinterRedirectPromptService
   ) {}
+  ngOnDestroy(): void {
+    if (this.printerIdValueChangesSub) {
+      this.printerIdValueChangesSub.unsubscribe();
+    }
+
+    if (this.viewStatusValueChangesSub) {
+      this.viewStatusValueChangesSub.unsubscribe();
+    }
+
+    if (this.lastAllowCommentsChangesSub) {
+      this.lastAllowCommentsChangesSub.unsubscribe();
+    }
+
+    if (this.printerRedirectPromptSubscription) {
+      this.printerRedirectPromptSubscription.unsubscribe();
+    }
+
+    if (this.printerRedirectSubscription) {
+      this.printerRedirectSubscription.unsubscribe();
+    }
+  }
 
   @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
@@ -107,6 +134,34 @@ export class EditPrintDetailComponent
 
       this.onChanges();
     });
+
+    /**
+     * Show the Add Printer prompt if needed.
+     */
+    this.printerRedirectPromptSubscription = this.printerRedirectPromptService
+      .shouldShowAddPrinterPrompt()
+      .subscribe((shouldShowPrompt) => {
+        if (shouldShowPrompt) {
+          this.printerRedirectToast = this.toastr.info(
+            'Click here to add a new 3D Printer before logging prints.',
+            'No Active Printers',
+            {
+              disableTimeOut: true,
+            }
+          );
+
+          this.printerRedirectSubscription = this.printerRedirectToast.onTap.subscribe(
+            () => {
+              this.router.navigate(['printers', 'new'], {
+                queryParams: {
+                  returnUrl: this.activatedRoute.snapshot['_routerState'].url,
+                },
+              });
+              this.printerRedirectSubscription.unsubscribe();
+            }
+          );
+        }
+      });
   }
 
   private onChanges() {

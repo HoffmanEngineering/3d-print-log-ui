@@ -51,6 +51,11 @@ app-navbar {
   text-decoration: underline;
 }
 
+/* Fix for column flexbox on safari. */
+div[fxLayout='column'] > div[fxFlex] {
+  flex: 1 0 auto !important;
+}
+
 /*
 	Use in conjunction with .visually-hidden to only display content when it's focused.
 	@note Useful for skip links 

@@ -1,18 +1,12 @@
-<main fxLayout="column wrap" fxLayoutAlign="center center" fxFlex="100%">
-  <mat-toolbar fxFlex color="primary">
-    <div
-      class="docs-header-headline"
-      fxFlex
-      fxFlexFill
-      fxLayout="column"
-      fxLayoutAlign="start center"
-    >
+<main fxLayout="column wrap" fxLayoutAlign="center center">
+  <mat-toolbar fxFlex="grow" color="primary">
+    <div class="docs-header-headline">
       <img
         class="logo"
         src="/assets/3d-print-log-logo_8b178eb1339b.svg"
         alt="3D Print Log Logo"
       />
-      <h2 fxFlex cy-subtitle>Log and analyze your 3D Prints</h2>
+      <h2 cy-subtitle>Log and analyze your 3D Prints</h2>
       <a
         mat-raised-button
         class="get-started"
@@ -22,7 +16,7 @@
     </div>
   </mat-toolbar>
 
-  <section fxFlex>
+  <section fxFlex="grow">
     <p>
       3D Print Log is a simple tool for tracking 3D prints. Easily record
       details of your 3D printers, print status, print duration, filament usage
@@ -41,7 +35,8 @@
       today and start logging!
     </p>
   </section>
-  <section fxFlex class="example-grid">
+
+  <section fxFlex="grow" class="example-grid">
     <div gdColumns="1fr 1fr" gdGap="16px" gdRows="auto">
       <div class="section image">
         <img
@@ -98,6 +93,7 @@
       </div>
     </div>
   </section>
+
   <div fxFlex="150px">
     <a
       color="accent"
@@ -108,7 +104,7 @@
     >
   </div>
 
-  <footer fxFlex fxFlexFill>
+  <footer fxFlex="grow" fxFlexFill>
     <mat-toolbar fxFlex color="primary">
       <div
         class="docs-header-headline"

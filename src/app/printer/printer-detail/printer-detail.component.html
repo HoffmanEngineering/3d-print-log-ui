@@ -8,17 +8,17 @@
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
     >
-      <mat-card-title fxFlex
+      <mat-card-title fxFlex="grow"
         >{{ this.printerForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
         Printer</mat-card-title
       >
       <mat-card-content
-        fxFlex
+        fxFlex="grow"
         fxFlexFill
         fxLayout="column wrap"
         fxLayoutAlign="space-evenly center"
       >
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Name</mat-label>
           <input
             id="edit-printer-name"
@@ -32,7 +32,7 @@
             A Name is <strong>required</strong>
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Make</mat-label>
           <input
             id="edit-printer-make"
@@ -56,7 +56,7 @@
           >
         </mat-autocomplete>
 
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Model</mat-label>
           <input
             id="edit-printer-model"
@@ -80,7 +80,7 @@
           >
         </mat-autocomplete>
 
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Filament Diameter (mm)</mat-label>
           <input
             id="edit-printer-filament-diameter"
@@ -96,7 +96,7 @@
             Filament Diameter cannot be negative
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Nozzle Diameter (mm)</mat-label>
           <input
             matInput
@@ -113,7 +113,7 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Description</mat-label>
           <textarea
             id="edit-printer-description"
@@ -125,7 +125,9 @@
           ></textarea>
         </mat-form-field>
 
-        <mat-checkbox fxFlex formControlName="isActive">Is Active</mat-checkbox>
+        <mat-checkbox fxFlex="grow" formControlName="isActive"
+          >Is Active</mat-checkbox
+        >
       </mat-card-content>
       <mat-card-actions
         fxLayout

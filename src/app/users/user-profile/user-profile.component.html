@@ -7,8 +7,12 @@
       fxLayout.gt-md="row"
       fxLayoutAlign="space-around start"
     >
-      <mat-card-header fxFlex fxLayout="column" fxLayoutAlign="start start">
-        <div fxFlex class="cover-photo-container">
+      <mat-card-header
+        fxFlex="grow"
+        fxLayout="column"
+        fxLayoutAlign="start start"
+      >
+        <div fxFlex="grow" class="cover-photo-container">
           <img
             *ngIf="this.userDetail.coverPicture"
             [src]="this.userDetail.coverPicture"
@@ -50,7 +54,7 @@
             (change)="addCoverPhoto($event)"
           />
         </div>
-        <div fxFlex class="profile-picture-container">
+        <div fxFlex="grow" class="profile-picture-container">
           <div class="profile-picture-wrapper">
             <img
               [src]="this.userDetail.profilePicture"
@@ -78,18 +82,23 @@
             (change)="addProfilePicture($event)"
           />
         </div>
-        <div fxFlex fxFlexFill fxLayout="column" fxLayoutAlign="start center">
-          <div fxFlex class="user-display-name">
+        <div
+          fxFlex="grow"
+          fxFlexFill
+          fxLayout="column"
+          fxLayoutAlign="start center"
+        >
+          <div fxFlex="grow" class="user-display-name">
             <div
               *ngIf="!isEditingDisplayName"
               fxLayout="column"
               fxLayoutAlign="start center"
               fxLayoutGap="15px"
             >
-              <h2 fxFlex aria-label="User name">
+              <h2 fxFlex="grow" aria-label="User name">
                 {{ userDetail.displayName }}
               </h2>
-              <div fxFlex>
+              <div fxFlex="grow">
                 <button
                   *ngIf="
                     userDetail.id === currentUser?.id && !isEditingDescription
@@ -145,7 +154,7 @@
             </div>
           </div>
 
-          <div fxFlex class="user-bio">
+          <div fxFlex="grow" class="user-bio">
             <div
               *ngIf="!isEditingDescription"
               fxLayout="column"
@@ -214,7 +223,7 @@
               </div>
             </div>
           </div>
-          <div fxFlex *ngIf="userDetail.id === currentUser?.id">
+          <div fxFlex="grow" *ngIf="userDetail.id === currentUser?.id">
             <hr />
             <div>
               <label for="profile-visibility" style="margin-right: 10px">
@@ -267,7 +276,7 @@
           </div>
         </div>
 
-        <div fxFlex>
+        <div fxFlex="grow">
           <app-stats [userId]="this.userDetail.id"></app-stats>
         </div>
         <div fxFlex>
@@ -276,7 +285,7 @@
       </mat-card-header>
 
       <mat-card-content
-        fxFlex
+        fxFlex="grow"
         fxLayout="column"
         fxLayoutAlign="start stretch"
         fxLayoutGap="10px"

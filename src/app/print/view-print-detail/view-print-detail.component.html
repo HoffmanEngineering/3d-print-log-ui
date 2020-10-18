@@ -1,7 +1,7 @@
-<div fxLayout="row" fxLayoutAlign="center" style="width: 100%;">
+<div fxLayout="row" fxLayoutAlign="center" style="width: 100%">
   <mat-card fxFlex="500px" fxFlex.xs="100%">
     <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
-      <mat-card-header fxFlex>
+      <mat-card-header fxFlex="grow">
         <img mat-card-avatar [src]="this.user.profilePicture" />
         <mat-card-title>
           {{ print.title }}
@@ -39,7 +39,7 @@
       </mat-card-content>
 
       <mat-card-content
-        fxFlex
+        fxFlex="grow"
         fxFlexFill
         fxLayout="column wrap"
         fxLayoutAlign="space-evenly center"
@@ -70,7 +70,7 @@
           <h3>Filament Type:</h3>
           <p>{{ print.filamentType }}</p>
           <h3>Notes:</h3>
-          <p style="white-space: pre-wrap;">{{ print.notes }}</p>
+          <p style="white-space: pre-wrap">{{ print.notes }}</p>
         </section>
       </mat-card-content>
       <mat-card-actions
@@ -81,7 +81,7 @@
         <div fxFlex fxFlexFill>
           <button
             *ngIf="currentUser && currentUser.id === user.id"
-            fxFlex
+            fxFlex="grow"
             mat-raised-button
             type="button"
             color="accent"
@@ -91,7 +91,7 @@
             Edit
           </button>
           <button
-            fxFlex
+            fxFlex="grow"
             mat-raised-button
             type="button"
             (click)="handleClose()"
@@ -102,7 +102,7 @@
           </button>
         </div>
       </mat-card-actions>
-      <mat-card-content style="width: 100%;">
+      <mat-card-content style="width: 100%">
         <app-print-comments
           [allowComments]="print.allowComments"
           [comments]="print.comments"

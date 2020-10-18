@@ -1,9 +1,12 @@
 <div fxLayout="column">
   <div fxFlex fxLayout="column" style="padding: 0px 10px">
-    <h3 fxFlex style="margin-right: 10px; margin-top: 5px; margin-bottom: 5px">
+    <h3
+      fxFlex="grow"
+      style="margin-right: 10px; margin-top: 5px; margin-bottom: 5px"
+    >
       Prints:
     </h3>
-    <div fxFlex fxLayout="row" fxLayoutGap="5px">
+    <div fxFlex="grow" fxLayout="row" fxLayoutGap="5px">
       <mat-form-field fxFlex>
         <mat-label> Search: </mat-label
         ><input
@@ -43,7 +46,7 @@
       </app-print-summary-card>
     </div>
     <button
-      fxFlex
+      fxFlex="grow"
       style="margin: 0 auto"
       *ngIf="showLoadMore"
       mat-raised-button

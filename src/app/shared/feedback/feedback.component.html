@@ -9,12 +9,12 @@
       fxLayoutGap="10px"
     >
       <mat-card-content
-        fxFlex
+        fxFlex="grow"
         fxFlexFill
         fxLayout="column wrap"
         fxLayoutAlign="space-evenly center"
       >
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Type</mat-label>
           <mat-select formControlName="type" required>
             <mat-option [value]="feedbackTypes.Suggestion"
@@ -26,7 +26,7 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Feedback</mat-label>
           <textarea
             matInput
@@ -41,7 +41,7 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Email (optional)</mat-label>
           <input
             matInput

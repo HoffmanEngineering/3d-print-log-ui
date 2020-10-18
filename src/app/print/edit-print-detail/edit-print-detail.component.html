@@ -8,14 +8,14 @@
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
     >
-      <mat-card-title fxFlex
+      <mat-card-title fxFlex="grow"
         >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
         Print</mat-card-title
       >
-      <div fxFlex>
+      <div fxFlex="grow">
         <input
           #imgFileInput
-          style="display: none;"
+          style="display: none"
           type="file"
           accept="image/*"
           class="custom-file-input form-control"
@@ -93,12 +93,12 @@
       </div>
 
       <mat-card-content
-        fxFlex
+        fxFlex="grow"
         fxFlexFill
         fxLayout="column wrap"
         fxLayoutAlign="space-evenly center"
       >
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Title</mat-label>
           <input
             id="edit-print-title"
@@ -112,7 +112,7 @@
             A Title is <strong>required</strong>
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Printer</mat-label>
           <mat-select
             formControlName="printerId"
@@ -130,7 +130,7 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Start Date</mat-label>
           <input
             matInput
@@ -151,7 +151,7 @@
             A Start Date is <strong>required</strong>
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Thing URL</mat-label>
           <input
             id="edit-print-url"
@@ -161,7 +161,7 @@
             maxlength="1000"
           />
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Estimated Print Time</mat-label>
           <input
             id="edit-print-estimated-print-time"
@@ -171,7 +171,7 @@
             formControlName="estimatedPrintTimeInSeconds"
           />
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Estimated Filament Usage (grams)</mat-label>
           <input
             id="edit-print-estimated-filament-usage"
@@ -188,7 +188,7 @@
             Numbers (up to 3-decimal places) only.
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Actual Print Time</mat-label>
           <input
             id="edit-print-actual-print-time"
@@ -198,7 +198,7 @@
             placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
           />
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Actual Filament Usage (grams)</mat-label>
           <input
             id="edit-print-actual-filament-usage"
@@ -213,7 +213,7 @@
             Numbers (up to 3-decimal places) only.
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Filament Type</mat-label>
           <input
             id="edit-print-filament-type"
@@ -224,7 +224,7 @@
           />
         </mat-form-field>
 
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Notes</mat-label>
           <textarea
             id="edit-print-notes"
@@ -242,7 +242,7 @@
           >
         </mat-form-field>
 
-        <mat-form-field fxFlex fxFlexFill>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Status</mat-label>
           <mat-select formControlName="status" id="edit-print-status">
             <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
@@ -257,8 +257,8 @@
           </mat-select>
         </mat-form-field>
 
-        <div style="margin: 10 0 10;" fxFlex fxFlexFill>
-          <mat-form-field style="margin: 0;" fxFlex>
+        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+          <mat-form-field style="margin: 0" fxFlex>
             <mat-label> Sharing To:</mat-label>
             <mat-select
               formControlName="viewStatus"
@@ -276,8 +276,8 @@
             </mat-select>
           </mat-form-field>
           <button
-            fxFlex
-            style="margin-left: 10px; height: 35px;"
+            fxFlex="grow"
+            style="margin-left: 10px; height: 35px"
             *ngIf="
               this.printForm &&
               this.printForm.get('viewStatus').dirty &&
@@ -299,7 +299,7 @@
         </div>
 
         <mat-checkbox
-          fxFlex
+          fxFlex="grow"
           fxFlexFill
           formControlName="allowComments"
           id="edit-allow-comments"
@@ -311,7 +311,7 @@
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
       >
-        <div fxFlex fxFlexFill *ngIf="printForm.get('id').value">
+        <div fxFlex="grow" fxFlexFill *ngIf="printForm.get('id').value">
           <button
             id="edit-print-copy-btn"
             mat-raised-button
@@ -329,7 +329,7 @@
           </button>
         </div>
         <div
-          fxFlex
+          fxFlex="grow"
           fxFlexFill
           [fxFlexOffset]="printForm.get('id').value ? '80px' : ''"
         >
@@ -345,7 +345,7 @@
             Submit
           </button>
         </div>
-        <div fxFlex fxFlexFill>
+        <div fxFlex="grow" fxFlexFill>
           <button
             id="edit-print-cancel-btn"
             fxFlex

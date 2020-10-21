@@ -44,6 +44,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     'printer',
     'start-date',
     'status',
+    'printTime',
     'commentCount',
     'more',
   ];
@@ -163,6 +164,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
             'printer',
             'start-date',
             'status',
+            'printTime',
             'commentCount',
             'more',
           ];
@@ -272,6 +274,22 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
             );
           });
         });
+      }
+    });
+  }
+
+  /**
+   * Changes the status of the selected print.
+   * @param id The Print Id
+   * @param newStatus The new status
+   */
+  public changeStatus(id: number, newStatus: PrintStatus) {
+    this.printService.updatePrintStatus(id, newStatus).subscribe(() => {
+      this.toastrService.success('Status Updated.', 'Success');
+      const print = this.prints.find((p) => p.id === id);
+
+      if (print) {
+        print.status = newStatus;
       }
     });
   }

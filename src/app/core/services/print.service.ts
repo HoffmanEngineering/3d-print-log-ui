@@ -53,6 +53,8 @@ export interface PrintSummary {
 
   defaultPrintImageId: number;
   createdByUserId: number;
+  estimatedPrintTimeInSeconds: number | null;
+  printTimeInSeconds: number | null;
 
   /**
    * The number of comments on the print.
@@ -305,6 +307,11 @@ export class PrintService {
     };
 
     return this.http.put<any>(url, printDto);
+  }
+
+  public updatePrintStatus(id: number, newStatus: PrintStatus) {
+    const url = `${this.baseApi}/api/Prints/${id}/status/${newStatus}`;
+    return this.http.put<any>(url, {});
   }
 
   deletePrint(id: number): Observable<any> {

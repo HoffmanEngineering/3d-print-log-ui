@@ -1,3 +1,4 @@
+import { version } from '../../package.json';
 // This file can be replaced during build by using the `fileReplacements` array.
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
@@ -5,6 +6,7 @@
 export const environment = {
   production: false,
   printLogApiUrl: 'https://localhost:5001',
+  version,
   authentication: {
     domain: 'dev-3dprintlog.auth0.com',
     client_id: 'Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ',

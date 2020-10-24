@@ -393,4 +393,9 @@ export class PrintService {
       })
     );
   }
+
+  public exportAllPrintsAsCsv() {
+    const url = `${this.baseApi}/api/Prints/csv`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
 }

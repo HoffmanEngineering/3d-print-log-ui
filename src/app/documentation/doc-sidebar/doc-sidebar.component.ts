@@ -16,6 +16,7 @@ export class DocSidebarComponent implements OnInit {
     { divider: true },
     { name: 'Cura Plugin', url: '/docs/cura-plugin' },
     { divider: true },
+    { name: 'Release Notes', url: '/docs/release-notes' },
     { name: 'About', url: '/docs/about' },
   ];
 

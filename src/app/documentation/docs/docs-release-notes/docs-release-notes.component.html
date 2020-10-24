@@ -1,0 +1,83 @@
+<div class="docs-markdown">
+  <h2>Release Notes</h2>
+  <hr />
+  <h3 id="v1.4.0">1.4.0 - CSV Exporting and Release Notes</h3>
+  <h4>CSV Exporting</h4>
+  <p>
+    This is your data, you should be able to use it how you like! Whether you
+    want to backup your data to your computer, or import it into a spreadsheet
+    for your own analytics, 3D Print Log has you covered. You can now export all
+    your prints as a .csv (comma separated values) file. Visit your
+    <a [routerLink]="['/settings']">Settings</a> and click
+    <strong>Export</strong> to save your print report.
+  </p>
+  <h4>Release Notes</h4>
+  <p>
+    As you may have noticed, we now have a
+    <a [routerLink]="['/docs/release-notes']">Release Notes</a> page. This page
+    will document all the changes happening to the application. Check back here
+    for information about new features and fixes for 3D Print Log.
+  </p>
+
+  <h3 id="v1.3.0">1.3.0 - Print List Updates</h3>
+  <p>
+    This update contains a variety of updates to the
+    <a [routerLink]="['/prints']">Prints</a> screen.
+  </p>
+  <h4>Added Print Time Column</h4>
+  <p>
+    The Print List now displays the Print Time. It will display the
+    <strong>Actual Print Time</strong> if one is saved, otherwise it will show
+    the <strong>Estimated Print Time*</strong>, with an * to indicate it is
+    estimated.
+  </p>
+  <h4>Quickly change a Print's Status through the ... menu</h4>
+  <p>
+    The ... menu on the print list now has a "Change Print Status" option, which
+    will let you set a new status for a print without having to click into the
+    full edit menu.
+  </p>
+
+  <h3 id="v1.2.0">1.2.0 - Deleting Prints, Cura Plugin Documentation</h3>
+  <h4>Deleting Prints</h4>
+  <p>
+    Mistakes happen. Sometimes you add a print multiple times, or forget that
+    you already added a specific print. In v1.2.0, you can delete a print (and
+    all it's related images and comments) from the ... menu on the
+    <a [routerLink]="['/prints']">Print List</a>. Selecting the
+    <strong>Delete</strong> option will ask for confirmation, and once confirmed
+    it will be deleted permanently.
+  </p>
+  <h4>Cura Plugin Documentation</h4>
+  <p>
+    <a routerLink="/docs/cura-plugin">Documentation is now available</a>
+    for the Cura Plugin. 🎉
+  </p>
+
+  <h3 id="v1.1.0">1.1.0 - Cura Plugin and Print Comments</h3>
+  <h4>Cura Plugin Now Available 🎉</h4>
+  <p>
+    The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura lets
+    you add new prints directly from Cura.
+  </p>
+  <p>
+    You can install this plugin via the
+    <a
+      href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+      >Ultimaker Cura Marketplace</a
+    >. Alternatively, you can download the
+    <a
+      href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+      >Latest Release from Github</a
+    >
+    and drag/drop into Cura to install.
+  </p>
+  <h4>Print Comments</h4>
+  <p>
+    Users can now leave comments on 3D Prints. You can control whether or not
+    comments are allowed when editing a print. Public prints will allow for
+    comments by any 3D Print Log user, while private prints will only let you
+    leave comments. If you share your print with other users, this is a great
+    way to have a conversation about the print.
+  </p>
+</div>

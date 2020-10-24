@@ -31,6 +31,7 @@ export class LoggingService {
         },
       });
       this.appInsights.loadAppInsights();
+      this.appInsights.context.application.ver = environment.version;
     } else {
       this.appInsights = ({
         trackPageView: () => {},

@@ -1,7 +1,7 @@
 <mat-toolbar color="primary">
   <mat-toolbar-row fxLayout="row" fxLayoutAlign="space-between center">
     <div fxFlex="50px" class="brand-img">
-      <a [routerLink]="['/']" style="height: 100%; width: 100%;">
+      <a [routerLink]="['/']" style="height: 100%; width: 100%">
         <img
           src="/assets/3d_brand_logo_b833b3f20dd.svg"
           alt="3D Print Log Logo"
@@ -17,7 +17,7 @@
       </object> -->
     </div>
     <div fxFlex fxFlexFill>
-      <div fxLayout="column" fxLayoutAlign="center start" style="height: 100%;">
+      <div fxLayout="column" fxLayoutAlign="center start" style="height: 100%">
         <div fxFlex fxLayout="row" fxLayoutAlign="center center">
           <a
             class="link"
@@ -75,6 +75,13 @@
                 routerLinkActive="active"
                 >Send Feedback</a
               >
+              <a
+                class="menu-link"
+                mat-menu-item
+                routerLink="/docs/release-notes"
+                routerLinkActive="active"
+                >Version v{{ versionNumber }}</a
+              >
             </mat-menu>
           </ng-container>
         </div>
@@ -113,6 +120,13 @@
                 routerLink="/feedback"
                 routerLinkActive="active"
                 >Send Feedback</a
+              >
+              <a
+                class="menu-link"
+                mat-menu-item
+                routerLink="/docs/release-notes"
+                routerLinkActive="active"
+                >Version v{{ versionNumber }}</a
               >
             </mat-menu>
           </ng-container>

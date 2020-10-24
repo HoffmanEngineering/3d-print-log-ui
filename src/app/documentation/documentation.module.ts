@@ -12,6 +12,7 @@ import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.compon
 import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocumentationComponent } from './documentation.component';
+import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 
 @NgModule({
   declarations: [
@@ -23,6 +24,7 @@ import { DocumentationComponent } from './documentation.component';
     DocsPrintsComponent,
     DocsAboutComponent,
     DocsCuraPluginComponent,
+    DocsReleaseNotesComponent,
   ],
   imports: [
     CommonModule,

@@ -16,6 +16,7 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./navbar.component.scss'],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+  public versionNumber = environment.version;
   public profilePictureUrl: string | null = null;
   public userId: number | null = null;
 

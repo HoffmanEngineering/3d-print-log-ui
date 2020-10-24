@@ -1,13 +1,13 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card fxFlex="500px" fxFlex.xs="100%">
+  <mat-card fxFlex="1000px" fxFlex.xs="100%">
     <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
-      <div fxFlex fxFlexFill>
+      <div fxFlex="grow" fxFlexFill>
         <h1>General Settings</h1>
         <hr />
       </div>
 
       <div
-        fxFlex
+        fxFlex="grow"
         fxFlexFill
         [ngClass]="{
           'mat-elevation-z5 editing-card':
@@ -17,7 +17,7 @@
         <div>
           <label
             for="profile-visibility"
-            style="margin-right: 10px;"
+            style="margin-right: 10px"
             matTooltip="Controls who can view your user profile."
             matTooltipPosition="right"
           >
@@ -29,21 +29,21 @@
             name="profile-visibility"
             [(ngModel)]="profileViewStatus"
           >
-            <option [ngValue]="profileViewStatusTypes.Public"
-              >Public (anyone can view)</option
-            >
-            <option [ngValue]="profileViewStatusTypes.Unlisted"
-              >Unlisted (anyone with link can view)</option
-            >
-            <option [ngValue]="profileViewStatusTypes.Private"
-              >Private (only you can view)</option
-            >
+            <option [ngValue]="profileViewStatusTypes.Public">
+              Public (anyone can view)
+            </option>
+            <option [ngValue]="profileViewStatusTypes.Unlisted">
+              Unlisted (anyone with link can view)
+            </option>
+            <option [ngValue]="profileViewStatusTypes.Private">
+              Private (only you can view)
+            </option>
           </select>
         </div>
 
         <div *ngIf="profileViewStatus !== this.userDetailsOnLoad.viewStatus">
           <div
-            style="margin-top: 10px;"
+            style="margin-top: 10px"
             fxLayout
             fxLayoutAlign="center center"
             fxLayoutGap="15px"
@@ -70,7 +70,7 @@
       </div>
 
       <div
-        fxFlex
+        fxFlex="grow"
         fxFlexFill
         [ngClass]="{
           'mat-elevation-z5 editing-card':
@@ -81,7 +81,7 @@
         <div>
           <label
             for="print-visibility"
-            style="margin-right: 10px;"
+            style="margin-right: 10px"
             matTooltip="The default View Status for new prints. You can change override this when adding a new print."
             matTooltipPosition="right"
           >
@@ -92,15 +92,15 @@
             name="print-visibility"
             [(ngModel)]="printViewStatus"
           >
-            <option [ngValue]="printViewStatusTypes.Public"
-              >Public (anyone can view)</option
-            >
-            <option [ngValue]="printViewStatusTypes.Unlisted"
-              >Unlisted (anyone with link can view)</option
-            >
-            <option [ngValue]="printViewStatusTypes.Private"
-              >Private (only you can view)</option
-            >
+            <option [ngValue]="printViewStatusTypes.Public">
+              Public (anyone can view)
+            </option>
+            <option [ngValue]="printViewStatusTypes.Unlisted">
+              Unlisted (anyone with link can view)
+            </option>
+            <option [ngValue]="printViewStatusTypes.Private">
+              Private (only you can view)
+            </option>
           </select>
         </div>
 
@@ -111,7 +111,7 @@
           "
         >
           <div
-            style="margin-top: 10px;"
+            style="margin-top: 10px"
             fxLayout
             fxLayoutAlign="center center"
             fxLayoutGap="15px"
@@ -138,6 +138,19 @@
       </div>
 
       <hr />
+      <div fxFlex="grow" fxFlexFill>
+        <h2>Export Data</h2>
+        <p>Save your prints as a csv file.</p>
+        <button
+          mat-raised-button
+          color="accent"
+          (click)="export()"
+          [class.spinner]="exportInProgress"
+          [disabled]="exportInProgress"
+        >
+          Export
+        </button>
+      </div>
     </div>
   </mat-card>
 </div>

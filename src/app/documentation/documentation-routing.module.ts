@@ -7,6 +7,7 @@ import { DocsCuraPluginComponent } from './docs/docs-cura-plugin/docs-cura-plugi
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
 import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.component';
 import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
+import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationComponent } from './documentation.component';
 
 const routes: Routes = [
@@ -22,6 +23,7 @@ const routes: Routes = [
       { path: 'prints', component: DocsPrintsComponent },
       { path: 'analytics', component: DocsAnalyticsComponent },
       { path: 'cura-plugin', component: DocsCuraPluginComponent },
+      { path: 'release-notes', component: DocsReleaseNotesComponent },
       { path: 'about', component: DocsAboutComponent },
       { path: '', redirectTo: 'getting-started' },
     ],

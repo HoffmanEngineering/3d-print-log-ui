@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { of } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -8,7 +8,7 @@ describe('PrintCommentsComponent', () => {
   let component: PrintCommentsComponent;
   let fixture: ComponentFixture<PrintCommentsComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     const mockAuthService = { ...jasmine.createSpyObj<AuthService>('AuthService', ['getUser$']), userProfile$: of(null)};
 
     TestBed.configureTestingModule({

@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { DocsGettingStartedComponent } from './docs-getting-started.component';
 
@@ -6,7 +6,7 @@ xdescribe('DocsGettingStartedComponent', () => {
   let component: DocsGettingStartedComponent;
   let fixture: ComponentFixture<DocsGettingStartedComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [DocsGettingStartedComponent],
     }).compileComponents();

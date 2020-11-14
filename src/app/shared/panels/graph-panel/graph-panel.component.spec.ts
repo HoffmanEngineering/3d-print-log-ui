@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { GraphPanelComponent } from './graph-panel.component';
 
@@ -6,7 +6,7 @@ describe('GraphPanelComponent', () => {
   let component: GraphPanelComponent;
   let fixture: ComponentFixture<GraphPanelComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [GraphPanelComponent],
     }).compileComponents();

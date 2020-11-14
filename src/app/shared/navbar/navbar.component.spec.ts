@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
@@ -11,7 +11,7 @@ describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     const mockAuthService: Partial<AuthService> = {
       userProfile$: of(null),
     };

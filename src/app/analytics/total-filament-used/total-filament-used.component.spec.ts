@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { TotalFilamentUsedComponent } from './total-filament-used.component';
 
@@ -6,7 +6,7 @@ describe('TotalFilamentUsedComponent', () => {
   let component: TotalFilamentUsedComponent;
   let fixture: ComponentFixture<TotalFilamentUsedComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ TotalFilamentUsedComponent ]
     })

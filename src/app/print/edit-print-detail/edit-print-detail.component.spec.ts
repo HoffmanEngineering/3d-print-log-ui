@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -22,7 +22,7 @@ describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
   let fixture: ComponentFixture<EditPrintDetailComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     const mockPrintService = jasmine.createSpyObj<PrintService>(
       'PrintService',
       ['addPrint']
@@ -83,7 +83,7 @@ describe('EditPrintDetailComponent', () => {
     }).compileComponents();
   }));
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     fixture = TestBed.createComponent(EditPrintDetailComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

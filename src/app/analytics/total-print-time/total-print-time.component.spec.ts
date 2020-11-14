@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { TotalPrintTimeComponent } from './total-print-time.component';
 
@@ -6,7 +6,7 @@ describe('TotalPrintTimeComponent', () => {
   let component: TotalPrintTimeComponent;
   let fixture: ComponentFixture<TotalPrintTimeComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [TotalPrintTimeComponent],
     }).compileComponents();

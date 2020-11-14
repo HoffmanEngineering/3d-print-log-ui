@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { PrintListComponent } from './print-list.component';
 
@@ -6,7 +6,7 @@ xdescribe('PrintListComponent', () => {
   let component: PrintListComponent;
   let fixture: ComponentFixture<PrintListComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [PrintListComponent],
     }).compileComponents();

@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { of } from 'rxjs';
 import { PrintService } from 'src/app/core/services/print.service';
@@ -8,7 +8,7 @@ describe('PrintImageComponent', () => {
   let component: PrintImageComponent;
   let fixture: ComponentFixture<PrintImageComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     const mockPrintService = jasmine.createSpyObj<PrintService>(
       'PrintService',
       { getPrintImage: of('') }

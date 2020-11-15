@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { convertToParamMap, ParamMap } from '@angular/router';
-import { PrintDetail } from 'src/app/core/services/print.service';
+import { ParamMap } from '@angular/router';
 
 import { CuraParserService } from './cura-parser.service';
 import { CuraParserV1pt0pt0Service } from './cura/cura-parser-v1-0-0.service';
+import { CuraParserV1pt1pt0Service } from './cura/cura-parser-v1-1-0.service';
 
 describe('CuraParserService', () => {
   let service: CuraParserService;
@@ -20,10 +20,16 @@ describe('CuraParserService', () => {
       ['parse']
     );
 
+    const mockv1_1_0Parser = jasmine.createSpyObj<CuraParserV1pt1pt0Service>(
+      'CuraParserV1pt1pt0Service',
+      ['parse']
+    );
+
     TestBed.configureTestingModule({
       providers: [
         CuraParserService,
         { provide: CuraParserV1pt0pt0Service, useValue: mockv1_0_0Parser },
+        { provide: CuraParserV1pt1pt0Service, useValue: mockv1_1_0Parser },
       ],
     });
     service = TestBed.inject(CuraParserService);

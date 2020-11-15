@@ -1,6 +1,6 @@
 {
   "name": "print-log-ui",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
@@ -10,6 +10,7 @@
     "test:ci": "ng test --no-watch --code-coverage --browsers ChromeHeadless",
     "lint": "ng lint",
     "e2e": "cypress open",
+    "source-map-explorer": "ng build --prod --sourceMap=true && source-map-explorer dist/print-log-ui/*",
     "prettier": "prettier --check src/**/*.*",
     "prettier:fix": "prettier --write src/**/*.*",
     "parse-cura": "ts-node --project cura-machine-def-parser/tsconfig.json cura-machine-def-parser/parser.ts",
@@ -65,6 +66,7 @@
     "karma-junit-reporter": "^2.0.1",
     "prettier": "^2.1.2",
     "protractor": "~7.0.0",
+    "source-map-explorer": "^2.5.0",
     "ts-loader": "^8.0.6",
     "ts-node": "^9.0.0",
     "tslint": "~6.1.3",

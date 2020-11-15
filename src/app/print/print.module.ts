@@ -16,6 +16,8 @@ import { LastSelectedPrinterSettingResolverService } from './resolvers/last-sele
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
 import { CuraParserService } from './services/integration/cura-parser.service';
+import { CuraParserV1pt0pt0Service } from './services/integration/cura/cura-parser-v1-0-0.service';
+import { CuraParserV1pt1pt0Service } from './services/integration/cura/cura-parser-v1-1-0.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 
 @NgModule({
@@ -42,6 +44,8 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
     CopyPrintDetailResolverService,
     LastSelectedPrinterSettingResolverService,
     CuraParserService,
+    CuraParserV1pt0pt0Service,
+    CuraParserV1pt1pt0Service,
   ],
 })
 export class PrintModule {}

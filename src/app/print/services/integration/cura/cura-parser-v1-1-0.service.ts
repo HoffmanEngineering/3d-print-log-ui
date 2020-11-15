@@ -15,6 +15,10 @@ export interface ExtruderSettings {
   retractionEnabled: boolean;
   variant: string;
   wallLineCount: number;
+  topThickness: number;
+  topLayerCount: number;
+  bottomThickness: number;
+  bottomLayerCount: number;
 }
 
 @Injectable()
@@ -66,27 +70,32 @@ export class CuraParserV1pt1pt0Service implements NewPrintParser {
           isAdaptiveLayerHeightEnabled ? '(with Adaptive Layer Height)' : ''
         }`.trim() + `\n`;
     }
-    if (params.has('top_thickness') && !spiralVaseModeEnabled) {
-      notes += `Top Thickness: ${params.get('top_thickness')}mm\n`;
-    }
-    if (params.has('bottom_thickness')) {
-      notes += `Bottom Thickness: ${params.get('bottom_thickness')}mm\n`;
-    }
 
-    if (params.has('wall_line_count')) {
-      notes += `Wall Line Count: ${params.get('wall_line_count')}\n`;
-    }
+    const usedExtruders = this.getExtrudersUsed(extruders);
 
-    if (params.has('infill_sparse_density') && !spiralVaseModeEnabled) {
-      const infillDensity = params.get('infill_sparse_density');
-      notes += `Infill: ${infillDensity}%\n`;
+    if (usedExtruders.length <= 1) {
+      const settings = this.GetSingleExtruderSettings(
+        params,
+        spiralVaseModeEnabled,
+        usedExtruders[0]
+      );
 
-      if (
-        params.has('infill_pattern') &&
-        !isNaN(Number(infillDensity)) &&
-        Number(infillDensity) > 0
-      ) {
-        notes += `Infill Pattern: ${params.get('infill_pattern')}\n`;
+      if (settings.length > 0) {
+        notes += settings.join('\n') + `\n`;
+      }
+    } else {
+      for (let i = 0; i < usedExtruders.length; i++) {
+        const settings = this.GetSingleExtruderSettings(
+          params,
+          spiralVaseModeEnabled,
+          usedExtruders[i]
+        );
+
+        if (settings.length > 0) {
+          notes += `Extruder ${i + 1}:\n`;
+          const formattedSetting = settings.map((s) => `- ${s}`);
+          notes += formattedSetting.join('\n') + `\n`;
+        }
       }
     }
 
@@ -168,6 +177,78 @@ export class CuraParserV1pt1pt0Service implements NewPrintParser {
     return notes;
   }
 
+  private getExtrudersUsed(extruders: ExtruderSettings[]) {
+    return extruders.filter((e) => e.materialUsed > 0);
+  }
+
+  private GetSingleExtruderSettings(
+    params: ParamMap,
+    spiralVaseModeEnabled: boolean,
+    extruder: ExtruderSettings
+  ): string[] {
+    const notes = [];
+
+    if (
+      (params.has('top_thickness') || extruder?.topThickness > -1) &&
+      !spiralVaseModeEnabled
+    ) {
+      notes.push(
+        `Top Thickness: ${
+          extruder?.topThickness > -1
+            ? extruder.topThickness
+            : params.get('top_thickness')
+        }mm`
+      );
+    }
+    if (params.has('bottom_thickness') || extruder?.bottomThickness > -1) {
+      notes.push(
+        `Bottom Thickness: ${
+          extruder?.bottomThickness > -1
+            ? extruder.bottomThickness
+            : params.get('bottom_thickness')
+        }mm`
+      );
+    }
+
+    if (params.has('wall_line_count') || extruder?.wallLineCount > -1) {
+      notes.push(
+        `Wall Line Count: ${
+          extruder?.wallLineCount > 0
+            ? extruder.wallLineCount
+            : params.get('wall_line_count')
+        }`
+      );
+    }
+
+    if (
+      (params.has('infill_sparse_density') ||
+        extruder?.infillSparseDensity > -1) &&
+      !spiralVaseModeEnabled
+    ) {
+      const infillDensity =
+        extruder?.infillSparseDensity > -1
+          ? extruder.infillSparseDensity
+          : params.get('infill_sparse_density');
+      notes.push(`Infill: ${infillDensity}%`);
+
+      if (
+        (params.has('infill_pattern') ||
+          (extruder && extruder.infillPattern !== '')) &&
+        !isNaN(Number(infillDensity)) &&
+        Number(infillDensity) > 0
+      ) {
+        notes.push(
+          `Infill Pattern: ${
+            extruder && extruder.infillPattern !== ''
+              ? extruder.infillPattern
+              : params.get('infill_pattern')
+          }`
+        );
+      }
+    }
+    return notes;
+  }
+
   /**
    * Extruder settings are prefixes with ex#_ to indicate which extruder they are part of, zero-indexed.
    * This parses those ex#_ settings into an array of extruder settings that we can then work with.
@@ -186,7 +267,7 @@ export class CuraParserV1pt1pt0Service implements NewPrintParser {
         gradualInfillSteps: +(params.get(`${prefix}gradual_infill_steps`) ?? 0),
         infillPattern: params.get(`${prefix}infill_pattern`) ?? '',
         infillSparseDensity: +(
-          params.get(`${prefix}infill_sparse_density`) ?? 0
+          params.get(`${prefix}infill_sparse_density`) ?? -1
         ),
         materialPrintTemperature: +(
           params.get(`${prefix}material_print_temperature`) ?? 0
@@ -197,7 +278,11 @@ export class CuraParserV1pt1pt0Service implements NewPrintParser {
           params.get(`${prefix}retraction_enable`) ?? false
         ),
         variant: params.get(`${prefix}variant`) ?? '',
-        wallLineCount: +(params.get(`${prefix}wall_line_count`) ?? 0),
+        wallLineCount: +(params.get(`${prefix}wall_line_count`) ?? -1),
+        topThickness: +(params.get(`${prefix}top_thickness`) ?? -1),
+        topLayerCount: +(params.get(`${prefix}top_layers`) ?? -1),
+        bottomThickness: +(params.get(`${prefix}bottom_thickness`) ?? -1),
+        bottomLayerCount: +(params.get(`${prefix}bottom_layers`) ?? -1),
       };
 
       extruders.push(parsedExtruder);

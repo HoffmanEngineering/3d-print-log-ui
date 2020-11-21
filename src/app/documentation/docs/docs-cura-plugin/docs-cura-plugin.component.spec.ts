@@ -8,9 +8,8 @@ describe('DocsCuraPluginComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ DocsCuraPluginComponent ]
-    })
-    .compileComponents();
+      declarations: [DocsCuraPluginComponent],
+    }).compileComponents();
   });
 
   beforeEach(() => {

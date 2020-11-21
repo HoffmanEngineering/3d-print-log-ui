@@ -7,12 +7,13 @@ describe('CommentComponent', () => {
   let component: CommentComponent;
   let fixture: ComponentFixture<CommentComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [ CommentComponent, HumanizePipe ]
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [CommentComponent, HumanizePipe],
+      }).compileComponents();
     })
-    .compileComponents();
-  }));
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(CommentComponent);
@@ -36,7 +37,7 @@ describe('CommentComponent', () => {
       },
       updatedById: 1,
       updatedDate: new Date('2020-09-09 00:00:00'),
-    }
+    };
     fixture.detectChanges();
   });
 

@@ -15,12 +15,12 @@
 
       <span
         matTooltip="{{ comment.createdDate | date: 'medium' }}"
-        style="padding-left: 5px;"
+        style="padding-left: 5px"
         >{{ comment.createdDate | humanize }}</span
       >
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <p style="padding-top: 5px; white-space: pre-wrap;">{{ comment.body }}</p>
+    <p style="padding-top: 5px; white-space: pre-wrap">{{ comment.body }}</p>
   </mat-card-content>
 </mat-card>

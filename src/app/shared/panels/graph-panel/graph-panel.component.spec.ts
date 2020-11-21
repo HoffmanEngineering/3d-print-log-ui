@@ -6,11 +6,13 @@ describe('GraphPanelComponent', () => {
   let component: GraphPanelComponent;
   let fixture: ComponentFixture<GraphPanelComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [GraphPanelComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [GraphPanelComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(GraphPanelComponent);

@@ -16,7 +16,7 @@ xdescribe('ErrorHandlerService', () => {
   });
 
   it('should be created', () => {
-    const service: ErrorHandlerService = TestBed.get(ErrorHandlerService);
+    const service: ErrorHandlerService = TestBed.inject(ErrorHandlerService);
     expect(service).toBeTruthy();
   });
 });

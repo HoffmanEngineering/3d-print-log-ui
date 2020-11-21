@@ -6,12 +6,13 @@ describe('InvalidUserComponent', () => {
   let component: InvalidUserComponent;
   let fixture: ComponentFixture<InvalidUserComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [ InvalidUserComponent ]
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [InvalidUserComponent],
+      }).compileComponents();
     })
-    .compileComponents();
-  }));
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(InvalidUserComponent);

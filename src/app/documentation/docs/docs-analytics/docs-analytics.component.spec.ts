@@ -6,12 +6,13 @@ describe('DocsAnalyticsComponent', () => {
   let component: DocsAnalyticsComponent;
   let fixture: ComponentFixture<DocsAnalyticsComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [ DocsAnalyticsComponent ]
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [DocsAnalyticsComponent],
+      }).compileComponents();
     })
-    .compileComponents();
-  }));
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DocsAnalyticsComponent);

@@ -9,7 +9,7 @@ xdescribe('CurrentUserDetailResolverService', () => {
   );
 
   it('should be created', () => {
-    const service: CurrentUserDetailResolverService = TestBed.get(
+    const service: CurrentUserDetailResolverService = TestBed.inject(
       CurrentUserDetailResolverService
     );
     expect(service).toBeTruthy();

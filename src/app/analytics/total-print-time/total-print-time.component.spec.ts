@@ -6,11 +6,13 @@ describe('TotalPrintTimeComponent', () => {
   let component: TotalPrintTimeComponent;
   let fixture: ComponentFixture<TotalPrintTimeComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [TotalPrintTimeComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [TotalPrintTimeComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(TotalPrintTimeComponent);

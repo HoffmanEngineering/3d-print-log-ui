@@ -6,11 +6,13 @@ xdescribe('PrinterDetailComponent', () => {
   let component: PrinterDetailComponent;
   let fixture: ComponentFixture<PrinterDetailComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [PrinterDetailComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [PrinterDetailComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrinterDetailComponent);

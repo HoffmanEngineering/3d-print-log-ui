@@ -6,11 +6,13 @@ xdescribe('PrintShareDialogComponent', () => {
   let component: PrintShareDialogComponent;
   let fixture: ComponentFixture<PrintShareDialogComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [PrintShareDialogComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [PrintShareDialogComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintShareDialogComponent);

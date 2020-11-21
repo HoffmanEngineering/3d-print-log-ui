@@ -145,7 +145,7 @@ const printers = {
     { make: 'Printrbot', model: 'Play (Heated Bed)' },
     { make: 'Printrbot', model: 'Simple' },
     { make: 'Printrbot', model: 'Simple Metal Extended' },
-    { make: 'Printrbot', model: "Simple Maker's Kit (1405)" },
+    { make: 'Printrbot', model: `Simple Maker's Kit (1405)` },
     { make: 'Prusa3D', model: 'Prusa i3' },
     { make: 'Prusa3D', model: 'Prusa i3 Mk2' },
     { make: 'Prusa3D', model: 'Prusa i3 Mk3/Mk3s' },

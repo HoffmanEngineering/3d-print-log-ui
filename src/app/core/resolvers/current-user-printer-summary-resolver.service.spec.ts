@@ -16,7 +16,7 @@ describe('CurrentUserPrinterSummaryResolverService', () => {
   });
 
   it('should be created', () => {
-    const service: CurrentUserPrinterSummaryResolverService = TestBed.get(
+    const service: CurrentUserPrinterSummaryResolverService = TestBed.inject(
       CurrentUserPrinterSummaryResolverService
     );
     expect(service).toBeTruthy();

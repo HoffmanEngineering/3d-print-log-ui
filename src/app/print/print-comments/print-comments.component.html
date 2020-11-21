@@ -15,7 +15,7 @@
             mat-card-avatar
             [src]="currentUserProfilePicture"
           />
-          <mat-form-field style="width: 100%;">
+          <mat-form-field style="width: 100%">
             <mat-label>Add Comment:</mat-label>
             <textarea
               #newCommentTextArea
@@ -37,7 +37,7 @@
             mat-raised-button
             color="accent"
             (click)="addComment()"
-            style="margin-left: auto;"
+            style="margin-left: auto"
           >
             Add Comment
           </button>
@@ -52,7 +52,5 @@
   </div>
 </div>
 <div *ngIf="!allowComments">
-  <mat-card>
-    Comments are disabled for this print.
-  </mat-card>
+  <mat-card> Comments are disabled for this print. </mat-card>
 </div>

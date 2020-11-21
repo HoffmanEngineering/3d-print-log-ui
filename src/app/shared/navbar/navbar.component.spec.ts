@@ -11,17 +11,19 @@ describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
 
-  beforeEach(waitForAsync(() => {
-    const mockAuthService: Partial<AuthService> = {
-      userProfile$: of(null),
-    };
-    TestBed.configureTestingModule({
-      declarations: [NavbarComponent],
-      imports: [RouterTestingModule, MatMenuModule],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      const mockAuthService: Partial<AuthService> = {
+        userProfile$: of(null),
+      };
+      TestBed.configureTestingModule({
+        declarations: [NavbarComponent],
+        imports: [RouterTestingModule, MatMenuModule],
+        providers: [{ provide: AuthService, useValue: mockAuthService }],
+        schemas: [NO_ERRORS_SCHEMA],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(NavbarComponent);

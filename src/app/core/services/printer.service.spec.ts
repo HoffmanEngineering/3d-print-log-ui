@@ -9,7 +9,7 @@ describe('PrinterService', () => {
   );
 
   it('should be created', () => {
-    const service: PrinterService = TestBed.get(PrinterService);
+    const service: PrinterService = TestBed.inject(PrinterService);
     expect(service).toBeTruthy();
   });
 });

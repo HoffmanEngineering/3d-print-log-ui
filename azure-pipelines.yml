@@ -40,6 +40,10 @@ steps:
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui/cobertura-coverage.xml'
     reportDirectory: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui'
 
+- script: |
+    npm run prettier
+  displayName: 'Check Prettier Formatting'
+
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Build.SourcesDirectory)/dist/print-log-ui'

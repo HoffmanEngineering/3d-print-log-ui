@@ -7,7 +7,7 @@ xdescribe('UserDetailResolverService', () => {
   );
 
   it('should be created', () => {
-    const service: UserDetailResolverService = TestBed.get(
+    const service: UserDetailResolverService = TestBed.inject(
       UserDetailResolverService
     );
     expect(service).toBeTruthy();

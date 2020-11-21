@@ -154,7 +154,7 @@ export class EditPrintDetailComponent
             () => {
               this.router.navigate(['printers', 'new'], {
                 queryParams: {
-                  returnUrl: this.activatedRoute.snapshot['_routerState'].url,
+                  returnUrl: this.activatedRoute.snapshot._routerState.url,
                 },
               });
               this.printerRedirectSubscription.unsubscribe();

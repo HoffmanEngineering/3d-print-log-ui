@@ -15,12 +15,12 @@ describe('CuraParserService', () => {
   };
 
   beforeEach(() => {
-    const mockv1_0_0Parser = jasmine.createSpyObj<CuraParserV1pt0pt0Service>(
+    const mockv1pt0pt0Parser = jasmine.createSpyObj<CuraParserV1pt0pt0Service>(
       'CuraParserV1pt0pt0Service',
       ['parse']
     );
 
-    const mockv1_1_0Parser = jasmine.createSpyObj<CuraParserV1pt1pt0Service>(
+    const mockv1pt1pt0Parser = jasmine.createSpyObj<CuraParserV1pt1pt0Service>(
       'CuraParserV1pt1pt0Service',
       ['parse']
     );
@@ -28,8 +28,8 @@ describe('CuraParserService', () => {
     TestBed.configureTestingModule({
       providers: [
         CuraParserService,
-        { provide: CuraParserV1pt0pt0Service, useValue: mockv1_0_0Parser },
-        { provide: CuraParserV1pt1pt0Service, useValue: mockv1_1_0Parser },
+        { provide: CuraParserV1pt0pt0Service, useValue: mockv1pt0pt0Parser },
+        { provide: CuraParserV1pt1pt0Service, useValue: mockv1pt1pt0Parser },
       ],
     });
     service = TestBed.inject(CuraParserService);
@@ -46,29 +46,29 @@ describe('CuraParserService', () => {
   });
 
   it(`should parse using the v1.0.0 parser when the param's plugin_version is 1.0.0`, () => {
-    const mockv1_0_0Parser = TestBed.inject(
+    const mockv1pt0pt0Parser = TestBed.inject(
       CuraParserV1pt0pt0Service
     ) as jasmine.SpyObj<CuraParserV1pt0pt0Service>;
-    mockv1_0_0Parser.parse.and.returnValue(null);
+    mockv1pt0pt0Parser.parse.and.returnValue(null);
 
     const testQueryString = 'plugin_version=1.0.0';
     const params = createQueryParams(testQueryString);
     service.parse(params);
 
-    expect(mockv1_0_0Parser.parse).toHaveBeenCalled();
+    expect(mockv1pt0pt0Parser.parse).toHaveBeenCalled();
   });
 
   it(`should parse using the v1.1.0 parser when the param's plugin_version is 1.1.0`, () => {
-    const mockv1_1_0Parser = TestBed.inject(
+    const mockv1pt1pt0Parser = TestBed.inject(
       CuraParserV1pt1pt0Service
     ) as jasmine.SpyObj<CuraParserV1pt1pt0Service>;
-    mockv1_1_0Parser.parse.and.returnValue(null);
+    mockv1pt1pt0Parser.parse.and.returnValue(null);
 
     const testQueryString = 'plugin_version=1.1.0';
     const params = createQueryParams(testQueryString);
     service.parse(params);
 
-    expect(mockv1_1_0Parser.parse).toHaveBeenCalled();
+    expect(mockv1pt1pt0Parser.parse).toHaveBeenCalled();
   });
 
   it(`should return null if the params do not contain a plugin_version key.`, () => {

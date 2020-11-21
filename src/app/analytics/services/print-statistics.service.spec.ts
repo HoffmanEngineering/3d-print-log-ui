@@ -6,7 +6,9 @@ xdescribe('PrintStatisticsService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: PrintStatisticsService = TestBed.get(PrintStatisticsService);
+    const service: PrintStatisticsService = TestBed.inject(
+      PrintStatisticsService
+    );
     expect(service).toBeTruthy();
   });
 });

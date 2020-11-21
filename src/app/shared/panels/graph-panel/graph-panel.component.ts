@@ -1,7 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 
-export interface GraphData {}
-
 @Component({
   selector: 'app-graph-panel',
   templateUrl: './graph-panel.component.html',

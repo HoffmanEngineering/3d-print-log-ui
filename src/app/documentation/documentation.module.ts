@@ -10,9 +10,9 @@ import { DocsCuraPluginComponent } from './docs/docs-cura-plugin/docs-cura-plugi
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
 import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.component';
 import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
+import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocumentationComponent } from './documentation.component';
-import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 
 @NgModule({
   declarations: [

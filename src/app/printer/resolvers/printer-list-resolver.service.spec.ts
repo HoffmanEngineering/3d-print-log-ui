@@ -7,7 +7,7 @@ xdescribe('PrinterListResolverService', () => {
   );
 
   it('should be created', () => {
-    const service: PrinterListResolverService = TestBed.get(
+    const service: PrinterListResolverService = TestBed.inject(
       PrinterListResolverService
     );
     expect(service).toBeTruthy();

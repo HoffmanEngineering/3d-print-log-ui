@@ -6,7 +6,7 @@ xdescribe('PrintListResolverService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: PrintListResolverService = TestBed.get(
+    const service: PrintListResolverService = TestBed.inject(
       PrintListResolverService
     );
     expect(service).toBeTruthy();

@@ -38,6 +38,9 @@
           "configurations": {
             "production": {
               "assets": [
+                "src/favicon_1293b2036.ico",
+                "src/assets",
+                "src/ads.txt",
                 {
                   "input": "src/deployment/production",
                   "output": "/",

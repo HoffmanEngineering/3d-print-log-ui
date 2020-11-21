@@ -6,11 +6,13 @@ xdescribe('DocsGettingStartedComponent', () => {
   let component: DocsGettingStartedComponent;
   let fixture: ComponentFixture<DocsGettingStartedComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [DocsGettingStartedComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [DocsGettingStartedComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DocsGettingStartedComponent);

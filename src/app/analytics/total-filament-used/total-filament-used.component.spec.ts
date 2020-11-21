@@ -6,12 +6,13 @@ describe('TotalFilamentUsedComponent', () => {
   let component: TotalFilamentUsedComponent;
   let fixture: ComponentFixture<TotalFilamentUsedComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [ TotalFilamentUsedComponent ]
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [TotalFilamentUsedComponent],
+      }).compileComponents();
     })
-    .compileComponents();
-  }));
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(TotalFilamentUsedComponent);

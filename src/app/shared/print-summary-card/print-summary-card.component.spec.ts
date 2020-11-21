@@ -6,11 +6,13 @@ xdescribe('PrintSummaryCardComponent', () => {
   let component: PrintSummaryCardComponent;
   let fixture: ComponentFixture<PrintSummaryCardComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [PrintSummaryCardComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [PrintSummaryCardComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintSummaryCardComponent);

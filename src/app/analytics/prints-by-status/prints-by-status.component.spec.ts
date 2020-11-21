@@ -6,11 +6,13 @@ describe('PrintsByStatusComponent', () => {
   let component: PrintsByStatusComponent;
   let fixture: ComponentFixture<PrintsByStatusComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [PrintsByStatusComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [PrintsByStatusComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintsByStatusComponent);

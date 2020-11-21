@@ -6,11 +6,13 @@ xdescribe('PrintListComponent', () => {
   let component: PrintListComponent;
   let fixture: ComponentFixture<PrintListComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [PrintListComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [PrintListComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintListComponent);

@@ -6,11 +6,13 @@ describe('DocSidebarComponent', () => {
   let component: DocSidebarComponent;
   let fixture: ComponentFixture<DocSidebarComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [DocSidebarComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [DocSidebarComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DocSidebarComponent);

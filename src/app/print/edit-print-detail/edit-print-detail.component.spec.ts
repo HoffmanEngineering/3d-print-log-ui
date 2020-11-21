@@ -22,72 +22,79 @@ describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
   let fixture: ComponentFixture<EditPrintDetailComponent>;
 
-  beforeEach(waitForAsync(() => {
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      ['addPrint']
-    );
+  beforeEach(
+    waitForAsync(() => {
+      const mockPrintService = jasmine.createSpyObj<PrintService>(
+        'PrintService',
+        ['addPrint']
+      );
 
-    const mockToastrService = jasmine.createSpyObj<ToastrService>(
-      'ToastrService',
-      ['success', 'error']
-    );
+      const mockToastrService = jasmine.createSpyObj<ToastrService>(
+        'ToastrService',
+        ['success', 'error']
+      );
 
-    const mockTitleService = jasmine.createSpyObj<Title>('Title', ['setTitle']);
+      const mockTitleService = jasmine.createSpyObj<Title>('Title', [
+        'setTitle',
+      ]);
 
-    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['updateUserSetting']
-    );
+      const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
+        'UserSettingService',
+        ['updateUserSetting']
+      );
 
-    const mockPrinterPromptService = jasmine.createSpyObj<
-      PrinterRedirectPromptService
-    >('PrinterRedirectPromptService', {
-      shouldShowAddPrinterPrompt: of(false),
-    });
-
-    TestBed.configureTestingModule({
-      declarations: [EditPrintDetailComponent],
-      imports: [
-        RouterTestingModule,
-        FormsModule,
-        ReactiveFormsModule,
-        MatInputModule,
-        MatSelectModule,
-        MatDatepickerModule,
-        MatMomentDateModule,
-        MatCheckboxModule,
-      ],
-      providers: [
-        { provide: PrintService, useValue: mockPrintService },
-        { provide: ToastrService, useValue: mockToastrService },
-        { provide: Title, useValue: mockTitleService },
-        { provide: UserSettingService, useValue: mockUserSettingService },
+      const mockPrinterPromptService = jasmine.createSpyObj<PrinterRedirectPromptService>(
+        'PrinterRedirectPromptService',
         {
-          provide: PrinterRedirectPromptService,
-          useValue: mockPrinterPromptService,
-        },
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            data: of({
-              printers: null,
-              lastSelectedPrinterSetting: null,
-              defaultPrintViewStatusSetting: null,
-              print: { print: { printerId: 1, notes: '' } },
-            }),
+          shouldShowAddPrinterPrompt: of(false),
+        }
+      );
+
+      TestBed.configureTestingModule({
+        declarations: [EditPrintDetailComponent],
+        imports: [
+          RouterTestingModule,
+          FormsModule,
+          ReactiveFormsModule,
+          MatInputModule,
+          MatSelectModule,
+          MatDatepickerModule,
+          MatMomentDateModule,
+          MatCheckboxModule,
+        ],
+        providers: [
+          { provide: PrintService, useValue: mockPrintService },
+          { provide: ToastrService, useValue: mockToastrService },
+          { provide: Title, useValue: mockTitleService },
+          { provide: UserSettingService, useValue: mockUserSettingService },
+          {
+            provide: PrinterRedirectPromptService,
+            useValue: mockPrinterPromptService,
           },
-        },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-  }));
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              data: of({
+                printers: null,
+                lastSelectedPrinterSetting: null,
+                defaultPrintViewStatusSetting: null,
+                print: { print: { printerId: 1, notes: '' } },
+              }),
+            },
+          },
+        ],
+        schemas: [NO_ERRORS_SCHEMA],
+      }).compileComponents();
+    })
+  );
 
-  beforeEach(waitForAsync(() => {
-    fixture = TestBed.createComponent(EditPrintDetailComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      fixture = TestBed.createComponent(EditPrintDetailComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    })
+  );
 
   it('should create', () => {
     expect(component).toBeTruthy();

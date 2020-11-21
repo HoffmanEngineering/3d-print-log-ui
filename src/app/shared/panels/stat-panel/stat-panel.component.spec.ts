@@ -6,11 +6,13 @@ describe('StatPanelComponent', () => {
   let component: StatPanelComponent;
   let fixture: ComponentFixture<StatPanelComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [StatPanelComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [StatPanelComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(StatPanelComponent);

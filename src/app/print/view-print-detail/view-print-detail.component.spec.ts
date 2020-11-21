@@ -6,11 +6,13 @@ xdescribe('ViewPrintDetailComponent', () => {
   let component: ViewPrintDetailComponent;
   let fixture: ComponentFixture<ViewPrintDetailComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [ViewPrintDetailComponent],
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [ViewPrintDetailComponent],
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(ViewPrintDetailComponent);

@@ -13,23 +13,22 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { MatDatepickerInputEvent } from '@angular/material/datepicker';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
-import { ActiveToast, Toast, ToastrService } from 'ngx-toastr';
+import { ActiveToast, ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
 import { Title } from '@angular/platform-browser';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
   UserSetting,
   UserSettingService,
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
-import { environment } from 'src/environments/environment';
 import {
   PrintDetail,
   PrintService,
@@ -86,12 +85,13 @@ export class EditPrintDetailComponent
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private formBuilder: FormBuilder,
-    private printService: PrintService,
-    private toastr: ToastrService,
+    private readonly printService: PrintService,
+    private readonly toastr: ToastrService,
     private cd: ChangeDetectorRef,
     private titleService: Title,
     private readonly userSettingService: UserSettingService,
-    private printerRedirectPromptService: PrinterRedirectPromptService
+    private readonly printerRedirectPromptService: PrinterRedirectPromptService,
+    private readonly loggingService: LoggingService
   ) {}
   ngOnDestroy(): void {
     if (this.printerIdValueChangesSub) {
@@ -229,6 +229,9 @@ export class EditPrintDetailComponent
   }
 
   changeDefaultViewStatus(newViewStatus: PrintViewStatus) {
+    this.loggingService.logEvent('ChangedDefaultViewStatus', {
+      status: newViewStatus,
+    });
     if (this.defaultPrintViewStatusSetting) {
       this.userSettingService
         .updateUserSetting(
@@ -497,6 +500,7 @@ export class EditPrintDetailComponent
           },
           (err) => {
             this.saving = false;
+            this.loggingService.logException(err);
           }
         );
     } else {
@@ -555,6 +559,7 @@ export class EditPrintDetailComponent
           },
           (err) => {
             this.saving = false;
+            this.loggingService.logException(err);
           }
         );
     }

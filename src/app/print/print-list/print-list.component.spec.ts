@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { LoggingService } from 'src/app/core/services/logging.service';
 
 import { PrintListComponent } from './print-list.component';
 
@@ -8,8 +9,14 @@ xdescribe('PrintListComponent', () => {
 
   beforeEach(
     waitForAsync(() => {
+      const mockLogger = jasmine.createSpyObj<LoggingService>(
+        'LoggingService',
+        ['logException', 'logEvent']
+      );
+
       TestBed.configureTestingModule({
         declarations: [PrintListComponent],
+        providers: [{ provide: LoggingService, useValue: mockLogger }],
       }).compileComponents();
     })
   );

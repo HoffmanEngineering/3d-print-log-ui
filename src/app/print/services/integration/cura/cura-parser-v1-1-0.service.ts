@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ParamMap } from '@angular/router';
 import { capitalize, snakeCase } from 'lodash-es';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrintDetail, PrintStatus } from 'src/app/core/services/print.service';
 import { NewPrintParser } from '../types';
 
@@ -23,7 +24,7 @@ export interface ExtruderSettings {
 
 @Injectable()
 export class CuraParserV1pt1pt0Service implements NewPrintParser {
-  constructor() {}
+  constructor(private readonly loggingService: LoggingService) {}
   parse(params: ParamMap): PrintDetail {
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),
@@ -31,9 +32,16 @@ export class CuraParserV1pt1pt0Service implements NewPrintParser {
 
     // extruder independent settings.
     if (params.has('estimated_print_time_seconds')) {
-      print.estimatedPrintTimeInSeconds = +params.get(
-        'estimated_print_time_seconds'
-      );
+      const printTime = +params.get('estimated_print_time_seconds');
+      if (isNaN(printTime)) {
+        this.loggingService.logTrace(
+          `Cura 1.0.0 - NaN Estimated Print Time Received: ${JSON.stringify(
+            params.get('estimated_print_time_seconds')
+          )}`
+        );
+      } else {
+        print.estimatedPrintTimeInSeconds = printTime;
+      }
     }
 
     if (params.has('print_name')) {
@@ -44,7 +52,17 @@ export class CuraParserV1pt1pt0Service implements NewPrintParser {
     }
 
     if (params.has('material_used_mg')) {
-      print.estimatedFilamentUsageMg = +params.get('material_used_mg');
+      const materialUsed = +params.get('material_used_mg');
+
+      if (isNaN(materialUsed)) {
+        this.loggingService.logTrace(
+          `Cura 1.0.0 - NaN Estimated Material Usaged Received: ${JSON.stringify(
+            params.get('material_used_mg')
+          )}`
+        );
+      } else {
+        print.estimatedFilamentUsageMg = materialUsed;
+      }
     }
 
     print.notes = this.putSettingsIntoNotes(params);

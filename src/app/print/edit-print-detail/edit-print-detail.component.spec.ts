@@ -16,6 +16,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
 describe('EditPrintDetailComponent', () => {
@@ -50,6 +51,11 @@ describe('EditPrintDetailComponent', () => {
         }
       );
 
+      const mockLogger = jasmine.createSpyObj<LoggingService>(
+        'LoggingService',
+        ['logException', 'logEvent']
+      );
+
       TestBed.configureTestingModule({
         declarations: [EditPrintDetailComponent],
         imports: [
@@ -71,6 +77,7 @@ describe('EditPrintDetailComponent', () => {
             provide: PrinterRedirectPromptService,
             useValue: mockPrinterPromptService,
           },
+          { provide: LoggingService, useValue: mockLogger },
           {
             provide: ActivatedRoute,
             useValue: {

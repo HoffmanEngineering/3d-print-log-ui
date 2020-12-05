@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ParamMap } from '@angular/router';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrintDetail } from 'src/app/core/services/print.service';
 
 import { CuraParserV1pt1pt0Service } from './cura-parser-v1-1-0.service';
@@ -13,7 +14,15 @@ describe('CuraParserV1pt1pt0Service', () => {
   };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [CuraParserV1pt1pt0Service] });
+    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logTrace',
+    ]);
+    TestBed.configureTestingModule({
+      providers: [
+        CuraParserV1pt1pt0Service,
+        { provide: LoggingService, useValue: mockLogger },
+      ],
+    });
     service = TestBed.inject(CuraParserV1pt1pt0Service);
 
     jasmine.clock().mockDate(new Date('2020-09-20 14:00:00'));

@@ -15,6 +15,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -78,7 +79,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     private media: MediaMatcher,
     private ngZone: NgZone,
     private changeDetectorRef: ChangeDetectorRef,
-    private printService: PrintService
+    private printService: PrintService,
+    private readonly loggingService: LoggingService
   ) {
     this.debouncedUpdateFilter = debounce(() => {
       this.currentPage = 1;
@@ -136,6 +138,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
           this.printerRedirectSubscription = this.printerRedirectToast.onTap.subscribe(
             () => {
+              this.loggingService.logEvent('NoActivePrinterPromptClicked');
               this.router.navigate(['printers', 'new']);
               this.printerRedirectSubscription.unsubscribe();
             }
@@ -233,6 +236,9 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public share(print: PrintSummary) {
+    this.loggingService.logEvent('PrintListShareClicked', {
+      printId: print.id,
+    });
     const dialogRef = this.dialog.open(PrintShareDialogComponent, {
       width: '300px',
       minWidth: '300px',

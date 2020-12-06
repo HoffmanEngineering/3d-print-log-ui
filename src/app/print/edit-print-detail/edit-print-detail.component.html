@@ -182,6 +182,13 @@
           />
           <mat-error
             *ngIf="
+              printForm.controls['estimatedFilamentUsageG'].hasError('min')
+            "
+          >
+            Estimated Filament Usage must be a positive number.
+          </mat-error>
+          <mat-error
+            *ngIf="
               printForm.controls['estimatedFilamentUsageG'].hasError('pattern')
             "
           >
@@ -207,6 +214,11 @@
             pattern="^\d*(\.\d{0,3})?$"
             formControlName="filamentUsageG"
           />
+          <mat-error
+            *ngIf="printForm.controls['filamentUsageG'].hasError('min')"
+          >
+            Filament Usage must be a positive number.
+          </mat-error>
           <mat-error
             *ngIf="printForm.controls['filamentUsageG'].hasError('pattern')"
           >
@@ -338,7 +350,7 @@
             fxFlex
             mat-raised-button
             type="submit"
-            [disabled]="!printForm.valid || saving"
+            [disabled]="saving"
             color="primary"
             [class.spinner]="saving"
           >

@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   HostListener,
   OnDestroy,
   OnInit,
@@ -91,7 +92,8 @@ export class EditPrintDetailComponent
     private titleService: Title,
     private readonly userSettingService: UserSettingService,
     private readonly printerRedirectPromptService: PrinterRedirectPromptService,
-    private readonly loggingService: LoggingService
+    private readonly loggingService: LoggingService,
+    private el: ElementRef
   ) {}
   ngOnDestroy(): void {
     if (this.printerIdValueChangesSub) {
@@ -316,11 +318,15 @@ export class EditPrintDetailComponent
       ],
       estimatedFilamentUsageG: [
         print ? print.estimatedFilamentUsageMg / 1000 : null,
+        [Validators.min(0)],
       ],
       printTimeInSeconds: [
         print ? this.parseIntoString(print.printTimeInSeconds) : null,
       ],
-      filamentUsageG: [print ? print.filamentUsageMg / 1000 : null],
+      filamentUsageG: [
+        print ? print.filamentUsageMg / 1000 : null,
+        [Validators.min(0)],
+      ],
       filamentType: [print ? print.filamentType : ''],
       notes: [print ? print.notes : ''],
       url: [print ? print.url : ''],
@@ -421,6 +427,24 @@ export class EditPrintDetailComponent
   onSubmit() {
     this.saving = true;
 
+    // Validate
+    this.printForm.markAllAsTouched();
+    if (!this.printForm.valid) {
+      this.saving = false;
+
+      // Loop through all controls, focusing the first invalid control.
+      for (const key of Object.keys(this.printForm.controls)) {
+        if (this.printForm.controls[key].invalid) {
+          const invalidControl = this.el.nativeElement.querySelector(
+            '[formcontrolname="' + key + '"]'
+          );
+          invalidControl.focus();
+          break;
+        }
+      }
+      return;
+    }
+
     const newPrint: Omit<PrintDetail, 'comments'> = this.getPrintFromForm();
 
     const newImages = this.images.controls.filter(
@@ -500,6 +524,9 @@ export class EditPrintDetailComponent
           },
           (err) => {
             this.saving = false;
+            this.loggingService.logTrace(
+              `PrintErr: ${JSON.stringify(newPrint)}`
+            );
             this.loggingService.logException(err);
           }
         );
@@ -559,6 +586,9 @@ export class EditPrintDetailComponent
           },
           (err) => {
             this.saving = false;
+            this.loggingService.logTrace(
+              `PrintErr: ${JSON.stringify(newPrint)}`
+            );
             this.loggingService.logException(err);
           }
         );

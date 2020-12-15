@@ -22,7 +22,7 @@ export class CuraParserV1pt0pt0Service implements NewPrintParser {
           )}`
         );
       } else {
-        print.estimatedPrintTimeInSeconds = printTime;
+        print.estimatedPrintTimeInSeconds = Math.round(printTime);
       }
     }
 
@@ -43,7 +43,7 @@ export class CuraParserV1pt0pt0Service implements NewPrintParser {
           )}`
         );
       } else {
-        print.estimatedFilamentUsageMg = materialUsed;
+        print.estimatedFilamentUsageMg = Math.round(materialUsed);
       }
     }
 

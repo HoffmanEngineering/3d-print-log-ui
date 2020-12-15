@@ -49,6 +49,19 @@ describe('CuraParserV1pt0pt0Service', () => {
     expect(printDetail).toEqual(jasmine.objectContaining(expected));
   });
 
+  // tslint:disable-next-line: max-line-length
+  it(`should round the estimated print time to the nearest int when given a 'estimated_print_time_seconds' query param with a decimal`, () => {
+    const testQueryString = 'estimated_print_time_seconds=5626.9';
+    const params = createQueryParams(testQueryString);
+
+    const printDetail = service.parse(params);
+
+    const expected: Pick<PrintDetail, 'estimatedPrintTimeInSeconds'> = {
+      estimatedPrintTimeInSeconds: 5627,
+    };
+    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+  });
+
   it(`should return a print with a null estimated print time when given no 'estimated_print_time_seconds' query param`, () => {
     const testQueryString = '';
     const params = createQueryParams(testQueryString);
@@ -106,6 +119,18 @@ describe('CuraParserV1pt0pt0Service', () => {
 
     const expected: Pick<PrintDetail, 'estimatedFilamentUsageMg'> = {
       estimatedFilamentUsageMg: 1234,
+    };
+    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+  });
+
+  it(`should round the estimated filament use to the nearest int when given 'material_used_mg' query param with a decimal`, () => {
+    const testQueryString = 'material_used_mg=1234.9';
+    const params = createQueryParams(testQueryString);
+
+    const printDetail = service.parse(params);
+
+    const expected: Pick<PrintDetail, 'estimatedFilamentUsageMg'> = {
+      estimatedFilamentUsageMg: 1235,
     };
     expect(printDetail).toEqual(jasmine.objectContaining(expected));
   });

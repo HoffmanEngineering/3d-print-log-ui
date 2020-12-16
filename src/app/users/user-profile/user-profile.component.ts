@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, Inject, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -7,6 +8,8 @@ import {
   AuthService,
   UserProfileInfo,
 } from 'src/app/core/services/auth.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
   ProfileViewStatus,
   UserDetailDto,
@@ -48,10 +51,12 @@ export class UserProfileComponent implements OnInit {
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private authService: AuthService,
-    private userService: UserService,
-    private toastrService: ToastrService,
-    private titleService: Title
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+    private readonly toastrService: ToastrService,
+    private readonly metaTagService: MetaTagService,
+    private readonly loggingService: LoggingService,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {}
 
   ngOnInit(): void {
@@ -64,9 +69,7 @@ export class UserProfileComponent implements OnInit {
         this.userDetail = data.userDetail;
         this.viewStatus = this.userDetail.viewStatus;
 
-        this.titleService.setTitle(
-          `${this.userDetail.displayName} Profile - 3D Print Log`.trim()
-        );
+        this.setMetaTags();
 
         this.authServiceSubscription = this.authService.userProfile$.subscribe(
           (user) => {
@@ -75,6 +78,22 @@ export class UserProfileComponent implements OnInit {
         );
       }
     );
+  }
+
+  setMetaTags() {
+    this.metaTagService.setTitle(
+      `${this.userDetail.displayName} Profile - 3D Print Log`.trim()
+    );
+
+    const url = `${this.document.location.origin}/users/${this.userDetail.id}`;
+    const title = `${this.userDetail.displayName} Profile - 3D Print Log`.trim();
+    const description = `View ${this.userDetail.displayName}'s 3D prints and projects on 3DPrintLog.com`.trim();
+    const imageUrl =
+      this.userDetail.profilePicture !== ''
+        ? this.userDetail.profilePicture
+        : '';
+
+    this.metaTagService.setSocialMediaTags(url, title, description, imageUrl);
   }
 
   addCoverPhoto(event) {
@@ -136,6 +155,8 @@ export class UserProfileComponent implements OnInit {
         coverPicture: null,
       };
 
+      this.loggingService.logEvent('CoverPhotoRemoved');
+
       this.authService.updateCurrentUserCoverPicture(null);
     });
   }
@@ -156,11 +177,13 @@ export class UserProfileComponent implements OnInit {
   public startEditingDescription() {
     this.bio = this.userDetail.bio ?? '';
     this.isEditingDescription = true;
+    this.loggingService.logEvent('UserProfileDescriptionEditStart');
   }
 
   public cancelEditingDescription() {
     this.bio = this.userDetail.bio ?? '';
     this.isEditingDescription = false;
+    this.loggingService.logEvent('UserProfileDescriptionEditCancelled');
   }
 
   public saveDescription() {
@@ -181,11 +204,13 @@ export class UserProfileComponent implements OnInit {
   public startEditingDisplayName() {
     this.displayName = this.userDetail.displayName ?? '';
     this.isEditingDisplayName = true;
+    this.loggingService.logEvent('DisplayNameEditingStart');
   }
 
   public cancelEditingDisplayName() {
     this.displayName = this.userDetail.displayName ?? '';
     this.isEditingDisplayName = false;
+    this.loggingService.logEvent('DisplayNameEditingCancelled');
   }
 
   public saveDisplayName() {

@@ -1,13 +1,17 @@
 import {
   Component,
+  ElementRef,
   Input,
   OnChanges,
   OnInit,
+  QueryList,
   SimpleChanges,
+  ViewChildren,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import { Subscription } from 'rxjs';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   PrintService,
   PrintStatus,
@@ -24,6 +28,8 @@ export class UserPrintsComponent implements OnChanges, OnInit {
   @Input() userId: number;
   @Input() userProfilePictureUrl: string;
   @Input() userName: string;
+
+  @ViewChildren('PrintSummaryCard') summaryCards: QueryList<ElementRef>;
 
   public prints: PrintSummary[] = [];
 
@@ -46,7 +52,8 @@ export class UserPrintsComponent implements OnChanges, OnInit {
   constructor(
     private readonly printService: PrintService,
     private readonly router: Router,
-    private readonly activatedRoute: ActivatedRoute
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly loggingService: LoggingService
   ) {
     this.debouncedUpdateFilter = debounce(() => {
       this.router.navigate(['.'], {
@@ -60,9 +67,7 @@ export class UserPrintsComponent implements OnChanges, OnInit {
 
   ngOnInit() {
     this.activatedRoute.queryParamMap.subscribe((params) => {
-      console.log(params);
       if (params.has('searchText')) {
-        console.log('search');
         this.searchText = params.get('searchText');
         this.clearPrints();
         this.pageNumber = 1;
@@ -80,34 +85,46 @@ export class UserPrintsComponent implements OnChanges, OnInit {
     }
   }
 
-  clearPrints() {
+  public clearPrints() {
     this.prints = [];
   }
-  updateFilter(): any {
-    if (this.printListSubscription) {
-      this.printListSubscription.unsubscribe();
-    }
-    this.printListSubscription = this.printService
-      .getPrintSummaries(
-        this.pageNumber,
-        this.PAGE_SIZE,
-        this.searchText,
-        this.filterByStatus,
-        undefined,
-        undefined,
-        this.userId
-      )
-      .subscribe((response) => {
-        this.pageNumber = response.paging.currentPage;
-        this.prints = [...this.prints, ...response.items];
+  public async updateFilter(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.printListSubscription) {
+        this.printListSubscription.unsubscribe();
+      }
+      this.printListSubscription = this.printService
+        .getPrintSummaries(
+          this.pageNumber,
+          this.PAGE_SIZE,
+          this.searchText,
+          this.filterByStatus,
+          undefined,
+          undefined,
+          this.userId
+        )
+        .subscribe((response) => {
+          this.pageNumber = response.paging.currentPage;
+          this.prints = [...this.prints, ...response.items];
 
-        this.showLoadMore = this.pageNumber < response.paging.totalPages;
-      });
+          this.showLoadMore = this.pageNumber < response.paging.totalPages;
+          resolve();
+        });
+    });
   }
 
-  loadNextPage() {
+  /**
+   * Loads the next page of prints, and scrolls to the previous last print (so that the scroll does not move for the user)
+   */
+  async loadNextPage() {
+    this.loggingService.logEvent('UserPrintLoadMorePrintClicked');
     this.pageNumber++;
 
-    this.updateFilter();
+    const previousLastPrint = this.summaryCards.last;
+
+    await this.updateFilter();
+    setTimeout(() => {
+      (previousLastPrint?.nativeElement as HTMLElement)?.scrollIntoView(false);
+    });
   }
 }

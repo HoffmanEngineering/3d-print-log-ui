@@ -17,9 +17,10 @@ export class MetaTag {
   providedIn: 'root',
 })
 export class MetaTagService {
+  private readonly description: string = 'description';
   private readonly urlMeta: string = 'og:url';
   private readonly titleMeta: string = 'og:title';
-  private readonly descriptionMeta: string = 'og:description';
+  private readonly facebookDescriptionMeta: string = 'og:description';
   private readonly imageMeta: string = 'og:image';
   private readonly secureImageMeta: string = 'og:image:secure_url';
   private readonly twitterTitleMeta: string = 'twitter:text:title';
@@ -38,9 +39,10 @@ export class MetaTagService {
     imageUrl: string
   ): void {
     const tags = [
+      new MetaTag(this.description, description, false),
       new MetaTag(this.urlMeta, url, true),
       new MetaTag(this.titleMeta, title, true),
-      new MetaTag(this.descriptionMeta, description, true),
+      new MetaTag(this.facebookDescriptionMeta, description, true),
       new MetaTag(this.imageMeta, imageUrl, true),
       new MetaTag(this.secureImageMeta, imageUrl, true),
       new MetaTag(this.twitterTitleMeta, title, false),

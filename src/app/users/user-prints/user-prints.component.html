@@ -36,7 +36,11 @@
     </div>
   </div>
   <ng-container *ngIf="prints.length > 0">
-    <div *ngFor="let print of prints" style="margin-bottom: 10px">
+    <div
+      #PrintSummaryCard
+      *ngFor="let print of prints"
+      style="margin-bottom: 10px"
+    >
       <app-print-summary-card
         [print]="print"
         [userId]="userId"

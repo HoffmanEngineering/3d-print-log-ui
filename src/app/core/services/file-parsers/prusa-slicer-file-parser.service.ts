@@ -3,6 +3,23 @@ import parse from 'parse-duration';
 import { GcodeNewPrintParser } from '../gcode-file-parser.service';
 import { PrintDetail, PrintStatus } from '../print.service';
 
+//
+export interface MaterialDensityGramsPerCubicCm {
+  PLA: number;
+  ABS: number;
+  PETG: number;
+  Nylon: number;
+}
+
+export class MaterialDensities {
+  static materials: MaterialDensityGramsPerCubicCm = {
+    PLA: 1.24,
+    ABS: 1.04,
+    PETG: 1.23,
+    Nylon: 1.06,
+  };
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -17,9 +34,248 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     // Print Times:
     print.estimatedPrintTimeInSeconds = this.parseEstimatedPrintTime(gcode);
 
-    console.log('PrusaSlicerPrint', print);
+    print.estimatedFilamentUsageMg = this.estimateFilamentUsageInMg(gcode);
+
+    print.notes = this.parseSettingsIntoNotes(gcode);
 
     return print;
+  }
+  estimateFilamentUsageInMg(gcode: string): number {
+    // Check to see if the user setup their filament densities, thus we can directly return filament usage.
+    const filamentUsedInGrams = this.parseSettingAsNumber(
+      gcode,
+      '; total filament used [g]'
+    );
+    if (filamentUsedInGrams > 0) {
+      return filamentUsedInGrams * 1000;
+    }
+
+    const filamentType = this.parseSettingAsString(gcode, '; filament_type');
+    // Try and grab the first diameter
+    const filamentDiameter = +this.parseSettingAsString(
+      gcode,
+      '; filament_diameter'
+    ).split(',')?.[0];
+    if (isNaN(filamentDiameter)) {
+      return undefined;
+    }
+    const filamentUsageLengthInMM = this.parseSettingAsString(
+      gcode,
+      '; filament used [mm]'
+    );
+
+    if (filamentType.includes('PLA')) {
+    } else if (filamentType.includes('ABS')) {
+    } else if (filamentType.includes('PETG')) {
+    }
+  }
+  parseSettingsIntoNotes(gcode: string): string {
+    let notes = '';
+    const spiralVaseModeEnabled = this.parseSettingAsBoolean(
+      gcode,
+      '; spiral_vase'
+    );
+
+    // if (params.has('layer_height')) {
+    //   const isAdaptiveLayerHeightEnabled =
+    //     params.has('adaptive_layer_height_enabled') &&
+    //     this.stringToBoolean(params.get('adaptive_layer_height_enabled'));
+
+    //   notes +=
+    //     `Layer Height: ${params.get('layer_height')}mm ${
+    //       isAdaptiveLayerHeightEnabled ? '(with Adaptive Layer Height)' : ''
+    //     }`.trim() + `\n`;
+    // }
+
+    // Layer Height
+    const layerHeight = this.parseSettingAsNumber(gcode, '; layer_height');
+    if (layerHeight) {
+      notes += `Layer Height: ${layerHeight}mm` + `\n`;
+    }
+    // if (params.has('top_thickness') && !spiralVaseModeEnabled) {
+    //   notes += `Top Thickness: ${params.get('top_thickness')}mm\n`;
+    // }
+
+    // Top Layers
+    const topLayers = this.parseSettingAsNumber(gcode, '; top_solid_layers');
+    if (topLayers) {
+      notes += `Top Layer Count: ${topLayers}` + `\n`;
+    }
+    // if (params.has('bottom_thickness')) {
+    //   notes += `Bottom Thickness: ${params.get('bottom_thickness')}mm\n`;
+    // }
+
+    // Bottom Layers
+    const bottomLayers = this.parseSettingAsNumber(
+      gcode,
+      '; bottom_solid_layers'
+    );
+    if (bottomLayers) {
+      notes += `Bottom Layer Count: ${bottomLayers}` + `\n`;
+    }
+
+    // if (params.has('wall_line_count')) {
+    //   notes += `Wall Line Count: ${params.get('wall_line_count')}\n`;
+    // }
+
+    // Top Layers
+    const perimeters = this.parseSettingAsNumber(gcode, '; perimeters');
+    if (perimeters) {
+      notes += `Perimeters: ${perimeters}` + `\n`;
+    }
+
+    // if (params.has('infill_sparse_density') && !spiralVaseModeEnabled) {
+    //   const infillDensity = params.get('infill_sparse_density');
+    //   notes += `Infill: ${infillDensity}%\n`;
+
+    //   if (
+    //     params.has('infill_pattern') &&
+    //     !isNaN(Number(infillDensity)) &&
+    //     Number(infillDensity) > 0
+    //   ) {
+    //     notes += `Infill Pattern: ${params.get('infill_pattern')}\n`;
+    //   }
+    // }
+
+    const infillDensity = this.parseSettingAsString(gcode, '; fill_density');
+    if (infillDensity !== '') {
+      notes += `Infill: ${infillDensity}` + `\n`;
+
+      const infillPattern = this.parseSettingAsString(gcode, '; fill_pattern');
+      if (infillPattern !== '') {
+        notes += `Infill Pattern: ${infillPattern}\n`;
+      }
+    }
+
+    // if (params.has('support_enabled')) {
+    //   const isSupportEnabled = this.stringToBoolean(
+    //     params.get('support_enabled')
+    //   );
+    //   if (isSupportEnabled) {
+    //     let supportType = '';
+    //     if (params.has('support_type')) {
+    //       switch (params.get('support_type')) {
+    //         case 'everywhere':
+    //           supportType = 'Everywhere';
+    //           break;
+    //         case 'buildplate':
+    //           supportType = 'Touching Buildplate';
+    //           break;
+    //       }
+    //     }
+    //     notes += `Support: Enabled ${supportType}`.trim() + `\n`;
+    //   } else {
+    //     notes += `Support: No Supports\n`;
+    //   }
+    // }
+
+    const supportEnabled = this.parseSettingAsBoolean(
+      gcode,
+      '; support_material'
+    );
+    if (supportEnabled) {
+      const buildplateOnly = this.parseSettingAsBoolean(
+        gcode,
+        '; support_material_buildplate_only'
+      );
+
+      const supportType = buildplateOnly ? 'Touching Buildplate' : 'Everywhere';
+      notes += `Support: Enabled ${supportType}`.trim() + `\n`;
+    } else {
+      notes += `Support: No Supports\n`;
+    }
+
+    // // Special Modes
+    // if (
+    //   params.has('mold_enabled') &&
+    //   this.stringToBoolean(params.get('mold_enabled'))
+    // ) {
+    //   notes += `Mold Mode: Enabled\n`;
+    // }
+
+    if (spiralVaseModeEnabled) {
+      notes += `Spiral Vase Mode: Enabled\n`;
+    }
+
+    if (this.parseSettingAsBoolean(gcode, '; ooze_prevention')) {
+      notes += `Ooze Prevention: Enabled\n`;
+    }
+
+    // if (
+    //   params.has('wireframe_enabled') &&
+    //   this.stringToBoolean(params.get('wireframe_enabled'))
+    // ) {
+    //   notes += `Wireframe Mode: Enabled\n`;
+    // }
+
+    // if (
+    //   params.has('magic_fuzzy_skin_enabled') &&
+    //   this.stringToBoolean(params.get('magic_fuzzy_skin_enabled'))
+    // ) {
+    //   notes += `Fuzzy Skin Mode: Enabled\n`;
+    // }
+
+    // if (
+    //   params.has('draft_shield_enabled') &&
+    //   this.stringToBoolean(params.get('draft_shield_enabled'))
+    // ) {
+    //   notes += `Draft Shield: Enabled\n`;
+    // }
+    if (this.parseSettingAsBoolean(gcode, '; draft_shield')) {
+      notes += `Draft Shield: Enabled\n`;
+    }
+
+    // if (
+    //   params.has('ironing_enabled') &&
+    //   this.stringToBoolean(params.get('ironing_enabled'))
+    // ) {
+    //   notes += `Ironing: Enabled\n`;
+    // }
+
+    notes = notes.trim();
+
+    if (notes !== '') {
+      notes = 'Print Settings:\n' + notes;
+    }
+
+    return notes;
+  }
+
+  private parseSettingAsString(gcode: string, settingName: string): string {
+    let result = '';
+
+    const regEx = new RegExp(settingName + ' = (.+)$', 'im');
+
+    const setting = gcode.match(regEx);
+
+    if (setting?.[1]) {
+      result = setting[1].toString().trim();
+    }
+
+    return result;
+  }
+
+  private parseSettingAsNumber(
+    gcode: string,
+    settingName: string
+  ): number | undefined {
+    let result: number | undefined;
+
+    const regEx = new RegExp(settingName + ' = (.+)$', 'im');
+
+    const setting = gcode.match(regEx);
+
+    if (setting?.[1]) {
+      result = +setting[1];
+    }
+
+    return result;
+  }
+
+  private parseSettingAsBoolean(gcode: string, settingName: string) {
+    const setting = this.parseSettingAsNumber(gcode, settingName);
+
+    return setting === 1;
   }
 
   private parseEstimatedPrintTime(gcode: string) {

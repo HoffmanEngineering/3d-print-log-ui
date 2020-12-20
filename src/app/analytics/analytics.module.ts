@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { AdsenseModule } from 'ng2-adsense';
 
 import { SharedModule } from '../shared/shared.module';
 import { AnalyticsRoutingModule } from './analytics-routing.module';
@@ -17,6 +18,6 @@ import { TotalPrintTimeComponent } from './total-print-time/total-print-time.com
     TotalPrintTimeComponent,
     TotalFilamentUsedComponent,
   ],
-  imports: [SharedModule, AnalyticsRoutingModule],
+  imports: [SharedModule, AnalyticsRoutingModule, AdsenseModule],
 })
 export class AnalyticsModule {}

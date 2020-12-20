@@ -6,18 +6,57 @@
     fxLayoutAlign="start center"
     fxLayoutGap="5px"
   >
-    <button
-      fxFlex="150px"
-      fxFlex.xs="120px"
-      style="height: 36px"
-      mat-raised-button
-      routerLink="new/edit"
-      type="button"
-      color="accent"
-      id="add-new-print"
-    >
-      Add New Print
-    </button>
+    <div fxFlex="150px" fxFlex.xs="120px" fxLayout="row">
+      <button
+        fxFlex="grow"
+        style="height: 36px"
+        class="no-right-radius"
+        mat-raised-button
+        routerLink="new/edit"
+        type="button"
+        color="accent"
+        id="add-new-print"
+        [ngStyle.xs]="{
+          height: 'auto',
+          'white-space': 'normal',
+          'line-height': '26px'
+        }"
+      >
+        Add New Print
+      </button>
+      <button
+        fxFlex="28px"
+        style="height: 36px; padding-left: 0; padding-right: 0"
+        [ngStyle.xs]="{
+          height: 'auto',
+          'white-space': 'normal',
+          'line-height': '26px'
+        }"
+        class="no-left-radius"
+        mat-raised-button
+        [matMenuTriggerFor]="printAddOptions"
+        type="button"
+        color="accent"
+        id="menu"
+      >
+        <mat-icon>expand_more</mat-icon>
+      </button>
+      <mat-menu #printAddOptions="matMenu">
+        <button mat-menu-item (click)="gcodeInput.click()">
+          Add Print From Gcode
+        </button>
+      </mat-menu>
+      <input
+        #gcodeInput
+        style="display: none"
+        type="file"
+        accept=".gcode,.g,.txt,.gco,.gx"
+        class="custom-file-input form-control"
+        id="files"
+        (change)="parseGcode($event)"
+      />
+    </div>
+
     <div fxLayoutGap="10px">
       <mat-form-field>
         <mat-label> Search: </mat-label

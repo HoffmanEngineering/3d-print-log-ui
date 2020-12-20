@@ -10,6 +10,7 @@ import {
   UserService,
   UserSummaryDto,
 } from 'src/app/core/services/user.service';
+import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
 import {
   PrintDetail,
   PrintDetailDTO,
@@ -29,7 +30,8 @@ export class PrintDetailResolverService
   constructor(
     private printService: PrintService,
     private userService: UserService,
-    private curaParserService: CuraParserService
+    private curaParserService: CuraParserService,
+    private readonly newPrintStoreService: NewPrintStoreService
   ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
@@ -60,6 +62,13 @@ export class PrintDetailResolverService
     }
 
     let defaultPrint: PrintDetail | null = null;
+
+    // Check if there is a new print in the store. If so, use that:
+    if (this.newPrintStoreService.hasNewPrint()) {
+      defaultPrint = this.newPrintStoreService.getNewPrint();
+      this.newPrintStoreService.clear();
+    }
+
     if (this.sentFromCura(route)) {
       defaultPrint = this.curaParserService.parse(route.queryParamMap);
     }

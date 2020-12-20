@@ -1,0 +1,37 @@
+<h1 mat-dialog-title>Slicer Not Yet Supported</h1>
+<div mat-dialog-content>
+  <p>
+    Unable to determine settings from gcode. Only
+    <strong>{{ this.data.supportedSlicers }}</strong> is supported at the
+    moment, new slicers will be added soon.
+  </p>
+
+  <h2>Request support for a new slicer:</h2>
+  <mat-form-field>
+    <mat-label> What slicer did you use?</mat-label>
+    <input
+      matInput
+      [(ngModel)]="slicerFeedback"
+      maxlength="200"
+      cdkFocusInitial
+    />
+    <mat-hint>
+      {{ 200 - slicerFeedback.length }} characters remaining.
+    </mat-hint>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions fxLayout fxLayoutAlign="space-around">
+  <button
+    type="button"
+    mat-raised-button
+    color="primary"
+    (click)="sendFeedback()"
+    [disabled]="slicerFeedback === ''"
+  >
+    Send suggestion for new slicer
+  </button>
+
+  <button type="button" mat-raised-button color="accent" mat-dialog-close>
+    Close
+  </button>
+</div>

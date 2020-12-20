@@ -35,6 +35,7 @@ import { NavbarComponent } from './navbar/navbar.component';
 import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
 import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component';
 import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
+import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog/parser-unavailable-dialog.component';
 import { DurationPipe } from './pipes/duration.pipe';
 import { HumanizePipe } from './pipes/humanize.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
@@ -59,6 +60,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     CommentComponent,
     HumanizePipe,
     SimpleDialogComponent,
+    ParserUnavailableDialogComponent,
   ],
   imports: [
     CommonModule,

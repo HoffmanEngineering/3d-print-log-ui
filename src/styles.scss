@@ -28,6 +28,17 @@ app-navbar {
   line-height: 28px;
 }
 
+/** Radius */
+.no-right-radius {
+  border-bottom-right-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.no-left-radius {
+  border-bottom-left-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+}
+
 .transparent {
   background: transparent;
   border: none !important;

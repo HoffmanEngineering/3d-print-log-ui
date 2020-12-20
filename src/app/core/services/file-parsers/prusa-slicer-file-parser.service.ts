@@ -112,34 +112,17 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
       '; spiral_vase'
     );
 
-    // if (params.has('layer_height')) {
-    //   const isAdaptiveLayerHeightEnabled =
-    //     params.has('adaptive_layer_height_enabled') &&
-    //     this.stringToBoolean(params.get('adaptive_layer_height_enabled'));
-
-    //   notes +=
-    //     `Layer Height: ${params.get('layer_height')}mm ${
-    //       isAdaptiveLayerHeightEnabled ? '(with Adaptive Layer Height)' : ''
-    //     }`.trim() + `\n`;
-    // }
-
     // Layer Height
     const layerHeight = this.parseSettingAsNumber(gcode, '; layer_height');
     if (layerHeight) {
       notes += `Layer Height: ${layerHeight}mm` + `\n`;
     }
-    // if (params.has('top_thickness') && !spiralVaseModeEnabled) {
-    //   notes += `Top Thickness: ${params.get('top_thickness')}mm\n`;
-    // }
 
     // Top Layers
     const topLayers = this.parseSettingAsNumber(gcode, '; top_solid_layers');
     if (topLayers) {
       notes += `Top Layer Count: ${topLayers}` + `\n`;
     }
-    // if (params.has('bottom_thickness')) {
-    //   notes += `Bottom Thickness: ${params.get('bottom_thickness')}mm\n`;
-    // }
 
     // Bottom Layers
     const bottomLayers = this.parseSettingAsNumber(
@@ -150,28 +133,11 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
       notes += `Bottom Layer Count: ${bottomLayers}` + `\n`;
     }
 
-    // if (params.has('wall_line_count')) {
-    //   notes += `Wall Line Count: ${params.get('wall_line_count')}\n`;
-    // }
-
     // Top Layers
     const perimeters = this.parseSettingAsNumber(gcode, '; perimeters');
     if (perimeters) {
       notes += `Perimeters: ${perimeters}` + `\n`;
     }
-
-    // if (params.has('infill_sparse_density') && !spiralVaseModeEnabled) {
-    //   const infillDensity = params.get('infill_sparse_density');
-    //   notes += `Infill: ${infillDensity}%\n`;
-
-    //   if (
-    //     params.has('infill_pattern') &&
-    //     !isNaN(Number(infillDensity)) &&
-    //     Number(infillDensity) > 0
-    //   ) {
-    //     notes += `Infill Pattern: ${params.get('infill_pattern')}\n`;
-    //   }
-    // }
 
     const infillDensity = this.parseSettingAsString(gcode, '; fill_density');
     if (infillDensity !== '') {
@@ -182,28 +148,6 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
         notes += `Infill Pattern: ${infillPattern}\n`;
       }
     }
-
-    // if (params.has('support_enabled')) {
-    //   const isSupportEnabled = this.stringToBoolean(
-    //     params.get('support_enabled')
-    //   );
-    //   if (isSupportEnabled) {
-    //     let supportType = '';
-    //     if (params.has('support_type')) {
-    //       switch (params.get('support_type')) {
-    //         case 'everywhere':
-    //           supportType = 'Everywhere';
-    //           break;
-    //         case 'buildplate':
-    //           supportType = 'Touching Buildplate';
-    //           break;
-    //       }
-    //     }
-    //     notes += `Support: Enabled ${supportType}`.trim() + `\n`;
-    //   } else {
-    //     notes += `Support: No Supports\n`;
-    //   }
-    // }
 
     const supportEnabled = this.parseSettingAsBoolean(
       gcode,
@@ -251,12 +195,6 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     //   notes += `Fuzzy Skin Mode: Enabled\n`;
     // }
 
-    // if (
-    //   params.has('draft_shield_enabled') &&
-    //   this.stringToBoolean(params.get('draft_shield_enabled'))
-    // ) {
-    //   notes += `Draft Shield: Enabled\n`;
-    // }
     if (this.parseSettingAsBoolean(gcode, '; draft_shield')) {
       notes += `Draft Shield: Enabled\n`;
     }

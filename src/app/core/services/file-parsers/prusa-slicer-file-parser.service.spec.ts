@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { PrusaSlicerFileParserService } from './prusa-slicer-file-parser.service';
 
-fdescribe('PrusaSlicerFileParserService', () => {
+describe('PrusaSlicerFileParserService', () => {
   let service: PrusaSlicerFileParserService;
 
   beforeEach(() => {

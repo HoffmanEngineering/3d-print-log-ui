@@ -6,7 +6,6 @@ import {
   FeedbackService,
   FeedbackType,
 } from 'src/app/core/services/feedback.service';
-import { DialogData } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 
 export interface ParserUnavailableDialogData {
   supportedSlicers: string;
@@ -18,7 +17,7 @@ export interface ParserUnavailableDialogData {
   styleUrls: ['./parser-unavailable-dialog.component.scss'],
 })
 export class ParserUnavailableDialogComponent {
-  public slicerFeedback: string = '';
+  public slicerFeedback = '';
 
   constructor(
     private readonly feedbackService: FeedbackService,

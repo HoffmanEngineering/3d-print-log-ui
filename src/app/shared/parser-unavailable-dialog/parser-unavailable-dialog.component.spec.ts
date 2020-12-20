@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { ToastrService } from 'ngx-toastr';
+import { FeedbackService } from 'src/app/core/services/feedback.service';
 
 import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog.component';
 
@@ -7,8 +10,23 @@ describe('ParserUnavailableDialogComponent', () => {
   let fixture: ComponentFixture<ParserUnavailableDialogComponent>;
 
   beforeEach(async () => {
+    const mockFeedbackService = jasmine.createSpyObj<FeedbackService>(
+      'FeedbackService',
+      ['addFeedback']
+    );
+    const mockToastrService = jasmine.createSpyObj<ToastrService>(
+      'ToastrService',
+      ['success']
+    );
+
     await TestBed.configureTestingModule({
       declarations: [ParserUnavailableDialogComponent],
+      providers: [
+        { provide: FeedbackService, useValue: mockFeedbackService },
+        { provide: ToastrService, useValue: mockToastrService },
+        { provide: MatDialogRef, useValue: {} },
+        { provide: MAT_DIALOG_DATA, useValue: { supportedSlicers: 'Cura' } },
+      ],
     }).compileComponents();
   });
 

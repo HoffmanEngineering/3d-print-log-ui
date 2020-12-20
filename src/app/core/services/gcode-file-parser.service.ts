@@ -38,8 +38,6 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
       slicer,
     });
 
-    console.log('Slicer Detected', slicer);
-
     switch (slicer) {
       case SupportedGcodeParserSlicers.PrusaSlicer:
         return this.prusaSlicerParser.parse(gcode);

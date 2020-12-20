@@ -15,8 +15,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
-import { LoggingService } from 'src/app/core/services/logging.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
@@ -154,7 +154,6 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.mobileQueryListener = () => {
       this.ngZone.run(() => {
-        console.log('Query Listener: ', this.mobileQuery.matches);
         if (this.mobileQuery.matches) {
           this.displayedColumns = [
             'image',
@@ -325,7 +324,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     const files = event.target.files;
     if (files) {
       for (const file of files) {
-        console.log(file.type);
+        this.loggingService.logTrace(`Parsing gcode of filetype: ${file.type}`);
         // if (!file.type.match(/[gcode|g|txt|gco|gx]/)) {
         //   // this.toastr.error(
         //   //   'Please select an image.',
@@ -336,11 +335,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
         const reader = new FileReader();
         reader.onload = (e: any) => {
-          console.log((e.target.result as string).substring(0, 100));
-
           const newPrint = this.gcodeParserService.parse(e.target.result);
 
-          console.log('print list new print', newPrint);
           if (newPrint) {
             this.newPrintStoreService.setNewPrint(newPrint);
             this.router

@@ -65,7 +65,6 @@ export class PrintDetailResolverService
 
     // Check if there is a new print in the store. If so, use that:
     if (this.newPrintStoreService.hasNewPrint()) {
-      console.log('getting print from store');
       defaultPrint = this.newPrintStoreService.getNewPrint();
       this.newPrintStoreService.clear();
     }

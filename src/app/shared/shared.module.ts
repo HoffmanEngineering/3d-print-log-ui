@@ -35,6 +35,7 @@ import { NavbarComponent } from './navbar/navbar.component';
 import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
 import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component';
 import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
+import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog/parser-unavailable-dialog.component';
 import { DurationPipe } from './pipes/duration.pipe';
 import { HumanizePipe } from './pipes/humanize.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
@@ -42,7 +43,6 @@ import { PrintSummaryCardComponent } from './print-summary-card/print-summary-ca
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
-import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog/parser-unavailable-dialog.component';
 
 @NgModule({
   declarations: [

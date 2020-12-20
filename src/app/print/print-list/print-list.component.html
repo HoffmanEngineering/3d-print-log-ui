@@ -10,27 +10,41 @@
       <button
         fxFlex="grow"
         style="height: 36px"
+        class="no-right-radius"
         mat-raised-button
         routerLink="new/edit"
         type="button"
         color="accent"
         id="add-new-print"
+        [ngStyle.xs]="{
+          height: 'auto',
+          'white-space': 'normal',
+          'line-height': '26px'
+        }"
       >
         Add New Print
       </button>
       <button
-        fxFlex="shrink"
-        style="height: 36px"
+        fxFlex="28px"
+        style="height: 36px; padding-left: 0; padding-right: 0"
+        [ngStyle.xs]="{
+          height: 'auto',
+          'white-space': 'normal',
+          'line-height': '26px'
+        }"
+        class="no-left-radius"
         mat-raised-button
         [matMenuTriggerFor]="printAddOptions"
         type="button"
         color="accent"
         id="menu"
       >
-        V
+        <mat-icon>expand_more</mat-icon>
       </button>
       <mat-menu #printAddOptions="matMenu">
-        <button mat-menu-item (click)="gcodeInput.click()">Vertebrates</button>
+        <button mat-menu-item (click)="gcodeInput.click()">
+          Add Print From Gcode
+        </button>
       </mat-menu>
       <input
         #gcodeInput
@@ -43,7 +57,7 @@
       />
     </div>
 
-    <div fxLayoutGap="10px">
+    <div fxFlex="grow" fxLayoutGap="10px">
       <mat-form-field>
         <mat-label> Search: </mat-label
         ><input

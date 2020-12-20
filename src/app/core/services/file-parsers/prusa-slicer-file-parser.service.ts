@@ -44,7 +44,7 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     // Check to see if the user setup their filament densities, thus we can directly return filament usage.
     const filamentUsedInGrams = this.parseSettingAsNumber(
       gcode,
-      '; total filament used [g]'
+      '; total filament used \\[g\\]'
     );
     if (filamentUsedInGrams > 0) {
       return filamentUsedInGrams * 1000;
@@ -59,16 +59,52 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     if (isNaN(filamentDiameter)) {
       return undefined;
     }
-    const filamentUsageLengthInMM = this.parseSettingAsString(
+    const filamentUsageLengthInMM = +this.parseSettingAsString(
       gcode,
-      '; filament used [mm]'
+      '; filament used \\[mm\\]'
     );
 
+    if (isNaN(filamentUsageLengthInMM)) {
+      return undefined;
+    }
+
     if (filamentType.includes('PLA')) {
+      return this.calculateWeightInMg(
+        MaterialDensities.materials.PLA,
+        filamentUsageLengthInMM,
+        filamentDiameter
+      );
     } else if (filamentType.includes('ABS')) {
+      return this.calculateWeightInMg(
+        MaterialDensities.materials.ABS,
+        filamentUsageLengthInMM,
+        filamentDiameter
+      );
     } else if (filamentType.includes('PETG')) {
+      return this.calculateWeightInMg(
+        MaterialDensities.materials.PETG,
+        filamentUsageLengthInMM,
+        filamentDiameter
+      );
     }
   }
+
+  private calculateWeightInMg(
+    materialDensityGramsPerCubicCm: number,
+    lengthInMm: number,
+    diameterInMm: number
+  ) {
+    const radiusInMm = diameterInMm / 2;
+    const filamentAreaInMm2 = Math.PI * radiusInMm * radiusInMm;
+
+    const volume = filamentAreaInMm2 * lengthInMm;
+
+    const densityInCubicMm = materialDensityGramsPerCubicCm / 1000;
+
+    const weightInGrams = volume * densityInCubicMm;
+    return Math.floor(weightInGrams * 1000);
+  }
+
   parseSettingsIntoNotes(gcode: string): string {
     let notes = '';
     const spiralVaseModeEnabled = this.parseSettingAsBoolean(
@@ -231,6 +267,18 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     // ) {
     //   notes += `Ironing: Enabled\n`;
     // }
+
+    const settingId = this.parseSettingAsString(gcode, '; print_settings_id');
+    if (settingId !== '') {
+      notes += `Print Setting Config: ${settingId}\n`;
+    }
+    const printerConfigId = this.parseSettingAsString(
+      gcode,
+      '; printer_settings_id'
+    );
+    if (printerConfigId !== '') {
+      notes += `Printer Config: ${printerConfigId}\n`;
+    }
 
     notes = notes.trim();
 

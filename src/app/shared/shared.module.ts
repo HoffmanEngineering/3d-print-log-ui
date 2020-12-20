@@ -42,6 +42,7 @@ import { PrintSummaryCardComponent } from './print-summary-card/print-summary-ca
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog/parser-unavailable-dialog.component';
 
 @NgModule({
   declarations: [
@@ -59,6 +60,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     CommentComponent,
     HumanizePipe,
     SimpleDialogComponent,
+    ParserUnavailableDialogComponent,
   ],
   imports: [
     CommonModule,

@@ -30,7 +30,7 @@ https://auth0.com/blog/end-to-end-testing-with-cypress-and-auth0/
 We have a nifty utility function to auto-generate the json file containing Cura's default printers. You point it at a local Cura repo, and it'll read through the printer definition files and generate the list of printers.
 
 You can run it by:
-`npm parse-cura`
+`npm run parse-cura`
 
 After, copy the json from `cura-machine-def-parser/out/printers.json` and replace the `const printers= {...}` in `src/printer/printer-detail/cura-exported-printers.ts` with the new defaults.
 

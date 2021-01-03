@@ -611,13 +611,16 @@ export class EditPrintDetailComponent
 
     const print: Omit<PrintDetail, 'comments'> = {
       id: this.printForm.controls.id.value,
-      estimatedFilamentUsageMg:
-        this.printForm.controls.estimatedFilamentUsageG.value * 1000,
+      estimatedFilamentUsageMg: Math.round(
+        this.printForm.controls.estimatedFilamentUsageG.value * 1000
+      ),
       estimatedPrintTimeInSeconds: this.parseAsSeconds(
         this.printForm.controls.estimatedPrintTimeInSeconds.value
       ),
       filamentType: this.printForm.controls.filamentType.value,
-      filamentUsageMg: this.printForm.controls.filamentUsageG.value * 1000,
+      filamentUsageMg: Math.round(
+        this.printForm.controls.filamentUsageG.value * 1000
+      ),
       notes: this.printForm.controls.notes.value,
       printTimeInSeconds: this.parseAsSeconds(
         this.printForm.controls.printTimeInSeconds.value

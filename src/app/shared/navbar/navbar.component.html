@@ -45,6 +45,15 @@
             >Printers</a
           >
 
+          <a
+            mat-button
+            class="link"
+            routerLink="/filament"
+            routerLinkActive="active"
+            *ngIf="auth.loggedIn"
+            >Filament</a
+          >
+
           <ng-container *ngIf="!this.mobileQuery.matches">
             <a
               mat-button

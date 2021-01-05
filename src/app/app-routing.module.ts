@@ -74,6 +74,11 @@ const routes: Routes = [
     component: HomeComponent,
     pathMatch: 'full',
   },
+  {
+    path: 'filament',
+    loadChildren: () =>
+      import('./filament/filament.module').then((m) => m.FilamentModule),
+  },
 
   {
     path: '**',

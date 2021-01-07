@@ -14,6 +14,7 @@ import {
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { AddCommentDto, Comment } from './comment.service';
+import { FilamentSummary } from './filament.service';
 
 export enum PrintSummarySortColumn {
   Title = 1,
@@ -44,6 +45,16 @@ export interface PrintImage {
   url?: string;
 }
 
+export interface PrintFilamentSummaryDto {
+  /**
+   * GUID
+   */
+  id: string;
+  filament: FilamentSummary;
+  amountMg?: number;
+  estimatedAmountMg?: number;
+}
+
 export interface PrintSummary {
   id: number;
   title: string;
@@ -71,6 +82,7 @@ export interface PrintDetailDTO {
   estimatedPrintTimeInSeconds?: number;
   estimatedFilamentUsageMg?: number;
   printTimeInSeconds?: number;
+  filamentUsage: PrintFilamentSummaryDto[];
   filamentUsageMg?: number;
   filamentType: string;
   notes: string;
@@ -93,6 +105,7 @@ export interface PutPrintDetailDTO {
   printTimeInSeconds?: number;
   filamentUsageMg?: number;
   filamentType: string;
+  filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
   url: string;
   status: PrintStatus;
@@ -113,6 +126,7 @@ export interface PrintDetail {
   printTimeInSeconds?: number;
   filamentUsageMg?: number;
   filamentType: string;
+  filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
   url: string;
   status: PrintStatus;
@@ -137,6 +151,7 @@ export interface AddPrintDTO {
   printTimeInSeconds?: number;
   filamentUsageMg?: number;
   filamentType: string;
+  filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
   url: string;
   status: PrintStatus;
@@ -144,6 +159,8 @@ export interface AddPrintDTO {
   viewStatus: PrintViewStatus;
   allowComments: boolean;
 }
+
+export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
 @Injectable({
   providedIn: 'root',
@@ -230,6 +247,7 @@ export class PrintService {
             url: newPrint.url,
             viewStatus: newPrint.viewStatus,
             images: newPrint.images || [],
+            filamentUsage: newPrint.filamentUsage || [],
             createdByUserId: newPrint.createdByUserId,
             comments,
             allowComments: newPrint.allowComments,
@@ -276,6 +294,7 @@ export class PrintService {
       url: newPrint.url,
       viewStatus: newPrint.viewStatus,
       allowComments: newPrint.allowComments,
+      filamentUsage: newPrint.filamentUsage,
     };
 
     return this.http.post<any>(url, printDto);
@@ -293,6 +312,7 @@ export class PrintService {
       estimatedPrintTimeInSeconds: print.estimatedPrintTimeInSeconds,
       filamentType: print.filamentType,
       filamentUsageMg: print.filamentUsageMg,
+      filamentUsage: print.filamentUsage,
       notes: print.notes,
       printTimeInSeconds: print.printTimeInSeconds,
       printerId: print.printerId,

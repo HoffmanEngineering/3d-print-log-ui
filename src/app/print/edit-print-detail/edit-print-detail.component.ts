@@ -23,6 +23,10 @@ import { Title } from '@angular/platform-browser';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
+import {
+  FilamentService,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
@@ -31,7 +35,9 @@ import {
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
 import {
+  EMPTY_GUID,
   PrintDetail,
+  PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
   PrintViewStatus,
@@ -82,6 +88,8 @@ export class EditPrintDetailComponent
   printerRedirectToast: ActiveToast<any>;
   printerRedirectSubscription: Subscription;
 
+  public filamentSummaries: FilamentSummary[];
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -93,8 +101,20 @@ export class EditPrintDetailComponent
     private readonly userSettingService: UserSettingService,
     private readonly printerRedirectPromptService: PrinterRedirectPromptService,
     private readonly loggingService: LoggingService,
-    private el: ElementRef
+    private el: ElementRef,
+    private readonly filamentService: FilamentService
   ) {}
+
+  // Help to get all photos controls as form array.
+  get images(): FormArray {
+    return this.printForm.get('images') as FormArray;
+  }
+
+  // Help to get all print filament usage controls as form array.
+  get filamentUsage(): FormArray {
+    return this.printForm.get('filamentUsage') as FormArray;
+  }
+
   ngOnDestroy(): void {
     if (this.printerIdValueChangesSub) {
       this.printerIdValueChangesSub.unsubscribe();
@@ -136,6 +156,12 @@ export class EditPrintDetailComponent
 
       this.onChanges();
     });
+
+    this.filamentService
+      .getCurrentUserFilamentSummaries()
+      .subscribe((filaments) => {
+        this.filamentSummaries = filaments.items;
+      });
 
     /**
      * Show the Add Printer prompt if needed.
@@ -294,6 +320,22 @@ export class EditPrintDetailComponent
       });
     }
 
+    // Handle PrintFilament Usage
+    const printFilamentUsageArray = this.formBuilder.array([]);
+
+    if (print && print.filamentUsage && print.filamentUsage.length >= 0) {
+      print.filamentUsage.forEach((pf) => {
+        const newFormGroup = this.formBuilder.group({
+          id: pf.id,
+          amountG: pf.amountMg / 1000,
+          estimatedAmountG: pf.estimatedAmountMg / 1000,
+          filament: pf.filament,
+        });
+
+        printFilamentUsageArray.push(newFormGroup);
+      });
+    }
+
     return this.formBuilder.group({
       id: [print ? print.id : null],
       title: [print ? print.title : '', Validators.required],
@@ -328,6 +370,7 @@ export class EditPrintDetailComponent
         [Validators.min(0)],
       ],
       filamentType: [print ? print.filamentType : ''],
+      filamentUsage: printFilamentUsageArray,
       notes: [print ? print.notes : ''],
       url: [print ? print.url : ''],
       status: [print ? print.status : PrintStatus.Pending],
@@ -354,11 +397,6 @@ export class EditPrintDetailComponent
     const newItem = this.formBuilder.control(data);
 
     return newItem;
-  }
-
-  // Help to get all photos controls as form array.
-  get images(): FormArray {
-    return this.printForm.get('images') as FormArray;
   }
 
   detectFiles(event) {
@@ -609,6 +647,22 @@ export class EditPrintDetailComponent
         };
       });
 
+    const filamentUsage = this.filamentUsage.controls.map((printFilament) => {
+      console.log(JSON.stringify(printFilament.value));
+      const newPf: PrintFilamentSummaryDto = {
+        id: printFilament.get('id').value ?? EMPTY_GUID,
+        estimatedAmountMg: Math.round(
+          +printFilament.get('estimatedAmountG').value * 1000
+        ),
+        filament: printFilament.get('filament').value,
+        amountMg: Math.round(+printFilament.get('amountG').value * 1000),
+      };
+
+      return newPf;
+    });
+
+    console.log(filamentUsage);
+
     const print: Omit<PrintDetail, 'comments'> = {
       id: this.printForm.controls.id.value,
       estimatedFilamentUsageMg: Math.round(
@@ -621,6 +675,7 @@ export class EditPrintDetailComponent
       filamentUsageMg: Math.round(
         this.printForm.controls.filamentUsageG.value * 1000
       ),
+      filamentUsage,
       notes: this.printForm.controls.notes.value,
       printTimeInSeconds: this.parseAsSeconds(
         this.printForm.controls.printTimeInSeconds.value
@@ -692,5 +747,12 @@ export class EditPrintDetailComponent
     } else {
       return `${(printer.make + ' ' + printer.model).trim()}`;
     }
+  }
+
+  public compareByFilamentId(
+    itemOne: FilamentSummary,
+    itemTwo: FilamentSummary
+  ) {
+    return itemOne && itemTwo && itemOne.id === itemTwo.id;
   }
 }

@@ -171,6 +171,85 @@
             formControlName="estimatedPrintTimeInSeconds"
           />
         </mat-form-field>
+
+        <!-- Filament Usage -->
+        Current Filaments:
+        <div formArrayName="filamentUsage">
+          <div
+            *ngFor="
+              let printFilament of filamentUsage.controls;
+              let printFilamentIndex = index
+            "
+          >
+            <div [formGroupName]="printFilamentIndex">
+              <mat-card fxFlex="grow" fxFlexFill fxLayout="row">
+                <div fxFlex="grow" fxLayout="column">
+                  <div fxFlex>
+                    <div
+                      class="filament-color-cell"
+                      [ngStyle]="{
+                        'background-color':
+                          '#' + printFilament.get('filament').value.colorHex
+                      }"
+                    ></div>
+                  </div>
+                  <div fxFlex>
+                    {{ printFilament.get('filament').value.displayName }}
+                  </div>
+                  <div fxFlex>
+                    {{
+                      printFilament.get('filament').value?.filamentRemaining /
+                        1000 | number
+                    }}
+                    (g) remaining
+                  </div>
+                </div>
+                <div fxFlex="grow" fxLayout="column">
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Filament</mat-label>
+                    <mat-select
+                      id="edit-print-estimated-print-time"
+                      formControlName="filament"
+                      [compareWith]="compareByFilamentId"
+                    >
+                      <mat-option
+                        *ngFor="let filament of filamentSummaries"
+                        [value]="filament"
+                      >
+                        {{ filament.displayName }} -
+                        {{ filament.colorName }} ({{
+                          filament?.filamentRemaining / 1000 | number
+                        }}
+                        g)
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Estimated Filament Used (g)</mat-label>
+                    <input
+                      id="edit-print-estimated-print-time"
+                      matInput
+                      type="text"
+                      pattern="^\d*(\.\d{0,3})?$"
+                      formControlName="estimatedAmountG"
+                    />
+                  </mat-form-field>
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Actual Filament Used (g)</mat-label>
+                    <input
+                      id="edit-print-estimated-print-time"
+                      matInput
+                      type="text"
+                      pattern="^\d*(\.\d{0,3})?$"
+                      formControlName="amountG"
+                    />
+                  </mat-form-field>
+                </div>
+              </mat-card>
+            </div>
+          </div>
+        </div>
+
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Estimated Filament Usage (grams)</mat-label>
           <input
@@ -373,4 +452,9 @@
     </form>
     <ng-adsense></ng-adsense>
   </mat-card>
+
+  <pre *ngIf="filamentUsage">
+  {{ filamentUsage.value | json }}
+</pre
+  >
 </div>

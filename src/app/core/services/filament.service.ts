@@ -66,4 +66,14 @@ export class FilamentService {
     const url = `${this.baseApi}/api/Filaments/${id}`;
     return this.http.get<FilamentDetail>(url);
   }
+
+  addFilament(filament: FilamentDetail): Observable<FilamentDetail> {
+    const url = `${this.baseApi}/api/Filaments/`;
+    return this.http.post<FilamentDetail>(url, filament);
+  }
+
+  updateFilament(filament: FilamentDetail): Observable<FilamentDetail> {
+    const url = `${this.baseApi}/api/Filaments/${filament.id}`;
+    return this.http.put<FilamentDetail>(url, filament);
+  }
 }

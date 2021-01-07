@@ -307,6 +307,7 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
       allowComments: null,
       createdByUserId: null,
       comments: [],
+      filamentUsage: [],
     };
 
     return print;

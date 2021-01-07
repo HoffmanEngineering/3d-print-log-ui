@@ -62,7 +62,7 @@ export class FilamentService {
     return this.http.get<PagedList<FilamentSummary>>(url, { params });
   }
 
-  getPrinterDetail(id: number): Observable<FilamentDetail> {
+  getFilamentDetail(id: string): Observable<FilamentDetail> {
     const url = `${this.baseApi}/api/Filaments/${id}`;
     return this.http.get<FilamentDetail>(url);
   }

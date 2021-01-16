@@ -7,6 +7,7 @@ import { FilamentListComponent } from './filament-list/filament-list.component';
 import { FilamentComponent } from './filament.component';
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
+import { MaterialResolverService } from './resolvers/material-resolver.service';
 
 const routes: Routes = [
   {
@@ -15,13 +16,16 @@ const routes: Routes = [
       {
         path: '',
         component: FilamentListComponent,
-        resolve: { filamentList: FilamentListResolverService },
+        resolve: {
+          filamentList: FilamentListResolverService,
+        },
       },
       {
         path: ':id',
         component: FilamentDetailComponent,
         resolve: {
           filament: FilamentDetailResolverService,
+          materials: MaterialResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },

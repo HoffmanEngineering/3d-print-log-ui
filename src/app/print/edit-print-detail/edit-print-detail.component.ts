@@ -58,6 +58,11 @@ export interface PrintImageValue {
 })
 export class EditPrintDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy {
+  public OTHER_FILAMENT_OPTION: Partial<FilamentSummary> = {
+    id: 'OTHER',
+    displayName: 'Other',
+  } as const;
+
   public printers: PrinterSummary[] = [];
 
   public printForm: FormGroup;
@@ -325,15 +330,33 @@ export class EditPrintDetailComponent
 
     if (print && print.filamentUsage && print.filamentUsage.length >= 0) {
       print.filamentUsage.forEach((pf) => {
-        const newFormGroup = this.formBuilder.group({
-          id: pf.id,
-          amountG: pf.amountMg / 1000,
-          estimatedAmountG: pf.estimatedAmountMg / 1000,
-          filament: pf.filament,
-        });
+        const newFormGroup = this.GetNewFilamentUsageForm(
+          pf.id,
+          pf.amountMg / 1000,
+          pf.estimatedAmountMg / 1000,
+          pf.filament,
+          pf.notes
+        );
 
         printFilamentUsageArray.push(newFormGroup);
       });
+    }
+
+    if (
+      print &&
+      (!(print.filamentType === null || print.filamentType === '') ||
+        print.filamentUsageMg > 0 ||
+        print.estimatedFilamentUsageMg > 0)
+    ) {
+      const newFormGroup = this.GetNewFilamentUsageForm(
+        EMPTY_GUID,
+        print.filamentUsageMg / 1000,
+        print.estimatedFilamentUsageMg / 1000,
+        this.OTHER_FILAMENT_OPTION as FilamentSummary,
+        print.filamentType
+      );
+
+      printFilamentUsageArray.push(newFormGroup);
     }
 
     return this.formBuilder.group({
@@ -389,6 +412,28 @@ export class EditPrintDetailComponent
           ? !!this.lastAllowCommentsSetting.value
           : true,
       ],
+    });
+  }
+
+  private GetNewFilamentUsageForm(
+    id: string,
+    amountG: number,
+    estimatedAmountG: number,
+    filament: FilamentSummary | null,
+    notes: string | null
+  ) {
+    // return this.formBuilder.group({
+    //   id: pf.id,
+    //   amountG: pf.amountMg / 1000,
+    //   estimatedAmountG: pf.estimatedAmountMg / 1000,
+    //   filament: pf.filament,
+    // });
+    return this.formBuilder.group({
+      id,
+      amountG,
+      estimatedAmountG,
+      filament,
+      notes,
     });
   }
 
@@ -647,34 +692,48 @@ export class EditPrintDetailComponent
         };
       });
 
-    const filamentUsage = this.filamentUsage.controls.map((printFilament) => {
-      console.log(JSON.stringify(printFilament.value));
-      const newPf: PrintFilamentSummaryDto = {
-        id: printFilament.get('id').value ?? EMPTY_GUID,
-        estimatedAmountMg: Math.round(
-          +printFilament.get('estimatedAmountG').value * 1000
-        ),
-        filament: printFilament.get('filament').value,
-        amountMg: Math.round(+printFilament.get('amountG').value * 1000),
-      };
+    const filamentUsage = this.filamentUsage.controls
+      .filter(
+        (fu) =>
+          fu.get('filament').value !== null &&
+          fu.get('filament').value !== this.OTHER_FILAMENT_OPTION
+      )
+      .map((printFilament) => {
+        console.log(JSON.stringify(printFilament.value));
+        const newPf: PrintFilamentSummaryDto = {
+          id: printFilament.get('id').value ?? EMPTY_GUID,
+          estimatedAmountMg: Math.round(
+            +printFilament.get('estimatedAmountG').value * 1000
+          ),
+          filament: printFilament.get('filament').value,
+          amountMg: Math.round(+printFilament.get('amountG').value * 1000),
+          notes: printFilament.get('notes').value,
+        };
 
-      return newPf;
-    });
+        return newPf;
+      });
 
-    console.log(filamentUsage);
+    /** Check if the Other Filament Option is in use. If so, then save it into the dedicated fields. */
+    const filamentUsageWithOtherOption = this.filamentUsage.controls.find(
+      (f) => f.get('filament').value === this.OTHER_FILAMENT_OPTION
+    );
 
     const print: Omit<PrintDetail, 'comments'> = {
       id: this.printForm.controls.id.value,
-      estimatedFilamentUsageMg: Math.round(
-        this.printForm.controls.estimatedFilamentUsageG.value * 1000
-      ),
+      estimatedFilamentUsageMg: filamentUsageWithOtherOption
+        ? Math.round(
+            filamentUsageWithOtherOption.get('estimatedAmountG').value * 1000
+          )
+        : null,
       estimatedPrintTimeInSeconds: this.parseAsSeconds(
         this.printForm.controls.estimatedPrintTimeInSeconds.value
       ),
-      filamentType: this.printForm.controls.filamentType.value,
-      filamentUsageMg: Math.round(
-        this.printForm.controls.filamentUsageG.value * 1000
-      ),
+      filamentType: filamentUsageWithOtherOption
+        ? filamentUsageWithOtherOption.get('notes').value
+        : null,
+      filamentUsageMg: filamentUsageWithOtherOption
+        ? Math.round(filamentUsageWithOtherOption.get('amountG').value * 1000)
+        : null,
       filamentUsage,
       notes: this.printForm.controls.notes.value,
       printTimeInSeconds: this.parseAsSeconds(
@@ -747,6 +806,28 @@ export class EditPrintDetailComponent
     } else {
       return `${(printer.make + ' ' + printer.model).trim()}`;
     }
+  }
+
+  addNewFilamentUsage() {
+    const newFormGroup = this.GetNewFilamentUsageForm(
+      EMPTY_GUID,
+      0,
+      0,
+      null,
+      ''
+    );
+
+    this.filamentUsage.push(newFormGroup);
+  }
+
+  public isOtherFilamentOptionUsed(): boolean {
+    return this.filamentUsage.controls.some((control) => {
+      return control.value.filament === this.OTHER_FILAMENT_OPTION;
+    });
+  }
+
+  public removeFilament(index: number) {
+    this.filamentUsage.removeAt(index);
   }
 
   public compareByFilamentId(

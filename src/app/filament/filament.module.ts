@@ -9,6 +9,7 @@ import { FilamentRoutingModule } from './filament-routing.module';
 import { FilamentComponent } from './filament.component';
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
+import { MaterialResolverService } from './resolvers/material-resolver.service';
 
 @NgModule({
   declarations: [
@@ -17,6 +18,10 @@ import { FilamentListResolverService } from './resolvers/filament-list-resolver.
     FilamentDetailComponent,
   ],
   imports: [SharedModule, FilamentRoutingModule, AdsenseModule],
-  providers: [FilamentListResolverService, FilamentDetailResolverService],
+  providers: [
+    FilamentListResolverService,
+    FilamentDetailResolverService,
+    MaterialResolverService,
+  ],
 })
 export class FilamentModule {}

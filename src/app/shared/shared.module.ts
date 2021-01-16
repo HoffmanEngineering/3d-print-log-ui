@@ -38,6 +38,7 @@ import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
 import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog/parser-unavailable-dialog.component';
 import { DurationPipe } from './pipes/duration.pipe';
 import { HumanizePipe } from './pipes/humanize.pipe';
+import { MaterialNamePipe } from './pipes/material-name.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
@@ -61,6 +62,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     HumanizePipe,
     SimpleDialogComponent,
     ParserUnavailableDialogComponent,
+    MaterialNamePipe,
   ],
   imports: [
     CommonModule,
@@ -135,6 +137,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     DonutChartComponent,
     CommentComponent,
     HumanizePipe,
+    MaterialNamePipe,
   ],
 })
 export class SharedModule {}

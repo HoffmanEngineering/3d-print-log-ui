@@ -53,6 +53,8 @@ export interface PrintFilamentSummaryDto {
   filament: FilamentSummary;
   amountMg?: number;
   estimatedAmountMg?: number;
+
+  notes?: string;
 }
 
 export interface PrintSummary {

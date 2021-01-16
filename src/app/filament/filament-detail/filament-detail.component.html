@@ -18,6 +18,9 @@
         fxLayout="column wrap"
         fxLayoutAlign="space-evenly center"
       >
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">General</h2>
+        </div>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Name</mat-label>
           <input
@@ -33,6 +36,10 @@
           >
             A Name is <strong>required</strong>
           </mat-error>
+          <mat-hint *ngIf="this.filamentForm.get('displayName').dirty">
+            {{ 255 - this.filamentForm.get('displayName').value.length }}
+            characters remaining.</mat-hint
+          >
         </mat-form-field>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
@@ -44,12 +51,27 @@
             formControlName="materialType"
             required
             maxlength="255"
+            [matAutocomplete]="materialAuto"
           />
-          <!-- <mat-error
-                  *ngIf="filamentForm.controls['brand'].hasError('required')"
-                >
-                  A Name is <strong>required</strong>
-                </mat-error> -->
+
+          <mat-error
+            *ngIf="filamentForm.controls['materialType'].hasError('required')"
+          >
+            A Material Type is <strong>required</strong>
+          </mat-error>
+
+          <mat-hint *ngIf="this.filamentForm.get('materialType').dirty">
+            {{ 255 - this.filamentForm.get('materialType').value.length }}
+            characters remaining.</mat-hint
+          >
+          <mat-autocomplete #materialAuto="matAutocomplete">
+            <mat-option
+              *ngFor="let material of filteredMaterials | async"
+              [value]="materialNamePipe.transform(material)"
+            >
+              {{ material | materialName }}
+            </mat-option>
+          </mat-autocomplete>
         </mat-form-field>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
@@ -69,7 +91,7 @@
         </mat-form-field>
 
         <div fxFlex="grow" fxFlexFill>
-          <mat-form-field>
+          <mat-form-field style="margin-left: 0px">
             <mat-label>Color</mat-label>
             <input
               id="edit-filament-name"
@@ -103,6 +125,10 @@
             >
               A Name is <strong>required</strong>
             </mat-error> -->
+          <mat-hint *ngIf="this.filamentForm.get('brand').dirty">
+            {{ 255 - this.filamentForm.get('brand').value.length }} characters
+            remaining.</mat-hint
+          >
         </mat-form-field>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
@@ -119,6 +145,30 @@
                   A Name is <strong>required</strong>
                 </mat-error> -->
         </mat-form-field>
+
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Notes</mat-label>
+          <textarea
+            id="edit-filament-description"
+            matInput
+            type="textarea"
+            formControlName="notes"
+            maxlength="1000"
+            rows="3"
+          ></textarea>
+          <mat-hint *ngIf="this.filamentForm.get('notes').dirty">
+            {{ 1000 - this.filamentForm.get('notes').value.length }} characters
+            remaining.</mat-hint
+          >
+        </mat-form-field>
+
+        <mat-checkbox fxFlex="grow" formControlName="isActive"
+          >Is Active</mat-checkbox
+        >
+
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">Weights</h2>
+        </div>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Initial Total Weight (g)</mat-label>
@@ -164,6 +214,9 @@
                 </mat-error> -->
         </mat-form-field>
 
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">Temperatures</h2>
+        </div>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Temperature Range Start (C)</mat-label>
           <input
@@ -209,14 +262,24 @@
                 </mat-error> -->
         </mat-form-field>
 
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">Purchase Details</h2>
+        </div>
+
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Purchase Date</mat-label>
           <input
-            id="edit-filament-name"
             matInput
-            type="date"
-            formControlName="recommendedTemp"
+            id="edit-print-start-date"
+            [matDatepicker]="picker"
+            placeholder="Date Purchased"
+            formControlName="purchaseDate"
           />
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="picker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
           <!-- <mat-error
                   *ngIf="filamentForm.controls['brand'].hasError('required')"
                 >
@@ -271,27 +334,6 @@
                   A Name is <strong>required</strong>
                 </mat-error> -->
         </mat-form-field>
-
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Notes</mat-label>
-          <textarea
-            id="edit-filament-description"
-            matInput
-            type="textarea"
-            formControlName="notes"
-            maxlength="1000"
-            rows="3"
-          ></textarea>
-          <!-- <mat-error
-                  *ngIf="filamentForm.controls['brand'].hasError('required')"
-                >
-                  A Name is <strong>required</strong>
-                </mat-error> -->
-        </mat-form-field>
-
-        <mat-checkbox fxFlex="grow" formControlName="isActive"
-          >Is Active</mat-checkbox
-        >
 
         <!-- <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Make</mat-label>
@@ -396,7 +438,7 @@
         <button
           mat-raised-button
           type="submit"
-          [disabled]="!filamentForm.valid || saving"
+          [disabled]="saving"
           color="primary"
           [class.spinner]="saving"
           id="edit-filament-submit-btn"

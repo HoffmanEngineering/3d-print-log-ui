@@ -1,12 +1,15 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { uniq } from 'lodash-es';
+import * as moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
+import { Material } from 'src/app/core/services/material.service';
+import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import {
   FilamentDetail,
   FilamentService,
@@ -21,13 +24,19 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   public filamentForm: FormGroup;
   public saving = false;
 
+  public materials: Material[] = [];
+  public filteredMaterials: Observable<Material[]> = null;
+
+  public materialNamePipe: MaterialNamePipe = new MaterialNamePipe();
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private formBuilder: FormBuilder,
     private filamentService: FilamentService,
     private toastr: ToastrService,
-    private titleService: Title
+    private titleService: Title,
+    private el: ElementRef
   ) {}
 
   @HostListener('window:beforeunload')
@@ -40,7 +49,46 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
 
     this.activatedRoute.data.subscribe((data) => {
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
+
+      this.materials = data.materials ?? [];
+
+      this.filteredMaterials = this.filamentForm
+        .get('materialType')
+        .valueChanges.pipe(
+          startWith(''),
+          tap((value) => {
+            if (
+              value === '' ||
+              +this.filamentForm.get('materialDensityGramPerCubicCm').value > 0
+            ) {
+              return;
+            }
+
+            const selectedMaterial = this.materials.find((m) => {
+              return this.materialNamePipe.transform(m) === value;
+            });
+            if (selectedMaterial) {
+              // This means a user selected a default materials
+              this.filamentForm
+                .get('materialDensityGramPerCubicCm')
+                .setValue(selectedMaterial.densityGramPerCubicCm);
+            }
+          }),
+          map((value) => this._filter(value))
+        );
     });
+  }
+
+  private _filter(value: string): Material[] {
+    const filterValue = value.toLowerCase();
+
+    return this.materials
+      .filter(
+        (option) =>
+          option.acronym?.toLowerCase().includes(filterValue) ||
+          option.name?.toLowerCase().includes(filterValue)
+      )
+      .sort();
   }
 
   buildFormFromFilamentDetail(filament: FilamentDetail): FormGroup {
@@ -68,7 +116,9 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       tempRangeStart: [filament?.tempRangeStart],
       tempRangeEnd: [filament?.tempRangeEnd],
       recommendedTemp: [filament?.recommendedTemp],
-      purchaseDate: [filament?.purchaseDate],
+      purchaseDate: [
+        filament?.purchaseDate ? new Date(filament.purchaseDate) : null,
+      ],
       purchaseLocation: [filament?.purchaseLocation],
       purchasePriceValue: [filament?.purchasePriceValue],
       purchasePriceCurrency: [filament?.purchasePriceCurrency],
@@ -90,6 +140,24 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
 
   onSubmit() {
     this.saving = true;
+
+    // Validate
+    this.filamentForm.markAllAsTouched();
+    if (!this.filamentForm.valid) {
+      this.saving = false;
+
+      // Loop through all controls, focusing the first invalid control.
+      for (const key of Object.keys(this.filamentForm.controls)) {
+        if (this.filamentForm.controls[key].invalid) {
+          const invalidControl = this.el.nativeElement.querySelector(
+            '[formcontrolname="' + key + '"]'
+          );
+          invalidControl.focus();
+          break;
+        }
+      }
+      return;
+    }
 
     const newFilament: FilamentDetail = this.getFilamentFromForm();
 

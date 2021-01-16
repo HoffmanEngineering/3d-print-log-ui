@@ -6,3 +6,7 @@ mat-form-field {
 mat-card-title {
   text-align: center;
 }
+
+.mat-form-field:not(.mat-focused) .mat-hint {
+  display: none;
+}

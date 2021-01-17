@@ -223,8 +223,10 @@
         <div fxFlex="grow" fxFlexFill>
           <h3 style="margin-block-end: 5px">
             Adjustments:
-            <a routerLink="/docs/prints#delete"
-              ><mat-icon inline matTooltip="Open Adjustment Help Documentation"
+            <a routerLink="/docs/filaments"
+              ><mat-icon
+                inline
+                matTooltip="Open Filament Adjustment Help Documentation"
                 >info</mat-icon
               ></a
             >
@@ -400,117 +402,6 @@
                   A Name is <strong>required</strong>
                 </mat-error> -->
         </mat-form-field>
-
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Purchase Currency</mat-label>
-          <input
-            id="edit-filament-name"
-            matInput
-            type="text"
-            formControlName="purchasePriceCurrency"
-            maxlength="256"
-          />
-          <!-- <mat-error
-                  *ngIf="filamentForm.controls['brand'].hasError('required')"
-                >
-                  A Name is <strong>required</strong>
-                </mat-error> -->
-        </mat-form-field>
-
-        <!-- <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Make</mat-label>
-          <input
-            id="edit-filament-make"
-            matInput
-            type="text"
-            formControlName="make"
-            [matAutocomplete]="autoMake"
-            required
-            maxlength="50"
-          />
-          <mat-error *ngIf="filamentForm.controls['make'].hasError('required')">
-            A Make is <strong>required</strong>
-          </mat-error>
-        </mat-form-field>
-
-        <mat-autocomplete #autoMake="matAutocomplete">
-          <mat-option
-            *ngFor="let option of filteredMakes | async"
-            [value]="option"
-            >{{ option }}</mat-option
-          >
-        </mat-autocomplete>
-
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Model</mat-label>
-          <input
-            id="edit-filament-model"
-            matInput
-            type="text"
-            formControlName="model"
-            [matAutocomplete]="autoModel"
-            required
-            maxlength="50"
-          />
-          <mat-error
-            *ngIf="filamentForm.controls['model'].hasError('required')"
-          >
-            A Model is <strong>required</strong>
-          </mat-error>
-        </mat-form-field> -->
-
-        <!-- <mat-autocomplete #autoModel="matAutocomplete">
-          <mat-option
-            *ngFor="let option of filteredModels | async"
-            [value]="option"
-            >{{ option }}</mat-option
-          >
-        </mat-autocomplete> -->
-
-        <!-- <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Filament Diameter (mm)</mat-label>
-          <input
-            id="edit-filament-filament-diameter"
-            matInput
-            type="number"
-            min="0"
-            formControlName="filamentDiameter"
-            required
-          />
-          <mat-error
-            *ngIf="filamentForm.controls['filamentDiameter'].hasError('min')"
-          >
-            Filament Diameter cannot be negative
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Nozzle Diameter (mm)</mat-label>
-          <input
-            matInput
-            id="edit-filament-nozzle-diameter"
-            type="number"
-            min="0"
-            formControlName="nozzleDiameter"
-            required
-          />
-          <mat-error
-            *ngIf="filamentForm.controls['nozzleDiameter'].hasError('min')"
-          >
-            Nozzle Diameter cannot be negative
-          </mat-error>
-        </mat-form-field>
-
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Description</mat-label>
-          <textarea
-            id="edit-filament-description"
-            matInput
-            type="textarea"
-            formControlName="description"
-            maxlength="1000"
-            rows="3"
-          ></textarea>
-        </mat-form-field> -->
       </mat-card-content>
       <mat-card-actions
         fxLayout

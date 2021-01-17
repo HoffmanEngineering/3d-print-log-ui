@@ -108,6 +108,10 @@
     ></tr>
   </table>
 
+  <div class="no-filament" *ngIf="totalCount === 0">
+    No filaments found. Add a new filament or try a different search.
+  </div>
+
   <mat-paginator
     [length]="totalCount"
     [pageSize]="pageSize"

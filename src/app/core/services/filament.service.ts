@@ -51,8 +51,8 @@ export interface FilamentAdjustment {
   id: string;
   filamentId: string;
   /**
-   * Adjustment weights are SUBTRACTED from total weight.
-   * Positive Numbers are removal of filament from the roll.
+   * Adjustment weights are added to total weight.
+   * Positive Numbers are additions of filament to the roll, Negative Numbers are removal of filament from the roll.
    */
   amountMg: number;
   notes: string;

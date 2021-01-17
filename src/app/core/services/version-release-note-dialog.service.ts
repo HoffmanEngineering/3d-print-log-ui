@@ -33,6 +33,17 @@ export class VersionReleaseNoteDialogService {
       <a href="/docs/prints">Prints Documentation</a> pages for more info. 
       Please send <a href="/docs/prints">Feedback</a> with questions, comments, and suggestions.
       <br />Happy Printing!
+    </p>
+    <p>
+      Support development of 3D Print Log by becoming a
+      <a
+        href="https://www.patreon.com/HoffmanEngineering"
+        rel="noreferrer noopener"
+        target="_blank"
+      >
+        Patron of Hoffman Engineering</a
+      >
+      on Patreon.com
     </p>`,
     },
   };

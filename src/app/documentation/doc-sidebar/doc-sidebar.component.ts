@@ -10,8 +10,9 @@ export class DocSidebarComponent implements OnInit {
   public navItems: INavData[] = [
     { name: 'Getting Started', url: '/docs/getting-started' },
     { divider: true },
-    { name: 'Printers', url: '/docs/printers' },
     { name: 'Prints', url: '/docs/prints' },
+    { name: 'Filaments', url: '/docs/filaments' },
+    { name: 'Printers', url: '/docs/printers' },
     { name: 'Analytics', url: '/docs/analytics' },
     { divider: true },
     { name: 'Cura Plugin', url: '/docs/cura-plugin' },

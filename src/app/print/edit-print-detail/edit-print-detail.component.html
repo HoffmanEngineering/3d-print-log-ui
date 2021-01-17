@@ -172,30 +172,6 @@
           />
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label> Estimated Filament Usage (grams)</mat-label>
-          <input
-            id="edit-print-estimated-filament-usage"
-            matInput
-            type="text"
-            pattern="^\d*(\.\d{0,3})?$"
-            formControlName="estimatedFilamentUsageG"
-          />
-          <mat-error
-            *ngIf="
-              printForm.controls['estimatedFilamentUsageG'].hasError('min')
-            "
-          >
-            Estimated Filament Usage must be a positive number.
-          </mat-error>
-          <mat-error
-            *ngIf="
-              printForm.controls['estimatedFilamentUsageG'].hasError('pattern')
-            "
-          >
-            Numbers (up to 3-decimal places) only.
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Actual Print Time</mat-label>
           <input
             id="edit-print-actual-print-time"
@@ -205,36 +181,188 @@
             placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
           />
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label> Actual Filament Usage (grams)</mat-label>
-          <input
-            id="edit-print-actual-filament-usage"
-            matInput
-            type="text"
-            pattern="^\d*(\.\d{0,3})?$"
-            formControlName="filamentUsageG"
-          />
-          <mat-error
-            *ngIf="printForm.controls['filamentUsageG'].hasError('min')"
+
+        <!-- Filament Usage -->
+
+        <div fxFlex="grow" fxFlexFill>
+          Filament Usage: <br />
+          <button
+            type="button"
+            mat-raised-button
+            (click)="addNewFilamentUsage()"
+            color="accent"
+            style="margin-bottom: 5px"
           >
-            Filament Usage must be a positive number.
-          </mat-error>
-          <mat-error
-            *ngIf="printForm.controls['filamentUsageG'].hasError('pattern')"
+            Add New Filament Record
+          </button>
+        </div>
+
+        <div formArrayName="filamentUsage">
+          <div
+            *ngFor="
+              let printFilament of filamentUsage.controls;
+              let printFilamentIndex = index
+            "
+            style="margin-bottom: 5px"
           >
-            Numbers (up to 3-decimal places) only.
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label> Filament Type</mat-label>
-          <input
-            id="edit-print-filament-type"
-            matInput
-            type="text"
-            formControlName="filamentType"
-            maxlength="100"
-          />
-        </mat-form-field>
+            <div [formGroupName]="printFilamentIndex">
+              <mat-card
+                class="mat-elevation-z4"
+                fxFlex="grow"
+                fxFlexFill
+                fxLayout="row"
+              >
+                <div fxFlex="grow" fxLayout="column">
+                  <div fxFlex>
+                    <div
+                      class="filament-color-cell"
+                      [ngStyle]="{
+                        'background-color': printFilament.get('filament').value
+                          ?.colorHex
+                          ? '#' + printFilament.get('filament').value?.colorHex
+                          : null
+                      }"
+                    ></div>
+                  </div>
+                  <div fxFlex>
+                    {{ printFilament.get('filament').value?.displayName }}
+                  </div>
+                  <div
+                    fxFlex="grow"
+                    *ngIf="
+                      printFilament.get('filament').value !==
+                      OTHER_FILAMENT_OPTION
+                    "
+                  >
+                    {{
+                      printFilament.get('filament').value?.filamentRemaining /
+                        1000 | number
+                    }}
+                    (g) remaining
+                  </div>
+                  <div fxFlex>
+                    <button
+                      type="button"
+                      mat-raised-button
+                      (click)="removeFilament(printFilamentIndex)"
+                      aria-label="Delete Filament"
+                    >
+                      <mat-icon>delete</mat-icon>Delete
+                    </button>
+                  </div>
+                </div>
+                <div fxFlex="grow" fxLayout="column">
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Filament</mat-label>
+                    <mat-select
+                      id="edit-print-estimated-print-time"
+                      formControlName="filament"
+                      [compareWith]="compareByFilamentId"
+                    >
+                      <mat-option
+                        *ngFor="let filament of filamentSummaries"
+                        [value]="filament"
+                      >
+                        <span
+                          style="
+                            display: inline-block;
+                            width: 15px;
+                            height: 15px;
+                            vertical-align: middle;
+                          "
+                          [ngStyle]="{
+                            'background-color': filament.colorHex
+                              ? '#' + filament.colorHex
+                              : null
+                          }"
+                        ></span>
+                        {{ filament.displayName }} -
+                        {{ filament.colorName }} ({{
+                          filament?.filamentRemaining / 1000 | number
+                        }}
+                        g)
+                      </mat-option>
+                      <mat-option
+                        *ngIf="
+                          printFilament.get('filament').value ===
+                            OTHER_FILAMENT_OPTION ||
+                          !isOtherFilamentOptionUsed()
+                        "
+                        [value]="OTHER_FILAMENT_OPTION"
+                      >
+                        OTHER
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Estimated Filament Used (g)</mat-label>
+                    <input
+                      id="edit-print-estimated-print-time"
+                      matInput
+                      type="text"
+                      pattern="^\d*(\.\d{0,3})?$"
+                      formControlName="estimatedAmountG"
+                    />
+                    <mat-error
+                      *ngIf="
+                        printFilament.get('estimatedAmountG').hasError('min')
+                      "
+                    >
+                      Estimated Filament Usage must be a positive number.
+                    </mat-error>
+                    <mat-error
+                      *ngIf="
+                        printFilament
+                          .get('estimatedAmountG')
+                          .hasError('pattern')
+                      "
+                    >
+                      Numbers (up to 3-decimal places) only.
+                    </mat-error>
+                  </mat-form-field>
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Actual Filament Used (g)</mat-label>
+                    <input
+                      id="edit-print-estimated-print-time"
+                      matInput
+                      type="text"
+                      pattern="^\d*(\.\d{0,3})?$"
+                      formControlName="amountG"
+                    />
+                    <mat-error
+                      *ngIf="printFilament.get('amountG').hasError('min')"
+                    >
+                      Filament Usage must be a positive number.
+                    </mat-error>
+                    <mat-error
+                      *ngIf="printFilament.get('amountG').hasError('pattern')"
+                    >
+                      Numbers (up to 3-decimal places) only.
+                    </mat-error>
+                  </mat-form-field>
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label>
+                      {{
+                        printFilament.get('filament').value ===
+                        OTHER_FILAMENT_OPTION
+                          ? 'Filament Type'
+                          : 'Notes'
+                      }}</mat-label
+                    >
+
+                    <input
+                      id="edit-print-estimated-print-time"
+                      matInput
+                      type="text"
+                      maxlength="1000"
+                      formControlName="notes"
+                    />
+                  </mat-form-field>
+                </div>
+              </mat-card>
+            </div>
+          </div>
+        </div>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Notes</mat-label>

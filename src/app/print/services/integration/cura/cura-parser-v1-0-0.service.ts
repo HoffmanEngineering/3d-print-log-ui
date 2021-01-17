@@ -188,6 +188,7 @@ export class CuraParserV1pt0pt0Service implements NewPrintParser {
       allowComments: null,
       createdByUserId: null,
       comments: [],
+      filamentUsage: [],
     };
 
     return print;

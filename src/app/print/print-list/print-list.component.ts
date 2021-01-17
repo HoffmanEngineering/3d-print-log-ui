@@ -269,7 +269,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
     // tslint:disable-next-line: max-line-length
-    (dialogRef.componentInstance as any).body = `Are you sure you want to delete print "${print.title}"? \n\n This action cannot be undone.`;
+    (dialogRef.componentInstance as any).body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
     (dialogRef.componentInstance as any).yesText = 'Delete';
     (dialogRef.componentInstance as any).yesColor = 'warn';
     (dialogRef.componentInstance as any).noText = 'Cancel';

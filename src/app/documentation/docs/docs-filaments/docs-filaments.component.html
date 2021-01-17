@@ -1,0 +1,175 @@
+<div class="docs-markdown">
+  <h2>Filaments</h2>
+  <hr />
+  <p>
+    3D Print Log Filaments helps you keep track of what materials and colors you
+    have, and how much filament is left on the roll. Print with confidence
+    knowing you won't run out of filament. Navigate to the
+    <a [routerLink]="['/filament']">Filament</a> section to manage your rolls of
+    Filament.
+  </p>
+  <h3 id="list">Filaments List</h3>
+  <p>
+    The Filament List shows you all your rolls of filament. Use the
+    <strong>Search</strong> input at the top to filter the list by the
+    filament's <strong>Name</strong>, <strong>Brand</strong> or
+    <strong>Color</strong> fields. Use the
+    <strong>Include Inactive</strong> checkbox to include
+    <strong>Empty or Inactive</strong> rolls of filament. The table is sorted by
+    <strong>Filament Remaining</strong> by default, but you can click on any of
+    the table headers to order by Name, Brand, or Color.
+  </p>
+  <h4>The Filament List Table</h4>
+
+  <ul>
+    <li>
+      <strong>Color Box</strong> - Displays the selected color of the filament.
+    </li>
+    <li><strong>Name</strong> - The Display Name of the Filament</li>
+    <li><strong>Brand</strong> - The Brand of filament.</li>
+    <li><strong>Color</strong> - The name of the Color of the filament.</li>
+    <li>
+      <strong>Remaining (g)</strong> - The weight of Filament remaining on the
+      roll.
+    </li>
+  </ul>
+
+  <hr />
+
+  <h3 id="remaining">How Remaining Filament is Calculated</h3>
+  <p>
+    The Remaining Filament is calculated by the Filament's
+    <strong>[Initial Nominal Weight]</strong>-<strong
+      >[sum of Filament used in Prints]</strong
+    >+<strong>[sum of any Adjustments]</strong>.
+  </p>
+  <p>
+    <strong>Initial Nominal Weight</strong> is entered when Adding/Editing a
+    filament, and is the nominal, or expected, weight of the filament on the
+    roll. So a 1kg roll of filament would have an Initial Nominal Weight of 1000
+    grams.
+  </p>
+  <p>
+    <strong>Filament Used in Prints</strong> are the weights entered in the
+    Filament Section when Adding/Editing a print. See
+    <a routerLink="/docs/prints">Prints Documentation</a> for more details on
+    how to add filament usage. When calculating Remaining Filament, a print's
+    <strong>Actual Filament Used</strong> will be used if available, otherwise
+    it'll use the <strong>Estimated Filament Used</strong>.
+  </p>
+  <p>
+    <strong>Filament Adjustments</strong> are entered when Adding/Editing a
+    filament, and represent non-print usage of filament. Useful for documenting
+    the wasted filament when changing colors, or adjusting a filament's weight
+    when adding a partially used roll to 3D Print Log. See the
+    <strong>Adjustments</strong> section below for more information.
+  </p>
+
+  <hr />
+
+  <h3 id="add">Add a roll of Filament</h3>
+  <p>
+    From the Filament list, click on the
+    <button mat-raised-button color="accent">Add New Filament</button> button.
+  </p>
+  <h4 id="add-general">General Section</h4>
+  <p>
+    Give the roll of filament a <strong>Name</strong> used to identify the roll.
+    If you have multiple rolls of the same brand/color, it may be helpful to
+    give the roll a name with a number (example: Hatchbox Black 1).
+  </p>
+  <p>
+    The <strong>Material Type</strong> is for storing the type of filament. You
+    can select one of the pre-populated material types to automatically fill the
+    <strong>Material Density</strong>, or you can add any other material just by
+    typing into the field. The <strong>Material Density</strong> is entered in
+    Grams Per Cubic Centimeter, and used when calculating weights.
+  </p>
+  <p>
+    The Color section has a <strong>Color Picker</strong> that lets you select
+    the color which is displayed. The <strong>Color Name</strong> lets you enter
+    the manufacturer's name. The <strong>Brand</strong> field is for recording
+    the filament's manufacturer. The <strong>Diameter</strong> is for the
+    diameter of the filament in millimeters. The <strong>Notes</strong> section
+    lets you record any additional notes/description/etc for the filament.
+  </p>
+  <h4 id="add-weights">Weights Section</h4>
+  <p>
+    The Weights section lets you record the initial weight of the rolls, as well
+    as any Weight Adjustments needed.
+  </p>
+  <ul>
+    <li>
+      <strong>Initial Total Weight (g)</strong> - The total weight of the roll
+      in grams, including the weight of the filament and the spool. Find by
+      putting the entire spool on a scale.
+    </li>
+    <li>
+      <strong>Initial Nominal Weight (g)</strong> - The nominal, or expected,
+      weight of just the filament in grams. For instance, a 1kg roll of filament
+      would have a nominal weight of 1,000 grams.
+    </li>
+    <li><strong>Spool Weight (g)</strong> - The weight of the empty spool.</li>
+  </ul>
+  <h4 id="add-adjustments">Filament Adjustments</h4>
+  <div fxLayout="row" fxLayout.lt-lg="column">
+    <div fxFlex="grow">
+      <p>
+        Adjustments represent non-print usage of filament. Adjustment weights
+        are added when calculating the remaining filament on a roll, so negative
+        amounts represent the removal of filament from the spool. Examples of
+        adjustments would be:
+      </p>
+      <ul>
+        <li>
+          Estimating filament used when adding a partially-used roll to 3D Print
+          Log.
+        </li>
+        <li>Tracking filament lost when switching colors on a printer.</li>
+      </ul>
+    </div>
+    <div fxFlex>
+      <img
+        class="fade-in"
+        [ngStyle.lt-md]="{
+          display: 'block',
+          'max-width': '90%',
+          'margin-left': 'auto',
+          'margin-right': 'auto'
+        }"
+        alt="Example of Filament Adjustments on the Filament Edit Screen"
+        src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
+      />
+    </div>
+  </div>
+
+  <h4 id="add-temperatures">Temperatures</h4>
+  <p>
+    Record the recommended temperature and range in Celsius for this filament.
+  </p>
+  <h4 id="add-purchase">Purchase Details</h4>
+  <p>
+    Record the <strong>Purchase Date</strong>, <strong>Location</strong>, and
+    <strong>Price</strong> for future reference, and ease of reordering. The
+    <strong>Location</strong> can be used to store a URL to the online retailer,
+    or the name of the store purchased from.
+  </p>
+  <hr />
+  <h3 id="edit">Edit a Filament</h3>
+  <p>
+    Click on any row in the Filament List to view and edit an existing 3D print.
+  </p>
+  <p>
+    After making changes, click
+    <button mat-raised-button color="primary">Submit</button> to update that
+    filament.
+  </p>
+  <hr />
+  <h3 id="delete">Delete a Filament</h3>
+  <p>
+    Deletion is not available at the moment, but you can
+    <strong>Inactive</strong> a filament by Editing, then unchecking the
+    <strong>Is Active</strong> checkbox in the <strong>General</strong> section.
+    Inactive filament will not be displayed.
+  </p>
+</div>

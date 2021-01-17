@@ -9,11 +9,11 @@
     >
       Add New Filament
     </button>
-    <!-- <div class="search-fields">
+    <div class="search-fields">
       <mat-form-field>
         <mat-label> Search: </mat-label
         ><input
-          id="printer-list-search-input"
+          id="filament-list-search-input"
           matInput
           type="text"
           [(ngModel)]="searchText"
@@ -27,10 +27,18 @@
         (ngModelChange)="updateFilter()"
         >Include Inactive</mat-checkbox
       >
-    </div> -->
+    </div>
   </div>
 
-  <table mat-table [dataSource]="filaments">
+  <table
+    mat-table
+    [dataSource]="filaments"
+    matSort
+    [matSortActive]="sortColumn"
+    [matSortDirection]="sortDirection === 1 ? 'asc' : 'desc'"
+    (matSortChange)="sortData($event)"
+    [matSortDisableClear]="true"
+  >
     <ng-container matColumnDef="colorHex">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let filament">
@@ -42,26 +50,50 @@
     </ng-container>
 
     <ng-container matColumnDef="displayName">
-      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="filamentSortColumns.DisplayName"
+      >
+        Name
+      </th>
       <td mat-cell *matCellDef="let filament">
         {{ filament.displayName }}
       </td>
     </ng-container>
 
     <ng-container matColumnDef="brand">
-      <th mat-header-cell *matHeaderCellDef>Brand</th>
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="filamentSortColumns.Brand"
+      >
+        Brand
+      </th>
       <td mat-cell *matCellDef="let filament">
         {{ filament.brand }}
       </td>
     </ng-container>
 
     <ng-container matColumnDef="colorName">
-      <th mat-header-cell *matHeaderCellDef>Color</th>
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="filamentSortColumns.Color"
+      >
+        Color
+      </th>
       <td mat-cell *matCellDef="let filament">{{ filament.colorName }}</td>
     </ng-container>
 
     <ng-container matColumnDef="filamentRemaining">
-      <th mat-header-cell *matHeaderCellDef>Remaining (g)</th>
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="filamentSortColumns.FilamentRemaining"
+      >
+        Remaining (g)
+      </th>
       <td mat-cell *matCellDef="let filament">
         {{ filament.filamentRemaining / 1000 }}
       </td>

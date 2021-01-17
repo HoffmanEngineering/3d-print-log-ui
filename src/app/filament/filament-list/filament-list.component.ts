@@ -1,13 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { debounce } from 'lodash';
 import {
   FilamentService,
+  FilamentSortColumns,
   FilamentSummary,
 } from 'src/app/core/services/filament.service';
 import { PagedList } from 'src/app/core/types/paging';
+import { SortDirection } from 'src/app/core/types/sort-request';
 
 @Component({
   selector: 'app-filament-list',
@@ -30,6 +33,13 @@ export class FilamentListComponent implements OnInit {
   ];
 
   public debouncedUpdateFilter;
+
+  public filamentSortColumns = FilamentSortColumns;
+  public sortColumn = FilamentSortColumns.FilamentRemaining;
+  public sortDirection = SortDirection.Desc;
+
+  public includeInactive = false;
+  public searchText = '';
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -61,10 +71,28 @@ export class FilamentListComponent implements OnInit {
 
   public updateFilter() {
     this.filamentService
-      .getCurrentUserFilamentSummaries(this.currentPage, this.pageSize)
+      .getCurrentUserFilamentSummaries(
+        this.currentPage,
+        this.pageSize,
+        this.sortColumn,
+        this.sortDirection,
+        this.searchText,
+        this.includeInactive
+      )
       .subscribe((response) => {
         this.handlePagedList(response);
       });
+  }
+
+  public sortData(sort: Sort) {
+    this.sortColumn = +sort.active;
+
+    this.sortDirection =
+      sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc;
+
+    this.currentPage = 1;
+
+    this.updateFilter();
   }
 
   private handlePagedList(response: PagedList<FilamentSummary>) {

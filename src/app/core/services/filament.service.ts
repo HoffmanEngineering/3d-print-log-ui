@@ -1,8 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { least } from 'd3';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
+import { SortDirection } from '../types/sort-request';
 
 export interface FilamentDetail {
   id: string;
@@ -56,6 +58,14 @@ export interface FilamentAdjustment {
   notes: string;
 }
 
+export enum FilamentSortColumns {
+  DisplayName = 1,
+  MaterialType = 2,
+  FilamentRemaining = 3,
+  Brand = 4,
+  Color = 5,
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -65,13 +75,27 @@ export class FilamentService {
 
   getCurrentUserFilamentSummaries(
     pageNumber: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    sortColumn: FilamentSortColumns = FilamentSortColumns.FilamentRemaining,
+    sortDirection: SortDirection = SortDirection.Desc,
+    searchText?: string,
+    includeInactive?: boolean
   ): Observable<PagedList<FilamentSummary>> {
     const url = `${this.baseApi}/api/Filaments`;
 
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('PageNumber', pageNumber.toString(10))
-      .set('PageSize', pageSize.toString(10));
+      .set('PageSize', pageSize.toString(10))
+      .set('SortColumn', sortColumn.toString())
+      .set('SortDirection', sortDirection.toString());
+
+    if (searchText !== undefined && searchText !== '') {
+      params = params.set('SearchText', searchText.trim());
+    }
+
+    if (includeInactive !== undefined) {
+      params = params.set('IncludeInactive', includeInactive.toString());
+    }
 
     return this.http.get<PagedList<FilamentSummary>>(url, { params });
   }

@@ -185,7 +185,7 @@
         <!-- Filament Usage -->
 
         <div fxFlex="grow" fxFlexFill>
-          Current Filaments: <br />
+          Filament Usage: <br />
           <button
             type="button"
             mat-raised-button
@@ -217,15 +217,23 @@
                     <div
                       class="filament-color-cell"
                       [ngStyle]="{
-                        'background-color':
-                          '#' + printFilament.get('filament').value?.colorHex
+                        'background-color': printFilament.get('filament').value
+                          ?.colorHex
+                          ? '#' + printFilament.get('filament').value?.colorHex
+                          : null
                       }"
                     ></div>
                   </div>
                   <div fxFlex>
                     {{ printFilament.get('filament').value?.displayName }}
                   </div>
-                  <div fxFlex="grow">
+                  <div
+                    fxFlex="grow"
+                    *ngIf="
+                      printFilament.get('filament').value !==
+                      OTHER_FILAMENT_OPTION
+                    "
+                  >
                     {{
                       printFilament.get('filament').value?.filamentRemaining /
                         1000 | number
@@ -255,6 +263,19 @@
                         *ngFor="let filament of filamentSummaries"
                         [value]="filament"
                       >
+                        <span
+                          style="
+                            display: inline-block;
+                            width: 15px;
+                            height: 15px;
+                            vertical-align: middle;
+                          "
+                          [ngStyle]="{
+                            'background-color': filament.colorHex
+                              ? '#' + filament.colorHex
+                              : null
+                          }"
+                        ></span>
                         {{ filament.displayName }} -
                         {{ filament.colorName }} ({{
                           filament?.filamentRemaining / 1000 | number
@@ -320,7 +341,15 @@
                     </mat-error>
                   </mat-form-field>
                   <mat-form-field fxFlex="grow" fxFlexFill>
-                    <mat-label> Notes</mat-label>
+                    <mat-label>
+                      {{
+                        printFilament.get('filament').value ===
+                        OTHER_FILAMENT_OPTION
+                          ? 'Filament Type'
+                          : 'Notes'
+                      }}</mat-label
+                    >
+
                     <input
                       id="edit-print-estimated-print-time"
                       matInput
@@ -472,9 +501,4 @@
     </form>
     <ng-adsense></ng-adsense>
   </mat-card>
-
-  <pre *ngIf="filamentUsage">
-  {{ filamentUsage.value | json }}
-</pre
-  >
 </div>

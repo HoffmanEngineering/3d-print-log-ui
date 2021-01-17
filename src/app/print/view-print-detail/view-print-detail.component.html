@@ -55,7 +55,50 @@
           <p>{{ print.url }}</p>
           <h3>Estimated Print Time:</h3>
           <p>{{ print.estimatedPrintTimeInSeconds | duration }}</p>
-          <h3>Estimated Filament Usage (grams)</h3>
+          <h3>Actual Print Time:</h3>
+          <p>{{ print.printTimeInSeconds | duration }}</p>
+
+          <h3>Filament Usage:</h3>
+
+          <div class="grid-container">
+            <ng-container
+              *ngFor="let printFilament of print.filamentUsage; let last = last"
+            >
+              <h3>Filament:</h3>
+              <p>{{ printFilament.filament.displayName }}</p>
+              <ng-container *ngIf="printFilament.estimatedAmountMg > 0">
+                <h3>Estimated:</h3>
+                <p>{{ printFilament.estimatedAmountMg / 1000 }} (g)</p>
+              </ng-container>
+              <ng-container *ngIf="printFilament.amountMg > 0">
+                <h3>Actual:</h3>
+                <p>{{ printFilament.amountMg / 1000 }} (g)</p>
+              </ng-container>
+              <hr *ngIf="!last" />
+            </ng-container>
+            <ng-container
+              *ngIf="
+                (print.filamentUsageMg !== null && print.filamentUsageMg > 0) ||
+                (print.estimatedFilamentUsageMg !== null &&
+                  print.estimatedFilamentUsageMg > 0) ||
+                (print.filamentType && print.filamentType !== '')
+              "
+            >
+              <hr *ngIf="print.filamentUsage.length > 0" />
+              <h3>Filament:</h3>
+              <p>{{ print.filamentType }}</p>
+              <ng-container *ngIf="print.estimatedFilamentUsageMg > 0">
+                <h3>Estimated:</h3>
+                <p>{{ print.estimatedFilamentUsageMg / 1000 }} (g)</p>
+              </ng-container>
+              <ng-container *ngIf="print.filamentUsageMg > 0">
+                <h3>Actual:</h3>
+                <p>{{ print.filamentUsageMg / 1000 }} (g)</p>
+              </ng-container>
+            </ng-container>
+          </div>
+
+          <!-- <h3>Estimated Filament Usage (grams)</h3>
           <p>
             {{
               print.estimatedFilamentUsageMg
@@ -63,12 +106,11 @@
                 : ''
             }}
           </p>
-          <h3>Actual Print Time:</h3>
-          <p>{{ print.printTimeInSeconds | duration }}</p>
+          
           <h3>Actual Filament Usage (grams)</h3>
           <p>{{ print.filamentUsageMg ? print.filamentUsageMg / 1000 : '' }}</p>
           <h3>Filament Type:</h3>
-          <p>{{ print.filamentType }}</p>
+          <p>{{ print.filamentType }}</p> -->
           <h3>Notes:</h3>
           <p style="white-space: pre-wrap">{{ print.notes }}</p>
         </section>

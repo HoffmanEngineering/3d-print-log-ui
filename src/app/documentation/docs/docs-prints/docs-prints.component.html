@@ -81,9 +81,7 @@
   <p>
     The Estimated and Actual <strong>Print Time</strong> fields accept
     human-readable input, such a <em>6h 12m 25s</em>, or
-    <em>6 hours 12 minutes 25 seconds</em>. The Estimated and Actual
-    <strong>Filament Usage (Grams)</strong> fields record the amount of filament
-    used.
+    <em>6 hours 12 minutes 25 seconds</em>.
   </p>
   <p>
     Prints can have one of 5 status:
@@ -91,6 +89,47 @@
     <strong>Status</strong> selection will default to Pending, but can be
     changed by clicking the dropdown.
   </p>
+  <h3 id="print-filament-usage">Filament Usage</h3>
+  <div fxLayout="row" fxLayout.lt-lg="column">
+    <div fxFlex="grow">
+      <p>
+        The <strong>Filament Usage</strong> section lets you record the roll of
+        filament used for the print. Click the
+        <strong>Add New Filament Record</strong> to begin. The
+        <strong>Filament</strong> dropdown displays the list of your currently
+        active filament. Selecting a filament will display the filament's color
+        and remaining filament. The
+        <strong>Estimated Filament Used (g)</strong> and
+        <strong>Actual Filament Used (g)</strong> record the weight of filament
+        needed for the print.
+      </p>
+      <p>
+        If you want to record a weight for a filament not being tracked, you can
+        select the <strong>"OTHER" option</strong> in the dropdown, and record
+        an arbitrary type and amount of filament. The "OTHER" option will not be
+        added to any filament roll's tracking, but it will be included in your
+        Analytics filament usage amounts.
+      </p>
+      <p>
+        A Filament Usage can be removed from the print by clicking the Delete
+        button.
+      </p>
+    </div>
+    <div fxFlex>
+      <img
+        class="fade-in"
+        [ngStyle.lt-md]="{
+          display: 'block',
+          'max-width': '90%',
+          'margin-left': 'auto',
+          'margin-right': 'auto'
+        }"
+        alt="Example of Filament Usage on the Print Edit Screen"
+        src="./assets/docs-print-filament-usage-example_94a6779bfc7.png"
+      />
+    </div>
+  </div>
+
   <p>
     When ready, click
     <button mat-raised-button type="button" color="primary">Submit</button> to

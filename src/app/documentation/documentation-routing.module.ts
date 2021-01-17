@@ -4,6 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { DocsAboutComponent } from './docs/docs-about/docs-about.component';
 import { DocsAnalyticsComponent } from './docs/docs-analytics/docs-analytics.component';
 import { DocsCuraPluginComponent } from './docs/docs-cura-plugin/docs-cura-plugin.component';
+import { DocsFilamentsComponent } from './docs/docs-filaments/docs-filaments.component';
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
 import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.component';
 import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
@@ -21,6 +22,7 @@ const routes: Routes = [
       },
       { path: 'printers', component: DocsPrintersComponent },
       { path: 'prints', component: DocsPrintsComponent },
+      { path: 'filaments', component: DocsFilamentsComponent },
       { path: 'analytics', component: DocsAnalyticsComponent },
       { path: 'cura-plugin', component: DocsCuraPluginComponent },
       { path: 'release-notes', component: DocsReleaseNotesComponent },

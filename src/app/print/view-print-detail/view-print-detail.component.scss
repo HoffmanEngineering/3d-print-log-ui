@@ -18,8 +18,16 @@ h3 {
   font-size: 0.8rem;
 }
 
-p {
+p,
+ul,
+.filamentUsage {
   grid-column: 2;
+  width: auto;
+  margin: 0;
+}
+
+hr {
+  grid-column: 1/-1;
   width: auto;
   margin: 0;
 }

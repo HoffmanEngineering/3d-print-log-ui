@@ -198,6 +198,10 @@
                 >
                   A Name is <strong>required</strong>
                 </mat-error> -->
+          <mat-hint
+            >The nominal, or expected, weight of the filament on the
+            spool.</mat-hint
+          >
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Spool Weight (g)</mat-label>
@@ -213,6 +217,82 @@
                   A Name is <strong>required</strong>
                 </mat-error> -->
         </mat-form-field>
+
+        <div fxFlex="grow" fxFlexFill>
+          <h3 style="margin-block-end: 5px">
+            Adjustments:
+            <a routerLink="/docs/prints#delete"
+              ><mat-icon inline matTooltip="Open Adjustment Help Documentation"
+                >info</mat-icon
+              ></a
+            >
+          </h3>
+          <button
+            type="button"
+            mat-raised-button
+            (click)="addAdjustment()"
+            color="accent"
+            style="margin-bottom: 5px"
+          >
+            Add New Adjustment
+          </button>
+        </div>
+        <div formArrayName="filamentAdjustments" fxFlex="grow" fxFlexFill>
+          <div
+            *ngFor="
+              let adjustment of filamentAdjustments.controls;
+              let adjustmentIndex = index
+            "
+            style="margin-bottom: 5px"
+          >
+            <div [formGroupName]="adjustmentIndex">
+              <mat-card
+                class="mat-elevation-z4"
+                fxFlex="grow"
+                fxFlexFill
+                fxLayout="row"
+              >
+                <div fxFlex="grow" fxLayout="column">
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Adjustment Amount (g)</mat-label>
+                    <input
+                      id="adjustment-amount-{{ adjustmentIndex }}"
+                      matInput
+                      type="text"
+                      pattern="^-?\d*(\.\d{0,3})?$"
+                      formControlName="amountG"
+                    />
+                    <mat-error
+                      *ngIf="adjustment.get('amountG').hasError('pattern')"
+                    >
+                      Numbers (up to 3-decimal places) only.
+                    </mat-error>
+                  </mat-form-field>
+                  <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Notes</mat-label>
+                    <input
+                      id="adjustment-note-{{ adjustmentIndex }}"
+                      matInput
+                      type="text"
+                      maxlength="1000"
+                      formControlName="notes"
+                    />
+                  </mat-form-field>
+                  <div fxFlex>
+                    <button
+                      type="button"
+                      mat-raised-button
+                      (click)="removeAdjustment(adjustmentIndex)"
+                      aria-label="Delete Adjustment"
+                    >
+                      <mat-icon>delete</mat-icon>Delete
+                    </button>
+                  </div>
+                </div>
+              </mat-card>
+            </div>
+          </div>
+        </div>
 
         <div fxFlex="grow" fxFlexFill>
           <h2 style="text-align: start">Temperatures</h2>

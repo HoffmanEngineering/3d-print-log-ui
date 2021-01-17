@@ -25,6 +25,8 @@ export interface FilamentDetail {
   purchasePriceValue: string;
   purchasePriceCurrency: string;
   notes: string;
+
+  filamentAdjustments: FilamentAdjustment[];
 }
 
 export interface FilamentSummary {
@@ -40,6 +42,18 @@ export interface FilamentSummary {
   notes: string;
   createdDate: string;
   filamentRemaining: number | null;
+}
+
+export interface FilamentAdjustment {
+  /** GUID */
+  id: string;
+  filamentId: string;
+  /**
+   * Adjustment weights are SUBTRACTED from total weight.
+   * Positive Numbers are removal of filament from the roll.
+   */
+  amountMg: number;
+  notes: string;
 }
 
 @Injectable({

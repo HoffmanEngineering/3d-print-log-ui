@@ -422,12 +422,6 @@ export class EditPrintDetailComponent
     filament: FilamentSummary | null,
     notes: string | null
   ) {
-    // return this.formBuilder.group({
-    //   id: pf.id,
-    //   amountG: pf.amountMg / 1000,
-    //   estimatedAmountG: pf.estimatedAmountMg / 1000,
-    //   filament: pf.filament,
-    // });
     return this.formBuilder.group({
       id,
       amountG,
@@ -699,7 +693,6 @@ export class EditPrintDetailComponent
           fu.get('filament').value !== this.OTHER_FILAMENT_OPTION
       )
       .map((printFilament) => {
-        console.log(JSON.stringify(printFilament.value));
         const newPf: PrintFilamentSummaryDto = {
           id: printFilament.get('id').value ?? EMPTY_GUID,
           estimatedAmountMg: Math.round(

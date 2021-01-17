@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { uniq } from 'lodash-es';
@@ -11,9 +11,12 @@ import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guar
 import { Material } from 'src/app/core/services/material.service';
 import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import {
+  FilamentAdjustment,
   FilamentDetail,
   FilamentService,
 } from '../../core/services/filament.service';
+
+const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
 @Component({
   selector: 'app-filament-detail',
@@ -42,6 +45,10 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
     return !this.filamentForm.dirty;
+  }
+
+  get filamentAdjustments() {
+    return this.filamentForm.get('filamentAdjustments') as FormArray;
   }
 
   ngOnInit() {
@@ -91,7 +98,34 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       .sort();
   }
 
+  private buildFilamentAdjustmentFormGroup(
+    id: string,
+    filamentId: string,
+    amountG: number,
+    notes: string
+  ) {
+    return this.formBuilder.group({
+      id,
+      filamentId,
+      amountG,
+      notes,
+    });
+  }
+
   buildFormFromFilamentDetail(filament: FilamentDetail): FormGroup {
+    const adjustments = this.formBuilder.array([]);
+    if (filament?.filamentAdjustments?.length > 0) {
+      filament.filamentAdjustments.forEach((adjustment) => {
+        const adjustmentControl = this.buildFilamentAdjustmentFormGroup(
+          adjustment.id,
+          adjustment.filamentId,
+          adjustment.amountMg / 1000,
+          adjustment.notes
+        );
+        adjustments.push(adjustmentControl);
+      });
+    }
+
     const form = this.formBuilder.group({
       id: [filament ? filament.id : null],
       displayName: [
@@ -123,7 +157,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       purchasePriceValue: [filament?.purchasePriceValue],
       purchasePriceCurrency: [filament?.purchasePriceCurrency],
       notes: [filament?.notes],
-
+      filamentAdjustments: adjustments,
       isActive: [
         filament &&
         filament.isActive !== null &&
@@ -136,6 +170,21 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     console.log(form);
 
     return form;
+  }
+
+  addAdjustment() {
+    this.filamentAdjustments.push(
+      this.buildFilamentAdjustmentFormGroup(
+        EMPTY_GUID,
+        this.filamentForm.get('id')?.value ?? EMPTY_GUID,
+        0,
+        ''
+      )
+    );
+  }
+
+  removeAdjustment(index: number) {
+    this.filamentAdjustments.removeAt(index);
   }
 
   onSubmit() {
@@ -189,6 +238,24 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   }
 
   private getFilamentFromForm(): FilamentDetail {
+    const adjustments = this.filamentAdjustments.controls
+      .filter((adjustment) => {
+        return (
+          adjustment.get('amountG').value !== 0 ||
+          adjustment.get('notes').value !== ''
+        );
+      })
+      .map((adjustment) => {
+        const newAdjustment: FilamentAdjustment = {
+          id: adjustment.get('id')?.value ?? EMPTY_GUID,
+          filamentId: adjustment.get('filamentId')?.value ?? EMPTY_GUID,
+          amountMg: Math.round(+adjustment.get('amountG').value * 1000),
+          notes: adjustment.get('notes').value,
+        };
+
+        return newAdjustment;
+      });
+
     const filament: FilamentDetail = {
       id: this.filamentForm.controls.id.value,
       brand: this.filamentForm.controls.brand.value,
@@ -217,11 +284,13 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       ),
       tempRangeEnd: this.filamentForm.controls.tempRangeEnd.value,
       tempRangeStart: this.filamentForm.controls.tempRangeStart.value,
+      filamentAdjustments: adjustments,
       isActive: this.filamentForm.controls.isActive.value,
     };
 
     return filament;
   }
+
   getColorHex(value: string | null): string {
     if (value && value !== '') {
       return value.replace('#', '');

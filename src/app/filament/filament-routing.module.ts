@@ -19,6 +19,7 @@ const routes: Routes = [
         resolve: {
           filamentList: FilamentListResolverService,
         },
+        runGuardsAndResolvers: 'always',
       },
       {
         path: ':id',

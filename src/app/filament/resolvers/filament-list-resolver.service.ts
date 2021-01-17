@@ -5,8 +5,10 @@ import {
   RouterStateSnapshot,
 } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
+import { SortDirection } from 'src/app/core/types/sort-request';
 import {
   FilamentService,
+  FilamentSortColumns,
   FilamentSummary,
 } from '../../core/services/filament.service';
 
@@ -14,7 +16,23 @@ import {
 export class FilamentListResolverService
   implements Resolve<PagedList<FilamentSummary>> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-    return this.filamentService.getCurrentUserFilamentSummaries();
+    const {
+      pageNumber = 1,
+      pageSize = 10,
+      searchText = '',
+      includeInactive,
+      sortDirection = SortDirection.Desc,
+      sortColumn = FilamentSortColumns.FilamentRemaining,
+    } = route.queryParams;
+
+    return this.filamentService.getCurrentUserFilamentSummaries(
+      pageNumber,
+      pageSize,
+      sortColumn,
+      sortDirection,
+      searchText,
+      includeInactive
+    );
   }
   constructor(private filamentService: FilamentService) {}
 }

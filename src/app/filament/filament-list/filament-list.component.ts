@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash';
 import {
   FilamentService,
@@ -44,13 +44,30 @@ export class FilamentListComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private filamentService: FilamentService,
-    private titleService: Title
+    private titleService: Title,
+    private readonly router: Router
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
 
   ngOnInit() {
     this.titleService.setTitle('My Filament - 3D Print Log');
+
+    this.activatedRoute.queryParamMap.subscribe((params) => {
+      if (params.has('searchText')) {
+        this.searchText = params.get('searchText');
+      }
+      if (params.has('includeInactive')) {
+        this.includeInactive =
+          params.get('includeInactive').toLowerCase() === 'true';
+      }
+      if (params.has('sortDirection')) {
+        this.sortDirection = +params.get('sortDirection');
+      }
+      if (params.has('sortColumn')) {
+        this.sortColumn = +params.get('sortColumn');
+      }
+    });
 
     this.activatedRoute.data.subscribe((data) => {
       const pagedResponse: PagedList<FilamentSummary> = data.filamentList;
@@ -70,18 +87,18 @@ export class FilamentListComponent implements OnInit {
   }
 
   public updateFilter() {
-    this.filamentService
-      .getCurrentUserFilamentSummaries(
-        this.currentPage,
-        this.pageSize,
-        this.sortColumn,
-        this.sortDirection,
-        this.searchText,
-        this.includeInactive
-      )
-      .subscribe((response) => {
-        this.handlePagedList(response);
-      });
+    return this.router.navigate(['.'], {
+      queryParams: {
+        pageNumber: this.currentPage,
+        pageSize: this.pageSize,
+        searchText: this.searchText || '',
+        includeInactive: this.includeInactive,
+        sortDirection: this.sortDirection,
+        sortColumn: this.sortColumn,
+        t: new Date().getTime(),
+      },
+      relativeTo: this.activatedRoute,
+    });
   }
 
   public sortData(sort: Sort) {

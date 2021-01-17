@@ -9,7 +9,9 @@
       fxLayoutGap="10px"
     >
       <mat-card-title fxFlex="grow"
-        >{{ this.filamentForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
+        >{{
+          this.filamentForm.get('id').value !== null ? 'Edit' : 'Add'
+        }}
         Filament</mat-card-title
       >
       <mat-card-content
@@ -538,7 +540,5 @@
       </mat-card-actions>
     </form>
     <ng-adsense></ng-adsense>
-
-    {{ this.filamentForm.value | json }}
   </mat-card>
 </div>

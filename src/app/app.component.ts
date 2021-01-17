@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
+import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
 
 @Component({
   selector: 'app-root',
@@ -18,10 +19,17 @@ export class AppComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private googleAnalytics: GoogleAnalyticsService,
-    private loggingService: LoggingService
+    private loggingService: LoggingService,
+    private releaseNotesService: VersionReleaseNoteDialogService
   ) {}
 
   ngOnInit() {
     this.auth.localAuthSetup();
+
+    this.auth.userProfile$.subscribe((user) => {
+      if (user) {
+        this.releaseNotesService.checkLastLoggedInVersion();
+      }
+    });
   }
 }

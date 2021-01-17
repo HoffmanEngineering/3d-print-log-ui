@@ -1,9 +1,12 @@
 <h1 mat-dialog-title *ngIf="title">{{ title }}</h1>
-<div mat-dialog-content style="white-space: pre-wrap">
-  {{ body }}
-</div>
+<div mat-dialog-content [innerHtml]="body"></div>
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onNoClick()" [color]="noColor">
+  <button
+    mat-button
+    *ngIf="noText !== ''"
+    (click)="onNoClick()"
+    [color]="noColor"
+  >
     {{ noText }}
   </button>
   <button

@@ -16,6 +16,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { FilamentService } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
@@ -56,6 +57,22 @@ describe('EditPrintDetailComponent', () => {
         ['logException', 'logEvent']
       );
 
+      const mockFilamentService = jasmine.createSpyObj<FilamentService>(
+        'FilamentService',
+        ['getCurrentUserFilamentSummaries']
+      );
+      mockFilamentService.getCurrentUserFilamentSummaries.and.returnValue(
+        of({
+          paging: {
+            currentPage: 1,
+            totalPages: 1,
+            pageSize: 10,
+            totalCount: 0,
+          },
+          items: [],
+        })
+      );
+
       TestBed.configureTestingModule({
         declarations: [EditPrintDetailComponent],
         imports: [
@@ -78,6 +95,7 @@ describe('EditPrintDetailComponent', () => {
             useValue: mockPrinterPromptService,
           },
           { provide: LoggingService, useValue: mockLogger },
+          { provide: FilamentService, useValue: mockFilamentService },
           {
             provide: ActivatedRoute,
             useValue: {

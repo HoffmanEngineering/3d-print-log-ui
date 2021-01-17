@@ -6,17 +6,12 @@ import { SharedModule } from '../shared/shared.module';
 import { FilamentDetailComponent } from './filament-detail/filament-detail.component';
 import { FilamentListComponent } from './filament-list/filament-list.component';
 import { FilamentRoutingModule } from './filament-routing.module';
-import { FilamentComponent } from './filament.component';
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { MaterialResolverService } from './resolvers/material-resolver.service';
 
 @NgModule({
-  declarations: [
-    FilamentComponent,
-    FilamentListComponent,
-    FilamentDetailComponent,
-  ],
+  declarations: [FilamentListComponent, FilamentDetailComponent],
   imports: [SharedModule, FilamentRoutingModule, AdsenseModule],
   providers: [
     FilamentListResolverService,

@@ -4,13 +4,12 @@ import {
   Resolve,
   RouterStateSnapshot,
 } from '@angular/router';
-import { of } from 'rxjs';
+
 import { map } from 'rxjs/operators';
 import {
+  EMPTY_GUID,
   PrintDetail,
-  PrintDetailDTO,
   PrintService,
-  PrintStatus,
 } from '../../core/services/print.service';
 import { PrintDetailWithUser } from './print-detail-resolver.service';
 
@@ -23,7 +22,17 @@ export class CopyPrintDetailResolverService
     if (Number.isInteger(printId)) {
       return this.printService.getPrintDetail(printId).pipe(
         map((print) => {
-          const cleanedPrint: PrintDetail = { ...print, id: null, images: [] };
+          const cleanedFilamentUsage = print.filamentUsage.map(
+            (printFilament) => {
+              return { ...printFilament, id: EMPTY_GUID };
+            }
+          );
+          const cleanedPrint: PrintDetail = {
+            ...print,
+            id: null,
+            images: [],
+            filamentUsage: cleanedFilamentUsage,
+          };
 
           const newDetails: PrintDetailWithUser = {
             print: cleanedPrint,

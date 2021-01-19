@@ -163,7 +163,7 @@ export class EditPrintDetailComponent
     });
 
     this.filamentService
-      .getCurrentUserFilamentSummaries()
+      .getCurrentUserFilamentSummaries(1, 250)
       .subscribe((filaments) => {
         this.filamentSummaries = filaments.items;
       });

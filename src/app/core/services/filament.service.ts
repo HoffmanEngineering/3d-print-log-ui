@@ -114,4 +114,9 @@ export class FilamentService {
     const url = `${this.baseApi}/api/Filaments/${filament.id}`;
     return this.http.put<FilamentDetail>(url, filament);
   }
+
+  deleteFilament(filamentId: string): Observable<any> {
+    const url = `${this.baseApi}/api/Filaments/${filamentId}`;
+    return this.http.delete<FilamentDetail>(url);
+  }
 }

@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash';
+import { ToastrService } from 'ngx-toastr';
 import {
   FilamentService,
   FilamentSortColumns,
@@ -11,13 +13,14 @@ import {
 } from 'src/app/core/services/filament.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
+import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 
 @Component({
-  selector: 'app-filament-list',
-  templateUrl: './filament-list.component.html',
-  styleUrls: ['./filament-list.component.scss'],
+  selector: 'app-filament-list-container',
+  templateUrl: './filament-list-container.component.html',
+  styleUrls: ['./filament-list-container.component.scss'],
 })
-export class FilamentListComponent implements OnInit {
+export class FilamentListContainerComponent implements OnInit {
   public filaments: FilamentSummary[] = [];
 
   public pageSize: number;
@@ -29,7 +32,9 @@ export class FilamentListComponent implements OnInit {
     'displayName',
     'brand',
     'colorName',
+    'materialType',
     'filamentRemaining',
+    'more',
   ];
 
   public debouncedUpdateFilter;
@@ -45,7 +50,9 @@ export class FilamentListComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private filamentService: FilamentService,
     private titleService: Title,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly dialog: MatDialog,
+    private readonly toastrService: ToastrService
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
@@ -98,6 +105,54 @@ export class FilamentListComponent implements OnInit {
         t: new Date().getTime(),
       },
       relativeTo: this.activatedRoute,
+    });
+  }
+
+  public deleteFilament(filament: FilamentSummary) {
+    const dialogRef = this.dialog.open(SimpleDialogComponent, {
+      maxWidth: '350px',
+    });
+    (dialogRef.componentInstance as any).title = 'Delete?';
+    // tslint:disable-next-line: max-line-length
+    (dialogRef.componentInstance as any).body = `Are you sure you want to delete filament "${filament.displayName}"? <br /> <br />  This action cannot be undone.`;
+    (dialogRef.componentInstance as any).yesText = 'Delete';
+    (dialogRef.componentInstance as any).yesColor = 'warn';
+    (dialogRef.componentInstance as any).noText = 'Cancel';
+
+    dialogRef.afterClosed().subscribe((shouldDelete) => {
+      if (shouldDelete) {
+        this.filamentService.deleteFilament(filament.id).subscribe(
+          (_) => {
+            this.updateFilter().then(() => {
+              this.toastrService.success(
+                'Filament removed successfully.',
+                'Success'
+              );
+            });
+          },
+          (err) => {
+            // Handle Error Messages:
+            console.log(err);
+            // debugger;
+            if (err.status === 400) {
+              this.toastrService.error(err.error, 'Cannot Delete Filament', {
+                progressBar: true,
+                timeOut: 10000,
+                extendedTimeOut: 5000,
+              });
+            } else {
+              this.toastrService.error(
+                'An error occurred, please wait a few seconds and try again.',
+                'Error Occurred',
+                {
+                  progressBar: true,
+                  timeOut: 5000,
+                }
+              );
+            }
+          }
+        );
+      }
     });
   }
 

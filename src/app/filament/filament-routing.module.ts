@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { FilamentDetailComponent } from './filament-detail/filament-detail.component';
-import { FilamentListComponent } from './filament-list/filament-list.component';
+import { FilamentListContainerComponent } from './filament-list-container/filament-list-container.component';
 
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
@@ -14,7 +14,7 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        component: FilamentListComponent,
+        component: FilamentListContainerComponent,
         resolve: {
           filamentList: FilamentListResolverService,
         },

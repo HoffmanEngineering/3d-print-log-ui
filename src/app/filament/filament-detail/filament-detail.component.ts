@@ -1,9 +1,8 @@
+import { Location } from '@angular/common';
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { uniq } from 'lodash-es';
-import * as moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
@@ -39,7 +38,8 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     private filamentService: FilamentService,
     private toastr: ToastrService,
     private titleService: Title,
-    private el: ElementRef
+    private el: ElementRef,
+    private location: Location
   ) {}
 
   @HostListener('window:beforeunload')
@@ -140,7 +140,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       ],
       colorName: [filament?.colorName ?? ''],
       colorHex: [
-        filament && filament.colorHex ? '#' + filament.colorHex : null,
+        filament && filament.colorHex ? '#' + filament.colorHex : '#000000',
       ],
       diameterMm: [filament?.diameterMm],
 
@@ -234,7 +234,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   }
 
   handleClose() {
-    this.router.navigate(['/filament']);
+    this.location.back();
   }
 
   private getFilamentFromForm(): FilamentDetail {

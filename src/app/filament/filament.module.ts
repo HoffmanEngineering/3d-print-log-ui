@@ -4,14 +4,14 @@ import { AdsenseModule } from 'ng2-adsense';
 import { SharedModule } from '../shared/shared.module';
 
 import { FilamentDetailComponent } from './filament-detail/filament-detail.component';
-import { FilamentListComponent } from './filament-list/filament-list.component';
+import { FilamentListContainerComponent } from './filament-list-container/filament-list-container.component';
 import { FilamentRoutingModule } from './filament-routing.module';
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { MaterialResolverService } from './resolvers/material-resolver.service';
 
 @NgModule({
-  declarations: [FilamentListComponent, FilamentDetailComponent],
+  declarations: [FilamentDetailComponent, FilamentListContainerComponent],
   imports: [SharedModule, FilamentRoutingModule, AdsenseModule],
   providers: [
     FilamentListResolverService,

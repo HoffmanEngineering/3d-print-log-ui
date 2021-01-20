@@ -15,21 +15,36 @@ table {
   margin-top: 5px;
 }
 
-.print-image {
+.search-fields {
+  display: inline;
+  margin-left: 10px;
+}
+
+.mat-column-colorHex {
+  flex: 0 0 70px !important;
+  width: 70px !important;
+}
+
+.filament-color-cell {
   display: flex;
   justify-content: center; /* align horizontal */
   align-items: center; /* align vertical */
-  max-height: 50px;
-  max-width: 50px;
-  min-height: 50px;
-  min-width: 50px;
-  margin-top: 3px;
-  margin-bottom: 3px;
+  width: 60px;
+  height: 30px;
+  position: relative;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   margin-right: 10px;
-  overflow: hidden;
+
+  // -webkit-box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
+  // -moz-box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
+  // box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-.no-prints {
+.no-filament {
   font-size: 16px;
   line-height: 28px;
   margin-left: 20px;

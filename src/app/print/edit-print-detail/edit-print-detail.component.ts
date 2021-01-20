@@ -19,6 +19,7 @@ import * as moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 
+import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
@@ -34,6 +35,7 @@ import {
   UserSettingService,
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
+import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import {
   EMPTY_GUID,
   PrintDetail,
@@ -107,7 +109,8 @@ export class EditPrintDetailComponent
     private readonly printerRedirectPromptService: PrinterRedirectPromptService,
     private readonly loggingService: LoggingService,
     private el: ElementRef,
-    private readonly filamentService: FilamentService
+    private readonly filamentService: FilamentService,
+    public dialog: MatDialog
   ) {}
 
   // Help to get all photos controls as form array.
@@ -817,6 +820,25 @@ export class EditPrintDetailComponent
     return this.filamentUsage.controls.some((control) => {
       return control.value.filament === this.OTHER_FILAMENT_OPTION;
     });
+  }
+
+  public searchFilament(filamentControl: AbstractControl) {
+    const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
+      data: {
+        // Only show the Other Filament Option if it's used
+        otherFilamentOption: this.isOtherFilamentOptionUsed()
+          ? null
+          : this.OTHER_FILAMENT_OPTION,
+      },
+    });
+
+    dialogRef.componentInstance.dialogRef
+      .afterClosed()
+      .subscribe((filament) => {
+        if (filament) {
+          filamentControl.setValue(filament);
+        }
+      });
   }
 
   public removeFilament(index: number) {

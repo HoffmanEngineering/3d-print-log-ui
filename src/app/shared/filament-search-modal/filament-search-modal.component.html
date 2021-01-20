@@ -18,7 +18,7 @@
       Use Non-Tracked "Other" Filament
     </button>
   </div>
-  <button mat-button [mat-dialog-close]="null" cdkFocusInitial color="basic">
+  <button mat-button (click)="closeSelected()" cdkFocusInitial color="basic">
     Close
   </button>
 </mat-dialog-actions>

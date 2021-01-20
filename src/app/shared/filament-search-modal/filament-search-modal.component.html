@@ -1,0 +1,24 @@
+<mat-dialog-content>
+  <app-filament-list
+    (filamentSelected)="handleFilamentSelected($event)"
+  ></app-filament-list>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <div
+    matTooltip="Only one 'Other' filament record allowed per print."
+    [matTooltipDisabled]="this.data.otherFilamentOption !== null"
+    style="margin-right: 5px"
+  >
+    <button
+      mat-raised-button
+      [disabled]="this.data.otherFilamentOption === null"
+      (click)="selectOtherFilament()"
+      color="basic"
+    >
+      Use Non-Tracked "Other" Filament
+    </button>
+  </div>
+  <button mat-button [mat-dialog-close]="null" cdkFocusInitial color="basic">
+    Close
+  </button>
+</mat-dialog-actions>

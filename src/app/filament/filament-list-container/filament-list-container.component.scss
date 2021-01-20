@@ -4,6 +4,10 @@ table {
   td {
     padding-right: 5px;
   }
+  [mat-row]:hover {
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 }
 
 .header {

@@ -31,6 +31,8 @@ import { RouterModule } from '@angular/router';
 import { CallbackComponent } from './callback/callback.component';
 import { CommentComponent } from './comments/comment/comment.component';
 import { FeedbackComponent } from './feedback/feedback.component';
+import { FilamentListComponent } from './filament-list/filament-list.component';
+import { FilamentSearchModalComponent } from './filament-search-modal/filament-search-modal.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
 import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component';
@@ -63,6 +65,8 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     SimpleDialogComponent,
     ParserUnavailableDialogComponent,
     MaterialNamePipe,
+    FilamentListComponent,
+    FilamentSearchModalComponent,
   ],
   imports: [
     CommonModule,
@@ -138,6 +142,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     CommentComponent,
     HumanizePipe,
     MaterialNamePipe,
+    FilamentSearchModalComponent,
   ],
 })
 export class SharedModule {}

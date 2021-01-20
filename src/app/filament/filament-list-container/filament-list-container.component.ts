@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
@@ -17,11 +16,11 @@ import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 
 @Component({
-  selector: 'app-filament-list',
-  templateUrl: './filament-list.component.html',
-  styleUrls: ['./filament-list.component.scss'],
+  selector: 'app-filament-list-container',
+  templateUrl: './filament-list-container.component.html',
+  styleUrls: ['./filament-list-container.component.scss'],
 })
-export class FilamentListComponent implements OnInit {
+export class FilamentListContainerComponent implements OnInit {
   public filaments: FilamentSummary[] = [];
 
   public pageSize: number;

@@ -228,6 +228,17 @@
                     {{ printFilament.get('filament').value?.displayName }}
                   </div>
                   <div
+                    *ngIf="
+                      printFilament.get('filament').value?.colorName !== ''
+                    "
+                    fxFlex
+                  >
+                    {{ printFilament.get('filament').value?.colorName }}
+                  </div>
+                  <div fxFlex>
+                    {{ printFilament.get('filament').value?.materialType }}
+                  </div>
+                  <div
                     fxFlex="grow"
                     *ngIf="
                       printFilament.get('filament').value !==
@@ -252,7 +263,21 @@
                   </div>
                 </div>
                 <div fxFlex="grow" fxLayout="column">
-                  <mat-form-field fxFlex="grow" fxFlexFill>
+                  <button
+                    mat-raised-button
+                    color="accent"
+                    (click)="searchFilament(printFilament.get('filament'))"
+                    type="button"
+                    style="margin-bottom: 5px"
+                  >
+                    {{
+                      printFilament.get('filament')?.value !== null
+                        ? 'Change'
+                        : 'Select'
+                    }}
+                    Filament
+                  </button>
+                  <!-- <mat-form-field fxFlex="grow" fxFlexFill>
                     <mat-label> Filament</mat-label>
                     <mat-select
                       id="edit-print-estimated-print-time"
@@ -293,7 +318,7 @@
                         OTHER
                       </mat-option>
                     </mat-select>
-                  </mat-form-field>
+                  </mat-form-field> -->
                   <mat-form-field fxFlex="grow" fxFlexFill>
                     <mat-label> Estimated Filament Used (g)</mat-label>
                     <input

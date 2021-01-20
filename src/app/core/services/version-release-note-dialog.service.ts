@@ -10,6 +10,46 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes = {
+    '1.7.1': {
+      title: '1.7.1 Release - Delete Filament and Filament Search Dialog 🎉',
+      body: `<p>
+  Selecting a roll of filament for a print has now gotten easier. The Print's
+  Filament Usage now has a <strong>Select Filament</strong> button which will
+  open a filament search dialog. This lets you search for a specific roll of
+  filament. In addition, you can now delete a filament if it has not been used
+  in a Print from the Filament List.
+</p>
+<p>Full list of changes:</p>
+<ul>
+  <li>
+    Added a new Search Filament dialog in the Edit Print page to make
+    selecting filament for a print easier.
+  </li>
+  <li>
+    Added the ability to delete a filament from the Filaments list page.
+  </li>
+  <li>
+    Fixed a bug where the Filament Color was not being saved until it was
+    interacted with.
+  </li>
+  <li>
+    Various enhancements to accessibility and keyboard navigation on the
+    Filament pages.
+  </li>
+</ul>
+<p>
+  Support development of 3D Print Log by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  <br />Happy Printing!
+</p>`,
+    },
     '1.7.0': {
       title: 'New Release - Filament Tracking is Here 🎉',
       body: `<p>

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 
 import {
   FilamentService,

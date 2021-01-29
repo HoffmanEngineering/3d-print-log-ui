@@ -4,7 +4,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
 import {
   FilamentService,

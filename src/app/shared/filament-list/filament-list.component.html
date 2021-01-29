@@ -109,7 +109,7 @@
         Remaining (g)
       </th>
       <td mat-cell *matCellDef="let filament">
-        {{ filament.filamentRemaining / 1000 }}
+        {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}
       </td>
     </ng-container>
 

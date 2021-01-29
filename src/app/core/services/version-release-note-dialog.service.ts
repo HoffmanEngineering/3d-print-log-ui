@@ -2,6 +2,23 @@ import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { environment } from 'src/environments/environment';
+import { LocalStorageService } from './local-storage.service';
+
+export interface RedirectRelease {
+  /**
+   * Tells the version release notes to look and display another version's release notes
+   */
+  redirect: string;
+}
+
+export interface ReleaseNote {
+  title: string;
+  body: string;
+}
+
+export interface ReleaseNoteHistory {
+  [x: string]: ReleaseNote | RedirectRelease;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -9,7 +26,10 @@ import { environment } from 'src/environments/environment';
 export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
-  private releaseNotes = {
+  private releaseNotes: ReleaseNoteHistory = {
+    '1.7.2': {
+      redirect: '1.7.1',
+    },
     '1.7.1': {
       title: '1.7.1 Release - Delete Filament and Filament Search Dialog 🎉',
       body: `<p>
@@ -88,39 +108,90 @@ export class VersionReleaseNoteDialogService {
     },
   };
 
-  constructor(private readonly dialog: MatDialog) {}
+  constructor(
+    private readonly dialog: MatDialog,
+    private readonly localStorageService: LocalStorageService
+  ) {}
 
-  public checkLastLoggedInVersion() {
-    const version = localStorage.getItem(this.LOCAL_STORAGE_KEY);
+  public async checkLastLoggedInVersion() {
+    const version = this.localStorageService.getItem(this.LOCAL_STORAGE_KEY);
 
     if (version === null || version !== environment.version) {
-      this.displayReleaseNotes(environment.version);
+      await this.displayReleaseNotes(environment.version, version);
     }
   }
 
   private setLastLoggedInVersion(version: string) {
-    localStorage.setItem(this.LOCAL_STORAGE_KEY, version);
+    this.localStorageService.setItem(this.LOCAL_STORAGE_KEY, version);
   }
 
-  private displayReleaseNotes(newVersion: string) {
-    if (this.releaseNotes[newVersion]) {
-      const dialogRef = this.dialog.open(SimpleDialogComponent, {
-        maxWidth: '400px',
-      });
-      (dialogRef.componentInstance as any).title = this.releaseNotes[
-        newVersion
-      ].title;
-      // tslint:disable-next-line: max-line-length
-      (dialogRef.componentInstance as any).body = this.releaseNotes[
-        newVersion
-      ].body;
-      (dialogRef.componentInstance as any).yesText = 'Ok';
-      (dialogRef.componentInstance as any).yesColor = 'primary';
-      (dialogRef.componentInstance as any).noText = '';
+  private async displayReleaseNotes(
+    newVersion: string,
+    lastDisplayedVersion: string
+  ) {
+    let release = this.releaseNotes[newVersion];
 
-      dialogRef.afterClosed().subscribe(() => {
-        this.setLastLoggedInVersion(newVersion);
-      });
+    if (release) {
+      // Account for redirected release notes
+      if (this.isRedirect(release)) {
+        release = this.getRedirectedReleaseNotes(release, lastDisplayedVersion);
+      }
+      if (release) {
+        await this.showReleaseNote(release);
+      }
+
+      this.setLastLoggedInVersion(newVersion);
     }
+  }
+
+  /**
+   * Recursively loop through all redirects until you find one that is a release note
+   */
+  getRedirectedReleaseNotes(
+    release: RedirectRelease | ReleaseNote,
+    lastDisplayedVersionKey: string
+  ): ReleaseNote | null {
+    if (this.isReleaseNote(release)) {
+      return release;
+    } else if (this.isRedirect(release)) {
+      const redirectedKey = release.redirect;
+      const redirectedNote = this.releaseNotes[redirectedKey];
+
+      // If we've already seen the release that was redirected, stop here
+      if (redirectedKey === lastDisplayedVersionKey) {
+        return null;
+      }
+
+      if (!redirectedNote) {
+        return null;
+      }
+
+      return this.getRedirectedReleaseNotes(
+        redirectedNote,
+        lastDisplayedVersionKey
+      );
+    }
+  }
+
+  private isReleaseNote(obj: any): obj is ReleaseNote {
+    return obj.title && obj.body;
+  }
+
+  private isRedirect(obj: any): obj is RedirectRelease {
+    return obj.redirect !== undefined;
+  }
+
+  private showReleaseNote(releaseNote: ReleaseNote) {
+    const dialogRef = this.dialog.open(SimpleDialogComponent, {
+      maxWidth: '400px',
+    });
+    dialogRef.componentInstance.title = releaseNote.title;
+
+    dialogRef.componentInstance.body = releaseNote.body;
+    dialogRef.componentInstance.yesText = 'Ok';
+    dialogRef.componentInstance.yesColor = 'primary';
+    dialogRef.componentInstance.noText = '';
+
+    return dialogRef.afterClosed().toPromise();
   }
 }

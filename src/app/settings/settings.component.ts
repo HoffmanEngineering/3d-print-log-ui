@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
+import { MetaTagService } from '../core/services/meta-tag.service';
 import { PrintService, PrintViewStatus } from '../core/services/print.service';
 import {
   UserSetting,
@@ -39,10 +41,14 @@ export class SettingsComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private userService: UserService,
     private userSettingService: UserSettingService,
-    private readonly printService: PrintService
+    private readonly printService: PrintService,
+    private readonly metaService: MetaTagService,
+    private readonly toastrService: ToastrService
   ) {}
 
   ngOnInit(): void {
+    this.metaService.setTitle('Settings - 3D Print Log');
+
     this.activatedRoute.data.subscribe((data) => {
       this.userDetailsOnLoad = data.currentUser;
 
@@ -104,10 +110,19 @@ export class SettingsComponent implements OnInit {
     }
 
     this.exportInProgress = true;
-    this.printService.exportAllPrintsAsCsv().subscribe((file) => {
-      this.downloadBlob(file);
-      this.exportInProgress = false;
-    });
+    this.printService.exportAllPrintsAsCsv().subscribe(
+      (file) => {
+        this.downloadBlob(file);
+        this.exportInProgress = false;
+      },
+      (err) => {
+        this.toastrService.error(
+          'An error has occurred while exporting data. Please try again in a few seconds.',
+          'Error Exporting'
+        );
+        this.exportInProgress = false;
+      }
+    );
   }
 
   private downloadBlob(newBlob: Blob): void {

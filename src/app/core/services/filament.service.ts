@@ -32,7 +32,7 @@ export interface FilamentDetail {
 }
 
 export interface FilamentSummary {
-  id: string;
+  id: string | null;
   displayName: string;
   brand: string;
   materialType: string;

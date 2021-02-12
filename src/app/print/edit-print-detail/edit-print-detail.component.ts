@@ -61,7 +61,7 @@ export interface PrintImageValue {
 export class EditPrintDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy {
   public OTHER_FILAMENT_OPTION: Partial<FilamentSummary> = {
-    id: 'OTHER',
+    id: EMPTY_GUID,
     displayName: 'Other',
   } as const;
 
@@ -95,8 +95,6 @@ export class EditPrintDetailComponent
   printerRedirectToast: ActiveToast<any>;
   printerRedirectSubscription: Subscription;
 
-  public filamentSummaries: FilamentSummary[];
-
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -109,7 +107,6 @@ export class EditPrintDetailComponent
     private readonly printerRedirectPromptService: PrinterRedirectPromptService,
     private readonly loggingService: LoggingService,
     private el: ElementRef,
-    private readonly filamentService: FilamentService,
     public dialog: MatDialog
   ) {}
 
@@ -164,12 +161,6 @@ export class EditPrintDetailComponent
 
       this.onChanges();
     });
-
-    this.filamentService
-      .getCurrentUserFilamentSummaries(1, 250)
-      .subscribe((filaments) => {
-        this.filamentSummaries = filaments.items;
-      });
 
     /**
      * Show the Add Printer prompt if needed.
@@ -397,7 +388,7 @@ export class EditPrintDetailComponent
       ],
       filamentType: [print ? print.filamentType : ''],
       filamentUsage: printFilamentUsageArray,
-      notes: [print ? print.notes : ''],
+      notes: [print?.notes ?? ''],
       url: [print ? print.url : ''],
       status: [print ? print.status : PrintStatus.Pending],
       viewStatus: [
@@ -689,47 +680,33 @@ export class EditPrintDetailComponent
         };
       });
 
-    const filamentUsage = this.filamentUsage.controls
-      .filter(
-        (fu) =>
-          fu.get('filament').value !== null &&
-          fu.get('filament').value !== this.OTHER_FILAMENT_OPTION
-      )
-      .map((printFilament) => {
-        const newPf: PrintFilamentSummaryDto = {
-          id: printFilament.get('id').value ?? EMPTY_GUID,
-          estimatedAmountMg: Math.round(
-            +printFilament.get('estimatedAmountG').value * 1000
-          ),
-          filament: printFilament.get('filament').value,
-          amountMg: Math.round(+printFilament.get('amountG').value * 1000),
-          notes: printFilament.get('notes').value,
-        };
+    const filamentUsage = this.filamentUsage.controls.map((printFilament) => {
+      const newPf: PrintFilamentSummaryDto = {
+        id: printFilament.get('id').value ?? EMPTY_GUID,
+        estimatedAmountMg: Math.round(
+          +printFilament.get('estimatedAmountG').value * 1000
+        ),
+        filament: printFilament.get('filament')?.value,
+        amountMg: Math.round(+printFilament.get('amountG').value * 1000),
+        notes: printFilament.get('notes').value,
+      };
 
-        return newPf;
-      });
+      return newPf;
+    });
 
     /** Check if the Other Filament Option is in use. If so, then save it into the dedicated fields. */
-    const filamentUsageWithOtherOption = this.filamentUsage.controls.find(
-      (f) => f.get('filament').value === this.OTHER_FILAMENT_OPTION
-    );
+    // const filamentUsageWithOtherOption = this.filamentUsage.controls.find(
+    //   (f) => f.get('filament').value === this.OTHER_FILAMENT_OPTION
+    // );
 
     const print: Omit<PrintDetail, 'comments'> = {
       id: this.printForm.controls.id.value,
-      estimatedFilamentUsageMg: filamentUsageWithOtherOption
-        ? Math.round(
-            filamentUsageWithOtherOption.get('estimatedAmountG').value * 1000
-          )
-        : null,
+      estimatedFilamentUsageMg: null,
       estimatedPrintTimeInSeconds: this.parseAsSeconds(
         this.printForm.controls.estimatedPrintTimeInSeconds.value
       ),
-      filamentType: filamentUsageWithOtherOption
-        ? filamentUsageWithOtherOption.get('notes').value
-        : null,
-      filamentUsageMg: filamentUsageWithOtherOption
-        ? Math.round(filamentUsageWithOtherOption.get('amountG').value * 1000)
-        : null,
+      filamentType: null,
+      filamentUsageMg: null,
       filamentUsage,
       notes: this.printForm.controls.notes.value,
       printTimeInSeconds: this.parseAsSeconds(
@@ -804,7 +781,7 @@ export class EditPrintDetailComponent
     }
   }
 
-  addNewFilamentUsage() {
+  public addNewFilamentUsage() {
     const newFormGroup = this.GetNewFilamentUsageForm(
       EMPTY_GUID,
       0,
@@ -816,19 +793,11 @@ export class EditPrintDetailComponent
     this.filamentUsage.push(newFormGroup);
   }
 
-  public isOtherFilamentOptionUsed(): boolean {
-    return this.filamentUsage.controls.some((control) => {
-      return control.value.filament === this.OTHER_FILAMENT_OPTION;
-    });
-  }
-
   public searchFilament(filamentControl: AbstractControl) {
     const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
       data: {
         // Only show the Other Filament Option if it's used
-        otherFilamentOption: this.isOtherFilamentOptionUsed()
-          ? null
-          : this.OTHER_FILAMENT_OPTION,
+        otherFilamentOption: this.OTHER_FILAMENT_OPTION,
       },
     });
 

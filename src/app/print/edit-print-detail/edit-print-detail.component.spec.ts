@@ -57,10 +57,6 @@ describe('EditPrintDetailComponent', () => {
         ['logException', 'logEvent']
       );
 
-      const mockFilamentService = jasmine.createSpyObj<FilamentService>(
-        'FilamentService',
-        ['getCurrentUserFilamentSummaries']
-      );
       mockFilamentService.getCurrentUserFilamentSummaries.and.returnValue(
         of({
           paging: {
@@ -95,7 +91,6 @@ describe('EditPrintDetailComponent', () => {
             useValue: mockPrinterPromptService,
           },
           { provide: LoggingService, useValue: mockLogger },
-          { provide: FilamentService, useValue: mockFilamentService },
           {
             provide: ActivatedRoute,
             useValue: {

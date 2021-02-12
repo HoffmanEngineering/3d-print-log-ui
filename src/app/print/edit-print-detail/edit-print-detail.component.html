@@ -277,48 +277,7 @@
                     }}
                     Filament
                   </button>
-                  <!-- <mat-form-field fxFlex="grow" fxFlexFill>
-                    <mat-label> Filament</mat-label>
-                    <mat-select
-                      id="edit-print-estimated-print-time"
-                      formControlName="filament"
-                      [compareWith]="compareByFilamentId"
-                    >
-                      <mat-option
-                        *ngFor="let filament of filamentSummaries"
-                        [value]="filament"
-                      >
-                        <span
-                          style="
-                            display: inline-block;
-                            width: 15px;
-                            height: 15px;
-                            vertical-align: middle;
-                          "
-                          [ngStyle]="{
-                            'background-color': filament.colorHex
-                              ? '#' + filament.colorHex
-                              : null
-                          }"
-                        ></span>
-                        {{ filament.displayName }} -
-                        {{ filament.colorName }} ({{
-                          filament?.filamentRemaining / 1000 | number
-                        }}
-                        g)
-                      </mat-option>
-                      <mat-option
-                        *ngIf="
-                          printFilament.get('filament').value ===
-                            OTHER_FILAMENT_OPTION ||
-                          !isOtherFilamentOptionUsed()
-                        "
-                        [value]="OTHER_FILAMENT_OPTION"
-                      >
-                        OTHER
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field> -->
+
                   <mat-form-field fxFlex="grow" fxFlexFill>
                     <mat-label> Estimated Filament Used (g)</mat-label>
                     <input

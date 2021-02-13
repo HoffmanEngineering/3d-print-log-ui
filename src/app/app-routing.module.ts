@@ -64,6 +64,16 @@ const routes: Routes = [
       import('./settings/settings.module').then((m) => m.SettingsModule),
   },
   {
+    path: 'filament',
+    loadChildren: () =>
+      import('./filament/filament.module').then((m) => m.FilamentModule),
+  },
+  {
+    path: 'api-keys',
+    loadChildren: () =>
+      import('./apikeys/apikeys.module').then((m) => m.ApikeysModule),
+  },
+  {
     path: 'home-redirect',
     canActivate: [HomepageRedirectGuard],
     pathMatch: 'full',
@@ -73,11 +83,6 @@ const routes: Routes = [
     path: '',
     component: HomeComponent,
     pathMatch: 'full',
-  },
-  {
-    path: 'filament',
-    loadChildren: () =>
-      import('./filament/filament.module').then((m) => m.FilamentModule),
   },
 
   {

@@ -1,0 +1,158 @@
+<div fxLayout="row" fxLayoutAlign="center">
+  <mat-card fxFlex="80vw" fxFlex.xs="100%">
+    <form
+      autocomplete="off"
+      fxLayout="column wrap"
+      fxLayoutAlign="start center"
+      fxLayoutGap="10px"
+    >
+      <mat-card-title fxFlex="grow"> API Keys</mat-card-title>
+      <mat-card-content
+        fxFlex="grow"
+        fxFlexFill
+        fxLayout="column wrap"
+        fxLayoutAlign="space-evenly center"
+      >
+        <button
+          fxFlex
+          fxFlexAlign="start"
+          mat-raised-button
+          type="button"
+          color="accent"
+          id="add-new-filament"
+          (click)="startAddNewKey()"
+        >
+          Create new API Key
+        </button>
+        <div
+          *ngIf="addingKey"
+          class="mat-elevation-z5 new-key"
+          style="padding: 10px"
+        >
+          <p>
+            API keys are used by applications outside the browser to access your
+            3D Print Log.
+            <br />
+            Your API keys should be managed like passwords. Keep them secret.
+          </p>
+          <mat-form-field style="width: 100%">
+            <mat-label>Description of new key:</mat-label>
+            <textarea
+              matInput
+              cdkTextareaAutosize
+              [(ngModel)]="newKeyDescription"
+              [ngModelOptions]="{ standalone: true }"
+              maxlength="1000"
+              cdkAutosizeMinRows="2"
+              cdkAutosizeMaxRows="2"
+            ></textarea>
+            <mat-hint>
+              {{ 1000 - newKeyDescription.length }} characters
+              remaining.</mat-hint
+            >
+          </mat-form-field>
+          <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+            <button
+              mat-raised-button
+              type="button"
+              color="primary"
+              (click)="addNewKey()"
+            >
+              Submit
+            </button>
+            <button
+              mat-raised-button
+              type="button"
+              class="close"
+              (click)="cancelAddNewKey()"
+              color="warn"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+        <div *ngIf="loading" class="spinner">Loading...</div>
+
+        <table fxFlex="grow" fxFlexFill mat-table [dataSource]="keys">
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let key">
+              <div>{{ key.description }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="key">
+            <th mat-header-cell *matHeaderCellDef>Key</th>
+            <td mat-cell *matCellDef="let key">
+              <div>
+                <div *ngIf="key.privateKey !== undefined">
+                  <div fxLayout="row">
+                    <mat-form-field fxFlex="40ch">
+                      <input
+                        matInput
+                        maxlength="1000"
+                        [value]="key.privateKey"
+                        disabled
+                      />
+                    </mat-form-field>
+                    <button
+                      fxFlex="60px"
+                      style="width=40px; height: 40px"
+                      type="button"
+                      mat-raised-button
+                      color="primary"
+                      (click)="copyToClipboard(key.privateKey)"
+                      aria-label="Copy key to clipboard"
+                      matTooltip="Copy key to clipboard"
+                    >
+                      <mat-icon>content_copy</mat-icon>
+                    </button>
+                  </div>
+                  <div>
+                    Make sure you copy this key now. We don't store it, and
+                    after you leave this page you won't be able to see it again.
+                  </div>
+                </div>
+
+                <input
+                  *ngIf="key.privateKey == undefined"
+                  value="******************************"
+                  disabled
+                />
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="created">
+            <th mat-header-cell *matHeaderCellDef>Created</th>
+            <td mat-cell *matCellDef="let key">
+              <div>{{ key.createdDate | date: 'short' }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="delete">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let key">
+              <button
+                type="button"
+                (click)="deleteKey(key.id)"
+                aria-label="Delete API Key"
+                mat-raised-button
+                color="warn"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            data-cy-filament-row
+          ></tr>
+        </table>
+      </mat-card-content>
+    </form>
+  </mat-card>
+</div>

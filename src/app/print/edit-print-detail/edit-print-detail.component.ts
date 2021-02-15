@@ -327,7 +327,11 @@ export class EditPrintDetailComponent
         const newFormGroup = this.GetNewFilamentUsageForm(
           pf.id,
           pf.amountMg / 1000,
+          pf.lengthInM,
+          pf.isActualLengthSource,
           pf.estimatedAmountMg / 1000,
+          pf.estimatedLengthInM,
+          pf.isEstimatedLengthSource,
           pf.filament,
           pf.notes
         );
@@ -345,7 +349,11 @@ export class EditPrintDetailComponent
       const newFormGroup = this.GetNewFilamentUsageForm(
         EMPTY_GUID,
         print.filamentUsageMg / 1000,
+        null,
+        false,
         print.estimatedFilamentUsageMg / 1000,
+        null,
+        false,
         this.OTHER_FILAMENT_OPTION as FilamentSummary,
         print.filamentType
       );
@@ -412,14 +420,22 @@ export class EditPrintDetailComponent
   private GetNewFilamentUsageForm(
     id: string,
     amountG: number,
+    lengthInM: number,
+    isActualLengthSource: boolean,
     estimatedAmountG: number,
+    estimatedLengthInM: number,
+    isEstimatedLengthSource: boolean,
     filament: FilamentSummary | null,
     notes: string | null
   ) {
     return this.formBuilder.group({
       id,
       amountG,
+      lengthInM,
+      isActualLengthSource,
       estimatedAmountG,
+      estimatedLengthInM,
+      isEstimatedLengthSource,
       filament,
       notes,
     });
@@ -686,8 +702,13 @@ export class EditPrintDetailComponent
         estimatedAmountMg: Math.round(
           +printFilament.get('estimatedAmountG').value * 1000
         ),
+        estimatedLengthInM: printFilament.get('estimatedLengthInM').value,
+        isEstimatedLengthSource: printFilament.get('isEstimatedLengthSource')
+          .value,
         filament: printFilament.get('filament')?.value,
         amountMg: Math.round(+printFilament.get('amountG').value * 1000),
+        lengthInM: printFilament.get('lengthInM').value,
+        isActualLengthSource: printFilament.get('isActualLengthSource').value,
         notes: printFilament.get('notes').value,
       };
 
@@ -785,7 +806,11 @@ export class EditPrintDetailComponent
     const newFormGroup = this.GetNewFilamentUsageForm(
       EMPTY_GUID,
       0,
+      null,
+      false,
       0,
+      null,
+      false,
       null,
       ''
     );
@@ -805,7 +830,11 @@ export class EditPrintDetailComponent
       .afterClosed()
       .subscribe((filament) => {
         if (filament) {
-          filamentControl.setValue(filament);
+          if (filament === this.OTHER_FILAMENT_OPTION) {
+            filamentControl.setValue(null);
+          } else {
+            filamentControl.setValue(filament);
+          }
         }
       });
   }

@@ -32,7 +32,7 @@ export interface FilamentDetail {
 }
 
 export interface FilamentSummary {
-  id: string | null;
+  id: string;
   displayName: string;
   brand: string;
   materialType: string;
@@ -44,6 +44,7 @@ export interface FilamentSummary {
   notes: string;
   createdDate: string;
   filamentRemaining: number | null;
+  filamentLengthRemainingInM: number | null;
 }
 
 export interface FilamentAdjustment {

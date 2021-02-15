@@ -5,6 +5,7 @@ import {
   ApiKeyService,
   UserApiKeySummary,
 } from '../core/services/api-key.service';
+import { MetaTagService } from '../core/services/meta-tag.service';
 
 export interface UserApiKeySummaryWithKey extends UserApiKeySummary {
   privateKey?: string;
@@ -33,10 +34,13 @@ export class ApikeysComponent implements OnInit {
   constructor(
     private readonly apiKeyService: ApiKeyService,
     private readonly clipboard: Clipboard,
-    private readonly toastrService: ToastrService
+    private readonly toastrService: ToastrService,
+    private readonly metaService: MetaTagService
   ) {}
 
   ngOnInit(): void {
+    this.metaService.setTitle('Personal Api Keys | 3D Print Log');
+
     this.loading = true;
     this.apiKeyService.getApiKeySummaryForUser().subscribe((keys) => {
       this.keys = keys;

@@ -225,7 +225,10 @@
                     ></div>
                   </div>
                   <div fxFlex>
-                    {{ printFilament.get('filament').value?.displayName }}
+                    {{
+                      printFilament.get('filament').value?.displayName ||
+                        'Other'
+                    }}
                   </div>
                   <div
                     *ngIf="
@@ -240,10 +243,7 @@
                   </div>
                   <div
                     fxFlex="grow"
-                    *ngIf="
-                      printFilament.get('filament').value !==
-                      OTHER_FILAMENT_OPTION
-                    "
+                    *ngIf="printFilament.get('filament').value !== null"
                   >
                     {{
                       printFilament.get('filament').value?.filamentRemaining /
@@ -253,10 +253,7 @@
                   </div>
                   <div
                     fxFlex="grow"
-                    *ngIf="
-                      printFilament.get('filament').value !==
-                      OTHER_FILAMENT_OPTION
-                    "
+                    *ngIf="printFilament.get('filament').value !== null"
                   >
                     {{
                       printFilament.get('filament').value
@@ -434,8 +431,7 @@
                   <mat-form-field fxFlex="grow" fxFlexFill>
                     <mat-label>
                       {{
-                        printFilament.get('filament').value ===
-                        OTHER_FILAMENT_OPTION
+                        printFilament.get('filament').value === null
                           ? 'Filament Type'
                           : 'Notes'
                       }}</mat-label

@@ -340,6 +340,7 @@ export class EditPrintDetailComponent
       });
     }
 
+    // Convert the old filamentType/FilamentUsage properties into the new Filament Usage format.
     if (
       print &&
       (!(print.filamentType === null || print.filamentType === '') ||
@@ -821,7 +822,6 @@ export class EditPrintDetailComponent
   public searchFilament(filamentControl: AbstractControl) {
     const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
       data: {
-        // Only show the Other Filament Option if it's used
         otherFilamentOption: this.OTHER_FILAMENT_OPTION,
       },
     });

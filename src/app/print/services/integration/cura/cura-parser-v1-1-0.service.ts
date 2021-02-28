@@ -329,6 +329,7 @@ export class CuraParserV1pt1pt0Service implements NewPrintParser {
       filamentType: '',
       notes: '',
       url: '',
+      fileName: '',
       status: PrintStatus.Pending,
       viewStatus: null,
       images: [],

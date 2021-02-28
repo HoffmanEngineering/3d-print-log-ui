@@ -7,7 +7,7 @@ import { INavData } from './types';
   styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnInit {
-  @Input() navItems: INavData;
+  @Input() navItems: INavData[];
 
   constructor() {}
 

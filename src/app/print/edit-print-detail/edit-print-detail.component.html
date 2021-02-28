@@ -356,7 +356,7 @@
                       </mat-error>
                     </mat-form-field>
                     <mat-form-field fxFlex="80px">
-                      <mat-label>Amount</mat-label>
+                      <mat-label>Measure</mat-label>
                       <mat-select formControlName="isEstimatedLengthSource">
                         <mat-option [value]="false"> Weight </mat-option>
                         <mat-option [value]="true"> Length </mat-option>
@@ -421,7 +421,7 @@
                       </mat-error>
                     </mat-form-field>
                     <mat-form-field fxFlex="80px">
-                      <mat-label>Amount</mat-label>
+                      <mat-label>Measure</mat-label>
                       <mat-select formControlName="isActualLengthSource">
                         <mat-option [value]="false"> Weight </mat-option>
                         <mat-option [value]="true"> Length </mat-option>
@@ -467,6 +467,17 @@
             {{ 1000 - printForm.get('notes').value.length }} characters
             remaining.</mat-hint
           >
+        </mat-form-field>
+
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label> File Name</mat-label>
+          <input
+            id="edit-print-file-name"
+            matInput
+            type="text"
+            formControlName="fileName"
+            maxlength="1000"
+          />
         </mat-form-field>
 
         <mat-form-field fxFlex="grow" fxFlexFill>

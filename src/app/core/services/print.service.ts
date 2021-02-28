@@ -111,6 +111,7 @@ export interface PrintDetailDTO {
   filamentType: string;
   notes: string;
   url: string;
+  fileName: string;
   status: PrintStatus;
   viewStatus: PrintViewStatus;
   images?: PrintImage[];
@@ -132,6 +133,7 @@ export interface PutPrintDetailDTO {
   filamentType: string;
   notes: string;
   url: string;
+  fileName: string;
   status: PrintStatus;
   viewStatus: PrintViewStatus;
   allowComments: boolean;
@@ -151,6 +153,7 @@ export interface PrintDetail {
   filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
   url: string;
+  fileName: string;
   status: PrintStatus;
 
   viewStatus: PrintViewStatus;
@@ -176,6 +179,7 @@ export interface AddPrintDTO {
   filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
   url: string;
+  fileName: string;
   status: PrintStatus;
 
   viewStatus: PrintViewStatus;
@@ -267,6 +271,7 @@ export class PrintService {
             status: newPrint.status,
             title: newPrint.title,
             url: newPrint.url,
+            fileName: newPrint.fileName,
             viewStatus: newPrint.viewStatus,
             images: newPrint.images || [],
             filamentUsage: newPrint.filamentUsage || [],
@@ -314,6 +319,7 @@ export class PrintService {
       status: newPrint.status,
       title: newPrint.title,
       url: newPrint.url,
+      fileName: newPrint.fileName,
       viewStatus: newPrint.viewStatus,
       allowComments: newPrint.allowComments,
       filamentUsage: newPrint.filamentUsage,
@@ -356,6 +362,7 @@ export class PrintService {
       status: print.status,
       title: print.title,
       url: print.url,
+      fileName: print.fileName,
       id: print.id,
       viewStatus: print.viewStatus,
       allowComments: print.allowComments,

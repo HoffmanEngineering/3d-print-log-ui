@@ -399,6 +399,7 @@ export class EditPrintDetailComponent
       filamentUsage: printFilamentUsageArray,
       notes: [print?.notes ?? ''],
       url: [print ? print.url : ''],
+      fileName: [print?.fileName ?? ''],
       status: [print ? print.status : PrintStatus.Pending],
       viewStatus: [
         print && print.viewStatus !== null
@@ -740,6 +741,7 @@ export class EditPrintDetailComponent
       viewStatus: this.printForm.controls.viewStatus.value,
       title: this.printForm.controls.title.value,
       url: this.printForm.controls.url.value,
+      fileName: this.printForm.controls.fileName.value,
       images: existingPrintImages,
       createdByUserId: null,
       allowComments: this.printForm.controls.allowComments.value,

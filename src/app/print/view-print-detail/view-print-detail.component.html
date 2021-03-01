@@ -70,12 +70,17 @@
                 <ng-container *ngIf="printFilament.isEstimatedLengthSource">
                   <ng-container *ngIf="printFilament.estimatedLengthInM > 0">
                     <h3>Estimated:</h3>
-                    <p>{{ printFilament.estimatedLengthInM }} meters</p>
+                    <p>
+                      {{
+                        printFilament.estimatedLengthInM | number: '1.0-1'
+                      }}
+                      meters
+                    </p>
                   </ng-container>
                 </ng-container>
                 <ng-container *ngIf="!printFilament.isEstimatedLengthSource">
                   <ng-container *ngIf="printFilament.estimatedAmountMg > 0">
-                    <h3>Estimated:</h3>
+                    <h3>Actual:</h3>
                     <p>{{ printFilament.estimatedAmountMg / 1000 }} grams</p>
                   </ng-container>
                 </ng-container>
@@ -83,7 +88,9 @@
                 <ng-container *ngIf="printFilament.isActualLengthSource">
                   <ng-container *ngIf="printFilament.lengthInM > 0">
                     <h3>Estimated:</h3>
-                    <p>{{ printFilament.lengthInM }} meters</p>
+                    <p>
+                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
+                    </p>
                   </ng-container>
                 </ng-container>
                 <ng-container *ngIf="!printFilament.isActualLengthSource">
@@ -100,12 +107,17 @@
                 <ng-container *ngIf="printFilament.isEstimatedLengthSource">
                   <ng-container *ngIf="printFilament.estimatedLengthInM > 0">
                     <h3>Estimated:</h3>
-                    <p>{{ printFilament.estimatedLengthInM }} meters</p>
+                    <p>
+                      {{
+                        printFilament.estimatedLengthInM | number: '1.0-1'
+                      }}
+                      meters
+                    </p>
                   </ng-container>
                 </ng-container>
                 <ng-container *ngIf="!printFilament.isEstimatedLengthSource">
                   <ng-container *ngIf="printFilament.estimatedAmountMg > 0">
-                    <h3>Estimated:</h3>
+                    <h3>Actual:</h3>
                     <p>{{ printFilament.estimatedAmountMg / 1000 }} grams</p>
                   </ng-container>
                 </ng-container>
@@ -113,7 +125,9 @@
                 <ng-container *ngIf="printFilament.isActualLengthSource">
                   <ng-container *ngIf="printFilament.lengthInM > 0">
                     <h3>Estimated:</h3>
-                    <p>{{ printFilament.lengthInM }} meters</p>
+                    <p>
+                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
+                    </p>
                   </ng-container>
                 </ng-container>
                 <ng-container *ngIf="!printFilament.isActualLengthSource">

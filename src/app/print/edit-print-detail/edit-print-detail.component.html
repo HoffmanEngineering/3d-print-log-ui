@@ -333,7 +333,6 @@
                         id="edit-print-estimated-print-time"
                         matInput
                         type="text"
-                        pattern="^\d*(\.\d{0,3})?$"
                         formControlName="estimatedLengthInM"
                       />
                       <mat-error
@@ -344,15 +343,6 @@
                         "
                       >
                         Estimated Filament Usage must be a positive number.
-                      </mat-error>
-                      <mat-error
-                        *ngIf="
-                          printFilament
-                            .get('estimatedLengthInM')
-                            .hasError('pattern')
-                        "
-                      >
-                        Numbers (up to 3-decimal places) only.
                       </mat-error>
                     </mat-form-field>
                     <mat-form-field fxFlex="80px">
@@ -407,22 +397,12 @@
                         id="edit-print-estimated-print-time"
                         matInput
                         type="text"
-                        pattern="^\d*(\.\d{0,3})?$"
                         formControlName="lengthInM"
                       />
                       <mat-error
                         *ngIf="printFilament.get('lengthInM').hasError('min')"
                       >
                         Actual Filament Usage must be a positive number.
-                      </mat-error>
-                      <mat-error
-                        *ngIf="
-                          printFilament
-                            .get('estimatedLengthInM')
-                            .hasError('pattern')
-                        "
-                      >
-                        Numbers (up to 3-decimal places) only.
                       </mat-error>
                     </mat-form-field>
                     <mat-form-field fxFlex="80px">
@@ -438,7 +418,7 @@
                       {{
                         printFilament.get('filament').value === null
                           ? 'Filament Type'
-                          : 'Notes'
+                          : 'Filament Notes'
                       }}</mat-label
                     >
 

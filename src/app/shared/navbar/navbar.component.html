@@ -179,6 +179,14 @@
           routerLinkActive="active"
           >Settings</a
         >
+        <a
+          *ngIf="auth.loggedIn"
+          class="menu-link"
+          mat-menu-item
+          [routerLink]="['/api-keys']"
+          routerLinkActive="active"
+          >Personal Api Keys</a
+        >
         <button mat-menu-item (click)="auth.logout()" *ngIf="auth.loggedIn">
           Log Out
         </button>

@@ -24,10 +24,7 @@ import { Title } from '@angular/platform-browser';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
-import {
-  FilamentService,
-  FilamentSummary,
-} from 'src/app/core/services/filament.service';
+import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
@@ -61,7 +58,7 @@ export interface PrintImageValue {
 export class EditPrintDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy {
   public OTHER_FILAMENT_OPTION: Partial<FilamentSummary> = {
-    id: 'OTHER',
+    id: EMPTY_GUID,
     displayName: 'Other',
   } as const;
 
@@ -91,11 +88,11 @@ export class EditPrintDetailComponent
 
   public lastAllowCommentsSetting: UserSetting | null = null;
   lastAllowCommentsChangesSub: Subscription;
+  public lastFilamentMeasureSetting: UserSetting | null = null;
+
   printerRedirectPromptSubscription: Subscription;
   printerRedirectToast: ActiveToast<any>;
   printerRedirectSubscription: Subscription;
-
-  public filamentSummaries: FilamentSummary[];
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -109,7 +106,6 @@ export class EditPrintDetailComponent
     private readonly printerRedirectPromptService: PrinterRedirectPromptService,
     private readonly loggingService: LoggingService,
     private el: ElementRef,
-    private readonly filamentService: FilamentService,
     public dialog: MatDialog
   ) {}
 
@@ -124,25 +120,15 @@ export class EditPrintDetailComponent
   }
 
   ngOnDestroy(): void {
-    if (this.printerIdValueChangesSub) {
-      this.printerIdValueChangesSub.unsubscribe();
-    }
+    this.printerIdValueChangesSub?.unsubscribe?.();
 
-    if (this.viewStatusValueChangesSub) {
-      this.viewStatusValueChangesSub.unsubscribe();
-    }
+    this.viewStatusValueChangesSub?.unsubscribe?.();
 
-    if (this.lastAllowCommentsChangesSub) {
-      this.lastAllowCommentsChangesSub.unsubscribe();
-    }
+    this.lastAllowCommentsChangesSub?.unsubscribe?.();
 
-    if (this.printerRedirectPromptSubscription) {
-      this.printerRedirectPromptSubscription.unsubscribe();
-    }
+    this.printerRedirectPromptSubscription?.unsubscribe?.();
 
-    if (this.printerRedirectSubscription) {
-      this.printerRedirectSubscription.unsubscribe();
-    }
+    this.printerRedirectSubscription?.unsubscribe?.();
   }
 
   @HostListener('window:beforeunload')
@@ -159,17 +145,12 @@ export class EditPrintDetailComponent
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
       this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
       this.lastAllowCommentsSetting = data.lastAllowCommentsSetting;
+      this.lastFilamentMeasureSetting = data.lastFilamentMeasureSetting;
 
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
 
       this.onChanges();
     });
-
-    this.filamentService
-      .getCurrentUserFilamentSummaries(1, 250)
-      .subscribe((filaments) => {
-        this.filamentSummaries = filaments.items;
-      });
 
     /**
      * Show the Add Printer prompt if needed.
@@ -202,11 +183,34 @@ export class EditPrintDetailComponent
   }
 
   private onChanges() {
-    this.SaveSettingWhenPrintIdChanges();
+    this.SaveSettingWhenSelectedPrinterIdChanges();
     this.SaveSettingWhenAllowCommentsChanges();
   }
+  public HandleFilamentMeasureTypeChange(isLength: boolean) {
+    const newValue = isLength ? 'Length' : 'Weight';
 
-  private SaveSettingWhenPrintIdChanges() {
+    if (this.lastFilamentMeasureSetting) {
+      this.userSettingService
+        .updateUserSetting(
+          this.lastFilamentMeasureSetting.id,
+          isLength ? 'Length' : 'Weight'
+        )
+        .subscribe((setting) => {
+          this.lastFilamentMeasureSetting = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Prints_LastSelectedFilamentMeasureType,
+          newValue
+        )
+        .subscribe((setting) => {
+          this.lastFilamentMeasureSetting = setting;
+        });
+    }
+  }
+
+  private SaveSettingWhenSelectedPrinterIdChanges() {
     if (this.printerIdValueChangesSub) {
       this.printerIdValueChangesSub.unsubscribe();
     }
@@ -336,7 +340,11 @@ export class EditPrintDetailComponent
         const newFormGroup = this.GetNewFilamentUsageForm(
           pf.id,
           pf.amountMg / 1000,
+          pf.lengthInM,
+          pf.isActualLengthSource,
           pf.estimatedAmountMg / 1000,
+          pf.estimatedLengthInM,
+          pf.isEstimatedLengthSource,
           pf.filament,
           pf.notes
         );
@@ -345,6 +353,7 @@ export class EditPrintDetailComponent
       });
     }
 
+    // Convert the old filamentType/FilamentUsage properties into the new Filament Usage format.
     if (
       print &&
       (!(print.filamentType === null || print.filamentType === '') ||
@@ -354,7 +363,11 @@ export class EditPrintDetailComponent
       const newFormGroup = this.GetNewFilamentUsageForm(
         EMPTY_GUID,
         print.filamentUsageMg / 1000,
+        null,
+        false,
         print.estimatedFilamentUsageMg / 1000,
+        null,
+        false,
         this.OTHER_FILAMENT_OPTION as FilamentSummary,
         print.filamentType
       );
@@ -397,8 +410,9 @@ export class EditPrintDetailComponent
       ],
       filamentType: [print ? print.filamentType : ''],
       filamentUsage: printFilamentUsageArray,
-      notes: [print ? print.notes : ''],
+      notes: [print?.notes ?? ''],
       url: [print ? print.url : ''],
+      fileName: [print?.fileName ?? ''],
       status: [print ? print.status : PrintStatus.Pending],
       viewStatus: [
         print && print.viewStatus !== null
@@ -421,14 +435,22 @@ export class EditPrintDetailComponent
   private GetNewFilamentUsageForm(
     id: string,
     amountG: number,
+    lengthInM: number,
+    isActualLengthSource: boolean,
     estimatedAmountG: number,
+    estimatedLengthInM: number,
+    isEstimatedLengthSource: boolean,
     filament: FilamentSummary | null,
     notes: string | null
   ) {
     return this.formBuilder.group({
       id,
       amountG,
+      lengthInM,
+      isActualLengthSource,
       estimatedAmountG,
+      estimatedLengthInM,
+      isEstimatedLengthSource,
       filament,
       notes,
     });
@@ -689,47 +711,38 @@ export class EditPrintDetailComponent
         };
       });
 
-    const filamentUsage = this.filamentUsage.controls
-      .filter(
-        (fu) =>
-          fu.get('filament').value !== null &&
-          fu.get('filament').value !== this.OTHER_FILAMENT_OPTION
-      )
-      .map((printFilament) => {
-        const newPf: PrintFilamentSummaryDto = {
-          id: printFilament.get('id').value ?? EMPTY_GUID,
-          estimatedAmountMg: Math.round(
-            +printFilament.get('estimatedAmountG').value * 1000
-          ),
-          filament: printFilament.get('filament').value,
-          amountMg: Math.round(+printFilament.get('amountG').value * 1000),
-          notes: printFilament.get('notes').value,
-        };
+    const filamentUsage = this.filamentUsage.controls.map((printFilament) => {
+      const newPf: PrintFilamentSummaryDto = {
+        id: printFilament.get('id').value ?? EMPTY_GUID,
+        estimatedAmountMg: Math.round(
+          +printFilament.get('estimatedAmountG').value * 1000
+        ),
+        estimatedLengthInM: printFilament.get('estimatedLengthInM').value,
+        isEstimatedLengthSource: printFilament.get('isEstimatedLengthSource')
+          .value,
+        filament: printFilament.get('filament')?.value,
+        amountMg: Math.round(+printFilament.get('amountG').value * 1000),
+        lengthInM: printFilament.get('lengthInM').value,
+        isActualLengthSource: printFilament.get('isActualLengthSource').value,
+        notes: printFilament.get('notes').value,
+      };
 
-        return newPf;
-      });
+      return newPf;
+    });
 
     /** Check if the Other Filament Option is in use. If so, then save it into the dedicated fields. */
-    const filamentUsageWithOtherOption = this.filamentUsage.controls.find(
-      (f) => f.get('filament').value === this.OTHER_FILAMENT_OPTION
-    );
+    // const filamentUsageWithOtherOption = this.filamentUsage.controls.find(
+    //   (f) => f.get('filament').value === this.OTHER_FILAMENT_OPTION
+    // );
 
     const print: Omit<PrintDetail, 'comments'> = {
       id: this.printForm.controls.id.value,
-      estimatedFilamentUsageMg: filamentUsageWithOtherOption
-        ? Math.round(
-            filamentUsageWithOtherOption.get('estimatedAmountG').value * 1000
-          )
-        : null,
+      estimatedFilamentUsageMg: null,
       estimatedPrintTimeInSeconds: this.parseAsSeconds(
         this.printForm.controls.estimatedPrintTimeInSeconds.value
       ),
-      filamentType: filamentUsageWithOtherOption
-        ? filamentUsageWithOtherOption.get('notes').value
-        : null,
-      filamentUsageMg: filamentUsageWithOtherOption
-        ? Math.round(filamentUsageWithOtherOption.get('amountG').value * 1000)
-        : null,
+      filamentType: null,
+      filamentUsageMg: null,
       filamentUsage,
       notes: this.printForm.controls.notes.value,
       printTimeInSeconds: this.parseAsSeconds(
@@ -741,6 +754,7 @@ export class EditPrintDetailComponent
       viewStatus: this.printForm.controls.viewStatus.value,
       title: this.printForm.controls.title.value,
       url: this.printForm.controls.url.value,
+      fileName: this.printForm.controls.fileName.value,
       images: existingPrintImages,
       createdByUserId: null,
       allowComments: this.printForm.controls.allowComments.value,
@@ -804,11 +818,22 @@ export class EditPrintDetailComponent
     }
   }
 
-  addNewFilamentUsage() {
+  public addNewFilamentUsage() {
+    let isLengthTheDefaultMeasureType = false;
+
+    if (this.lastFilamentMeasureSetting !== null) {
+      isLengthTheDefaultMeasureType =
+        this.lastFilamentMeasureSetting.value === 'Length' ? true : false;
+    }
+
     const newFormGroup = this.GetNewFilamentUsageForm(
       EMPTY_GUID,
       0,
       0,
+      isLengthTheDefaultMeasureType,
+      0,
+      0,
+      isLengthTheDefaultMeasureType,
       null,
       ''
     );
@@ -816,19 +841,10 @@ export class EditPrintDetailComponent
     this.filamentUsage.push(newFormGroup);
   }
 
-  public isOtherFilamentOptionUsed(): boolean {
-    return this.filamentUsage.controls.some((control) => {
-      return control.value.filament === this.OTHER_FILAMENT_OPTION;
-    });
-  }
-
   public searchFilament(filamentControl: AbstractControl) {
     const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
       data: {
-        // Only show the Other Filament Option if it's used
-        otherFilamentOption: this.isOtherFilamentOptionUsed()
-          ? null
-          : this.OTHER_FILAMENT_OPTION,
+        otherFilamentOption: this.OTHER_FILAMENT_OPTION,
       },
     });
 
@@ -836,7 +852,11 @@ export class EditPrintDetailComponent
       .afterClosed()
       .subscribe((filament) => {
         if (filament) {
-          filamentControl.setValue(filament);
+          if (filament === this.OTHER_FILAMENT_OPTION) {
+            filamentControl.setValue(null);
+          } else {
+            filamentControl.setValue(filament);
+          }
         }
       });
   }

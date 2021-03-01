@@ -2,6 +2,35 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.8.0">
+    1.8.0- Filament Measurement by Length and Weight, Gcode File Names
+  </h3>
+  <h4>Filament Measurement by Length</h4>
+  <p>
+    Many slicers only report filament used in length, so now Filament Usage can
+    now be recorded by Weight (in grams) or by Length (in meters). Simply add a
+    Filament Usage to the print, and change the new
+    <strong>Measure</strong> dropdown to select the measure type you'd like to
+    use.
+  </p>
+  <p>
+    Both options will update the filament roll's Weight Remaining. When you
+    change the measurement type, it'll be saved as your default type, so future
+    Filament Usage will default to Weight or Length depending on the last one
+    you selected.
+  </p>
+  <h4>Print File Names</h4>
+  <p>
+    A <strong>File Name</strong> field has been added to the Print, so you can
+    record the name of the gcode file generated. This will also be useful in the
+    upcoming <strong>Octoprint Integration</strong> (coming soon).
+  </p>
+  <h4>Multiple "Other" Filament Usage now allowed</h4>
+  <p>
+    Previously you could only have one non-tracked "other" filament recorded on
+    a print. Now you can add as many "other" filament usage you want.
+  </p>
+
   <h3 id="v1.7.3">1.7.3- Filament Analytics Bug Fix</h3>
   <p>
     Fixed a bug where filament usage was not correctly reported on the analytics

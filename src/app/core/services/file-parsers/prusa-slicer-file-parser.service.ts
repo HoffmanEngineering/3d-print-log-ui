@@ -301,6 +301,7 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
       filamentType: '',
       notes: '',
       url: '',
+      fileName: '',
       status: PrintStatus.Pending,
       viewStatus: null,
       images: [],

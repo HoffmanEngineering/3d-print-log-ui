@@ -52,7 +52,29 @@ export interface PrintFilamentSummaryDto {
   id: string;
   filament: FilamentSummary;
   amountMg?: number;
+  lengthInM?: number;
+  isActualLengthSource: boolean;
   estimatedAmountMg?: number;
+  estimatedLengthInM?: number;
+
+  isEstimatedLengthSource: boolean;
+
+  notes?: string;
+}
+
+export interface PutPrintFilamentSummaryDto {
+  /**
+   * GUID
+   */
+  id: string;
+  filamentId?: string;
+  amountMg?: number;
+  lengthInM?: number;
+  isActualLengthSource: boolean;
+  estimatedAmountMg?: number;
+  estimatedLengthInM?: number;
+
+  isEstimatedLengthSource: boolean;
 
   notes?: string;
 }
@@ -89,6 +111,7 @@ export interface PrintDetailDTO {
   filamentType: string;
   notes: string;
   url: string;
+  fileName: string;
   status: PrintStatus;
   viewStatus: PrintViewStatus;
   images?: PrintImage[];
@@ -105,16 +128,15 @@ export interface PutPrintDetailDTO {
   estimatedPrintTimeInSeconds?: number;
   estimatedFilamentUsageMg?: number;
   printTimeInSeconds?: number;
+  filamentUsage: PutPrintFilamentSummaryDto[];
   filamentUsageMg?: number;
   filamentType: string;
-  filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
   url: string;
+  fileName: string;
   status: PrintStatus;
-
   viewStatus: PrintViewStatus;
   allowComments: boolean;
-  images?: PrintImage[];
 }
 
 export interface PrintDetail {
@@ -131,6 +153,7 @@ export interface PrintDetail {
   filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
   url: string;
+  fileName: string;
   status: PrintStatus;
 
   viewStatus: PrintViewStatus;
@@ -156,6 +179,7 @@ export interface AddPrintDTO {
   filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
   url: string;
+  fileName: string;
   status: PrintStatus;
 
   viewStatus: PrintViewStatus;
@@ -247,6 +271,7 @@ export class PrintService {
             status: newPrint.status,
             title: newPrint.title,
             url: newPrint.url,
+            fileName: newPrint.fileName,
             viewStatus: newPrint.viewStatus,
             images: newPrint.images || [],
             filamentUsage: newPrint.filamentUsage || [],
@@ -294,6 +319,7 @@ export class PrintService {
       status: newPrint.status,
       title: newPrint.title,
       url: newPrint.url,
+      fileName: newPrint.fileName,
       viewStatus: newPrint.viewStatus,
       allowComments: newPrint.allowComments,
       filamentUsage: newPrint.filamentUsage,
@@ -305,16 +331,30 @@ export class PrintService {
   updatePrint(print: Omit<PrintDetail, 'comments'>): Observable<any> {
     const url = `${this.baseApi}/api/Prints/${print.id}`;
 
-    const printer: any = {
-      id: print.printerId,
-    };
+    const filamentUsage: PutPrintFilamentSummaryDto[] = print.filamentUsage.map(
+      (pf) => {
+        const usage: PutPrintFilamentSummaryDto = {
+          id: pf.id,
+          filamentId: pf.filament?.id ?? null,
+          estimatedAmountMg: pf.estimatedAmountMg,
+          estimatedLengthInM: pf.estimatedLengthInM,
+          isEstimatedLengthSource: pf.isEstimatedLengthSource,
+          amountMg: pf.amountMg,
+          lengthInM: pf.lengthInM,
+          isActualLengthSource: pf.isActualLengthSource,
+          notes: pf.notes,
+        };
+
+        return usage;
+      }
+    );
 
     const printDto: PutPrintDetailDTO = {
       estimatedFilamentUsageMg: print.estimatedFilamentUsageMg,
       estimatedPrintTimeInSeconds: print.estimatedPrintTimeInSeconds,
       filamentType: print.filamentType,
       filamentUsageMg: print.filamentUsageMg,
-      filamentUsage: print.filamentUsage,
+      filamentUsage,
       notes: print.notes,
       printTimeInSeconds: print.printTimeInSeconds,
       printerId: print.printerId,
@@ -322,8 +362,8 @@ export class PrintService {
       status: print.status,
       title: print.title,
       url: print.url,
+      fileName: print.fileName,
       id: print.id,
-      images: print.images,
       viewStatus: print.viewStatus,
       allowComments: print.allowComments,
     };

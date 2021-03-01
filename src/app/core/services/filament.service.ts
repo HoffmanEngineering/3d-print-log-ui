@@ -44,6 +44,7 @@ export interface FilamentSummary {
   notes: string;
   createdDate: string;
   filamentRemaining: number | null;
+  filamentLengthRemainingInM: number | null;
 }
 
 export interface FilamentAdjustment {

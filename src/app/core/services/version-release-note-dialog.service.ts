@@ -27,6 +27,46 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.8.0': {
+      title:
+        '1.8.0 Release - Filament Measurement by Length, Record File Names 🎉',
+      body: `<p>
+Many slicers only report filament used in length, so now Filament Usage can be recorded by <strong>Weight (in grams)</strong> or by <strong>Length (in meters)</strong>.
+</p>
+<p>A <strong>File Name</strong> field has been added to the Print, so you can
+record the name of the gcode file generated. This will also be useful in the
+upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
+<p>Full list of changes:</p>
+<ul>
+  <li>
+    Filament Usage can be recorded by <strong>Weight (in grams)</strong> or by <strong>Length (in meters)</strong>.
+  </li>
+  <li>
+    File Name field added to the Print Details.
+  </li>
+  <li>
+    Multiple "Other" Filament Usage now allowed.
+  </li>
+</ul>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  <br />Happy Printing!
+</p>`,
+    },
     '1.7.3': {
       redirect: '1.7.2',
     },

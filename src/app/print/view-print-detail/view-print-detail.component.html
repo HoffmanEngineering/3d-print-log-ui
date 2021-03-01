@@ -64,15 +64,78 @@
             <ng-container
               *ngFor="let printFilament of print.filamentUsage; let last = last"
             >
-              <h3>Filament:</h3>
-              <p>{{ printFilament.filament.displayName }}</p>
-              <ng-container *ngIf="printFilament.estimatedAmountMg > 0">
-                <h3>Estimated:</h3>
-                <p>{{ printFilament.estimatedAmountMg / 1000 }} (g)</p>
+              <ng-container *ngIf="printFilament.filament === null">
+                <h3>Filament:</h3>
+                <p>{{ printFilament.notes }}</p>
+                <ng-container *ngIf="printFilament.isEstimatedLengthSource">
+                  <ng-container *ngIf="printFilament.estimatedLengthInM > 0">
+                    <h3>Estimated:</h3>
+                    <p>
+                      {{
+                        printFilament.estimatedLengthInM | number: '1.0-1'
+                      }}
+                      meters
+                    </p>
+                  </ng-container>
+                </ng-container>
+                <ng-container *ngIf="!printFilament.isEstimatedLengthSource">
+                  <ng-container *ngIf="printFilament.estimatedAmountMg > 0">
+                    <h3>Actual:</h3>
+                    <p>{{ printFilament.estimatedAmountMg / 1000 }} grams</p>
+                  </ng-container>
+                </ng-container>
+
+                <ng-container *ngIf="printFilament.isActualLengthSource">
+                  <ng-container *ngIf="printFilament.lengthInM > 0">
+                    <h3>Estimated:</h3>
+                    <p>
+                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
+                    </p>
+                  </ng-container>
+                </ng-container>
+                <ng-container *ngIf="!printFilament.isActualLengthSource">
+                  <ng-container *ngIf="printFilament.amountMg > 0">
+                    <h3>Actual:</h3>
+                    <p>{{ printFilament.amountMg / 1000 }} grams</p>
+                  </ng-container>
+                </ng-container>
               </ng-container>
-              <ng-container *ngIf="printFilament.amountMg > 0">
-                <h3>Actual:</h3>
-                <p>{{ printFilament.amountMg / 1000 }} (g)</p>
+
+              <ng-container *ngIf="printFilament.filament != null">
+                <h3>Filament:</h3>
+                <p>{{ printFilament.filament.displayName }}</p>
+                <ng-container *ngIf="printFilament.isEstimatedLengthSource">
+                  <ng-container *ngIf="printFilament.estimatedLengthInM > 0">
+                    <h3>Estimated:</h3>
+                    <p>
+                      {{
+                        printFilament.estimatedLengthInM | number: '1.0-1'
+                      }}
+                      meters
+                    </p>
+                  </ng-container>
+                </ng-container>
+                <ng-container *ngIf="!printFilament.isEstimatedLengthSource">
+                  <ng-container *ngIf="printFilament.estimatedAmountMg > 0">
+                    <h3>Actual:</h3>
+                    <p>{{ printFilament.estimatedAmountMg / 1000 }} grams</p>
+                  </ng-container>
+                </ng-container>
+
+                <ng-container *ngIf="printFilament.isActualLengthSource">
+                  <ng-container *ngIf="printFilament.lengthInM > 0">
+                    <h3>Estimated:</h3>
+                    <p>
+                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
+                    </p>
+                  </ng-container>
+                </ng-container>
+                <ng-container *ngIf="!printFilament.isActualLengthSource">
+                  <ng-container *ngIf="printFilament.amountMg > 0">
+                    <h3>Actual:</h3>
+                    <p>{{ printFilament.amountMg / 1000 }} grams</p>
+                  </ng-container>
+                </ng-container>
               </ng-container>
               <hr *ngIf="!last" />
             </ng-container>
@@ -100,6 +163,9 @@
 
           <h3>Notes:</h3>
           <p style="white-space: pre-wrap">{{ print.notes }}</p>
+
+          <h3>File Name:</h3>
+          <p style="white-space: pre-wrap">{{ print.fileName }}</p>
         </section>
       </mat-card-content>
       <mat-card-actions

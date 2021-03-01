@@ -31,8 +31,7 @@ export class VersionReleaseNoteDialogService {
       title:
         '1.8.0 Release - Filament Measurement by Length, Record File Names 🎉',
       body: `<p>
-Many slicers only report filament used in length, so now Filament Usage can
-now be recorded by <strong>Weight (in grams)</strong> or by <strong>Length (in meters)</strong>.
+Many slicers only report filament used in length, so now Filament Usage can be recorded by <strong>Weight (in grams)</strong> or by <strong>Length (in meters)</strong>.
 </p>
 <p>A <strong>File Name</strong> field has been added to the Print, so you can
 record the name of the gcode file generated. This will also be useful in the

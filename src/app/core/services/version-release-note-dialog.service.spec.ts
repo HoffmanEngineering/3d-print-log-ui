@@ -52,21 +52,4 @@ describe('VersionReleaseNoteDialogService', () => {
 
     expect(mockMatDialog.open).not.toHaveBeenCalled();
   });
-
-  it(`Should currently redirect to 1.7.1 release notes when last version is 1.7.0 `, async () => {
-    const mockLocalStorage = TestBed.inject(
-      LocalStorageService
-    ) as jasmine.SpyObj<LocalStorageService>;
-    const mockMatDialog = TestBed.inject(
-      MatDialog
-    ) as jasmine.SpyObj<MatDialog>;
-
-    const currentVersion = '1.7.0';
-    mockLocalStorage.getItem.and.returnValue(currentVersion);
-
-    await service.checkLastLoggedInVersion();
-
-    expect(mockMatDialog.open).toHaveBeenCalled();
-    expect(mockDialogRef.componentInstance.title).toContain('1.7.1');
-  });
 });

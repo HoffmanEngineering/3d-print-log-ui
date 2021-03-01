@@ -403,6 +403,7 @@ describe('CuraParserV1pt1pt0Service', () => {
         createdByUserId: null,
         comments: [],
         filamentUsage: [],
+        fileName: '',
       },
     },
     {
@@ -434,6 +435,7 @@ Support: Enabled Touching Buildplate`,
         createdByUserId: null,
         comments: [],
         filamentUsage: [],
+        fileName: '',
       },
     },
   ];

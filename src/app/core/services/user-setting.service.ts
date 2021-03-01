@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
@@ -18,6 +17,7 @@ export enum UserSettingType {
    * The value of the last changed Allow Comments on prints.
    */
   Prints_LastSelectedAllowComments = 3,
+  Prints_LastSelectedFilamentMeasureType = 4,
 }
 
 export interface UserSetting {

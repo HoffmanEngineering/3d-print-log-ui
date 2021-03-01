@@ -24,10 +24,7 @@ import { Title } from '@angular/platform-browser';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
-import {
-  FilamentService,
-  FilamentSummary,
-} from 'src/app/core/services/filament.service';
+import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
@@ -91,6 +88,8 @@ export class EditPrintDetailComponent
 
   public lastAllowCommentsSetting: UserSetting | null = null;
   lastAllowCommentsChangesSub: Subscription;
+  public lastFilamentMeasureSetting: UserSetting | null = null;
+
   printerRedirectPromptSubscription: Subscription;
   printerRedirectToast: ActiveToast<any>;
   printerRedirectSubscription: Subscription;
@@ -121,25 +120,15 @@ export class EditPrintDetailComponent
   }
 
   ngOnDestroy(): void {
-    if (this.printerIdValueChangesSub) {
-      this.printerIdValueChangesSub.unsubscribe();
-    }
+    this.printerIdValueChangesSub?.unsubscribe?.();
 
-    if (this.viewStatusValueChangesSub) {
-      this.viewStatusValueChangesSub.unsubscribe();
-    }
+    this.viewStatusValueChangesSub?.unsubscribe?.();
 
-    if (this.lastAllowCommentsChangesSub) {
-      this.lastAllowCommentsChangesSub.unsubscribe();
-    }
+    this.lastAllowCommentsChangesSub?.unsubscribe?.();
 
-    if (this.printerRedirectPromptSubscription) {
-      this.printerRedirectPromptSubscription.unsubscribe();
-    }
+    this.printerRedirectPromptSubscription?.unsubscribe?.();
 
-    if (this.printerRedirectSubscription) {
-      this.printerRedirectSubscription.unsubscribe();
-    }
+    this.printerRedirectSubscription?.unsubscribe?.();
   }
 
   @HostListener('window:beforeunload')
@@ -156,6 +145,7 @@ export class EditPrintDetailComponent
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
       this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
       this.lastAllowCommentsSetting = data.lastAllowCommentsSetting;
+      this.lastFilamentMeasureSetting = data.lastFilamentMeasureSetting;
 
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
 
@@ -193,11 +183,34 @@ export class EditPrintDetailComponent
   }
 
   private onChanges() {
-    this.SaveSettingWhenPrintIdChanges();
+    this.SaveSettingWhenSelectedPrinterIdChanges();
     this.SaveSettingWhenAllowCommentsChanges();
   }
+  public HandleFilamentMeasureTypeChange(isLength: boolean) {
+    const newValue = isLength ? 'Length' : 'Weight';
 
-  private SaveSettingWhenPrintIdChanges() {
+    if (this.lastFilamentMeasureSetting) {
+      this.userSettingService
+        .updateUserSetting(
+          this.lastFilamentMeasureSetting.id,
+          isLength ? 'Length' : 'Weight'
+        )
+        .subscribe((setting) => {
+          this.lastFilamentMeasureSetting = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Prints_LastSelectedFilamentMeasureType,
+          newValue
+        )
+        .subscribe((setting) => {
+          this.lastFilamentMeasureSetting = setting;
+        });
+    }
+  }
+
+  private SaveSettingWhenSelectedPrinterIdChanges() {
     if (this.printerIdValueChangesSub) {
       this.printerIdValueChangesSub.unsubscribe();
     }
@@ -806,14 +819,21 @@ export class EditPrintDetailComponent
   }
 
   public addNewFilamentUsage() {
+    let isLengthTheDefaultMeasureType = false;
+
+    if (this.lastFilamentMeasureSetting !== null) {
+      isLengthTheDefaultMeasureType =
+        this.lastFilamentMeasureSetting.value === 'Length' ? true : false;
+    }
+
     const newFormGroup = this.GetNewFilamentUsageForm(
       EMPTY_GUID,
       0,
-      null,
-      false,
       0,
-      null,
-      false,
+      isLengthTheDefaultMeasureType,
+      0,
+      0,
+      isLengthTheDefaultMeasureType,
       null,
       ''
     );

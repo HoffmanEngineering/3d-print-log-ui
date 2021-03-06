@@ -16,6 +16,7 @@ export class DocSidebarComponent implements OnInit {
     { name: 'Analytics', url: '/docs/analytics' },
     { divider: true },
     { name: 'Cura Plugin', url: '/docs/cura-plugin' },
+    { name: 'Octoprint Webhook', url: '/docs/octoprint-webhook' },
     { divider: true },
     { name: 'Release Notes', url: '/docs/release-notes' },
     { name: 'About', url: '/docs/about' },

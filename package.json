@@ -1,6 +1,6 @@
 {
   "name": "print-log-ui",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
@@ -31,6 +31,7 @@
     "@angular/platform-browser": "~11.2.4",
     "@angular/platform-browser-dynamic": "~11.2.4",
     "@angular/router": "~11.2.4",
+    "@angular/youtube-player": "^11.2.3",
     "@auth0/auth0-spa-js": "^1.13.6",
     "@microsoft/applicationinsights-web": "^2.5.11",
     "@types/lodash": "^4.14.168",

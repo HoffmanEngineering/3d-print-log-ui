@@ -67,27 +67,7 @@ export class AuthService {
   // Create a local property for login status
   loggedIn: boolean = null;
 
-  constructor(private router: Router, private userService: UserService) {
-    // this.userProfile$.subscribe((user) => {
-    //   if (user) {
-    //     console.log(user);
-    //     this.userService.getCurrentUserDetail().subscribe((currentUser) => {
-    //       if (currentUser.displayName === null) {
-    //         const userInfo: UserDetailDto = {
-    //           ...currentUser,
-    //           displayName: user.nickname,
-    //           profilePicture: user.picture,
-    //         };
-    //         this.userService
-    //           .updateCurrentUserDetail(userInfo)
-    //           .subscribe((updatedUser) => {
-    //             // TODO: Save this updated user back to the userProfile$ object.
-    //           });
-    //       }
-    //     });
-    //   }
-    // });
-  }
+  constructor(private router: Router, private userService: UserService) {}
 
   // When calling, options can be passed if desired
   // https://auth0.github.io/auth0-spa-js/classes/auth0client.html#getuser

@@ -27,6 +27,37 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.9.0': {
+      title: '1.9.0 Release - OctoPrint Integration',
+      body: `  <p>
+  3D Print Log now has an <strong>OctoPrint Integration</strong>! 3D Print Log can receive
+  information from Octoprint in order to create and update print status, print
+  time, and filament usage. It will also save pictures from the camera on success/failure.
+  <br />
+  Visit the
+  <a href="/docs/octoprint-webhook">3D Print Log OctoPrint Docs</a> for
+  information on how to set up the integration.
+</p>
+  
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.8.0': {
       title:
         '1.8.0 Release - Filament Measurement by Length, Record File Names 🎉',

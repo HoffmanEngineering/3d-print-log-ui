@@ -6,6 +6,7 @@ import { DocsAnalyticsComponent } from './docs/docs-analytics/docs-analytics.com
 import { DocsCuraPluginComponent } from './docs/docs-cura-plugin/docs-cura-plugin.component';
 import { DocsFilamentsComponent } from './docs/docs-filaments/docs-filaments.component';
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
+import { DocsOctoprintWebhookComponent } from './docs/docs-octoprint-webhook/docs-octoprint-webhook.component';
 import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.component';
 import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
@@ -25,6 +26,7 @@ const routes: Routes = [
       { path: 'filaments', component: DocsFilamentsComponent },
       { path: 'analytics', component: DocsAnalyticsComponent },
       { path: 'cura-plugin', component: DocsCuraPluginComponent },
+      { path: 'octoprint-webhook', component: DocsOctoprintWebhookComponent },
       { path: 'release-notes', component: DocsReleaseNotesComponent },
       { path: 'about', component: DocsAboutComponent },
       { path: '', redirectTo: 'getting-started' },

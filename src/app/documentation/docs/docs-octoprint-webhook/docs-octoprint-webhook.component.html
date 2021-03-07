@@ -21,9 +21,9 @@
   <p>
     Note: Users have reported the Webhook Plugin settings sometimes do not save
     correctly within OctoPrint. Refreshing the OctoPrint tab, re-entering the
-    settings and saving again might be necessary. Repeat until you can refresh
-    OctoPrint and the settings load correctly. If you run into issues with the
-    integration working, see the <strong>Troubleshooting</strong> steps below.
+    settings and saving again might be necessary. If you run into issues with
+    the integration working, see the <strong>Troubleshooting</strong> steps
+    below.
   </p>
   <hr />
   <h3>Features:</h3>
@@ -46,7 +46,27 @@
     OctoPrint). The Print Time and Filament Usage will be updated.
   </p>
   <hr />
+  <h3>Limitations:</h3>
+  <p>
+    There are a handful of limitations from using the OctoPrint Webhook plugin.
+    If you are an OctoPrint Plugin Developer and would like to help creating a
+    custom 3D Print Log Plugin, please
+    <a routerLink="/feedback">Send a Feedback, we are looking for help!</a>
+  </p>
+  <ul>
+    <li>
+      OctoPrint does not keep track of actual filament usage, so we cannot save
+      actual filament usage on completion/failures. 3D Print Log can only record
+      the initial estimated usage.
+    </li>
+    <li>
+      The OctoPrint does not analyze print settings, so no print settings from
+      the slicer will be automatically recorded in the Notes section.
+    </li>
+  </ul>
+  <hr />
   <h3 id="Setup">Setup:</h3>
+  <youtube-player videoId="E3kHsxSkBAw"></youtube-player>
 
   <h4>Step 1: Download OctoPrint-Webhook Plugin</h4>
   <div fxLayout="row" fxLayout.lt-lg="column">

@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
+import { YouTubePlayerModule } from '@angular/youtube-player';
 import { AdsenseModule } from 'ng2-adsense';
 import { SharedModule } from '../shared/shared.module';
 import { DocSidebarComponent } from './doc-sidebar/doc-sidebar.component';
@@ -35,6 +36,7 @@ import { DocumentationComponent } from './documentation.component';
     SharedModule,
     DocumentationRoutingModule,
     AdsenseModule,
+    YouTubePlayerModule,
   ],
 })
 export class DocumentationModule {}

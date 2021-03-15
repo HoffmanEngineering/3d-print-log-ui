@@ -13,7 +13,7 @@ import {
 export class FilamentDetailResolverService implements Resolve<FilamentDetail> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const filamentId = route.paramMap.get('id');
-    console.log(filamentId);
+
     if (filamentId === 'new') {
       return null;
     }

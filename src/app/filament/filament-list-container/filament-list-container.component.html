@@ -136,7 +136,12 @@
             data-cy-edit-menu-option
             ><mat-icon>edit</mat-icon>Edit</a
           >
-
+          <a
+            class="menu-link"
+            mat-menu-item
+            [routerLink]="['copy', filament.id]"
+            ><mat-icon>file_copy</mat-icon>Duplicate</a
+          >
           <button
             type="button"
             mat-menu-item

@@ -167,8 +167,6 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       ],
     });
 
-    console.log(form);
-
     return form;
   }
 

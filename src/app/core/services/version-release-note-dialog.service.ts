@@ -27,6 +27,32 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.10.0': {
+      title: '1.10.0 Release - Copy Filament',
+      body: `<p>
+  You can now duplicate an existing filament roll. Click the ... menu on the
+  <a href="/filament">Filament List</a> and select "Duplicate".
+</p>
+  
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.9.0': {
       title: '1.9.0 Release - OctoPrint Integration',
       body: `  <p>

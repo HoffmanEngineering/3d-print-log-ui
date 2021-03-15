@@ -1,7 +1,7 @@
 import { version } from '../../package.json';
 export const environment = {
   production: true,
-  printLogApiUrl: 'https://3d-print-log-api-prod.azurewebsites.net',
+  printLogApiUrl: 'https://api.3dprintlog.com',
   version,
   authentication: {
     domain: '3dprintlog.auth0.com',

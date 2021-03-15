@@ -132,8 +132,7 @@ export class FilamentListContainerComponent implements OnInit {
           },
           (err) => {
             // Handle Error Messages:
-            console.log(err);
-            // debugger;
+
             if (err.status === 400) {
               this.toastrService.error(err.error, 'Cannot Delete Filament', {
                 progressBar: true,

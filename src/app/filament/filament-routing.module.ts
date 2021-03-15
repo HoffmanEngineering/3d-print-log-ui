@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { FilamentDetailComponent } from './filament-detail/filament-detail.component';
 import { FilamentListContainerComponent } from './filament-list-container/filament-list-container.component';
+import { CopyFilamentDetailResolverService } from './resolvers/copy-filament-detail-resolver.service';
 
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
@@ -19,6 +20,15 @@ const routes: Routes = [
           filamentList: FilamentListResolverService,
         },
         runGuardsAndResolvers: 'always',
+      },
+      {
+        path: 'copy/:id',
+        component: FilamentDetailComponent,
+        resolve: {
+          filament: CopyFilamentDetailResolverService,
+          materials: MaterialResolverService,
+        },
+        canDeactivate: [PendingChangesGuard],
       },
       {
         path: ':id',

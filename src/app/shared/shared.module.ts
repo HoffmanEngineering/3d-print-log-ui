@@ -28,6 +28,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
+import { AccountDeactivationBannerComponent } from './account-deactivation-banner/account-deactivation-banner.component';
 import { CallbackComponent } from './callback/callback.component';
 import { CommentComponent } from './comments/comment/comment.component';
 import { FeedbackComponent } from './feedback/feedback.component';
@@ -67,6 +68,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     MaterialNamePipe,
     FilamentListComponent,
     FilamentSearchModalComponent,
+    AccountDeactivationBannerComponent,
   ],
   imports: [
     CommonModule,
@@ -143,6 +145,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     HumanizePipe,
     MaterialNamePipe,
     FilamentSearchModalComponent,
+    AccountDeactivationBannerComponent,
   ],
 })
 export class SharedModule {}

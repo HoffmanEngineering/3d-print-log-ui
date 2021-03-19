@@ -27,6 +27,36 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.11.0': {
+      title: '1.11.0 Release - Delete User Accounts',
+      body: `<p>
+  You are in control of your data, so now you can choose to delete your 3D
+  Print Log account and all associated data. If you wish to delete your
+  account, you can find the new options under
+  <strong>Delete Account</strong> on your
+  <a href="/settings">Settings Page</a>. After a 24 hour waiting period,
+  your account and all prints, filament, printers, etc, will be permanently
+  deleted from the website.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.10.0': {
       title: '1.10.0 Release - Copy Filament',
       body: `<p>

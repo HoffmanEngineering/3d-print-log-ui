@@ -106,8 +106,8 @@
 
         <div
           *ngIf="
-            printViewStatus.toString() !==
-            this.defaultPrintViewStatusSettingOnLoad?.value.toString()
+            printViewStatus?.toString() !==
+            this.defaultPrintViewStatusSettingOnLoad?.value?.toString()
           "
         >
           <div
@@ -150,6 +150,62 @@
         >
           Export
         </button>
+      </div>
+
+      <hr />
+      <div fxFlex="grow" fxFlexFill>
+        <h2>Danger Zone</h2>
+        <details style="border: 1px solid red; padding: 5px">
+          <summary>
+            <h3 style="display: inline-block; margin: 0">Delete Account</h3>
+          </summary>
+          <p>
+            While we are sad to see you go, you can deactivate your 3D Print Log
+            account, and
+            <strong>permanently delete all your data</strong>.
+          </p>
+          <p>
+            If you are deleting your account because of a feature that 3D Print
+            Log is missing, please
+            <a routerLink="/feedback">send us a feedback</a> and let us know
+            what you'd like to see. We are adding features all the time, and
+            love to know how we can improve.
+          </p>
+          <ul>
+            <li>
+              Deactivated accounts will have all data deleted 24 hours after
+              deactivation. This includes any recorded <strong>Prints</strong>,
+              <strong>Printers</strong>, <strong>Filaments</strong>,
+              <strong>Comments</strong>, <strong>Images</strong> and your
+              <strong>Profile</strong>.
+            </li>
+            <li>
+              Deletion is irreversible. Once deletion occurs, there is
+              <strong>no way to recover your data</strong> if you change your
+              mind.
+            </li>
+            <li>
+              You may create a new account at anytime in the future, but there
+              will be no way to recover any deleted data.
+            </li>
+          </ul>
+          <mat-checkbox
+            class="text-wrap"
+            [(ngModel)]="deactivationAgreementChecked"
+            >I have read the information above and understand that my data will
+            be deleted in 24 hours. I wish to proceed with the deletion of my 3D
+            Print Log profile.</mat-checkbox
+          >
+          <br />
+          <button
+            mat-raised-button
+            color="warn"
+            (click)="deactivateAccount()"
+            [disabled]="!deactivationAgreementChecked"
+          >
+            Deactivate Account
+          </button>
+        </details>
       </div>
     </div>
   </mat-card>

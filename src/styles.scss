@@ -113,3 +113,9 @@ div[fxLayout='column'] > div[fxFlex] {
   border-top-color: #000000;
   animation: spinner 0.8s linear infinite;
 }
+
+mat-checkbox.text-wrap {
+  label.mat-checkbox-layout {
+    white-space: normal;
+  }
+}

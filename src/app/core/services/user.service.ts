@@ -46,6 +46,8 @@ export interface UserDetailDto {
 
   bio: string;
 
+  deactivationDateTime: Date | null;
+
   viewStatus: ProfileViewStatus;
 }
 
@@ -93,18 +95,90 @@ export class UserService {
 
   getCurrentUserDetail() {
     const url = `${this.baseApiUrl}/me`;
-    return this.http.get<UserDetailDto>(url);
+    return this.http.get<UserDetailDto>(url).pipe(
+      map((user) => {
+        const mappedUser: UserDetailDto = {
+          ...user,
+          deactivationDateTime:
+            user.deactivationDateTime !== null
+              ? new Date(user.deactivationDateTime)
+              : null,
+        };
+
+        return mappedUser;
+      })
+    );
+  }
+
+  deactivateCurrentUser() {
+    const url = `${this.baseApiUrl}/me/deactivate`;
+    return this.http.post<UserDetailDto>(url, {}).pipe(
+      map((user) => {
+        const mappedUser: UserDetailDto = {
+          ...user,
+          deactivationDateTime:
+            user.deactivationDateTime !== null
+              ? new Date(user.deactivationDateTime)
+              : null,
+        };
+
+        return mappedUser;
+      })
+    );
+  }
+
+  reactivateCurrentUser() {
+    const url = `${this.baseApiUrl}/me/reactivate`;
+    return this.http.post<UserDetailDto>(url, {}).pipe(
+      map((user) => {
+        const mappedUser: UserDetailDto = {
+          ...user,
+          deactivationDateTime:
+            user.deactivationDateTime !== null
+              ? new Date(user.deactivationDateTime)
+              : null,
+        };
+
+        return mappedUser;
+      })
+    );
   }
 
   getUserDetail(id: number) {
     const url = `${this.baseApiUrl}/${id}`;
     const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
-    return this.http.get<UserDetailDto>(url, { headers });
+    return this.http
+      .get<UserDetailDto>(url, { headers })
+      .pipe(
+        map((user) => {
+          const mappedUser: UserDetailDto = {
+            ...user,
+            deactivationDateTime:
+              user.deactivationDateTime !== null
+                ? new Date(user.deactivationDateTime)
+                : null,
+          };
+
+          return mappedUser;
+        })
+      );
   }
 
   updateCurrentUserDetail(newUserDetail: UpdateUserDetailDto) {
     const url = `${this.baseApiUrl}/me`;
-    return this.http.put<UserDetailDto>(url, newUserDetail);
+    return this.http.put<UserDetailDto>(url, newUserDetail).pipe(
+      map((user) => {
+        const mappedUser: UserDetailDto = {
+          ...user,
+          deactivationDateTime:
+            user.deactivationDateTime !== null
+              ? new Date(user.deactivationDateTime)
+              : null,
+        };
+
+        return mappedUser;
+      })
+    );
   }
 
   updateCurrentUserProfilePicture(file: File) {

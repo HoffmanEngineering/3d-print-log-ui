@@ -30,6 +30,8 @@ export interface UserProfileInfo {
 
   bio: string;
 
+  deactivationDateTime: Date | null;
+
   viewStatus: ProfileViewStatus;
 }
 
@@ -103,6 +105,13 @@ export class AuthService {
     this.userProfileSubject$.next({
       ...this.userProfileSubject$.value,
       coverPicture: newUrl,
+    });
+  }
+
+  updateCurrentUserDeactivationDate(deactivationDate: Date | null) {
+    this.userProfileSubject$.next({
+      ...this.userProfileSubject$.value,
+      deactivationDateTime: deactivationDate,
     });
   }
 

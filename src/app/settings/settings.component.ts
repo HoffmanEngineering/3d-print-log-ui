@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { PrintService, PrintViewStatus } from '../core/services/print.service';
 import {
@@ -37,9 +38,12 @@ export class SettingsComponent implements OnInit {
 
   public exportInProgress = false;
 
+  public deactivationAgreementChecked = false;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private userService: UserService,
+    private authService: AuthService,
     private userSettingService: UserSettingService,
     private readonly printService: PrintService,
     private readonly metaService: MetaTagService,
@@ -154,5 +158,13 @@ export class SettingsComponent implements OnInit {
       window.URL.revokeObjectURL(data);
       link.remove();
     }, 100);
+  }
+
+  public deactivateAccount() {
+    this.userService.deactivateCurrentUser().subscribe((updatedUser) => {
+      this.authService.updateCurrentUserDeactivationDate(
+        updatedUser.deactivationDateTime
+      );
+    });
   }
 }

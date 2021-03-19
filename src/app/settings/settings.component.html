@@ -155,11 +155,21 @@
       <hr />
       <div fxFlex="grow" fxFlexFill>
         <h2>Danger Zone</h2>
-        <div style="border: 1px solid red; padding: 5px">
-          <h3>Delete Account</h3>
+        <details style="border: 1px solid red; padding: 5px">
+          <summary>
+            <h3 style="display: inline-block; margin: 0">Delete Account</h3>
+          </summary>
           <p>
-            Deactivate your account, and
+            While we are sad to see you go, you can deactivate your 3D Print Log
+            account, and
             <strong>permanently delete all your data</strong>.
+          </p>
+          <p>
+            If you are deleting your account because of a feature that 3D Print
+            Log is missing, please
+            <a routerLink="/feedback">send us a feedback</a> and let us know
+            what you'd like to see. We are adding features all the time, and
+            love to know how we can improve.
           </p>
           <ul>
             <li>
@@ -170,10 +180,14 @@
               <strong>Profile</strong>.
             </li>
             <li>
-              Deletion is irreversible. Once deletion occurs, there is no way to
-              recover your data if you change your mind.
+              Deletion is irreversible. Once deletion occurs, there is
+              <strong>no way to recover your data</strong> if you change your
+              mind.
             </li>
-            <li></li>
+            <li>
+              You may create a new account at anytime in the future, but there
+              will be no way to recover any deleted data.
+            </li>
           </ul>
           <mat-checkbox
             class="text-wrap"
@@ -191,7 +205,7 @@
           >
             Deactivate Account
           </button>
-        </div>
+        </details>
       </div>
     </div>
   </mat-card>

@@ -28,7 +28,7 @@ export class VersionReleaseNoteDialogService {
 
   private releaseNotes: ReleaseNoteHistory = {
     '1.11.2': {
-      redirect: '1.11.0',
+      redirect: '1.11.1',
     },
     '1.11.1': {
       redirect: '1.11.0',

@@ -70,7 +70,14 @@ export class PrintDetailResolverService
     }
 
     if (this.sentFromCura(route)) {
-      defaultPrint = this.curaParserService.parse(route.queryParamMap);
+      return this.curaParserService.parse(route.queryParamMap).then((print) => {
+        const curaPrintDetail: PrintDetailWithUser = {
+          print,
+          user: null,
+        };
+
+        return curaPrintDetail;
+      });
     }
 
     const emptyPrintDetail: PrintDetailWithUser = {

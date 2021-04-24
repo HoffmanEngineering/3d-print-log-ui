@@ -4,6 +4,7 @@ import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrintDetail } from 'src/app/core/services/print.service';
 import { CuraParserV1pt0pt0Service } from './cura/cura-parser-v1-0-0.service';
 import { CuraParserV1pt1pt0Service } from './cura/cura-parser-v1-1-0.service';
+import { CuraParserV1pt2pt0Service } from './cura/cura-parser-v1-2-0.service';
 import { NewPrintParser } from './types';
 
 @Injectable()
@@ -11,9 +12,11 @@ export class CuraParserService implements NewPrintParser {
   constructor(
     private readonly parserV1pt0pt0: CuraParserV1pt0pt0Service,
     private readonly parserV1pt1pt0: CuraParserV1pt1pt0Service,
+    private readonly parserV1pt2pt0: CuraParserV1pt2pt0Service,
     private readonly loggingService: LoggingService
   ) {}
-  parse(params: ParamMap): PrintDetail {
+
+  async parse(params: ParamMap): Promise<PrintDetail> {
     if (!params.has('plugin_version')) {
       // Cura plugin will always have the plugin_version, so
       console.warn('No Cura Plugin Version detected');
@@ -30,6 +33,8 @@ export class CuraParserService implements NewPrintParser {
       case '1.1.0':
         return this.parserV1pt1pt0.parse(params);
         break;
+      case '1.2.0':
+        return this.parserV1pt2pt0.parse(params);
       default:
         return null;
     }

@@ -19,6 +19,7 @@ import { PrintListResolverService } from './resolvers/print-list-resolver.servic
 import { CuraParserService } from './services/integration/cura-parser.service';
 import { CuraParserV1pt0pt0Service } from './services/integration/cura/cura-parser-v1-0-0.service';
 import { CuraParserV1pt1pt0Service } from './services/integration/cura/cura-parser-v1-1-0.service';
+import { CuraParserV1pt2pt0Service } from './services/integration/cura/cura-parser-v1-2-0.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 
 @NgModule({
@@ -48,6 +49,7 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
     CuraParserService,
     CuraParserV1pt0pt0Service,
     CuraParserV1pt1pt0Service,
+    CuraParserV1pt2pt0Service,
   ],
 })
 export class PrintModule {}

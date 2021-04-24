@@ -443,13 +443,16 @@
             matInput
             type="text"
             formControlName="notes"
-            maxlength="1000"
+            maxlength="50000"
             cdkTextareaAutosize
             cdkAutosizeMinRows="3"
-            cdkAutosizeMaxRows="10"
+            cdkAutosizeMaxRows="15"
           ></textarea>
-          <mat-hint align="end">
-            {{ 1000 - printForm.get('notes').value.length }} characters
+          <mat-hint
+            *ngIf="50000 - printForm.get('notes').value.length < 1000"
+            align="end"
+          >
+            {{ 50000 - printForm.get('notes').value.length }} characters
             remaining.</mat-hint
           >
         </mat-form-field>

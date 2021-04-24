@@ -8,7 +8,7 @@ import { NewPrintParser } from '../types';
 @Injectable()
 export class CuraParserV1pt0pt0Service implements NewPrintParser {
   constructor(private readonly loggingService: LoggingService) {}
-  parse(params: ParamMap): PrintDetail {
+  async parse(params: ParamMap): Promise<PrintDetail> {
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),
     };

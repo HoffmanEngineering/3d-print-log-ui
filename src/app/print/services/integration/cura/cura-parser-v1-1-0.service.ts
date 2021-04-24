@@ -25,7 +25,7 @@ export interface ExtruderSettings {
 @Injectable()
 export class CuraParserV1pt1pt0Service implements NewPrintParser {
   constructor(private readonly loggingService: LoggingService) {}
-  parse(params: ParamMap): PrintDetail {
+  async parse(params: ParamMap): Promise<PrintDetail> {
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),
     };

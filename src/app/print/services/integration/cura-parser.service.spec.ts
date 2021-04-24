@@ -4,6 +4,7 @@ import { ParamMap } from '@angular/router';
 import { CuraParserService } from './cura-parser.service';
 import { CuraParserV1pt0pt0Service } from './cura/cura-parser-v1-0-0.service';
 import { CuraParserV1pt1pt0Service } from './cura/cura-parser-v1-1-0.service';
+import { CuraParserV1pt2pt0Service } from './cura/cura-parser-v1-2-0.service';
 
 describe('CuraParserService', () => {
   let service: CuraParserService;
@@ -25,11 +26,17 @@ describe('CuraParserService', () => {
       ['parse']
     );
 
+    const mockv1pt2pt0Parser = jasmine.createSpyObj<CuraParserV1pt2pt0Service>(
+      'CuraParserV1pt2pt0Service',
+      ['parse']
+    );
+
     TestBed.configureTestingModule({
       providers: [
         CuraParserService,
         { provide: CuraParserV1pt0pt0Service, useValue: mockv1pt0pt0Parser },
         { provide: CuraParserV1pt1pt0Service, useValue: mockv1pt1pt0Parser },
+        { provide: CuraParserV1pt2pt0Service, useValue: mockv1pt2pt0Parser },
       ],
     });
     service = TestBed.inject(CuraParserService);
@@ -45,7 +52,7 @@ describe('CuraParserService', () => {
     expect(service).toBeTruthy();
   });
 
-  it(`should parse using the v1.0.0 parser when the param's plugin_version is 1.0.0`, () => {
+  it(`should parse using the v1.0.0 parser when the param's plugin_version is 1.0.0`, async () => {
     const mockv1pt0pt0Parser = TestBed.inject(
       CuraParserV1pt0pt0Service
     ) as jasmine.SpyObj<CuraParserV1pt0pt0Service>;
@@ -53,12 +60,12 @@ describe('CuraParserService', () => {
 
     const testQueryString = 'plugin_version=1.0.0';
     const params = createQueryParams(testQueryString);
-    service.parse(params);
+    await service.parse(params);
 
     expect(mockv1pt0pt0Parser.parse).toHaveBeenCalled();
   });
 
-  it(`should parse using the v1.1.0 parser when the param's plugin_version is 1.1.0`, () => {
+  it(`should parse using the v1.1.0 parser when the param's plugin_version is 1.1.0`, async () => {
     const mockv1pt1pt0Parser = TestBed.inject(
       CuraParserV1pt1pt0Service
     ) as jasmine.SpyObj<CuraParserV1pt1pt0Service>;
@@ -66,15 +73,28 @@ describe('CuraParserService', () => {
 
     const testQueryString = 'plugin_version=1.1.0';
     const params = createQueryParams(testQueryString);
-    service.parse(params);
+    await service.parse(params);
 
     expect(mockv1pt1pt0Parser.parse).toHaveBeenCalled();
   });
 
-  it(`should return null if the params do not contain a plugin_version key.`, () => {
+  it(`should parse using the v1.2.0 parser when the param's plugin_version is 1.2.0`, async () => {
+    const mockv1pt2pt0Parser = TestBed.inject(
+      CuraParserV1pt2pt0Service
+    ) as jasmine.SpyObj<CuraParserV1pt2pt0Service>;
+    mockv1pt2pt0Parser.parse.and.returnValue(null);
+
+    const testQueryString = 'plugin_version=1.2.0';
+    const params = createQueryParams(testQueryString);
+    await service.parse(params);
+
+    expect(mockv1pt2pt0Parser.parse).toHaveBeenCalled();
+  });
+
+  it(`should return null if the params do not contain a plugin_version key.`, async () => {
     const testQueryString = 'non_version=foo';
     const params = createQueryParams(testQueryString);
-    const result = service.parse(params);
+    const result = await service.parse(params);
 
     expect(result).toBeNull();
   });

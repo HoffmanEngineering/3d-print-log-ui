@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { INavData } from 'src/app/shared/sidebar/types';
 
 @Component({
@@ -6,7 +6,7 @@ import { INavData } from 'src/app/shared/sidebar/types';
   templateUrl: './doc-sidebar.component.html',
   styleUrls: ['./doc-sidebar.component.scss'],
 })
-export class DocSidebarComponent implements OnInit {
+export class DocSidebarComponent {
   public navItems: INavData[] = [
     { name: 'Getting Started', url: '/docs/getting-started' },
     { divider: true },
@@ -21,8 +21,4 @@ export class DocSidebarComponent implements OnInit {
     { name: 'Release Notes', url: '/docs/release-notes' },
     { name: 'About', url: '/docs/about' },
   ];
-
-  constructor() {}
-
-  ngOnInit() {}
 }

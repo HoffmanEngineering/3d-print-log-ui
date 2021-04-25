@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ParamMap } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrintDetail } from 'src/app/core/services/print.service';
 import { CuraParserV1pt0pt0Service } from './cura/cura-parser-v1-0-0.service';
@@ -13,7 +14,8 @@ export class CuraParserService implements NewPrintParser {
     private readonly parserV1pt0pt0: CuraParserV1pt0pt0Service,
     private readonly parserV1pt1pt0: CuraParserV1pt1pt0Service,
     private readonly parserV1pt2pt0: CuraParserV1pt2pt0Service,
-    private readonly loggingService: LoggingService
+    private readonly loggingService: LoggingService,
+    private readonly toastrService: ToastrService
   ) {}
 
   async parse(params: ParamMap): Promise<PrintDetail> {
@@ -29,14 +31,22 @@ export class CuraParserService implements NewPrintParser {
 
     switch (params.get('plugin_version')) {
       case '1.0.0':
+        this.displayOutdatedCuraToast();
         return this.parserV1pt0pt0.parse(params);
       case '1.1.0':
+        this.displayOutdatedCuraToast();
         return this.parserV1pt1pt0.parse(params);
-        break;
       case '1.2.0':
         return this.parserV1pt2pt0.parse(params);
       default:
         return null;
     }
+  }
+
+  private displayOutdatedCuraToast() {
+    this.toastrService.info(
+      'An update for the 3D Print Log Cura Plugin is available. Update through the Cura Marketplace.',
+      'Update Available'
+    );
   }
 }

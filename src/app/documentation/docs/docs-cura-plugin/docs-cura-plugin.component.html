@@ -4,7 +4,8 @@
 
   <p>
     The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura lets
-    you add new prints directly from Cura.
+    you add new prints directly from Cura. Automatically log print settings,
+    duration, and filament usage from Cura.
   </p>
   <p>
     You can install this plugin via the
@@ -38,7 +39,41 @@
   </p>
 
   <p>
-    This will only prepopulate the form, no information is saved until you save
-    the form in 3D Print Log.
+    This will open a browser tab with 3D Print Log's
+    <strong>New Print</strong> form prepopulated with the information from Cura.
   </p>
+
+  <h3 id="customize-settings">Customize Settings</h3>
+  <div fxLayout="row" fxLayout.lt-lg="column">
+    <div fxFlex="grow">
+      <p>
+        You can customize the list of logged settings through Cura's
+        <strong>Extensions</strong> -> <strong>3D Print Log</strong> ->
+        <strong>Configure Settings to Log</strong> menu option.
+      </p>
+      <p>
+        Here you can select if you want to record the Profile Name, the Filament
+        Names, and the list of settings you want recorded. Simply search for the
+        setting you want to record, and click the Checkbox next to them to start
+        uploading them to 3D Print Log.
+      </p>
+      <p>
+        The <strong>Reset to Defaults</strong> will revert any changes you made
+        back to the default selection.
+      </p>
+    </div>
+    <div fxFlex>
+      <img
+        class="fade-in"
+        [ngStyle.lt-md]="{
+          display: 'block',
+          'max-width': '90%',
+          'margin-left': 'auto',
+          'margin-right': 'auto'
+        }"
+        alt="The Customize Settings to Log dialog inside of Cura"
+        src="./assets/docs-3dprintloguploader-cura-setting-dialog_d85e4adef.png"
+      />
+    </div>
+  </div>
 </div>

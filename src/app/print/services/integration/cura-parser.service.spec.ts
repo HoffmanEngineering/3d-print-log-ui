@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ParamMap } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
 import { CuraParserService } from './cura-parser.service';
 import { CuraParserV1pt0pt0Service } from './cura/cura-parser-v1-0-0.service';
@@ -31,12 +32,18 @@ describe('CuraParserService', () => {
       ['parse']
     );
 
+    const mockToastrService = jasmine.createSpyObj<ToastrService>(
+      'ToastrService',
+      ['info']
+    );
+
     TestBed.configureTestingModule({
       providers: [
         CuraParserService,
         { provide: CuraParserV1pt0pt0Service, useValue: mockv1pt0pt0Parser },
         { provide: CuraParserV1pt1pt0Service, useValue: mockv1pt1pt0Parser },
         { provide: CuraParserV1pt2pt0Service, useValue: mockv1pt2pt0Parser },
+        { provide: ToastrService, useValue: mockToastrService },
       ],
     });
     service = TestBed.inject(CuraParserService);

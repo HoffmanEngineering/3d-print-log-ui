@@ -27,6 +27,58 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.12.0': {
+      title:
+        '1.12.0 Release - Customize Settings with 3D Print Log Cura Plugin v1.2.0',
+      body: `<p>
+  The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura has
+  been updated to v1.2.0. You can now select any combination of Cura settings
+  to record, so you can log the information that is important to you.
+</p>
+<h4>Plugin Changes:</h4>
+<ul>
+  <li>
+    Customize the list of settings recorded. Settings Menu is accessible
+    inside of Cura through Extensions -> 3D Print Log -> Configure Settings to
+    Log
+  </li>
+  <li>Added option to log Cura Profile Name.</li>
+  <li>Added option to log selected filament names and materials.</li>
+  <li>Added support for Cura 4.9.</li>
+</ul>
+<p>
+  You can install v1.2.0 of the
+  plugin via the
+  <a
+    href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+    >Ultimaker Cura Marketplace</a
+  >
+  . Alternatively, you can download the
+  <a
+    href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+    >Latest Release from Github</a
+  >
+  and drag/drop into Cura to install.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.11.2': {
       redirect: '1.11.1',
     },

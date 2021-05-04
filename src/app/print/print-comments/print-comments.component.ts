@@ -7,8 +7,10 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
+import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Comment } from 'src/app/core/services/comment.service';
+import { PrintService } from 'src/app/core/services/print.service';
 
 @Component({
   selector: 'app-print-comments',
@@ -16,6 +18,8 @@ import { Comment } from 'src/app/core/services/comment.service';
   styleUrls: ['./print-comments.component.scss'],
 })
 export class PrintCommentsComponent implements OnInit {
+  @Input() printId: number;
+  @Input() printOwnerUserId: number;
   @Input() comments: Comment[];
   @Input() allowComments: boolean;
 
@@ -28,34 +32,61 @@ export class PrintCommentsComponent implements OnInit {
   notLoggedIn: ElementRef;
 
   public currentUserProfilePicture = '';
+  public currentUserId: number | null = null;
   public newComment = '';
 
   public isLoggedIn = false;
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly printService: PrintService,
+    private readonly toastrService: ToastrService
+  ) {}
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.authService.userProfile$.subscribe((user) => {
       if (user) {
         this.isLoggedIn = true;
       }
       this.currentUserProfilePicture = user?.profilePicture ?? '';
+      this.currentUserId = user?.id;
     });
   }
 
-  addComment() {
+  public addComment() {
     if (this.newComment !== '') {
       this.addNewComment.emit(this.newComment);
       this.newComment = '';
     }
   }
 
-  scrollToReply() {
+  public scrollToReply() {
     if (this.newCommentTextArea) {
       this.newCommentTextArea.nativeElement.scrollIntoView();
       this.newCommentTextArea.nativeElement.focus();
     } else if (this.notLoggedIn) {
       this.notLoggedIn.nativeElement.scrollIntoView();
+    }
+  }
+
+  public deleteComment(comment: Comment) {
+    this.printService.deletePrintComment(this.printId, comment.id).subscribe(
+      () => {
+        this.toastrService.success('Comment deleted successfully.');
+
+        this.removeComment(comment);
+      },
+      (err) => {
+        const message = err?.error ?? err?.message ?? '';
+        this.toastrService.error(message);
+      }
+    );
+  }
+
+  private removeComment(comment: Comment) {
+    const index = this.comments.indexOf(comment);
+    if (index > -1) {
+      this.comments.splice(index, 1);
     }
   }
 }

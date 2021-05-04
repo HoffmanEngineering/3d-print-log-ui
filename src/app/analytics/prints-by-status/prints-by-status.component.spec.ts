@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { PrintsByStatusComponent } from './prints-by-status.component';
@@ -10,6 +11,7 @@ describe('PrintsByStatusComponent', () => {
     waitForAsync(() => {
       TestBed.configureTestingModule({
         declarations: [PrintsByStatusComponent],
+        schemas: [NO_ERRORS_SCHEMA],
       }).compileComponents();
     })
   );

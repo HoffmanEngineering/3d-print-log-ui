@@ -27,6 +27,31 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.12.1': {
+      title: '1.12.1 Release - Ability to Delete Comments',
+      body: `<p>
+      You can now delete your own comments. The owner of a print can also moderate
+      comments on their prints and have the ability to remove comments from other users.
+    </p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.12.0': {
       title:
         '1.12.0 Release - Customize Settings with 3D Print Log Cura Plugin v1.2.0',

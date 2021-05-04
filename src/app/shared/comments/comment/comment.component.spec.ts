@@ -1,4 +1,12 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  waitForAsync,
+} from '@angular/core/testing';
+import { MatMenuModule } from '@angular/material/menu';
+import { By } from '@angular/platform-browser';
 
 import { HumanizePipe } from '../../pipes/humanize.pipe';
 import { CommentComponent } from './comment.component';
@@ -11,6 +19,8 @@ describe('CommentComponent', () => {
     waitForAsync(() => {
       TestBed.configureTestingModule({
         declarations: [CommentComponent, HumanizePipe],
+        imports: [MatMenuModule],
+        schemas: [NO_ERRORS_SCHEMA],
       }).compileComponents();
     })
   );
@@ -44,4 +54,32 @@ describe('CommentComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should show the More menu when showDelete property is true', fakeAsync(() => {
+    // Arrange
+    component.showDelete = true;
+
+    // Act
+    fixture.detectChanges();
+
+    // Assert
+    const buttonSelector = `#comment${component.comment.id}MoreButton`;
+    const btn = fixture.debugElement.query(By.css(buttonSelector));
+    console.log(btn);
+    expect(btn).not.toBeNull();
+  }));
+
+  it('should not show the More menu when showDelete property is false', fakeAsync(() => {
+    // Arrange
+    component.showDelete = false;
+
+    // Act
+    fixture.detectChanges();
+
+    // Assert
+    const buttonSelector = `#comment${component.comment.id}MoreButton`;
+    const btn = fixture.debugElement.query(By.css(buttonSelector));
+
+    expect(btn).toBeNull();
+  }));
 });

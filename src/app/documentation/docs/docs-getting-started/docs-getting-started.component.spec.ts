@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { DocsGettingStartedComponent } from './docs-getting-started.component';
@@ -10,6 +11,7 @@ xdescribe('DocsGettingStartedComponent', () => {
     waitForAsync(() => {
       TestBed.configureTestingModule({
         declarations: [DocsGettingStartedComponent],
+        schemas: [NO_ERRORS_SCHEMA],
       }).compileComponents();
     })
   );

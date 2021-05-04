@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ParamMap } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { LoggingService } from 'src/app/core/services/logging.service';
 
 import { CuraParserService } from './cura-parser.service';
 import { CuraParserV1pt0pt0Service } from './cura/cura-parser-v1-0-0.service';
@@ -37,6 +38,11 @@ describe('CuraParserService', () => {
       ['info']
     );
 
+    const mockLoggingService = jasmine.createSpyObj<LoggingService>(
+      'LoggingService',
+      ['logEvent']
+    );
+
     TestBed.configureTestingModule({
       providers: [
         CuraParserService,
@@ -44,6 +50,7 @@ describe('CuraParserService', () => {
         { provide: CuraParserV1pt1pt0Service, useValue: mockv1pt1pt0Parser },
         { provide: CuraParserV1pt2pt0Service, useValue: mockv1pt2pt0Parser },
         { provide: ToastrService, useValue: mockToastrService },
+        { provide: LoggingService, useValue: mockLoggingService },
       ],
     });
     service = TestBed.inject(CuraParserService);

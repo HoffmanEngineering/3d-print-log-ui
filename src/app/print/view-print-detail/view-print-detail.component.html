@@ -195,6 +195,8 @@
       </mat-card-actions>
       <mat-card-content style="width: 100%">
         <app-print-comments
+          [printId]="print.id"
+          [printOwnerUserId]="print.createdByUserId"
           [allowComments]="print.allowComments"
           [comments]="print.comments"
           (addNewComment)="addComment($event)"

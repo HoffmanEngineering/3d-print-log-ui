@@ -8,6 +8,7 @@
     <!-- <mat-card-title>
       <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
     </mat-card-title> -->
+
     <mat-card-subtitle>
       <a [routerLink]="['/users', comment.createdBy.id]">{{
         comment.createdBy.displayName
@@ -19,6 +20,28 @@
         >{{ comment.createdDate | humanize }}</span
       >
     </mat-card-subtitle>
+
+    <div fxFlex></div>
+    <button
+      id="comment{{ comment.id }}MoreButton"
+      *ngIf="showDelete"
+      mat-button
+      class="transparent more-button"
+      [matMenuTriggerFor]="aboutMenu"
+      data-cy-more-button
+    >
+      <mat-icon>more_horiz</mat-icon>
+    </button>
+    <mat-menu #aboutMenu="matMenu">
+      <button
+        *ngIf="showDelete"
+        type="button"
+        mat-menu-item
+        (click)="delete.emit()"
+      >
+        <mat-icon>delete</mat-icon>Delete
+      </button>
+    </mat-menu>
   </mat-card-header>
   <mat-card-content>
     <p style="padding-top: 5px; white-space: pre-wrap">{{ comment.body }}</p>

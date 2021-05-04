@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Comment } from 'src/app/core/services/comment.service';
 
 @Component({
@@ -8,6 +8,10 @@ import { Comment } from 'src/app/core/services/comment.service';
 })
 export class CommentComponent implements OnInit {
   @Input() comment: Comment;
+
+  @Input() public showDelete = false;
+
+  @Output() public delete: EventEmitter<void> = new EventEmitter();
 
   constructor() {}
 

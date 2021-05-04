@@ -4,7 +4,15 @@
     <button mat-flat-button (click)="scrollToReply()">Reply</button>
   </div>
   <div class="comment" *ngFor="let comment of comments">
-    <app-comment [comment]="comment"> </app-comment>
+    <app-comment
+      [comment]="comment"
+      [showDelete]="
+        printOwnerUserId === currentUserId ||
+        comment.createdById === currentUserId
+      "
+      (delete)="deleteComment(comment)"
+    >
+    </app-comment>
   </div>
   <div>
     <mat-card class="mat-elevation-z4">

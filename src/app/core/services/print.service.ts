@@ -456,6 +456,15 @@ export class PrintService {
     );
   }
 
+  /**
+   * Delete a print comment.
+   */
+  public deletePrintComment(printId: number, commentId: number) {
+    const url = `${this.baseApi}/api/Prints/${printId}/comment/${commentId}`;
+
+    return this.http.delete<Comment>(url);
+  }
+
   public exportAllPrintsAsCsv() {
     const url = `${this.baseApi}/api/Prints/csv`;
     return this.http.get(url, { responseType: 'blob' });

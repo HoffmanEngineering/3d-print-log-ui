@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { TotalFilamentUsedComponent } from './total-filament-used.component';
@@ -10,6 +11,7 @@ describe('TotalFilamentUsedComponent', () => {
     waitForAsync(() => {
       TestBed.configureTestingModule({
         declarations: [TotalFilamentUsedComponent],
+        schemas: [NO_ERRORS_SCHEMA],
       }).compileComponents();
     })
   );

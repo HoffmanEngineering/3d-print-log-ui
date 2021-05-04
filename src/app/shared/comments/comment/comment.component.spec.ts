@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import {
   ComponentFixture,
   fakeAsync,
@@ -19,6 +20,7 @@ describe('CommentComponent', () => {
       TestBed.configureTestingModule({
         declarations: [CommentComponent, HumanizePipe],
         imports: [MatMenuModule],
+        schemas: [NO_ERRORS_SCHEMA],
       }).compileComponents();
     })
   );

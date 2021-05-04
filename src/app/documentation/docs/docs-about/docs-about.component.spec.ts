@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { DocsAboutComponent } from './docs-about.component';
@@ -10,6 +11,7 @@ describe('DocsAboutComponent', () => {
     waitForAsync(() => {
       TestBed.configureTestingModule({
         declarations: [DocsAboutComponent],
+        schemas: [NO_ERRORS_SCHEMA],
       }).compileComponents();
     })
   );

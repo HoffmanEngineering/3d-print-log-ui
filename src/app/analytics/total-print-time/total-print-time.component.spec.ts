@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { TotalPrintTimeComponent } from './total-print-time.component';
@@ -10,6 +11,7 @@ describe('TotalPrintTimeComponent', () => {
     waitForAsync(() => {
       TestBed.configureTestingModule({
         declarations: [TotalPrintTimeComponent],
+        schemas: [NO_ERRORS_SCHEMA],
       }).compileComponents();
     })
   );

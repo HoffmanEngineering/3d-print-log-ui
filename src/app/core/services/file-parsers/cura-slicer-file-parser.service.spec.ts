@@ -1,16 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 
 import { CuraSlicerFileParserService } from './cura-slicer-file-parser.service';
-import testGcodeFile from './cura-test-file';
+import multipleExtruderTestFile from './cura-test-file-multiple-extruders';
+import singleExtruderTestFile from './cura-test-file-single-extruder';
 
 fdescribe('CuraSlicerFileParserService', () => {
   let service: CuraSlicerFileParserService;
-  let testGcode: string;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(CuraSlicerFileParserService);
-    testGcode = testGcodeFile.data;
   });
 
   it('should be created', () => {
@@ -18,7 +17,8 @@ fdescribe('CuraSlicerFileParserService', () => {
   });
 
   describe('estimated print time', () => {
-    it('should parse the TIME row as the estimated print time in seconds', () => {
+    fit('should parse the TIME row as the estimated print time in seconds', () => {
+      const testGcode = multipleExtruderTestFile.data;
       const expectedTimeInSeconds = 6311;
       const actualPrint = service.parse(testGcode);
 
@@ -28,11 +28,24 @@ fdescribe('CuraSlicerFileParserService', () => {
     });
 
     it('should set the estimated print time to null if the gcode does not contain a TIME row', () => {
+      const testGcode = multipleExtruderTestFile.data;
       const expectedTimeInSeconds = 6311;
       const noTimeRowGcode = 'Test; Test; Test;';
       const actualPrint = service.parse(noTimeRowGcode);
 
       expect(actualPrint.estimatedPrintTimeInSeconds).toBeNull();
+    });
+  });
+
+  describe('Single Extruder Parsing', () => {
+    it('should parse the settings for a single extruder correctly', () => {
+      const testGcode = singleExtruderTestFile.data;
+      const expectedTimeInSeconds = 6311;
+      const actualPrint = service.parse(testGcode);
+
+      expect(actualPrint.estimatedPrintTimeInSeconds).toEqual(
+        expectedTimeInSeconds
+      );
     });
   });
 });

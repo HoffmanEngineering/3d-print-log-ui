@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
-import { forEach, min } from 'lodash';
+import { capitalize, flatMap, flattenDeep } from 'lodash';
 import { GcodeNewPrintParser } from '../gcode-file-parser.service';
+import { LoggingService } from '../logging.service';
 import { PrintDetail, PrintStatus } from '../print.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CuraSlicerFileParserService implements GcodeNewPrintParser {
-  constructor() {}
+  constructor(private readonly loggingService: LoggingService) {}
 
   parse(gcode: string): PrintDetail {
     const print: PrintDetail = {
@@ -18,6 +19,7 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
     print.estimatedPrintTimeInSeconds = this.parseEstimatedPrintTime(gcode);
 
     const settings = this.parseSetting(gcode);
+    print.notes = settings;
 
     // print.estimatedFilamentUsageMg = this.estimateFilamentUsageInMg(gcode);
 
@@ -25,20 +27,20 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
 
     return print;
   }
-  parseSetting(gcode: string) {
+  parseSetting(gcode: string): string {
     let settings = gcode.match(/;End of Gcode(?<test>(.|\n)*)/g)?.[0];
 
     if (settings === null || settings === undefined) {
-      return;
+      return '';
     }
 
-    console.log('Before Cleanup', settings);
+    // console.log('Before Cleanup', settings);
 
     settings = settings.replace(/;End of Gcode\n/gm, '');
     settings = settings.replace(/;SETTING_\d /gm, '');
-    console.log('After Setting Wipe', settings);
+    // console.log('After Setting Wipe', settings);
     settings = settings.replace(/\n/gm, '');
-    console.log(settings);
+    // console.log(settings);
 
     const globalQuality = settings.match(/"global_quality": ".*?\\n\\n"/g);
     console.log('global', globalQuality);
@@ -46,21 +48,240 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
     const globalGeneral =
       globalQuality.length > 0
         ? this.parseGeneralSection(globalQuality[0])
-        : null;
+        : [];
     const globalValues =
-      globalQuality.length > 0 ? this.parseValues(globalQuality[0]) : null;
+      globalQuality.length > 0 ? this.parseValues(globalQuality[0]) : [];
 
     const extruderQuality = settings.match(
-      /"extruder_quality": \[.*?\\n\\n\"\],/g
+      /"extruder_quality": \[.*?\\n\\n\"\](,|})/g
     );
     console.log('extruder', extruderQuality);
 
     const extruderGeneral =
       extruderQuality.length > 0
         ? this.parseGeneralSection(extruderQuality[0])
-        : null;
+        : [];
     const extruderValues =
-      extruderQuality.length > 0 ? this.parseValues(extruderQuality[0]) : null;
+      extruderQuality.length > 0 ? this.parseValues(extruderQuality[0]) : [];
+
+    console.log('extruder general', extruderGeneral);
+    console.log('extruder values', extruderQuality);
+
+    if (extruderValues.length === 1) {
+      // There is only one extruder
+      return this.createNoteForOneExtruder(
+        globalGeneral?.[0],
+        globalValues?.[0],
+        extruderGeneral?.[0],
+        extruderValues?.[0]
+      );
+    } else if (extruderValues.length > 1) {
+      // There are multiple extruders.
+
+      return this.createNoteForMultipleExtruders(
+        globalGeneral?.[0],
+        globalValues?.[0],
+        extruderGeneral,
+        extruderValues
+      );
+    } else {
+      // There was probably a problem.
+      this.loggingService.logTrace('Problem while parsing Cura Code', {
+        gcodeLength: gcode.length,
+        settingSectionLength: settings.length,
+        globalQualityLength: globalQuality.length,
+        globalGeneralLength: globalGeneral.length,
+        globalValueLength: globalValues.length,
+        extruderQualityLength: extruderQuality.length,
+        extruderGeneralLength: extruderGeneral.length,
+        extruderValuesLength: extruderValues.length,
+      });
+      return '';
+    }
+  }
+  createNoteForMultipleExtruders(
+    globalGeneral: { [key: string]: string },
+    globalValues: { [key: string]: string },
+    extrudersGeneral: { [key: string]: string }[],
+    extrudersValues: { [key: string]: string }[]
+  ): string {
+    const fixedGlobalGeneral = this.convertKeys(globalGeneral);
+    const fixedGlobalValues = this.convertKeys(globalValues);
+
+    const fixedExtrudersGeneral = extrudersGeneral.map((obj) =>
+      this.convertKeys(obj)
+    );
+    const fixedExtrudersValues = extrudersValues.map((obj) =>
+      this.convertKeys(obj)
+    );
+
+    const uniqueGeneralKeys = new Set([
+      ...Object.keys(fixedGlobalGeneral),
+      ...flatMap(fixedExtrudersGeneral, (obj) => Object.keys(obj)),
+    ]);
+
+    const uniqueValueKeys = new Set([
+      ...Object.keys(fixedGlobalValues),
+      ...flatMap(fixedExtrudersValues, (obj) => Object.keys(obj)),
+    ]);
+
+    console.log(
+      'createNoteForMultipleExtruders',
+      uniqueGeneralKeys,
+      uniqueValueKeys
+    );
+    // Now format the note:
+
+    let note = '';
+
+    if (uniqueGeneralKeys.size > 0) {
+      note = note + 'Profile:\n';
+      for (const key of uniqueGeneralKeys) {
+        if (key === 'Version') {
+          continue;
+        }
+        const setting = this.formatSetting(
+          key,
+          fixedGlobalGeneral,
+          fixedExtrudersGeneral
+        );
+        note = note + '  ' + setting + '\n';
+      }
+
+      note = note + '\n';
+    }
+
+    // if (Object.keys(values).length > 0) {
+    //   note = note + 'Modified Settings:\n';
+    //   for (const [key, value] of Object.entries(values)) {
+    //     note = note + '  ' + key + ': ' + value + '\n';
+    //   }
+    //   note = note + '\n';
+    // }
+    if (uniqueValueKeys.size > 0) {
+      note = note + 'Modified Settings:\n';
+      for (const key of uniqueValueKeys) {
+        const setting = this.formatSetting(
+          key,
+          fixedGlobalValues,
+          fixedExtrudersValues
+        );
+        note = note + '  ' + setting + '\n';
+      }
+
+      note = note + '\n';
+    }
+
+    console.log(note);
+    return note;
+  }
+  formatSetting(
+    key: string,
+    fixedGlobalGeneral: { [key: string]: string },
+    fixedExtrudersGeneral: { [key: string]: string }[]
+  ): string {
+    // If all settings are same, just use value;
+
+    const settingsAreSame =
+      fixedGlobalGeneral?.[key] !== undefined &&
+      fixedExtrudersGeneral.every(
+        (obj) => obj?.[key] === fixedGlobalGeneral?.[key]
+      );
+
+    if (settingsAreSame) {
+      return key + ': ' + fixedGlobalGeneral?.[key];
+    }
+
+    // If settings are different, combine them like:
+    // Layer Height: 0.5 mm (Ex 1), 0.8mm (Ex 2)
+
+    const global = fixedGlobalGeneral?.[key];
+
+    const areExtrudersTheSame = new Set(
+      fixedExtrudersGeneral.map((obj) => obj[key])
+    );
+    const extruders =
+      areExtrudersTheSame.size === 1
+        ? areExtrudersTheSame.values().next().value
+        : fixedExtrudersGeneral
+            .map((obj, index) => {
+              if (obj?.[key] === undefined) {
+                return '';
+              }
+
+              return obj?.[key] + ' (Ex ' + (index + 1) + ')';
+            })
+            .filter((value) => value !== '')
+            .join(', ');
+
+    return (
+      key +
+      ': ' +
+      (extruders !== undefined && extruders !== '' ? extruders : global)
+    );
+
+    return '';
+  }
+  /**
+   * Create a note for cases where there is just a single extruder.
+   */
+  createNoteForOneExtruder(
+    globalGeneral: { [key: string]: string },
+    globalValues: { [key: string]: string },
+    extruderGeneral: { [key: string]: string },
+    extruderValues: { [key: string]: string }
+  ): string {
+    // Combine the general and values sections, making sure the extruder overrides the global:
+
+    const general = {
+      ...this.convertKeys(globalGeneral),
+      ...this.convertKeys(extruderGeneral),
+    };
+    const values = {
+      ...this.convertKeys(globalValues),
+      ...this.convertKeys(extruderValues),
+    };
+
+    // console.log('createNoteForOneExtruder', general, values);
+    // Now format the note:
+
+    let note = '';
+
+    if (Object.keys(general).length > 0) {
+      note = note + 'Profile:\n';
+      for (const [key, value] of Object.entries(general)) {
+        if (key === 'Version') {
+          continue;
+        }
+        note = note + '  ' + key + ': ' + value + '\n';
+      }
+
+      note = note + '\n';
+    }
+
+    if (Object.keys(values).length > 0) {
+      note = note + 'Modified Settings:\n';
+      for (const [key, value] of Object.entries(values)) {
+        note = note + '  ' + key + ': ' + value + '\n';
+      }
+      note = note + '\n';
+    }
+
+    console.log(note);
+    return note;
+  }
+  convertKeys(obj: { [key: string]: string }): { [key: string]: string } {
+    const results = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const fixedKey = key
+        .replace(/ /g, '')
+        .split('_')
+        .map((s) => capitalize(s))
+        .join(' ');
+      results[fixedKey.trim()] = value.trim();
+    }
+
+    return results;
   }
 
   private parseGeneralSection(
@@ -68,15 +289,19 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
   ): Array<{ [key: string]: string }> {
     const valueRegex = values.match(/\[general\]\\n(.*?)\\n\[/g);
 
-    console.log('Parse General', valueRegex);
+    // console.log('Parse General', valueRegex);
 
     const result = [];
     for (const value of valueRegex) {
       let valueString = value.replace('[general]\\n', '');
       valueString = valueString.replace('\\n[', '');
-      console.log('General String', valueString);
+      // console.log('General String', valueString);
 
-      this.createKeyValuePairs(valueString);
+      const kvp = this.createKeyValuePairs(valueString);
+      const keyCount = Object.keys(kvp).length;
+      if (keyCount > 0) {
+        result.push(kvp);
+      }
     }
 
     return result;
@@ -85,13 +310,13 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
   private parseValues(values: string): Array<{ [key: string]: string }> {
     const valueRegex = values.match(/\[values\]\\n(.*?)\\n\\n\"/g);
 
-    console.log('Parse Values', valueRegex);
+    // console.log('Parse Values', valueRegex);
 
     const result = [];
     for (const value of valueRegex) {
       let valueString = value.replace('[values]\\n', '');
       valueString = valueString.replace('\\n\\n"', '');
-      console.log('Value String', valueString);
+      // console.log('Value String', valueString);
 
       const kvp = this.createKeyValuePairs(valueString);
       const keyCount = Object.keys(kvp).length;

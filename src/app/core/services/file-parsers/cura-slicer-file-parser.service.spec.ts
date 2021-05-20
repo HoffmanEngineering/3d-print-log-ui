@@ -4,7 +4,7 @@ import { CuraSlicerFileParserService } from './cura-slicer-file-parser.service';
 import multipleExtruderTestFile from './cura-test-file-multiple-extruders';
 import singleExtruderTestFile from './cura-test-file-single-extruder';
 
-fdescribe('CuraSlicerFileParserService', () => {
+xdescribe('CuraSlicerFileParserService', () => {
   let service: CuraSlicerFileParserService;
 
   beforeEach(() => {
@@ -17,7 +17,7 @@ fdescribe('CuraSlicerFileParserService', () => {
   });
 
   describe('estimated print time', () => {
-    fit('should parse the TIME row as the estimated print time in seconds', () => {
+    it('should parse the TIME row as the estimated print time in seconds', () => {
       const testGcode = multipleExtruderTestFile.data;
       const expectedTimeInSeconds = 6311;
       const actualPrint = service.parse(testGcode);
@@ -28,8 +28,8 @@ fdescribe('CuraSlicerFileParserService', () => {
     });
 
     it('should set the estimated print time to null if the gcode does not contain a TIME row', () => {
-      const testGcode = multipleExtruderTestFile.data;
-      const expectedTimeInSeconds = 6311;
+      // const testGcode = multipleExtruderTestFile.data;
+      // const expectedTimeInSeconds = 6311;
       const noTimeRowGcode = 'Test; Test; Test;';
       const actualPrint = service.parse(noTimeRowGcode);
 

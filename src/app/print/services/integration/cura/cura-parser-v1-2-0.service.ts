@@ -37,8 +37,6 @@ export class CuraParserV1pt2pt0Service implements NewPrintParser {
       .getSettings(settingId)
       .toPromise();
 
-    console.log(curaData);
-
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),
     };

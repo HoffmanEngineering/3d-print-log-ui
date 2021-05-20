@@ -23,7 +23,6 @@ export class AccountDeactivationBannerComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.userProfileSubscription = this.auth.userProfile$.subscribe((user) => {
-      console.log(user);
       if (user) {
         this.deactivationDate = user.deactivationDateTime;
       } else {

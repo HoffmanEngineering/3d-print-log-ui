@@ -140,7 +140,6 @@ export class EditPrintDetailComponent
     this.titleService.setTitle('Print Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
-      console.log('ngOnInit Data', data);
       this.printers = data.printers;
 
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;

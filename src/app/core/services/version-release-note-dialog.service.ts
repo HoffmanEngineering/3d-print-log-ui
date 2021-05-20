@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.12.2': {
+      redirect: '1.12.1',
+    },
     '1.12.1': {
       title: '1.12.1 Release - Ability to Delete Comments',
       body: `<p>

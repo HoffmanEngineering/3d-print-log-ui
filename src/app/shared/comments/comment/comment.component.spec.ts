@@ -65,7 +65,7 @@ describe('CommentComponent', () => {
     // Assert
     const buttonSelector = `#comment${component.comment.id}MoreButton`;
     const btn = fixture.debugElement.query(By.css(buttonSelector));
-    console.log(btn);
+
     expect(btn).not.toBeNull();
   }));
 

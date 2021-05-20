@@ -37,6 +37,7 @@ export class CuraParserService implements NewPrintParser {
         this.displayOutdatedCuraToast();
         return this.parserV1pt1pt0.parse(params);
       case '1.2.0':
+      case '1.2.1':
         return this.parserV1pt2pt0.parse(params);
       default:
         return null;

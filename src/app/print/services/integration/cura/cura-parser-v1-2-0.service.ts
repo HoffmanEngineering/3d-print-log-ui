@@ -82,6 +82,16 @@ export class CuraParserV1pt2pt0Service implements NewPrintParser {
     // Note should come pre-formatted by the Cura Plugin in this version, so just add the note section if it exists.
     print.notes = settings?.note?.toString?.() ?? '';
 
+    if (settings?.snapshot && settings.snapshot !== '') {
+      print.images = [
+        {
+          id: null,
+          isDefault: true,
+          url: 'data:image/png;base64,' + settings.snapshot,
+        },
+      ];
+    }
+
     return print;
   }
 

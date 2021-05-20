@@ -140,6 +140,7 @@ export class EditPrintDetailComponent
     this.titleService.setTitle('Print Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
+      console.log('ngOnInit Data', data);
       this.printers = data.printers;
 
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
@@ -317,7 +318,7 @@ export class EditPrintDetailComponent
       print.images.forEach((image) => {
         const newImage: PrintImageValue = {
           id: image.id,
-          url: null,
+          url: image.url ?? null,
           file: null,
           isDefault: image.isDefault,
         };
@@ -550,7 +551,7 @@ export class EditPrintDetailComponent
     const newPrint: Omit<PrintDetail, 'comments'> = this.getPrintFromForm();
 
     const newImages = this.images.controls.filter(
-      (control) => control.dirty && control.value.id === undefined
+      (control) => control.value.id === undefined || control.value.id === null
     );
 
     // Check the selected default.
@@ -580,9 +581,18 @@ export class EditPrintDetailComponent
             }
 
             const imagesToUpload = newImages.map((image) => {
-              return this.printService.uploadPrintImage(
+              if (image.value.file !== null && image.value.file !== undefined) {
+                return this.printService.uploadPrintImage(
+                  createdPrint.id,
+                  image.value.file,
+                  image.value.isDefault
+                );
+              }
+
+              // otherwise, assume its a new image from a data url:
+              return this.printService.uploadPrintImageFromDataUrl(
                 createdPrint.id,
-                image.value.file,
+                image.value.url,
                 image.value.isDefault
               );
             });
@@ -642,9 +652,18 @@ export class EditPrintDetailComponent
             }
 
             const imagesToUpload = newImages.map((image) => {
-              return this.printService.uploadPrintImage(
+              if (image.value.file !== null && image.value.file !== undefined) {
+                return this.printService.uploadPrintImage(
+                  updatedPrint.id,
+                  image.value.file,
+                  image.value.isDefault
+                );
+              }
+
+              // otherwise, assume its a new image from a data url:
+              return this.printService.uploadPrintImageFromDataUrl(
                 updatedPrint.id,
-                image.value.file,
+                image.value.url,
                 image.value.isDefault
               );
             });

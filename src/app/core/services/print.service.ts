@@ -382,6 +382,38 @@ export class PrintService {
     return this.http.delete<any>(url);
   }
 
+  public uploadPrintImageFromDataUrl(
+    printId: number,
+    dataUrl: string,
+    isDefault = false
+  ) {
+    const dataURItoBlob = (dataURI: string) => {
+      const bytes =
+        dataURI.split(',')[0].indexOf('base64') >= 0
+          ? atob(dataURI.split(',')[1])
+          : unescape(dataURI.split(',')[1]);
+      const mime = dataURI.split(',')[0].split(':')[1].split(';')[0];
+      const max = bytes.length;
+      const ia = new Uint8Array(max);
+      for (let i = 0; i < max; i++) {
+        ia[i] = bytes.charCodeAt(i);
+      }
+      return new Blob([ia], { type: mime });
+    };
+    // Since its a print image, we assume the mime type to be image/{ext}, so grab it.
+    const ext = dataUrl.split(',')[0].split(':')[1].split(';')[0].split('/')[1];
+    const fileName = `printImage.${ext}`;
+    const blob = dataURItoBlob(dataUrl);
+
+    const formData: FormData = new FormData();
+    formData.append('image', blob, fileName);
+    formData.append('isDefault', isDefault.toString());
+
+    const url = `${this.baseApi}/api/Prints/${printId}/image`;
+
+    return this.http.post(url, formData);
+  }
+
   public uploadPrintImage(printId: number, file: File, isDefault = false) {
     const url = `${this.baseApi}/api/Prints/${printId}/image`;
 

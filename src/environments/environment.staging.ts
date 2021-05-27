@@ -6,7 +6,7 @@ import packageInfo from '../../package.json';
 export const environment = {
   production: false,
   printLogApiUrl: 'https://3d-print-log-staging.azurewebsites.net', // 'https://localhost:5001',
-  version: packageInfo.version,,
+  version: packageInfo.version,
 };
 
 /*

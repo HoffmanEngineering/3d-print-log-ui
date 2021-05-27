@@ -27,6 +27,52 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.12.3': {
+      title: '1.12.3 Release - Snapshots from Cura',
+      body: `<img
+  class="version-release-note-dialog-image"
+  alt="The Add 3D Print screen with the cura snapshot as the print image."
+  src="./assets/release_curasnapshot_40d0a079b.png"
+/>
+<p>
+  The <strong>3D Print Log Uploader Plugin for Cura</strong> as been
+  updated to version 1.2.1. This version adds an "Include Snapshot" option
+  which will automatically send a screenshot from Cura as the print's
+  image.
+</p>
+<p>
+  You can install v1.2.1 of the
+  plugin via the
+  <a
+    href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+    >Ultimaker Cura Marketplace</a
+  >
+  . Alternatively, you can download the
+  <a
+    href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+    >Latest Release from Github</a
+  >
+  and drag/drop into Cura to install.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.12.2': {
       redirect: '1.12.1',
     },

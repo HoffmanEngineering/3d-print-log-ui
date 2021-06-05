@@ -28,6 +28,8 @@ export interface PrinterDetail {
   filamentDiameter: number | null;
 
   isActive: boolean;
+
+  loadedFilaments: PrinterFilamentSummaryDto[];
 }
 
 export interface PrinterFilamentSummaryDto {
@@ -36,6 +38,35 @@ export interface PrinterFilamentSummaryDto {
    */
   id: string;
   filament: FilamentSummary;
+}
+
+export interface AddPrinterDetailDto {
+  id: number;
+  make: string;
+  model: string;
+
+  name: string;
+
+  description: string;
+
+  nozzleDiameter: number | null;
+
+  filamentDiameter: number | null;
+
+  isActive: boolean;
+
+  loadedFilaments: AddPrinterFilamentSummaryDto[];
+}
+
+export interface AddPrinterFilamentSummaryDto {
+  /**
+   * GUID
+   */
+  id: string;
+  /**
+   * GUID
+   */
+  filamentId: string;
 }
 
 @Injectable({
@@ -74,13 +105,17 @@ export class PrinterService {
   addPrinter(newPrinter: PrinterDetail): Observable<PrinterDetail> {
     const url = `${this.baseApi}/api/Printers/`;
 
-    return this.http.post<PrinterDetail>(url, newPrinter);
+    const dto: AddPrinterDetailDto = this.getAddPrinterDto(newPrinter);
+
+    return this.http.post<PrinterDetail>(url, dto);
   }
 
   updatePrinter(printer: PrinterDetail): Observable<PrinterDetail> {
     const url = `${this.baseApi}/api/Printers/${printer.id}`;
 
-    return this.http.put<PrinterDetail>(url, printer);
+    const dto: AddPrinterDetailDto = this.getAddPrinterDto(printer);
+
+    return this.http.put<PrinterDetail>(url, dto);
   }
 
   getLoadedFilamentForPrinter(
@@ -93,5 +128,32 @@ export class PrinterService {
         return response?.length > 0 ? response : [];
       })
     );
+  }
+
+  private getAddPrinterDto(printer: PrinterDetail): AddPrinterDetailDto {
+    const filamentUsage: AddPrinterFilamentSummaryDto[] = printer.loadedFilaments.map(
+      (pf) => {
+        const usage: AddPrinterFilamentSummaryDto = {
+          id: pf.id,
+          filamentId: pf.filament?.id ?? null,
+        };
+
+        return usage;
+      }
+    );
+
+    const printDto: AddPrinterDetailDto = {
+      id: printer.id,
+      name: printer.name,
+      make: printer.make,
+      model: printer.model,
+      description: printer.description,
+      nozzleDiameter: printer.nozzleDiameter,
+      filamentDiameter: printer.filamentDiameter,
+      isActive: printer.isActive,
+      loadedFilaments: filamentUsage,
+    };
+
+    return printDto;
   }
 }

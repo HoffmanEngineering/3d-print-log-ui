@@ -1,5 +1,12 @@
 import { Component, HostListener, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { uniq } from 'lodash-es';
@@ -7,8 +14,12 @@ import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
+import { FilamentSummary } from 'src/app/core/services/filament.service';
+import { EMPTY_GUID } from 'src/app/core/services/print.service';
+import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import {
   PrinterDetail,
+  PrinterFilamentSummaryDto,
   PrinterService,
 } from '../../core/services/printer.service';
 import defaultPrinters from './cura-exported-printers';
@@ -30,13 +41,19 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
 
   filteredModels: Observable<string[]>;
 
+  // Help to get all printer loaded filament controls as form array.
+  get loadedFilaments(): FormArray {
+    return this.printerForm.get('loadedFilaments') as FormArray;
+  }
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private formBuilder: FormBuilder,
     private printerService: PrinterService,
     private toastr: ToastrService,
-    private titleService: Title
+    private titleService: Title,
+    public dialog: MatDialog
   ) {}
 
   @HostListener('window:beforeunload')
@@ -113,6 +130,23 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
   }
 
   buildFormFromPrinterDetail(printer: PrinterDetail): FormGroup {
+    const loadedFilamentsForm = this.formBuilder.array([]);
+
+    if (
+      printer &&
+      printer.loadedFilaments &&
+      printer.loadedFilaments.length >= 0
+    ) {
+      printer.loadedFilaments.forEach((pf) => {
+        const newFormGroup = this.GetNewLoadedFilamentFormElement(
+          pf.id,
+          pf.filament
+        );
+
+        loadedFilamentsForm.push(newFormGroup);
+      });
+    }
+
     const form = this.formBuilder.group({
       id: [printer ? printer.id : null],
       name: [printer && printer.name ? printer.name : '', Validators.required],
@@ -135,9 +169,45 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
           ? printer.isActive
           : true,
       ],
+      loadedFilaments: loadedFilamentsForm,
     });
 
     return form;
+  }
+
+  private GetNewLoadedFilamentFormElement(
+    id: string,
+    filament: FilamentSummary | null
+  ) {
+    return this.formBuilder.group({
+      id,
+      filament,
+    });
+  }
+
+  public loadFilament() {
+    const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
+      data: {
+        otherFilamentOption: null,
+      },
+    });
+
+    dialogRef.componentInstance.dialogRef
+      .afterClosed()
+      .subscribe((filament) => {
+        if (filament) {
+          const newFilament = this.GetNewLoadedFilamentFormElement(
+            EMPTY_GUID,
+            filament
+          );
+
+          this.loadedFilaments.push(newFilament);
+        }
+      });
+  }
+
+  public removeFilament(index: number) {
+    this.loadedFilaments.removeAt(index);
   }
 
   onSubmit() {
@@ -187,6 +257,17 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
   }
 
   private getPrinterFromForm(): PrinterDetail {
+    const newLoadedFilament = this.loadedFilaments.controls.map(
+      (printerFilament) => {
+        const newPf: PrinterFilamentSummaryDto = {
+          id: printerFilament.get('id').value ?? EMPTY_GUID,
+          filament: printerFilament.get('filament')?.value,
+        };
+
+        return newPf;
+      }
+    );
+
     const printer: PrinterDetail = {
       id: this.printerForm.controls.id.value,
       name: this.printerForm.controls.name.value,
@@ -196,6 +277,7 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
       nozzleDiameter: this.printerForm.controls.nozzleDiameter.value,
       filamentDiameter: this.printerForm.controls.filamentDiameter.value,
       isActive: this.printerForm.controls.isActive.value,
+      loadedFilaments: newLoadedFilament,
     };
 
     return printer;

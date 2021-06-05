@@ -144,7 +144,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
             () => {
               this.loggingService.logEvent('NoActivePrinterPromptClicked');
               this.router.navigate(['printers', 'new']);
-              this.printerRedirectSubscription.unsubscribe();
+              this.printerRedirectSubscription?.unsubscribe?.();
             }
           );
         }

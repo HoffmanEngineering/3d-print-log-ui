@@ -1,8 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { PagedList } from 'src/app/core/types/paging';
 import { environment } from 'src/environments/environment';
+import { FilamentSummary } from './filament.service';
 
 export interface PrinterSummary {
   id: number;
@@ -26,6 +28,14 @@ export interface PrinterDetail {
   filamentDiameter: number | null;
 
   isActive: boolean;
+}
+
+export interface PrinterFilamentSummaryDto {
+  /**
+   * GUID
+   */
+  id: string;
+  filament: FilamentSummary;
 }
 
 @Injectable({
@@ -71,5 +81,17 @@ export class PrinterService {
     const url = `${this.baseApi}/api/Printers/${printer.id}`;
 
     return this.http.put<PrinterDetail>(url, printer);
+  }
+
+  getLoadedFilamentForPrinter(
+    printerId: number
+  ): Observable<PrinterFilamentSummaryDto[]> {
+    const url = `${this.baseApi}/api/Printers/${printerId}/filament`;
+
+    return this.http.get<PrinterFilamentSummaryDto[]>(url).pipe(
+      map((response) => {
+        return response?.length > 0 ? response : [];
+      })
+    );
   }
 }

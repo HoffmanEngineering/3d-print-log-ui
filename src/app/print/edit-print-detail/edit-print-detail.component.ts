@@ -26,7 +26,10 @@ import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { PrinterSummary } from 'src/app/core/services/printer.service';
+import {
+  PrinterService,
+  PrinterSummary,
+} from 'src/app/core/services/printer.service';
 import {
   UserSetting,
   UserSettingService,
@@ -93,12 +96,14 @@ export class EditPrintDetailComponent
   printerRedirectPromptSubscription: Subscription;
   printerRedirectToast: ActiveToast<any>;
   printerRedirectSubscription: Subscription;
+  loadFilamentOnPrinterChangeSub: Subscription;
 
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private formBuilder: FormBuilder,
     private readonly printService: PrintService,
+    private readonly printerService: PrinterService,
     private readonly toastr: ToastrService,
     private cd: ChangeDetectorRef,
     private titleService: Title,
@@ -129,6 +134,8 @@ export class EditPrintDetailComponent
     this.printerRedirectPromptSubscription?.unsubscribe?.();
 
     this.printerRedirectSubscription?.unsubscribe?.();
+
+    this.loadFilamentOnPrinterChangeSub?.unsubscribe?.();
   }
 
   @HostListener('window:beforeunload')
@@ -148,6 +155,61 @@ export class EditPrintDetailComponent
       this.lastFilamentMeasureSetting = data.lastFilamentMeasureSetting;
 
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
+
+      // update print form with the last loaded filament
+      if (
+        this.printForm.get('id').value === null &&
+        this.printForm.get('printerId').value !== null
+      ) {
+        this.printerService
+          .getLoadedFilamentForPrinter(this.printForm.get('printerId').value)
+          .subscribe((loadedFilament) => {
+            let isLengthTheDefaultMeasureType = false;
+
+            if (this.lastFilamentMeasureSetting !== null) {
+              isLengthTheDefaultMeasureType =
+                this.lastFilamentMeasureSetting.value === 'Length'
+                  ? true
+                  : false;
+            }
+
+            for (let i = 1; i <= loadedFilament.length; i++) {
+              // If there is a filament usage with OTHER in this index, just update the filament
+              const filament = loadedFilament[i - 1].filament;
+
+              console.log(this.filamentUsage.value);
+
+              if (
+                this.filamentUsage.length >= i &&
+                this.filamentUsage.at(i - 1).get('filament').value ===
+                  this.OTHER_FILAMENT_OPTION
+              ) {
+                this.filamentUsage
+                  .at(i - 1)
+                  .get('filament')
+                  .setValue(filament);
+              }
+              // Else, add a new control:
+              else {
+                const newFormGroup = this.GetNewFilamentUsageForm(
+                  EMPTY_GUID,
+                  0,
+                  0,
+                  isLengthTheDefaultMeasureType,
+                  0,
+                  0,
+                  isLengthTheDefaultMeasureType,
+                  filament,
+                  ''
+                );
+
+                this.filamentUsage.push(newFormGroup);
+              }
+            }
+
+            this.filamentUsage.markAsPristine();
+          });
+      }
 
       this.onChanges();
     });
@@ -185,6 +247,67 @@ export class EditPrintDetailComponent
   private onChanges() {
     this.SaveSettingWhenSelectedPrinterIdChanges();
     this.SaveSettingWhenAllowCommentsChanges();
+    this.loadLoadedFilamentOnPrinterChange();
+  }
+  loadLoadedFilamentOnPrinterChange() {
+    if (this.loadFilamentOnPrinterChangeSub) {
+      this.loadFilamentOnPrinterChangeSub.unsubscribe();
+    }
+    this.loadFilamentOnPrinterChangeSub = this.printForm
+      .get('printerId')
+      .valueChanges.subscribe((newPrinterId) => {
+        const isFilamentPristine = this.filamentUsage.pristine;
+        const isPrintNew = this.printForm.get('id').value === null;
+
+        if (isPrintNew && isFilamentPristine) {
+          this.printerService
+            .getLoadedFilamentForPrinter(newPrinterId)
+            .subscribe((loadedFilament) => {
+              // Clear the existing filament usage.
+
+              // Add a new filament usage for the currently loaded filament for that printer.
+
+              let isLengthTheDefaultMeasureType = false;
+
+              if (this.lastFilamentMeasureSetting !== null) {
+                isLengthTheDefaultMeasureType =
+                  this.lastFilamentMeasureSetting.value === 'Length'
+                    ? true
+                    : false;
+              }
+
+              for (let i = 1; i <= loadedFilament.length; i++) {
+                // If there is a filament usage with OTHER in this index, just update the filament
+                const filament = loadedFilament[i - 1].filament;
+
+                console.log(this.filamentUsage.value);
+
+                if (this.filamentUsage.length >= i) {
+                  this.filamentUsage
+                    .at(i - 1)
+                    .get('filament')
+                    .setValue(filament);
+                }
+                // Else, add a new control:
+                else {
+                  const newFormGroup = this.GetNewFilamentUsageForm(
+                    EMPTY_GUID,
+                    0,
+                    0,
+                    isLengthTheDefaultMeasureType,
+                    0,
+                    0,
+                    isLengthTheDefaultMeasureType,
+                    filament,
+                    ''
+                  );
+
+                  this.filamentUsage.push(newFormGroup);
+                }
+              }
+            });
+        }
+      });
   }
   public HandleFilamentMeasureTypeChange(isLength: boolean) {
     const newValue = isLength ? 'Length' : 'Weight';

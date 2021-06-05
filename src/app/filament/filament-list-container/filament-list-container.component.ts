@@ -11,6 +11,7 @@ import {
   FilamentSortColumns,
   FilamentSummary,
 } from 'src/app/core/services/filament.service';
+import { PrintSummary } from 'src/app/core/services/print.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -33,6 +34,7 @@ export class FilamentListContainerComponent implements OnInit {
     'brand',
     'colorName',
     'materialType',
+    'loadedInPrinter',
     'filamentRemaining',
     'more',
   ];
@@ -172,5 +174,23 @@ export class FilamentListContainerComponent implements OnInit {
     this.currentPage = response.paging.currentPage;
     this.pageSize = response.paging.pageSize;
     this.totalCount = response.paging.totalCount;
+  }
+
+  public getPrinterLabel(filament: FilamentSummary) {
+    const printer = filament?.loadedInPrinter;
+
+    if (printer === null || printer === undefined) {
+      return '';
+    }
+
+    if (printer.name && printer.name !== '') {
+      return `${printer.name} - (${(
+        printer.make +
+        ' ' +
+        printer.model
+      ).trim()})`;
+    } else {
+      return `${(printer.make + ' ' + printer.model).trim()}`;
+    }
   }
 }

@@ -113,6 +113,13 @@
       </td>
     </ng-container>
 
+    <ng-container matColumnDef="loadedInPrinter">
+      <th mat-header-cell *matHeaderCellDef>Loaded In</th>
+      <td mat-cell *matCellDef="let filament">
+        {{ getPrinterLabel(filament) }}
+      </td>
+    </ng-container>
+
     <!-- <ng-container matColumnDef="more">
       <th mat-header-cell *matHeaderCellDef></th>
       <td

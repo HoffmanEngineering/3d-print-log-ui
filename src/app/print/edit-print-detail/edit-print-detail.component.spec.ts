@@ -18,6 +18,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { PrinterService } from 'src/app/core/services/printer.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
 describe('EditPrintDetailComponent', () => {
@@ -57,6 +58,11 @@ describe('EditPrintDetailComponent', () => {
         ['logException', 'logEvent']
       );
 
+      const mockPrinterService = jasmine.createSpyObj<PrinterService>(
+        'PrinterService',
+        { getLoadedFilamentForPrinter: of([]) }
+      );
+
       TestBed.configureTestingModule({
         declarations: [EditPrintDetailComponent],
         imports: [
@@ -72,6 +78,7 @@ describe('EditPrintDetailComponent', () => {
         ],
         providers: [
           { provide: PrintService, useValue: mockPrintService },
+          { provide: PrinterService, useValue: mockPrinterService },
           { provide: ToastrService, useValue: mockToastrService },
           { provide: Title, useValue: mockTitleService },
           { provide: UserSettingService, useValue: mockUserSettingService },

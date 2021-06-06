@@ -87,8 +87,8 @@ export class PrinterListComponent implements OnInit {
   }
 
   public unloadAllFilament(printer: PrinterSummaryWithFilament) {
-    this.printerService.unloadFilament(printer.id).subscribe((_) => {
-      this.updateFilter().then((_) => {
+    this.printerService.unloadFilament(printer.id).subscribe(() => {
+      this.updateFilter().then(() => {
         this.toastrService.success(
           'Filament unloaded successfully.',
           'Success'

@@ -168,7 +168,7 @@ export class EditPrintDetailComponent
 
             if (this.lastFilamentMeasureSetting !== null) {
               isLengthTheDefaultMeasureType =
-                this.lastFilamentMeasureSetting.value === 'Length'
+                this.lastFilamentMeasureSetting?.value === 'Length'
                   ? true
                   : false;
             }
@@ -176,8 +176,6 @@ export class EditPrintDetailComponent
             for (let i = 1; i <= loadedFilament.length; i++) {
               // If there is a filament usage with OTHER in this index, just update the filament
               const filament = loadedFilament[i - 1].filament;
-
-              console.log(this.filamentUsage.value);
 
               if (
                 this.filamentUsage.length >= i &&
@@ -257,21 +255,18 @@ export class EditPrintDetailComponent
       .get('printerId')
       .valueChanges.subscribe((newPrinterId) => {
         const isFilamentPristine = this.filamentUsage.pristine;
-        const isPrintNew = this.printForm.get('id').value === null;
+        const isPrintNew = this.printForm.get('id')?.value === null;
 
         if (isPrintNew && isFilamentPristine) {
           this.printerService
             .getLoadedFilamentForPrinter(newPrinterId)
             .subscribe((loadedFilament) => {
-              // Clear the existing filament usage.
-
               // Add a new filament usage for the currently loaded filament for that printer.
-
               let isLengthTheDefaultMeasureType = false;
 
               if (this.lastFilamentMeasureSetting !== null) {
                 isLengthTheDefaultMeasureType =
-                  this.lastFilamentMeasureSetting.value === 'Length'
+                  this.lastFilamentMeasureSetting?.value === 'Length'
                     ? true
                     : false;
               }
@@ -279,8 +274,6 @@ export class EditPrintDetailComponent
               for (let i = 1; i <= loadedFilament.length; i++) {
                 // If there is a filament usage with OTHER in this index, just update the filament
                 const filament = loadedFilament[i - 1].filament;
-
-                console.log(this.filamentUsage.value);
 
                 if (this.filamentUsage.length >= i) {
                   this.filamentUsage

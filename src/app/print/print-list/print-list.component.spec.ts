@@ -60,7 +60,7 @@ describe('PrintListComponent', () => {
 
       const mockToastrService = jasmine.createSpyObj<ToastrService>(
         'ToastrService',
-        ['success', 'error', 'info']
+        ['success', 'error', 'info', 'remove']
       );
 
       const mockPrintService = jasmine.createSpyObj<PrintService>(

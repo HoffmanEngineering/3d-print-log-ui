@@ -36,6 +36,7 @@ export class FilamentListContainerComponent implements OnInit {
     'materialType',
     'loadedInPrinter',
     'filamentRemaining',
+    'isActive',
     'more',
   ];
 
@@ -76,6 +77,13 @@ export class FilamentListContainerComponent implements OnInit {
       if (params.has('sortColumn')) {
         this.sortColumn = +params.get('sortColumn');
       }
+
+      if (params.has('pageNumber')) {
+        this.currentPage = +params.get('pageNumber');
+      }
+      if (params.has('pageSize')) {
+        this.pageSize = +params.get('pageSize');
+      }
     });
 
     this.activatedRoute.data.subscribe((data) => {
@@ -85,14 +93,10 @@ export class FilamentListContainerComponent implements OnInit {
   }
 
   public pageChange(pageEvent: PageEvent) {
-    const newPageNumber = pageEvent.pageIndex + 1;
-    const newPageSize = pageEvent.pageSize;
+    this.currentPage = pageEvent.pageIndex + 1;
+    this.pageSize = pageEvent.pageSize;
 
-    this.filamentService
-      .getCurrentUserFilamentSummaries(newPageNumber, newPageSize)
-      .subscribe((response) => {
-        this.handlePagedList(response);
-      });
+    this.updateFilter();
   }
 
   public updateFilter() {

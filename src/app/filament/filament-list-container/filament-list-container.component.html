@@ -119,6 +119,15 @@
       </td>
     </ng-container>
 
+    <ng-container matColumnDef="isActive">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let filament">
+        <mat-chip-list *ngIf="!filament.isActive">
+          <mat-chip color="accent" selected>Inactive</mat-chip>
+        </mat-chip-list>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="more">
       <th mat-header-cell *matHeaderCellDef></th>
       <td

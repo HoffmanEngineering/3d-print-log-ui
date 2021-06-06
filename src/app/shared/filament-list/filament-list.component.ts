@@ -34,6 +34,7 @@ export class FilamentListComponent implements OnInit {
     'materialType',
     'loadedInPrinter',
     'filamentRemaining',
+    'isActive',
   ];
 
   public debouncedUpdateFilter;

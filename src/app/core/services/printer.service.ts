@@ -14,6 +14,16 @@ export interface PrinterSummary {
   isActive: boolean;
 }
 
+export interface PrinterSummaryWithFilament {
+  id: number;
+  name: string;
+  make: string;
+  model: string;
+  isActive: boolean;
+
+  loadedFilaments: PrinterFilamentSummaryDto[];
+}
+
 export interface PrinterDetail {
   id: number;
   make: string;
@@ -82,7 +92,7 @@ export class PrinterService {
     pageSize: number = 10,
     searchText: string = '',
     includeInactive: boolean = false
-  ): Observable<PagedList<PrinterSummary>> {
+  ): Observable<PagedList<PrinterSummaryWithFilament>> {
     const url = `${this.baseApi}/api/printers/summary`;
 
     let params = new HttpParams()
@@ -94,7 +104,9 @@ export class PrinterService {
       params = params.set('searchText', searchText);
     }
 
-    return this.http.get<PagedList<PrinterSummary>>(url, { params });
+    return this.http.get<PagedList<PrinterSummaryWithFilament>>(url, {
+      params,
+    });
   }
 
   getPrinterDetail(id: number): Observable<PrinterDetail> {

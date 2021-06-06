@@ -5,6 +5,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import {
   PrinterService,
   PrinterSummary,
+  PrinterSummaryWithFilament,
 } from '../../core/services/printer.service';
 
 import { Title } from '@angular/platform-browser';
@@ -16,7 +17,7 @@ import { debounce } from 'lodash-es';
   styleUrls: ['./printer-list.component.scss'],
 })
 export class PrinterListComponent implements OnInit {
-  public printers: PrinterSummary[] = [];
+  public printers: PrinterSummaryWithFilament[] = [];
 
   public pageSize: number;
   public currentPage: number;
@@ -25,7 +26,13 @@ export class PrinterListComponent implements OnInit {
   public includeInactive = false;
   public searchText = '';
 
-  public displayedColumns: string[] = ['name', 'make', 'model', 'isActive'];
+  public displayedColumns: string[] = [
+    'name',
+    'make',
+    'model',
+    'filament',
+    'isActive',
+  ];
 
   public debouncedUpdateFilter;
 
@@ -41,7 +48,8 @@ export class PrinterListComponent implements OnInit {
     this.titleService.setTitle('My Printers - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
-      const pagedResponse: PagedList<PrinterSummary> = data.printerList;
+      const pagedResponse: PagedList<PrinterSummaryWithFilament> =
+        data.printerList;
       this.handlePagedList(pagedResponse);
     });
   }
@@ -75,11 +83,24 @@ export class PrinterListComponent implements OnInit {
       });
   }
 
-  private handlePagedList(response: PagedList<PrinterSummary>) {
+  private handlePagedList(response: PagedList<PrinterSummaryWithFilament>) {
     this.printers = response.items;
 
     this.currentPage = response.paging.currentPage;
     this.pageSize = response.paging.pageSize;
     this.totalCount = response.paging.totalCount;
+  }
+
+  public formatLoadedInFilament(printer: PrinterSummaryWithFilament) {
+    let result = '';
+    if (printer?.loadedFilaments?.length > 0) {
+      result = printer.loadedFilaments
+        .map((f) => {
+          return `${f.filament.displayName} (${f.filament.materialType})`;
+        })
+        .join(', ');
+    }
+
+    return result;
   }
 }

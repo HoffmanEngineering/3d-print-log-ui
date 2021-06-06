@@ -113,7 +113,7 @@
     </ng-container>
 
     <ng-container matColumnDef="loadedInPrinter">
-      <th mat-header-cell *matHeaderCellDef>Loaded In</th>
+      <th mat-header-cell *matHeaderCellDef>Loaded In Printer</th>
       <td mat-cell *matCellDef="let filament">
         {{ getPrinterLabel(filament) }}
       </td>
@@ -148,6 +148,13 @@
             mat-menu-item
             [routerLink]="['copy', filament.id]"
             ><mat-icon>file_copy</mat-icon>Duplicate</a
+          >
+          <a
+            *ngIf="filament?.loadedInPrinter?.id"
+            class="menu-link"
+            mat-menu-item
+            [routerLink]="['/', 'printers', filament.loadedInPrinter.id]"
+            ><mat-icon>open_in_browser</mat-icon>Go To Loaded Printer</a
           >
           <button
             type="button"

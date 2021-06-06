@@ -1,8 +1,8 @@
-import { version } from '../../package.json';
+import packageInfo from '../../package.json';
 export const environment = {
   production: true,
   printLogApiUrl: 'https://api.3dprintlog.com',
-  version,
+  version: packageInfo.version,
   authentication: {
     domain: '3dprintlog.auth0.com',
     client_id: '3JOtliMnZIQJDZ5auHia2GZEydfXW9xB',

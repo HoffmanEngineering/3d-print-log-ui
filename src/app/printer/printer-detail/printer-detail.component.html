@@ -128,6 +128,102 @@
         <mat-checkbox fxFlex="grow" formControlName="isActive"
           >Is Active</mat-checkbox
         >
+
+        <div fxFlex="grow" fxFlexFill>
+          Loaded Filaments: <br />
+          <button
+            type="button"
+            mat-raised-button
+            (click)="loadFilament()"
+            color="accent"
+            style="margin-bottom: 5px"
+          >
+            Load Filament
+          </button>
+        </div>
+
+        <div formArrayName="loadedFilaments">
+          <div
+            *ngFor="
+              let printFilament of loadedFilaments.controls;
+              let printFilamentIndex = index
+            "
+            style="margin-bottom: 5px"
+          >
+            <div [formGroupName]="printFilamentIndex">
+              <mat-card
+                class="mat-elevation-z4"
+                fxFlex="grow"
+                fxFlexFill
+                fxLayout="row"
+              >
+                <div fxFlex="grow" fxLayout="column">
+                  <div fxFlex>
+                    <div
+                      class="filament-color-cell"
+                      [ngStyle]="{
+                        'background-color': printFilament.get('filament').value
+                          ?.colorHex
+                          ? '#' + printFilament.get('filament').value?.colorHex
+                          : null
+                      }"
+                    ></div>
+                  </div>
+                  <div fxFlex>
+                    {{
+                      printFilament.get('filament').value?.displayName ||
+                        'Other'
+                    }}
+                  </div>
+                  <div
+                    *ngIf="
+                      printFilament.get('filament').value?.colorName !== ''
+                    "
+                    fxFlex
+                  >
+                    {{ printFilament.get('filament').value?.colorName }}
+                  </div>
+                  <div fxFlex>
+                    {{ printFilament.get('filament').value?.materialType }}
+                  </div>
+                  <div
+                    fxFlex="grow"
+                    *ngIf="printFilament.get('filament').value !== null"
+                  >
+                    {{
+                      printFilament.get('filament').value?.filamentRemaining /
+                        1000 | number
+                    }}
+                    (g) remaining
+                  </div>
+                  <div
+                    fxFlex="grow"
+                    *ngIf="printFilament.get('filament').value !== null"
+                  >
+                    {{
+                      printFilament.get('filament').value
+                        ?.filamentLengthRemainingInM | number
+                    }}
+                    (m) remaining
+                  </div>
+                  <div fxFlex>
+                    <button
+                      type="button"
+                      mat-raised-button
+                      (click)="removeFilament(printFilamentIndex)"
+                      attr.aria-label="Unload {{
+                        printFilament.get('filament').value?.displayName ||
+                          'Other'
+                      }}"
+                    >
+                      <mat-icon>delete</mat-icon>Unload
+                    </button>
+                  </div>
+                </div>
+              </mat-card>
+            </div>
+          </div>
+        </div>
       </mat-card-content>
       <mat-card-actions
         fxLayout

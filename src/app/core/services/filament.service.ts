@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
 import { SortDirection } from '../types/sort-request';
+import { PrinterSummary } from './printer.service';
 
 export interface FilamentDetail {
   id: string;
@@ -45,6 +46,8 @@ export interface FilamentSummary {
   createdDate: string;
   filamentRemaining: number | null;
   filamentLengthRemainingInM: number | null;
+
+  loadedInPrinter: PrinterSummary | null;
 }
 
 export interface FilamentAdjustment {

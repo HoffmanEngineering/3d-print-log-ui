@@ -27,6 +27,82 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.12.3': {
+      title: '1.12.3 - Printers keep track of Loaded Filament',
+      body: `<p>
+  Printers now keep track of what filament rolls were last used. These are
+  considered the printer's <strong>Loaded Filament</strong>. When you start to
+  add a new print, the selected printer's
+  <strong>Loaded Filament</strong> will automatically populate. And when the
+  new print is saved, it'll automatically add the print's selected filament as
+  that printer's currently loaded filament.
+</p>
+<p>
+  A printer's currently loaded filament is displayed on the
+  <strong>Printer List</strong>, and the filament's current printer is
+  displayed on the <strong>Filament List</strong>.
+</p>
+<p>
+  See the <a rel="noreferrer noopener" target="_blank" href="/docs/printers">Printer Documentation</a> for more
+  information on managing loaded filament.
+</p>
+<h4>Full List of Changes:</h4>
+<ul>
+  <li>
+    New Prints will automatically populate the
+    <strong>Filament Usage</strong> section based on the selected printer's
+    <strong>Loaded Filament</strong>.
+  </li>
+  <li>
+    Printer List displays the printer's Loaded Filament.
+    <ul>
+      <li>
+        Printer List contains a ...more menu which allows for quick unloading
+        of filament.
+      </li>
+    </ul>
+  </li>
+  <li>
+    Editing a Printer allows you to manager that printer's
+    <strong>Loaded Filament</strong>.
+  </li>
+  <li>
+    Filament List display which printer that filament is currently loaded in.
+  </li>
+  <li>
+    Filament List has a new menu option to navigate to the edit page for
+    printer it's currently loaded in.
+  </li>
+  <li>
+    Filament List will now display the Inactive badge for inactive filament
+    rolls.
+  </li>
+  <li>
+    Searching on the Print List and Filament List has been improved. Search
+    will look for words separated by spaces, and search for exact text by
+    enclosing words with quotes. Searching for filament material type has been
+    added.
+  </li>
+</ul>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.12.2': {
       redirect: '1.12.1',
     },

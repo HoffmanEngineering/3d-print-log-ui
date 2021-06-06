@@ -1,8 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { PagedList } from 'src/app/core/types/paging';
 import { environment } from 'src/environments/environment';
+import { FilamentSummary } from './filament.service';
 
 export interface PrinterSummary {
   id: number;
@@ -10,6 +12,16 @@ export interface PrinterSummary {
   make: string;
   model: string;
   isActive: boolean;
+}
+
+export interface PrinterSummaryWithFilament {
+  id: number;
+  name: string;
+  make: string;
+  model: string;
+  isActive: boolean;
+
+  loadedFilaments: PrinterFilamentSummaryDto[];
 }
 
 export interface PrinterDetail {
@@ -26,6 +38,45 @@ export interface PrinterDetail {
   filamentDiameter: number | null;
 
   isActive: boolean;
+
+  loadedFilaments: PrinterFilamentSummaryDto[];
+}
+
+export interface PrinterFilamentSummaryDto {
+  /**
+   * GUID
+   */
+  id: string;
+  filament: FilamentSummary;
+}
+
+export interface AddPrinterDetailDto {
+  id: number;
+  make: string;
+  model: string;
+
+  name: string;
+
+  description: string;
+
+  nozzleDiameter: number | null;
+
+  filamentDiameter: number | null;
+
+  isActive: boolean;
+
+  loadedFilaments: AddPrinterFilamentSummaryDto[];
+}
+
+export interface AddPrinterFilamentSummaryDto {
+  /**
+   * GUID
+   */
+  id: string;
+  /**
+   * GUID
+   */
+  filamentId: string;
 }
 
 @Injectable({
@@ -41,7 +92,7 @@ export class PrinterService {
     pageSize: number = 10,
     searchText: string = '',
     includeInactive: boolean = false
-  ): Observable<PagedList<PrinterSummary>> {
+  ): Observable<PagedList<PrinterSummaryWithFilament>> {
     const url = `${this.baseApi}/api/printers/summary`;
 
     let params = new HttpParams()
@@ -53,7 +104,9 @@ export class PrinterService {
       params = params.set('searchText', searchText);
     }
 
-    return this.http.get<PagedList<PrinterSummary>>(url, { params });
+    return this.http.get<PagedList<PrinterSummaryWithFilament>>(url, {
+      params,
+    });
   }
 
   getPrinterDetail(id: number): Observable<PrinterDetail> {
@@ -64,12 +117,64 @@ export class PrinterService {
   addPrinter(newPrinter: PrinterDetail): Observable<PrinterDetail> {
     const url = `${this.baseApi}/api/Printers/`;
 
-    return this.http.post<PrinterDetail>(url, newPrinter);
+    const dto: AddPrinterDetailDto = this.getAddPrinterDto(newPrinter);
+
+    return this.http.post<PrinterDetail>(url, dto);
   }
 
   updatePrinter(printer: PrinterDetail): Observable<PrinterDetail> {
     const url = `${this.baseApi}/api/Printers/${printer.id}`;
 
-    return this.http.put<PrinterDetail>(url, printer);
+    const dto: AddPrinterDetailDto = this.getAddPrinterDto(printer);
+
+    return this.http.put<PrinterDetail>(url, dto);
+  }
+
+  getLoadedFilamentForPrinter(
+    printerId: number
+  ): Observable<PrinterFilamentSummaryDto[]> {
+    const url = `${this.baseApi}/api/Printers/${printerId}/filament`;
+
+    return this.http.get<PrinterFilamentSummaryDto[]>(url).pipe(
+      map((response) => {
+        return response?.length > 0 ? response : [];
+      })
+    );
+  }
+
+  /**
+   * Unload all the filament currently loaded into a printer.
+   */
+  unloadFilament(printerId: number): Observable<void> {
+    const url = `${this.baseApi}/api/Printers/${printerId}/filament/unload`;
+
+    return this.http.put<void>(url, {});
+  }
+
+  private getAddPrinterDto(printer: PrinterDetail): AddPrinterDetailDto {
+    const filamentUsage: AddPrinterFilamentSummaryDto[] = printer.loadedFilaments.map(
+      (pf) => {
+        const usage: AddPrinterFilamentSummaryDto = {
+          id: pf.id,
+          filamentId: pf.filament?.id ?? null,
+        };
+
+        return usage;
+      }
+    );
+
+    const printDto: AddPrinterDetailDto = {
+      id: printer.id,
+      name: printer.name,
+      make: printer.make,
+      model: printer.model,
+      description: printer.description,
+      nozzleDiameter: printer.nozzleDiameter,
+      filamentDiameter: printer.filamentDiameter,
+      isActive: printer.isActive,
+      loadedFilaments: filamentUsage,
+    };
+
+    return printDto;
   }
 }

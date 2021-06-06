@@ -32,7 +32,9 @@ export class FilamentListComponent implements OnInit {
     'brand',
     'colorName',
     'materialType',
+    'loadedInPrinter',
     'filamentRemaining',
+    'isActive',
   ];
 
   public debouncedUpdateFilter;
@@ -98,5 +100,23 @@ export class FilamentListComponent implements OnInit {
     this.currentPage = response.paging.currentPage;
     this.pageSize = response.paging.pageSize;
     this.totalCount = response.paging.totalCount;
+  }
+
+  public getPrinterLabel(filament: FilamentSummary) {
+    const printer = filament?.loadedInPrinter;
+
+    if (printer === null || printer === undefined) {
+      return '';
+    }
+
+    if (printer.name && printer.name !== '') {
+      return `${printer.name} - (${(
+        printer.make +
+        ' ' +
+        printer.model
+      ).trim()})`;
+    } else {
+      return `${(printer.make + ' ' + printer.model).trim()}`;
+    }
   }
 }

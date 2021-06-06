@@ -103,3 +103,9 @@ angular-app:
   server.key (private key)
   server.crt (root certificate)
   Before we run our application, make sure you have restarted your browser and updated the start script in package.json.
+
+# Updating Angular
+
+Normally `ng update` is used to update dependencies. The following script is just for copy/paste convenience:
+
+`ng update @angular/cli @angular/core @angular/material @angular/material-moment-adapter @angular/cdk @angular/flex-layout @angular/youtube-player`

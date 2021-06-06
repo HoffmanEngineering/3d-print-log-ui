@@ -5,16 +5,16 @@ import packageInfo from '../../package.json';
 
 export const environment = {
   production: false,
-  printLogApiUrl: 'https://localhost:5001',
+  printLogApiUrl: 'https://unittest.3dprintlog.dev',
   version: packageInfo.version,
   authentication: {
-    domain: 'dev-3dprintlog.auth0.com',
-    client_id: 'Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ',
-    audience: 'https://dev.3dprintlog.com/api',
+    domain: 'unittest.3dprintlog.dev',
+    client_id: '123-456',
+    audience: 'https://unittest.3dprintlog.dev',
   },
-  googleAnalyticsId: 'UA-65004387-7',
+  googleAnalyticsId: '',
   appInsights: {
-    instrumentationKey: 'aea218c9-705c-4566-89ec-ec01aca375b4',
+    instrumentationKey: null,
   },
   /**
    * Feature Flags

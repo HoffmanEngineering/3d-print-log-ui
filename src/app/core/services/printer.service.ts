@@ -142,6 +142,15 @@ export class PrinterService {
     );
   }
 
+  /**
+   * Unload all the filament currently loaded into a printer.
+   */
+  unloadFilament(printerId: number): Observable<void> {
+    const url = `${this.baseApi}/api/Printers/${printerId}/filament/unload`;
+
+    return this.http.put<void>(url, {});
+  }
+
   private getAddPrinterDto(printer: PrinterDetail): AddPrinterDetailDto {
     const filamentUsage: AddPrinterFilamentSummaryDto[] = printer.loadedFilaments.map(
       (pf) => {

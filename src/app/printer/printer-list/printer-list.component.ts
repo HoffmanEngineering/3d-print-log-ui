@@ -10,6 +10,7 @@ import {
 
 import { Title } from '@angular/platform-browser';
 import { debounce } from 'lodash-es';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-printer-list',
@@ -32,6 +33,7 @@ export class PrinterListComponent implements OnInit {
     'model',
     'filament',
     'isActive',
+    'more',
   ];
 
   public debouncedUpdateFilter;
@@ -39,7 +41,8 @@ export class PrinterListComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private printerService: PrinterService,
-    private titleService: Title
+    private titleService: Title,
+    private readonly toastrService: ToastrService
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
@@ -70,17 +73,28 @@ export class PrinterListComponent implements OnInit {
       });
   }
 
-  public updateFilter() {
-    this.printerService
+  public async updateFilter() {
+    const response = await this.printerService
       .getCurrentUserPrinterSummaries(
         this.currentPage,
         this.pageSize,
         this.searchText,
         this.includeInactive
       )
-      .subscribe((response) => {
-        this.handlePagedList(response);
+      .toPromise();
+
+    this.handlePagedList(response);
+  }
+
+  public unloadAllFilament(printer: PrinterSummaryWithFilament) {
+    this.printerService.unloadFilament(printer.id).subscribe((_) => {
+      this.updateFilter().then((_) => {
+        this.toastrService.success(
+          'Filament unloaded successfully.',
+          'Success'
+        );
       });
+    });
   }
 
   private handlePagedList(response: PagedList<PrinterSummaryWithFilament>) {

@@ -27,6 +27,7 @@ export class CuraParserService implements NewPrintParser {
 
     this.loggingService.logEvent('PrintSentFromCura', {
       plugin_version: params.get('plugin_version').toString(),
+      cura_version: params.get('cura_version').toString(),
     });
 
     switch (params.get('plugin_version')) {
@@ -37,6 +38,8 @@ export class CuraParserService implements NewPrintParser {
         this.displayOutdatedCuraToast();
         return this.parserV1pt1pt0.parse(params);
       case '1.2.0':
+        this.displayOutdatedCuraToast();
+        return this.parserV1pt2pt0.parse(params);
       case '1.2.1':
         return this.parserV1pt2pt0.parse(params);
       default:

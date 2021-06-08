@@ -46,12 +46,13 @@ describe('EditPrintDetailComponent', () => {
         ['updateUserSetting']
       );
 
-      const mockPrinterPromptService = jasmine.createSpyObj<PrinterRedirectPromptService>(
-        'PrinterRedirectPromptService',
-        {
-          shouldShowAddPrinterPrompt: of(false),
-        }
-      );
+      const mockPrinterPromptService =
+        jasmine.createSpyObj<PrinterRedirectPromptService>(
+          'PrinterRedirectPromptService',
+          {
+            shouldShowAddPrinterPrompt: of(false),
+          }
+        );
 
       const mockLogger = jasmine.createSpyObj<LoggingService>(
         'LoggingService',

@@ -10,7 +10,7 @@ describe('CuraParserV1pt0pt0Service', () => {
 
   const createQueryParams = (queryString: string) => {
     const urlParams = new URLSearchParams(queryString);
-    return (urlParams as unknown) as ParamMap;
+    return urlParams as unknown as ParamMap;
   };
 
   beforeEach(() => {

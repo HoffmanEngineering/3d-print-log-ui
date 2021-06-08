@@ -12,7 +12,8 @@ import {
 
 @Injectable()
 export class PrinterListResolverService
-  implements Resolve<PagedList<PrinterSummary>> {
+  implements Resolve<PagedList<PrinterSummary>>
+{
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.printerService.getCurrentUserPrinterSummaries();
   }

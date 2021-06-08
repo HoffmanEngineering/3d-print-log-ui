@@ -267,14 +267,14 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       initialTotalWeightMg: Math.round(
         this.filamentForm.controls.initialTotalWeightG.value * 1000
       ),
-      materialDensityGramPerCubicCm: this.filamentForm.controls
-        .materialDensityGramPerCubicCm.value,
+      materialDensityGramPerCubicCm:
+        this.filamentForm.controls.materialDensityGramPerCubicCm.value,
       materialType: this.filamentForm.controls.materialType.value,
       notes: this.filamentForm.controls.notes.value,
       purchaseDate: this.filamentForm.controls.purchaseDate.value,
       purchaseLocation: this.filamentForm.controls.purchaseLocation.value,
-      purchasePriceCurrency: this.filamentForm.controls.purchasePriceCurrency
-        .value,
+      purchasePriceCurrency:
+        this.filamentForm.controls.purchasePriceCurrency.value,
       purchasePriceValue: this.filamentForm.controls.purchasePriceValue.value,
       recommendedTemp: this.filamentForm.controls.recommendedTemp.value,
       spoolWeightMg: Math.round(

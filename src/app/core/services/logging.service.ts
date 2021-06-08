@@ -33,7 +33,7 @@ export class LoggingService {
       this.appInsights.loadAppInsights();
       this.appInsights.context.application.ver = environment.version;
     } else {
-      this.appInsights = ({
+      this.appInsights = {
         trackPageView: () => {},
         trackEvent: () => {},
         trackMetric: () => {},
@@ -43,7 +43,7 @@ export class LoggingService {
         trackTrace: (message: string, properties?: { [key: string]: any }) => {
           console.log(message, { properties });
         },
-      } as unknown) as ApplicationInsights;
+      } as unknown as ApplicationInsights;
     }
   }
 

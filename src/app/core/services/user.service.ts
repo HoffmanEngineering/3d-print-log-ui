@@ -147,21 +147,19 @@ export class UserService {
   getUserDetail(id: number) {
     const url = `${this.baseApiUrl}/${id}`;
     const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
-    return this.http
-      .get<UserDetailDto>(url, { headers })
-      .pipe(
-        map((user) => {
-          const mappedUser: UserDetailDto = {
-            ...user,
-            deactivationDateTime:
-              user.deactivationDateTime !== null
-                ? new Date(user.deactivationDateTime)
-                : null,
-          };
+    return this.http.get<UserDetailDto>(url, { headers }).pipe(
+      map((user) => {
+        const mappedUser: UserDetailDto = {
+          ...user,
+          deactivationDateTime:
+            user.deactivationDateTime !== null
+              ? new Date(user.deactivationDateTime)
+              : null,
+        };
 
-          return mappedUser;
-        })
-      );
+        return mappedUser;
+      })
+    );
   }
 
   updateCurrentUserDetail(newUserDetail: UpdateUserDetailDto) {

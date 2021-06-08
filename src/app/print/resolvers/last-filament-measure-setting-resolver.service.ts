@@ -12,7 +12,8 @@ import {
 
 @Injectable()
 export class LastFilamentMeasureSettingResolverService
-  implements Resolve<UserSetting | null> {
+  implements Resolve<UserSetting | null>
+{
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Prints_LastSelectedFilamentMeasureType

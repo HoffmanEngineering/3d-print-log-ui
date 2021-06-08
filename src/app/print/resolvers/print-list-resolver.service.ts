@@ -14,7 +14,8 @@ import {
 
 @Injectable()
 export class PrintListResolverService
-  implements Resolve<PagedList<PrintSummary>> {
+  implements Resolve<PagedList<PrintSummary>>
+{
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const {
       pageNumber = 1,

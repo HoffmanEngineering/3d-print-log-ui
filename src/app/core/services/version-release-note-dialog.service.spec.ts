@@ -14,10 +14,10 @@ describe('VersionReleaseNoteDialogService', () => {
     const mockMatDialog = jasmine.createSpyObj<MatDialog>('MatDialog', [
       'open',
     ]);
-    mockDialogRef = ({
+    mockDialogRef = {
       afterClosed: () => of(),
       componentInstance: {},
-    } as unknown) as MatDialogRef<any, any>;
+    } as unknown as MatDialogRef<any, any>;
     mockMatDialog.open.and.returnValue(mockDialogRef);
 
     const mockLocalStorage = jasmine.createSpyObj<LocalStorageService>(

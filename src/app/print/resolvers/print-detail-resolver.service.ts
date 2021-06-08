@@ -26,7 +26,8 @@ export interface PrintDetailWithUser {
 
 @Injectable()
 export class PrintDetailResolverService
-  implements Resolve<PrintDetailWithUser> {
+  implements Resolve<PrintDetailWithUser>
+{
   constructor(
     private printService: PrintService,
     private userService: UserService,

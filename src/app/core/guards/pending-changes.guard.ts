@@ -15,7 +15,8 @@ export interface ComponentCanDeactivate {
   providedIn: 'root',
 })
 export class PendingChangesGuard
-  implements CanDeactivate<ComponentCanDeactivate> {
+  implements CanDeactivate<ComponentCanDeactivate>
+{
   canDeactivate(
     component: ComponentCanDeactivate,
     currentRoute: ActivatedRouteSnapshot,

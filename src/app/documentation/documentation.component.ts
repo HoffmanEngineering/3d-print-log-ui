@@ -18,7 +18,8 @@ let apiLoaded = false;
   styleUrls: ['./documentation.component.scss'],
 })
 export class DocumentationComponent
-  implements OnInit, OnDestroy, AfterViewInit {
+  implements OnInit, OnDestroy, AfterViewInit
+{
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;
 

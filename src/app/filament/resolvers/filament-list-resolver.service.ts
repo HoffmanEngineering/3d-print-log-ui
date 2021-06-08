@@ -14,7 +14,8 @@ import {
 
 @Injectable()
 export class FilamentListResolverService
-  implements Resolve<PagedList<FilamentSummary>> {
+  implements Resolve<PagedList<FilamentSummary>>
+{
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const {
       pageNumber = 1,

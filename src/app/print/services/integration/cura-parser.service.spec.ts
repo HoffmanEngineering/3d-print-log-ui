@@ -72,7 +72,7 @@ describe('CuraParserService', () => {
     ) as jasmine.SpyObj<CuraParserV1pt0pt0Service>;
     mockv1pt0pt0Parser.parse.and.returnValue(null);
 
-    const testQueryString = 'plugin_version=1.0.0';
+    const testQueryString = 'plugin_version=1.0.0&cura_version=4.5.0';
     const params = createQueryParams(testQueryString);
     await service.parse(params);
 
@@ -85,7 +85,7 @@ describe('CuraParserService', () => {
     ) as jasmine.SpyObj<CuraParserV1pt1pt0Service>;
     mockv1pt1pt0Parser.parse.and.returnValue(null);
 
-    const testQueryString = 'plugin_version=1.1.0';
+    const testQueryString = 'plugin_version=1.1.0&cura_version=4.5.0';
     const params = createQueryParams(testQueryString);
     await service.parse(params);
 
@@ -98,7 +98,7 @@ describe('CuraParserService', () => {
     ) as jasmine.SpyObj<CuraParserV1pt2pt0Service>;
     mockv1pt2pt0Parser.parse.and.returnValue(null);
 
-    const testQueryString = 'plugin_version=1.2.0';
+    const testQueryString = 'plugin_version=1.2.0&cura_version=4.5.0';
     const params = createQueryParams(testQueryString);
     await service.parse(params);
 
@@ -106,7 +106,7 @@ describe('CuraParserService', () => {
   });
 
   it(`should return null if the params do not contain a plugin_version key.`, async () => {
-    const testQueryString = 'non_version=foo';
+    const testQueryString = 'non_version=foo&cura_version=4.5.0';
     const params = createQueryParams(testQueryString);
     const result = await service.parse(params);
 

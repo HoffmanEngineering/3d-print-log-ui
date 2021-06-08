@@ -31,12 +31,13 @@ describe('PrintListComponent', () => {
         ['logException', 'logEvent']
       );
 
-      const mockPrinterRedirectPromptService = jasmine.createSpyObj<PrinterRedirectPromptService>(
-        'PrinterRedirectPromptService',
-        {
-          shouldShowAddPrinterPrompt: of(false),
-        }
-      );
+      const mockPrinterRedirectPromptService =
+        jasmine.createSpyObj<PrinterRedirectPromptService>(
+          'PrinterRedirectPromptService',
+          {
+            shouldShowAddPrinterPrompt: of(false),
+          }
+        );
 
       const mockPrintPagedResult: PagedList<PrintSummary> = {
         items: [],

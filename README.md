@@ -109,3 +109,8 @@ angular-app:
 Normally `ng update` is used to update dependencies. The following script is just for copy/paste convenience:
 
 `ng update @angular/cli @angular/core @angular/material @angular/material-moment-adapter @angular/cdk @angular/flex-layout @angular/youtube-player`
+
+# Ignoring Largescale Refactors
+
+We can use the ignoreRevsFile feature of git to ignore blames of large-scale refactors:
+`git config blame.ignoreRevsFile .git-blame-ignore-revs`

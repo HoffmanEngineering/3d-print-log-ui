@@ -11,7 +11,8 @@ import { PrinterService, PrinterSummary } from '../services/printer.service';
   providedIn: 'root',
 })
 export class CurrentUserPrinterSummaryResolverService
-  implements Resolve<PrinterSummary[]> {
+  implements Resolve<PrinterSummary[]>
+{
   constructor(private printerService: PrinterService) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {

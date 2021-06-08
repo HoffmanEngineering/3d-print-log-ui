@@ -59,7 +59,8 @@ export interface PrintImageValue {
   styleUrls: ['./edit-print-detail.component.scss'],
 })
 export class EditPrintDetailComponent
-  implements OnInit, ComponentCanDeactivate, OnDestroy {
+  implements OnInit, ComponentCanDeactivate, OnDestroy
+{
   public OTHER_FILAMENT_OPTION: Partial<FilamentSummary> = {
     id: EMPTY_GUID,
     displayName: 'Other',
@@ -227,8 +228,8 @@ export class EditPrintDetailComponent
             }
           );
 
-          this.printerRedirectSubscription = this.printerRedirectToast.onTap.subscribe(
-            () => {
+          this.printerRedirectSubscription =
+            this.printerRedirectToast.onTap.subscribe(() => {
               this.router.navigate(['printers', 'new'], {
                 queryParams: {
                   // tslint:disable-next-line: no-string-literal
@@ -236,8 +237,7 @@ export class EditPrintDetailComponent
                 },
               });
               this.printerRedirectSubscription.unsubscribe();
-            }
-          );
+            });
         }
       });
   }

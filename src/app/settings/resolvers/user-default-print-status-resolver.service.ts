@@ -12,7 +12,8 @@ import { UserDetailDto, UserService } from 'src/app/core/services/user.service';
 
 @Injectable()
 export class CurrentUserDetailResolverService
-  implements Resolve<UserDetailDto> {
+  implements Resolve<UserDetailDto>
+{
   constructor(private userService: UserService) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {

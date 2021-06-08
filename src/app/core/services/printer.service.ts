@@ -152,16 +152,15 @@ export class PrinterService {
   }
 
   private getAddPrinterDto(printer: PrinterDetail): AddPrinterDetailDto {
-    const filamentUsage: AddPrinterFilamentSummaryDto[] = printer.loadedFilaments.map(
-      (pf) => {
+    const filamentUsage: AddPrinterFilamentSummaryDto[] =
+      printer.loadedFilaments.map((pf) => {
         const usage: AddPrinterFilamentSummaryDto = {
           id: pf.id,
           filamentId: pf.filament?.id ?? null,
         };
 
         return usage;
-      }
-    );
+      });
 
     const printDto: AddPrinterDetailDto = {
       id: printer.id,

@@ -13,7 +13,8 @@ import {
 
 @Injectable()
 export class CopyFilamentDetailResolverService
-  implements Resolve<FilamentDetail> {
+  implements Resolve<FilamentDetail>
+{
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const filamentId = route.paramMap.get('id');
 

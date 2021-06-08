@@ -12,7 +12,8 @@ import {
 
 @Injectable()
 export class LastSelectedPrinterSettingResolverService
-  implements Resolve<UserSetting | null> {
+  implements Resolve<UserSetting | null>
+{
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Prints_LastSelectedPrinterId

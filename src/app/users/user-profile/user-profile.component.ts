@@ -86,8 +86,10 @@ export class UserProfileComponent implements OnInit {
     );
 
     const url = `${this.document.location.origin}/users/${this.userDetail.id}`;
-    const title = `${this.userDetail.displayName} Profile - 3D Print Log`.trim();
-    const description = `View ${this.userDetail.displayName}'s 3D prints and projects on 3DPrintLog.com`.trim();
+    const title =
+      `${this.userDetail.displayName} Profile - 3D Print Log`.trim();
+    const description =
+      `View ${this.userDetail.displayName}'s 3D prints and projects on 3DPrintLog.com`.trim();
     const imageUrl =
       this.userDetail.profilePicture !== ''
         ? this.userDetail.profilePicture

@@ -12,10 +12,11 @@ describe('CuraParserV1pt2pt0Service', () => {
     const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logTrace',
     ]);
-    const mockCuraSettingServiceService = jasmine.createSpyObj<CuraSettingServiceService>(
-      'CuraSettingServiceService',
-      ['getSettings']
-    );
+    const mockCuraSettingServiceService =
+      jasmine.createSpyObj<CuraSettingServiceService>(
+        'CuraSettingServiceService',
+        ['getSettings']
+      );
     TestBed.configureTestingModule({
       providers: [
         CuraParserV1pt2pt0Service,

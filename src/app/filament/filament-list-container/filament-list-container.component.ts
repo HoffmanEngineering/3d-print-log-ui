@@ -120,7 +120,9 @@ export class FilamentListContainerComponent implements OnInit {
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
     // tslint:disable-next-line: max-line-length
-    (dialogRef.componentInstance as any).body = `Are you sure you want to delete filament "${filament.displayName}"? <br /> <br />  This action cannot be undone.`;
+    (
+      dialogRef.componentInstance as any
+    ).body = `Are you sure you want to delete filament "${filament.displayName}"? <br /> <br />  This action cannot be undone.`;
     (dialogRef.componentInstance as any).yesText = 'Delete';
     (dialogRef.componentInstance as any).yesColor = 'warn';
     (dialogRef.componentInstance as any).noText = 'Cancel';

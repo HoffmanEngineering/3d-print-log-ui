@@ -40,14 +40,16 @@ export interface UserProfileInfo {
 })
 export class AuthService {
   // Create an observable of Auth0 instance of client
-  auth0Client$ = (from(
-    createAuth0Client({
-      domain: environment.authentication.domain,
-      client_id: environment.authentication.client_id,
-      redirect_uri: `${window.location.origin}/callback`,
-      audience: environment.authentication.audience,
-    })
-  ) as Observable<Auth0Client>).pipe(
+  auth0Client$ = (
+    from(
+      createAuth0Client({
+        domain: environment.authentication.domain,
+        client_id: environment.authentication.client_id,
+        redirect_uri: `${window.location.origin}/callback`,
+        audience: environment.authentication.audience,
+      })
+    ) as Observable<Auth0Client>
+  ).pipe(
     shareReplay(1), // Every subscription receives the same shared value
     catchError((err) => throwError(err))
   );

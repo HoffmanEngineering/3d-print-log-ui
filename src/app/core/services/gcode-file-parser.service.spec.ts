@@ -14,10 +14,11 @@ describe('GcodeFileParserService', () => {
       ['logEvent']
     );
 
-    const mockPrusaSlicerService = jasmine.createSpyObj<PrusaSlicerFileParserService>(
-      'PrusaSlicerFileParserService',
-      ['parse']
-    );
+    const mockPrusaSlicerService =
+      jasmine.createSpyObj<PrusaSlicerFileParserService>(
+        'PrusaSlicerFileParserService',
+        ['parse']
+      );
 
     const mockMatDialog = jasmine.createSpyObj<MatDialog>('MatDialog', [
       'open',

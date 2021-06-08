@@ -8,3 +8,4 @@ dist
 *.png
 *.txt
 *.gitkeep
+src/app/core/services/file-parsers/cura-test-file-multiple-extruders.ts

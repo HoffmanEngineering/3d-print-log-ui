@@ -14,7 +14,8 @@ import {
   providedIn: 'root',
 })
 export class DefaultPrintViewStatusSettingResolverService
-  implements Resolve<UserSetting | null> {
+  implements Resolve<UserSetting | null>
+{
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Prints_DefaultPrintViewStatus

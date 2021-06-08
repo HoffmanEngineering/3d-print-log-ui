@@ -11,7 +11,8 @@ const routes: Routes = [
     component: SettingsComponent,
     resolve: {
       currentUser: CurrentUserDetailResolverService,
-      defaultPrintViewStatusSetting: DefaultPrintViewStatusSettingResolverService,
+      defaultPrintViewStatusSetting:
+        DefaultPrintViewStatusSettingResolverService,
     },
   },
 ];

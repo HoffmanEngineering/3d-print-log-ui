@@ -14,8 +14,7 @@ import {
 
 @Injectable()
 export class PrintListResolverService
-  implements Resolve<PagedList<PrintSummary>>
-{
+  implements Resolve<PagedList<PrintSummary>> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const {
       pageNumber = 1,
@@ -26,11 +25,16 @@ export class PrintListResolverService
       sortColumn = PrintSummarySortColumn.StartDate,
     } = route.queryParams;
 
+    const printerIds = route.queryParamMap
+      .getAll('filterByPrinterId')
+      .map((id) => +id);
+
     return this.printService.getPrintSummaries(
       pageNumber,
       pageSize,
       searchText,
       filterByStatus,
+      printerIds,
       sortDirection,
       sortColumn
     );

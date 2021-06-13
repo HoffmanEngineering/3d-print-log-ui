@@ -17,6 +17,7 @@ import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
@@ -37,6 +38,7 @@ import { PrinterRedirectPromptService } from '../services/printer-redirect-promp
 })
 export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   public prints: PrintSummary[] = [];
+  public printers: PrinterSummary[] = [];
   public pageSize: number;
   public currentPage: number;
   public totalCount: number;
@@ -55,6 +57,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   public searchText = '';
 
   public filterByStatus: PrintStatus | null = -1;
+
+  public filterByPrinterIds: number[] = [];
 
   public printStatusTypes = PrintStatus;
 
@@ -118,11 +122,21 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
       if (params.has('sortColumn')) {
         this.sortColumn = +params.get('sortColumn');
       }
+
+      if (params.has('filterByPrinterId')) {
+        this.filterByPrinterIds = params
+          .getAll('filterByPrinterId')
+          .map((id) => +id);
+      } else {
+        this.filterByPrinterIds = [];
+      }
     });
 
     this.activatedRoute.data.subscribe((data) => {
       const pagedResponse: PagedList<PrintSummary> = data.printList;
       this.handlePagedList(pagedResponse);
+
+      this.printers = data.printers;
     });
 
     /**
@@ -140,12 +154,13 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
             }
           );
 
-          this.printerRedirectSubscription =
-            this.printerRedirectToast.onTap.subscribe(() => {
+          this.printerRedirectSubscription = this.printerRedirectToast.onTap.subscribe(
+            () => {
               this.loggingService.logEvent('NoActivePrinterPromptClicked');
               this.router.navigate(['printers', 'new']);
               this.printerRedirectSubscription?.unsubscribe?.();
-            });
+            }
+          );
         }
       });
 
@@ -215,6 +230,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.currentPage = 1;
     this.searchText = '';
     this.filterByStatus = -1;
+    this.filterByPrinterIds = [];
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrintSummarySortColumn.StartDate;
@@ -229,6 +245,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
         pageSize: this.pageSize,
         searchText: this.searchText || '',
         filterByStatus: this.filterByStatus,
+        filterByPrinterId: this.filterByPrinterIds,
         sortDirection: this.sortDirection,
         sortColumn: this.sortColumn,
         t: new Date().getTime(),
@@ -250,15 +267,15 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     dialogRef.afterClosed().subscribe((result) => {});
   }
 
-  public getPrinterLabel(print: PrintSummary) {
-    if (print.printer.name && print.printer.name !== '') {
-      return `${print.printer.name} - (${(
-        print.printer.make +
+  public getPrinterLabel(printer: PrinterSummary) {
+    if (printer.name && printer.name !== '') {
+      return `${printer.name} - (${(
+        printer.make +
         ' ' +
-        print.printer.model
+        printer.model
       ).trim()})`;
     } else {
-      return `${(print.printer.make + ' ' + print.printer.model).trim()}`;
+      return `${(printer.make + ' ' + printer.model).trim()}`;
     }
   }
 
@@ -268,9 +285,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
     // tslint:disable-next-line: max-line-length
-    (
-      dialogRef.componentInstance as any
-    ).body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
+    (dialogRef.componentInstance as any).body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
     (dialogRef.componentInstance as any).yesText = 'Delete';
     (dialogRef.componentInstance as any).yesColor = 'warn';
     (dialogRef.componentInstance as any).noText = 'Cancel';

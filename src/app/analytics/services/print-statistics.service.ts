@@ -6,7 +6,7 @@ import { environment } from 'src/environments/environment';
 
 export interface PrintStatistic {
   id: number;
-  printerId: number;
+  printerID: number;
   startDate?: Date;
   estimatedPrintTimeInSeconds?: number;
   estimatedFilamentUsageMg?: number;

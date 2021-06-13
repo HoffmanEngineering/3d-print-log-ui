@@ -207,6 +207,7 @@ export class PrintService {
     pageSize: number = 10,
     searchText: string = '',
     filterByStatus: PrintStatus | null = null,
+    filterByPrinterIds: number[] = [],
     sortDirection = SortDirection.Desc,
     sortColumn = PrintSummarySortColumn.StartDate,
     userId?: number
@@ -228,6 +229,12 @@ export class PrintService {
       params = params.set('filterByStatus', filterByStatus.toString(10));
     }
 
+    if (filterByPrinterIds?.length > 0) {
+      for (const id of filterByPrinterIds) {
+        params = params.append('filterByPrinterIds', id.toString());
+      }
+    }
+
     if (userId !== undefined) {
       params = params.set('userId', userId.toString(10));
     }
@@ -239,67 +246,49 @@ export class PrintService {
     const url = `${this.baseApi}/api/Prints/${id}`;
     const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
 
-    return this.http.get<PrintDetailDTO>(url, { headers }).pipe(
-      map((newPrint) => {
-        const comments: Comment[] = [];
-        for (const comment of newPrint.comments) {
-          const formattedComment: Comment = { ...comment };
-          formattedComment.createdDate = moment
-            .utc(comment.createdDate)
-            .toDate();
-          formattedComment.updatedDate = moment
-            .utc(comment.updatedDate)
-            .toDate();
-          comments.push(formattedComment);
-        }
+    return this.http
+      .get<PrintDetailDTO>(url, { headers })
+      .pipe(
+        map((newPrint) => {
+          const comments: Comment[] = [];
+          for (const comment of newPrint.comments) {
+            const formattedComment: Comment = { ...comment };
+            formattedComment.createdDate = moment
+              .utc(comment.createdDate)
+              .toDate();
+            formattedComment.updatedDate = moment
+              .utc(comment.updatedDate)
+              .toDate();
+            comments.push(formattedComment);
+          }
 
-        const print: PrintDetail = {
-          id: newPrint.id,
-          estimatedFilamentUsageMg: newPrint.estimatedFilamentUsageMg,
-          estimatedPrintTimeInSeconds: newPrint.estimatedPrintTimeInSeconds,
-          filamentType: newPrint.filamentType,
-          filamentUsageMg: newPrint.filamentUsageMg,
-          notes: newPrint.notes,
-          printTimeInSeconds: newPrint.printTimeInSeconds,
-          printerId: newPrint.printerId,
-          printer: newPrint.printer,
-          startDate: newPrint.startDate
-            ? moment(newPrint.startDate).toDate()
-            : null,
-          status: newPrint.status,
-          title: newPrint.title,
-          url: newPrint.url,
-          fileName: newPrint.fileName,
-          viewStatus: newPrint.viewStatus,
-          images: newPrint.images || [],
-          filamentUsage: newPrint.filamentUsage || [],
-          createdByUserId: newPrint.createdByUserId,
-          comments,
-          allowComments: newPrint.allowComments,
-        };
-        return print;
-      })
-      // mergeMap(print => {
-      //   if (print.images.length === 0) {
-      //     return of(print);
-      //   }
-
-      //   const imageRequests: Observable<string>[] = [];
-      //   for (const image of print.images) {
-      //     imageRequests.push(this.getPrintImage(print.id, image.id));
-      //   }
-
-      //   return forkJoin(imageRequests).pipe(
-      //     tap(request => console.log(request)),
-      //     map(images => {
-      //       for (let i = 0; i < print.images.length; i++) {
-      //         print.images[i].url = images[i];
-      //       }
-      //       return print;
-      //     })
-      //   );
-      // })
-    );
+          const print: PrintDetail = {
+            id: newPrint.id,
+            estimatedFilamentUsageMg: newPrint.estimatedFilamentUsageMg,
+            estimatedPrintTimeInSeconds: newPrint.estimatedPrintTimeInSeconds,
+            filamentType: newPrint.filamentType,
+            filamentUsageMg: newPrint.filamentUsageMg,
+            notes: newPrint.notes,
+            printTimeInSeconds: newPrint.printTimeInSeconds,
+            printerId: newPrint.printerId,
+            printer: newPrint.printer,
+            startDate: newPrint.startDate
+              ? moment(newPrint.startDate).toDate()
+              : null,
+            status: newPrint.status,
+            title: newPrint.title,
+            url: newPrint.url,
+            fileName: newPrint.fileName,
+            viewStatus: newPrint.viewStatus,
+            images: newPrint.images || [],
+            filamentUsage: newPrint.filamentUsage || [],
+            createdByUserId: newPrint.createdByUserId,
+            comments,
+            allowComments: newPrint.allowComments,
+          };
+          return print;
+        })
+      );
   }
 
   addPrint(newPrint: Omit<PrintDetail, 'comments'>): Observable<any> {

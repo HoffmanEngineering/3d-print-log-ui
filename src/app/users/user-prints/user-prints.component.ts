@@ -99,6 +99,7 @@ export class UserPrintsComponent implements OnChanges, OnInit {
           this.PAGE_SIZE,
           this.searchText,
           this.filterByStatus,
+          [],
           undefined,
           undefined,
           this.userId

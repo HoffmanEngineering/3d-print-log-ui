@@ -24,25 +24,42 @@
           <mat-option [value]="timeSelectionOptions.Last365Days"
             >Last 365 days</mat-option
           >
+          <mat-option [value]="timeSelectionOptions.AllTime"
+            >All Time</mat-option
+          >
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label> Filter by Printers</mat-label>
+        <mat-select
+          [(ngModel)]="filterByPrinterIds"
+          (ngModelChange)="filterByPrinters()"
+          multiple
+        >
+          <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
+            getPrinterLabel(printer)
+          }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="card mat-elevation-z3">
-        <app-total-print-time [prints]="printStatistics"></app-total-print-time>
+        <app-total-print-time
+          [prints]="filteredPrintStatistics"
+        ></app-total-print-time>
       </div>
       <div class="card mat-elevation-z3">
         <app-total-filament-used
-          [prints]="printStatistics"
+          [prints]="filteredPrintStatistics"
         ></app-total-filament-used>
       </div>
       <div class="card mat-elevation-z3">
-        <app-prints-by-status [prints]="printStatistics">
+        <app-prints-by-status [prints]="filteredPrintStatistics">
         </app-prints-by-status>
       </div>
 
       <!-- 
       <div>
-        {{ printStatistics | json }}
+        {{ filteredPrintStatistics | json }}
       </div> -->
     </mat-card-content>
     <ng-adsense></ng-adsense>

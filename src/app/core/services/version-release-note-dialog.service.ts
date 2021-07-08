@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.12.6': {
+      redirect: '1.12.5',
+    },
     '1.12.5': {
       title: '1.12.5 Filter Prints/Analytics by Printers',
       body: `<p>

@@ -25,7 +25,6 @@ const routes: Routes = [
           printList: PrintListResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
         },
-        runGuardsAndResolvers: 'always',
       },
       {
         path: 'copy/:id',
@@ -34,7 +33,8 @@ const routes: Routes = [
           print: CopyPrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
           lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
-          defaultPrintViewStatusSetting: DefaultPrintViewStatusSettingResolverService,
+          defaultPrintViewStatusSetting:
+            DefaultPrintViewStatusSettingResolverService,
           lastFilamentMeasureSetting: LastFilamentMeasureSettingResolverService,
         },
         canDeactivate: [PendingChangesGuard],
@@ -46,7 +46,8 @@ const routes: Routes = [
           print: PrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
           lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
-          defaultPrintViewStatusSetting: DefaultPrintViewStatusSettingResolverService,
+          defaultPrintViewStatusSetting:
+            DefaultPrintViewStatusSettingResolverService,
           lastFilamentMeasureSetting: LastFilamentMeasureSettingResolverService,
         },
         canActivate: [AuthGuard],

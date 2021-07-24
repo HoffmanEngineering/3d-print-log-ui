@@ -113,6 +113,18 @@
     </button>
   </div>
 
+  <div
+    *ngIf="isLoading"
+    style="
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+    "
+  >
+    <mat-progress-bar color="primary" mode="indeterminate"> </mat-progress-bar>
+  </div>
+
   <table
     fxFlex="grow"
     mat-table

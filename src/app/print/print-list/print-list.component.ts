@@ -75,6 +75,10 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;
 
+  public isLoading = false;
+
+  public printSearchSubscription: Subscription | null = null;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private printerRedirectPromptService: PrinterRedirectPromptService,
@@ -91,6 +95,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     private readonly newPrintStoreService: NewPrintStoreService
   ) {
     this.debouncedUpdateFilter = debounce(() => {
+      this.isLoading = true;
       this.currentPage = 1;
       this.updateFilter();
     }, 400);
@@ -154,13 +159,12 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
             }
           );
 
-          this.printerRedirectSubscription = this.printerRedirectToast.onTap.subscribe(
-            () => {
+          this.printerRedirectSubscription =
+            this.printerRedirectToast.onTap.subscribe(() => {
               this.loggingService.logEvent('NoActivePrinterPromptClicked');
               this.router.navigate(['printers', 'new']);
               this.printerRedirectSubscription?.unsubscribe?.();
-            }
-          );
+            });
         }
       });
 
@@ -239,19 +243,45 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public updateFilter() {
-    return this.router.navigate(['.'], {
-      queryParams: {
-        pageNumber: this.currentPage,
-        pageSize: this.pageSize,
-        searchText: this.searchText || '',
-        filterByStatus: this.filterByStatus,
-        filterByPrinterId: this.filterByPrinterIds,
-        sortDirection: this.sortDirection,
-        sortColumn: this.sortColumn,
-        t: new Date().getTime(),
-      },
-      relativeTo: this.activatedRoute,
-    });
+    this.isLoading = true;
+
+    return this.router
+      .navigate(['.'], {
+        queryParams: {
+          pageNumber: this.currentPage,
+          pageSize: this.pageSize,
+          searchText: this.searchText || '',
+          filterByStatus: this.filterByStatus,
+          filterByPrinterId: this.filterByPrinterIds,
+          sortDirection: this.sortDirection,
+          sortColumn: this.sortColumn,
+          t: new Date().getTime(),
+        },
+        relativeTo: this.activatedRoute,
+      })
+      .then(() => {
+        this.printSearchSubscription?.unsubscribe?.();
+
+        this.printSearchSubscription = this.printService
+          .getPrintSummaries(
+            this.currentPage,
+            this.pageSize,
+            this.searchText || '',
+            this.filterByStatus,
+            this.filterByPrinterIds,
+            this.sortDirection,
+            this.sortColumn
+          )
+          .subscribe(
+            (prints) => {
+              this.handlePagedList(prints);
+              this.isLoading = false;
+            },
+            () => {
+              this.isLoading = false;
+            }
+          );
+      });
   }
 
   public share(print: PrintSummary) {
@@ -285,7 +315,9 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
     // tslint:disable-next-line: max-line-length
-    (dialogRef.componentInstance as any).body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
+    (
+      dialogRef.componentInstance as any
+    ).body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
     (dialogRef.componentInstance as any).yesText = 'Delete';
     (dialogRef.componentInstance as any).yesColor = 'warn';
     (dialogRef.componentInstance as any).noText = 'Cancel';

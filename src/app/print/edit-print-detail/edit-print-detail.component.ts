@@ -158,10 +158,14 @@ export class EditPrintDetailComponent
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
 
       // update print form with the last loaded filament
-      if (
-        this.printForm.get('id').value === null &&
-        this.printForm.get('printerId').value !== null
-      ) {
+      const printIsNew = this.printForm.get('id').value === null;
+      const filamentIsEmpty =
+        this.filamentUsage.length ===
+        0; /* Check that there isn't any filament in the case of copying */
+      const printerHasBeenSelected =
+        this.printForm.get('printerId').value !== null;
+
+      if (printIsNew && filamentIsEmpty && printerHasBeenSelected) {
         this.printerService
           .getLoadedFilamentForPrinter(this.printForm.get('printerId').value)
           .subscribe((loadedFilament) => {

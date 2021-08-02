@@ -18,9 +18,20 @@
       {{ print.startDate | date: 'longDate' }}
     </mat-card-subtitle>
   </mat-card-header>
-  <app-print-image
-    *ngIf="print.defaultPrintImageId > 0"
-    [printId]="print.id"
-    [imageId]="print.defaultPrintImageId"
-  ></app-print-image>
+  <mat-card-content
+    fxLayout="column"
+    fxLayoutAlign="start center"
+    fxLayoutGap="10px"
+  >
+    <div fxLayout="row">
+      <div class="main-image">
+        <app-print-image
+          *ngIf="print.defaultPrintImageId > 0"
+          [printId]="print.id"
+          [imageId]="print.defaultPrintImageId"
+        ></app-print-image>
+      </div>
+    </div>
+    <div></div>
+  </mat-card-content>
 </mat-card>

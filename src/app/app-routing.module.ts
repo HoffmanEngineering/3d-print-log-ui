@@ -84,6 +84,10 @@ const routes: Routes = [
     component: HomeComponent,
     pathMatch: 'full',
   },
+  {
+    path: 'feed',
+    loadChildren: () => import('./feed/feed.module').then((m) => m.FeedModule),
+  },
 
   {
     path: '**',

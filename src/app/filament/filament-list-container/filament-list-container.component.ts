@@ -1,17 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
-import { debounce } from 'lodash-es';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { debounce, isNumber } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import {
   FilamentService,
   FilamentSortColumns,
   FilamentSummary,
 } from 'src/app/core/services/filament.service';
-import { PrintSummary } from 'src/app/core/services/print.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -21,7 +22,7 @@ import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialo
   templateUrl: './filament-list-container.component.html',
   styleUrls: ['./filament-list-container.component.scss'],
 })
-export class FilamentListContainerComponent implements OnInit {
+export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public filaments: FilamentSummary[] = [];
 
   public pageSize: number;
@@ -49,6 +50,10 @@ export class FilamentListContainerComponent implements OnInit {
   public includeInactive = false;
   public searchText = '';
 
+  private EMPTY_FILAMENT_ADJUSTMENT_NOTE: string = 'Set to Empty.';
+
+  private subscriptions: Subscription = new Subscription();
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private filamentService: FilamentService,
@@ -58,6 +63,19 @@ export class FilamentListContainerComponent implements OnInit {
     private readonly toastrService: ToastrService
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+
+    this.subscriptions.add(
+      router.events
+        .pipe(filter((e) => e instanceof NavigationEnd))
+        .subscribe(() => {
+          const mainHeader = document.querySelector(
+            '#add-new-filament'
+          ) as HTMLElement;
+          if (mainHeader) {
+            mainHeader?.focus?.();
+          }
+        })
+    );
   }
 
   ngOnInit() {
@@ -90,6 +108,10 @@ export class FilamentListContainerComponent implements OnInit {
       const pagedResponse: PagedList<FilamentSummary> = data.filamentList;
       this.handlePagedList(pagedResponse);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions?.unsubscribe();
   }
 
   public pageChange(pageEvent: PageEvent) {
@@ -197,6 +219,31 @@ export class FilamentListContainerComponent implements OnInit {
       ).trim()})`;
     } else {
       return `${(printer.make + ' ' + printer.model).trim()}`;
+    }
+  }
+
+  /**
+   * Mark a filament as empty.
+   */
+  public markAsEmpty(filament: FilamentSummary) {
+    const remainingAmount = filament.filamentRemaining;
+    if (isNumber(remainingAmount)) {
+      const adjustmentAmount = -remainingAmount;
+      this.filamentService
+        .addAdjustmentAmount(
+          filament.id,
+          adjustmentAmount,
+          this.EMPTY_FILAMENT_ADJUSTMENT_NOTE,
+          false
+        )
+        .subscribe((_) => {
+          this.updateFilter().then(() => {
+            this.toastrService.success(
+              'Filament marked as empty successfully.',
+              'Success'
+            );
+          });
+        });
     }
   }
 }

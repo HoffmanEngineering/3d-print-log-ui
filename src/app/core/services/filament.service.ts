@@ -2,9 +2,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { least } from 'd3';
 import { Observable } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
 import { SortDirection } from '../types/sort-request';
+import { EMPTY_GUID } from './print.service';
 import { PrinterSummary } from './printer.service';
 
 export interface FilamentDetail {
@@ -122,5 +124,41 @@ export class FilamentService {
   deleteFilament(filamentId: string): Observable<any> {
     const url = `${this.baseApi}/api/Filaments/${filamentId}`;
     return this.http.delete<FilamentDetail>(url);
+  }
+
+  /**
+   * Add an adjustment to a filament. Optionally set the isActive flag.
+   */
+  addAdjustmentAmount(
+    filamentId: string,
+    adjustmentValue: number,
+    note: string,
+    isActive?: boolean
+  ): Observable<FilamentDetail> {
+    return this.getFilamentDetail(filamentId).pipe(
+      map((filament) => {
+        // Add an adjustment:
+        const newAdjustment: FilamentAdjustment = {
+          amountMg: adjustmentValue,
+          filamentId: filamentId,
+          id: EMPTY_GUID,
+          notes: note,
+        };
+        filament.filamentAdjustments = [
+          ...filament.filamentAdjustments,
+          newAdjustment,
+        ];
+
+        // Optionally allow an adjustment to mark the filament as inactive.
+        if (isActive !== undefined) {
+          filament.isActive = isActive;
+        }
+
+        return filament;
+      }),
+      mergeMap((filament) => {
+        return this.updateFilament(filament);
+      })
+    );
   }
 }

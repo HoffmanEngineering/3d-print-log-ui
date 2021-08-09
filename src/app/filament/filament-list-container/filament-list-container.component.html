@@ -147,6 +147,7 @@
           <!-- <button mat-menu-item>Fee</button> -->
           <a
             class="menu-link"
+            attr.aria-label="Edit filament {{ filament.displayName }}"
             mat-menu-item
             [routerLink]="[filament.id]"
             data-cy-edit-menu-option
@@ -165,6 +166,10 @@
             [routerLink]="['/', 'printers', filament.loadedInPrinter.id]"
             ><mat-icon>open_in_browser</mat-icon>Go To Loaded Printer</a
           >
+          <hr />
+          <button type="button" mat-menu-item (click)="markAsEmpty(filament)">
+            <mat-icon>hide_source</mat-icon>Mark As Empty
+          </button>
           <button
             type="button"
             mat-menu-item

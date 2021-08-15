@@ -3,7 +3,6 @@ import {
   ElementRef,
   Input,
   OnChanges,
-  OnInit,
   SimpleChanges,
   ViewEncapsulation,
 } from '@angular/core';
@@ -22,7 +21,7 @@ export class DonutChartDatum {
   templateUrl: './donut-chart.component.html',
   styleUrls: ['./donut-chart.component.scss'],
 })
-export class DonutChartComponent implements OnInit, OnChanges {
+export class DonutChartComponent implements OnChanges {
   @Input() data: number[];
   @Input() colors: string[] = [...d3.schemeCategory10];
   hostElement; // Native element hosting the SVG container
@@ -51,8 +50,6 @@ export class DonutChartComponent implements OnInit, OnChanges {
   constructor(private elRef: ElementRef) {
     this.hostElement = this.elRef.nativeElement;
   }
-
-  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.data) {

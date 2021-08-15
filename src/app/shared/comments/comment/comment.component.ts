@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Comment } from 'src/app/core/services/comment.service';
 
 @Component({
@@ -6,7 +6,7 @@ import { Comment } from 'src/app/core/services/comment.service';
   templateUrl: './comment.component.html',
   styleUrls: ['./comment.component.scss'],
 })
-export class CommentComponent implements OnInit {
+export class CommentComponent {
   @Input() comment: Comment;
 
   @Input() public showDelete = false;
@@ -14,6 +14,4 @@ export class CommentComponent implements OnInit {
   @Output() public delete: EventEmitter<void> = new EventEmitter();
 
   constructor() {}
-
-  ngOnInit(): void {}
 }

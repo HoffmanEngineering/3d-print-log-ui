@@ -237,7 +237,7 @@ export class EditPrintDetailComponent
             this.printerRedirectToast.onTap.subscribe(() => {
               this.router.navigate(['printers', 'new'], {
                 queryParams: {
-                  // tslint:disable-next-line: no-string-literal
+                  // eslint-disable-next-line @typescript-eslint/dot-notation
                   returnUrl: this.activatedRoute.snapshot['_routerState'].url,
                 },
               });

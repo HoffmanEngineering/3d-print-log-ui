@@ -1,12 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-docs-release-notes',
   templateUrl: './docs-release-notes.component.html',
   styleUrls: ['./docs-release-notes.component.scss'],
 })
-export class DocsReleaseNotesComponent implements OnInit {
+export class DocsReleaseNotesComponent {
   constructor() {}
-
-  ngOnInit(): void {}
 }

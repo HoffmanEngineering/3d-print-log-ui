@@ -1,4 +1,4 @@
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { Component, Inject, Input } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { DialogData } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 
@@ -7,7 +7,7 @@ import { DialogData } from 'src/app/print/print-share-dialog/print-share-dialog.
   templateUrl: './simple-dialog.component.html',
   styleUrls: ['./simple-dialog.component.scss'],
 })
-export class SimpleDialogComponent implements OnInit {
+export class SimpleDialogComponent {
   @Input() public title: string;
   @Input() public yesText = 'Yes';
   @Input() public yesColor = 'basic';
@@ -19,8 +19,6 @@ export class SimpleDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<SimpleDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData
   ) {}
-
-  ngOnInit(): void {}
 
   onNoClick(): void {
     this.dialogRef.close();

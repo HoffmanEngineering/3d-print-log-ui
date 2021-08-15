@@ -196,7 +196,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
         this.changeDetectorRef.detectChanges();
       });
     };
-    // tslint:disable-next-line: deprecation
+
     this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
@@ -314,7 +314,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
       maxWidth: '350px',
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
-    // tslint:disable-next-line: max-line-length
+    // eslint-disable-next-line max-len
     (
       dialogRef.componentInstance as any
     ).body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;

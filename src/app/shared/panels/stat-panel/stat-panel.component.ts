@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-stat-panel',
@@ -8,13 +8,11 @@ import { Component, Input, OnInit } from '@angular/core';
 /**
  * Used to display a single metric.
  */
-export class StatPanelComponent implements OnInit {
+export class StatPanelComponent {
   @Input() title: string;
   @Input() value: number | string;
 
   @Input() invertDisplay = false;
 
   constructor() {}
-
-  ngOnInit() {}
 }

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -12,14 +12,12 @@ export interface DialogData {
   templateUrl: './filament-search-modal.component.html',
   styleUrls: ['./filament-search-modal.component.scss'],
 })
-export class FilamentSearchModalComponent implements OnInit {
+export class FilamentSearchModalComponent {
   constructor(
     public dialogRef: MatDialogRef<FilamentSearchModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
     private readonly loggingService: LoggingService
   ) {}
-
-  ngOnInit(): void {}
 
   handleFilamentSelected(filament: FilamentSummary) {
     this.loggingService.logEvent('FilamentSearchModal_FilamentSelected');

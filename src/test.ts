@@ -1,5 +1,4 @@
 // This file is required by karma.conf.js and loads recursively all the .spec and framework files
-// tslint:disable:ordered-imports
 import 'zone.js/testing'; // zone-testing needs to come before any other import
 
 import { getTestBed } from '@angular/core/testing';

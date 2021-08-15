@@ -1,12 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-docs-analytics',
   templateUrl: './docs-analytics.component.html',
   styleUrls: ['./docs-analytics.component.scss'],
 })
-export class DocsAnalyticsComponent implements OnInit {
+export class DocsAnalyticsComponent {
   constructor() {}
-
-  ngOnInit(): void {}
 }

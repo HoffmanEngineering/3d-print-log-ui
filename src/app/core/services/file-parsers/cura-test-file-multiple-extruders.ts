@@ -1,4 +1,4 @@
-// tslint:disable
+/* eslint-disable */
 const data = {
   'data': `;FLAVOR:Marlin
 ;TIME:6311

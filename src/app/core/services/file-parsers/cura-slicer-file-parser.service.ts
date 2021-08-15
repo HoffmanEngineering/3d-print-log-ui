@@ -338,7 +338,7 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
     let matches: any[];
     const output = {};
 
-    // tslint:disable-next-line
+    // eslint-disable-next-line
     while ((matches = kvpRegex.exec(valueString)) !== null) {
       // Store the first match as the key, and the second match as the value
       output[matches[1]] = matches[2];

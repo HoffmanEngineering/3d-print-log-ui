@@ -141,7 +141,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       maxWidth: '350px',
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
-    // tslint:disable-next-line: max-line-length
+    // eslint-disable-next-line max-len
     (
       dialogRef.componentInstance as any
     ).body = `Are you sure you want to delete filament "${filament.displayName}"? <br /> <br />  This action cannot be undone.`;

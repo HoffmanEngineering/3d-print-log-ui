@@ -7,7 +7,7 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce, isNumber } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, take } from 'rxjs/operators';
 import {
   FilamentService,
   FilamentSortColumns,
@@ -57,6 +57,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription = new Subscription();
 
+  public isLoading = false;
+
+  public filamentSearchSubscription: Subscription | null = null;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private filamentService: FilamentService,
@@ -65,11 +69,18 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     private readonly dialog: MatDialog,
     private readonly toastrService: ToastrService
   ) {
-    this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+    this.debouncedUpdateFilter = debounce(() => {
+      this.isLoading = true;
+      this.currentPage = 1;
+      this.updateFilter();
+    }, 400);
 
     this.subscriptions.add(
       router.events
-        .pipe(filter((e) => e instanceof NavigationEnd))
+        .pipe(
+          filter((e) => e instanceof NavigationEnd),
+          take(1)
+        )
         .subscribe(() => {
           const mainHeader = document.querySelector(
             '#add-new-filament'
@@ -124,6 +135,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions?.unsubscribe();
+
+    this.filamentSearchSubscription?.unsubscribe?.();
   }
 
   public pageChange(pageEvent: PageEvent) {
@@ -134,20 +147,46 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   }
 
   public updateFilter() {
-    return this.router.navigate(['.'], {
-      queryParams: {
-        pageNumber: this.currentPage,
-        pageSize: this.pageSize,
-        searchText: this.searchText || '',
-        includeInactive: this.includeInactive,
-        showFavoritesOnly: this.showFavoritesOnly,
-        showLoadedFilamentOnly: this.showLoadedFilamentOnly,
-        sortDirection: this.sortDirection,
-        sortColumn: this.sortColumn,
-        t: new Date().getTime(),
-      },
-      relativeTo: this.activatedRoute,
-    });
+    this.isLoading = true;
+    return this.router
+      .navigate(['.'], {
+        queryParams: {
+          pageNumber: this.currentPage,
+          pageSize: this.pageSize,
+          searchText: this.searchText || '',
+          includeInactive: this.includeInactive,
+          showFavoritesOnly: this.showFavoritesOnly,
+          showLoadedFilamentOnly: this.showLoadedFilamentOnly,
+          sortDirection: this.sortDirection,
+          sortColumn: this.sortColumn,
+          t: new Date().getTime(),
+        },
+        relativeTo: this.activatedRoute,
+      })
+      .then(() => {
+        this.filamentSearchSubscription?.unsubscribe?.();
+
+        this.filamentSearchSubscription = this.filamentService
+          .getCurrentUserFilamentSummaries(
+            this.currentPage,
+            this.pageSize,
+            this.sortColumn,
+            this.sortDirection,
+            this.searchText,
+            this.includeInactive,
+            this.showFavoritesOnly,
+            this.showLoadedFilamentOnly
+          )
+          .subscribe(
+            (filaments) => {
+              this.handlePagedList(filaments);
+              this.isLoading = false;
+            },
+            () => {
+              this.isLoading = false;
+            }
+          );
+      });
   }
 
   public deleteFilament(filament: FilamentSummary) {

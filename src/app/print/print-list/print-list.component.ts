@@ -11,10 +11,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
@@ -79,6 +80,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   public printSearchSubscription: Subscription | null = null;
 
+  private subscriptions: Subscription = new Subscription();
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private printerRedirectPromptService: PrinterRedirectPromptService,
@@ -99,6 +102,22 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
       this.currentPage = 1;
       this.updateFilter();
     }, 400);
+
+    this.subscriptions.add(
+      router.events
+        .pipe(
+          filter((e) => e instanceof NavigationEnd),
+          take(1)
+        )
+        .subscribe(() => {
+          const mainHeader = document.querySelector(
+            '#add-new-print'
+          ) as HTMLElement;
+          if (mainHeader) {
+            mainHeader?.focus?.();
+          }
+        })
+    );
   }
 
   ngOnDestroy(): void {
@@ -106,9 +125,9 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
       this.toastrService.remove(this.printerRedirectToast.toastId);
     }
 
-    if (this.printerRedirectSubscription) {
-      this.printerRedirectSubscription.unsubscribe();
-    }
+    this.printerRedirectSubscription?.unsubscribe?.();
+
+    this.subscriptions?.unsubscribe?.();
   }
 
   ngOnInit() {

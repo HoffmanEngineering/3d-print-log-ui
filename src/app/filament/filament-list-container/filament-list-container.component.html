@@ -138,6 +138,7 @@
         <button
           mat-button
           class="transparent"
+          attr.aria-label="More options for {{ filament.displayName }}"
           [matMenuTriggerFor]="aboutMenu"
           data-cy-more-button
         >
@@ -156,6 +157,7 @@
           <a
             class="menu-link"
             mat-menu-item
+            attr.aria-label="Duplicate filament {{ filament.displayName }}"
             [routerLink]="['copy', filament.id]"
             ><mat-icon>file_copy</mat-icon>Duplicate</a
           >
@@ -167,11 +169,17 @@
             ><mat-icon>open_in_browser</mat-icon>Go To Loaded Printer</a
           >
           <hr />
-          <button type="button" mat-menu-item (click)="markAsEmpty(filament)">
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="Mark filament {{ filament.displayName }} as empty."
+            (click)="markAsEmpty(filament)"
+          >
             <mat-icon>hide_source</mat-icon>Mark As Empty
           </button>
           <button
             type="button"
+            attr.aria-label="Delete filament {{ filament.displayName }}"
             mat-menu-item
             (click)="deleteFilament(filament)"
           >

@@ -15,7 +15,11 @@
     filament's <strong>Name</strong>, <strong>Brand</strong> or
     <strong>Color</strong> fields. Use the
     <strong>Include Inactive</strong> checkbox to include
-    <strong>Empty or Inactive</strong> rolls of filament. The table is sorted by
+    <strong>Empty or Inactive</strong> rolls of filament. Use the
+    <strong>Show Favorites Only</strong> checkbox to only show
+    <strong>Favorite</strong> rolls of filament. Use the
+    <strong>Show Loaded Filament Only</strong> checkbox to only show filament
+    currently loaded in a printer. The table is sorted by
     <strong>Filament Remaining</strong> by default, but you can click on any of
     the table headers to order by Name, Brand, or Color.
   </p>
@@ -23,9 +27,13 @@
 
   <ul>
     <li>
+      <strong>Favorite Star</strong> - Displays whether the roll is a
+      "favorite".
+    </li>
+    <li>
       <strong>Color Box</strong> - Displays the selected color of the filament.
     </li>
-    <li><strong>Name</strong> - The Display Name of the Filament</li>
+    <li><strong>Name</strong> - The Display Name of the Filament.</li>
     <li><strong>Brand</strong> - The Brand of filament.</li>
     <li><strong>Color</strong> - The name of the Color of the filament.</li>
     <li>
@@ -33,6 +41,13 @@
       roll.
     </li>
   </ul>
+
+  <h4>Favorite Filament</h4>
+  <p>
+    A filament can be marked as "favorite" by clicking the
+    <mat-icon inline>star_border</mat-icon> icon. This will allow the filament
+    to appear when the <strong>Show Favorites Only</strong> filter is applied.
+  </p>
 
   <hr />
 

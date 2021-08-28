@@ -101,7 +101,7 @@
             (click)="unloadAllFilament(printer)"
             [disabled]="
               printer.loadedFilaments?.length === null ||
-              printer.loadedFilaments?.length == 0
+              printer.loadedFilaments?.length === 0
             "
             [attr.aria-label]="'Unload filament from printer ' + printer.name"
           >

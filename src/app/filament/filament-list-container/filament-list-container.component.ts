@@ -1,17 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
-import { debounce } from 'lodash-es';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { debounce, isNumber } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
+import { Subscription } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 import {
   FilamentService,
   FilamentSortColumns,
   FilamentSummary,
 } from 'src/app/core/services/filament.service';
-import { PrintSummary } from 'src/app/core/services/print.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -21,7 +22,7 @@ import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialo
   templateUrl: './filament-list-container.component.html',
   styleUrls: ['./filament-list-container.component.scss'],
 })
-export class FilamentListContainerComponent implements OnInit {
+export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public filaments: FilamentSummary[] = [];
 
   public pageSize: number;
@@ -29,6 +30,7 @@ export class FilamentListContainerComponent implements OnInit {
   public totalCount: number;
 
   public displayedColumns: string[] = [
+    'isFavorite',
     'colorHex',
     'displayName',
     'brand',
@@ -48,6 +50,16 @@ export class FilamentListContainerComponent implements OnInit {
 
   public includeInactive = false;
   public searchText = '';
+  public showFavoritesOnly = false;
+  public showLoadedFilamentOnly = false;
+
+  private EMPTY_FILAMENT_ADJUSTMENT_NOTE: string = 'Set to Empty.';
+
+  private subscriptions: Subscription = new Subscription();
+
+  public isLoading = false;
+
+  public filamentSearchSubscription: Subscription | null = null;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -57,7 +69,27 @@ export class FilamentListContainerComponent implements OnInit {
     private readonly dialog: MatDialog,
     private readonly toastrService: ToastrService
   ) {
-    this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+    this.debouncedUpdateFilter = debounce(() => {
+      this.isLoading = true;
+      this.currentPage = 1;
+      this.updateFilter();
+    }, 400);
+
+    this.subscriptions.add(
+      router.events
+        .pipe(
+          filter((e) => e instanceof NavigationEnd),
+          take(1)
+        )
+        .subscribe(() => {
+          const mainHeader = document.querySelector(
+            '#add-new-filament'
+          ) as HTMLElement;
+          if (mainHeader) {
+            mainHeader?.focus?.();
+          }
+        })
+    );
   }
 
   ngOnInit() {
@@ -71,6 +103,15 @@ export class FilamentListContainerComponent implements OnInit {
         this.includeInactive =
           params.get('includeInactive').toLowerCase() === 'true';
       }
+      if (params.has('showFavoritesOnly')) {
+        this.showFavoritesOnly =
+          params.get('showFavoritesOnly').toLowerCase() === 'true';
+      }
+      if (params.has('showLoadedFilamentOnly')) {
+        this.showLoadedFilamentOnly =
+          params.get('showLoadedFilamentOnly').toLowerCase() === 'true';
+      }
+
       if (params.has('sortDirection')) {
         this.sortDirection = +params.get('sortDirection');
       }
@@ -92,6 +133,12 @@ export class FilamentListContainerComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions?.unsubscribe();
+
+    this.filamentSearchSubscription?.unsubscribe?.();
+  }
+
   public pageChange(pageEvent: PageEvent) {
     this.currentPage = pageEvent.pageIndex + 1;
     this.pageSize = pageEvent.pageSize;
@@ -100,18 +147,46 @@ export class FilamentListContainerComponent implements OnInit {
   }
 
   public updateFilter() {
-    return this.router.navigate(['.'], {
-      queryParams: {
-        pageNumber: this.currentPage,
-        pageSize: this.pageSize,
-        searchText: this.searchText || '',
-        includeInactive: this.includeInactive,
-        sortDirection: this.sortDirection,
-        sortColumn: this.sortColumn,
-        t: new Date().getTime(),
-      },
-      relativeTo: this.activatedRoute,
-    });
+    this.isLoading = true;
+    return this.router
+      .navigate(['.'], {
+        queryParams: {
+          pageNumber: this.currentPage,
+          pageSize: this.pageSize,
+          searchText: this.searchText || '',
+          includeInactive: this.includeInactive,
+          showFavoritesOnly: this.showFavoritesOnly,
+          showLoadedFilamentOnly: this.showLoadedFilamentOnly,
+          sortDirection: this.sortDirection,
+          sortColumn: this.sortColumn,
+          t: new Date().getTime(),
+        },
+        relativeTo: this.activatedRoute,
+      })
+      .then(() => {
+        this.filamentSearchSubscription?.unsubscribe?.();
+
+        this.filamentSearchSubscription = this.filamentService
+          .getCurrentUserFilamentSummaries(
+            this.currentPage,
+            this.pageSize,
+            this.sortColumn,
+            this.sortDirection,
+            this.searchText,
+            this.includeInactive,
+            this.showFavoritesOnly,
+            this.showLoadedFilamentOnly
+          )
+          .subscribe(
+            (filaments) => {
+              this.handlePagedList(filaments);
+              this.isLoading = false;
+            },
+            () => {
+              this.isLoading = false;
+            }
+          );
+      });
   }
 
   public deleteFilament(filament: FilamentSummary) {
@@ -119,7 +194,7 @@ export class FilamentListContainerComponent implements OnInit {
       maxWidth: '350px',
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
-    // tslint:disable-next-line: max-line-length
+    // eslint-disable-next-line max-len
     (
       dialogRef.componentInstance as any
     ).body = `Are you sure you want to delete filament "${filament.displayName}"? <br /> <br />  This action cannot be undone.`;
@@ -198,5 +273,39 @@ export class FilamentListContainerComponent implements OnInit {
     } else {
       return `${(printer.make + ' ' + printer.model).trim()}`;
     }
+  }
+
+  /**
+   * Mark a filament as empty.
+   */
+  public markAsEmpty(filament: FilamentSummary) {
+    const remainingAmount = filament.filamentRemaining;
+    if (isNumber(remainingAmount)) {
+      const adjustmentAmount = -remainingAmount;
+      this.filamentService
+        .addAdjustmentAmount(
+          filament.id,
+          adjustmentAmount,
+          this.EMPTY_FILAMENT_ADJUSTMENT_NOTE,
+          false
+        )
+        .subscribe((_) => {
+          this.updateFilter().then(() => {
+            this.toastrService.success(
+              'Filament marked as empty successfully.',
+              'Success'
+            );
+          });
+        });
+    }
+  }
+
+  public toggleFavorite(filament: FilamentSummary) {
+    const newIsFavorite = !filament.isFavorite;
+    this.filamentService
+      .changeFavorite(filament.id, newIsFavorite)
+      .subscribe((_) => {
+        filament.isFavorite = newIsFavorite;
+      });
   }
 }

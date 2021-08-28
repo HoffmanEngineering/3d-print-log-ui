@@ -1,4 +1,4 @@
-// tslint:disable
+/* eslint-disable */
 const printers = {
   printers: [
     { make: '101Hero', model: '101Hero' },

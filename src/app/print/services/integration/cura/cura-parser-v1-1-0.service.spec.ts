@@ -48,7 +48,7 @@ describe('CuraParserV1pt1pt0Service', () => {
     expect(printDetail).toEqual(jasmine.objectContaining(expected));
   });
 
-  // tslint:disable-next-line: max-line-length
+  // eslint-disable-next-line max-len
   it(`should round the estimated print time to the nearest int when given a 'estimated_print_time_seconds' query param with decimals`, async () => {
     const testQueryString = 'estimated_print_time_seconds=5626.95';
     const params = createQueryParams(testQueryString);
@@ -168,7 +168,7 @@ describe('CuraParserV1pt1pt0Service', () => {
       expect(printDetail.notes).toContain(expected);
     });
 
-    // tslint:disable-next-line: max-line-length
+    // eslint-disable-next-line max-len
     it(`should return notes which includes Top Thickness when given 'top_thickness' query param and we aren't in spiral vase mode`, async () => {
       const testQueryString = 'top_thickness=0.95&magic_spiralize=False';
       const params = createQueryParams(testQueryString);
@@ -320,7 +320,7 @@ describe('CuraParserV1pt1pt0Service', () => {
       expect(printDetail.notes).toContain(expected);
     });
 
-    // tslint:disable-next-line: max-line-length
+    // eslint-disable-next-line max-len
     it(`should return notes which include "Fuzzy Skin Mode: Enabled" when given 'magic_fuzzy_skin_enabled=true' query param  `, async () => {
       const testQueryString = 'magic_fuzzy_skin_enabled=true';
       const params = createQueryParams(testQueryString);

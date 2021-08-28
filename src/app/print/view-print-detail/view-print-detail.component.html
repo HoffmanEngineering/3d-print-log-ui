@@ -99,7 +99,7 @@
                 </ng-container>
               </ng-container>
 
-              <ng-container *ngIf="printFilament.filament != null">
+              <ng-container *ngIf="printFilament.filament !== null">
                 <h3>Filament:</h3>
                 <p>{{ printFilament.filament.displayName }}</p>
                 <ng-container *ngIf="printFilament.isEstimatedLengthSource">

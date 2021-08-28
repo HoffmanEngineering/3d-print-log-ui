@@ -107,7 +107,10 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
-            "assets": ["src/favicon_1293b2036.ico", "src/assets"],
+            "assets": [
+              "src/favicon_1293b2036.ico",
+              "src/assets"
+            ],
             "styles": [
               "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "src/styles.scss"
@@ -122,14 +125,12 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "tsconfig.app.json",
-              "tsconfig.spec.json",
-              "e2e/tsconfig.json"
-            ],
-            "exclude": ["**/node_modules/**"]
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
           }
         },
         "e2e": {
@@ -149,6 +150,7 @@
   },
   "defaultProject": "print-log-ui",
   "cli": {
-    "analytics": "932ccb37-95ca-4ef1-a216-1106c27a6cc5"
+    "analytics": "932ccb37-95ca-4ef1-a216-1106c27a6cc5",
+    "defaultCollection": "@angular-eslint/schematics"
   }
 }

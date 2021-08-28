@@ -43,7 +43,7 @@ export class DocumentationComponent
         this.changeDetectorRef.detectChanges();
       });
     };
-    // tslint:disable-next-line: deprecation
+
     this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
@@ -56,7 +56,6 @@ export class DocumentationComponent
   }
 
   ngOnDestroy(): void {
-    // tslint:disable-next-line: deprecation
     this.mobileQuery.removeListener(this.mobileQueryListener);
   }
 

@@ -27,6 +27,7 @@ export class FilamentListComponent implements OnInit {
   public totalCount: number;
 
   public displayedColumns: string[] = [
+    'isFavorite',
     'colorHex',
     'displayName',
     'brand',
@@ -44,6 +45,9 @@ export class FilamentListComponent implements OnInit {
   public sortDirection = SortDirection.Desc;
 
   public includeInactive = false;
+
+  public showFavoritesOnly = false;
+  public showLoadedFilamentOnly = false;
   public searchText = '';
 
   @Output()
@@ -76,7 +80,9 @@ export class FilamentListComponent implements OnInit {
         this.sortColumn,
         this.sortDirection,
         this.searchText,
-        this.includeInactive
+        this.includeInactive,
+        this.showFavoritesOnly,
+        this.showLoadedFilamentOnly
       )
       .subscribe((response) => {
         this.handlePagedList(response);
@@ -118,5 +124,14 @@ export class FilamentListComponent implements OnInit {
     } else {
       return `${(printer.make + ' ' + printer.model).trim()}`;
     }
+  }
+
+  public toggleFavorite(filament: FilamentSummary) {
+    const newIsFavorite = !filament.isFavorite;
+    this.filamentService
+      .changeFavorite(filament.id, newIsFavorite)
+      .subscribe((_) => {
+        filament.isFavorite = newIsFavorite;
+      });
   }
 }

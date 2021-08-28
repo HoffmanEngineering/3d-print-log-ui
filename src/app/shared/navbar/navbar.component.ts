@@ -55,12 +55,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.changeDetectorRef.detectChanges();
       });
     };
-    // tslint:disable-next-line: deprecation
     this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
   ngOnDestroy(): void {
-    // tslint:disable-next-line: deprecation
     this.mobileQuery.removeListener(this.mobileQueryListener);
 
     if (this.userProfileSubscription) {

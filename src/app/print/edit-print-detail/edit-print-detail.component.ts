@@ -237,7 +237,7 @@ export class EditPrintDetailComponent
             this.printerRedirectToast.onTap.subscribe(() => {
               this.router.navigate(['printers', 'new'], {
                 queryParams: {
-                  // tslint:disable-next-line: no-string-literal
+                  // eslint-disable-next-line @typescript-eslint/dot-notation
                   returnUrl: this.activatedRoute.snapshot['_routerState'].url,
                 },
               });
@@ -985,6 +985,8 @@ export class EditPrintDetailComponent
       data: {
         otherFilamentOption: this.OTHER_FILAMENT_OPTION,
       },
+      height: '80vh',
+      width: '80vw',
     });
 
     dialogRef.componentInstance.dialogRef

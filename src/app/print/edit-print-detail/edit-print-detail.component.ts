@@ -985,6 +985,8 @@ export class EditPrintDetailComponent
       data: {
         otherFilamentOption: this.OTHER_FILAMENT_OPTION,
       },
+      height: '80vh',
+      width: '80vw',
     });
 
     dialogRef.componentInstance.dialogRef

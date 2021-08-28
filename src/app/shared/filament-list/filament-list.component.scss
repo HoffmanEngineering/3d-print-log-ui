@@ -55,6 +55,18 @@ table {
   width: 1% !important;
 }
 
+mat-checkbox {
+  margin-left: 15px;
+}
+
+.not-favorite-icon {
+  opacity: 25%;
+}
+
+.not-favorite-icon:hover {
+  opacity: 100%;
+}
+
 @media screen and (max-width: 550px) {
   th.mat-header-cell:last-of-type,
   td.mat-cell:last-of-type,

@@ -30,6 +30,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public totalCount: number;
 
   public displayedColumns: string[] = [
+    'isFavorite',
     'colorHex',
     'displayName',
     'brand',
@@ -49,6 +50,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   public includeInactive = false;
   public searchText = '';
+  public showFavoritesOnly = false;
+  public showLoadedFilamentOnly = false;
 
   private EMPTY_FILAMENT_ADJUSTMENT_NOTE: string = 'Set to Empty.';
 
@@ -89,6 +92,15 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
         this.includeInactive =
           params.get('includeInactive').toLowerCase() === 'true';
       }
+      if (params.has('showFavoritesOnly')) {
+        this.showFavoritesOnly =
+          params.get('showFavoritesOnly').toLowerCase() === 'true';
+      }
+      if (params.has('showLoadedFilamentOnly')) {
+        this.showLoadedFilamentOnly =
+          params.get('showLoadedFilamentOnly').toLowerCase() === 'true';
+      }
+
       if (params.has('sortDirection')) {
         this.sortDirection = +params.get('sortDirection');
       }
@@ -128,6 +140,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
         pageSize: this.pageSize,
         searchText: this.searchText || '',
         includeInactive: this.includeInactive,
+        showFavoritesOnly: this.showFavoritesOnly,
+        showLoadedFilamentOnly: this.showLoadedFilamentOnly,
         sortDirection: this.sortDirection,
         sortColumn: this.sortColumn,
         t: new Date().getTime(),
@@ -245,5 +259,14 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
           });
         });
     }
+  }
+
+  public toggleFavorite(filament: FilamentSummary) {
+    const newIsFavorite = !filament.isFavorite;
+    this.filamentService
+      .changeFavorite(filament.id, newIsFavorite)
+      .subscribe((_) => {
+        filament.isFavorite = newIsFavorite;
+      });
   }
 }

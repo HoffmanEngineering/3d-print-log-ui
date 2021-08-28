@@ -1,6 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { least } from 'd3';
 import { Observable } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -30,7 +29,7 @@ export interface FilamentDetail {
   purchasePriceValue: string;
   purchasePriceCurrency: string;
   notes: string;
-
+  isFavorite: boolean;
   filamentAdjustments: FilamentAdjustment[];
 }
 
@@ -45,6 +44,7 @@ export interface FilamentSummary {
   recommendedTemp: number | null;
   isActive: boolean;
   notes: string;
+  isFavorite: boolean;
   createdDate: string;
   filamentRemaining: number | null;
   filamentLengthRemainingInM: number | null;
@@ -85,7 +85,9 @@ export class FilamentService {
     sortColumn: FilamentSortColumns = FilamentSortColumns.FilamentRemaining,
     sortDirection: SortDirection = SortDirection.Desc,
     searchText?: string,
-    includeInactive?: boolean
+    includeInactive?: boolean,
+    showFavoritesOnly?: boolean,
+    showLoadedFilamentOnly?: boolean
   ): Observable<PagedList<FilamentSummary>> {
     const url = `${this.baseApi}/api/Filaments`;
 
@@ -101,6 +103,17 @@ export class FilamentService {
 
     if (includeInactive !== undefined) {
       params = params.set('IncludeInactive', includeInactive.toString());
+    }
+
+    if (showFavoritesOnly !== undefined) {
+      params = params.set('showFavoritesOnly', showFavoritesOnly.toString());
+    }
+
+    if (showLoadedFilamentOnly !== undefined) {
+      params = params.set(
+        'showLoadedFilamentOnly',
+        showLoadedFilamentOnly.toString()
+      );
     }
 
     return this.http.get<PagedList<FilamentSummary>>(url, { params });
@@ -153,6 +166,25 @@ export class FilamentService {
         if (isActive !== undefined) {
           filament.isActive = isActive;
         }
+
+        return filament;
+      }),
+      mergeMap((filament) => {
+        return this.updateFilament(filament);
+      })
+    );
+  }
+
+  /**
+   * Add an adjustment to a filament. Optionally set the isActive flag.
+   */
+  changeFavorite(
+    filamentId: string,
+    isFavorite: boolean
+  ): Observable<FilamentDetail> {
+    return this.getFilamentDetail(filamentId).pipe(
+      map((filament) => {
+        filament.isFavorite = isFavorite;
 
         return filament;
       }),

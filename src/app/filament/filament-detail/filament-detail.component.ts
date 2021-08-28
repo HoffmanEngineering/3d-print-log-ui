@@ -165,6 +165,13 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
           ? filament.isActive
           : true,
       ],
+      isFavorite: [
+        filament &&
+        filament.isFavorite !== null &&
+        filament.isFavorite !== undefined
+          ? filament.isFavorite
+          : false,
+      ],
     });
 
     return form;
@@ -284,6 +291,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       tempRangeStart: this.filamentForm.controls.tempRangeStart.value,
       filamentAdjustments: adjustments,
       isActive: this.filamentForm.controls.isActive.value,
+      isFavorite: this.filamentForm.controls.isFavorite.value,
     };
 
     return filament;

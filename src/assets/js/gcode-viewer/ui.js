@@ -20,10 +20,10 @@ GCODE.ui = (function(){
         // $('#'+id).width(parseInt(progress)+'%').text(parseInt(progress)+'%');
 //        $('#'+id);
 
-        let action = {
+        var action = {
             type: "SET_PROGRESS",
-            progress,
-            id
+            progress: progress,
+            id: id
         };
 
         GCODE.adapter.sendMessageToLog(action)

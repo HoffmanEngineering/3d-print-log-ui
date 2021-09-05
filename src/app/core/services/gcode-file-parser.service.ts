@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { PrintDetail } from 'src/app/core/services/print.service';
+import { GcodeViewerModalComponent } from 'src/app/shared/gcode-viewer-modal/gcode-viewer-modal.component';
 import { ParserUnavailableDialogComponent } from 'src/app/shared/parser-unavailable-dialog/parser-unavailable-dialog.component';
 import { PrusaSlicerFileParserService } from './file-parsers/prusa-slicer-file-parser.service';
 import { LoggingService } from './logging.service';
@@ -10,7 +11,7 @@ import { LoggingService } from './logging.service';
  * Parses Gcode text into a new PrintDetail object
  */
 export interface GcodeNewPrintParser {
-  parse(gcode: string): PrintDetail;
+  parse(gcode: string): Promise<PrintDetail>;
 }
 
 export enum SupportedGcodeParserSlicers {
@@ -31,7 +32,7 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
     return Object.values(SupportedGcodeParserSlicers);
   }
 
-  public parse(gcode: string): PrintDetail {
+  public async parse(gcode: string): Promise<PrintDetail> {
     const slicer: string = this.detectSlicerFromGcode(gcode);
 
     this.loggingService.logEvent('GcodeAnalyzed', {
@@ -42,10 +43,26 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
       case SupportedGcodeParserSlicers.PrusaSlicer:
         return this.prusaSlicerParser.parse(gcode);
       default:
-        this.showParserUnavailableDialog();
-        return null;
+        //this.showParserUnavailableDialog();
+        return this.showGenericGcodeViewerModal(gcode);
     }
   }
+  GcodeViewerModalComponent;
+
+  async showGenericGcodeViewerModal(gcode: string): Promise<PrintDetail> {
+    return new Promise((resolve, reject) => {
+      const dialogRef = this.dialog.open(GcodeViewerModalComponent, {
+        minWidth: 300,
+        maxWidth: 450,
+        data: { gcode: gcode },
+      });
+
+      dialogRef.afterClosed().subscribe((result) => {
+        resolve(result);
+      });
+    });
+  }
+
   showParserUnavailableDialog() {
     const dialogRef = this.dialog.open(ParserUnavailableDialogComponent, {
       minWidth: 300,

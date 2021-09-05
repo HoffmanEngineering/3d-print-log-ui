@@ -402,14 +402,14 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
         const reader = new FileReader();
         reader.onload = (e: any) => {
-          const newPrint = this.gcodeParserService.parse(e.target.result);
-
-          if (newPrint) {
-            this.newPrintStoreService.setNewPrint(newPrint);
-            this.router
-              .navigate(['new', 'edit'], { relativeTo: this.activatedRoute })
-              .catch((err) => console.error(err));
-          }
+          this.gcodeParserService.parse(e.target.result).then((newPrint) => {
+            if (newPrint) {
+              this.newPrintStoreService.setNewPrint(newPrint);
+              this.router
+                .navigate(['new', 'edit'], { relativeTo: this.activatedRoute })
+                .catch((err) => console.error(err));
+            }
+          });
         };
         reader.readAsText(file);
       }

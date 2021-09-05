@@ -12,6 +12,16 @@ window.addEventListener("message", (event) => {
 
     switch(type) {
         case "START_LOAD_GCODE":
+            var options = event.data.options;
+
+            if (options) {
+                GCODE.gCodeReader.setOption({
+                    filamentDia: options.filamentDiaMm,
+                    nozzleDia: options.nozzleDiaMm, 
+                    filamentType: options.filamentType, 
+                });
+            }
+
             GCODE.gCodeReader.loadFile(event.data.gcode);
            break;
     }

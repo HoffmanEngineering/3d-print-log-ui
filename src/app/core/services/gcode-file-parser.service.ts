@@ -58,6 +58,7 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
       });
 
       dialogRef.afterClosed().subscribe((result) => {
+        console.log(result);
         resolve(result);
       });
     });

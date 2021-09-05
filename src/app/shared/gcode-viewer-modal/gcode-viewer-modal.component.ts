@@ -7,11 +7,20 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { FilamentService } from 'src/app/core/services/filament.service';
 import {
   EMPTY_GUID,
   PrintDetail,
   PrintStatus,
 } from 'src/app/core/services/print.service';
+import {
+  PrinterDetail,
+  PrinterService,
+} from 'src/app/core/services/printer.service';
+import {
+  UserSettingService,
+  UserSettingType,
+} from 'src/app/core/services/user-setting.service';
 import { SimpleDialogComponent } from '../simple-dialog/simple-dialog.component';
 
 export interface DialogData {
@@ -26,17 +35,38 @@ export interface DialogData {
 export class GcodeViewerModalComponent implements AfterViewInit {
   @ViewChild('iframe') iframe: ElementRef;
 
+  public lastSelectedPrinter: PrinterDetail = null;
+
   @HostListener('window:message', ['$event'])
-  onMessage(e) {
+  public async onMessage(e) {
     console.log('Message Recieved In Angular', e);
 
     const type = e.data.type;
 
     switch (type) {
       case 'GCODE_PARSER_INIT':
+        const lastSelectedPrinterId =
+          +(await this.getLastSelectedPrinter())?.value || null;
+
+        const printer: PrinterDetail = null;
+        if (lastSelectedPrinterId) {
+          this.lastSelectedPrinter = await this.printerService
+            .getPrinterDetail(lastSelectedPrinterId)
+            .toPromise();
+        }
+
         const action = {
           type: 'START_LOAD_GCODE',
           gcode: this.data.gcode,
+          options: {
+            nozzleDiaMm: this.lastSelectedPrinter.nozzleDiameter ?? 0.4,
+            filamentDiaMm: this.lastSelectedPrinter.filamentDiameter ?? 1.75,
+            filamentType: this.lastSelectedPrinter.loadedFilaments.some((fil) =>
+              fil.filament.materialType.includes('ABS')
+            )
+              ? 'ABS'
+              : 'PLA',
+          },
         };
 
         this.sendMessage(action);
@@ -44,9 +74,18 @@ export class GcodeViewerModalComponent implements AfterViewInit {
       case 'MODEL_INFO':
         const detail = this.parseModelInfoToPrintDetail(e.data.data);
 
+        if (this.lastSelectedPrinter) {
+          detail.printerId = this.lastSelectedPrinter.id;
+        }
+
         this.dialogRef.close(detail);
         break;
     }
+  }
+  getLastSelectedPrinter() {
+    return this.userSettingService.getCurrentUsersSettingByType(
+      UserSettingType.Prints_LastSelectedPrinterId
+    );
   }
   parseModelInfoToPrintDetail(info: any): PrintDetail {
     const print: PrintDetail = {
@@ -63,7 +102,7 @@ export class GcodeViewerModalComponent implements AfterViewInit {
       print.filamentUsage = [
         {
           id: EMPTY_GUID,
-          filament: null,
+          filament: this.lastSelectedPrinter?.loadedFilaments?.[0]?.filament,
           isActualLengthSource: true,
           isEstimatedLengthSource: true,
           estimatedLengthInM: filamentInMeters,
@@ -76,7 +115,10 @@ export class GcodeViewerModalComponent implements AfterViewInit {
 
   constructor(
     public dialogRef: MatDialogRef<SimpleDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData
+    @Inject(MAT_DIALOG_DATA) public data: DialogData,
+    private readonly userSettingService: UserSettingService,
+    private readonly printerService: PrinterService,
+    private readonly filamentService: FilamentService
   ) {}
 
   onNoClick(): void {

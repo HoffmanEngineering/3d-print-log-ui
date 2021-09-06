@@ -27,6 +27,44 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.14.0': {
+      title: '1.14.0 - Gcode Parsing for all Slicers',
+      body: `<p>
+  3D Print Log now has the ability to add prints from any gcode file.
+  Previously only a handful of slicers were supported, but now if a supported
+  parser is not available, then the gcode is analyzed to determine print
+  information.
+</p>
+<p>
+  Find the <strong>Add Print from Gcode</strong> on the
+  <strong>Print List</strong>.
+</p>
+<p>
+  Gcode Parsing based on
+  <a target="_blank" href="https://github.com/hudbrog/gCodeViewer"
+    >hudbrog's gCodeViewer</a
+  >, which you can find at
+  <a target="_blank" href="https://gcode.ws/">gcode.ws</a>.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.13.0': {
       title: '1.13.0 - Favorite Filaments',
       body: `<p>

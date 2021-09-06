@@ -49,6 +49,7 @@ import { PrintSummaryCardComponent } from './print-summary-card/print-summary-ca
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-modal.component';
 
 @NgModule({
   declarations: [
@@ -71,6 +72,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
     FilamentListComponent,
     FilamentSearchModalComponent,
     AccountDeactivationBannerComponent,
+    GcodeViewerModalComponent,
   ],
   imports: [
     CommonModule,

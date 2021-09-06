@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { ToastrService } from 'ngx-toastr';
 import { PrusaSlicerFileParserService } from './file-parsers/prusa-slicer-file-parser.service';
 
 import { GcodeFileParserService } from './gcode-file-parser.service';
@@ -24,6 +25,10 @@ describe('GcodeFileParserService', () => {
       'open',
     ]);
 
+    const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
+      'error',
+    ]);
+
     TestBed.configureTestingModule({
       providers: [
         { provide: LoggingService, useValue: mockLoggingService },
@@ -32,6 +37,7 @@ describe('GcodeFileParserService', () => {
           useValue: mockPrusaSlicerService,
         },
         { provide: MatDialog, useValue: mockMatDialog },
+        { provide: ToastrService, useValue: mockToastr },
       ],
     });
     service = TestBed.inject(GcodeFileParserService);

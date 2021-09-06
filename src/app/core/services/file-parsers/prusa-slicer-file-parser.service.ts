@@ -26,7 +26,7 @@ export class MaterialDensities {
 export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
   constructor() {}
 
-  parse(gcode: string): PrintDetail {
+  public async parse(gcode: string): Promise<PrintDetail> {
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),
     };

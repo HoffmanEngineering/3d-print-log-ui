@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { ToastrService } from 'ngx-toastr';
 
 import { PrintDetail } from 'src/app/core/services/print.service';
 import { GcodeViewerModalComponent } from 'src/app/shared/gcode-viewer-modal/gcode-viewer-modal.component';
@@ -11,7 +12,12 @@ import { LoggingService } from './logging.service';
  * Parses Gcode text into a new PrintDetail object
  */
 export interface GcodeNewPrintParser {
-  parse(gcode: string): Promise<PrintDetail>;
+  /**
+   * Parse PrintDetails from gcode
+   * @param gcode The contents of a gcode file
+   * @param fileName Optional file name of the gcode file
+   */
+  parse(gcode: string, fileName?: string): Promise<PrintDetail>;
 }
 
 export enum SupportedGcodeParserSlicers {
@@ -25,40 +31,53 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
   constructor(
     private readonly loggingService: LoggingService,
     private readonly prusaSlicerParser: PrusaSlicerFileParserService,
-    private readonly dialog: MatDialog
+    private readonly dialog: MatDialog,
+    private readonly toastrService: ToastrService
   ) {}
 
   public getSupportedSlicers(): string[] {
     return Object.values(SupportedGcodeParserSlicers);
   }
 
-  public async parse(gcode: string): Promise<PrintDetail> {
+  public async parse(gcode: string, fileName: string): Promise<PrintDetail> {
     const slicer: string = this.detectSlicerFromGcode(gcode);
 
     this.loggingService.logEvent('GcodeAnalyzed', {
       slicer,
     });
 
-    switch (slicer) {
-      case SupportedGcodeParserSlicers.PrusaSlicer:
-        return this.prusaSlicerParser.parse(gcode);
-      default:
-        //this.showParserUnavailableDialog();
-        return this.showGenericGcodeViewerModal(gcode);
+    try {
+      switch (slicer) {
+        case SupportedGcodeParserSlicers.PrusaSlicer:
+          return this.prusaSlicerParser.parse(gcode);
+        default:
+          const result = this.showGenericGcodeViewerModal(gcode, fileName);
+
+          return result || null;
+      }
+    } catch (e: unknown) {
+      this.toastrService.error(
+        'An error occurred while parsing gcode, unable to extract settings.',
+        'Error'
+      );
+      return null;
     }
   }
   GcodeViewerModalComponent;
 
-  async showGenericGcodeViewerModal(gcode: string): Promise<PrintDetail> {
+  async showGenericGcodeViewerModal(
+    gcode: string,
+    fileName?: string
+  ): Promise<PrintDetail> {
     return new Promise((resolve, reject) => {
       const dialogRef = this.dialog.open(GcodeViewerModalComponent, {
+        disableClose: true,
         minWidth: 300,
         maxWidth: 450,
-        data: { gcode: gcode },
+        data: { gcode: gcode, fileName: fileName },
       });
 
       dialogRef.afterClosed().subscribe((result) => {
-        console.log(result);
         resolve(result);
       });
     });

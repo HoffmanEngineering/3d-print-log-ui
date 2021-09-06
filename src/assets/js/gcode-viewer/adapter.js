@@ -5,9 +5,6 @@
  */
 
 window.addEventListener("message", (event) => {
-    console.log("Received Message!");
-    console.log(event);
-
     const type = event.data.type;
 
     switch(type) {

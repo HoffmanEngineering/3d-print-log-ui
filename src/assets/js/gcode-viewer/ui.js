@@ -20,10 +20,11 @@ GCODE.ui = (function(){
         // $('#'+id).width(parseInt(progress)+'%').text(parseInt(progress)+'%');
 //        $('#'+id);
 
+        var actionType = id === 'analyzeProgress' ? 'SET_ANALYZE_PROGRESS' : 'SET_LOAD_PROGRESS';
+
         var action = {
-            type: "SET_PROGRESS",
+            type: actionType,
             progress: progress,
-            id: id
         };
 
         GCODE.adapter.sendMessageToLog(action)

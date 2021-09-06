@@ -7,6 +7,8 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { capitalize, snakeCase } from 'lodash';
+import { Action } from 'rxjs/internal/scheduler/Action';
 import { FilamentService } from 'src/app/core/services/filament.service';
 import {
   EMPTY_GUID,
@@ -25,6 +27,15 @@ import { SimpleDialogComponent } from '../simple-dialog/simple-dialog.component'
 
 export interface DialogData {
   gcode: string;
+  fileName?: string;
+}
+
+export enum Actions {
+  GCODE_PARSER_INIT = 'GCODE_PARSER_INIT',
+  START_LOAD_GCODE = 'START_LOAD_GCODE',
+  SET_ANALYZE_PROGRESS = 'SET_ANALYZE_PROGRESS',
+  SET_LOAD_PROGRESS = 'SET_LOAD_PROGRESS',
+  MODEL_INFO = 'MODEL_INFO',
 }
 
 @Component({
@@ -35,20 +46,20 @@ export interface DialogData {
 export class GcodeViewerModalComponent implements AfterViewInit {
   @ViewChild('iframe') iframe: ElementRef;
 
+  public loadingProgress = 0;
+  public analyzingProgress = 0;
+
   public lastSelectedPrinter: PrinterDetail = null;
 
   @HostListener('window:message', ['$event'])
   public async onMessage(e) {
-    console.log('Message Recieved In Angular', e);
-
     const type = e.data.type;
 
     switch (type) {
-      case 'GCODE_PARSER_INIT':
+      case Actions.GCODE_PARSER_INIT:
         const lastSelectedPrinterId =
           +(await this.getLastSelectedPrinter())?.value || null;
 
-        const printer: PrinterDetail = null;
         if (lastSelectedPrinterId) {
           this.lastSelectedPrinter = await this.printerService
             .getPrinterDetail(lastSelectedPrinterId)
@@ -56,13 +67,13 @@ export class GcodeViewerModalComponent implements AfterViewInit {
         }
 
         const action = {
-          type: 'START_LOAD_GCODE',
+          type: Actions.START_LOAD_GCODE,
           gcode: this.data.gcode,
           options: {
-            nozzleDiaMm: this.lastSelectedPrinter.nozzleDiameter ?? 0.4,
-            filamentDiaMm: this.lastSelectedPrinter.filamentDiameter ?? 1.75,
-            filamentType: this.lastSelectedPrinter.loadedFilaments.some((fil) =>
-              fil.filament.materialType.includes('ABS')
+            nozzleDiaMm: this.lastSelectedPrinter?.nozzleDiameter ?? 0.4,
+            filamentDiaMm: this.lastSelectedPrinter?.filamentDiameter ?? 1.75,
+            filamentType: this.lastSelectedPrinter?.loadedFilaments.some(
+              (fil) => fil.filament.materialType.includes('ABS')
             )
               ? 'ABS'
               : 'PLA',
@@ -71,14 +82,34 @@ export class GcodeViewerModalComponent implements AfterViewInit {
 
         this.sendMessage(action);
         break;
-      case 'MODEL_INFO':
+      case Actions.MODEL_INFO:
         const detail = this.parseModelInfoToPrintDetail(e.data.data);
 
         if (this.lastSelectedPrinter) {
           detail.printerId = this.lastSelectedPrinter.id;
         }
 
+        if (this.data.fileName) {
+          detail.fileName = this.data.fileName;
+          detail.title = (snakeCase(this.data.fileName) as string)
+            .split('_')
+            .filter((segment) => segment.toLocaleLowerCase() !== 'gcode')
+            .map((s) => capitalize(s))
+            .join(' ');
+        }
+
         this.dialogRef.close(detail);
+        break;
+      case Actions.SET_LOAD_PROGRESS:
+        this.loadingProgress = e.data.progress;
+        break;
+      case Actions.SET_ANALYZE_PROGRESS:
+        const progress = e.data.progress;
+
+        if (progress > 0) {
+          this.loadingProgress = 100;
+        }
+        this.analyzingProgress = progress;
         break;
     }
   }
@@ -110,7 +141,34 @@ export class GcodeViewerModalComponent implements AfterViewInit {
       ];
     }
 
+    print.notes = this.parseNotes(info);
+
     return print;
+  }
+  private parseNotes(info: any): string {
+    let notes = '';
+
+    if (info.layerCnt) {
+      notes += `  Layers: ${info.layerCnt.toFixed(0)}\n`;
+    }
+
+    if (info.layerHeight && info.layerHeight > 0) {
+      notes += `  Layer Height: ${parseFloat(info.layerHeight).toFixed(2)}mm\n`;
+    }
+
+    if (info.modelSize) {
+      notes += `  Model Size:\n`;
+      notes += `    X: ${info.modelSize.x.toFixed(2)}mm\n`;
+      notes += `    Y: ${info.modelSize.y.toFixed(2)}mm\n`;
+      notes += `    Z: ${info.modelSize.z.toFixed(2)}mm\n`;
+    }
+
+    // Add Header
+    if (notes !== '') {
+      notes = 'Settings:\n' + notes;
+    }
+
+    return notes;
   }
 
   constructor(

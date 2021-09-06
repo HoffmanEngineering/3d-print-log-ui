@@ -10,7 +10,7 @@ import { PrintDetail, PrintStatus } from '../print.service';
 export class CuraSlicerFileParserService implements GcodeNewPrintParser {
   constructor(private readonly loggingService: LoggingService) {}
 
-  public async parse(gcode: string): Promise<PrintDetail> {
+  public async parse(gcode: string, fileName?: string): Promise<PrintDetail> {
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),
     };

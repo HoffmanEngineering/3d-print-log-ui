@@ -14,23 +14,23 @@ describe('PrusaSlicerFileParserService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should parse the estimated print time using the normal mode when estimation exist in the gcode', () => {
+  it('should parse the estimated print time using the normal mode when estimation exist in the gcode', async () => {
     const testGcode = `; total filament used [g] = 0.0
 ; total filament cost = 0.0
 ; estimated printing time (normal mode) = 1h 00m 00s
 ; estimated printing time (silent mode) = 1h 26m 53s`;
     const expectedEstPrintTime = 3600;
 
-    const actual = service.parse(testGcode);
+    const actual = await service.parse(testGcode);
 
     expect(actual.estimatedPrintTimeInSeconds).toBe(expectedEstPrintTime);
   });
 
-  it('should set the estimated print time to undefined when no estimations exist in the gcode', () => {
+  it('should set the estimated print time to undefined when no estimations exist in the gcode', async () => {
     const testGcodeWithoutEstimations = `; total filament used [g] = 0.0
     ; total filament cost = 0.0`;
 
-    const actual = service.parse(testGcodeWithoutEstimations);
+    const actual = await service.parse(testGcodeWithoutEstimations);
 
     expect(actual.estimatedPrintTimeInSeconds).toBeUndefined();
   });

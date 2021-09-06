@@ -113,12 +113,55 @@ export class GcodeViewerModalComponent implements AfterViewInit {
         break;
     }
   }
-  getLastSelectedPrinter() {
+
+  constructor(
+    public dialogRef: MatDialogRef<SimpleDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: DialogData,
+    private readonly userSettingService: UserSettingService,
+    private readonly printerService: PrinterService
+  ) {}
+
+  ngAfterViewInit() {
+    let content = `<html>
+         <head>
+             <h1>Hello world</h1>
+             <script type="text/javascript" src="assets/js/gcode-viewer/ui.js"></script>
+             <script type="text/javascript" src="assets/js/gcode-viewer/gCodeReader.js"></script>
+             <script type="text/javascript" src="assets/js/gcode-viewer/renderer.js"></script>
+             <script type="text/javascript" src="assets/js/gcode-viewer/analyzer.js"></script>
+             <script type="text/javascript" src="assets/js/gcode-viewer/adapter.js"></script>
+          </head>
+            <body>
+            <canvas id="canvas" width="650" height="620"></canvas>
+             <script>
+             GCODE.ui.initHandlers();
+            </script>
+            <script>
+              GCODE.ui.initHandlers();
+          </script>
+        </body>
+      </html>`;
+    let doc =
+      this.iframe.nativeElement.contentDocument ||
+      this.iframe.nativeElement.contentWindow;
+    doc.open();
+    doc.write(content);
+    doc.close();
+  }
+
+  private sendMessage(action) {
+    (this.iframe.nativeElement as HTMLIFrameElement).contentWindow.postMessage(
+      action,
+      '*'
+    );
+  }
+
+  private getLastSelectedPrinter() {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Prints_LastSelectedPrinterId
     );
   }
-  parseModelInfoToPrintDetail(info: any): PrintDetail {
+  private parseModelInfoToPrintDetail(info: any): PrintDetail {
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),
     };
@@ -169,53 +212,6 @@ export class GcodeViewerModalComponent implements AfterViewInit {
     }
 
     return notes;
-  }
-
-  constructor(
-    public dialogRef: MatDialogRef<SimpleDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData,
-    private readonly userSettingService: UserSettingService,
-    private readonly printerService: PrinterService,
-    private readonly filamentService: FilamentService
-  ) {}
-
-  onNoClick(): void {
-    this.dialogRef.close();
-  }
-
-  ngAfterViewInit() {
-    let content = `<html>
-         <head>
-             <h1>Hello world</h1>
-             <script type="text/javascript" src="assets/js/gcode-viewer/ui.js"></script>
-             <script type="text/javascript" src="assets/js/gcode-viewer/gCodeReader.js"></script>
-             <script type="text/javascript" src="assets/js/gcode-viewer/renderer.js"></script>
-             <script type="text/javascript" src="assets/js/gcode-viewer/analyzer.js"></script>
-             <script type="text/javascript" src="assets/js/gcode-viewer/adapter.js"></script>
-          </head>
-            <body>
-            <canvas id="canvas" width="650" height="620"></canvas>
-             <script>
-             GCODE.ui.initHandlers();
-            </script>
-            <script>
-              GCODE.ui.initHandlers();
-          </script>
-        </body>
-      </html>`;
-    let doc =
-      this.iframe.nativeElement.contentDocument ||
-      this.iframe.nativeElement.contentWindow;
-    doc.open();
-    doc.write(content);
-    doc.close();
-  }
-
-  sendMessage(action) {
-    (this.iframe.nativeElement as HTMLIFrameElement).contentWindow.postMessage(
-      action,
-      '*'
-    );
   }
 
   private getDefaultPrintDetail() {

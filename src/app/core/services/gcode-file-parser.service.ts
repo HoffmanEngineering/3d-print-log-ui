@@ -39,7 +39,7 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
     return Object.values(SupportedGcodeParserSlicers);
   }
 
-  public async parse(gcode: string, fileName: string): Promise<PrintDetail> {
+  public async parse(gcode: string, fileName?: string): Promise<PrintDetail> {
     const slicer: string = this.detectSlicerFromGcode(gcode);
 
     this.loggingService.logEvent('GcodeAnalyzed', {

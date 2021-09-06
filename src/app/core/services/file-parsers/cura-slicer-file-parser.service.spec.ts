@@ -17,31 +17,31 @@ xdescribe('CuraSlicerFileParserService', () => {
   });
 
   describe('estimated print time', () => {
-    it('should parse the TIME row as the estimated print time in seconds', () => {
+    it('should parse the TIME row as the estimated print time in seconds', async () => {
       const testGcode = multipleExtruderTestFile.data;
       const expectedTimeInSeconds = 6311;
-      const actualPrint = service.parse(testGcode);
+      const actualPrint = await service.parse(testGcode);
 
       expect(actualPrint.estimatedPrintTimeInSeconds).toEqual(
         expectedTimeInSeconds
       );
     });
 
-    it('should set the estimated print time to null if the gcode does not contain a TIME row', () => {
+    it('should set the estimated print time to null if the gcode does not contain a TIME row', async () => {
       // const testGcode = multipleExtruderTestFile.data;
       // const expectedTimeInSeconds = 6311;
       const noTimeRowGcode = 'Test; Test; Test;';
-      const actualPrint = service.parse(noTimeRowGcode);
+      const actualPrint = await service.parse(noTimeRowGcode);
 
       expect(actualPrint.estimatedPrintTimeInSeconds).toBeNull();
     });
   });
 
   describe('Single Extruder Parsing', () => {
-    it('should parse the settings for a single extruder correctly', () => {
+    it('should parse the settings for a single extruder correctly', async () => {
       const testGcode = singleExtruderTestFile.data;
       const expectedTimeInSeconds = 6311;
-      const actualPrint = service.parse(testGcode);
+      const actualPrint = await service.parse(testGcode);
 
       expect(actualPrint.estimatedPrintTimeInSeconds).toEqual(
         expectedTimeInSeconds

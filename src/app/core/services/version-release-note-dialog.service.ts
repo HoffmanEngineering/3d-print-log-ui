@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.14.1': {
+      redirect: '1.14.0',
+    },
     '1.14.0': {
       title: '1.14.0 - Gcode Parsing for all Slicers',
       body: `<p>

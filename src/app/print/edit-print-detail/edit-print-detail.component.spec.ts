@@ -115,5 +115,5 @@ describe('EditPrintDetailComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-  });
+  }, 10000);
 });

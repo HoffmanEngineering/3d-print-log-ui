@@ -132,7 +132,9 @@ export class SettingsComponent implements OnInit {
   private downloadBlob(newBlob: Blob): void {
     // IE doesn't allow using a blob object directly as link href
     // instead it is necessary to use msSaveOrOpenBlob
+    // @ts-ignore
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      // @ts-ignore
       window.navigator.msSaveOrOpenBlob(newBlob);
       return;
     }

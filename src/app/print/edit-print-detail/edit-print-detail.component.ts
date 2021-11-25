@@ -216,6 +216,8 @@ export class EditPrintDetailComponent
       }
 
       this.onChanges();
+      this.getEstimatedCompletedDate();
+      this.getActualCompletedDate();
     });
 
     /**
@@ -251,6 +253,11 @@ export class EditPrintDetailComponent
     this.SaveSettingWhenSelectedPrinterIdChanges();
     this.SaveSettingWhenAllowCommentsChanges();
     this.loadLoadedFilamentOnPrinterChange();
+
+    this.printForm.valueChanges.subscribe(() => {
+      this.getEstimatedCompletedDate();
+      this.getActualCompletedDate();
+    });
   }
   loadLoadedFilamentOnPrinterChange() {
     if (this.loadFilamentOnPrinterChangeSub) {
@@ -923,8 +930,8 @@ export class EditPrintDetailComponent
     const duration = moment.duration(seconds, 'seconds');
     let result = '';
 
-    if (duration.days() > 0) {
-      result += `${duration.days()}d `;
+    if (+duration.asDays().toFixed(0) > 0) {
+      result += `${duration.asDays().toFixed(0)}d `;
     }
 
     if (duration.hours() > 0) {
@@ -1011,5 +1018,88 @@ export class EditPrintDetailComponent
     itemTwo: FilamentSummary
   ) {
     return itemOne && itemTwo && itemOne.id === itemTwo.id;
+  }
+
+  public setStartDateToNow() {
+    this.printForm.get('startDate').setValue(new Date());
+  }
+
+  public estimatedCompletedDate: Date = null;
+  public actualCompletedDate: Date = null;
+
+  public getEstimatedCompletedDate() {
+    const startDate = this.printForm.get('startDate').value;
+
+    if (!startDate) {
+      return '';
+    }
+
+    const estimatedPrintTimeInSeconds = this.parseAsSeconds(
+      this.printForm.controls.estimatedPrintTimeInSeconds.value
+    );
+
+    //return moment(startDate).add(estimatedPrintTimeInSeconds, 's').toDate();
+    //.format('l, LTS');
+
+    if (
+      estimatedPrintTimeInSeconds === null ||
+      estimatedPrintTimeInSeconds === undefined ||
+      estimatedPrintTimeInSeconds <= 0
+    ) {
+      console.log(estimatedPrintTimeInSeconds);
+      this.estimatedCompletedDate = null;
+      return;
+    }
+
+    this.estimatedCompletedDate = moment(startDate)
+      .add(estimatedPrintTimeInSeconds, 's')
+      .toDate();
+  }
+
+  getActualCompletedDate() {
+    const startDate = this.printForm.get('startDate').value;
+
+    if (!startDate) {
+      return '';
+    }
+
+    const printTimeInSeconds = this.parseAsSeconds(
+      this.printForm.controls.printTimeInSeconds.value
+    );
+
+    //return moment(startDate).add(estimatedPrintTimeInSeconds, 's').toDate();
+    //.format('l, LTS');
+
+    if (
+      printTimeInSeconds === null ||
+      printTimeInSeconds === undefined ||
+      printTimeInSeconds <= 0
+    ) {
+      this.actualCompletedDate = null;
+      return;
+    }
+
+    this.actualCompletedDate = moment(startDate)
+      .add(printTimeInSeconds, 's')
+      .toDate();
+  }
+
+  public updateActualCompletedDate(newDate: Date) {
+    const startDate = this.printForm.get('startDate').value;
+
+    if (!startDate) {
+      return '';
+    }
+
+    const difference = moment(newDate).diff(startDate, 's');
+
+    this.printForm.controls.printTimeInSeconds.setValue(
+      this.parseIntoString(difference)
+    );
+    this.getActualCompletedDate();
+  }
+
+  public setActualCompletedDateToNow() {
+    this.updateActualCompletedDate(new Date());
   }
 }

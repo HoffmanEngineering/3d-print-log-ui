@@ -50,6 +50,11 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-modal.component';
+import {
+  NgxMatDatetimePickerModule,
+  NgxMatTimepickerModule,
+} from '@angular-material-components/datetime-picker';
+import { NgxMatMomentModule } from '@angular-material-components/moment-adapter';
 
 @NgModule({
   declarations: [
@@ -106,6 +111,9 @@ import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-mod
     ClipboardModule,
     MatProgressSpinnerModule,
     MatProgressBarModule,
+    NgxMatDatetimePickerModule,
+    NgxMatTimepickerModule,
+    NgxMatMomentModule,
   ],
   exports: [
     CommonModule,
@@ -154,6 +162,9 @@ import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-mod
     AccountDeactivationBannerComponent,
     MatProgressSpinnerModule,
     MatProgressBarModule,
+    NgxMatDatetimePickerModule,
+    NgxMatTimepickerModule,
+    NgxMatMomentModule,
   ],
 })
 export class SharedModule {}

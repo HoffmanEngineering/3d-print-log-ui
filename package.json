@@ -1,6 +1,6 @@
 {
   "name": "print-log-ui",
-  "version": "1.14.1",
+  "version": "1.15.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
@@ -20,6 +20,8 @@
   },
   "private": true,
   "dependencies": {
+    "@angular-material-components/datetime-picker": "^7.0.0",
+    "@angular-material-components/moment-adapter": "^6.0.0",
     "@angular/animations": "~13.0.1",
     "@angular/cdk": "^13.0.1",
     "@angular/common": "~13.0.1",

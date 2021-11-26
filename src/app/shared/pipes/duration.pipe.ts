@@ -13,8 +13,8 @@ export class DurationPipe implements PipeTransform {
     const duration = moment.duration(value, 'seconds');
     let result = '';
 
-    if (duration.days() > 0) {
-      result += `${duration.days()}d `;
+    if (+duration.asDays().toFixed(0) > 0) {
+      result += `${duration.asDays().toFixed(0)}d `;
     }
 
     if (duration.hours() > 0) {

@@ -130,27 +130,49 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label> Start Date</mat-label>
-          <input
-            matInput
-            id="edit-print-start-date"
-            [matDatepicker]="picker"
-            placeholder="Choose a date"
-            formControlName="startDate"
-            required
-          />
-          <mat-datepicker-toggle
-            matSuffix
-            [for]="picker"
-          ></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-          <mat-error
-            *ngIf="printForm.controls['startDate'].hasError('required')"
+        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+          <mat-form-field style="margin: 0" fxFlex="grow">
+            <input
+              matInput
+              [ngxMatDatetimePicker]="picker"
+              placeholder="Start Date and Time"
+              formControlName="startDate"
+              aria-label="The date and time that the print was started."
+            />
+            <mat-error
+              *ngIf="printForm.controls['startDate'].hasError('required')"
+            >
+              A Start Date is <strong>required</strong>
+            </mat-error>
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="picker"
+            ></mat-datepicker-toggle>
+            <ngx-mat-datetime-picker
+              #picker
+              [showSpinners]="true"
+              [showSeconds]="true"
+              [touchUi]="true"
+              color="primary"
+              [enableMeridian]="true"
+            >
+            </ngx-mat-datetime-picker>
+          </mat-form-field>
+
+          <button
+            fxFlex
+            style="margin-left: 10px; height: 35px"
+            mat-raised-button
+            type="button"
+            color="basic"
+            (click)="setStartDateToNow()"
+            type="button"
+            aria-label="Set the start date and time to now."
           >
-            A Start Date is <strong>required</strong>
-          </mat-error>
-        </mat-form-field>
+            Now
+          </button>
+        </div>
+
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Thing URL</mat-label>
           <input
@@ -161,26 +183,97 @@
             maxlength="1000"
           />
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label> Estimated Print Time</mat-label>
-          <input
-            id="edit-print-estimated-print-time"
-            matInput
-            type="text"
-            placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
-            formControlName="estimatedPrintTimeInSeconds"
-          />
-        </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label> Actual Print Time</mat-label>
-          <input
-            id="edit-print-actual-print-time"
-            matInput
-            type="text"
-            formControlName="printTimeInSeconds"
-            placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
-          />
-        </mat-form-field>
+
+        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+          <mat-form-field style="margin: 0" fxFlex>
+            <mat-label> Estimated Print Time</mat-label>
+            <input
+              id="edit-print-estimated-print-time"
+              matInput
+              type="text"
+              placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
+              formControlName="estimatedPrintTimeInSeconds"
+              (change)="getEstimatedCompletedDate()"
+            />
+          </mat-form-field>
+
+          <mat-form-field style="margin: 0" fxFlex="grow">
+            <input
+              matInput
+              [ngxMatDatetimePicker]="estimatedPicker"
+              placeholder="Estimated Completed Date and Time"
+              [ngModel]="estimatedCompletedDate"
+              [ngModelOptions]="{ standalone: true }"
+              [disabled]="true"
+              aria-label="The estimated date and time of completion."
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="estimatedPicker"
+            ></mat-datepicker-toggle>
+            <ngx-mat-datetime-picker
+              #estimatedPicker
+              [showSpinners]="true"
+              [showSeconds]="true"
+              [touchUi]="true"
+              color="primary"
+              [enableMeridian]="true"
+            >
+            </ngx-mat-datetime-picker>
+          </mat-form-field>
+        </div>
+
+        <!-- Actual -->
+        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+          <mat-form-field style="margin: 0" fxFlex>
+            <mat-label> Actual Print Time</mat-label>
+            <input
+              id="edit-print-actual-print-time"
+              matInput
+              type="text"
+              formControlName="printTimeInSeconds"
+              placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
+              (change)="getActualCompletedDate()"
+            />
+          </mat-form-field>
+
+          <mat-form-field style="margin: 0" fxFlex="grow">
+            <input
+              matInput
+              [ngxMatDatetimePicker]="actualPicker"
+              placeholder="Completed Date and Time"
+              [ngModel]="actualCompletedDate"
+              (ngModelChange)="updateActualCompletedDate($event)"
+              [ngModelOptions]="{ standalone: true }"
+              aria-label="The date and time of completion."
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="actualPicker"
+            ></mat-datepicker-toggle>
+            <ngx-mat-datetime-picker
+              #actualPicker
+              [showSpinners]="true"
+              [showSeconds]="true"
+              [touchUi]="true"
+              color="primary"
+              [enableMeridian]="true"
+            >
+            </ngx-mat-datetime-picker>
+          </mat-form-field>
+          <button
+            fxFlex
+            style="margin-left: 10px; height: 35px"
+            mat-raised-button
+            type="button"
+            color="basic"
+            (click)="setActualCompletedDateToNow()"
+            type="button"
+            aria-label="Set the Completed Date to now."
+          >
+            Now
+          </button>
+        </div>
 
         <!-- Filament Usage -->
 

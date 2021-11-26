@@ -27,6 +27,39 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.15.0': {
+      title: '1.15.0 Release - Print Start and Completed Times',
+      body: `<img
+  class="version-release-note-dialog-image"
+  alt="The Edit 3D Print page showing the new Start and Completed date and time fields."
+  src="./assets/release_1-15-0_PrintDateTimes_e0cb4d1e406944.png"
+/>
+<p>
+  Print times have been overhauled. The Edit Print page can now record the
+  <strong>start time</strong> of the print, and the <strong>estimated completed date/time</strong> will be
+  displayed based on the estimated print time. The <strong>actual completed
+  date/time</strong> can be set, which will automatically calculate the actual
+  print time.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.14.1': {
       redirect: '1.14.0',
     },

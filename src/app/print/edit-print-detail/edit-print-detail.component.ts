@@ -99,6 +99,13 @@ export class EditPrintDetailComponent
   printerRedirectSubscription: Subscription;
   loadFilamentOnPrinterChangeSub: Subscription;
 
+  /** The estimated datetime of completion. Used just as display, based on the startDate and EstimatedPrintTimeInSeconds controls. */
+  public estimatedCompletedDate: Date = null;
+  estimatedCompletedDateSubscription: Subscription;
+  /** The actual datetime of completion. Used as a display and input, but any changes will drive the PrintTimeInSeconds control. */
+  public actualCompletedDate: Date = null;
+  actualCompletedDateSubscription: Subscription;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -137,6 +144,10 @@ export class EditPrintDetailComponent
     this.printerRedirectSubscription?.unsubscribe?.();
 
     this.loadFilamentOnPrinterChangeSub?.unsubscribe?.();
+
+    this.estimatedCompletedDateSubscription?.unsubscribe?.();
+
+    this.actualCompletedDateSubscription?.unsubscribe?.();
   }
 
   @HostListener('window:beforeunload')
@@ -216,6 +227,8 @@ export class EditPrintDetailComponent
       }
 
       this.onChanges();
+      this.getEstimatedCompletedDate();
+      this.getActualCompletedDate();
     });
 
     /**
@@ -251,7 +264,44 @@ export class EditPrintDetailComponent
     this.SaveSettingWhenSelectedPrinterIdChanges();
     this.SaveSettingWhenAllowCommentsChanges();
     this.loadLoadedFilamentOnPrinterChange();
+    this.getEstimatedCompletedDateChanges();
+    this.getActualCompletedDateChanges();
   }
+
+  private getEstimatedCompletedDateChanges() {
+    this.estimatedCompletedDateSubscription = new Subscription();
+
+    this.estimatedCompletedDateSubscription.add(
+      this.printForm.get('startDate').valueChanges.subscribe(() => {
+        this.getEstimatedCompletedDate();
+      })
+    );
+
+    this.estimatedCompletedDateSubscription.add(
+      this.printForm
+        .get('estimatedPrintTimeInSeconds')
+        .valueChanges.subscribe(() => {
+          this.getEstimatedCompletedDate();
+        })
+    );
+  }
+
+  private getActualCompletedDateChanges() {
+    this.actualCompletedDateSubscription = new Subscription();
+
+    this.actualCompletedDateSubscription.add(
+      this.printForm.get('startDate').valueChanges.subscribe(() => {
+        this.getActualCompletedDate();
+      })
+    );
+
+    this.actualCompletedDateSubscription.add(
+      this.printForm.get('printTimeInSeconds').valueChanges.subscribe(() => {
+        this.getActualCompletedDate();
+      })
+    );
+  }
+
   loadLoadedFilamentOnPrinterChange() {
     if (this.loadFilamentOnPrinterChangeSub) {
       this.loadFilamentOnPrinterChangeSub.unsubscribe();
@@ -923,8 +973,8 @@ export class EditPrintDetailComponent
     const duration = moment.duration(seconds, 'seconds');
     let result = '';
 
-    if (duration.days() > 0) {
-      result += `${duration.days()}d `;
+    if (+duration.asDays().toFixed(0) > 0) {
+      result += `${duration.asDays().toFixed(0)}d `;
     }
 
     if (duration.hours() > 0) {
@@ -1011,5 +1061,78 @@ export class EditPrintDetailComponent
     itemTwo: FilamentSummary
   ) {
     return itemOne && itemTwo && itemOne.id === itemTwo.id;
+  }
+
+  public setStartDateToNow() {
+    this.printForm.get('startDate').setValue(new Date());
+  }
+
+  public getEstimatedCompletedDate() {
+    const startDate = this.printForm.get('startDate').value;
+
+    if (!startDate) {
+      return '';
+    }
+
+    const estimatedPrintTimeInSeconds = this.parseAsSeconds(
+      this.printForm.controls.estimatedPrintTimeInSeconds.value
+    );
+
+    if (
+      estimatedPrintTimeInSeconds === null ||
+      estimatedPrintTimeInSeconds === undefined ||
+      estimatedPrintTimeInSeconds <= 0
+    ) {
+      this.estimatedCompletedDate = null;
+      return;
+    }
+
+    this.estimatedCompletedDate = moment(startDate)
+      .add(estimatedPrintTimeInSeconds, 's')
+      .toDate();
+  }
+
+  getActualCompletedDate() {
+    const startDate = this.printForm.get('startDate').value;
+
+    if (!startDate) {
+      return '';
+    }
+
+    const printTimeInSeconds = this.parseAsSeconds(
+      this.printForm.controls.printTimeInSeconds.value
+    );
+
+    if (
+      printTimeInSeconds === null ||
+      printTimeInSeconds === undefined ||
+      printTimeInSeconds <= 0
+    ) {
+      this.actualCompletedDate = null;
+      return;
+    }
+
+    this.actualCompletedDate = moment(startDate)
+      .add(printTimeInSeconds, 's')
+      .toDate();
+  }
+
+  public updateActualCompletedDate(newDate: Date) {
+    const startDate = this.printForm.get('startDate').value;
+
+    if (!startDate) {
+      return '';
+    }
+
+    const difference = moment(newDate).diff(startDate, 's');
+
+    this.printForm.controls.printTimeInSeconds.setValue(
+      this.parseIntoString(difference)
+    );
+    this.getActualCompletedDate();
+  }
+
+  public setActualCompletedDateToNow() {
+    this.updateActualCompletedDate(new Date());
   }
 }

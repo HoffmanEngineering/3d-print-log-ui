@@ -99,6 +99,13 @@ export class EditPrintDetailComponent
   printerRedirectSubscription: Subscription;
   loadFilamentOnPrinterChangeSub: Subscription;
 
+  /** The estimated datetime of completion. Used just as display, based on the startDate and EstimatedPrintTimeInSeconds controls. */
+  public estimatedCompletedDate: Date = null;
+  estimatedCompletedDateSubscription: Subscription;
+  /** The actual datetime of completion. Used as a display and input, but any changes will drive the PrintTimeInSeconds control. */
+  public actualCompletedDate: Date = null;
+  actualCompletedDateSubscription: Subscription;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -137,6 +144,10 @@ export class EditPrintDetailComponent
     this.printerRedirectSubscription?.unsubscribe?.();
 
     this.loadFilamentOnPrinterChangeSub?.unsubscribe?.();
+
+    this.estimatedCompletedDateSubscription?.unsubscribe?.();
+
+    this.actualCompletedDateSubscription?.unsubscribe?.();
   }
 
   @HostListener('window:beforeunload')
@@ -253,12 +264,44 @@ export class EditPrintDetailComponent
     this.SaveSettingWhenSelectedPrinterIdChanges();
     this.SaveSettingWhenAllowCommentsChanges();
     this.loadLoadedFilamentOnPrinterChange();
-
-    this.printForm.valueChanges.subscribe(() => {
-      this.getEstimatedCompletedDate();
-      this.getActualCompletedDate();
-    });
+    this.getEstimatedCompletedDateChanges();
+    this.getActualCompletedDateChanges();
   }
+
+  private getEstimatedCompletedDateChanges() {
+    this.estimatedCompletedDateSubscription = new Subscription();
+
+    this.estimatedCompletedDateSubscription.add(
+      this.printForm.get('startDate').valueChanges.subscribe(() => {
+        this.getEstimatedCompletedDate();
+      })
+    );
+
+    this.estimatedCompletedDateSubscription.add(
+      this.printForm
+        .get('estimatedPrintTimeInSeconds')
+        .valueChanges.subscribe(() => {
+          this.getEstimatedCompletedDate();
+        })
+    );
+  }
+
+  private getActualCompletedDateChanges() {
+    this.actualCompletedDateSubscription = new Subscription();
+
+    this.actualCompletedDateSubscription.add(
+      this.printForm.get('startDate').valueChanges.subscribe(() => {
+        this.getActualCompletedDate();
+      })
+    );
+
+    this.actualCompletedDateSubscription.add(
+      this.printForm.get('printTimeInSeconds').valueChanges.subscribe(() => {
+        this.getActualCompletedDate();
+      })
+    );
+  }
+
   loadLoadedFilamentOnPrinterChange() {
     if (this.loadFilamentOnPrinterChangeSub) {
       this.loadFilamentOnPrinterChangeSub.unsubscribe();
@@ -1024,9 +1067,6 @@ export class EditPrintDetailComponent
     this.printForm.get('startDate').setValue(new Date());
   }
 
-  public estimatedCompletedDate: Date = null;
-  public actualCompletedDate: Date = null;
-
   public getEstimatedCompletedDate() {
     const startDate = this.printForm.get('startDate').value;
 
@@ -1038,15 +1078,11 @@ export class EditPrintDetailComponent
       this.printForm.controls.estimatedPrintTimeInSeconds.value
     );
 
-    //return moment(startDate).add(estimatedPrintTimeInSeconds, 's').toDate();
-    //.format('l, LTS');
-
     if (
       estimatedPrintTimeInSeconds === null ||
       estimatedPrintTimeInSeconds === undefined ||
       estimatedPrintTimeInSeconds <= 0
     ) {
-      console.log(estimatedPrintTimeInSeconds);
       this.estimatedCompletedDate = null;
       return;
     }
@@ -1066,9 +1102,6 @@ export class EditPrintDetailComponent
     const printTimeInSeconds = this.parseAsSeconds(
       this.printForm.controls.printTimeInSeconds.value
     );
-
-    //return moment(startDate).add(estimatedPrintTimeInSeconds, 's').toDate();
-    //.format('l, LTS');
 
     if (
       printTimeInSeconds === null ||

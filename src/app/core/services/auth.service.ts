@@ -126,8 +126,10 @@ export class AuthService {
 
   getTokenSilently$(options?): Observable<string> {
     return this.auth0Client$.pipe(
-      concatMap((client: Auth0Client) => from(client.getTokenSilently(options)))
-    );
+      concatMap((client: Auth0Client) =>
+        from(client.getTokenSilently({ ...options, detailedResponse: false }))
+      )
+    ) as unknown as Observable<string>; // TODO: Figure out why getTokenSilently isn't giving the right type
   }
 
   localAuthSetup() {

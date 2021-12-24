@@ -10,3 +10,4 @@ dist
 *.gitkeep
 src/assets/*
 src/app/core/services/file-parsers/cura-test-file-multiple-extruders.ts
+.npmrc

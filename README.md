@@ -108,7 +108,7 @@ angular-app:
 
 Normally `ng update` is used to update dependencies. The following script is just for copy/paste convenience:
 
-`ng update @angular/cli @angular/core @angular/material @angular/material-moment-adapter @angular/cdk @angular/flex-layout @angular/youtube-player`
+`ng update @angular/cli @angular/core @angular/material @angular/material-moment-adapter @angular/cdk @angular/flex-layout @angular/youtube-player @typescript-eslint/eslint-plugin@latest @typescript-eslint/parser@latest eslint`
 
 # Ignoring Largescale Refactors
 

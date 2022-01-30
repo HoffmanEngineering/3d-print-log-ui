@@ -1,11 +1,5 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import {
-  ChangeDetectorRef,
-  Component,
-  NgZone,
-  OnDestroy,
-  OnInit,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -55,17 +49,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
     {
       key: 'image',
       displayName: 'Image (Small)',
-      description: 'The default image.',
+      description: 'The default image as a small thumbnail.',
     },
     {
       key: 'image-medium',
       displayName: 'Image (Medium)',
-      description: 'The default image.',
+      description: 'The default image as a medium thumbnail.',
     },
     {
       key: 'image-large',
       displayName: 'Image (Large)',
-      description: 'The default image.',
+      description: 'The default image as a large thumbnail.',
     },
     {
       key: 'title',
@@ -95,22 +89,23 @@ export class PrintListComponent implements OnInit, OnDestroy {
     {
       key: 'end-date',
       displayName: 'End Date',
-      description: 'End date of the print.',
+      description: 'End date of the print if there is a print time recorded.',
     },
     {
       key: 'end-time',
       displayName: 'End Time',
-      description: 'End time of the print',
+      description: 'End time of the print if there is a print time recorded.',
     },
     {
       key: 'end-date-time',
       displayName: 'End Date/Time',
-      description: 'End date/time of the print',
+      description:
+        'End date/time of the print if there is a print time recorded.',
     },
     {
       key: 'status',
       displayName: 'Status',
-      description: '',
+      description: 'The print status.',
     },
     {
       key: 'printTime',
@@ -119,7 +114,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     },
     {
       key: 'commentCount',
-      displayName: 'Comments',
+      displayName: 'Comment Count',
       description: 'Displays the number of comments',
     },
   ];
@@ -154,7 +149,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public printerRedirectSubscription: Subscription;
 
   mobileQuery: MediaQueryList;
-  private mobileQueryListener: () => void;
 
   public isLoading = false;
 
@@ -173,8 +167,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private router: Router,
     public dialog: MatDialog,
     private media: MediaMatcher,
-    private ngZone: NgZone,
-    private changeDetectorRef: ChangeDetectorRef,
     private printService: PrintService,
     private readonly loggingService: LoggingService,
     private readonly gcodeParserService: GcodeFileParserService,
@@ -312,35 +304,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
         JSON.stringify(this.displayedColumns)
       );
     }
-
-    // this.mobileQueryListener = () => {
-    //   this.ngZone.run(() => {
-    //     if (this.mobileQuery.matches) {
-    //       this.displayedColumns = [
-    //         'image',
-    //         'title',
-    //         'printer',
-    //         'start-date',
-    //         'status',
-    //         'more',
-    //       ];
-    //     } else {
-    //       this.displayedColumns = [
-    //         'image',
-    //         'title',
-    //         'printer',
-    //         'start-date',
-    //         'status',
-    //         'printTime',
-    //         'commentCount',
-    //         'more',
-    //       ];
-    //     }
-    //     this.changeDetectorRef.detectChanges();
-    //   });
-    // };
-
-    // this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
   public pageChange(pageEvent: PageEvent) {
@@ -508,6 +471,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(() => {
       subscription.unsubscribe();
+
+      this.loggingService.logEvent('PrintListLayoutChanged', {
+        columns: JSON.stringify(this.displayedColumns),
+      });
     });
   }
 

@@ -17,9 +17,15 @@ export class PrintListResolverService
   implements Resolve<PagedList<PrintSummary>>
 {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    let defaultPageSize = 10;
+    const savedPageSize = localStorage.getItem('print_list_page_size');
+    if (savedPageSize) {
+      defaultPageSize = +savedPageSize;
+    }
+
     const {
       pageNumber = 1,
-      pageSize = 10,
+      pageSize = defaultPageSize,
       searchText = '',
       filterByStatus = null,
       sortDirection = SortDirection.Desc,

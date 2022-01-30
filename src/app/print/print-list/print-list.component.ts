@@ -1,6 +1,5 @@
 import { MediaMatcher } from '@angular/cdk/layout';
 import {
-  AfterViewInit,
   ChangeDetectorRef,
   Component,
   NgZone,
@@ -13,6 +12,7 @@ import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
+import moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
@@ -44,7 +44,7 @@ export interface ColumnDefinition {
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
 })
-export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
+export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
   public printers: PrinterSummary[] = [];
   public pageSize: number;
@@ -54,7 +54,17 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   public allPossibleColumns: ColumnDefinition[] = [
     {
       key: 'image',
-      displayName: 'Image',
+      displayName: 'Image (Small)',
+      description: 'The default image.',
+    },
+    {
+      key: 'image-medium',
+      displayName: 'Image (Medium)',
+      description: 'The default image.',
+    },
+    {
+      key: 'image-large',
+      displayName: 'Image (Large)',
       description: 'The default image.',
     },
     {
@@ -70,7 +80,7 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     {
       key: 'start-date',
       displayName: 'Start Date',
-      description: '',
+      description: 'Start date of the print',
     },
     {
       key: 'start-time',
@@ -81,6 +91,21 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
       key: 'start-date-time',
       displayName: 'Start Date/Time',
       description: 'Start date/time of the print',
+    },
+    {
+      key: 'end-date',
+      displayName: 'End Date',
+      description: 'End date of the print.',
+    },
+    {
+      key: 'end-time',
+      displayName: 'End Time',
+      description: 'End time of the print',
+    },
+    {
+      key: 'end-date-time',
+      displayName: 'End Date/Time',
+      description: 'End date/time of the print',
     },
     {
       key: 'status',
@@ -318,10 +343,6 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     // this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
-  ngAfterViewInit() {
-    this.mobileQueryListener();
-  }
-
   public pageChange(pageEvent: PageEvent) {
     this.currentPage = pageEvent.pageIndex + 1;
     this.pageSize = pageEvent.pageSize;
@@ -362,6 +383,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   public updateFilter() {
     this.isLoading = true;
+
+    localStorage.setItem('print_list_page_size', this.pageSize.toString(10));
 
     return this.router
       .navigate(['.'], {
@@ -518,6 +541,24 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       return 'Unknown';
     }
+  }
+
+  public getPrintEndDate(print: PrintSummary) {
+    if (
+      print.startDate &&
+      (print.estimatedPrintTimeInSeconds > 0 || print.printTimeInSeconds > 0)
+    ) {
+      const printTime =
+        print.printTimeInSeconds > 0
+          ? print.printTimeInSeconds
+          : print.estimatedPrintTimeInSeconds > 0
+          ? print.estimatedPrintTimeInSeconds
+          : 0;
+
+      return moment(print.startDate).add(printTime, 'seconds').toDate();
+    }
+
+    return null;
   }
 
   public parseGcode(event) {

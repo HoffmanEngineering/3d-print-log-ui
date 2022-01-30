@@ -152,6 +152,30 @@
       </td>
     </ng-container>
 
+    <ng-container matColumnDef="image-medium">
+      <th mat-header-cell *matHeaderCellDef>Image</th>
+      <td mat-cell *matCellDef="let print">
+        <div class="print-image-medium">
+          <app-print-image
+            [printId]="print.id"
+            [imageId]="print.defaultPrintImageId"
+          ></app-print-image>
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="image-large">
+      <th mat-header-cell *matHeaderCellDef>Image</th>
+      <td mat-cell *matCellDef="let print">
+        <div class="print-image-large">
+          <app-print-image
+            [printId]="print.id"
+            [imageId]="print.defaultPrintImageId"
+          ></app-print-image>
+        </div>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="title">
       <th
         scope="col"
@@ -188,7 +212,7 @@
         *matHeaderCellDef
         [mat-sort-header]="printSummarySortColumns.StartDate"
       >
-        Start Date/Time
+        Start Time
       </th>
       <td mat-cell *matCellDef="let print">
         {{ print.startDate | date: 'mediumTime' }}
@@ -205,6 +229,78 @@
       </th>
       <td mat-cell *matCellDef="let print">
         {{ print.startDate | date: 'medium' }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="end-date">
+      <th mat-header-cell *matHeaderCellDef>End Date</th>
+      <td mat-cell *matCellDef="let print">
+        <div
+          matTooltip="* indicates Estimated End Time"
+          [matTooltipDisabled]="
+            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+          "
+        >
+          {{ getPrintEndDate(print) | date
+          }}<ng-container
+            *ngIf="
+              (print.printTimeInSeconds === null ||
+                print.printTimeInSeconds === undefined ||
+                print.printTimeInSeconds === 0) &&
+              print.estimatedPrintTimeInSeconds !== null &&
+              print.estimatedPrintTimeInSeconds > 0
+            "
+            >*</ng-container
+          >
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="end-time">
+      <th mat-header-cell *matHeaderCellDef>End Time</th>
+      <td mat-cell *matCellDef="let print">
+        <div
+          matTooltip="* indicates Estimated End Time"
+          [matTooltipDisabled]="
+            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+          "
+        >
+          {{ getPrintEndDate(print) | date: 'mediumTime'
+          }}<ng-container
+            *ngIf="
+              (print.printTimeInSeconds === null ||
+                print.printTimeInSeconds === undefined ||
+                print.printTimeInSeconds === 0) &&
+              print.estimatedPrintTimeInSeconds !== null &&
+              print.estimatedPrintTimeInSeconds > 0
+            "
+            >*</ng-container
+          >
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="end-date-time">
+      <th mat-header-cell *matHeaderCellDef>End Date/Time</th>
+      <td mat-cell *matCellDef="let print">
+        <div
+          matTooltip="* indicates Estimated End Time"
+          [matTooltipDisabled]="
+            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+          "
+        >
+          {{ getPrintEndDate(print) | date: 'medium'
+          }}<ng-container
+            *ngIf="
+              (print.printTimeInSeconds === null ||
+                print.printTimeInSeconds === undefined ||
+                print.printTimeInSeconds === 0) &&
+              print.estimatedPrintTimeInSeconds !== null &&
+              print.estimatedPrintTimeInSeconds > 0
+            "
+            >*</ng-container
+          >
+        </div>
       </td>
     </ng-container>
 

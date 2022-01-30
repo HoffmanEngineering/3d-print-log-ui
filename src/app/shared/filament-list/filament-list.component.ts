@@ -58,12 +58,22 @@ export class FilamentListComponent implements OnInit {
   }
 
   ngOnInit() {
+    let defaultPageSize = 10;
+    const savedPageSize = localStorage.getItem('filament_list_page_size');
+    if (savedPageSize) {
+      defaultPageSize = +savedPageSize;
+    }
+
+    this.pageSize = defaultPageSize;
+
     this.updateFilter();
   }
 
   public pageChange(pageEvent: PageEvent) {
     const newPageNumber = pageEvent.pageIndex + 1;
     const newPageSize = pageEvent.pageSize;
+
+    localStorage.setItem('filament_list_page_size', newPageSize.toString(10));
 
     this.filamentService
       .getCurrentUserFilamentSummaries(newPageNumber, newPageSize)
@@ -73,6 +83,13 @@ export class FilamentListComponent implements OnInit {
   }
 
   public updateFilter() {
+    if (this.pageSize) {
+      localStorage.setItem(
+        'filament_list_page_size',
+        this.pageSize.toString(10)
+      );
+    }
+
     this.filamentService
       .getCurrentUserFilamentSummaries(
         this.currentPage,

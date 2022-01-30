@@ -17,9 +17,15 @@ export class FilamentListResolverService
   implements Resolve<PagedList<FilamentSummary>>
 {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    let defaultPageSize = 10;
+    const savedPageSize = localStorage.getItem('filament_list_page_size');
+    if (savedPageSize) {
+      defaultPageSize = +savedPageSize;
+    }
+
     const {
       pageNumber = 1,
-      pageSize = 10,
+      pageSize = defaultPageSize,
       searchText = '',
       includeInactive,
       showFavoritesOnly,

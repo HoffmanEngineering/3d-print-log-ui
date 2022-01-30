@@ -148,6 +148,9 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   public updateFilter() {
     this.isLoading = true;
+
+    localStorage.setItem('filament_list_page_size', this.pageSize.toString(10));
+
     return this.router
       .navigate(['.'], {
         queryParams: {

@@ -27,6 +27,32 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.16.0': {
+      title: '1.16.0 - Customizable Print List',
+      body: `<p>
+      The Print List has been updated to have <strong>customizable columns</strong>. You can select
+      which columns are visible using the new Gear icon on the Print List page. New columns can be selected, including start/end dates and times, and larger print images.
+    </p>
+    <p><strong>Item Per Page</strong> settings are now saved, and will be used when reloading the lists.</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.15.2': {
       redirect: '1.15.1',
     },

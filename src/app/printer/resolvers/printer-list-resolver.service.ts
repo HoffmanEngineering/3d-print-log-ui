@@ -15,7 +15,16 @@ export class PrinterListResolverService
   implements Resolve<PagedList<PrinterSummary>>
 {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-    return this.printerService.getCurrentUserPrinterSummaries();
+    let defaultPageSize = 10;
+    const savedPageSize = localStorage.getItem('printer_list_page_size');
+    if (savedPageSize) {
+      defaultPageSize = +savedPageSize;
+    }
+
+    return this.printerService.getCurrentUserPrinterSummaries(
+      1,
+      defaultPageSize
+    );
   }
   constructor(private printerService: PrinterService) {}
 }

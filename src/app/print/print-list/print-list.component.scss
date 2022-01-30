@@ -29,6 +29,34 @@ table {
   overflow: hidden;
 }
 
+.print-image-medium {
+  display: flex;
+  justify-content: center; /* align horizontal */
+  align-items: center; /* align vertical */
+  max-height: 100px;
+  max-width: 100px;
+  min-height: 100px;
+  min-width: 100px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
+.print-image-large {
+  display: flex;
+  justify-content: center; /* align horizontal */
+  align-items: center; /* align vertical */
+  max-height: 250px;
+  max-width: 250px;
+  min-height: 250px;
+  min-width: 250px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
 .no-prints {
   font-size: 16px;
   line-height: 28px;

@@ -61,6 +61,8 @@ export class PrinterListComponent implements OnInit {
     const newPageNumber = pageEvent.pageIndex + 1;
     const newPageSize = pageEvent.pageSize;
 
+    localStorage.setItem('printer_list_page_size', newPageSize.toString(10));
+
     this.printerService
       .getCurrentUserPrinterSummaries(
         newPageNumber,
@@ -74,6 +76,8 @@ export class PrinterListComponent implements OnInit {
   }
 
   public async updateFilter() {
+    localStorage.setItem('printer_list_page_size', this.pageSize.toString(10));
+
     const response = await this.printerService
       .getCurrentUserPrinterSummaries(
         this.currentPage,

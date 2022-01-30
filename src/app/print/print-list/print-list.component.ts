@@ -1,20 +1,14 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  NgZone,
-  OnDestroy,
-  OnInit,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
+import moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -31,18 +25,99 @@ import {
 } from '../../core/services/print.service';
 import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
+
+export interface ColumnDefinition {
+  key: string;
+  displayName: string;
+  description: string;
+}
 
 @Component({
   selector: 'app-print-list',
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
 })
-export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
+export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
   public printers: PrinterSummary[] = [];
   public pageSize: number;
   public currentPage: number;
   public totalCount: number;
+
+  public allPossibleColumns: ColumnDefinition[] = [
+    {
+      key: 'image',
+      displayName: 'Image (Small)',
+      description: 'The default image as a small thumbnail.',
+    },
+    {
+      key: 'image-medium',
+      displayName: 'Image (Medium)',
+      description: 'The default image as a medium thumbnail.',
+    },
+    {
+      key: 'image-large',
+      displayName: 'Image (Large)',
+      description: 'The default image as a large thumbnail.',
+    },
+    {
+      key: 'title',
+      displayName: 'Title',
+      description: "The print's title.",
+    },
+    {
+      key: 'printer',
+      displayName: 'Print',
+      description: 'Make and model of the printer.',
+    },
+    {
+      key: 'start-date',
+      displayName: 'Start Date',
+      description: 'Start date of the print',
+    },
+    {
+      key: 'start-time',
+      displayName: 'Start Time',
+      description: 'Start time of the print',
+    },
+    {
+      key: 'start-date-time',
+      displayName: 'Start Date/Time',
+      description: 'Start date/time of the print',
+    },
+    {
+      key: 'end-date',
+      displayName: 'End Date',
+      description: 'End date of the print if there is a print time recorded.',
+    },
+    {
+      key: 'end-time',
+      displayName: 'End Time',
+      description: 'End time of the print if there is a print time recorded.',
+    },
+    {
+      key: 'end-date-time',
+      displayName: 'End Date/Time',
+      description:
+        'End date/time of the print if there is a print time recorded.',
+    },
+    {
+      key: 'status',
+      displayName: 'Status',
+      description: 'The print status.',
+    },
+    {
+      key: 'printTime',
+      displayName: 'Print Time',
+      description: 'Displays the actual print time, or estimated print time.',
+    },
+    {
+      key: 'commentCount',
+      displayName: 'Comment Count',
+      description: 'Displays the number of comments',
+    },
+  ];
 
   public displayedColumns: string[] = [
     'image',
@@ -74,13 +149,15 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   public printerRedirectSubscription: Subscription;
 
   mobileQuery: MediaQueryList;
-  private mobileQueryListener: () => void;
 
   public isLoading = false;
 
   public printSearchSubscription: Subscription | null = null;
 
   private subscriptions: Subscription = new Subscription();
+
+  private readonly PRINT_TABLE_DISPLAYED_COLUMNS =
+    'print_table_displayed_columns';
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -90,8 +167,6 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     private router: Router,
     public dialog: MatDialog,
     private media: MediaMatcher,
-    private ngZone: NgZone,
-    private changeDetectorRef: ChangeDetectorRef,
     private printService: PrintService,
     private readonly loggingService: LoggingService,
     private readonly gcodeParserService: GcodeFileParserService,
@@ -189,38 +264,46 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.mobileQuery = this.media.matchMedia('(max-width: 800px)');
 
-    this.mobileQueryListener = () => {
-      this.ngZone.run(() => {
-        if (this.mobileQuery.matches) {
-          this.displayedColumns = [
-            'image',
-            'title',
-            'printer',
-            'start-date',
-            'status',
-            'more',
-          ];
-        } else {
-          this.displayedColumns = [
-            'image',
-            'title',
-            'printer',
-            'start-date',
-            'status',
-            'printTime',
-            'commentCount',
-            'more',
-          ];
-        }
-        this.changeDetectorRef.detectChanges();
-      });
-    };
+    // Load display'd columns.
+    const columns = JSON.parse(
+      localStorage.getItem(this.PRINT_TABLE_DISPLAYED_COLUMNS)
+    );
+    console.log(columns);
+    // Error correction
+    if (
+      Array.isArray(columns) &&
+      columns.every((entry) => typeof entry === 'string')
+    ) {
+      this.displayedColumns = columns;
+    } else {
+      // Initialize with defaults for size;
+      if (this.mobileQuery.matches) {
+        this.displayedColumns = [
+          'image',
+          'title',
+          'printer',
+          'start-date',
+          'status',
+          'more',
+        ];
+      } else {
+        this.displayedColumns = [
+          'image',
+          'title',
+          'printer',
+          'start-date',
+          'status',
+          'printTime',
+          'commentCount',
+          'more',
+        ];
+      }
 
-    this.mobileQuery.addListener(this.mobileQueryListener);
-  }
-
-  ngAfterViewInit() {
-    this.mobileQueryListener();
+      localStorage.setItem(
+        this.PRINT_TABLE_DISPLAYED_COLUMNS,
+        JSON.stringify(this.displayedColumns)
+      );
+    }
   }
 
   public pageChange(pageEvent: PageEvent) {
@@ -263,6 +346,8 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   public updateFilter() {
     this.isLoading = true;
+
+    localStorage.setItem('print_list_page_size', this.pageSize.toString(10));
 
     return this.router
       .navigate(['.'], {
@@ -355,6 +440,44 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
+  public openPrintTableLayout() {
+    const onSelectionChange = new Subject<string[]>();
+
+    const subscription = onSelectionChange.subscribe((selectedColumns) => {
+      // Always add the 'more' column at the end
+      this.displayedColumns = [
+        ...selectedColumns.filter((col) => col !== 'more'),
+        'more',
+      ];
+
+      localStorage.setItem(
+        this.PRINT_TABLE_DISPLAYED_COLUMNS,
+        JSON.stringify(this.displayedColumns)
+      );
+    });
+
+    const dialogRef = this.dialog.open(PrintTableLayoutComponent, {
+      width: '450px',
+      minWidth: '450px',
+      disableClose: true,
+      data: {
+        allPossibleColumns: this.allPossibleColumns.filter(
+          (column) => column.key !== 'more'
+        ),
+        currentColumns: this.displayedColumns,
+        changeEvent: onSelectionChange,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      subscription.unsubscribe();
+
+      this.loggingService.logEvent('PrintListLayoutChanged', {
+        columns: JSON.stringify(this.displayedColumns),
+      });
+    });
+  }
+
   /**
    * Changes the status of the selected print.
    * @param id The Print Id
@@ -385,6 +508,24 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       return 'Unknown';
     }
+  }
+
+  public getPrintEndDate(print: PrintSummary) {
+    if (
+      print.startDate &&
+      (print.estimatedPrintTimeInSeconds > 0 || print.printTimeInSeconds > 0)
+    ) {
+      const printTime =
+        print.printTimeInSeconds > 0
+          ? print.printTimeInSeconds
+          : print.estimatedPrintTimeInSeconds > 0
+          ? print.estimatedPrintTimeInSeconds
+          : 0;
+
+      return moment(print.startDate).add(printTime, 'seconds').toDate();
+    }
+
+    return null;
   }
 
   public parseGcode(event) {

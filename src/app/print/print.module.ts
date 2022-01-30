@@ -21,6 +21,7 @@ import { CuraParserV1pt0pt0Service } from './services/integration/cura/cura-pars
 import { CuraParserV1pt1pt0Service } from './services/integration/cura/cura-parser-v1-1-0.service';
 import { CuraParserV1pt2pt0Service } from './services/integration/cura/cura-parser-v1-2-0.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
+import { PrintTableLayoutComponent } from './print-list/print-table-layout/print-table-layout.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
     ViewPrintDetailComponent,
     PrintShareDialogComponent,
     PrintCommentsComponent,
+    PrintTableLayoutComponent,
   ],
   imports: [
     CommonModule,

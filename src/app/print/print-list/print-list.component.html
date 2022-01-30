@@ -219,7 +219,31 @@
     </ng-container>
 
     <ng-container matColumnDef="more">
-      <th mat-header-cell *matHeaderCellDef></th>
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        (click)="$event.preventDefault(); $event.stopPropagation()"
+      >
+        <button
+          mat-button
+          class="transparent"
+          attr.aria-label="Open table settings"
+          [matMenuTriggerFor]="tableSettingsMenu"
+          data-cy-table-settings
+        >
+          <mat-icon>settings</mat-icon>
+        </button>
+        <mat-menu #tableSettingsMenu="matMenu">
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="Change the layout of the print table."
+            (click)="openPrintTableLayout()"
+          >
+            <mat-icon>table_rows</mat-icon>Change table layout
+          </button>
+        </mat-menu>
+      </th>
       <td
         mat-cell
         *matCellDef="let print"

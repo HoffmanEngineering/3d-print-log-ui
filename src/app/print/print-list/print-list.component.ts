@@ -31,6 +31,12 @@ import {
 } from '../../core/services/print.service';
 import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
+
+export interface ColumnDefinition {
+  key: string;
+  displayName: string;
+}
 
 @Component({
   selector: 'app-print-list',
@@ -43,6 +49,37 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   public pageSize: number;
   public currentPage: number;
   public totalCount: number;
+
+  public allPossibleColumns: ColumnDefinition[] = [
+    {
+      key: 'image',
+      displayName: 'Image',
+    },
+    {
+      key: 'title',
+      displayName: 'Title',
+    },
+    {
+      key: 'printer',
+      displayName: 'Print',
+    },
+    {
+      key: 'start-date',
+      displayName: 'Start Date',
+    },
+    {
+      key: 'status',
+      displayName: 'Status',
+    },
+    {
+      key: 'printTime',
+      displayName: 'Print Time',
+    },
+    {
+      key: 'commentCount',
+      displayName: 'Comments',
+    },
+  ];
 
   public displayedColumns: string[] = [
     'image',
@@ -81,6 +118,9 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   public printSearchSubscription: Subscription | null = null;
 
   private subscriptions: Subscription = new Subscription();
+
+  private readonly PRINT_TABLE_DISPLAYED_COLUMNS =
+    'print_table_displayed_columns';
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -189,34 +229,75 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.mobileQuery = this.media.matchMedia('(max-width: 800px)');
 
-    this.mobileQueryListener = () => {
-      this.ngZone.run(() => {
-        if (this.mobileQuery.matches) {
-          this.displayedColumns = [
-            'image',
-            'title',
-            'printer',
-            'start-date',
-            'status',
-            'more',
-          ];
-        } else {
-          this.displayedColumns = [
-            'image',
-            'title',
-            'printer',
-            'start-date',
-            'status',
-            'printTime',
-            'commentCount',
-            'more',
-          ];
-        }
-        this.changeDetectorRef.detectChanges();
-      });
-    };
+    // Load display'd columns.
+    const columns = JSON.parse(
+      localStorage.getItem(this.PRINT_TABLE_DISPLAYED_COLUMNS)
+    );
+    console.log(columns);
+    // Error correction
+    if (
+      Array.isArray(columns) &&
+      columns.every((entry) => typeof entry === 'string')
+    ) {
+      this.displayedColumns = columns;
+    } else {
+      // Initialize with defaults for size;
+      if (this.mobileQuery.matches) {
+        this.displayedColumns = [
+          'image',
+          'title',
+          'printer',
+          'start-date',
+          'status',
+          'more',
+        ];
+      } else {
+        this.displayedColumns = [
+          'image',
+          'title',
+          'printer',
+          'start-date',
+          'status',
+          'printTime',
+          'commentCount',
+          'more',
+        ];
+      }
 
-    this.mobileQuery.addListener(this.mobileQueryListener);
+      localStorage.setItem(
+        this.PRINT_TABLE_DISPLAYED_COLUMNS,
+        JSON.stringify(this.displayedColumns)
+      );
+    }
+
+    // this.mobileQueryListener = () => {
+    //   this.ngZone.run(() => {
+    //     if (this.mobileQuery.matches) {
+    //       this.displayedColumns = [
+    //         'image',
+    //         'title',
+    //         'printer',
+    //         'start-date',
+    //         'status',
+    //         'more',
+    //       ];
+    //     } else {
+    //       this.displayedColumns = [
+    //         'image',
+    //         'title',
+    //         'printer',
+    //         'start-date',
+    //         'status',
+    //         'printTime',
+    //         'commentCount',
+    //         'more',
+    //       ];
+    //     }
+    //     this.changeDetectorRef.detectChanges();
+    //   });
+    // };
+
+    // this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
   ngAfterViewInit() {
@@ -352,6 +433,28 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
           });
         });
       }
+    });
+  }
+
+  public openPrintTableLayout() {
+    const dialogRef = this.dialog.open(PrintTableLayoutComponent, {
+      maxWidth: '350px',
+      data: {
+        allPossibleColumns: this.allPossibleColumns.filter(
+          (column) => column.key !== 'more'
+        ),
+        currentColumns: this.displayedColumns,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((selectedColumns) => {
+      // Always add the 'more' column at the end
+      this.displayedColumns = [...selectedColumns, 'more'];
+
+      localStorage.setItem(
+        this.PRINT_TABLE_DISPLAYED_COLUMNS,
+        JSON.stringify(this.displayedColumns)
+      );
     });
   }
 

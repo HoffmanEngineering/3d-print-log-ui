@@ -21,18 +21,52 @@
     <mat-label> Link to Print:</mat-label>
     <input matInput readonly="true" [ngModel]="printLink" />
   </mat-form-field> -->
-  <mat-selection-list [(ngModel)]="selectedColumns">
-    <mat-list-option *ngFor="let column of allColumns" [value]="column.key">
+  <mat-selection-list
+    [(ngModel)]="selectedColumns"
+    (ngModelChange)="this.data.changeEvent.next($event)"
+  >
+    <mat-list-option
+      *ngFor="let column of allColumns"
+      [value]="column.key"
+      [matTooltip]="column.description"
+    >
       {{ column.displayName }}
     </mat-list-option>
   </mat-selection-list>
 </div>
-<div mat-dialog-actions fxLayout fxLayoutAlign="space-around">
+<div
+  mat-dialog-actions
+  fxLayout="row"
+  fxLayoutAlign="space-between center"
+  fxLayout
+>
   <button
+    fxFlex="shrink"
+    fxFlexAlign="start"
+    type="button"
+    mat-raised-button
+    color="basic"
+    (click)="resetToDefaults()"
+  >
+    Reset to Default
+  </button>
+  <button
+    fxFlex="shrink"
+    fxFlexAlign="end"
+    type="button"
+    mat-raised-button
+    color="primary"
+    [mat-dialog-close]="selectedColumns"
+  >
+    Save
+  </button>
+  <button
+    fxFlex="shrink"
+    fxFlexAlign="end"
     type="button"
     mat-raised-button
     color="accent"
-    [mat-dialog-close]="selectedColumns"
+    (click)="resetSelection()"
   >
     Close
   </button>

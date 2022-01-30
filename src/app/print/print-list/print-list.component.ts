@@ -14,7 +14,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -36,6 +36,7 @@ import { PrintTableLayoutComponent } from './print-table-layout/print-table-layo
 export interface ColumnDefinition {
   key: string;
   displayName: string;
+  description: string;
 }
 
 @Component({
@@ -54,30 +55,47 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
     {
       key: 'image',
       displayName: 'Image',
+      description: 'The default image.',
     },
     {
       key: 'title',
       displayName: 'Title',
+      description: "The print's title.",
     },
     {
       key: 'printer',
       displayName: 'Print',
+      description: 'Make and model of the printer.',
     },
     {
       key: 'start-date',
       displayName: 'Start Date',
+      description: '',
+    },
+    {
+      key: 'start-time',
+      displayName: 'Start Time',
+      description: 'Start time of the print',
+    },
+    {
+      key: 'start-date-time',
+      displayName: 'Start Date/Time',
+      description: 'Start date/time of the print',
     },
     {
       key: 'status',
       displayName: 'Status',
+      description: '',
     },
     {
       key: 'printTime',
       displayName: 'Print Time',
+      description: 'Displays the actual print time, or estimated print time.',
     },
     {
       key: 'commentCount',
       displayName: 'Comments',
+      description: 'Displays the number of comments',
     },
   ];
 
@@ -437,24 +455,36 @@ export class PrintListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public openPrintTableLayout() {
-    const dialogRef = this.dialog.open(PrintTableLayoutComponent, {
-      maxWidth: '350px',
-      data: {
-        allPossibleColumns: this.allPossibleColumns.filter(
-          (column) => column.key !== 'more'
-        ),
-        currentColumns: this.displayedColumns,
-      },
-    });
+    const onSelectionChange = new Subject<string[]>();
 
-    dialogRef.afterClosed().subscribe((selectedColumns) => {
+    const subscription = onSelectionChange.subscribe((selectedColumns) => {
       // Always add the 'more' column at the end
-      this.displayedColumns = [...selectedColumns, 'more'];
+      this.displayedColumns = [
+        ...selectedColumns.filter((col) => col !== 'more'),
+        'more',
+      ];
 
       localStorage.setItem(
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
         JSON.stringify(this.displayedColumns)
       );
+    });
+
+    const dialogRef = this.dialog.open(PrintTableLayoutComponent, {
+      width: '450px',
+      minWidth: '450px',
+      disableClose: true,
+      data: {
+        allPossibleColumns: this.allPossibleColumns.filter(
+          (column) => column.key !== 'more'
+        ),
+        currentColumns: this.displayedColumns,
+        changeEvent: onSelectionChange,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      subscription.unsubscribe();
     });
   }
 

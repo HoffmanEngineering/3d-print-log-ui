@@ -182,6 +182,32 @@
       <td mat-cell *matCellDef="let print">{{ print.startDate | date }}</td>
     </ng-container>
 
+    <ng-container matColumnDef="start-time">
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="printSummarySortColumns.StartDate"
+      >
+        Start Date/Time
+      </th>
+      <td mat-cell *matCellDef="let print">
+        {{ print.startDate | date: 'mediumTime' }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="start-date-time">
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="printSummarySortColumns.StartDate"
+      >
+        Start Date/Time
+      </th>
+      <td mat-cell *matCellDef="let print">
+        {{ print.startDate | date: 'medium' }}
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="printTime">
       <th mat-header-cell *matHeaderCellDef>Print Time</th>
       <td mat-cell *matCellDef="let print">

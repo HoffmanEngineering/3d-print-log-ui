@@ -24,74 +24,70 @@ describe('PrintListComponent', () => {
   let component: PrintListComponent;
   let fixture: ComponentFixture<PrintListComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      const mockLogger = jasmine.createSpyObj<LoggingService>(
-        'LoggingService',
-        ['logException', 'logEvent']
+  beforeEach(waitForAsync(() => {
+    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logException',
+      'logEvent',
+    ]);
+
+    const mockPrinterRedirectPromptService =
+      jasmine.createSpyObj<PrinterRedirectPromptService>(
+        'PrinterRedirectPromptService',
+        {
+          shouldShowAddPrinterPrompt: of(false),
+        }
       );
 
-      const mockPrinterRedirectPromptService =
-        jasmine.createSpyObj<PrinterRedirectPromptService>(
-          'PrinterRedirectPromptService',
-          {
-            shouldShowAddPrinterPrompt: of(false),
-          }
-        );
+    const mockPrintPagedResult: PagedList<PrintSummary> = {
+      items: [],
+      paging: {
+        currentPage: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 1,
+      },
+    };
 
-      const mockPrintPagedResult: PagedList<PrintSummary> = {
-        items: [],
-        paging: {
-          currentPage: 1,
-          pageSize: 10,
-          totalCount: 0,
-          totalPages: 1,
+    const mockActivatedRoute = {
+      data: of({ printList: mockPrintPagedResult }),
+      queryParamMap: of({ has: () => false }),
+      snapshot: {},
+    };
+
+    const mockTitleService = jasmine.createSpyObj<Title>('Title', ['setTitle']);
+
+    const mockToastrService = jasmine.createSpyObj<ToastrService>(
+      'ToastrService',
+      ['success', 'error', 'info', 'remove']
+    );
+
+    const mockPrintService = jasmine.createSpyObj<PrintService>(
+      'PrintService',
+      ['deletePrint']
+    );
+
+    TestBed.configureTestingModule({
+      declarations: [PrintListComponent, DurationPipe],
+      imports: [
+        RouterTestingModule,
+        MatDialogModule,
+        MatMenuModule,
+        MatTableModule,
+      ],
+      providers: [
+        { provide: LoggingService, useValue: mockLogger },
+        {
+          provide: PrinterRedirectPromptService,
+          useValue: mockPrinterRedirectPromptService,
         },
-      };
-
-      const mockActivatedRoute = {
-        data: of({ printList: mockPrintPagedResult }),
-        queryParamMap: of({ has: () => false }),
-        snapshot: {},
-      };
-
-      const mockTitleService = jasmine.createSpyObj<Title>('Title', [
-        'setTitle',
-      ]);
-
-      const mockToastrService = jasmine.createSpyObj<ToastrService>(
-        'ToastrService',
-        ['success', 'error', 'info', 'remove']
-      );
-
-      const mockPrintService = jasmine.createSpyObj<PrintService>(
-        'PrintService',
-        ['deletePrint']
-      );
-
-      TestBed.configureTestingModule({
-        declarations: [PrintListComponent, DurationPipe],
-        imports: [
-          RouterTestingModule,
-          MatDialogModule,
-          MatMenuModule,
-          MatTableModule,
-        ],
-        providers: [
-          { provide: LoggingService, useValue: mockLogger },
-          {
-            provide: PrinterRedirectPromptService,
-            useValue: mockPrinterRedirectPromptService,
-          },
-          { provide: ActivatedRoute, useValue: mockActivatedRoute },
-          { provide: Title, useValue: mockTitleService },
-          { provide: ToastrService, useValue: mockToastrService },
-          { provide: PrintService, useValue: mockPrintService },
-        ],
-        schemas: [NO_ERRORS_SCHEMA],
-      }).compileComponents();
-    })
-  );
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: Title, useValue: mockTitleService },
+        { provide: ToastrService, useValue: mockToastrService },
+        { provide: PrintService, useValue: mockPrintService },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintListComponent);

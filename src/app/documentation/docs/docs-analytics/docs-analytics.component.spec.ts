@@ -7,14 +7,12 @@ describe('DocsAnalyticsComponent', () => {
   let component: DocsAnalyticsComponent;
   let fixture: ComponentFixture<DocsAnalyticsComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        declarations: [DocsAnalyticsComponent],
-        schemas: [NO_ERRORS_SCHEMA],
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [DocsAnalyticsComponent],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DocsAnalyticsComponent);

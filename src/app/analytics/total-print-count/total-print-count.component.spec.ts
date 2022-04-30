@@ -7,14 +7,12 @@ describe('TotalPrintCountComponent', () => {
   let component: TotalPrintCountComponent;
   let fixture: ComponentFixture<TotalPrintCountComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        declarations: [TotalPrintCountComponent],
-        schemas: [NO_ERRORS_SCHEMA],
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [TotalPrintCountComponent],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(TotalPrintCountComponent);

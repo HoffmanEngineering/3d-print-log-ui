@@ -7,14 +7,12 @@ xdescribe('DocsGettingStartedComponent', () => {
   let component: DocsGettingStartedComponent;
   let fixture: ComponentFixture<DocsGettingStartedComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        declarations: [DocsGettingStartedComponent],
-        schemas: [NO_ERRORS_SCHEMA],
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [DocsGettingStartedComponent],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DocsGettingStartedComponent);

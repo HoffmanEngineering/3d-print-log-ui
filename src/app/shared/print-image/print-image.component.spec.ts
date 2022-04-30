@@ -8,19 +8,17 @@ describe('PrintImageComponent', () => {
   let component: PrintImageComponent;
   let fixture: ComponentFixture<PrintImageComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      const mockPrintService = jasmine.createSpyObj<PrintService>(
-        'PrintService',
-        { getPrintImage: of('') }
-      );
+  beforeEach(waitForAsync(() => {
+    const mockPrintService = jasmine.createSpyObj<PrintService>(
+      'PrintService',
+      { getPrintImage: of('') }
+    );
 
-      TestBed.configureTestingModule({
-        declarations: [PrintImageComponent],
-        providers: [{ provide: PrintService, useValue: mockPrintService }],
-      }).compileComponents();
-    })
-  );
+    TestBed.configureTestingModule({
+      declarations: [PrintImageComponent],
+      providers: [{ provide: PrintService, useValue: mockPrintService }],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintImageComponent);

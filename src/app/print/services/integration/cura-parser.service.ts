@@ -43,7 +43,9 @@ export class CuraParserService implements NewPrintParser {
       case '1.2.1':
         return this.parserV1pt2pt0.parse(params);
       default:
-        return null;
+        // By default, attempt to use the highest parser version so newer
+        // versions that are backward compatible will still work
+        return this.parserV1pt2pt0.parse(params);
     }
   }
 

@@ -6,13 +6,11 @@ xdescribe('UserPrintsComponent', () => {
   let component: UserPrintsComponent;
   let fixture: ComponentFixture<UserPrintsComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        declarations: [UserPrintsComponent],
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [UserPrintsComponent],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(UserPrintsComponent);

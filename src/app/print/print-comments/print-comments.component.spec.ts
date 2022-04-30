@@ -10,33 +10,31 @@ describe('PrintCommentsComponent', () => {
   let component: PrintCommentsComponent;
   let fixture: ComponentFixture<PrintCommentsComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      const mockAuthService = {
-        ...jasmine.createSpyObj<AuthService>('AuthService', ['getUser$']),
-        userProfile$: of(null),
-      };
+  beforeEach(waitForAsync(() => {
+    const mockAuthService = {
+      ...jasmine.createSpyObj<AuthService>('AuthService', ['getUser$']),
+      userProfile$: of(null),
+    };
 
-      const mockPrintService = jasmine.createSpyObj<PrintService>(
-        'PrintService',
-        ['deletePrintComment']
-      );
+    const mockPrintService = jasmine.createSpyObj<PrintService>(
+      'PrintService',
+      ['deletePrintComment']
+    );
 
-      const mockToastrService = jasmine.createSpyObj<ToastrService>(
-        'ToastrService',
-        ['success', 'error']
-      );
+    const mockToastrService = jasmine.createSpyObj<ToastrService>(
+      'ToastrService',
+      ['success', 'error']
+    );
 
-      TestBed.configureTestingModule({
-        declarations: [PrintCommentsComponent],
-        providers: [
-          { provide: AuthService, useValue: mockAuthService },
-          { provide: PrintService, useValue: mockPrintService },
-          { provide: ToastrService, useValue: mockToastrService },
-        ],
-      }).compileComponents();
-    })
-  );
+    TestBed.configureTestingModule({
+      declarations: [PrintCommentsComponent],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: PrintService, useValue: mockPrintService },
+        { provide: ToastrService, useValue: mockToastrService },
+      ],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintCommentsComponent);

@@ -30,96 +30,90 @@ describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
   let fixture: ComponentFixture<EditPrintDetailComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      const mockPrintService = jasmine.createSpyObj<PrintService>(
-        'PrintService',
-        ['addPrint']
+  beforeEach(waitForAsync(() => {
+    const mockPrintService = jasmine.createSpyObj<PrintService>(
+      'PrintService',
+      ['addPrint']
+    );
+
+    const mockToastrService = jasmine.createSpyObj<ToastrService>(
+      'ToastrService',
+      ['success', 'error']
+    );
+
+    const mockTitleService = jasmine.createSpyObj<Title>('Title', ['setTitle']);
+
+    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
+      'UserSettingService',
+      ['updateUserSetting']
+    );
+
+    const mockPrinterPromptService =
+      jasmine.createSpyObj<PrinterRedirectPromptService>(
+        'PrinterRedirectPromptService',
+        {
+          shouldShowAddPrinterPrompt: of(false),
+        }
       );
 
-      const mockToastrService = jasmine.createSpyObj<ToastrService>(
-        'ToastrService',
-        ['success', 'error']
-      );
+    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logException',
+      'logEvent',
+    ]);
 
-      const mockTitleService = jasmine.createSpyObj<Title>('Title', [
-        'setTitle',
-      ]);
+    const mockPrinterService = jasmine.createSpyObj<PrinterService>(
+      'PrinterService',
+      { getLoadedFilamentForPrinter: of([]) }
+    );
 
-      const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
-        'UserSettingService',
-        ['updateUserSetting']
-      );
-
-      const mockPrinterPromptService =
-        jasmine.createSpyObj<PrinterRedirectPromptService>(
-          'PrinterRedirectPromptService',
-          {
-            shouldShowAddPrinterPrompt: of(false),
-          }
-        );
-
-      const mockLogger = jasmine.createSpyObj<LoggingService>(
-        'LoggingService',
-        ['logException', 'logEvent']
-      );
-
-      const mockPrinterService = jasmine.createSpyObj<PrinterService>(
-        'PrinterService',
-        { getLoadedFilamentForPrinter: of([]) }
-      );
-
-      TestBed.configureTestingModule({
-        declarations: [EditPrintDetailComponent],
-        imports: [
-          RouterTestingModule,
-          FormsModule,
-          ReactiveFormsModule,
-          MatInputModule,
-          MatSelectModule,
-          MatDatepickerModule,
-          MatMomentDateModule,
-          MatCheckboxModule,
-          MatDialogModule,
-          NgxMatDatetimePickerModule,
-          NgxMatTimepickerModule,
-          NgxMatMomentModule,
-        ],
-        providers: [
-          { provide: PrintService, useValue: mockPrintService },
-          { provide: PrinterService, useValue: mockPrinterService },
-          { provide: ToastrService, useValue: mockToastrService },
-          { provide: Title, useValue: mockTitleService },
-          { provide: UserSettingService, useValue: mockUserSettingService },
-          {
-            provide: PrinterRedirectPromptService,
-            useValue: mockPrinterPromptService,
+    TestBed.configureTestingModule({
+      declarations: [EditPrintDetailComponent],
+      imports: [
+        RouterTestingModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatInputModule,
+        MatSelectModule,
+        MatDatepickerModule,
+        MatMomentDateModule,
+        MatCheckboxModule,
+        MatDialogModule,
+        NgxMatDatetimePickerModule,
+        NgxMatTimepickerModule,
+        NgxMatMomentModule,
+      ],
+      providers: [
+        { provide: PrintService, useValue: mockPrintService },
+        { provide: PrinterService, useValue: mockPrinterService },
+        { provide: ToastrService, useValue: mockToastrService },
+        { provide: Title, useValue: mockTitleService },
+        { provide: UserSettingService, useValue: mockUserSettingService },
+        {
+          provide: PrinterRedirectPromptService,
+          useValue: mockPrinterPromptService,
+        },
+        { provide: LoggingService, useValue: mockLogger },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({
+              printers: null,
+              lastSelectedPrinterSetting: null,
+              defaultPrintViewStatusSetting: null,
+              print: { print: { printerId: 1, notes: '' } },
+            }),
           },
-          { provide: LoggingService, useValue: mockLogger },
-          {
-            provide: ActivatedRoute,
-            useValue: {
-              data: of({
-                printers: null,
-                lastSelectedPrinterSetting: null,
-                defaultPrintViewStatusSetting: null,
-                print: { print: { printerId: 1, notes: '' } },
-              }),
-            },
-          },
-        ],
-        schemas: [NO_ERRORS_SCHEMA],
-      }).compileComponents();
-    })
-  );
+        },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  }));
 
-  beforeEach(
-    waitForAsync(() => {
-      fixture = TestBed.createComponent(EditPrintDetailComponent);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    fixture = TestBed.createComponent(EditPrintDetailComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  }));
 
   it('should create', () => {
     expect(component).toBeTruthy();

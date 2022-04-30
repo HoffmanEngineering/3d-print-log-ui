@@ -7,14 +7,12 @@ describe('TotalFilamentUsedComponent', () => {
   let component: TotalFilamentUsedComponent;
   let fixture: ComponentFixture<TotalFilamentUsedComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        declarations: [TotalFilamentUsedComponent],
-        schemas: [NO_ERRORS_SCHEMA],
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [TotalFilamentUsedComponent],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(TotalFilamentUsedComponent);

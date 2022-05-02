@@ -27,6 +27,47 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.16.2': {
+      title: '1.16.2 - Support Cura 5 Beta',
+      body: `<p>
+  The <strong>3D Print Log Uploader Plugin for Cura</strong> has been updated
+  to version 2.0.2. This version adds support for the new Cura 5 Beta, as well
+  as adding in new settings to control the "Would you like to send to 3D Print
+  Log" prompt.
+</p>
+<p>
+  You can install v2.0.2 of the
+  plugin via the
+  <a
+    href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+    >Ultimaker Cura Marketplace</a
+  >
+  . Alternatively, you can download the
+  <a
+    href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+    >Latest Release from Github</a
+  >
+  and drag/drop into Cura to install.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.16.1': {
       redirect: '1.16.0',
     },

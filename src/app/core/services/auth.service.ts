@@ -83,7 +83,10 @@ export class AuthService {
           if (currentUser.displayName === null) {
             const userInfo: UserDetailDto = {
               ...currentUser,
-              displayName: user.nickname,
+              displayName:
+                user.nickname.length > 30
+                  ? user.nickname.substring(0, 29)
+                  : user.nickname,
               profilePicture: user.picture,
             };
 

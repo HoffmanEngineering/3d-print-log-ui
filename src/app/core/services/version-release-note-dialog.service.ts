@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.16.3': {
+      redirect: '1.16.2',
+    },
     '1.16.2': {
       title: '1.16.2 - Support Cura 5 Beta',
       body: `<p>

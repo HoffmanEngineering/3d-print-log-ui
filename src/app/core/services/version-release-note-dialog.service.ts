@@ -27,6 +27,41 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.16.4': {
+      title: '1.16.4 - Android App Released!',
+      body: `<p>
+  3D Print Log now has an Android App! Download the
+  <a href="https://play.google.com/store/apps/details?id=com.printlog.app"
+    >3D Print Log App from the Google Play Store</a
+  >, and start logging your prints and filament usage from your mobile device!
+</p>
+<p>
+  Since this is the initial release, we would appreciate it if you left a
+  review and provided feedback about the app. Thank you!
+</p>
+<p>
+  The iOS app is still under development and should be available shortly, so
+  keep checking back.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.16.3': {
       redirect: '1.16.2',
     },

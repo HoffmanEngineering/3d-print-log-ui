@@ -55,6 +55,8 @@ import {
   NgxMatTimepickerModule,
 } from '@angular-material-components/datetime-picker';
 import { NgxMatMomentModule } from '@angular-material-components/moment-adapter';
+import { AdComponent } from './ad/ad.component';
+import { AdsenseModule } from 'ng2-adsense';
 
 @NgModule({
   declarations: [
@@ -78,6 +80,7 @@ import { NgxMatMomentModule } from '@angular-material-components/moment-adapter'
     FilamentSearchModalComponent,
     AccountDeactivationBannerComponent,
     GcodeViewerModalComponent,
+    AdComponent,
   ],
   imports: [
     CommonModule,
@@ -114,6 +117,7 @@ import { NgxMatMomentModule } from '@angular-material-components/moment-adapter'
     NgxMatDatetimePickerModule,
     NgxMatTimepickerModule,
     NgxMatMomentModule,
+    AdsenseModule,
   ],
   exports: [
     CommonModule,
@@ -165,6 +169,8 @@ import { NgxMatMomentModule } from '@angular-material-components/moment-adapter'
     NgxMatDatetimePickerModule,
     NgxMatTimepickerModule,
     NgxMatMomentModule,
+    AdsenseModule,
+    AdComponent,
   ],
 })
 export class SharedModule {}

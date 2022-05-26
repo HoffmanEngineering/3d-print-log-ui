@@ -68,7 +68,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     },
     {
       key: 'printer',
-      displayName: 'Print',
+      displayName: 'Printer',
       description: 'Make and model of the printer.',
     },
     {

@@ -137,6 +137,71 @@
         </div>
       </div>
 
+      <div
+        fxFlex="grow"
+        fxFlexFill
+        [ngClass]="{
+          'mat-elevation-z5 editing-card':
+            preferredCurrency?.toString() !==
+            this.preferredCurrencyNameSettingOnLoad?.value.toString()
+        }"
+      >
+        <div>
+          <label
+            for="preferred-currency"
+            style="margin-right: 10px"
+            matTooltip="The currency symbol used throughout the application"
+            matTooltipPosition="right"
+          >
+            Preferred Currency <mat-icon inline>info</mat-icon>:</label
+          >
+          <select
+            id="preferred-currency"
+            name="preferred-currency"
+            [(ngModel)]="preferredCurrency"
+          >
+            <option
+              *ngFor="let currency of currencies | keyvalue: sortByName"
+              [ngValue]="currency.key"
+            >
+              {{ currency.value.name }} - {{ currency.value.symbol }}
+            </option>
+          </select>
+        </div>
+
+        <div
+          *ngIf="
+            preferredCurrency?.toString() !==
+            this.preferredCurrencyNameSettingOnLoad?.value?.toString()
+          "
+        >
+          <div
+            style="margin-top: 10px"
+            fxLayout
+            fxLayoutAlign="center center"
+            fxLayoutGap="15px"
+          >
+            <button
+              mat-raised-button
+              type="submit"
+              color="primary"
+              (click)="savePreferredCurrency(preferredCurrency)"
+            >
+              Save Preferred Currency
+            </button>
+            <button
+              mat-raised-button
+              type="button"
+              class="close"
+              (click)="cancelPreferredCurrency()"
+              color="warn"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
       <hr />
       <div fxFlex="grow" fxFlexFill>
         <h2>Export Data</h2>

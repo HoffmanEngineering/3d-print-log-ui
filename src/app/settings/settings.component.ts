@@ -1,3 +1,4 @@
+import { KeyValue } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -14,6 +15,7 @@ import {
   UserDetailDto,
   UserService,
 } from '../core/services/user.service';
+import { Currencies, Currency } from './resolvers/currencies-resolver.service';
 
 @Component({
   selector: 'app-settings',
@@ -27,6 +29,9 @@ export class SettingsComponent implements OnInit {
   public profileViewStatusTypes = ProfileViewStatus;
   public printViewStatusTypes = PrintViewStatus;
 
+  public preferredCurrencyNameSettingOnLoad: UserSetting | null = null;
+  public preferredCurrencySymbolSettingOnLoad: UserSetting | null = null;
+
   /**
    * NgModel for Profile View Status
    */
@@ -36,9 +41,16 @@ export class SettingsComponent implements OnInit {
    */
   public printViewStatus: PrintViewStatus = null;
 
+  /**
+   * NgModel for Currency
+   */
+  public preferredCurrency: string = null;
+
   public exportInProgress = false;
 
   public deactivationAgreementChecked = false;
+
+  public currencies: Currencies = null;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -54,18 +66,46 @@ export class SettingsComponent implements OnInit {
     this.metaService.setTitle('Settings - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
+      this.currencies = data.currencies;
+
       this.userDetailsOnLoad = data.currentUser;
 
       this.defaultPrintViewStatusSettingOnLoad =
         data.defaultPrintViewStatusSetting;
+
+      this.preferredCurrencyNameSettingOnLoad =
+        data.preferredCurrencyNameSetting;
+      this.preferredCurrencySymbolSettingOnLoad =
+        data.preferredCurrencySymbolSetting;
 
       // Default all the ngModels
       this.profileViewStatus = this.userDetailsOnLoad.viewStatus;
       this.printViewStatus = this.defaultPrintViewStatusSettingOnLoad
         ? +this.defaultPrintViewStatusSettingOnLoad.value
         : null;
+
+      this.preferredCurrency = this.preferredCurrencyNameSettingOnLoad
+        ? this.preferredCurrencyNameSettingOnLoad.value
+        : 'USD';
     });
   }
+
+  public sortByName = (
+    a: KeyValue<string, Currency>,
+    b: KeyValue<string, Currency>
+  ): number => {
+    const nameA = a.value.name.toUpperCase(); // ignore upper and lowercase
+    const nameB = b.value.name.toUpperCase(); // ignore upper and lowercase
+    if (nameA < nameB) {
+      return -1;
+    }
+    if (nameA > nameB) {
+      return 1;
+    }
+
+    // names must be equal
+    return 0;
+  };
 
   public saveProfileVisibility(newViewStatus: ProfileViewStatus) {
     const newUserDetail: UserDetailDto = {
@@ -106,6 +146,47 @@ export class SettingsComponent implements OnInit {
     this.printViewStatus = this.defaultPrintViewStatusSettingOnLoad
       ? +this.defaultPrintViewStatusSettingOnLoad.value
       : null;
+  }
+
+  savePreferredCurrency(newCurrency: string) {
+    if (this.preferredCurrencyNameSettingOnLoad) {
+      this.userSettingService
+        .updateUserSetting(
+          this.preferredCurrencyNameSettingOnLoad.id,
+          newCurrency.toString()
+        )
+        .subscribe((setting) => {
+          this.preferredCurrencyNameSettingOnLoad = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(UserSettingType.Currency_Name, newCurrency.toString())
+        .subscribe((setting) => {
+          this.preferredCurrencyNameSettingOnLoad = setting;
+        });
+    }
+
+    const symbol = this.currencies[newCurrency].symbol;
+
+    if (this.preferredCurrencySymbolSettingOnLoad) {
+      this.userSettingService
+        .updateUserSetting(this.preferredCurrencySymbolSettingOnLoad.id, symbol)
+        .subscribe((setting) => {
+          this.preferredCurrencySymbolSettingOnLoad = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(UserSettingType.Currency_Symbol, symbol)
+        .subscribe((setting) => {
+          this.preferredCurrencySymbolSettingOnLoad = setting;
+        });
+    }
+  }
+
+  cancelPreferredCurrency() {
+    this.preferredCurrency = this.preferredCurrencyNameSettingOnLoad
+      ? this.preferredCurrencyNameSettingOnLoad.value
+      : 'USD';
   }
 
   public export() {

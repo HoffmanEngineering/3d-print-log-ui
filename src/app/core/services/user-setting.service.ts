@@ -18,6 +18,8 @@ export enum UserSettingType {
    */
   Prints_LastSelectedAllowComments = 3,
   Prints_LastSelectedFilamentMeasureType = 4,
+  Currency_Name = 5,
+  Currency_Symbol = 6,
 }
 
 export interface UserSetting {

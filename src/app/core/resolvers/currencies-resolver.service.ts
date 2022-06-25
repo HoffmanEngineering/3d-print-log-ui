@@ -29,8 +29,11 @@ export interface Currency {
   numToBasic: number;
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class CurrenciesResolverService implements Resolve<Currencies> {
+  /** List gathered by https://github.com/ourworldincode/currency */
   currencies: Currencies = {
     AED: {
       name: 'United Arab Emirates Dirham',

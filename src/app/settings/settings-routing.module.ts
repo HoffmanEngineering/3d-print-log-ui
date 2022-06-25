@@ -4,7 +4,7 @@ import { CurrencyNameResolverService } from '../core/resolvers/currency-name-res
 import { CurrencySymbolResolverService } from '../core/resolvers/currency-symbol-resolver.service';
 
 import { DefaultPrintViewStatusSettingResolverService } from '../core/resolvers/default-print-view-status-setting-resolver.service';
-import { CurrenciesResolverService } from './resolvers/currencies-resolver.service';
+import { CurrenciesResolverService } from '../core/resolvers/currencies-resolver.service';
 import { CurrentUserDetailResolverService } from './resolvers/current-user-detail-resolver.service';
 import { SettingsComponent } from './settings.component';
 

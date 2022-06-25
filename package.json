@@ -38,6 +38,7 @@
     "@auth0/auth0-spa-js": "^1.21.0",
     "@microsoft/applicationinsights-web": "^2.8.1",
     "@types/lodash": "^4.14.182",
+    "currency.js": "^2.0.4",
     "d3": "^7.2.1",
     "lodash-es": "^4.17.21",
     "moment": "^2.29.3",

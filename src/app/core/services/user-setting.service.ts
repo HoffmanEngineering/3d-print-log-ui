@@ -110,7 +110,7 @@ export class UserSettingService {
       map((settingDto) => this.formatUserSettingDto(settingDto)),
       tap((updatedSetting) => {
         const existingSetting = this.userSettings.findIndex(
-          (u) => (u.id = updatedSetting.id)
+          (u) => u.id === updatedSetting.id
         );
 
         if (existingSetting !== -1) {

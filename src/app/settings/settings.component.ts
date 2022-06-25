@@ -15,7 +15,10 @@ import {
   UserDetailDto,
   UserService,
 } from '../core/services/user.service';
-import { Currencies, Currency } from './resolvers/currencies-resolver.service';
+import {
+  Currencies,
+  Currency,
+} from '../core/resolvers/currencies-resolver.service';
 
 @Component({
   selector: 'app-settings',

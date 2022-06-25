@@ -725,14 +725,6 @@ export class EditPrintDetailComponent
 
     const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
 
-    console.log(
-      pricePerGram.format(),
-      diameterMm,
-      areaSqM,
-      densityGramPerCubicM,
-      lengthM,
-      gramsUsed
-    );
     return pricePerGram.multiply(gramsUsed).format(currencyFormat);
   }
 

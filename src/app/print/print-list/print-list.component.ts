@@ -268,7 +268,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     const columns = JSON.parse(
       localStorage.getItem(this.PRINT_TABLE_DISPLAYED_COLUMNS)
     );
-    console.log(columns);
+
     // Error correction
     if (
       Array.isArray(columns) &&

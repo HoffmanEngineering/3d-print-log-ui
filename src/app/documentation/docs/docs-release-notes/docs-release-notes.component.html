@@ -2,112 +2,15 @@
   <h2>Release Notes</h2>
   <hr />
 
-  <h3 id="v1.16.4">1.16.4 - Android App Released!</h3>
-  <p>
-    3D Print Log now has an Android App! Download the
-    <a href="https://play.google.com/store/apps/details?id=com.printlog.app"
-      >3D Print Log App from the Google Play Store</a
-    >, and start logging your prints and filament usage from your mobile device!
-  </p>
-  <p>
-    Since this is the initial release, we would appreciate it if you left a
-    review and provided feedback about the app. Thank you!
-  </p>
-  <p>
-    The iOS app is still under development and should be available shortly, so
-    keep checking back.
-  </p>
-
-  <h3 id="v1.16.3">1.16.3 - Display Name Bug Fix</h3>
-  <p>
-    Fixed a small bug where new users with long names were receiving errors when
-    logging in.
-  </p>
-
-  <h3 id="v1.16.2">1.16.2 - Support Cura 5 Beta</h3>
-  <p>
-    The <strong>3D Print Log Uploader Plugin for Cura</strong> has been updated
-    to version 2.0.2. This version adds support for the new Cura 5 Beta, as well
-    as adding in new settings to control the "Would you like to send to 3D Print
-    Log" prompt.
-  </p>
-  <p>
-    You can install v2.0.2 of the plugin via the
-    <a
-      href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
-      >Ultimaker Cura Marketplace</a
-    >
-    . Alternatively, you can download the
-    <a
-      href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
-      >Latest Release from Github</a
-    >
-    and drag/drop into Cura to install.
-  </p>
-
-  <h3 id="v1.16.1">1.16.1 - Security Patch</h3>
-  <p>Security updates and performance improvements.</p>
-
-  <h3 id="v1.16.0">1.16.0 - Print List Enhancements</h3>
-  <p>
-    The Print List has been updated to have customizable columns. You can select
-    which columns are visible using the new Gear icon
-    <mat-icon inline="true">settings</mat-icon> on the Print List page.
-  </p>
-  <h4>Full List of Changes:</h4>
-  <ul>
-    <li>
-      <Strong>Hide/Show Print List Columns</Strong> - Change which columns are
-      visible on the Print List by clicking the Gear Icon -> Change Table
-      Layout.
-    </li>
-    <li>
-      <strong>New Print List Columns</strong> - Added new columns to the Print
-      List, make them visible by selecting them in the new Change Table Layout
-      menu:
-      <ul>
-        <li>
-          <strong>Image (Medium), Image (Large)</strong> - Displays the print's
-          image in a medium/large thumbnail.
-        </li>
-        <li>
-          <strong>Start Time, Start Date/Time</strong> - Displays the print's
-          start time, or the print's start date and time as a single column.
-        </li>
-        <li>
-          <strong>End Date, End Time, End Date/Time</strong> - Displays the
-          print's end date, end time, or end date and time (if the print has an
-          actual or estimated Print Time)
-        </li>
-      </ul>
-    </li>
-
-    <li>
-      <Strong>Items Per Page settings are saved</Strong> - On the Print List,
-      Printer List, and Filament List pages, when the
-      <strong>Items Per Page</strong> is changed. It is remembered by the
-      browser, and will be used when the page is reloaded.
-    </li>
-  </ul>
-
-  <h3 id="v1.15.2">1.15.2 - Security Patch</h3>
-  <p>Security updates and performance improvements.</p>
-
-  <h3 id="v1.15.1">1.15.1 - Print Time Rounding Bug Fix</h3>
-  <p>
-    Fixed an issue where some print times were adding an extra day due to
-    incorrect rounding.
-  </p>
-
-  <h3 id="v1.15.0">1.15.0 - Print Start and Completed Times</h3>
+  <h3 id="v1.17.0">
+    1.17.0 - Set Preferred Currency and Show Estimated Filament Costs
+  </h3>
   <div fxLayout="column">
     <div fxFlex="grow">
       <p>
-        Print times have been overhauled. The Edit Print page can now record the
-        start time of the print, and the estimated completed date/time will be
-        displayed based on the estimated print time. The actual completed
-        date/time can be set, which will automatically calculate the actual
-        print time.
+        The Edit Print page will now display estimated/actual filament costs.
+        When you add the weight or length of filament used, the cost for that
+        amount of filament will be displayed.
       </p>
     </div>
     <div fxFlex>
@@ -119,97 +22,132 @@
 
           'margin-right': 'auto'
         }"
-        alt="The Edit 3D Print page showing the new Start and Completed date and time fields."
-        src="./assets/release_1-15-0_PrintDateTimes_e0cb4d1e406944.png"
+        alt="The Edit 3D Print page showing the new filament cost."
+        src="./assets/release_filament_cost_8b69eeeb49b59.png"
       />
     </div>
+    <div fxFlex="grow">
+      <p>
+        To support the cost calculation, the filament needs to have both an
+        Initial Weight and a Purchase Price, from which the price-per-gram will
+        be calculated. The Filament's Purchase Price now only accepts numbers.
+        Any previously saved "Purchase Price" which was not numeric have been
+        moved to a "Purchase Notes" section.
+      </p>
+      <p>
+        You can now set your <strong>Preferred Currency</strong> in the Settings
+        page (click User Picture -> Settings). The selected currency will be
+        used throughout the application.
+      </p>
+    </div>
 
-    <h3 id="v1.14.1">1.14.1 - Performance Improvements</h3>
-    <p>Security updates and performance improvements from dependencies.</p>
-
-    <h3 id="v1.14.0">1.14.0 - Gcode Parsing for all Slicers</h3>
+    <h3 id="v1.16.4">1.16.4 - Android App Released!</h3>
     <p>
-      3D Print Log now has the ability to add prints from any gcode file.
-      Previously only a handful of slicers were supported, but now if a
-      supported parser is not available, then the gcode is analyzed to determine
-      print information.
+      3D Print Log now has an Android App! Download the
+      <a href="https://play.google.com/store/apps/details?id=com.printlog.app"
+        >3D Print Log App from the Google Play Store</a
+      >, and start logging your prints and filament usage from your mobile
+      device!
     </p>
     <p>
-      Find the <strong>Add Print from Gcode</strong> on the
-      <strong>Print List</strong>.
+      Since this is the initial release, we would appreciate it if you left a
+      review and provided feedback about the app. Thank you!
+    </p>
+    <p>
+      The iOS app is still under development and should be available shortly, so
+      keep checking back.
     </p>
 
-    <h3 id="v1.13.0">1.13.0 - Favorite Filaments</h3>
+    <h3 id="v1.16.3">1.16.3 - Display Name Bug Fix</h3>
     <p>
-      As your filament roll collection grows, it can be difficult to find a
-      particular roll in your list. Filament can now be marked as a "favorite"
-      by clicking on the star in the filament list. The filament list can be
-      filtered to only show favorite filament. The filament list can also be
-      filtered to only show currently loaded filament.
+      Fixed a small bug where new users with long names were receiving errors
+      when logging in.
+    </p>
+
+    <h3 id="v1.16.2">1.16.2 - Support Cura 5 Beta</h3>
+    <p>
+      The <strong>3D Print Log Uploader Plugin for Cura</strong> has been
+      updated to version 2.0.2. This version adds support for the new Cura 5
+      Beta, as well as adding in new settings to control the "Would you like to
+      send to 3D Print Log" prompt.
+    </p>
+    <p>
+      You can install v2.0.2 of the plugin via the
+      <a
+        href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+        >Ultimaker Cura Marketplace</a
+      >
+      . Alternatively, you can download the
+      <a
+        href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+        >Latest Release from Github</a
+      >
+      and drag/drop into Cura to install.
+    </p>
+
+    <h3 id="v1.16.1">1.16.1 - Security Patch</h3>
+    <p>Security updates and performance improvements.</p>
+
+    <h3 id="v1.16.0">1.16.0 - Print List Enhancements</h3>
+    <p>
+      The Print List has been updated to have customizable columns. You can
+      select which columns are visible using the new Gear icon
+      <mat-icon inline="true">settings</mat-icon> on the Print List page.
     </p>
     <h4>Full List of Changes:</h4>
     <ul>
       <li>
-        <Strong>Favorite Filaments</Strong> - Click the Star Icon in the
-        Filament List to add that roll to your "favorites".
+        <Strong>Hide/Show Print List Columns</Strong> - Change which columns are
+        visible on the Print List by clicking the Gear Icon -> Change Table
+        Layout.
       </li>
       <li>
-        Filament List can now be filtered to show only favorite filaments.
+        <strong>New Print List Columns</strong> - Added new columns to the Print
+        List, make them visible by selecting them in the new Change Table Layout
+        menu:
+        <ul>
+          <li>
+            <strong>Image (Medium), Image (Large)</strong> - Displays the
+            print's image in a medium/large thumbnail.
+          </li>
+          <li>
+            <strong>Start Time, Start Date/Time</strong> - Displays the print's
+            start time, or the print's start date and time as a single column.
+          </li>
+          <li>
+            <strong>End Date, End Time, End Date/Time</strong> - Displays the
+            print's end date, end time, or end date and time (if the print has
+            an actual or estimated Print Time)
+          </li>
+        </ul>
       </li>
+
       <li>
-        Filament List can now be filtered to show only currently loaded
-        filaments.
+        <Strong>Items Per Page settings are saved</Strong> - On the Print List,
+        Printer List, and Filament List pages, when the
+        <strong>Items Per Page</strong> is changed. It is remembered by the
+        browser, and will be used when the page is reloaded.
       </li>
-      <li>
-        Filament List More (...) menu includes a "Mark as Empty" option, which
-        will automatically set that roll's available filament to 0g and set the
-        roll as "inactive".
-      </li>
-      <li>Loading indicator added to Filament List.</li>
-      <li>Improved accessibility on Print List and Filament List pages.</li>
     </ul>
 
-    <h3 id="v1.12.8">1.12.8 - Bug Fixes</h3>
-    <p>Fixed an issue with image centering in Chrome browsers.</p>
+    <h3 id="v1.15.2">1.15.2 - Security Patch</h3>
+    <p>Security updates and performance improvements.</p>
 
-    <h3 id="v1.12.7">1.12.7 - Loading indicators on Print Search</h3>
-    <p>Added loading indicators on the print list search.</p>
-
-    <h3 id="v1.12.6">1.12.6 - Dependency updates and bug fixes.</h3>
-    <p>Security updates and performance improvements from dependencies.</p>
-
-    <h3 id="v1.12.5">1.12.5 - Filter Prints/Analytics by Printers</h3>
+    <h3 id="v1.15.1">1.15.1 - Print Time Rounding Bug Fix</h3>
     <p>
-      The Print List and Analytics pages can now be filtered by one or more
-      printers.
+      Fixed an issue where some print times were adding an extra day due to
+      incorrect rounding.
     </p>
 
-    <h3 id="v1.12.4">1.12.4 - Snapshots from Cura</h3>
+    <h3 id="v1.15.0">1.15.0 - Print Start and Completed Times</h3>
     <div fxLayout="column">
       <div fxFlex="grow">
         <p>
-          The <strong>3D Print Log Uploader Plugin for Cura</strong> as been
-          updated to version 1.2.1. This version adds an "Include Snapshot"
-          option which will automatically send a screenshot from Cura as the
-          print's image.
-        </p>
-        <p>
-          You can install v1.2.1 of the plugin via the
-          <a
-            href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
-            >Ultimaker Cura Marketplace</a
-          >
-          . Alternatively, you can download the
-          <a
-            href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
-            >Latest Release from Github</a
-          >
-          and drag/drop into Cura to install.
-        </p>
-        <p>
-          This release also fixes a discrepancy between the Total Filament Used
-          statistic in Analytics, and the Total Filament Used in your Profile.
-          Both are now calculated correctly.
+          Print times have been overhauled. The Edit Print page can now record
+          the start time of the print, and the estimated completed date/time
+          will be displayed based on the estimated print time. The actual
+          completed date/time can be set, which will automatically calculate the
+          actual print time.
         </p>
       </div>
       <div fxFlex>
@@ -221,395 +159,504 @@
 
             'margin-right': 'auto'
           }"
-          alt="The Add 3D Print screen with the cura snapshot as the print image."
-          src="./assets/release_curasnapshot_40d0a079b.png"
+          alt="The Edit 3D Print page showing the new Start and Completed date and time fields."
+          src="./assets/release_1-15-0_PrintDateTimes_e0cb4d1e406944.png"
         />
       </div>
+
+      <h3 id="v1.14.1">1.14.1 - Performance Improvements</h3>
+      <p>Security updates and performance improvements from dependencies.</p>
+
+      <h3 id="v1.14.0">1.14.0 - Gcode Parsing for all Slicers</h3>
+      <p>
+        3D Print Log now has the ability to add prints from any gcode file.
+        Previously only a handful of slicers were supported, but now if a
+        supported parser is not available, then the gcode is analyzed to
+        determine print information.
+      </p>
+      <p>
+        Find the <strong>Add Print from Gcode</strong> on the
+        <strong>Print List</strong>.
+      </p>
+
+      <h3 id="v1.13.0">1.13.0 - Favorite Filaments</h3>
+      <p>
+        As your filament roll collection grows, it can be difficult to find a
+        particular roll in your list. Filament can now be marked as a "favorite"
+        by clicking on the star in the filament list. The filament list can be
+        filtered to only show favorite filament. The filament list can also be
+        filtered to only show currently loaded filament.
+      </p>
+      <h4>Full List of Changes:</h4>
+      <ul>
+        <li>
+          <Strong>Favorite Filaments</Strong> - Click the Star Icon in the
+          Filament List to add that roll to your "favorites".
+        </li>
+        <li>
+          Filament List can now be filtered to show only favorite filaments.
+        </li>
+        <li>
+          Filament List can now be filtered to show only currently loaded
+          filaments.
+        </li>
+        <li>
+          Filament List More (...) menu includes a "Mark as Empty" option, which
+          will automatically set that roll's available filament to 0g and set
+          the roll as "inactive".
+        </li>
+        <li>Loading indicator added to Filament List.</li>
+        <li>Improved accessibility on Print List and Filament List pages.</li>
+      </ul>
+
+      <h3 id="v1.12.8">1.12.8 - Bug Fixes</h3>
+      <p>Fixed an issue with image centering in Chrome browsers.</p>
+
+      <h3 id="v1.12.7">1.12.7 - Loading indicators on Print Search</h3>
+      <p>Added loading indicators on the print list search.</p>
+
+      <h3 id="v1.12.6">1.12.6 - Dependency updates and bug fixes.</h3>
+      <p>Security updates and performance improvements from dependencies.</p>
+
+      <h3 id="v1.12.5">1.12.5 - Filter Prints/Analytics by Printers</h3>
+      <p>
+        The Print List and Analytics pages can now be filtered by one or more
+        printers.
+      </p>
+
+      <h3 id="v1.12.4">1.12.4 - Snapshots from Cura</h3>
+      <div fxLayout="column">
+        <div fxFlex="grow">
+          <p>
+            The <strong>3D Print Log Uploader Plugin for Cura</strong> as been
+            updated to version 1.2.1. This version adds an "Include Snapshot"
+            option which will automatically send a screenshot from Cura as the
+            print's image.
+          </p>
+          <p>
+            You can install v1.2.1 of the plugin via the
+            <a
+              href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+              >Ultimaker Cura Marketplace</a
+            >
+            . Alternatively, you can download the
+            <a
+              href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+              >Latest Release from Github</a
+            >
+            and drag/drop into Cura to install.
+          </p>
+          <p>
+            This release also fixes a discrepancy between the Total Filament
+            Used statistic in Analytics, and the Total Filament Used in your
+            Profile. Both are now calculated correctly.
+          </p>
+        </div>
+        <div fxFlex>
+          <img
+            class="fade-in"
+            [ngStyle]="{
+              display: 'block',
+              'max-width': '90%',
+
+              'margin-right': 'auto'
+            }"
+            alt="The Add 3D Print screen with the cura snapshot as the print image."
+            src="./assets/release_curasnapshot_40d0a079b.png"
+          />
+        </div>
+      </div>
+
+      <h3 id="v1.12.3">1.12.3 - Printers keep track of Loaded Filament</h3>
+      <p>
+        Printers now keep track of what filament rolls were last used. These are
+        considered the printer's <strong>Loaded Filament</strong>. When you
+        start to add a new print, the selected printer's
+        <strong>Loaded Filament</strong> will automatically populate. And when
+        the new print is saved, it'll automatically add the print's selected
+        filament as that printer's currently loaded filament.
+      </p>
+      <p>
+        A printer's currently loaded filament is displayed on the
+        <strong>Printer List</strong>, and the filament's current printer is
+        displayed on the <strong>Filament List</strong>.
+      </p>
+      <p>
+        See the <a routerLink="/docs/printers">Printer Documentation</a> for
+        more information on managing loaded filament.
+      </p>
+      <h4>Full List of Changes:</h4>
+      <ul>
+        <li>
+          New Prints will automatically populate the
+          <strong>Filament Usage</strong> section based on the selected
+          printer's <strong>Loaded Filament</strong>.
+        </li>
+        <li>
+          Printer List displays the printer's Loaded Filament.
+          <ul>
+            <li>
+              Printer List contains a ...more menu which allows for quick
+              unloading of filament.
+            </li>
+          </ul>
+        </li>
+        <li>
+          Editing a Printer allows you to manager that printer's
+          <strong>Loaded Filament</strong>.
+        </li>
+        <li>
+          Filament List display which printer that filament is currently loaded
+          in.
+        </li>
+        <li>
+          Filament List has a new menu option to navigate to the edit page for
+          printer it's currently loaded in.
+        </li>
+        <li>
+          Filament List will now display the Inactive badge for inactive
+          filament rolls.
+        </li>
+        <li>
+          Searching on the Print List and Filament List has been improved.
+          Search will look for words separated by spaces, and search for exact
+          text by enclosing words with quotes. Searching for filament material
+          type has been added.
+        </li>
+      </ul>
+
+      <h3 id="v1.12.1">1.12.1 - Ability to Delete Comments</h3>
+      <p>
+        You can now delete your own comments. The owner of a print can also
+        moderate comments on their prints and have the ability to remove
+        comments from other users.
+      </p>
+
+      <h3 id="v1.12.0">
+        1.12.0 - Customize Settings with 3D Print Log Cura Plugin v1.2.0
+      </h3>
+      <p>
+        The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura has
+        been updated to v1.2.0. You can now select any combination of Cura
+        settings to record, so you can log the information that is important to
+        you.
+      </p>
+      <h4>Plugin Changes:</h4>
+      <ul>
+        <li>
+          Customize the list of settings recorded. Settings Menu is accessible
+          inside of Cura through Extensions -> 3D Print Log -> Configure
+          Settings to Log
+        </li>
+        <li>Added option to log Cura Profile Name.</li>
+        <li>Added option to log selected filament names and materials.</li>
+        <li>Added support for Cura 4.9.</li>
+      </ul>
+      <p>
+        You can install v1.2.0 of the plugin via the
+        <a
+          href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+          >Ultimaker Cura Marketplace</a
+        >
+        . Alternatively, you can download the
+        <a
+          href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+          >Latest Release from Github</a
+        >
+        and drag/drop into Cura to install.
+      </p>
+
+      <h3 id="v1.11.1">1.11.1- Homescreen Icons and Security Updates</h3>
+      <p>
+        A new homescreen icon was added for IOs/Android homescreen links.
+        Website was updated with the latest security patches of dependencies.
+      </p>
+
+      <h3 id="v1.11.0">1.11.0- Deleting User Accounts</h3>
+      <p>
+        You are in control of your data, so now you can choose to delete your 3D
+        Print Log account and all associated data. If you wish to delete your
+        account, you can find the new options under
+        <strong>Delete Account</strong> on your
+        <a routerLink="/settings">Settings Page</a>. After a 24 hour waiting
+        period, your account and all prints, filament, printers, etc, will be
+        permanently deleted from the website.
+      </p>
+
+      <h3 id="v1.10.0">1.10.0- Duplicate Filaments</h3>
+      <p>
+        You can now duplicate an existing filament roll. Click the ... menu on
+        the
+        <a routerLink="/filament">Filament List</a> and select "Duplicate".
+      </p>
+
+      <h3 id="v1.9.0">1.9.0- OctoPrint Integration</h3>
+      <p>
+        3D Print Log now has an OctoPrint Integration! 3D Print Log can receive
+        information from Octoprint in order to create and update print statuses,
+        print time, and filament usage. It will also save pictures from the
+        camera on success/failure. Visit the
+        <a routerLink="/docs/octoprint-webhook"
+          >3D Print Log OctoPrint Webhook Docs</a
+        >
+        for information on how to set up the integration.
+      </p>
+
+      <h3 id="v1.8.0">
+        1.8.0- Filament Measurement by Length and Weight, Gcode File Names
+      </h3>
+      <h4>Filament Measurement by Length</h4>
+      <p>
+        Many slicers only report filament used in length, so now Filament Usage
+        can now be recorded by Weight (in grams) or by Length (in meters).
+        Simply add a Filament Usage to the print, and change the new
+        <strong>Measure</strong> dropdown to select the measure type you'd like
+        to use.
+      </p>
+      <p>
+        Both options will update the filament roll's Weight Remaining. When you
+        change the measurement type, it'll be saved as your default type, so
+        future Filament Usage will default to Weight or Length depending on the
+        last one you selected.
+      </p>
+      <h4>Print File Names</h4>
+      <p>
+        A <strong>File Name</strong> field has been added to the Print, so you
+        can record the name of the gcode file generated. This will also be
+        useful in the upcoming <strong>Octoprint Integration</strong> (coming
+        soon).
+      </p>
+      <h4>Multiple "Other" Filament Usage now allowed</h4>
+      <p>
+        Previously you could only have one non-tracked "other" filament recorded
+        on a print. Now you can add as many "other" filament usage you want.
+      </p>
+
+      <h3 id="v1.7.3">1.7.3- Filament Analytics Bug Fix</h3>
+      <p>
+        Fixed a bug where filament usage was not correctly reported on the
+        analytics page.
+      </p>
+
+      <h3 id="v1.7.2">
+        1.7.2- Remaining Filament Rounding and Security Updates
+      </h3>
+      <p>
+        A minor update which rounds the Filament List's
+        <strong>Remaining Filament</strong> column to the nearest gram. The
+        websites dependencies were also updated to the latest versions, which
+        includes security updates and performance improvements.
+      </p>
+
+      <h3 id="v1.7.1">1.7.1- Delete Filament and Filament Search Dialog</h3>
+      <p>
+        Selecting a roll of filament for a print has now gotten easier. The
+        Print's Filament Usage now has a <strong>Select Filament</strong> button
+        which will open a filament search dialog. This lets you search for a
+        specific roll of filament. In addition, you can now delete a filament if
+        it has not been used in a Print from the Filament List.
+      </p>
+      <p>Full list of changes:</p>
+      <ul>
+        <li>
+          Added a new Search Filament dialog in the Edit Print page to make
+          selecting filament for a print easier.
+        </li>
+        <li>
+          Added the ability to delete a filament from the Filaments list page.
+        </li>
+        <li>
+          Fixed a bug where the Filament Color was not being saved until it was
+          interacted with.
+        </li>
+        <li>
+          Various enhancements to accessibility and keyboard navigation on the
+          Filament pages.
+        </li>
+      </ul>
+
+      <h3 id="v1.7.0">1.7- Filament Roll Tracking 🎉</h3>
+      <p>
+        Filament tracking is here! Now you can add rolls of filament, and 3D
+        Print Log will automatically keep track of how much filament is
+        remaining on the roll. See colors, print temperatures, and record brand
+        and purchasing information for all your rolls of filament.
+      </p>
+      <ul>
+        <li>
+          Added new <a routerLink="/filament">Filament</a> page, where you can
+          manage your rolls of filament
+        </li>
+        <li>
+          Updated the <a routerLink="/prints">Print Details</a> page to have a
+          <strong>Filament Usage</strong> section for assigning a roll of
+          filament to a print.
+        </li>
+      </ul>
+      <p>
+        See the <a routerLink="/docs/filaments">Filament Documentation</a> and
+        <a routerLink="/docs/prints">Prints Documentation</a> pages for more
+        info. <br />Happy Printing!
+      </p>
+
+      <h3 id="v1.6.1">1.6.1 - Bug fix: Filament Rounding issue</h3>
+      <p>
+        Fixed an issue where a print was unable to be saved due to rounding
+        issues when converting Estimated/Actual Filament Usage from grams to mg.
+      </p>
+
+      <h3 id="v1.6">1.6 - New Feature: Add Print From Gcode</h3>
+      <p>
+        You can now add a print by importing settings from a gcode file. The
+        <strong>Add Print From Gcode</strong> option can be found in the
+        dropdown next to
+        <strong>Add New Print <mat-icon inline>expand_more</mat-icon></strong>
+        in the <a routerLink="/prints">Print List</a>. Currently only gcode from
+        Prusa Slicer is supported, but more slicers will be supported soon.
+        Please <a routerLink="/feedback">Send a Feedback</a> if you are willing
+        to share a gcode example file for a slicer that is not yet supported.
+      </p>
+
+      <h3 id="v1.5.4">1.5.4 - User Profile Print Enhancements</h3>
+      <p>
+        Added better scrolling behavior when loading prints in a user's profile.
+      </p>
+
+      <h3 id="v1.5.3">1.5.3 - Cura Plugin Filament Usage Validation</h3>
+      <p>
+        Fixed an error that prevented prints from saving when Cura sent
+        fractional filament usage amounts.
+      </p>
+
+      <h3 id="v1.5.2">1.5.2 - Print Form Validation</h3>
+      <p>
+        You will now see more detailed error messages on the New/Edit Print
+        form, if the print you are saving is invalid or missing required fields.
+      </p>
+
+      <h3 id="v1.5.1">1.5.1 - Bug Fixes</h3>
+      <p>
+        Fixed a few minor bugs, including an issue where sometimes filament
+        usage sent by the Cura plugin was incorrectly reported and prevented the
+        print from saving.
+      </p>
+
+      <h3 id="v1.5.0">1.5.0 - 3D Print Log Cura Plugin v1.1.0</h3>
+      <p>
+        The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura is
+        being updated to v1.1.0.
+      </p>
+      <ul>
+        <li>Added support for Cura 4.8.</li>
+        <li>Added support for multiple extruders.</li>
+        <li>
+          Fixed bug where slicer settings would not correctly log settings the
+          user changed without saving the profile.
+        </li>
+        <li>Plugin will only try and log files that have been sliced.</li>
+      </ul>
+      <p>
+        You can install this plugin via the
+        <a
+          href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+          >Ultimaker Cura Marketplace</a
+        >
+        . Alternatively, you can download the
+        <a
+          href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+          >Latest Release from Github</a
+        >
+        and drag/drop into Cura to install.
+      </p>
+
+      <h3 id="v1.4.1">1.4.1 - Performance Improvements</h3>
+      <p>
+        Updated website's dependencies to the latest versions, which includes
+        security patches and performance improvements. Thanks for using 3D Print
+        Log!
+      </p>
+
+      <h3 id="v1.4.0">1.4.0 - CSV Exporting and Release Notes</h3>
+      <h4>CSV Exporting</h4>
+      <p>
+        This is your data, you should be able to use it how you like! Whether
+        you want to backup your data to your computer, or import it into a
+        spreadsheet for your own analytics, 3D Print Log has you covered. You
+        can now export all your prints as a .csv (comma separated values) file.
+        Visit your
+        <a [routerLink]="['/settings']">Settings</a> and click
+        <strong>Export</strong> to save your print report.
+      </p>
+      <h4>Release Notes</h4>
+      <p>
+        As you may have noticed, we now have a
+        <a [routerLink]="['/docs/release-notes']">Release Notes</a> page. This
+        page will document all the changes happening to the application. Check
+        back here for information about new features and fixes for 3D Print Log.
+      </p>
+
+      <h3 id="v1.3.0">1.3.0 - Print List Updates</h3>
+      <p>
+        This update contains a variety of updates to the
+        <a [routerLink]="['/prints']">Prints</a> screen.
+      </p>
+      <h4>Added Print Time Column</h4>
+      <p>
+        The Print List now displays the Print Time. It will display the
+        <strong>Actual Print Time</strong> if one is saved, otherwise it will
+        show the <strong>Estimated Print Time*</strong>, with an * to indicate
+        it is estimated.
+      </p>
+      <h4>Quickly change a Print's Status through the ... menu</h4>
+      <p>
+        The ... menu on the print list now has a "Change Print Status" option,
+        which will let you set a new status for a print without having to click
+        into the full edit menu.
+      </p>
+
+      <h3 id="v1.2.0">1.2.0 - Deleting Prints, Cura Plugin Documentation</h3>
+      <h4>Deleting Prints</h4>
+      <p>
+        Mistakes happen. Sometimes you add a print multiple times, or forget
+        that you already added a specific print. In v1.2.0, you can delete a
+        print (and all it's related images and comments) from the ... menu on
+        the
+        <a [routerLink]="['/prints']">Print List</a>. Selecting the
+        <strong>Delete</strong> option will ask for confirmation, and once
+        confirmed it will be deleted permanently.
+      </p>
+      <h4>Cura Plugin Documentation</h4>
+      <p>
+        <a routerLink="/docs/cura-plugin">Documentation is now available</a>
+        for the Cura Plugin. 🎉
+      </p>
+
+      <h3 id="v1.1.0">1.1.0 - Cura Plugin and Print Comments</h3>
+      <h4>Cura Plugin Now Available 🎉</h4>
+      <p>
+        The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura
+        lets you add new prints directly from Cura.
+      </p>
+      <p>
+        You can install this plugin via the
+        <a
+          href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+          >Ultimaker Cura Marketplace</a
+        >. Alternatively, you can download the
+        <a
+          href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+          >Latest Release from Github</a
+        >
+        and drag/drop into Cura to install.
+      </p>
+      <h4>Print Comments</h4>
+      <p>
+        Users can now leave comments on 3D Prints. You can control whether or
+        not comments are allowed when editing a print. Public prints will allow
+        for comments by any 3D Print Log user, while private prints will only
+        let you leave comments. If you share your print with other users, this
+        is a great way to have a conversation about the print.
+      </p>
     </div>
-
-    <h3 id="v1.12.3">1.12.3 - Printers keep track of Loaded Filament</h3>
-    <p>
-      Printers now keep track of what filament rolls were last used. These are
-      considered the printer's <strong>Loaded Filament</strong>. When you start
-      to add a new print, the selected printer's
-      <strong>Loaded Filament</strong> will automatically populate. And when the
-      new print is saved, it'll automatically add the print's selected filament
-      as that printer's currently loaded filament.
-    </p>
-    <p>
-      A printer's currently loaded filament is displayed on the
-      <strong>Printer List</strong>, and the filament's current printer is
-      displayed on the <strong>Filament List</strong>.
-    </p>
-    <p>
-      See the <a routerLink="/docs/printers">Printer Documentation</a> for more
-      information on managing loaded filament.
-    </p>
-    <h4>Full List of Changes:</h4>
-    <ul>
-      <li>
-        New Prints will automatically populate the
-        <strong>Filament Usage</strong> section based on the selected printer's
-        <strong>Loaded Filament</strong>.
-      </li>
-      <li>
-        Printer List displays the printer's Loaded Filament.
-        <ul>
-          <li>
-            Printer List contains a ...more menu which allows for quick
-            unloading of filament.
-          </li>
-        </ul>
-      </li>
-      <li>
-        Editing a Printer allows you to manager that printer's
-        <strong>Loaded Filament</strong>.
-      </li>
-      <li>
-        Filament List display which printer that filament is currently loaded
-        in.
-      </li>
-      <li>
-        Filament List has a new menu option to navigate to the edit page for
-        printer it's currently loaded in.
-      </li>
-      <li>
-        Filament List will now display the Inactive badge for inactive filament
-        rolls.
-      </li>
-      <li>
-        Searching on the Print List and Filament List has been improved. Search
-        will look for words separated by spaces, and search for exact text by
-        enclosing words with quotes. Searching for filament material type has
-        been added.
-      </li>
-    </ul>
-
-    <h3 id="v1.12.1">1.12.1 - Ability to Delete Comments</h3>
-    <p>
-      You can now delete your own comments. The owner of a print can also
-      moderate comments on their prints and have the ability to remove comments
-      from other users.
-    </p>
-
-    <h3 id="v1.12.0">
-      1.12.0 - Customize Settings with 3D Print Log Cura Plugin v1.2.0
-    </h3>
-    <p>
-      The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura has
-      been updated to v1.2.0. You can now select any combination of Cura
-      settings to record, so you can log the information that is important to
-      you.
-    </p>
-    <h4>Plugin Changes:</h4>
-    <ul>
-      <li>
-        Customize the list of settings recorded. Settings Menu is accessible
-        inside of Cura through Extensions -> 3D Print Log -> Configure Settings
-        to Log
-      </li>
-      <li>Added option to log Cura Profile Name.</li>
-      <li>Added option to log selected filament names and materials.</li>
-      <li>Added support for Cura 4.9.</li>
-    </ul>
-    <p>
-      You can install v1.2.0 of the plugin via the
-      <a
-        href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
-        >Ultimaker Cura Marketplace</a
-      >
-      . Alternatively, you can download the
-      <a
-        href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
-        >Latest Release from Github</a
-      >
-      and drag/drop into Cura to install.
-    </p>
-
-    <h3 id="v1.11.1">1.11.1- Homescreen Icons and Security Updates</h3>
-    <p>
-      A new homescreen icon was added for IOs/Android homescreen links. Website
-      was updated with the latest security patches of dependencies.
-    </p>
-
-    <h3 id="v1.11.0">1.11.0- Deleting User Accounts</h3>
-    <p>
-      You are in control of your data, so now you can choose to delete your 3D
-      Print Log account and all associated data. If you wish to delete your
-      account, you can find the new options under
-      <strong>Delete Account</strong> on your
-      <a routerLink="/settings">Settings Page</a>. After a 24 hour waiting
-      period, your account and all prints, filament, printers, etc, will be
-      permanently deleted from the website.
-    </p>
-
-    <h3 id="v1.10.0">1.10.0- Duplicate Filaments</h3>
-    <p>
-      You can now duplicate an existing filament roll. Click the ... menu on the
-      <a routerLink="/filament">Filament List</a> and select "Duplicate".
-    </p>
-
-    <h3 id="v1.9.0">1.9.0- OctoPrint Integration</h3>
-    <p>
-      3D Print Log now has an OctoPrint Integration! 3D Print Log can receive
-      information from Octoprint in order to create and update print statuses,
-      print time, and filament usage. It will also save pictures from the camera
-      on success/failure. Visit the
-      <a routerLink="/docs/octoprint-webhook"
-        >3D Print Log OctoPrint Webhook Docs</a
-      >
-      for information on how to set up the integration.
-    </p>
-
-    <h3 id="v1.8.0">
-      1.8.0- Filament Measurement by Length and Weight, Gcode File Names
-    </h3>
-    <h4>Filament Measurement by Length</h4>
-    <p>
-      Many slicers only report filament used in length, so now Filament Usage
-      can now be recorded by Weight (in grams) or by Length (in meters). Simply
-      add a Filament Usage to the print, and change the new
-      <strong>Measure</strong> dropdown to select the measure type you'd like to
-      use.
-    </p>
-    <p>
-      Both options will update the filament roll's Weight Remaining. When you
-      change the measurement type, it'll be saved as your default type, so
-      future Filament Usage will default to Weight or Length depending on the
-      last one you selected.
-    </p>
-    <h4>Print File Names</h4>
-    <p>
-      A <strong>File Name</strong> field has been added to the Print, so you can
-      record the name of the gcode file generated. This will also be useful in
-      the upcoming <strong>Octoprint Integration</strong> (coming soon).
-    </p>
-    <h4>Multiple "Other" Filament Usage now allowed</h4>
-    <p>
-      Previously you could only have one non-tracked "other" filament recorded
-      on a print. Now you can add as many "other" filament usage you want.
-    </p>
-
-    <h3 id="v1.7.3">1.7.3- Filament Analytics Bug Fix</h3>
-    <p>
-      Fixed a bug where filament usage was not correctly reported on the
-      analytics page.
-    </p>
-
-    <h3 id="v1.7.2">1.7.2- Remaining Filament Rounding and Security Updates</h3>
-    <p>
-      A minor update which rounds the Filament List's
-      <strong>Remaining Filament</strong> column to the nearest gram. The
-      websites dependencies were also updated to the latest versions, which
-      includes security updates and performance improvements.
-    </p>
-
-    <h3 id="v1.7.1">1.7.1- Delete Filament and Filament Search Dialog</h3>
-    <p>
-      Selecting a roll of filament for a print has now gotten easier. The
-      Print's Filament Usage now has a <strong>Select Filament</strong> button
-      which will open a filament search dialog. This lets you search for a
-      specific roll of filament. In addition, you can now delete a filament if
-      it has not been used in a Print from the Filament List.
-    </p>
-    <p>Full list of changes:</p>
-    <ul>
-      <li>
-        Added a new Search Filament dialog in the Edit Print page to make
-        selecting filament for a print easier.
-      </li>
-      <li>
-        Added the ability to delete a filament from the Filaments list page.
-      </li>
-      <li>
-        Fixed a bug where the Filament Color was not being saved until it was
-        interacted with.
-      </li>
-      <li>
-        Various enhancements to accessibility and keyboard navigation on the
-        Filament pages.
-      </li>
-    </ul>
-
-    <h3 id="v1.7.0">1.7- Filament Roll Tracking 🎉</h3>
-    <p>
-      Filament tracking is here! Now you can add rolls of filament, and 3D Print
-      Log will automatically keep track of how much filament is remaining on the
-      roll. See colors, print temperatures, and record brand and purchasing
-      information for all your rolls of filament.
-    </p>
-    <ul>
-      <li>
-        Added new <a routerLink="/filament">Filament</a> page, where you can
-        manage your rolls of filament
-      </li>
-      <li>
-        Updated the <a routerLink="/prints">Print Details</a> page to have a
-        <strong>Filament Usage</strong> section for assigning a roll of filament
-        to a print.
-      </li>
-    </ul>
-    <p>
-      See the <a routerLink="/docs/filaments">Filament Documentation</a> and
-      <a routerLink="/docs/prints">Prints Documentation</a> pages for more info.
-      <br />Happy Printing!
-    </p>
-
-    <h3 id="v1.6.1">1.6.1 - Bug fix: Filament Rounding issue</h3>
-    <p>
-      Fixed an issue where a print was unable to be saved due to rounding issues
-      when converting Estimated/Actual Filament Usage from grams to mg.
-    </p>
-
-    <h3 id="v1.6">1.6 - New Feature: Add Print From Gcode</h3>
-    <p>
-      You can now add a print by importing settings from a gcode file. The
-      <strong>Add Print From Gcode</strong> option can be found in the dropdown
-      next to
-      <strong>Add New Print <mat-icon inline>expand_more</mat-icon></strong> in
-      the <a routerLink="/prints">Print List</a>. Currently only gcode from
-      Prusa Slicer is supported, but more slicers will be supported soon. Please
-      <a routerLink="/feedback">Send a Feedback</a> if you are willing to share
-      a gcode example file for a slicer that is not yet supported.
-    </p>
-
-    <h3 id="v1.5.4">1.5.4 - User Profile Print Enhancements</h3>
-    <p>
-      Added better scrolling behavior when loading prints in a user's profile.
-    </p>
-
-    <h3 id="v1.5.3">1.5.3 - Cura Plugin Filament Usage Validation</h3>
-    <p>
-      Fixed an error that prevented prints from saving when Cura sent fractional
-      filament usage amounts.
-    </p>
-
-    <h3 id="v1.5.2">1.5.2 - Print Form Validation</h3>
-    <p>
-      You will now see more detailed error messages on the New/Edit Print form,
-      if the print you are saving is invalid or missing required fields.
-    </p>
-
-    <h3 id="v1.5.1">1.5.1 - Bug Fixes</h3>
-    <p>
-      Fixed a few minor bugs, including an issue where sometimes filament usage
-      sent by the Cura plugin was incorrectly reported and prevented the print
-      from saving.
-    </p>
-
-    <h3 id="v1.5.0">1.5.0 - 3D Print Log Cura Plugin v1.1.0</h3>
-    <p>
-      The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura is
-      being updated to v1.1.0.
-    </p>
-    <ul>
-      <li>Added support for Cura 4.8.</li>
-      <li>Added support for multiple extruders.</li>
-      <li>
-        Fixed bug where slicer settings would not correctly log settings the
-        user changed without saving the profile.
-      </li>
-      <li>Plugin will only try and log files that have been sliced.</li>
-    </ul>
-    <p>
-      You can install this plugin via the
-      <a
-        href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
-        >Ultimaker Cura Marketplace</a
-      >
-      . Alternatively, you can download the
-      <a
-        href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
-        >Latest Release from Github</a
-      >
-      and drag/drop into Cura to install.
-    </p>
-
-    <h3 id="v1.4.1">1.4.1 - Performance Improvements</h3>
-    <p>
-      Updated website's dependencies to the latest versions, which includes
-      security patches and performance improvements. Thanks for using 3D Print
-      Log!
-    </p>
-
-    <h3 id="v1.4.0">1.4.0 - CSV Exporting and Release Notes</h3>
-    <h4>CSV Exporting</h4>
-    <p>
-      This is your data, you should be able to use it how you like! Whether you
-      want to backup your data to your computer, or import it into a spreadsheet
-      for your own analytics, 3D Print Log has you covered. You can now export
-      all your prints as a .csv (comma separated values) file. Visit your
-      <a [routerLink]="['/settings']">Settings</a> and click
-      <strong>Export</strong> to save your print report.
-    </p>
-    <h4>Release Notes</h4>
-    <p>
-      As you may have noticed, we now have a
-      <a [routerLink]="['/docs/release-notes']">Release Notes</a> page. This
-      page will document all the changes happening to the application. Check
-      back here for information about new features and fixes for 3D Print Log.
-    </p>
-
-    <h3 id="v1.3.0">1.3.0 - Print List Updates</h3>
-    <p>
-      This update contains a variety of updates to the
-      <a [routerLink]="['/prints']">Prints</a> screen.
-    </p>
-    <h4>Added Print Time Column</h4>
-    <p>
-      The Print List now displays the Print Time. It will display the
-      <strong>Actual Print Time</strong> if one is saved, otherwise it will show
-      the <strong>Estimated Print Time*</strong>, with an * to indicate it is
-      estimated.
-    </p>
-    <h4>Quickly change a Print's Status through the ... menu</h4>
-    <p>
-      The ... menu on the print list now has a "Change Print Status" option,
-      which will let you set a new status for a print without having to click
-      into the full edit menu.
-    </p>
-
-    <h3 id="v1.2.0">1.2.0 - Deleting Prints, Cura Plugin Documentation</h3>
-    <h4>Deleting Prints</h4>
-    <p>
-      Mistakes happen. Sometimes you add a print multiple times, or forget that
-      you already added a specific print. In v1.2.0, you can delete a print (and
-      all it's related images and comments) from the ... menu on the
-      <a [routerLink]="['/prints']">Print List</a>. Selecting the
-      <strong>Delete</strong> option will ask for confirmation, and once
-      confirmed it will be deleted permanently.
-    </p>
-    <h4>Cura Plugin Documentation</h4>
-    <p>
-      <a routerLink="/docs/cura-plugin">Documentation is now available</a>
-      for the Cura Plugin. 🎉
-    </p>
-
-    <h3 id="v1.1.0">1.1.0 - Cura Plugin and Print Comments</h3>
-    <h4>Cura Plugin Now Available 🎉</h4>
-    <p>
-      The <strong>3D Print Log Uploader</strong> plugin for Ultimaker Cura lets
-      you add new prints directly from Cura.
-    </p>
-    <p>
-      You can install this plugin via the
-      <a
-        href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
-        >Ultimaker Cura Marketplace</a
-      >. Alternatively, you can download the
-      <a
-        href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
-        >Latest Release from Github</a
-      >
-      and drag/drop into Cura to install.
-    </p>
-    <h4>Print Comments</h4>
-    <p>
-      Users can now leave comments on 3D Prints. You can control whether or not
-      comments are allowed when editing a print. Public prints will allow for
-      comments by any 3D Print Log user, while private prints will only let you
-      leave comments. If you share your print with other users, this is a great
-      way to have a conversation about the print.
-    </p>
   </div>
 </div>

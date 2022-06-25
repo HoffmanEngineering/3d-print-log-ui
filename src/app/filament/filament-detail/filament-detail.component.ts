@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { Material } from 'src/app/core/services/material.service';
+import { UserSetting } from 'src/app/core/services/user-setting.service';
 import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import {
   FilamentAdjustment,
@@ -30,6 +31,8 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   public filteredMaterials: Observable<Material[]> = null;
 
   public materialNamePipe: MaterialNamePipe = new MaterialNamePipe();
+
+  public preferredCurrencySymbol = '$';
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -55,6 +58,10 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     this.titleService.setTitle('Filament Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
+      this.preferredCurrencySymbol =
+        (data.preferredCurrencySymbolSetting as UserSetting | null)?.value ??
+        '$';
+
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
 
       this.materials = data.materials ?? [];

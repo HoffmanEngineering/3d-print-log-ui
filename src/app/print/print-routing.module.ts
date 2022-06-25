@@ -3,6 +3,9 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '../core/guards/auth.guard';
 
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
+import { CurrenciesResolverService } from '../core/resolvers/currencies-resolver.service';
+import { CurrencyNameResolverService } from '../core/resolvers/currency-name-resolver.service';
+import { CurrencySymbolResolverService } from '../core/resolvers/currency-symbol-resolver.service';
 import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/current-user-printer-summary-resolver.service';
 import { DefaultPrintViewStatusSettingResolverService } from '../core/resolvers/default-print-view-status-setting-resolver.service';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
@@ -36,6 +39,9 @@ const routes: Routes = [
           defaultPrintViewStatusSetting:
             DefaultPrintViewStatusSettingResolverService,
           lastFilamentMeasureSetting: LastFilamentMeasureSettingResolverService,
+          currencies: CurrenciesResolverService,
+          preferredCurrencyNameSetting: CurrencyNameResolverService,
+          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -49,6 +55,9 @@ const routes: Routes = [
           defaultPrintViewStatusSetting:
             DefaultPrintViewStatusSettingResolverService,
           lastFilamentMeasureSetting: LastFilamentMeasureSettingResolverService,
+          currencies: CurrenciesResolverService,
+          preferredCurrencyNameSetting: CurrencyNameResolverService,
+          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
         },
         canActivate: [AuthGuard],
         canDeactivate: [PendingChangesGuard],

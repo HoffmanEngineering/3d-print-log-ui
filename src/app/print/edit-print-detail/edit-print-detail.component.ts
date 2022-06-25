@@ -45,6 +45,8 @@ import {
   PrintViewStatus,
 } from '../../core/services/print.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import currency from 'currency.js';
+import { Currencies } from 'src/app/core/resolvers/currencies-resolver.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -106,6 +108,10 @@ export class EditPrintDetailComponent
   public actualCompletedDate: Date = null;
   actualCompletedDateSubscription: Subscription;
 
+  public currencies: Currencies;
+
+  public preferredCurrencyNameSetting: UserSetting | null = null;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -159,6 +165,9 @@ export class EditPrintDetailComponent
     this.titleService.setTitle('Print Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
+      this.preferredCurrencyNameSetting = data.preferredCurrencyNameSetting;
+      this.currencies = data.currencies;
+
       this.printers = data.printers;
 
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
@@ -625,6 +634,106 @@ export class EditPrintDetailComponent
       filament,
       notes,
     });
+  }
+
+  public getEstimatedPrice(printFilamentGroup: FormGroup) {
+    const filament = printFilamentGroup.get('filament')
+      .value as FilamentSummary;
+
+    const isLengthSource = printFilamentGroup.get(
+      'isEstimatedLengthSource'
+    ).value;
+
+    const weightG = printFilamentGroup.get('estimatedAmountG').value;
+
+    const lengthM = printFilamentGroup.get('estimatedLengthInM').value;
+
+    return this.getPrice(filament, isLengthSource, weightG, lengthM);
+  }
+
+  public getActualPrice(printFilamentGroup: FormGroup) {
+    const filament = printFilamentGroup.get('filament')
+      .value as FilamentSummary;
+
+    const isLengthSource = printFilamentGroup.get('isActualLengthSource').value;
+
+    const weightG = printFilamentGroup.get('amountG').value;
+
+    const lengthM = printFilamentGroup.get('lengthInM').value;
+
+    return this.getPrice(filament, isLengthSource, weightG, lengthM);
+  }
+
+  public getPrice(
+    filament: FilamentSummary,
+    isLengthSource: boolean,
+    weightG: string,
+    lengthM: string
+  ) {
+    const filamentPrice = filament.purchasePriceValue;
+
+    if (filamentPrice == null) {
+      return '(Filament price not set)';
+    }
+
+    const filamentWeightMg = filament.initialNominalWeightMg;
+
+    if (filamentWeightMg == null || filamentWeightMg === 0) {
+      return '(Filament initial weight not set)';
+    }
+
+    const pricePerGram = currency(filamentPrice).divide(
+      filamentWeightMg / 1000.0
+    );
+
+    function getDecimalSeparator() {
+      const numberWithDecimalSeparator = 100000.1;
+      return Intl.NumberFormat()
+        .formatToParts(numberWithDecimalSeparator)
+        .find((part) => part.type === 'decimal').value;
+    }
+
+    function getGroupSeparator() {
+      const numberWithDecimalSeparator = 100000.1;
+      return Intl.NumberFormat()
+        .formatToParts(numberWithDecimalSeparator)
+        .find((part) => part.type === 'group').value;
+    }
+
+    const preferredCurrencyName =
+      this.preferredCurrencyNameSetting?.value ?? 'USD';
+    const preferredCurrency = this.currencies[preferredCurrencyName];
+
+    const currencyFormat = {
+      symbol: preferredCurrency.symbol,
+      decimal: getDecimalSeparator(),
+      separator: getGroupSeparator(),
+    };
+
+    if (!isLengthSource) {
+      // Use Weights, ezpz
+
+      return pricePerGram.multiply(weightG).format(currencyFormat);
+    }
+
+    // Calculate from length.
+    const diameterMm = filament.diameterMm;
+    const areaSqM = Math.PI * Math.pow(diameterMm / 1000.0, 2) * (1 / 4);
+
+    const densityGramPerCubicM =
+      filament.materialDensityGramPerCubicCm * 1000000;
+
+    const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
+
+    console.log(
+      pricePerGram.format(),
+      diameterMm,
+      areaSqM,
+      densityGramPerCubicM,
+      lengthM,
+      gramsUsed
+    );
+    return pricePerGram.multiply(gramsUsed).format(currencyFormat);
   }
 
   // We will create multiple form controls inside defined form controls photos.

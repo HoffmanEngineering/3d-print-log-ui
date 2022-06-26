@@ -28,6 +28,7 @@ export interface FilamentDetail {
   purchaseLocation: string;
   purchasePriceValue: string;
   purchasePriceCurrency: string;
+  purchaseNotes: string;
   notes: string;
   isFavorite: boolean;
   filamentAdjustments: FilamentAdjustment[];
@@ -48,7 +49,9 @@ export interface FilamentSummary {
   createdDate: string;
   filamentRemaining: number | null;
   filamentLengthRemainingInM: number | null;
-
+  purchasePriceValue: string;
+  initialNominalWeightMg: number | null;
+  diameterMm: number;
   loadedInPrinter: PrinterSummary | null;
 }
 

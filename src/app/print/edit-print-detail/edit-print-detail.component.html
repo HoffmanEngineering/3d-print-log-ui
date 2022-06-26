@@ -317,7 +317,7 @@
                       }"
                     ></div>
                   </div>
-                  <div fxFlex>
+                  <div fxFlex class="filament-section">
                     {{
                       printFilament.get('filament').value?.displayName ||
                         'Other'
@@ -328,14 +328,16 @@
                       printFilament.get('filament').value?.colorName !== ''
                     "
                     fxFlex
+                    class="filament-section"
                   >
                     {{ printFilament.get('filament').value?.colorName }}
                   </div>
-                  <div fxFlex>
+                  <div fxFlex class="filament-section">
                     {{ printFilament.get('filament').value?.materialType }}
                   </div>
                   <div
                     fxFlex="grow"
+                    class="filament-section"
                     *ngIf="printFilament.get('filament').value !== null"
                   >
                     {{
@@ -346,6 +348,7 @@
                   </div>
                   <div
                     fxFlex="grow"
+                    class="filament-section"
                     *ngIf="printFilament.get('filament').value !== null"
                   >
                     {{
@@ -523,6 +526,39 @@
                       formControlName="notes"
                     />
                   </mat-form-field>
+
+                  <div
+                    gdColumns="max-content auto"
+                    gdRows="2"
+                    gdGap="10px"
+                    style="padding-inline: 10px; padding-bottom: 5px"
+                    *ngIf="printFilament.get('filament').value !== null"
+                  >
+                    <div gdColumn="1" gdRow="1">Estimated Cost:</div>
+                    <div gdColumn="2" gdRow="1">
+                      {{ getEstimatedPrice(printFilament) }}
+                    </div>
+                    <div
+                      gdColumn="1"
+                      gdRow="2"
+                      *ngIf="
+                        printFilament.get('amountG').value !== 0 ||
+                        printFilament.get('lengthInM').value !== 0
+                      "
+                    >
+                      Actual Cost:
+                    </div>
+                    <div
+                      gdColumn="2"
+                      gdRow="2"
+                      *ngIf="
+                        printFilament.get('amountG').value !== 0 ||
+                        printFilament.get('lengthInM').value !== 0
+                      "
+                    >
+                      {{ getActualPrice(printFilament) }}
+                    </div>
+                  </div>
                 </div>
               </mat-card>
             </div>

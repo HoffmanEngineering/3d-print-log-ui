@@ -378,7 +378,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Purchase Location</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-purchase-location"
             matInput
             type="text"
             formControlName="purchaseLocation"
@@ -393,18 +393,36 @@
 
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Purchase Price</mat-label>
+          <span matPrefix>{{ this.preferredCurrencySymbol }}&nbsp;</span>
           <input
-            id="edit-filament-name"
+            id="edit-filament-purchase-price"
             matInput
             type="text"
             formControlName="purchasePriceValue"
             maxlength="256"
           />
-          <!-- <mat-error
-                  *ngIf="filamentForm.controls['brand'].hasError('required')"
-                >
-                  A Name is <strong>required</strong>
-                </mat-error> -->
+          <mat-error
+            *ngIf="
+              filamentForm.controls['purchasePriceValue'].hasError('pattern')
+            "
+          >
+            Only numeric prices are allowed.
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Purchase Notes</mat-label>
+          <textarea
+            id="purchase-notes-text"
+            matInput
+            type="textarea"
+            formControlName="purchaseNotes"
+            maxlength="1000"
+            rows="3"
+          ></textarea>
+          <mat-hint *ngIf="this.filamentForm.get('purchaseNotes').dirty">
+            {{ 1000 - this.filamentForm.get('purchaseNotes').value.length }}
+            characters remaining.</mat-hint
+          >
         </mat-form-field>
       </mat-card-content>
       <mat-card-actions

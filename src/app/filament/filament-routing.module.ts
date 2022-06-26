@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
+import { CurrencySymbolResolverService } from '../core/resolvers/currency-symbol-resolver.service';
 import { FilamentDetailComponent } from './filament-detail/filament-detail.component';
 import { FilamentListContainerComponent } from './filament-list-container/filament-list-container.component';
 import { CopyFilamentDetailResolverService } from './resolvers/copy-filament-detail-resolver.service';
@@ -26,6 +27,7 @@ const routes: Routes = [
         resolve: {
           filament: CopyFilamentDetailResolverService,
           materials: MaterialResolverService,
+          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -35,6 +37,7 @@ const routes: Routes = [
         resolve: {
           filament: FilamentDetailResolverService,
           materials: MaterialResolverService,
+          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },

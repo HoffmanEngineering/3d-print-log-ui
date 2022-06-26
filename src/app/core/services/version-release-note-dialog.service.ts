@@ -27,6 +27,42 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.17.0': {
+      title: '1.17.0 Release - Preferred Currency and Filament Costs',
+      body: `<img
+  class="version-release-note-dialog-image"
+  alt="The Edit 3D Print page showing the new filament cost."
+  src="./assets/release_filament_cost_8b69eeeb49b59.png"
+/>
+<p>
+  The Edit Print page will now display estimated/actual filament costs.
+  When you add the weight or length of filament used, the cost for that
+  amount of filament will be displayed.
+</p>
+<p>
+  You can now set your <strong>Preferred Currency</strong> in the Settings
+  page (click User Picture -> Settings). The selected currency will be
+  used throughout the application.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.16.4': {
       title: '1.16.4 - Android App Released!',
       body: `<p>

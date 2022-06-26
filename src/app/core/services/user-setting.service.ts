@@ -18,6 +18,8 @@ export enum UserSettingType {
    */
   Prints_LastSelectedAllowComments = 3,
   Prints_LastSelectedFilamentMeasureType = 4,
+  Currency_Name = 5,
+  Currency_Symbol = 6,
 }
 
 export interface UserSetting {
@@ -108,7 +110,7 @@ export class UserSettingService {
       map((settingDto) => this.formatUserSettingDto(settingDto)),
       tap((updatedSetting) => {
         const existingSetting = this.userSettings.findIndex(
-          (u) => (u.id = updatedSetting.id)
+          (u) => u.id === updatedSetting.id
         );
 
         if (existingSetting !== -1) {

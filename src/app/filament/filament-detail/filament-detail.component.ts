@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { Material } from 'src/app/core/services/material.service';
+import { UserSetting } from 'src/app/core/services/user-setting.service';
 import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import {
   FilamentAdjustment,
@@ -30,6 +31,8 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   public filteredMaterials: Observable<Material[]> = null;
 
   public materialNamePipe: MaterialNamePipe = new MaterialNamePipe();
+
+  public preferredCurrencySymbol = '$';
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -55,6 +58,10 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     this.titleService.setTitle('Filament Details - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
+      this.preferredCurrencySymbol =
+        (data.preferredCurrencySymbolSetting as UserSetting | null)?.value ??
+        '$';
+
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
 
       this.materials = data.materials ?? [];
@@ -154,8 +161,12 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
         filament?.purchaseDate ? new Date(filament.purchaseDate) : null,
       ],
       purchaseLocation: [filament?.purchaseLocation],
-      purchasePriceValue: [filament?.purchasePriceValue],
+      purchasePriceValue: [
+        filament?.purchasePriceValue,
+        Validators.pattern(/^[0-9,.]*$/),
+      ],
       purchasePriceCurrency: [filament?.purchasePriceCurrency],
+      purchaseNotes: [filament?.purchaseNotes],
       notes: [filament?.notes],
       filamentAdjustments: adjustments,
       isActive: [
@@ -283,6 +294,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       purchasePriceCurrency:
         this.filamentForm.controls.purchasePriceCurrency.value,
       purchasePriceValue: this.filamentForm.controls.purchasePriceValue.value,
+      purchaseNotes: this.filamentForm.controls.purchaseNotes.value,
       recommendedTemp: this.filamentForm.controls.recommendedTemp.value,
       spoolWeightMg: Math.round(
         this.filamentForm.controls.spoolWeightG.value * 1000

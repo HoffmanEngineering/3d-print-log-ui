@@ -42,7 +42,7 @@
     "d3": "^7.2.1",
     "lodash-es": "^4.17.21",
     "moment": "^2.29.3",
-    "ng2-adsense": "^10.1.0",
+    "ng2-adsense": "^11.0.0",
     "ngx-toastr": "^15.0.0",
     "parse-duration": "^1.0.2",
     "rxjs": "~7.4.0",

@@ -55,7 +55,30 @@
 //   });
 // });
 
-//Cypress.Commands.add('login', (appState = { targetUrl: '/' }) => {
+Cypress.Commands.add('login', () => {
+  const username = Cypress.env('auth_username');
+  const password = Cypress.env('auth_password');
+
+  cy.session([username, password], () => {
+    cy.visit('https://localhost:4200/');
+    cy.get('#loginButton').click();
+
+    cy.origin(
+      'https://dev-3dprintlog.auth0.com/',
+      { args: [username, password] },
+      ([username, password]) => {
+        cy.get('#username').type(username);
+        cy.get('#password').type(password);
+
+        cy.get("button[type='submit'][name='action']")
+          .contains('Continue')
+          .click();
+      }
+    );
+  });
+});
+
+/* OLD API-DRIVE LOG IN
 Cypress.Commands.add('login', (targetUrl = '/') => {
   Cypress.log({
     name: 'loginViaAuth0',
@@ -114,3 +137,4 @@ Cypress.Commands.add('login', (targetUrl = '/') => {
     });
   });
 });
+*/

@@ -1,7 +1,7 @@
 import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import {
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   FormGroupDirective,
   Validators,
 } from '@angular/forms';
@@ -24,14 +24,14 @@ import {
 export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
   @ViewChild(FormGroupDirective, { static: true })
   feedbackForm: FormGroupDirective;
-  public form: FormGroup;
+  public form: UntypedFormGroup;
 
   public readonly feedbackTypes = FeedbackType;
   public saving = false;
 
   constructor(
     private router: Router,
-    private formBuilder: FormBuilder,
+    private formBuilder: UntypedFormBuilder,
     private feedbackService: FeedbackService,
     private toastr: ToastrService,
     private titleService: Title

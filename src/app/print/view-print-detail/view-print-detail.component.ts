@@ -1,6 +1,6 @@
 import { DOCUMENT, Location } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
 import { Subscription } from 'rxjs';
@@ -33,7 +33,7 @@ export interface PrintImageValue {
 export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   public printers: PrinterSummary[] = [];
 
-  public printForm: FormGroup;
+  public printForm: UntypedFormGroup;
 
   public print: PrintDetail;
   public user: UserSummaryDto;

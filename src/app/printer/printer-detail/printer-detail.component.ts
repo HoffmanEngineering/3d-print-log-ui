@@ -1,9 +1,9 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import {
   AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   Validators,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -30,7 +30,7 @@ import defaultPrinters from './cura-exported-printers';
   styleUrls: ['./printer-detail.component.scss'],
 })
 export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
-  public printerForm: FormGroup;
+  public printerForm: UntypedFormGroup;
   public saving = false;
 
   // public referencePrinter = defaultPrinters;
@@ -42,14 +42,14 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
   filteredModels: Observable<string[]>;
 
   // Help to get all printer loaded filament controls as form array.
-  get loadedFilaments(): FormArray {
-    return this.printerForm.get('loadedFilaments') as FormArray;
+  get loadedFilaments(): UntypedFormArray {
+    return this.printerForm.get('loadedFilaments') as UntypedFormArray;
   }
 
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
-    private formBuilder: FormBuilder,
+    private formBuilder: UntypedFormBuilder,
     private printerService: PrinterService,
     private toastr: ToastrService,
     private titleService: Title,
@@ -129,7 +129,7 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
     return uniqueModels;
   }
 
-  buildFormFromPrinterDetail(printer: PrinterDetail): FormGroup {
+  buildFormFromPrinterDetail(printer: PrinterDetail): UntypedFormGroup {
     const loadedFilamentsForm = this.formBuilder.array([]);
 
     if (

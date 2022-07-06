@@ -1,6 +1,11 @@
 import { Location } from '@angular/common';
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators,
+} from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -24,7 +29,7 @@ const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
   styleUrls: ['./filament-detail.component.scss'],
 })
 export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
-  public filamentForm: FormGroup;
+  public filamentForm: UntypedFormGroup;
   public saving = false;
 
   public materials: Material[] = [];
@@ -37,7 +42,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
-    private formBuilder: FormBuilder,
+    private formBuilder: UntypedFormBuilder,
     private filamentService: FilamentService,
     private toastr: ToastrService,
     private titleService: Title,
@@ -51,7 +56,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   }
 
   get filamentAdjustments() {
-    return this.filamentForm.get('filamentAdjustments') as FormArray;
+    return this.filamentForm.get('filamentAdjustments') as UntypedFormArray;
   }
 
   ngOnInit() {
@@ -119,7 +124,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     });
   }
 
-  buildFormFromFilamentDetail(filament: FilamentDetail): FormGroup {
+  buildFormFromFilamentDetail(filament: FilamentDetail): UntypedFormGroup {
     const adjustments = this.formBuilder.array([]);
     if (filament?.filamentAdjustments?.length > 0) {
       filament.filamentAdjustments.forEach((adjustment) => {

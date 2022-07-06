@@ -34,16 +34,12 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
       return '';
     }
 
-    // console.log('Before Cleanup', settings);
-
     settings = settings.replace(/;End of Gcode\n/gm, '');
     settings = settings.replace(/;SETTING_\d /gm, '');
-    // console.log('After Setting Wipe', settings);
+
     settings = settings.replace(/\n/gm, '');
-    // console.log(settings);
 
     const globalQuality = settings.match(/"global_quality": ".*?\\n\\n"/g);
-    console.log('global', globalQuality);
 
     const globalGeneral =
       globalQuality.length > 0
@@ -55,7 +51,6 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
     const extruderQuality = settings.match(
       /"extruder_quality": \[.*?\\n\\n\"\](,|})/g
     );
-    console.log('extruder', extruderQuality);
 
     const extruderGeneral =
       extruderQuality.length > 0
@@ -63,9 +58,6 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
         : [];
     const extruderValues =
       extruderQuality.length > 0 ? this.parseValues(extruderQuality[0]) : [];
-
-    console.log('extruder general', extruderGeneral);
-    console.log('extruder values', extruderQuality);
 
     if (extruderValues.length === 1) {
       // There is only one extruder
@@ -151,13 +143,6 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
       note = note + '\n';
     }
 
-    // if (Object.keys(values).length > 0) {
-    //   note = note + 'Modified Settings:\n';
-    //   for (const [key, value] of Object.entries(values)) {
-    //     note = note + '  ' + key + ': ' + value + '\n';
-    //   }
-    //   note = note + '\n';
-    // }
     if (uniqueValueKeys.size > 0) {
       note = note + 'Modified Settings:\n';
       for (const key of uniqueValueKeys) {
@@ -242,7 +227,6 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
       ...this.convertKeys(extruderValues),
     };
 
-    // console.log('createNoteForOneExtruder', general, values);
     // Now format the note:
 
     let note = '';

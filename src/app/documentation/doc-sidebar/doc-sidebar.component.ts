@@ -15,6 +15,7 @@ export class DocSidebarComponent {
     { name: 'Printers', url: '/docs/printers' },
     { name: 'Analytics', url: '/docs/analytics' },
     { divider: true },
+    { name: 'Android App', url: '/docs/android-app' },
     { name: 'Cura Plugin', url: '/docs/cura-plugin' },
     { name: 'Octoprint Webhook', url: '/docs/octoprint-webhook' },
     { divider: true },

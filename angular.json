@@ -148,9 +148,10 @@
       }
     }
   },
-  "defaultProject": "print-log-ui",
   "cli": {
     "analytics": "932ccb37-95ca-4ef1-a216-1106c27a6cc5",
-    "defaultCollection": "@angular-eslint/schematics"
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }

@@ -8,10 +8,10 @@ import {
 } from '@angular/core';
 import {
   AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -70,12 +70,12 @@ export class EditPrintDetailComponent
 
   public printers: PrinterSummary[] = [];
 
-  public printForm: FormGroup;
+  public printForm: UntypedFormGroup;
 
   public printStatusTypes = PrintStatus;
   public printViewStatusTypes = PrintViewStatus;
 
-  public selectedImage: FormControl;
+  public selectedImage: UntypedFormControl;
 
   public defaultImageIdOnLoad: number | null = null;
 
@@ -115,7 +115,7 @@ export class EditPrintDetailComponent
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
-    private formBuilder: FormBuilder,
+    private formBuilder: UntypedFormBuilder,
     private readonly printService: PrintService,
     private readonly printerService: PrinterService,
     private readonly toastr: ToastrService,
@@ -129,13 +129,13 @@ export class EditPrintDetailComponent
   ) {}
 
   // Help to get all photos controls as form array.
-  get images(): FormArray {
-    return this.printForm.get('images') as FormArray;
+  get images(): UntypedFormArray {
+    return this.printForm.get('images') as UntypedFormArray;
   }
 
   // Help to get all print filament usage controls as form array.
-  get filamentUsage(): FormArray {
-    return this.printForm.get('filamentUsage') as FormArray;
+  get filamentUsage(): UntypedFormArray {
+    return this.printForm.get('filamentUsage') as UntypedFormArray;
   }
 
   ngOnDestroy(): void {
@@ -490,7 +490,7 @@ export class EditPrintDetailComponent
       };
     }
   }
-  buildFormFromPrintDetail(print: PrintDetail): FormGroup {
+  buildFormFromPrintDetail(print: PrintDetail): UntypedFormGroup {
     const imageArray = this.formBuilder.array([]);
 
     if (print && print.images) {
@@ -636,7 +636,7 @@ export class EditPrintDetailComponent
     });
   }
 
-  public getEstimatedPrice(printFilamentGroup: FormGroup) {
+  public getEstimatedPrice(printFilamentGroup: UntypedFormGroup) {
     const filament = printFilamentGroup.get('filament')
       .value as FilamentSummary;
 
@@ -651,7 +651,7 @@ export class EditPrintDetailComponent
     return this.getPrice(filament, isLengthSource, weightG, lengthM);
   }
 
-  public getActualPrice(printFilamentGroup: FormGroup) {
+  public getActualPrice(printFilamentGroup: UntypedFormGroup) {
     const filament = printFilamentGroup.get('filament')
       .value as FilamentSummary;
 
@@ -729,7 +729,7 @@ export class EditPrintDetailComponent
   }
 
   // We will create multiple form controls inside defined form controls photos.
-  createItem(data: PrintImageValue): FormControl {
+  createItem(data: PrintImageValue): UntypedFormControl {
     const newItem = this.formBuilder.control(data);
 
     return newItem;
@@ -766,12 +766,12 @@ export class EditPrintDetailComponent
     }
   }
 
-  selectImage(image: FormControl) {
+  selectImage(image: UntypedFormControl) {
     this.selectedImage = image;
     this.setAsDefault(image); // TODO: Get right-click menu to make default
   }
 
-  removeImage(image: FormControl) {
+  removeImage(image: UntypedFormControl) {
     const imageId = image.value.id;
     if (imageId) {
       this.imageIdsToDelete.push(imageId);
@@ -790,7 +790,7 @@ export class EditPrintDetailComponent
     }
   }
 
-  setAsDefault(image: FormControl) {
+  setAsDefault(image: UntypedFormControl) {
     this.images.controls.forEach((control) => {
       control.value.isDefault = false;
     });

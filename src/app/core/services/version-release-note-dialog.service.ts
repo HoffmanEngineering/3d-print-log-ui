@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.17.1': {
+      redirect: '1.17.0',
+    },
     '1.17.0': {
       title: '1.17.0 Release - Preferred Currency and Filament Costs',
       body: `<img

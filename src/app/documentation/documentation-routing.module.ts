@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { DocsAboutComponent } from './docs/docs-about/docs-about.component';
 import { DocsAnalyticsComponent } from './docs/docs-analytics/docs-analytics.component';
+import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-app.component';
 import { DocsCuraPluginComponent } from './docs/docs-cura-plugin/docs-cura-plugin.component';
 import { DocsFilamentsComponent } from './docs/docs-filaments/docs-filaments.component';
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
@@ -25,11 +26,12 @@ const routes: Routes = [
       { path: 'prints', component: DocsPrintsComponent },
       { path: 'filaments', component: DocsFilamentsComponent },
       { path: 'analytics', component: DocsAnalyticsComponent },
+      { path: 'android-app', component: DocsAndroidAppComponent },
       { path: 'cura-plugin', component: DocsCuraPluginComponent },
       { path: 'octoprint-webhook', component: DocsOctoprintWebhookComponent },
       { path: 'release-notes', component: DocsReleaseNotesComponent },
       { path: 'about', component: DocsAboutComponent },
-      { path: '', redirectTo: 'getting-started' },
+      { path: '', redirectTo: 'getting-started', pathMatch: 'full' },
     ],
   },
 ];

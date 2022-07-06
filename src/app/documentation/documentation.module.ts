@@ -16,6 +16,7 @@ import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocumentationComponent } from './documentation.component';
+import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-app.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { DocumentationComponent } from './documentation.component';
     DocsReleaseNotesComponent,
     DocsFilamentsComponent,
     DocsOctoprintWebhookComponent,
+    DocsAndroidAppComponent,
   ],
   imports: [
     CommonModule,

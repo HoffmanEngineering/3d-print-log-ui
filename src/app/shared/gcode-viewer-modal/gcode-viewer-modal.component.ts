@@ -7,9 +7,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { capitalize, snakeCase } from 'lodash';
-import { Action } from 'rxjs/internal/scheduler/Action';
-import { FilamentService } from 'src/app/core/services/filament.service';
+import { capitalize, snakeCase } from 'lodash-es';
 import {
   EMPTY_GUID,
   PrintDetail,

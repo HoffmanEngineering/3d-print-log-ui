@@ -682,9 +682,7 @@ export class EditPrintDetailComponent
       return '(Filament initial weight not set)';
     }
 
-    const pricePerGram = currency(filamentPrice).divide(
-      filamentWeightMg / 1000.0
-    );
+    const pricePerGram = Number(filamentPrice) / (filamentWeightMg / 1000.0);
 
     function getDecimalSeparator() {
       const numberWithDecimalSeparator = 100000.1;
@@ -713,7 +711,7 @@ export class EditPrintDetailComponent
     if (!isLengthSource) {
       // Use Weights, ezpz
 
-      return pricePerGram.multiply(weightG).format(currencyFormat);
+      return currency(pricePerGram * Number(weightG)).format(currencyFormat);
     }
 
     // Calculate from length.
@@ -725,7 +723,7 @@ export class EditPrintDetailComponent
 
     const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
 
-    return pricePerGram.multiply(gramsUsed).format(currencyFormat);
+    return currency(pricePerGram * gramsUsed).format(currencyFormat);
   }
 
   // We will create multiple form controls inside defined form controls photos.

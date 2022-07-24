@@ -27,6 +27,38 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.18.0': {
+      title: '1.18.0 Release - Filament Storage Location and Bed Temperatures',
+      body: `<p>
+  The Filament edit details page contains two new fields:
+  <strong>Recommended Bed Temperature</strong> and
+  <strong>Storage Location</strong>. If you keep your filament organized in
+  boxes/containers/etc, you can now save where the filament is stored so you
+  can find it easier.
+</p>
+<p>
+  The <strong>Storage Location</strong> is also displayed on the filament
+  list, to make it easier to search.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.17.2': {
       redirect: '1.17.1',
     },

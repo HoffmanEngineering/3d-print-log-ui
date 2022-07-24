@@ -55,6 +55,7 @@ export interface FilamentSummary {
   initialNominalWeightMg: number | null;
   diameterMm: number;
   loadedInPrinter: PrinterSummary | null;
+  storageLocation: string;
 }
 
 export interface FilamentAdjustment {
@@ -75,6 +76,7 @@ export enum FilamentSortColumns {
   FilamentRemaining = 3,
   Brand = 4,
   Color = 5,
+  StorageLocation = 6,
 }
 
 @Injectable({

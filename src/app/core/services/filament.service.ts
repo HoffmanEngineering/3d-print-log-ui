@@ -23,12 +23,14 @@ export interface FilamentDetail {
   tempRangeStart: number | null;
   tempRangeEnd: number | null;
   recommendedTemp: number | null;
+  recommendedBedTemp: number | null;
   isActive: boolean;
   purchaseDate: string | null;
   purchaseLocation: string;
   purchasePriceValue: string;
   purchasePriceCurrency: string;
   purchaseNotes: string;
+  storageLocation: string;
   notes: string;
   isFavorite: boolean;
   filamentAdjustments: FilamentAdjustment[];

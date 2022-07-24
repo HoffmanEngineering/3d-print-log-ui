@@ -149,6 +149,21 @@
         </mat-form-field>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Storage Location</mat-label>
+          <input
+            id="edit-filament-storage-location"
+            matInput
+            type="text"
+            formControlName="storageLocation"
+            maxlength="256"
+          />
+          <mat-hint *ngIf="this.filamentForm.get('storageLocation').dirty">
+            {{ 256 - this.filamentForm.get('storageLocation').value.length }}
+            characters remaining.</mat-hint
+          >
+        </mat-form-field>
+
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Notes</mat-label>
           <textarea
             id="edit-filament-description"
@@ -306,7 +321,7 @@
           <h2 style="text-align: start">Temperatures</h2>
         </div>
         <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Temperature Range Start (C)</mat-label>
+          <mat-label>Hotend Temperature Range Start (C)</mat-label>
           <input
             id="edit-filament-name"
             matInput
@@ -321,7 +336,7 @@
         </mat-form-field>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Temperature Range End (C)</mat-label>
+          <mat-label>Hotend Temperature Range End (C)</mat-label>
           <input
             id="edit-filament-name"
             matInput
@@ -336,18 +351,22 @@
         </mat-form-field>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Recommended Temperature (C)</mat-label>
+          <mat-label>Recommended Hotend Temperature (C)</mat-label>
           <input
             id="edit-filament-name"
             matInput
             type="number"
             formControlName="recommendedTemp"
           />
-          <!-- <mat-error
-                  *ngIf="filamentForm.controls['brand'].hasError('required')"
-                >
-                  A Name is <strong>required</strong>
-                </mat-error> -->
+        </mat-form-field>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Recommended Bed Temperature (C)</mat-label>
+          <input
+            id="edit-filament-name"
+            matInput
+            type="number"
+            formControlName="recommendedBedTemp"
+          />
         </mat-form-field>
 
         <div fxFlex="grow" fxFlexFill>

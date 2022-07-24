@@ -162,6 +162,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       tempRangeStart: [filament?.tempRangeStart],
       tempRangeEnd: [filament?.tempRangeEnd],
       recommendedTemp: [filament?.recommendedTemp],
+      recommendedBedTemp: [filament?.recommendedBedTemp],
       purchaseDate: [
         filament?.purchaseDate ? new Date(filament.purchaseDate) : null,
       ],
@@ -172,6 +173,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       ],
       purchasePriceCurrency: [filament?.purchasePriceCurrency],
       purchaseNotes: [filament?.purchaseNotes],
+      storageLocation: [filament?.storageLocation ?? ''],
       notes: [filament?.notes],
       filamentAdjustments: adjustments,
       isActive: [
@@ -301,11 +303,13 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       purchasePriceValue: this.filamentForm.controls.purchasePriceValue.value,
       purchaseNotes: this.filamentForm.controls.purchaseNotes.value,
       recommendedTemp: this.filamentForm.controls.recommendedTemp.value,
+      recommendedBedTemp: this.filamentForm.controls.recommendedBedTemp.value,
       spoolWeightMg: Math.round(
         this.filamentForm.controls.spoolWeightG.value * 1000
       ),
       tempRangeEnd: this.filamentForm.controls.tempRangeEnd.value,
       tempRangeStart: this.filamentForm.controls.tempRangeStart.value,
+      storageLocation: this.filamentForm.controls.storageLocation.value,
       filamentAdjustments: adjustments,
       isActive: this.filamentForm.controls.isActive.value,
       isFavorite: this.filamentForm.controls.isFavorite.value,

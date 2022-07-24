@@ -167,6 +167,19 @@
       <td mat-cell *matCellDef="let filament">{{ filament.colorName }}</td>
     </ng-container>
 
+    <ng-container matColumnDef="storageLocation">
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="filamentSortColumns.StorageLocation"
+      >
+        Storage Location
+      </th>
+      <td mat-cell *matCellDef="let filament">
+        {{ filament.storageLocation }}
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="filamentRemaining">
       <th
         mat-header-cell

@@ -33,6 +33,7 @@ export class FilamentListComponent implements OnInit {
     'brand',
     'colorName',
     'materialType',
+    'storageLocation',
     'loadedInPrinter',
     'filamentRemaining',
     'isActive',

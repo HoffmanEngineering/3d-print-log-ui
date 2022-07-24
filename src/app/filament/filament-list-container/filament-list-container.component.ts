@@ -36,6 +36,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     'brand',
     'colorName',
     'materialType',
+    'storageLocation',
     'loadedInPrinter',
     'filamentRemaining',
     'isActive',

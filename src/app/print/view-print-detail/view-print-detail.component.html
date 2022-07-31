@@ -47,7 +47,7 @@
         <section class="mat-typography grid-container">
           <h3>Print Status:</h3>
           <p>
-            {{ printStatusTypes[print.status] | titlecase }}
+            {{ getStatus(print.status) | titlecase }}
           </p>
           <h3>Printer:</h3>
           <p>{{ print.printer.make }} {{ print.printer.model }}</p>

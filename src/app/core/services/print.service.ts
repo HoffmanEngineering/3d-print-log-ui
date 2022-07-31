@@ -28,6 +28,7 @@ export enum PrintStatus {
   Success = 3,
   Cancelled = 4,
   Failed = 5,
+  PartialSuccess = 6,
 }
 
 export enum PrintViewStatus {

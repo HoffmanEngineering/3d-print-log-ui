@@ -97,6 +97,15 @@
       (if the print has saved "actual" or "estimated" print time), as a single
       column.
     </li>
+    <li>
+      <strong>Filament</strong> - Gives a detailed view of the filament usage of
+      the print, including color, name, and filament used
+    </li>
+    <li>
+      <strong>Total Filament (g)</strong> - The sum of the all the filament
+      weights for the print. It will use the Actual Amount if it is greater than
+      0, otherwise it will use the estimated weight.
+    </li>
   </ul>
 
   <hr />
@@ -121,8 +130,10 @@
   </p>
   <p>
     Prints can have one of 5 status:
-    <strong>Pending, Printing, Successful, Failed, or Cancelled</strong>. The
-    <strong>Status</strong> selection will default to Pending, but can be
+    <strong
+      >Pending, Printing, Successful, Partial Success, Failed, or
+      Cancelled</strong
+    >. The <strong>Status</strong> selection will default to Pending, but can be
     changed by clicking the dropdown.
   </p>
   <h3 id="print-filament-usage">Filament Usage</h3>

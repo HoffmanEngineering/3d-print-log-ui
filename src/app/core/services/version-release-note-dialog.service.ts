@@ -27,6 +27,54 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.19.0': {
+      title:
+        '1.19.0 Release - Filament on Print List and Partial Success Status',
+      body: `<img
+      class="version-release-note-dialog-image"
+      alt="The Print List with the new Filament and Total Filament columns."
+      src="./assets/release_1-19-0_FilamentPrintList_684039eab.PNG"
+/>
+<p>
+  The Print List now has two new optional columns: The
+  <strong>Filament</strong> column displays detailed information about the
+  filament used for the print, including the color, display name, and weight
+  used. The <strong>Total Filament (g)</strong> column displays the sum of all
+  the weight of filament used. The <strong>Total Filament (g)</strong> column
+  is also sortable, so you can sort the list by weight to find a past design
+  that uses a specific amount of filament.
+</p>
+<p>
+  You can view those new columns on the Print List by clicking the
+  <strong>Gear Icon</strong>-><strong>Change table layout</strong>, then
+  selecting <strong>Filament</strong> or <strong>Total Filament (g)</strong>.
+</p>
+<p>
+  There is a new <strong>Print Status</strong> for
+  <strong>Partial Success</strong>. This can be handy for prints where some of
+  the parts succeeded, but some failed. You can select the new status when
+  editing a print, or using the <strong>Change Print Status</strong> menu
+  option from the Print List.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.18.0': {
       title: '1.18.0 Release - Filament Storage Location and Bed Temperatures',
       body: `<p>
@@ -863,7 +911,7 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
 
   private showReleaseNote(releaseNote: ReleaseNote) {
     const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '400px',
+      maxWidth: '450px',
     });
     dialogRef.componentInstance.title = releaseNote.title;
 

@@ -136,6 +136,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     'start-date',
     'status',
     'printTime',
+    'filamentSummary',
     'commentCount',
     'more',
   ];
@@ -304,6 +305,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
           'start-date',
           'status',
           'printTime',
+          'filamentSummary',
           'commentCount',
           'more',
         ];
@@ -515,6 +517,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
       return 'Printing';
     } else if (print.status === PrintStatus.Success) {
       return 'Success';
+    } else if (print.status === PrintStatus.PartialSuccess) {
+      return 'Partial Success';
     } else {
       return 'Unknown';
     }

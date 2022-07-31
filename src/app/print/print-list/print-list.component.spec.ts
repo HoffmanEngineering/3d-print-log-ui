@@ -146,6 +146,10 @@ describe('PrintListComponent', () => {
           status: PrintStatus.Success,
           title: 'Test Print',
           startDate: new Date('2021-05-27'),
+          filamentUsage: [],
+          sumActualFilamentWeightMg: 0,
+          sumEstimatedFilamentWeightMg: 0,
+          totalFilamentWeightMg: 0,
         },
       ],
       paging: {

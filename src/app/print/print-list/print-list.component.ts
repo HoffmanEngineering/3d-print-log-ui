@@ -113,6 +113,16 @@ export class PrintListComponent implements OnInit, OnDestroy {
       description: 'Displays the actual print time, or estimated print time.',
     },
     {
+      key: 'filamentSummary',
+      displayName: 'Filament',
+      description: 'Displays a summary of the filament used.',
+    },
+    {
+      key: 'totalFilamentUsage',
+      displayName: 'Total Filament (g)',
+      description: 'Displays the total filament usage in grams',
+    },
+    {
       key: 'commentCount',
       displayName: 'Comment Count',
       description: 'Displays the number of comments',

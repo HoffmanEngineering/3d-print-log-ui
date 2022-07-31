@@ -19,6 +19,7 @@ import { FilamentSummary } from './filament.service';
 export enum PrintSummarySortColumn {
   Title = 1,
   StartDate = 2,
+  FilamentUsage = 3,
 }
 
 export enum PrintStatus {
@@ -90,6 +91,11 @@ export interface PrintSummary {
   createdByUserId: number;
   estimatedPrintTimeInSeconds: number | null;
   printTimeInSeconds: number | null;
+
+  sumActualFilamentWeightMg: number;
+  sumEstimatedFilamentWeightMg: number;
+  totalFilamentWeightMg: number;
+  filamentUsage: PrintFilamentSummaryDto[];
 
   /**
    * The number of comments on the print.

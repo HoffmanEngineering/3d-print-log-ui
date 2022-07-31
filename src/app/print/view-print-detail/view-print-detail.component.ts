@@ -127,6 +127,24 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  public getStatus(status: PrintStatus) {
+    if (status === PrintStatus.Cancelled) {
+      return 'Cancelled';
+    } else if (status === PrintStatus.Failed) {
+      return 'Failed';
+    } else if (status === PrintStatus.Pending) {
+      return 'Pending';
+    } else if (status === PrintStatus.Printing) {
+      return 'Printing';
+    } else if (status === PrintStatus.Success) {
+      return 'Success';
+    } else if (status === PrintStatus.PartialSuccess) {
+      return 'Partial Success';
+    } else {
+      return 'Unknown';
+    }
+  }
+
   addComment(newComment: string) {
     this.printService
       .addPrintComment(this.print.id, newComment)

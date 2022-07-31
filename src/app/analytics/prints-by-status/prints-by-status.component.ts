@@ -36,7 +36,7 @@ export class PrintsByStatusComponent implements OnChanges {
 
   displayedColumns = ['legend', 'orderStatus', 'total'];
 
-  colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#8c8c8c8a', '#d62728'];
+  colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#f5ec45', '#8c8c8c8a', '#d62728'];
 
   showData = false;
 
@@ -82,6 +82,11 @@ export class PrintsByStatusComponent implements OnChanges {
       {
         status: PrintStatus[PrintStatus.Success],
         stateDisplayValue: PrintStatus[PrintStatus.Success],
+        count: 0,
+      },
+      {
+        status: PrintStatus[PrintStatus.PartialSuccess],
+        stateDisplayValue: 'Partial Success',
         count: 0,
       },
       {

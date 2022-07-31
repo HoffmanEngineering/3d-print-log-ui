@@ -95,6 +95,9 @@
           <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
           <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
           <mat-option [value]="printStatusTypes.Success">Success</mat-option>
+          <mat-option [value]="printStatusTypes.PartialSuccess"
+            >Partial Success</mat-option
+          >
           <mat-option [value]="printStatusTypes.Cancelled"
             >Cancelled</mat-option
           >
@@ -330,6 +333,73 @@
       </td>
     </ng-container>
 
+    <ng-container matColumnDef="filamentSummary">
+      <th mat-header-cell *matHeaderCellDef>Filament</th>
+      <td mat-cell *matCellDef="let print">
+        <div
+          gdColumns="max-content max-content max-content"
+          gdRows="auto"
+          gdGap="10px"
+          style="padding-inline: 10px; padding-block: 5px"
+        >
+          <ng-container *ngFor="let fu of print.filamentUsage; index as i">
+            <div gdColumn="1" [gdRow]="i">
+              <div
+                *ngIf="fu.filament !== null"
+                class="filament-color-cell"
+                [ngStyle]="{ 'background-color': '#' + fu.filament.colorHex }"
+              ></div>
+            </div>
+            <div gdColumn="2" [gdRow]="i">
+              <ng-container
+                *ngIf="fu.filament !== null; else nonTrackedFilament"
+              >
+                <a
+                  [routerLink]="['/filament', fu.filament.id]"
+                  (click)="$event.preventDefault(); $event.stopPropagation()"
+                  >{{ fu.filament?.displayName }}</a
+                >
+                <ng-container *ngIf="fu.filament?.colorName">
+                  ({{ fu.filament?.colorName }})</ng-container
+                >
+              </ng-container>
+              <ng-template #nonTrackedFilament>
+                {{ fu.notes }}
+              </ng-template>
+            </div>
+            <div gdColumn="3" [gdRow]="i">
+              <ng-container
+                *ngIf="
+                  fu.amountMg !== null && fu.amountMg > 0;
+                  else estimatedUsage
+                "
+              >
+                {{ fu.amountMg / 1000 | number: '1.0-1' }} g</ng-container
+              >
+              <ng-template #estimatedUsage>
+                <div matTooltip="* indicates Estimated Filament Usage">
+                  {{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }} g *
+                </div>
+              </ng-template>
+            </div>
+          </ng-container>
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="totalFilamentUsage">
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="printSummarySortColumns.FilamentUsage"
+      >
+        Total Filament (g)
+      </th>
+      <td mat-cell *matCellDef="let print">
+        {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="status">
       <th mat-header-cell *matHeaderCellDef>Status</th>
       <td mat-cell *matCellDef="let print">{{ getStatus(print) }}</td>
@@ -454,6 +524,14 @@
             (click)="changeStatus(print.id, printStatusTypes.Success)"
           >
             <mat-icon>done</mat-icon>Success
+          </button>
+          <button
+            type="button"
+            mat-menu-item
+            aria-label="Change status to Success"
+            (click)="changeStatus(print.id, printStatusTypes.PartialSuccess)"
+          >
+            <mat-icon>rule</mat-icon>Partial Success
           </button>
           <button
             type="button"

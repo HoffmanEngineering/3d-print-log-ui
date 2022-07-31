@@ -55,10 +55,47 @@
       <td mat-cell *matCellDef="let printer">{{ printer.model }}</td>
     </ng-container>
 
-    <ng-container matColumnDef="filament">
+    <!-- <ng-container matColumnDef="filament">
       <th mat-header-cell *matHeaderCellDef>Loaded Filament</th>
       <td mat-cell *matCellDef="let printer">
         {{ formatLoadedInFilament(printer) }}
+      </td>
+    </ng-container> -->
+
+    <ng-container matColumnDef="filament">
+      <th mat-header-cell *matHeaderCellDef>Loaded Filament</th>
+      <td mat-cell *matCellDef="let printer">
+        <div
+          gdColumns="max-content max-content"
+          gdRows="auto"
+          gdGap="10px"
+          style="padding-inline: 10px; padding-block: 5px"
+        >
+          <ng-container *ngFor="let pf of printer.loadedFilaments; index as i">
+            <div gdColumn="1" [gdRow]="i">
+              <div
+                *ngIf="pf.filament !== null"
+                class="filament-color-cell"
+                [ngStyle]="{ 'background-color': '#' + pf.filament.colorHex }"
+              ></div>
+            </div>
+            <div gdColumn="2" [gdRow]="i">
+              <ng-container
+                *ngIf="pf.filament !== null; else nonTrackedFilament"
+              >
+                <a
+                  [routerLink]="['/filament', pf.filament.id]"
+                  (click)="$event.preventDefault(); $event.stopPropagation()"
+                  >{{ pf.filament?.displayName }}</a
+                >
+                <ng-container *ngIf="pf.filament?.colorName">
+                  ({{ pf.filament?.colorName }})</ng-container
+                >
+              </ng-container>
+              <ng-template #nonTrackedFilament> </ng-template>
+            </div>
+          </ng-container>
+        </div>
       </td>
     </ng-container>
 

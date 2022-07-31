@@ -113,6 +113,16 @@ export class PrintListComponent implements OnInit, OnDestroy {
       description: 'Displays the actual print time, or estimated print time.',
     },
     {
+      key: 'filamentSummary',
+      displayName: 'Filament',
+      description: 'Displays a summary of the filament used.',
+    },
+    {
+      key: 'totalFilamentUsage',
+      displayName: 'Total Filament (g)',
+      description: 'Displays the total filament usage in grams',
+    },
+    {
       key: 'commentCount',
       displayName: 'Comment Count',
       description: 'Displays the number of comments',
@@ -126,6 +136,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     'start-date',
     'status',
     'printTime',
+    'filamentSummary',
     'commentCount',
     'more',
   ];
@@ -294,6 +305,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
           'start-date',
           'status',
           'printTime',
+          'filamentSummary',
           'commentCount',
           'more',
         ];
@@ -505,6 +517,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
       return 'Printing';
     } else if (print.status === PrintStatus.Success) {
       return 'Success';
+    } else if (print.status === PrintStatus.PartialSuccess) {
+      return 'Partial Success';
     } else {
       return 'Unknown';
     }

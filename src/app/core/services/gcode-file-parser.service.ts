@@ -49,7 +49,12 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
     try {
       switch (slicer) {
         case SupportedGcodeParserSlicers.PrusaSlicer:
-          return this.prusaSlicerParser.parse(gcode);
+          const prusaResult = await this.prusaSlicerParser.parse(gcode);
+          if (fileName) {
+            prusaResult.fileName = fileName;
+          }
+
+          return prusaResult;
         default:
           const result = this.showGenericGcodeViewerModal(gcode, fileName);
 

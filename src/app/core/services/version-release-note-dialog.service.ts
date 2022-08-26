@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.19.1': {
+      redirect: '1.19.0',
+    },
     '1.19.0': {
       title:
         '1.19.0 Release - Filament on Print List and Partial Success Status',

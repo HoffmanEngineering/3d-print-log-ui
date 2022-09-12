@@ -18,6 +18,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
+import { environment } from 'src/environments/environment';
 
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
@@ -47,6 +48,7 @@ import {
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import currency from 'currency.js';
 import { Currencies } from 'src/app/core/resolvers/currencies-resolver.service';
+import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -125,7 +127,8 @@ export class EditPrintDetailComponent
     private readonly printerRedirectPromptService: PrinterRedirectPromptService,
     private readonly loggingService: LoggingService,
     private el: ElementRef,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private analyticsService: GoogleAnalyticsService
   ) {}
 
   // Help to get all photos controls as form array.
@@ -897,6 +900,10 @@ export class EditPrintDetailComponent
         )
         .subscribe(
           (createdPrint) => {
+            this.analyticsService.emitConversion(
+              environment.googleAds.trafficSearchConversion
+            );
+
             this.saving = false;
             this.printForm.markAsPristine();
             this.router.navigate(['/prints']).then(() => {

@@ -25,6 +25,9 @@ export const environment = {
      */
     userProfile: true,
   },
+  googleAds: {
+    trafficSearchConversion: '',
+  },
 };
 
 /*

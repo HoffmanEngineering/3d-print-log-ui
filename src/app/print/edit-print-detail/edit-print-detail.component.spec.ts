@@ -25,6 +25,7 @@ import {
   NgxMatTimepickerModule,
 } from '@angular-material-components/datetime-picker';
 import { NgxMatMomentModule } from '@angular-material-components/moment-adapter';
+import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 
 describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
@@ -66,6 +67,11 @@ describe('EditPrintDetailComponent', () => {
       { getLoadedFilamentForPrinter: of([]) }
     );
 
+    const mockTrackingService = jasmine.createSpyObj<GoogleAnalyticsService>(
+      'GoogleAnalyticsService',
+      ['emitConversion']
+    );
+
     TestBed.configureTestingModule({
       declarations: [EditPrintDetailComponent],
       imports: [
@@ -84,6 +90,7 @@ describe('EditPrintDetailComponent', () => {
       ],
       providers: [
         { provide: PrintService, useValue: mockPrintService },
+        { provide: GoogleAnalyticsService, useValue: mockTrackingService },
         { provide: PrinterService, useValue: mockPrinterService },
         { provide: ToastrService, useValue: mockToastrService },
         { provide: Title, useValue: mockTitleService },

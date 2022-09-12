@@ -34,4 +34,8 @@ export class GoogleAnalyticsService {
       eventValue,
     });
   }
+
+  public emitConversion(sendTo: string) {
+    gtag('event', 'conversion', { send_to: sendTo });
+  }
 }

@@ -27,6 +27,48 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.20.0': {
+      title: '1.20.0 - Cura Plugin 2.0.5',
+      body: `<p>
+  The <strong>3D Print Log Uploader Plugin for Cura</strong> has been updated
+  to version 2.0.5. This version adds a new option "Include Object Details In
+  Notes", which is enabled by default. This will add the object name,
+  position, and size information directly within the Notes section went sent
+  to 3D Print Log.
+</p>
+<p>
+  You can install v2.0.5 of the
+  plugin via the
+  <a
+    href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
+    >Ultimaker Cura Marketplace</a
+  >
+  . Alternatively, you can download the
+  <a
+    href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+    >Latest Release from Github</a
+  >
+  and drag/drop into Cura to install.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Happy Printing!
+</p>`,
+    },
     '1.19.1': {
       redirect: '1.19.0',
     },

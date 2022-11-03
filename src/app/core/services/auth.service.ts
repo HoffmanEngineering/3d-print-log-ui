@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import createAuth0Client from '@auth0/auth0-spa-js';
-import Auth0Client from '@auth0/auth0-spa-js/dist/typings/Auth0Client';
+import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
+
 import {
   BehaviorSubject,
   combineLatest,
@@ -44,9 +44,11 @@ export class AuthService {
     from(
       createAuth0Client({
         domain: environment.authentication.domain,
-        client_id: environment.authentication.client_id,
-        redirect_uri: `${window.location.origin}/callback`,
-        audience: environment.authentication.audience,
+        clientId: environment.authentication.client_id,
+        authorizationParams: {
+          audience: environment.authentication.audience,
+          redirect_uri: `${window.location.origin}/callback`,
+        },
       })
     ) as Observable<Auth0Client>
   ).pipe(
@@ -75,9 +77,9 @@ export class AuthService {
 
   // When calling, options can be passed if desired
   // https://auth0.github.io/auth0-spa-js/classes/auth0client.html#getuser
-  getUser$(options?): Observable<any> {
+  getUser$(): Observable<any> {
     return this.auth0Client$.pipe(
-      concatMap((client: Auth0Client) => from(client.getUser(options))),
+      concatMap((client: Auth0Client) => from(client.getUser())),
       tap((user) => {
         this.userService.getCurrentUserDetail().subscribe((currentUser) => {
           if (currentUser.displayName === null) {
@@ -164,8 +166,10 @@ export class AuthService {
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log in
       client.loginWithRedirect({
-        redirect_uri: `${window.location.origin}/callback`,
         appState: { target: redirectPath },
+        authorizationParams: {
+          redirect_uri: `${window.location.origin}/callback`,
+        },
       });
     });
   }
@@ -199,8 +203,8 @@ export class AuthService {
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log out
       client.logout({
-        client_id: environment.authentication.client_id,
-        returnTo: `${window.location.origin}`,
+        clientId: environment.authentication.client_id,
+        logoutParams: { returnTo: `${window.location.origin}` },
       });
     });
   }

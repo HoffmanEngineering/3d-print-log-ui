@@ -43,6 +43,7 @@ export class CuraParserService implements NewPrintParser {
       case '2.0.1':
       case '2.0.2':
       case '2.0.3':
+      case '2.0.4':
         this.displayOutdatedCuraToast();
         return this.parserV1pt2pt0.parse(params);
       default:

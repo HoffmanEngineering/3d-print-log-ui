@@ -133,20 +133,39 @@
           >
         </mat-form-field>
 
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Diameter (mm)</mat-label>
-          <input
-            id="edit-filament-name"
-            matInput
-            type="number"
-            formControlName="diameterMm"
-          />
-          <!-- <mat-error
-                  *ngIf="filamentForm.controls['brand'].hasError('required')"
-                >
-                  A Name is <strong>required</strong>
-                </mat-error> -->
-        </mat-form-field>
+        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+          <mat-form-field style="margin: 0" fxFlex>
+            <mat-label>Diameter (mm)</mat-label>
+            <input
+              id="edit-filament-name"
+              matInput
+              type="number"
+              formControlName="diameterMm"
+              step="0.25"
+            />
+          </mat-form-field>
+          <button
+            fxFlex="grow"
+            style="margin-left: 10px; height: 35px"
+            *ngIf="
+              this.filamentForm &&
+              this.filamentForm.get('diameterMm').dirty &&
+              (this.defaultFilamentDiameterMmSetting === null ||
+                this.filamentForm.get('diameterMm').value.toString() !==
+                  this.defaultFilamentDiameterMmSetting.value.toString())
+            "
+            mat-raised-button
+            type="button"
+            color="accent"
+            (click)="
+              this.changeDefaultFilamentDiameter(
+                this.filamentForm.get('diameterMm').value
+              )
+            "
+          >
+            Save as Default Filament Diameter
+          </button>
+        </div>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Storage Location</mat-label>
@@ -428,6 +447,50 @@
             Only numeric prices are allowed.
           </mat-error>
         </mat-form-field>
+
+        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+          <mat-form-field style="margin: 0" fxFlex>
+            <mat-label>Purchase Price</mat-label>
+            <span matPrefix>{{ this.preferredCurrencySymbol }}&nbsp;</span>
+            <input
+              id="edit-filament-purchase-price"
+              matInput
+              type="text"
+              formControlName="purchasePriceValue"
+              maxlength="256"
+            />
+            <mat-error
+              *ngIf="
+                filamentForm.controls['purchasePriceValue'].hasError('pattern')
+              "
+            >
+              Only numeric prices are allowed.
+            </mat-error>
+          </mat-form-field>
+          <button
+            fxFlex="grow"
+            style="margin-left: 10px; height: 35px"
+            *ngIf="
+              this.filamentForm &&
+              this.filamentForm.get('purchasePriceValue').dirty &&
+              this.filamentForm.get('purchasePriceValue').valid &&
+              (this.defaultFilamentPriceSetting === null ||
+                this.filamentForm.get('purchasePriceValue').value.toString() !==
+                  this.defaultFilamentPriceSetting.value.toString())
+            "
+            mat-raised-button
+            type="button"
+            color="accent"
+            (click)="
+              this.changeDefaultFilamentPrice(
+                this.filamentForm.get('purchasePriceValue').value
+              )
+            "
+          >
+            Save as Default Filament Price
+          </button>
+        </div>
+
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Purchase Notes</mat-label>
           <textarea

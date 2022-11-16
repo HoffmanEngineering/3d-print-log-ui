@@ -12,8 +12,13 @@ import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { Material } from 'src/app/core/services/material.service';
-import { UserSetting } from 'src/app/core/services/user-setting.service';
+import {
+  UserSetting,
+  UserSettingService,
+  UserSettingType,
+} from 'src/app/core/services/user-setting.service';
 import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import {
   FilamentAdjustment,
@@ -39,6 +44,9 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
 
   public preferredCurrencySymbol = '$';
 
+  public defaultFilamentDiameterMmSetting: UserSetting | null = null;
+  public defaultFilamentPriceSetting: UserSetting | null = null;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -47,7 +55,10 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     private toastr: ToastrService,
     private titleService: Title,
     private el: ElementRef,
-    private location: Location
+    private location: Location,
+    private readonly loggingService: LoggingService,
+
+    private readonly userSettingService: UserSettingService
   ) {}
 
   @HostListener('window:beforeunload')
@@ -67,9 +78,13 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
         (data.preferredCurrencySymbolSetting as UserSetting | null)?.value ??
         '$';
 
-      this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
-
       this.materials = data.materials ?? [];
+
+      this.defaultFilamentDiameterMmSetting =
+        data.defaultFilamentDiameterMmSetting;
+      this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
+
+      this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
 
       this.filteredMaterials = this.filamentForm
         .get('materialType')
@@ -154,7 +169,14 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       colorHex: [
         filament && filament.colorHex ? '#' + filament.colorHex : '#000000',
       ],
-      diameterMm: [filament?.diameterMm],
+
+      diameterMm: [
+        filament?.diameterMm
+          ? filament.diameterMm
+          : this.defaultFilamentDiameterMmSetting
+          ? +this.defaultFilamentDiameterMmSetting.value
+          : null,
+      ],
 
       initialTotalWeightG: [filament?.initialTotalWeightMg / 1000],
       initialNominalWeightG: [filament?.initialNominalWeightMg / 1000],
@@ -168,7 +190,11 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       ],
       purchaseLocation: [filament?.purchaseLocation],
       purchasePriceValue: [
-        filament?.purchasePriceValue,
+        filament?.purchasePriceValue
+          ? filament.purchasePriceValue
+          : this.defaultFilamentPriceSetting
+          ? this.defaultFilamentPriceSetting.value
+          : null,
         Validators.pattern(/^[0-9,.]*$/),
       ],
       purchasePriceCurrency: [filament?.purchasePriceCurrency],
@@ -323,6 +349,57 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       return value.replace('#', '');
     } else {
       return null;
+    }
+  }
+
+  changeDefaultFilamentDiameter(newDiameterMm: number) {
+    this.loggingService.logEvent('ChangedDefaultFilamentDiameter', {
+      diameter: newDiameterMm,
+    });
+    if (this.defaultFilamentDiameterMmSetting) {
+      this.userSettingService
+        .updateUserSetting(
+          this.defaultFilamentDiameterMmSetting.id,
+          newDiameterMm.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultFilamentDiameterMmSetting = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Filaments_DefaultDiameterMm,
+          newDiameterMm.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultFilamentDiameterMmSetting = setting;
+        });
+    }
+  }
+
+  changeDefaultFilamentPrice(newPrice: string) {
+    this.loggingService.logEvent('ChangedDefaultFilamentPrice', {
+      price: newPrice,
+      symbol: this.preferredCurrencySymbol,
+    });
+    if (this.defaultFilamentPriceSetting) {
+      this.userSettingService
+        .updateUserSetting(
+          this.defaultFilamentDiameterMmSetting.id,
+          newPrice.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultFilamentPriceSetting = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Filaments_DefaultPrice,
+          newPrice.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultFilamentPriceSetting = setting;
+        });
     }
   }
 }

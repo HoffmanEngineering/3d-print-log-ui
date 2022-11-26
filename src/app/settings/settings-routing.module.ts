@@ -7,6 +7,8 @@ import { DefaultPrintViewStatusSettingResolverService } from '../core/resolvers/
 import { CurrenciesResolverService } from '../core/resolvers/currencies-resolver.service';
 import { CurrentUserDetailResolverService } from './resolvers/current-user-detail-resolver.service';
 import { SettingsComponent } from './settings.component';
+import { DefaultFilamentDiameterSettingResolverService } from '../core/resolvers/default-filament-diameter-setting-resolver.service';
+import { DefaultFilamentPriceSettingResolverService } from '../core/resolvers/default-filament-price-setting-resolver.service';
 
 const routes: Routes = [
   {
@@ -19,6 +21,9 @@ const routes: Routes = [
       currencies: CurrenciesResolverService,
       preferredCurrencyNameSetting: CurrencyNameResolverService,
       preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+      defaultFilamentDiameterMmSetting:
+        DefaultFilamentDiameterSettingResolverService,
+      defaultFilamentPriceSetting: DefaultFilamentPriceSettingResolverService,
     },
   },
 ];

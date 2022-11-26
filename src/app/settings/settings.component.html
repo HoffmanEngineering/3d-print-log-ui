@@ -202,6 +202,128 @@
         </div>
       </div>
 
+      <div
+        fxFlex="grow"
+        fxFlexFill
+        [ngClass]="{
+          'mat-elevation-z5 editing-card':
+            defaultFilamentDiameterMm?.toString() !==
+            this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()
+        }"
+      >
+        <div>
+          <label
+            for="default-filament-diameter-mm"
+            style="margin-right: 10px"
+            matTooltip="The default filament diameter when adding a new roll of Filament."
+            matTooltipPosition="right"
+          >
+            Default Filament Diameter (mm)
+            <mat-icon inline>info</mat-icon>:</label
+          >
+          <input
+            id="default-filament-diameter-mm"
+            type="number"
+            [(ngModel)]="defaultFilamentDiameterMm"
+            step="0.25"
+          />
+        </div>
+
+        <div
+          *ngIf="
+            defaultFilamentDiameterMm?.toString() !==
+            this.defaultFilamentDiameterMmSettingOnLoad?.value?.toString()
+          "
+        >
+          <div
+            style="margin-top: 10px"
+            fxLayout
+            fxLayoutAlign="center center"
+            fxLayoutGap="15px"
+          >
+            <button
+              mat-raised-button
+              type="submit"
+              color="primary"
+              (click)="saveDefaultFilamentDiameterMm(defaultFilamentDiameterMm)"
+            >
+              Save Default Filament Diameter
+            </button>
+            <button
+              mat-raised-button
+              type="button"
+              class="close"
+              (click)="cancelDefaultFilamentDiameterMm()"
+              color="warn"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        fxFlex="grow"
+        fxFlexFill
+        [ngClass]="{
+          'mat-elevation-z5 editing-card':
+            defaultFilamentPrice?.toString() !==
+            this.defaultFilamentPriceSettingOnLoad?.value.toString()
+        }"
+      >
+        <div>
+          <label
+            for="default-filament-price"
+            style="margin-right: 10px"
+            matTooltip="The default filament price when adding a new roll of Filament."
+            matTooltipPosition="right"
+          >
+            Default Filament Price <mat-icon inline>info</mat-icon>:</label
+          >
+          <span
+            >{{ this.currencies[this.preferredCurrency]?.symbol }}&nbsp;</span
+          >
+          <input
+            id="default-filament-price"
+            type="text"
+            [(ngModel)]="defaultFilamentPrice"
+            maxlength="256"
+          />
+        </div>
+
+        <div
+          *ngIf="
+            defaultFilamentPrice?.toString() !==
+            this.defaultFilamentPriceSettingOnLoad?.value?.toString()
+          "
+        >
+          <div
+            style="margin-top: 10px"
+            fxLayout
+            fxLayoutAlign="center center"
+            fxLayoutGap="15px"
+          >
+            <button
+              mat-raised-button
+              type="submit"
+              color="primary"
+              (click)="saveDefaultFilamentPrice(defaultFilamentPrice)"
+            >
+              Save Default Filament price
+            </button>
+            <button
+              mat-raised-button
+              type="button"
+              class="close"
+              (click)="cancelDefaultFilamentPrice()"
+              color="warn"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
       <hr />
       <div fxFlex="grow" fxFlexFill>
         <h2>Export Data</h2>

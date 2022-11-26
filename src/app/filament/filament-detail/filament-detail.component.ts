@@ -352,7 +352,11 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     }
   }
 
-  changeDefaultFilamentDiameter(newDiameterMm: number) {
+  changeDefaultFilamentDiameter(newDiameterMm: number | null) {
+    if (newDiameterMm === null) {
+      return;
+    }
+
     this.loggingService.logEvent('ChangedDefaultFilamentDiameter', {
       diameter: newDiameterMm,
     });
@@ -377,7 +381,11 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     }
   }
 
-  changeDefaultFilamentPrice(newPrice: string) {
+  changeDefaultFilamentPrice(newPrice: string | null) {
+    if (newPrice === null) {
+      return;
+    }
+
     this.loggingService.logEvent('ChangedDefaultFilamentPrice', {
       price: newPrice,
       symbol: this.preferredCurrencySymbol,

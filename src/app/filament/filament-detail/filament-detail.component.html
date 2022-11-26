@@ -429,25 +429,6 @@
                 </mat-error> -->
         </mat-form-field>
 
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Purchase Price</mat-label>
-          <span matPrefix>{{ this.preferredCurrencySymbol }}&nbsp;</span>
-          <input
-            id="edit-filament-purchase-price"
-            matInput
-            type="text"
-            formControlName="purchasePriceValue"
-            maxlength="256"
-          />
-          <mat-error
-            *ngIf="
-              filamentForm.controls['purchasePriceValue'].hasError('pattern')
-            "
-          >
-            Only numeric prices are allowed.
-          </mat-error>
-        </mat-form-field>
-
         <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
           <mat-form-field style="margin: 0" fxFlex>
             <mat-label>Purchase Price</mat-label>

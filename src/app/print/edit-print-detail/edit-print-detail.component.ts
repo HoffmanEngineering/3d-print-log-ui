@@ -121,8 +121,6 @@ export class EditPrintDetailComponent
 
   public defaultFilamentPriceSetting: UserSetting | null = null;
 
-  public isUsingDefaultFilamentPrice = false;
-
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -706,7 +704,7 @@ export class EditPrintDetailComponent
     }
 
     // Save if we are using a default price
-    this.isUsingDefaultFilamentPrice = filamentPrice === defaultPrice;
+    const isUsingDefaultFilamentPrice = filamentPrice === defaultPrice;
 
     const pricePerGram = Number(filamentPrice) / (filamentWeightMg / 1000.0);
 
@@ -737,7 +735,7 @@ export class EditPrintDetailComponent
 
       result = currency(pricePerGram * Number(weightG)).format(currencyFormat);
 
-      if (this.isUsingDefaultFilamentPrice) {
+      if (isUsingDefaultFilamentPrice) {
         result += '*';
       }
 
@@ -755,7 +753,7 @@ export class EditPrintDetailComponent
 
     result = currency(pricePerGram * gramsUsed).format(currencyFormat);
 
-    if (this.isUsingDefaultFilamentPrice) {
+    if (isUsingDefaultFilamentPrice) {
       result += '*';
     }
 

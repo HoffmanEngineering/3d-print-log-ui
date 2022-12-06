@@ -574,7 +574,8 @@
                         defaultFilamentPriceSetting?.value
                       }}"
                       [matTooltipDisabled]="
-                        isUsingDefaultFilamentPrice === false
+                        printFilament.get('filament').value
+                          ?.purchasePriceValue !== null
                       "
                     >
                       {{ getEstimatedPrice(printFilament) }}
@@ -600,7 +601,8 @@
                         preferredCurrency?.symbol
                       }}{{ defaultFilamentPriceSetting?.value }}"
                       [matTooltipDisabled]="
-                        isUsingDefaultFilamentPrice === false
+                        printFilament.get('filament').value
+                          ?.purchasePriceValue !== null
                       "
                     >
                       {{ getActualPrice(printFilament) }}

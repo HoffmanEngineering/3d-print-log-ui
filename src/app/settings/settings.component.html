@@ -388,7 +388,9 @@
             mat-raised-button
             color="warn"
             (click)="deactivateAccount()"
-            [disabled]="!deactivationAgreementChecked"
+            [disabled]="
+              deactivateHasBeenClicked || !deactivationAgreementChecked
+            "
           >
             Deactivate Account
           </button>

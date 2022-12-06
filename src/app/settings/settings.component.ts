@@ -38,6 +38,8 @@ export class SettingsComponent implements OnInit {
   public defaultFilamentDiameterMmSettingOnLoad: UserSetting | null = null;
   public defaultFilamentPriceSettingOnLoad: UserSetting | null = null;
 
+  public deactivateHasBeenClicked = false;
+
   /**
    * NgModel for Profile View Status
    */
@@ -116,6 +118,15 @@ export class SettingsComponent implements OnInit {
       this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
         ? this.defaultFilamentPriceSettingOnLoad.value
         : null;
+    });
+
+    this.authService.userProfile$.subscribe((user) => {
+      if (user.deactivationDateTime) {
+        this.deactivateHasBeenClicked = true;
+      } else {
+        // If the deactivate date time gets set back to null, then clear the click
+        this.deactivateHasBeenClicked = false;
+      }
     });
   }
 
@@ -329,10 +340,18 @@ export class SettingsComponent implements OnInit {
   }
 
   public deactivateAccount() {
+    this.deactivateHasBeenClicked = true;
+
     this.userService.deactivateCurrentUser().subscribe((updatedUser) => {
       this.authService.updateCurrentUserDeactivationDate(
         updatedUser.deactivationDateTime
       );
+
+      window.scroll({
+        top: 0,
+        left: 0,
+        behavior: 'smooth',
+      });
     });
   }
 }

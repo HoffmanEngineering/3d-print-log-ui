@@ -190,11 +190,7 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       ],
       purchaseLocation: [filament?.purchaseLocation],
       purchasePriceValue: [
-        filament?.purchasePriceValue
-          ? filament.purchasePriceValue
-          : this.defaultFilamentPriceSetting
-          ? this.defaultFilamentPriceSetting.value
-          : null,
+        filament?.purchasePriceValue ? filament.purchasePriceValue : null,
         Validators.pattern(/^[0-9,.]*$/),
       ],
       purchasePriceCurrency: [filament?.purchasePriceCurrency],

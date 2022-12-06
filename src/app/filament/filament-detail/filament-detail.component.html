@@ -438,6 +438,11 @@
               matInput
               type="text"
               formControlName="purchasePriceValue"
+              [placeholder]="
+                defaultFilamentPriceSetting
+                  ? defaultFilamentPriceSetting.value
+                  : null
+              "
               maxlength="256"
             />
             <mat-error

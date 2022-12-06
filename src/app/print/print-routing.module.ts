@@ -7,6 +7,7 @@ import { CurrenciesResolverService } from '../core/resolvers/currencies-resolver
 import { CurrencyNameResolverService } from '../core/resolvers/currency-name-resolver.service';
 import { CurrencySymbolResolverService } from '../core/resolvers/currency-symbol-resolver.service';
 import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/current-user-printer-summary-resolver.service';
+import { DefaultFilamentPriceSettingResolverService } from '../core/resolvers/default-filament-price-setting-resolver.service';
 import { DefaultPrintViewStatusSettingResolverService } from '../core/resolvers/default-print-view-status-setting-resolver.service';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintListComponent } from './print-list/print-list.component';
@@ -38,6 +39,8 @@ const routes: Routes = [
           lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
           defaultPrintViewStatusSetting:
             DefaultPrintViewStatusSettingResolverService,
+          defaultFilamentPriceSetting:
+            DefaultFilamentPriceSettingResolverService,
           lastFilamentMeasureSetting: LastFilamentMeasureSettingResolverService,
           currencies: CurrenciesResolverService,
           preferredCurrencyNameSetting: CurrencyNameResolverService,
@@ -54,6 +57,8 @@ const routes: Routes = [
           lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
           defaultPrintViewStatusSetting:
             DefaultPrintViewStatusSettingResolverService,
+          defaultFilamentPriceSetting:
+            DefaultFilamentPriceSettingResolverService,
           lastFilamentMeasureSetting: LastFilamentMeasureSettingResolverService,
           currencies: CurrenciesResolverService,
           preferredCurrencyNameSetting: CurrencyNameResolverService,

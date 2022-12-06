@@ -357,6 +357,38 @@
                     }}
                     (m) remaining
                   </div>
+                  <div
+                    fxFlex="grow"
+                    class="filament-section"
+                    *ngIf="
+                      printFilament.get('filament').value !== null &&
+                      printFilament.get('filament').value
+                        ?.purchasePriceValue !== null &&
+                      printFilament.get('filament').value
+                        ?.purchasePriceValue !== ''
+                    "
+                  >
+                    Price: {{ preferredCurrency?.symbol
+                    }}{{
+                      printFilament.get('filament').value?.purchasePriceValue
+                    }}
+                  </div>
+                  <div
+                    fxFlex="grow"
+                    class="filament-section"
+                    *ngIf="
+                      printFilament.get('filament').value !== null &&
+                      printFilament.get('filament').value
+                        ?.purchasePriceValue === null &&
+                      defaultFilamentPriceSetting?.value !== null
+                    "
+                    matTooltip="* using default filament price of {{
+                      preferredCurrency?.symbol
+                    }}{{ defaultFilamentPriceSetting?.value }}"
+                  >
+                    Price: {{ preferredCurrency?.symbol
+                    }}{{ defaultFilamentPriceSetting?.value }}*
+                  </div>
                   <div fxFlex>
                     <button
                       type="button"
@@ -535,7 +567,16 @@
                     *ngIf="printFilament.get('filament').value !== null"
                   >
                     <div gdColumn="1" gdRow="1">Estimated Cost:</div>
-                    <div gdColumn="2" gdRow="1">
+                    <div
+                      gdColumn="2"
+                      gdRow="1"
+                      matTooltip="* using default filament price of {{
+                        defaultFilamentPriceSetting?.value
+                      }}"
+                      [matTooltipDisabled]="
+                        isUsingDefaultFilamentPrice === false
+                      "
+                    >
                       {{ getEstimatedPrice(printFilament) }}
                     </div>
                     <div
@@ -554,6 +595,12 @@
                       *ngIf="
                         printFilament.get('amountG').value !== 0 ||
                         printFilament.get('lengthInM').value !== 0
+                      "
+                      matTooltip="* using default filament price of {{
+                        preferredCurrency?.symbol
+                      }}{{ defaultFilamentPriceSetting?.value }}"
+                      [matTooltipDisabled]="
+                        isUsingDefaultFilamentPrice === false
                       "
                     >
                       {{ getActualPrice(printFilament) }}

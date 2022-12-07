@@ -11,6 +11,8 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
 import { FilamentService } from 'src/app/core/services/filament.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import { UserSettingService } from 'src/app/core/services/user-setting.service';
 
 import { FilamentDetailComponent } from './filament-detail.component';
 
@@ -29,6 +31,16 @@ describe('FilamentDetailComponent', () => {
       ['success']
     );
 
+    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
+      'UserSettingService',
+      ['updateUserSetting']
+    );
+
+    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logException',
+      'logEvent',
+    ]);
+
     await TestBed.configureTestingModule({
       declarations: [FilamentDetailComponent],
       imports: [
@@ -45,6 +57,8 @@ describe('FilamentDetailComponent', () => {
       providers: [
         { provide: FilamentService, useValue: mockFilamentService },
         { provide: ToastrService, useValue: mockToastrservice },
+        { provide: UserSettingService, useValue: mockUserSettingService },
+        { provide: LoggingService, useValue: mockLogger },
         {
           provide: ActivatedRoute,
           useValue: {

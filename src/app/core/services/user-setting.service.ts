@@ -20,6 +20,8 @@ export enum UserSettingType {
   Prints_LastSelectedFilamentMeasureType = 4,
   Currency_Name = 5,
   Currency_Symbol = 6,
+  Filaments_DefaultDiameterMm = 7,
+  Filaments_DefaultPrice = 8,
 }
 
 export interface UserSetting {

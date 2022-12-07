@@ -35,6 +35,11 @@ export class SettingsComponent implements OnInit {
   public preferredCurrencyNameSettingOnLoad: UserSetting | null = null;
   public preferredCurrencySymbolSettingOnLoad: UserSetting | null = null;
 
+  public defaultFilamentDiameterMmSettingOnLoad: UserSetting | null = null;
+  public defaultFilamentPriceSettingOnLoad: UserSetting | null = null;
+
+  public deactivateHasBeenClicked = false;
+
   /**
    * NgModel for Profile View Status
    */
@@ -48,6 +53,16 @@ export class SettingsComponent implements OnInit {
    * NgModel for Currency
    */
   public preferredCurrency: string = null;
+
+  /**
+   * NgModel for Default Filament Diameter
+   */
+  public defaultFilamentDiameterMm: number = null;
+
+  /**
+   * NgModel for Default Filament Price
+   */
+  public defaultFilamentPrice: string = null;
 
   public exportInProgress = false;
 
@@ -81,6 +96,10 @@ export class SettingsComponent implements OnInit {
       this.preferredCurrencySymbolSettingOnLoad =
         data.preferredCurrencySymbolSetting;
 
+      this.defaultFilamentDiameterMmSettingOnLoad =
+        data.defaultFilamentDiameterMmSetting;
+      this.defaultFilamentPriceSettingOnLoad = data.defaultFilamentPriceSetting;
+
       // Default all the ngModels
       this.profileViewStatus = this.userDetailsOnLoad.viewStatus;
       this.printViewStatus = this.defaultPrintViewStatusSettingOnLoad
@@ -90,6 +109,24 @@ export class SettingsComponent implements OnInit {
       this.preferredCurrency = this.preferredCurrencyNameSettingOnLoad
         ? this.preferredCurrencyNameSettingOnLoad.value
         : 'USD';
+
+      this.defaultFilamentDiameterMm = this
+        .defaultFilamentDiameterMmSettingOnLoad
+        ? +this.defaultFilamentDiameterMmSettingOnLoad.value
+        : null;
+
+      this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
+        ? this.defaultFilamentPriceSettingOnLoad.value
+        : null;
+    });
+
+    this.authService.userProfile$.subscribe((user) => {
+      if (user.deactivationDateTime) {
+        this.deactivateHasBeenClicked = true;
+      } else {
+        // If the deactivate date time gets set back to null, then clear the click
+        this.deactivateHasBeenClicked = false;
+      }
     });
   }
 
@@ -192,6 +229,62 @@ export class SettingsComponent implements OnInit {
       : 'USD';
   }
 
+  saveDefaultFilamentDiameterMm(newDiameterMm: number) {
+    if (this.defaultFilamentDiameterMmSettingOnLoad) {
+      this.userSettingService
+        .updateUserSetting(
+          this.defaultFilamentDiameterMmSettingOnLoad.id,
+          newDiameterMm.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultFilamentDiameterMmSettingOnLoad = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Filaments_DefaultDiameterMm,
+          newDiameterMm.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultFilamentDiameterMmSettingOnLoad = setting;
+        });
+    }
+  }
+
+  cancelDefaultFilamentDiameterMm() {
+    this.defaultFilamentDiameterMm = this.defaultFilamentDiameterMmSettingOnLoad
+      ? +this.defaultFilamentDiameterMmSettingOnLoad.value
+      : null;
+  }
+
+  saveDefaultFilamentPrice(newPrice: string) {
+    if (this.defaultFilamentPriceSettingOnLoad) {
+      this.userSettingService
+        .updateUserSetting(
+          this.defaultFilamentPriceSettingOnLoad.id,
+          newPrice.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultFilamentPriceSettingOnLoad = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Filaments_DefaultPrice,
+          newPrice.toString()
+        )
+        .subscribe((setting) => {
+          this.defaultFilamentPriceSettingOnLoad = setting;
+        });
+    }
+  }
+
+  cancelDefaultFilamentPrice() {
+    this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
+      ? this.defaultFilamentPriceSettingOnLoad.value
+      : null;
+  }
+
   public export() {
     if (this.exportInProgress) {
       return; // prevent multiple exports;
@@ -247,10 +340,18 @@ export class SettingsComponent implements OnInit {
   }
 
   public deactivateAccount() {
+    this.deactivateHasBeenClicked = true;
+
     this.userService.deactivateCurrentUser().subscribe((updatedUser) => {
       this.authService.updateCurrentUserDeactivationDate(
         updatedUser.deactivationDateTime
       );
+
+      window.scroll({
+        top: 0,
+        left: 0,
+        behavior: 'smooth',
+      });
     });
   }
 }

@@ -27,6 +27,48 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.21.0': {
+      title: '1.21.0 - Filament Defaults and Total Print Costs',
+      body: `<p>
+  You can now set the <strong>Default Filament Diameter</strong> and
+  <strong>Default Filament Price</strong>. The
+  <strong>Default Filament Diameter</strong> will automatically populate the
+  diameter when creating a new filament, saving you keystrokes. The
+  <strong>Default Filament Price</strong> acts as a global price and will be used in all cost
+  calculations when the selected filament doesn't have a price specified.
+</p>
+<p>
+  Speaking of cost calculations, the
+  <a routerLink="/prints">Print List</a> now has a new
+  <strong>Total Cost</strong> column. This will display the sum of all the
+  filament costs for that print. The <strong>Filament</strong> column will
+  also display the individual costs for each different filament used in a
+  print. You can view those new columns on the Print List by clicking the
+  <strong>Gear Icon</strong>-><strong>Change table layout</strong>, then
+  selecting <strong>Filament</strong> or <strong>Total Cost</strong>.
+</p>
+<p>
+  And theres a few bug fixes related to the Octoprint Integration and account deactivation. See the <a rel="noreferrer noopener" target="_blank" href="/docs/release-notes">Full Release Notes</a> for all changes and bug fixes in this version.
+</p>
+<p>
+  Support development of 3D Print Log:<br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.20.0': {
       title: '1.20.0 - Cura Plugin 2.0.5',
       body: `<p>

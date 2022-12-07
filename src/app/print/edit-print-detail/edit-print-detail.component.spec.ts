@@ -34,7 +34,7 @@ describe('EditPrintDetailComponent', () => {
   beforeEach(waitForAsync(() => {
     const mockPrintService = jasmine.createSpyObj<PrintService>(
       'PrintService',
-      ['addPrint']
+      { addPrint: of(), calculatePrintCost: { valid: false, message: '' } }
     );
 
     const mockToastrService = jasmine.createSpyObj<ToastrService>(
@@ -108,6 +108,22 @@ describe('EditPrintDetailComponent', () => {
               lastSelectedPrinterSetting: null,
               defaultPrintViewStatusSetting: null,
               print: { print: { printerId: 1, notes: '' } },
+              currencies: {
+                USD: {
+                  name: 'United States Dollar',
+                  demonym: 'US',
+                  majorSingle: 'Dollar',
+                  majorPlural: 'Dollars',
+                  ISOnum: 840,
+                  symbol: '$',
+                  symbolNative: '$',
+                  minorSingle: 'Cent',
+                  minorPlural: 'Cents',
+                  ISOdigits: 2,
+                  decimals: 2,
+                  numToBasic: 100,
+                },
+              },
             }),
           },
         },

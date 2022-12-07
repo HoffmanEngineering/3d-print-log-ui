@@ -39,6 +39,8 @@ import {
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import {
   EMPTY_GUID,
+  FilamentPrice,
+  FilamentPriceInvalid,
   PrintDetail,
   PrintFilamentSummaryDto,
   PrintService,
@@ -47,7 +49,10 @@ import {
 } from '../../core/services/print.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import currency from 'currency.js';
-import { Currencies } from 'src/app/core/resolvers/currencies-resolver.service';
+import {
+  Currencies,
+  Currency,
+} from 'src/app/core/resolvers/currencies-resolver.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 
 export interface PrintImageValue {
@@ -112,7 +117,11 @@ export class EditPrintDetailComponent
 
   public currencies: Currencies;
 
+  public preferredCurrency: Currency | undefined = undefined;
+
   public preferredCurrencyNameSetting: UserSetting | null = null;
+
+  public defaultFilamentPriceSetting: UserSetting | null = null;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -171,12 +180,18 @@ export class EditPrintDetailComponent
       this.preferredCurrencyNameSetting = data.preferredCurrencyNameSetting;
       this.currencies = data.currencies;
 
+      const preferredCurrencyName =
+        this.preferredCurrencyNameSetting?.value ?? 'USD';
+      this.preferredCurrency = this.currencies[preferredCurrencyName];
+
       this.printers = data.printers;
 
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
       this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
       this.lastAllowCommentsSetting = data.lastAllowCommentsSetting;
       this.lastFilamentMeasureSetting = data.lastFilamentMeasureSetting;
+
+      this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
 
@@ -651,7 +666,20 @@ export class EditPrintDetailComponent
 
     const lengthM = printFilamentGroup.get('estimatedLengthInM').value;
 
-    return this.getPrice(filament, isLengthSource, weightG, lengthM);
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+
+    const symbol = this.preferredCurrency.symbol;
+
+    return this.formatFilamentPrice(
+      this.printService.calculatePrintCost({
+        filament,
+        isLengthSource,
+        weightG,
+        lengthM,
+        currencySymbol: symbol,
+        defaultFilamentPrice: defaultPrice,
+      })
+    );
   }
 
   public getActualPrice(printFilamentGroup: UntypedFormGroup) {
@@ -664,69 +692,32 @@ export class EditPrintDetailComponent
 
     const lengthM = printFilamentGroup.get('lengthInM').value;
 
-    return this.getPrice(filament, isLengthSource, weightG, lengthM);
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+
+    const symbol = this.preferredCurrency.symbol;
+
+    return this.formatFilamentPrice(
+      this.printService.calculatePrintCost({
+        filament,
+        isLengthSource,
+        weightG,
+        lengthM,
+        currencySymbol: symbol,
+        defaultFilamentPrice: defaultPrice,
+      })
+    );
   }
 
-  public getPrice(
-    filament: FilamentSummary,
-    isLengthSource: boolean,
-    weightG: string,
-    lengthM: string
-  ) {
-    const filamentPrice = filament.purchasePriceValue;
-
-    if (filamentPrice == null) {
-      return '(Filament price not set)';
+  public formatFilamentPrice(price: FilamentPrice) {
+    if (price.valid) {
+      let result = price.formattedPrice;
+      if (price.usesDefaultPrice) {
+        result += '*';
+      }
+      return result;
+    } else {
+      return (price as FilamentPriceInvalid).message;
     }
-
-    const filamentWeightMg = filament.initialNominalWeightMg;
-
-    if (filamentWeightMg == null || filamentWeightMg === 0) {
-      return '(Filament initial weight not set)';
-    }
-
-    const pricePerGram = Number(filamentPrice) / (filamentWeightMg / 1000.0);
-
-    function getDecimalSeparator() {
-      const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'decimal').value;
-    }
-
-    function getGroupSeparator() {
-      const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'group').value;
-    }
-
-    const preferredCurrencyName =
-      this.preferredCurrencyNameSetting?.value ?? 'USD';
-    const preferredCurrency = this.currencies[preferredCurrencyName];
-
-    const currencyFormat = {
-      symbol: preferredCurrency.symbol,
-      decimal: getDecimalSeparator(),
-      separator: getGroupSeparator(),
-    };
-
-    if (!isLengthSource) {
-      // Use Weights, ezpz
-
-      return currency(pricePerGram * Number(weightG)).format(currencyFormat);
-    }
-
-    // Calculate from length.
-    const diameterMm = filament.diameterMm;
-    const areaSqM = Math.PI * Math.pow(diameterMm / 1000.0, 2) * (1 / 4);
-
-    const densityGramPerCubicM =
-      filament.materialDensityGramPerCubicCm * 1000000;
-
-    const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
-
-    return currency(pricePerGram * gramsUsed).format(currencyFormat);
   }
 
   // We will create multiple form controls inside defined form controls photos.

@@ -39,6 +39,8 @@ import {
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import {
   EMPTY_GUID,
+  FilamentPrice,
+  FilamentPriceInvalid,
   PrintDetail,
   PrintFilamentSummaryDto,
   PrintService,
@@ -664,7 +666,20 @@ export class EditPrintDetailComponent
 
     const lengthM = printFilamentGroup.get('estimatedLengthInM').value;
 
-    return this.getPrice(filament, isLengthSource, weightG, lengthM);
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+
+    const symbol = this.preferredCurrency.symbol;
+
+    return this.formatFilamentPrice(
+      this.printService.calculatePrintCost({
+        filament,
+        isLengthSource,
+        weightG,
+        lengthM,
+        currencySymbol: symbol,
+        defaultFilamentPrice: defaultPrice,
+      })
+    );
   }
 
   public getActualPrice(printFilamentGroup: UntypedFormGroup) {
@@ -677,87 +692,32 @@ export class EditPrintDetailComponent
 
     const lengthM = printFilamentGroup.get('lengthInM').value;
 
-    return this.getPrice(filament, isLengthSource, weightG, lengthM);
-  }
-
-  public getPrice(
-    filament: FilamentSummary,
-    isLengthSource: boolean,
-    weightG: string,
-    lengthM: string
-  ) {
     const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
 
-    const filamentPrice =
-      filament.purchasePriceValue != null && filament.purchasePriceValue !== ''
-        ? filament.purchasePriceValue
-        : defaultPrice;
+    const symbol = this.preferredCurrency.symbol;
 
-    if (filamentPrice == null) {
-      return '(Filament price not set)';
-    }
+    return this.formatFilamentPrice(
+      this.printService.calculatePrintCost({
+        filament,
+        isLengthSource,
+        weightG,
+        lengthM,
+        currencySymbol: symbol,
+        defaultFilamentPrice: defaultPrice,
+      })
+    );
+  }
 
-    const filamentWeightMg = filament.initialNominalWeightMg;
-
-    if (filamentWeightMg == null || filamentWeightMg === 0) {
-      return '(Filament initial weight not set)';
-    }
-
-    // Save if we are using a default price
-    const isUsingDefaultFilamentPrice = filamentPrice === defaultPrice;
-
-    const pricePerGram = Number(filamentPrice) / (filamentWeightMg / 1000.0);
-
-    function getDecimalSeparator() {
-      const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'decimal').value;
-    }
-
-    function getGroupSeparator() {
-      const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'group').value;
-    }
-
-    const currencyFormat = {
-      symbol: this.preferredCurrency.symbol,
-      decimal: getDecimalSeparator(),
-      separator: getGroupSeparator(),
-    };
-
-    let result = '';
-
-    if (!isLengthSource) {
-      // Use Weights, ezpz
-
-      result = currency(pricePerGram * Number(weightG)).format(currencyFormat);
-
-      if (isUsingDefaultFilamentPrice) {
+  public formatFilamentPrice(price: FilamentPrice) {
+    if (price.valid) {
+      let result = price.formattedPrice;
+      if (price.usesDefaultPrice) {
         result += '*';
       }
-
       return result;
+    } else {
+      return (price as FilamentPriceInvalid).message;
     }
-
-    // Calculate from length.
-    const diameterMm = filament.diameterMm;
-    const areaSqM = Math.PI * Math.pow(diameterMm / 1000.0, 2) * (1 / 4);
-
-    const densityGramPerCubicM =
-      filament.materialDensityGramPerCubicCm * 1000000;
-
-    const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
-
-    result = currency(pricePerGram * gramsUsed).format(currencyFormat);
-
-    if (isUsingDefaultFilamentPrice) {
-      result += '*';
-    }
-
-    return result;
   }
 
   // We will create multiple form controls inside defined form controls photos.

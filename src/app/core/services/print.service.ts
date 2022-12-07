@@ -15,6 +15,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { AddCommentDto, Comment } from './comment.service';
 import { FilamentSummary } from './filament.service';
+import currency from 'currency.js';
 
 export enum PrintSummarySortColumn {
   Title = 1,
@@ -194,6 +195,21 @@ export interface AddPrintDTO {
 }
 
 export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
+
+export type FilamentPriceValid = {
+  valid: true;
+  price: currency;
+  formattedPrice: string;
+  symbol: string;
+  usesDefaultPrice: boolean;
+};
+
+export type FilamentPriceInvalid = {
+  valid: false;
+  message: string;
+};
+
+export type FilamentPrice = FilamentPriceValid | FilamentPriceInvalid;
 
 @Injectable({
   providedIn: 'root',
@@ -492,5 +508,207 @@ export class PrintService {
   public exportAllPrintsAsCsv() {
     const url = `${this.baseApi}/api/Prints/csv`;
     return this.http.get(url, { responseType: 'blob' });
+  }
+
+  // Calculates all individual filament costs, as well as the sum total of all
+  public calculateTotalPrintCost(
+    filamentUsage: PrintFilamentSummaryDto[],
+    currencySymbol: string,
+    defaultFilamentPrice?: string
+  ) {
+    const prices: FilamentPrice[] = [];
+
+    for (const fu of filamentUsage) {
+      if (fu.filament === null) {
+        continue;
+      }
+
+      // If actual has an amount, use it.
+      if (
+        (fu.isActualLengthSource && fu.lengthInM > 0) ||
+        (!fu.isActualLengthSource && fu.amountMg > 0)
+      ) {
+        const price = this.calculatePrintCost({
+          currencySymbol,
+          filament: fu.filament,
+          isLengthSource: fu.isActualLengthSource,
+          lengthM: fu.lengthInM,
+          weightG: fu.amountMg > 0 ? fu.amountMg / 1000 : undefined,
+          defaultFilamentPrice,
+        });
+
+        prices.push(price);
+      } else {
+        const price = this.calculatePrintCost({
+          currencySymbol,
+          filament: fu.filament,
+          isLengthSource: fu.isEstimatedLengthSource,
+          lengthM: fu.estimatedLengthInM,
+          weightG:
+            fu.estimatedAmountMg > 0 ? fu.estimatedAmountMg / 1000 : undefined,
+          defaultFilamentPrice,
+        });
+
+        prices.push(price);
+      }
+    }
+
+    // Once all prices are calculated, sum them up.
+    let totalPrice: currency = undefined;
+
+    for (const price of prices) {
+      if (price.valid && !isNaN(price.price.value)) {
+        if (totalPrice == undefined) {
+          totalPrice = price.price;
+        } else {
+          totalPrice = totalPrice.add(price.price);
+        }
+      }
+    }
+
+    function getDecimalSeparator() {
+      const numberWithDecimalSeparator = 100000.1;
+      return Intl.NumberFormat()
+        .formatToParts(numberWithDecimalSeparator)
+        .find((part) => part.type === 'decimal').value;
+    }
+
+    function getGroupSeparator() {
+      const numberWithDecimalSeparator = 100000.1;
+      return Intl.NumberFormat()
+        .formatToParts(numberWithDecimalSeparator)
+        .find((part) => part.type === 'group').value;
+    }
+
+    const currencyFormat = {
+      symbol: currencySymbol,
+      decimal: getDecimalSeparator(),
+      separator: getGroupSeparator(),
+    };
+
+    let total: FilamentPrice = undefined;
+    if (totalPrice) {
+      total = {
+        formattedPrice: totalPrice.format(currencyFormat),
+        price: totalPrice,
+        symbol: currencySymbol,
+        usesDefaultPrice: prices.some(
+          (price) => price.valid && price.usesDefaultPrice
+        ),
+        valid: true,
+      };
+    } else {
+      total = {
+        valid: false,
+        message: 'Cannot calculate total',
+      };
+    }
+
+    return {
+      prices,
+      total,
+    };
+  }
+
+  /** Returns the  */
+  public calculatePrintCost({
+    filament,
+    isLengthSource,
+    weightG,
+    lengthM,
+    currencySymbol,
+    defaultFilamentPrice,
+  }: {
+    filament: FilamentSummary;
+    isLengthSource: boolean;
+    weightG: string | number | undefined;
+    lengthM: string | number | undefined;
+    currencySymbol: string;
+    defaultFilamentPrice?: string;
+  }): FilamentPrice {
+    if (filament === null) {
+      return { valid: false, message: '' };
+    }
+
+    const defaultPrice = defaultFilamentPrice ?? null;
+
+    const filamentPrice =
+      filament.purchasePriceValue != null && filament.purchasePriceValue !== ''
+        ? filament.purchasePriceValue
+        : defaultPrice;
+
+    if (filamentPrice == null) {
+      return { valid: false, message: '(Filament price not set)' };
+    }
+
+    const filamentWeightMg = filament.initialNominalWeightMg;
+
+    if (filamentWeightMg == null || filamentWeightMg === 0) {
+      return { valid: false, message: '(Filament initial weight not set)' };
+    }
+
+    // Save if we are using a default price
+    const isUsingDefaultFilamentPrice = filamentPrice === defaultPrice;
+
+    const pricePerGram = Number(filamentPrice) / (filamentWeightMg / 1000.0);
+
+    function getDecimalSeparator() {
+      const numberWithDecimalSeparator = 100000.1;
+      return Intl.NumberFormat()
+        .formatToParts(numberWithDecimalSeparator)
+        .find((part) => part.type === 'decimal').value;
+    }
+
+    function getGroupSeparator() {
+      const numberWithDecimalSeparator = 100000.1;
+      return Intl.NumberFormat()
+        .formatToParts(numberWithDecimalSeparator)
+        .find((part) => part.type === 'group').value;
+    }
+
+    const currencyFormat = {
+      symbol: currencySymbol,
+      decimal: getDecimalSeparator(),
+      separator: getGroupSeparator(),
+    };
+
+    if (!isLengthSource) {
+      // Use Weights, ezpz
+
+      if (isNaN(currency(pricePerGram * Number(weightG)).value)) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
+      return {
+        valid: true,
+        price: currency(pricePerGram * Number(weightG)),
+        formattedPrice: currency(pricePerGram * Number(weightG)).format(
+          currencyFormat
+        ),
+        symbol: currencySymbol,
+        usesDefaultPrice: isUsingDefaultFilamentPrice,
+      };
+    }
+
+    // Calculate from length.
+    const diameterMm = filament.diameterMm;
+    const areaSqM = Math.PI * Math.pow(diameterMm / 1000.0, 2) * (1 / 4);
+
+    const densityGramPerCubicM =
+      filament.materialDensityGramPerCubicCm * 1000000;
+
+    const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
+
+    if (isNaN(currency(pricePerGram * gramsUsed).value)) {
+      return { message: '(Price not valid)', valid: false };
+    }
+
+    return {
+      valid: true,
+      price: currency(pricePerGram * gramsUsed),
+      formattedPrice: currency(pricePerGram * gramsUsed).format(currencyFormat),
+      symbol: currencySymbol,
+      usesDefaultPrice: isUsingDefaultFilamentPrice,
+    };
   }
 }

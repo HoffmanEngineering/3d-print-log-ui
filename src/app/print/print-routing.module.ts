@@ -28,6 +28,9 @@ const routes: Routes = [
         resolve: {
           printList: PrintListResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
+          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          defaultFilamentPriceSetting:
+            DefaultFilamentPriceSettingResolverService,
         },
       },
       {

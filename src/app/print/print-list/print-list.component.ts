@@ -10,14 +10,19 @@ import moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
+import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import { UserSetting } from 'src/app/core/services/user-setting.service';
 import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
+  FilamentPrice,
+  FilamentPriceInvalid,
+  PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
   PrintSummary,
@@ -123,6 +128,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
       description: 'Displays the total filament usage in grams',
     },
     {
+      key: 'totalCost',
+      displayName: 'Total Cost',
+      description: 'Displays the total print cost.',
+    },
+    {
       key: 'commentCount',
       displayName: 'Comment Count',
       description: 'Displays the number of comments',
@@ -169,6 +179,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   private readonly PRINT_TABLE_DISPLAYED_COLUMNS =
     'print_table_displayed_columns';
+
+  public defaultFilamentPriceSetting: UserSetting | null = null;
+
+  public preferredCurrencySymbolSetting: UserSetting | null = null;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -243,6 +257,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
     });
 
     this.activatedRoute.data.subscribe((data) => {
+      this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
+      this.preferredCurrencySymbolSetting = data.preferredCurrencySymbolSetting;
+
       const pagedResponse: PagedList<PrintSummary> = data.printList;
       this.handlePagedList(pagedResponse);
 
@@ -540,6 +557,89 @@ export class PrintListComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  public getEstimatedPrice(filamentUsage: PrintFilamentSummaryDto) {
+    const filament = filamentUsage.filament;
+
+    const isLengthSource = filamentUsage.isEstimatedLengthSource;
+
+    const weightG =
+      filamentUsage.estimatedAmountMg > 0
+        ? filamentUsage.estimatedAmountMg / 1000
+        : undefined;
+
+    const lengthM = filamentUsage.estimatedLengthInM;
+
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+
+    const symbol = this.preferredCurrencySymbolSetting?.value ?? '$';
+
+    return this.formatFilamentPrice(
+      this.printService.calculatePrintCost({
+        filament,
+        isLengthSource,
+        weightG,
+        lengthM,
+        currencySymbol: symbol,
+        defaultFilamentPrice: defaultPrice,
+      })
+    );
+  }
+
+  public getActualPrice(filamentUsage: PrintFilamentSummaryDto) {
+    const filament = filamentUsage.filament;
+
+    const isLengthSource = filamentUsage.isActualLengthSource;
+
+    const weightG =
+      filamentUsage.amountMg > 0 ? filamentUsage.amountMg / 1000 : undefined;
+
+    const lengthM = filamentUsage.lengthInM;
+
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+
+    const symbol = this.preferredCurrencySymbolSetting?.value ?? '$';
+
+    return this.formatFilamentPrice(
+      this.printService.calculatePrintCost({
+        filament,
+        isLengthSource,
+        weightG,
+        lengthM,
+        currencySymbol: symbol,
+        defaultFilamentPrice: defaultPrice,
+      })
+    );
+  }
+
+  public formatFilamentPrice(price: FilamentPrice) {
+    if (price.valid) {
+      let result = price.formattedPrice;
+      if (price.usesDefaultPrice) {
+        result += '*';
+      }
+      return result;
+    } else {
+      return (price as FilamentPriceInvalid).message;
+    }
+  }
+
+  public getTotalFilamentCost(filamentUsage: PrintFilamentSummaryDto[]) {
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+
+    const symbol = this.preferredCurrencySymbolSetting?.value ?? '$';
+
+    const total = this.printService.calculateTotalPrintCost(
+      filamentUsage,
+      symbol,
+      defaultPrice
+    );
+
+    if (total.total.valid) {
+      return `${total.total.formattedPrice}`;
+    }
+    return '';
   }
 
   public parseGcode(event) {

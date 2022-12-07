@@ -2,6 +2,62 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.21.0">1.21.0 - Filament Defaults and Total Print Costs</h3>
+  <p>
+    You can now set the <strong>Default Filament Diameter</strong> and
+    <strong>Default Filament Price</strong>. The
+    <strong>Default Filament Diameter</strong> will automatically populate the
+    diameter when creating a new filament, saving you keystrokes. The
+    <strong>Default Filament Price</strong> will be used in all cost
+    calculations when the selected filament doesn't have a price specified.
+  </p>
+  <p>
+    You can set the defaults in the <a routerLink="/settings">Settings Page</a>,
+    or when changing the Diameter or Price on the Edit Filament page.
+  </p>
+  <p>
+    Speaking of cost calculations, the
+    <a routerLink="/prints">Print List</a> now has a new
+    <strong>Total Cost</strong> column. This will display the sum of all the
+    filament costs for that print. The <strong>Filament</strong> column will
+    also display the individual costs for each different filament used in a
+    print. You can view those new columns on the Print List by clicking the
+    <strong>Gear Icon</strong>-><strong>Change table layout</strong>, then
+    selecting <strong>Filament</strong> or <strong>Total Cost</strong>.
+  </p>
+
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>New Default Filament Diameter</strong> - New setting for the
+      default filament diameter
+    </li>
+    <li>
+      <strong>New Default Filament Price</strong> - Global filament price used
+      in all cost calculations, if the filament doesn't specify a price.
+    </li>
+    <li>
+      <strong>Print List - Add Total Cost Column</strong> - New column which
+      will display the total cost of filament for a print, accessible from the
+      Print List's Gear menu.
+    </li>
+    <li>
+      <strong>Print List - Cost added to Filament column</strong> - Filament
+      rows display the cost of the amount of that filament that was used
+    </li>
+    <li>
+      <strong>Octoprint Filament Usage Bug Fix</strong> - Prints added through
+      the Octoprint integration will now automatically calculate the weight of
+      filament used, which means costs will now be accurate. This fix was also
+      applied to all old prints.
+    </li>
+    <li>
+      <strong>Deactivate Account button disabled</strong> - The "Deactivate
+      Account" button will now be disabled once clicked, preventing confusion on
+      whether or not the deactivation was successful.
+    </li>
+  </ul>
+
   <h3 id="v1.20.0">1.20.0 - Cura Plugin 2.0.5</h3>
   <p>
     The <strong>3D Print Log Uploader Plugin for Cura</strong> has been updated

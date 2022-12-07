@@ -34,7 +34,7 @@ describe('EditPrintDetailComponent', () => {
   beforeEach(waitForAsync(() => {
     const mockPrintService = jasmine.createSpyObj<PrintService>(
       'PrintService',
-      ['addPrint']
+      { addPrint: of(), calculatePrintCost: { valid: false, message: '' } }
     );
 
     const mockToastrService = jasmine.createSpyObj<ToastrService>(

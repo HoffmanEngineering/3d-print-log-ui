@@ -5,7 +5,7 @@ import {
   TestBed,
   waitForAsync,
 } from '@angular/core/testing';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatLegacyMenuModule as MatMenuModule } from '@angular/material/legacy-menu';
 import { By } from '@angular/platform-browser';
 
 import { HumanizePipe } from '../../pipes/humanize.pipe';

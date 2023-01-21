@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { ToastrService } from 'ngx-toastr';
 
 import { PrintDetail } from 'src/app/core/services/print.service';

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { PrintStatistic } from '../services/print-statistics.service';
 
-import { MatSlideToggleChange } from '@angular/material/slide-toggle';
+import { MatLegacySlideToggleChange as MatSlideToggleChange } from '@angular/material/legacy-slide-toggle';
 import { groupBy } from 'lodash-es';
 import { PrintStatus } from 'src/app/core/services/print.service';
 import { DonutChartComponent } from 'src/app/shared/panels/donut-chart/donut-chart.component';

@@ -1,5 +1,5 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card fxFlex="500px" fxFlex.xs="100%">
+  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
     <form
       [formGroup]="filamentForm"
       (ngSubmit)="onSubmit()"
@@ -289,6 +289,7 @@
           >
             <div [formGroupName]="adjustmentIndex">
               <mat-card
+                appearance="outlined"
                 class="mat-elevation-z4"
                 fxFlex="grow"
                 fxFlexFill

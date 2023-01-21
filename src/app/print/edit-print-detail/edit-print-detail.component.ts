@@ -20,7 +20,7 @@ import { ActiveToast, ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 import { environment } from 'src/environments/environment';
 
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';

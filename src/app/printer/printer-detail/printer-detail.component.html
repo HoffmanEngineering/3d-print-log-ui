@@ -1,5 +1,5 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card fxFlex="500px" fxFlex.xs="100%">
+  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
     <form
       [formGroup]="printerForm"
       (ngSubmit)="onSubmit()"
@@ -152,6 +152,7 @@
           >
             <div [formGroupName]="printFilamentIndex">
               <mat-card
+                appearance="outlined"
                 class="mat-elevation-z4"
                 fxFlex="grow"
                 fxFlexFill

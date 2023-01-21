@@ -62,7 +62,7 @@ app-navbar {
   white-space: nowrap !important; /* 3 */
 }
 
-.mat-button.active > span {
+.mat-mdc-button.active > span {
   text-decoration: underline;
 }
 
@@ -114,7 +114,10 @@ div[fxLayout='column'] > div[fxFlex] {
   animation: spinner 0.8s linear infinite;
 }
 
+/* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
 mat-checkbox.text-wrap {
+  /* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
   label.mat-checkbox-layout {
     white-space: normal;
   }

@@ -1,22 +1,5 @@
 <div fxLayout="column" fxLayoutAlign="center">
   <div
-    style="
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: white;
-    "
-  >
-    <mat-progress-bar
-      *ngIf="isLoading"
-      color="primary"
-      mode="indeterminate"
-      aria-label="Searching for prints."
-    >
-    </mat-progress-bar>
-    <div *ngIf="!isLoading" style="height: 4px"></div>
-  </div>
-  <div
     class="header"
     fxFlex="grow"
     fxLayout

@@ -1,6 +1,6 @@
 <div fxLayout="row" fxLayoutAlign="center" style="width: 100%">
   <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
-    <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
+    <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="10px">
       <mat-card-header fxFlex="grow">
         <img mat-card-avatar [src]="this.user.profilePicture" />
         <mat-card-title>
@@ -169,7 +169,7 @@
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
       >
-        <div fxFlex fxFlexFill>
+        <div fxFlex fxFlexFill fxLayoutGap="10px">
           <button
             *ngIf="currentUser && currentUser.id === user.id"
             fxFlex="grow"

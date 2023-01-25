@@ -1,5 +1,7 @@
 <mat-card appearance="outlined" class="container">
-  <mat-card-title class="title">Prints by Status</mat-card-title>
+  <mat-card-header>
+    <mat-card-title class="title">Prints by Status</mat-card-title>
+  </mat-card-header>
   <mat-card-content id="ordersByStatus" #ordersByStatus>
     <div id="chartAndDataContainer">
       <div id="chartContainer" [ngClass]="{ half: showData }">

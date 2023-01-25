@@ -67,9 +67,10 @@ app-navbar {
 }
 
 /* Fix for column flexbox on safari. */
-div[fxLayout='column'] > div[fxFlex] {
-  flex: 1 0 auto !important;
-}
+// TODO: CHeck if this is still needed....
+// div[fxLayout='column'] > div[fxFlex] {
+//   flex: 1 0 auto !important;
+// }
 
 /*
 	Use in conjunction with .visually-hidden to only display content when it's focused.

@@ -319,11 +319,10 @@
               let printFilament of filamentUsage.controls;
               let printFilamentIndex = index
             "
-            style="margin-bottom: 5px"
+            style="margin-bottom: 10px"
           >
             <div [formGroupName]="printFilamentIndex">
               <mat-card
-                appearance="outlined"
                 class="mat-elevation-z4"
                 fxFlex="grow"
                 fxFlexFill
@@ -445,7 +444,7 @@
                       </button>
                     </div>
 
-                    <div fxFlex="grow" fxLayout="row">
+                    <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
                       <mat-form-field
                         *ngIf="
                           printFilament.get('isEstimatedLengthSource').value ===
@@ -504,7 +503,7 @@
                           Estimated Filament Usage must be a positive number.
                         </mat-error>
                       </mat-form-field>
-                      <mat-form-field fxFlex="120px">
+                      <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
                         <mat-label>Measure</mat-label>
                         <mat-select
                           formControlName="isEstimatedLengthSource"
@@ -518,7 +517,7 @@
                       </mat-form-field>
                     </div>
 
-                    <div fxFlex="grow" fxLayout="row">
+                    <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
                       <mat-form-field
                         *ngIf="
                           printFilament.get('isActualLengthSource').value ===
@@ -567,7 +566,7 @@
                           Actual Filament Usage must be a positive number.
                         </mat-error>
                       </mat-form-field>
-                      <mat-form-field fxFlex="120px">
+                      <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
                         <mat-label>Measure</mat-label>
                         <mat-select formControlName="isActualLengthSource">
                           <mat-option [value]="false"> Weight </mat-option>

@@ -3,14 +3,39 @@
   <mat-selection-list
     [(ngModel)]="selectedColumns"
     (ngModelChange)="this.data.changeEvent.next($event)"
+    (cdkDropListDropped)="drop($event)"
+    cdkDropList
   >
-    <mat-list-option
-      *ngFor="let column of allColumns"
-      [value]="column.key"
-      [matTooltip]="column.description"
+    <div
+      cdkDrag
+      *ngFor="let column of allColumns; let i = index"
+      style="display: flex"
     >
-      {{ column.displayName }}
-    </mat-list-option>
+      <div style="flex: initial; align-self: center">
+        <button class="transparent" style="cursor: pointer" (click)="moveUp(i)">
+          <mat-icon>keyboard_arrow_up</mat-icon>
+        </button>
+
+        <button
+          class="transparent"
+          style="cursor: pointer"
+          (click)="moveDown(i)"
+        >
+          <mat-icon>keyboard_arrow_down</mat-icon>
+        </button>
+      </div>
+      <div
+        style="flex: initial; align-self: center; cursor: pointer"
+        cdkDragHandle
+      >
+        <mat-icon>drag_handle</mat-icon>
+      </div>
+      <div style="flex: 1">
+        <mat-list-option [value]="column.key" [matTooltip]="column.description">
+          {{ column.displayName }}
+        </mat-list-option>
+      </div>
+    </div>
   </mat-selection-list>
 </div>
 <div

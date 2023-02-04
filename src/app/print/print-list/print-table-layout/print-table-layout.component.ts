@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ColumnDefinition } from '../print-list.component';
 import { Subject } from 'rxjs';
 import { MediaMatcher } from '@angular/cdk/layout';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 export interface DialogData {
   allPossibleColumns: ColumnDefinition[];
@@ -20,6 +21,7 @@ export interface DialogData {
 export class PrintTableLayoutComponent implements OnInit {
   public selectedColumns: string[];
   public initialSelectedColumns: string[];
+  public initialAllColumns: ColumnDefinition[];
   public allColumns: ColumnDefinition[];
   public changeEvent: Subject<string[]>;
 
@@ -33,10 +35,39 @@ export class PrintTableLayoutComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.initialAllColumns = [...this.data.allPossibleColumns];
     this.allColumns = [...this.data.allPossibleColumns];
+
     this.initialSelectedColumns = [...this.data.currentColumns];
     this.selectedColumns = [...this.data.currentColumns];
     this.changeEvent = this.data.changeEvent;
+  }
+
+  drop({
+    previousIndex,
+    currentIndex,
+  }: CdkDragDrop<string[]> | { previousIndex: number; currentIndex: number }) {
+    moveItemInArray(this.allColumns, previousIndex, currentIndex);
+    // this.data.changeEvent.next(this.selectedColumns);
+
+    const newOrderedSelectionList = [];
+    for (const column of this.allColumns) {
+      if (this.selectedColumns.includes(column.key)) {
+        newOrderedSelectionList.push(column.key);
+      }
+    }
+
+    this.selectedColumns = [...newOrderedSelectionList];
+
+    this.data.changeEvent.next([...this.selectedColumns]);
+  }
+
+  moveUp(index: number) {
+    this.drop({ previousIndex: index, currentIndex: index - 1 });
+  }
+
+  moveDown(index: number) {
+    this.drop({ previousIndex: index, currentIndex: index + 1 });
   }
 
   resetSelection() {
@@ -46,6 +77,8 @@ export class PrintTableLayoutComponent implements OnInit {
 
   resetToDefaults() {
     const mobileQuery = this.media.matchMedia('(max-width: 800px)');
+
+    this.allColumns = [...this.initialAllColumns];
 
     let defaultColumns: string[];
 

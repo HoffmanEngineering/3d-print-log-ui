@@ -57,6 +57,7 @@ import {
 import { NgxMatMomentModule } from '@angular-material-components/moment-adapter';
 import { AdComponent } from './ad/ad.component';
 import { AdsenseModule } from 'ng2-adsense';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
   declarations: [
@@ -118,6 +119,7 @@ import { AdsenseModule } from 'ng2-adsense';
     NgxMatTimepickerModule,
     NgxMatMomentModule,
     AdsenseModule,
+    DragDropModule,
   ],
   exports: [
     CommonModule,
@@ -171,6 +173,7 @@ import { AdsenseModule } from 'ng2-adsense';
     NgxMatMomentModule,
     AdsenseModule,
     AdComponent,
+    DragDropModule,
   ],
 })
 export class SharedModule {}

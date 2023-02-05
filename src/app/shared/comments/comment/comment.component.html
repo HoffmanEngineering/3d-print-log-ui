@@ -1,4 +1,4 @@
-<mat-card class="mat-elevation-z1">
+<mat-card appearance="outlined" class="mat-elevation-z1">
   <mat-card-header>
     <img
       *ngIf="comment.createdBy.profilePicture"
@@ -15,7 +15,7 @@
       }}</a>
 
       <span
-        matTooltip="{{ comment.createdDate | date: 'medium' }}"
+        matTooltip="{{ comment.createdDate | date : 'medium' }}"
         style="padding-left: 5px"
         >{{ comment.createdDate | humanize }}</span
       >

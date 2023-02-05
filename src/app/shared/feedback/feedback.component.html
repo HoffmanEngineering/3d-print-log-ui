@@ -1,17 +1,17 @@
 <section fxLayout="row" fxLayoutAlign="center">
-  <mat-card fxFlex="500px" fxFlex.xs="100%">
+  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
     <h1>Send Feedback</h1>
     <form
       [formGroup]="form"
       (ngSubmit)="onSubmit()"
-      fxLayout="column wrap"
+      fxLayout="column"
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
     >
       <mat-card-content
         fxFlex="grow"
         fxFlexFill
-        fxLayout="column wrap"
+        fxLayout="column"
         fxLayoutAlign="space-evenly center"
       >
         <mat-form-field fxFlex="grow" fxFlexFill>

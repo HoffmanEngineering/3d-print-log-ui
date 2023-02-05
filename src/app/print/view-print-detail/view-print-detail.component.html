@@ -1,6 +1,6 @@
 <div fxLayout="row" fxLayoutAlign="center" style="width: 100%">
-  <mat-card fxFlex="500px" fxFlex.xs="100%">
-    <div fxLayout="column wrap" fxLayoutAlign="start center" fxLayoutGap="10px">
+  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
+    <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="10px">
       <mat-card-header fxFlex="grow">
         <img mat-card-avatar [src]="this.user.profilePicture" />
         <mat-card-title>
@@ -9,12 +9,12 @@
         <mat-card-subtitle *ngIf="isUserProfileFeatureEnabled">
           Printed by
           <a [routerLink]="['/users', user.id]">{{ user.displayName }}</a> on
-          {{ print.startDate | date: 'longDate' }}
+          {{ print.startDate | date : 'longDate' }}
         </mat-card-subtitle>
         <mat-card-subtitle *ngIf="!isUserProfileFeatureEnabled">
           Printed by
           {{ user.displayName }} on
-          {{ print.startDate | date: 'longDate' }}
+          {{ print.startDate | date : 'longDate' }}
         </mat-card-subtitle>
       </mat-card-header>
 
@@ -71,7 +71,7 @@
                   <ng-container *ngIf="printFilament.estimatedLengthInM > 0">
                     <h3>Estimated:</h3>
                     <p>
-                      {{ printFilament.estimatedLengthInM | number: '1.0-1' }}
+                      {{ printFilament.estimatedLengthInM | number : '1.0-1' }}
                       meters
                     </p>
                   </ng-container>
@@ -87,7 +87,7 @@
                   <ng-container *ngIf="printFilament.lengthInM > 0">
                     <h3>Actual:</h3>
                     <p>
-                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
+                      {{ printFilament.lengthInM | number : '1.0-1' }} meters
                     </p>
                   </ng-container>
                 </ng-container>
@@ -106,7 +106,7 @@
                   <ng-container *ngIf="printFilament.estimatedLengthInM > 0">
                     <h3>Estimated:</h3>
                     <p>
-                      {{ printFilament.estimatedLengthInM | number: '1.0-1' }}
+                      {{ printFilament.estimatedLengthInM | number : '1.0-1' }}
                       meters
                     </p>
                   </ng-container>
@@ -122,7 +122,7 @@
                   <ng-container *ngIf="printFilament.lengthInM > 0">
                     <h3>Actual:</h3>
                     <p>
-                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
+                      {{ printFilament.lengthInM | number : '1.0-1' }} meters
                     </p>
                   </ng-container>
                 </ng-container>
@@ -169,7 +169,7 @@
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
       >
-        <div fxFlex fxFlexFill>
+        <div fxFlex fxFlexFill fxLayoutGap="10px">
           <button
             *ngIf="currentUser && currentUser.id === user.id"
             fxFlex="grow"

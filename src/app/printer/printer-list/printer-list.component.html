@@ -102,9 +102,9 @@
     <ng-container matColumnDef="isActive">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let printer">
-        <mat-chip-list *ngIf="!printer.isActive">
-          <mat-chip color="accent" selected>Inactive</mat-chip>
-        </mat-chip-list>
+        <mat-chip-listbox *ngIf="!printer.isActive">
+          <mat-chip-option color="accent" selected>Inactive</mat-chip-option>
+        </mat-chip-listbox>
       </td>
     </ng-container>
 

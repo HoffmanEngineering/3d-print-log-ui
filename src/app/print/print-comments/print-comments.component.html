@@ -15,7 +15,7 @@
     </app-comment>
   </div>
   <div>
-    <mat-card class="mat-elevation-z4">
+    <mat-card appearance="outlined" class="mat-elevation-z4">
       <div *ngIf="isLoggedIn">
         <mat-card-content>
           <img
@@ -60,5 +60,7 @@
   </div>
 </div>
 <div *ngIf="!allowComments">
-  <mat-card> Comments are disabled for this print. </mat-card>
+  <mat-card appearance="outlined">
+    Comments are disabled for this print.
+  </mat-card>
 </div>

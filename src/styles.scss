@@ -62,14 +62,15 @@ app-navbar {
   white-space: nowrap !important; /* 3 */
 }
 
-.mat-button.active > span {
+.mat-mdc-button.active > span {
   text-decoration: underline;
 }
 
 /* Fix for column flexbox on safari. */
-div[fxLayout='column'] > div[fxFlex] {
-  flex: 1 0 auto !important;
-}
+// TODO: CHeck if this is still needed....
+// div[fxLayout='column'] > div[fxFlex] {
+//   flex: 1 0 auto !important;
+// }
 
 /*
 	Use in conjunction with .visually-hidden to only display content when it's focused.
@@ -114,7 +115,10 @@ div[fxLayout='column'] > div[fxFlex] {
   animation: spinner 0.8s linear infinite;
 }
 
+/* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
 mat-checkbox.text-wrap {
+  /* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
   label.mat-checkbox-layout {
     white-space: normal;
   }

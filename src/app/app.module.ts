@@ -2,6 +2,9 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { LoadingBarModule } from '@ngx-loading-bar/core';
+import { LoadingBarHttpClientModule } from '@ngx-loading-bar/http-client';
+import { LoadingBarRouterModule } from '@ngx-loading-bar/router';
 import { AdsenseModule } from 'ng2-adsense';
 import { ToastrModule } from 'ngx-toastr';
 
@@ -18,6 +21,12 @@ import { SharedModule } from './shared/shared.module';
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+    // for HttpClient use:
+    LoadingBarHttpClientModule,
+    // for Core use:
+    LoadingBarModule,
+    // for Router use:
+    LoadingBarRouterModule,
     SharedModule,
     HttpClientModule,
     ToastrModule.forRoot({

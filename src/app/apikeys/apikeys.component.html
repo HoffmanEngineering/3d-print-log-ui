@@ -1,8 +1,8 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card fxFlex="80vw" fxFlex.xs="100%">
+  <mat-card appearance="outlined" fxFlex="80vw" fxFlex.xs="100%">
     <form
       autocomplete="off"
-      fxLayout="column wrap"
+      fxLayout="column"
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
     >
@@ -10,11 +10,10 @@
       <mat-card-content
         fxFlex="grow"
         fxFlexFill
-        fxLayout="column wrap"
+        fxLayout="column"
         fxLayoutAlign="space-evenly center"
       >
         <button
-          fxFlex
           fxFlexAlign="start"
           mat-raised-button
           type="button"
@@ -126,7 +125,7 @@
           <ng-container matColumnDef="created">
             <th mat-header-cell *matHeaderCellDef>Created</th>
             <td mat-cell *matCellDef="let key">
-              <div>{{ key.createdDate | date: 'short' }}</div>
+              <div>{{ key.createdDate | date : 'short' }}</div>
             </td>
           </ng-container>
 

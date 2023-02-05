@@ -1,7 +1,16 @@
 <div class="container">
   <app-navbar class="mat-elevation-z6"></app-navbar>
+
   <div class="main-app">
+    <ngx-loading-bar
+      [includeSpinner]="false"
+      [fixed]="false"
+      [height]="'3px'"
+      [color]="'#3f51b5'"
+      style="z-index: 1000"
+    ></ngx-loading-bar>
     <app-account-deactivation-banner></app-account-deactivation-banner>
+
     <router-outlet></router-outlet>
   </div>
 </div>

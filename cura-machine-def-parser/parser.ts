@@ -99,7 +99,8 @@ function mergeDeep(target, source) {
         model !== 'Extruder' &&
         model !== 'Creawsome Base Printer' &&
         model !== 'FFF printer' &&
-        make !== 'Custom'
+        make !== 'Custom' &&
+        !/[Bb]ase/i.test(model)
       ) {
         newPrinters.push(newPrinter);
       }

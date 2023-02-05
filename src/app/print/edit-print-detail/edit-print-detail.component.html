@@ -1,10 +1,10 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card fxFlex="500px" fxFlex.xs="100%">
+  <mat-card appearance="outlined" fxFlex="800px" fxFlex.xs="100%">
     <form
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"
       autocomplete="off"
-      fxLayout="column wrap"
+      fxLayout="column"
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
     >
@@ -95,7 +95,7 @@
       <mat-card-content
         fxFlex="grow"
         fxFlexFill
-        fxLayout="column wrap"
+        fxLayout="column"
         fxLayoutAlign="space-evenly center"
       >
         <mat-form-field fxFlex="grow" fxFlexFill>
@@ -132,6 +132,7 @@
 
         <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
           <mat-form-field style="margin: 0" fxFlex="grow">
+            <mat-label>Start Date and Time</mat-label>
             <input
               matInput
               [ngxMatDatetimePicker]="picker"
@@ -161,7 +162,7 @@
 
           <button
             fxFlex
-            style="margin-left: 10px; height: 35px"
+            style="margin-left: 10px; height: 72%"
             mat-raised-button
             type="button"
             color="basic"
@@ -184,8 +185,18 @@
           />
         </mat-form-field>
 
-        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-          <mat-form-field style="margin: 0" fxFlex>
+        <div
+          style="margin: 10 0 10"
+          fxFlex="grow"
+          fxFlexFill
+          fxLayout.lt-md="column"
+          fxLayout="row"
+        >
+          <mat-form-field
+            style="margin: 0px 5px 0px 0px"
+            fxFlex="50%"
+            fxFlex.lt-md="100%"
+          >
             <mat-label> Estimated Print Time</mat-label>
             <input
               id="edit-print-estimated-print-time"
@@ -197,7 +208,7 @@
             />
           </mat-form-field>
 
-          <mat-form-field style="margin: 0" fxFlex="grow">
+          <mat-form-field style="margin: 0" fxFlex="50%" fxFlex.lt-md="100%">
             <input
               matInput
               [ngxMatDatetimePicker]="estimatedPicker"
@@ -224,8 +235,18 @@
         </div>
 
         <!-- Actual -->
-        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-          <mat-form-field style="margin: 0" fxFlex>
+        <div
+          style="margin: 10 0 10"
+          fxFlex="grow"
+          fxFlexFill
+          fxLayout.lt-md="column"
+          fxLayout="row"
+        >
+          <mat-form-field
+            style="margin: 0px 5px 0px 0px"
+            fxFlex="50%"
+            fxFlex.lt-md="100%"
+          >
             <mat-label> Actual Print Time</mat-label>
             <input
               id="edit-print-actual-print-time"
@@ -237,42 +258,44 @@
             />
           </mat-form-field>
 
-          <mat-form-field style="margin: 0" fxFlex="grow">
-            <input
-              matInput
-              [ngxMatDatetimePicker]="actualPicker"
-              placeholder="Completed Date and Time"
-              [ngModel]="actualCompletedDate"
-              (ngModelChange)="updateActualCompletedDate($event)"
-              [ngModelOptions]="{ standalone: true }"
-              aria-label="The date and time of completion."
-            />
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="actualPicker"
-            ></mat-datepicker-toggle>
-            <ngx-mat-datetime-picker
-              #actualPicker
-              [showSpinners]="true"
-              [showSeconds]="true"
-              [touchUi]="true"
-              color="primary"
-              [enableMeridian]="true"
+          <div fxFlex="50%" fxFlex.lt-md="100%">
+            <mat-form-field style="margin: 0" fxFlex="grow">
+              <input
+                matInput
+                [ngxMatDatetimePicker]="actualPicker"
+                placeholder="Completed Date and Time"
+                [ngModel]="actualCompletedDate"
+                (ngModelChange)="updateActualCompletedDate($event)"
+                [ngModelOptions]="{ standalone: true }"
+                aria-label="The date and time of completion."
+              />
+              <mat-datepicker-toggle
+                matSuffix
+                [for]="actualPicker"
+              ></mat-datepicker-toggle>
+              <ngx-mat-datetime-picker
+                #actualPicker
+                [showSpinners]="true"
+                [showSeconds]="true"
+                [touchUi]="true"
+                color="primary"
+                [enableMeridian]="true"
+              >
+              </ngx-mat-datetime-picker>
+            </mat-form-field>
+            <button
+              fxFlex
+              style="margin-left: 10px; height: 72%"
+              mat-raised-button
+              type="button"
+              color="basic"
+              (click)="setActualCompletedDateToNow()"
+              type="button"
+              aria-label="Set the Completed Date to now."
             >
-            </ngx-mat-datetime-picker>
-          </mat-form-field>
-          <button
-            fxFlex
-            style="margin-left: 10px; height: 35px"
-            mat-raised-button
-            type="button"
-            color="basic"
-            (click)="setActualCompletedDateToNow()"
-            type="button"
-            aria-label="Set the Completed Date to now."
-          >
-            Now
-          </button>
+              Now
+            </button>
+          </div>
         </div>
 
         <!-- Filament Usage -->
@@ -296,7 +319,7 @@
               let printFilament of filamentUsage.controls;
               let printFilamentIndex = index
             "
-            style="margin-bottom: 5px"
+            style="margin-bottom: 10px"
           >
             <div [formGroupName]="printFilamentIndex">
               <mat-card
@@ -305,310 +328,321 @@
                 fxFlexFill
                 fxLayout="row"
               >
-                <div fxFlex="grow" fxLayout="column">
-                  <div fxFlex>
-                    <div
-                      class="filament-color-cell"
-                      [ngStyle]="{
-                        'background-color': printFilament.get('filament').value
-                          ?.colorHex
-                          ? '#' + printFilament.get('filament').value?.colorHex
-                          : null
-                      }"
-                    ></div>
-                  </div>
-                  <div fxFlex class="filament-section">
-                    {{
-                      printFilament.get('filament').value?.displayName ||
-                        'Other'
-                    }}
-                  </div>
-                  <div
-                    *ngIf="
-                      printFilament.get('filament').value?.colorName !== ''
-                    "
-                    fxFlex
-                    class="filament-section"
-                  >
-                    {{ printFilament.get('filament').value?.colorName }}
-                  </div>
-                  <div fxFlex class="filament-section">
-                    {{ printFilament.get('filament').value?.materialType }}
-                  </div>
-                  <div
-                    fxFlex="grow"
-                    class="filament-section"
-                    *ngIf="printFilament.get('filament').value !== null"
-                  >
-                    {{
-                      printFilament.get('filament').value?.filamentRemaining /
-                        1000 | number
-                    }}
-                    (g) remaining
-                  </div>
-                  <div
-                    fxFlex="grow"
-                    class="filament-section"
-                    *ngIf="printFilament.get('filament').value !== null"
-                  >
-                    {{
-                      printFilament.get('filament').value
-                        ?.filamentLengthRemainingInM | number
-                    }}
-                    (m) remaining
-                  </div>
-                  <div
-                    fxFlex="grow"
-                    class="filament-section"
-                    *ngIf="
-                      printFilament.get('filament').value !== null &&
-                      printFilament.get('filament').value
-                        ?.purchasePriceValue !== null &&
-                      printFilament.get('filament').value
-                        ?.purchasePriceValue !== ''
-                    "
-                  >
-                    Price: {{ preferredCurrency?.symbol
-                    }}{{
-                      printFilament.get('filament').value?.purchasePriceValue
-                    }}
-                  </div>
-                  <div
-                    fxFlex="grow"
-                    class="filament-section"
-                    *ngIf="
-                      printFilament.get('filament').value !== null &&
-                      printFilament.get('filament').value
-                        ?.purchasePriceValue === null &&
-                      defaultFilamentPriceSetting?.value !== null
-                    "
-                    matTooltip="* using default filament price of {{
-                      preferredCurrency?.symbol
-                    }}{{ defaultFilamentPriceSetting?.value }}"
-                  >
-                    Price: {{ preferredCurrency?.symbol
-                    }}{{ defaultFilamentPriceSetting?.value }}*
-                  </div>
-                  <div fxFlex>
-                    <button
-                      type="button"
-                      mat-raised-button
-                      (click)="removeFilament(printFilamentIndex)"
-                      aria-label="Delete Filament"
-                    >
-                      <mat-icon>delete</mat-icon>Delete
-                    </button>
-                  </div>
-                </div>
-                <div fxFlex="grow" fxLayout="column">
-                  <button
-                    mat-raised-button
-                    color="accent"
-                    (click)="searchFilament(printFilament.get('filament'))"
-                    type="button"
-                    style="margin-bottom: 5px"
-                  >
-                    {{
-                      printFilament.get('filament')?.value !== null
-                        ? 'Change'
-                        : 'Select'
-                    }}
-                    Filament
-                  </button>
-
-                  <div fxFlex="grow" fxLayout="row">
-                    <mat-form-field
-                      *ngIf="
-                        printFilament.get('isEstimatedLengthSource').value ===
-                        false
-                      "
-                      fxFlex="grow"
-                    >
-                      <mat-label> Estimated Filament Used (g)</mat-label>
-                      <input
-                        id="edit-print-estimated-print-time"
-                        matInput
-                        type="text"
-                        pattern="^\d*(\.\d{0,3})?$"
-                        formControlName="estimatedAmountG"
-                      />
-                      <mat-error
-                        *ngIf="
-                          printFilament.get('estimatedAmountG').hasError('min')
-                        "
-                      >
-                        Estimated Filament Usage must be a positive number.
-                      </mat-error>
-                      <mat-error
-                        *ngIf="
-                          printFilament
-                            .get('estimatedAmountG')
-                            .hasError('pattern')
-                        "
-                      >
-                        Numbers (up to 3-decimal places) only.
-                      </mat-error>
-                    </mat-form-field>
-                    <mat-form-field
-                      *ngIf="
-                        printFilament.get('isEstimatedLengthSource').value ===
-                        true
-                      "
-                      fxFlex="grow"
-                    >
-                      <mat-label> Estimated Filament Used (m)</mat-label>
-                      <input
-                        id="edit-print-estimated-print-time"
-                        matInput
-                        type="text"
-                        formControlName="estimatedLengthInM"
-                      />
-                      <mat-error
-                        *ngIf="
-                          printFilament
-                            .get('estimatedLengthInM')
-                            .hasError('min')
-                        "
-                      >
-                        Estimated Filament Usage must be a positive number.
-                      </mat-error>
-                    </mat-form-field>
-                    <mat-form-field fxFlex="80px">
-                      <mat-label>Measure</mat-label>
-                      <mat-select
-                        formControlName="isEstimatedLengthSource"
-                        (selectionChange)="
-                          HandleFilamentMeasureTypeChange($event.value)
-                        "
-                      >
-                        <mat-option [value]="false"> Weight </mat-option>
-                        <mat-option [value]="true"> Length </mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-
-                  <div fxFlex="grow" fxLayout="row">
-                    <mat-form-field
-                      *ngIf="
-                        printFilament.get('isActualLengthSource').value ===
-                        false
-                      "
-                      fxFlex="grow"
-                    >
-                      <mat-label> Actual Filament Used (g)</mat-label>
-                      <input
-                        id="edit-print-estimated-print-time"
-                        matInput
-                        type="text"
-                        pattern="^\d*(\.\d{0,3})?$"
-                        formControlName="amountG"
-                      />
-                      <mat-error
-                        *ngIf="printFilament.get('amountG').hasError('min')"
-                      >
-                        Filament Usage must be a positive number.
-                      </mat-error>
-                      <mat-error
-                        *ngIf="printFilament.get('amountG').hasError('pattern')"
-                      >
-                        Numbers (up to 3-decimal places) only.
-                      </mat-error>
-                    </mat-form-field>
-                    <mat-form-field
-                      *ngIf="
-                        printFilament.get('isActualLengthSource').value === true
-                      "
-                      fxFlex="grow"
-                    >
-                      <mat-label> Actual Filament Used (m)</mat-label>
-                      <input
-                        id="edit-print-estimated-print-time"
-                        matInput
-                        type="text"
-                        formControlName="lengthInM"
-                      />
-                      <mat-error
-                        *ngIf="printFilament.get('lengthInM').hasError('min')"
-                      >
-                        Actual Filament Usage must be a positive number.
-                      </mat-error>
-                    </mat-form-field>
-                    <mat-form-field fxFlex="80px">
-                      <mat-label>Measure</mat-label>
-                      <mat-select formControlName="isActualLengthSource">
-                        <mat-option [value]="false"> Weight </mat-option>
-                        <mat-option [value]="true"> Length </mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                  <mat-form-field fxFlex="grow" fxFlexFill>
-                    <mat-label>
+                <mat-card-content>
+                  <div fxFlex="grow" fxLayout="column">
+                    <div fxFlex>
+                      <div
+                        class="filament-color-cell"
+                        [ngStyle]="{
+                          'background-color': printFilament.get('filament')
+                            .value?.colorHex
+                            ? '#' +
+                              printFilament.get('filament').value?.colorHex
+                            : null
+                        }"
+                      ></div>
+                    </div>
+                    <div fxFlex class="filament-section">
                       {{
-                        printFilament.get('filament').value === null
-                          ? 'Filament Type'
-                          : 'Filament Notes'
-                      }}</mat-label
-                    >
-
-                    <input
-                      id="edit-print-estimated-print-time"
-                      matInput
-                      type="text"
-                      maxlength="1000"
-                      formControlName="notes"
-                    />
-                  </mat-form-field>
-
-                  <div
-                    gdColumns="max-content auto"
-                    gdRows="2"
-                    gdGap="10px"
-                    style="padding-inline: 10px; padding-bottom: 5px"
-                    *ngIf="printFilament.get('filament').value !== null"
-                  >
-                    <div gdColumn="1" gdRow="1">Estimated Cost:</div>
+                        printFilament.get('filament').value?.displayName ||
+                          'Other'
+                      }}
+                    </div>
                     <div
-                      gdColumn="2"
-                      gdRow="1"
-                      matTooltip="* using default filament price of {{
-                        defaultFilamentPriceSetting?.value
-                      }}"
-                      [matTooltipDisabled]="
+                      *ngIf="
+                        printFilament.get('filament').value?.colorName !== ''
+                      "
+                      fxFlex
+                      class="filament-section"
+                    >
+                      {{ printFilament.get('filament').value?.colorName }}
+                    </div>
+                    <div fxFlex class="filament-section">
+                      {{ printFilament.get('filament').value?.materialType }}
+                    </div>
+                    <div
+                      fxFlex
+                      class="filament-section"
+                      *ngIf="printFilament.get('filament').value !== null"
+                    >
+                      {{
+                        printFilament.get('filament').value?.filamentRemaining /
+                          1000 | number
+                      }}
+                      (g) remaining
+                    </div>
+                    <div
+                      fxFlex
+                      class="filament-section"
+                      *ngIf="printFilament.get('filament').value !== null"
+                    >
+                      {{
                         printFilament.get('filament').value
-                          ?.purchasePriceValue !== null
-                      "
-                    >
-                      {{ getEstimatedPrice(printFilament) }}
+                          ?.filamentLengthRemainingInM | number
+                      }}
+                      (m) remaining
                     </div>
                     <div
-                      gdColumn="1"
-                      gdRow="2"
+                      fxFlex
+                      class="filament-section"
                       *ngIf="
-                        printFilament.get('amountG').value !== 0 ||
-                        printFilament.get('lengthInM').value !== 0
+                        printFilament.get('filament').value !== null &&
+                        printFilament.get('filament').value
+                          ?.purchasePriceValue !== null &&
+                        printFilament.get('filament').value
+                          ?.purchasePriceValue !== ''
                       "
                     >
-                      Actual Cost:
+                      Price: {{ preferredCurrency?.symbol
+                      }}{{
+                        printFilament.get('filament').value?.purchasePriceValue
+                      }}
                     </div>
                     <div
-                      gdColumn="2"
-                      gdRow="2"
+                      fxFlex
+                      class="filament-section"
                       *ngIf="
-                        printFilament.get('amountG').value !== 0 ||
-                        printFilament.get('lengthInM').value !== 0
+                        printFilament.get('filament').value !== null &&
+                        printFilament.get('filament').value
+                          ?.purchasePriceValue === null &&
+                        defaultFilamentPriceSetting?.value !== null
                       "
                       matTooltip="* using default filament price of {{
                         preferredCurrency?.symbol
                       }}{{ defaultFilamentPriceSetting?.value }}"
-                      [matTooltipDisabled]="
-                        printFilament.get('filament').value
-                          ?.purchasePriceValue !== null
-                      "
                     >
-                      {{ getActualPrice(printFilament) }}
+                      Price: {{ preferredCurrency?.symbol
+                      }}{{ defaultFilamentPriceSetting?.value }}*
+                    </div>
+                    <div fxFlex>
+                      <button
+                        type="button"
+                        mat-raised-button
+                        (click)="removeFilament(printFilamentIndex)"
+                        aria-label="Delete Filament"
+                      >
+                        <mat-icon>delete</mat-icon>Delete
+                      </button>
                     </div>
                   </div>
-                </div>
+                  <div fxFlex="grow" fxLayout="column">
+                    <div fxFlex="grow" fxFlexFill>
+                      <button
+                        fxFlex="grow"
+                        mat-raised-button
+                        color="accent"
+                        (click)="searchFilament(printFilament.get('filament'))"
+                        type="button"
+                        style="margin-bottom: 5px"
+                      >
+                        {{
+                          printFilament.get('filament')?.value !== null
+                            ? 'Change'
+                            : 'Select'
+                        }}
+                        Filament
+                      </button>
+                    </div>
+
+                    <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                      <mat-form-field
+                        *ngIf="
+                          printFilament.get('isEstimatedLengthSource').value ===
+                          false
+                        "
+                        fxFlex="grow"
+                      >
+                        <mat-label> Estimated Filament Used (g)</mat-label>
+                        <input
+                          id="edit-print-estimated-print-time"
+                          matInput
+                          type="text"
+                          pattern="^\d*(\.\d{0,3})?$"
+                          formControlName="estimatedAmountG"
+                        />
+                        <mat-error
+                          *ngIf="
+                            printFilament
+                              .get('estimatedAmountG')
+                              .hasError('min')
+                          "
+                        >
+                          Estimated Filament Usage must be a positive number.
+                        </mat-error>
+                        <mat-error
+                          *ngIf="
+                            printFilament
+                              .get('estimatedAmountG')
+                              .hasError('pattern')
+                          "
+                        >
+                          Numbers (up to 3-decimal places) only.
+                        </mat-error>
+                      </mat-form-field>
+                      <mat-form-field
+                        *ngIf="
+                          printFilament.get('isEstimatedLengthSource').value ===
+                          true
+                        "
+                        fxFlex="grow"
+                      >
+                        <mat-label> Estimated Filament Used (m)</mat-label>
+                        <input
+                          id="edit-print-estimated-print-time"
+                          matInput
+                          type="text"
+                          formControlName="estimatedLengthInM"
+                        />
+                        <mat-error
+                          *ngIf="
+                            printFilament
+                              .get('estimatedLengthInM')
+                              .hasError('min')
+                          "
+                        >
+                          Estimated Filament Usage must be a positive number.
+                        </mat-error>
+                      </mat-form-field>
+                      <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                        <mat-label>Measure</mat-label>
+                        <mat-select
+                          formControlName="isEstimatedLengthSource"
+                          (selectionChange)="
+                            HandleFilamentMeasureTypeChange($event.value)
+                          "
+                        >
+                          <mat-option [value]="false"> Weight </mat-option>
+                          <mat-option [value]="true"> Length </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                      <mat-form-field
+                        *ngIf="
+                          printFilament.get('isActualLengthSource').value ===
+                          false
+                        "
+                        fxFlex="grow"
+                      >
+                        <mat-label> Actual Filament Used (g)</mat-label>
+                        <input
+                          id="edit-print-estimated-print-time"
+                          matInput
+                          type="text"
+                          pattern="^\d*(\.\d{0,3})?$"
+                          formControlName="amountG"
+                        />
+                        <mat-error
+                          *ngIf="printFilament.get('amountG').hasError('min')"
+                        >
+                          Filament Usage must be a positive number.
+                        </mat-error>
+                        <mat-error
+                          *ngIf="
+                            printFilament.get('amountG').hasError('pattern')
+                          "
+                        >
+                          Numbers (up to 3-decimal places) only.
+                        </mat-error>
+                      </mat-form-field>
+                      <mat-form-field
+                        *ngIf="
+                          printFilament.get('isActualLengthSource').value ===
+                          true
+                        "
+                        fxFlex="grow"
+                      >
+                        <mat-label> Actual Filament Used (m)</mat-label>
+                        <input
+                          id="edit-print-estimated-print-time"
+                          matInput
+                          type="text"
+                          formControlName="lengthInM"
+                        />
+                        <mat-error
+                          *ngIf="printFilament.get('lengthInM').hasError('min')"
+                        >
+                          Actual Filament Usage must be a positive number.
+                        </mat-error>
+                      </mat-form-field>
+                      <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                        <mat-label>Measure</mat-label>
+                        <mat-select formControlName="isActualLengthSource">
+                          <mat-option [value]="false"> Weight </mat-option>
+                          <mat-option [value]="true"> Length </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <mat-form-field fxFlex="grow" fxFlexFill>
+                      <mat-label>
+                        {{
+                          printFilament.get('filament').value === null
+                            ? 'Filament Type'
+                            : 'Filament Notes'
+                        }}</mat-label
+                      >
+
+                      <input
+                        id="edit-print-estimated-print-time"
+                        matInput
+                        type="text"
+                        maxlength="1000"
+                        formControlName="notes"
+                      />
+                    </mat-form-field>
+
+                    <div
+                      gdColumns="max-content auto"
+                      gdRows="2"
+                      gdGap="10px"
+                      style="padding-inline: 10px; padding-bottom: 5px"
+                      *ngIf="printFilament.get('filament').value !== null"
+                    >
+                      <div gdColumn="1" gdRow="1">Estimated Cost:</div>
+                      <div
+                        gdColumn="2"
+                        gdRow="1"
+                        matTooltip="* using default filament price of {{
+                          defaultFilamentPriceSetting?.value
+                        }}"
+                        [matTooltipDisabled]="
+                          printFilament.get('filament').value
+                            ?.purchasePriceValue !== null
+                        "
+                      >
+                        {{ getEstimatedPrice(printFilament) }}
+                      </div>
+                      <div
+                        gdColumn="1"
+                        gdRow="2"
+                        *ngIf="
+                          printFilament.get('amountG').value !== 0 ||
+                          printFilament.get('lengthInM').value !== 0
+                        "
+                      >
+                        Actual Cost:
+                      </div>
+                      <div
+                        gdColumn="2"
+                        gdRow="2"
+                        *ngIf="
+                          printFilament.get('amountG').value !== 0 ||
+                          printFilament.get('lengthInM').value !== 0
+                        "
+                        matTooltip="* using default filament price of {{
+                          preferredCurrency?.symbol
+                        }}{{ defaultFilamentPriceSetting?.value }}"
+                        [matTooltipDisabled]="
+                          printFilament.get('filament').value
+                            ?.purchasePriceValue !== null
+                        "
+                      >
+                        {{ getActualPrice(printFilament) }}
+                      </div>
+                    </div>
+                  </div>
+                </mat-card-content>
               </mat-card>
             </div>
           </div>

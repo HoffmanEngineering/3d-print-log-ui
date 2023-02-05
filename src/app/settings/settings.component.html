@@ -166,7 +166,7 @@
             [(ngModel)]="preferredCurrency"
           >
             <option
-              *ngFor="let currency of currencies | keyvalue: sortByName"
+              *ngFor="let currency of currencies | keyvalue : sortByName"
               [ngValue]="currency.key"
             >
               {{ currency.value.name }} - {{ currency.value.symbol }}

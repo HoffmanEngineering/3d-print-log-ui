@@ -201,7 +201,7 @@
         Start Time
       </th>
       <td mat-cell *matCellDef="let print">
-        {{ print.startDate | date: 'mediumTime' }}
+        {{ print.startDate | date : 'mediumTime' }}
       </td>
     </ng-container>
 
@@ -214,7 +214,7 @@
         Start Date/Time
       </th>
       <td mat-cell *matCellDef="let print">
-        {{ print.startDate | date: 'medium' }}
+        {{ print.startDate | date : 'medium' }}
       </td>
     </ng-container>
 
@@ -251,7 +251,7 @@
             print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
           "
         >
-          {{ getPrintEndDate(print) | date: 'mediumTime'
+          {{ getPrintEndDate(print) | date : 'mediumTime'
           }}<ng-container
             *ngIf="
               (print.printTimeInSeconds === null ||
@@ -275,7 +275,7 @@
             print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
           "
         >
-          {{ getPrintEndDate(print) | date: 'medium'
+          {{ getPrintEndDate(print) | date : 'medium'
           }}<ng-container
             *ngIf="
               (print.printTimeInSeconds === null ||
@@ -357,11 +357,11 @@
                   else estimatedUsage
                 "
               >
-                {{ fu.amountMg / 1000 | number: '1.0-1' }} g</ng-container
+                {{ fu.amountMg / 1000 | number : '1.0-1' }} g</ng-container
               >
               <ng-template #estimatedUsage>
                 <div matTooltip="* indicates Estimated Filament Usage">
-                  {{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }} g *
+                  {{ fu.estimatedAmountMg / 1000 | number : '1.0-1' }} g *
                 </div>
               </ng-template>
             </div>
@@ -398,7 +398,7 @@
         Total Filament (g)
       </th>
       <td mat-cell *matCellDef="let print">
-        {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+        {{ print.totalFilamentWeightMg / 1000 | number : '1.0-1' }}
       </td>
     </ng-container>
 

@@ -11,11 +11,11 @@
     <mat-card-subtitle *ngIf="userId && userName">
       Printed by
       <a [routerLink]="['/users', userId]">{{ userName }}</a> on
-      {{ print.startDate | date: 'longDate' }}
+      {{ print.startDate | date : 'longDate' }}
     </mat-card-subtitle>
     <mat-card-subtitle *ngIf="!userId || !userName">
       Printed on
-      {{ print.startDate | date: 'longDate' }}
+      {{ print.startDate | date : 'longDate' }}
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content

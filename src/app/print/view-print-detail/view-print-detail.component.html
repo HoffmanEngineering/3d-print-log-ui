@@ -9,12 +9,12 @@
         <mat-card-subtitle *ngIf="isUserProfileFeatureEnabled">
           Printed by
           <a [routerLink]="['/users', user.id]">{{ user.displayName }}</a> on
-          {{ print.startDate | date: 'longDate' }}
+          {{ print.startDate | date : 'longDate' }}
         </mat-card-subtitle>
         <mat-card-subtitle *ngIf="!isUserProfileFeatureEnabled">
           Printed by
           {{ user.displayName }} on
-          {{ print.startDate | date: 'longDate' }}
+          {{ print.startDate | date : 'longDate' }}
         </mat-card-subtitle>
       </mat-card-header>
 
@@ -71,7 +71,7 @@
                   <ng-container *ngIf="printFilament.estimatedLengthInM > 0">
                     <h3>Estimated:</h3>
                     <p>
-                      {{ printFilament.estimatedLengthInM | number: '1.0-1' }}
+                      {{ printFilament.estimatedLengthInM | number : '1.0-1' }}
                       meters
                     </p>
                   </ng-container>
@@ -87,7 +87,7 @@
                   <ng-container *ngIf="printFilament.lengthInM > 0">
                     <h3>Actual:</h3>
                     <p>
-                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
+                      {{ printFilament.lengthInM | number : '1.0-1' }} meters
                     </p>
                   </ng-container>
                 </ng-container>
@@ -106,7 +106,7 @@
                   <ng-container *ngIf="printFilament.estimatedLengthInM > 0">
                     <h3>Estimated:</h3>
                     <p>
-                      {{ printFilament.estimatedLengthInM | number: '1.0-1' }}
+                      {{ printFilament.estimatedLengthInM | number : '1.0-1' }}
                       meters
                     </p>
                   </ng-container>
@@ -122,7 +122,7 @@
                   <ng-container *ngIf="printFilament.lengthInM > 0">
                     <h3>Actual:</h3>
                     <p>
-                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
+                      {{ printFilament.lengthInM | number : '1.0-1' }} meters
                     </p>
                   </ng-container>
                 </ng-container>

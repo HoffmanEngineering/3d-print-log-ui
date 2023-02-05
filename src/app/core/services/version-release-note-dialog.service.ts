@@ -27,6 +27,42 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.22.0': {
+      title: '1.22.0 - Copy Print Image and Reorder Print List Columns',
+      body: `<p>
+  When copying a print, the print image will also be copied. You can remove
+  the image before saving if you do not want to save the copied image.
+</p>
+<p>
+  Columns on the Print List can now be reordered! From the Print List, click
+  the Gear Menu -> Change Table Layout, and then either drag-and-drop or use
+  the arrows to reorder the columns.
+</p>
+<p>
+  Styling across the application have been adjusted to be more accessible 
+  and easier to read and navigate. See the 
+  <a rel="noreferrer noopener" target="_blank" href="/docs/release-notes">Full Release Notes</a> 
+  for all changes and bug fixes in this version.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.21.0': {
       title: '1.21.0 - Filament Defaults and Total Print Costs',
       body: `<p>

@@ -35,11 +35,44 @@ export class PrintTableLayoutComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.initialAllColumns = [...this.data.allPossibleColumns];
-    this.allColumns = [...this.data.allPossibleColumns];
-
     this.initialSelectedColumns = [...this.data.currentColumns];
     this.selectedColumns = [...this.data.currentColumns];
+    this.initialAllColumns = [...this.data.allPossibleColumns];
+
+    // Adjust the all columns based on the order of the selected columns
+    const reorderedAllColumns = [...this.data.allPossibleColumns];
+
+    let previousIndex = undefined;
+    let currentIndex = 0;
+
+    for (let i = 0; i < this.selectedColumns.length; i++) {
+      // Ignore the More column
+      if (this.selectedColumns[i] === 'more') {
+        continue;
+      }
+
+      currentIndex = reorderedAllColumns.findIndex(
+        (col) => col.key === this.selectedColumns[i]
+      );
+
+      if (currentIndex == undefined) {
+        continue;
+      }
+
+      if (previousIndex === undefined) {
+        previousIndex = currentIndex;
+        continue;
+      }
+
+      if (currentIndex < previousIndex) {
+        moveItemInArray(reorderedAllColumns, currentIndex, previousIndex);
+      } else {
+        previousIndex = currentIndex;
+      }
+    }
+
+    this.allColumns = [...reorderedAllColumns];
+
     this.changeEvent = this.data.changeEvent;
   }
 
@@ -48,7 +81,6 @@ export class PrintTableLayoutComponent implements OnInit {
     currentIndex,
   }: CdkDragDrop<string[]> | { previousIndex: number; currentIndex: number }) {
     moveItemInArray(this.allColumns, previousIndex, currentIndex);
-    // this.data.changeEvent.next(this.selectedColumns);
 
     const newOrderedSelectionList = [];
     for (const column of this.allColumns) {
@@ -100,6 +132,7 @@ export class PrintTableLayoutComponent implements OnInit {
         'start-date',
         'status',
         'printTime',
+        'filamentSummary',
         'commentCount',
         'more',
       ];

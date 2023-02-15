@@ -92,8 +92,19 @@
                 </mat-error> -->
         </mat-form-field>
 
-        <div fxFlex="grow" fxFlexFill>
-          <mat-form-field style="margin-left: 0px">
+        <div
+          fxFlex="grow"
+          fxFlexFill
+          fxLayout="row"
+          fxLayout.lt-md="column"
+          style="margin-inline: 10px"
+        >
+          <mat-form-field
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-left: 0"
+            ngStyle.lt-md="margin-inline: 0"
+          >
             <mat-label>Color</mat-label>
             <input
               id="edit-filament-color-hex"
@@ -102,7 +113,12 @@
               formControlName="colorHex"
             />
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-right: 0"
+            ngStyle.lt-md="margin-inline: 0"
+          >
             <mat-label>Color Name</mat-label>
             <input
               id="edit-filament-color"
@@ -145,8 +161,8 @@
             />
           </mat-form-field>
           <button
-            fxFlex="grow"
-            style="margin-left: 10px; height: 35px"
+            fxFlex
+            style="margin-left: 10px; height: 72%"
             *ngIf="
               this.filamentForm &&
               this.filamentForm.get('diameterMm').dirty &&

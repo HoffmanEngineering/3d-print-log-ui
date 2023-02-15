@@ -114,3 +114,15 @@ Normally `ng update` is used to update dependencies. The following script is jus
 
 We can use the ignoreRevsFile feature of git to ignore blames of large-scale refactors:
 `git config blame.ignoreRevsFile .git-blame-ignore-revs`
+
+# Testing in Safari from another computer
+
+In the case that you do not have a mac for development, but you have access to an iOS device to test on which is on the same network as your normal development machine.
+
+First, you'll need the local IP address on your development computer (ie, 192.168.1.23)
+
+Update auth0's dev environment to allow login/logout for that IP address.
+
+`npm start` will bind angular to all ip addresses at <ip>:4200.
+
+For the API: In visual studio, update the launch configuration for `PrintLogApi` to also launch with the local IP address. You can then use the mac device to hit `https://192.168.1.23:4200` to load from your development machiine.

@@ -27,6 +27,31 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.22.1': {
+      title: '1.22.1 - Fix for Safari',
+      body: `<p>
+  Fixed an issue where the filament details page was not navigating correctly
+  when using the Safari web browser.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.22.0': {
       title: '1.22.0 - Copy Print Image and Reorder Print List Columns',
       body: `<p>

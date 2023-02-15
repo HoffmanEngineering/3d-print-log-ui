@@ -47,7 +47,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Material Type</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-material-type"
             matInput
             type="text"
             formControlName="materialType"
@@ -79,7 +79,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Material Density (grams/cm<sup>3</sup>)</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-density"
             matInput
             type="number"
             formControlName="materialDensityGramPerCubicCm"
@@ -96,7 +96,7 @@
           <mat-form-field style="margin-left: 0px">
             <mat-label>Color</mat-label>
             <input
-              id="edit-filament-name"
+              id="edit-filament-color-hex"
               matInput
               type="color"
               formControlName="colorHex"
@@ -105,7 +105,7 @@
           <mat-form-field>
             <mat-label>Color Name</mat-label>
             <input
-              id="edit-filament-name"
+              id="edit-filament-color"
               matInput
               type="text"
               formControlName="colorName"
@@ -116,7 +116,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Brand</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-brand"
             matInput
             type="text"
             formControlName="brand"
@@ -137,7 +137,7 @@
           <mat-form-field style="margin: 0" fxFlex>
             <mat-label>Diameter (mm)</mat-label>
             <input
-              id="edit-filament-name"
+              id="edit-filament-diameter"
               matInput
               type="number"
               formControlName="diameterMm"
@@ -213,7 +213,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Initial Total Weight (g)</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-total-weight"
             matInput
             type="number"
             formControlName="initialTotalWeightG"
@@ -228,7 +228,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Initial Nominal Weight (g)</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-initial-nominal-weight"
             matInput
             type="number"
             formControlName="initialNominalWeightG"
@@ -246,7 +246,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Spool Weight (g)</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-spool-weight"
             matInput
             type="number"
             formControlName="spoolWeightG"
@@ -343,7 +343,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Hotend Temperature Range Start (C)</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-hotend-temp-range-start"
             matInput
             type="number"
             formControlName="tempRangeStart"
@@ -358,7 +358,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Hotend Temperature Range End (C)</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-hotend-temperature-range-end"
             matInput
             type="number"
             formControlName="tempRangeEnd"
@@ -373,7 +373,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Recommended Hotend Temperature (C)</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-recommended-hotend-temp"
             matInput
             type="number"
             formControlName="recommendedTemp"
@@ -382,7 +382,7 @@
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Recommended Bed Temperature (C)</mat-label>
           <input
-            id="edit-filament-name"
+            id="edit-filament-recommended-bed-temp"
             matInput
             type="number"
             formControlName="recommendedBedTemp"
@@ -397,7 +397,7 @@
           <mat-label>Purchase Date</mat-label>
           <input
             matInput
-            id="edit-print-start-date"
+            id="edit-filament-purchase-date"
             [matDatepicker]="picker"
             placeholder="Date Purchased"
             formControlName="purchaseDate"
@@ -455,8 +455,8 @@
             </mat-error>
           </mat-form-field>
           <button
-            fxFlex="grow"
-            style="margin-left: 10px; height: 35px"
+            fxFlex
+            style="margin-left: 10px; height: 72%"
             *ngIf="
               this.filamentForm &&
               this.filamentForm.get('purchasePriceValue').dirty &&

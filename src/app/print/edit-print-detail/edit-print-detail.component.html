@@ -454,7 +454,9 @@
                       >
                         <mat-label> Estimated Filament Used (g)</mat-label>
                         <input
-                          id="edit-print-estimated-print-time"
+                          id="edit-print-estimated-filement-used-gram-{{
+                            printFilamentIndex
+                          }}"
                           matInput
                           type="text"
                           pattern="^\d*(\.\d{0,3})?$"
@@ -488,7 +490,9 @@
                       >
                         <mat-label> Estimated Filament Used (m)</mat-label>
                         <input
-                          id="edit-print-estimated-print-time"
+                          id="edit-print-estimated-filement-used-meter-{{
+                            printFilamentIndex
+                          }}"
                           matInput
                           type="text"
                           formControlName="estimatedLengthInM"
@@ -527,7 +531,9 @@
                       >
                         <mat-label> Actual Filament Used (g)</mat-label>
                         <input
-                          id="edit-print-estimated-print-time"
+                          id="edit-print-actual-filament-used-gram-{{
+                            printFilamentIndex
+                          }}"
                           matInput
                           type="text"
                           pattern="^\d*(\.\d{0,3})?$"
@@ -555,7 +561,9 @@
                       >
                         <mat-label> Actual Filament Used (m)</mat-label>
                         <input
-                          id="edit-print-estimated-print-time"
+                          id="edit-print-actual-filament-used-meter-{{
+                            printFilamentIndex
+                          }}"
                           matInput
                           type="text"
                           formControlName="lengthInM"
@@ -584,7 +592,7 @@
                       >
 
                       <input
-                        id="edit-print-estimated-print-time"
+                        id="edit-print-filament-notes-{{ printFilamentIndex }}"
                         matInput
                         type="text"
                         maxlength="1000"

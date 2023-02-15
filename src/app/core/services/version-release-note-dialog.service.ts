@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.22.2': {
+      redirect: '1.22.1',
+    },
     '1.22.1': {
       title: '1.22.1 - Fix for Safari',
       body: `<p>

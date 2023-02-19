@@ -47,6 +47,14 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   public defaultFilamentDiameterMmSetting: UserSetting | null = null;
   public defaultFilamentPriceSetting: UserSetting | null = null;
 
+  public filamentStorageLocations: string[] = [];
+
+  public filamentPurchaseLocations: string[] = [];
+
+  public filteredFilamentStorageLocations: Observable<string[]> = null;
+
+  public filteredFilamentPurchaseLocations: Observable<string[]> = null;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -110,6 +118,28 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
           }),
           map((value) => this._filter(value))
         );
+
+      this.filamentService.getFilamentStorageLocations().subscribe((dto) => {
+        this.filamentStorageLocations = dto.storageLocations;
+
+        this.filteredFilamentStorageLocations = this.filamentForm
+          .get('storageLocation')
+          .valueChanges.pipe(
+            startWith(''),
+            map((value) => this._filterStorageLocations(value))
+          );
+      });
+
+      this.filamentService.getFilamentPurchaseLocations().subscribe((dto) => {
+        this.filamentPurchaseLocations = dto.purchaseLocations;
+
+        this.filteredFilamentPurchaseLocations = this.filamentForm
+          .get('purchaseLocation')
+          .valueChanges.pipe(
+            startWith(''),
+            map((value) => this._filterPurchaseLocations(value))
+          );
+      });
     });
   }
 
@@ -122,6 +152,30 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
           option.acronym?.toLowerCase().includes(filterValue) ||
           option.name?.toLowerCase().includes(filterValue)
       )
+      .sort();
+  }
+
+  private _filterStorageLocations(value: string): string[] {
+    const filterValue = value.toLowerCase();
+
+    if (value === '') {
+      return this.filamentStorageLocations.sort();
+    }
+
+    return this.filamentStorageLocations
+      .filter((option) => option.toLowerCase().includes(filterValue))
+      .sort();
+  }
+
+  private _filterPurchaseLocations(value: string): string[] {
+    const filterValue = value.toLowerCase();
+
+    if (value === '') {
+      return this.filamentPurchaseLocations.sort();
+    }
+
+    return this.filamentPurchaseLocations
+      .filter((option) => option.toLowerCase().includes(filterValue))
       .sort();
   }
 

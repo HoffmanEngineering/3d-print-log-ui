@@ -191,7 +191,18 @@
             type="text"
             formControlName="storageLocation"
             maxlength="256"
+            [matAutocomplete]="autoStorageLocations"
           />
+          <mat-autocomplete #autoStorageLocations="matAutocomplete">
+            <mat-option
+              *ngFor="
+                let option of this.filteredFilamentStorageLocations | async
+              "
+              [value]="option"
+            >
+              {{ option }}
+            </mat-option>
+          </mat-autocomplete>
           <mat-hint *ngIf="this.filamentForm.get('storageLocation').dirty">
             {{ 256 - this.filamentForm.get('storageLocation').value.length }}
             characters remaining.</mat-hint
@@ -438,7 +449,18 @@
             type="text"
             formControlName="purchaseLocation"
             maxlength="1000"
+            [matAutocomplete]="autoPurchaseLocations"
           />
+          <mat-autocomplete #autoPurchaseLocations="matAutocomplete">
+            <mat-option
+              *ngFor="
+                let option of this.filteredFilamentPurchaseLocations | async
+              "
+              [value]="option"
+            >
+              {{ option }}
+            </mat-option>
+          </mat-autocomplete>
           <!-- <mat-error
                   *ngIf="filamentForm.controls['brand'].hasError('required')"
                 >

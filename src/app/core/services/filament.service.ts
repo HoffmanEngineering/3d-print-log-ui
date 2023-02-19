@@ -58,6 +58,18 @@ export interface FilamentSummary {
   storageLocation: string;
 }
 
+export interface FilamentStorageLocations {
+  storageLocations: string[];
+}
+
+export interface FilamentPurchaseLocations {
+  purchaseLocations: string[];
+}
+
+export interface FilamentBrands {
+  brands: string[];
+}
+
 export interface FilamentAdjustment {
   /** GUID */
   id: string;
@@ -199,5 +211,32 @@ export class FilamentService {
         return this.updateFilament(filament);
       })
     );
+  }
+
+  /**
+   *
+   * @returns A list of all storage locations for the current user.
+   */
+  getFilamentStorageLocations(): Observable<FilamentStorageLocations> {
+    const url = `${this.baseApi}/api/Filaments/storage-locations`;
+    return this.http.get<FilamentStorageLocations>(url);
+  }
+
+  /**
+   *
+   * @returns A list of all purchase locations for the current user.
+   */
+  getFilamentPurchaseLocations(): Observable<FilamentPurchaseLocations> {
+    const url = `${this.baseApi}/api/Filaments/purchase-locations`;
+    return this.http.get<FilamentPurchaseLocations>(url);
+  }
+
+  /**
+   *
+   * @returns A list of all brands of filament for the current user.
+   */
+  getFilamentBrands(): Observable<FilamentBrands> {
+    const url = `${this.baseApi}/api/Filaments/brands`;
+    return this.http.get<FilamentBrands>(url);
   }
 }

@@ -23,7 +23,12 @@ describe('FilamentDetailComponent', () => {
   beforeEach(async () => {
     const mockFilamentService = jasmine.createSpyObj<FilamentService>(
       'FilamentService',
-      ['getCurrentUserFilamentSummaries']
+      [
+        'getCurrentUserFilamentSummaries',
+        'getFilamentBrands',
+        'getFilamentPurchaseLocations',
+        'getFilamentStorageLocations',
+      ]
     );
 
     const mockToastrservice = jasmine.createSpyObj<ToastrService>(

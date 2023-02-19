@@ -49,6 +49,8 @@ export class AuthService {
           audience: environment.authentication.audience,
           redirect_uri: `${window.location.origin}/callback`,
         },
+        cacheLocation: 'localstorage',
+        useRefreshTokens: true,
       })
     ) as Observable<Auth0Client>
   ).pipe(

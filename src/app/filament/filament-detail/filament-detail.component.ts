@@ -54,6 +54,8 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   public filteredFilamentStorageLocations: Observable<string[]> = null;
 
   public filteredFilamentPurchaseLocations: Observable<string[]> = null;
+  filamentBrands: string[];
+  filteredFilamentBrands: Observable<string[]>;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -140,6 +142,17 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
             map((value) => this._filterPurchaseLocations(value))
           );
       });
+
+      this.filamentService.getFilamentBrands().subscribe((dto) => {
+        this.filamentBrands = dto.brands;
+
+        this.filteredFilamentBrands = this.filamentForm
+          .get('brand')
+          .valueChanges.pipe(
+            startWith(''),
+            map((value) => this._filterBrands(value))
+          );
+      });
     });
   }
 
@@ -175,6 +188,18 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     }
 
     return this.filamentPurchaseLocations
+      .filter((option) => option.toLowerCase().includes(filterValue))
+      .sort();
+  }
+
+  private _filterBrands(value: string): string[] {
+    const filterValue = value.toLowerCase();
+
+    if (value === '') {
+      return this.filamentBrands.sort();
+    }
+
+    return this.filamentBrands
       .filter((option) => option.toLowerCase().includes(filterValue))
       .sort();
   }

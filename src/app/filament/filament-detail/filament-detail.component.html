@@ -137,7 +137,16 @@
             type="text"
             formControlName="brand"
             maxlength="255"
+            [matAutocomplete]="autoBrands"
           />
+          <mat-autocomplete #autoBrands="matAutocomplete">
+            <mat-option
+              *ngFor="let option of this.filteredFilamentBrands | async"
+              [value]="option"
+            >
+              {{ option }}
+            </mat-option>
+          </mat-autocomplete>
           <!-- <mat-error
               *ngIf="filamentForm.controls['brand'].hasError('required')"
             >

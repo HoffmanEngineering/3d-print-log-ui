@@ -66,6 +66,10 @@ export interface FilamentPurchaseLocations {
   purchaseLocations: string[];
 }
 
+export interface FilamentBrands {
+  brands: string[];
+}
+
 export interface FilamentAdjustment {
   /** GUID */
   id: string;
@@ -225,5 +229,14 @@ export class FilamentService {
   getFilamentPurchaseLocations(): Observable<FilamentPurchaseLocations> {
     const url = `${this.baseApi}/api/Filaments/purchase-locations`;
     return this.http.get<FilamentPurchaseLocations>(url);
+  }
+
+  /**
+   *
+   * @returns A list of all brands of filament for the current user.
+   */
+  getFilamentBrands(): Observable<FilamentBrands> {
+    const url = `${this.baseApi}/api/Filaments/brands`;
+    return this.http.get<FilamentBrands>(url);
   }
 }

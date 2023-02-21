@@ -141,10 +141,12 @@ export class AuthService {
       ),
       catchError((err) => {
         if (err.error === 'missing_refresh_token') {
-          console.log('Missing Refresh Token: Logging out');
-          this.logout();
+          if (this.loggedIn) {
+            console.log('Missing Refresh Token: Logging out');
+            this.logout();
+          }
         }
-        console.error('Error in getTokenSilently', err);
+
         return throwError(err);
       })
     ) as unknown as Observable<string>; // TODO: Figure out why getTokenSilently isn't giving the right type

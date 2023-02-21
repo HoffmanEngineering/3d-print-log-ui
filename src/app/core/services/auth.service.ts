@@ -55,7 +55,10 @@ export class AuthService {
     ) as Observable<Auth0Client>
   ).pipe(
     shareReplay(1), // Every subscription receives the same shared value
-    catchError((err) => throwError(err))
+    catchError((err) => {
+      console.error('Error in Auth Client Creation', err);
+      return throwError(err);
+    })
   );
   // Define observables for SDK methods that return promises by default
   // For each Auth0 SDK method, first ensure the client instance is ready
@@ -135,7 +138,15 @@ export class AuthService {
     return this.auth0Client$.pipe(
       concatMap((client: Auth0Client) =>
         from(client.getTokenSilently({ ...options, detailedResponse: false }))
-      )
+      ),
+      catchError((err) => {
+        if (err.error === 'missing_refresh_token') {
+          console.log('Missing Refresh Token: Logging out');
+          this.logout();
+        }
+        console.error('Error in getTokenSilently', err);
+        return throwError(err);
+      })
     ) as unknown as Observable<string>; // TODO: Figure out why getTokenSilently isn't giving the right type
   }
 

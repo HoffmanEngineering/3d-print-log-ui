@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.22.4': {
+      redirect: '1.22.3',
+    },
     '1.22.3': {
       title: '1.22.3 - Filament Field Autocomplete',
       body: `<p>

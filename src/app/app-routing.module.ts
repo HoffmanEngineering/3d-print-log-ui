@@ -30,6 +30,13 @@ const routes: Routes = [
       import('./printer/printer.module').then((m) => m.PrinterModule),
   },
   {
+    path: 'printer-maintenance',
+    loadChildren: () =>
+      import('./printer-maintenance/printer-maintenance.module').then(
+        (m) => m.PrinterMaintenanceModule
+      ),
+  },
+  {
     path: 'home',
     loadChildren: () => import('./home/home.module').then((m) => m.HomeModule),
   },

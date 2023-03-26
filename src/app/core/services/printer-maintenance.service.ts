@@ -20,7 +20,6 @@ export interface AddPrinterMaintenanceDto {
 
   notes: string;
   priceValue: string;
-  priceCurrency: string;
 }
 
 export interface PutPrinterMaintenanceDto {
@@ -33,7 +32,6 @@ export interface PutPrinterMaintenanceDto {
 
   notes: string;
   priceValue: string;
-  priceCurrency: string;
 }
 
 export interface PrinterMaintenanceDto {
@@ -47,7 +45,6 @@ export interface PrinterMaintenanceDto {
 
   notes: string;
   priceValue: string;
-  priceCurrency: string;
 }
 
 export interface PrinterMaintenanceCategoriesDto {

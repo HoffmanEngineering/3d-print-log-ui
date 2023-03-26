@@ -292,7 +292,6 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
         description: '',
         priceValue: null,
         notes: '',
-        priceCurrency: null,
       },
       ...this.entries,
     ];

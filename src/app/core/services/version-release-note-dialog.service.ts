@@ -27,6 +27,44 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.23.0': {
+      title: '1.23.0 - Printer Maintenance Log',
+      body: `  <p>
+  You can now log maintenance on your printers! This will allow you to track
+  when you last cleaned your print heads, changed your nozzles, and any other
+  maintenance task you want. You can also keep track of upcoming maintenance
+  tasks.
+</p>
+<p>
+  The maintenance log can be found on the
+  <a rel="noreferrer noopener" target="_blank" href="/printer-maintenance">Printer Maintenance</a>
+  page.
+</p>
+<p>
+  This is the initial release, with more functionality around maintenance
+  tasks coming in the future. More analytics, reminders, and task rules are in
+  the works. If you have any suggestions, please send in a
+  <a rel="noreferrer noopener" target="_blank" href="/feedback">feedback</a>!
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.22.4': {
       redirect: '1.22.3',
     },

@@ -36,14 +36,32 @@
             *ngIf="auth.loggedIn"
             >Prints</a
           >
-          <a
+
+          <button
             mat-button
             class="link"
-            routerLink="/printers"
-            routerLinkActive="active"
+            [matMenuTriggerFor]="printerMenu"
             *ngIf="auth.loggedIn"
-            >Printers</a
           >
+            Printers
+          </button>
+          <mat-menu #printerMenu="matMenu">
+            <!-- <button mat-menu-item>Fee</button> -->
+            <a
+              class="menu-link"
+              mat-menu-item
+              routerLink="/printers"
+              routerLinkActive="active"
+              >Printers</a
+            >
+            <a
+              class="menu-link"
+              mat-menu-item
+              routerLink="/printer-maintenance"
+              routerLinkActive="active"
+              >Printer Maintenance</a
+            >
+          </mat-menu>
 
           <a
             mat-button

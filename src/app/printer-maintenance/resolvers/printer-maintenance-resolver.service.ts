@@ -18,7 +18,9 @@ export class PrinterMaintenanceResolverService
 {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     let defaultPageSize = 10;
-    const savedPageSize = localStorage.getItem('print_list_page_size');
+    const savedPageSize = localStorage.getItem(
+      'printer_maintenance_list_page_size'
+    );
     if (savedPageSize) {
       defaultPageSize = +savedPageSize;
     }

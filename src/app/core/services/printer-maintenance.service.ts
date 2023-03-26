@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
 import { SortDirection } from '../types/sort-request';
+import { PrinterSummary } from './printer.service';
 
 export enum PrinterMaintenanceSortColumn {
   Date = 1,
@@ -13,7 +14,7 @@ export enum PrinterMaintenanceSortColumn {
 export interface AddPrinterMaintenanceDto {
   printerId: number;
   done: boolean;
-  date: Date;
+  date: string;
   category: string;
   description: string;
 
@@ -26,7 +27,7 @@ export interface PutPrinterMaintenanceDto {
   id: string;
   printerId: number;
   done: boolean;
-  date: Date;
+  date: string;
   category: string;
   description: string;
 
@@ -38,8 +39,9 @@ export interface PutPrinterMaintenanceDto {
 export interface PrinterMaintenanceDto {
   id: string;
   printerId: number;
+  printer: PrinterSummary;
   done: boolean;
-  date: Date;
+  date: string;
   category: string;
   description: string;
 

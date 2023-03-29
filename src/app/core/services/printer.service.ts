@@ -130,6 +130,12 @@ export class PrinterService {
     return this.http.put<PrinterDetail>(url, dto);
   }
 
+  deletePrinter(id: number): Observable<any> {
+    const url = `${this.baseApi}/api/Printers/${id}`;
+
+    return this.http.delete<PrinterDetail>(url);
+  }
+
   getLoadedFilamentForPrinter(
     printerId: number
   ): Observable<PrinterFilamentSummaryDto[]> {

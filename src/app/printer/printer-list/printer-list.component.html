@@ -144,6 +144,15 @@
           >
             <mat-icon>remove_circle</mat-icon>Unload Filament
           </button>
+
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="Delete {{ printer.name }}"
+            (click)="deletePrinter(printer)"
+          >
+            <mat-icon>delete</mat-icon>Delete
+          </button>
         </mat-menu>
       </td>
     </ng-container>

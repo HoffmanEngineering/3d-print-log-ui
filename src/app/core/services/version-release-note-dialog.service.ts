@@ -27,6 +27,33 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.23.1': {
+      title: '1.23.1 - Delete Printers',
+      body: `<p>
+  Printers can now be deleted. From the Printer List, click the ... menu and
+  select "Delete". That will display a confirmation screen, and once accepted
+  the printer and all linked maintenance entries will be deleted. Only
+  printers that are not used in any prints can be deleted.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.23.0': {
       title: '1.23.0 - Printer Maintenance Log',
       body: `  <p>

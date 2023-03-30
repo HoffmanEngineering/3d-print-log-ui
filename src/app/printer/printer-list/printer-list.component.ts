@@ -11,6 +11,9 @@ import {
 import { Title } from '@angular/platform-browser';
 import { debounce } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
+import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-printer-list',
@@ -42,7 +45,8 @@ export class PrinterListComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private printerService: PrinterService,
     private titleService: Title,
-    private readonly toastrService: ToastrService
+    private readonly toastrService: ToastrService,
+    public dialog: MatDialog
   ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
@@ -120,5 +124,37 @@ export class PrinterListComponent implements OnInit {
     }
 
     return result;
+  }
+
+  public deletePrinter(printer: PrinterSummaryWithFilament) {
+    const dialogRef = this.dialog.open(SimpleDialogComponent, {
+      maxWidth: '350px',
+    });
+    (dialogRef.componentInstance as any).title = 'Delete?';
+    // eslint-disable-next-line max-len
+    (
+      dialogRef.componentInstance as any
+    ).body = `Are you sure you want to delete printer "${printer.name}"? <br /> <br />  This action cannot be undone.`;
+    (dialogRef.componentInstance as any).yesText = 'Delete';
+    (dialogRef.componentInstance as any).yesColor = 'warn';
+    (dialogRef.componentInstance as any).noText = 'Cancel';
+
+    dialogRef.afterClosed().subscribe((shouldDelete) => {
+      if (shouldDelete) {
+        this.printerService.deletePrinter(printer.id).subscribe({
+          complete: () => {
+            this.updateFilter().then(() => {
+              this.toastrService.success(
+                'Printer removed successfully.',
+                'Success'
+              );
+            });
+          },
+          error: (error: HttpErrorResponse) => {
+            this.toastrService.error(error.error, 'Error');
+          },
+        });
+      }
+    });
   }
 }

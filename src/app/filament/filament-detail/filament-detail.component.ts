@@ -344,7 +344,6 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
 
     saveFilament.subscribe(
       (filament) => {
-        this.saving = false;
         this.filamentForm.markAsPristine();
 
         this.router.navigateByUrl('/filament').then(() => {

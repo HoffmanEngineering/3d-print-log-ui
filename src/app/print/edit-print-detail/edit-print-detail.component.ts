@@ -895,7 +895,6 @@ export class EditPrintDetailComponent
               environment.googleAds.trafficSearchConversion
             );
 
-            this.saving = false;
             this.printForm.markAsPristine();
             this.router.navigate(['/prints']).then(() => {
               this.toastr.success('Save successful!');
@@ -966,7 +965,6 @@ export class EditPrintDetailComponent
         )
         .subscribe(
           (updatedPrint) => {
-            this.saving = false;
             this.printForm.markAsPristine();
             this.router.navigate(['/prints']).then(() => {
               this.toastr.success('Save successful!');

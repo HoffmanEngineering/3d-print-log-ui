@@ -153,7 +153,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public searchText = '';
 
-  public filterByStatus: PrintStatus | null = -1;
+  public filterByStatus: PrintStatus | null = null;
 
   public filterByPrinterIds: number[] = [];
 
@@ -364,7 +364,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public resetFilters() {
     this.currentPage = 1;
     this.searchText = '';
-    this.filterByStatus = -1;
+    this.filterByStatus = null;
     this.filterByPrinterIds = [];
 
     this.sortDirection = SortDirection.Desc;

@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { EMPTY_GUID } from 'src/app/core/services/print.service';
 import {
@@ -13,7 +9,7 @@ import {
 
 @Injectable()
 export class CopyFilamentDetailResolverService
-  implements Resolve<FilamentDetail>
+  
 {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const filamentId = route.paramMap.get('id');

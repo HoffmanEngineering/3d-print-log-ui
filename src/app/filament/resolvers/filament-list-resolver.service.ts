@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import {
@@ -14,7 +10,7 @@ import {
 
 @Injectable()
 export class FilamentListResolverService
-  implements Resolve<PagedList<FilamentSummary>>
+  
 {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     let defaultPageSize = 10;

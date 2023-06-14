@@ -1,10 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  CanDeactivate,
-  RouterStateSnapshot,
-  UrlTree,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { isObservable, Observable } from 'rxjs';
 
 export interface ComponentCanDeactivate {
@@ -15,7 +10,7 @@ export interface ComponentCanDeactivate {
   providedIn: 'root',
 })
 export class PendingChangesGuard
-  implements CanDeactivate<ComponentCanDeactivate>
+  
 {
   canDeactivate(
     component: ComponentCanDeactivate,

@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { PrinterService, PrinterSummary } from '../services/printer.service';
 
@@ -11,7 +7,7 @@ import { PrinterService, PrinterSummary } from '../services/printer.service';
   providedIn: 'root',
 })
 export class CurrentUserPrinterSummaryResolverService
-  implements Resolve<PrinterSummary[]>
+  
 {
   constructor(private printerService: PrinterService) {}
 

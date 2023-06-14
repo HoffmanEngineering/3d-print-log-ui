@@ -1,16 +1,12 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import {
   PrinterDetail,
   PrinterService,
 } from '../../core/services/printer.service';
 
 @Injectable()
-export class PrinterDetailResolverService implements Resolve<PrinterDetail> {
+export class PrinterDetailResolverService  {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const printerId = +route.paramMap.get('id');
 

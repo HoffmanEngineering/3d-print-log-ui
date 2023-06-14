@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 
 import { map, mergeMap, take } from 'rxjs/operators';
@@ -16,7 +12,7 @@ import { PrintDetailWithUser } from './print-detail-resolver.service';
 
 @Injectable()
 export class CopyPrintDetailResolverService
-  implements Resolve<PrintDetailWithUser>
+  
 {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const printId = +route.paramMap.get('id');

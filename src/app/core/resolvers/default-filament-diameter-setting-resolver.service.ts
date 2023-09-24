@@ -9,9 +9,7 @@ import {
 @Injectable({
   providedIn: 'root',
 })
-export class DefaultFilamentDiameterSettingResolverService
-  
-{
+export class DefaultFilamentDiameterSettingResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Filaments_DefaultDiameterMm

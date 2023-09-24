@@ -1,0 +1,34 @@
+import { TestBed } from '@angular/core/testing';
+import { ResolveFn } from '@angular/router';
+
+import { materialCategoryResolver } from './material-category.resolver';
+import { MaterialCategory } from '../services/material-categories.service';
+
+describe('materialCategoryResolver', () => {
+  const executeResolver: ResolveFn<MaterialCategory[]> = (
+    ...resolverParameters
+  ) =>
+    TestBed.runInInjectionContext(() =>
+      materialCategoryResolver(...resolverParameters)
+    );
+
+  beforeEach(() => {
+    const mockMaterialCategoryService = jasmine.createSpyObj(
+      'MaterialCategoryService',
+      ['getMaterialCategories']
+    );
+
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: 'MaterialCategoryService',
+          useValue: mockMaterialCategoryService,
+        },
+      ],
+    });
+  });
+
+  it('should be created', () => {
+    expect(executeResolver).toBeTruthy();
+  });
+});

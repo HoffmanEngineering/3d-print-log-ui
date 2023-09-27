@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { PagedList } from 'src/app/core/types/paging';
 import { environment } from 'src/environments/environment';
 import { FilamentSummary } from './filament.service';
+import { PrinterCategory } from './printer-categories.service';
 
 export interface PrinterSummary {
   id: number;
@@ -12,6 +13,7 @@ export interface PrinterSummary {
   make: string;
   model: string;
   isActive: boolean;
+  type: PrinterCategory;
 }
 
 export interface PrinterSummaryWithFilament {
@@ -20,6 +22,7 @@ export interface PrinterSummaryWithFilament {
   make: string;
   model: string;
   isActive: boolean;
+  type: PrinterCategory;
 
   loadedFilaments: PrinterFilamentSummaryDto[];
 }
@@ -40,6 +43,8 @@ export interface PrinterDetail {
   isActive: boolean;
 
   loadedFilaments: PrinterFilamentSummaryDto[];
+
+  type: PrinterCategory;
 }
 
 export interface PrinterFilamentSummaryDto {
@@ -64,6 +69,8 @@ export interface AddPrinterDetailDto {
   filamentDiameter: number | null;
 
   isActive: boolean;
+
+  type: string;
 
   loadedFilaments: AddPrinterFilamentSummaryDto[];
 }
@@ -178,6 +185,7 @@ export class PrinterService {
       filamentDiameter: printer.filamentDiameter,
       isActive: printer.isActive,
       loadedFilaments: filamentUsage,
+      type: printer.type.nickname,
     };
 
     return printDto;

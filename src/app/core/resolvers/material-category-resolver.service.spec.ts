@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ResolveFn } from '@angular/router';
 
-import { materialCategoryResolver } from './material-category.resolver';
+import { MaterialCategoryResolverService } from './material-category-resolver.service';
 import { MaterialCategory } from '../services/material-categories.service';
 
 describe('materialCategoryResolver', () => {
@@ -9,7 +9,7 @@ describe('materialCategoryResolver', () => {
     ...resolverParameters
   ) =>
     TestBed.runInInjectionContext(() =>
-      materialCategoryResolver(...resolverParameters)
+      MaterialCategoryResolverService(...resolverParameters)
     );
 
   beforeEach(() => {

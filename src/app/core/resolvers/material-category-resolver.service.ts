@@ -6,7 +6,7 @@ import {
   MaterialCategoryService,
 } from '../services/material-categories.service';
 
-export const materialCategoryResolver: ResolveFn<MaterialCategory[]> = (
+export const MaterialCategoryResolverService: ResolveFn<MaterialCategory[]> = (
   route,
   state,
   materialCategoryService = inject(MaterialCategoryService)

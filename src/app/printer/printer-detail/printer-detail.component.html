@@ -32,6 +32,23 @@
             A Name is <strong>required</strong>
           </mat-error>
         </mat-form-field>
+
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Type</mat-label>
+          <mat-select formControlName="type">
+            <mat-option
+            *ngFor="let type of printerCategories"
+            [value]="type.nickname"
+            [matTooltip]="type.description"
+            [matTooltipPosition]="'right'"
+            >{{ type.nickname }} - {{type.name}}</mat-option
+          >
+          </mat-select>
+          <mat-error *ngIf="printerForm.controls['make'].hasError('required')">
+            A Make is <strong>required</strong>
+          </mat-error>
+        </mat-form-field>
+
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Make</mat-label>
           <input

@@ -5,7 +5,7 @@ import {
 } from '../services/printer-categories.service';
 import { inject } from '@angular/core';
 
-export const printerCategoryResolver: ResolveFn<PrinterCategory[]> = (
+export const PrinterCategoryResolverService: ResolveFn<PrinterCategory[]> = (
   route,
   state,
   printerCategoryService = inject(PrinterCategoryService)

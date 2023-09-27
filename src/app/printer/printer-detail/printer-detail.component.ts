@@ -23,6 +23,8 @@ import {
   PrinterService,
 } from '../../core/services/printer.service';
 import defaultPrinters from './cura-exported-printers';
+import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
+import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 
 @Component({
   selector: 'app-printer-detail',
@@ -40,6 +42,9 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
   filteredMakes: Observable<string[]>;
 
   filteredModels: Observable<string[]>;
+
+  public printerCategories: PrinterCategory[] = [];
+  public materialCategories: MaterialCategory[] = [];
 
   // Help to get all printer loaded filament controls as form array.
   get loadedFilaments(): UntypedFormArray {
@@ -67,6 +72,9 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
     this.getReferencePrinterMakes();
 
     this.activatedRoute.data.subscribe((data) => {
+      this.printerCategories = data.printerCategories;
+      this.materialCategories = data.materialCategories;
+
       this.printerForm = this.buildFormFromPrinterDetail(data.printer);
 
       this.filteredMakes = this.printerForm.controls.make.valueChanges.pipe(
@@ -170,6 +178,7 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
           : true,
       ],
       loadedFilaments: loadedFilamentsForm,
+      type: printer?.type?.nickname ?? 'FDM',
     });
 
     return form;
@@ -278,6 +287,10 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
       filamentDiameter: this.printerForm.controls.filamentDiameter.value,
       isActive: this.printerForm.controls.isActive.value,
       loadedFilaments: newLoadedFilament,
+      type: this.printerCategories.find(
+        (catergory) =>
+          catergory.nickname === this.printerForm.controls.type.value
+      ),
     };
 
     return printer;

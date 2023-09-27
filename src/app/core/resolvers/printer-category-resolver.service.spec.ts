@@ -1,15 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { ResolveFn } from '@angular/router';
 
-import { printerCategoryResolver } from './printer-category.resolver';
+import { PrinterCategoryResolverService } from './printer-category-resolver.service';
 import { PrinterCategory } from '../services/printer-categories.service';
 
-describe('printerCategoryResolver', () => {
+describe('PrinterCategoryResolverService', () => {
   const executeResolver: ResolveFn<PrinterCategory[]> = (
     ...resolverParameters
   ) =>
     TestBed.runInInjectionContext(() =>
-      printerCategoryResolver(...resolverParameters)
+      PrinterCategoryResolverService(...resolverParameters)
     );
 
   beforeEach(() => {

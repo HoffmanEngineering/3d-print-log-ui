@@ -15,7 +15,6 @@
     "prettier": "prettier --check src/**/*.*",
     "prettier:fix": "prettier --write src/**/*.*",
     "parse-cura": "ts-node --project cura-machine-def-parser/tsconfig.json cura-machine-def-parser/parser.ts",
-    "postinstall": "ngcc",
     "prepare": "husky install"
   },
   "private": true,

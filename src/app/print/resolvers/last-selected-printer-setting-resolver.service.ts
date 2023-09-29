@@ -7,9 +7,7 @@ import {
 } from 'src/app/core/services/user-setting.service';
 
 @Injectable()
-export class LastSelectedPrinterSettingResolverService
-  
-{
+export class LastSelectedPrinterSettingResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Prints_LastSelectedPrinterId

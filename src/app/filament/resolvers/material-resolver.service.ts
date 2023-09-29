@@ -6,7 +6,7 @@ import {
 } from 'src/app/core/services/material.service';
 
 @Injectable()
-export class MaterialResolverService  {
+export class MaterialResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.materialService.getMaterials();
   }

@@ -9,9 +9,7 @@ import {
 @Injectable({
   providedIn: 'root',
 })
-export class DefaultFilamentPriceSettingResolverService
-  
-{
+export class DefaultFilamentPriceSettingResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Filaments_DefaultPrice

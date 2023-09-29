@@ -6,7 +6,7 @@ import {
 } from '../../core/services/printer.service';
 
 @Injectable()
-export class PrinterDetailResolverService  {
+export class PrinterDetailResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const printerId = +route.paramMap.get('id');
 

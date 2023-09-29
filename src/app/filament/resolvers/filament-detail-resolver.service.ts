@@ -6,7 +6,7 @@ import {
 } from '../../core/services/filament.service';
 
 @Injectable()
-export class FilamentDetailResolverService  {
+export class FilamentDetailResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const filamentId = route.paramMap.get('id');
 

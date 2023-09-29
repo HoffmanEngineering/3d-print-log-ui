@@ -7,9 +7,7 @@ import {
 } from 'src/app/core/services/user-setting.service';
 
 @Injectable()
-export class LastFilamentMeasureSettingResolverService
-  
-{
+export class LastFilamentMeasureSettingResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Prints_LastSelectedFilamentMeasureType

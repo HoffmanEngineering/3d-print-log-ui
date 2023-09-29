@@ -9,9 +9,7 @@ import {
 @Injectable({
   providedIn: 'root',
 })
-export class CurrencySymbolResolverService
-  
-{
+export class CurrencySymbolResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Currency_Symbol

@@ -8,9 +8,7 @@ import {
 } from '../../core/services/filament.service';
 
 @Injectable()
-export class CopyFilamentDetailResolverService
-  
-{
+export class CopyFilamentDetailResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const filamentId = route.paramMap.get('id');
 

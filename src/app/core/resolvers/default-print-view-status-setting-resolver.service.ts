@@ -9,9 +9,7 @@ import {
 @Injectable({
   providedIn: 'root',
 })
-export class DefaultPrintViewStatusSettingResolverService
-  
-{
+export class DefaultPrintViewStatusSettingResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Prints_DefaultPrintViewStatus

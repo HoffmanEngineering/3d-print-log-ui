@@ -9,9 +9,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 
 @Injectable()
-export class PrinterMaintenanceResolverService
-  
-{
+export class PrinterMaintenanceResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     let defaultPageSize = 10;
     const savedPageSize = localStorage.getItem(

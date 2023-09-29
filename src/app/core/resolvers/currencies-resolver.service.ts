@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+} from '@angular/router';
 
 import { EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -27,7 +31,7 @@ export interface Currency {
 @Injectable({
   providedIn: 'root',
 })
-export class CurrenciesResolverService  {
+export class CurrenciesResolverService {
   /** List gathered by https://github.com/ourworldincode/currency */
   currencies: Currencies = {
     AED: {

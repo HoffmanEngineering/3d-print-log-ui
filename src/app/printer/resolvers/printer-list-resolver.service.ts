@@ -7,9 +7,7 @@ import {
 } from '../../core/services/printer.service';
 
 @Injectable()
-export class PrinterListResolverService
-  
-{
+export class PrinterListResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     let defaultPageSize = 10;
     const savedPageSize = localStorage.getItem('printer_list_page_size');

@@ -11,9 +11,7 @@ import {
 import { PrintDetailWithUser } from './print-detail-resolver.service';
 
 @Injectable()
-export class CopyPrintDetailResolverService
-  
-{
+export class CopyPrintDetailResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const printId = +route.paramMap.get('id');
 

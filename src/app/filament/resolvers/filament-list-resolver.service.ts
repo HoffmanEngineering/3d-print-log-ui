@@ -9,9 +9,7 @@ import {
 } from '../../core/services/filament.service';
 
 @Injectable()
-export class FilamentListResolverService
-  
-{
+export class FilamentListResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     let defaultPageSize = 10;
     const savedPageSize = localStorage.getItem('filament_list_page_size');

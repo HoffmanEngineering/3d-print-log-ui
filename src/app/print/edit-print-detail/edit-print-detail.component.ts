@@ -42,6 +42,7 @@ import {
   FilamentPrice,
   FilamentPriceInvalid,
   PrintDetail,
+  PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
@@ -81,6 +82,7 @@ export class EditPrintDetailComponent
 
   public printStatusTypes = PrintStatus;
   public printViewStatusTypes = PrintViewStatus;
+  public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
   public selectedImage: UntypedFormControl;
 
@@ -217,13 +219,17 @@ export class EditPrintDetailComponent
         this.printerService
           .getLoadedFilamentForPrinter(this.printForm.get('printerId').value)
           .subscribe((loadedFilament) => {
-            let isLengthTheDefaultMeasureType = false;
+            let defaultMeasureType = PrintFilamentSourceMeasurement.Weight;
 
             if (this.lastFilamentMeasureSetting !== null) {
-              isLengthTheDefaultMeasureType =
-                this.lastFilamentMeasureSetting?.value === 'Length'
-                  ? true
-                  : false;
+              defaultMeasureType =
+                this.lastFilamentMeasureSetting?.value === 'Weight'
+                  ? PrintFilamentSourceMeasurement.Weight
+                  : this.lastFilamentMeasureSetting?.value === 'Length'
+                  ? PrintFilamentSourceMeasurement.Length
+                  : this.lastFilamentMeasureSetting?.value === 'Volume'
+                  ? PrintFilamentSourceMeasurement.Volume
+                  : PrintFilamentSourceMeasurement.Weight;
             }
 
             for (let i = 1; i <= loadedFilament.length; i++) {
@@ -246,10 +252,12 @@ export class EditPrintDetailComponent
                   EMPTY_GUID,
                   0,
                   0,
-                  isLengthTheDefaultMeasureType,
+                  0,
+                  defaultMeasureType,
                   0,
                   0,
-                  isLengthTheDefaultMeasureType,
+                  0,
+                  defaultMeasureType,
                   filament,
                   ''
                 );
@@ -286,7 +294,6 @@ export class EditPrintDetailComponent
             this.printerRedirectToast.onTap.subscribe(() => {
               this.router.navigate(['printers', 'new'], {
                 queryParams: {
-                  // eslint-disable-next-line @typescript-eslint/dot-notation
                   returnUrl: this.activatedRoute.snapshot['_routerState'].url,
                 },
               });
@@ -353,13 +360,18 @@ export class EditPrintDetailComponent
             .getLoadedFilamentForPrinter(newPrinterId)
             .subscribe((loadedFilament) => {
               // Add a new filament usage for the currently loaded filament for that printer.
-              let isLengthTheDefaultMeasureType = false;
+
+              let defaultMeasureType = PrintFilamentSourceMeasurement.Weight;
 
               if (this.lastFilamentMeasureSetting !== null) {
-                isLengthTheDefaultMeasureType =
-                  this.lastFilamentMeasureSetting?.value === 'Length'
-                    ? true
-                    : false;
+                defaultMeasureType =
+                  this.lastFilamentMeasureSetting?.value === 'Weight'
+                    ? PrintFilamentSourceMeasurement.Weight
+                    : this.lastFilamentMeasureSetting?.value === 'Length'
+                    ? PrintFilamentSourceMeasurement.Length
+                    : this.lastFilamentMeasureSetting?.value === 'Volume'
+                    ? PrintFilamentSourceMeasurement.Volume
+                    : PrintFilamentSourceMeasurement.Weight;
               }
 
               for (let i = 1; i <= loadedFilament.length; i++) {
@@ -378,10 +390,12 @@ export class EditPrintDetailComponent
                     EMPTY_GUID,
                     0,
                     0,
-                    isLengthTheDefaultMeasureType,
+                    0,
+                    defaultMeasureType,
                     0,
                     0,
-                    isLengthTheDefaultMeasureType,
+                    0,
+                    defaultMeasureType,
                     filament,
                     ''
                   );
@@ -393,15 +407,19 @@ export class EditPrintDetailComponent
         }
       });
   }
-  public HandleFilamentMeasureTypeChange(isLength: boolean) {
-    const newValue = isLength ? 'Length' : 'Weight';
+  public HandleFilamentMeasureTypeChange(
+    source: PrintFilamentSourceMeasurement
+  ) {
+    const newValue =
+      source === PrintFilamentSourceMeasurement.Weight
+        ? 'Weight'
+        : source === PrintFilamentSourceMeasurement.Length
+        ? 'Length'
+        : 'Volume';
 
     if (this.lastFilamentMeasureSetting) {
       this.userSettingService
-        .updateUserSetting(
-          this.lastFilamentMeasureSetting.id,
-          isLength ? 'Length' : 'Weight'
-        )
+        .updateUserSetting(this.lastFilamentMeasureSetting.id, newValue)
         .subscribe((setting) => {
           this.lastFilamentMeasureSetting = setting;
         });
@@ -558,10 +576,12 @@ export class EditPrintDetailComponent
           pf.id,
           pf.amountMg / 1000,
           pf.lengthInM,
-          pf.isActualLengthSource,
+          pf.volumeMl,
+          pf.source,
           pf.estimatedAmountMg / 1000,
           pf.estimatedLengthInM,
-          pf.isEstimatedLengthSource,
+          pf.estimatedVolumeMl,
+          pf.estimatedSource,
           pf.filament,
           pf.notes
         );
@@ -581,10 +601,12 @@ export class EditPrintDetailComponent
         EMPTY_GUID,
         print.filamentUsageMg / 1000,
         null,
-        false,
+        null,
+        PrintFilamentSourceMeasurement.Weight,
         print.estimatedFilamentUsageMg / 1000,
         null,
-        false,
+        null,
+        PrintFilamentSourceMeasurement.Weight,
         this.OTHER_FILAMENT_OPTION as FilamentSummary,
         print.filamentType
       );
@@ -653,10 +675,12 @@ export class EditPrintDetailComponent
     id: string,
     amountG: number,
     lengthInM: number,
-    isActualLengthSource: boolean,
+    volumeMl: number,
+    source: PrintFilamentSourceMeasurement,
     estimatedAmountG: number,
     estimatedLengthInM: number,
-    isEstimatedLengthSource: boolean,
+    estimatedVolumeMl: number,
+    estimatedSource: PrintFilamentSourceMeasurement,
     filament: FilamentSummary | null,
     notes: string | null
   ) {
@@ -664,10 +688,12 @@ export class EditPrintDetailComponent
       id,
       amountG,
       lengthInM,
-      isActualLengthSource,
+      volumeMl,
+      source,
       estimatedAmountG,
       estimatedLengthInM,
-      isEstimatedLengthSource,
+      estimatedVolumeMl,
+      estimatedSource,
       filament,
       notes,
     });
@@ -1021,12 +1047,13 @@ export class EditPrintDetailComponent
           +printFilament.get('estimatedAmountG').value * 1000
         ),
         estimatedLengthInM: printFilament.get('estimatedLengthInM').value,
-        isEstimatedLengthSource: printFilament.get('isEstimatedLengthSource')
-          .value,
+        estimatedVolumeMl: printFilament.get('estimatedVolumeMl').value,
+        estimatedSource: printFilament.get('estimatedSource').value,
         filament: printFilament.get('filament')?.value,
         amountMg: Math.round(+printFilament.get('amountG').value * 1000),
         lengthInM: printFilament.get('lengthInM').value,
-        isActualLengthSource: printFilament.get('isActualLengthSource').value,
+        volumeMl: printFilament.get('volumeMl').value,
+        source: printFilament.get('source').value,
         notes: printFilament.get('notes').value,
       };
 
@@ -1133,10 +1160,16 @@ export class EditPrintDetailComponent
       EMPTY_GUID,
       0,
       0,
-      isLengthTheDefaultMeasureType,
+      0,
+      isLengthTheDefaultMeasureType
+        ? PrintFilamentSourceMeasurement.Length
+        : PrintFilamentSourceMeasurement.Weight,
       0,
       0,
-      isLengthTheDefaultMeasureType,
+      0,
+      isLengthTheDefaultMeasureType
+        ? PrintFilamentSourceMeasurement.Length
+        : PrintFilamentSourceMeasurement.Weight,
       null,
       ''
     );

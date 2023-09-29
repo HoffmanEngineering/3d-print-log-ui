@@ -22,6 +22,7 @@ import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialo
 import {
   FilamentPrice,
   FilamentPriceInvalid,
+  PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
@@ -562,7 +563,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public getEstimatedPrice(filamentUsage: PrintFilamentSummaryDto) {
     const filament = filamentUsage.filament;
 
-    const isLengthSource = filamentUsage.isEstimatedLengthSource;
+    const isLengthSource =
+      filamentUsage.estimatedSource === PrintFilamentSourceMeasurement.Length;
 
     const weightG =
       filamentUsage.estimatedAmountMg > 0
@@ -590,7 +592,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public getActualPrice(filamentUsage: PrintFilamentSummaryDto) {
     const filament = filamentUsage.filament;
 
-    const isLengthSource = filamentUsage.isActualLengthSource;
+    const isLengthSource =
+      filamentUsage.source === PrintFilamentSourceMeasurement.Length;
 
     const weightG =
       filamentUsage.amountMg > 0 ? filamentUsage.amountMg / 1000 : undefined;

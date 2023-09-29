@@ -38,6 +38,12 @@ export enum PrintViewStatus {
   Private = 3,
 }
 
+export enum PrintFilamentSourceMeasurement {
+  Weight = 1,
+  Length = 2,
+  Volume = 3,
+}
+
 export interface PrintImage {
   id: number;
   isDefault: boolean;
@@ -54,13 +60,17 @@ export interface PrintFilamentSummaryDto {
    */
   id: string;
   filament: FilamentSummary;
+
   amountMg?: number;
   lengthInM?: number;
-  isActualLengthSource: boolean;
+  volumeMl?: number;
+
   estimatedAmountMg?: number;
   estimatedLengthInM?: number;
+  estimatedVolumeMl?: number;
 
-  isEstimatedLengthSource: boolean;
+  source: PrintFilamentSourceMeasurement;
+  estimatedSource: PrintFilamentSourceMeasurement;
 
   notes?: string;
 }
@@ -71,13 +81,17 @@ export interface PutPrintFilamentSummaryDto {
    */
   id: string;
   filamentId?: string;
+
   amountMg?: number;
   lengthInM?: number;
-  isActualLengthSource: boolean;
+  volumeMl?: number;
+
   estimatedAmountMg?: number;
   estimatedLengthInM?: number;
+  estimatedVolumeMl?: number;
 
-  isEstimatedLengthSource: boolean;
+  source: PrintFilamentSourceMeasurement;
+  estimatedSource: PrintFilamentSourceMeasurement;
 
   notes?: string;
 }
@@ -346,10 +360,12 @@ export class PrintService {
           filamentId: pf.filament?.id ?? null,
           estimatedAmountMg: pf.estimatedAmountMg,
           estimatedLengthInM: pf.estimatedLengthInM,
-          isEstimatedLengthSource: pf.isEstimatedLengthSource,
+          estimatedVolumeMl: pf.estimatedVolumeMl,
+          estimatedSource: pf.estimatedSource,
           amountMg: pf.amountMg,
           lengthInM: pf.lengthInM,
-          isActualLengthSource: pf.isActualLengthSource,
+          volumeMl: pf.volumeMl,
+          source: pf.source,
           notes: pf.notes,
         };
 
@@ -525,13 +541,15 @@ export class PrintService {
 
       // If actual has an amount, use it.
       if (
-        (fu.isActualLengthSource && fu.lengthInM > 0) ||
-        (!fu.isActualLengthSource && fu.amountMg > 0)
+        (fu.source == PrintFilamentSourceMeasurement.Length &&
+          fu.lengthInM > 0) ||
+        (!(fu.source == PrintFilamentSourceMeasurement.Length) &&
+          fu.amountMg > 0)
       ) {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,
-          isLengthSource: fu.isActualLengthSource,
+          isLengthSource: fu.source == PrintFilamentSourceMeasurement.Length,
           lengthM: fu.lengthInM,
           weightG: fu.amountMg > 0 ? fu.amountMg / 1000 : undefined,
           defaultFilamentPrice,
@@ -542,7 +560,8 @@ export class PrintService {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,
-          isLengthSource: fu.isEstimatedLengthSource,
+          isLengthSource:
+            fu.estimatedSource == PrintFilamentSourceMeasurement.Length,
           lengthM: fu.estimatedLengthInM,
           weightG:
             fu.estimatedAmountMg > 0 ? fu.estimatedAmountMg / 1000 : undefined,

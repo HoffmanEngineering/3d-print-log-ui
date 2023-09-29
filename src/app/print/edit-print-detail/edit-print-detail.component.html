@@ -447,8 +447,7 @@
                     <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
                       <mat-form-field
                         *ngIf="
-                          printFilament.get('isEstimatedLengthSource').value ===
-                          false
+                          printFilament.get('estimatedSource').value === printFilamentSourceMeasurementTypes.Weight
                         "
                         fxFlex="grow"
                       >
@@ -483,8 +482,7 @@
                       </mat-form-field>
                       <mat-form-field
                         *ngIf="
-                          printFilament.get('isEstimatedLengthSource').value ===
-                          true
+                          printFilament.get('estimatedSource').value === printFilamentSourceMeasurementTypes.Length
                         "
                         fxFlex="grow"
                       >
@@ -507,16 +505,42 @@
                           Estimated {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage must be a positive number.
                         </mat-error>
                       </mat-form-field>
+                      <mat-form-field
+                        *ngIf="
+                          printFilament.get('estimatedSource').value === printFilamentSourceMeasurementTypes.Volume
+                        "
+                        fxFlex="grow"
+                      >
+                        <mat-label> Estimated {{ materialCategoryNameForSelectedPrinter | titlecase }} Used (ml)</mat-label>
+                        <input
+                          id="edit-print-estimated-filement-used-ml-{{
+                            printFilamentIndex
+                          }}"
+                          matInput
+                          type="text"
+                          formControlName="estimatedVolumeMl"
+                        />
+                        <mat-error
+                          *ngIf="
+                            printFilament
+                              .get('estimatedVolumeMl')
+                              .hasError('min')
+                          "
+                        >
+                          Estimated {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage must be a positive number.
+                        </mat-error>
+                      </mat-form-field>
                       <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
                         <mat-label>Measure</mat-label>
                         <mat-select
-                          formControlName="isEstimatedLengthSource"
+                          formControlName="estimatedSource"
                           (selectionChange)="
                             HandleFilamentMeasureTypeChange($event.value)
                           "
                         >
-                          <mat-option [value]="false"> Weight </mat-option>
-                          <mat-option [value]="true"> Length </mat-option>
+                          <mat-option [value]="printFilamentSourceMeasurementTypes.Weight"> Weight </mat-option>
+                          <mat-option [value]="printFilamentSourceMeasurementTypes.Length"> Length </mat-option>
+                          <mat-option [value]="printFilamentSourceMeasurementTypes.Volume"> Volume </mat-option>
                         </mat-select>
                       </mat-form-field>
                     </div>
@@ -524,8 +548,7 @@
                     <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
                       <mat-form-field
                         *ngIf="
-                          printFilament.get('isActualLengthSource').value ===
-                          false
+                          printFilament.get('source').value === printFilamentSourceMeasurementTypes.Weight
                         "
                         fxFlex="grow"
                       >
@@ -554,8 +577,7 @@
                       </mat-form-field>
                       <mat-form-field
                         *ngIf="
-                          printFilament.get('isActualLengthSource').value ===
-                          true
+                        printFilament.get('source').value === printFilamentSourceMeasurementTypes.Length
                         "
                         fxFlex="grow"
                       >
@@ -574,11 +596,33 @@
                           Actual {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage must be a positive number.
                         </mat-error>
                       </mat-form-field>
+                      <mat-form-field
+                        *ngIf="
+                        printFilament.get('source').value === printFilamentSourceMeasurementTypes.Volume
+                        "
+                        fxFlex="grow"
+                      >
+                        <mat-label> Actual {{ materialCategoryNameForSelectedPrinter | titlecase }} Used (ml)</mat-label>
+                        <input
+                          id="edit-print-actual-filament-used-ml-{{
+                            printFilamentIndex
+                          }}"
+                          matInput
+                          type="text"
+                          formControlName="volumeMl"
+                        />
+                        <mat-error
+                          *ngIf="printFilament.get('volumeMl').hasError('min')"
+                        >
+                          Actual {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage must be a positive number.
+                        </mat-error>
+                      </mat-form-field>
                       <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
                         <mat-label>Measure</mat-label>
-                        <mat-select formControlName="isActualLengthSource">
-                          <mat-option [value]="false"> Weight </mat-option>
-                          <mat-option [value]="true"> Length </mat-option>
+                        <mat-select formControlName="source">
+                          <mat-option [value]="printFilamentSourceMeasurementTypes.Weight"> Weight </mat-option>
+                          <mat-option [value]="printFilamentSourceMeasurementTypes.Length"> Length </mat-option>
+                          <mat-option [value]="printFilamentSourceMeasurementTypes.Volume"> Volume </mat-option>
                         </mat-select>
                       </mat-form-field>
                     </div>

@@ -44,6 +44,13 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
   filteredModels: Observable<string[]>;
 
   public printerCategories: PrinterCategory[] = [];
+
+  /** Printer Categories grouped by their material type name */
+  public groupedPrinterCategories: {
+    name: string;
+    categories: PrinterCategory[];
+  }[] = [];
+
   public materialCategories: MaterialCategory[] = [];
 
   // Help to get all printer loaded filament controls as form array.
@@ -75,6 +82,8 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
       this.printerCategories = data.printerCategories;
       this.materialCategories = data.materialCategories;
 
+      this.groupPrinterCategoriesByMaterial();
+
       this.printerForm = this.buildFormFromPrinterDetail(data.printer);
 
       this.filteredMakes = this.printerForm.controls.make.valueChanges.pipe(
@@ -87,6 +96,59 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
 
         map((value) => this._filterModels(value))
       );
+    });
+  }
+
+  /**
+   * Group the printerCategories by their material category
+   *  */
+  private groupPrinterCategoriesByMaterial() {
+    this.groupedPrinterCategories = this.printerCategories.reduce(
+      (acc, curr) => {
+        const existingGroup = acc.find(
+          (g) => g.name === curr.materialCategory.name
+        );
+
+        if (existingGroup) {
+          existingGroup.categories.push(curr);
+        } else {
+          acc.push({
+            name: curr?.materialCategory?.name ?? 'Other',
+            categories: [curr],
+          });
+        }
+
+        return acc;
+      },
+      []
+    );
+
+    // sort the grouped printer categories by their nickname
+    this.groupedPrinterCategories.forEach((g) => {
+      g.categories = g.categories.sort((a, b) => {
+        if (a.nickname < b.nickname) {
+          return -1;
+        }
+
+        if (a.nickname > b.nickname) {
+          return 1;
+        }
+
+        return 0;
+      });
+    });
+
+    // Sort the groups by their name
+    this.groupedPrinterCategories.sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+
+      if (a.name > b.name) {
+        return 1;
+      }
+
+      return 0;
     });
   }
 
@@ -178,7 +240,7 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
           : true,
       ],
       loadedFilaments: loadedFilamentsForm,
-      type: printer?.type?.nickname ?? 'FDM',
+      type: [printer?.type?.nickname ?? 'FDM', Validators.required],
     });
 
     return form;

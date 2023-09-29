@@ -123,6 +123,11 @@ export class EditPrintDetailComponent
 
   public defaultFilamentPriceSetting: UserSetting | null = null;
 
+  /**
+   * The name of the selected printer's material category. Defaults to 'material' is none is selected
+   */
+  public materialCategoryNameForSelectedPrinter: string = 'material';
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -203,6 +208,10 @@ export class EditPrintDetailComponent
           this.OTHER_FILAMENT_OPTION;
       const printerHasBeenSelected =
         this.printForm.get('printerId').value !== null;
+
+      this.setMaterialCategoryNameForPrinterId(
+        this.printForm.get('printerId').value
+      );
 
       if (printIsNew && filamentIsEmpty && printerHasBeenSelected) {
         this.printerService
@@ -414,12 +423,16 @@ export class EditPrintDetailComponent
     }
     this.printerIdValueChangesSub = this.printForm
       .get('printerId')
-      .valueChanges.subscribe((newPrintId) => {
+      .valueChanges.subscribe((newPrinterId) => {
+        // Save the name of the selected printer's material category. Defaults to 'material' is none is selected
+        this.setMaterialCategoryNameForPrinterId(newPrinterId);
+
+        // Save the last selected printer setting.
         if (this.lastSelectedPrinterSetting) {
           this.userSettingService
             .updateUserSetting(
               this.lastSelectedPrinterSetting.id,
-              newPrintId.toString()
+              newPrinterId.toString()
             )
             .subscribe((setting) => {
               this.lastSelectedPrinterSetting = setting;
@@ -428,13 +441,19 @@ export class EditPrintDetailComponent
           this.userSettingService
             .addUserSetting(
               UserSettingType.Prints_LastSelectedPrinterId,
-              newPrintId.toString()
+              newPrinterId.toString()
             )
             .subscribe((setting) => {
               this.lastSelectedPrinterSetting = setting;
             });
         }
       });
+  }
+
+  private setMaterialCategoryNameForPrinterId(newPrinterId: any) {
+    const printer = this.printers.find((p) => p.id === newPrinterId);
+    this.materialCategoryNameForSelectedPrinter =
+      printer?.type?.materialCategory.name ?? 'material';
   }
 
   private SaveSettingWhenAllowCommentsChanges() {

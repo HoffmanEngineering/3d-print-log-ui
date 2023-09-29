@@ -638,13 +638,13 @@ export class PrintService {
         : defaultPrice;
 
     if (filamentPrice == null) {
-      return { valid: false, message: '(Filament price not set)' };
+      return { valid: false, message: '(Material price not set)' };
     }
 
     const filamentWeightMg = filament.initialNominalWeightMg;
 
     if (filamentWeightMg == null || filamentWeightMg === 0) {
-      return { valid: false, message: '(Filament initial weight not set)' };
+      return { valid: false, message: '(Material initial weight not set)' };
     }
 
     // Save if we are using a default price

@@ -298,10 +298,10 @@
           </div>
         </div>
 
-        <!-- Filament Usage -->
+        <!-- Material Usage -->
 
         <div fxFlex="grow" fxFlexFill>
-          Filament Usage: <br />
+          {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage: <br />
           <button
             type="button"
             mat-raised-button
@@ -309,7 +309,7 @@
             color="accent"
             style="margin-bottom: 5px"
           >
-            Add New Filament Record
+            Add New {{ materialCategoryNameForSelectedPrinter | titlecase }} Record
           </button>
         </div>
 
@@ -440,7 +440,7 @@
                             ? 'Change'
                             : 'Select'
                         }}
-                        Filament
+                        {{ materialCategoryNameForSelectedPrinter | titlecase }}
                       </button>
                     </div>
 
@@ -452,7 +452,7 @@
                         "
                         fxFlex="grow"
                       >
-                        <mat-label> Estimated Filament Used (g)</mat-label>
+                        <mat-label> Estimated {{ materialCategoryNameForSelectedPrinter | titlecase }} Used (g)</mat-label>
                         <input
                           id="edit-print-estimated-filement-used-gram-{{
                             printFilamentIndex
@@ -469,7 +469,7 @@
                               .hasError('min')
                           "
                         >
-                          Estimated Filament Usage must be a positive number.
+                          Estimated {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage must be a positive number.
                         </mat-error>
                         <mat-error
                           *ngIf="
@@ -488,7 +488,7 @@
                         "
                         fxFlex="grow"
                       >
-                        <mat-label> Estimated Filament Used (m)</mat-label>
+                        <mat-label> Estimated {{ materialCategoryNameForSelectedPrinter | titlecase }} Used (m)</mat-label>
                         <input
                           id="edit-print-estimated-filement-used-meter-{{
                             printFilamentIndex
@@ -504,7 +504,7 @@
                               .hasError('min')
                           "
                         >
-                          Estimated Filament Usage must be a positive number.
+                          Estimated {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage must be a positive number.
                         </mat-error>
                       </mat-form-field>
                       <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
@@ -529,7 +529,7 @@
                         "
                         fxFlex="grow"
                       >
-                        <mat-label> Actual Filament Used (g)</mat-label>
+                        <mat-label> Actual {{ materialCategoryNameForSelectedPrinter | titlecase }} Used (g)</mat-label>
                         <input
                           id="edit-print-actual-filament-used-gram-{{
                             printFilamentIndex
@@ -542,7 +542,7 @@
                         <mat-error
                           *ngIf="printFilament.get('amountG').hasError('min')"
                         >
-                          Filament Usage must be a positive number.
+                        {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage must be a positive number.
                         </mat-error>
                         <mat-error
                           *ngIf="
@@ -559,7 +559,7 @@
                         "
                         fxFlex="grow"
                       >
-                        <mat-label> Actual Filament Used (m)</mat-label>
+                        <mat-label> Actual {{ materialCategoryNameForSelectedPrinter | titlecase }} Used (m)</mat-label>
                         <input
                           id="edit-print-actual-filament-used-meter-{{
                             printFilamentIndex
@@ -571,7 +571,7 @@
                         <mat-error
                           *ngIf="printFilament.get('lengthInM').hasError('min')"
                         >
-                          Actual Filament Usage must be a positive number.
+                          Actual {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage must be a positive number.
                         </mat-error>
                       </mat-form-field>
                       <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">

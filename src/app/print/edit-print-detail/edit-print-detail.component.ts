@@ -1126,9 +1126,15 @@ export class EditPrintDetailComponent
   }
 
   public searchFilament(filamentControl: AbstractControl) {
+    const material = this.printers.find(
+      (p) => p.id === this.printForm.get('printerId').value
+    )?.type?.materialCategory.nickname;
+
+    console.log(material, this.printers, this.printForm.get('printerId').value);
     const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
       data: {
         otherFilamentOption: this.OTHER_FILAMENT_OPTION,
+        filterByMaterialCategory: material,
       },
       height: '80vh',
       width: '80vw',

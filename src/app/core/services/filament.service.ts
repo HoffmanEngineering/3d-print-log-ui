@@ -7,6 +7,7 @@ import { PagedList } from '../types/paging';
 import { SortDirection } from '../types/sort-request';
 import { EMPTY_GUID } from './print.service';
 import { PrinterSummary } from './printer.service';
+import { MaterialCategory } from './material-categories.service';
 
 export interface FilamentDetail {
   id: string;
@@ -56,6 +57,7 @@ export interface FilamentSummary {
   diameterMm: number;
   loadedInPrinter: PrinterSummary | null;
   storageLocation: string;
+  materialCategory: MaterialCategory;
 }
 
 export interface FilamentStorageLocations {
@@ -106,7 +108,8 @@ export class FilamentService {
     searchText?: string,
     includeInactive?: boolean,
     showFavoritesOnly?: boolean,
-    showLoadedFilamentOnly?: boolean
+    showLoadedFilamentOnly?: boolean,
+    filterByMaterialCategoryNickname?: string
   ): Observable<PagedList<FilamentSummary>> {
     const url = `${this.baseApi}/api/Filaments`;
 
@@ -118,6 +121,16 @@ export class FilamentService {
 
     if (searchText !== undefined && searchText !== '') {
       params = params.set('SearchText', searchText.trim());
+    }
+
+    if (
+      filterByMaterialCategoryNickname !== undefined &&
+      filterByMaterialCategoryNickname !== ''
+    ) {
+      params = params.set(
+        'filterByMaterialCategoryNickname',
+        filterByMaterialCategoryNickname.trim()
+      );
     }
 
     if (includeInactive !== undefined) {

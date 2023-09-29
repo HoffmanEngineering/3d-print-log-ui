@@ -13,6 +13,7 @@ import {
   FilamentSortColumns,
   FilamentSummary,
 } from 'src/app/core/services/filament.service';
+import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -62,6 +63,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   public filamentSearchSubscription: Subscription | null = null;
 
+  public materialCategories: MaterialCategory[] = [];
+
+  public filterByMaterialCategory: string = '';
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private filamentService: FilamentService,
@@ -100,6 +105,11 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       if (params.has('searchText')) {
         this.searchText = params.get('searchText');
       }
+
+      if (params.has('filterByMaterialCategory')) {
+        this.filterByMaterialCategory = params.get('filterByMaterialCategory');
+      }
+
       if (params.has('includeInactive')) {
         this.includeInactive =
           params.get('includeInactive').toLowerCase() === 'true';
@@ -129,6 +139,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     });
 
     this.activatedRoute.data.subscribe((data) => {
+      this.materialCategories = data.materialCategories;
+
       const pagedResponse: PagedList<FilamentSummary> = data.filamentList;
       this.handlePagedList(pagedResponse);
     });
@@ -161,6 +173,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
           includeInactive: this.includeInactive,
           showFavoritesOnly: this.showFavoritesOnly,
           showLoadedFilamentOnly: this.showLoadedFilamentOnly,
+          filterByMaterialCategory: this.filterByMaterialCategory || '',
           sortDirection: this.sortDirection,
           sortColumn: this.sortColumn,
           t: new Date().getTime(),
@@ -179,7 +192,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
             this.searchText,
             this.includeInactive,
             this.showFavoritesOnly,
-            this.showLoadedFilamentOnly
+            this.showLoadedFilamentOnly,
+            this.filterByMaterialCategory
           )
           .subscribe(
             (filaments) => {

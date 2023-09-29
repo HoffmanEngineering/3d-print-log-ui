@@ -72,6 +72,10 @@ const routes: Routes = [
   },
   {
     path: 'filament',
+    redirectTo: 'materials',
+  },
+  {
+    path: 'materials',
     loadChildren: () =>
       import('./filament/filament.module').then((m) => m.FilamentModule),
   },

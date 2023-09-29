@@ -24,7 +24,7 @@
       color="accent"
       id="add-new-filament"
     >
-      Add New Filament
+      Add New Material
     </button>
     <div class="search-fields">
       <mat-form-field>
@@ -54,7 +54,7 @@
         type="checkbox"
         [(ngModel)]="showLoadedFilamentOnly"
         (ngModelChange)="updateFilter()"
-        >Show Loaded Filament Only</mat-checkbox
+        >Show Loaded Materials Only</mat-checkbox
       >
 
       <mat-form-field>
@@ -90,7 +90,7 @@
           mat-button
           *ngIf="filament.isFavorite"
           class="transparent"
-          attr.aria-label="Filament {{
+          attr.aria-label="Material {{
             filament.displayName
           }} is favorite. Click to remove from favorites."
           (click)="
@@ -107,7 +107,7 @@
           mat-button
           *ngIf="!filament.isFavorite"
           class="transparent not-favorite-icon"
-          attr.aria-label="Filament {{
+          attr.aria-label="Material {{
             filament.displayName
           }} is not a favorite. Click to add to favorites."
           (click)="
@@ -244,7 +244,7 @@
           <!-- <button mat-menu-item>Fee</button> -->
           <a
             class="menu-link"
-            attr.aria-label="Edit filament {{ filament.displayName }}"
+            attr.aria-label="Edit Material {{ filament.displayName }}"
             mat-menu-item
             [routerLink]="[filament.id]"
             data-cy-edit-menu-option
@@ -253,7 +253,7 @@
           <a
             class="menu-link"
             mat-menu-item
-            attr.aria-label="Duplicate filament {{ filament.displayName }}"
+            attr.aria-label="Duplicate Material {{ filament.displayName }}"
             [routerLink]="['copy', filament.id]"
             ><mat-icon>file_copy</mat-icon>Duplicate</a
           >
@@ -268,14 +268,14 @@
           <button
             type="button"
             mat-menu-item
-            attr.aria-label="Mark filament {{ filament.displayName }} as empty."
+            attr.aria-label="Mark Material {{ filament.displayName }} as empty."
             (click)="markAsEmpty(filament)"
           >
             <mat-icon>hide_source</mat-icon>Mark As Empty
           </button>
           <button
             type="button"
-            attr.aria-label="Delete filament {{ filament.displayName }}"
+            attr.aria-label="Delete Material {{ filament.displayName }}"
             mat-menu-item
             (click)="deleteFilament(filament)"
           >
@@ -295,7 +295,7 @@
   </table>
 
   <div class="no-filament" *ngIf="totalCount === 0">
-    No filaments found. Add a new filament or try a different search.
+    No Materials found. Add a new Material or try a different search.
   </div>
 
   <mat-paginator

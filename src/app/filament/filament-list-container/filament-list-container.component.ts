@@ -215,7 +215,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     // eslint-disable-next-line max-len
     (
       dialogRef.componentInstance as any
-    ).body = `Are you sure you want to delete filament "${filament.displayName}"? <br /> <br />  This action cannot be undone.`;
+    ).body = `Are you sure you want to delete material "${filament.displayName}"? <br /> <br />  This action cannot be undone.`;
     (dialogRef.componentInstance as any).yesText = 'Delete';
     (dialogRef.componentInstance as any).yesColor = 'warn';
     (dialogRef.componentInstance as any).noText = 'Cancel';
@@ -226,7 +226,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
           (_) => {
             this.updateFilter().then(() => {
               this.toastrService.success(
-                'Filament removed successfully.',
+                'Material removed successfully.',
                 'Success'
               );
             });
@@ -235,7 +235,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
             // Handle Error Messages:
 
             if (err.status === 400) {
-              this.toastrService.error(err.error, 'Cannot Delete Filament', {
+              this.toastrService.error(err.error, 'Cannot Delete Material', {
                 progressBar: true,
                 timeOut: 10000,
                 extendedTimeOut: 5000,
@@ -310,7 +310,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
         .subscribe((_) => {
           this.updateFilter().then(() => {
             this.toastrService.success(
-              'Filament marked as empty successfully.',
+              'Material marked as empty successfully.',
               'Success'
             );
           });

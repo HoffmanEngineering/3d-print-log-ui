@@ -11,7 +11,7 @@ export class DocSidebarComponent {
     { name: 'Getting Started', url: '/docs/getting-started' },
     { divider: true },
     { name: 'Prints', url: '/docs/prints' },
-    { name: 'Filaments', url: '/docs/filaments' },
+    { name: 'Materials', url: '/docs/materials' },
     { name: 'Printers', url: '/docs/printers' },
     { name: 'Analytics', url: '/docs/analytics' },
     { divider: true },

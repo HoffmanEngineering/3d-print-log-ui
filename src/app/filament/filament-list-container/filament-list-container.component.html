@@ -59,16 +59,18 @@
 
       <mat-form-field>
         <mat-label> Filter by Category: </mat-label>
-        <mat-select [(ngModel)] = "filterByMaterialCategory"
-        (ngModelChange)="updateFilter()"
+        <mat-select
+          [(ngModel)]="filterByMaterialCategory"
+          (ngModelChange)="updateFilter()"
         >
           <mat-option value=""> No Filter </mat-option>
           <mat-option
             *ngFor="let materialCategory of materialCategories"
             [value]="materialCategory.nickname"
-          >{{materialCategory.name}}</mat-option>
+            >{{ materialCategory.name }}</mat-option
+          >
         </mat-select>
-    </mat-form-field>
+      </mat-form-field>
     </div>
   </div>
 

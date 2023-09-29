@@ -22,6 +22,9 @@ export enum UserSettingType {
   Currency_Symbol = 6,
   Filaments_DefaultDiameterMm = 7,
   Filaments_DefaultPrice = 8,
+  Prints_LastSelectedResinMeasureType = 9,
+  Prints_LastSelectedPowderMeasureType = 10,
+  Prints_LastSelectedWireMeasureType = 11,
 }
 
 export interface UserSetting {

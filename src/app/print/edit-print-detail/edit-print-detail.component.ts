@@ -103,7 +103,10 @@ export class EditPrintDetailComponent
 
   public lastAllowCommentsSetting: UserSetting | null = null;
   lastAllowCommentsChangesSub: Subscription;
-  public lastFilamentMeasureSetting: UserSetting | null = null;
+
+  public lastMaterialMeasureSettings: {
+    [materialCategoryNickname: string]: UserSetting | null;
+  } = {};
 
   printerRedirectPromptSubscription: Subscription;
   printerRedirectToast: ActiveToast<any>;
@@ -196,7 +199,9 @@ export class EditPrintDetailComponent
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
       this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
       this.lastAllowCommentsSetting = data.lastAllowCommentsSetting;
-      this.lastFilamentMeasureSetting = data.lastFilamentMeasureSetting;
+      this.lastMaterialMeasureSettings = data.lastMaterialMeasureSettings;
+
+      console.log(this.lastMaterialMeasureSettings);
 
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
@@ -219,18 +224,10 @@ export class EditPrintDetailComponent
         this.printerService
           .getLoadedFilamentForPrinter(this.printForm.get('printerId').value)
           .subscribe((loadedFilament) => {
-            let defaultMeasureType = PrintFilamentSourceMeasurement.Weight;
-
-            if (this.lastFilamentMeasureSetting !== null) {
-              defaultMeasureType =
-                this.lastFilamentMeasureSetting?.value === 'Weight'
-                  ? PrintFilamentSourceMeasurement.Weight
-                  : this.lastFilamentMeasureSetting?.value === 'Length'
-                  ? PrintFilamentSourceMeasurement.Length
-                  : this.lastFilamentMeasureSetting?.value === 'Volume'
-                  ? PrintFilamentSourceMeasurement.Volume
-                  : PrintFilamentSourceMeasurement.Weight;
-            }
+            const defaultMeasureType =
+              this.getDefaultMeasureTypeForSelectedPrinter(
+                this.printForm.get('printerId').value
+              );
 
             for (let i = 1; i <= loadedFilament.length; i++) {
               // If there is a filament usage with OTHER in this index, just update the filament
@@ -303,6 +300,39 @@ export class EditPrintDetailComponent
       });
   }
 
+  getDefaultMeasureTypeForSelectedPrinter(printerId: any) {
+    // Get the printer by Id
+    const { userSetting: lastMeasureSetting } =
+      this.getMeasureUserSettingForPrinterMaterial(printerId);
+
+    // Get the default measure type for that material category
+
+    const defaultMeasureType =
+      lastMeasureSetting?.value === 'Weight'
+        ? PrintFilamentSourceMeasurement.Weight
+        : lastMeasureSetting?.value === 'Length'
+        ? PrintFilamentSourceMeasurement.Length
+        : lastMeasureSetting?.value === 'Volume'
+        ? PrintFilamentSourceMeasurement.Volume
+        : PrintFilamentSourceMeasurement.Weight;
+
+    return defaultMeasureType;
+  }
+
+  private getMeasureUserSettingForPrinterMaterial(printerId: any) {
+    const printer = this.printers.find((p) => p.id === printerId);
+
+    // Get the material category name for that printer
+    const materialCategoryName = (
+      printer?.type?.materialCategory?.nickname ?? 'filament'
+    ).toLowerCase();
+
+    // Get the last filament measure setting for that material category
+    const lastMeasureSetting =
+      this.lastMaterialMeasureSettings?.[materialCategoryName];
+    return { materialCategoryName, userSetting: lastMeasureSetting };
+  }
+
   private onChanges() {
     this.SaveSettingWhenSelectedPrinterIdChanges();
     this.SaveSettingWhenAllowCommentsChanges();
@@ -361,18 +391,8 @@ export class EditPrintDetailComponent
             .subscribe((loadedFilament) => {
               // Add a new filament usage for the currently loaded filament for that printer.
 
-              let defaultMeasureType = PrintFilamentSourceMeasurement.Weight;
-
-              if (this.lastFilamentMeasureSetting !== null) {
-                defaultMeasureType =
-                  this.lastFilamentMeasureSetting?.value === 'Weight'
-                    ? PrintFilamentSourceMeasurement.Weight
-                    : this.lastFilamentMeasureSetting?.value === 'Length'
-                    ? PrintFilamentSourceMeasurement.Length
-                    : this.lastFilamentMeasureSetting?.value === 'Volume'
-                    ? PrintFilamentSourceMeasurement.Volume
-                    : PrintFilamentSourceMeasurement.Weight;
-              }
+              const defaultMeasureType =
+                this.getDefaultMeasureTypeForSelectedPrinter(newPrinterId);
 
               for (let i = 1; i <= loadedFilament.length; i++) {
                 // If there is a filament usage with OTHER in this index, just update the filament
@@ -417,20 +437,41 @@ export class EditPrintDetailComponent
         ? 'Length'
         : 'Volume';
 
-    if (this.lastFilamentMeasureSetting) {
+    // Find the last filament measure setting for the selected printer's material category
+    const { materialCategoryName, userSetting } =
+      this.getMeasureUserSettingForPrinterMaterial(
+        this.printForm.get('printerId').value
+      );
+
+    if (userSetting) {
       this.userSettingService
-        .updateUserSetting(this.lastFilamentMeasureSetting.id, newValue)
+        .updateUserSetting(userSetting.id, newValue)
         .subscribe((setting) => {
-          this.lastFilamentMeasureSetting = setting;
+          this.lastMaterialMeasureSettings[materialCategoryName] = setting;
         });
     } else {
+      const materialUserSettingType =
+        materialCategoryName === 'filament'
+          ? UserSettingType.Prints_LastSelectedFilamentMeasureType
+          : materialCategoryName === 'resin'
+          ? UserSettingType.Prints_LastSelectedResinMeasureType
+          : materialCategoryName === 'powder'
+          ? UserSettingType.Prints_LastSelectedPowderMeasureType
+          : materialCategoryName === 'wire'
+          ? UserSettingType.Prints_LastSelectedWireMeasureType
+          : 'none';
+
+      if (materialUserSettingType === 'none') {
+        console.warn(
+          `Unknown material type ${materialCategoryName}, unable to save user setting.`
+        );
+        return;
+      }
+
       this.userSettingService
-        .addUserSetting(
-          UserSettingType.Prints_LastSelectedFilamentMeasureType,
-          newValue
-        )
+        .addUserSetting(materialUserSettingType, newValue)
         .subscribe((setting) => {
-          this.lastFilamentMeasureSetting = setting;
+          this.lastMaterialMeasureSettings[materialCategoryName] = setting;
         });
     }
   }
@@ -1149,27 +1190,20 @@ export class EditPrintDetailComponent
   }
 
   public addNewFilamentUsage() {
-    let isLengthTheDefaultMeasureType = false;
-
-    if (this.lastFilamentMeasureSetting !== null) {
-      isLengthTheDefaultMeasureType =
-        this.lastFilamentMeasureSetting.value === 'Length' ? true : false;
-    }
+    const defaultMaterialType = this.getDefaultMeasureTypeForSelectedPrinter(
+      this.printForm.get('printerId').value
+    );
 
     const newFormGroup = this.GetNewFilamentUsageForm(
       EMPTY_GUID,
       0,
       0,
       0,
-      isLengthTheDefaultMeasureType
-        ? PrintFilamentSourceMeasurement.Length
-        : PrintFilamentSourceMeasurement.Weight,
+      defaultMaterialType,
       0,
       0,
       0,
-      isLengthTheDefaultMeasureType
-        ? PrintFilamentSourceMeasurement.Length
-        : PrintFilamentSourceMeasurement.Weight,
+      defaultMaterialType,
       null,
       ''
     );
@@ -1182,7 +1216,6 @@ export class EditPrintDetailComponent
       (p) => p.id === this.printForm.get('printerId').value
     )?.type?.materialCategory.nickname;
 
-    console.log(material, this.printers, this.printForm.get('printerId').value);
     const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
       data: {
         otherFilamentOption: this.OTHER_FILAMENT_OPTION,

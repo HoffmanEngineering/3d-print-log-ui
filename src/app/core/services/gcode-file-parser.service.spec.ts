@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
-import { PrusaSlicerFileParserService } from './file-parsers/prusa-slicer-file-parser.service';
+import { PrusaSlicerFileParserService } from './file-parsers/prusa/prusa-slicer-file-parser.service';
 
 import { GcodeFileParserService } from './gcode-file-parser.service';
 import { LoggingService } from './logging.service';
+import { CrealityPrintFileParserService } from './file-parsers/creality-print/creality-print-file-parser.service';
 
 describe('GcodeFileParserService', () => {
   let service: GcodeFileParserService;
@@ -18,6 +19,12 @@ describe('GcodeFileParserService', () => {
     const mockPrusaSlicerService =
       jasmine.createSpyObj<PrusaSlicerFileParserService>(
         'PrusaSlicerFileParserService',
+        ['parse']
+      );
+
+    const mockCrealityPrintParserService =
+      jasmine.createSpyObj<CrealityPrintFileParserService>(
+        'CrealityPrintFileParserService',
         ['parse']
       );
 
@@ -35,6 +42,10 @@ describe('GcodeFileParserService', () => {
         {
           provide: PrusaSlicerFileParserService,
           useValue: mockPrusaSlicerService,
+        },
+        {
+          provide: CrealityPrintFileParserService,
+          useValue: mockCrealityPrintParserService,
         },
         { provide: MatDialog, useValue: mockMatDialog },
         { provide: ToastrService, useValue: mockToastr },

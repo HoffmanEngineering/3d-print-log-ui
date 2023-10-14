@@ -12,18 +12,14 @@
     "importHelpers": true,
     "target": "ES2022",
     "resolveJsonModule": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "lib": [
-      "esnext",
-      "dom"
-    ],
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["esnext", "dom"],
     "allowSyntheticDefaultImports": true,
     "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
     "strictInjectionParameters": true
-  }
+  },
+  "exclude": ["cypress.config.ts"]
 }

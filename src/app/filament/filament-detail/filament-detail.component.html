@@ -330,8 +330,16 @@
                 fxFlex="grow"
                 fxFlexFill
                 fxLayout="row"
+                fxLayoutAlign="space-evenly center"
+                fxLayoutGap="10px"
               >
-                <div fxFlex="grow" fxLayout="column">
+                <div
+                  fxFlex="grow"
+                  fxLayout="column"
+                  fxLayoutAlign="start center"
+                  fxLayoutGap="10px"
+                  style="padding: 5px"
+                >
                   <mat-form-field fxFlex="grow" fxFlexFill>
                     <mat-label> Adjustment Amount (g)</mat-label>
                     <input
@@ -357,12 +365,15 @@
                       formControlName="notes"
                     />
                   </mat-form-field>
-                  <div fxFlex>
+                  <div fxFlex style="padding-bottom: 10px">
                     <button
                       type="button"
                       mat-raised-button
                       (click)="removeAdjustment(adjustmentIndex)"
                       aria-label="Delete Adjustment"
+                      matTooltip="Delete {{
+                        adjustment.get('amountG').value
+                      }} gram Adjustment"
                     >
                       <mat-icon>delete</mat-icon>Delete
                     </button>

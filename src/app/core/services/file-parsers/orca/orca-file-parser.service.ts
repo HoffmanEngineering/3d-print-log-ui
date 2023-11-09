@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import parse from 'parse-duration';
-import { GcodeNewPrintParser } from '../gcode-file-parser.service';
-import { PrintDetail, PrintStatus } from '../print.service';
+import { GcodeNewPrintParser } from '../../gcode-file-parser.service';
+import { PrintDetail, PrintStatus } from '../../print.service';
 
 //
 export interface MaterialDensityGramsPerCubicCm {
@@ -23,7 +23,7 @@ export class MaterialDensities {
 @Injectable({
   providedIn: 'root',
 })
-export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
+export class OrcaFileParserService implements GcodeNewPrintParser {
   constructor() {}
 
   public async parse(gcode: string): Promise<PrintDetail> {
@@ -44,7 +44,7 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     // Check to see if the user setup their filament densities, thus we can directly return filament usage.
     const filamentUsedInGrams = this.parseSettingAsNumber(
       gcode,
-      '; total filament used \\[g\\]'
+      '; filament used \\[g\\]'
     );
     if (filamentUsedInGrams > 0) {
       return filamentUsedInGrams * 1000;
@@ -107,10 +107,38 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
 
   parseSettingsIntoNotes(gcode: string): string {
     let notes = '';
+
+    const settingId = this.parseSettingAsString(gcode, '; print_settings_id');
+    if (settingId !== '') {
+      notes += `Print Setting Config: ${settingId}\n`;
+    }
+    const printerConfigId = this.parseSettingAsString(
+      gcode,
+      '; printer_settings_id'
+    );
+    if (printerConfigId !== '') {
+      notes += `Printer Config: ${printerConfigId}\n`;
+    }
+
     const spiralVaseModeEnabled = this.parseSettingAsBoolean(
       gcode,
-      '; spiral_vase'
+      '; spiral_mode'
     );
+
+    // Layer Count
+
+    let layerCount = '';
+
+    const layerCountregEx = new RegExp('total layer number: (.+)$', 'im');
+
+    const layerCountsetting = gcode.match(layerCountregEx);
+
+    if (layerCountsetting?.[1]) {
+      layerCount = layerCountsetting[1].toString().trim();
+    }
+    if (layerCount) {
+      notes += `Layer Count: ${layerCount}` + `\n`;
+    }
 
     // Layer Height
     const layerHeight = this.parseSettingAsNumber(gcode, '; layer_height');
@@ -119,7 +147,7 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     }
 
     // Top Layers
-    const topLayers = this.parseSettingAsNumber(gcode, '; top_solid_layers');
+    const topLayers = this.parseSettingAsNumber(gcode, '; top_shell_layers');
     if (topLayers) {
       notes += `Top Layer Count: ${topLayers}` + `\n`;
     }
@@ -127,23 +155,29 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     // Bottom Layers
     const bottomLayers = this.parseSettingAsNumber(
       gcode,
-      '; bottom_solid_layers'
+      '; bottom_shell_layers'
     );
     if (bottomLayers) {
       notes += `Bottom Layer Count: ${bottomLayers}` + `\n`;
     }
 
     // Top Layers
-    const perimeters = this.parseSettingAsNumber(gcode, '; perimeters');
+    const perimeters = this.parseSettingAsNumber(gcode, '; wall_loops');
     if (perimeters) {
-      notes += `Perimeters: ${perimeters}` + `\n`;
+      notes += `Walls: ${perimeters}` + `\n`;
     }
 
-    const infillDensity = this.parseSettingAsString(gcode, '; fill_density');
+    const infillDensity = this.parseSettingAsString(
+      gcode,
+      '; sparse_infill_density'
+    );
     if (infillDensity !== '') {
       notes += `Infill: ${infillDensity}` + `\n`;
 
-      const infillPattern = this.parseSettingAsString(gcode, '; fill_pattern');
+      const infillPattern = this.parseSettingAsString(
+        gcode,
+        '; sparse_infill_pattern'
+      );
       if (infillPattern !== '') {
         notes += `Infill Pattern: ${infillPattern}\n`;
       }
@@ -151,12 +185,12 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
 
     const supportEnabled = this.parseSettingAsBoolean(
       gcode,
-      '; support_material'
+      '; support_filament'
     );
     if (supportEnabled) {
       const buildplateOnly = this.parseSettingAsBoolean(
         gcode,
-        '; support_material_buildplate_only'
+        '; support_on_build_plate_only'
       );
 
       const supportType = buildplateOnly ? 'Touching Buildplate' : 'Everywhere';
@@ -195,7 +229,12 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     //   notes += `Fuzzy Skin Mode: Enabled\n`;
     // }
 
-    if (this.parseSettingAsBoolean(gcode, '; draft_shield')) {
+    const draftShieldSetting = this.parseSettingAsString(
+      gcode,
+      '; draft_shield'
+    );
+
+    if (draftShieldSetting === 'enabled') {
       notes += `Draft Shield: Enabled\n`;
     }
 
@@ -205,18 +244,6 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
     // ) {
     //   notes += `Ironing: Enabled\n`;
     // }
-
-    const settingId = this.parseSettingAsString(gcode, '; print_settings_id');
-    if (settingId !== '') {
-      notes += `Print Setting Config: ${settingId}\n`;
-    }
-    const printerConfigId = this.parseSettingAsString(
-      gcode,
-      '; printer_settings_id'
-    );
-    if (printerConfigId !== '') {
-      notes += `Printer Config: ${printerConfigId}\n`;
-    }
 
     notes = notes.trim();
 
@@ -266,9 +293,7 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
 
   private parseEstimatedPrintTime(gcode: string) {
     let estPrintTime: number | undefined;
-    const printTimeString = gcode.match(
-      /estimated printing time \(normal mode\) = (.+)$/im
-    );
+    const printTimeString = gcode.match(/total estimated time: (.+)$/im);
     if (printTimeString?.[1]) {
       const time = this.parseAsSeconds(printTimeString[1]);
       if (time) {

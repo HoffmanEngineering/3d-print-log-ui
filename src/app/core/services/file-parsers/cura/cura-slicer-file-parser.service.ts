@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { capitalize, flatMap } from 'lodash-es';
-import { GcodeNewPrintParser } from '../gcode-file-parser.service';
-import { LoggingService } from '../logging.service';
-import { PrintDetail, PrintStatus } from '../print.service';
+import { GcodeNewPrintParser } from '../../gcode-file-parser.service';
+import { LoggingService } from '../../logging.service';
+import { PrintDetail, PrintStatus } from '../../print.service';
 
 @Injectable({
   providedIn: 'root',

@@ -312,8 +312,6 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
   saveEntry(entry: PrinterMaintenanceDto) {
     this.isLoading = true;
 
-    console.log(entry);
-
     // Validate the date and printerId, if they are invalid, don't save
     if (entry.date == null) {
       this.isLoading = false;
@@ -418,7 +416,6 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
     entry.printerId = printer.id;
     entry.printer = printer;
-    console.log(entry);
   }
 
   public filterCategories(value: string) {

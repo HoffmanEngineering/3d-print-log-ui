@@ -324,7 +324,7 @@ export class EditPrintDetailComponent
 
     // Get the material category name for that printer
     const materialCategoryName = (
-      printer?.type?.materialCategory?.nickname ?? 'filament'
+      printer?.category?.materialCategory?.nickname ?? 'filament'
     ).toLowerCase();
 
     // Get the last filament measure setting for that material category
@@ -512,7 +512,7 @@ export class EditPrintDetailComponent
   private setMaterialCategoryNameForPrinterId(newPrinterId: any) {
     const printer = this.printers.find((p) => p.id === newPrinterId);
     this.materialCategoryNameForSelectedPrinter =
-      printer?.type?.materialCategory.name ?? 'material';
+      printer?.category?.materialCategory.name ?? 'material';
   }
 
   private SaveSettingWhenAllowCommentsChanges() {
@@ -1214,7 +1214,7 @@ export class EditPrintDetailComponent
   public searchFilament(filamentControl: AbstractControl) {
     const material = this.printers.find(
       (p) => p.id === this.printForm.get('printerId').value
-    )?.type?.materialCategory.nickname;
+    )?.category?.materialCategory.nickname;
 
     const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
       data: {

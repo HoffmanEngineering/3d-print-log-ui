@@ -240,7 +240,7 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
           : true,
       ],
       loadedFilaments: loadedFilamentsForm,
-      type: [printer?.type?.nickname ?? 'FDM', Validators.required],
+      type: [printer?.category?.nickname ?? 'FFF', Validators.required],
     });
 
     return form;
@@ -349,7 +349,7 @@ export class PrinterDetailComponent implements OnInit, ComponentCanDeactivate {
       filamentDiameter: this.printerForm.controls.filamentDiameter.value,
       isActive: this.printerForm.controls.isActive.value,
       loadedFilaments: newLoadedFilament,
-      type: this.printerCategories.find(
+      category: this.printerCategories.find(
         (catergory) =>
           catergory.nickname === this.printerForm.controls.type.value
       ),

@@ -4,6 +4,7 @@ import { GcodeNewPrintParser } from '../../gcode-file-parser.service';
 import {
   EMPTY_GUID,
   PrintDetail,
+  PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
   PrintStatus,
 } from '../../print.service';
@@ -68,9 +69,9 @@ export class CrealityPrintFileParserService implements GcodeNewPrintParser {
 
     return [
       {
-        isEstimatedLengthSource: true,
+        estimatedSource: PrintFilamentSourceMeasurement.Length,
+        source: PrintFilamentSourceMeasurement.Weight,
         estimatedLengthInM: filamentUsedInMeters,
-        isActualLengthSource: false,
         amountMg: 0,
         estimatedAmountMg: 0,
         lengthInM: 0,

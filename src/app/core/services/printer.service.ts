@@ -13,17 +13,10 @@ export interface PrinterSummary {
   make: string;
   model: string;
   isActive: boolean;
-  type: PrinterCategory;
+  category: PrinterCategory;
 }
 
-export interface PrinterSummaryWithFilament {
-  id: number;
-  name: string;
-  make: string;
-  model: string;
-  isActive: boolean;
-  type: PrinterCategory;
-
+export interface PrinterSummaryWithFilament extends PrinterSummary {
   loadedFilaments: PrinterFilamentSummaryDto[];
 }
 
@@ -44,7 +37,7 @@ export interface PrinterDetail {
 
   loadedFilaments: PrinterFilamentSummaryDto[];
 
-  type: PrinterCategory;
+  category: PrinterCategory;
 }
 
 export interface PrinterFilamentSummaryDto {
@@ -70,7 +63,7 @@ export interface AddPrinterDetailDto {
 
   isActive: boolean;
 
-  type: string;
+  category: string;
 
   loadedFilaments: AddPrinterFilamentSummaryDto[];
 }
@@ -185,7 +178,7 @@ export class PrinterService {
       filamentDiameter: printer.filamentDiameter,
       isActive: printer.isActive,
       loadedFilaments: filamentUsage,
-      type: printer.type.nickname,
+      category: printer.category.nickname,
     };
 
     return printDto;

@@ -13,6 +13,7 @@ export interface FilamentDetail {
   id: string;
   displayName: string;
   brand: string;
+  materialCategoryNickname: string;
   materialType: string;
   materialDensityGramPerCubicCm: number;
   colorName: string;
@@ -32,6 +33,12 @@ export interface FilamentDetail {
   purchasePriceCurrency: string;
   purchaseNotes: string;
   storageLocation: string;
+
+  initialLayerTimeS: number | null;
+  layerTimeS: number | null;
+  meltingTemperature: number | null;
+  inertGas: string;
+  materialRefreshRatio: number | null;
   notes: string;
   isFavorite: boolean;
   filamentAdjustments: FilamentAdjustment[];
@@ -41,6 +48,7 @@ export interface FilamentSummary {
   id: string;
   displayName: string;
   brand: string;
+  materialCategoryNickname: string;
   materialType: string;
   materialDensityGramPerCubicCm: number;
   colorName: string;

@@ -1,5 +1,11 @@
 import { Location } from '@angular/common';
-import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import {
   UntypedFormArray,
   UntypedFormBuilder,
@@ -9,7 +15,7 @@ import {
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -25,6 +31,7 @@ import {
   FilamentDetail,
   FilamentService,
 } from '../../core/services/filament.service';
+import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
@@ -33,7 +40,9 @@ const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
   templateUrl: './filament-detail.component.html',
   styleUrls: ['./filament-detail.component.scss'],
 })
-export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
+export class FilamentDetailComponent
+  implements OnInit, ComponentCanDeactivate, OnDestroy
+{
   public filamentForm: UntypedFormGroup;
   public saving = false;
 
@@ -56,6 +65,10 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   public filteredFilamentPurchaseLocations: Observable<string[]> = null;
   filamentBrands: string[];
   filteredFilamentBrands: Observable<string[]>;
+
+  materialCategorySubscription: Subscription;
+
+  public materialCategories: MaterialCategory[] = [];
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -90,11 +103,25 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
 
       this.materials = data.materials ?? [];
 
+      this.materialCategories = data.materialCategories;
+
       this.defaultFilamentDiameterMmSetting =
         data.defaultFilamentDiameterMmSetting;
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
+
+      this.recalculateFormFieldsForSelectedMaterialCategory(
+        this.filamentForm.get('materialCategoryNickname').value
+      );
+
+      this.materialCategorySubscription = this.filamentForm
+        .get('materialCategoryNickname')
+        .valueChanges.subscribe((categoryNickname) => {
+          this.recalculateFormFieldsForSelectedMaterialCategory(
+            categoryNickname
+          );
+        });
 
       this.filteredMaterials = this.filamentForm
         .get('materialType')
@@ -154,6 +181,74 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
           );
       });
     });
+  }
+
+  /**
+   * Adjust the form fields to match the settings for the material category
+   */
+  private recalculateFormFieldsForSelectedMaterialCategory(value: any) {
+    const selectedMaterialCategory = this.materialCategories.find((m) => {
+      return m.nickname === value;
+    });
+
+    if (selectedMaterialCategory) {
+      // Adjust the form fields to match the settings for the material category
+      if (selectedMaterialCategory.hasDiameter) {
+        this.filamentForm.get('diameterMm').enable();
+      } else {
+        this.filamentForm.get('diameterMm').disable();
+      }
+
+      if (selectedMaterialCategory.showBedTemperature) {
+        this.filamentForm.get('recommendedBedTemp').enable();
+      } else {
+        this.filamentForm.get('recommendedBedTemp').disable();
+      }
+
+      if (selectedMaterialCategory.showNozzleTemperature) {
+        this.filamentForm.get('recommendedTemp').enable();
+        this.filamentForm.get('tempRangeStart').enable();
+        this.filamentForm.get('tempRangeEnd').enable();
+      } else {
+        this.filamentForm.get('recommendedTemp').disable();
+        this.filamentForm.get('tempRangeStart').disable();
+        this.filamentForm.get('tempRangeEnd').disable();
+      }
+
+      if (selectedMaterialCategory.showMeltingTemperature) {
+        this.filamentForm.get('meltingTemperature').enable();
+      } else {
+        this.filamentForm.get('meltingTemperature').disable();
+      }
+
+      if (selectedMaterialCategory.showInertGas) {
+        this.filamentForm.get('inertGas').enable();
+      } else {
+        this.filamentForm.get('inertGas').disable();
+      }
+
+      if (selectedMaterialCategory.showMaterialRefreshRatio) {
+        this.filamentForm.get('materialRefreshRatio').enable();
+      } else {
+        this.filamentForm.get('materialRefreshRatio').disable();
+      }
+
+      if (selectedMaterialCategory.showRecommendedInitialLayerTimeInSeconds) {
+        this.filamentForm.get('initialLayerTimeS').enable();
+      } else {
+        this.filamentForm.get('initialLayerTimeS').disable();
+      }
+
+      if (selectedMaterialCategory.showRecommendedLayerTimeInSeconds) {
+        this.filamentForm.get('layerTimeS').enable();
+      } else {
+        this.filamentForm.get('layerTimeS').disable();
+      }
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.materialCategorySubscription?.unsubscribe();
   }
 
   private _filter(value: string): Material[] {
@@ -291,6 +386,14 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
           ? filament.isFavorite
           : false,
       ],
+      materialCategoryNickname: [
+        filament?.materialCategoryNickname ?? 'filament',
+      ],
+      inertGas: [filament?.inertGas ?? ''],
+      initialLayerTimeS: [filament?.initialLayerTimeS ?? null],
+      layerTimeS: [filament?.layerTimeS ?? null],
+      meltingTemperature: [filament?.meltingTemperature ?? null],
+      materialRefreshRatio: [filament?.materialRefreshRatio ?? null],
     });
 
     return form;
@@ -382,6 +485,8 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     const filament: FilamentDetail = {
       id: this.filamentForm.controls.id.value,
       brand: this.filamentForm.controls.brand.value,
+      materialCategoryNickname:
+        this.filamentForm.controls.materialCategoryNickname.value,
       colorHex: this.getColorHex(this.filamentForm.controls.colorHex.value),
       colorName: this.filamentForm.controls.colorName.value,
       diameterMm: this.filamentForm.controls.diameterMm.value,
@@ -410,6 +515,12 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       tempRangeEnd: this.filamentForm.controls.tempRangeEnd.value,
       tempRangeStart: this.filamentForm.controls.tempRangeStart.value,
       storageLocation: this.filamentForm.controls.storageLocation.value,
+      inertGas: this.filamentForm.controls.inertGas.value,
+      initialLayerTimeS: this.filamentForm.controls.initialLayerTimeS.value,
+      layerTimeS: this.filamentForm.controls.layerTimeS.value,
+      meltingTemperature: this.filamentForm.controls.meltingTemperature.value,
+      materialRefreshRatio:
+        this.filamentForm.controls.materialRefreshRatio.value,
       filamentAdjustments: adjustments,
       isActive: this.filamentForm.controls.isActive.value,
       isFavorite: this.filamentForm.controls.isFavorite.value,

@@ -45,6 +45,31 @@
         </mat-form-field>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Category</mat-label>
+
+          <mat-select formControlName="materialCategoryNickname">
+            <mat-option
+              *ngFor="let type of materialCategories"
+              [value]="type.nickname"
+              [matTooltip]="type.description"
+              [matTooltipPosition]="'right'"
+            >
+              {{ type.name }}</mat-option
+            >
+          </mat-select>
+
+          <mat-error
+            *ngIf="
+              this.filamentForm.controls['materialCategoryNickname'].hasError(
+                'required'
+              )
+            "
+          >
+            A category is <strong>required</strong>
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Material Type</mat-label>
           <input
             id="edit-filament-material-type"
@@ -158,7 +183,12 @@
           >
         </mat-form-field>
 
-        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+        <div
+          *ngIf="this.filamentForm.get('diameterMm').enabled"
+          style="margin: 10 0 10"
+          fxFlex="grow"
+          fxFlexFill
+        >
           <mat-form-field style="margin: 0" fxFlex>
             <mat-label>Diameter (mm)</mat-label>
             <input
@@ -174,9 +204,11 @@
             style="margin-left: 10px; height: 72%"
             *ngIf="
               this.filamentForm &&
+              this.filamentForm.get('diameterMm').enabled &&
               this.filamentForm.get('diameterMm').dirty &&
+              this.filamentForm.get('diameterMm').value !== null &&
               (this.defaultFilamentDiameterMmSetting === null ||
-                this.filamentForm.get('diameterMm').value.toString() !==
+                this.filamentForm.get('diameterMm').value?.toString() !==
                   this.defaultFilamentDiameterMmSetting.value.toString())
             "
             mat-raised-button
@@ -384,10 +416,28 @@
           </div>
         </div>
 
-        <div fxFlex="grow" fxFlexFill>
-          <h2 style="text-align: start">Temperatures</h2>
+        <div
+          *ngIf="
+            this.filamentForm.get('recommendedTemp').enabled ||
+            this.filamentForm.get('recommendedBedTemp').enabled ||
+            this.filamentForm.get('tempRangeStart').enabled ||
+            this.filamentForm.get('tempRangeEnd').enabled ||
+            this.filamentForm.get('meltingTemperature').enabled ||
+            this.filamentForm.get('initialLayerTimeS').enabled ||
+            this.filamentForm.get('layerTimeS').enabled ||
+            this.filamentForm.get('materialRefreshRatio').enabled ||
+            this.filamentForm.get('inertGas').enabled
+          "
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <h2 style="text-align: start">Print Settings</h2>
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field
+          *ngIf="this.filamentForm.get('tempRangeStart').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
           <mat-label>Hotend Temperature Range Start (C)</mat-label>
           <input
             id="edit-filament-hotend-temp-range-start"
@@ -402,7 +452,11 @@
                 </mat-error> -->
         </mat-form-field>
 
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field
+          *ngIf="this.filamentForm.get('tempRangeEnd').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
           <mat-label>Hotend Temperature Range End (C)</mat-label>
           <input
             id="edit-filament-hotend-temperature-range-end"
@@ -417,7 +471,11 @@
                 </mat-error> -->
         </mat-form-field>
 
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field
+          *ngIf="this.filamentForm.get('recommendedTemp').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
           <mat-label>Recommended Hotend Temperature (C)</mat-label>
           <input
             id="edit-filament-recommended-hotend-temp"
@@ -426,13 +484,89 @@
             formControlName="recommendedTemp"
           />
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field
+          *ngIf="this.filamentForm.get('recommendedBedTemp').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
           <mat-label>Recommended Bed Temperature (C)</mat-label>
           <input
             id="edit-filament-recommended-bed-temp"
             matInput
             type="number"
             formControlName="recommendedBedTemp"
+          />
+        </mat-form-field>
+        <mat-form-field
+          *ngIf="this.filamentForm.get('meltingTemperature').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Melting Temperature (C)</mat-label>
+          <input
+            id="edit-filament-melting-temperature"
+            matInput
+            type="number"
+            formControlName="meltingTemperature"
+          />
+        </mat-form-field>
+
+        <mat-form-field
+          *ngIf="this.filamentForm.get('initialLayerTimeS').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Initial Layer Timer (s)</mat-label>
+          <input
+            id="edit-filament-initial-layer-time"
+            matInput
+            type="number"
+            formControlName="initialLayerTimeS"
+          />
+        </mat-form-field>
+
+        <mat-form-field
+          *ngIf="this.filamentForm.get('layerTimeS').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Layer Timer (s)</mat-label>
+          <input
+            id="edit-filament-layer-time"
+            matInput
+            type="number"
+            formControlName="layerTimeS"
+          />
+        </mat-form-field>
+
+        <mat-form-field
+          *ngIf="this.filamentForm.get('materialRefreshRatio').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Material Refresh Ratio</mat-label>
+          <input
+            id="edit-filament-material-refresh-ratio"
+            matInput
+            type="number"
+            min="0"
+            max="1"
+            formControlName="materialRefreshRatio"
+            matTooltip="The percentage of new powder when mixing with old powder. 1.0 means always use new powder."
+          />
+        </mat-form-field>
+
+        <mat-form-field
+          *ngIf="this.filamentForm.get('inertGas').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Inert Gas</mat-label>
+          <input
+            id="edit-filament-inert-gas"
+            matInput
+            type="number"
+            formControlName="inertGas"
           />
         </mat-form-field>
 

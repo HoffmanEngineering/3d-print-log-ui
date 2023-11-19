@@ -36,6 +36,7 @@ const routes: Routes = [
             DefaultFilamentDiameterSettingResolverService,
           defaultFilamentPriceSetting:
             DefaultFilamentPriceSettingResolverService,
+          materialCategories: MaterialCategoryResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -50,6 +51,7 @@ const routes: Routes = [
             DefaultFilamentDiameterSettingResolverService,
           defaultFilamentPriceSetting:
             DefaultFilamentPriceSettingResolverService,
+          materialCategories: MaterialCategoryResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },

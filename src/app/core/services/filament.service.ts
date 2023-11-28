@@ -9,6 +9,12 @@ import { EMPTY_GUID } from './print.service';
 import { PrinterSummary } from './printer.service';
 import { MaterialCategory } from './material-categories.service';
 
+export enum FilamentSourceMeasurement {
+  Weight = 1,
+  Length = 2,
+  Volume = 3,
+}
+
 export interface FilamentDetail {
   id: string;
   displayName: string;
@@ -80,15 +86,37 @@ export interface FilamentBrands {
   brands: string[];
 }
 
+export enum FilamentAdjustmentSourceMeasurement {
+  Weight = 1,
+  Length = 2,
+  Volume = 3,
+}
+
 export interface FilamentAdjustment {
   /** GUID */
   id: string;
   filamentId: string;
+
+  source: FilamentAdjustmentSourceMeasurement;
+
   /**
    * Adjustment weights are added to total weight.
    * Positive Numbers are additions of filament to the roll, Negative Numbers are removal of filament from the roll.
    */
-  amountMg: number;
+  amountMg: number | null;
+
+  /**
+   * Adjustment lengths are added to total lengths.
+   * Positive Numbers are additions of filament to the roll, Negative Numbers are removal of filament from the roll.
+   */
+  lengthInM: number | null;
+
+  /**
+   * Adjustment volume are added to total volume.
+   * Positive Numbers are additions of filament to the roll, Negative Numbers are removal of filament from the roll.
+   */
+  volumeMl: number | null;
+
   notes: string;
 }
 
@@ -193,6 +221,9 @@ export class FilamentService {
         // Add an adjustment:
         const newAdjustment: FilamentAdjustment = {
           amountMg: adjustmentValue,
+          source: FilamentAdjustmentSourceMeasurement.Weight,
+          lengthInM: null,
+          volumeMl: null,
           filamentId: filamentId,
           id: EMPTY_GUID,
           notes: note,

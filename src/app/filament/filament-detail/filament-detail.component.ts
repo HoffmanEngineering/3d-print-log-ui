@@ -28,8 +28,10 @@ import {
 import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import {
   FilamentAdjustment,
+  FilamentAdjustmentSourceMeasurement,
   FilamentDetail,
   FilamentService,
+  FilamentSourceMeasurement,
 } from '../../core/services/filament.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 
@@ -69,6 +71,11 @@ export class FilamentDetailComponent
   materialCategorySubscription: Subscription;
 
   public materialCategories: MaterialCategory[] = [];
+
+  public filamentAdjustmentSourceMeasurement =
+    FilamentAdjustmentSourceMeasurement;
+
+  public filamentSourceMeasurement = FilamentSourceMeasurement;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -302,13 +309,19 @@ export class FilamentDetailComponent
   private buildFilamentAdjustmentFormGroup(
     id: string,
     filamentId: string,
-    amountG: number,
+    source: FilamentAdjustmentSourceMeasurement,
+    amountG: number | null,
+    lengthInM: number | null,
+    volumeMl: number | null,
     notes: string
   ) {
     return this.formBuilder.group({
       id,
+      source,
       filamentId,
       amountG,
+      lengthInM,
+      volumeMl,
       notes,
     });
   }
@@ -320,7 +333,10 @@ export class FilamentDetailComponent
         const adjustmentControl = this.buildFilamentAdjustmentFormGroup(
           adjustment.id,
           adjustment.filamentId,
+          adjustment.source,
           adjustment.amountMg / 1000,
+          adjustment.lengthInM,
+          adjustment.volumeMl,
           adjustment.notes
         );
         adjustments.push(adjustmentControl);
@@ -404,7 +420,10 @@ export class FilamentDetailComponent
       this.buildFilamentAdjustmentFormGroup(
         EMPTY_GUID,
         this.filamentForm.get('id')?.value ?? EMPTY_GUID,
+        FilamentAdjustmentSourceMeasurement.Weight,
         0,
+        null,
+        null,
         ''
       )
     );
@@ -468,6 +487,8 @@ export class FilamentDetailComponent
       .filter((adjustment) => {
         return (
           adjustment.get('amountG').value !== 0 ||
+          adjustment.get('lengthInM').value !== 0 ||
+          adjustment.get('volumeMl').value !== 0 ||
           adjustment.get('notes').value !== ''
         );
       })
@@ -475,7 +496,19 @@ export class FilamentDetailComponent
         const newAdjustment: FilamentAdjustment = {
           id: adjustment.get('id')?.value ?? EMPTY_GUID,
           filamentId: adjustment.get('filamentId')?.value ?? EMPTY_GUID,
-          amountMg: Math.round(+adjustment.get('amountG').value * 1000),
+          source: adjustment.get('source').value,
+          amountMg:
+            +adjustment.get('amountG').value !== null
+              ? Math.round(+adjustment.get('amountG').value * 1000)
+              : null,
+          lengthInM:
+            +adjustment.get('lengthInM').value !== null
+              ? Math.round(+adjustment.get('lengthInM').value)
+              : null,
+          volumeMl:
+            +adjustment.get('volumeMl').value !== null
+              ? Math.round(+adjustment.get('volumeMl').value)
+              : null,
           notes: adjustment.get('notes').value,
         };
 

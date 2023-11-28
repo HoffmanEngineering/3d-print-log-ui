@@ -372,7 +372,13 @@
                   fxLayoutGap="10px"
                   style="padding: 5px"
                 >
-                  <mat-form-field fxFlex="grow" fxFlexFill>
+                  <div
+                    fxFlex="grow"
+                    fxFlexFill
+                    fxLayout="row"
+                    fxLayout.lt-md="column"
+                  >
+                    <!-- <mat-form-field fxFlex="grow" fxFlexFill>
                     <mat-label> Adjustment Amount (g)</mat-label>
                     <input
                       id="adjustment-amount-{{ adjustmentIndex }}"
@@ -386,17 +392,103 @@
                     >
                       Numbers (up to 3-decimal places) only.
                     </mat-error>
-                  </mat-form-field>
-                  <mat-form-field fxFlex="grow" fxFlexFill>
-                    <mat-label> Notes</mat-label>
-                    <input
-                      id="adjustment-note-{{ adjustmentIndex }}"
-                      matInput
-                      type="text"
-                      maxlength="1000"
-                      formControlName="notes"
-                    />
-                  </mat-form-field>
+                  </mat-form-field> -->
+                    <mat-form-field
+                      *ngIf="
+                        adjustment.get('source').value ===
+                        filamentAdjustmentSourceMeasurement.Weight
+                      "
+                      fxFlex="grow"
+                    >
+                      <mat-label> Material Used (g)</mat-label>
+                      <input
+                        id="filament-adjustment-used-gram-{{ adjustmentIndex }}"
+                        matInput
+                        type="text"
+                        pattern="^-?\d*(\.\d{0,3})?$"
+                        formControlName="amountG"
+                      />
+                      <mat-error
+                        *ngIf="adjustment.get('amountG').hasError('pattern')"
+                      >
+                        Numbers (up to 3-decimal places) only.
+                      </mat-error>
+                    </mat-form-field>
+                    <mat-form-field
+                      *ngIf="
+                        adjustment.get('source').value ===
+                        filamentAdjustmentSourceMeasurement.Length
+                      "
+                      fxFlex="grow"
+                    >
+                      <mat-label> Material Used (m)</mat-label>
+                      <input
+                        id="filament-adjustment-used-meter-{{
+                          adjustmentIndex
+                        }}"
+                        matInput
+                        type="text"
+                        formControlName="lengthInM"
+                      />
+                      <mat-error
+                        *ngIf="adjustment.get('lengthInM').hasError('min')"
+                      >
+                        Material Usage must be a positive number.
+                      </mat-error>
+                    </mat-form-field>
+                    <mat-form-field
+                      *ngIf="
+                        adjustment.get('source').value ===
+                        filamentAdjustmentSourceMeasurement.Volume
+                      "
+                      fxFlex="grow"
+                    >
+                      <mat-label> Material Used (ml)</mat-label>
+                      <input
+                        id="filament-adjustment-used-ml-{{ adjustmentIndex }}"
+                        matInput
+                        type="text"
+                        formControlName="volumeMl"
+                      />
+                      <mat-error
+                        *ngIf="adjustment.get('volumeMl').hasError('min')"
+                      >
+                        Material Usage must be a positive number.
+                      </mat-error>
+                    </mat-form-field>
+                    <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                      <mat-label>Measure</mat-label>
+                      <mat-select formControlName="source">
+                        <mat-option
+                          [value]="filamentAdjustmentSourceMeasurement.Weight"
+                        >
+                          Weight
+                        </mat-option>
+                        <mat-option
+                          [value]="filamentAdjustmentSourceMeasurement.Length"
+                        >
+                          Length
+                        </mat-option>
+                        <mat-option
+                          [value]="filamentAdjustmentSourceMeasurement.Volume"
+                        >
+                          Volume
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div fxFlex="grow" fxFlexFill>
+                    <mat-form-field fxFlex="grow" fxFlexFill>
+                      <mat-label> Notes</mat-label>
+                      <input
+                        id="adjustment-note-{{ adjustmentIndex }}"
+                        matInput
+                        type="text"
+                        maxlength="1000"
+                        formControlName="notes"
+                      />
+                    </mat-form-field>
+                  </div>
                   <div fxFlex style="padding-bottom: 10px">
                     <button
                       type="button"

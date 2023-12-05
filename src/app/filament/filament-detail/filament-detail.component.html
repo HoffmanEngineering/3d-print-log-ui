@@ -293,7 +293,113 @@
                 </mat-error> -->
         </mat-form-field>
 
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <div fxFlex="grow" fxFlexFill fxLayout="row" fxLayout.lt-md="column">
+          <!-- <mat-form-field fxFlex="grow" fxFlexFill>
+                    <mat-label> Adjustment Amount (g)</mat-label>
+                    <input
+                      id="adjustment-amount-{{ adjustmentIndex }}"
+                      matInput
+                      type="text"
+                      pattern="^-?\d*(\.\d{0,3})?$"
+                      formControlName="amountG"
+                    />
+                    <mat-error
+                      *ngIf="adjustment.get('amountG').hasError('pattern')"
+                    >
+                      Numbers (up to 3-decimal places) only.
+                    </mat-error>
+                  </mat-form-field> -->
+          <mat-form-field
+            *ngIf="
+              this.filamentForm.get('source').value ===
+              filamentSourceMeasurement.Weight
+            "
+            fxFlex="grow"
+          >
+            <mat-label> Initial Nominal Weight (g)</mat-label>
+            <input
+              id="filament-inital-nominal-weight"
+              matInput
+              type="text"
+              pattern="^-?\d*(\.\d{0,3})?$"
+              formControlName="initialNominalWeightG"
+            />
+            <mat-error
+              *ngIf="
+                this.filamentForm
+                  .get('initialNominalWeightG')
+                  .hasError('pattern')
+              "
+            >
+              Numbers (up to 3-decimal places) only.
+            </mat-error>
+            <mat-hint
+              >The nominal, or expected, weight of the material.</mat-hint
+            >
+          </mat-form-field>
+          <mat-form-field
+            *ngIf="
+              this.filamentForm.get('source').value ===
+              filamentSourceMeasurement.Length
+            "
+            fxFlex="grow"
+          >
+            <mat-label> Initial Nominal Length (m)</mat-label>
+            <input
+              id="filament-initial-nominal-length"
+              matInput
+              type="text"
+              formControlName="initialNominalLengthM"
+            />
+            <mat-error
+              *ngIf="
+                this.filamentForm.get('initialNominalLengthM').hasError('min')
+              "
+            >
+              Initial Nominal Length must be a positive number.
+            </mat-error>
+            <mat-hint>The nominal, or expected, length of material</mat-hint>
+          </mat-form-field>
+          <mat-form-field
+            *ngIf="
+              this.filamentForm.get('source').value ===
+              filamentSourceMeasurement.Volume
+            "
+            fxFlex="grow"
+          >
+            <mat-label> Initial Nominal Volume (ml)</mat-label>
+            <input
+              id="filament-initial-nominal-volume"
+              matInput
+              type="text"
+              formControlName="initialNominalVolumeMl"
+            />
+            <mat-error
+              *ngIf="
+                this.filamentForm.get('initialNominalVolumeMl').hasError('min')
+              "
+            >
+              Initial Nominal Volume must be a positive number.
+            </mat-error>
+            <mat-hint>The nominal, or expected, volume of material</mat-hint>
+          </mat-form-field>
+          <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+            <mat-label>Measure</mat-label>
+            <mat-select formControlName="source">
+              <mat-option [value]="filamentSourceMeasurement.Weight">
+                Weight
+              </mat-option>
+              <mat-option [value]="filamentSourceMeasurement.Length">
+                Length
+              </mat-option>
+              <mat-option [value]="filamentSourceMeasurement.Volume">
+                Volume
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Initial Nominal Weight (g)</mat-label>
           <input
             id="edit-filament-initial-nominal-weight"
@@ -301,16 +407,12 @@
             type="number"
             formControlName="initialNominalWeightG"
           />
-          <!-- <mat-error
-                  *ngIf="filamentForm.controls['brand'].hasError('required')"
-                >
-                  A Name is <strong>required</strong>
-                </mat-error> -->
+
           <mat-hint
             >The nominal, or expected, weight of the filament on the
             spool.</mat-hint
           >
-        </mat-form-field>
+        </mat-form-field> -->
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Spool Weight (g)</mat-label>
           <input

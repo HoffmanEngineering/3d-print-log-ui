@@ -26,7 +26,10 @@ export interface FilamentDetail {
   colorHex: string;
   diameterMm: number | null;
   initialTotalWeightMg: number | null;
+  source: FilamentSourceMeasurement;
   initialNominalWeightMg: number | null;
+  initialNominalLengthM: number | null;
+  initialNominalVolumeMl: number | null;
   spoolWeightMg: number | null;
   tempRangeStart: number | null;
   tempRangeEnd: number | null;

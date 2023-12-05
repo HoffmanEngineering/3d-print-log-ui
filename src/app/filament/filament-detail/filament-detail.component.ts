@@ -370,6 +370,9 @@ export class FilamentDetailComponent
 
       initialTotalWeightG: [filament?.initialTotalWeightMg / 1000],
       initialNominalWeightG: [filament?.initialNominalWeightMg / 1000],
+      initialNominalLengthM: [filament?.initialNominalLengthM],
+      initialNominalVolumeMl: [filament?.initialNominalVolumeMl],
+      source: [filament?.source ?? FilamentSourceMeasurement.Weight],
       spoolWeightG: [filament?.spoolWeightMg / 1000],
       tempRangeStart: [filament?.tempRangeStart],
       tempRangeEnd: [filament?.tempRangeEnd],
@@ -524,12 +527,27 @@ export class FilamentDetailComponent
       colorName: this.filamentForm.controls.colorName.value,
       diameterMm: this.filamentForm.controls.diameterMm.value,
       displayName: this.filamentForm.controls.displayName.value,
-      initialNominalWeightMg: Math.round(
-        this.filamentForm.controls.initialNominalWeightG.value * 1000
-      ),
+      source: this.filamentForm.controls.source.value,
+      initialNominalWeightMg: !isNaN(
+        +this.filamentForm.controls.initialNominalWeightG.value
+      )
+        ? Math.round(
+            +this.filamentForm.controls.initialNominalWeightG.value * 1000
+          )
+        : null,
       initialTotalWeightMg: Math.round(
         this.filamentForm.controls.initialTotalWeightG.value * 1000
       ),
+      initialNominalLengthM: !isNaN(
+        +this.filamentForm.controls.initialNominalLengthM.value
+      )
+        ? Math.round(+this.filamentForm.controls.initialNominalLengthM.value)
+        : null,
+      initialNominalVolumeMl: !isNaN(
+        +this.filamentForm.controls.initialNominalVolumeMl.value
+      )
+        ? Math.round(+this.filamentForm.controls.initialNominalVolumeMl.value)
+        : null,
       materialDensityGramPerCubicCm:
         this.filamentForm.controls.materialDensityGramPerCubicCm.value,
       materialType: this.filamentForm.controls.materialType.value,

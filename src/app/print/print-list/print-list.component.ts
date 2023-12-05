@@ -563,8 +563,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public getEstimatedPrice(filamentUsage: PrintFilamentSummaryDto) {
     const filament = filamentUsage.filament;
 
-    const isLengthSource =
-      filamentUsage.estimatedSource === PrintFilamentSourceMeasurement.Length;
+    const source = filamentUsage.estimatedSource;
 
     const weightG =
       filamentUsage.estimatedAmountMg > 0
@@ -573,6 +572,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     const lengthM = filamentUsage.estimatedLengthInM;
 
+    const volumeMl = filamentUsage.estimatedVolumeMl;
+
     const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
 
     const symbol = this.preferredCurrencySymbolSetting?.value ?? '$';
@@ -580,9 +581,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
     return this.formatFilamentPrice(
       this.printService.calculatePrintCost({
         filament,
-        isLengthSource,
+        source,
         weightG,
         lengthM,
+        volumeMl,
         currencySymbol: symbol,
         defaultFilamentPrice: defaultPrice,
       })
@@ -592,13 +594,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public getActualPrice(filamentUsage: PrintFilamentSummaryDto) {
     const filament = filamentUsage.filament;
 
-    const isLengthSource =
-      filamentUsage.source === PrintFilamentSourceMeasurement.Length;
-
+    const source = filamentUsage.source;
     const weightG =
       filamentUsage.amountMg > 0 ? filamentUsage.amountMg / 1000 : undefined;
 
     const lengthM = filamentUsage.lengthInM;
+
+    const volumeMl = filamentUsage.volumeMl;
 
     const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
 
@@ -607,9 +609,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
     return this.formatFilamentPrice(
       this.printService.calculatePrintCost({
         filament,
-        isLengthSource,
+        source,
         weightG,
         lengthM,
+        volumeMl,
         currencySymbol: symbol,
         defaultFilamentPrice: defaultPrice,
       })

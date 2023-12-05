@@ -549,9 +549,10 @@ export class PrintService {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,
-          isLengthSource: fu.source == PrintFilamentSourceMeasurement.Length,
+          source: fu.source,
           lengthM: fu.lengthInM,
           weightG: fu.amountMg > 0 ? fu.amountMg / 1000 : undefined,
+          volumeMl: fu.volumeMl,
           defaultFilamentPrice,
         });
 
@@ -560,11 +561,11 @@ export class PrintService {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,
-          isLengthSource:
-            fu.estimatedSource == PrintFilamentSourceMeasurement.Length,
+          source: fu.estimatedSource,
           lengthM: fu.estimatedLengthInM,
           weightG:
             fu.estimatedAmountMg > 0 ? fu.estimatedAmountMg / 1000 : undefined,
+          volumeMl: fu.estimatedVolumeMl,
           defaultFilamentPrice,
         });
 
@@ -632,16 +633,18 @@ export class PrintService {
   /** Returns the  */
   public calculatePrintCost({
     filament,
-    isLengthSource,
+    source,
     weightG,
     lengthM,
+    volumeMl,
     currencySymbol,
     defaultFilamentPrice,
   }: {
     filament: FilamentSummary;
-    isLengthSource: boolean;
-    weightG: string | number | undefined;
-    lengthM: string | number | undefined;
+    source: PrintFilamentSourceMeasurement;
+    weightG?: string | number;
+    lengthM?: string | number;
+    volumeMl?: string | number;
     currencySymbol: string;
     defaultFilamentPrice?: string;
   }): FilamentPrice {
@@ -691,7 +694,7 @@ export class PrintService {
       separator: getGroupSeparator(),
     };
 
-    if (!isLengthSource) {
+    if (source == PrintFilamentSourceMeasurement.Weight) {
       // Use Weights, ezpz
 
       if (isNaN(currency(pricePerGram * Number(weightG)).value)) {
@@ -707,27 +710,47 @@ export class PrintService {
         symbol: currencySymbol,
         usesDefaultPrice: isUsingDefaultFilamentPrice,
       };
+    } else if (source == PrintFilamentSourceMeasurement.Length) {
+      // Calculate from length.
+      const diameterMm = filament.diameterMm;
+      const areaSqM = Math.PI * Math.pow(diameterMm / 1000.0, 2) * (1 / 4);
+
+      const densityGramPerCubicM =
+        filament.materialDensityGramPerCubicCm * 1000000;
+
+      const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
+
+      if (isNaN(currency(pricePerGram * gramsUsed).value)) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
+      return {
+        valid: true,
+        price: currency(pricePerGram * gramsUsed),
+        formattedPrice: currency(pricePerGram * gramsUsed).format(
+          currencyFormat
+        ),
+        symbol: currencySymbol,
+        usesDefaultPrice: isUsingDefaultFilamentPrice,
+      };
+    } else if (source === PrintFilamentSourceMeasurement.Volume) {
+      const amountMg =
+        +volumeMl * filament.materialDensityGramPerCubicCm * 1000;
+      const amountG = amountMg / 1000;
+
+      if (isNaN(currency(pricePerGram * Number(amountG)).value)) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
+      return {
+        valid: true,
+        price: currency(pricePerGram * Number(amountG)),
+        formattedPrice: currency(pricePerGram * Number(amountG)).format(
+          currencyFormat
+        ),
+        symbol: currencySymbol,
+        usesDefaultPrice: isUsingDefaultFilamentPrice,
+      };
     }
-
-    // Calculate from length.
-    const diameterMm = filament.diameterMm;
-    const areaSqM = Math.PI * Math.pow(diameterMm / 1000.0, 2) * (1 / 4);
-
-    const densityGramPerCubicM =
-      filament.materialDensityGramPerCubicCm * 1000000;
-
-    const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
-
-    if (isNaN(currency(pricePerGram * gramsUsed).value)) {
-      return { message: '(Price not valid)', valid: false };
-    }
-
-    return {
-      valid: true,
-      price: currency(pricePerGram * gramsUsed),
-      formattedPrice: currency(pricePerGram * gramsUsed).format(currencyFormat),
-      symbol: currencySymbol,
-      usesDefaultPrice: isUsingDefaultFilamentPrice,
-    };
   }
 }

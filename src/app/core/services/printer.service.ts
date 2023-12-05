@@ -33,11 +33,21 @@ export interface PrinterDetail {
 
   filamentDiameter: number | null;
 
+  beamDiameter: number | null;
+
   isActive: boolean;
 
   loadedFilaments: PrinterFilamentSummaryDto[];
 
   category: PrinterCategory;
+
+  bedWidthMm?: number;
+  bedHeightMm?: number;
+  bedDepthMm?: number;
+  screenResolutionXPixels?: number;
+  screenResolutionYPixels?: number;
+  hasHeatedBed?: boolean;
+  hasHeatedChamber?: boolean;
 }
 
 export interface PrinterFilamentSummaryDto {
@@ -57,15 +67,25 @@ export interface AddPrinterDetailDto {
 
   description: string;
 
-  nozzleDiameter: number | null;
+  nozzleDiameter?: number | null;
 
-  filamentDiameter: number | null;
+  filamentDiameter?: number | null;
+
+  beamDiameter?: number | null;
 
   isActive: boolean;
 
   category: string;
 
   loadedFilaments: AddPrinterFilamentSummaryDto[];
+
+  bedWidthMm?: number;
+  bedHeightMm?: number;
+  bedDepthMm?: number;
+  screenResolutionXPixels?: number;
+  screenResolutionYPixels?: number;
+  hasHeatedBed?: boolean;
+  hasHeatedChamber?: boolean;
 }
 
 export interface AddPrinterFilamentSummaryDto {
@@ -176,9 +196,17 @@ export class PrinterService {
       description: printer.description,
       nozzleDiameter: printer.nozzleDiameter,
       filamentDiameter: printer.filamentDiameter,
+      beamDiameter: printer.beamDiameter,
       isActive: printer.isActive,
       loadedFilaments: filamentUsage,
       category: printer.category.nickname,
+      bedDepthMm: printer.bedDepthMm,
+      bedHeightMm: printer.bedHeightMm,
+      bedWidthMm: printer.bedWidthMm,
+      screenResolutionXPixels: printer.screenResolutionXPixels,
+      screenResolutionYPixels: printer.screenResolutionYPixels,
+      hasHeatedBed: printer.hasHeatedBed,
+      hasHeatedChamber: printer.hasHeatedChamber,
     };
 
     return printDto;

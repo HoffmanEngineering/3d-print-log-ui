@@ -744,13 +744,13 @@ export class EditPrintDetailComponent
     const filament = printFilamentGroup.get('filament')
       .value as FilamentSummary;
 
-    const isLengthSource = printFilamentGroup.get(
-      'isEstimatedLengthSource'
-    ).value;
+    const source = printFilamentGroup.get('estimatedSource').value;
 
     const weightG = printFilamentGroup.get('estimatedAmountG').value;
 
     const lengthM = printFilamentGroup.get('estimatedLengthInM').value;
+
+    const volumeMl = printFilamentGroup.get('estimatedVolumeMl').value;
 
     const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
 
@@ -759,9 +759,10 @@ export class EditPrintDetailComponent
     return this.formatFilamentPrice(
       this.printService.calculatePrintCost({
         filament,
-        isLengthSource,
+        source,
         weightG,
         lengthM,
+        volumeMl,
         currencySymbol: symbol,
         defaultFilamentPrice: defaultPrice,
       })
@@ -772,11 +773,13 @@ export class EditPrintDetailComponent
     const filament = printFilamentGroup.get('filament')
       .value as FilamentSummary;
 
-    const isLengthSource = printFilamentGroup.get('isActualLengthSource').value;
+    const source = printFilamentGroup.get('source').value;
 
     const weightG = printFilamentGroup.get('amountG').value;
 
     const lengthM = printFilamentGroup.get('lengthInM').value;
+
+    const volumeMl = printFilamentGroup.get('volumeMl').value;
 
     const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
 
@@ -785,9 +788,10 @@ export class EditPrintDetailComponent
     return this.formatFilamentPrice(
       this.printService.calculatePrintCost({
         filament,
-        isLengthSource,
+        source,
         weightG,
         lengthM,
+        volumeMl,
         currencySymbol: symbol,
         defaultFilamentPrice: defaultPrice,
       })

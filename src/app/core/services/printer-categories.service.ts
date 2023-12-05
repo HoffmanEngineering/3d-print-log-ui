@@ -11,6 +11,14 @@ export interface PrinterCategory {
   name: string;
   description: string;
   materialCategory: MaterialCategory;
+
+  showNozzleDiameter: boolean;
+  showFilamentDiameter: boolean;
+  showBeamDiameter: boolean;
+  showBedSize: boolean;
+  showScreenResolution: boolean;
+  showHasHeatedBed: boolean;
+  showHasHeatedChamber: boolean;
 }
 
 @Injectable({

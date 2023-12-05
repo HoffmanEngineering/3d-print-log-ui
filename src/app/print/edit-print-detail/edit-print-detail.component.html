@@ -386,6 +386,17 @@
                     <div
                       fxFlex
                       class="filament-section"
+                      *ngIf="printFilament.get('filament').value !== null"
+                    >
+                      {{
+                        printFilament.get('filament').value
+                          ?.filamentVolumeRemainingInMl | number
+                      }}
+                      (ml) remaining
+                    </div>
+                    <div
+                      fxFlex
+                      class="filament-section"
                       *ngIf="
                         printFilament.get('filament').value !== null &&
                         printFilament.get('filament').value

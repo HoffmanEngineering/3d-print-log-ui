@@ -105,39 +105,6 @@
         </mat-autocomplete>
 
         <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Filament Diameter (mm)</mat-label>
-          <input
-            id="edit-printer-filament-diameter"
-            matInput
-            type="number"
-            min="0"
-            formControlName="filamentDiameter"
-            required
-          />
-          <mat-error
-            *ngIf="printerForm.controls['filamentDiameter'].hasError('min')"
-          >
-            Filament Diameter cannot be negative
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Nozzle Diameter (mm)</mat-label>
-          <input
-            matInput
-            id="edit-printer-nozzle-diameter"
-            type="number"
-            min="0"
-            formControlName="nozzleDiameter"
-            required
-          />
-          <mat-error
-            *ngIf="printerForm.controls['nozzleDiameter'].hasError('min')"
-          >
-            Nozzle Diameter cannot be negative
-          </mat-error>
-        </mat-form-field>
-
-        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Description</mat-label>
           <textarea
             id="edit-printer-description"
@@ -153,8 +120,179 @@
           >Is Active</mat-checkbox
         >
 
+        <h2>Machine Settings</h2>
+
+        <mat-form-field
+          *ngIf="printerForm.get('filamentDiameter').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Filament Diameter (mm)</mat-label>
+          <input
+            id="edit-printer-filament-diameter"
+            matInput
+            type="number"
+            min="0"
+            formControlName="filamentDiameter"
+          />
+          <mat-error
+            *ngIf="printerForm.controls['filamentDiameter'].hasError('min')"
+          >
+            Filament Diameter cannot be negative
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field
+          *ngIf="printerForm.get('nozzleDiameter').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Nozzle Diameter (mm)</mat-label>
+          <input
+            matInput
+            id="edit-printer-nozzle-diameter"
+            type="number"
+            min="0"
+            formControlName="nozzleDiameter"
+          />
+          <mat-error
+            *ngIf="printerForm.controls['nozzleDiameter'].hasError('min')"
+          >
+            Nozzle Diameter cannot be negative
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field
+          *ngIf="printerForm.get('beamDiameter').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Beam Diameter (mm)</mat-label>
+          <input
+            matInput
+            id="edit-printer-beam-diameter"
+            type="number"
+            formControlName="beamDiameter"
+          />
+          <mat-error
+            *ngIf="printerForm.controls['beamDiameter'].hasError('min')"
+          >
+            Beam Diameter cannot be negative
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field
+          *ngIf="printerForm.get('bedWidthMm').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Bed X (Width) (mm)</mat-label>
+          <input
+            matInput
+            id="edit-printer-bed-width-mm"
+            type="number"
+            formControlName="bedWidthMm"
+          />
+          <mat-error *ngIf="printerForm.controls['bedWidthMm'].hasError('min')">
+            Bed X (Width) cannot be negative
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field
+          *ngIf="printerForm.get('bedDepthMm').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Bed Y (Depth) (mm)</mat-label>
+          <input
+            matInput
+            id="edit-printer-bed-depth-mm"
+            type="number"
+            formControlName="bedDepthMm"
+          />
+          <mat-error *ngIf="printerForm.controls['bedDepthMm'].hasError('min')">
+            Bed Y (Depth) cannot be negative
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field
+          *ngIf="printerForm.get('bedHeightMm').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Bed Z (Height) (mm)</mat-label>
+          <input
+            matInput
+            id="edit-printer-bed-height-mm"
+            type="number"
+            formControlName="bedHeightMm"
+          />
+          <mat-error
+            *ngIf="printerForm.controls['bedHeightMm'].hasError('min')"
+          >
+            Bed Z (Depth) cannot be negative
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Form for Screen Resolution-->
+        <mat-form-field
+          *ngIf="printerForm.get('screenResolutionXPixels').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Screen Resolution X (Pixels)</mat-label>
+          <input
+            matInput
+            id="edit-printer-screen-resolution-x-pixels"
+            type="number"
+            formControlName="screenResolutionXPixels"
+          />
+          <mat-error
+            *ngIf="
+              printerForm.controls['screenResolutionXPixels'].hasError('min')
+            "
+          >
+            Screen Resolution X (Pixels) cannot be negative
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field
+          *ngIf="printerForm.get('screenResolutionYPixels').enabled"
+          fxFlex="grow"
+          fxFlexFill
+        >
+          <mat-label>Screen Resolution Y (Pixels)</mat-label>
+          <input
+            matInput
+            id="edit-printer-screen-resolution-y-pixels"
+            type="number"
+            formControlName="screenResolutionYPixels"
+          />
+          <mat-error
+            *ngIf="
+              printerForm.controls['screenResolutionYPixels'].hasError('min')
+            "
+          >
+            Screen Resolution Y (Pixels) cannot be negative
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Checkboxes for hasHeatedBed and hasHeatedChamber-->
+        <mat-checkbox
+          *ngIf="printerForm.get('hasHeatedBed').enabled"
+          fxFlex="grow"
+          formControlName="hasHeatedBed"
+          class="align-left"
+          >Has Heated Bed</mat-checkbox
+        >
+        <mat-checkbox
+          *ngIf="printerForm.get('hasHeatedChamber').enabled"
+          fxFlex="grow"
+          formControlName="hasHeatedChamber"
+          class="align-left"
+          >Has Heated Chamber</mat-checkbox
+        >
+
+        <h2>Loaded Materials</h2>
         <div fxFlex="grow" fxFlexFill>
-          Loaded Materials: <br />
           <button
             type="button"
             mat-raised-button

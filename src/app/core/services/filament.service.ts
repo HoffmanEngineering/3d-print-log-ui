@@ -69,6 +69,7 @@ export interface FilamentSummary {
   createdDate: string;
   filamentRemaining: number | null;
   filamentLengthRemainingInM: number | null;
+  filamentVolumeRemainingInMl: number | null;
   purchasePriceValue: string;
   initialNominalWeightMg: number | null;
   diameterMm: number;

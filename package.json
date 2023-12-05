@@ -50,7 +50,7 @@
     "parse-duration": "^1.0.2",
     "rxjs": "^7.8.1",
     "tslib": "^2.3.1",
-    "zone.js": "~0.13.1"
+    "zone.js": "^0.14.2"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^16.1.0",
@@ -89,7 +89,7 @@
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",
     "tslint-config-prettier": "^1.18.0",
-    "typescript": "5.0.x"
+    "typescript": "^5.3.2"
   },
   "lint-staged": {
     "*.{js,css,md,ts,scss}": "prettier --write"

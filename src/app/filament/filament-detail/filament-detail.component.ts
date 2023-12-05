@@ -128,6 +128,8 @@ export class FilamentDetailComponent
           this.recalculateFormFieldsForSelectedMaterialCategory(
             categoryNickname
           );
+
+          this.filamentForm.get('materialType').enable();
         });
 
       this.filteredMaterials = this.filamentForm
@@ -260,12 +262,18 @@ export class FilamentDetailComponent
 
   private _filter(value: string): Material[] {
     const filterValue = value.toLowerCase();
+    const materialCategory = this.filamentForm.get(
+      'materialCategoryNickname'
+    ).value;
 
     return this.materials
       .filter(
         (option) =>
-          option.acronym?.toLowerCase().includes(filterValue) ||
-          option.name?.toLowerCase().includes(filterValue)
+          (option.acronym?.toLowerCase().includes(filterValue) ||
+            option.name?.toLowerCase().includes(filterValue)) &&
+          (materialCategory === '' ||
+            materialCategory == null ||
+            option.materialCategoryNickname === materialCategory)
       )
       .sort();
   }
@@ -367,9 +375,16 @@ export class FilamentDetailComponent
           ? +this.defaultFilamentDiameterMmSetting.value
           : null,
       ],
-
-      initialTotalWeightG: [filament?.initialTotalWeightMg / 1000],
-      initialNominalWeightG: [filament?.initialNominalWeightMg / 1000],
+      initialTotalWeightG: [
+        filament?.initialTotalWeightMg > 0
+          ? filament?.initialTotalWeightMg / 1000
+          : null,
+      ],
+      initialNominalWeightG: [
+        filament?.initialNominalWeightMg > 0
+          ? filament?.initialNominalWeightMg / 1000
+          : null,
+      ],
       initialNominalLengthM: [filament?.initialNominalLengthM],
       initialNominalVolumeMl: [filament?.initialNominalVolumeMl],
       source: [filament?.source ?? FilamentSourceMeasurement.Weight],

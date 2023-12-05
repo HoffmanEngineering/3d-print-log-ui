@@ -79,6 +79,8 @@
             required
             maxlength="255"
             [matAutocomplete]="materialAuto"
+            matTooltip="Type your own or select a pre-defined Material."
+            matTooltipPosition="above"
           />
 
           <mat-error
@@ -293,7 +295,13 @@
                 </mat-error> -->
         </mat-form-field>
 
-        <div fxFlex="grow" fxFlexFill fxLayout="row" fxLayout.lt-md="column">
+        <div
+          fxFlex="grow"
+          fxFlexFill
+          fxLayout="row"
+          fxLayout.lt-md="column"
+          style="margin-inline: 10px"
+        >
           <!-- <mat-form-field fxFlex="grow" fxFlexFill>
                     <mat-label> Adjustment Amount (g)</mat-label>
                     <input
@@ -314,7 +322,10 @@
               this.filamentForm.get('source').value ===
               filamentSourceMeasurement.Weight
             "
-            fxFlex="grow"
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-left: 0"
+            ngStyle.lt-md="margin-inline: 0"
           >
             <mat-label> Initial Nominal Weight (g)</mat-label>
             <input
@@ -342,7 +353,10 @@
               this.filamentForm.get('source').value ===
               filamentSourceMeasurement.Length
             "
-            fxFlex="grow"
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-left: 0"
+            ngStyle.lt-md="margin-inline: 0"
           >
             <mat-label> Initial Nominal Length (m)</mat-label>
             <input
@@ -365,7 +379,10 @@
               this.filamentForm.get('source').value ===
               filamentSourceMeasurement.Volume
             "
-            fxFlex="grow"
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-left: 0"
+            ngStyle.lt-md="margin-inline: 0"
           >
             <mat-label> Initial Nominal Volume (ml)</mat-label>
             <input
@@ -383,7 +400,12 @@
             </mat-error>
             <mat-hint>The nominal, or expected, volume of material</mat-hint>
           </mat-form-field>
-          <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+          <mat-form-field
+            fxFlex="120px"
+            fxFlex.lt-md="100%"
+            style="margin-right: 0"
+            ngStyle.lt-md="margin-inline: 0"
+          >
             <mat-label>Measure</mat-label>
             <mat-select formControlName="source">
               <mat-option [value]="filamentSourceMeasurement.Weight">

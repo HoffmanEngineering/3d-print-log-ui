@@ -311,10 +311,10 @@ export class EditPrintDetailComponent
       lastMeasureSetting?.value === 'Weight'
         ? PrintFilamentSourceMeasurement.Weight
         : lastMeasureSetting?.value === 'Length'
-        ? PrintFilamentSourceMeasurement.Length
-        : lastMeasureSetting?.value === 'Volume'
-        ? PrintFilamentSourceMeasurement.Volume
-        : PrintFilamentSourceMeasurement.Weight;
+          ? PrintFilamentSourceMeasurement.Length
+          : lastMeasureSetting?.value === 'Volume'
+            ? PrintFilamentSourceMeasurement.Volume
+            : PrintFilamentSourceMeasurement.Weight;
 
     return defaultMeasureType;
   }
@@ -434,8 +434,8 @@ export class EditPrintDetailComponent
       source === PrintFilamentSourceMeasurement.Weight
         ? 'Weight'
         : source === PrintFilamentSourceMeasurement.Length
-        ? 'Length'
-        : 'Volume';
+          ? 'Length'
+          : 'Volume';
 
     // Find the last filament measure setting for the selected printer's material category
     const { materialCategoryName, userSetting } =
@@ -454,12 +454,12 @@ export class EditPrintDetailComponent
         materialCategoryName === 'filament'
           ? UserSettingType.Prints_LastSelectedFilamentMeasureType
           : materialCategoryName === 'resin'
-          ? UserSettingType.Prints_LastSelectedResinMeasureType
-          : materialCategoryName === 'powder'
-          ? UserSettingType.Prints_LastSelectedPowderMeasureType
-          : materialCategoryName === 'wire'
-          ? UserSettingType.Prints_LastSelectedWireMeasureType
-          : 'none';
+            ? UserSettingType.Prints_LastSelectedResinMeasureType
+            : materialCategoryName === 'powder'
+              ? UserSettingType.Prints_LastSelectedPowderMeasureType
+              : materialCategoryName === 'wire'
+                ? UserSettingType.Prints_LastSelectedWireMeasureType
+                : 'none';
 
       if (materialUserSettingType === 'none') {
         console.warn(
@@ -662,8 +662,8 @@ export class EditPrintDetailComponent
         print && print.printerId !== null
           ? print.printerId
           : this.lastSelectedPrinterSetting
-          ? +this.lastSelectedPrinterSetting.value
-          : null,
+            ? +this.lastSelectedPrinterSetting.value
+            : null,
         Validators.required,
       ],
       startDate: [
@@ -698,16 +698,16 @@ export class EditPrintDetailComponent
         print && print.viewStatus !== null
           ? print.viewStatus
           : this.defaultPrintViewStatusSetting
-          ? +this.defaultPrintViewStatusSetting.value
-          : PrintViewStatus.Private,
+            ? +this.defaultPrintViewStatusSetting.value
+            : PrintViewStatus.Private,
       ],
       images: imageArray,
       allowComments: [
         print && print.allowComments !== null
           ? print.allowComments
           : this.lastAllowCommentsSetting
-          ? !!this.lastAllowCommentsSetting.value
-          : true,
+            ? !!this.lastAllowCommentsSetting.value
+            : true,
       ],
     });
   }
@@ -848,7 +848,7 @@ export class EditPrintDetailComponent
     }
   }
 
-  selectImage(image: UntypedFormControl) {
+  selectImage(image: any) {
     this.selectedImage = image;
     this.setAsDefault(image); // TODO: Get right-click menu to make default
   }

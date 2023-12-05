@@ -22,8 +22,8 @@
           id="files"
           (change)="detectFiles($event)"
         />
+        @if (images.length < 1) {
         <button
-          *ngIf="images.length < 1"
           type="button"
           mat-raised-button
           (click)="imgFileInput.click()"
@@ -31,12 +31,8 @@
         >
           Upload Picture
         </button>
-
-        <div
-          fxFlex
-          class="card-img-top main-image"
-          *ngIf="selectedImage && selectedImage.value"
-        >
+        } @if (selectedImage && selectedImage.value) {
+        <div fxFlex class="card-img-top main-image">
           <app-print-image
             fxFlex
             [printId]="printForm.get('id').value"
@@ -47,18 +43,10 @@
             (imageDataChange)="selectedImage.value.url = $event"
           ></app-print-image>
         </div>
-
-        <div
-          class="images-preview mt-2"
-          *ngIf="false"
-          fxLayout
-          fxLayoutAlign="center center"
-        >
-          <div
-            fxFlex
-            formArrayName="images"
-            *ngFor="let image of images.controls; let i = index"
-          >
+        } @if (false) {
+        <div class="images-preview mt-2" fxLayout fxLayoutAlign="center center">
+          @for (image of images.controls; track image; let i = $index) {
+          <div fxFlex formArrayName="images">
             <div
               [formGroupName]="i"
               class="image-preview"
@@ -69,17 +57,14 @@
               (click)="selectImage(image)"
             >
               <!--
-            <img
-              [src]="$any(image).value.url"
-              
-              [ngClass]="{
-              
-              }"
-              alt="Image Preview"
-              (click)="selectImage(image)"
-            />
-            
-          -->
+                    <img
+                      [src]="$any(image).value.url"
+                      [ngClass]="{
+                      }"
+                      alt="Image Preview"
+                      (click)="selectImage(image)"
+                      />
+                    -->
               <app-print-image
                 fxFlex
                 [printId]="printForm.get('id').value"
@@ -89,9 +74,10 @@
               ></app-print-image>
             </div>
           </div>
+          }
         </div>
+        }
       </div>
-
       <mat-card-content
         fxFlex="grow"
         fxFlexFill
@@ -108,9 +94,9 @@
             required
             maxlength="100"
           />
-          <mat-error *ngIf="printForm.controls['title'].hasError('required')">
-            A Title is <strong>required</strong>
-          </mat-error>
+          @if (printForm.controls['title'].hasError('required')) {
+          <mat-error> A Title is <strong>required</strong> </mat-error>
+          }
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Printer</mat-label>
@@ -119,17 +105,16 @@
             required
             id="edit-print-printer"
           >
-            <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
+            @for (printer of printers; track printer) {
+            <mat-option [value]="printer.id">{{
               getPrinterLabel(printer)
             }}</mat-option>
+            }
           </mat-select>
-          <mat-error
-            *ngIf="printForm.controls['printerId'].hasError('required')"
-          >
-            A Printer is <strong>required</strong>
-          </mat-error>
+          @if (printForm.controls['printerId'].hasError('required')) {
+          <mat-error> A Printer is <strong>required</strong> </mat-error>
+          }
         </mat-form-field>
-
         <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
           <mat-form-field style="margin: 0" fxFlex="grow">
             <mat-label>Start Date and Time</mat-label>
@@ -140,11 +125,9 @@
               formControlName="startDate"
               aria-label="The date and time that the print was started."
             />
-            <mat-error
-              *ngIf="printForm.controls['startDate'].hasError('required')"
-            >
-              A Start Date is <strong>required</strong>
-            </mat-error>
+            @if (printForm.controls['startDate'].hasError('required')) {
+            <mat-error> A Start Date is <strong>required</strong> </mat-error>
+            }
             <mat-datepicker-toggle
               matSuffix
               [for]="picker"
@@ -159,7 +142,6 @@
             >
             </ngx-mat-datetime-picker>
           </mat-form-field>
-
           <button
             fxFlex
             style="margin-left: 10px; height: 72%"
@@ -173,7 +155,6 @@
             Now
           </button>
         </div>
-
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Thing URL</mat-label>
           <input
@@ -184,7 +165,6 @@
             maxlength="1000"
           />
         </mat-form-field>
-
         <div
           style="margin: 10 0 10"
           fxFlex="grow"
@@ -207,7 +187,6 @@
               (change)="getEstimatedCompletedDate()"
             />
           </mat-form-field>
-
           <mat-form-field style="margin: 0" fxFlex="50%" fxFlex.lt-md="100%">
             <input
               matInput
@@ -233,7 +212,6 @@
             </ngx-mat-datetime-picker>
           </mat-form-field>
         </div>
-
         <!-- Actual -->
         <div
           style="margin: 10 0 10"
@@ -257,7 +235,6 @@
               (change)="getActualCompletedDate()"
             />
           </mat-form-field>
-
           <div fxFlex="50%" fxFlex.lt-md="100%">
             <mat-form-field style="margin: 0" fxFlex="grow">
               <input
@@ -297,9 +274,7 @@
             </button>
           </div>
         </div>
-
         <!-- Material Usage -->
-
         <div fxFlex="grow" fxFlexFill>
           {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage: <br />
           <button
@@ -313,15 +288,10 @@
             {{ materialCategoryNameForSelectedPrinter | titlecase }} Record
           </button>
         </div>
-
         <div formArrayName="filamentUsage">
-          <div
-            *ngFor="
-              let printFilament of filamentUsage.controls;
-              let printFilamentIndex = index
-            "
-            style="margin-bottom: 10px"
-          >
+          @for ( printFilament of filamentUsage.controls; track printFilament;
+          let printFilamentIndex = $index) {
+          <div style="margin-bottom: 10px">
             <div [formGroupName]="printFilamentIndex">
               <mat-card
                 class="mat-elevation-z4"
@@ -349,76 +319,55 @@
                           'Other'
                       }}
                     </div>
-                    <div
-                      *ngIf="
-                        printFilament.get('filament').value?.colorName !== ''
-                      "
-                      fxFlex
-                      class="filament-section"
-                    >
+                    @if ( printFilament.get('filament').value?.colorName !== ''
+                    ) {
+                    <div fxFlex class="filament-section">
                       {{ printFilament.get('filament').value?.colorName }}
                     </div>
+                    }
                     <div fxFlex class="filament-section">
                       {{ printFilament.get('filament').value?.materialType }}
                     </div>
-                    <div
-                      fxFlex
-                      class="filament-section"
-                      *ngIf="printFilament.get('filament').value !== null"
-                    >
+                    @if (printFilament.get('filament').value !== null) {
+                    <div fxFlex class="filament-section">
                       {{
                         printFilament.get('filament').value?.filamentRemaining /
                           1000 | number
                       }}
                       (g) remaining
                     </div>
-                    <div
-                      fxFlex
-                      class="filament-section"
-                      *ngIf="printFilament.get('filament').value !== null"
-                    >
+                    } @if (printFilament.get('filament').value !== null) {
+                    <div fxFlex class="filament-section">
                       {{
                         printFilament.get('filament').value
                           ?.filamentLengthRemainingInM | number
                       }}
                       (m) remaining
                     </div>
-                    <div
-                      fxFlex
-                      class="filament-section"
-                      *ngIf="printFilament.get('filament').value !== null"
-                    >
+                    } @if (printFilament.get('filament').value !== null) {
+                    <div fxFlex class="filament-section">
                       {{
                         printFilament.get('filament').value
                           ?.filamentVolumeRemainingInMl | number
                       }}
                       (ml) remaining
                     </div>
-                    <div
-                      fxFlex
-                      class="filament-section"
-                      *ngIf="
-                        printFilament.get('filament').value !== null &&
-                        printFilament.get('filament').value
-                          ?.purchasePriceValue !== null &&
-                        printFilament.get('filament').value
-                          ?.purchasePriceValue !== ''
-                      "
-                    >
+                    } @if ( printFilament.get('filament').value !== null &&
+                    printFilament.get('filament').value ?.purchasePriceValue !==
+                    null && printFilament.get('filament').value
+                    ?.purchasePriceValue !== '' ) {
+                    <div fxFlex class="filament-section">
                       Price: {{ preferredCurrency?.symbol
                       }}{{
                         printFilament.get('filament').value?.purchasePriceValue
                       }}
                     </div>
+                    } @if ( printFilament.get('filament').value !== null &&
+                    printFilament.get('filament').value ?.purchasePriceValue ===
+                    null && defaultFilamentPriceSetting?.value !== null ) {
                     <div
                       fxFlex
                       class="filament-section"
-                      *ngIf="
-                        printFilament.get('filament').value !== null &&
-                        printFilament.get('filament').value
-                          ?.purchasePriceValue === null &&
-                        defaultFilamentPriceSetting?.value !== null
-                      "
                       matTooltip="* using default filament price of {{
                         preferredCurrency?.symbol
                       }}{{ defaultFilamentPriceSetting?.value }}"
@@ -426,6 +375,7 @@
                       Price: {{ preferredCurrency?.symbol
                       }}{{ defaultFilamentPriceSetting?.value }}*
                     </div>
+                    }
                     <div fxFlex>
                       <button
                         type="button"
@@ -455,15 +405,10 @@
                         {{ materialCategoryNameForSelectedPrinter | titlecase }}
                       </button>
                     </div>
-
                     <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
-                      <mat-form-field
-                        *ngIf="
-                          printFilament.get('estimatedSource').value ===
-                          printFilamentSourceMeasurementTypes.Weight
-                        "
-                        fxFlex="grow"
-                      >
+                      @if ( printFilament.get('estimatedSource').value ===
+                      printFilamentSourceMeasurementTypes.Weight ) {
+                      <mat-form-field fxFlex="grow">
                         <mat-label>
                           Estimated
                           {{
@@ -480,36 +425,25 @@
                           pattern="^\d*(\.\d{0,3})?$"
                           formControlName="estimatedAmountG"
                         />
-                        <mat-error
-                          *ngIf="
-                            printFilament
-                              .get('estimatedAmountG')
-                              .hasError('min')
-                          "
-                        >
+                        @if ( printFilament .get('estimatedAmountG')
+                        .hasError('min') ) {
+                        <mat-error>
                           Estimated
                           {{
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
                           Usage must be a positive number.
                         </mat-error>
-                        <mat-error
-                          *ngIf="
-                            printFilament
-                              .get('estimatedAmountG')
-                              .hasError('pattern')
-                          "
-                        >
+                        } @if ( printFilament .get('estimatedAmountG')
+                        .hasError('pattern') ) {
+                        <mat-error>
                           Numbers (up to 3-decimal places) only.
                         </mat-error>
+                        }
                       </mat-form-field>
-                      <mat-form-field
-                        *ngIf="
-                          printFilament.get('estimatedSource').value ===
-                          printFilamentSourceMeasurementTypes.Length
-                        "
-                        fxFlex="grow"
-                      >
+                      } @if ( printFilament.get('estimatedSource').value ===
+                      printFilamentSourceMeasurementTypes.Length ) {
+                      <mat-form-field fxFlex="grow">
                         <mat-label>
                           Estimated
                           {{
@@ -525,27 +459,20 @@
                           type="text"
                           formControlName="estimatedLengthInM"
                         />
-                        <mat-error
-                          *ngIf="
-                            printFilament
-                              .get('estimatedLengthInM')
-                              .hasError('min')
-                          "
-                        >
+                        @if ( printFilament .get('estimatedLengthInM')
+                        .hasError('min') ) {
+                        <mat-error>
                           Estimated
                           {{
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
                           Usage must be a positive number.
                         </mat-error>
+                        }
                       </mat-form-field>
-                      <mat-form-field
-                        *ngIf="
-                          printFilament.get('estimatedSource').value ===
-                          printFilamentSourceMeasurementTypes.Volume
-                        "
-                        fxFlex="grow"
-                      >
+                      } @if ( printFilament.get('estimatedSource').value ===
+                      printFilamentSourceMeasurementTypes.Volume ) {
+                      <mat-form-field fxFlex="grow">
                         <mat-label>
                           Estimated
                           {{
@@ -561,20 +488,18 @@
                           type="text"
                           formControlName="estimatedVolumeMl"
                         />
-                        <mat-error
-                          *ngIf="
-                            printFilament
-                              .get('estimatedVolumeMl')
-                              .hasError('min')
-                          "
-                        >
+                        @if ( printFilament .get('estimatedVolumeMl')
+                        .hasError('min') ) {
+                        <mat-error>
                           Estimated
                           {{
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
                           Usage must be a positive number.
                         </mat-error>
+                        }
                       </mat-form-field>
+                      }
                       <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
                         <mat-label>Measure</mat-label>
                         <mat-select
@@ -601,15 +526,10 @@
                         </mat-select>
                       </mat-form-field>
                     </div>
-
                     <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
-                      <mat-form-field
-                        *ngIf="
-                          printFilament.get('source').value ===
-                          printFilamentSourceMeasurementTypes.Weight
-                        "
-                        fxFlex="grow"
-                      >
+                      @if ( printFilament.get('source').value ===
+                      printFilamentSourceMeasurementTypes.Weight ) {
+                      <mat-form-field fxFlex="grow">
                         <mat-label>
                           Actual
                           {{
@@ -626,29 +546,23 @@
                           pattern="^\d*(\.\d{0,3})?$"
                           formControlName="amountG"
                         />
-                        <mat-error
-                          *ngIf="printFilament.get('amountG').hasError('min')"
-                        >
+                        @if (printFilament.get('amountG').hasError('min')) {
+                        <mat-error>
                           {{
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
                           Usage must be a positive number.
                         </mat-error>
-                        <mat-error
-                          *ngIf="
-                            printFilament.get('amountG').hasError('pattern')
-                          "
-                        >
+                        } @if ( printFilament.get('amountG').hasError('pattern')
+                        ) {
+                        <mat-error>
                           Numbers (up to 3-decimal places) only.
                         </mat-error>
+                        }
                       </mat-form-field>
-                      <mat-form-field
-                        *ngIf="
-                          printFilament.get('source').value ===
-                          printFilamentSourceMeasurementTypes.Length
-                        "
-                        fxFlex="grow"
-                      >
+                      } @if ( printFilament.get('source').value ===
+                      printFilamentSourceMeasurementTypes.Length ) {
+                      <mat-form-field fxFlex="grow">
                         <mat-label>
                           Actual
                           {{
@@ -664,23 +578,19 @@
                           type="text"
                           formControlName="lengthInM"
                         />
-                        <mat-error
-                          *ngIf="printFilament.get('lengthInM').hasError('min')"
-                        >
+                        @if (printFilament.get('lengthInM').hasError('min')) {
+                        <mat-error>
                           Actual
                           {{
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
                           Usage must be a positive number.
                         </mat-error>
+                        }
                       </mat-form-field>
-                      <mat-form-field
-                        *ngIf="
-                          printFilament.get('source').value ===
-                          printFilamentSourceMeasurementTypes.Volume
-                        "
-                        fxFlex="grow"
-                      >
+                      } @if ( printFilament.get('source').value ===
+                      printFilamentSourceMeasurementTypes.Volume ) {
+                      <mat-form-field fxFlex="grow">
                         <mat-label>
                           Actual
                           {{
@@ -696,16 +606,17 @@
                           type="text"
                           formControlName="volumeMl"
                         />
-                        <mat-error
-                          *ngIf="printFilament.get('volumeMl').hasError('min')"
-                        >
+                        @if (printFilament.get('volumeMl').hasError('min')) {
+                        <mat-error>
                           Actual
                           {{
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
                           Usage must be a positive number.
                         </mat-error>
+                        }
                       </mat-form-field>
+                      }
                       <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
                         <mat-label>Measure</mat-label>
                         <mat-select formControlName="source">
@@ -735,7 +646,6 @@
                             : 'Filament Notes'
                         }}</mat-label
                       >
-
                       <input
                         id="edit-print-filament-notes-{{ printFilamentIndex }}"
                         matInput
@@ -744,13 +654,12 @@
                         formControlName="notes"
                       />
                     </mat-form-field>
-
+                    @if (printFilament.get('filament').value !== null) {
                     <div
                       gdColumns="max-content auto"
                       gdRows="2"
                       gdGap="10px"
                       style="padding-inline: 10px; padding-bottom: 5px"
-                      *ngIf="printFilament.get('filament').value !== null"
                     >
                       <div gdColumn="1" gdRow="1">Estimated Cost:</div>
                       <div
@@ -764,25 +673,16 @@
                             ?.purchasePriceValue !== null
                         "
                       >
-                        {{ getEstimatedPrice(printFilament) }}
+                        {{ getEstimatedPrice($any(printFilament)) }}
                       </div>
-                      <div
-                        gdColumn="1"
-                        gdRow="2"
-                        *ngIf="
-                          printFilament.get('amountG').value !== 0 ||
-                          printFilament.get('lengthInM').value !== 0
-                        "
-                      >
-                        Actual Cost:
-                      </div>
+                      @if ( printFilament.get('amountG').value !== 0 ||
+                      printFilament.get('lengthInM').value !== 0 ) {
+                      <div gdColumn="1" gdRow="2">Actual Cost:</div>
+                      } @if ( printFilament.get('amountG').value !== 0 ||
+                      printFilament.get('lengthInM').value !== 0 ) {
                       <div
                         gdColumn="2"
                         gdRow="2"
-                        *ngIf="
-                          printFilament.get('amountG').value !== 0 ||
-                          printFilament.get('lengthInM').value !== 0
-                        "
                         matTooltip="* using default filament price of {{
                           preferredCurrency?.symbol
                         }}{{ defaultFilamentPriceSetting?.value }}"
@@ -791,16 +691,18 @@
                             ?.purchasePriceValue !== null
                         "
                       >
-                        {{ getActualPrice(printFilament) }}
+                        {{ getActualPrice($any(printFilament)) }}
                       </div>
+                      }
                     </div>
+                    }
                   </div>
                 </mat-card-content>
               </mat-card>
             </div>
           </div>
+          }
         </div>
-
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Notes</mat-label>
           <textarea
@@ -813,15 +715,13 @@
             cdkAutosizeMinRows="3"
             cdkAutosizeMaxRows="15"
           ></textarea>
-          <mat-hint
-            *ngIf="50000 - printForm.get('notes').value.length < 1000"
-            align="end"
-          >
+          @if (50000 - printForm.get('notes').value.length < 1000) {
+          <mat-hint align="end">
             {{ 50000 - printForm.get('notes').value.length }} characters
             remaining.</mat-hint
           >
+          }
         </mat-form-field>
-
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> File Name</mat-label>
           <input
@@ -832,7 +732,6 @@
             maxlength="1000"
           />
         </mat-form-field>
-
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Status</mat-label>
           <mat-select formControlName="status" id="edit-print-status">
@@ -850,7 +749,6 @@
             <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
           </mat-select>
         </mat-form-field>
-
         <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
           <mat-form-field style="margin: 0" fxFlex>
             <mat-label> Sharing To:</mat-label>
@@ -869,16 +767,13 @@
               >
             </mat-select>
           </mat-form-field>
+          @if ( this.printForm && this.printForm.get('viewStatus').dirty &&
+          (this.defaultPrintViewStatusSetting === null ||
+          this.printForm.get('viewStatus').value.toString() !==
+          this.defaultPrintViewStatusSetting.value.toString()) ) {
           <button
             fxFlex
             style="margin-left: 10px; height: 72%"
-            *ngIf="
-              this.printForm &&
-              this.printForm.get('viewStatus').dirty &&
-              (this.defaultPrintViewStatusSetting === null ||
-                this.printForm.get('viewStatus').value.toString() !==
-                  this.defaultPrintViewStatusSetting.value.toString())
-            "
             mat-raised-button
             type="button"
             color="accent"
@@ -890,8 +785,8 @@
           >
             Save as Default View Status
           </button>
+          }
         </div>
-
         <mat-checkbox
           fxFlex="grow"
           fxFlexFill
@@ -905,7 +800,8 @@
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
       >
-        <div fxFlex="grow" fxFlexFill *ngIf="printForm.get('id').value">
+        @if (printForm.get('id').value) {
+        <div fxFlex="grow" fxFlexFill>
           <button
             id="edit-print-copy-btn"
             mat-raised-button
@@ -922,6 +818,7 @@
             Copy
           </button>
         </div>
+        }
         <div
           fxFlex="grow"
           fxFlexFill

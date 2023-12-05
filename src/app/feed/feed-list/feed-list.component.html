@@ -4,44 +4,45 @@
     fxFlex="500px"
     fxFlex.xs="100%"
     fxFlex.gt-md="1200px"
-  >
+    >
     <div
       fxLayout="column wrap"
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
       fxLayout.gt-md="row"
       fxLayoutAlign="space-around start"
-    >
+      >
       <mat-card-content
         fxFlex="grow"
         fxLayout="column"
         fxLayoutAlign="start stretch"
         fxLayoutGap="10px"
-      >
-        <ng-container *ngIf="feed.length > 0">
-          <div
-            #PrintSummaryCard
-            *ngFor="let print of feed"
-            style="margin-bottom: 10px"
-          >
-            <app-print-summary-card
-              [print]="print"
-              [userId]="print.createdBy.id"
-              [userName]="print.createdBy.displayName"
-              [userProfilePictureUrl]="print.createdBy.profilePicture"
-            >
-            </app-print-summary-card>
-          </div>
+        >
+        @if (feed.length > 0) {
+          @for (print of feed; track print) {
+            <div
+              #PrintSummaryCard
+              style="margin-bottom: 10px"
+              >
+              <app-print-summary-card
+                [print]="print"
+                [userId]="print.createdBy.id"
+                [userName]="print.createdBy.displayName"
+                [userProfilePictureUrl]="print.createdBy.profilePicture"
+                >
+              </app-print-summary-card>
+            </div>
+          }
           <button
             fxFlex="grow"
             style="margin: 0 auto"
             mat-raised-button
             color="accent"
             (click)="loadNextPage()"
-          >
+            >
             Load More
           </button>
-        </ng-container>
+        }
       </mat-card-content>
     </div>
   </mat-card>

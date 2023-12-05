@@ -1,20 +1,23 @@
 <div>
   <div
     style="
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
     "
-  >
-    <mat-progress-bar
-      *ngIf="isLoading"
-      color="primary"
-      mode="indeterminate"
-      aria-label="Searching for prints."
     >
-    </mat-progress-bar>
-    <div *ngIf="!isLoading" style="height: 4px"></div>
+    @if (isLoading) {
+      <mat-progress-bar
+        color="primary"
+        mode="indeterminate"
+        aria-label="Searching for prints."
+        >
+      </mat-progress-bar>
+    }
+    @if (!isLoading) {
+      <div style="height: 4px"></div>
+    }
   </div>
   <div class="header">
     <button
@@ -23,288 +26,279 @@
       type="button"
       color="accent"
       id="add-new-filament"
-    >
+      >
       Add New Material
     </button>
     <div class="search-fields">
       <mat-form-field>
         <mat-label> Search: </mat-label
-        ><input
+          ><input
           id="filament-list-search-input"
           matInput
           type="text"
           [(ngModel)]="searchText"
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
-      /></mat-form-field>
-
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="includeInactive"
-        (ngModelChange)="updateFilter()"
-        >Include Inactive</mat-checkbox
-      >
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="showFavoritesOnly"
-        (ngModelChange)="updateFilter()"
-        >Show Favorites Only</mat-checkbox
-      >
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="showLoadedFilamentOnly"
-        (ngModelChange)="updateFilter()"
-        >Show Loaded Materials Only</mat-checkbox
-      >
-
-      <mat-form-field>
-        <mat-label> Filter by Category: </mat-label>
-        <mat-select
-          [(ngModel)]="filterByMaterialCategory"
+        /></mat-form-field>
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="includeInactive"
           (ngModelChange)="updateFilter()"
-        >
-          <mat-option value=""> No Filter </mat-option>
-          <mat-option
-            *ngFor="let materialCategory of materialCategories"
-            [value]="materialCategory.nickname"
-            >{{ materialCategory.name }}</mat-option
+          >Include Inactive</mat-checkbox
           >
-        </mat-select>
-      </mat-form-field>
-    </div>
-  </div>
-
-  <table
-    mat-table
-    [dataSource]="filaments"
-    matSort
-    [matSortActive]="sortColumn"
-    [matSortDirection]="sortDirection === 1 ? 'asc' : 'desc'"
-    (matSortChange)="sortData($event)"
-    [matSortDisableClear]="true"
-  >
-    <ng-container matColumnDef="isFavorite">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let filament">
-        <button
-          mat-button
-          *ngIf="filament.isFavorite"
-          class="transparent"
-          attr.aria-label="Material {{
-            filament.displayName
-          }} is favorite. Click to remove from favorites."
-          (click)="
-            $event.preventDefault();
-            $event.stopPropagation();
-            toggleFavorite(filament)
-          "
-          matTooltip="Remove from Favorites"
-        >
-          <mat-icon>star</mat-icon>
-        </button>
-
-        <button
-          mat-button
-          *ngIf="!filament.isFavorite"
-          class="transparent not-favorite-icon"
-          attr.aria-label="Material {{
-            filament.displayName
-          }} is not a favorite. Click to add to favorites."
-          (click)="
-            $event.preventDefault();
-            $event.stopPropagation();
-            toggleFavorite(filament)
-          "
-          matTooltip="Add to Favorites"
-        >
-          <mat-icon>star_border</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="colorHex">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let filament">
-        <div
-          class="filament-color-cell"
-          [ngStyle]="{ 'background-color': '#' + filament.colorHex }"
-        ></div>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="displayName">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="filamentSortColumns.DisplayName"
-      >
-        Name
-      </th>
-      <td mat-cell *matCellDef="let filament">
-        {{ filament.displayName }}
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="materialType">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="filamentSortColumns.MaterialType"
-      >
-        Material
-      </th>
-      <td mat-cell *matCellDef="let filament">
-        {{ filament.materialType }}
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="brand">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="filamentSortColumns.Brand"
-      >
-        Brand
-      </th>
-      <td mat-cell *matCellDef="let filament">
-        {{ filament.brand }}
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="colorName">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="filamentSortColumns.Color"
-      >
-        Color
-      </th>
-      <td mat-cell *matCellDef="let filament">{{ filament.colorName }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="storageLocation">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="filamentSortColumns.StorageLocation"
-      >
-        Storage Location
-      </th>
-      <td mat-cell *matCellDef="let filament">
-        {{ filament.storageLocation }}
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="filamentRemaining">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="filamentSortColumns.FilamentRemaining"
-      >
-        Remaining (g)
-      </th>
-      <td mat-cell *matCellDef="let filament">
-        {{ filament.filamentRemaining / 1000 | number : '1.0-0' }}
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="loadedInPrinter">
-      <th mat-header-cell *matHeaderCellDef>Loaded In Printer</th>
-      <td mat-cell *matCellDef="let filament">
-        {{ getPrinterLabel(filament) }}
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="isActive">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let filament">
-        <mat-chip-listbox *ngIf="!filament.isActive">
-          <mat-chip-option color="accent" selected>Inactive</mat-chip-option>
-        </mat-chip-listbox>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="more">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td
-        mat-cell
-        *matCellDef="let filament"
-        (click)="$event.preventDefault(); $event.stopPropagation()"
-      >
-        <button
-          mat-button
-          class="transparent"
-          attr.aria-label="More options for {{ filament.displayName }}"
-          [matMenuTriggerFor]="aboutMenu"
-          data-cy-more-button
-        >
-          <mat-icon>more_horiz</mat-icon>
-        </button>
-        <mat-menu #aboutMenu="matMenu">
-          <!-- <button mat-menu-item>Fee</button> -->
-          <a
-            class="menu-link"
-            attr.aria-label="Edit Material {{ filament.displayName }}"
-            mat-menu-item
-            [routerLink]="[filament.id]"
-            data-cy-edit-menu-option
-            ><mat-icon>edit</mat-icon>Edit</a
-          >
-          <a
-            class="menu-link"
-            mat-menu-item
-            attr.aria-label="Duplicate Material {{ filament.displayName }}"
-            [routerLink]="['copy', filament.id]"
-            ><mat-icon>file_copy</mat-icon>Duplicate</a
-          >
-          <a
-            *ngIf="filament?.loadedInPrinter?.id"
-            class="menu-link"
-            mat-menu-item
-            [routerLink]="['/', 'printers', filament.loadedInPrinter.id]"
-            ><mat-icon>open_in_browser</mat-icon>Go To Loaded Printer</a
-          >
-          <hr />
-          <button
-            type="button"
-            mat-menu-item
-            attr.aria-label="Mark Material {{ filament.displayName }} as empty."
-            (click)="markAsEmpty(filament)"
-          >
-            <mat-icon>hide_source</mat-icon>Mark As Empty
-          </button>
-          <button
-            type="button"
-            attr.aria-label="Delete Material {{ filament.displayName }}"
-            mat-menu-item
-            (click)="deleteFilament(filament)"
-          >
-            <mat-icon>delete</mat-icon>Delete
-          </button>
-        </mat-menu>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr
-      mat-row
-      *matRowDef="let row; columns: displayedColumns"
-      [routerLink]="row.id"
-      data-cy-filament-row
-    ></tr>
-  </table>
-
-  <div class="no-filament" *ngIf="totalCount === 0">
-    No Materials found. Add a new Material or try a different search.
-  </div>
-
-  <mat-paginator
-    [length]="totalCount"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5, 10, 25, 100]"
-    (page)="pageChange($event)"
-  >
-  </mat-paginator>
-
-  <app-ad></app-ad>
-</div>
+          <mat-checkbox
+            type="checkbox"
+            [(ngModel)]="showFavoritesOnly"
+            (ngModelChange)="updateFilter()"
+            >Show Favorites Only</mat-checkbox
+            >
+            <mat-checkbox
+              type="checkbox"
+              [(ngModel)]="showLoadedFilamentOnly"
+              (ngModelChange)="updateFilter()"
+              >Show Loaded Materials Only</mat-checkbox
+              >
+              <mat-form-field>
+                <mat-label> Filter by Category: </mat-label>
+                <mat-select
+                  [(ngModel)]="filterByMaterialCategory"
+                  (ngModelChange)="updateFilter()"
+                  >
+                  <mat-option value=""> No Filter </mat-option>
+                  @for (materialCategory of materialCategories; track materialCategory) {
+                    <mat-option
+                      [value]="materialCategory.nickname"
+                      >{{ materialCategory.name }}</mat-option
+                      >
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+            <table
+              mat-table
+              [dataSource]="filaments"
+              matSort
+              [matSortActive]="sortColumn"
+              [matSortDirection]="sortDirection === 1 ? 'asc' : 'desc'"
+              (matSortChange)="sortData($event)"
+              [matSortDisableClear]="true"
+              >
+              <ng-container matColumnDef="isFavorite">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let filament">
+                  @if (filament.isFavorite) {
+                    <button
+                      mat-button
+                      class="transparent"
+                      attr.aria-label="Material {{
+                      filament.displayName
+                      }} is favorite. Click to remove from favorites."
+                      (click)="
+                      $event.preventDefault();
+                      $event.stopPropagation();
+                      toggleFavorite(filament)
+                      "
+                      matTooltip="Remove from Favorites"
+                      >
+                      <mat-icon>star</mat-icon>
+                    </button>
+                  }
+                  @if (!filament.isFavorite) {
+                    <button
+                      mat-button
+                      class="transparent not-favorite-icon"
+                      attr.aria-label="Material {{
+                      filament.displayName
+                      }} is not a favorite. Click to add to favorites."
+                      (click)="
+                      $event.preventDefault();
+                      $event.stopPropagation();
+                      toggleFavorite(filament)
+                      "
+                      matTooltip="Add to Favorites"
+                      >
+                      <mat-icon>star_border</mat-icon>
+                    </button>
+                  }
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="colorHex">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let filament">
+                  <div
+                    class="filament-color-cell"
+                    [ngStyle]="{ 'background-color': '#' + filament.colorHex }"
+                  ></div>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="displayName">
+                <th
+                  mat-header-cell
+                  *matHeaderCellDef
+                  [mat-sort-header]="filamentSortColumns.DisplayName"
+                  >
+                  Name
+                </th>
+                <td mat-cell *matCellDef="let filament">
+                  {{ filament.displayName }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="materialType">
+                <th
+                  mat-header-cell
+                  *matHeaderCellDef
+                  [mat-sort-header]="filamentSortColumns.MaterialType"
+                  >
+                  Material
+                </th>
+                <td mat-cell *matCellDef="let filament">
+                  {{ filament.materialType }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="brand">
+                <th
+                  mat-header-cell
+                  *matHeaderCellDef
+                  [mat-sort-header]="filamentSortColumns.Brand"
+                  >
+                  Brand
+                </th>
+                <td mat-cell *matCellDef="let filament">
+                  {{ filament.brand }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="colorName">
+                <th
+                  mat-header-cell
+                  *matHeaderCellDef
+                  [mat-sort-header]="filamentSortColumns.Color"
+                  >
+                  Color
+                </th>
+                <td mat-cell *matCellDef="let filament">{{ filament.colorName }}</td>
+              </ng-container>
+              <ng-container matColumnDef="storageLocation">
+                <th
+                  mat-header-cell
+                  *matHeaderCellDef
+                  [mat-sort-header]="filamentSortColumns.StorageLocation"
+                  >
+                  Storage Location
+                </th>
+                <td mat-cell *matCellDef="let filament">
+                  {{ filament.storageLocation }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="filamentRemaining">
+                <th
+                  mat-header-cell
+                  *matHeaderCellDef
+                  [mat-sort-header]="filamentSortColumns.FilamentRemaining"
+                  >
+                  Remaining (g)
+                </th>
+                <td mat-cell *matCellDef="let filament">
+                  {{ filament.filamentRemaining / 1000 | number : '1.0-0' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="loadedInPrinter">
+                <th mat-header-cell *matHeaderCellDef>Loaded In Printer</th>
+                <td mat-cell *matCellDef="let filament">
+                  {{ getPrinterLabel(filament) }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="isActive">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let filament">
+                  @if (!filament.isActive) {
+                    <mat-chip-listbox>
+                      <mat-chip-option color="accent" selected>Inactive</mat-chip-option>
+                    </mat-chip-listbox>
+                  }
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="more">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td
+                  mat-cell
+                  *matCellDef="let filament"
+                  (click)="$event.preventDefault(); $event.stopPropagation()"
+                  >
+                  <button
+                    mat-button
+                    class="transparent"
+                    attr.aria-label="More options for {{ filament.displayName }}"
+                    [matMenuTriggerFor]="aboutMenu"
+                    data-cy-more-button
+                    >
+                    <mat-icon>more_horiz</mat-icon>
+                  </button>
+                  <mat-menu #aboutMenu="matMenu">
+                    <!-- <button mat-menu-item>Fee</button> -->
+                    <a
+                      class="menu-link"
+                      attr.aria-label="Edit Material {{ filament.displayName }}"
+                      mat-menu-item
+                      [routerLink]="[filament.id]"
+                      data-cy-edit-menu-option
+                      ><mat-icon>edit</mat-icon>Edit</a
+                      >
+                      <a
+                        class="menu-link"
+                        mat-menu-item
+                        attr.aria-label="Duplicate Material {{ filament.displayName }}"
+                        [routerLink]="['copy', filament.id]"
+                        ><mat-icon>file_copy</mat-icon>Duplicate</a
+                        >
+                        @if (filament?.loadedInPrinter?.id) {
+                          <a
+                            class="menu-link"
+                            mat-menu-item
+                            [routerLink]="['/', 'printers', filament.loadedInPrinter.id]"
+                            ><mat-icon>open_in_browser</mat-icon>Go To Loaded Printer</a
+                            >
+                          }
+                          <hr />
+                          <button
+                            type="button"
+                            mat-menu-item
+                            attr.aria-label="Mark Material {{ filament.displayName }} as empty."
+                            (click)="markAsEmpty(filament)"
+                            >
+                            <mat-icon>hide_source</mat-icon>Mark As Empty
+                          </button>
+                          <button
+                            type="button"
+                            attr.aria-label="Delete Material {{ filament.displayName }}"
+                            mat-menu-item
+                            (click)="deleteFilament(filament)"
+                            >
+                            <mat-icon>delete</mat-icon>Delete
+                          </button>
+                        </mat-menu>
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr
+                      mat-row
+                      *matRowDef="let row; columns: displayedColumns"
+                      [routerLink]="row.id"
+                      data-cy-filament-row
+                    ></tr>
+                  </table>
+                  @if (totalCount === 0) {
+                    <div class="no-filament">
+                      No Materials found. Add a new Material or try a different search.
+                    </div>
+                  }
+                  <mat-paginator
+                    [length]="totalCount"
+                    [pageSize]="pageSize"
+                    [pageSizeOptions]="[5, 10, 25, 100]"
+                    (page)="pageChange($event)"
+                    >
+                  </mat-paginator>
+                  <app-ad></app-ad>
+                </div>
+                

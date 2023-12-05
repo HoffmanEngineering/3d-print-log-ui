@@ -5,37 +5,37 @@
     (ngModelChange)="this.data.changeEvent.next($event)"
     (cdkDropListDropped)="drop($event)"
     cdkDropList
-  >
-    <div
-      cdkDrag
-      *ngFor="let column of allColumns; let i = index"
-      style="display: flex"
     >
-      <div style="flex: initial; align-self: center">
-        <button class="transparent" style="cursor: pointer" (click)="moveUp(i)">
-          <mat-icon>keyboard_arrow_up</mat-icon>
-        </button>
-
-        <button
-          class="transparent"
-          style="cursor: pointer"
-          (click)="moveDown(i)"
-        >
-          <mat-icon>keyboard_arrow_down</mat-icon>
-        </button>
-      </div>
+    @for (column of allColumns; track column; let i = $index) {
       <div
-        style="flex: initial; align-self: center; cursor: grab"
-        cdkDragHandle
-      >
-        <mat-icon>drag_handle</mat-icon>
+        cdkDrag
+        style="display: flex"
+        >
+        <div style="flex: initial; align-self: center">
+          <button class="transparent" style="cursor: pointer" (click)="moveUp(i)">
+            <mat-icon>keyboard_arrow_up</mat-icon>
+          </button>
+          <button
+            class="transparent"
+            style="cursor: pointer"
+            (click)="moveDown(i)"
+            >
+            <mat-icon>keyboard_arrow_down</mat-icon>
+          </button>
+        </div>
+        <div
+          style="flex: initial; align-self: center; cursor: grab"
+          cdkDragHandle
+          >
+          <mat-icon>drag_handle</mat-icon>
+        </div>
+        <div style="flex: 1">
+          <mat-list-option [value]="column.key" [matTooltip]="column.description">
+            {{ column.displayName }}
+          </mat-list-option>
+        </div>
       </div>
-      <div style="flex: 1">
-        <mat-list-option [value]="column.key" [matTooltip]="column.description">
-          {{ column.displayName }}
-        </mat-list-option>
-      </div>
-    </div>
+    }
   </mat-selection-list>
 </div>
 <div
@@ -43,13 +43,13 @@
   fxLayout="row"
   fxLayoutAlign="space-between center"
   fxLayout
->
+  >
   <button
     type="button"
     mat-raised-button
     color="basic"
     (click)="resetToDefaults()"
-  >
+    >
     Reset to Default
   </button>
   <button
@@ -57,7 +57,7 @@
     mat-raised-button
     color="primary"
     [mat-dialog-close]="selectedColumns"
-  >
+    >
     Save
   </button>
   <button
@@ -65,7 +65,7 @@
     mat-raised-button
     color="accent"
     (click)="resetSelection()"
-  >
+    >
     Close
   </button>
 </div>

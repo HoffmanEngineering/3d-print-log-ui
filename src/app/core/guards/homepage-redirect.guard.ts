@@ -13,7 +13,10 @@ import { AuthService } from '../services/auth.service';
   providedIn: 'root',
 })
 export class HomepageRedirectGuard {
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(
+    private auth: AuthService,
+    private router: Router
+  ) {}
 
   canActivate(
     next: ActivatedRouteSnapshot,

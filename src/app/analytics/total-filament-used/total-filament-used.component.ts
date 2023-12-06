@@ -28,9 +28,9 @@ export class TotalFilamentUsedComponent implements OnChanges {
           isFinite(print.filamentUsageMg) && print.filamentUsageMg > 0
             ? +print.filamentUsageMg
             : isFinite(print.estimatedFilamentUsageMg) &&
-              print.estimatedFilamentUsageMg > 0
-            ? +print.estimatedFilamentUsageMg
-            : 0;
+                print.estimatedFilamentUsageMg > 0
+              ? +print.estimatedFilamentUsageMg
+              : 0;
 
         return accumulatedFilamentUsedMg + filamentUsedMg;
       },

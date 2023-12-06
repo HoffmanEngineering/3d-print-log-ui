@@ -9,11 +9,11 @@
         <app-comment
           [comment]="comment"
           [showDelete]="
-          printOwnerUserId === currentUserId ||
-          comment.createdById === currentUserId
+            printOwnerUserId === currentUserId ||
+            comment.createdById === currentUserId
           "
           (delete)="deleteComment(comment)"
-          >
+        >
         </app-comment>
       </div>
     }
@@ -23,10 +23,7 @@
           <div>
             <mat-card-content>
               @if (currentUserProfilePicture !== '') {
-                <img
-                  mat-card-avatar
-                  [src]="currentUserProfilePicture"
-                  />
+                <img mat-card-avatar [src]="currentUserProfilePicture" />
               }
               <mat-form-field style="width: 100%">
                 <mat-label>Add Comment:</mat-label>
@@ -42,36 +39,35 @@
                 ></textarea>
                 <mat-hint align="end">
                   {{ 2000 - newComment.length }} characters remaining.</mat-hint
-                  >
-                </mat-form-field>
-                <button
-                  id="btn-add-print-comment"
-                  mat-raised-button
-                  color="accent"
-                  (click)="addComment()"
-                  style="margin-left: auto"
-                  >
-                  Add Comment
-                </button>
-              </mat-card-content>
-            </div>
-          }
-          @if (!isLoggedIn) {
-            <div>
-              <mat-card-content #notLoggedIn>
-                <p>Please log in to add comments</p>
-              </mat-card-content>
-            </div>
-          }
-        </mat-card>
-      </div>
-    </div>
-  }
-  @if (!allowComments) {
-    <div>
-      <mat-card appearance="outlined">
-        Comments are disabled for this print.
+                >
+              </mat-form-field>
+              <button
+                id="btn-add-print-comment"
+                mat-raised-button
+                color="accent"
+                (click)="addComment()"
+                style="margin-left: auto"
+              >
+                Add Comment
+              </button>
+            </mat-card-content>
+          </div>
+        }
+        @if (!isLoggedIn) {
+          <div>
+            <mat-card-content #notLoggedIn>
+              <p>Please log in to add comments</p>
+            </mat-card-content>
+          </div>
+        }
       </mat-card>
     </div>
-  }
-  
+  </div>
+}
+@if (!allowComments) {
+  <div>
+    <mat-card appearance="outlined">
+      Comments are disabled for this print.
+    </mat-card>
+  </div>
+}

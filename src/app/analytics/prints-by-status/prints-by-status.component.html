@@ -18,10 +18,14 @@
               mat-table
               [dataSource]="orderStates"
               class="mat-elevation-z8"
-              >
+            >
               <ng-container matColumnDef="legend">
                 <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let element" [ngClass]="element.status">
+                <td
+                  mat-cell
+                  *matCellDef="let element"
+                  [ngClass]="element.status"
+                >
                   &#9632;
                 </td>
               </ng-container>
@@ -51,7 +55,7 @@
       color="primary"
       [checked]="showData"
       (change)="toggleData($event)"
-      >
+    >
       View Legend
     </mat-slide-toggle>
   </mat-card-content>

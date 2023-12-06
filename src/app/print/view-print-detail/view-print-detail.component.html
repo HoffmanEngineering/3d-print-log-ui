@@ -10,14 +10,14 @@
           <mat-card-subtitle>
             Printed by
             <a [routerLink]="['/users', user.id]">{{ user.displayName }}</a> on
-            {{ print.startDate | date : 'longDate' }}
+            {{ print.startDate | date: 'longDate' }}
           </mat-card-subtitle>
         }
         @if (!isUserProfileFeatureEnabled) {
           <mat-card-subtitle>
             Printed by
             {{ user.displayName }} on
-            {{ print.startDate | date : 'longDate' }}
+            {{ print.startDate | date: 'longDate' }}
           </mat-card-subtitle>
         }
       </mat-card-header>
@@ -25,7 +25,7 @@
         fxLayout="column"
         fxLayoutAlign="start center"
         fxLayoutGap="10px"
-        >
+      >
         <div fxLayout="row">
           @if (selectedImage) {
             <div class="main-image">
@@ -47,7 +47,7 @@
         fxFlexFill
         fxLayout="column wrap"
         fxLayoutAlign="space-evenly center"
-        >
+      >
         <section class="mat-typography grid-container">
           <h3>Print Status:</h3>
           <p>
@@ -63,34 +63,50 @@
           <p>{{ print.printTimeInSeconds | duration }}</p>
           <h3>Filament Usage:</h3>
           <div class="grid-container">
-            @for (printFilament of print.filamentUsage; track printFilament; let last = $last) {
+            @for (
+              printFilament of print.filamentUsage;
+              track printFilament;
+              let last = $last
+            ) {
               @if (printFilament.filament === null) {
                 <h3>Filament:</h3>
                 <p>{{ printFilament.notes }}</p>
-                @if (printFilament.estimatedSource === printFilamentSourceMeasurementTypes.Length ) {
+                @if (
+                  printFilament.estimatedSource ===
+                  printFilamentSourceMeasurementTypes.Length
+                ) {
                   @if (printFilament.estimatedLengthInM > 0) {
                     <h3>Estimated:</h3>
                     <p>
-                      {{ printFilament.estimatedLengthInM | number : '1.0-1' }}
+                      {{ printFilament.estimatedLengthInM | number: '1.0-1' }}
                       meters
                     </p>
                   }
                 }
-                @if (printFilament.estimatedSource === printFilamentSourceMeasurementTypes.Weight) {
+                @if (
+                  printFilament.estimatedSource ===
+                  printFilamentSourceMeasurementTypes.Weight
+                ) {
                   @if (printFilament.estimatedAmountMg > 0) {
                     <h3>Estimated:</h3>
                     <p>{{ printFilament.estimatedAmountMg / 1000 }} grams</p>
                   }
                 }
-                @if (printFilament.source === printFilamentSourceMeasurementTypes.Length) {
+                @if (
+                  printFilament.source ===
+                  printFilamentSourceMeasurementTypes.Length
+                ) {
                   @if (printFilament.lengthInM > 0) {
                     <h3>Actual:</h3>
                     <p>
-                      {{ printFilament.lengthInM | number : '1.0-1' }} meters
+                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
                     </p>
                   }
                 }
-                @if (printFilament.source === printFilamentSourceMeasurementTypes.Weight) {
+                @if (
+                  printFilament.source ===
+                  printFilamentSourceMeasurementTypes.Weight
+                ) {
                   @if (printFilament.amountMg > 0) {
                     <h3>Actual:</h3>
                     <p>{{ printFilament.amountMg / 1000 }} grams</p>
@@ -100,30 +116,42 @@
               @if (printFilament.filament !== null) {
                 <h3>Filament:</h3>
                 <p>{{ printFilament.filament.displayName }}</p>
-                @if (printFilament.estimatedSource === printFilamentSourceMeasurementTypes.Length) {
+                @if (
+                  printFilament.estimatedSource ===
+                  printFilamentSourceMeasurementTypes.Length
+                ) {
                   @if (printFilament.estimatedLengthInM > 0) {
                     <h3>Estimated:</h3>
                     <p>
-                      {{ printFilament.estimatedLengthInM | number : '1.0-1' }}
+                      {{ printFilament.estimatedLengthInM | number: '1.0-1' }}
                       meters
                     </p>
                   }
                 }
-                @if (printFilament.estimatedSource === printFilamentSourceMeasurementTypes.Weight) {
+                @if (
+                  printFilament.estimatedSource ===
+                  printFilamentSourceMeasurementTypes.Weight
+                ) {
                   @if (printFilament.estimatedAmountMg > 0) {
                     <h3>Estimated:</h3>
                     <p>{{ printFilament.estimatedAmountMg / 1000 }} grams</p>
                   }
                 }
-                @if (printFilament.source === printFilamentSourceMeasurementTypes.Length) {
+                @if (
+                  printFilament.source ===
+                  printFilamentSourceMeasurementTypes.Length
+                ) {
                   @if (printFilament.lengthInM > 0) {
                     <h3>Actual:</h3>
                     <p>
-                      {{ printFilament.lengthInM | number : '1.0-1' }} meters
+                      {{ printFilament.lengthInM | number: '1.0-1' }} meters
                     </p>
                   }
                 }
-                @if (printFilament.source === printFilamentSourceMeasurementTypes.Weight) {
+                @if (
+                  printFilament.source ===
+                  printFilamentSourceMeasurementTypes.Weight
+                ) {
                   @if (printFilament.amountMg > 0) {
                     <h3>Actual:</h3>
                     <p>{{ printFilament.amountMg / 1000 }} grams</p>
@@ -137,9 +165,9 @@
             @if (
               (print.filamentUsageMg !== null && print.filamentUsageMg > 0) ||
               (print.estimatedFilamentUsageMg !== null &&
-              print.estimatedFilamentUsageMg > 0) ||
+                print.estimatedFilamentUsageMg > 0) ||
               (print.filamentType && print.filamentType !== '')
-              ) {
+            ) {
               @if (print.filamentUsage.length > 0) {
                 <hr />
               }
@@ -165,7 +193,7 @@
         fxLayout
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
-        >
+      >
         <div fxFlex fxFlexFill fxLayoutGap="10px">
           @if (currentUser && currentUser.id === user.id) {
             <button
@@ -175,7 +203,7 @@
               color="accent"
               [routerLink]="['edit']"
               data-cy-edit-btn
-              >
+            >
               Edit
             </button>
           }
@@ -186,7 +214,7 @@
             (click)="handleClose()"
             color="warn"
             data-cy-close-btn
-            >
+          >
             Close
           </button>
         </div>

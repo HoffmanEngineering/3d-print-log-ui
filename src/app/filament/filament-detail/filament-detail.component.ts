@@ -136,7 +136,7 @@ export class FilamentDetailComponent
         .get('materialType')
         .valueChanges.pipe(
           startWith(''),
-          tap((value) => {
+          tap((value: string) => {
             if (
               value === '' ||
               +this.filamentForm.get('materialDensityGramPerCubicCm').value > 0
@@ -372,8 +372,8 @@ export class FilamentDetailComponent
         filament?.diameterMm
           ? filament.diameterMm
           : this.defaultFilamentDiameterMmSetting
-          ? +this.defaultFilamentDiameterMmSetting.value
-          : null,
+            ? +this.defaultFilamentDiameterMmSetting.value
+            : null,
       ],
       initialTotalWeightG: [
         filament?.initialTotalWeightMg > 0

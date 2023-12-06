@@ -1,22 +1,19 @@
 <mat-card appearance="outlined" class="mat-elevation-z1">
   <mat-card-header>
     @if (comment.createdBy.profilePicture) {
-      <img
-        mat-card-avatar
-        [src]="comment.createdBy.profilePicture"
-        />
+      <img mat-card-avatar [src]="comment.createdBy.profilePicture" />
     }
     <!-- <mat-card-title>
     <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
   </mat-card-title> -->
-  <mat-card-subtitle>
-    <a [routerLink]="['/users', comment.createdBy.id]">{{
-      comment.createdBy.displayName
-    }}</a>
-    <span
-      matTooltip="{{ comment.createdDate | date : 'medium' }}"
-      style="padding-left: 5px"
-      >{{ comment.createdDate | humanize }}</span
+    <mat-card-subtitle>
+      <a [routerLink]="['/users', comment.createdBy.id]">{{
+        comment.createdBy.displayName
+      }}</a>
+      <span
+        matTooltip="{{ comment.createdDate | date: 'medium' }}"
+        style="padding-left: 5px"
+        >{{ comment.createdDate | humanize }}</span
       >
     </mat-card-subtitle>
     <div fxFlex></div>
@@ -27,17 +24,13 @@
         class="transparent more-button"
         [matMenuTriggerFor]="aboutMenu"
         data-cy-more-button
-        >
+      >
         <mat-icon>more_horiz</mat-icon>
       </button>
     }
     <mat-menu #aboutMenu="matMenu">
       @if (showDelete) {
-        <button
-          type="button"
-          mat-menu-item
-          (click)="delete.emit()"
-          >
+        <button type="button" mat-menu-item (click)="delete.emit()">
           <mat-icon>delete</mat-icon>Delete
         </button>
       }

@@ -2,17 +2,17 @@
   <div class="pending-deletion-banner">
     <div
       style="
-      width: 70vw;
-      max-width: 70vw;
-      margin-left: auto;
-      margin-right: auto;
+        width: 70vw;
+        max-width: 70vw;
+        margin-left: auto;
+        margin-right: auto;
       "
       class="text-area"
       fxLayout="row"
       fxLayoutAlign="start center"
-      >
+    >
       <div fxFlex="grow" fxFlexFill>
-        Your Account was deactivated on {{ deactivationDate | date : 'medium' }}.
+        Your Account was deactivated on {{ deactivationDate | date: 'medium' }}.
         All data will be removed 24 hours after deactivation.
       </div>
       <button
@@ -20,7 +20,7 @@
         fxFlex="180px"
         color="primary"
         (click)="reactivateAccount()"
-        >
+      >
         Reactivate Account
       </button>
     </div>

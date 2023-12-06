@@ -7,946 +7,770 @@
       fxLayout="column"
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
-      >
+    >
       <mat-card-title fxFlex="grow"
         >{{
-        this.filamentForm.get('id').value !== null ? 'Edit' : 'Add'
+          this.filamentForm.get('id').value !== null ? 'Edit' : 'Add'
         }}
         Material</mat-card-title
-        >
-        <mat-card-content
+      >
+      <mat-card-content
+        fxFlex="grow"
+        fxFlexFill
+        fxLayout="column"
+        fxLayoutAlign="space-evenly center"
+      >
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">General</h2>
+        </div>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Name</mat-label>
+          <input
+            id="edit-filament-name"
+            matInput
+            type="text"
+            formControlName="displayName"
+            required
+            maxlength="255"
+          />
+          @if (filamentForm.controls['displayName'].hasError('required')) {
+          <mat-error> A Name is <strong>required</strong> </mat-error>
+          } @if (this.filamentForm.get('displayName').dirty) {
+          <mat-hint>
+            {{ 255 - this.filamentForm.get('displayName').value.length }}
+            characters remaining.</mat-hint
+          >
+          }
+        </mat-form-field>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Category</mat-label>
+          <mat-select formControlName="materialCategoryNickname">
+            @for (type of materialCategories; track type) {
+            <mat-option
+              [value]="type.nickname"
+              [matTooltip]="type.description"
+              [matTooltipPosition]="'right'"
+            >
+              {{ type.name }}</mat-option
+            >
+            }
+          </mat-select>
+          @if ( this.filamentForm.controls['materialCategoryNickname'].hasError(
+          'required' ) ) {
+          <mat-error> A category is <strong>required</strong> </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Material Type</mat-label>
+          <input
+            id="edit-filament-material-type"
+            matInput
+            type="text"
+            formControlName="materialType"
+            required
+            maxlength="255"
+            [matAutocomplete]="materialAuto"
+            matTooltip="Type your own or select a pre-defined Material."
+            matTooltipPosition="above"
+          />
+          @if (filamentForm.controls['materialType'].hasError('required')) {
+          <mat-error> A Material Type is <strong>required</strong> </mat-error>
+          } @if (this.filamentForm.get('materialType').dirty) {
+          <mat-hint>
+            {{ 255 - this.filamentForm.get('materialType').value.length }}
+            characters remaining.</mat-hint
+          >
+          }
+          <mat-autocomplete #materialAuto="matAutocomplete">
+            @for (material of filteredMaterials | async; track material) {
+            <mat-option [value]="materialNamePipe.transform(material)">
+              {{ material | materialName }}
+            </mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Material Density (grams/cm<sup>3</sup>)</mat-label>
+          <input
+            id="edit-filament-density"
+            matInput
+            type="number"
+            formControlName="materialDensityGramPerCubicCm"
+            required
+          />
+        </mat-form-field>
+        <div
           fxFlex="grow"
           fxFlexFill
-          fxLayout="column"
-          fxLayoutAlign="space-evenly center"
+          fxLayout="row"
+          fxLayout.lt-md="column"
+          style="margin-inline: 10px"
+        >
+          <mat-form-field
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-left: 0"
+            ngStyle.lt-md="margin-inline: 0"
           >
-          <div fxFlex="grow" fxFlexFill>
-            <h2 style="text-align: start">General</h2>
-          </div>
-          <mat-form-field fxFlex="grow" fxFlexFill>
-            <mat-label>Name</mat-label>
+            <mat-label>Color</mat-label>
             <input
-              id="edit-filament-name"
+              id="edit-filament-color-hex"
+              matInput
+              type="color"
+              formControlName="colorHex"
+            />
+          </mat-form-field>
+          <mat-form-field
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-right: 0"
+            ngStyle.lt-md="margin-inline: 0"
+          >
+            <mat-label>Color Name</mat-label>
+            <input
+              id="edit-filament-color"
               matInput
               type="text"
-              formControlName="displayName"
-              required
-              maxlength="255"
-              />
-              @if (filamentForm.controls['displayName'].hasError('required')) {
-                <mat-error
-                  >
-                  A Name is <strong>required</strong>
-                </mat-error>
-              }
-              @if (this.filamentForm.get('displayName').dirty) {
-                <mat-hint>
-                  {{ 255 - this.filamentForm.get('displayName').value.length }}
-                  characters remaining.</mat-hint
-                  >
-              }
-            </mat-form-field>
-            <mat-form-field fxFlex="grow" fxFlexFill>
-              <mat-label>Category</mat-label>
-              <mat-select formControlName="materialCategoryNickname">
-                @for (type of materialCategories; track type) {
-                  <mat-option
-                    [value]="type.nickname"
-                    [matTooltip]="type.description"
-                    [matTooltipPosition]="'right'"
-                    >
-                    {{ type.name }}</mat-option
-                    >
-                  }
-                </mat-select>
-                @if (
-                  this.filamentForm.controls['materialCategoryNickname'].hasError(
-                  'required'
-                  )
-                  ) {
-                  <mat-error
-                    >
-                    A category is <strong>required</strong>
-                  </mat-error>
-                }
-              </mat-form-field>
-              <mat-form-field fxFlex="grow" fxFlexFill>
-                <mat-label>Material Type</mat-label>
-                <input
-                  id="edit-filament-material-type"
-                  matInput
-                  type="text"
-                  formControlName="materialType"
-                  required
-                  maxlength="255"
-                  [matAutocomplete]="materialAuto"
-                  matTooltip="Type your own or select a pre-defined Material."
-                  matTooltipPosition="above"
-                  />
-                  @if (filamentForm.controls['materialType'].hasError('required')) {
-                    <mat-error
-                      >
-                      A Material Type is <strong>required</strong>
-                    </mat-error>
-                  }
-                  @if (this.filamentForm.get('materialType').dirty) {
-                    <mat-hint>
-                      {{ 255 - this.filamentForm.get('materialType').value.length }}
-                      characters remaining.</mat-hint
-                      >
-                  }
-                  <mat-autocomplete #materialAuto="matAutocomplete">
-                    @for (material of filteredMaterials | async; track material) {
-                      <mat-option
-                        [value]="materialNamePipe.transform(material)"
-                        >
-                        {{ material | materialName }}
-                      </mat-option>
-                    }
-                  </mat-autocomplete>
-                </mat-form-field>
-                <mat-form-field fxFlex="grow" fxFlexFill>
-                  <mat-label>Material Density (grams/cm<sup>3</sup>)</mat-label>
-                  <input
-                    id="edit-filament-density"
-                    matInput
-                    type="number"
-                    formControlName="materialDensityGramPerCubicCm"
-                    required
-                    />
-                    <!-- <mat-error
-                    *ngIf="filamentForm.controls['brand'].hasError('required')"
-                    >
-                    A Name is <strong>required</strong>
-                  </mat-error> -->
-                </mat-form-field>
+              formControlName="colorName"
+            />
+          </mat-form-field>
+        </div>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Brand</mat-label>
+          <input
+            id="edit-filament-brand"
+            matInput
+            type="text"
+            formControlName="brand"
+            maxlength="255"
+            [matAutocomplete]="autoBrands"
+          />
+          <mat-autocomplete #autoBrands="matAutocomplete">
+            @for (option of this.filteredFilamentBrands | async; track option) {
+            <mat-option [value]="option">
+              {{ option }}
+            </mat-option>
+            }
+          </mat-autocomplete>
+          @if (this.filamentForm.get('brand').dirty) {
+          <mat-hint>
+            {{ 255 - this.filamentForm.get('brand').value.length }} characters
+            remaining.</mat-hint
+          >
+          }
+        </mat-form-field>
+        @if (this.filamentForm.get('diameterMm').enabled) {
+        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+          <mat-form-field style="margin: 0" fxFlex>
+            <mat-label>Diameter (mm)</mat-label>
+            <input
+              id="edit-filament-diameter"
+              matInput
+              type="number"
+              formControlName="diameterMm"
+              step="0.25"
+            />
+          </mat-form-field>
+          @if ( this.filamentForm && this.filamentForm.get('diameterMm').enabled
+          && this.filamentForm.get('diameterMm').dirty &&
+          this.filamentForm.get('diameterMm').value !== null &&
+          (this.defaultFilamentDiameterMmSetting === null ||
+          this.filamentForm.get('diameterMm').value?.toString() !==
+          this.defaultFilamentDiameterMmSetting.value.toString()) ) {
+          <button
+            fxFlex
+            style="margin-left: 10px; height: 72%"
+            mat-raised-button
+            type="button"
+            color="accent"
+            (click)="
+              this.changeDefaultFilamentDiameter(
+                this.filamentForm.get('diameterMm').value
+              )
+            "
+          >
+            Save as Default Filament Diameter
+          </button>
+          }
+        </div>
+        }
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Storage Location</mat-label>
+          <input
+            id="edit-filament-storage-location"
+            matInput
+            type="text"
+            formControlName="storageLocation"
+            maxlength="256"
+            [matAutocomplete]="autoStorageLocations"
+          />
+          <mat-autocomplete #autoStorageLocations="matAutocomplete">
+            @for ( option of this.filteredFilamentStorageLocations | async;
+            track option ) {
+            <mat-option [value]="option">
+              {{ option }}
+            </mat-option>
+            }
+          </mat-autocomplete>
+          @if (this.filamentForm.get('storageLocation').dirty) {
+          <mat-hint>
+            {{ 256 - this.filamentForm.get('storageLocation').value.length }}
+            characters remaining.</mat-hint
+          >
+          }
+        </mat-form-field>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Notes</mat-label>
+          <textarea
+            id="edit-filament-description"
+            matInput
+            type="textarea"
+            formControlName="notes"
+            maxlength="1000"
+            rows="3"
+          ></textarea>
+          @if (this.filamentForm.get('notes').dirty) {
+          <mat-hint>
+            {{ 1000 - this.filamentForm.get('notes').value.length }}
+            characters remaining.</mat-hint
+          >
+          }
+        </mat-form-field>
+        <mat-checkbox fxFlex="grow" formControlName="isActive"
+          >Is Active</mat-checkbox
+        >
+        <mat-checkbox fxFlex="grow" formControlName="isFavorite"
+          >Is Favorite</mat-checkbox
+        >
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">Weights</h2>
+        </div>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Initial Total Weight (g)</mat-label>
+          <input
+            id="edit-filament-total-weight"
+            matInput
+            type="number"
+            formControlName="initialTotalWeightG"
+          />
+        </mat-form-field>
+        <div
+          fxFlex="grow"
+          fxFlexFill
+          fxLayout="row"
+          fxLayout.lt-md="column"
+          style="margin-inline: 10px"
+        >
+          @if ( this.filamentForm.get('source').value ===
+          filamentSourceMeasurement.Weight ) {
+          <mat-form-field
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-left: 0"
+            ngStyle.lt-md="margin-inline: 0"
+          >
+            <mat-label> Initial Nominal Weight (g)</mat-label>
+            <input
+              id="filament-inital-nominal-weight"
+              matInput
+              type="text"
+              pattern="^-?\d*(\.\d{0,3})?$"
+              formControlName="initialNominalWeightG"
+            />
+            @if ( this.filamentForm .get('initialNominalWeightG')
+            .hasError('pattern') ) {
+            <mat-error> Numbers (up to 3-decimal places) only. </mat-error>
+            }
+            <mat-hint
+              >The nominal, or expected, weight of the material.</mat-hint
+            >
+          </mat-form-field>
+          } @if ( this.filamentForm.get('source').value ===
+          filamentSourceMeasurement.Length ) {
+          <mat-form-field
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-left: 0"
+            ngStyle.lt-md="margin-inline: 0"
+          >
+            <mat-label> Initial Nominal Length (m)</mat-label>
+            <input
+              id="filament-initial-nominal-length"
+              matInput
+              type="text"
+              formControlName="initialNominalLengthM"
+            />
+            @if ( this.filamentForm.get('initialNominalLengthM').hasError('min')
+            ) {
+            <mat-error>
+              Initial Nominal Length must be a positive number.
+            </mat-error>
+            }
+            <mat-hint>The nominal, or expected, length of material</mat-hint>
+          </mat-form-field>
+          } @if ( this.filamentForm.get('source').value ===
+          filamentSourceMeasurement.Volume ) {
+          <mat-form-field
+            fxFlex
+            fxFlex.lt-md="100%"
+            style="margin-left: 0"
+            ngStyle.lt-md="margin-inline: 0"
+          >
+            <mat-label> Initial Nominal Volume (ml)</mat-label>
+            <input
+              id="filament-initial-nominal-volume"
+              matInput
+              type="text"
+              formControlName="initialNominalVolumeMl"
+            />
+            @if (
+            this.filamentForm.get('initialNominalVolumeMl').hasError('min') ) {
+            <mat-error>
+              Initial Nominal Volume must be a positive number.
+            </mat-error>
+            }
+            <mat-hint>The nominal, or expected, volume of material</mat-hint>
+          </mat-form-field>
+          }
+          <mat-form-field
+            fxFlex="120px"
+            fxFlex.lt-md="100%"
+            style="margin-right: 0"
+            ngStyle.lt-md="margin-inline: 0"
+          >
+            <mat-label>Measure</mat-label>
+            <mat-select formControlName="source">
+              <mat-option [value]="filamentSourceMeasurement.Weight">
+                Weight
+              </mat-option>
+              <mat-option [value]="filamentSourceMeasurement.Length">
+                Length
+              </mat-option>
+              <mat-option [value]="filamentSourceMeasurement.Volume">
+                Volume
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Spool Weight (g)</mat-label>
+          <input
+            id="edit-filament-spool-weight"
+            matInput
+            type="number"
+            formControlName="spoolWeightG"
+          />
+          <!-- <mat-error
+            *ngIf="filamentForm.controls['brand'].hasError('required')"
+            >
+            A Name is <strong>required</strong>
+          </mat-error> -->
+        </mat-form-field>
+        <div fxFlex="grow" fxFlexFill>
+          <h3 style="margin-block-end: 5px">
+            Adjustments:
+            <a routerLink="/docs/materials"
+              ><mat-icon
+                inline
+                matTooltip="Open Material Adjustment Help Documentation"
+                >info</mat-icon
+              ></a
+            >
+          </h3>
+          <button
+            type="button"
+            mat-raised-button
+            (click)="addAdjustment()"
+            color="accent"
+            style="margin-bottom: 5px"
+          >
+            Add New Adjustment
+          </button>
+        </div>
+        <div formArrayName="filamentAdjustments" fxFlex="grow" fxFlexFill>
+          @for ( adjustment of filamentAdjustments.controls; track adjustment;
+          let adjustmentIndex = $index ) {
+          <div style="margin-bottom: 5px">
+            <div [formGroupName]="adjustmentIndex">
+              <mat-card
+                appearance="outlined"
+                class="mat-elevation-z4"
+                fxFlex="grow"
+                fxFlexFill
+                fxLayout="row"
+                fxLayoutAlign="space-evenly center"
+                fxLayoutGap="10px"
+              >
                 <div
                   fxFlex="grow"
-                  fxFlexFill
-                  fxLayout="row"
-                  fxLayout.lt-md="column"
-                  style="margin-inline: 10px"
+                  fxLayout="column"
+                  fxLayoutAlign="start center"
+                  fxLayoutGap="10px"
+                  style="padding: 5px"
+                >
+                  <div
+                    fxFlex="grow"
+                    fxFlexFill
+                    fxLayout="row"
+                    fxLayout.lt-md="column"
                   >
-                  <mat-form-field
-                    fxFlex
-                    fxFlex.lt-md="100%"
-                    style="margin-left: 0"
-                    ngStyle.lt-md="margin-inline: 0"
-                    >
-                    <mat-label>Color</mat-label>
-                    <input
-                      id="edit-filament-color-hex"
-                      matInput
-                      type="color"
-                      formControlName="colorHex"
+                    @if ( adjustment.get('source').value ===
+                    filamentAdjustmentSourceMeasurement.Weight ) {
+                    <mat-form-field fxFlex="grow">
+                      <mat-label> Material Used (g)</mat-label>
+                      <input
+                        id="filament-adjustment-used-gram-{{ adjustmentIndex }}"
+                        matInput
+                        type="text"
+                        pattern="^-?\d*(\.\d{0,3})?$"
+                        formControlName="amountG"
+                      />
+                      @if (adjustment.get('amountG').hasError('pattern')) {
+                      <mat-error>
+                        Numbers (up to 3-decimal places) only.
+                      </mat-error>
+                      }
+                    </mat-form-field>
+                    } @if ( adjustment.get('source').value ===
+                    filamentAdjustmentSourceMeasurement.Length ) {
+                    <mat-form-field fxFlex="grow">
+                      <mat-label> Material Used (m)</mat-label>
+                      <input
+                        id="filament-adjustment-used-meter-{{
+                          adjustmentIndex
+                        }}"
+                        matInput
+                        type="text"
+                        formControlName="lengthInM"
+                      />
+                      @if (adjustment.get('lengthInM').hasError('min')) {
+                      <mat-error>
+                        Material Usage must be a positive number.
+                      </mat-error>
+                      }
+                    </mat-form-field>
+                    } @if ( adjustment.get('source').value ===
+                    filamentAdjustmentSourceMeasurement.Volume ) {
+                    <mat-form-field fxFlex="grow">
+                      <mat-label> Material Used (ml)</mat-label>
+                      <input
+                        id="filament-adjustment-used-ml-{{ adjustmentIndex }}"
+                        matInput
+                        type="text"
+                        formControlName="volumeMl"
+                      />
+                      @if (adjustment.get('volumeMl').hasError('min')) {
+                      <mat-error>
+                        Material Usage must be a positive number.
+                      </mat-error>
+                      }
+                    </mat-form-field>
+                    }
+                    <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                      <mat-label>Measure</mat-label>
+                      <mat-select formControlName="source">
+                        <mat-option
+                          [value]="filamentAdjustmentSourceMeasurement.Weight"
+                        >
+                          Weight
+                        </mat-option>
+                        <mat-option
+                          [value]="filamentAdjustmentSourceMeasurement.Length"
+                        >
+                          Length
+                        </mat-option>
+                        <mat-option
+                          [value]="filamentAdjustmentSourceMeasurement.Volume"
+                        >
+                          Volume
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div fxFlex="grow" fxFlexFill>
+                    <mat-form-field fxFlex="grow" fxFlexFill>
+                      <mat-label> Notes</mat-label>
+                      <input
+                        id="adjustment-note-{{ adjustmentIndex }}"
+                        matInput
+                        type="text"
+                        maxlength="1000"
+                        formControlName="notes"
                       />
                     </mat-form-field>
-                    <mat-form-field
-                      fxFlex
-                      fxFlex.lt-md="100%"
-                      style="margin-right: 0"
-                      ngStyle.lt-md="margin-inline: 0"
-                      >
-                      <mat-label>Color Name</mat-label>
-                      <input
-                        id="edit-filament-color"
-                        matInput
-                        type="text"
-                        formControlName="colorName"
-                        />
-                      </mat-form-field>
-                    </div>
-                    <mat-form-field fxFlex="grow" fxFlexFill>
-                      <mat-label>Brand</mat-label>
-                      <input
-                        id="edit-filament-brand"
-                        matInput
-                        type="text"
-                        formControlName="brand"
-                        maxlength="255"
-                        [matAutocomplete]="autoBrands"
-                        />
-                        <mat-autocomplete #autoBrands="matAutocomplete">
-                          @for (option of this.filteredFilamentBrands | async; track option) {
-                            <mat-option
-                              [value]="option"
-                              >
-                              {{ option }}
-                            </mat-option>
-                          }
-                        </mat-autocomplete>
-                        <!-- <mat-error
-                        *ngIf="filamentForm.controls['brand'].hasError('required')"
-                        >
-                        A Name is <strong>required</strong>
-                      </mat-error> -->
-                      @if (this.filamentForm.get('brand').dirty) {
-                        <mat-hint>
-                          {{ 255 - this.filamentForm.get('brand').value.length }} characters
-                          remaining.</mat-hint
-                          >
-                      }
-                    </mat-form-field>
-                    @if (this.filamentForm.get('diameterMm').enabled) {
-                      <div
-                        style="margin: 10 0 10"
-                        fxFlex="grow"
-                        fxFlexFill
-                        >
-                        <mat-form-field style="margin: 0" fxFlex>
-                          <mat-label>Diameter (mm)</mat-label>
-                          <input
-                            id="edit-filament-diameter"
-                            matInput
-                            type="number"
-                            formControlName="diameterMm"
-                            step="0.25"
-                            />
-                          </mat-form-field>
-                          @if (
-                            this.filamentForm &&
-                            this.filamentForm.get('diameterMm').enabled &&
-                            this.filamentForm.get('diameterMm').dirty &&
-                            this.filamentForm.get('diameterMm').value !== null &&
-                            (this.defaultFilamentDiameterMmSetting === null ||
-                            this.filamentForm.get('diameterMm').value?.toString() !==
-                            this.defaultFilamentDiameterMmSetting.value.toString())
-                            ) {
-                            <button
-                              fxFlex
-                              style="margin-left: 10px; height: 72%"
-                              mat-raised-button
-                              type="button"
-                              color="accent"
-                              (click)="
-                              this.changeDefaultFilamentDiameter(
-                              this.filamentForm.get('diameterMm').value
-                              )
-                              "
-                              >
-                              Save as Default Filament Diameter
-                            </button>
-                          }
-                        </div>
-                      }
-                      <mat-form-field fxFlex="grow" fxFlexFill>
-                        <mat-label>Storage Location</mat-label>
-                        <input
-                          id="edit-filament-storage-location"
-                          matInput
-                          type="text"
-                          formControlName="storageLocation"
-                          maxlength="256"
-                          [matAutocomplete]="autoStorageLocations"
-                          />
-                          <mat-autocomplete #autoStorageLocations="matAutocomplete">
-                            @for (
-                              option of this.filteredFilamentStorageLocations | async
-                              ; track
-                              option) {
-                              <mat-option
-                                [value]="option"
-                                >
-                                {{ option }}
-                              </mat-option>
-                            }
-                          </mat-autocomplete>
-                          @if (this.filamentForm.get('storageLocation').dirty) {
-                            <mat-hint>
-                              {{ 256 - this.filamentForm.get('storageLocation').value.length }}
-                              characters remaining.</mat-hint
-                              >
-                          }
-                        </mat-form-field>
-                        <mat-form-field fxFlex="grow" fxFlexFill>
-                          <mat-label>Notes</mat-label>
-                          <textarea
-                            id="edit-filament-description"
-                            matInput
-                            type="textarea"
-                            formControlName="notes"
-                            maxlength="1000"
-                            rows="3"
-                          ></textarea>
-                          @if (this.filamentForm.get('notes').dirty) {
-                            <mat-hint>
-                              {{ 1000 - this.filamentForm.get('notes').value.length }} characters
-                              remaining.</mat-hint
-                              >
-                            }
-                          </mat-form-field>
-                          <mat-checkbox fxFlex="grow" formControlName="isActive"
-                            >Is Active</mat-checkbox
-                            >
-                            <mat-checkbox fxFlex="grow" formControlName="isFavorite"
-                              >Is Favorite</mat-checkbox
-                              >
-                              <div fxFlex="grow" fxFlexFill>
-                                <h2 style="text-align: start">Weights</h2>
-                              </div>
-                              <mat-form-field fxFlex="grow" fxFlexFill>
-                                <mat-label>Initial Total Weight (g)</mat-label>
-                                <input
-                                  id="edit-filament-total-weight"
-                                  matInput
-                                  type="number"
-                                  formControlName="initialTotalWeightG"
-                                  />
-                                  <!-- <mat-error
-                                  *ngIf="filamentForm.controls['brand'].hasError('required')"
-                                  >
-                                  A Name is <strong>required</strong>
-                                </mat-error> -->
-                              </mat-form-field>
-                              <div
-                                fxFlex="grow"
-                                fxFlexFill
-                                fxLayout="row"
-                                fxLayout.lt-md="column"
-                                style="margin-inline: 10px"
-                                >
-                                <!-- <mat-form-field fxFlex="grow" fxFlexFill>
-                                <mat-label> Adjustment Amount (g)</mat-label>
-                                <input
-                                  id="adjustment-amount-{{ adjustmentIndex }}"
-                                  matInput
-                                  type="text"
-                                  pattern="^-?\d*(\.\d{0,3})?$"
-                                  formControlName="amountG"
-                                  />
-                                  <mat-error
-                                    *ngIf="adjustment.get('amountG').hasError('pattern')"
-                                    >
-                                    Numbers (up to 3-decimal places) only.
-                                  </mat-error>
-                                </mat-form-field> -->
-                                @if (
-                                  this.filamentForm.get('source').value ===
-                                  filamentSourceMeasurement.Weight
-                                  ) {
-                                  <mat-form-field
-                                    fxFlex
-                                    fxFlex.lt-md="100%"
-                                    style="margin-left: 0"
-                                    ngStyle.lt-md="margin-inline: 0"
-                                    >
-                                    <mat-label> Initial Nominal Weight (g)</mat-label>
-                                    <input
-                                      id="filament-inital-nominal-weight"
-                                      matInput
-                                      type="text"
-                                      pattern="^-?\d*(\.\d{0,3})?$"
-                                      formControlName="initialNominalWeightG"
-                                      />
-                                      @if (
-                                        this.filamentForm
-                                        .get('initialNominalWeightG')
-                                        .hasError('pattern')
-                                        ) {
-                                        <mat-error
-                                          >
-                                          Numbers (up to 3-decimal places) only.
-                                        </mat-error>
-                                      }
-                                      <mat-hint
-                                        >The nominal, or expected, weight of the material.</mat-hint
-                                        >
-                                      </mat-form-field>
-                                    }
-                                    @if (
-                                      this.filamentForm.get('source').value ===
-                                      filamentSourceMeasurement.Length
-                                      ) {
-                                      <mat-form-field
-                                        fxFlex
-                                        fxFlex.lt-md="100%"
-                                        style="margin-left: 0"
-                                        ngStyle.lt-md="margin-inline: 0"
-                                        >
-                                        <mat-label> Initial Nominal Length (m)</mat-label>
-                                        <input
-                                          id="filament-initial-nominal-length"
-                                          matInput
-                                          type="text"
-                                          formControlName="initialNominalLengthM"
-                                          />
-                                          @if (
-                                            this.filamentForm.get('initialNominalLengthM').hasError('min')
-                                            ) {
-                                            <mat-error
-                                              >
-                                              Initial Nominal Length must be a positive number.
-                                            </mat-error>
-                                          }
-                                          <mat-hint>The nominal, or expected, length of material</mat-hint>
-                                        </mat-form-field>
-                                      }
-                                      @if (
-                                        this.filamentForm.get('source').value ===
-                                        filamentSourceMeasurement.Volume
-                                        ) {
-                                        <mat-form-field
-                                          fxFlex
-                                          fxFlex.lt-md="100%"
-                                          style="margin-left: 0"
-                                          ngStyle.lt-md="margin-inline: 0"
-                                          >
-                                          <mat-label> Initial Nominal Volume (ml)</mat-label>
-                                          <input
-                                            id="filament-initial-nominal-volume"
-                                            matInput
-                                            type="text"
-                                            formControlName="initialNominalVolumeMl"
-                                            />
-                                            @if (
-                                              this.filamentForm.get('initialNominalVolumeMl').hasError('min')
-                                              ) {
-                                              <mat-error
-                                                >
-                                                Initial Nominal Volume must be a positive number.
-                                              </mat-error>
-                                            }
-                                            <mat-hint>The nominal, or expected, volume of material</mat-hint>
-                                          </mat-form-field>
-                                        }
-                                        <mat-form-field
-                                          fxFlex="120px"
-                                          fxFlex.lt-md="100%"
-                                          style="margin-right: 0"
-                                          ngStyle.lt-md="margin-inline: 0"
-                                          >
-                                          <mat-label>Measure</mat-label>
-                                          <mat-select formControlName="source">
-                                            <mat-option [value]="filamentSourceMeasurement.Weight">
-                                              Weight
-                                            </mat-option>
-                                            <mat-option [value]="filamentSourceMeasurement.Length">
-                                              Length
-                                            </mat-option>
-                                            <mat-option [value]="filamentSourceMeasurement.Volume">
-                                              Volume
-                                            </mat-option>
-                                          </mat-select>
-                                        </mat-form-field>
-                                      </div>
-                                      <!-- <mat-form-field fxFlex="grow" fxFlexFill>
-                                      <mat-label>Initial Nominal Weight (g)</mat-label>
-                                      <input
-                                        id="edit-filament-initial-nominal-weight"
-                                        matInput
-                                        type="number"
-                                        formControlName="initialNominalWeightG"
-                                        />
-                                        <mat-hint
-                                          >The nominal, or expected, weight of the filament on the
-                                          spool.</mat-hint
-                                          >
-                                        </mat-form-field> -->
-                                        <mat-form-field fxFlex="grow" fxFlexFill>
-                                          <mat-label>Spool Weight (g)</mat-label>
-                                          <input
-                                            id="edit-filament-spool-weight"
-                                            matInput
-                                            type="number"
-                                            formControlName="spoolWeightG"
-                                            />
-                                            <!-- <mat-error
-                                            *ngIf="filamentForm.controls['brand'].hasError('required')"
-                                            >
-                                            A Name is <strong>required</strong>
-                                          </mat-error> -->
-                                        </mat-form-field>
-                                        <div fxFlex="grow" fxFlexFill>
-                                          <h3 style="margin-block-end: 5px">
-                                            Adjustments:
-                                            <a routerLink="/docs/materials"
-                                              ><mat-icon
-                                              inline
-                                              matTooltip="Open Material Adjustment Help Documentation"
-                                              >info</mat-icon
-                                              ></a
-                                              >
-                                            </h3>
-                                            <button
-                                              type="button"
-                                              mat-raised-button
-                                              (click)="addAdjustment()"
-                                              color="accent"
-                                              style="margin-bottom: 5px"
-                                              >
-                                              Add New Adjustment
-                                            </button>
-                                          </div>
-                                          <div formArrayName="filamentAdjustments" fxFlex="grow" fxFlexFill>
-                                            @for (
-                                              adjustment of filamentAdjustments.controls; track
-                                              adjustment; let adjustmentIndex = $index) {
-                                              <div
-                                                style="margin-bottom: 5px"
-                                                >
-                                                <div [formGroupName]="adjustmentIndex">
-                                                  <mat-card
-                                                    appearance="outlined"
-                                                    class="mat-elevation-z4"
-                                                    fxFlex="grow"
-                                                    fxFlexFill
-                                                    fxLayout="row"
-                                                    fxLayoutAlign="space-evenly center"
-                                                    fxLayoutGap="10px"
-                                                    >
-                                                    <div
-                                                      fxFlex="grow"
-                                                      fxLayout="column"
-                                                      fxLayoutAlign="start center"
-                                                      fxLayoutGap="10px"
-                                                      style="padding: 5px"
-                                                      >
-                                                      <div
-                                                        fxFlex="grow"
-                                                        fxFlexFill
-                                                        fxLayout="row"
-                                                        fxLayout.lt-md="column"
-                                                        >
-                                                        <!-- <mat-form-field fxFlex="grow" fxFlexFill>
-                                                        <mat-label> Adjustment Amount (g)</mat-label>
-                                                        <input
-                                                          id="adjustment-amount-{{ adjustmentIndex }}"
-                                                          matInput
-                                                          type="text"
-                                                          pattern="^-?\d*(\.\d{0,3})?$"
-                                                          formControlName="amountG"
-                                                          />
-                                                          <mat-error
-                                                            *ngIf="adjustment.get('amountG').hasError('pattern')"
-                                                            >
-                                                            Numbers (up to 3-decimal places) only.
-                                                          </mat-error>
-                                                        </mat-form-field> -->
-                                                        @if (
-                                                          adjustment.get('source').value ===
-                                                          filamentAdjustmentSourceMeasurement.Weight
-                                                          ) {
-                                                          <mat-form-field
-                                                            fxFlex="grow"
-                                                            >
-                                                            <mat-label> Material Used (g)</mat-label>
-                                                            <input
-                                                              id="filament-adjustment-used-gram-{{ adjustmentIndex }}"
-                                                              matInput
-                                                              type="text"
-                                                              pattern="^-?\d*(\.\d{0,3})?$"
-                                                              formControlName="amountG"
-                                                              />
-                                                              @if (adjustment.get('amountG').hasError('pattern')) {
-                                                                <mat-error
-                                                                  >
-                                                                  Numbers (up to 3-decimal places) only.
-                                                                </mat-error>
-                                                              }
-                                                            </mat-form-field>
-                                                          }
-                                                          @if (
-                                                            adjustment.get('source').value ===
-                                                            filamentAdjustmentSourceMeasurement.Length
-                                                            ) {
-                                                            <mat-form-field
-                                                              fxFlex="grow"
-                                                              >
-                                                              <mat-label> Material Used (m)</mat-label>
-                                                              <input
-                                                                id="filament-adjustment-used-meter-{{
-                                                                adjustmentIndex
-                                                                }}"
-                                                                matInput
-                                                                type="text"
-                                                                formControlName="lengthInM"
-                                                                />
-                                                                @if (adjustment.get('lengthInM').hasError('min')) {
-                                                                  <mat-error
-                                                                    >
-                                                                    Material Usage must be a positive number.
-                                                                  </mat-error>
-                                                                }
-                                                              </mat-form-field>
-                                                            }
-                                                            @if (
-                                                              adjustment.get('source').value ===
-                                                              filamentAdjustmentSourceMeasurement.Volume
-                                                              ) {
-                                                              <mat-form-field
-                                                                fxFlex="grow"
-                                                                >
-                                                                <mat-label> Material Used (ml)</mat-label>
-                                                                <input
-                                                                  id="filament-adjustment-used-ml-{{ adjustmentIndex }}"
-                                                                  matInput
-                                                                  type="text"
-                                                                  formControlName="volumeMl"
-                                                                  />
-                                                                  @if (adjustment.get('volumeMl').hasError('min')) {
-                                                                    <mat-error
-                                                                      >
-                                                                      Material Usage must be a positive number.
-                                                                    </mat-error>
-                                                                  }
-                                                                </mat-form-field>
-                                                              }
-                                                              <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
-                                                                <mat-label>Measure</mat-label>
-                                                                <mat-select formControlName="source">
-                                                                  <mat-option
-                                                                    [value]="filamentAdjustmentSourceMeasurement.Weight"
-                                                                    >
-                                                                    Weight
-                                                                  </mat-option>
-                                                                  <mat-option
-                                                                    [value]="filamentAdjustmentSourceMeasurement.Length"
-                                                                    >
-                                                                    Length
-                                                                  </mat-option>
-                                                                  <mat-option
-                                                                    [value]="filamentAdjustmentSourceMeasurement.Volume"
-                                                                    >
-                                                                    Volume
-                                                                  </mat-option>
-                                                                </mat-select>
-                                                              </mat-form-field>
-                                                            </div>
-                                                            <div fxFlex="grow" fxFlexFill>
-                                                              <mat-form-field fxFlex="grow" fxFlexFill>
-                                                                <mat-label> Notes</mat-label>
-                                                                <input
-                                                                  id="adjustment-note-{{ adjustmentIndex }}"
-                                                                  matInput
-                                                                  type="text"
-                                                                  maxlength="1000"
-                                                                  formControlName="notes"
-                                                                  />
-                                                                </mat-form-field>
-                                                              </div>
-                                                              <div fxFlex style="padding-bottom: 10px">
-                                                                <button
-                                                                  type="button"
-                                                                  mat-raised-button
-                                                                  (click)="removeAdjustment(adjustmentIndex)"
-                                                                  aria-label="Delete Adjustment"
-                                                                  matTooltip="Delete {{
-                                                                  adjustment.get('amountG').value
-                                                                  }} gram Adjustment"
-                                                                  >
-                                                                  <mat-icon>delete</mat-icon>Delete
-                                                                </button>
-                                                              </div>
-                                                            </div>
-                                                          </mat-card>
-                                                        </div>
-                                                      </div>
-                                                    }
-                                                  </div>
-                                                  @if (
-                                                    this.filamentForm.get('recommendedTemp').enabled ||
-                                                    this.filamentForm.get('recommendedBedTemp').enabled ||
-                                                    this.filamentForm.get('tempRangeStart').enabled ||
-                                                    this.filamentForm.get('tempRangeEnd').enabled ||
-                                                    this.filamentForm.get('meltingTemperature').enabled ||
-                                                    this.filamentForm.get('initialLayerTimeS').enabled ||
-                                                    this.filamentForm.get('layerTimeS').enabled ||
-                                                    this.filamentForm.get('materialRefreshRatio').enabled ||
-                                                    this.filamentForm.get('inertGas').enabled
-                                                    ) {
-                                                    <div
-                                                      fxFlex="grow"
-                                                      fxFlexFill
-                                                      >
-                                                      <h2 style="text-align: start">Print Settings</h2>
-                                                    </div>
-                                                  }
-                                                  @if (this.filamentForm.get('tempRangeStart').enabled) {
-                                                    <mat-form-field
-                                                      fxFlex="grow"
-                                                      fxFlexFill
-                                                      >
-                                                      <mat-label>Hotend Temperature Range Start (C)</mat-label>
-                                                      <input
-                                                        id="edit-filament-hotend-temp-range-start"
-                                                        matInput
-                                                        type="number"
-                                                        formControlName="tempRangeStart"
-                                                        />
-                                                        <!-- <mat-error
-                                                        *ngIf="filamentForm.controls['brand'].hasError('required')"
-                                                        >
-                                                        A Name is <strong>required</strong>
-                                                      </mat-error> -->
-                                                    </mat-form-field>
-                                                  }
-                                                  @if (this.filamentForm.get('tempRangeEnd').enabled) {
-                                                    <mat-form-field
-                                                      fxFlex="grow"
-                                                      fxFlexFill
-                                                      >
-                                                      <mat-label>Hotend Temperature Range End (C)</mat-label>
-                                                      <input
-                                                        id="edit-filament-hotend-temperature-range-end"
-                                                        matInput
-                                                        type="number"
-                                                        formControlName="tempRangeEnd"
-                                                        />
-                                                        <!-- <mat-error
-                                                        *ngIf="filamentForm.controls['brand'].hasError('required')"
-                                                        >
-                                                        A Name is <strong>required</strong>
-                                                      </mat-error> -->
-                                                    </mat-form-field>
-                                                  }
-                                                  @if (this.filamentForm.get('recommendedTemp').enabled) {
-                                                    <mat-form-field
-                                                      fxFlex="grow"
-                                                      fxFlexFill
-                                                      >
-                                                      <mat-label>Recommended Hotend Temperature (C)</mat-label>
-                                                      <input
-                                                        id="edit-filament-recommended-hotend-temp"
-                                                        matInput
-                                                        type="number"
-                                                        formControlName="recommendedTemp"
-                                                        />
-                                                      </mat-form-field>
-                                                    }
-                                                    @if (this.filamentForm.get('recommendedBedTemp').enabled) {
-                                                      <mat-form-field
-                                                        fxFlex="grow"
-                                                        fxFlexFill
-                                                        >
-                                                        <mat-label>Recommended Bed Temperature (C)</mat-label>
-                                                        <input
-                                                          id="edit-filament-recommended-bed-temp"
-                                                          matInput
-                                                          type="number"
-                                                          formControlName="recommendedBedTemp"
-                                                          />
-                                                        </mat-form-field>
-                                                      }
-                                                      @if (this.filamentForm.get('meltingTemperature').enabled) {
-                                                        <mat-form-field
-                                                          fxFlex="grow"
-                                                          fxFlexFill
-                                                          >
-                                                          <mat-label>Melting Temperature (C)</mat-label>
-                                                          <input
-                                                            id="edit-filament-melting-temperature"
-                                                            matInput
-                                                            type="number"
-                                                            formControlName="meltingTemperature"
-                                                            />
-                                                          </mat-form-field>
-                                                        }
-                                                        @if (this.filamentForm.get('initialLayerTimeS').enabled) {
-                                                          <mat-form-field
-                                                            fxFlex="grow"
-                                                            fxFlexFill
-                                                            >
-                                                            <mat-label>Initial Layer Timer (s)</mat-label>
-                                                            <input
-                                                              id="edit-filament-initial-layer-time"
-                                                              matInput
-                                                              type="number"
-                                                              formControlName="initialLayerTimeS"
-                                                              />
-                                                            </mat-form-field>
-                                                          }
-                                                          @if (this.filamentForm.get('layerTimeS').enabled) {
-                                                            <mat-form-field
-                                                              fxFlex="grow"
-                                                              fxFlexFill
-                                                              >
-                                                              <mat-label>Layer Timer (s)</mat-label>
-                                                              <input
-                                                                id="edit-filament-layer-time"
-                                                                matInput
-                                                                type="number"
-                                                                formControlName="layerTimeS"
-                                                                />
-                                                              </mat-form-field>
-                                                            }
-                                                            @if (this.filamentForm.get('materialRefreshRatio').enabled) {
-                                                              <mat-form-field
-                                                                fxFlex="grow"
-                                                                fxFlexFill
-                                                                >
-                                                                <mat-label>Material Refresh Ratio</mat-label>
-                                                                <input
-                                                                  id="edit-filament-material-refresh-ratio"
-                                                                  matInput
-                                                                  type="number"
-                                                                  min="0"
-                                                                  max="1"
-                                                                  formControlName="materialRefreshRatio"
-                                                                  matTooltip="The percentage of new powder when mixing with old powder. 1.0 means always use new powder."
-                                                                  />
-                                                                </mat-form-field>
-                                                              }
-                                                              @if (this.filamentForm.get('inertGas').enabled) {
-                                                                <mat-form-field
-                                                                  fxFlex="grow"
-                                                                  fxFlexFill
-                                                                  >
-                                                                  <mat-label>Inert Gas</mat-label>
-                                                                  <input
-                                                                    id="edit-filament-inert-gas"
-                                                                    matInput
-                                                                    type="text"
-                                                                    formControlName="inertGas"
-                                                                    maxlength="255"
-                                                                    />
-                                                                  </mat-form-field>
-                                                                }
-                                                                <div fxFlex="grow" fxFlexFill>
-                                                                  <h2 style="text-align: start">Purchase Details</h2>
-                                                                </div>
-                                                                <mat-form-field fxFlex="grow" fxFlexFill>
-                                                                  <mat-label>Purchase Date</mat-label>
-                                                                  <input
-                                                                    matInput
-                                                                    id="edit-filament-purchase-date"
-                                                                    [matDatepicker]="picker"
-                                                                    placeholder="Date Purchased"
-                                                                    formControlName="purchaseDate"
-                                                                    />
-                                                                    <mat-datepicker-toggle
-                                                                      matSuffix
-                                                                      [for]="picker"
-                                                                    ></mat-datepicker-toggle>
-                                                                    <mat-datepicker #picker></mat-datepicker>
-                                                                    <!-- <mat-error
+                  </div>
+                  <div fxFlex style="padding-bottom: 10px">
+                    <button
+                      type="button"
+                      mat-raised-button
+                      (click)="removeAdjustment(adjustmentIndex)"
+                      aria-label="Delete Adjustment"
+                      matTooltip="Delete {{
+                        adjustment.get('amountG').value
+                      }} gram Adjustment"
+                    >
+                      <mat-icon>delete</mat-icon>Delete
+                    </button>
+                  </div>
+                </div>
+              </mat-card>
+            </div>
+          </div>
+          }
+        </div>
+        @if ( this.filamentForm.get('recommendedTemp').enabled ||
+        this.filamentForm.get('recommendedBedTemp').enabled ||
+        this.filamentForm.get('tempRangeStart').enabled ||
+        this.filamentForm.get('tempRangeEnd').enabled ||
+        this.filamentForm.get('meltingTemperature').enabled ||
+        this.filamentForm.get('initialLayerTimeS').enabled ||
+        this.filamentForm.get('layerTimeS').enabled ||
+        this.filamentForm.get('materialRefreshRatio').enabled ||
+        this.filamentForm.get('inertGas').enabled ) {
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">Print Settings</h2>
+        </div>
+        } @if (this.filamentForm.get('tempRangeStart').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Hotend Temperature Range Start (C)</mat-label>
+          <input
+            id="edit-filament-hotend-temp-range-start"
+            matInput
+            type="number"
+            formControlName="tempRangeStart"
+          />
+          <!-- <mat-error
+              *ngIf="filamentForm.controls['brand'].hasError('required')"
+              >
+              A Name is <strong>required</strong>
+            </mat-error> -->
+        </mat-form-field>
+        } @if (this.filamentForm.get('tempRangeEnd').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Hotend Temperature Range End (C)</mat-label>
+          <input
+            id="edit-filament-hotend-temperature-range-end"
+            matInput
+            type="number"
+            formControlName="tempRangeEnd"
+          />
+          <!-- <mat-error
+              *ngIf="filamentForm.controls['brand'].hasError('required')"
+              >
+              A Name is <strong>required</strong>
+            </mat-error> -->
+        </mat-form-field>
+        } @if (this.filamentForm.get('recommendedTemp').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Recommended Hotend Temperature (C)</mat-label>
+          <input
+            id="edit-filament-recommended-hotend-temp"
+            matInput
+            type="number"
+            formControlName="recommendedTemp"
+          />
+        </mat-form-field>
+        } @if (this.filamentForm.get('recommendedBedTemp').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Recommended Bed Temperature (C)</mat-label>
+          <input
+            id="edit-filament-recommended-bed-temp"
+            matInput
+            type="number"
+            formControlName="recommendedBedTemp"
+          />
+        </mat-form-field>
+        } @if (this.filamentForm.get('meltingTemperature').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Melting Temperature (C)</mat-label>
+          <input
+            id="edit-filament-melting-temperature"
+            matInput
+            type="number"
+            formControlName="meltingTemperature"
+          />
+        </mat-form-field>
+        } @if (this.filamentForm.get('initialLayerTimeS').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Initial Layer Timer (s)</mat-label>
+          <input
+            id="edit-filament-initial-layer-time"
+            matInput
+            type="number"
+            formControlName="initialLayerTimeS"
+          />
+        </mat-form-field>
+        } @if (this.filamentForm.get('layerTimeS').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Layer Timer (s)</mat-label>
+          <input
+            id="edit-filament-layer-time"
+            matInput
+            type="number"
+            formControlName="layerTimeS"
+          />
+        </mat-form-field>
+        } @if (this.filamentForm.get('materialRefreshRatio').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Material Refresh Ratio</mat-label>
+          <input
+            id="edit-filament-material-refresh-ratio"
+            matInput
+            type="number"
+            min="0"
+            max="1"
+            formControlName="materialRefreshRatio"
+            matTooltip="The percentage of new powder when mixing with old powder. 1.0 means always use new powder."
+          />
+        </mat-form-field>
+        } @if (this.filamentForm.get('inertGas').enabled) {
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Inert Gas</mat-label>
+          <input
+            id="edit-filament-inert-gas"
+            matInput
+            type="text"
+            formControlName="inertGas"
+            maxlength="255"
+          />
+        </mat-form-field>
+        }
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">Purchase Details</h2>
+        </div>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Purchase Date</mat-label>
+          <input
+            matInput
+            id="edit-filament-purchase-date"
+            [matDatepicker]="picker"
+            placeholder="Date Purchased"
+            formControlName="purchaseDate"
+          />
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="picker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          <!-- <mat-error
                                                                     *ngIf="filamentForm.controls['brand'].hasError('required')"
                                                                     >
                                                                     A Name is <strong>required</strong>
                                                                   </mat-error> -->
-                                                                </mat-form-field>
-                                                                <mat-form-field fxFlex="grow" fxFlexFill>
-                                                                  <mat-label>Purchase Location</mat-label>
-                                                                  <input
-                                                                    id="edit-filament-purchase-location"
-                                                                    matInput
-                                                                    type="text"
-                                                                    formControlName="purchaseLocation"
-                                                                    maxlength="1000"
-                                                                    [matAutocomplete]="autoPurchaseLocations"
-                                                                    />
-                                                                    <mat-autocomplete #autoPurchaseLocations="matAutocomplete">
-                                                                      @for (
-                                                                        option of this.filteredFilamentPurchaseLocations | async
-                                                                        ; track
-                                                                        option) {
-                                                                        <mat-option
-                                                                          [value]="option"
-                                                                          >
-                                                                          {{ option }}
-                                                                        </mat-option>
-                                                                      }
-                                                                    </mat-autocomplete>
-                                                                    <!-- <mat-error
+        </mat-form-field>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Purchase Location</mat-label>
+          <input
+            id="edit-filament-purchase-location"
+            matInput
+            type="text"
+            formControlName="purchaseLocation"
+            maxlength="1000"
+            [matAutocomplete]="autoPurchaseLocations"
+          />
+          <mat-autocomplete #autoPurchaseLocations="matAutocomplete">
+            @for ( option of this.filteredFilamentPurchaseLocations | async;
+            track option ) {
+            <mat-option [value]="option">
+              {{ option }}
+            </mat-option>
+            }
+          </mat-autocomplete>
+          <!-- <mat-error
                                                                     *ngIf="filamentForm.controls['brand'].hasError('required')"
                                                                     >
                                                                     A Name is <strong>required</strong>
                                                                   </mat-error> -->
-                                                                </mat-form-field>
-                                                                <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-                                                                  <mat-form-field style="margin: 0" fxFlex>
-                                                                    <mat-label>Purchase Price</mat-label>
-                                                                    <span matPrefix>{{ this.preferredCurrencySymbol }}&nbsp;</span>
-                                                                    <input
-                                                                      id="edit-filament-purchase-price"
-                                                                      matInput
-                                                                      type="text"
-                                                                      formControlName="purchasePriceValue"
-                                                                      [placeholder]="
-                                                                      defaultFilamentPriceSetting
-                                                                      ? defaultFilamentPriceSetting.value
-                                                                      : null
-                                                                      "
-                                                                      maxlength="256"
-                                                                      />
-                                                                      @if (
-                                                                        filamentForm.controls['purchasePriceValue'].hasError('pattern')
-                                                                        ) {
-                                                                        <mat-error
-                                                                          >
-                                                                          Only numeric prices are allowed.
-                                                                        </mat-error>
-                                                                      }
-                                                                    </mat-form-field>
-                                                                    @if (
-                                                                      this.filamentForm &&
-                                                                      this.filamentForm.get('purchasePriceValue').dirty &&
-                                                                      this.filamentForm.get('purchasePriceValue').valid &&
-                                                                      (this.defaultFilamentPriceSetting === null ||
-                                                                      this.filamentForm.get('purchasePriceValue').value.toString() !==
-                                                                      this.defaultFilamentPriceSetting.value.toString())
-                                                                      ) {
-                                                                      <button
-                                                                        fxFlex
-                                                                        style="margin-left: 10px; height: 72%"
-                                                                        mat-raised-button
-                                                                        type="button"
-                                                                        color="accent"
-                                                                        (click)="
-                                                                        this.changeDefaultFilamentPrice(
-                                                                        this.filamentForm.get('purchasePriceValue').value
-                                                                        )
-                                                                        "
-                                                                        >
-                                                                        Save as Default Filament Price
-                                                                      </button>
-                                                                    }
-                                                                  </div>
-                                                                  <mat-form-field fxFlex="grow" fxFlexFill>
-                                                                    <mat-label>Purchase Notes</mat-label>
-                                                                    <textarea
-                                                                      id="purchase-notes-text"
-                                                                      matInput
-                                                                      type="textarea"
-                                                                      formControlName="purchaseNotes"
-                                                                      maxlength="1000"
-                                                                      rows="3"
-                                                                    ></textarea>
-                                                                    @if (this.filamentForm.get('purchaseNotes').dirty) {
-                                                                      <mat-hint>
-                                                                        {{ 1000 - this.filamentForm.get('purchaseNotes').value.length }}
-                                                                        characters remaining.</mat-hint
-                                                                        >
-                                                                    }
-                                                                  </mat-form-field>
-                                                                </mat-card-content>
-                                                                <mat-card-actions
-                                                                  fxLayout
-                                                                  fxLayoutAlign="space-between center"
-                                                                  fxLayoutGap="15px"
-                                                                  >
-                                                                  <button
-                                                                    mat-raised-button
-                                                                    type="submit"
-                                                                    [disabled]="saving"
-                                                                    color="primary"
-                                                                    [class.spinner]="saving"
-                                                                    id="edit-filament-submit-btn"
-                                                                    >
-                                                                    Submit
-                                                                  </button>
-                                                                  <button
-                                                                    id="edit-filament-cancel-btn"
-                                                                    mat-raised-button
-                                                                    type="button"
-                                                                    class="close"
-                                                                    (click)="handleClose()"
-                                                                    color="warn"
-                                                                    >
-                                                                    {{ filamentForm.dirty ? 'Cancel' : 'Close' }}
-                                                                  </button>
-                                                                </mat-card-actions>
-                                                              </form>
-                                                              <app-ad></app-ad>
-                                                            </mat-card>
-                                                          </div>
-                                                          
+        </mat-form-field>
+        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
+          <mat-form-field style="margin: 0" fxFlex>
+            <mat-label>Purchase Price</mat-label>
+            <span matPrefix>{{ this.preferredCurrencySymbol }}&nbsp;</span>
+            <input
+              id="edit-filament-purchase-price"
+              matInput
+              type="text"
+              formControlName="purchasePriceValue"
+              [placeholder]="
+                defaultFilamentPriceSetting
+                  ? defaultFilamentPriceSetting.value
+                  : null
+              "
+              maxlength="256"
+            />
+            @if (
+            filamentForm.controls['purchasePriceValue'].hasError('pattern') ) {
+            <mat-error> Only numeric prices are allowed. </mat-error>
+            }
+          </mat-form-field>
+          @if ( this.filamentForm &&
+          this.filamentForm.get('purchasePriceValue').dirty &&
+          this.filamentForm.get('purchasePriceValue').valid &&
+          (this.defaultFilamentPriceSetting === null ||
+          this.filamentForm.get('purchasePriceValue').value.toString() !==
+          this.defaultFilamentPriceSetting.value.toString()) ) {
+          <button
+            fxFlex
+            style="margin-left: 10px; height: 72%"
+            mat-raised-button
+            type="button"
+            color="accent"
+            (click)="
+              this.changeDefaultFilamentPrice(
+                this.filamentForm.get('purchasePriceValue').value
+              )
+            "
+          >
+            Save as Default Filament Price
+          </button>
+          }
+        </div>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Purchase Notes</mat-label>
+          <textarea
+            id="purchase-notes-text"
+            matInput
+            type="textarea"
+            formControlName="purchaseNotes"
+            maxlength="1000"
+            rows="3"
+          ></textarea>
+          @if (this.filamentForm.get('purchaseNotes').dirty) {
+          <mat-hint>
+            {{ 1000 - this.filamentForm.get('purchaseNotes').value.length }}
+            characters remaining.</mat-hint
+          >
+          }
+        </mat-form-field>
+      </mat-card-content>
+      <mat-card-actions
+        fxLayout
+        fxLayoutAlign="space-between center"
+        fxLayoutGap="15px"
+      >
+        <button
+          mat-raised-button
+          type="submit"
+          [disabled]="saving"
+          color="primary"
+          [class.spinner]="saving"
+          id="edit-filament-submit-btn"
+        >
+          Submit
+        </button>
+        <button
+          id="edit-filament-cancel-btn"
+          mat-raised-button
+          type="button"
+          class="close"
+          (click)="handleClose()"
+          color="warn"
+        >
+          {{ filamentForm.dirty ? 'Cancel' : 'Close' }}
+        </button>
+      </mat-card-actions>
+    </form>
+    <app-ad></app-ad>
+  </mat-card>
+</div>

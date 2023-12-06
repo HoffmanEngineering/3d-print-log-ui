@@ -4,41 +4,36 @@
     fxFlex="500px"
     fxFlex.xs="100%"
     fxFlex.gt-md="1200px"
-    >
+  >
     <div
       fxLayout="column"
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
       fxLayout.gt-md="row"
       fxLayoutAlign="space-around start"
-      >
+    >
       <mat-card-header
         fxFlex="grow"
         fxLayout="column"
         fxLayoutAlign="start start"
-        >
+      >
         <div fxFlex="grow" class="cover-photo-container">
           @if (this.userDetail.coverPicture) {
-            <img
-              [src]="this.userDetail.coverPicture"
-              class="cover-photo"
-              />
+            <img [src]="this.userDetail.coverPicture" class="cover-photo" />
           }
           @if (!this.userDetail.coverPicture) {
-            <div class="empty-cover-photo">
-              &nbsp;
-            </div>
+            <div class="empty-cover-photo">&nbsp;</div>
           }
           @if (
             userDetail.id === currentUser?.id &&
             !isEditingDescription &&
             !isEditingDisplayName
-            ) {
+          ) {
             <button
               mat-button
               class="transparent btn-transparent cover-photo-edit"
               [matMenuTriggerFor]="coverPhotoMenu"
-              >
+            >
               <mat-icon>photo</mat-icon> Cover Photo
             </button>
           }
@@ -47,7 +42,7 @@
               type="button"
               mat-menu-item
               (click)="coverphotoinput.click()"
-              >
+            >
               <mat-icon>add_photo_alternate</mat-icon>Upload Photo
             </button>
             <button type="button" mat-menu-item (click)="removeCoverPhoto()">
@@ -61,25 +56,25 @@
             id="cover-photo-input"
             #coverphotoinput
             (change)="addCoverPhoto($event)"
-            />
+          />
         </div>
         <div fxFlex="grow" class="profile-picture-container">
           <div class="profile-picture-wrapper">
             <img
               [src]="this.userDetail.profilePicture"
               class="profile-picture"
-              />
+            />
           </div>
           @if (
             userDetail.id === currentUser?.id &&
             !isEditingDescription &&
             !isEditingDisplayName
-            ) {
+          ) {
             <button
               type="button"
               class="transparent btn-transparent profile-photo-edit"
               (click)="profilephotoinput.click()"
-              >
+            >
               <mat-icon>photo</mat-icon>
             </button>
           }
@@ -90,35 +85,35 @@
             id="profile-photo-input"
             #profilephotoinput
             (change)="addProfilePicture($event)"
-            />
+          />
         </div>
         <div
           fxFlex="grow"
           fxFlexFill
           fxLayout="column"
           fxLayoutAlign="start center"
-          >
+        >
           <div fxFlex="grow" class="user-display-name">
             @if (!isEditingDisplayName) {
               <div
                 fxLayout="column"
                 fxLayoutAlign="start center"
                 fxLayoutGap="15px"
-                >
+              >
                 <h2 fxFlex="grow" aria-label="User name">
                   {{ userDetail.displayName }}
                 </h2>
                 <div fxFlex="grow">
                   @if (
                     userDetail.id === currentUser?.id && !isEditingDescription
-                    ) {
+                  ) {
                     <button
                       mat-raised-button
                       type="button"
                       color="accent"
                       style="margin-bottom: 10px"
                       (click)="startEditingDisplayName()"
-                      >
+                    >
                       <mat-icon>edit</mat-icon>Edit Display Name
                     </button>
                   }
@@ -126,10 +121,7 @@
               </div>
             }
             @if (isEditingDisplayName) {
-              <div
-                class="mat-elevation-z5 display-name"
-                style="padding: 10px"
-                >
+              <div class="mat-elevation-z5 display-name" style="padding: 10px">
                 <mat-form-field style="width: 100%">
                   <mat-label>Display name:</mat-label>
                   <textarea
@@ -141,178 +133,173 @@
                     cdkAutosizeMaxRows="2"
                   ></textarea>
                   <mat-hint>
-                    {{ 30 - displayName.length }} characters remaining.</mat-hint
+                    {{ 30 - displayName.length }} characters
+                    remaining.</mat-hint
+                  >
+                </mat-form-field>
+                <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                  <button
+                    mat-raised-button
+                    type="submit"
+                    color="primary"
+                    (click)="saveDisplayName()"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    mat-raised-button
+                    type="button"
+                    class="close"
+                    (click)="cancelEditingDisplayName()"
+                    color="warn"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+          <div fxFlex="grow" class="user-bio">
+            @if (!isEditingDescription) {
+              <div
+                fxLayout="column"
+                fxLayoutAlign="start center"
+                fxLayoutGap="15px"
+              >
+                @if (!isEditingDescription) {
+                  <div style="white-space: pre-wrap" fxFlex>
+                    {{ userDetail.bio }}
+                  </div>
+                }
+                <div fxFlex>
+                  @if (
+                    userDetail.id === currentUser?.id && !isEditingDisplayName
+                  ) {
+                    <button
+                      type="button"
+                      mat-raised-button
+                      color="accent"
+                      (click)="startEditingDescription()"
                     >
-                  </mat-form-field>
-                  <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                      <mat-icon>edit</mat-icon>Edit Bio
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+            @if (isEditingDescription) {
+              <div class="mat-elevation-z5" style="padding: 10px">
+                <mat-form-field style="width: 100%">
+                  <mat-label>Describe who you are:</mat-label>
+                  <textarea
+                    matInput
+                    cdkTextareaAutosize
+                    [(ngModel)]="bio"
+                    maxlength="1000"
+                    cdkAutosizeMinRows="2"
+                    cdkAutosizeMaxRows="10"
+                  ></textarea>
+                  <mat-hint>
+                    {{ 1000 - bio.length }} characters remaining.</mat-hint
+                  >
+                </mat-form-field>
+                <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                  <button
+                    mat-raised-button
+                    type="submit"
+                    color="primary"
+                    (click)="saveDescription()"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    mat-raised-button
+                    type="button"
+                    class="close"
+                    (click)="cancelEditingDescription()"
+                    color="warn"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+          @if (userDetail.id === currentUser?.id) {
+            <div fxFlex="grow">
+              <hr />
+              <div>
+                <label for="profile-visibility" style="margin-right: 10px">
+                  Profile Visibility:</label
+                >
+                <select
+                  id="profile-visibility"
+                  name="profile-visibility"
+                  [(ngModel)]="viewStatus"
+                >
+                  <option [ngValue]="profileViewStatusTypes.Public">
+                    Public (anyone can view)
+                  </option>
+                  <option [ngValue]="profileViewStatusTypes.Unlisted">
+                    Unlisted (anyone with link can view)
+                  </option>
+                  <option [ngValue]="profileViewStatusTypes.Private">
+                    Private (only you can view)
+                  </option>
+                </select>
+              </div>
+              @if (viewStatus !== this.userDetail.viewStatus) {
+                <div>
+                  <div
+                    style="margin-top: 10px"
+                    fxLayout
+                    fxLayoutAlign="center center"
+                    fxLayoutGap="15px"
+                  >
                     <button
                       mat-raised-button
                       type="submit"
                       color="primary"
-                      (click)="saveDisplayName()"
-                      >
-                      Submit
+                      (click)="saveProfileVisibility(viewStatus)"
+                    >
+                      Save Visibility
                     </button>
                     <button
                       mat-raised-button
                       type="button"
                       class="close"
-                      (click)="cancelEditingDisplayName()"
+                      (click)="viewStatus = this.userDetail.viewStatus"
                       color="warn"
-                      >
+                    >
                       Cancel
                     </button>
                   </div>
                 </div>
               }
+              <hr />
             </div>
-            <div fxFlex="grow" class="user-bio">
-              @if (!isEditingDescription) {
-                <div
-                  fxLayout="column"
-                  fxLayoutAlign="start center"
-                  fxLayoutGap="15px"
-                  >
-                  @if (!isEditingDescription) {
-                    <div
-                      style="white-space: pre-wrap"
-                      fxFlex
-                      >
-                      {{ userDetail.bio }}
-                    </div>
-                  }
-                  <div fxFlex>
-                    @if (
-                      userDetail.id === currentUser?.id && !isEditingDisplayName
-                      ) {
-                      <button
-                        type="button"
-                        mat-raised-button
-                        color="accent"
-                        (click)="startEditingDescription()"
-                        >
-                        <mat-icon>edit</mat-icon>Edit Bio
-                      </button>
-                    }
-                  </div>
-                </div>
-              }
-              @if (isEditingDescription) {
-                <div
-                  class="mat-elevation-z5"
-                  style="padding: 10px"
-                  >
-                  <mat-form-field style="width: 100%">
-                    <mat-label>Describe who you are:</mat-label>
-                    <textarea
-                      matInput
-                      cdkTextareaAutosize
-                      [(ngModel)]="bio"
-                      maxlength="1000"
-                      cdkAutosizeMinRows="2"
-                      cdkAutosizeMaxRows="10"
-                    ></textarea>
-                    <mat-hint>
-                      {{ 1000 - bio.length }} characters remaining.</mat-hint
-                      >
-                    </mat-form-field>
-                    <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
-                      <button
-                        mat-raised-button
-                        type="submit"
-                        color="primary"
-                        (click)="saveDescription()"
-                        >
-                        Submit
-                      </button>
-                      <button
-                        mat-raised-button
-                        type="button"
-                        class="close"
-                        (click)="cancelEditingDescription()"
-                        color="warn"
-                        >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-              @if (userDetail.id === currentUser?.id) {
-                <div fxFlex="grow">
-                  <hr />
-                  <div>
-                    <label for="profile-visibility" style="margin-right: 10px">
-                      Profile Visibility:</label
-                      >
-                      <select
-                        id="profile-visibility"
-                        name="profile-visibility"
-                        [(ngModel)]="viewStatus"
-                        >
-                        <option [ngValue]="profileViewStatusTypes.Public">
-                          Public (anyone can view)
-                        </option>
-                        <option [ngValue]="profileViewStatusTypes.Unlisted">
-                          Unlisted (anyone with link can view)
-                        </option>
-                        <option [ngValue]="profileViewStatusTypes.Private">
-                          Private (only you can view)
-                        </option>
-                      </select>
-                    </div>
-                    @if (viewStatus !== this.userDetail.viewStatus) {
-                      <div>
-                        <div
-                          style="margin-top: 10px"
-                          fxLayout
-                          fxLayoutAlign="center center"
-                          fxLayoutGap="15px"
-                          >
-                          <button
-                            mat-raised-button
-                            type="submit"
-                            color="primary"
-                            (click)="saveProfileVisibility(viewStatus)"
-                            >
-                            Save Visibility
-                          </button>
-                          <button
-                            mat-raised-button
-                            type="button"
-                            class="close"
-                            (click)="viewStatus = this.userDetail.viewStatus"
-                            color="warn"
-                            >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    }
-                    <hr />
-                  </div>
-                }
-              </div>
-              <div fxFlex="grow">
-                <app-stats [userId]="this.userDetail.id"></app-stats>
-              </div>
-              <div fxFlex="grow" fxFlexFill>
-                <app-ad></app-ad>
-              </div>
-            </mat-card-header>
-            <mat-card-content
-              fxFlex="grow"
-              fxLayout="column"
-              fxLayoutAlign="start stretch"
-              fxLayoutGap="10px"
-              >
-              <app-user-prints
-                [userId]="this.userDetail.id"
-                [userName]="this.userDetail.displayName"
-                [userProfilePictureUrl]="this.userDetail.profilePicture"
-              ></app-user-prints>
-            </mat-card-content>
-            <!-- <div fxFlex>
+          }
+        </div>
+        <div fxFlex="grow">
+          <app-stats [userId]="this.userDetail.id"></app-stats>
+        </div>
+        <div fxFlex="grow" fxFlexFill>
+          <app-ad></app-ad>
+        </div>
+      </mat-card-header>
+      <mat-card-content
+        fxFlex="grow"
+        fxLayout="column"
+        fxLayoutAlign="start stretch"
+        fxLayoutGap="10px"
+      >
+        <app-user-prints
+          [userId]="this.userDetail.id"
+          [userName]="this.userDetail.displayName"
+          [userProfilePictureUrl]="this.userDetail.profilePicture"
+        ></app-user-prints>
+      </mat-card-content>
+      <!-- <div fxFlex>
             <div
               fxFlex
               class="card-img-top main-image"
@@ -357,7 +344,7 @@
               </div>
             </div>
           </div> -->
-          <!-- <mat-card-actions
+      <!-- <mat-card-actions
           fxLayout
           fxLayoutAlign="space-between center"
           fxLayoutGap="15px"
@@ -368,7 +355,6 @@
             </button>
           </div>
         </mat-card-actions> -->
-      </div>
-    </mat-card>
-  </div>
-  
+    </div>
+  </mat-card>
+</div>

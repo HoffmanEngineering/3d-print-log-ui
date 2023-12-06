@@ -3,69 +3,65 @@
     <h3
       fxFlex="grow"
       style="margin-right: 10px; margin-top: 5px; margin-bottom: 5px"
-      >
+    >
       Prints:
     </h3>
     <div fxFlex="grow" fxLayout="row" fxLayoutGap="5px">
       <mat-form-field fxFlex>
         <mat-label> Search: </mat-label
-          ><input
+        ><input
           matInput
           type="text"
           [(ngModel)]="searchText"
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
-        /></mat-form-field>
-        <mat-form-field fxFlex>
-          <mat-label> Status</mat-label>
-          <mat-select
-            [(ngModel)]="filterByStatus"
-            (ngModelChange)="clearPrints(); updateFilter()"
-            >
-            <mat-option [value]="-1">All</mat-option>
-            <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
-            <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
-            <mat-option [value]="printStatusTypes.Success">Success</mat-option>
-            <mat-option [value]="printStatusTypes.Cancelled"
-              >Cancelled</mat-option
-              >
-              <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </div>
-      @if (prints.length > 0) {
-        @for (print of prints; track print) {
-          <div
-            #PrintSummaryCard
-            style="margin-bottom: 10px"
-            >
-            <app-print-summary-card
-              [print]="print"
-              [userId]="userId"
-              [userName]="userName"
-              [userProfilePictureUrl]="userProfilePictureUrl"
-              >
-            </app-print-summary-card>
-          </div>
-        }
-        @if (showLoadMore) {
-          <button
-            fxFlex="grow"
-            style="margin: 0 auto"
-            mat-raised-button
-            color="accent"
-            (click)="loadNextPage()"
-            >
-            Load More
-          </button>
-        }
-      }
-      @if (prints.length === 0) {
-        <mat-card appearance="outlined" fxFlex>
-          No Prints Found. The user shared any prints publicly that match the
-          search.
-        </mat-card>
-      }
+      /></mat-form-field>
+      <mat-form-field fxFlex>
+        <mat-label> Status</mat-label>
+        <mat-select
+          [(ngModel)]="filterByStatus"
+          (ngModelChange)="clearPrints(); updateFilter()"
+        >
+          <mat-option [value]="-1">All</mat-option>
+          <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
+          <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
+          <mat-option [value]="printStatusTypes.Success">Success</mat-option>
+          <mat-option [value]="printStatusTypes.Cancelled"
+            >Cancelled</mat-option
+          >
+          <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
-    
+  </div>
+  @if (prints.length > 0) {
+    @for (print of prints; track print) {
+      <div #PrintSummaryCard style="margin-bottom: 10px">
+        <app-print-summary-card
+          [print]="print"
+          [userId]="userId"
+          [userName]="userName"
+          [userProfilePictureUrl]="userProfilePictureUrl"
+        >
+        </app-print-summary-card>
+      </div>
+    }
+    @if (showLoadMore) {
+      <button
+        fxFlex="grow"
+        style="margin: 0 auto"
+        mat-raised-button
+        color="accent"
+        (click)="loadNextPage()"
+      >
+        Load More
+      </button>
+    }
+  }
+  @if (prints.length === 0) {
+    <mat-card appearance="outlined" fxFlex>
+      No Prints Found. The user shared any prints publicly that match the
+      search.
+    </mat-card>
+  }
+</div>

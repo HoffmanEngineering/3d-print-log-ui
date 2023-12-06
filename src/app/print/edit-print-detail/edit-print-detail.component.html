@@ -23,40 +23,46 @@
           (change)="detectFiles($event)"
         />
         @if (images.length < 1) {
-        <button
-          type="button"
-          mat-raised-button
-          (click)="imgFileInput.click()"
-          color="accent"
-        >
-          Upload Picture
-        </button>
-        } @if (selectedImage && selectedImage.value) {
-        <div fxFlex class="card-img-top main-image">
-          <app-print-image
-            fxFlex
-            [printId]="printForm.get('id').value"
-            [imageId]="selectedImage.value.id"
-            [imageData]="selectedImage.value.url"
-            [showDeleteOnHover]="true"
-            (delete)="removeImage(selectedImage)"
-            (imageDataChange)="selectedImage.value.url = $event"
-          ></app-print-image>
-        </div>
-        } @if (false) {
-        <div class="images-preview mt-2" fxLayout fxLayoutAlign="center center">
-          @for (image of images.controls; track image; let i = $index) {
-          <div fxFlex formArrayName="images">
-            <div
-              [formGroupName]="i"
-              class="image-preview"
-              [ngClass]="{
-                isDefault: image?.value?.isDefault === true,
-                isSelected: selectedImage === image
-              }"
-              (click)="selectImage(image)"
-            >
-              <!--
+          <button
+            type="button"
+            mat-raised-button
+            (click)="imgFileInput.click()"
+            color="accent"
+          >
+            Upload Picture
+          </button>
+        }
+        @if (selectedImage && selectedImage.value) {
+          <div fxFlex class="card-img-top main-image">
+            <app-print-image
+              fxFlex
+              [printId]="printForm.get('id').value"
+              [imageId]="selectedImage.value.id"
+              [imageData]="selectedImage.value.url"
+              [showDeleteOnHover]="true"
+              (delete)="removeImage(selectedImage)"
+              (imageDataChange)="selectedImage.value.url = $event"
+            ></app-print-image>
+          </div>
+        }
+        @if (false) {
+          <div
+            class="images-preview mt-2"
+            fxLayout
+            fxLayoutAlign="center center"
+          >
+            @for (image of images.controls; track image; let i = $index) {
+              <div fxFlex formArrayName="images">
+                <div
+                  [formGroupName]="i"
+                  class="image-preview"
+                  [ngClass]="{
+                    isDefault: image?.value?.isDefault === true,
+                    isSelected: selectedImage === image
+                  }"
+                  (click)="selectImage(image)"
+                >
+                  <!--
                     <img
                       [src]="$any(image).value.url"
                       [ngClass]="{
@@ -65,17 +71,17 @@
                       (click)="selectImage(image)"
                       />
                     -->
-              <app-print-image
-                fxFlex
-                [printId]="printForm.get('id').value"
-                [imageId]="image.value.id"
-                [imageData]="image.value.url"
-                (imageDataChange)="image.value.url = $event"
-              ></app-print-image>
-            </div>
+                  <app-print-image
+                    fxFlex
+                    [printId]="printForm.get('id').value"
+                    [imageId]="image.value.id"
+                    [imageData]="image.value.url"
+                    (imageDataChange)="image.value.url = $event"
+                  ></app-print-image>
+                </div>
+              </div>
+            }
           </div>
-          }
-        </div>
         }
       </div>
       <mat-card-content
@@ -95,7 +101,7 @@
             maxlength="100"
           />
           @if (printForm.controls['title'].hasError('required')) {
-          <mat-error> A Title is <strong>required</strong> </mat-error>
+            <mat-error> A Title is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
@@ -106,13 +112,13 @@
             id="edit-print-printer"
           >
             @for (printer of printers; track printer) {
-            <mat-option [value]="printer.id">{{
-              getPrinterLabel(printer)
-            }}</mat-option>
+              <mat-option [value]="printer.id">{{
+                getPrinterLabel(printer)
+              }}</mat-option>
             }
           </mat-select>
           @if (printForm.controls['printerId'].hasError('required')) {
-          <mat-error> A Printer is <strong>required</strong> </mat-error>
+            <mat-error> A Printer is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
         <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
@@ -126,7 +132,7 @@
               aria-label="The date and time that the print was started."
             />
             @if (printForm.controls['startDate'].hasError('required')) {
-            <mat-error> A Start Date is <strong>required</strong> </mat-error>
+              <mat-error> A Start Date is <strong>required</strong> </mat-error>
             }
             <mat-datepicker-toggle
               matSuffix
@@ -289,418 +295,503 @@
           </button>
         </div>
         <div formArrayName="filamentUsage">
-          @for ( printFilament of filamentUsage.controls; track printFilament;
-          let printFilamentIndex = $index) {
-          <div style="margin-bottom: 10px">
-            <div [formGroupName]="printFilamentIndex">
-              <mat-card
-                class="mat-elevation-z4"
-                fxFlex="grow"
-                fxFlexFill
-                fxLayout="row"
-              >
-                <mat-card-content>
-                  <div fxFlex="grow" fxLayout="column">
-                    <div fxFlex>
-                      <div
-                        class="filament-color-cell"
-                        [ngStyle]="{
-                          'background-color': printFilament.get('filament')
-                            .value?.colorHex
-                            ? '#' +
-                              printFilament.get('filament').value?.colorHex
-                            : null
-                        }"
-                      ></div>
-                    </div>
-                    <div fxFlex class="filament-section">
-                      {{
-                        printFilament.get('filament').value?.displayName ||
-                          'Other'
-                      }}
-                    </div>
-                    @if ( printFilament.get('filament').value?.colorName !== ''
-                    ) {
-                    <div fxFlex class="filament-section">
-                      {{ printFilament.get('filament').value?.colorName }}
-                    </div>
-                    }
-                    <div fxFlex class="filament-section">
-                      {{ printFilament.get('filament').value?.materialType }}
-                    </div>
-                    @if (printFilament.get('filament').value !== null) {
-                    <div fxFlex class="filament-section">
-                      {{
-                        printFilament.get('filament').value?.filamentRemaining /
-                          1000 | number
-                      }}
-                      (g) remaining
-                    </div>
-                    } @if (printFilament.get('filament').value !== null) {
-                    <div fxFlex class="filament-section">
-                      {{
-                        printFilament.get('filament').value
-                          ?.filamentLengthRemainingInM | number
-                      }}
-                      (m) remaining
-                    </div>
-                    } @if (printFilament.get('filament').value !== null) {
-                    <div fxFlex class="filament-section">
-                      {{
-                        printFilament.get('filament').value
-                          ?.filamentVolumeRemainingInMl | number
-                      }}
-                      (ml) remaining
-                    </div>
-                    } @if ( printFilament.get('filament').value !== null &&
-                    printFilament.get('filament').value ?.purchasePriceValue !==
-                    null && printFilament.get('filament').value
-                    ?.purchasePriceValue !== '' ) {
-                    <div fxFlex class="filament-section">
-                      Price: {{ preferredCurrency?.symbol
-                      }}{{
-                        printFilament.get('filament').value?.purchasePriceValue
-                      }}
-                    </div>
-                    } @if ( printFilament.get('filament').value !== null &&
-                    printFilament.get('filament').value ?.purchasePriceValue ===
-                    null && defaultFilamentPriceSetting?.value !== null ) {
-                    <div
-                      fxFlex
-                      class="filament-section"
-                      matTooltip="* using default filament price of {{
-                        preferredCurrency?.symbol
-                      }}{{ defaultFilamentPriceSetting?.value }}"
-                    >
-                      Price: {{ preferredCurrency?.symbol
-                      }}{{ defaultFilamentPriceSetting?.value }}*
-                    </div>
-                    }
-                    <div fxFlex>
-                      <button
-                        type="button"
-                        mat-raised-button
-                        (click)="removeFilament(printFilamentIndex)"
-                        aria-label="Delete Filament"
-                      >
-                        <mat-icon>delete</mat-icon>Delete
-                      </button>
-                    </div>
-                  </div>
-                  <div fxFlex="grow" fxLayout="column">
-                    <div fxFlex="grow" fxFlexFill>
-                      <button
-                        fxFlex="grow"
-                        mat-raised-button
-                        color="accent"
-                        (click)="searchFilament(printFilament.get('filament'))"
-                        type="button"
-                        style="margin-bottom: 5px"
-                      >
+          @for (
+            printFilament of filamentUsage.controls;
+            track printFilament;
+            let printFilamentIndex = $index
+          ) {
+            <div style="margin-bottom: 10px">
+              <div [formGroupName]="printFilamentIndex">
+                <mat-card
+                  class="mat-elevation-z4"
+                  fxFlex="grow"
+                  fxFlexFill
+                  fxLayout="row"
+                >
+                  <mat-card-content>
+                    <div fxFlex="grow" fxLayout="column">
+                      <div fxFlex>
+                        <div
+                          class="filament-color-cell"
+                          [ngStyle]="{
+                            'background-color': printFilament.get('filament')
+                              .value?.colorHex
+                              ? '#' +
+                                printFilament.get('filament').value?.colorHex
+                              : null
+                          }"
+                        ></div>
+                      </div>
+                      <div fxFlex class="filament-section">
                         {{
-                          printFilament.get('filament')?.value !== null
-                            ? 'Change'
-                            : 'Select'
+                          printFilament.get('filament').value?.displayName ||
+                            'Other'
                         }}
-                        {{ materialCategoryNameForSelectedPrinter | titlecase }}
-                      </button>
-                    </div>
-                    <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
-                      @if ( printFilament.get('estimatedSource').value ===
-                      printFilamentSourceMeasurementTypes.Weight ) {
-                      <mat-form-field fxFlex="grow">
-                        <mat-label>
-                          Estimated
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Used (g)</mat-label
-                        >
-                        <input
-                          id="edit-print-estimated-filement-used-gram-{{
-                            printFilamentIndex
-                          }}"
-                          matInput
-                          type="text"
-                          pattern="^\d*(\.\d{0,3})?$"
-                          formControlName="estimatedAmountG"
-                        />
-                        @if ( printFilament .get('estimatedAmountG')
-                        .hasError('min') ) {
-                        <mat-error>
-                          Estimated
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Usage must be a positive number.
-                        </mat-error>
-                        } @if ( printFilament .get('estimatedAmountG')
-                        .hasError('pattern') ) {
-                        <mat-error>
-                          Numbers (up to 3-decimal places) only.
-                        </mat-error>
-                        }
-                      </mat-form-field>
-                      } @if ( printFilament.get('estimatedSource').value ===
-                      printFilamentSourceMeasurementTypes.Length ) {
-                      <mat-form-field fxFlex="grow">
-                        <mat-label>
-                          Estimated
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Used (m)</mat-label
-                        >
-                        <input
-                          id="edit-print-estimated-filement-used-meter-{{
-                            printFilamentIndex
-                          }}"
-                          matInput
-                          type="text"
-                          formControlName="estimatedLengthInM"
-                        />
-                        @if ( printFilament .get('estimatedLengthInM')
-                        .hasError('min') ) {
-                        <mat-error>
-                          Estimated
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Usage must be a positive number.
-                        </mat-error>
-                        }
-                      </mat-form-field>
-                      } @if ( printFilament.get('estimatedSource').value ===
-                      printFilamentSourceMeasurementTypes.Volume ) {
-                      <mat-form-field fxFlex="grow">
-                        <mat-label>
-                          Estimated
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Used (ml)</mat-label
-                        >
-                        <input
-                          id="edit-print-estimated-filement-used-ml-{{
-                            printFilamentIndex
-                          }}"
-                          matInput
-                          type="text"
-                          formControlName="estimatedVolumeMl"
-                        />
-                        @if ( printFilament .get('estimatedVolumeMl')
-                        .hasError('min') ) {
-                        <mat-error>
-                          Estimated
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Usage must be a positive number.
-                        </mat-error>
-                        }
-                      </mat-form-field>
+                      </div>
+                      @if (
+                        printFilament.get('filament').value?.colorName !== ''
+                      ) {
+                        <div fxFlex class="filament-section">
+                          {{ printFilament.get('filament').value?.colorName }}
+                        </div>
                       }
-                      <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
-                        <mat-label>Measure</mat-label>
-                        <mat-select
-                          formControlName="estimatedSource"
-                          (selectionChange)="
-                            HandleFilamentMeasureTypeChange($event.value)
+                      <div fxFlex class="filament-section">
+                        {{ printFilament.get('filament').value?.materialType }}
+                      </div>
+                      @if (printFilament.get('filament').value !== null) {
+                        <div fxFlex class="filament-section">
+                          {{
+                            printFilament.get('filament').value
+                              ?.filamentRemaining / 1000 | number
+                          }}
+                          (g) remaining
+                        </div>
+                      }
+                      @if (printFilament.get('filament').value !== null) {
+                        <div fxFlex class="filament-section">
+                          {{
+                            printFilament.get('filament').value
+                              ?.filamentLengthRemainingInM | number
+                          }}
+                          (m) remaining
+                        </div>
+                      }
+                      @if (printFilament.get('filament').value !== null) {
+                        <div fxFlex class="filament-section">
+                          {{
+                            printFilament.get('filament').value
+                              ?.filamentVolumeRemainingInMl | number
+                          }}
+                          (ml) remaining
+                        </div>
+                      }
+                      @if (
+                        printFilament.get('filament').value !== null &&
+                        printFilament.get('filament').value
+                          ?.purchasePriceValue !== null &&
+                        printFilament.get('filament').value
+                          ?.purchasePriceValue !== ''
+                      ) {
+                        <div fxFlex class="filament-section">
+                          Price: {{ preferredCurrency?.symbol
+                          }}{{
+                            printFilament.get('filament').value
+                              ?.purchasePriceValue
+                          }}
+                        </div>
+                      }
+                      @if (
+                        printFilament.get('filament').value !== null &&
+                        printFilament.get('filament').value
+                          ?.purchasePriceValue === null &&
+                        defaultFilamentPriceSetting?.value !== null
+                      ) {
+                        <div
+                          fxFlex
+                          class="filament-section"
+                          matTooltip="* using default filament price of {{
+                            preferredCurrency?.symbol
+                          }}{{ defaultFilamentPriceSetting?.value }}"
+                        >
+                          Price: {{ preferredCurrency?.symbol
+                          }}{{ defaultFilamentPriceSetting?.value }}*
+                        </div>
+                      }
+                      <div fxFlex>
+                        <button
+                          type="button"
+                          mat-raised-button
+                          (click)="removeFilament(printFilamentIndex)"
+                          aria-label="Delete Filament"
+                        >
+                          <mat-icon>delete</mat-icon>Delete
+                        </button>
+                      </div>
+                    </div>
+                    <div fxFlex="grow" fxLayout="column">
+                      <div fxFlex="grow" fxFlexFill>
+                        <button
+                          fxFlex="grow"
+                          mat-raised-button
+                          color="accent"
+                          (click)="
+                            searchFilament(printFilament.get('filament'))
                           "
+                          type="button"
+                          style="margin-bottom: 5px"
                         >
-                          <mat-option
-                            [value]="printFilamentSourceMeasurementTypes.Weight"
-                          >
-                            Weight
-                          </mat-option>
-                          <mat-option
-                            [value]="printFilamentSourceMeasurementTypes.Length"
-                          >
-                            Length
-                          </mat-option>
-                          <mat-option
-                            [value]="printFilamentSourceMeasurementTypes.Volume"
-                          >
-                            Volume
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
-                      @if ( printFilament.get('source').value ===
-                      printFilamentSourceMeasurementTypes.Weight ) {
-                      <mat-form-field fxFlex="grow">
-                        <mat-label>
-                          Actual
+                          {{
+                            printFilament.get('filament')?.value !== null
+                              ? 'Change'
+                              : 'Select'
+                          }}
                           {{
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
-                          Used (g)</mat-label
-                        >
-                        <input
-                          id="edit-print-actual-filament-used-gram-{{
-                            printFilamentIndex
-                          }}"
-                          matInput
-                          type="text"
-                          pattern="^\d*(\.\d{0,3})?$"
-                          formControlName="amountG"
-                        />
-                        @if (printFilament.get('amountG').hasError('min')) {
-                        <mat-error>
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Usage must be a positive number.
-                        </mat-error>
-                        } @if ( printFilament.get('amountG').hasError('pattern')
+                        </button>
+                      </div>
+                      <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                        @if (
+                          printFilament.get('estimatedSource').value ===
+                          printFilamentSourceMeasurementTypes.Weight
                         ) {
-                        <mat-error>
-                          Numbers (up to 3-decimal places) only.
-                        </mat-error>
+                          <mat-form-field fxFlex="grow">
+                            <mat-label>
+                              Estimated
+                              {{
+                                materialCategoryNameForSelectedPrinter
+                                  | titlecase
+                              }}
+                              Used (g)</mat-label
+                            >
+                            <input
+                              id="edit-print-estimated-filement-used-gram-{{
+                                printFilamentIndex
+                              }}"
+                              matInput
+                              type="text"
+                              pattern="^\d*(\.\d{0,3})?$"
+                              formControlName="estimatedAmountG"
+                            />
+                            @if (
+                              printFilament
+                                .get('estimatedAmountG')
+                                .hasError('min')
+                            ) {
+                              <mat-error>
+                                Estimated
+                                {{
+                                  materialCategoryNameForSelectedPrinter
+                                    | titlecase
+                                }}
+                                Usage must be a positive number.
+                              </mat-error>
+                            }
+                            @if (
+                              printFilament
+                                .get('estimatedAmountG')
+                                .hasError('pattern')
+                            ) {
+                              <mat-error>
+                                Numbers (up to 3-decimal places) only.
+                              </mat-error>
+                            }
+                          </mat-form-field>
                         }
-                      </mat-form-field>
-                      } @if ( printFilament.get('source').value ===
-                      printFilamentSourceMeasurementTypes.Length ) {
-                      <mat-form-field fxFlex="grow">
+                        @if (
+                          printFilament.get('estimatedSource').value ===
+                          printFilamentSourceMeasurementTypes.Length
+                        ) {
+                          <mat-form-field fxFlex="grow">
+                            <mat-label>
+                              Estimated
+                              {{
+                                materialCategoryNameForSelectedPrinter
+                                  | titlecase
+                              }}
+                              Used (m)</mat-label
+                            >
+                            <input
+                              id="edit-print-estimated-filement-used-meter-{{
+                                printFilamentIndex
+                              }}"
+                              matInput
+                              type="text"
+                              formControlName="estimatedLengthInM"
+                            />
+                            @if (
+                              printFilament
+                                .get('estimatedLengthInM')
+                                .hasError('min')
+                            ) {
+                              <mat-error>
+                                Estimated
+                                {{
+                                  materialCategoryNameForSelectedPrinter
+                                    | titlecase
+                                }}
+                                Usage must be a positive number.
+                              </mat-error>
+                            }
+                          </mat-form-field>
+                        }
+                        @if (
+                          printFilament.get('estimatedSource').value ===
+                          printFilamentSourceMeasurementTypes.Volume
+                        ) {
+                          <mat-form-field fxFlex="grow">
+                            <mat-label>
+                              Estimated
+                              {{
+                                materialCategoryNameForSelectedPrinter
+                                  | titlecase
+                              }}
+                              Used (ml)</mat-label
+                            >
+                            <input
+                              id="edit-print-estimated-filement-used-ml-{{
+                                printFilamentIndex
+                              }}"
+                              matInput
+                              type="text"
+                              formControlName="estimatedVolumeMl"
+                            />
+                            @if (
+                              printFilament
+                                .get('estimatedVolumeMl')
+                                .hasError('min')
+                            ) {
+                              <mat-error>
+                                Estimated
+                                {{
+                                  materialCategoryNameForSelectedPrinter
+                                    | titlecase
+                                }}
+                                Usage must be a positive number.
+                              </mat-error>
+                            }
+                          </mat-form-field>
+                        }
+                        <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                          <mat-label>Measure</mat-label>
+                          <mat-select
+                            formControlName="estimatedSource"
+                            (selectionChange)="
+                              HandleFilamentMeasureTypeChange($event.value)
+                            "
+                          >
+                            <mat-option
+                              [value]="
+                                printFilamentSourceMeasurementTypes.Weight
+                              "
+                            >
+                              Weight
+                            </mat-option>
+                            <mat-option
+                              [value]="
+                                printFilamentSourceMeasurementTypes.Length
+                              "
+                            >
+                              Length
+                            </mat-option>
+                            <mat-option
+                              [value]="
+                                printFilamentSourceMeasurementTypes.Volume
+                              "
+                            >
+                              Volume
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                      <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                        @if (
+                          printFilament.get('source').value ===
+                          printFilamentSourceMeasurementTypes.Weight
+                        ) {
+                          <mat-form-field fxFlex="grow">
+                            <mat-label>
+                              Actual
+                              {{
+                                materialCategoryNameForSelectedPrinter
+                                  | titlecase
+                              }}
+                              Used (g)</mat-label
+                            >
+                            <input
+                              id="edit-print-actual-filament-used-gram-{{
+                                printFilamentIndex
+                              }}"
+                              matInput
+                              type="text"
+                              pattern="^\d*(\.\d{0,3})?$"
+                              formControlName="amountG"
+                            />
+                            @if (printFilament.get('amountG').hasError('min')) {
+                              <mat-error>
+                                {{
+                                  materialCategoryNameForSelectedPrinter
+                                    | titlecase
+                                }}
+                                Usage must be a positive number.
+                              </mat-error>
+                            }
+                            @if (
+                              printFilament.get('amountG').hasError('pattern')
+                            ) {
+                              <mat-error>
+                                Numbers (up to 3-decimal places) only.
+                              </mat-error>
+                            }
+                          </mat-form-field>
+                        }
+                        @if (
+                          printFilament.get('source').value ===
+                          printFilamentSourceMeasurementTypes.Length
+                        ) {
+                          <mat-form-field fxFlex="grow">
+                            <mat-label>
+                              Actual
+                              {{
+                                materialCategoryNameForSelectedPrinter
+                                  | titlecase
+                              }}
+                              Used (m)</mat-label
+                            >
+                            <input
+                              id="edit-print-actual-filament-used-meter-{{
+                                printFilamentIndex
+                              }}"
+                              matInput
+                              type="text"
+                              formControlName="lengthInM"
+                            />
+                            @if (
+                              printFilament.get('lengthInM').hasError('min')
+                            ) {
+                              <mat-error>
+                                Actual
+                                {{
+                                  materialCategoryNameForSelectedPrinter
+                                    | titlecase
+                                }}
+                                Usage must be a positive number.
+                              </mat-error>
+                            }
+                          </mat-form-field>
+                        }
+                        @if (
+                          printFilament.get('source').value ===
+                          printFilamentSourceMeasurementTypes.Volume
+                        ) {
+                          <mat-form-field fxFlex="grow">
+                            <mat-label>
+                              Actual
+                              {{
+                                materialCategoryNameForSelectedPrinter
+                                  | titlecase
+                              }}
+                              Used (ml)</mat-label
+                            >
+                            <input
+                              id="edit-print-actual-filament-used-ml-{{
+                                printFilamentIndex
+                              }}"
+                              matInput
+                              type="text"
+                              formControlName="volumeMl"
+                            />
+                            @if (
+                              printFilament.get('volumeMl').hasError('min')
+                            ) {
+                              <mat-error>
+                                Actual
+                                {{
+                                  materialCategoryNameForSelectedPrinter
+                                    | titlecase
+                                }}
+                                Usage must be a positive number.
+                              </mat-error>
+                            }
+                          </mat-form-field>
+                        }
+                        <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                          <mat-label>Measure</mat-label>
+                          <mat-select formControlName="source">
+                            <mat-option
+                              [value]="
+                                printFilamentSourceMeasurementTypes.Weight
+                              "
+                            >
+                              Weight
+                            </mat-option>
+                            <mat-option
+                              [value]="
+                                printFilamentSourceMeasurementTypes.Length
+                              "
+                            >
+                              Length
+                            </mat-option>
+                            <mat-option
+                              [value]="
+                                printFilamentSourceMeasurementTypes.Volume
+                              "
+                            >
+                              Volume
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                      <mat-form-field fxFlex="grow" fxFlexFill>
                         <mat-label>
-                          Actual
                           {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Used (m)</mat-label
+                            printFilament.get('filament').value === null
+                              ? 'Filament Type'
+                              : 'Filament Notes'
+                          }}</mat-label
                         >
                         <input
-                          id="edit-print-actual-filament-used-meter-{{
+                          id="edit-print-filament-notes-{{
                             printFilamentIndex
                           }}"
                           matInput
                           type="text"
-                          formControlName="lengthInM"
+                          maxlength="1000"
+                          formControlName="notes"
                         />
-                        @if (printFilament.get('lengthInM').hasError('min')) {
-                        <mat-error>
-                          Actual
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Usage must be a positive number.
-                        </mat-error>
-                        }
                       </mat-form-field>
-                      } @if ( printFilament.get('source').value ===
-                      printFilamentSourceMeasurementTypes.Volume ) {
-                      <mat-form-field fxFlex="grow">
-                        <mat-label>
-                          Actual
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Used (ml)</mat-label
+                      @if (printFilament.get('filament').value !== null) {
+                        <div
+                          gdColumns="max-content auto"
+                          gdRows="2"
+                          gdGap="10px"
+                          style="padding-inline: 10px; padding-bottom: 5px"
                         >
-                        <input
-                          id="edit-print-actual-filament-used-ml-{{
-                            printFilamentIndex
-                          }}"
-                          matInput
-                          type="text"
-                          formControlName="volumeMl"
-                        />
-                        @if (printFilament.get('volumeMl').hasError('min')) {
-                        <mat-error>
-                          Actual
-                          {{
-                            materialCategoryNameForSelectedPrinter | titlecase
-                          }}
-                          Usage must be a positive number.
-                        </mat-error>
-                        }
-                      </mat-form-field>
-                      }
-                      <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
-                        <mat-label>Measure</mat-label>
-                        <mat-select formControlName="source">
-                          <mat-option
-                            [value]="printFilamentSourceMeasurementTypes.Weight"
+                          <div gdColumn="1" gdRow="1">Estimated Cost:</div>
+                          <div
+                            gdColumn="2"
+                            gdRow="1"
+                            matTooltip="* using default filament price of {{
+                              defaultFilamentPriceSetting?.value
+                            }}"
+                            [matTooltipDisabled]="
+                              printFilament.get('filament').value
+                                ?.purchasePriceValue !== null
+                            "
                           >
-                            Weight
-                          </mat-option>
-                          <mat-option
-                            [value]="printFilamentSourceMeasurementTypes.Length"
-                          >
-                            Length
-                          </mat-option>
-                          <mat-option
-                            [value]="printFilamentSourceMeasurementTypes.Volume"
-                          >
-                            Volume
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <mat-form-field fxFlex="grow" fxFlexFill>
-                      <mat-label>
-                        {{
-                          printFilament.get('filament').value === null
-                            ? 'Filament Type'
-                            : 'Filament Notes'
-                        }}</mat-label
-                      >
-                      <input
-                        id="edit-print-filament-notes-{{ printFilamentIndex }}"
-                        matInput
-                        type="text"
-                        maxlength="1000"
-                        formControlName="notes"
-                      />
-                    </mat-form-field>
-                    @if (printFilament.get('filament').value !== null) {
-                    <div
-                      gdColumns="max-content auto"
-                      gdRows="2"
-                      gdGap="10px"
-                      style="padding-inline: 10px; padding-bottom: 5px"
-                    >
-                      <div gdColumn="1" gdRow="1">Estimated Cost:</div>
-                      <div
-                        gdColumn="2"
-                        gdRow="1"
-                        matTooltip="* using default filament price of {{
-                          defaultFilamentPriceSetting?.value
-                        }}"
-                        [matTooltipDisabled]="
-                          printFilament.get('filament').value
-                            ?.purchasePriceValue !== null
-                        "
-                      >
-                        {{ getEstimatedPrice($any(printFilament)) }}
-                      </div>
-                      @if ( printFilament.get('amountG').value !== 0 ||
-                      printFilament.get('lengthInM').value !== 0 ) {
-                      <div gdColumn="1" gdRow="2">Actual Cost:</div>
-                      } @if ( printFilament.get('amountG').value !== 0 ||
-                      printFilament.get('lengthInM').value !== 0 ) {
-                      <div
-                        gdColumn="2"
-                        gdRow="2"
-                        matTooltip="* using default filament price of {{
-                          preferredCurrency?.symbol
-                        }}{{ defaultFilamentPriceSetting?.value }}"
-                        [matTooltipDisabled]="
-                          printFilament.get('filament').value
-                            ?.purchasePriceValue !== null
-                        "
-                      >
-                        {{ getActualPrice($any(printFilament)) }}
-                      </div>
+                            {{ getEstimatedPrice($any(printFilament)) }}
+                          </div>
+                          @if (
+                            printFilament.get('amountG').value !== 0 ||
+                            printFilament.get('lengthInM').value !== 0
+                          ) {
+                            <div gdColumn="1" gdRow="2">Actual Cost:</div>
+                          }
+                          @if (
+                            printFilament.get('amountG').value !== 0 ||
+                            printFilament.get('lengthInM').value !== 0
+                          ) {
+                            <div
+                              gdColumn="2"
+                              gdRow="2"
+                              matTooltip="* using default filament price of {{
+                                preferredCurrency?.symbol
+                              }}{{ defaultFilamentPriceSetting?.value }}"
+                              [matTooltipDisabled]="
+                                printFilament.get('filament').value
+                                  ?.purchasePriceValue !== null
+                              "
+                            >
+                              {{ getActualPrice($any(printFilament)) }}
+                            </div>
+                          }
+                        </div>
                       }
                     </div>
-                    }
-                  </div>
-                </mat-card-content>
-              </mat-card>
+                  </mat-card-content>
+                </mat-card>
+              </div>
             </div>
-          </div>
           }
         </div>
         <mat-form-field fxFlex="grow" fxFlexFill>
@@ -716,10 +807,10 @@
             cdkAutosizeMaxRows="15"
           ></textarea>
           @if (50000 - printForm.get('notes').value.length < 1000) {
-          <mat-hint align="end">
-            {{ 50000 - printForm.get('notes').value.length }} characters
-            remaining.</mat-hint
-          >
+            <mat-hint align="end">
+              {{ 50000 - printForm.get('notes').value.length }} characters
+              remaining.</mat-hint
+            >
           }
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
@@ -767,24 +858,27 @@
               >
             </mat-select>
           </mat-form-field>
-          @if ( this.printForm && this.printForm.get('viewStatus').dirty &&
-          (this.defaultPrintViewStatusSetting === null ||
-          this.printForm.get('viewStatus').value.toString() !==
-          this.defaultPrintViewStatusSetting.value.toString()) ) {
-          <button
-            fxFlex
-            style="margin-left: 10px; height: 72%"
-            mat-raised-button
-            type="button"
-            color="accent"
-            (click)="
-              this.changeDefaultViewStatus(
-                this.printForm.get('viewStatus').value
-              )
-            "
-          >
-            Save as Default View Status
-          </button>
+          @if (
+            this.printForm &&
+            this.printForm.get('viewStatus').dirty &&
+            (this.defaultPrintViewStatusSetting === null ||
+              this.printForm.get('viewStatus').value.toString() !==
+                this.defaultPrintViewStatusSetting.value.toString())
+          ) {
+            <button
+              fxFlex
+              style="margin-left: 10px; height: 72%"
+              mat-raised-button
+              type="button"
+              color="accent"
+              (click)="
+                this.changeDefaultViewStatus(
+                  this.printForm.get('viewStatus').value
+                )
+              "
+            >
+              Save as Default View Status
+            </button>
           }
         </div>
         <mat-checkbox
@@ -801,23 +895,23 @@
         fxLayoutGap="15px"
       >
         @if (printForm.get('id').value) {
-        <div fxFlex="grow" fxFlexFill>
-          <button
-            id="edit-print-copy-btn"
-            mat-raised-button
-            [disabled]="printForm.dirty || saving"
-            type="button"
-            color="accent"
-            title="{{
-              printForm.dirty || saving
-                ? 'Save changes before copying'
-                : 'Copy to a new print'
-            }}"
-            [routerLink]="['../..', 'copy', printForm.get('id').value]"
-          >
-            Copy
-          </button>
-        </div>
+          <div fxFlex="grow" fxFlexFill>
+            <button
+              id="edit-print-copy-btn"
+              mat-raised-button
+              [disabled]="printForm.dirty || saving"
+              type="button"
+              color="accent"
+              title="{{
+                printForm.dirty || saving
+                  ? 'Save changes before copying'
+                  : 'Copy to a new print'
+              }}"
+              [routerLink]="['../..', 'copy', printForm.get('id').value]"
+            >
+              Copy
+            </button>
+          </div>
         }
         <div
           fxFlex="grow"

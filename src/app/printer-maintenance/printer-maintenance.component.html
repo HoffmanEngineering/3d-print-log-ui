@@ -5,347 +5,320 @@
     fxLayout
     fxLayoutAlign="start center"
     fxLayoutGap="5px"
-    >
+  >
     <button
       mat-raised-button
       (click)="addEntry()"
       type="button"
       color="accent"
       id="add-entry"
-      >
+    >
       Add Entry
     </button>
     <div fxLayoutGap="10px">
       <mat-form-field>
         <mat-label> Search: </mat-label
-          ><input
+        ><input
           matInput
           type="text"
           [(ngModel)]="searchText"
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
           [disabled]="this.editId !== null"
-        /></mat-form-field>
-        <mat-form-field>
-          <mat-label> Filter by Printers</mat-label>
-          <mat-select
-            [(ngModel)]="filterByPrinterIds"
-            (ngModelChange)="this.currentPage = 1; updateFilter()"
-            multiple
-            [disabled]="this.editId !== null"
-            >
-            @for (printer of printers; track printer) {
-              <mat-option [value]="printer.id">{{
-                getPrinterLabel(printer)
-              }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
-      <button
-        fxFlex="120px"
-        fxFlex.xs="80px"
-        style="height: 36px"
-        [ngStyle.xs]="{
+      /></mat-form-field>
+      <mat-form-field>
+        <mat-label> Filter by Printers</mat-label>
+        <mat-select
+          [(ngModel)]="filterByPrinterIds"
+          (ngModelChange)="this.currentPage = 1; updateFilter()"
+          multiple
+          [disabled]="this.editId !== null"
+        >
+          @for (printer of printers; track printer) {
+            <mat-option [value]="printer.id">{{
+              getPrinterLabel(printer)
+            }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <button
+      fxFlex="120px"
+      fxFlex.xs="80px"
+      style="height: 36px"
+      [ngStyle.xs]="{
         height: 'auto',
         'white-space': 'normal',
         'line-height': '26px'
-        }"
-        mat-raised-button
-        (click)="resetFilters()"
-        [disabled]="this.editId !== null"
-        >
-        Reset Filters
-      </button>
-    </div>
-    <table
-      fxFlex="grow"
-      aria-label="Print List"
-      aria-live="polite"
-      mat-table
-      [dataSource]="entries"
-      matSort
-      (matSortChange)="sortData($event)"
-      [matSortDisabled]="this.editId !== null"
-      [matSortDisableClear]="true"
-      >
-      <ng-container matColumnDef="done">
-        <th scope="col" mat-header-cell *matHeaderCellDef>Done</th>
-        <td mat-cell *matCellDef="let entry">
-          <mat-checkbox
-            [(checked)]="entry.done"
-            (change)="toggleDone(entry, $event.checked)"
-            [disabled]="this.editId !== null && this.editId !== entry.id"
-          ></mat-checkbox>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="date">
-        <th
-          scope="col"
-          mat-header-cell
-          *matHeaderCellDef
-          [mat-sort-header]="printerMaintenanceSortColumn.Date"
-          >
-          Date
-        </th>
-        <td mat-cell *matCellDef="let entry">
-          @if (entry.id === this.editId) {
-            <mat-form-field
-              style="width: 100%"
-              [ngStyle.xs]="{ width: 'auto' }"
-              >
-              <input
-                matInput
-                [matDatepicker]="picker"
-                [value]="entry.date"
-                (dateChange)="updateDate(entry, $event)"
-                [disabled]="this.editId !== entry.id"
-                />
-              <mat-datepicker-toggle
-                matSuffix
-                [for]="picker"
-              ></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-              @if (dateError !== null) {
-                <mat-error>
-                  {{ dateError }}
-                </mat-error>
-              }
-            </mat-form-field>
-          }
-          @if (entry.id === this.editId && dateError !== null) {
-            <div
-              class="error-message"
-              >
-              {{ this.dateError }}
-            </div>
-          }
-          @if (entry.id !== this.editId) {
-            <span>
-              {{ entry.date | date }}
-            </span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="printer">
-        <th mat-header-cell *matHeaderCellDef>Printer</th>
-        <td mat-cell *matCellDef="let entry">
-          @if (entry.id === this.editId) {
-            <mat-form-field
-              style="width: 100%"
-              [ngStyle.xs]="{ width: 'auto' }"
-              >
-              <mat-label> Printer </mat-label>
-              <mat-select
-                [(ngModel)]="entry.printerId"
-                (ngModelChange)="updatePrinter(entry, $event)"
-                [disabled]="this.editId !== entry.id"
-                #printerValue="ngModel"
-                >
-                @for (printer of printers; track printer) {
-                  <mat-option [value]="printer.id">{{
-                    getPrinterLabel(printer)
-                  }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          }
-          @if (entry.id === this.editId && printerError !== null) {
-            <div
-              class="error-message"
-              >
-              {{ this.printerError }}
-            </div>
-          }
-          @if (entry.id !== this.editId) {
-            <span>
-              {{ getPrinterLabel(entry.printer) }}
-            </span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="category">
-        <th scope="col" mat-header-cell *matHeaderCellDef>Category</th>
-        <td mat-cell *matCellDef="let entry">
-          @if (entry.id === this.editId) {
-            <mat-form-field
-              style="width: 100%"
-              [ngStyle.xs]="{ width: 'auto' }"
-              >
-              <input
-                matInput
-                [(ngModel)]="entry.category"
-                (ngModelChange)="filterCategories($event)"
-                [disabled]="this.editId !== entry.id"
-                [matAutocomplete]="autoCategories"
-                />
-              <mat-autocomplete #autoCategories="matAutocomplete">
-                @for (option of this.filteredCategories; track option) {
-                  <mat-option
-                    [value]="option"
-                    >
-                    {{ option }}
-                  </mat-option>
-                }
-              </mat-autocomplete>
-            </mat-form-field>
-          }
-          @if (entry.id !== this.editId) {
-            <span>
-              {{ entry.category }}
-            </span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="description">
-        <th scope="col" mat-header-cell *matHeaderCellDef>Description</th>
-        <td mat-cell *matCellDef="let entry">
-          @if (entry.id === this.editId) {
-            <mat-form-field
-              style="width: 100%"
-              [ngStyle.xs]="{ width: 'auto' }"
-              >
-              <input
-                matInput
-                [(ngModel)]="entry.description"
-                [disabled]="this.editId !== entry.id"
-                />
-            </mat-form-field>
-          }
-          @if (entry.id !== this.editId) {
-            <span>
-              {{ entry.description }}
-            </span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="price">
-        <th scope="col" mat-header-cell *matHeaderCellDef>Price</th>
-        <td mat-cell *matCellDef="let entry">
-          @if (entry.id === this.editId) {
-            <mat-form-field
-              style="width: 100%"
-              [ngStyle.xs]="{ width: 'auto' }"
-              >
-              <input
-                name="maintenance-price"
-                matInput
-                [(ngModel)]="entry.priceValue"
-                [disabled]="this.editId !== entry.id"
-                pattern="[0-9,.]*"
-                #purchasePriceValue="ngModel"
-                />
-              @if (purchasePriceValue.hasError('pattern')) {
-                <mat-error>
-                  Only numeric prices are allowed.
-                </mat-error>
-              }
-            </mat-form-field>
-          }
-          @if (entry.id !== this.editId) {
-            <span>
-              {{ formatPrice(entry) }}
-            </span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="notes">
-        <th scope="col" mat-header-cell *matHeaderCellDef>Notes</th>
-        <td mat-cell *matCellDef="let entry">
-          @if (entry.id === this.editId) {
-            <mat-form-field
-              style="width: 100%"
-              [ngStyle.xs]="{ width: 'auto' }"
-              >
-              <input
-                matInput
-                [(ngModel)]="entry.notes"
-                [disabled]="this.editId !== entry.id"
-                />
-            </mat-form-field>
-          }
-          @if (entry.id !== this.editId) {
-            <span>
-              {{ entry.notes }}
-            </span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="more">
-        <th scope="col" mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let entry">
-          <div>
-            @if (this.editId === entry.id) {
-              <button
-                mat-icon-button
-                (click)="saveEntry(entry)"
-                aria-label="Save"
-                matTooltip="Save"
-                matTooltipPosition="above"
-                >
-                <mat-icon>save</mat-icon>
-              </button>
-            }
-            @if (this.editId === entry.id) {
-              <button
-                mat-icon-button
-                (click)="cancelEdit()"
-                aria-label="Cancel"
-                matTooltip="Cancel"
-                matTooltipPosition="above"
-                >
-                <mat-icon>cancel</mat-icon>
-              </button>
-            }
-            @if (this.editId === entry.id && entry.id !== emptyGuid) {
-              <button
-                mat-icon-button
-                (click)="tryDeleteEntry(entry.id)"
-                aria-label="Delete"
-                matTooltip="Delete"
-                matTooltipPosition="above"
-                >
-                <mat-icon>delete</mat-icon>
-              </button>
-            }
-            @if (this.editId !== entry.id) {
-              <button
-                mat-icon-button
-                (click)="editEntry(entry)"
-                aria-label="Edit"
-                matTooltip="Edit"
-                matTooltipPosition="left"
-                [disabled]="this.editId !== null && this.editId !== entry.id"
-                >
-                <mat-icon>edit</mat-icon>
-              </button>
-            }
-          </div>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr
-        scope="row"
-        mat-row
-        *matRowDef="let row; columns: displayedColumns"
-        [attr.cy-print-row]="row.id"
-      ></tr>
-    </table>
-    @if (totalCount === 0) {
-      <div class="no-entries">
-        No maintenance entries found. Add a maintenance entry or try a different
-        search.
-      </div>
-    }
-    <mat-paginator
-      [pageIndex]="currentPage - 1"
-      [length]="totalCount"
-      [pageSize]="pageSize"
-      [pageSizeOptions]="[5, 10, 25, 100]"
-      (page)="pageChange($event)"
+      }"
+      mat-raised-button
+      (click)="resetFilters()"
       [disabled]="this.editId !== null"
-      >
-    </mat-paginator>
-    <app-ad></app-ad>
+    >
+      Reset Filters
+    </button>
   </div>
-  
+  <table
+    fxFlex="grow"
+    aria-label="Print List"
+    aria-live="polite"
+    mat-table
+    [dataSource]="entries"
+    matSort
+    (matSortChange)="sortData($event)"
+    [matSortDisabled]="this.editId !== null"
+    [matSortDisableClear]="true"
+  >
+    <ng-container matColumnDef="done">
+      <th scope="col" mat-header-cell *matHeaderCellDef>Done</th>
+      <td mat-cell *matCellDef="let entry">
+        <mat-checkbox
+          [(checked)]="entry.done"
+          (change)="toggleDone(entry, $event.checked)"
+          [disabled]="this.editId !== null && this.editId !== entry.id"
+        ></mat-checkbox>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="date">
+      <th
+        scope="col"
+        mat-header-cell
+        *matHeaderCellDef
+        [mat-sort-header]="printerMaintenanceSortColumn.Date"
+      >
+        Date
+      </th>
+      <td mat-cell *matCellDef="let entry">
+        @if (entry.id === this.editId) {
+          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+            <input
+              matInput
+              [matDatepicker]="picker"
+              [value]="entry.date"
+              (dateChange)="updateDate(entry, $event)"
+              [disabled]="this.editId !== entry.id"
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="picker"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            @if (dateError !== null) {
+              <mat-error>
+                {{ dateError }}
+              </mat-error>
+            }
+          </mat-form-field>
+        }
+        @if (entry.id === this.editId && dateError !== null) {
+          <div class="error-message">
+            {{ this.dateError }}
+          </div>
+        }
+        @if (entry.id !== this.editId) {
+          <span>
+            {{ entry.date | date }}
+          </span>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="printer">
+      <th mat-header-cell *matHeaderCellDef>Printer</th>
+      <td mat-cell *matCellDef="let entry">
+        @if (entry.id === this.editId) {
+          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+            <mat-label> Printer </mat-label>
+            <mat-select
+              [(ngModel)]="entry.printerId"
+              (ngModelChange)="updatePrinter(entry, $event)"
+              [disabled]="this.editId !== entry.id"
+              #printerValue="ngModel"
+            >
+              @for (printer of printers; track printer) {
+                <mat-option [value]="printer.id">{{
+                  getPrinterLabel(printer)
+                }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @if (entry.id === this.editId && printerError !== null) {
+          <div class="error-message">
+            {{ this.printerError }}
+          </div>
+        }
+        @if (entry.id !== this.editId) {
+          <span>
+            {{ getPrinterLabel(entry.printer) }}
+          </span>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="category">
+      <th scope="col" mat-header-cell *matHeaderCellDef>Category</th>
+      <td mat-cell *matCellDef="let entry">
+        @if (entry.id === this.editId) {
+          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+            <input
+              matInput
+              [(ngModel)]="entry.category"
+              (ngModelChange)="filterCategories($event)"
+              [disabled]="this.editId !== entry.id"
+              [matAutocomplete]="autoCategories"
+            />
+            <mat-autocomplete #autoCategories="matAutocomplete">
+              @for (option of this.filteredCategories; track option) {
+                <mat-option [value]="option">
+                  {{ option }}
+                </mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+        }
+        @if (entry.id !== this.editId) {
+          <span>
+            {{ entry.category }}
+          </span>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="description">
+      <th scope="col" mat-header-cell *matHeaderCellDef>Description</th>
+      <td mat-cell *matCellDef="let entry">
+        @if (entry.id === this.editId) {
+          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+            <input
+              matInput
+              [(ngModel)]="entry.description"
+              [disabled]="this.editId !== entry.id"
+            />
+          </mat-form-field>
+        }
+        @if (entry.id !== this.editId) {
+          <span>
+            {{ entry.description }}
+          </span>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="price">
+      <th scope="col" mat-header-cell *matHeaderCellDef>Price</th>
+      <td mat-cell *matCellDef="let entry">
+        @if (entry.id === this.editId) {
+          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+            <input
+              name="maintenance-price"
+              matInput
+              [(ngModel)]="entry.priceValue"
+              [disabled]="this.editId !== entry.id"
+              pattern="[0-9,.]*"
+              #purchasePriceValue="ngModel"
+            />
+            @if (purchasePriceValue.hasError('pattern')) {
+              <mat-error> Only numeric prices are allowed. </mat-error>
+            }
+          </mat-form-field>
+        }
+        @if (entry.id !== this.editId) {
+          <span>
+            {{ formatPrice(entry) }}
+          </span>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="notes">
+      <th scope="col" mat-header-cell *matHeaderCellDef>Notes</th>
+      <td mat-cell *matCellDef="let entry">
+        @if (entry.id === this.editId) {
+          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+            <input
+              matInput
+              [(ngModel)]="entry.notes"
+              [disabled]="this.editId !== entry.id"
+            />
+          </mat-form-field>
+        }
+        @if (entry.id !== this.editId) {
+          <span>
+            {{ entry.notes }}
+          </span>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="more">
+      <th scope="col" mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let entry">
+        <div>
+          @if (this.editId === entry.id) {
+            <button
+              mat-icon-button
+              (click)="saveEntry(entry)"
+              aria-label="Save"
+              matTooltip="Save"
+              matTooltipPosition="above"
+            >
+              <mat-icon>save</mat-icon>
+            </button>
+          }
+          @if (this.editId === entry.id) {
+            <button
+              mat-icon-button
+              (click)="cancelEdit()"
+              aria-label="Cancel"
+              matTooltip="Cancel"
+              matTooltipPosition="above"
+            >
+              <mat-icon>cancel</mat-icon>
+            </button>
+          }
+          @if (this.editId === entry.id && entry.id !== emptyGuid) {
+            <button
+              mat-icon-button
+              (click)="tryDeleteEntry(entry.id)"
+              aria-label="Delete"
+              matTooltip="Delete"
+              matTooltipPosition="above"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+          @if (this.editId !== entry.id) {
+            <button
+              mat-icon-button
+              (click)="editEntry(entry)"
+              aria-label="Edit"
+              matTooltip="Edit"
+              matTooltipPosition="left"
+              [disabled]="this.editId !== null && this.editId !== entry.id"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          }
+        </div>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr
+      scope="row"
+      mat-row
+      *matRowDef="let row; columns: displayedColumns"
+      [attr.cy-print-row]="row.id"
+    ></tr>
+  </table>
+  @if (totalCount === 0) {
+    <div class="no-entries">
+      No maintenance entries found. Add a maintenance entry or try a different
+      search.
+    </div>
+  }
+  <mat-paginator
+    [pageIndex]="currentPage - 1"
+    [length]="totalCount"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5, 10, 25, 100]"
+    (page)="pageChange($event)"
+    [disabled]="this.editId !== null"
+  >
+  </mat-paginator>
+  <app-ad></app-ad>
+</div>

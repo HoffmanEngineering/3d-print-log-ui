@@ -3,7 +3,7 @@
   (mouseenter)="imageHovered = true"
   (mouseleave)="imageHovered = false"
   (click)="imageHovered = !imageHovered"
-  >
+>
   @if (showDeleteOnHover && imageHovered) {
     <button
       mat-raised-button
@@ -13,15 +13,11 @@
       class="overlay pointable"
       color="warn"
       (click)="handleDeleteClick($event)"
-      >
+    >
       <mat-icon>delete</mat-icon>Remove
     </button>
   }
   @if (imageData) {
-    <img
-      [src]="imageData"
-      class="fade-in"
-      alt="Image of 3D Print"
-      />
+    <img [src]="imageData" class="fade-in" alt="Image of 3D Print" />
   }
 </div>

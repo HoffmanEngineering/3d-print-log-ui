@@ -449,9 +449,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
     // eslint-disable-next-line max-len
-    (
-      dialogRef.componentInstance as any
-    ).body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
+    (dialogRef.componentInstance as any).body =
+      `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
     (dialogRef.componentInstance as any).yesText = 'Delete';
     (dialogRef.componentInstance as any).yesColor = 'warn';
     (dialogRef.componentInstance as any).noText = 'Cancel';
@@ -551,8 +550,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
         print.printTimeInSeconds > 0
           ? print.printTimeInSeconds
           : print.estimatedPrintTimeInSeconds > 0
-          ? print.estimatedPrintTimeInSeconds
-          : 0;
+            ? print.estimatedPrintTimeInSeconds
+            : 0;
 
       return moment(print.startDate).add(printTime, 'seconds').toDate();
     }

@@ -147,7 +147,17 @@ export class FilamentDetailComponent
             const selectedMaterial = this.materials.find((m) => {
               return this.materialNamePipe.transform(m) === value;
             });
-            if (selectedMaterial) {
+
+            const materialCategory = this.filamentForm.get(
+              'materialCategoryNickname'
+            ).value;
+
+            const isMaterialCategoryMatch =
+              materialCategory === '' ||
+              materialCategory == null ||
+              selectedMaterial?.materialCategoryNickname === materialCategory;
+
+            if (selectedMaterial && isMaterialCategoryMatch) {
               // This means a user selected a default materials
               this.filamentForm
                 .get('materialDensityGramPerCubicCm')
@@ -660,5 +670,13 @@ export class FilamentDetailComponent
           this.defaultFilamentPriceSetting = setting;
         });
     }
+  }
+
+  public getMaterialCategoryName(nickname: string): string {
+    const category = this.materialCategories.find((m) => {
+      return m.nickname === nickname;
+    });
+
+    return category?.name ?? '';
   }
 }

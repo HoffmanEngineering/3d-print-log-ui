@@ -34,6 +34,7 @@ export class PrinterListComponent implements OnInit {
     'name',
     'make',
     'model',
+    'type',
     'filament',
     'isActive',
     'more',

@@ -120,13 +120,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
     },
     {
       key: 'filamentSummary',
-      displayName: 'Filament',
-      description: 'Displays a summary of the filament used.',
+      displayName: 'Material',
+      description: 'Displays a summary of the material used.',
     },
     {
       key: 'totalFilamentUsage',
-      displayName: 'Total Filament (g)',
-      description: 'Displays the total filament usage in grams',
+      displayName: 'Total Material (g)',
+      description: 'Displays the total material usage in grams',
     },
     {
       key: 'totalCost',

@@ -20,10 +20,15 @@
     <button mat-raised-button color="accent">Add Printer</button> button.
   </p>
   <p>
-    Give the printer a <strong>Name</strong>, a <strong>Make</strong>, and a
-    <strong>Model</strong>. Add the correct <strong>filament</strong> and
-    <strong>nozzle</strong> diameters. Optionally add a description (which can
-    help when searching).
+    Give the printer a <strong>Name</strong>, select the
+    <strong>Printer Type</strong> such as FDM, SLA, etc. Then add a
+    <strong>Make</strong>, and a <strong>Model</strong>. Optionally add a
+    description (which can help when searching).
+  </p>
+  <p>
+    Different printer types have different options. For example, FDM printers
+    will have a filament diameter and nozzle diameter, while DLP resin printers
+    will have screen resolutions. Fill out any additional fields as needed.
   </p>
   <p>
     When ready, click
@@ -39,23 +44,23 @@
     printer.
   </p>
   <hr />
-  <h3 id="loaded_filament">Loaded Filament</h3>
+  <h3 id="loaded_filament">Loaded Material</h3>
   <p>
     Printers can have one or more filament rolls considered "loaded", meaning
     they are currently in use by that printer. When adding a new print, the
-    selected printer's "Loaded Filament" will automatically populate in the
-    print's Filament Usage section.
+    selected printer's "Loaded Material" will automatically populate in the
+    print's Material Usage section.
   </p>
-  <h4>Managing Loaded Filament</h4>
+  <h4>Managing Loaded Material</h4>
   <p>
     <strong>Automatic Load</strong> - The first time a New Print is saved, that
-    print's Filament Usage will be considered the currently loaded filament for
+    print's Material Usage will be considered the currently loaded filament for
     the selected printer.
   </p>
   <p>
     <strong>Manual Load</strong> - In a printer's <strong>Edit Page</strong>,
     you can manually load and unload filament. Simply click
-    <strong>Load Filament</strong> to select a new filament, or click
+    <strong>Load Material</strong> to select a new filament, or click
     <strong>Unload</strong> to remove a currently loaded filament.
   </p>
   <p>
@@ -66,7 +71,7 @@
   <p>
     <strong>Quick Unload</strong> - On the Printer List, click the
     <strong>...</strong> menu and select the
-    <strong>Unload Filament</strong> button to remove that printer's currently
+    <strong>Unload Material</strong> button to remove that printer's currently
     loaded filament.
   </p>
   <hr />

@@ -296,7 +296,7 @@
       </td>
     </ng-container>
     <ng-container matColumnDef="filamentSummary">
-      <th mat-header-cell *matHeaderCellDef>Filament</th>
+      <th mat-header-cell *matHeaderCellDef>Materials</th>
       <td mat-cell *matCellDef="let print">
         <div
           gdColumns="max-content max-content max-content max-content"
@@ -331,7 +331,7 @@
               @if (fu.amountMg !== null && fu.amountMg > 0) {
                 {{ fu.amountMg / 1000 | number: '1.0-1' }} g
               } @else {
-                <div matTooltip="* indicates Estimated Filament Usage">
+                <div matTooltip="* indicates Estimated Material Usage">
                   {{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }} g *
                 </div>
               }
@@ -339,7 +339,7 @@
             <div
               gdColumn="4"
               [gdRow]="i"
-              matTooltip="* indicates default filament price used"
+              matTooltip="* indicates default material price used"
             >
               @if (fu.amountMg !== null && fu.amountMg > 0) {
                 {{ getActualPrice(fu) }}
@@ -359,7 +359,7 @@
         *matHeaderCellDef
         [mat-sort-header]="printSummarySortColumns.FilamentUsage"
       >
-        Total Filament (g)
+        Total Material (g)
       </th>
       <td mat-cell *matCellDef="let print">
         {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}

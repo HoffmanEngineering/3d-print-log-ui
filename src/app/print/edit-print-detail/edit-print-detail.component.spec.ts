@@ -104,7 +104,7 @@ describe('EditPrintDetailComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             data: of({
-              printers: null,
+              printers: [],
               lastSelectedPrinterSetting: null,
               defaultPrintViewStatusSetting: null,
               print: { print: { printerId: 1, notes: '' } },

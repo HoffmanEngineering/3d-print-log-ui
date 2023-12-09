@@ -3,7 +3,6 @@ import { NavigationEnd, Router } from '@angular/router';
 
 import { environment } from 'src/environments/environment';
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 declare let gtag: Function;
 
 @Injectable({

@@ -1,6 +1,7 @@
 <mat-dialog-content>
   <app-filament-list
     (filamentSelected)="handleFilamentSelected($event)"
+    [filterByMaterialCategory]="data.filterByMaterialCategory"
   ></app-filament-list>
 </mat-dialog-content>
 <mat-dialog-actions align="end">

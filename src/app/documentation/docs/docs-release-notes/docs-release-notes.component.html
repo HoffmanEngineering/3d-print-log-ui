@@ -2,6 +2,67 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.25.0">
+    1.25.0 - Support all Materials and Printer Types (Resin, Powder, etc)
+  </h3>
+  <p>
+    3D Print Log now supports all materials and printer types. When adding a new
+    material, you can select whether the material is filament, resin, powder, or
+    wire. When adding a new printer, you can select whether the printer is FDM,
+    SLA, SLS, etc. The printer type will be used to filter your materials,
+    allowing easy filtering of materials that are compatible with your printer.
+  </p>
+  <p>
+    In addition to weight, 3D Print Log now supports length and volumetric
+    measurements for both Materials and Print Material Usage. Easily keep track
+    of the volume of bottles of resin, or add new filament spools that are
+    measured in length. No matter how your slicer reports material usage, you
+    can now track it in 3D Print Log.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Filament renamed to Materials</strong> - The Filament tab is now
+      the Materials tab
+    </li>
+    <li>
+      <strong>Materials Categories</strong> - Materials can now be filament,
+      resin, powder, or wire
+    </li>
+    <li>
+      <strong>Materials support length and volume for Initial Amounts</strong> -
+      When adding a new material, you can now specify the initial amount in
+      length or volume, in addition to weight.
+    </li>
+    <li>
+      <strong>New Material Settings</strong> - Materials now have new options,
+      depending on the category selected. New options for layer times, melting
+      temperatures, inert gas, and refresh ratios have been added.
+    </li>
+    <li>
+      <strong> Material List Filtered by Category</strong> - The material list
+      can be filtered by the category. When adding a material usage to a Print,
+      the selected printer will determine which materials are displayed.
+    </li>
+    <li>
+      <strong>Printer Types</strong> - Printers now have a type selection,
+      allowing you to mark a printer as FDM, SLA, SLS, etc. We tried to set all
+      existing printers to the correct type, but we cannot account for all
+      printers. You made need to change your existing printer types.
+    </li>
+    <li>
+      <strong>New Printer Settings</strong> - Printers now have new options,
+      depending on the type selected. New options for bed size, screen
+      resolutions, beam diameter, heated bed and chambers, and more have been
+      added.
+    </li>
+    <li>
+      <strong>Security and Performance Improvements</strong> - Updated website
+      dependencies, which bring various bug fixes, security and performance
+      improvements. The website is now running Angular 17.
+    </li>
+  </ul>
+
   <h3 id="v1.24.0">
     1.24.0 - Bambu Studio, Orca, and Creality Print Gcode Support
   </h3>

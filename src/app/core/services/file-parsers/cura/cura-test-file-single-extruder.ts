@@ -1,4 +1,5 @@
 /* eslint-disable */
+// prettier-ignore
 const data = {
   data: `
   ;FLAVOR:Marlin

@@ -8,5 +8,8 @@ import { AuthService } from 'src/app/core/services/auth.service';
   styleUrls: ['./docs-getting-started.component.scss'],
 })
 export class DocsGettingStartedComponent {
-  constructor(public authService: AuthService, public router: Router) {}
+  constructor(
+    public authService: AuthService,
+    public router: Router
+  ) {}
 }

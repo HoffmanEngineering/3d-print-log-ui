@@ -1,6 +1,6 @@
 /* eslint-disable */
 const data = {
-  'data': `;FLAVOR:Marlin
+  data: `;FLAVOR:Marlin
 ;TIME:6311
 ;Filament used: 6.72693m, 0m
 ;Layer height: 0.3
@@ -161670,7 +161670,7 @@ M104 S0
 ;SETTING_3  verydraft\\n\\n[values]\\nlayer_height_0 = 0.3\\nprime_tower_enable 
 ;SETTING_3 = True\\nprime_tower_position_x = 180\\nprime_tower_position_y = 160\
 ;SETTING_3 \nprime_tower_size = 37\\nsupport_extruder_nr = 1\\n\\n"}
-`
-}
+`,
+};
 
 export default data;

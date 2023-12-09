@@ -1,17 +1,17 @@
 <mat-nav-list class="sidebar">
-  <ng-container *ngFor="let item of navItems">
-    <ng-container *ngIf="item.divider">
+  @for (item of navItems; track item) {
+    @if (item.divider) {
       <div class="divider">
         <mat-divider></mat-divider>
       </div>
-    </ng-container>
-    <ng-container *ngIf="item.url">
+    }
+    @if (item.url) {
       <a
         mat-list-item
         [routerLink]="[item.url]"
         routerLinkActive="active-link"
         >{{ item.name }}</a
       >
-    </ng-container>
-  </ng-container>
+    }
+  }
 </mat-nav-list>

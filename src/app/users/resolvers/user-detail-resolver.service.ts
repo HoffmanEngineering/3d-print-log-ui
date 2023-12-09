@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
-  Resolve,
   Router,
   RouterStateSnapshot,
 } from '@angular/router';
@@ -11,7 +10,7 @@ import { catchError } from 'rxjs/operators';
 import { UserDetailDto, UserService } from 'src/app/core/services/user.service';
 
 @Injectable()
-export class UserDetailResolverService implements Resolve<UserDetailDto> {
+export class UserDetailResolverService {
   constructor(
     private userService: UserService,
     private readonly router: Router

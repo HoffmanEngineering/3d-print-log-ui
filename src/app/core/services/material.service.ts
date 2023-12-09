@@ -12,6 +12,7 @@ export interface Material {
   id: string;
   acronym: string | null;
   name: string | null;
+  materialCategoryNickname: string | null;
   densityGramPerCubicCm: number;
 }
 

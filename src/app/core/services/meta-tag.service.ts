@@ -26,7 +26,10 @@ export class MetaTagService {
   private readonly twitterTitleMeta: string = 'twitter:text:title';
   private readonly twitterImageMeta: string = 'twitter:image';
 
-  constructor(private titleService: Title, private metaService: Meta) {}
+  constructor(
+    private titleService: Title,
+    private metaService: Meta
+  ) {}
 
   public setTitle(title: string): void {
     this.titleService.setTitle(title);

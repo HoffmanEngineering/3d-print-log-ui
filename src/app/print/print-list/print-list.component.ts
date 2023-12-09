@@ -22,6 +22,7 @@ import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialo
 import {
   FilamentPrice,
   FilamentPriceInvalid,
+  PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
@@ -119,13 +120,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
     },
     {
       key: 'filamentSummary',
-      displayName: 'Filament',
-      description: 'Displays a summary of the filament used.',
+      displayName: 'Material',
+      description: 'Displays a summary of the material used.',
     },
     {
       key: 'totalFilamentUsage',
-      displayName: 'Total Filament (g)',
-      description: 'Displays the total filament usage in grams',
+      displayName: 'Total Material (g)',
+      description: 'Displays the total material usage in grams',
     },
     {
       key: 'totalCost',
@@ -153,7 +154,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public searchText = '';
 
-  public filterByStatus: PrintStatus | null = -1;
+  public filterByStatus: PrintStatus | null = null;
 
   public filterByPrinterIds: number[] = [];
 
@@ -364,7 +365,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public resetFilters() {
     this.currentPage = 1;
     this.searchText = '';
-    this.filterByStatus = -1;
+    this.filterByStatus = null;
     this.filterByPrinterIds = [];
 
     this.sortDirection = SortDirection.Desc;
@@ -448,9 +449,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
     // eslint-disable-next-line max-len
-    (
-      dialogRef.componentInstance as any
-    ).body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
+    (dialogRef.componentInstance as any).body =
+      `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
     (dialogRef.componentInstance as any).yesText = 'Delete';
     (dialogRef.componentInstance as any).yesColor = 'warn';
     (dialogRef.componentInstance as any).noText = 'Cancel';
@@ -550,8 +550,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
         print.printTimeInSeconds > 0
           ? print.printTimeInSeconds
           : print.estimatedPrintTimeInSeconds > 0
-          ? print.estimatedPrintTimeInSeconds
-          : 0;
+            ? print.estimatedPrintTimeInSeconds
+            : 0;
 
       return moment(print.startDate).add(printTime, 'seconds').toDate();
     }
@@ -562,7 +562,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public getEstimatedPrice(filamentUsage: PrintFilamentSummaryDto) {
     const filament = filamentUsage.filament;
 
-    const isLengthSource = filamentUsage.isEstimatedLengthSource;
+    const source = filamentUsage.estimatedSource;
 
     const weightG =
       filamentUsage.estimatedAmountMg > 0
@@ -571,6 +571,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     const lengthM = filamentUsage.estimatedLengthInM;
 
+    const volumeMl = filamentUsage.estimatedVolumeMl;
+
     const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
 
     const symbol = this.preferredCurrencySymbolSetting?.value ?? '$';
@@ -578,9 +580,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
     return this.formatFilamentPrice(
       this.printService.calculatePrintCost({
         filament,
-        isLengthSource,
+        source,
         weightG,
         lengthM,
+        volumeMl,
         currencySymbol: symbol,
         defaultFilamentPrice: defaultPrice,
       })
@@ -590,12 +593,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public getActualPrice(filamentUsage: PrintFilamentSummaryDto) {
     const filament = filamentUsage.filament;
 
-    const isLengthSource = filamentUsage.isActualLengthSource;
-
+    const source = filamentUsage.source;
     const weightG =
       filamentUsage.amountMg > 0 ? filamentUsage.amountMg / 1000 : undefined;
 
     const lengthM = filamentUsage.lengthInM;
+
+    const volumeMl = filamentUsage.volumeMl;
 
     const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
 
@@ -604,9 +608,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
     return this.formatFilamentPrice(
       this.printService.calculatePrintCost({
         filament,
-        isLengthSource,
+        source,
         weightG,
         lengthM,
+        volumeMl,
         currencySymbol: symbol,
         defaultFilamentPrice: defaultPrice,
       })

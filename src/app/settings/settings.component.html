@@ -1,5 +1,5 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="1000px" fxFlex.xs="100%">
+  <mat-card appearance="outlined" fxFlex="1000px" fxFlex.lt-md="100%" fxFlex.xs="100%">
     <div
       fxLayout="column"
       fxLayoutAlign="start center"
@@ -10,7 +10,6 @@
         <h1>General Settings</h1>
         <hr />
       </div>
-
       <div
         fxFlex="grow"
         fxFlexFill
@@ -45,35 +44,35 @@
             </option>
           </select>
         </div>
-
-        <div *ngIf="profileViewStatus !== this.userDetailsOnLoad.viewStatus">
-          <div
-            style="margin-top: 10px"
-            fxLayout
-            fxLayoutAlign="center center"
-            fxLayoutGap="15px"
-          >
-            <button
-              mat-raised-button
-              type="submit"
-              color="primary"
-              (click)="saveProfileVisibility(profileViewStatus)"
+        @if (profileViewStatus !== this.userDetailsOnLoad.viewStatus) {
+          <div>
+            <div
+              style="margin-top: 10px"
+              fxLayout
+              fxLayoutAlign="center center"
+              fxLayoutGap="15px"
             >
-              Save Visibility
-            </button>
-            <button
-              mat-raised-button
-              type="button"
-              class="close"
-              (click)="profileViewStatus = this.userDetailsOnLoad.viewStatus"
-              color="warn"
-            >
-              Cancel
-            </button>
+              <button
+                mat-raised-button
+                type="submit"
+                color="primary"
+                (click)="saveProfileVisibility(profileViewStatus)"
+              >
+                Save Visibility
+              </button>
+              <button
+                mat-raised-button
+                type="button"
+                class="close"
+                (click)="profileViewStatus = this.userDetailsOnLoad.viewStatus"
+                color="warn"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        }
       </div>
-
       <div
         fxFlex="grow"
         fxFlexFill
@@ -108,40 +107,38 @@
             </option>
           </select>
         </div>
-
-        <div
-          *ngIf="
-            printViewStatus?.toString() !==
-            this.defaultPrintViewStatusSettingOnLoad?.value?.toString()
-          "
-        >
-          <div
-            style="margin-top: 10px"
-            fxLayout
-            fxLayoutAlign="center center"
-            fxLayoutGap="15px"
-          >
-            <button
-              mat-raised-button
-              type="submit"
-              color="primary"
-              (click)="saveDefaultPrintViewStatus(printViewStatus)"
+        @if (
+          printViewStatus?.toString() !==
+          this.defaultPrintViewStatusSettingOnLoad?.value?.toString()
+        ) {
+          <div>
+            <div
+              style="margin-top: 10px"
+              fxLayout
+              fxLayoutAlign="center center"
+              fxLayoutGap="15px"
             >
-              Save Visibility
-            </button>
-            <button
-              mat-raised-button
-              type="button"
-              class="close"
-              (click)="cancelDefaultPrintViewStatus()"
-              color="warn"
-            >
-              Cancel
-            </button>
+              <button
+                mat-raised-button
+                type="submit"
+                color="primary"
+                (click)="saveDefaultPrintViewStatus(printViewStatus)"
+              >
+                Save Visibility
+              </button>
+              <button
+                mat-raised-button
+                type="button"
+                class="close"
+                (click)="cancelDefaultPrintViewStatus()"
+                color="warn"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        }
       </div>
-
       <div
         fxFlex="grow"
         fxFlexFill
@@ -165,48 +162,48 @@
             name="preferred-currency"
             [(ngModel)]="preferredCurrency"
           >
-            <option
-              *ngFor="let currency of currencies | keyvalue : sortByName"
-              [ngValue]="currency.key"
-            >
-              {{ currency.value.name }} - {{ currency.value.symbol }}
-            </option>
+            @for (
+              currency of currencies | keyvalue: sortByName;
+              track currency
+            ) {
+              <option [ngValue]="currency.key">
+                {{ currency.value.name }} - {{ currency.value.symbol }}
+              </option>
+            }
           </select>
         </div>
-
-        <div
-          *ngIf="
-            preferredCurrency?.toString() !==
-            this.preferredCurrencyNameSettingOnLoad?.value?.toString()
-          "
-        >
-          <div
-            style="margin-top: 10px"
-            fxLayout
-            fxLayoutAlign="center center"
-            fxLayoutGap="15px"
-          >
-            <button
-              mat-raised-button
-              type="submit"
-              color="primary"
-              (click)="savePreferredCurrency(preferredCurrency)"
+        @if (
+          preferredCurrency?.toString() !==
+          this.preferredCurrencyNameSettingOnLoad?.value?.toString()
+        ) {
+          <div>
+            <div
+              style="margin-top: 10px"
+              fxLayout
+              fxLayoutAlign="center center"
+              fxLayoutGap="15px"
             >
-              Save Preferred Currency
-            </button>
-            <button
-              mat-raised-button
-              type="button"
-              class="close"
-              (click)="cancelPreferredCurrency()"
-              color="warn"
-            >
-              Cancel
-            </button>
+              <button
+                mat-raised-button
+                type="submit"
+                color="primary"
+                (click)="savePreferredCurrency(preferredCurrency)"
+              >
+                Save Preferred Currency
+              </button>
+              <button
+                mat-raised-button
+                type="button"
+                class="close"
+                (click)="cancelPreferredCurrency()"
+                color="warn"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        }
       </div>
-
       <div
         fxFlex="grow"
         fxFlexFill
@@ -233,40 +230,40 @@
             step="0.25"
           />
         </div>
-
-        <div
-          *ngIf="
-            defaultFilamentDiameterMm?.toString() !==
-            this.defaultFilamentDiameterMmSettingOnLoad?.value?.toString()
-          "
-        >
-          <div
-            style="margin-top: 10px"
-            fxLayout
-            fxLayoutAlign="center center"
-            fxLayoutGap="15px"
-          >
-            <button
-              mat-raised-button
-              type="submit"
-              color="primary"
-              (click)="saveDefaultFilamentDiameterMm(defaultFilamentDiameterMm)"
+        @if (
+          defaultFilamentDiameterMm?.toString() !==
+          this.defaultFilamentDiameterMmSettingOnLoad?.value?.toString()
+        ) {
+          <div>
+            <div
+              style="margin-top: 10px"
+              fxLayout
+              fxLayoutAlign="center center"
+              fxLayoutGap="15px"
             >
-              Save Default Filament Diameter
-            </button>
-            <button
-              mat-raised-button
-              type="button"
-              class="close"
-              (click)="cancelDefaultFilamentDiameterMm()"
-              color="warn"
-            >
-              Cancel
-            </button>
+              <button
+                mat-raised-button
+                type="submit"
+                color="primary"
+                (click)="
+                  saveDefaultFilamentDiameterMm(defaultFilamentDiameterMm)
+                "
+              >
+                Save Default Filament Diameter
+              </button>
+              <button
+                mat-raised-button
+                type="button"
+                class="close"
+                (click)="cancelDefaultFilamentDiameterMm()"
+                color="warn"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        }
       </div>
-
       <div
         fxFlex="grow"
         fxFlexFill
@@ -295,40 +292,38 @@
             maxlength="256"
           />
         </div>
-
-        <div
-          *ngIf="
-            defaultFilamentPrice?.toString() !==
-            this.defaultFilamentPriceSettingOnLoad?.value?.toString()
-          "
-        >
-          <div
-            style="margin-top: 10px"
-            fxLayout
-            fxLayoutAlign="center center"
-            fxLayoutGap="15px"
-          >
-            <button
-              mat-raised-button
-              type="submit"
-              color="primary"
-              (click)="saveDefaultFilamentPrice(defaultFilamentPrice)"
+        @if (
+          defaultFilamentPrice?.toString() !==
+          this.defaultFilamentPriceSettingOnLoad?.value?.toString()
+        ) {
+          <div>
+            <div
+              style="margin-top: 10px"
+              fxLayout
+              fxLayoutAlign="center center"
+              fxLayoutGap="15px"
             >
-              Save Default Filament price
-            </button>
-            <button
-              mat-raised-button
-              type="button"
-              class="close"
-              (click)="cancelDefaultFilamentPrice()"
-              color="warn"
-            >
-              Cancel
-            </button>
+              <button
+                mat-raised-button
+                type="submit"
+                color="primary"
+                (click)="saveDefaultFilamentPrice(defaultFilamentPrice)"
+              >
+                Save Default Filament price
+              </button>
+              <button
+                mat-raised-button
+                type="button"
+                class="close"
+                (click)="cancelDefaultFilamentPrice()"
+                color="warn"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        }
       </div>
-
       <hr />
       <div fxFlex="grow" fxFlexFill>
         <h2>Export Data</h2>
@@ -343,7 +338,6 @@
           Export
         </button>
       </div>
-
       <hr />
       <div fxFlex="grow" fxFlexFill>
         <h2>Danger Zone</h2>

@@ -23,26 +23,28 @@
   </mat-form-field>
 </div>
 <div mat-dialog-actions fxLayout fxLayoutAlign="space-around">
-  <button
-    *ngIf="!navigatorShareService.canShare()"
-    type="button"
-    mat-raised-button
-    color="primary"
-    (click)="copyToClipboard()"
-    cdkFocusInitial
-  >
-    Copy Link to Clipboard
-  </button>
-  <button
-    *ngIf="navigatorShareService.canShare()"
-    type="button"
-    mat-raised-button
-    color="primary"
-    (click)="share()"
-    cdkFocusInitial
-  >
-    Share <mat-icon>share</mat-icon>
-  </button>
+  @if (!navigatorShareService.canShare()) {
+    <button
+      type="button"
+      mat-raised-button
+      color="primary"
+      (click)="copyToClipboard()"
+      cdkFocusInitial
+    >
+      Copy Link to Clipboard
+    </button>
+  }
+  @if (navigatorShareService.canShare()) {
+    <button
+      type="button"
+      mat-raised-button
+      color="primary"
+      (click)="share()"
+      cdkFocusInitial
+    >
+      Share <mat-icon>share</mat-icon>
+    </button>
+  }
   <button type="button" mat-raised-button color="accent" mat-dialog-close>
     Close
   </button>

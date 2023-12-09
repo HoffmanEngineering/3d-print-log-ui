@@ -1,33 +1,39 @@
 <h1>Parsing Gcode</h1>
-<h2 *ngIf="loadingProgress === 0" class="pending">Loading.</h2>
-<h2 *ngIf="loadingProgress > 0 && loadingProgress < 100" class="loading">
-  Loading
-</h2>
-<h2 *ngIf="loadingProgress === 100">Loading Complete.</h2>
+@if (loadingProgress === 0) {
+  <h2 class="pending">Loading.</h2>
+}
+@if (loadingProgress > 0 && loadingProgress < 100) {
+  <h2 class="loading">Loading</h2>
+}
+@if (loadingProgress === 100) {
+  <h2>Loading Complete.</h2>
+}
 <mat-progress-bar
   mode="determinate"
   aria-label="Loading Progress"
   [attr.aria-valuenow]="loadingProgress"
   [value]="loadingProgress"
 ></mat-progress-bar>
-<h2 *ngIf="analyzingProgress === 0" class="pending">Analyzing.</h2>
-<h2 *ngIf="analyzingProgress > 0 && analyzingProgress < 100" class="loading">
-  Analyzing
-</h2>
-<h2 *ngIf="analyzingProgress === 100">Analyzing Complete.</h2>
+@if (analyzingProgress === 0) {
+  <h2 class="pending">Analyzing.</h2>
+}
+@if (analyzingProgress > 0 && analyzingProgress < 100) {
+  <h2 class="loading">Analyzing</h2>
+}
+@if (analyzingProgress === 100) {
+  <h2>Analyzing Complete.</h2>
+}
 <mat-progress-bar
   mode="determinate"
   aria-label="Analyzing Progress"
   [attr.aria-valuenow]="analyzingProgress"
   [value]="analyzingProgress"
 ></mat-progress-bar>
-
 <mat-dialog-actions align="end">
   <button mat-button [mat-dialog-close]="false" cdkFocusInitial color="warn">
     Cancel
   </button>
 </mat-dialog-actions>
-
 <iframe
   style="position: absolute; width: 0; height: 0; border: 0"
   #iframe

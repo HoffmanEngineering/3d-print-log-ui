@@ -11,6 +11,7 @@ import { capitalize, snakeCase } from 'lodash-es';
 import {
   EMPTY_GUID,
   PrintDetail,
+  PrintFilamentSourceMeasurement,
   PrintStatus,
 } from 'src/app/core/services/print.service';
 import {
@@ -175,8 +176,8 @@ export class GcodeViewerModalComponent implements AfterViewInit {
         {
           id: EMPTY_GUID,
           filament: this.lastSelectedPrinter?.loadedFilaments?.[0]?.filament,
-          isActualLengthSource: true,
-          isEstimatedLengthSource: true,
+          source: PrintFilamentSourceMeasurement.Length,
+          estimatedSource: PrintFilamentSourceMeasurement.Length,
           estimatedLengthInM: filamentInMeters,
         },
       ];

@@ -444,9 +444,8 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
     });
     (dialogRef.componentInstance as any).title = 'Delete?';
     // eslint-disable-next-line max-len
-    (
-      dialogRef.componentInstance as any
-    ).body = `Are you sure you want to delete maintenance entry? <br /> <br />  This action cannot be undone.`;
+    (dialogRef.componentInstance as any).body =
+      `Are you sure you want to delete maintenance entry? <br /> <br />  This action cannot be undone.`;
     (dialogRef.componentInstance as any).yesText = 'Delete';
     (dialogRef.componentInstance as any).yesColor = 'warn';
     (dialogRef.componentInstance as any).noText = 'Cancel';

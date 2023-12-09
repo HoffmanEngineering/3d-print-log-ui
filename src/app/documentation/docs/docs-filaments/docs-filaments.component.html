@@ -1,112 +1,115 @@
 <div class="docs-markdown">
-  <h2>Filaments</h2>
+  <h2>Materials</h2>
   <hr />
   <p>
-    3D Print Log Filaments helps you keep track of what materials and colors you
-    have, and how much filament is left on the roll. Print with confidence
-    knowing you won't run out of filament. Navigate to the
-    <a [routerLink]="['/filament']">Filament</a> section to manage your rolls of
-    Filament.
+    3D Print Log helps you keep track of what materials and colors you have, and
+    how much material is left on the roll/spool/bottle/etc. Print with
+    confidence knowing you won't run out of material mid-print. Navigate to the
+    <a [routerLink]="['/materials']">Materials</a> section to manage all your
+    materials.
   </p>
-  <h3 id="list">Filaments List</h3>
   <p>
-    The Filament List shows you all your rolls of filament. Use the
+    A <strong>Material</strong> is an individual product, such as a single roll
+    of filament or bottle of resin.
+  </p>
+
+  <h3 id="list">Materials List</h3>
+  <p>
+    The Materials List shows you all of your materials. Use the
     <strong>Search</strong> input at the top to filter the list by the
-    filament's <strong>Name</strong>, <strong>Brand</strong> or
+    materials's <strong>Name</strong>, <strong>Brand</strong> or
     <strong>Color</strong> fields. Use the
     <strong>Include Inactive</strong> checkbox to include
-    <strong>Empty or Inactive</strong> rolls of filament. Use the
+    <strong>Empty or Inactive</strong> rolls of materials. Use the
     <strong>Show Favorites Only</strong> checkbox to only show
-    <strong>Favorite</strong> rolls of filament. Use the
-    <strong>Show Loaded Filament Only</strong> checkbox to only show filament
+    <strong>Favorite</strong> materials. Use the
+    <strong>Show Loaded Materials Only</strong> checkbox to only show materials
     currently loaded in a printer. The table is sorted by
-    <strong>Filament Remaining</strong> by default, but you can click on any of
+    <strong>Material Remaining</strong> by default, but you can click on any of
     the table headers to order by Name, Brand, or Color.
   </p>
-  <h4>The Filament List Table</h4>
+  <h4>The Material List Table</h4>
 
   <ul>
     <li>
-      <strong>Favorite Star</strong> - Displays whether the roll is a
+      <strong>Favorite Star</strong> - Displays whether the material is a
       "favorite".
     </li>
     <li>
       <strong>Color Box</strong> - Displays the selected color of the filament.
     </li>
-    <li><strong>Name</strong> - The Display Name of the Filament.</li>
-    <li><strong>Brand</strong> - The Brand of filament.</li>
-    <li><strong>Color</strong> - The name of the Color of the filament.</li>
-    <li>
-      <strong>Remaining (g)</strong> - The weight of Filament remaining on the
-      roll.
-    </li>
+    <li><strong>Name</strong> - The Display Name of the Material.</li>
+    <li><strong>Brand</strong> - The Brand of material.</li>
+    <li><strong>Color</strong> - The name of the Color of the material.</li>
+    <li><strong>Remaining (g)</strong> - The weight of material remaining.</li>
   </ul>
 
-  <h4>Favorite Filament</h4>
+  <h4>Favorite Material</h4>
   <p>
-    A filament can be marked as "favorite" by clicking the
-    <mat-icon inline>star_border</mat-icon> icon. This will allow the filament
+    A material can be marked as "favorite" by clicking the
+    <mat-icon inline>star_border</mat-icon> icon. This will allow the material
     to appear when the <strong>Show Favorites Only</strong> filter is applied.
   </p>
 
   <hr />
 
-  <h3 id="remaining">How Remaining Filament is Calculated</h3>
+  <h3 id="remaining">How Remaining Material is Calculated</h3>
   <p>
-    The Remaining Filament is calculated by the Filament's
+    The Remaining Material is calculated by the Materials's
     <strong>[Initial Nominal Weight]</strong>-<strong
-      >[sum of Filament used in Prints]</strong
+      >[sum of Material used in Prints]</strong
     >+<strong>[sum of any Adjustments]</strong>.
   </p>
   <p>
     <strong>Initial Nominal Weight</strong> is entered when Adding/Editing a
-    filament, and is the nominal, or expected, weight of the filament on the
-    roll. So a 1kg roll of filament would have an Initial Nominal Weight of 1000
-    grams.
+    material, and is the nominal, or expected, weight of the material on the
+    roll or bottle. So a 1kg roll of filament would have an Initial Nominal
+    Weight of 1000 grams.
   </p>
   <p>
-    <strong>Filament Used in Prints</strong> are the weights entered in the
-    Filament Section when Adding/Editing a print. See
+    <strong>Material Used in Prints</strong> are the weights entered in the
+    Material Section when Adding/Editing a print. See
     <a routerLink="/docs/prints">Prints Documentation</a> for more details on
-    how to add filament usage. When calculating Remaining Filament, a print's
-    <strong>Actual Filament Used</strong> will be used if available, otherwise
-    it'll use the <strong>Estimated Filament Used</strong>.
+    how to add material usage. When calculating Remaining Material, a print's
+    <strong>Actual Material Used</strong> will be used if available, otherwise
+    it'll use the <strong>Estimated Material Used</strong>.
   </p>
   <p>
-    <strong>Filament Adjustments</strong> are entered when Adding/Editing a
-    filament, and represent non-print usage of filament. Useful for documenting
-    the wasted filament when changing colors, or adjusting a filament's weight
+    <strong>Material Adjustments</strong> are entered when Adding/Editing a
+    material, and represent non-print usage of material. Useful for documenting
+    the wasted materials when changing colors, or adjusting a material's weight
     when adding a partially used roll to 3D Print Log. See the
     <strong>Adjustments</strong> section below for more information.
   </p>
 
   <hr />
 
-  <h3 id="add">Add a roll of Filament</h3>
+  <h3 id="add">Add a new roll of Material</h3>
   <p>
-    From the Filament list, click on the
-    <button mat-raised-button color="accent">Add New Filament</button> button.
+    From the Material list, click on the
+    <button mat-raised-button color="accent">Add New Material</button> button.
   </p>
   <h4 id="add-general">General Section</h4>
   <p>
-    Give the roll of filament a <strong>Name</strong> used to identify the roll.
+    Give the roll of material a <strong>Name</strong> used to identify the roll.
     If you have multiple rolls of the same brand/color, it may be helpful to
     give the roll a name with a number (example: Hatchbox Black 1).
   </p>
   <p>
-    The <strong>Material Type</strong> is for storing the type of filament. You
-    can select one of the pre-populated material types to automatically fill the
-    <strong>Material Density</strong>, or you can add any other material just by
-    typing into the field. The <strong>Material Density</strong> is entered in
-    Grams Per Cubic Centimeter, and used when calculating weights.
+    The <strong>Material Type</strong> is for storing the type of material, such
+    as PLA, SuperFlex Resin, etc. You can select one of the pre-populated
+    material types to automatically fill the <strong>Material Density</strong>,
+    or you can add any other material just by typing into the field. The
+    <strong>Material Density</strong> is entered in Grams Per Cubic Centimeter,
+    and used when calculating weights.
   </p>
   <p>
     The Color section has a <strong>Color Picker</strong> that lets you select
     the color which is displayed. The <strong>Color Name</strong> lets you enter
     the manufacturer's name. The <strong>Brand</strong> field is for recording
-    the filament's manufacturer. The <strong>Diameter</strong> is for the
+    the materials's manufacturer. The <strong>Diameter</strong> is for the
     diameter of the filament in millimeters. The <strong>Notes</strong> section
-    lets you record any additional notes/description/etc for the filament.
+    lets you record any additional notes/description/etc for the material.
   </p>
   <h4 id="add-weights">Weights Section</h4>
   <p>
@@ -116,31 +119,31 @@
   <ul>
     <li>
       <strong>Initial Total Weight (g)</strong> - The total weight of the roll
-      in grams, including the weight of the filament and the spool. Find by
+      in grams, including the weight of the material and the spool. Find by
       putting the entire spool on a scale.
     </li>
     <li>
       <strong>Initial Nominal Weight (g)</strong> - The nominal, or expected,
-      weight of just the filament in grams. For instance, a 1kg roll of filament
+      weight of just the material in grams. For instance, a 1kg roll of material
       would have a nominal weight of 1,000 grams.
     </li>
     <li><strong>Spool Weight (g)</strong> - The weight of the empty spool.</li>
   </ul>
-  <h4 id="add-adjustments">Filament Adjustments</h4>
+  <h4 id="add-adjustments">Material Adjustments</h4>
   <div fxLayout="row" fxLayout.lt-lg="column">
     <div fxFlex="grow">
       <p>
-        Adjustments represent non-print usage of filament. Adjustment weights
-        are added when calculating the remaining filament on a roll, so negative
-        amounts represent the removal of filament from the spool. Examples of
-        adjustments would be:
+        Adjustments represent non-print usage of material. Adjustment weights
+        are added when calculating the remaining material on a roll, so negative
+        amounts represent the removal of material from the container. Examples
+        of adjustments would be:
       </p>
       <ul>
         <li>
-          Estimating filament used when adding a partially-used roll to 3D Print
+          Estimating material used when adding a partially-used roll to 3D Print
           Log.
         </li>
-        <li>Tracking filament lost when switching colors on a printer.</li>
+        <li>Tracking material lost when switching colors on a printer.</li>
       </ul>
     </div>
     <div fxFlex>
@@ -152,7 +155,7 @@
           'margin-left': 'auto',
           'margin-right': 'auto'
         }"
-        alt="Example of Filament Adjustments on the Filament Edit Screen"
+        alt="Example of Material Adjustments on the Material Edit Screen"
         src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
       />
     </div>
@@ -160,7 +163,7 @@
 
   <h4 id="add-temperatures">Temperatures</h4>
   <p>
-    Record the recommended temperature and range in Celsius for this filament.
+    Record the recommended temperature and range in Celsius for this material.
   </p>
   <h4 id="add-purchase">Purchase Details</h4>
   <p>
@@ -170,39 +173,39 @@
     or the name of the store purchased from.
   </p>
   <hr />
-  <h3 id="edit">Edit a Filament</h3>
+  <h3 id="edit">Edit a Material</h3>
   <p>
-    Click on any row in the Filament List to view and edit an existing 3D print.
+    Click on any row in the Material List to view and edit an existing 3D print.
   </p>
   <p>
     After making changes, click
     <button mat-raised-button color="primary">Submit</button> to update that
-    filament.
+    material.
   </p>
   <hr />
-  <h3 id="delete">Delete a Filament</h3>
+  <h3 id="delete">Delete a Material</h3>
   <p>
-    Filaments that have not been used in any Prints can be deleted from the
-    <a routerLink="/filament">Filament List</a>. Click the ... more menu on the
-    row for the filament you want to delete. A warning that the filament will be
-    permanently deleted will appear. When <strong>Delete</strong> is clicked,
-    the filament will be deleted.
+    Materials that have not been used in any Prints can be deleted from the
+    <a routerLink="/materials">Materials List</a>. Click the ... more menu on
+    the row for the material you want to delete. A warning that the material
+    will be permanently deleted will appear. When <strong>Delete</strong> is
+    clicked, the material will be deleted.
   </p>
   <p>
-    If a filament has been used in a Print, you cannot delete it. Instead, you
-    can <strong>Inactive</strong> a filament by Editing, then unchecking the
+    If a material has been used in a Print, you cannot delete it. Instead, you
+    can <strong>Inactive</strong> a material by Editing, then unchecking the
     <strong>Is Active</strong> checkbox in the <strong>General</strong> section.
-    Inactive filament will not be displayed.
+    Inactive material will not be displayed.
   </p>
 
   <hr />
-  <h3 id="loaded_filament">Loaded Filament</h3>
+  <h3 id="loaded_filament">Loaded Material</h3>
   <p>
-    Printers can have one or more filament rolls considered "loaded", meaning
-    they are currently in use by that printer. A roll can only be "loaded" by
-    one printer at a time, so loading a roll into a new printer will
+    Printers can have one or more materials considered "loaded", meaning they
+    are currently in use by that printer. A material can only be "loaded" by one
+    printer at a time, so loading a material into a new printer will
     automatically unload it from the old printer. See the
     <a routerLink="/docs/printers">Printer Documentation</a> for more
-    information on managing loaded filament.
+    information on managing loaded materials.
   </p>
 </div>

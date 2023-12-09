@@ -9,42 +9,35 @@
         <span class="visually-hidden">Navigate to home page.</span>
       </a>
       <!-- <object
-        viewBox="0 0 100 100"
-        type="image/svg+xml"
-        data="/assets/small_logo.svg"
+      viewBox="0 0 100 100"
+      type="image/svg+xml"
+      data="/assets/small_logo.svg"
       >
-        3D Print Log Logo
-      </object> -->
+      3D Print Log Logo
+    </object> -->
     </div>
     <div fxFlex fxFlexFill>
       <div fxLayout="column" fxLayoutAlign="center start" style="height: 100%">
         <div fxFlex fxLayout="row" fxLayoutAlign="center center">
-          <a
-            class="link"
-            mat-button
-            routerLink="/"
-            routerLinkActive="active"
-            *ngIf="!auth.loggedIn"
-            >Home</a
-          >
-
-          <a
-            mat-button
-            class="link"
-            routerLink="/prints"
-            routerLinkActive="active"
-            *ngIf="auth.loggedIn"
-            >Prints</a
-          >
-
-          <button
-            mat-button
-            class="link"
-            [matMenuTriggerFor]="printerMenu"
-            *ngIf="auth.loggedIn"
-          >
-            Printers
-          </button>
+          @if (!auth.loggedIn) {
+            <a class="link" mat-button routerLink="/" routerLinkActive="active"
+              >Home</a
+            >
+          }
+          @if (auth.loggedIn) {
+            <a
+              mat-button
+              class="link"
+              routerLink="/prints"
+              routerLinkActive="active"
+              >Prints</a
+            >
+          }
+          @if (auth.loggedIn) {
+            <button mat-button class="link" [matMenuTriggerFor]="printerMenu">
+              Printers
+            </button>
+          }
           <mat-menu #printerMenu="matMenu">
             <!-- <button mat-menu-item>Fee</button> -->
             <a
@@ -62,26 +55,25 @@
               >Printer Maintenance</a
             >
           </mat-menu>
-
-          <a
-            mat-button
-            class="link"
-            routerLink="/filament"
-            routerLinkActive="active"
-            *ngIf="auth.loggedIn"
-            >Filament</a
-          >
-
-          <ng-container *ngIf="!this.mobileQuery.matches">
+          @if (auth.loggedIn) {
             <a
               mat-button
               class="link"
-              routerLink="/analytics"
+              routerLink="/materials"
               routerLinkActive="active"
-              *ngIf="auth.loggedIn"
-              >Analytics</a
+              >Materials</a
             >
-
+          }
+          @if (!this.mobileQuery.matches) {
+            @if (auth.loggedIn) {
+              <a
+                mat-button
+                class="link"
+                routerLink="/analytics"
+                routerLinkActive="active"
+                >Analytics</a
+              >
+            }
             <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
               About
             </button>
@@ -94,60 +86,15 @@
                 routerLinkActive="active"
                 >Documentation</a
               >
-              <a
-                class="menu-link"
-                *ngIf="auth.loggedIn"
-                mat-menu-item
-                routerLink="/feedback"
-                routerLinkActive="active"
-                >Send Feedback</a
-              >
-              <a
-                class="menu-link"
-                mat-menu-item
-                routerLink="/docs/release-notes"
-                routerLinkActive="active"
-                >Version v{{ versionNumber }}</a
-              >
-            </mat-menu>
-          </ng-container>
-        </div>
-        <div
-          fxFlex
-          fxLayout="row"
-          fxLayoutAlign="center center"
-          *ngIf="this.mobileQuery.matches"
-        >
-          <ng-container>
-            <a
-              mat-button
-              class="link"
-              routerLink="/analytics"
-              routerLinkActive="active"
-              *ngIf="auth.loggedIn"
-              >Analytics</a
-            >
-
-            <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
-              About
-            </button>
-            <mat-menu #aboutMenu="matMenu">
-              <!-- <button mat-menu-item>Fee</button> -->
-              <a
-                class="menu-link"
-                mat-menu-item
-                routerLink="/docs"
-                routerLinkActive="active"
-                >Documentation</a
-              >
-              <a
-                class="menu-link"
-                *ngIf="auth.loggedIn"
-                mat-menu-item
-                routerLink="/feedback"
-                routerLinkActive="active"
-                >Send Feedback</a
-              >
+              @if (auth.loggedIn) {
+                <a
+                  class="menu-link"
+                  mat-menu-item
+                  routerLink="/feedback"
+                  routerLinkActive="active"
+                  >Send Feedback</a
+                >
+              }
               <a
                 class="menu-link"
                 mat-menu-item
@@ -156,71 +103,116 @@
                 >Version v{{ versionNumber }}</a
               >
             </mat-menu>
-          </ng-container>
+          }
         </div>
+        @if (this.mobileQuery.matches) {
+          <div fxFlex fxLayout="row" fxLayoutAlign="center center">
+            <ng-container>
+              @if (auth.loggedIn) {
+                <a
+                  mat-button
+                  class="link"
+                  routerLink="/analytics"
+                  routerLinkActive="active"
+                  >Analytics</a
+                >
+              }
+              <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
+                About
+              </button>
+              <mat-menu #aboutMenu="matMenu">
+                <!-- <button mat-menu-item>Fee</button> -->
+                <a
+                  class="menu-link"
+                  mat-menu-item
+                  routerLink="/docs"
+                  routerLinkActive="active"
+                  >Documentation</a
+                >
+                @if (auth.loggedIn) {
+                  <a
+                    class="menu-link"
+                    mat-menu-item
+                    routerLink="/feedback"
+                    routerLinkActive="active"
+                    >Send Feedback</a
+                  >
+                }
+                <a
+                  class="menu-link"
+                  mat-menu-item
+                  routerLink="/docs/release-notes"
+                  routerLinkActive="active"
+                  >Version v{{ versionNumber }}</a
+                >
+              </mat-menu>
+            </ng-container>
+          </div>
+        }
       </div>
     </div>
     <div [fxFlex]="auth.loggedIn ? '50px' : '200px'">
-      <button
-        class="transparent"
-        [matMenuTriggerFor]="profileMenu"
-        *ngIf="auth.loggedIn"
-      >
-        <img
-          class="profile-picture"
-          *ngIf="profilePictureUrl"
-          [src]="profilePictureUrl"
-          alt="User's Profile Picture"
-        />
-
-        <img
-          class="profile-picture"
-          *ngIf="!profilePictureUrl"
-          src="/assets/user.svg"
-          alt="Default Profile Picture"
-        />
-      </button>
-      <mat-menu #profileMenu="matMenu">
-        <a
-          class="menu-link"
-          mat-menu-item
-          [routerLink]="['users', userId]"
-          routerLinkActive="active"
-          *ngIf="auth.loggedIn && isUserProfileFeatureEnabled"
-          >My Profile</a
-        >
-        <a
-          *ngIf="auth.loggedIn"
-          class="menu-link"
-          mat-menu-item
-          [routerLink]="['/settings']"
-          routerLinkActive="active"
-          >Settings</a
-        >
-        <a
-          *ngIf="auth.loggedIn"
-          class="menu-link"
-          mat-menu-item
-          [routerLink]="['/api-keys']"
-          routerLinkActive="active"
-          >Personal Api Keys</a
-        >
-        <button mat-menu-item (click)="auth.logout()" *ngIf="auth.loggedIn">
-          Log Out
+      @if (auth.loggedIn) {
+        <button class="transparent" [matMenuTriggerFor]="profileMenu">
+          @if (profilePictureUrl) {
+            <img
+              class="profile-picture"
+              [src]="profilePictureUrl"
+              alt="User's Profile Picture"
+            />
+          }
+          @if (!profilePictureUrl) {
+            <img
+              class="profile-picture"
+              src="/assets/user.svg"
+              alt="Default Profile Picture"
+            />
+          }
         </button>
+      }
+      <mat-menu #profileMenu="matMenu">
+        @if (auth.loggedIn && isUserProfileFeatureEnabled) {
+          <a
+            class="menu-link"
+            mat-menu-item
+            [routerLink]="['users', userId]"
+            routerLinkActive="active"
+            >My Profile</a
+          >
+        }
+        @if (auth.loggedIn) {
+          <a
+            class="menu-link"
+            mat-menu-item
+            [routerLink]="['/settings']"
+            routerLinkActive="active"
+            >Settings</a
+          >
+        }
+        @if (auth.loggedIn) {
+          <a
+            class="menu-link"
+            mat-menu-item
+            [routerLink]="['/api-keys']"
+            routerLinkActive="active"
+            >Personal Api Keys</a
+          >
+        }
+        @if (auth.loggedIn) {
+          <button mat-menu-item (click)="auth.logout()">Log Out</button>
+        }
       </mat-menu>
-
-      <button
-        id="loginButton"
-        mat-raised-button
-        color="accent"
-        (click)="auth.login('/prints')"
-        *ngIf="!auth.loggedIn"
-      >
-        Log In/Create Account
-      </button>
+      @if (!auth.loggedIn) {
+        <button
+          id="loginButton"
+          mat-raised-button
+          color="accent"
+          (click)="auth.login('/prints')"
+        >
+          Log In/Create Account
+        </button>
+      }
     </div>
   </mat-toolbar-row>
 </mat-toolbar>
-
 <ng-template #links> </ng-template>

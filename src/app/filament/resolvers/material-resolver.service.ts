@@ -1,16 +1,12 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import {
   Material,
   MaterialService,
 } from 'src/app/core/services/material.service';
 
 @Injectable()
-export class MaterialResolverService implements Resolve<Material[]> {
+export class MaterialResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.materialService.getMaterials();
   }

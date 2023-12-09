@@ -8,6 +8,10 @@ import {
   FilamentSortColumns,
   FilamentSummary,
 } from 'src/app/core/services/filament.service';
+import {
+  MaterialCategory,
+  MaterialCategoryService,
+} from 'src/app/core/services/material-categories.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 
@@ -51,10 +55,24 @@ export class FilamentListComponent implements OnInit {
   public showLoadedFilamentOnly = false;
   public searchText = '';
 
+  public materialCategories: MaterialCategory[] = [];
+
+  @Input()
+  get filterByMaterialCategory(): string {
+    return this._filterByMaterialCategory;
+  }
+  set filterByMaterialCategory(filterByMaterialCategory: string) {
+    this._filterByMaterialCategory = filterByMaterialCategory;
+  }
+  protected _filterByMaterialCategory = '';
+
   @Output()
   public filamentSelected = new EventEmitter<FilamentSummary>();
 
-  constructor(private filamentService: FilamentService) {
+  constructor(
+    private filamentService: FilamentService,
+    private materialCategoryService: MaterialCategoryService
+  ) {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
 
@@ -64,6 +82,12 @@ export class FilamentListComponent implements OnInit {
     if (savedPageSize) {
       defaultPageSize = +savedPageSize;
     }
+
+    this.materialCategoryService
+      .getMaterialCategories()
+      .subscribe((response) => {
+        this.materialCategories = response;
+      });
 
     this.pageSize = defaultPageSize;
 
@@ -100,7 +124,8 @@ export class FilamentListComponent implements OnInit {
         this.searchText,
         this.includeInactive,
         this.showFavoritesOnly,
-        this.showLoadedFilamentOnly
+        this.showLoadedFilamentOnly,
+        this.filterByMaterialCategory
       )
       .subscribe((response) => {
         this.handlePagedList(response);

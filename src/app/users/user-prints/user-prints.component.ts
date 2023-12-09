@@ -38,7 +38,7 @@ export class UserPrintsComponent implements OnChanges, OnInit {
 
   public searchText = '';
 
-  public filterByStatus: PrintStatus | null = -1;
+  public filterByStatus: PrintStatus | null = null;
 
   public printStatusTypes = PrintStatus;
 
@@ -79,7 +79,7 @@ export class UserPrintsComponent implements OnChanges, OnInit {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.userId) {
       this.searchText = '';
-      this.filterByStatus = -1;
+      this.filterByStatus = null;
       this.clearPrints();
       this.updateFilter();
     }

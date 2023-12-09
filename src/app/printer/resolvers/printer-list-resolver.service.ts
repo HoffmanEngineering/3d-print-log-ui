@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
 import {
   PrinterService,
@@ -11,9 +7,7 @@ import {
 } from '../../core/services/printer.service';
 
 @Injectable()
-export class PrinterListResolverService
-  implements Resolve<PagedList<PrinterSummary>>
-{
+export class PrinterListResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     let defaultPageSize = 10;
     const savedPageSize = localStorage.getItem('printer_list_page_size');

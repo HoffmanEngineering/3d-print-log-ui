@@ -4,23 +4,20 @@
   (mouseleave)="imageHovered = false"
   (click)="imageHovered = !imageHovered"
 >
-  <button
-    *ngIf="showDeleteOnHover && imageHovered"
-    mat-raised-button
-    aria-hidden="false"
-    aria-label="Remove Image"
-    title="Remove Image"
-    class="overlay pointable"
-    color="warn"
-    (click)="handleDeleteClick($event)"
-  >
-    <mat-icon>delete</mat-icon>Remove
-  </button>
-
-  <img
-    *ngIf="imageData"
-    [src]="imageData"
-    class="fade-in"
-    alt="Image of 3D Print"
-  />
+  @if (showDeleteOnHover && imageHovered) {
+    <button
+      mat-raised-button
+      aria-hidden="false"
+      aria-label="Remove Image"
+      title="Remove Image"
+      class="overlay pointable"
+      color="warn"
+      (click)="handleDeleteClick($event)"
+    >
+      <mat-icon>delete</mat-icon>Remove
+    </button>
+  }
+  @if (imageData) {
+    <img [src]="imageData" class="fade-in" alt="Image of 3D Print" />
+  }
 </div>

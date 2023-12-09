@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
-  CanActivate,
   Router,
   RouterStateSnapshot,
   UrlTree,
@@ -13,8 +12,11 @@ import { AuthService } from '../services/auth.service';
 @Injectable({
   providedIn: 'root',
 })
-export class HomepageRedirectGuard implements CanActivate {
-  constructor(private auth: AuthService, private router: Router) {}
+export class HomepageRedirectGuard {
+  constructor(
+    private auth: AuthService,
+    private router: Router
+  ) {}
 
   canActivate(
     next: ActivatedRouteSnapshot,

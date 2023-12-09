@@ -16,7 +16,6 @@
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
       /></mat-form-field>
-
       <mat-form-field fxFlex>
         <mat-label> Status</mat-label>
         <mat-select
@@ -35,35 +34,34 @@
       </mat-form-field>
     </div>
   </div>
-  <ng-container *ngIf="prints.length > 0">
-    <div
-      #PrintSummaryCard
-      *ngFor="let print of prints"
-      style="margin-bottom: 10px"
-    >
-      <app-print-summary-card
-        [print]="print"
-        [userId]="userId"
-        [userName]="userName"
-        [userProfilePictureUrl]="userProfilePictureUrl"
+  @if (prints.length > 0) {
+    @for (print of prints; track print) {
+      <div #PrintSummaryCard style="margin-bottom: 10px">
+        <app-print-summary-card
+          [print]="print"
+          [userId]="userId"
+          [userName]="userName"
+          [userProfilePictureUrl]="userProfilePictureUrl"
+        >
+        </app-print-summary-card>
+      </div>
+    }
+    @if (showLoadMore) {
+      <button
+        fxFlex="grow"
+        style="margin: 0 auto"
+        mat-raised-button
+        color="accent"
+        (click)="loadNextPage()"
       >
-      </app-print-summary-card>
-    </div>
-    <button
-      fxFlex="grow"
-      style="margin: 0 auto"
-      *ngIf="showLoadMore"
-      mat-raised-button
-      color="accent"
-      (click)="loadNextPage()"
-    >
-      Load More
-    </button>
-  </ng-container>
-  <ng-container *ngIf="prints.length === 0">
+        Load More
+      </button>
+    }
+  }
+  @if (prints.length === 0) {
     <mat-card appearance="outlined" fxFlex>
       No Prints Found. The user shared any prints publicly that match the
       search.
     </mat-card>
-  </ng-container>
+  }
 </div>

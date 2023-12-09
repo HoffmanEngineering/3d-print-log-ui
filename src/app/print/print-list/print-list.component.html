@@ -56,7 +56,6 @@
         (change)="parseGcode($event)"
       />
     </div>
-
     <div fxLayoutGap="10px">
       <mat-form-field>
         <mat-label> Search: </mat-label
@@ -67,7 +66,6 @@
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
       /></mat-form-field>
-
       <mat-form-field>
         <mat-label> Status</mat-label>
         <mat-select
@@ -94,9 +92,11 @@
           (ngModelChange)="this.currentPage = 1; updateFilter()"
           multiple
         >
-          <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
-            getPrinterLabel(printer)
-          }}</mat-option>
+          @for (printer of printers; track printer) {
+            <mat-option [value]="printer.id">{{
+              getPrinterLabel(printer)
+            }}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
@@ -115,7 +115,6 @@
       Reset Filters
     </button>
   </div>
-
   <table
     fxFlex="grow"
     aria-label="Print List"
@@ -137,7 +136,6 @@
         </div>
       </td>
     </ng-container>
-
     <ng-container matColumnDef="image-medium">
       <th mat-header-cell *matHeaderCellDef>Image</th>
       <td mat-cell *matCellDef="let print">
@@ -149,7 +147,6 @@
         </div>
       </td>
     </ng-container>
-
     <ng-container matColumnDef="image-large">
       <th mat-header-cell *matHeaderCellDef>Image</th>
       <td mat-cell *matCellDef="let print">
@@ -161,7 +158,6 @@
         </div>
       </td>
     </ng-container>
-
     <ng-container matColumnDef="title">
       <th
         scope="col"
@@ -173,14 +169,12 @@
       </th>
       <td mat-cell *matCellDef="let print">{{ print.title }}</td>
     </ng-container>
-
     <ng-container matColumnDef="printer">
       <th mat-header-cell *matHeaderCellDef>Printer</th>
       <td mat-cell *matCellDef="let print">
         {{ getPrinterLabel(print.printer) }}
       </td>
     </ng-container>
-
     <ng-container matColumnDef="start-date">
       <th
         mat-header-cell
@@ -191,7 +185,6 @@
       </th>
       <td mat-cell *matCellDef="let print">{{ print.startDate | date }}</td>
     </ng-container>
-
     <ng-container matColumnDef="start-time">
       <th
         mat-header-cell
@@ -201,10 +194,9 @@
         Start Time
       </th>
       <td mat-cell *matCellDef="let print">
-        {{ print.startDate | date : 'mediumTime' }}
+        {{ print.startDate | date: 'mediumTime' }}
       </td>
     </ng-container>
-
     <ng-container matColumnDef="start-date-time">
       <th
         mat-header-cell
@@ -214,10 +206,9 @@
         Start Date/Time
       </th>
       <td mat-cell *matCellDef="let print">
-        {{ print.startDate | date : 'medium' }}
+        {{ print.startDate | date: 'medium' }}
       </td>
     </ng-container>
-
     <ng-container matColumnDef="end-date">
       <th mat-header-cell *matHeaderCellDef>End Date</th>
       <td mat-cell *matCellDef="let print">
@@ -227,21 +218,19 @@
             print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
           "
         >
-          {{ getPrintEndDate(print) | date
-          }}<ng-container
-            *ngIf="
-              (print.printTimeInSeconds === null ||
-                print.printTimeInSeconds === undefined ||
-                print.printTimeInSeconds === 0) &&
-              print.estimatedPrintTimeInSeconds !== null &&
-              print.estimatedPrintTimeInSeconds > 0
-            "
-            >*</ng-container
-          >
+          {{ getPrintEndDate(print) | date }}
+          @if (
+            (print.printTimeInSeconds === null ||
+              print.printTimeInSeconds === undefined ||
+              print.printTimeInSeconds === 0) &&
+            print.estimatedPrintTimeInSeconds !== null &&
+            print.estimatedPrintTimeInSeconds > 0
+          ) {
+            *
+          }
         </div>
       </td>
     </ng-container>
-
     <ng-container matColumnDef="end-time">
       <th mat-header-cell *matHeaderCellDef>End Time</th>
       <td mat-cell *matCellDef="let print">
@@ -251,21 +240,19 @@
             print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
           "
         >
-          {{ getPrintEndDate(print) | date : 'mediumTime'
-          }}<ng-container
-            *ngIf="
-              (print.printTimeInSeconds === null ||
-                print.printTimeInSeconds === undefined ||
-                print.printTimeInSeconds === 0) &&
-              print.estimatedPrintTimeInSeconds !== null &&
-              print.estimatedPrintTimeInSeconds > 0
-            "
-            >*</ng-container
-          >
+          {{ getPrintEndDate(print) | date: 'mediumTime' }}
+          @if (
+            (print.printTimeInSeconds === null ||
+              print.printTimeInSeconds === undefined ||
+              print.printTimeInSeconds === 0) &&
+            print.estimatedPrintTimeInSeconds !== null &&
+            print.estimatedPrintTimeInSeconds > 0
+          ) {
+            *
+          }
         </div>
       </td>
     </ng-container>
-
     <ng-container matColumnDef="end-date-time">
       <th mat-header-cell *matHeaderCellDef>End Date/Time</th>
       <td mat-cell *matCellDef="let print">
@@ -275,49 +262,41 @@
             print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
           "
         >
-          {{ getPrintEndDate(print) | date : 'medium'
-          }}<ng-container
-            *ngIf="
-              (print.printTimeInSeconds === null ||
-                print.printTimeInSeconds === undefined ||
-                print.printTimeInSeconds === 0) &&
-              print.estimatedPrintTimeInSeconds !== null &&
-              print.estimatedPrintTimeInSeconds > 0
-            "
-            >*</ng-container
-          >
+          {{ getPrintEndDate(print) | date: 'medium' }}
+          @if (
+            (print.printTimeInSeconds === null ||
+              print.printTimeInSeconds === undefined ||
+              print.printTimeInSeconds === 0) &&
+            print.estimatedPrintTimeInSeconds !== null &&
+            print.estimatedPrintTimeInSeconds > 0
+          ) {
+            *
+          }
         </div>
       </td>
     </ng-container>
-
     <ng-container matColumnDef="printTime">
       <th mat-header-cell *matHeaderCellDef>Print Time</th>
       <td mat-cell *matCellDef="let print">
-        <ng-container
-          *ngIf="
-            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0;
-            else estimatedDuration
-          "
-        >
-          {{ print.printTimeInSeconds | duration }}</ng-container
-        >
-        <ng-template #estimatedDuration>
+        @if (
+          print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+        ) {
+          {{ print.printTimeInSeconds | duration }}
+        } @else {
           <div matTooltip="* indicates Estimated Print Time">
-            {{ print.estimatedPrintTimeInSeconds | duration
-            }}<ng-container
-              *ngIf="
-                print.estimatedPrintTimeInSeconds !== null &&
-                print.estimatedPrintTimeInSeconds > 0
-              "
-              >*</ng-container
-            >
+            {{ print.estimatedPrintTimeInSeconds | duration }}
+            @if (
+              print.estimatedPrintTimeInSeconds !== null &&
+              print.estimatedPrintTimeInSeconds > 0
+            ) {
+              *
+            }
           </div>
-        </ng-template>
+        }
       </td>
     </ng-container>
-
     <ng-container matColumnDef="filamentSummary">
-      <th mat-header-cell *matHeaderCellDef>Filament</th>
+      <th mat-header-cell *matHeaderCellDef>Materials</th>
       <td mat-cell *matCellDef="let print">
         <div
           gdColumns="max-content max-content max-content max-content"
@@ -325,100 +304,81 @@
           gdGap="10px"
           style="padding-inline: 10px; padding-block: 5px"
         >
-          <ng-container *ngFor="let fu of print.filamentUsage; index as i">
+          @for (fu of print.filamentUsage; track fu; let i = $index) {
             <div gdColumn="1" [gdRow]="i">
-              <div
-                *ngIf="fu.filament !== null"
-                class="filament-color-cell"
-                [ngStyle]="{ 'background-color': '#' + fu.filament.colorHex }"
-              ></div>
+              @if (fu.filament !== null) {
+                <div
+                  class="filament-color-cell"
+                  [ngStyle]="{ 'background-color': '#' + fu.filament.colorHex }"
+                ></div>
+              }
             </div>
             <div gdColumn="2" [gdRow]="i">
-              <ng-container
-                *ngIf="fu.filament !== null; else nonTrackedFilament"
-              >
+              @if (fu.filament !== null) {
                 <a
                   [routerLink]="['/filament', fu.filament.id]"
                   (click)="$event.preventDefault(); $event.stopPropagation()"
                   >{{ fu.filament?.displayName }}</a
                 >
-                <ng-container *ngIf="fu.filament?.colorName">
-                  ({{ fu.filament?.colorName }})</ng-container
-                >
-              </ng-container>
-              <ng-template #nonTrackedFilament>
+                @if (fu.filament?.colorName) {
+                  ({{ fu.filament?.colorName }})
+                }
+              } @else {
                 {{ fu.notes }}
-              </ng-template>
+              }
             </div>
             <div gdColumn="3" [gdRow]="i">
-              <ng-container
-                *ngIf="
-                  fu.amountMg !== null && fu.amountMg > 0;
-                  else estimatedUsage
-                "
-              >
-                {{ fu.amountMg / 1000 | number : '1.0-1' }} g</ng-container
-              >
-              <ng-template #estimatedUsage>
-                <div matTooltip="* indicates Estimated Filament Usage">
-                  {{ fu.estimatedAmountMg / 1000 | number : '1.0-1' }} g *
+              @if (fu.amountMg !== null && fu.amountMg > 0) {
+                {{ fu.amountMg / 1000 | number: '1.0-1' }} g
+              } @else {
+                <div matTooltip="* indicates Estimated Material Usage">
+                  {{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }} g *
                 </div>
-              </ng-template>
+              }
             </div>
             <div
               gdColumn="4"
               [gdRow]="i"
-              matTooltip="* indicates default filament price used"
+              matTooltip="* indicates default material price used"
             >
-              <ng-container
-                *ngIf="
-                  fu.amountMg !== null && fu.amountMg > 0;
-                  else estimatedPrice
-                "
-              >
-                {{ getActualPrice(fu) }}</ng-container
-              >
-              <ng-template #estimatedPrice>
+              @if (fu.amountMg !== null && fu.amountMg > 0) {
+                {{ getActualPrice(fu) }}
+              } @else {
                 <div>
                   {{ getEstimatedPrice(fu) }}
                 </div>
-              </ng-template>
+              }
             </div>
-          </ng-container>
+          }
         </div>
       </td>
     </ng-container>
-
     <ng-container matColumnDef="totalFilamentUsage">
       <th
         mat-header-cell
         *matHeaderCellDef
         [mat-sort-header]="printSummarySortColumns.FilamentUsage"
       >
-        Total Filament (g)
+        Total Material (g)
       </th>
       <td mat-cell *matCellDef="let print">
-        {{ print.totalFilamentWeightMg / 1000 | number : '1.0-1' }}
+        {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
       </td>
     </ng-container>
-
     <ng-container matColumnDef="totalCost">
       <th mat-header-cell *matHeaderCellDef>Total Cost</th>
       <td mat-cell *matCellDef="let print">
         {{ getTotalFilamentCost(print.filamentUsage) }}
       </td>
     </ng-container>
-
     <ng-container matColumnDef="status">
       <th mat-header-cell *matHeaderCellDef>Status</th>
       <td mat-cell *matCellDef="let print">{{ getStatus(print) }}</td>
     </ng-container>
-
     <ng-container matColumnDef="commentCount">
       <th mat-header-cell *matHeaderCellDef>Comments</th>
       <td mat-cell *matCellDef="let print">{{ print.commentCount }}</td>
     </ng-container>
-
     <ng-container matColumnDef="more">
       <th
         mat-header-cell
@@ -561,7 +521,6 @@
         </mat-menu>
       </td>
     </ng-container>
-
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr
       scope="row"
@@ -571,11 +530,11 @@
       [attr.cy-print-row]="row.id"
     ></tr>
   </table>
-
-  <div class="no-prints" *ngIf="totalCount === 0">
-    No prints found. Add a new print or try a different search.
-  </div>
-
+  @if (totalCount === 0) {
+    <div class="no-prints">
+      No prints found. Add a new print or try a different search.
+    </div>
+  }
   <mat-paginator
     [pageIndex]="currentPage - 1"
     [length]="totalCount"
@@ -584,6 +543,5 @@
     (page)="pageChange($event)"
   >
   </mat-paginator>
-
   <app-ad></app-ad>
 </div>

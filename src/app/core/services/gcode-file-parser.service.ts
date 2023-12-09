@@ -66,9 +66,8 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
           return prusaResult;
 
         case SupportedGcodeParserSlicers.CrealityPrint:
-          const creatilyPrintResult = await this.crealityPrintParser.parse(
-            gcode
-          );
+          const creatilyPrintResult =
+            await this.crealityPrintParser.parse(gcode);
           if (fileName) {
             creatilyPrintResult.fileName = fileName;
             creatilyPrintResult.title = this.getTitle(fileName);

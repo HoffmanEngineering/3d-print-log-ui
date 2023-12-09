@@ -14,6 +14,7 @@ import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { environment } from 'src/environments/environment';
 import {
   PrintDetail,
+  PrintFilamentSourceMeasurement,
   PrintService,
   PrintStatus,
 } from '../../core/services/print.service';
@@ -46,6 +47,8 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   public isUserProfileFeatureEnabled = environment.features.userProfile;
   userProfileSubscription: Subscription;
   currentUser: UserProfileInfo;
+
+  public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
   constructor(
     private activatedRoute: ActivatedRoute,

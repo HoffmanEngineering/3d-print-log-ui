@@ -1,20 +1,17 @@
 <mat-card appearance="outlined" class="container">
-  <ng-container *ngIf="!invertDisplay; else invertedDisplay">
+  @if (!invertDisplay) {
     <mat-card-header>
       <mat-card-title class="title">{{ title }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       {{ value }}
     </mat-card-content>
-  </ng-container>
+  } @else {
+    <mat-card-header>
+      <mat-card-title class="title">{{ value }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      {{ title }}
+    </mat-card-content>
+  }
 </mat-card>
-
-<ng-template #invertedDisplay>
-  <mat-card-header>
-    <mat-card-title class="title">{{ value }}</mat-card-title>
-  </mat-card-header>
-
-  <mat-card-content>
-    {{ title }}
-  </mat-card-content>
-</ng-template>

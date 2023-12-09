@@ -38,6 +38,12 @@ export enum PrintViewStatus {
   Private = 3,
 }
 
+export enum PrintFilamentSourceMeasurement {
+  Weight = 1,
+  Length = 2,
+  Volume = 3,
+}
+
 export interface PrintImage {
   id: number;
   isDefault: boolean;
@@ -54,13 +60,17 @@ export interface PrintFilamentSummaryDto {
    */
   id: string;
   filament: FilamentSummary;
+
   amountMg?: number;
   lengthInM?: number;
-  isActualLengthSource: boolean;
+  volumeMl?: number;
+
   estimatedAmountMg?: number;
   estimatedLengthInM?: number;
+  estimatedVolumeMl?: number;
 
-  isEstimatedLengthSource: boolean;
+  source: PrintFilamentSourceMeasurement;
+  estimatedSource: PrintFilamentSourceMeasurement;
 
   notes?: string;
 }
@@ -71,13 +81,17 @@ export interface PutPrintFilamentSummaryDto {
    */
   id: string;
   filamentId?: string;
+
   amountMg?: number;
   lengthInM?: number;
-  isActualLengthSource: boolean;
+  volumeMl?: number;
+
   estimatedAmountMg?: number;
   estimatedLengthInM?: number;
+  estimatedVolumeMl?: number;
 
-  isEstimatedLengthSource: boolean;
+  source: PrintFilamentSourceMeasurement;
+  estimatedSource: PrintFilamentSourceMeasurement;
 
   notes?: string;
 }
@@ -346,10 +360,12 @@ export class PrintService {
           filamentId: pf.filament?.id ?? null,
           estimatedAmountMg: pf.estimatedAmountMg,
           estimatedLengthInM: pf.estimatedLengthInM,
-          isEstimatedLengthSource: pf.isEstimatedLengthSource,
+          estimatedVolumeMl: pf.estimatedVolumeMl,
+          estimatedSource: pf.estimatedSource,
           amountMg: pf.amountMg,
           lengthInM: pf.lengthInM,
-          isActualLengthSource: pf.isActualLengthSource,
+          volumeMl: pf.volumeMl,
+          source: pf.source,
           notes: pf.notes,
         };
 
@@ -525,15 +541,18 @@ export class PrintService {
 
       // If actual has an amount, use it.
       if (
-        (fu.isActualLengthSource && fu.lengthInM > 0) ||
-        (!fu.isActualLengthSource && fu.amountMg > 0)
+        (fu.source == PrintFilamentSourceMeasurement.Length &&
+          fu.lengthInM > 0) ||
+        (!(fu.source == PrintFilamentSourceMeasurement.Length) &&
+          fu.amountMg > 0)
       ) {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,
-          isLengthSource: fu.isActualLengthSource,
+          source: fu.source,
           lengthM: fu.lengthInM,
           weightG: fu.amountMg > 0 ? fu.amountMg / 1000 : undefined,
+          volumeMl: fu.volumeMl,
           defaultFilamentPrice,
         });
 
@@ -542,10 +561,11 @@ export class PrintService {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,
-          isLengthSource: fu.isEstimatedLengthSource,
+          source: fu.estimatedSource,
           lengthM: fu.estimatedLengthInM,
           weightG:
             fu.estimatedAmountMg > 0 ? fu.estimatedAmountMg / 1000 : undefined,
+          volumeMl: fu.estimatedVolumeMl,
           defaultFilamentPrice,
         });
 
@@ -613,16 +633,18 @@ export class PrintService {
   /** Returns the  */
   public calculatePrintCost({
     filament,
-    isLengthSource,
+    source,
     weightG,
     lengthM,
+    volumeMl,
     currencySymbol,
     defaultFilamentPrice,
   }: {
     filament: FilamentSummary;
-    isLengthSource: boolean;
-    weightG: string | number | undefined;
-    lengthM: string | number | undefined;
+    source: PrintFilamentSourceMeasurement;
+    weightG?: string | number;
+    lengthM?: string | number;
+    volumeMl?: string | number;
     currencySymbol: string;
     defaultFilamentPrice?: string;
   }): FilamentPrice {
@@ -638,13 +660,13 @@ export class PrintService {
         : defaultPrice;
 
     if (filamentPrice == null) {
-      return { valid: false, message: '(Filament price not set)' };
+      return { valid: false, message: '(Material price not set)' };
     }
 
     const filamentWeightMg = filament.initialNominalWeightMg;
 
     if (filamentWeightMg == null || filamentWeightMg === 0) {
-      return { valid: false, message: '(Filament initial weight not set)' };
+      return { valid: false, message: '(Material initial weight not set)' };
     }
 
     // Save if we are using a default price
@@ -672,7 +694,7 @@ export class PrintService {
       separator: getGroupSeparator(),
     };
 
-    if (!isLengthSource) {
+    if (source == PrintFilamentSourceMeasurement.Weight) {
       // Use Weights, ezpz
 
       if (isNaN(currency(pricePerGram * Number(weightG)).value)) {
@@ -688,27 +710,47 @@ export class PrintService {
         symbol: currencySymbol,
         usesDefaultPrice: isUsingDefaultFilamentPrice,
       };
+    } else if (source == PrintFilamentSourceMeasurement.Length) {
+      // Calculate from length.
+      const diameterMm = filament.diameterMm;
+      const areaSqM = Math.PI * Math.pow(diameterMm / 1000.0, 2) * (1 / 4);
+
+      const densityGramPerCubicM =
+        filament.materialDensityGramPerCubicCm * 1000000;
+
+      const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
+
+      if (isNaN(currency(pricePerGram * gramsUsed).value)) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
+      return {
+        valid: true,
+        price: currency(pricePerGram * gramsUsed),
+        formattedPrice: currency(pricePerGram * gramsUsed).format(
+          currencyFormat
+        ),
+        symbol: currencySymbol,
+        usesDefaultPrice: isUsingDefaultFilamentPrice,
+      };
+    } else if (source === PrintFilamentSourceMeasurement.Volume) {
+      const amountMg =
+        +volumeMl * filament.materialDensityGramPerCubicCm * 1000;
+      const amountG = amountMg / 1000;
+
+      if (isNaN(currency(pricePerGram * Number(amountG)).value)) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
+      return {
+        valid: true,
+        price: currency(pricePerGram * Number(amountG)),
+        formattedPrice: currency(pricePerGram * Number(amountG)).format(
+          currencyFormat
+        ),
+        symbol: currencySymbol,
+        usesDefaultPrice: isUsingDefaultFilamentPrice,
+      };
     }
-
-    // Calculate from length.
-    const diameterMm = filament.diameterMm;
-    const areaSqM = Math.PI * Math.pow(diameterMm / 1000.0, 2) * (1 / 4);
-
-    const densityGramPerCubicM =
-      filament.materialDensityGramPerCubicCm * 1000000;
-
-    const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
-
-    if (isNaN(currency(pricePerGram * gramsUsed).value)) {
-      return { message: '(Price not valid)', valid: false };
-    }
-
-    return {
-      valid: true,
-      price: currency(pricePerGram * gramsUsed),
-      formattedPrice: currency(pricePerGram * gramsUsed).format(currencyFormat),
-      symbol: currencySymbol,
-      usesDefaultPrice: isUsingDefaultFilamentPrice,
-    };
   }
 }

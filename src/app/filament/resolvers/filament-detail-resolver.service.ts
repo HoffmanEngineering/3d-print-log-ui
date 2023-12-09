@@ -1,16 +1,12 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import {
   FilamentDetail,
   FilamentService,
 } from '../../core/services/filament.service';
 
 @Injectable()
-export class FilamentDetailResolverService implements Resolve<FilamentDetail> {
+export class FilamentDetailResolverService {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const filamentId = route.paramMap.get('id');
 

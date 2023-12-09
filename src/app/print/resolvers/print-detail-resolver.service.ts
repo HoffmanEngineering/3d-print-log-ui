@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import {
@@ -25,9 +21,7 @@ export interface PrintDetailWithUser {
 }
 
 @Injectable()
-export class PrintDetailResolverService
-  implements Resolve<PrintDetailWithUser>
-{
+export class PrintDetailResolverService {
   constructor(
     private printService: PrintService,
     private userService: UserService,

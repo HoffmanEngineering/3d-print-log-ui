@@ -5,6 +5,7 @@ import { LoggingService } from 'src/app/core/services/logging.service';
 
 export interface DialogData {
   otherFilamentOption: any;
+  filterByMaterialCategory: string;
 }
 
 @Component({

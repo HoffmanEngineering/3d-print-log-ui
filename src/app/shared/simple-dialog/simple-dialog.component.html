@@ -1,14 +1,13 @@
-<h1 mat-dialog-title *ngIf="title">{{ title }}</h1>
+@if (title) {
+  <h1 mat-dialog-title>{{ title }}</h1>
+}
 <div mat-dialog-content [innerHtml]="body" style="color: #000000de"></div>
 <mat-dialog-actions align="end">
-  <button
-    mat-button
-    *ngIf="noText !== ''"
-    (click)="onNoClick()"
-    [color]="noColor"
-  >
-    {{ noText }}
-  </button>
+  @if (noText !== '') {
+    <button mat-button (click)="onNoClick()" [color]="noColor">
+      {{ noText }}
+    </button>
+  }
   <button
     mat-button
     [mat-dialog-close]="true"

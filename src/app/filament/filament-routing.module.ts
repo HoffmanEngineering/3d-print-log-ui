@@ -11,6 +11,7 @@ import { CopyFilamentDetailResolverService } from './resolvers/copy-filament-det
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { MaterialResolverService } from './resolvers/material-resolver.service';
+import { MaterialCategoryResolverService } from '../core/resolvers/material-category-resolver.service';
 
 const routes: Routes = [
   {
@@ -21,6 +22,7 @@ const routes: Routes = [
         component: FilamentListContainerComponent,
         resolve: {
           filamentList: FilamentListResolverService,
+          materialCategories: MaterialCategoryResolverService,
         },
       },
       {
@@ -34,6 +36,7 @@ const routes: Routes = [
             DefaultFilamentDiameterSettingResolverService,
           defaultFilamentPriceSetting:
             DefaultFilamentPriceSettingResolverService,
+          materialCategories: MaterialCategoryResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -48,6 +51,7 @@ const routes: Routes = [
             DefaultFilamentDiameterSettingResolverService,
           defaultFilamentPriceSetting:
             DefaultFilamentPriceSettingResolverService,
+          materialCategories: MaterialCategoryResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },

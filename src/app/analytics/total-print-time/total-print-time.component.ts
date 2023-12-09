@@ -27,8 +27,8 @@ export class TotalPrintTimeComponent implements OnChanges {
         const printTime = isFinite(print.printTimeInSeconds)
           ? +print.printTimeInSeconds
           : isFinite(print.estimatedPrintTimeInSeconds)
-          ? +print.estimatedPrintTimeInSeconds
-          : 0;
+            ? +print.estimatedPrintTimeInSeconds
+            : 0;
 
         return accumulatedPrintTime + printTime;
       },

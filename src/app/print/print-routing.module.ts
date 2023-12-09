@@ -44,7 +44,8 @@ const routes: Routes = [
             DefaultPrintViewStatusSettingResolverService,
           defaultFilamentPriceSetting:
             DefaultFilamentPriceSettingResolverService,
-          lastFilamentMeasureSetting: LastFilamentMeasureSettingResolverService,
+          lastFilamentMeasureSettings:
+            LastFilamentMeasureSettingResolverService,
           currencies: CurrenciesResolverService,
           preferredCurrencyNameSetting: CurrencyNameResolverService,
           preferredCurrencySymbolSetting: CurrencySymbolResolverService,
@@ -62,7 +63,8 @@ const routes: Routes = [
             DefaultPrintViewStatusSettingResolverService,
           defaultFilamentPriceSetting:
             DefaultFilamentPriceSettingResolverService,
-          lastFilamentMeasureSetting: LastFilamentMeasureSettingResolverService,
+          lastMaterialMeasureSettings:
+            LastFilamentMeasureSettingResolverService,
           currencies: CurrenciesResolverService,
           preferredCurrencyNameSetting: CurrencyNameResolverService,
           preferredCurrencySymbolSetting: CurrencySymbolResolverService,

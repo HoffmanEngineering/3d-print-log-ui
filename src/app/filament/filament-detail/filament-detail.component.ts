@@ -1,5 +1,11 @@
 import { Location } from '@angular/common';
-import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import {
   UntypedFormArray,
   UntypedFormBuilder,
@@ -9,7 +15,7 @@ import {
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -22,9 +28,12 @@ import {
 import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import {
   FilamentAdjustment,
+  FilamentAdjustmentSourceMeasurement,
   FilamentDetail,
   FilamentService,
+  FilamentSourceMeasurement,
 } from '../../core/services/filament.service';
+import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
@@ -33,7 +42,9 @@ const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
   templateUrl: './filament-detail.component.html',
   styleUrls: ['./filament-detail.component.scss'],
 })
-export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
+export class FilamentDetailComponent
+  implements OnInit, ComponentCanDeactivate, OnDestroy
+{
   public filamentForm: UntypedFormGroup;
   public saving = false;
 
@@ -56,6 +67,15 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   public filteredFilamentPurchaseLocations: Observable<string[]> = null;
   filamentBrands: string[];
   filteredFilamentBrands: Observable<string[]>;
+
+  materialCategorySubscription: Subscription;
+
+  public materialCategories: MaterialCategory[] = [];
+
+  public filamentAdjustmentSourceMeasurement =
+    FilamentAdjustmentSourceMeasurement;
+
+  public filamentSourceMeasurement = FilamentSourceMeasurement;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -90,17 +110,33 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
 
       this.materials = data.materials ?? [];
 
+      this.materialCategories = data.materialCategories;
+
       this.defaultFilamentDiameterMmSetting =
         data.defaultFilamentDiameterMmSetting;
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
 
+      this.recalculateFormFieldsForSelectedMaterialCategory(
+        this.filamentForm.get('materialCategoryNickname').value
+      );
+
+      this.materialCategorySubscription = this.filamentForm
+        .get('materialCategoryNickname')
+        .valueChanges.subscribe((categoryNickname) => {
+          this.recalculateFormFieldsForSelectedMaterialCategory(
+            categoryNickname
+          );
+
+          this.filamentForm.get('materialType').enable();
+        });
+
       this.filteredMaterials = this.filamentForm
         .get('materialType')
         .valueChanges.pipe(
           startWith(''),
-          tap((value) => {
+          tap((value: string) => {
             if (
               value === '' ||
               +this.filamentForm.get('materialDensityGramPerCubicCm').value > 0
@@ -111,7 +147,17 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
             const selectedMaterial = this.materials.find((m) => {
               return this.materialNamePipe.transform(m) === value;
             });
-            if (selectedMaterial) {
+
+            const materialCategory = this.filamentForm.get(
+              'materialCategoryNickname'
+            ).value;
+
+            const isMaterialCategoryMatch =
+              materialCategory === '' ||
+              materialCategory == null ||
+              selectedMaterial?.materialCategoryNickname === materialCategory;
+
+            if (selectedMaterial && isMaterialCategoryMatch) {
               // This means a user selected a default materials
               this.filamentForm
                 .get('materialDensityGramPerCubicCm')
@@ -156,14 +202,88 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     });
   }
 
+  /**
+   * Adjust the form fields to match the settings for the material category
+   */
+  private recalculateFormFieldsForSelectedMaterialCategory(value: any) {
+    const selectedMaterialCategory = this.materialCategories.find((m) => {
+      return m.nickname === value;
+    });
+
+    if (selectedMaterialCategory) {
+      // Adjust the form fields to match the settings for the material category
+      if (selectedMaterialCategory.hasDiameter) {
+        this.filamentForm.get('diameterMm').enable();
+      } else {
+        this.filamentForm.get('diameterMm').disable();
+      }
+
+      if (selectedMaterialCategory.showBedTemperature) {
+        this.filamentForm.get('recommendedBedTemp').enable();
+      } else {
+        this.filamentForm.get('recommendedBedTemp').disable();
+      }
+
+      if (selectedMaterialCategory.showNozzleTemperature) {
+        this.filamentForm.get('recommendedTemp').enable();
+        this.filamentForm.get('tempRangeStart').enable();
+        this.filamentForm.get('tempRangeEnd').enable();
+      } else {
+        this.filamentForm.get('recommendedTemp').disable();
+        this.filamentForm.get('tempRangeStart').disable();
+        this.filamentForm.get('tempRangeEnd').disable();
+      }
+
+      if (selectedMaterialCategory.showMeltingTemperature) {
+        this.filamentForm.get('meltingTemperature').enable();
+      } else {
+        this.filamentForm.get('meltingTemperature').disable();
+      }
+
+      if (selectedMaterialCategory.showInertGas) {
+        this.filamentForm.get('inertGas').enable();
+      } else {
+        this.filamentForm.get('inertGas').disable();
+      }
+
+      if (selectedMaterialCategory.showMaterialRefreshRatio) {
+        this.filamentForm.get('materialRefreshRatio').enable();
+      } else {
+        this.filamentForm.get('materialRefreshRatio').disable();
+      }
+
+      if (selectedMaterialCategory.showRecommendedInitialLayerTimeInSeconds) {
+        this.filamentForm.get('initialLayerTimeS').enable();
+      } else {
+        this.filamentForm.get('initialLayerTimeS').disable();
+      }
+
+      if (selectedMaterialCategory.showRecommendedLayerTimeInSeconds) {
+        this.filamentForm.get('layerTimeS').enable();
+      } else {
+        this.filamentForm.get('layerTimeS').disable();
+      }
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.materialCategorySubscription?.unsubscribe();
+  }
+
   private _filter(value: string): Material[] {
     const filterValue = value.toLowerCase();
+    const materialCategory = this.filamentForm.get(
+      'materialCategoryNickname'
+    ).value;
 
     return this.materials
       .filter(
         (option) =>
-          option.acronym?.toLowerCase().includes(filterValue) ||
-          option.name?.toLowerCase().includes(filterValue)
+          (option.acronym?.toLowerCase().includes(filterValue) ||
+            option.name?.toLowerCase().includes(filterValue)) &&
+          (materialCategory === '' ||
+            materialCategory == null ||
+            option.materialCategoryNickname === materialCategory)
       )
       .sort();
   }
@@ -207,13 +327,19 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
   private buildFilamentAdjustmentFormGroup(
     id: string,
     filamentId: string,
-    amountG: number,
+    source: FilamentAdjustmentSourceMeasurement,
+    amountG: number | null,
+    lengthInM: number | null,
+    volumeMl: number | null,
     notes: string
   ) {
     return this.formBuilder.group({
       id,
+      source,
       filamentId,
       amountG,
+      lengthInM,
+      volumeMl,
       notes,
     });
   }
@@ -225,7 +351,10 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
         const adjustmentControl = this.buildFilamentAdjustmentFormGroup(
           adjustment.id,
           adjustment.filamentId,
+          adjustment.source,
           adjustment.amountMg / 1000,
+          adjustment.lengthInM,
+          adjustment.volumeMl,
           adjustment.notes
         );
         adjustments.push(adjustmentControl);
@@ -253,12 +382,22 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
         filament?.diameterMm
           ? filament.diameterMm
           : this.defaultFilamentDiameterMmSetting
-          ? +this.defaultFilamentDiameterMmSetting.value
+            ? +this.defaultFilamentDiameterMmSetting.value
+            : null,
+      ],
+      initialTotalWeightG: [
+        filament?.initialTotalWeightMg > 0
+          ? filament?.initialTotalWeightMg / 1000
           : null,
       ],
-
-      initialTotalWeightG: [filament?.initialTotalWeightMg / 1000],
-      initialNominalWeightG: [filament?.initialNominalWeightMg / 1000],
+      initialNominalWeightG: [
+        filament?.initialNominalWeightMg > 0
+          ? filament?.initialNominalWeightMg / 1000
+          : null,
+      ],
+      initialNominalLengthM: [filament?.initialNominalLengthM],
+      initialNominalVolumeMl: [filament?.initialNominalVolumeMl],
+      source: [filament?.source ?? FilamentSourceMeasurement.Weight],
       spoolWeightG: [filament?.spoolWeightMg / 1000],
       tempRangeStart: [filament?.tempRangeStart],
       tempRangeEnd: [filament?.tempRangeEnd],
@@ -291,6 +430,14 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
           ? filament.isFavorite
           : false,
       ],
+      materialCategoryNickname: [
+        filament?.materialCategoryNickname ?? 'filament',
+      ],
+      inertGas: [filament?.inertGas ?? ''],
+      initialLayerTimeS: [filament?.initialLayerTimeS ?? null],
+      layerTimeS: [filament?.layerTimeS ?? null],
+      meltingTemperature: [filament?.meltingTemperature ?? null],
+      materialRefreshRatio: [filament?.materialRefreshRatio ?? null],
     });
 
     return form;
@@ -301,7 +448,10 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       this.buildFilamentAdjustmentFormGroup(
         EMPTY_GUID,
         this.filamentForm.get('id')?.value ?? EMPTY_GUID,
+        FilamentAdjustmentSourceMeasurement.Weight,
         0,
+        null,
+        null,
         ''
       )
     );
@@ -365,6 +515,8 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       .filter((adjustment) => {
         return (
           adjustment.get('amountG').value !== 0 ||
+          adjustment.get('lengthInM').value !== 0 ||
+          adjustment.get('volumeMl').value !== 0 ||
           adjustment.get('notes').value !== ''
         );
       })
@@ -372,7 +524,19 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
         const newAdjustment: FilamentAdjustment = {
           id: adjustment.get('id')?.value ?? EMPTY_GUID,
           filamentId: adjustment.get('filamentId')?.value ?? EMPTY_GUID,
-          amountMg: Math.round(+adjustment.get('amountG').value * 1000),
+          source: adjustment.get('source').value,
+          amountMg:
+            +adjustment.get('amountG').value !== null
+              ? Math.round(+adjustment.get('amountG').value * 1000)
+              : null,
+          lengthInM:
+            +adjustment.get('lengthInM').value !== null
+              ? Math.round(+adjustment.get('lengthInM').value)
+              : null,
+          volumeMl:
+            +adjustment.get('volumeMl').value !== null
+              ? Math.round(+adjustment.get('volumeMl').value)
+              : null,
           notes: adjustment.get('notes').value,
         };
 
@@ -382,16 +546,33 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
     const filament: FilamentDetail = {
       id: this.filamentForm.controls.id.value,
       brand: this.filamentForm.controls.brand.value,
+      materialCategoryNickname:
+        this.filamentForm.controls.materialCategoryNickname.value,
       colorHex: this.getColorHex(this.filamentForm.controls.colorHex.value),
       colorName: this.filamentForm.controls.colorName.value,
       diameterMm: this.filamentForm.controls.diameterMm.value,
       displayName: this.filamentForm.controls.displayName.value,
-      initialNominalWeightMg: Math.round(
-        this.filamentForm.controls.initialNominalWeightG.value * 1000
-      ),
+      source: this.filamentForm.controls.source.value,
+      initialNominalWeightMg: !isNaN(
+        +this.filamentForm.controls.initialNominalWeightG.value
+      )
+        ? Math.round(
+            +this.filamentForm.controls.initialNominalWeightG.value * 1000
+          )
+        : null,
       initialTotalWeightMg: Math.round(
         this.filamentForm.controls.initialTotalWeightG.value * 1000
       ),
+      initialNominalLengthM: !isNaN(
+        +this.filamentForm.controls.initialNominalLengthM.value
+      )
+        ? Math.round(+this.filamentForm.controls.initialNominalLengthM.value)
+        : null,
+      initialNominalVolumeMl: !isNaN(
+        +this.filamentForm.controls.initialNominalVolumeMl.value
+      )
+        ? Math.round(+this.filamentForm.controls.initialNominalVolumeMl.value)
+        : null,
       materialDensityGramPerCubicCm:
         this.filamentForm.controls.materialDensityGramPerCubicCm.value,
       materialType: this.filamentForm.controls.materialType.value,
@@ -410,6 +591,12 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
       tempRangeEnd: this.filamentForm.controls.tempRangeEnd.value,
       tempRangeStart: this.filamentForm.controls.tempRangeStart.value,
       storageLocation: this.filamentForm.controls.storageLocation.value,
+      inertGas: this.filamentForm.controls.inertGas.value,
+      initialLayerTimeS: this.filamentForm.controls.initialLayerTimeS.value,
+      layerTimeS: this.filamentForm.controls.layerTimeS.value,
+      meltingTemperature: this.filamentForm.controls.meltingTemperature.value,
+      materialRefreshRatio:
+        this.filamentForm.controls.materialRefreshRatio.value,
       filamentAdjustments: adjustments,
       isActive: this.filamentForm.controls.isActive.value,
       isFavorite: this.filamentForm.controls.isFavorite.value,
@@ -483,5 +670,13 @@ export class FilamentDetailComponent implements OnInit, ComponentCanDeactivate {
           this.defaultFilamentPriceSetting = setting;
         });
     }
+  }
+
+  public getMaterialCategoryName(nickname: string): string {
+    const category = this.materialCategories.find((m) => {
+      return m.nickname === nickname;
+    });
+
+    return category?.name ?? '';
   }
 }

@@ -3,7 +3,6 @@
     <mat-card-header
       ><mat-card-title class="title">Analytics</mat-card-title>
     </mat-card-header>
-
     <mat-card-content align="center">
       <mat-form-field>
         <mat-label>Select Date Range:</mat-label>
@@ -38,12 +37,13 @@
           (ngModelChange)="filterByPrinters()"
           multiple
         >
-          <mat-option *ngFor="let printer of printers" [value]="printer.id">{{
-            getPrinterLabel(printer)
-          }}</mat-option>
+          @for (printer of printers; track printer) {
+            <mat-option [value]="printer.id">{{
+              getPrinterLabel(printer)
+            }}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
-
       <div class="card mat-elevation-z3">
         <app-total-print-time
           [prints]="filteredPrintStatistics"
@@ -58,11 +58,10 @@
         <app-prints-by-status [prints]="filteredPrintStatistics">
         </app-prints-by-status>
       </div>
-
-      <!-- 
-      <div>
-        {{ filteredPrintStatistics | json }}
-      </div> -->
+      <!--
+                  <div>
+                    {{ filteredPrintStatistics | json }}
+                  </div> -->
     </mat-card-content>
     <app-ad></app-ad>
   </mat-card>

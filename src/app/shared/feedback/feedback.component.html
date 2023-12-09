@@ -25,7 +25,6 @@
             <mat-option [value]="feedbackTypes.Other">Other</mat-option>
           </mat-select>
         </mat-form-field>
-
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Feedback</mat-label>
           <textarea
@@ -36,11 +35,10 @@
             rows="4"
             maxlength="5000"
           ></textarea>
-          <mat-error *ngIf="form.controls['note'].hasError('required')">
-            A Note is <strong>required</strong>
-          </mat-error>
+          @if (form.controls['note'].hasError('required')) {
+            <mat-error> A Note is <strong>required</strong> </mat-error>
+          }
         </mat-form-field>
-
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Email (optional)</mat-label>
           <input

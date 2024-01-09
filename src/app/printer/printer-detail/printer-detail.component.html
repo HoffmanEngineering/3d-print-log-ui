@@ -52,7 +52,12 @@
             <mat-error> A Type is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field
+          fxFlex="grow"
+          fxFlexFill
+          matTooltip="Type your own or select a pre-defined Printer."
+          matTooltipPosition="above"
+        >
           <mat-label>Make</mat-label>
           <input
             id="edit-printer-make"
@@ -72,7 +77,12 @@
             <mat-option [value]="option">{{ option }}</mat-option>
           }
         </mat-autocomplete>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field
+          fxFlex="grow"
+          fxFlexFill
+          matTooltip="Type your own or select a pre-defined Printer."
+          matTooltipPosition="above"
+        >
           <mat-label>Model</mat-label>
           <input
             id="edit-printer-model"

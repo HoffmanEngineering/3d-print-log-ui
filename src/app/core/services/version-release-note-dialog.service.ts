@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.25.1': {
+      redirect: '1.25.0',
+    },
     '1.25.0': {
       title: '1.25.0 - Support Resin and Powder Printers',
       body: `<p>

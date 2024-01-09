@@ -1,0 +1,41 @@
+// A fix for https://github.com/h2qutc/angular-material-components/issues/357
+.mat-datepicker-content,
+.time-container {
+  box-shadow:
+    0px 2px 4px -1px rgba(0, 0, 0, 0.2),
+    0px 4px 5px 0px rgba(0, 0, 0, 0.14),
+    0px 1px 10px 0px rgba(0, 0, 0, 0.12);
+  display: block;
+  border-radius: 4px;
+  background-color: var(--mat-datepicker-calendar-container-background-color);
+  color: var(--mat-datepicker-calendar-container-text-color);
+}
+
+.mat-calendar-body-cell-content {
+  color: var(--mat-datepicker-calendar-date-text-color);
+  border-color: var(--mat-datepicker-calendar-date-outline-color);
+}
+
+.mat-calendar-body-selected {
+  background-color: var(
+    --mat-datepicker-calendar-date-selected-state-background-color
+  );
+  color: var(--mat-datepicker-calendar-date-selected-state-text-color);
+}
+
+.mat-calendar-body-cell-content {
+  border: none !important;
+}
+
+.mat-calendar-body-cell:not(.mat-calendar-body-disabled):hover
+  > .mat-calendar-body-cell-content:not(.mat-calendar-body-selected):not(
+    .mat-calendar-body-comparison-identical
+  ) {
+  background-color: var(
+    --mat-datepicker-calendar-date-hover-state-background-color
+  );
+}
+
+.mat-calendar-arrow {
+  fill: var(--mat-datepicker-calendar-period-button-icon-color);
+}

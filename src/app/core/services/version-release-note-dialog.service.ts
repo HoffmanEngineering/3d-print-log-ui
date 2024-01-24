@@ -27,6 +27,39 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.26.0': {
+      title: '1.26.0 - Klipper/Moonraker Integration is here!',
+      body: `<p>
+  3D Print Log now integrates with Klipper/Moonraker. Configure your Klipper
+  printer to automatically send print information to 3D Print Log, tracking
+  print time and filament usage. It uses moonraker's built in
+  <strong>notifier</strong> component, so no additional plugins are required,
+  just a small configuration change.
+</p>
+<p>
+  See the 
+  <a rel="noreferrer noopener" target="_blank" href="/docs/klipper">Documentation</a> 
+  for how to configure the klipper integration
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.25.1': {
       redirect: '1.25.0',
     },

@@ -18,6 +18,7 @@ export class DocSidebarComponent {
     { name: 'Android App', url: '/docs/android-app' },
     { name: 'Cura Plugin', url: '/docs/cura-plugin' },
     { name: 'Octoprint Webhook', url: '/docs/octoprint-webhook' },
+    { name: 'Klipper/Moonraker', url: '/docs/klipper' },
     { divider: true },
     { name: 'Release Notes', url: '/docs/release-notes' },
     { name: 'About', url: '/docs/about' },

@@ -12,6 +12,7 @@ import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.compon
 import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationComponent } from './documentation.component';
+import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.component';
 
 const routes: Routes = [
   {
@@ -30,6 +31,7 @@ const routes: Routes = [
       { path: 'android-app', component: DocsAndroidAppComponent },
       { path: 'cura-plugin', component: DocsCuraPluginComponent },
       { path: 'octoprint-webhook', component: DocsOctoprintWebhookComponent },
+      { path: 'klipper', component: DocsMoonrakerComponent },
       { path: 'release-notes', component: DocsReleaseNotesComponent },
       { path: 'about', component: DocsAboutComponent },
       { path: '', redirectTo: 'getting-started', pathMatch: 'full' },

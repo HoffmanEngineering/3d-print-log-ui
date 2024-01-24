@@ -17,6 +17,7 @@ import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-releas
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocumentationComponent } from './documentation.component';
 import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-app.component';
+import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.component';
 
 @NgModule({
   declarations: [
@@ -31,6 +32,7 @@ import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-ap
     DocsReleaseNotesComponent,
     DocsFilamentsComponent,
     DocsOctoprintWebhookComponent,
+    DocsMoonrakerComponent,
     DocsAndroidAppComponent,
   ],
   imports: [

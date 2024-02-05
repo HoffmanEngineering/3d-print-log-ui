@@ -13,6 +13,8 @@ import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationComponent } from './documentation.component';
 import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.component';
+import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
+import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
 
 const routes: Routes = [
   {
@@ -34,6 +36,8 @@ const routes: Routes = [
       { path: 'klipper', component: DocsMoonrakerComponent },
       { path: 'release-notes', component: DocsReleaseNotesComponent },
       { path: 'about', component: DocsAboutComponent },
+      { path: 'privacy-policy', component: DocsPrivacyPolicyComponent },
+      //{ path: 'terms-of-service', component: DocsTermsComponent },
       { path: '', redirectTo: 'getting-started', pathMatch: 'full' },
     ],
   },

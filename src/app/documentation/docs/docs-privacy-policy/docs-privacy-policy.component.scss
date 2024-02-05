@@ -1,0 +1,9 @@
+.social {
+  a {
+    margin: 0 2px;
+    transition: all 0.5s ease-in-out;
+    img:hover {
+      transform: scale(1.1);
+    }
+  }
+}

@@ -22,5 +22,7 @@ export class DocSidebarComponent {
     { divider: true },
     { name: 'Release Notes', url: '/docs/release-notes' },
     { name: 'About', url: '/docs/about' },
+    { name: 'Privacy Policy', url: '/docs/privacy-policy' },
+    // { name: 'Terms of Service', url: '/docs/terms-of-service' },
   ];
 }

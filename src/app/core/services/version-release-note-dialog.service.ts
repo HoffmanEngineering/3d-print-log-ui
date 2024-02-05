@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.26.1': {
+      redirect: '1.26.0',
+    },
     '1.26.0': {
       title: '1.26.0 - Klipper/Moonraker Integration is here!',
       body: `<p>

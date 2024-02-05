@@ -18,6 +18,8 @@ import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocumentationComponent } from './documentation.component';
 import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-app.component';
 import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.component';
+import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
+import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
 
 @NgModule({
   declarations: [
@@ -34,6 +36,8 @@ import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.com
     DocsOctoprintWebhookComponent,
     DocsMoonrakerComponent,
     DocsAndroidAppComponent,
+    DocsTermsComponent,
+    DocsPrivacyPolicyComponent,
   ],
   imports: [
     CommonModule,

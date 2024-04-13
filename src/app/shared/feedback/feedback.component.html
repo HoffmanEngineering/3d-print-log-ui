@@ -1,62 +1,59 @@
-<section fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
-    <h1>Send Feedback</h1>
-    <form
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
-    >
-      <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
-      >
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label> Type</mat-label>
-          <mat-select formControlName="type" required>
-            <mat-option [value]="feedbackTypes.Suggestion"
-              >Suggestion</mat-option
-            >
-            <mat-option [value]="feedbackTypes.Question">Question</mat-option>
-            <mat-option [value]="feedbackTypes.Bug">Bug</mat-option>
-            <mat-option [value]="feedbackTypes.Other">Other</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Feedback</mat-label>
-          <textarea
-            matInput
-            type="text"
-            formControlName="note"
-            required
-            rows="4"
-            maxlength="5000"
-          ></textarea>
-          @if (form.controls['note'].hasError('required')) {
-            <mat-error> A Note is <strong>required</strong> </mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label>Email (optional)</mat-label>
-          <input
-            matInput
-            type="email"
-            formControlName="email"
-            rows="4"
-            maxlength="1000"
-          />
-        </mat-form-field>
+<section class="flex justify-center content-stretch items-stretch flex-row">
+  <mat-card appearance="outlined" class="xs:basis-full">
+    <h1 class="font-bold text-center">Send Feedback</h1>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <mat-card-content>
+        <div
+          class="flex flex-col justify-evenly content-center items-center w-full basis-full h-full min-h-full min-w-full"
+        >
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
+            <mat-label> Type</mat-label>
+            <mat-select formControlName="type" required="">
+              <mat-option [value]="feedbackTypes.Suggestion"
+                >Suggestion</mat-option
+              >
+              <mat-option [value]="feedbackTypes.Question">Question</mat-option>
+              <mat-option [value]="feedbackTypes.Bug">Bug</mat-option>
+              <mat-option [value]="feedbackTypes.Other">Other</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
+            <mat-label>Feedback</mat-label>
+            <textarea
+              matInput=""
+              type="text"
+              formControlName="note"
+              required=""
+              rows="4"
+              maxlength="5000"
+            ></textarea>
+            @if (form.controls['note'].hasError('required')) {
+              <mat-error> A Note is <strong>required</strong> </mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
+            <mat-label>Email (optional)</mat-label>
+            <input
+              matInput=""
+              type="email"
+              formControlName="email"
+              rows="4"
+              maxlength="1000"
+            />
+          </mat-form-field>
+        </div>
       </mat-card-content>
       <mat-card-actions
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
+        class="flex justify-center content-center items-center w-full flex-row gap-[15px]"
       >
         <button
-          mat-raised-button
+          mat-raised-button=""
           type="submit"
           [disabled]="!form.valid || saving"
           color="primary"
@@ -65,7 +62,7 @@
           Submit
         </button>
         <button
-          mat-raised-button
+          mat-raised-button=""
           type="button"
           class="close"
           (click)="handleClose()"

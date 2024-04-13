@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* You can add global styles to this file, and also import other style files */
 * {
   box-sizing: border-box;
@@ -22,15 +26,16 @@ app-navbar {
 }
 
 .docs-markdown {
-  min-height: 70vh;
+  // min-height: 70vh;
+  @apply prose max-w-none;
 }
 
-.docs-markdown ol,
-.docs-markdown p,
-.docs-markdown ul {
-  font-size: 16px;
-  line-height: 28px;
-}
+// .docs-markdown ol,
+// .docs-markdown p,
+// .docs-markdown ul {
+//   font-size: 16px;
+//   line-height: 28px;
+// }
 
 /** Radius */
 .no-right-radius {

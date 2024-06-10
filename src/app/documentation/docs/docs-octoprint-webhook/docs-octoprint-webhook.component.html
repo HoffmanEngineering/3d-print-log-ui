@@ -69,17 +69,17 @@
   <youtube-player videoId="E3kHsxSkBAw"></youtube-player>
 
   <h4>Step 1: Download OctoPrint-Webhook Plugin</h4>
-  <div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col">
+    <div class="basis-full">
       <ul>
         <li>
-          On your OctoPrint, navigate to Settings -> Plugin Manager, and click
-          the <strong>"Get More.."</strong> button at the bottom.
+          On your OctoPrint, navigate to Settings -&gt; Plugin Manager, and
+          click the <strong>"Get More.."</strong> button at the bottom.
         </li>
         <li>Search for "OctoPrint-Webhook", and install the plugin.</li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <!-- <img
         class="fade-in"
         [ngStyle.lt-md]="{
@@ -95,8 +95,8 @@
   </div>
 
   <h4>Step 2: Generate API Key on 3D Print Log</h4>
-  <div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col">
+    <div class="basis-full">
       <p>
         OctoPrint will need an "API Key" to authenticate. This is how 3D Print
         Log knows what user your OctoPrint is for.
@@ -122,7 +122,7 @@
         </li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <!-- <img
           class="fade-in"
           [ngStyle.lt-md]="{
@@ -138,8 +138,8 @@
   </div>
 
   <h4>Step 3: Find your Printer ID Number in 3D Print Log</h4>
-  <div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col">
+    <div class="basis-full">
       <p>
         OctoPrint needs to know what Printer to use in 3D Print Log. We'll need
         to find the printer's id number in 3D Print Log.
@@ -157,7 +157,7 @@
         <li>Copy that ID number for use in <strong>Step 5</strong>.</li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <!-- <img
           class="fade-in"
           [ngStyle.lt-md]="{
@@ -173,8 +173,8 @@
   </div>
 
   <h4>Step 4: Add new Webhook in OctoPrint Webhook Plugin</h4>
-  <div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col">
+    <div class="basis-full">
       <ul>
         <li>
           On your OctoPrint, navigate to Settings and find the Webhooks menu
@@ -213,10 +213,10 @@
               Change <strong>HEADERS</strong> to
               <pre>
     <code>
-&#123;
+&amp;#123;
     "Content-Type": "application/json",
-    "X-Api-Key": "&#64;apiSecret"
-&#125;
+    "X-Api-Key": "&amp;#64;apiSecret"
+&amp;#125;
 </code>
 </pre>
             </li>
@@ -224,21 +224,21 @@
               Change <strong>DATA</strong> to
               <pre>
     <code>
-&#123;
-    "deviceIdentifier":"&#64;deviceIdentifier",
-    "apiSecret":"&#64;apiSecret",
-    "topic":"&#64;topic",
-    "message":"&#64;message",
-    "extra":"&#64;extra",
-    "state": "&#64;state",
-    "job": "&#64;job",
-    "progress": "&#64;progress",
-    "currentZ": "&#64;currentZ",
-    "offsets": "&#64;offsets",
-    "meta": "&#64;meta",
-    "currentTime": "&#64;currentTime",
-    "snapshot": "&#64;snapshot"
-&#125;
+&amp;#123;
+    "deviceIdentifier":"&amp;#64;deviceIdentifier",
+    "apiSecret":"&amp;#64;apiSecret",
+    "topic":"&amp;#64;topic",
+    "message":"&amp;#64;message",
+    "extra":"&amp;#64;extra",
+    "state": "&amp;#64;state",
+    "job": "&amp;#64;job",
+    "progress": "&amp;#64;progress",
+    "currentZ": "&amp;#64;currentZ",
+    "offsets": "&amp;#64;offsets",
+    "meta": "&amp;#64;meta",
+    "currentTime": "&amp;#64;currentTime",
+    "snapshot": "&amp;#64;snapshot"
+&amp;#125;
 </code>
 </pre>
             </li>
@@ -247,7 +247,7 @@
         <li>Click <strong>Save</strong> to save the settings.</li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <!-- <img
         class="fade-in"
         [ngStyle.lt-md]="{
@@ -263,8 +263,8 @@
   </div>
 
   <h4>Step 5: Send a Test Message</h4>
-  <div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col">
+    <div class="basis-full">
       <ul>
         <li>
           On your OctoPrint, navigate to Settings and find the Webhooks menu
@@ -288,7 +288,7 @@
         <li>If an error message is returned, see Troubleshooting below.</li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <!-- <img
           class="fade-in"
           [ngStyle.lt-md]="{
@@ -304,15 +304,15 @@
   </div>
 
   <h4>Step 6: Happy Printing!</h4>
-  <div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col">
+    <div class="basis-full">
       <p>
         The <strong>OctoPrint Webhook</strong> plugin should now be configured.
         Happy printing!
       </p>
     </div>
 
-    <div fxFlex>
+    <div class="flex-1">
       <!-- <img
           class="fade-in"
           [ngStyle.lt-md]="{
@@ -342,7 +342,7 @@
     <li>
       Refresh OctoPrint in your browser, and check that the OctoPrint Webhook
       plugin has the correct api key saved under
-      <strong>Webhook Parameters -> API SECRET</strong>.
+      <strong>Webhook Parameters -&gt; API SECRET</strong>.
     </li>
     <li>
       If the WebHook Plugin didn't save the API Secret, enter it and try to save
@@ -371,7 +371,7 @@
     <li>
       Refresh OctoPrint in your browser, and check that the OctoPrint Webhook
       plugin has the correct Printer ID saved under
-      <strong>Webhook Parameters -> DEVICE IDENTIFIER</strong>.
+      <strong>Webhook Parameters -&gt; DEVICE IDENTIFIER</strong>.
     </li>
     <li>
       If the WebHook Plugin didn't save the DEVICE IDENTIFIER, enter it and try
@@ -401,7 +401,7 @@
     <li>
       Refresh OctoPrint in your browser, and check that the OctoPrint Webhook
       plugin has the correct Printer ID saved under
-      <strong>Webhook Parameters -> DEVICE IDENTIFIER</strong>.
+      <strong>Webhook Parameters -&gt; DEVICE IDENTIFIER</strong>.
     </li>
     <li>
       If the WebHook Plugin didn't save the DEVICE IDENTIFIER, enter it and try

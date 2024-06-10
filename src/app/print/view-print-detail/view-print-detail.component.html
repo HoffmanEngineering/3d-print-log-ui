@@ -1,7 +1,12 @@
-<div fxLayout="row" fxLayoutAlign="center" style="width: 100%">
-  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
-    <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="10px">
-      <mat-card-header fxFlex="grow">
+<div
+  style="width: 100%"
+  class="flex justify-center content-stretch items-stretch flex-row"
+>
+  <mat-card appearance="outlined" fxFlex="500px" class="xs:basis-full">
+    <div
+      class="flex justify-start content-center items-center flex-col gap-2.5"
+    >
+      <mat-card-header class="basis-full">
         <img mat-card-avatar [src]="this.user.profilePicture" />
         <mat-card-title>
           {{ print.title }}
@@ -22,20 +27,18 @@
         }
       </mat-card-header>
       <mat-card-content
-        fxLayout="column"
-        fxLayoutAlign="start center"
-        fxLayoutGap="10px"
+        class="flex flex-col justify-start content-center items-center w-full gap-2.5"
       >
-        <div fxLayout="row">
+        <div class="flex flex-row">
           @if (selectedImage) {
             <div class="main-image">
               <app-print-image
-                fxFlex
                 [printId]="print.id"
                 [imageId]="selectedImage.id"
                 [imageData]="selectedImage.url"
                 [showDeleteOnHover]="false"
                 (imageDataChange)="selectedImage.url = $event"
+                class="flex-1"
               ></app-print-image>
             </div>
           }
@@ -43,10 +46,7 @@
         <div></div>
       </mat-card-content>
       <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column wrap"
-        fxLayoutAlign="space-evenly center"
+        class="flex flex-col justify-evenly content-center items-center w-full flex-wrap basis-full h-full min-h-full min-w-full"
       >
         <section class="mat-typography grid-container">
           <h3>Print Status:</h3>
@@ -190,30 +190,28 @@
         </section>
       </mat-card-content>
       <mat-card-actions
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
+        class="flex flex-col justify-between content-center items-center w-full flex-row gap-[15px]"
       >
-        <div fxFlex fxFlexFill fxLayoutGap="10px">
+        <div class="flex gap-2.5 flex-1 h-full w-full min-h-full min-w-full">
           @if (currentUser && currentUser.id === user.id) {
             <button
-              fxFlex="grow"
               mat-raised-button
               type="button"
               color="accent"
               [routerLink]="['edit']"
               data-cy-edit-btn
+              class="basis-full"
             >
               Edit
             </button>
           }
           <button
-            fxFlex="grow"
             mat-raised-button
             type="button"
             (click)="handleClose()"
             color="warn"
             data-cy-close-btn
+            class="basis-full"
           >
             Close
           </button>

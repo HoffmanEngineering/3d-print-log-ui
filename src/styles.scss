@@ -30,6 +30,10 @@ app-navbar {
   @apply prose max-w-none;
 }
 
+a:not([class='docs-markdown']) {
+  @apply underline text-blue-600 hover:text-blue-800 visited:text-purple-600;
+}
+
 // .docs-markdown ol,
 // .docs-markdown p,
 // .docs-markdown ul {

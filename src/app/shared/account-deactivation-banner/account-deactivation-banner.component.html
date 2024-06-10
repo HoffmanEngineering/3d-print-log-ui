@@ -7,19 +7,17 @@
         margin-left: auto;
         margin-right: auto;
       "
-      class="text-area"
-      fxLayout="row"
-      fxLayoutAlign="start center"
+      class="text-area flex justify-start content-center items-center flex-row"
     >
-      <div fxFlex="grow" fxFlexFill>
+      <div class="basis-full h-full w-full min-h-full min-w-full">
         Your Account was deactivated on {{ deactivationDate | date: 'medium' }}.
         All data will be removed 24 hours after deactivation.
       </div>
       <button
         mat-raised-button
-        fxFlex="180px"
         color="primary"
         (click)="reactivateAccount()"
+        class="basis-[180px]"
       >
         Reactivate Account
       </button>

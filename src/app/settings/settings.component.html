@@ -1,22 +1,24 @@
-<div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="1000px" fxFlex.lt-md="100%" fxFlex.xs="100%">
+<div class="flex justify-center content-stretch items-stretch flex-row">
+  <mat-card
+    appearance="outlined"
+    fxFlex="1000px"
+    fxFlex.lt-md="100%"
+    class="xs:basis-full"
+  >
     <div
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
       style="padding: 16px"
+      class="flex justify-start content-center items-center flex-col gap-2.5"
     >
-      <div fxFlex="grow" fxFlexFill>
+      <div class="basis-full h-full w-full min-h-full min-w-full">
         <h1>General Settings</h1>
         <hr />
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             profileViewStatus !== this.userDetailsOnLoad.viewStatus
         }"
+        class="basis-full h-full w-full min-h-full min-w-full"
       >
         <div>
           <label
@@ -48,9 +50,7 @@
           <div>
             <div
               style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
+              class="flex justify-center content-center items-center flex-row gap-[15px]"
             >
               <button
                 mat-raised-button
@@ -74,13 +74,12 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             printViewStatus?.toString() !==
             this.defaultPrintViewStatusSettingOnLoad?.value.toString()
         }"
+        class="basis-full h-full w-full min-h-full min-w-full"
       >
         <div>
           <label
@@ -114,9 +113,7 @@
           <div>
             <div
               style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
+              class="flex justify-center content-center items-center flex-row gap-[15px]"
             >
               <button
                 mat-raised-button
@@ -140,13 +137,12 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             preferredCurrency?.toString() !==
             this.preferredCurrencyNameSettingOnLoad?.value.toString()
         }"
+        class="basis-full h-full w-full min-h-full min-w-full"
       >
         <div>
           <label
@@ -179,9 +175,7 @@
           <div>
             <div
               style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
+              class="flex justify-center content-center items-center flex-row gap-[15px]"
             >
               <button
                 mat-raised-button
@@ -205,13 +199,12 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             defaultFilamentDiameterMm?.toString() !==
             this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()
         }"
+        class="basis-full h-full w-full min-h-full min-w-full"
       >
         <div>
           <label
@@ -237,9 +230,7 @@
           <div>
             <div
               style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
+              class="flex justify-center content-center items-center flex-row gap-[15px]"
             >
               <button
                 mat-raised-button
@@ -265,13 +256,12 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             defaultFilamentPrice?.toString() !==
             this.defaultFilamentPriceSettingOnLoad?.value.toString()
         }"
+        class="basis-full h-full w-full min-h-full min-w-full"
       >
         <div>
           <label
@@ -283,7 +273,9 @@
             Default Filament Price <mat-icon inline>info</mat-icon>:</label
           >
           <span
-            >{{ this.currencies[this.preferredCurrency]?.symbol }}&nbsp;</span
+            >{{
+              this.currencies[this.preferredCurrency]?.symbol
+            }}&amp;nbsp;</span
           >
           <input
             id="default-filament-price"
@@ -299,9 +291,7 @@
           <div>
             <div
               style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
+              class="flex justify-center content-center items-center flex-row gap-[15px]"
             >
               <button
                 mat-raised-button
@@ -325,7 +315,7 @@
         }
       </div>
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="basis-full h-full w-full min-h-full min-w-full">
         <h2>Export Data</h2>
         <p>Save your prints as a csv file.</p>
         <button
@@ -339,7 +329,7 @@
         </button>
       </div>
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="basis-full h-full w-full min-h-full min-w-full">
         <h2>Danger Zone</h2>
         <details style="border: 1px solid red; padding: 5px">
           <summary>

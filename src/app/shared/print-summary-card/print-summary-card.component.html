@@ -21,11 +21,9 @@
     }
   </mat-card-header>
   <mat-card-content
-    fxLayout="column"
-    fxLayoutAlign="start center"
-    fxLayoutGap="10px"
+    class="flex justify-start content-center items-center flex-col gap-2.5"
   >
-    <div fxLayout="row">
+    <div class="flex flex-row">
       <div class="main-image">
         @if (print.defaultPrintImageId > 0) {
           <app-print-image

@@ -1,22 +1,16 @@
-<div fxLayout="row" fxLayoutAlign="center">
+<div class="flex justify-center content-stretch items-stretch flex-row">
   <mat-card
     appearance="outlined"
     fxFlex="500px"
     fxFlex.xs="100%"
-    fxFlex.gt-md="1200px"
+    class="gt-md:basis-[1200px]"
   >
     <div
       fxLayout="column wrap"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
-      fxLayout.gt-md="row"
-      fxLayoutAlign="space-around start"
+      class="flex justify-start content-center items-center gt-md:flex gt-md:flex-row gap-2.5"
     >
       <mat-card-content
-        fxFlex="grow"
-        fxLayout="column"
-        fxLayoutAlign="start stretch"
-        fxLayoutGap="10px"
+        class="flex justify-start content-stretch items-stretch flex-col gap-2.5 basis-full"
       >
         @if (feed.length > 0) {
           @for (print of feed; track print) {
@@ -31,11 +25,11 @@
             </div>
           }
           <button
-            fxFlex="grow"
             style="margin: 0 auto"
             mat-raised-button
             color="accent"
             (click)="loadNextPage()"
+            class="basis-full"
           >
             Load More
           </button>

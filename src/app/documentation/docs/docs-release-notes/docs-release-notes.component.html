@@ -156,8 +156,8 @@
   </p>
   <p>
     Columns on the Print List can now be reordered! From the Print List, click
-    the Gear Menu -> Change Table Layout, and then either drag-and-drop or use
-    the arrows to reorder the columns.
+    the Gear Menu -&gt; Change Table Layout, and then either drag-and-drop or
+    use the arrows to reorder the columns.
   </p>
 
   <h4>Full List of Changes:</h4>
@@ -168,7 +168,7 @@
     </li>
     <li>
       <strong>Reorder Print List Columns</strong> - Columns can be reordered via
-      the <strong>Gear Icon -> Change Table Layout</strong> menu on the Print
+      the <strong>Gear Icon -&gt; Change Table Layout</strong> menu on the Print
       List
     </li>
     <li>
@@ -205,7 +205,7 @@
     filament costs for that print. The <strong>Filament</strong> column will
     also display the individual costs for each different filament used in a
     print. You can view those new columns on the Print List by clicking the
-    <strong>Gear Icon</strong>-><strong>Change table layout</strong>, then
+    <strong>Gear Icon</strong>-&gt;<strong>Change table layout</strong>, then
     selecting <strong>Filament</strong> or <strong>Total Cost</strong>.
   </p>
 
@@ -282,8 +282,8 @@
   <h3 id="v1.19.0">
     1.19.0 - Filament on Print List and Partial Success Status
   </h3>
-  <div fxLayout="column">
-    <div fxFlex="grow">
+  <div class="flex flex-col">
+    <div class="basis-full">
       <p>
         The Print List now has two new optional columns: The
         <strong>Filament</strong> column displays detailed information about the
@@ -296,8 +296,8 @@
       </p>
       <p>
         You can view those new columns on the Print List by clicking the
-        <strong>Gear Icon</strong>-><strong>Change table layout</strong>, then
-        selecting <strong>Filament</strong> or
+        <strong>Gear Icon</strong>-&gt;<strong>Change table layout</strong>,
+        then selecting <strong>Filament</strong> or
         <strong>Total Filament (g)</strong>.
       </p>
       <p>
@@ -308,15 +308,9 @@
         <strong>Change Print Status</strong> menu option from the Print List.
       </p>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <img
-        class="fade-in"
-        [ngStyle]="{
-          display: 'block',
-          'max-width': '90%',
-
-          'margin-right': 'auto'
-        }"
+        class="max-w-[400px] mx-auto fade-in"
         alt="The Print List with the new Filament and Total Filament columns."
         src="./assets/release_1-19-0_FilamentPrintList_684039eab.PNG"
       />
@@ -379,28 +373,22 @@
     <h3 id="v1.17.0">
       1.17.0 - Set Preferred Currency and Show Estimated Filament Costs
     </h3>
-    <div fxLayout="column">
-      <div fxFlex="grow">
+    <div class="flex flex-col">
+      <div class="basis-full">
         <p>
           The Edit Print page will now display estimated/actual filament costs.
           When you add the weight or length of filament used, the cost for that
           amount of filament will be displayed.
         </p>
       </div>
-      <div fxFlex>
+      <div class="flex-1">
         <img
-          class="fade-in"
-          [ngStyle]="{
-            display: 'block',
-            'max-width': '90%',
-
-            'margin-right': 'auto'
-          }"
+          class="max-w-[400px] mx-auto fade-in"
           alt="The Edit 3D Print page showing the new filament cost."
           src="./assets/release_filament_cost_8b69eeeb49b59.png"
         />
       </div>
-      <div fxFlex="grow">
+      <div class="basis-full">
         <p>
           To support the cost calculation, the filament needs to have both an
           Initial Weight and a Purchase Price, from which the price-per-gram
@@ -410,8 +398,8 @@
         </p>
         <p>
           You can now set your <strong>Preferred Currency</strong> in the
-          Settings page (click User Picture -> Settings). The selected currency
-          will be used throughout the application.
+          Settings page (click User Picture -&gt; Settings). The selected
+          currency will be used throughout the application.
         </p>
       </div>
 
@@ -472,7 +460,7 @@
       <ul>
         <li>
           <Strong>Hide/Show Print List Columns</Strong> - Change which columns
-          are visible on the Print List by clicking the Gear Icon -> Change
+          are visible on the Print List by clicking the Gear Icon -&gt; Change
           Table Layout.
         </li>
         <li>
@@ -515,8 +503,8 @@
       </p>
 
       <h3 id="v1.15.0">1.15.0 - Print Start and Completed Times</h3>
-      <div fxLayout="column">
-        <div fxFlex="grow">
+      <div class="flex flex-col">
+        <div class="basis-full">
           <p>
             Print times have been overhauled. The Edit Print page can now record
             the start time of the print, and the estimated completed date/time
@@ -525,15 +513,9 @@
             the actual print time.
           </p>
         </div>
-        <div fxFlex>
+        <div class="flex-1">
           <img
-            class="fade-in"
-            [ngStyle]="{
-              display: 'block',
-              'max-width': '90%',
-
-              'margin-right': 'auto'
-            }"
+            class="max-w-[400px] mx-auto fade-in"
             alt="The Edit 3D Print page showing the new Start and Completed date and time fields."
             src="./assets/release_1-15-0_PrintDateTimes_e0cb4d1e406944.png"
           />
@@ -600,8 +582,8 @@
         </p>
 
         <h3 id="v1.12.4">1.12.4 - Snapshots from Cura</h3>
-        <div fxLayout="column">
-          <div fxFlex="grow">
+        <div class="flex flex-col">
+          <div class="basis-full">
             <p>
               The <strong>3D Print Log Uploader Plugin for Cura</strong> as been
               updated to version 1.2.1. This version adds an "Include Snapshot"
@@ -627,15 +609,9 @@
               Profile. Both are now calculated correctly.
             </p>
           </div>
-          <div fxFlex>
+          <div class="flex-1">
             <img
-              class="fade-in"
-              [ngStyle]="{
-                display: 'block',
-                'max-width': '90%',
-
-                'margin-right': 'auto'
-              }"
+              class="max-w-[400px] mx-auto fade-in"
               alt="The Add 3D Print screen with the cura snapshot as the print image."
               src="./assets/release_curasnapshot_40d0a079b.png"
             />
@@ -720,7 +696,7 @@
         <ul>
           <li>
             Customize the list of settings recorded. Settings Menu is accessible
-            inside of Cura through Extensions -> 3D Print Log -> Configure
+            inside of Cura through Extensions -&gt; 3D Print Log -&gt; Configure
             Settings to Log
           </li>
           <li>Added option to log Cura Profile Name.</li>

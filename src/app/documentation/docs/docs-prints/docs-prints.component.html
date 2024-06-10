@@ -67,7 +67,7 @@
   </ul>
   <p>
     Additional columns (hidden by default, use the
-    <strong>Gear Icon -> Change Table Layout</strong> menu to customize
+    <strong>Gear Icon -&gt; Change Table Layout</strong> menu to customize
     columns).
   </p>
   <ul>
@@ -137,8 +137,8 @@
     changed by clicking the dropdown.
   </p>
   <h3 id="print-material-usage">Material Usage</h3>
-  <div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col">
+    <div class="basis-full">
       <p>
         The <strong>Material Usage</strong> section lets you record what
         material was used for the print. Click the
@@ -168,15 +168,9 @@
         button.
       </p>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
+        class="max-w-[400px] mx-auto fade-in"
         alt="Example of Material Usage on the Print Edit Screen"
         src="./assets/docs-print-filament-usage-example_e008efc37fb.png"
       />
@@ -185,8 +179,8 @@
 
   <p>
     When ready, click
-    <button mat-raised-button type="button" color="primary">Submit</button> to
-    save your new 3D Print.
+    <button mat-raised-button type="button" color="primary">Submit</button>
+    to save your new 3D Print.
   </p>
   <hr />
   <h3 id="edit">Edit an existing 3D Print</h3>

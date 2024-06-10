@@ -1,13 +1,13 @@
-<div fxLayout="column">
-  <div fxFlex fxLayout="column" style="padding: 0px 10px">
+<div class="flex flex-col">
+  <div style="padding: 0px 10px" class="flex flex-col flex-1">
     <h3
-      fxFlex="grow"
       style="margin-right: 10px; margin-top: 5px; margin-bottom: 5px"
+      class="basis-full"
     >
       Prints:
     </h3>
-    <div fxFlex="grow" fxLayout="row" fxLayoutGap="5px">
-      <mat-form-field fxFlex>
+    <div class="flex flex-row gap-[5px] basis-full">
+      <mat-form-field class="flex-1">
         <mat-label> Search: </mat-label
         ><input
           matInput
@@ -16,7 +16,7 @@
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
       /></mat-form-field>
-      <mat-form-field fxFlex>
+      <mat-form-field class="flex-1">
         <mat-label> Status</mat-label>
         <mat-select
           [(ngModel)]="filterByStatus"
@@ -48,18 +48,18 @@
     }
     @if (showLoadMore) {
       <button
-        fxFlex="grow"
         style="margin: 0 auto"
         mat-raised-button
         color="accent"
         (click)="loadNextPage()"
+        class="basis-full"
       >
         Load More
       </button>
     }
   }
   @if (prints.length === 0) {
-    <mat-card appearance="outlined" fxFlex>
+    <mat-card appearance="outlined" class="flex-1">
       No Prints Found. The user shared any prints publicly that match the
       search.
     </mat-card>

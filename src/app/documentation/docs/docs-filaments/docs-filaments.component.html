@@ -87,7 +87,8 @@
   <h3 id="add">Add a new roll of Material</h3>
   <p>
     From the Material list, click on the
-    <button mat-raised-button color="accent">Add New Material</button> button.
+    <button mat-raised-button color="accent">Add New Material</button>
+    button.
   </p>
   <h4 id="add-general">General Section</h4>
   <p>
@@ -130,8 +131,8 @@
     <li><strong>Spool Weight (g)</strong> - The weight of the empty spool.</li>
   </ul>
   <h4 id="add-adjustments">Material Adjustments</h4>
-  <div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col">
+    <div class="basis-full">
       <p>
         Adjustments represent non-print usage of material. Adjustment weights
         are added when calculating the remaining material on a roll, so negative
@@ -146,15 +147,9 @@
         <li>Tracking material lost when switching colors on a printer.</li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
+        class="max-w-[400px] mx-auto fade-in"
         alt="Example of Material Adjustments on the Material Edit Screen"
         src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
       />

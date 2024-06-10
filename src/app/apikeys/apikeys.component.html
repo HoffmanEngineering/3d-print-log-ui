@@ -1,25 +1,20 @@
-<div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="80vw" fxFlex.xs="100%">
+<div class="flex justify-center content-stretch items-stretch flex-row">
+  <mat-card appearance="outlined" fxFlex="80vw" class="xs:basis-full">
     <form
       autocomplete="off"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
+      class="flex justify-start content-center items-center flex-col gap-2.5"
     >
-      <mat-card-title fxFlex="grow"> API Keys</mat-card-title>
+      <mat-card-title class="basis-full"> API Keys</mat-card-title>
       <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
+        class="flex flex-col justify-evenly content-center items-center w-full basis-full h-full min-h-full min-w-full"
       >
         <button
-          fxFlexAlign="start"
           mat-raised-button
           type="button"
           color="accent"
           id="add-new-filament"
           (click)="startAddNewKey()"
+          class="self-start"
         >
           Create new API Key
         </button>
@@ -47,7 +42,9 @@
                 remaining.</mat-hint
               >
             </mat-form-field>
-            <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+            <div
+              class="flex justify-center content-center items-center flex-row gap-[15px]"
+            >
               <button
                 mat-raised-button
                 type="button"
@@ -71,7 +68,11 @@
         @if (loading) {
           <div class="spinner">Loading...</div>
         }
-        <table fxFlex="grow" fxFlexFill mat-table [dataSource]="keys">
+        <table
+          mat-table
+          [dataSource]="keys"
+          class="basis-full h-full w-full min-h-full min-w-full"
+        >
           <ng-container matColumnDef="description">
             <th mat-header-cell *matHeaderCellDef>Description</th>
             <td mat-cell *matCellDef="let key">
@@ -84,8 +85,8 @@
               <div>
                 @if (key.privateKey !== undefined) {
                   <div>
-                    <div fxLayout="row">
-                      <mat-form-field fxFlex="40ch">
+                    <div class="flex flex-row">
+                      <mat-form-field class="basis-">
                         <input
                           matInput
                           maxlength="1000"
@@ -94,7 +95,6 @@
                         />
                       </mat-form-field>
                       <button
-                        fxFlex="60px"
                         style="width=40px; height: 40px"
                         type="button"
                         mat-raised-button
@@ -102,6 +102,7 @@
                         (click)="copyToClipboard(key.privateKey)"
                         aria-label="Copy key to clipboard"
                         matTooltip="Copy key to clipboard"
+                        class="basis-[60px]"
                       >
                         <mat-icon>content_copy</mat-icon>
                       </button>

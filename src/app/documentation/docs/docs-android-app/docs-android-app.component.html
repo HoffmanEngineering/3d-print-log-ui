@@ -12,79 +12,31 @@
     in one will be available in the other. So use whichever is most convenient
     for you.
   </p>
-  <div fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px">
-    <div fxFlex>
+  <div fxLayout="row" class="lt-lg:flex lt-lg:flex-col flex gap-[15px]">
+    <div class="flex-1">
       <img
-        [ngStyle]="{
-          display: 'block',
-          'max-width': '100%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        [ngStyle.lt-lg]="{
-          display: 'block',
-          'max-height': '400px',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        class="fade-in"
+        class="max-w-[400px] mx-auto fade-in"
         alt="Example of a Print through the Android App featuring a Blue Captain America bust"
         src="./assets/docs/android-app/cap_america_48231bd04bd.png"
       />
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <img
-        [ngStyle]="{
-          display: 'block',
-          'max-width': '100%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        [ngStyle.lt-lg]="{
-          display: 'block',
-          'max-height': '400px',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        class="fade-in"
+        class="max-w-[400px] mx-auto fade-in"
         alt="The homescreen of the Android App showing the 3D Print Log Logo"
         src="./assets/docs/android-app/homescreen_655aec71e79.png"
       />
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <img
-        [ngStyle]="{
-          display: 'block',
-          'max-width': '100%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        [ngStyle.lt-lg]="{
-          display: 'block',
-          'max-height': '400px',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        class="fade-in"
+        class="max-w-[400px] mx-auto fade-in"
         alt="The list of prints shown in the Android App"
         src="./assets/docs/android-app/print-screen_fca3e13340.png"
       />
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <img
-        [ngStyle]="{
-          display: 'block',
-          'max-width': '100%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        [ngStyle.lt-lg]="{
-          display: 'block',
-          'max-height': '400px',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        class="fade-in"
+        class="max-w-[400px] mx-auto fade-in"
         alt="The analytics screen of the Android App"
         src="./assets/docs/android-app/analytics_1657a6da1871.png"
       />

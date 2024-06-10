@@ -1,18 +1,16 @@
-<div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="800px" fxFlex.xs="100%">
+<div class="flex justify-center content-stretch items-stretch flex-row">
+  <mat-card appearance="outlined" fxFlex="800px" class="xs:basis-full">
     <form
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"
       autocomplete="off"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
+      class="flex justify-start content-center items-center flex-col gap-2.5"
     >
-      <mat-card-title fxFlex="grow"
+      <mat-card-title class="basis-full"
         >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
         Print</mat-card-title
       >
-      <div fxFlex="grow">
+      <div class="basis-full">
         <input
           #imgFileInput
           style="display: none"
@@ -33,26 +31,24 @@
           </button>
         }
         @if (selectedImage && selectedImage.value) {
-          <div fxFlex class="card-img-top main-image">
+          <div class="card-img-top main-image flex-1">
             <app-print-image
-              fxFlex
               [printId]="printForm.get('id').value"
               [imageId]="selectedImage.value.id"
               [imageData]="selectedImage.value.url"
               [showDeleteOnHover]="true"
               (delete)="removeImage(selectedImage)"
               (imageDataChange)="selectedImage.value.url = $event"
+              class="flex-1"
             ></app-print-image>
           </div>
         }
         @if (false) {
           <div
-            class="images-preview mt-2"
-            fxLayout
-            fxLayoutAlign="center center"
+            class="images-preview mt-2 flex justify-center content-center items-center flex-row"
           >
             @for (image of images.controls; track image; let i = $index) {
-              <div fxFlex formArrayName="images">
+              <div formArrayName="images" class="flex-1">
                 <div
                   [formGroupName]="i"
                   class="image-preview"
@@ -72,11 +68,11 @@
                       />
                     -->
                   <app-print-image
-                    fxFlex
                     [printId]="printForm.get('id').value"
                     [imageId]="image.value.id"
                     [imageData]="image.value.url"
                     (imageDataChange)="image.value.url = $event"
+                    class="flex-1"
                   ></app-print-image>
                 </div>
               </div>
@@ -85,12 +81,9 @@
         }
       </div>
       <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
+        class="flex flex-col justify-evenly content-center items-center w-full basis-full h-full min-h-full min-w-full"
       >
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label> Title</mat-label>
           <input
             id="edit-print-title"
@@ -104,7 +97,7 @@
             <mat-error> A Title is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label> Printer</mat-label>
           <mat-select
             formControlName="printerId"
@@ -121,8 +114,11 @@
             <mat-error> A Printer is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-          <mat-form-field style="margin: 0" fxFlex="grow">
+        <div
+          style="margin: 10 0 10"
+          class="basis-full h-full w-full min-h-full min-w-full"
+        >
+          <mat-form-field style="margin: 0" class="basis-full">
             <mat-label>Start Date and Time</mat-label>
             <input
               matInput
@@ -149,19 +145,18 @@
             </ngx-mat-datetime-picker>
           </mat-form-field>
           <button
-            fxFlex
             style="margin-left: 10px; height: 72%"
             mat-raised-button
             type="button"
             color="basic"
             (click)="setStartDateToNow()"
-            type="button"
             aria-label="Set the start date and time to now."
+            class="flex-1"
           >
             Now
           </button>
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label> Thing URL</mat-label>
           <input
             id="edit-print-url"
@@ -173,15 +168,13 @@
         </mat-form-field>
         <div
           style="margin: 10 0 10"
-          fxFlex="grow"
-          fxFlexFill
           fxLayout.lt-md="column"
-          fxLayout="row"
+          class="flex flex-row basis-full h-full w-full min-h-full min-w-full"
         >
           <mat-form-field
             style="margin: 0px 5px 0px 0px"
             fxFlex="50%"
-            fxFlex.lt-md="100%"
+            class="lt-md:basis-full"
           >
             <mat-label> Estimated Print Time</mat-label>
             <input
@@ -193,7 +186,11 @@
               (change)="getEstimatedCompletedDate()"
             />
           </mat-form-field>
-          <mat-form-field style="margin: 0" fxFlex="50%" fxFlex.lt-md="100%">
+          <mat-form-field
+            style="margin: 0"
+            fxFlex="50%"
+            class="lt-md:basis-full"
+          >
             <input
               matInput
               [ngxMatDatetimePicker]="estimatedPicker"
@@ -221,15 +218,13 @@
         <!-- Actual -->
         <div
           style="margin: 10 0 10"
-          fxFlex="grow"
-          fxFlexFill
           fxLayout.lt-md="column"
-          fxLayout="row"
+          class="flex flex-row basis-full h-full w-full min-h-full min-w-full"
         >
           <mat-form-field
             style="margin: 0px 5px 0px 0px"
             fxFlex="50%"
-            fxFlex.lt-md="100%"
+            class="lt-md:basis-full"
           >
             <mat-label> Actual Print Time</mat-label>
             <input
@@ -241,8 +236,8 @@
               (change)="getActualCompletedDate()"
             />
           </mat-form-field>
-          <div fxFlex="50%" fxFlex.lt-md="100%">
-            <mat-form-field style="margin: 0" fxFlex="grow">
+          <div fxFlex="50%" class="lt-md:basis-full">
+            <mat-form-field style="margin: 0" class="basis-full">
               <input
                 matInput
                 [ngxMatDatetimePicker]="actualPicker"
@@ -267,21 +262,20 @@
               </ngx-mat-datetime-picker>
             </mat-form-field>
             <button
-              fxFlex
               style="margin-left: 10px; height: 72%"
               mat-raised-button
               type="button"
               color="basic"
               (click)="setActualCompletedDateToNow()"
-              type="button"
               aria-label="Set the Completed Date to now."
+              class="flex-1"
             >
               Now
             </button>
           </div>
         </div>
         <!-- Material Usage -->
-        <div fxFlex="grow" fxFlexFill>
+        <div class="basis-full h-full w-full min-h-full min-w-full">
           <h2>
             {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage:
           </h2>
@@ -305,14 +299,11 @@
             <div style="margin-bottom: 10px">
               <div [formGroupName]="printFilamentIndex">
                 <mat-card
-                  class="mat-elevation-z4"
-                  fxFlex="grow"
-                  fxFlexFill
-                  fxLayout="row"
+                  class="mat-elevation-z4 flex flex-row basis-full h-full w-full min-h-full min-w-full"
                 >
                   <mat-card-content>
-                    <div fxFlex="grow" fxLayout="column">
-                      <div fxFlex>
+                    <div class="flex flex-col basis-full">
+                      <div class="flex-1">
                         <div
                           class="filament-color-cell"
                           [ngStyle]="{
@@ -324,7 +315,7 @@
                           }"
                         ></div>
                       </div>
-                      <div fxFlex class="filament-section">
+                      <div class="filament-section flex-1">
                         {{
                           printFilament.get('filament').value?.displayName ||
                             'Other'
@@ -333,15 +324,15 @@
                       @if (
                         printFilament.get('filament').value?.colorName !== ''
                       ) {
-                        <div fxFlex class="filament-section">
+                        <div class="filament-section flex-1">
                           {{ printFilament.get('filament').value?.colorName }}
                         </div>
                       }
-                      <div fxFlex class="filament-section">
+                      <div class="filament-section flex-1">
                         {{ printFilament.get('filament').value?.materialType }}
                       </div>
                       @if (printFilament.get('filament').value !== null) {
-                        <div fxFlex class="filament-section">
+                        <div class="filament-section flex-1">
                           {{
                             printFilament.get('filament').value
                               ?.filamentRemaining / 1000 | number
@@ -350,7 +341,7 @@
                         </div>
                       }
                       @if (printFilament.get('filament').value !== null) {
-                        <div fxFlex class="filament-section">
+                        <div class="filament-section flex-1">
                           {{
                             printFilament.get('filament').value
                               ?.filamentLengthRemainingInM | number
@@ -359,7 +350,7 @@
                         </div>
                       }
                       @if (printFilament.get('filament').value !== null) {
-                        <div fxFlex class="filament-section">
+                        <div class="filament-section flex-1">
                           {{
                             printFilament.get('filament').value
                               ?.filamentVolumeRemainingInMl | number
@@ -374,7 +365,7 @@
                         printFilament.get('filament').value
                           ?.purchasePriceValue !== ''
                       ) {
-                        <div fxFlex class="filament-section">
+                        <div class="filament-section flex-1">
                           Price: {{ preferredCurrency?.symbol
                           }}{{
                             printFilament.get('filament').value
@@ -389,8 +380,7 @@
                         defaultFilamentPriceSetting?.value !== null
                       ) {
                         <div
-                          fxFlex
-                          class="filament-section"
+                          class="filament-section flex-1"
                           matTooltip="* using default filament price of {{
                             preferredCurrency?.symbol
                           }}{{ defaultFilamentPriceSetting?.value }}"
@@ -399,7 +389,7 @@
                           }}{{ defaultFilamentPriceSetting?.value }}*
                         </div>
                       }
-                      <div fxFlex>
+                      <div class="flex-1">
                         <button
                           type="button"
                           mat-raised-button
@@ -410,10 +400,11 @@
                         </button>
                       </div>
                     </div>
-                    <div fxFlex="grow" fxLayout="column">
-                      <div fxFlex="grow" fxFlexFill>
+                    <div class="flex flex-col basis-full">
+                      <div
+                        class="basis-full h-full w-full min-h-full min-w-full"
+                      >
                         <button
-                          fxFlex="grow"
                           mat-raised-button
                           color="accent"
                           (click)="
@@ -421,6 +412,7 @@
                           "
                           type="button"
                           style="margin-bottom: 5px"
+                          class="basis-full"
                         >
                           {{
                             printFilament.get('filament')?.value !== null
@@ -432,12 +424,15 @@
                           }}
                         </button>
                       </div>
-                      <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                      <div
+                        fxLayout="row"
+                        class="lt-md:flex lt-md:flex-col basis-full"
+                      >
                         @if (
                           printFilament.get('estimatedSource').value ===
                           printFilamentSourceMeasurementTypes.Weight
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field class="basis-full">
                             <mat-label>
                               Estimated
                               {{
@@ -484,7 +479,7 @@
                           printFilament.get('estimatedSource').value ===
                           printFilamentSourceMeasurementTypes.Length
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field class="basis-full">
                             <mat-label>
                               Estimated
                               {{
@@ -521,7 +516,7 @@
                           printFilament.get('estimatedSource').value ===
                           printFilamentSourceMeasurementTypes.Volume
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field class="basis-full">
                             <mat-label>
                               Estimated
                               {{
@@ -554,7 +549,7 @@
                             }
                           </mat-form-field>
                         }
-                        <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                        <mat-form-field fxFlex="120px" class="lt-md:basis-full">
                           <mat-label>Measure</mat-label>
                           <mat-select
                             formControlName="estimatedSource"
@@ -586,12 +581,15 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
-                      <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                      <div
+                        fxLayout="row"
+                        class="lt-md:flex lt-md:flex-col basis-full"
+                      >
                         @if (
                           printFilament.get('source').value ===
                           printFilamentSourceMeasurementTypes.Weight
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field class="basis-full">
                             <mat-label>
                               Actual
                               {{
@@ -631,7 +629,7 @@
                           printFilament.get('source').value ===
                           printFilamentSourceMeasurementTypes.Length
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field class="basis-full">
                             <mat-label>
                               Actual
                               {{
@@ -666,7 +664,7 @@
                           printFilament.get('source').value ===
                           printFilamentSourceMeasurementTypes.Volume
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field class="basis-full">
                             <mat-label>
                               Actual
                               {{
@@ -697,7 +695,7 @@
                             }
                           </mat-form-field>
                         }
-                        <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                        <mat-form-field fxFlex="120px" class="lt-md:basis-full">
                           <mat-label>Measure</mat-label>
                           <mat-select formControlName="source">
                             <mat-option
@@ -724,7 +722,9 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
-                      <mat-form-field fxFlex="grow" fxFlexFill>
+                      <mat-form-field
+                        class="basis-full h-full w-full min-h-full min-w-full"
+                      >
                         <mat-label>
                           {{
                             printFilament.get('filament').value === null
@@ -796,7 +796,7 @@
             </div>
           }
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label> Notes</mat-label>
           <textarea
             id="edit-print-notes"
@@ -815,7 +815,7 @@
             >
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label> File Name</mat-label>
           <input
             id="edit-print-file-name"
@@ -825,7 +825,7 @@
             maxlength="1000"
           />
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label> Status</mat-label>
           <mat-select formControlName="status" id="edit-print-status">
             <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
@@ -842,8 +842,11 @@
             <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
           </mat-select>
         </mat-form-field>
-        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-          <mat-form-field style="margin: 0" fxFlex>
+        <div
+          style="margin: 10 0 10"
+          class="basis-full h-full w-full min-h-full min-w-full"
+        >
+          <mat-form-field style="margin: 0" class="flex-1">
             <mat-label> Sharing To:</mat-label>
             <mat-select
               formControlName="viewStatus"
@@ -868,7 +871,6 @@
                 this.defaultPrintViewStatusSetting.value.toString())
           ) {
             <button
-              fxFlex
               style="margin-left: 10px; height: 72%"
               mat-raised-button
               type="button"
@@ -878,26 +880,24 @@
                   this.printForm.get('viewStatus').value
                 )
               "
+              class="flex-1"
             >
               Save as Default View Status
             </button>
           }
         </div>
         <mat-checkbox
-          fxFlex="grow"
-          fxFlexFill
           formControlName="allowComments"
           id="edit-allow-comments"
+          class="basis-full h-full w-full min-h-full min-w-full"
           >Allow Comments</mat-checkbox
         >
       </mat-card-content>
       <mat-card-actions
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
+        class="flex flex-col justify-between content-center items-center w-full flex-row gap-[15px]"
       >
         @if (printForm.get('id').value) {
-          <div fxFlex="grow" fxFlexFill>
+          <div class="basis-full h-full w-full min-h-full min-w-full">
             <button
               id="edit-print-copy-btn"
               mat-raised-button
@@ -915,31 +915,27 @@
             </button>
           </div>
         }
-        <div
-          fxFlex="grow"
-          fxFlexFill
-          [fxFlexOffset]="printForm.get('id').value ? '80px' : ''"
-        >
+        <div class="basis-full h-full w-full min-h-full min-w-full">
           <button
             id="edit-print-submit-btn"
-            fxFlex
             mat-raised-button
             type="submit"
             [disabled]="saving"
             color="primary"
             [class.spinner]="saving"
+            class="flex-1"
           >
             Submit
           </button>
         </div>
-        <div fxFlex="grow" fxFlexFill>
+        <div class="basis-full h-full w-full min-h-full min-w-full">
           <button
             id="edit-print-cancel-btn"
-            fxFlex
             mat-raised-button
             type="button"
             (click)="handleClose()"
             color="warn"
+            class="flex-1"
           >
             {{ printForm.dirty ? 'Cancel' : 'Close' }}
           </button>

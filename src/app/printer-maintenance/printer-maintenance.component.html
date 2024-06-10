@@ -1,10 +1,6 @@
-<div fxLayout="column" fxLayoutAlign="center">
+<div class="flex justify-center content-stretch items-stretch flex-col">
   <div
-    class="header"
-    fxFlex="grow"
-    fxLayout
-    fxLayoutAlign="start center"
-    fxLayoutGap="5px"
+    class="header flex flex-col justify-start content-center items-center w-full flex-row gap-[5px] basis-full"
   >
     <button
       mat-raised-button
@@ -15,7 +11,7 @@
     >
       Add Entry
     </button>
-    <div fxLayoutGap="10px">
+    <div class="flex gap-2.5">
       <mat-form-field>
         <mat-label> Search: </mat-label
         ><input
@@ -43,23 +39,16 @@
       </mat-form-field>
     </div>
     <button
-      fxFlex="120px"
-      fxFlex.xs="80px"
-      style="height: 36px"
-      [ngStyle.xs]="{
-        height: 'auto',
-        'white-space': 'normal',
-        'line-height': '26px'
-      }"
+      class="flex"
       mat-raised-button
       (click)="resetFilters()"
       [disabled]="this.editId !== null"
+      class="xs:basis-20"
     >
       Reset Filters
     </button>
   </div>
   <table
-    fxFlex="grow"
     aria-label="Print List"
     aria-live="polite"
     mat-table
@@ -68,6 +57,7 @@
     (matSortChange)="sortData($event)"
     [matSortDisabled]="this.editId !== null"
     [matSortDisableClear]="true"
+    class="basis-full"
   >
     <ng-container matColumnDef="done">
       <th scope="col" mat-header-cell *matHeaderCellDef>Done</th>
@@ -90,7 +80,7 @@
       </th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === this.editId) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="w-auto gt-xs:w-full">
             <input
               matInput
               [matDatepicker]="picker"
@@ -126,7 +116,7 @@
       <th mat-header-cell *matHeaderCellDef>Printer</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === this.editId) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="w-auto gt-xs:w-full">
             <mat-label> Printer </mat-label>
             <mat-select
               [(ngModel)]="entry.printerId"
@@ -158,7 +148,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Category</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === this.editId) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="w-auto gt-xs:w-full">
             <input
               matInput
               [(ngModel)]="entry.category"
@@ -186,7 +176,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Description</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === this.editId) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="w-auto gt-xs:w-full">
             <input
               matInput
               [(ngModel)]="entry.description"
@@ -205,7 +195,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Price</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === this.editId) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="w-auto gt-xs:w-full">
             <input
               name="maintenance-price"
               matInput
@@ -230,7 +220,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Notes</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === this.editId) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="w-auto gt-xs:w-full">
             <input
               matInput
               [(ngModel)]="entry.notes"

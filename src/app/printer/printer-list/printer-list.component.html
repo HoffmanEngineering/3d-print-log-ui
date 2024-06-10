@@ -65,7 +65,7 @@
           style="padding-inline: 10px; padding-block: 5px"
         >
           @for (pf of printer.loadedFilaments; track pf; let i = $index) {
-            <div gdColumn="1" [gdRow]="i">
+            <div>
               @if (pf.filament !== null) {
                 <div
                   class="filament-color-cell"
@@ -73,7 +73,7 @@
                 ></div>
               }
             </div>
-            <div gdColumn="2" [gdRow]="i">
+            <div>
               @if (pf.filament !== null) {
                 <a
                   [routerLink]="['/filament', pf.filament.id]"

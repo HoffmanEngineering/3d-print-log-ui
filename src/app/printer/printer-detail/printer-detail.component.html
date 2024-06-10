@@ -1,24 +1,19 @@
-<div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
+<div class="flex justify-center content-stretch items-stretch flex-row">
+  <mat-card appearance="outlined" fxFlex="500px" class="xs:basis-full">
     <form
       [formGroup]="printerForm"
       (ngSubmit)="onSubmit()"
       autocomplete="off"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
+      class="flex justify-start content-center items-center flex-col gap-2.5"
     >
-      <mat-card-title fxFlex="grow"
+      <mat-card-title class="basis-full"
         >{{ this.printerForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
         Printer</mat-card-title
       >
       <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
+        class="flex flex-col justify-evenly content-center items-center w-full basis-full h-full min-h-full min-w-full"
       >
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label>Name</mat-label>
           <input
             id="edit-printer-name"
@@ -32,7 +27,7 @@
             <mat-error> A Name is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label>Type</mat-label>
           <mat-select formControlName="type">
             @for (group of groupedPrinterCategories; track group) {
@@ -53,10 +48,9 @@
           }
         </mat-form-field>
         <mat-form-field
-          fxFlex="grow"
-          fxFlexFill
           matTooltip="Type your own or select a pre-defined Printer."
           matTooltipPosition="above"
+          class="basis-full h-full w-full min-h-full min-w-full"
         >
           <mat-label>Make</mat-label>
           <input
@@ -78,10 +72,9 @@
           }
         </mat-autocomplete>
         <mat-form-field
-          fxFlex="grow"
-          fxFlexFill
           matTooltip="Type your own or select a pre-defined Printer."
           matTooltipPosition="above"
+          class="basis-full h-full w-full min-h-full min-w-full"
         >
           <mat-label>Model</mat-label>
           <input
@@ -102,7 +95,7 @@
             <mat-option [value]="option">{{ option }}</mat-option>
           }
         </mat-autocomplete>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="basis-full h-full w-full min-h-full min-w-full">
           <mat-label>Description</mat-label>
           <textarea
             id="edit-printer-description"
@@ -113,12 +106,14 @@
             rows="3"
           ></textarea>
         </mat-form-field>
-        <mat-checkbox fxFlex="grow" formControlName="isActive"
+        <mat-checkbox formControlName="isActive" class="basis-full"
           >Is Active</mat-checkbox
         >
         <h2>Machine Settings</h2>
         @if (printerForm.get('filamentDiameter').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
             <mat-label>Filament Diameter (mm)</mat-label>
             <input
               id="edit-printer-filament-diameter"
@@ -133,7 +128,9 @@
           </mat-form-field>
         }
         @if (printerForm.get('nozzleDiameter').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
             <mat-label>Nozzle Diameter (mm)</mat-label>
             <input
               matInput
@@ -148,7 +145,9 @@
           </mat-form-field>
         }
         @if (printerForm.get('beamDiameter').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
             <mat-label>Beam Diameter (mm)</mat-label>
             <input
               matInput
@@ -162,7 +161,9 @@
           </mat-form-field>
         }
         @if (printerForm.get('bedWidthMm').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
             <mat-label>Bed X (Width) (mm)</mat-label>
             <input
               matInput
@@ -176,7 +177,9 @@
           </mat-form-field>
         }
         @if (printerForm.get('bedDepthMm').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
             <mat-label>Bed Y (Depth) (mm)</mat-label>
             <input
               matInput
@@ -190,7 +193,9 @@
           </mat-form-field>
         }
         @if (printerForm.get('bedHeightMm').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
             <mat-label>Bed Z (Height) (mm)</mat-label>
             <input
               matInput
@@ -205,7 +210,9 @@
         }
         <!-- Form for Screen Resolution-->
         @if (printerForm.get('screenResolutionXPixels').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
             <mat-label>Screen Resolution X (Pixels)</mat-label>
             <input
               matInput
@@ -223,7 +230,9 @@
           </mat-form-field>
         }
         @if (printerForm.get('screenResolutionYPixels').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field
+            class="basis-full h-full w-full min-h-full min-w-full"
+          >
             <mat-label>Screen Resolution Y (Pixels)</mat-label>
             <input
               matInput
@@ -243,22 +252,20 @@
         <!-- Checkboxes for hasHeatedBed and hasHeatedChamber-->
         @if (printerForm.get('hasHeatedBed').enabled) {
           <mat-checkbox
-            fxFlex="grow"
             formControlName="hasHeatedBed"
-            class="align-left"
+            class="align-left basis-full"
             >Has Heated Bed</mat-checkbox
           >
         }
         @if (printerForm.get('hasHeatedChamber').enabled) {
           <mat-checkbox
-            fxFlex="grow"
             formControlName="hasHeatedChamber"
-            class="align-left"
+            class="align-left basis-full"
             >Has Heated Chamber</mat-checkbox
           >
         }
         <h2>Loaded Materials</h2>
-        <div fxFlex="grow" fxFlexFill>
+        <div class="basis-full h-full w-full min-h-full min-w-full">
           <button
             type="button"
             mat-raised-button
@@ -279,14 +286,11 @@
               <div [formGroupName]="printFilamentIndex">
                 <mat-card
                   appearance="outlined"
-                  class="mat-elevation-z4"
-                  fxFlex="grow"
-                  fxFlexFill
-                  fxLayout="row"
+                  class="mat-elevation-z4 flex flex-row basis-full h-full w-full min-h-full min-w-full"
                 >
                   <mat-card-content>
-                    <div fxFlex="grow" fxLayout="column" fxLayoutGap="4px">
-                      <div fxFlex style="padding-bottom: 10px">
+                    <div class="flex flex-col gap-1 basis-full">
+                      <div style="padding-bottom: 10px" class="flex-1">
                         <div
                           class="filament-color-cell"
                           [ngStyle]="{
@@ -298,7 +302,7 @@
                           }"
                         ></div>
                       </div>
-                      <div fxFlex>
+                      <div class="flex-1">
                         {{
                           printFilament.get('filament').value?.displayName ||
                             'Other'
@@ -307,15 +311,15 @@
                       @if (
                         printFilament.get('filament').value?.colorName !== ''
                       ) {
-                        <div fxFlex>
+                        <div class="flex-1">
                           {{ printFilament.get('filament').value?.colorName }}
                         </div>
                       }
-                      <div fxFlex>
+                      <div class="flex-1">
                         {{ printFilament.get('filament').value?.materialType }}
                       </div>
                       @if (printFilament.get('filament').value !== null) {
-                        <div fxFlex="grow">
+                        <div class="basis-full">
                           {{
                             printFilament.get('filament').value
                               ?.filamentRemaining / 1000 | number
@@ -324,7 +328,7 @@
                         </div>
                       }
                       @if (printFilament.get('filament').value !== null) {
-                        <div fxFlex="grow">
+                        <div class="basis-full">
                           {{
                             printFilament.get('filament').value
                               ?.filamentLengthRemainingInM | number
@@ -333,9 +337,8 @@
                         </div>
                       }
                       <div
-                        fxFlex
-                        fxLayoutAlign="center"
                         style="padding-top: 10px"
+                        class="flex flex-col justify-center content-stretch items-stretch w-full flex-1"
                       >
                         <button
                           type="button"
@@ -358,9 +361,7 @@
         </div>
       </mat-card-content>
       <mat-card-actions
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
+        class="flex flex-col justify-between content-center items-center w-full flex-row gap-[15px]"
       >
         <button
           mat-raised-button

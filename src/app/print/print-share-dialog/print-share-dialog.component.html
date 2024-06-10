@@ -22,7 +22,10 @@
     <input matInput readonly="true" [ngModel]="printLink" />
   </mat-form-field>
 </div>
-<div mat-dialog-actions fxLayout fxLayoutAlign="space-around">
+<div
+  mat-dialog-actions
+  class="flex justify-around content-stretch items-stretch flex-row"
+>
   @if (!navigatorShareService.canShare()) {
     <button
       type="button"

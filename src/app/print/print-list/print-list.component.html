@@ -1,39 +1,22 @@
-<div fxLayout="column" fxLayoutAlign="center">
+<div class="flex justify-center content-stretch items-stretch flex-col">
   <div
-    class="header"
-    fxFlex="grow"
-    fxLayout
-    fxLayoutAlign="start center"
-    fxLayoutGap="5px"
+    class="header flex flex-row justify-start content-center items-center w-screen gap-[5px] basis-full"
   >
-    <div fxFlex="150px" fxFlex.xs="120px" fxLayout="row">
+    <div class="flex flex-row xs:basis-[120px]">
       <button
-        fxFlex="grow"
-        style="height: 36px"
-        class="no-right-radius"
         mat-raised-button
+        class="h-9 no-right-radius basis-full lt-md:!h-auto lt-md:whitespace-normal lt-md:leading-6"
         routerLink="new/edit"
         type="button"
         color="accent"
         id="add-new-print"
-        [ngStyle.xs]="{
-          height: 'auto',
-          'white-space': 'normal',
-          'line-height': '26px'
-        }"
+        style="height: 36px"
       >
         Add New Print
       </button>
       <button
-        fxFlex="28px"
-        style="height: 36px; padding-left: 0; padding-right: 0"
-        [ngStyle.xs]="{
-          height: 'auto',
-          'white-space': 'normal',
-          'line-height': '26px'
-        }"
-        class="no-left-radius"
         mat-raised-button
+        class="h-9 no-left-radius basis-7 !px-1 !min-w-1 lt-md:!h-auto lt-md:whitespace-normal lt-md:leading-6"
         [matMenuTriggerFor]="printAddOptions"
         type="button"
         color="accent"
@@ -56,7 +39,7 @@
         (change)="parseGcode($event)"
       />
     </div>
-    <div fxLayoutGap="10px">
+    <div class="flex gap-2.5">
       <mat-form-field>
         <mat-label> Search: </mat-label
         ><input
@@ -101,22 +84,17 @@
       </mat-form-field>
     </div>
     <button
+      class="flex h-9"
       fxFlex="120px"
-      fxFlex.xs="80px"
       style="height: 36px"
-      [ngStyle.xs]="{
-        height: 'auto',
-        'white-space': 'normal',
-        'line-height': '26px'
-      }"
       mat-raised-button
       (click)="resetFilters()"
+      class="xs:basis-20"
     >
       Reset Filters
     </button>
   </div>
   <table
-    fxFlex="grow"
     aria-label="Print List"
     aria-live="polite"
     mat-table
@@ -124,6 +102,7 @@
     matSort
     (matSortChange)="sortData($event)"
     [matSortDisableClear]="true"
+    class="basis-full"
   >
     <ng-container matColumnDef="image">
       <th mat-header-cell *matHeaderCellDef>Image</th>
@@ -298,14 +277,9 @@
     <ng-container matColumnDef="filamentSummary">
       <th mat-header-cell *matHeaderCellDef>Materials</th>
       <td mat-cell *matCellDef="let print">
-        <div
-          gdColumns="max-content max-content max-content max-content"
-          gdRows="auto"
-          gdGap="10px"
-          style="padding-inline: 10px; padding-block: 5px"
-        >
+        <div class="grid" style="padding-inline: 10px; padding-block: 5px">
           @for (fu of print.filamentUsage; track fu; let i = $index) {
-            <div gdColumn="1" [gdRow]="i">
+            <div>
               @if (fu.filament !== null) {
                 <div
                   class="filament-color-cell"
@@ -313,7 +287,7 @@
                 ></div>
               }
             </div>
-            <div gdColumn="2" [gdRow]="i">
+            <div>
               @if (fu.filament !== null) {
                 <a
                   [routerLink]="['/filament', fu.filament.id]"
@@ -327,7 +301,7 @@
                 {{ fu.notes }}
               }
             </div>
-            <div gdColumn="3" [gdRow]="i">
+            <div>
               @if (fu.amountMg !== null && fu.amountMg > 0) {
                 {{ fu.amountMg / 1000 | number: '1.0-1' }} g
               } @else {
@@ -336,11 +310,7 @@
                 </div>
               }
             </div>
-            <div
-              gdColumn="4"
-              [gdRow]="i"
-              matTooltip="* indicates default material price used"
-            >
+            <div matTooltip="* indicates default material price used">
               @if (fu.amountMg !== null && fu.amountMg > 0) {
                 {{ getActualPrice(fu) }}
               } @else {

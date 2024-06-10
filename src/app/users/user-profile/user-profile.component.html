@@ -1,28 +1,23 @@
-<div fxLayout="row" fxLayoutAlign="center">
+<div class="flex justify-center content-stretch items-stretch flex-row">
   <mat-card
     appearance="outlined"
     fxFlex="500px"
     fxFlex.xs="100%"
-    fxFlex.gt-md="1200px"
+    class="gt-md:basis-[1200px]"
   >
     <div
       fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
-      fxLayout.gt-md="row"
-      fxLayoutAlign="space-around start"
+      class="flex justify-start content-center items-center gt-md:flex gt-md:flex-row gap-2.5"
     >
       <mat-card-header
-        fxFlex="grow"
-        fxLayout="column"
-        fxLayoutAlign="start start"
+        class="flex justify-start content-start items-start flex-col basis-full"
       >
-        <div fxFlex="grow" class="cover-photo-container">
+        <div class="cover-photo-container basis-full">
           @if (this.userDetail.coverPicture) {
             <img [src]="this.userDetail.coverPicture" class="cover-photo" />
           }
           @if (!this.userDetail.coverPicture) {
-            <div class="empty-cover-photo">&nbsp;</div>
+            <div class="empty-cover-photo">&amp;nbsp;</div>
           }
           @if (
             userDetail.id === currentUser?.id &&
@@ -58,7 +53,7 @@
             (change)="addCoverPhoto($event)"
           />
         </div>
-        <div fxFlex="grow" class="profile-picture-container">
+        <div class="profile-picture-container basis-full">
           <div class="profile-picture-wrapper">
             <img
               [src]="this.userDetail.profilePicture"
@@ -88,22 +83,17 @@
           />
         </div>
         <div
-          fxFlex="grow"
-          fxFlexFill
-          fxLayout="column"
-          fxLayoutAlign="start center"
+          class="flex flex-col justify-start content-center items-center w-full basis-full h-full min-h-full min-w-full"
         >
-          <div fxFlex="grow" class="user-display-name">
+          <div class="user-display-name basis-full">
             @if (!isEditingDisplayName) {
               <div
-                fxLayout="column"
-                fxLayoutAlign="start center"
-                fxLayoutGap="15px"
+                class="flex justify-start content-center items-center flex-col gap-[15px]"
               >
-                <h2 fxFlex="grow" aria-label="User name">
+                <h2 aria-label="User name" class="basis-full">
                   {{ userDetail.displayName }}
                 </h2>
-                <div fxFlex="grow">
+                <div class="basis-full">
                   @if (
                     userDetail.id === currentUser?.id && !isEditingDescription
                   ) {
@@ -137,7 +127,9 @@
                     remaining.</mat-hint
                   >
                 </mat-form-field>
-                <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                <div
+                  class="flex justify-center content-center items-center flex-row gap-[15px]"
+                >
                   <button
                     mat-raised-button
                     type="submit"
@@ -159,19 +151,17 @@
               </div>
             }
           </div>
-          <div fxFlex="grow" class="user-bio">
+          <div class="user-bio basis-full">
             @if (!isEditingDescription) {
               <div
-                fxLayout="column"
-                fxLayoutAlign="start center"
-                fxLayoutGap="15px"
+                class="flex justify-start content-center items-center flex-col gap-[15px]"
               >
                 @if (!isEditingDescription) {
-                  <div style="white-space: pre-wrap" fxFlex>
+                  <div style="white-space: pre-wrap" class="flex-1">
                     {{ userDetail.bio }}
                   </div>
                 }
-                <div fxFlex>
+                <div class="flex-1">
                   @if (
                     userDetail.id === currentUser?.id && !isEditingDisplayName
                   ) {
@@ -203,7 +193,9 @@
                     {{ 1000 - bio.length }} characters remaining.</mat-hint
                   >
                 </mat-form-field>
-                <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                <div
+                  class="flex justify-center content-center items-center flex-row gap-[15px]"
+                >
                   <button
                     mat-raised-button
                     type="submit"
@@ -226,7 +218,7 @@
             }
           </div>
           @if (userDetail.id === currentUser?.id) {
-            <div fxFlex="grow">
+            <div class="basis-full">
               <hr />
               <div>
                 <label for="profile-visibility" style="margin-right: 10px">
@@ -252,9 +244,7 @@
                 <div>
                   <div
                     style="margin-top: 10px"
-                    fxLayout
-                    fxLayoutAlign="center center"
-                    fxLayoutGap="15px"
+                    class="flex justify-center content-center items-center flex-row gap-[15px]"
                   >
                     <button
                       mat-raised-button
@@ -280,18 +270,15 @@
             </div>
           }
         </div>
-        <div fxFlex="grow">
+        <div class="basis-full">
           <app-stats [userId]="this.userDetail.id"></app-stats>
         </div>
-        <div fxFlex="grow" fxFlexFill>
+        <div class="basis-full h-full w-full min-h-full min-w-full">
           <app-ad></app-ad>
         </div>
       </mat-card-header>
       <mat-card-content
-        fxFlex="grow"
-        fxLayout="column"
-        fxLayoutAlign="start stretch"
-        fxLayoutGap="10px"
+        class="flex justify-start content-stretch items-stretch flex-col gap-2.5 basis-full"
       >
         <app-user-prints
           [userId]="this.userDetail.id"

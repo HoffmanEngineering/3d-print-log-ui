@@ -5,7 +5,7 @@ import {
   OnInit,
   SimpleChanges,
 } from '@angular/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
 
 @Component({

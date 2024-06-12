@@ -15,7 +15,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as moment from 'moment';
+import moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 import { environment } from 'src/environments/environment';

@@ -58,7 +58,7 @@
                   class="image-preview"
                   [ngClass]="{
                     isDefault: image?.value?.isDefault === true,
-                    isSelected: selectedImage === image
+                    isSelected: selectedImage === image,
                   }"
                   (click)="selectImage(image)"
                 >
@@ -320,7 +320,7 @@
                               .value?.colorHex
                               ? '#' +
                                 printFilament.get('filament').value?.colorHex
-                              : null
+                              : null,
                           }"
                         ></div>
                       </div>

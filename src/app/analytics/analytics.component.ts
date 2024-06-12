@@ -5,7 +5,7 @@ import {
 } from './services/print-statistics.service';
 
 import { Title } from '@angular/platform-browser';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
   PrinterService,
   PrinterSummary,

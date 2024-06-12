@@ -1,4 +1,8 @@
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import {
+  HTTP_INTERCEPTORS,
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
 import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -28,7 +32,6 @@ import { SharedModule } from './shared/shared.module';
     // for Router use:
     LoadingBarRouterModule,
     SharedModule,
-    HttpClientModule,
     ToastrModule.forRoot({
       timeOut: 5000,
       positionClass: 'toast-bottom-right',
@@ -48,6 +51,7 @@ import { SharedModule } from './shared/shared.module';
       useClass: AuthInterceptorService,
     },
     { provide: ErrorHandler, useClass: ErrorHandlerService },
+    provideHttpClient(withInterceptorsFromDi()),
   ],
 })
 export class AppModule {}

@@ -1,5 +1,10 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="1000px" fxFlex.lt-md="100%" fxFlex.xs="100%">
+  <mat-card
+    appearance="outlined"
+    fxFlex="1000px"
+    fxFlex.lt-md="100%"
+    fxFlex.xs="100%"
+  >
     <div
       fxLayout="column"
       fxLayoutAlign="start center"
@@ -15,7 +20,7 @@
         fxFlexFill
         [ngClass]="{
           'mat-elevation-z5 editing-card':
-            profileViewStatus !== this.userDetailsOnLoad.viewStatus
+            profileViewStatus !== this.userDetailsOnLoad.viewStatus,
         }"
       >
         <div>
@@ -79,7 +84,7 @@
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             printViewStatus?.toString() !==
-            this.defaultPrintViewStatusSettingOnLoad?.value.toString()
+            this.defaultPrintViewStatusSettingOnLoad?.value.toString(),
         }"
       >
         <div>
@@ -145,7 +150,7 @@
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             preferredCurrency?.toString() !==
-            this.preferredCurrencyNameSettingOnLoad?.value.toString()
+            this.preferredCurrencyNameSettingOnLoad?.value.toString(),
         }"
       >
         <div>
@@ -210,7 +215,7 @@
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             defaultFilamentDiameterMm?.toString() !==
-            this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()
+            this.defaultFilamentDiameterMmSettingOnLoad?.value.toString(),
         }"
       >
         <div>
@@ -270,7 +275,7 @@
         [ngClass]="{
           'mat-elevation-z5 editing-card':
             defaultFilamentPrice?.toString() !==
-            this.defaultFilamentPriceSettingOnLoad?.value.toString()
+            this.defaultFilamentPriceSettingOnLoad?.value.toString(),
         }"
       >
         <div>

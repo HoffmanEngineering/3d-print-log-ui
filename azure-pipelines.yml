@@ -4,51 +4,51 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- master
+  - master
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '18.x'
-  displayName: 'Install Node.js'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: 'Install Node.js'
 
-- script: |
-    npm install -g @angular/cli
-    npm install
-    npm run build
-  displayName: 'npm install and build'
+  - script: |
+      npm install -g @angular/cli
+      npm install
+      npm run build
+    displayName: 'npm install and build'
 
-- script: |
-    npm run test:ci
-  displayName: 'Run Unit Tests'
+  - script: |
+      npm run test:ci
+    displayName: 'Run Unit Tests'
 
-- task: PublishTestResults@2
-  displayName: 'Publish Unit Test Results'
-  condition: succeededOrFailed()
-  inputs:
-    testRunner: 'JUnit'
-    testResultsFiles: '**/TESTS.xml'
+  - task: PublishTestResults@2
+    displayName: 'Publish Unit Test Results'
+    condition: succeededOrFailed()
+    inputs:
+      testRunner: 'JUnit'
+      testResultsFiles: '**/TESTS.xml'
 
-- task: PublishCodeCoverageResults@1
-  displayName: 'Publish Code Coverage Results'
-  condition: succeededOrFailed()
-  inputs: 
-    codeCoverageTool: 'Cobertura' 
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui/cobertura-coverage.xml'
-    reportDirectory: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui'
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish Code Coverage Results'
+    condition: succeededOrFailed()
+    inputs:
+      codeCoverageTool: 'Cobertura'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui/cobertura-coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui'
 
-- script: |
-    npm run prettier
-  displayName: 'Check Prettier Formatting'
+  - script: |
+      npm run prettier
+    displayName: 'Check Prettier Formatting'
 
-- script: |
-    npm run lint
-  displayName: 'Check Linting'
+  - script: |
+      npm run lint
+    displayName: 'Check Linting'
 
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Build.SourcesDirectory)/dist/print-log-ui'
-    publishLocation: 'pipeline'
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)/dist/print-log-ui/browser'
+      publishLocation: 'pipeline'

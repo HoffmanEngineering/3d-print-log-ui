@@ -2,7 +2,7 @@ import { DOCUMENT, Location } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as moment from 'moment';
+import moment from 'moment';
 import { Subscription } from 'rxjs';
 import {
   AuthService,

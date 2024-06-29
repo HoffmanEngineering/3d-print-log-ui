@@ -67,9 +67,14 @@
             [matAutocomplete]="autoMake"
             required
             maxlength="50"
+            (focus)="makeHasFocus = true"
+            (blur)="makeHasFocus = false"
           />
           @if (printerForm.controls['make'].hasError('required')) {
             <mat-error> A Make is <strong>required</strong> </mat-error>
+          }
+          @if (this.printerForm.get('make').dirty && makeHasFocus) {
+            <mat-hint>Not in the list? Don't worry, just type it.</mat-hint>
           }
         </mat-form-field>
         <mat-autocomplete #autoMake="matAutocomplete">
@@ -92,9 +97,14 @@
             [matAutocomplete]="autoModel"
             required
             maxlength="50"
+            (focus)="modelHasFocus = true"
+            (blur)="modelHasFocus = false"
           />
           @if (printerForm.controls['model'].hasError('required')) {
             <mat-error> A Model is <strong>required</strong> </mat-error>
+          }
+          @if (this.printerForm.get('model').dirty && modelHasFocus) {
+            <mat-hint>Not in the list? Don't worry, just type it.</mat-hint>
           }
         </mat-form-field>
         <mat-autocomplete #autoModel="matAutocomplete">

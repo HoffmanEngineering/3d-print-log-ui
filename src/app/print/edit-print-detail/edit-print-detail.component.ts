@@ -71,7 +71,7 @@ export interface PrintImageValue {
 export class EditPrintDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy
 {
-  public OTHER_FILAMENT_OPTION: Partial<FilamentSummary> = {
+  public static OTHER_FILAMENT_OPTION: Partial<FilamentSummary> = {
     id: EMPTY_GUID,
     displayName: 'Other',
   } as const;
@@ -201,8 +201,6 @@ export class EditPrintDetailComponent
       this.lastAllowCommentsSetting = data.lastAllowCommentsSetting;
       this.lastMaterialMeasureSettings = data.lastMaterialMeasureSettings;
 
-      console.log(this.lastMaterialMeasureSettings);
-
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
@@ -212,7 +210,7 @@ export class EditPrintDetailComponent
       const filamentIsEmpty =
         this.filamentUsage.length === 0 ||
         this.filamentUsage.at(0)?.get('filament')?.value ===
-          this.OTHER_FILAMENT_OPTION;
+          EditPrintDetailComponent.OTHER_FILAMENT_OPTION;
       const printerHasBeenSelected =
         this.printForm.get('printerId').value !== null;
 
@@ -236,7 +234,7 @@ export class EditPrintDetailComponent
               if (
                 this.filamentUsage.length >= i &&
                 this.filamentUsage.at(i - 1).get('filament').value ===
-                  this.OTHER_FILAMENT_OPTION
+                  EditPrintDetailComponent.OTHER_FILAMENT_OPTION
               ) {
                 this.filamentUsage
                   .at(i - 1)
@@ -648,7 +646,7 @@ export class EditPrintDetailComponent
         null,
         null,
         PrintFilamentSourceMeasurement.Weight,
-        this.OTHER_FILAMENT_OPTION as FilamentSummary,
+        EditPrintDetailComponent.OTHER_FILAMENT_OPTION as FilamentSummary,
         print.filamentType
       );
 
@@ -1107,7 +1105,7 @@ export class EditPrintDetailComponent
 
     /** Check if the Other Filament Option is in use. If so, then save it into the dedicated fields. */
     // const filamentUsageWithOtherOption = this.filamentUsage.controls.find(
-    //   (f) => f.get('filament').value === this.OTHER_FILAMENT_OPTION
+    //   (f) => f.get('filament').value === EditPrintDetailComponent.OTHER_FILAMENT_OPTION
     // );
 
     const print: Omit<PrintDetail, 'comments'> = {
@@ -1222,7 +1220,7 @@ export class EditPrintDetailComponent
 
     const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
       data: {
-        otherFilamentOption: this.OTHER_FILAMENT_OPTION,
+        otherFilamentOption: EditPrintDetailComponent.OTHER_FILAMENT_OPTION,
         filterByMaterialCategory: material,
       },
       height: '80vh',
@@ -1233,7 +1231,7 @@ export class EditPrintDetailComponent
       .afterClosed()
       .subscribe((filament) => {
         if (filament) {
-          if (filament === this.OTHER_FILAMENT_OPTION) {
+          if (filament === EditPrintDetailComponent.OTHER_FILAMENT_OPTION) {
             filamentControl.setValue(null);
           } else {
             filamentControl.setValue(filament);

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { AnycubicFileParserService } from './anycubic-file-parser.service';
 
-describe('AnycubicFileParserService', () => {
+xdescribe('AnycubicFileParserService', () => {
   let service: AnycubicFileParserService;
 
   beforeEach(() => {

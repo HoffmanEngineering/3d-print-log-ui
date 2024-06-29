@@ -1,7 +1,14 @@
 import { Injectable } from '@angular/core';
 import parse from 'parse-duration';
 import { GcodeNewPrintParser } from '../../gcode-file-parser.service';
-import { PrintDetail, PrintImage, PrintStatus } from '../../print.service';
+import {
+  PrintDetail,
+  PrintFilamentSourceMeasurement,
+  PrintFilamentSummaryDto,
+  PrintImage,
+  PrintStatus,
+} from '../../print.service';
+import { EditPrintDetailComponent } from 'src/app/print/edit-print-detail/edit-print-detail.component';
 
 //
 export interface MaterialDensityGramsPerCubicCm {
@@ -34,7 +41,9 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
     // Print Times:
     print.estimatedPrintTimeInSeconds = this.parseEstimatedPrintTime(gcode);
 
-    print.estimatedFilamentUsageMg = this.estimateFilamentUsageInMg(gcode);
+    //print.estimatedFilamentUsageMg = this.estimateFilamentUsageInMg(gcode);
+
+    print.filamentUsage = this.getFilamentUsage(gcode);
 
     print.notes = this.parseSettingsIntoNotes(gcode);
 
@@ -43,6 +52,38 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
 
     return print;
   }
+
+  private getFilamentUsage(gcode: string): PrintFilamentSummaryDto[] {
+    const filament: PrintFilamentSummaryDto[] = [];
+
+    const filamentUsed = this.parseSettingAsString(
+      gcode,
+      '; filament used \\[mm\\]'
+    );
+
+    const usage = filamentUsed.split(',').map((x) => +x.trim());
+
+    for (let i = 0; i < usage.length; i++) {
+      if (usage[i] === 0) {
+        continue;
+      }
+
+      const filamentUsage: PrintFilamentSummaryDto = {
+        estimatedSource: PrintFilamentSourceMeasurement.Length,
+        estimatedLengthInM: +(usage[i] / 1000).toFixed(3),
+        id: null,
+        notes: '',
+        source: PrintFilamentSourceMeasurement.Length,
+        filament:
+          EditPrintDetailComponent.OTHER_FILAMENT_OPTION as unknown as any,
+      };
+
+      filament.push(filamentUsage);
+    }
+
+    return filament;
+  }
+
   estimateFilamentUsageInMg(gcode: string): number {
     // Check to see if the user setup their filament densities, thus we can directly return filament usage.
     const filamentUsedInGrams = this.parseSettingAsNumber(
@@ -267,8 +308,6 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
 
     const image = gcode.match(imageRegEx);
 
-    console.log(image);
-
     if (image?.[1]) {
       const base64Data = image[1]
         .toString()
@@ -280,8 +319,6 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
         id: null,
         isDefault: true,
       };
-
-      console.log(printImage.url);
 
       images.push(printImage);
     }
@@ -330,7 +367,6 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
     let estPrintTime: number | undefined;
     const printTimeString = gcode.match(/print_time = (.+)$/im);
     if (printTimeString?.[1]) {
-      console.log(printTimeString?.[1]);
       const time = this.parseAsSeconds(printTimeString[1]);
       if (time) {
         estPrintTime = time;

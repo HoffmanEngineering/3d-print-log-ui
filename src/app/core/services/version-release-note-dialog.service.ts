@@ -27,6 +27,32 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.27.0': {
+      title: '1.27.0- Anycubic Slicer Gcode Parser',
+      body: `<p>
+  Added support for the Anycubic Slicer when adding prints from gcode. The
+  parser will extract the thumbnail, print time, filament usage, and other settings from
+  the gcode file.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.26.3': {
       redirect: '1.26.2',
     },

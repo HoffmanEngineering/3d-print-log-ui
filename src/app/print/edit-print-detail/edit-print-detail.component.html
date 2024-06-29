@@ -103,6 +103,12 @@
           @if (printForm.controls['title'].hasError('required')) {
             <mat-error> A Title is <strong>required</strong> </mat-error>
           }
+          @if (printForm.controls['title'].hasError('maxlength')) {
+            <mat-error>
+              Title is {{ printForm.controls['title'].value.length }} characters
+              long, but has a max length of 100
+            </mat-error>
+          }
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label> Printer</mat-label>

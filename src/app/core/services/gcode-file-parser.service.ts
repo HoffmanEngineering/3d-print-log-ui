@@ -198,6 +198,8 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
       .split('_')
       .filter((segment) => segment.toLocaleLowerCase() !== 'gcode')
       .map((s) => capitalize(s))
-      .join(' ');
+      .join(' ')
+      .trim()
+      .substring(0, 100); // Limit to 100 characters
   }
 }

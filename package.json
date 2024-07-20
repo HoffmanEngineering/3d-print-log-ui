@@ -1,6 +1,6 @@
 {
   "name": "print-log-ui",
-  "version": "1.27.0",
+  "version": "1.27.1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",

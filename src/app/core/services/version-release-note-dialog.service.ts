@@ -27,6 +27,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.27.1': {
+      redirect: '1.27.0',
+    },
     '1.27.0': {
       title: '1.27.0- Anycubic Slicer Gcode Parser',
       body: `<p>

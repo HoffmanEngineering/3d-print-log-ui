@@ -32,13 +32,11 @@ steps:
       testRunner: 'JUnit'
       testResultsFiles: '**/TESTS.xml'
 
-  - task: PublishCodeCoverageResults@1
+  - task: PublishCodeCoverageResults@2
     displayName: 'Publish Code Coverage Results'
     condition: succeededOrFailed()
     inputs:
-      codeCoverageTool: 'Cobertura'
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui/cobertura-coverage.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/cobertura-coverage.xml'
 
   - script: |
       npm run prettier
@@ -50,5 +48,5 @@ steps:
 
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: '$(Build.SourcesDirectory)/dist/print-log-ui'
+      targetPath: '$(Build.SourcesDirectory)/dist/print-log-ui/browser'
       publishLocation: 'pipeline'

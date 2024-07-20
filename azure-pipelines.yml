@@ -36,7 +36,7 @@ steps:
     displayName: 'Publish Code Coverage Results'
     condition: succeededOrFailed()
     inputs:
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/print-log-ui/cobertura-coverage.xml'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/cobertura-coverage.xml'
 
   - script: |
       npm run prettier

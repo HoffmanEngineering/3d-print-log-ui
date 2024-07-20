@@ -5,7 +5,7 @@
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
-    "downlevelIteration": true,
+    "esModuleInterop": true,
     "experimentalDecorators": true,
     "module": "es2020",
     "moduleResolution": "node",
@@ -13,8 +13,10 @@
     "target": "ES2022",
     "resolveJsonModule": true,
     "typeRoots": ["node_modules/@types"],
-    "lib": ["esnext", "dom"],
-    "allowSyntheticDefaultImports": true,
+    "lib": [
+      "esnext",
+      "dom"
+    ],
     "useDefineForClassFields": false
   },
   "angularCompilerOptions": {

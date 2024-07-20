@@ -108,7 +108,7 @@ angular-app:
 
 Normally `ng update` is used to update dependencies. The following script is just for copy/paste convenience:
 
-`ng update typescript zone.js @angular/cli @angular/core @angular/material @angular/material-moment-adapter @angular/cdk @angular/flex-layout @angular/youtube-player @typescript-eslint/eslint-plugin@latest @typescript-eslint/parser@latest eslint @angular-eslint/builder @angular-eslint/eslint-plugin @angular-eslint/eslint-plugin-template @angular-eslint/schematics @angular-eslint/template-parser @auth0/auth0-spa-js @microsoft/applicationinsights-web karma karma-chrome-launcher karma-coverage karma-jasmine prettier moment jasmine-core lint-staged ngx-toastr @types/jasmine @types/lodash @angular-material-components/datetime-picker @angular-material-components/moment-adapter @cypress/webpack-preprocessor cypress d3 karma-jasmine-html-reporter source-map-explorer --force -C`
+`ng update typescript zone.js @angular/cli @angular/core @angular/material @angular/material-moment-adapter @angular/cdk  @angular/youtube-player @typescript-eslint/eslint-plugin@latest @typescript-eslint/parser@latest eslint @angular-eslint/builder @angular-eslint/eslint-plugin @angular-eslint/eslint-plugin-template @angular-eslint/schematics @angular-eslint/template-parser @auth0/auth0-spa-js @microsoft/applicationinsights-web @ngbracket/ngx-layout karma karma-chrome-launcher karma-coverage karma-jasmine prettier moment jasmine-core lint-staged ngx-toastr @types/jasmine @types/lodash @angular-material-components/datetime-picker @angular-material-components/moment-adapter @cypress/webpack-preprocessor cypress d3 karma-jasmine-html-reporter source-map-explorer --force -C`
 
 # Ignoring Largescale Refactors
 

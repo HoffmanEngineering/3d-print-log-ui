@@ -20,6 +20,7 @@ import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-ap
 import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.component';
 import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
 import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
+import { DocsSlic3rUploaderComponent } from './docs/docs-slic3r-uploader/docs-slic3r-uploader.component';
 
 @NgModule({
   declarations: [
@@ -38,6 +39,7 @@ import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-priv
     DocsAndroidAppComponent,
     DocsTermsComponent,
     DocsPrivacyPolicyComponent,
+    DocsSlic3rUploaderComponent,
   ],
   imports: [
     CommonModule,

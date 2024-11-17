@@ -15,6 +15,7 @@ import { DocumentationComponent } from './documentation.component';
 import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.component';
 import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
 import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
+import { DocsSlic3rUploaderComponent } from './docs/docs-slic3r-uploader/docs-slic3r-uploader.component';
 
 const routes: Routes = [
   {
@@ -34,6 +35,7 @@ const routes: Routes = [
       { path: 'cura-plugin', component: DocsCuraPluginComponent },
       { path: 'octoprint-webhook', component: DocsOctoprintWebhookComponent },
       { path: 'klipper', component: DocsMoonrakerComponent },
+      { path: 'slic3r-uploader', component: DocsSlic3rUploaderComponent },
       { path: 'release-notes', component: DocsReleaseNotesComponent },
       { path: 'about', component: DocsAboutComponent },
       { path: 'privacy-policy', component: DocsPrivacyPolicyComponent },

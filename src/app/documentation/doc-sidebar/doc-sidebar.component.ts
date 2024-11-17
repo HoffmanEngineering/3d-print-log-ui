@@ -19,6 +19,10 @@ export class DocSidebarComponent {
     { name: 'Cura Plugin', url: '/docs/cura-plugin' },
     { name: 'Octoprint Webhook', url: '/docs/octoprint-webhook' },
     { name: 'Klipper/Moonraker', url: '/docs/klipper' },
+    {
+      name: 'OrcaSlicer/PrusaSlicer/Bambu',
+      url: '/docs/slic3r-uploader',
+    },
     { divider: true },
     { name: 'Release Notes', url: '/docs/release-notes' },
     { name: 'About', url: '/docs/about' },

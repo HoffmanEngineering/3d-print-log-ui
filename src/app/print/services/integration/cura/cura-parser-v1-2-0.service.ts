@@ -63,6 +63,10 @@ export class CuraParserV1pt2pt0Service implements NewPrintParser {
         .join(' ');
     }
 
+    if (settings.file_name) {
+      print.fileName = settings.file_name;
+    }
+
     if (settings.material_used_mg) {
       const materialUsed = +settings.material_used_mg;
 

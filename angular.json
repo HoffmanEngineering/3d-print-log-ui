@@ -27,7 +27,8 @@
             "assets": [
               "src/favicon_1293b2036.ico",
               "src/assets",
-              "src/ads.txt"
+              "src/ads.txt",
+              "src/staticwebapp.config.json"
             ],
             "styles": [
               "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
@@ -46,7 +47,8 @@
               "assets": [
                 "src/favicon_1293b2036.ico",
                 "src/assets",
-                "src/ads.txt"
+                "src/ads.txt",
+                "src/staticwebapp.config.json"
               ],
               "fileReplacements": [
                 {

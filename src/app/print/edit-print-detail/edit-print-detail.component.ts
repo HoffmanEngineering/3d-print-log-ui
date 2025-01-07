@@ -210,7 +210,9 @@ export class EditPrintDetailComponent
       const filamentIsEmpty =
         this.filamentUsage.length === 0 ||
         this.filamentUsage.at(0)?.get('filament')?.value ===
-          EditPrintDetailComponent.OTHER_FILAMENT_OPTION;
+          EditPrintDetailComponent.OTHER_FILAMENT_OPTION ||
+        this.filamentUsage.at(0)?.get('filament')?.value?.id === EMPTY_GUID;
+
       const printerHasBeenSelected =
         this.printForm.get('printerId').value !== null;
 
@@ -233,8 +235,10 @@ export class EditPrintDetailComponent
 
               if (
                 this.filamentUsage.length >= i &&
-                this.filamentUsage.at(i - 1).get('filament').value ===
-                  EditPrintDetailComponent.OTHER_FILAMENT_OPTION
+                (this.filamentUsage.at(i - 1).get('filament').value ===
+                  EditPrintDetailComponent.OTHER_FILAMENT_OPTION ||
+                  this.filamentUsage.at(i - 1).get('filament').value?.id ===
+                    EMPTY_GUID)
               ) {
                 this.filamentUsage
                   .at(i - 1)

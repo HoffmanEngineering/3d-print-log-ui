@@ -67,17 +67,25 @@ export class CuraParserV1pt2pt0Service implements NewPrintParser {
       print.fileName = settings.file_name;
     }
 
-    if (settings.material_used_mg) {
-      const materialUsed = +settings.material_used_mg;
+    if (settings.filamentUsage) {
+      // TODO some kind of validation?
 
-      if (isNaN(materialUsed)) {
-        this.loggingService.logTrace(
-          `Cura 1.0.0 - NaN Estimated Material Usaged Received: ${JSON.stringify(
-            settings.material_used_mg
-          )}`
-        );
-      } else {
-        print.estimatedFilamentUsageMg = Math.round(materialUsed);
+      if (Array.isArray(settings.filamentUsage)) {
+        print.filamentUsage = settings.filamentUsage;
+      }
+    } else {
+      if (settings.material_used_mg) {
+        const materialUsed = +settings.material_used_mg;
+
+        if (isNaN(materialUsed)) {
+          this.loggingService.logTrace(
+            `Cura 1.0.0 - NaN Estimated Material Usaged Received: ${JSON.stringify(
+              settings.material_used_mg
+            )}`
+          );
+        } else {
+          print.estimatedFilamentUsageMg = Math.round(materialUsed);
+        }
       }
     }
 

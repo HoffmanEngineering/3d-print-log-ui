@@ -27,6 +27,43 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.29.0': {
+      title: '1.29.0- Slic3r Post-Processing Uploader v1.1.0 Released',
+      body: `<p>
+The
+<a
+  href="https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader"
+  rel="noreferrer noopener"
+  target="_blank"
+  >Slic3r Post-Processing Uploader</a
+>
+has been updated to v1.1.0, which adds better multi-material support.
+Download the new version today for the latest features.
+</p>
+<p>
+  See the 
+  <a rel="noreferrer noopener" target="_blank" href="/docs/slic3r-uploader">Documentation</a> 
+  for how to download and configure the slicer plugin.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.28.0': {
       title:
         '1.28.0- Uploader for Slic3r-based Slicers (OrcaSlicer/PrusaSlicer/Bambu Studio/SuperSlicer)',

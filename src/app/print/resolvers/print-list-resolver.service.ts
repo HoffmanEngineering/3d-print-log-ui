@@ -30,12 +30,17 @@ export class PrintListResolverService {
       .getAll('filterByPrinterId')
       .map((id) => +id);
 
+    const filamentIds = route.queryParamMap
+      .getAll('filterByFilamentId')
+      .map((id) => id);
+
     return this.printService.getPrintSummaries(
       pageNumber,
       pageSize,
       searchText,
       filterByStatus,
       printerIds,
+      filamentIds,
       sortDirection,
       sortColumn
     );

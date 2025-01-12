@@ -48,6 +48,7 @@ export interface ColumnDefinition {
 export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
   public printers: PrinterSummary[] = [];
+  public filaments: FilamentSummary[] = [];
   public pageSize: number;
   public currentPage: number;
   public totalCount: number;
@@ -159,6 +160,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public filterByPrinterIds: number[] = [];
 
+  public filterByFilamentIds: string[] = [];
+
   public printStatusTypes = PrintStatus;
 
   public printSummarySortColumns = PrintSummarySortColumn;
@@ -256,6 +259,14 @@ export class PrintListComponent implements OnInit, OnDestroy {
       } else {
         this.filterByPrinterIds = [];
       }
+
+      if (params.has('filterByFilamentId')) {
+        this.filterByFilamentIds = params
+          .getAll('filterByFilamentId')
+          .map((id) => id);
+      } else {
+        this.filterByFilamentIds = [];
+      }
     });
 
     this.activatedRoute.data.subscribe((data) => {
@@ -266,6 +277,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       this.handlePagedList(pagedResponse);
 
       this.printers = data.printers;
+      this.filaments = data.filaments;
     });
 
     /**
@@ -368,6 +380,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.searchText = '';
     this.filterByStatus = null;
     this.filterByPrinterIds = [];
+    this.filterByFilamentIds = [];
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrintSummarySortColumn.StartDate;
@@ -388,6 +401,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
           searchText: this.searchText || '',
           filterByStatus: this.filterByStatus,
           filterByPrinterId: this.filterByPrinterIds,
+          filterByFilamentId: this.filterByFilamentIds,
           sortDirection: this.sortDirection,
           sortColumn: this.sortColumn,
           t: new Date().getTime(),
@@ -404,6 +418,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.searchText || '',
             this.filterByStatus,
             this.filterByPrinterIds,
+            this.filterByFilamentIds,
             this.sortDirection,
             this.sortColumn
           )
@@ -442,6 +457,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
     } else {
       return `${(printer.make + ' ' + printer.model).trim()}`;
     }
+  }
+
+  public getFilamentLabel(filament: FilamentSummary) {
+    return `${filament.displayName} - ${filament.brand} - ${filament.materialType} - ${filament.colorName}`;
   }
 
   public deletePrint(print: PrintSummary) {

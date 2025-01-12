@@ -99,6 +99,20 @@
           }
         </mat-select>
       </mat-form-field>
+      <mat-form-field>
+        <mat-label> Filter by Filament</mat-label>
+        <mat-select
+          [(ngModel)]="filterByFilamentIds"
+          (ngModelChange)="this.currentPage = 1; updateFilter()"
+          multiple
+        >
+          @for (filament of filaments; track filament) {
+            <mat-option [value]="filament.id">{{
+              getFilamentLabel(filament)
+            }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
     <button
       fxFlex="120px"

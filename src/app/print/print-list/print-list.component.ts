@@ -20,6 +20,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
+  EMPTY_GUID,
   FilamentPrice,
   FilamentPriceInvalid,
   PrintFilamentSourceMeasurement,
@@ -32,6 +33,7 @@ import {
 import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
+import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 
 export interface ColumnDefinition {
   key: string;
@@ -722,5 +724,36 @@ export class PrintListComponent implements OnInit, OnDestroy {
         reader.readAsText(file);
       }
     }
+  }
+
+  public searchFilament() {
+    const otherFilamentOption: Partial<FilamentSummary> = {
+      id: EMPTY_GUID,
+      displayName: 'Other',
+    } as const;
+
+    const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
+      data: {
+        otherFilamentOption,
+      },
+      height: '80vh',
+      width: '80vw',
+    });
+
+    dialogRef.componentInstance.dialogRef
+      .afterClosed()
+      .subscribe((filament) => {
+        if (filament) {
+          if (filament === otherFilamentOption) {
+            this.filterByFilamentIds = [EMPTY_GUID];
+          } else {
+            if (!this.filterByFilamentIds.find((id) => id === filament.id)) {
+              this.filterByFilamentIds.push(filament.id);
+            }
+          }
+        }
+
+        this.updateFilter();
+      });
   }
 }

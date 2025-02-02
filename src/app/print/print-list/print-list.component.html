@@ -99,20 +99,37 @@
           }
         </mat-select>
       </mat-form-field>
+
       <mat-form-field>
-        <mat-label> Filter by Filament</mat-label>
+        <mat-label> Filter by Material</mat-label>
         <mat-select
           [(ngModel)]="filterByFilamentIds"
           (ngModelChange)="this.currentPage = 1; updateFilter()"
           multiple
         >
           @for (filament of filaments; track filament) {
-            <mat-option [value]="filament.id">{{
-              getFilamentLabel(filament)
-            }}</mat-option>
+            <mat-option [value]="filament.id">
+              <!-- generate a span that is a box of 12 pixels wide of a specific color -->
+              <span
+                style="display: inline-block; width: 12px; height: 12px; background-color: #{{
+                  filament.colorHex
+                }}"
+              ></span>
+              <span>
+                {{ getFilamentLabel(filament) }}
+              </span></mat-option
+            >
           }
         </mat-select>
       </mat-form-field>
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="searchFilament()"
+        type="button"
+      >
+        Add Material to Filter
+      </button>
     </div>
     <button
       fxFlex="120px"

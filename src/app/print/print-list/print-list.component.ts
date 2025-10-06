@@ -469,13 +469,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(SimpleDialogComponent, {
       maxWidth: '350px',
     });
-    (dialogRef.componentInstance as any).title = 'Delete?';
+    dialogRef.componentInstance.title = 'Delete?';
     // eslint-disable-next-line max-len
-    (dialogRef.componentInstance as any).body =
-      `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
-    (dialogRef.componentInstance as any).yesText = 'Delete';
-    (dialogRef.componentInstance as any).yesColor = 'warn';
-    (dialogRef.componentInstance as any).noText = 'Cancel';
+    dialogRef.componentInstance.body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
+    dialogRef.componentInstance.yesText = 'Delete';
+    dialogRef.componentInstance.yesColor = 'warn';
+    dialogRef.componentInstance.noText = 'Cancel';
 
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {
@@ -736,8 +735,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
       data: {
         otherFilamentOption,
       },
-      height: '80vh',
-      width: '80vw',
+      height: '80svh',
+      width: '80svw',
+      position: {
+        top: '5vh',
+        left: '5vw',
+      },
     });
 
     dialogRef.componentInstance.dialogRef

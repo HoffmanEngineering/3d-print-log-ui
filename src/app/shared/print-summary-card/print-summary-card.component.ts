@@ -5,6 +5,7 @@ import { PrintSummary } from 'src/app/core/services/print.service';
   selector: 'app-print-summary-card',
   templateUrl: './print-summary-card.component.html',
   styleUrls: ['./print-summary-card.component.scss'],
+  standalone: false,
 })
 export class PrintSummaryCardComponent {
   @Input() userProfilePictureUrl: string = null;

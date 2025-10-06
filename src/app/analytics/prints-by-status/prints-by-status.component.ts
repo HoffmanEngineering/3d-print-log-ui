@@ -23,6 +23,7 @@ export interface PrintStatusState {
   selector: 'app-prints-by-status',
   templateUrl: './prints-by-status.component.html',
   styleUrls: ['./prints-by-status.component.scss'],
+  standalone: false,
 })
 export class PrintsByStatusComponent implements OnChanges {
   @Input() prints: PrintStatistic[] = [];

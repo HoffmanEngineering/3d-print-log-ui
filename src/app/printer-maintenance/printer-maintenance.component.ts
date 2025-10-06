@@ -24,6 +24,7 @@ import { SimpleDialogComponent } from '../shared/simple-dialog/simple-dialog.com
   selector: 'app-printer-maintenance',
   templateUrl: './printer-maintenance.component.html',
   styleUrls: ['./printer-maintenance.component.scss'],
+  standalone: false,
 })
 export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
   public editId: string | null = null;

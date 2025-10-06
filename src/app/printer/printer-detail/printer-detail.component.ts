@@ -30,6 +30,7 @@ import { MaterialCategory } from 'src/app/core/services/material-categories.serv
   selector: 'app-printer-detail',
   templateUrl: './printer-detail.component.html',
   styleUrls: ['./printer-detail.component.scss'],
+  standalone: false,
 })
 export class PrinterDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy

@@ -43,6 +43,7 @@ export interface ColumnDefinition {
   selector: 'app-print-list',
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
+  standalone: false,
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];

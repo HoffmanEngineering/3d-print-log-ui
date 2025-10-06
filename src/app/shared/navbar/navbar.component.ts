@@ -14,6 +14,7 @@ import { environment } from 'src/environments/environment';
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
+  standalone: false,
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   public versionNumber = environment.version;

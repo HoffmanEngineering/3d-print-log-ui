@@ -19,6 +19,7 @@ export interface DialogData {
   selector: 'app-print-share-dialog',
   templateUrl: './print-share-dialog.component.html',
   styleUrls: ['./print-share-dialog.component.scss'],
+  standalone: false,
 })
 export class PrintShareDialogComponent implements OnInit {
   print: PrintDetail;

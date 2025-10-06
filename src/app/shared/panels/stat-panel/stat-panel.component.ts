@@ -4,6 +4,7 @@ import { Component, Input } from '@angular/core';
   selector: 'app-stat-panel',
   templateUrl: './stat-panel.component.html',
   styleUrls: ['./stat-panel.component.scss'],
+  standalone: false,
 })
 /**
  * Used to display a single metric.

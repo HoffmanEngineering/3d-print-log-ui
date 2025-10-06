@@ -5,6 +5,7 @@ import { Comment } from 'src/app/core/services/comment.service';
   selector: 'app-comment',
   templateUrl: './comment.component.html',
   styleUrls: ['./comment.component.scss'],
+  standalone: false,
 })
 export class CommentComponent {
   @Input() comment: Comment;

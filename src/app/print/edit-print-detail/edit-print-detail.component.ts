@@ -67,6 +67,7 @@ export interface PrintImageValue {
   selector: 'app-print-detail',
   templateUrl: './edit-print-detail.component.html',
   styleUrls: ['./edit-print-detail.component.scss'],
+  standalone: false,
 })
 export class EditPrintDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy

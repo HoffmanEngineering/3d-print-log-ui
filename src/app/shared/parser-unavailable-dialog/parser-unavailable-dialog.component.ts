@@ -15,6 +15,7 @@ export interface ParserUnavailableDialogData {
   selector: 'app-parser-unavailable-dialog',
   templateUrl: './parser-unavailable-dialog.component.html',
   styleUrls: ['./parser-unavailable-dialog.component.scss'],
+  standalone: false,
 })
 export class ParserUnavailableDialogComponent {
   public slicerFeedback = '';

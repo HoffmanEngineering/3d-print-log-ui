@@ -5,6 +5,7 @@ import { PrintService } from '../../core/services/print.service';
   selector: 'app-print-image',
   templateUrl: './print-image.component.html',
   styleUrls: ['./print-image.component.scss'],
+  standalone: false,
 })
 export class PrintImageComponent implements OnInit {
   @Input() printId: number;

@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-docs-cura-plugin',
   templateUrl: './docs-cura-plugin.component.html',
   styleUrls: ['./docs-cura-plugin.component.scss'],
+  standalone: false,
 })
 export class DocsCuraPluginComponent {
   constructor() {}

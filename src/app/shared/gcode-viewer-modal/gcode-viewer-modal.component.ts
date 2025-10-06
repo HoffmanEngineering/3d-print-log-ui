@@ -41,6 +41,7 @@ export enum Actions {
   selector: 'app-gcode-viewer-modal',
   templateUrl: './gcode-viewer-modal.component.html',
   styleUrls: ['./gcode-viewer-modal.component.scss'],
+  standalone: false,
 })
 export class GcodeViewerModalComponent implements AfterViewInit {
   @ViewChild('iframe') iframe: ElementRef;

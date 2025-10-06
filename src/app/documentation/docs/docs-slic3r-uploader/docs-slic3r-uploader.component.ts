@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-docs-slic3r-uploader',
   templateUrl: './docs-slic3r-uploader.component.html',
   styleUrls: ['./docs-slic3r-uploader.component.scss'],
-  // interpolation: [`{{{{`, `}}}}`],
+  standalone: false,
 })
 export class DocsSlic3rUploaderComponent {
   constructor() {}

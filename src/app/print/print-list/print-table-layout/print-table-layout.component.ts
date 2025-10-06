@@ -17,6 +17,7 @@ export interface DialogData {
   selector: 'app-print-table-layout',
   templateUrl: './print-table-layout.component.html',
   styleUrls: ['./print-table-layout.component.scss'],
+  standalone: false,
 })
 export class PrintTableLayoutComponent implements OnInit {
   public selectedColumns: string[];

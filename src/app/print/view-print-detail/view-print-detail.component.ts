@@ -30,6 +30,7 @@ export interface PrintImageValue {
   selector: 'app-view-print-detail',
   templateUrl: './view-print-detail.component.html',
   styleUrls: ['./view-print-detail.component.scss'],
+  standalone: false,
 })
 export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   public printers: PrinterSummary[] = [];

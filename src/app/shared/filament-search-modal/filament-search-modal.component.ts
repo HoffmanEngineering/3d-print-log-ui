@@ -12,6 +12,7 @@ export interface DialogData {
   selector: 'app-filament-search-modal',
   templateUrl: './filament-search-modal.component.html',
   styleUrls: ['./filament-search-modal.component.scss'],
+  standalone: false,
 })
 export class FilamentSearchModalComponent {
   constructor(

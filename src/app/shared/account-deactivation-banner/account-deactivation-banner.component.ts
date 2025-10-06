@@ -10,6 +10,7 @@ import { SimpleDialogComponent } from '../simple-dialog/simple-dialog.component'
   selector: 'app-account-deactivation-banner',
   templateUrl: './account-deactivation-banner.component.html',
   styleUrls: ['./account-deactivation-banner.component.scss'],
+  standalone: false,
 })
 export class AccountDeactivationBannerComponent implements OnInit, OnDestroy {
   userProfileSubscription: Subscription;

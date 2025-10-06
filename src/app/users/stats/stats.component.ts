@@ -12,6 +12,7 @@ import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stat
   selector: 'app-stats',
   templateUrl: './stats.component.html',
   styleUrls: ['./stats.component.scss'],
+  standalone: false,
 })
 export class StatsComponent implements OnChanges {
   @Input() userId: number;

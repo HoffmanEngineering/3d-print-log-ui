@@ -16,6 +16,7 @@ import { PrintService } from 'src/app/core/services/print.service';
   selector: 'app-print-comments',
   templateUrl: './print-comments.component.html',
   styleUrls: ['./print-comments.component.scss'],
+  standalone: false,
 })
 export class PrintCommentsComponent implements OnInit {
   @Input() printId: number;

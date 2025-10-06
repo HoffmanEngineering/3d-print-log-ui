@@ -6,6 +6,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
   selector: 'app-docs-getting-started',
   templateUrl: './docs-getting-started.component.html',
   styleUrls: ['./docs-getting-started.component.scss'],
+  standalone: false,
 })
 export class DocsGettingStartedComponent {
   constructor(

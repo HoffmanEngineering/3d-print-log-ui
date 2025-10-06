@@ -20,6 +20,7 @@ export class DonutChartDatum {
   encapsulation: ViewEncapsulation.None,
   templateUrl: './donut-chart.component.html',
   styleUrls: ['./donut-chart.component.scss'],
+  standalone: false,
 })
 export class DonutChartComponent implements OnChanges {
   @Input() data: number[];

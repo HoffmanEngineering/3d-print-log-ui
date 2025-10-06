@@ -15,6 +15,7 @@ export interface UserApiKeySummaryWithKey extends UserApiKeySummary {
   selector: 'app-apikeys',
   templateUrl: './apikeys.component.html',
   styleUrls: ['./apikeys.component.scss'],
+  standalone: false,
 })
 export class ApikeysComponent implements OnInit {
   public keys: UserApiKeySummary[] = [];

@@ -3,6 +3,7 @@ import moment from 'moment';
 
 @Pipe({
   name: 'duration',
+  standalone: false,
 })
 export class DurationPipe implements PipeTransform {
   transform(value: unknown, ...args: unknown[]): unknown {

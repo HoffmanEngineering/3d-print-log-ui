@@ -16,6 +16,7 @@ let apiLoaded = false;
   selector: 'app-documentation',
   templateUrl: './documentation.component.html',
   styleUrls: ['./documentation.component.scss'],
+  standalone: false,
 })
 export class DocumentationComponent
   implements OnInit, OnDestroy, AfterViewInit

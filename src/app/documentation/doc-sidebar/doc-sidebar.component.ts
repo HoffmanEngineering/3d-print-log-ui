@@ -5,6 +5,7 @@ import { INavData } from 'src/app/shared/sidebar/types';
   selector: 'app-doc-sidebar',
   templateUrl: './doc-sidebar.component.html',
   styleUrls: ['./doc-sidebar.component.scss'],
+  standalone: false,
 })
 export class DocSidebarComponent {
   public navItems: INavData[] = [

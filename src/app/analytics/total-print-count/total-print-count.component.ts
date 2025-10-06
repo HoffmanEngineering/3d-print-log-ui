@@ -11,6 +11,7 @@ import { PrintStatistic } from '../services/print-statistics.service';
   selector: 'app-total-print-count',
   templateUrl: './total-print-count.component.html',
   styleUrls: ['./total-print-count.component.scss'],
+  standalone: false,
 })
 export class TotalPrintCountComponent implements OnChanges {
   @Input() prints: PrintStatistic[] = [];

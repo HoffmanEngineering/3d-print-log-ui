@@ -4,8 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
-    "build:dev": "ng build",
-    "build": "ng build --configuration production",
+    "build:dev": "ng build --verbose",
+    "build": "ng build --configuration production --verbose",
     "test": "ng test",
     "test:ci": "ng test --no-watch --code-coverage --browsers ChromeHeadless",
     "lint": "ng lint",

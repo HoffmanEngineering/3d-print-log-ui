@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, DOCUMENT } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {
   PrintDetail,
@@ -7,7 +7,7 @@ import {
 } from '../../core/services/print.service';
 
 import { Clipboard } from '@angular/cdk/clipboard';
-import { DOCUMENT } from '@angular/common';
+
 import { ToastrService } from 'ngx-toastr';
 import { NavigatorShareService } from 'src/app/core/services/navigator-share.service';
 

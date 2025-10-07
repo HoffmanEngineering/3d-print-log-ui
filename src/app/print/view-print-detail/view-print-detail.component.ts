@@ -1,5 +1,5 @@
-import { DOCUMENT, Location } from '@angular/common';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
+import { Component, Inject, OnDestroy, OnInit, DOCUMENT } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import moment from 'moment';

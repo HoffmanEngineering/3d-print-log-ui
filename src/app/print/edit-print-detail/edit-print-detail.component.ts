@@ -354,6 +354,12 @@ export class EditPrintDetailComponent
     );
 
     this.estimatedCompletedDateSubscription.add(
+      this.printForm.get('startTime').valueChanges.subscribe(() => {
+        this.getEstimatedCompletedDate();
+      })
+    );
+
+    this.estimatedCompletedDateSubscription.add(
       this.printForm
         .get('estimatedPrintTimeInSeconds')
         .valueChanges.subscribe(() => {
@@ -367,6 +373,12 @@ export class EditPrintDetailComponent
 
     this.actualCompletedDateSubscription.add(
       this.printForm.get('startDate').valueChanges.subscribe(() => {
+        this.getActualCompletedDate();
+      })
+    );
+
+    this.actualCompletedDateSubscription.add(
+      this.printForm.get('startTime').valueChanges.subscribe(() => {
         this.getActualCompletedDate();
       })
     );
@@ -675,6 +687,14 @@ export class EditPrintDetailComponent
             ? moment(print.startDate).toDate()
             : moment().toDate()
           : moment().toDate(),
+        Validators.required,
+      ],
+      startTime: [
+        print
+          ? print.startDate
+            ? moment(print.startDate).format('HH:mm:ss')
+            : moment().format('HH:mm:ss')
+          : moment().format('HH:mm:ss'),
         Validators.required,
       ],
       estimatedPrintTimeInSeconds: [
@@ -1127,7 +1147,7 @@ export class EditPrintDetailComponent
         this.printForm.controls.printTimeInSeconds.value
       ),
       printerId: this.printForm.controls.printerId.value,
-      startDate: this.printForm.controls.startDate.value,
+      startDate: this.getCombinedStartDateTime(),
       status: this.printForm.controls.status.value,
       viewStatus: this.printForm.controls.viewStatus.value,
       title: this.printForm.controls.title.value,
@@ -1257,11 +1277,13 @@ export class EditPrintDetailComponent
   }
 
   public setStartDateToNow() {
-    this.printForm.get('startDate').setValue(new Date());
+    const now = new Date();
+    this.printForm.get('startDate').setValue(now);
+    this.printForm.get('startTime').setValue(moment(now).format('HH:mm:ss'));
   }
 
   public getEstimatedCompletedDate() {
-    const startDate = this.printForm.get('startDate').value;
+    const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
       return '';
@@ -1286,7 +1308,7 @@ export class EditPrintDetailComponent
   }
 
   getActualCompletedDate() {
-    const startDate = this.printForm.get('startDate').value;
+    const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
       return '';
@@ -1311,7 +1333,7 @@ export class EditPrintDetailComponent
   }
 
   public updateActualCompletedDate(newDate: Date) {
-    const startDate = this.printForm.get('startDate').value;
+    const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
       return '';
@@ -1327,5 +1349,86 @@ export class EditPrintDetailComponent
 
   public setActualCompletedDateToNow() {
     this.updateActualCompletedDate(new Date());
+  }
+
+  // Helper methods for the separate date/time picker implementation
+  public getEstimatedCompletedDateOnly(): Date | null {
+    return this.estimatedCompletedDate ? this.estimatedCompletedDate : null;
+  }
+
+  public getEstimatedCompletedTimeOnly(): string {
+    return this.estimatedCompletedDate
+      ? moment(this.estimatedCompletedDate).format('HH:mm:ss')
+      : '';
+  }
+
+  public getActualCompletedDateOnly(): Date | null {
+    return this.actualCompletedDate ? this.actualCompletedDate : null;
+  }
+
+  public getActualCompletedTimeOnly(): string {
+    return this.actualCompletedDate
+      ? moment(this.actualCompletedDate).format('HH:mm:ss')
+      : '';
+  }
+
+  public updateActualCompletedDateOnly(newDate: Date) {
+    if (!newDate) {
+      this.actualCompletedDate = null;
+      return;
+    }
+
+    // Combine the new date with the existing time (if any)
+    const existingTime = this.getActualCompletedTimeOnly();
+    const [hours, minutes, seconds] = existingTime
+      ? existingTime.split(':').map(Number)
+      : [0, 0, 0];
+
+    const combinedDateTime = moment(newDate)
+      .hour(hours)
+      .minute(minutes)
+      .second(seconds)
+      .toDate();
+
+    this.updateActualCompletedDate(combinedDateTime);
+  }
+
+  public updateActualCompletedTimeOnly(newTime: string) {
+    if (!newTime) {
+      return;
+    }
+
+    const existingDate = this.getActualCompletedDateOnly();
+    if (!existingDate) {
+      return;
+    }
+
+    const [hours, minutes, seconds] = newTime.split(':').map(Number);
+
+    const combinedDateTime = moment(existingDate)
+      .hour(hours)
+      .minute(minutes)
+      .second(seconds || 0)
+      .toDate();
+
+    this.updateActualCompletedDate(combinedDateTime);
+  }
+
+  // Helper method to get the combined datetime for API calls
+  public getCombinedStartDateTime(): Date {
+    const date = this.printForm.get('startDate').value;
+    const time = this.printForm.get('startTime').value;
+
+    if (!date || !time) {
+      return date || new Date();
+    }
+
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+
+    return moment(date)
+      .hour(hours)
+      .minute(minutes)
+      .second(seconds || 0)
+      .toDate();
   }
 }

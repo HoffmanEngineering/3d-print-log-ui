@@ -129,42 +129,93 @@
                 [imageId]="print.defaultPrintImageId"
               ></app-print-image>
             </div>
-            
+
             <!-- Content Section -->
             <div class="card-content">
               <h3 class="card-title">{{ print.title }}</h3>
-              
+
               <div class="card-meta">
                 <div class="meta-item">
                   <mat-icon class="meta-icon">print</mat-icon>
                   <span>{{ getPrinterLabel(print.printer) }}</span>
                 </div>
-                
+
                 <div class="meta-item">
                   <mat-icon class="meta-icon">calendar_today</mat-icon>
                   <span>{{ print.startDate | date }}</span>
                 </div>
-                
+
                 <div class="meta-item">
                   <mat-icon class="meta-icon">timer</mat-icon>
                   <span>
-                    @if (print.printTimeInSeconds !== null && print.printTimeInSeconds > 0) {
+                    @if (
+                      print.printTimeInSeconds !== null &&
+                      print.printTimeInSeconds > 0
+                    ) {
                       {{ print.printTimeInSeconds | duration }}
-                    } @else if (print.estimatedPrintTimeInSeconds !== null && print.estimatedPrintTimeInSeconds > 0) {
+                    } @else if (
+                      print.estimatedPrintTimeInSeconds !== null &&
+                      print.estimatedPrintTimeInSeconds > 0
+                    ) {
                       {{ print.estimatedPrintTimeInSeconds | duration }} *
                     } @else {
                       --
                     }
                   </span>
                 </div>
-                
-                <div class="meta-item status-badge" [class]="'status-' + print.status">
-                  <mat-icon class="meta-icon">{{ getStatusIcon(print) }}</mat-icon>
+
+                <!-- Materials Section -->
+                @if (print.filamentUsage && print.filamentUsage.length > 0) {
+                  <div class="meta-item materials-section">
+                    <div class="materials-container">
+                      @for (
+                        fu of print.filamentUsage;
+                        track fu;
+                        let i = $index
+                      ) {
+                        <div class="material-chip">
+                          @if (fu.filament !== null) {
+                            <div
+                              class="material-color"
+                              [style.background-color]="
+                                '#' + fu.filament.colorHex
+                              "
+                              [title]="fu.filament.colorName || 'No color name'"
+                            ></div>
+                            <span class="material-name">
+                              {{ fu.filament?.displayName }}
+                              @if (fu.amountMg !== null && fu.amountMg > 0) {
+                                ({{ fu.amountMg / 1000 | number: '1.0-1' }}g)
+                              } @else if (
+                                fu.estimatedAmountMg !== null &&
+                                fu.estimatedAmountMg > 0
+                              ) {
+                                ({{
+                                  fu.estimatedAmountMg / 1000 | number: '1.0-1'
+                                }}g*)
+                              }
+                            </span>
+                          } @else {
+                            <span class="material-name">{{ fu.notes }}</span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <div
+                  class="meta-item status-badge"
+                  [class]="'status-' + print.status"
+                >
+                  <mat-icon class="meta-icon">{{
+                    getStatusIcon(print)
+                  }}</mat-icon>
                   <span>{{ getStatus(print) }}</span>
                 </div>
               </div>
             </div>
-            
+
             <!-- Actions Section -->
             <div class="card-actions" (click)="$event.stopPropagation()">
               <button
@@ -182,18 +233,10 @@
                 >
                   <mat-icon>edit</mat-icon>Edit
                 </a>
-                <a
-                  class="menu-link"
-                  mat-menu-item
-                  [routerLink]="[print.id]"
-                >
+                <a class="menu-link" mat-menu-item [routerLink]="[print.id]">
                   <mat-icon>launch</mat-icon>View
                 </a>
-                <button
-                  type="button"
-                  mat-menu-item
-                  (click)="share(print)"
-                >
+                <button type="button" mat-menu-item (click)="share(print)">
                   <mat-icon>share</mat-icon>Share
                 </button>
                 <a
@@ -211,10 +254,7 @@
                   <mat-icon>delete</mat-icon>Delete
                 </button>
                 <hr />
-                <button
-                  mat-menu-item
-                  [matMenuTriggerFor]="printStatusMenu"
-                >
+                <button mat-menu-item [matMenuTriggerFor]="printStatusMenu">
                   Change Print Status
                 </button>
               </mat-menu>
@@ -243,7 +283,9 @@
                 <button
                   type="button"
                   mat-menu-item
-                  (click)="changeStatus(print.id, printStatusTypes.PartialSuccess)"
+                  (click)="
+                    changeStatus(print.id, printStatusTypes.PartialSuccess)
+                  "
                 >
                   <mat-icon>rule</mat-icon>Partial Success
                 </button>

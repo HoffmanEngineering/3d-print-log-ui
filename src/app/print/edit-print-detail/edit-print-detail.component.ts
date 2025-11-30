@@ -1,17 +1,18 @@
 import {
-  ChangeDetectorRef,
   Component,
   ElementRef,
-  HostListener,
   OnDestroy,
   OnInit,
+  inject,
+  DestroyRef,
+  ChangeDetectorRef,
 } from '@angular/core';
 import {
   AbstractControl,
-  UntypedFormArray,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,6 +26,7 @@ import { Title } from '@angular/platform-browser';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -51,7 +53,6 @@ import {
   PrintViewStatus,
 } from '../../core/services/print.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
-import currency from 'currency.js';
 import {
   Currencies,
   Currency,
@@ -65,11 +66,63 @@ export interface PrintImageValue {
   isDefault: boolean;
 }
 
+export interface PrintFilamentUsageFormValue {
+  id: string;
+  amountG: number | null;
+  lengthInM: number | null;
+  volumeMl: number | null;
+  source: PrintFilamentSourceMeasurement;
+  estimatedAmountG: number | null;
+  estimatedLengthInM: number | null;
+  estimatedVolumeMl: number | null;
+  estimatedSource: PrintFilamentSourceMeasurement;
+  filament: FilamentSummary | null;
+  notes: string | null;
+}
+
+export type FilamentUsageFormGroup = FormGroup<{
+  id: FormControl<string>;
+  amountG: FormControl<number | null>;
+  lengthInM: FormControl<number | null>;
+  volumeMl: FormControl<number | null>;
+  source: FormControl<PrintFilamentSourceMeasurement>;
+  estimatedAmountG: FormControl<number | null>;
+  estimatedLengthInM: FormControl<number | null>;
+  estimatedVolumeMl: FormControl<number | null>;
+  estimatedSource: FormControl<PrintFilamentSourceMeasurement>;
+  filament: FormControl<FilamentSummary | null>;
+  notes: FormControl<string | null>;
+}>;
+
+export interface PrintFormValue {
+  id: number | null;
+  title: string;
+  printerId: number | null;
+  startDate: Date;
+  startTime: string;
+  estimatedPrintTimeInSeconds: string | null;
+  estimatedFilamentUsageG: number | null;
+  printTimeInSeconds: string | null;
+  filamentUsageG: number | null;
+  filamentType: string;
+  filamentUsage: PrintFilamentUsageFormValue[];
+  notes: string;
+  url: string;
+  fileName: string;
+  status: PrintStatus;
+  viewStatus: PrintViewStatus;
+  images: PrintImageValue[];
+  allowComments: boolean;
+}
+
 @Component({
   selector: 'app-print-detail',
   templateUrl: './edit-print-detail.component.html',
   styleUrls: ['./edit-print-detail.component.scss'],
   standalone: false,
+  host: {
+    '(window:beforeunload)': 'canDeactivate()',
+  },
 })
 export class EditPrintDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy
@@ -81,17 +134,36 @@ export class EditPrintDetailComponent
 
   public printers: PrinterSummary[] = [];
 
-  public printForm: UntypedFormGroup;
+  public printForm!: FormGroup<{
+    id: FormControl<number | null>;
+    title: FormControl<string>;
+    printerId: FormControl<number | null>;
+    startDate: FormControl<Date>;
+    startTime: FormControl<string>;
+    estimatedPrintTimeInSeconds: FormControl<string | null>;
+    estimatedFilamentUsageG: FormControl<number | null>;
+    printTimeInSeconds: FormControl<string | null>;
+    filamentUsageG: FormControl<number | null>;
+    filamentType: FormControl<string>;
+    filamentUsage: FormArray<FormGroup>;
+    notes: FormControl<string>;
+    url: FormControl<string>;
+    fileName: FormControl<string>;
+    status: FormControl<PrintStatus>;
+    viewStatus: FormControl<PrintViewStatus>;
+    images: FormArray<FormControl<PrintImageValue>>;
+    allowComments: FormControl<boolean>;
+  }>;
 
   public printStatusTypes = PrintStatus;
   public printViewStatusTypes = PrintViewStatus;
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
-  public selectedImage: UntypedFormControl;
+  public selectedImage: FormControl<PrintImageValue> | null = null;
 
   public defaultImageIdOnLoad: number | null = null;
 
-  private imageIdsToDelete = [];
+  private imageIdsToDelete: number[] = [];
 
   /**
    * If the form is currently saving.
@@ -99,29 +171,25 @@ export class EditPrintDetailComponent
   public saving = false;
 
   public lastSelectedPrinterSetting: UserSetting | null = null;
-  printerIdValueChangesSub: Subscription;
 
   public defaultPrintViewStatusSetting: UserSetting | null = null;
-  viewStatusValueChangesSub: Subscription;
 
   public lastAllowCommentsSetting: UserSetting | null = null;
-  lastAllowCommentsChangesSub: Subscription;
 
   public lastMaterialMeasureSettings: {
     [materialCategoryNickname: string]: UserSetting | null;
   } = {};
 
-  printerRedirectPromptSubscription: Subscription;
-  printerRedirectToast: ActiveToast<any>;
-  printerRedirectSubscription: Subscription;
-  loadFilamentOnPrinterChangeSub: Subscription;
+  printerRedirectPromptSubscription: Subscription | undefined;
+  printerRedirectToast: ActiveToast<any> | undefined;
+  printerRedirectSubscription: Subscription | undefined;
 
   /** The estimated datetime of completion. Used just as display, based on the startDate and EstimatedPrintTimeInSeconds controls. */
-  public estimatedCompletedDate: Date = null;
-  estimatedCompletedDateSubscription: Subscription;
+  public estimatedCompletedDate: Date | null = null;
+  estimatedCompletedDateSubscription: Subscription | undefined;
   /** The actual datetime of completion. Used as a display and input, but any changes will drive the PrintTimeInSeconds control. */
-  public actualCompletedDate: Date = null;
-  actualCompletedDateSubscription: Subscription;
+  public actualCompletedDate: Date | null = null;
+  actualCompletedDateSubscription: Subscription | undefined;
 
   public currencies: Currencies;
 
@@ -136,52 +204,49 @@ export class EditPrintDetailComponent
    */
   public materialCategoryNameForSelectedPrinter: string = 'material';
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private router: Router,
-    private formBuilder: UntypedFormBuilder,
-    private readonly printService: PrintService,
-    private readonly printerService: PrinterService,
-    private readonly toastr: ToastrService,
-    private cd: ChangeDetectorRef,
-    private titleService: Title,
-    private readonly userSettingService: UserSettingService,
-    private readonly printerRedirectPromptService: PrinterRedirectPromptService,
-    private readonly loggingService: LoggingService,
-    private el: ElementRef,
-    public dialog: MatDialog,
-    private analyticsService: GoogleAnalyticsService
-  ) {}
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly printService = inject(PrintService);
+  private readonly printerService = inject(PrinterService);
+  private readonly toastr = inject(ToastrService);
+  private readonly titleService = inject(Title);
+  private readonly userSettingService = inject(UserSettingService);
+  private readonly printerRedirectPromptService = inject(
+    PrinterRedirectPromptService
+  );
+  private readonly loggingService = inject(LoggingService);
+  private readonly el = inject(ElementRef);
+  public readonly dialog = inject(MatDialog);
+  private readonly analyticsService = inject(GoogleAnalyticsService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private readonly cd = inject(ChangeDetectorRef);
 
   // Help to get all photos controls as form array.
-  get images(): UntypedFormArray {
-    return this.printForm.get('images') as UntypedFormArray;
+  get images(): FormArray<FormControl<PrintImageValue>> {
+    return this.printForm.get('images') as FormArray<
+      FormControl<PrintImageValue>
+    >;
   }
 
   // Help to get all print filament usage controls as form array.
-  get filamentUsage(): UntypedFormArray {
-    return this.printForm.get('filamentUsage') as UntypedFormArray;
+  get filamentUsage(): FormArray<FilamentUsageFormGroup> {
+    return this.printForm.get(
+      'filamentUsage'
+    ) as FormArray<FilamentUsageFormGroup>;
   }
 
   ngOnDestroy(): void {
-    this.printerIdValueChangesSub?.unsubscribe?.();
-
-    this.viewStatusValueChangesSub?.unsubscribe?.();
-
-    this.lastAllowCommentsChangesSub?.unsubscribe?.();
-
     this.printerRedirectPromptSubscription?.unsubscribe?.();
 
     this.printerRedirectSubscription?.unsubscribe?.();
-
-    this.loadFilamentOnPrinterChangeSub?.unsubscribe?.();
 
     this.estimatedCompletedDateSubscription?.unsubscribe?.();
 
     this.actualCompletedDateSubscription?.unsubscribe?.();
   }
 
-  @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
     return !this.printForm.dirty;
   }
@@ -305,7 +370,7 @@ export class EditPrintDetailComponent
       });
   }
 
-  getDefaultMeasureTypeForSelectedPrinter(printerId: any) {
+  getDefaultMeasureTypeForSelectedPrinter(printerId: number | null) {
     // Get the printer by Id
     const { userSetting: lastMeasureSetting } =
       this.getMeasureUserSettingForPrinterMaterial(printerId);
@@ -324,7 +389,7 @@ export class EditPrintDetailComponent
     return defaultMeasureType;
   }
 
-  private getMeasureUserSettingForPrinterMaterial(printerId: any) {
+  private getMeasureUserSettingForPrinterMaterial(printerId: number | null) {
     const printer = this.printers.find((p) => p.id === printerId);
 
     // Get the material category name for that printer
@@ -393,12 +458,10 @@ export class EditPrintDetailComponent
   }
 
   loadLoadedFilamentOnPrinterChange() {
-    if (this.loadFilamentOnPrinterChangeSub) {
-      this.loadFilamentOnPrinterChangeSub.unsubscribe();
-    }
-    this.loadFilamentOnPrinterChangeSub = this.printForm
+    this.printForm
       .get('printerId')
-      .valueChanges.subscribe((newPrinterId) => {
+      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((newPrinterId: number | null) => {
         const isFilamentPristine = this.filamentUsage.pristine;
         const isPrintNew = this.printForm.get('id')?.value === null;
 
@@ -494,12 +557,10 @@ export class EditPrintDetailComponent
   }
 
   private SaveSettingWhenSelectedPrinterIdChanges() {
-    if (this.printerIdValueChangesSub) {
-      this.printerIdValueChangesSub.unsubscribe();
-    }
-    this.printerIdValueChangesSub = this.printForm
+    this.printForm
       .get('printerId')
-      .valueChanges.subscribe((newPrinterId) => {
+      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((newPrinterId: number | null) => {
         // Save the name of the selected printer's material category. Defaults to 'material' is none is selected
         this.setMaterialCategoryNameForPrinterId(newPrinterId);
 
@@ -526,19 +587,17 @@ export class EditPrintDetailComponent
       });
   }
 
-  private setMaterialCategoryNameForPrinterId(newPrinterId: any) {
+  private setMaterialCategoryNameForPrinterId(newPrinterId: number | null) {
     const printer = this.printers.find((p) => p.id === newPrinterId);
     this.materialCategoryNameForSelectedPrinter =
       printer?.category?.materialCategory.name ?? 'material';
   }
 
   private SaveSettingWhenAllowCommentsChanges() {
-    if (this.lastAllowCommentsChangesSub) {
-      this.lastAllowCommentsChangesSub.unsubscribe();
-    }
-    this.lastAllowCommentsChangesSub = this.printForm
+    this.printForm
       .get('allowComments')
-      .valueChanges.subscribe((allowComments) => {
+      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((allowComments: boolean) => {
         if (this.lastAllowCommentsSetting) {
           this.userSettingService
             .updateUserSetting(
@@ -586,25 +645,43 @@ export class EditPrintDetailComponent
     }
   }
 
-  onFileChange(event) {
+  onFileChange(event: Event) {
+    // Note: This method appears to be unused/dead code
+    // Images are handled through detectFiles() instead
     const reader = new FileReader();
 
-    if (event.target.files && event.target.files.length) {
-      const [file] = event.target.files;
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length) {
+      const file = target.files[0];
       reader.readAsDataURL(file);
 
       reader.onload = () => {
-        this.printForm.patchValue({
-          file: reader.result,
-        });
-
-        // need to run CD since file load runs outside of zone
-        this.cd.markForCheck();
+        // This would need a 'file' field in the form to work
+        // Currently the form doesn't have this field
       };
     }
   }
-  buildFormFromPrintDetail(print: PrintDetail): UntypedFormGroup {
-    const imageArray = this.formBuilder.array([]);
+  buildFormFromPrintDetail(print: PrintDetail): FormGroup<{
+    id: FormControl<number | null>;
+    title: FormControl<string>;
+    printerId: FormControl<number | null>;
+    startDate: FormControl<Date>;
+    startTime: FormControl<string>;
+    estimatedPrintTimeInSeconds: FormControl<string | null>;
+    estimatedFilamentUsageG: FormControl<number | null>;
+    printTimeInSeconds: FormControl<string | null>;
+    filamentUsageG: FormControl<number | null>;
+    filamentType: FormControl<string>;
+    filamentUsage: FormArray<FormGroup>;
+    notes: FormControl<string>;
+    url: FormControl<string>;
+    fileName: FormControl<string>;
+    status: FormControl<PrintStatus>;
+    viewStatus: FormControl<PrintViewStatus>;
+    images: FormArray<FormControl<PrintImageValue>>;
+    allowComments: FormControl<boolean>;
+  }> {
+    const imageArray = this.formBuilder.array<FormControl<PrintImageValue>>([]);
 
     if (print && print.images) {
       print.images.forEach((image) => {
@@ -626,7 +703,7 @@ export class EditPrintDetailComponent
     }
 
     // Handle PrintFilament Usage
-    const printFilamentUsageArray = this.formBuilder.array([]);
+    const printFilamentUsageArray = this.formBuilder.array<FormGroup>([]);
 
     if (print && print.filamentUsage && print.filamentUsage.length >= 0) {
       print.filamentUsage.forEach((pf) => {
@@ -739,34 +816,42 @@ export class EditPrintDetailComponent
 
   private GetNewFilamentUsageForm(
     id: string,
-    amountG: number,
-    lengthInM: number,
-    volumeMl: number,
+    amountG: number | null,
+    lengthInM: number | null,
+    volumeMl: number | null,
     source: PrintFilamentSourceMeasurement,
-    estimatedAmountG: number,
-    estimatedLengthInM: number,
-    estimatedVolumeMl: number,
+    estimatedAmountG: number | null,
+    estimatedLengthInM: number | null,
+    estimatedVolumeMl: number | null,
     estimatedSource: PrintFilamentSourceMeasurement,
     filament: FilamentSummary | null,
     notes: string | null
-  ) {
+  ): FilamentUsageFormGroup {
     return this.formBuilder.group({
-      id,
-      amountG,
-      lengthInM,
-      volumeMl,
-      source,
-      estimatedAmountG,
-      estimatedLengthInM,
-      estimatedVolumeMl,
-      estimatedSource,
-      filament,
-      notes,
+      id: this.formBuilder.control(id, { nonNullable: true }),
+      amountG: this.formBuilder.control<number | null>(amountG),
+      lengthInM: this.formBuilder.control<number | null>(lengthInM),
+      volumeMl: this.formBuilder.control<number | null>(volumeMl),
+      source: this.formBuilder.control(source, { nonNullable: true }),
+      estimatedAmountG: this.formBuilder.control<number | null>(
+        estimatedAmountG
+      ),
+      estimatedLengthInM: this.formBuilder.control<number | null>(
+        estimatedLengthInM
+      ),
+      estimatedVolumeMl: this.formBuilder.control<number | null>(
+        estimatedVolumeMl
+      ),
+      estimatedSource: this.formBuilder.control(estimatedSource, {
+        nonNullable: true,
+      }),
+      filament: this.formBuilder.control<FilamentSummary | null>(filament),
+      notes: this.formBuilder.control<string | null>(notes),
     });
   }
 
-  public getEstimatedPrice(printFilamentGroup: UntypedFormGroup) {
-    const filament = printFilamentGroup.get('filament')
+  public getEstimatedPrice(printFilamentGroup: FilamentUsageFormGroup) {
+    const filament = printFilamentGroup.get('filament')!
       .value as FilamentSummary;
 
     const source = printFilamentGroup.get('estimatedSource').value;
@@ -794,8 +879,8 @@ export class EditPrintDetailComponent
     );
   }
 
-  public getActualPrice(printFilamentGroup: UntypedFormGroup) {
-    const filament = printFilamentGroup.get('filament')
+  public getActualPrice(printFilamentGroup: FilamentUsageFormGroup) {
+    const filament = printFilamentGroup.get('filament')!
       .value as FilamentSummary;
 
     const source = printFilamentGroup.get('source').value;
@@ -836,16 +921,18 @@ export class EditPrintDetailComponent
   }
 
   // We will create multiple form controls inside defined form controls photos.
-  createItem(data: PrintImageValue): UntypedFormControl {
+  createItem(data: PrintImageValue): FormControl<PrintImageValue> {
     const newItem = this.formBuilder.control(data);
 
     return newItem;
   }
 
-  detectFiles(event) {
-    const files = event.target.files;
+  detectFiles(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const files = target.files;
     if (files) {
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         if (!file.type.match(/image.*/)) {
           this.toastr.error(
             'Please select an image.',
@@ -867,18 +954,21 @@ export class EditPrintDetailComponent
           newItem.markAsDirty();
           this.images.push(newItem);
           this.selectImage(newItem);
+
+          // need to run CD since file load runs outside of zone
+          this.cd.markForCheck();
         };
         reader.readAsDataURL(file);
       }
     }
   }
 
-  selectImage(image: any) {
+  selectImage(image: FormControl<PrintImageValue>) {
     this.selectedImage = image;
     this.setAsDefault(image); // TODO: Get right-click menu to make default
   }
 
-  removeImage(image: UntypedFormControl) {
+  removeImage(image: FormControl<PrintImageValue>) {
     const imageId = image.value.id;
     if (imageId) {
       this.imageIdsToDelete.push(imageId);
@@ -897,7 +987,7 @@ export class EditPrintDetailComponent
     }
   }
 
-  setAsDefault(image: UntypedFormControl) {
+  setAsDefault(image: FormControl<PrintImageValue>) {
     this.images.controls.forEach((control) => {
       control.value.isDefault = false;
     });
@@ -1287,7 +1377,9 @@ export class EditPrintDetailComponent
   }
 
   public removeFilament(index: number) {
-    const filamentFormGroup = this.filamentUsage.at(index) as UntypedFormGroup;
+    const filamentFormGroup = this.filamentUsage.at(
+      index
+    ) as FilamentUsageFormGroup;
 
     // Check if the filament has any non-zero data
     const hasNonZeroData =
@@ -1330,20 +1422,24 @@ export class EditPrintDetailComponent
   public dropFilament(event: CdkDragDrop<any[]>) {
     const filamentArray = this.filamentUsage.controls;
     moveItemInArray(filamentArray, event.previousIndex, event.currentIndex);
-    this.filamentUsage.setValue(filamentArray.map((control) => control.value));
+    this.filamentUsage.setValue(
+      filamentArray.map((control) => control.getRawValue())
+    );
   }
 
   public swapFilamentData(fromIndex: number, toIndex: number) {
-    const fromGroup = this.filamentUsage.at(fromIndex) as UntypedFormGroup;
-    const toGroup = this.filamentUsage.at(toIndex) as UntypedFormGroup;
+    const fromGroup = this.filamentUsage.at(
+      fromIndex
+    ) as FilamentUsageFormGroup;
+    const toGroup = this.filamentUsage.at(toIndex) as FilamentUsageFormGroup;
 
-    // Get the current values
-    const fromValue = fromGroup.value;
-    const toValue = toGroup.value;
+    // Get the current values using getRawValue to get all fields
+    const fromValue = fromGroup.getRawValue();
+    const toValue = toGroup.getRawValue();
 
     // Keep the original ids and filament selections
-    const fromId = fromValue.id;
-    const toId = toValue.id;
+    const fromId = fromValue.id!;
+    const toId = toValue.id!;
     const fromFilament = fromValue.filament;
     const toFilament = toValue.filament;
 

@@ -1110,19 +1110,38 @@ export class EditPrintDetailComponent
         };
       });
 
+    // Helper function to convert empty strings to null for numeric fields
+    const parseNumericValue = (value: any): number | null => {
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+      const parsed = +value;
+      return isNaN(parsed) ? null : parsed;
+    };
+
     const filamentUsage = this.filamentUsage.controls.map((printFilament) => {
+      const estimatedAmountG = parseNumericValue(
+        printFilament.get('estimatedAmountG').value
+      );
+      const amountG = parseNumericValue(printFilament.get('amountG').value);
+
       const newPf: PrintFilamentSummaryDto = {
         id: printFilament.get('id').value ?? EMPTY_GUID,
-        estimatedAmountMg: Math.round(
-          +printFilament.get('estimatedAmountG').value * 1000
+        estimatedAmountMg:
+          estimatedAmountG !== null
+            ? Math.round(estimatedAmountG * 1000)
+            : null,
+        estimatedLengthInM: parseNumericValue(
+          printFilament.get('estimatedLengthInM').value
         ),
-        estimatedLengthInM: printFilament.get('estimatedLengthInM').value,
-        estimatedVolumeMl: printFilament.get('estimatedVolumeMl').value,
+        estimatedVolumeMl: parseNumericValue(
+          printFilament.get('estimatedVolumeMl').value
+        ),
         estimatedSource: printFilament.get('estimatedSource').value,
         filament: printFilament.get('filament')?.value,
-        amountMg: Math.round(+printFilament.get('amountG').value * 1000),
-        lengthInM: printFilament.get('lengthInM').value,
-        volumeMl: printFilament.get('volumeMl').value,
+        amountMg: amountG !== null ? Math.round(amountG * 1000) : null,
+        lengthInM: parseNumericValue(printFilament.get('lengthInM').value),
+        volumeMl: parseNumericValue(printFilament.get('volumeMl').value),
         source: printFilament.get('source').value,
         notes: printFilament.get('notes').value,
       };

@@ -330,16 +330,23 @@
             {{ materialCategoryNameForSelectedPrinter | titlecase }} Record
           </button>
         </div>
-        <div formArrayName="filamentUsage">
+        <div
+          formArrayName="filamentUsage"
+          cdkDropList
+          (cdkDropListDropped)="dropFilament($event)"
+        >
           @for (
             printFilament of filamentUsage.controls;
             track printFilament;
             let printFilamentIndex = $index
           ) {
-            <div style="margin-bottom: 10px">
+            <div style="margin-bottom: 10px" cdkDrag>
               <div [formGroupName]="printFilamentIndex">
                 <mat-card class="mat-elevation-z4 filament-entry-card">
                   <mat-card-content>
+                    <div class="filament-drag-handle" cdkDragHandle>
+                      <mat-icon>drag_indicator</mat-icon>
+                    </div>
                     <div class="filament-info-column">
                       <div fxFlex>
                         <div
@@ -462,6 +469,58 @@
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
                         </button>
+                        @if (filamentUsage.length > 1) {
+                          <button
+                            type="button"
+                            mat-stroked-button
+                            [matMenuTriggerFor]="swapMenu"
+                            aria-label="Swap Data with Another Filament"
+                          >
+                            <mat-icon>swap_vert</mat-icon>Swap Data
+                          </button>
+                          <mat-menu #swapMenu="matMenu">
+                            @for (
+                              otherFilament of filamentUsage.controls;
+                              track otherFilament;
+                              let otherIndex = $index
+                            ) {
+                              @if (otherIndex !== printFilamentIndex) {
+                                <button
+                                  mat-menu-item
+                                  (click)="
+                                    swapFilamentData(
+                                      printFilamentIndex,
+                                      otherIndex
+                                    )
+                                  "
+                                >
+                                  <span class="swap-menu-item">
+                                    <mat-icon>swap_vert</mat-icon>
+                                    <div
+                                      class="swap-color-indicator"
+                                      [ngStyle]="{
+                                        'background-color': otherFilament.get(
+                                          'filament'
+                                        ).value?.colorHex
+                                          ? '#' +
+                                            otherFilament.get('filament').value
+                                              ?.colorHex
+                                          : '#ccc',
+                                      }"
+                                    ></div>
+                                    <span>
+                                      Swap with #{{ otherIndex + 1 }}:
+                                      {{
+                                        otherFilament.get('filament')?.value
+                                          ?.displayName || 'Other'
+                                      }}
+                                    </span>
+                                  </span>
+                                </button>
+                              }
+                            }
+                          </mat-menu>
+                        }
                         <button
                           type="button"
                           mat-stroked-button

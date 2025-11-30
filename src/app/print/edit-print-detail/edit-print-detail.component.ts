@@ -22,6 +22,7 @@ import { environment } from 'src/environments/environment';
 
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
@@ -1271,7 +1272,6 @@ export class EditPrintDetailComponent
 
     // Check if the filament has any non-zero data
     const hasNonZeroData =
-      filamentFormGroup.get('filament')?.value !== null ||
       (filamentFormGroup.get('amountG')?.value &&
         filamentFormGroup.get('amountG')?.value > 0) ||
       (filamentFormGroup.get('lengthInM')?.value &&
@@ -1306,6 +1306,44 @@ export class EditPrintDetailComponent
     } else {
       this.filamentUsage.removeAt(index);
     }
+  }
+
+  public dropFilament(event: CdkDragDrop<any[]>) {
+    const filamentArray = this.filamentUsage.controls;
+    moveItemInArray(filamentArray, event.previousIndex, event.currentIndex);
+    this.filamentUsage.setValue(filamentArray.map((control) => control.value));
+  }
+
+  public swapFilamentData(fromIndex: number, toIndex: number) {
+    const fromGroup = this.filamentUsage.at(fromIndex) as UntypedFormGroup;
+    const toGroup = this.filamentUsage.at(toIndex) as UntypedFormGroup;
+
+    // Get the current values
+    const fromValue = fromGroup.value;
+    const toValue = toGroup.value;
+
+    // Keep the original ids and filament selections
+    const fromId = fromValue.id;
+    const toId = toValue.id;
+    const fromFilament = fromValue.filament;
+    const toFilament = toValue.filament;
+
+    // Set the swapped values (swap usage data but keep filament selections)
+    fromGroup.setValue({
+      ...toValue,
+      id: fromId, // Keep original id
+      filament: fromFilament, // Keep original filament
+    });
+
+    toGroup.setValue({
+      ...fromValue,
+      id: toId, // Keep original id
+      filament: toFilament, // Keep original filament
+    });
+
+    // Mark both as dirty since data changed
+    fromGroup.markAsDirty();
+    toGroup.markAsDirty();
   }
 
   public compareByFilamentId(

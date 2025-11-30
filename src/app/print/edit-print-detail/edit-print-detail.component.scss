@@ -91,6 +91,20 @@ mat-card-title {
   }
 }
 
+.swap-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .swap-color-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+  }
+}
+
 .filament-entry-card {
   margin-bottom: $filament-entry-gap;
 
@@ -102,6 +116,27 @@ mat-card-title {
 
     @media (max-width: 599px) {
       flex-direction: column;
+    }
+  }
+
+  // Drag handle for reordering filament cards
+  .filament-drag-handle {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    cursor: grab;
+    color: rgba(0, 0, 0, 0.54);
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    mat-icon {
+      user-select: none;
+    }
+
+    @media (max-width: 599px) {
+      align-self: flex-start;
     }
   }
 
@@ -202,6 +237,26 @@ mat-card-title {
   align-items: center;
   gap: 4px;
   font-size: 13px;
+}
+
+// Drag and drop styles for filament cards
+.cdk-drag-preview {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  opacity: 0.8;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.4;
+  background: #f0f0f0;
+  border: 2px dashed #ccc;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drop-list-dragging .filament-entry-card:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 // Sticky action buttons

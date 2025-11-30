@@ -5,7 +5,6 @@ import {
   OnInit,
   inject,
   DestroyRef,
-  ChangeDetectorRef,
 } from '@angular/core';
 import {
   AbstractControl,
@@ -132,7 +131,29 @@ export class EditPrintDetailComponent
     displayName: 'Other',
   } as const;
 
+  private static readonly MEASURE_TYPE_MAP: Record<
+    string,
+    PrintFilamentSourceMeasurement
+  > = {
+    Weight: PrintFilamentSourceMeasurement.Weight,
+    Length: PrintFilamentSourceMeasurement.Length,
+    Volume: PrintFilamentSourceMeasurement.Volume,
+  };
+
+  private static readonly MATERIAL_CATEGORY_TO_USER_SETTING: Record<
+    string,
+    UserSettingType
+  > = {
+    filament: UserSettingType.Prints_LastSelectedFilamentMeasureType,
+    resin: UserSettingType.Prints_LastSelectedResinMeasureType,
+    powder: UserSettingType.Prints_LastSelectedPowderMeasureType,
+    wire: UserSettingType.Prints_LastSelectedWireMeasureType,
+  };
+
   public printers: PrinterSummary[] = [];
+
+  private printerLabelCache = new Map<number, string>();
+  private priceCache = new Map<string, string>();
 
   public printForm!: FormGroup<{
     id: FormControl<number | null>;
@@ -221,8 +242,6 @@ export class EditPrintDetailComponent
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly cd = inject(ChangeDetectorRef);
-
   // Help to get all photos controls as form array.
   get images(): FormArray<FormControl<PrintImageValue>> {
     return this.printForm.get('images') as FormArray<
@@ -263,6 +282,9 @@ export class EditPrintDetailComponent
       this.preferredCurrency = this.currencies[preferredCurrencyName];
 
       this.printers = data.printers;
+
+      // Build printer label cache for performance
+      this.buildPrinterLabelCache();
 
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
       this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
@@ -375,16 +397,10 @@ export class EditPrintDetailComponent
     const { userSetting: lastMeasureSetting } =
       this.getMeasureUserSettingForPrinterMaterial(printerId);
 
-    // Get the default measure type for that material category
-
+    // Get the default measure type for that material category using lookup map
     const defaultMeasureType =
-      lastMeasureSetting?.value === 'Weight'
-        ? PrintFilamentSourceMeasurement.Weight
-        : lastMeasureSetting?.value === 'Length'
-          ? PrintFilamentSourceMeasurement.Length
-          : lastMeasureSetting?.value === 'Volume'
-            ? PrintFilamentSourceMeasurement.Volume
-            : PrintFilamentSourceMeasurement.Weight;
+      EditPrintDetailComponent.MEASURE_TYPE_MAP[lastMeasureSetting?.value] ??
+      PrintFilamentSourceMeasurement.Weight;
 
     return defaultMeasureType;
   }
@@ -403,12 +419,59 @@ export class EditPrintDetailComponent
     return { materialCategoryName, userSetting: lastMeasureSetting };
   }
 
+  /**
+   * Build cache of printer labels for performance optimization in templates
+   */
+  private buildPrinterLabelCache(): void {
+    this.printerLabelCache.clear();
+    this.printers.forEach((printer) => {
+      const label =
+        printer.name && printer.name !== ''
+          ? `${printer.name} - (${(printer.make + ' ' + printer.model).trim()})`
+          : `${(printer.make + ' ' + printer.model).trim()}`;
+      this.printerLabelCache.set(printer.id, label);
+    });
+  }
+
+  /**
+   * Generate cache key for price calculations
+   */
+  private getPriceCacheKey(
+    filamentId: string | undefined,
+    source: PrintFilamentSourceMeasurement,
+    weightG: number | null,
+    lengthM: number | null,
+    volumeMl: number | null,
+    type: 'estimated' | 'actual'
+  ): string {
+    return `${type}_${filamentId}_${source}_${weightG}_${lengthM}_${volumeMl}`;
+  }
+
+  /**
+   * Clear price cache when form values change
+   */
+  private clearPriceCache(): void {
+    this.priceCache.clear();
+  }
+
   private onChanges() {
     this.SaveSettingWhenSelectedPrinterIdChanges();
     this.SaveSettingWhenAllowCommentsChanges();
     this.loadLoadedFilamentOnPrinterChange();
     this.getEstimatedCompletedDateChanges();
     this.getActualCompletedDateChanges();
+    this.clearPriceCacheOnFilamentChanges();
+  }
+
+  /**
+   * Clear price cache when filament usage form values change
+   */
+  private clearPriceCacheOnFilamentChanges(): void {
+    this.filamentUsage.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.clearPriceCache();
+      });
   }
 
   private getEstimatedCompletedDateChanges() {
@@ -531,17 +594,11 @@ export class EditPrintDetailComponent
         });
     } else {
       const materialUserSettingType =
-        materialCategoryName === 'filament'
-          ? UserSettingType.Prints_LastSelectedFilamentMeasureType
-          : materialCategoryName === 'resin'
-            ? UserSettingType.Prints_LastSelectedResinMeasureType
-            : materialCategoryName === 'powder'
-              ? UserSettingType.Prints_LastSelectedPowderMeasureType
-              : materialCategoryName === 'wire'
-                ? UserSettingType.Prints_LastSelectedWireMeasureType
-                : 'none';
+        EditPrintDetailComponent.MATERIAL_CATEGORY_TO_USER_SETTING[
+          materialCategoryName
+        ];
 
-      if (materialUserSettingType === 'none') {
+      if (!materialUserSettingType) {
         console.warn(
           `Unknown material type ${materialCategoryName}, unable to save user setting.`
         );
@@ -645,22 +702,6 @@ export class EditPrintDetailComponent
     }
   }
 
-  onFileChange(event: Event) {
-    // Note: This method appears to be unused/dead code
-    // Images are handled through detectFiles() instead
-    const reader = new FileReader();
-
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files.length) {
-      const file = target.files[0];
-      reader.readAsDataURL(file);
-
-      reader.onload = () => {
-        // This would need a 'file' field in the form to work
-        // Currently the form doesn't have this field
-      };
-    }
-  }
   buildFormFromPrintDetail(print: PrintDetail): FormGroup<{
     id: FormControl<number | null>;
     title: FormControl<string>;
@@ -850,23 +891,34 @@ export class EditPrintDetailComponent
     });
   }
 
-  public getEstimatedPrice(printFilamentGroup: FilamentUsageFormGroup) {
+  public getEstimatedPrice(printFilamentGroup: FilamentUsageFormGroup): string {
     const filament = printFilamentGroup.get('filament')!
       .value as FilamentSummary;
-
     const source = printFilamentGroup.get('estimatedSource').value;
-
     const weightG = printFilamentGroup.get('estimatedAmountG').value;
-
     const lengthM = printFilamentGroup.get('estimatedLengthInM').value;
-
     const volumeMl = printFilamentGroup.get('estimatedVolumeMl').value;
 
-    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+    // Generate cache key
+    const cacheKey = this.getPriceCacheKey(
+      filament?.id,
+      source,
+      weightG,
+      lengthM,
+      volumeMl,
+      'estimated'
+    );
 
+    // Check cache first
+    if (this.priceCache.has(cacheKey)) {
+      return this.priceCache.get(cacheKey)!;
+    }
+
+    // Calculate and cache
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
     const symbol = this.preferredCurrency.symbol;
 
-    return this.formatFilamentPrice(
+    const result = this.formatFilamentPrice(
       this.printService.calculatePrintCost({
         filament,
         source,
@@ -877,25 +929,39 @@ export class EditPrintDetailComponent
         defaultFilamentPrice: defaultPrice,
       })
     );
+
+    this.priceCache.set(cacheKey, result);
+    return result;
   }
 
-  public getActualPrice(printFilamentGroup: FilamentUsageFormGroup) {
+  public getActualPrice(printFilamentGroup: FilamentUsageFormGroup): string {
     const filament = printFilamentGroup.get('filament')!
       .value as FilamentSummary;
-
     const source = printFilamentGroup.get('source').value;
-
     const weightG = printFilamentGroup.get('amountG').value;
-
     const lengthM = printFilamentGroup.get('lengthInM').value;
-
     const volumeMl = printFilamentGroup.get('volumeMl').value;
 
-    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+    // Generate cache key
+    const cacheKey = this.getPriceCacheKey(
+      filament?.id,
+      source,
+      weightG,
+      lengthM,
+      volumeMl,
+      'actual'
+    );
 
+    // Check cache first
+    if (this.priceCache.has(cacheKey)) {
+      return this.priceCache.get(cacheKey)!;
+    }
+
+    // Calculate and cache
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
     const symbol = this.preferredCurrency.symbol;
 
-    return this.formatFilamentPrice(
+    const result = this.formatFilamentPrice(
       this.printService.calculatePrintCost({
         filament,
         source,
@@ -906,6 +972,9 @@ export class EditPrintDetailComponent
         defaultFilamentPrice: defaultPrice,
       })
     );
+
+    this.priceCache.set(cacheKey, result);
+    return result;
   }
 
   public formatFilamentPrice(price: FilamentPrice) {
@@ -954,9 +1023,6 @@ export class EditPrintDetailComponent
           newItem.markAsDirty();
           this.images.push(newItem);
           this.selectImage(newItem);
-
-          // need to run CD since file load runs outside of zone
-          this.cd.markForCheck();
         };
         reader.readAsDataURL(file);
       }
@@ -1190,6 +1256,17 @@ export class EditPrintDetailComponent
     this.router.navigate(['/prints']);
   }
 
+  /**
+   * Helper function to convert empty strings to null for numeric fields
+   */
+  private parseNumericValue(value: any): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    const parsed = +value;
+    return isNaN(parsed) ? null : parsed;
+  }
+
   getPrintFromForm(): Omit<PrintDetail, 'comments'> {
     const existingPrintImages = this.images.controls
       .filter((control) => control.value.id !== undefined)
@@ -1200,20 +1277,13 @@ export class EditPrintDetailComponent
         };
       });
 
-    // Helper function to convert empty strings to null for numeric fields
-    const parseNumericValue = (value: any): number | null => {
-      if (value === null || value === undefined || value === '') {
-        return null;
-      }
-      const parsed = +value;
-      return isNaN(parsed) ? null : parsed;
-    };
-
     const filamentUsage = this.filamentUsage.controls.map((printFilament) => {
-      const estimatedAmountG = parseNumericValue(
+      const estimatedAmountG = this.parseNumericValue(
         printFilament.get('estimatedAmountG').value
       );
-      const amountG = parseNumericValue(printFilament.get('amountG').value);
+      const amountG = this.parseNumericValue(
+        printFilament.get('amountG').value
+      );
 
       const newPf: PrintFilamentSummaryDto = {
         id: printFilament.get('id').value ?? EMPTY_GUID,
@@ -1221,17 +1291,17 @@ export class EditPrintDetailComponent
           estimatedAmountG !== null
             ? Math.round(estimatedAmountG * 1000)
             : null,
-        estimatedLengthInM: parseNumericValue(
+        estimatedLengthInM: this.parseNumericValue(
           printFilament.get('estimatedLengthInM').value
         ),
-        estimatedVolumeMl: parseNumericValue(
+        estimatedVolumeMl: this.parseNumericValue(
           printFilament.get('estimatedVolumeMl').value
         ),
         estimatedSource: printFilament.get('estimatedSource').value,
         filament: printFilament.get('filament')?.value,
         amountMg: amountG !== null ? Math.round(amountG * 1000) : null,
-        lengthInM: parseNumericValue(printFilament.get('lengthInM').value),
-        volumeMl: parseNumericValue(printFilament.get('volumeMl').value),
+        lengthInM: this.parseNumericValue(printFilament.get('lengthInM').value),
+        volumeMl: this.parseNumericValue(printFilament.get('volumeMl').value),
         source: printFilament.get('source').value,
         notes: printFilament.get('notes').value,
       };
@@ -1270,10 +1340,6 @@ export class EditPrintDetailComponent
     };
 
     return print;
-  }
-
-  setDateToNoon(control: AbstractControl) {
-    const date = control.value;
   }
 
   parseAsSeconds(input: string): number | null {
@@ -1315,16 +1381,12 @@ export class EditPrintDetailComponent
     return result;
   }
 
-  getPrinterLabel(printer: PrinterSummary) {
-    if (printer.name && printer.name !== '') {
-      return `${printer.name} - (${(
-        printer.make +
-        ' ' +
-        printer.model
-      ).trim()})`;
-    } else {
-      return `${(printer.make + ' ' + printer.model).trim()}`;
-    }
+  /**
+   * Get printer label from cache for performance.
+   * Called in template loops, so caching prevents recalculation on every change detection.
+   */
+  getPrinterLabel(printer: PrinterSummary): string {
+    return this.printerLabelCache.get(printer.id) ?? '';
   }
 
   public addNewFilamentUsage() {

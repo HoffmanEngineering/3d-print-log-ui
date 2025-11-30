@@ -1,5 +1,5 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="800px" fxFlex.xs="100%">
+  <mat-card appearance="outlined" fxFlex="800px" fxFlex.lt-md="100%">
     <form
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"
@@ -25,9 +25,8 @@
         @if (images.length < 1) {
           <button
             type="button"
-            mat-raised-button
+            mat-stroked-button
             (click)="imgFileInput.click()"
-            color="accent"
           >
             Upload Picture
           </button>
@@ -129,7 +128,7 @@
         </mat-form-field>
         <div fxFlex="grow" fxFlexFill>
           <div
-            style="margin-left: -10px"
+            class="input-row desktop-margin-offset"
             fxLayout="row"
             fxLayoutGap="10px"
             fxLayout.lt-md="column"
@@ -169,11 +168,9 @@
           <button
             fxFlex
             style="margin-top: 0px; height: 56px"
-            mat-raised-button
+            mat-stroked-button
             type="button"
-            color="basic"
             (click)="setStartDateToNow()"
-            type="button"
             aria-label="Set the start date and time to now."
           >
             Now
@@ -307,11 +304,9 @@
                 fxFlex="20"
                 fxFlex.lt-md="100"
                 style="margin-top: 10px; height: 56px"
-                mat-raised-button
+                mat-stroked-button
                 type="button"
-                color="basic"
                 (click)="setActualCompletedDateToNow()"
-                type="button"
                 aria-label="Set the Completed Date to now."
               >
                 Now
@@ -328,7 +323,7 @@
             type="button"
             mat-raised-button
             (click)="addNewFilamentUsage()"
-            color="accent"
+            color="primary"
             style="margin-bottom: 5px"
           >
             Add New
@@ -343,14 +338,9 @@
           ) {
             <div style="margin-bottom: 10px">
               <div [formGroupName]="printFilamentIndex">
-                <mat-card
-                  class="mat-elevation-z4"
-                  fxFlex="grow"
-                  fxFlexFill
-                  fxLayout="row"
-                >
+                <mat-card class="mat-elevation-z4 filament-entry-card">
                   <mat-card-content>
-                    <div fxFlex="grow" fxLayout="column">
+                    <div class="filament-info-column">
                       <div fxFlex>
                         <div
                           class="filament-color-cell"
@@ -363,7 +353,7 @@
                           }"
                         ></div>
                       </div>
-                      <div fxFlex class="filament-section">
+                      <div fxFlex class="filament-section filament-name">
                         {{
                           printFilament.get('filament').value?.displayName ||
                             'Other'
@@ -449,12 +439,10 @@
                         </button>
                       </div>
                     </div>
-                    <div fxFlex="grow" fxLayout="column">
-                      <div fxFlex="grow" fxFlexFill>
+                    <div class="filament-actions-column">
+                      <div>
                         <button
-                          fxFlex="grow"
-                          mat-raised-button
-                          color="accent"
+                          mat-stroked-button
                           (click)="
                             searchFilament(printFilament.get('filament'))
                           "
@@ -471,12 +459,12 @@
                           }}
                         </button>
                       </div>
-                      <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                      <div class="input-row">
                         @if (
                           printFilament.get('estimatedSource').value ===
                           printFilamentSourceMeasurementTypes.Weight
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field>
                             <mat-label>
                               Estimated
                               {{
@@ -560,7 +548,7 @@
                           printFilament.get('estimatedSource').value ===
                           printFilamentSourceMeasurementTypes.Volume
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field>
                             <mat-label>
                               Estimated
                               {{
@@ -593,7 +581,7 @@
                             }
                           </mat-form-field>
                         }
-                        <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                        <mat-form-field style="flex: 0 0 120px">
                           <mat-label>Measure</mat-label>
                           <mat-select
                             formControlName="estimatedSource"
@@ -625,12 +613,12 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
-                      <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                      <div class="input-row">
                         @if (
                           printFilament.get('source').value ===
                           printFilamentSourceMeasurementTypes.Weight
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field>
                             <mat-label>
                               Actual
                               {{
@@ -705,7 +693,7 @@
                           printFilament.get('source').value ===
                           printFilamentSourceMeasurementTypes.Volume
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field>
                             <mat-label>
                               Actual
                               {{
@@ -736,7 +724,7 @@
                             }
                           </mat-form-field>
                         }
-                        <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                        <mat-form-field style="flex: 0 0 120px">
                           <mat-label>Measure</mat-label>
                           <mat-select formControlName="source">
                             <mat-option
@@ -763,7 +751,7 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
-                      <mat-form-field fxFlex="grow" fxFlexFill>
+                      <mat-form-field>
                         <mat-label>
                           {{
                             printFilament.get('filament').value === null
@@ -799,7 +787,28 @@
                               printFilament.get('filament').value
                                 ?.purchasePriceValue !== null
                             "
+                            [ngClass]="{
+                              'price-error': getEstimatedPrice(
+                                $any(printFilament)
+                              ).includes('('),
+                            }"
                           >
+                            @if (
+                              getEstimatedPrice($any(printFilament)).includes(
+                                '('
+                              )
+                            ) {
+                              <mat-icon
+                                inline
+                                style="
+                                  font-size: 16px;
+                                  width: 16px;
+                                  height: 16px;
+                                  vertical-align: text-bottom;
+                                "
+                                >warning</mat-icon
+                              >
+                            }
                             {{ getEstimatedPrice($any(printFilament)) }}
                           </div>
                           @if (
@@ -822,7 +831,28 @@
                                 printFilament.get('filament').value
                                   ?.purchasePriceValue !== null
                               "
+                              [ngClass]="{
+                                'price-error': getActualPrice(
+                                  $any(printFilament)
+                                ).includes('('),
+                              }"
                             >
+                              @if (
+                                getActualPrice($any(printFilament)).includes(
+                                  '('
+                                )
+                              ) {
+                                <mat-icon
+                                  inline
+                                  style="
+                                    font-size: 16px;
+                                    width: 16px;
+                                    height: 16px;
+                                    vertical-align: text-bottom;
+                                  "
+                                  >warning</mat-icon
+                                >
+                              }
                               {{ getActualPrice($any(printFilament)) }}
                             </div>
                           }
@@ -909,9 +939,8 @@
             <button
               fxFlex
               style="margin-left: 10px; height: 72%"
-              mat-raised-button
+              mat-stroked-button
               type="button"
-              color="accent"
               (click)="
                 this.changeDefaultViewStatus(
                   this.printForm.get('viewStatus').value
@@ -931,6 +960,7 @@
         >
       </mat-card-content>
       <mat-card-actions
+        class="sticky-actions"
         fxLayout
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
@@ -939,10 +969,9 @@
           <div fxFlex="grow" fxFlexFill>
             <button
               id="edit-print-copy-btn"
-              mat-raised-button
+              mat-stroked-button
               [disabled]="printForm.dirty || saving"
               type="button"
-              color="accent"
               title="{{
                 printForm.dirty || saving
                   ? 'Save changes before copying'

@@ -37,6 +37,7 @@ import {
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
+import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   EMPTY_GUID,
   FilamentPrice,
@@ -1266,7 +1267,45 @@ export class EditPrintDetailComponent
   }
 
   public removeFilament(index: number) {
-    this.filamentUsage.removeAt(index);
+    const filamentFormGroup = this.filamentUsage.at(index) as UntypedFormGroup;
+
+    // Check if the filament has any non-zero data
+    const hasNonZeroData =
+      filamentFormGroup.get('filament')?.value !== null ||
+      (filamentFormGroup.get('amountG')?.value &&
+        filamentFormGroup.get('amountG')?.value > 0) ||
+      (filamentFormGroup.get('lengthInM')?.value &&
+        filamentFormGroup.get('lengthInM')?.value > 0) ||
+      (filamentFormGroup.get('volumeMl')?.value &&
+        filamentFormGroup.get('volumeMl')?.value > 0) ||
+      (filamentFormGroup.get('estimatedAmountG')?.value &&
+        filamentFormGroup.get('estimatedAmountG')?.value > 0) ||
+      (filamentFormGroup.get('estimatedLengthInM')?.value &&
+        filamentFormGroup.get('estimatedLengthInM')?.value > 0) ||
+      (filamentFormGroup.get('estimatedVolumeMl')?.value &&
+        filamentFormGroup.get('estimatedVolumeMl')?.value > 0) ||
+      (filamentFormGroup.get('notes')?.value &&
+        filamentFormGroup.get('notes')?.value.trim() !== '');
+
+    if (hasNonZeroData) {
+      const dialogRef = this.dialog.open(SimpleDialogComponent, {
+        maxWidth: '350px',
+      });
+      (dialogRef.componentInstance as any).title = 'Remove Filament Record?';
+      (dialogRef.componentInstance as any).body =
+        'Are you sure? This filament record has usage data that will be lost.';
+      (dialogRef.componentInstance as any).yesText = 'Delete';
+      (dialogRef.componentInstance as any).yesColor = 'warn';
+      (dialogRef.componentInstance as any).noText = 'Cancel';
+
+      dialogRef.afterClosed().subscribe((shouldDelete) => {
+        if (shouldDelete) {
+          this.filamentUsage.removeAt(index);
+        }
+      });
+    } else {
+      this.filamentUsage.removeAt(index);
+    }
   }
 
   public compareByFilamentId(

@@ -195,7 +195,7 @@
         >
           <mat-form-field
             style="margin: 0px 5px 0px 0px"
-            fxFlex="40%"
+            fxFlex="30%"
             fxFlex.lt-md="100%"
           >
             <mat-label> Estimated Print Time</mat-label>
@@ -208,7 +208,7 @@
               (change)="getEstimatedCompletedDate()"
             />
           </mat-form-field>
-          <div style="margin: 0" fxFlex="60%" fxFlex.lt-md="100%">
+          <div style="margin: 0" fxFlex="70%" fxFlex.lt-md="100%">
             <div fxLayout="row" fxLayoutGap="5px" fxLayout.lt-md="column">
               <mat-form-field fxFlex="40" fxFlex.lt-md="100">
                 <mat-label>Est. Completion Date</mat-label>
@@ -255,7 +255,7 @@
         >
           <mat-form-field
             style="margin: 0px 5px 0px 0px"
-            fxFlex="40%"
+            fxFlex="30%"
             fxFlex.lt-md="100%"
           >
             <mat-label> Actual Print Time</mat-label>
@@ -268,7 +268,7 @@
               (change)="getActualCompletedDate()"
             />
           </mat-form-field>
-          <div fxFlex="60%" fxFlex.lt-md="100%">
+          <div fxFlex="70%" fxFlex.lt-md="100%">
             <div fxLayout="row" fxLayoutGap="5px" fxLayout.lt-md="column">
               <mat-form-field fxFlex="40" fxFlex.lt-md="100">
                 <mat-label>Completion Date</mat-label>
@@ -354,10 +354,24 @@
                         ></div>
                       </div>
                       <div fxFlex class="filament-section filament-name">
-                        {{
-                          printFilament.get('filament').value?.displayName ||
-                            'Other'
-                        }}
+                        @if (printFilament.get('filament').value !== null) {
+                          <a
+                            [href]="
+                              '/materials/' +
+                              printFilament.get('filament').value?.id
+                            "
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="filament-link"
+                          >
+                            {{
+                              printFilament.get('filament').value?.displayName
+                            }}
+                          </a>
+                        }
+                        @if (printFilament.get('filament').value === null) {
+                          <span>Other</span>
+                        }
                       </div>
                       @if (
                         printFilament.get('filament').value?.colorName !== ''

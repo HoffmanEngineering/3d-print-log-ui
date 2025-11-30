@@ -81,6 +81,16 @@ mat-card-title {
   }
 }
 
+.filament-link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    color: #1976d2; // Material primary blue
+  }
+}
+
 .filament-entry-card {
   margin-bottom: $filament-entry-gap;
 

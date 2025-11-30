@@ -428,27 +428,17 @@
                           }}{{ defaultFilamentPriceSetting?.value }}*
                         </div>
                       }
-                      <div fxFlex>
-                        <button
-                          type="button"
-                          mat-raised-button
-                          (click)="removeFilament(printFilamentIndex)"
-                          aria-label="Delete Filament"
-                        >
-                          <mat-icon>delete</mat-icon>Delete
-                        </button>
-                      </div>
                     </div>
                     <div class="filament-actions-column">
-                      <div>
+                      <div class="button-row">
                         <button
                           mat-stroked-button
                           (click)="
                             searchFilament(printFilament.get('filament'))
                           "
                           type="button"
-                          style="margin-bottom: 5px"
                         >
+                          <mat-icon>swap_horiz</mat-icon>
                           {{
                             printFilament.get('filament')?.value !== null
                               ? 'Change'
@@ -457,6 +447,14 @@
                           {{
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
+                        </button>
+                        <button
+                          type="button"
+                          mat-stroked-button
+                          (click)="removeFilament(printFilamentIndex)"
+                          aria-label="Delete Filament"
+                        >
+                          <mat-icon>delete</mat-icon>Delete
                         </button>
                       </div>
                       <div class="input-row">

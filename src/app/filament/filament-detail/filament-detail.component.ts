@@ -41,6 +41,7 @@ const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
   selector: 'app-filament-detail',
   templateUrl: './filament-detail.component.html',
   styleUrls: ['./filament-detail.component.scss'],
+  standalone: false,
 })
 export class FilamentDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy

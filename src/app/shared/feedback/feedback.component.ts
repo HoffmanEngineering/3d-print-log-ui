@@ -20,6 +20,7 @@ import {
   selector: 'app-feedback',
   templateUrl: './feedback.component.html',
   styleUrls: ['./feedback.component.scss'],
+  standalone: false,
 })
 export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
   @ViewChild(FormGroupDirective, { static: true })

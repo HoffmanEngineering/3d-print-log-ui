@@ -1,5 +1,5 @@
-import { DOCUMENT, Location } from '@angular/common';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
+import { Component, Inject, OnDestroy, OnInit, DOCUMENT } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import moment from 'moment';
@@ -30,6 +30,7 @@ export interface PrintImageValue {
   selector: 'app-view-print-detail',
   templateUrl: './view-print-detail.component.html',
   styleUrls: ['./view-print-detail.component.scss'],
+  standalone: false,
 })
 export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   public printers: PrinterSummary[] = [];

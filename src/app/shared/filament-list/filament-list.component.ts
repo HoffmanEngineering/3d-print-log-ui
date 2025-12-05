@@ -19,6 +19,7 @@ import { SortDirection } from 'src/app/core/types/sort-request';
   selector: 'app-filament-list',
   templateUrl: './filament-list.component.html',
   styleUrls: ['./filament-list.component.scss'],
+  standalone: false,
 })
 export class FilamentListComponent implements OnInit {
   @Input()

@@ -23,6 +23,7 @@ import {
   selector: 'app-user-prints',
   templateUrl: './user-prints.component.html',
   styleUrls: ['./user-prints.component.scss'],
+  standalone: false,
 })
 export class UserPrintsComponent implements OnChanges, OnInit {
   @Input() userId: number;

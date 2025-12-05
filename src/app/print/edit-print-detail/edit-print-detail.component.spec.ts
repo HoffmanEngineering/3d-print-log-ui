@@ -20,11 +20,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterService } from 'src/app/core/services/printer.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
-import {
-  NgxMatDatetimePickerModule,
-  NgxMatTimepickerModule,
-} from '@angular-material-components/datetime-picker';
-import { NgxMatMomentModule } from '@angular-material-components/moment-adapter';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 
 describe('EditPrintDetailComponent', () => {
@@ -84,9 +79,6 @@ describe('EditPrintDetailComponent', () => {
         MatMomentDateModule,
         MatCheckboxModule,
         MatDialogModule,
-        NgxMatDatetimePickerModule,
-        NgxMatTimepickerModule,
-        NgxMatMomentModule,
       ],
       providers: [
         { provide: PrintService, useValue: mockPrintService },

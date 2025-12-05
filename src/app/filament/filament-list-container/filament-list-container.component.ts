@@ -22,6 +22,7 @@ import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialo
   selector: 'app-filament-list-container',
   templateUrl: './filament-list-container.component.html',
   styleUrls: ['./filament-list-container.component.scss'],
+  standalone: false,
 })
 export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public filaments: FilamentSummary[] = [];

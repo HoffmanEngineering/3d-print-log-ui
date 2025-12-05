@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-docs-terms',
   templateUrl: './docs-terms.component.html',
   styleUrls: ['./docs-terms.component.scss'],
+  standalone: false,
 })
 export class DocsTermsComponent {
   constructor() {}

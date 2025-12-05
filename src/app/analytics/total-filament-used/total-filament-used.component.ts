@@ -7,6 +7,7 @@ import { PrintStatistic } from '../services/print-statistics.service';
   templateUrl: './total-filament-used.component.html',
   styleUrls: ['./total-filament-used.component.scss'],
   providers: [DecimalPipe],
+  standalone: false,
 })
 export class TotalFilamentUsedComponent implements OnChanges {
   @Input() prints: PrintStatistic[] = [];

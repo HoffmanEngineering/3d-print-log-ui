@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-docs-analytics',
   templateUrl: './docs-analytics.component.html',
   styleUrls: ['./docs-analytics.component.scss'],
+  standalone: false,
 })
 export class DocsAnalyticsComponent {
   constructor() {}

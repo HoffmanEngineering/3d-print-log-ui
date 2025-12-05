@@ -1,44 +1,52 @@
 <main fxLayout="column wrap" fxLayoutAlign="center center">
-  <mat-toolbar fxFlex="grow" color="primary">
+  <!-- Hero Section -->
+  <mat-toolbar fxFlex="grow" color="primary" class="hero-section">
     <div fxFlex="grow" class="docs-header-headline">
       <img
         class="logo"
         src="/assets/3d-print-log-logo_8b178eb1339b.svg"
         alt="3D Print Log Logo"
       />
-      <h2 cy-subtitle>Log and analyze your 3D Prints</h2>
+      <h2 cy-subtitle class="hero-subtitle">Log and analyze your 3D Prints</h2>
       <a
         mat-raised-button
-        class="get-started"
+        color="accent"
+        class="get-started cta-button"
         routerLink="/docs/getting-started"
         >Get started</a
       >
     </div>
   </mat-toolbar>
 
-  <section fxFlex="grow">
-    <p>
-      3D Print Log is a simple tool for tracking 3D prints. Easily record
-      details of your 3D printers, filament usage, print status, print duration
-      and more.
-    </p>
-    <p>
-      <a [routerLink]="['/docs', 'getting-started']"
-        >View the quick start guide</a
-      >, or jump into it by
-      <a
-        href
-        (click)="auth.login('/prints')"
-        aria-label="Login or Create Free Account"
-        >creating a <strong>free</strong> account</a
-      >
-      today and start logging!
-    </p>
+  <!-- Introduction Section -->
+  <section fxFlex="grow" class="intro-section">
+    <div class="intro-content">
+      <p class="intro-text">
+        3D Print Log is a simple tool for tracking 3D prints. Easily record
+        details of your 3D printers, filament usage, print status, print
+        duration and more.
+      </p>
+      <p class="intro-cta">
+        <a [routerLink]="['/docs', 'getting-started']" class="quick-link"
+          >View the quick start guide</a
+        >, or jump into it by
+        <a
+          href
+          (click)="auth.login('/prints')"
+          aria-label="Login or Create Free Account"
+          class="quick-link"
+          >creating a <strong>free</strong> account</a
+        >
+        today and start logging!
+      </p>
+    </div>
   </section>
 
-  <section fxFlex="grow" class="example-grid">
-    <div gdColumns="1fr 1fr" gdGap="16px" gdRows="auto">
-      <div class="section image">
+  <!-- Features Grid Section -->
+  <section fxFlex="grow" class="example-grid features-section">
+    <div gdColumns="1fr 1fr" gdGap="48px" gdRows="auto" class="features-grid">
+      <!-- Feature 1: Track Prints -->
+      <div class="section image feature-image feature-1-image">
         <img
           class="fade-in"
           src="/assets/Homepage_PrinterList_fd6e7f73bf3f.png"
@@ -48,7 +56,7 @@
           loading="lazy"
         />
       </div>
-      <div class="section homepage-desc">
+      <div class="section homepage-desc feature-content feature-1-content">
         <h2>Track Every 3D Print</h2>
         <p>
           Log details for every print. Upload pictures, track print times and
@@ -57,7 +65,8 @@
         </p>
       </div>
 
-      <div class="section homepage-desc">
+      <!-- Feature 2: Material Library -->
+      <div class="section homepage-desc feature-content feature-2-content">
         <h2>Create Your Material Library</h2>
         <p>
           Keep track of every roll of filament and bottle of resin. See what
@@ -66,7 +75,7 @@
           start a print again wondering if there is enough material to finish.
         </p>
       </div>
-      <div class="section image">
+      <div class="section image feature-image feature-2-image">
         <img
           class="fade-in"
           src="/assets/Homepage_Filament_34b0aa09478611.png"
@@ -77,7 +86,8 @@
         />
       </div>
 
-      <div class="section image">
+      <!-- Feature 3: Analytics -->
+      <div class="section image feature-image feature-3-image">
         <img
           src="/assets/Homepage_Analytics_56744e5428bda.png"
           class="fade-in"
@@ -85,7 +95,7 @@
           loading="lazy"
         />
       </div>
-      <div class="section homepage-desc">
+      <div class="section homepage-desc feature-content feature-3-content">
         <h2>View Print Analytics</h2>
         <p>
           See statistics about your prints. Metrics like total print times,
@@ -94,27 +104,37 @@
         </p>
       </div>
 
-      <div class="section homepage-desc">
+      <!-- Feature 4: Integrations -->
+      <div class="section homepage-desc feature-content feature-4-content">
         <h2>Automatically Upload with Slicer Integrations</h2>
         <p>
           The
-          <a routerLink="/docs/cura-plugin">3D Print Log plugin</a>
+          <a routerLink="/docs/cura-plugin" class="feature-link"
+            >3D Print Log plugin</a
+          >
           for Ultimaker Cura makes it easy to send print information and
           settings directly from your slicer.
         </p>
         <p>
           We also have integrations for Slic3r-based slicers like OrcaSlicer,
           PrusaSlicer, Super Slicer and Bambu Studio by using our
-          <a routerLink="/docs/slic3r-uploader">Slic3r Uploader</a>
+          <a routerLink="/docs/slic3r-uploader" class="feature-link"
+            >Slic3r Uploader</a
+          >
         </p>
         <p>
           And you can setup
-          <a routerLink="/docs/octoprint-webhook">Octoprint</a> or
-          <a routerLink="/docs/klipper">Klipper/Moonraker</a> to automatically
-          send print status updates to 3D Print Log.
+          <a routerLink="/docs/octoprint-webhook" class="feature-link"
+            >Octoprint</a
+          >
+          or
+          <a routerLink="/docs/klipper" class="feature-link"
+            >Klipper/Moonraker</a
+          >
+          to automatically send print status updates to 3D Print Log.
         </p>
       </div>
-      <div class="section image">
+      <div class="section image feature-image feature-4-image">
         <img
           class="fade-in"
           src="/assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
@@ -127,27 +147,29 @@
     </div>
   </section>
 
-  <div fxFlex="150px">
+  <!-- Bottom CTA Section -->
+  <div fxFlex="150px" class="bottom-cta-section">
     <a
       color="accent"
       mat-raised-button
-      class="get-started"
+      class="get-started cta-button-large"
       routerLink="/docs/getting-started"
       >Get started</a
     >
   </div>
 
-  <footer fxFlex="grow" fxFlexFill>
-    <mat-toolbar fxFlex color="primary">
+  <!-- Footer -->
+  <footer fxFlex="grow" fxFlexFill class="footer-section">
+    <mat-toolbar fxFlex color="primary" class="footer-toolbar">
       <div
-        class="docs-header-headline"
+        class="docs-header-headline footer-content"
         fxFlex
         fxFlexFill
         fxLayout="column"
         fxLayoutAlign="start center"
       >
-        <h1 fxFlex class="mat-h1">3D Print Log</h1>
-        <h2 fxFlex>Log and analyze your 3D Prints</h2>
+        <h1 fxFlex class="mat-h1 footer-title">3D Print Log</h1>
+        <h2 fxFlex class="footer-subtitle">Log and analyze your 3D Prints</h2>
         <a
           mat-raised-button
           class="get-started"

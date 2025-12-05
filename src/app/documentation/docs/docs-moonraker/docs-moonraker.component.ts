@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-docs-moonraker',
   templateUrl: './docs-moonraker.component.html',
   styleUrls: ['./docs-moonraker.component.scss'],
-  // interpolation: [`{{{{`, `}}}}`],
+  standalone: false,
 })
 export class DocsMoonrakerComponent {
   constructor() {}

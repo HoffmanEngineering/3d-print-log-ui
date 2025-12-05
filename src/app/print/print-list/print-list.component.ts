@@ -43,6 +43,7 @@ export interface ColumnDefinition {
   selector: 'app-print-list',
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
+  standalone: false,
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
@@ -539,6 +540,28 @@ export class PrintListComponent implements OnInit, OnDestroy {
     } else {
       return 'Unknown';
     }
+  }
+
+  public getStatusIcon(print: PrintSummary): string {
+    if (print.status === PrintStatus.Cancelled) {
+      return 'remove_circle_outline';
+    } else if (print.status === PrintStatus.Failed) {
+      return 'error_outline';
+    } else if (print.status === PrintStatus.Pending) {
+      return 'pending_actions';
+    } else if (print.status === PrintStatus.Printing) {
+      return 'play_circle_outline';
+    } else if (print.status === PrintStatus.Success) {
+      return 'check_circle_outline';
+    } else if (print.status === PrintStatus.PartialSuccess) {
+      return 'rule';
+    } else {
+      return 'help_outline';
+    }
+  }
+
+  public navigateToPrint(printId: number): void {
+    this.router.navigate([printId], { relativeTo: this.activatedRoute });
   }
 
   public getPrintEndDate(print: PrintSummary) {

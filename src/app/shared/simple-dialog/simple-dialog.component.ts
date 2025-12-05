@@ -6,6 +6,7 @@ import { DialogData } from 'src/app/print/print-share-dialog/print-share-dialog.
   selector: 'app-simple-dialog',
   templateUrl: './simple-dialog.component.html',
   styleUrls: ['./simple-dialog.component.scss'],
+  standalone: false,
 })
 export class SimpleDialogComponent {
   @Input() public title: string;

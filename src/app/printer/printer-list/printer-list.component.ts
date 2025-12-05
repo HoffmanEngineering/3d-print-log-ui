@@ -19,6 +19,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   selector: 'app-printer-list',
   templateUrl: './printer-list.component.html',
   styleUrls: ['./printer-list.component.scss'],
+  standalone: false,
 })
 export class PrinterListComponent implements OnInit {
   public printers: PrinterSummaryWithFilament[] = [];

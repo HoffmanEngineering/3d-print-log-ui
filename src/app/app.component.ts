@@ -8,6 +8,7 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  standalone: false,
 })
 export class AppComponent implements OnInit {
   title = 'print-log-ui';

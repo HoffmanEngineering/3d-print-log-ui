@@ -1,5 +1,5 @@
 <div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="800px" fxFlex.xs="100%">
+  <mat-card appearance="outlined" fxFlex="800px" fxFlex.lt-md="100%">
     <form
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"
@@ -25,9 +25,8 @@
         @if (images.length < 1) {
           <button
             type="button"
-            mat-raised-button
+            mat-stroked-button
             (click)="imgFileInput.click()"
-            color="accent"
           >
             Upload Picture
           </button>
@@ -127,41 +126,51 @@
             <mat-error> A Printer is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-          <mat-form-field style="margin: 0" fxFlex="grow">
-            <mat-label>Start Date and Time</mat-label>
-            <input
-              matInput
-              [ngxMatDatetimePicker]="picker"
-              placeholder="Start Date and Time"
-              formControlName="startDate"
-              aria-label="The date and time that the print was started."
-            />
-            @if (printForm.controls['startDate'].hasError('required')) {
-              <mat-error> A Start Date is <strong>required</strong> </mat-error>
-            }
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="picker"
-            ></mat-datepicker-toggle>
-            <ngx-mat-datetime-picker
-              #picker
-              [showSpinners]="true"
-              [showSeconds]="true"
-              [touchUi]="true"
-              color="primary"
-              [enableMeridian]="true"
-            >
-            </ngx-mat-datetime-picker>
-          </mat-form-field>
+        <div fxFlex="grow" fxFlexFill>
+          <div
+            class="input-row desktop-margin-offset"
+            fxLayout="row"
+            fxLayoutGap="10px"
+            fxLayout.lt-md="column"
+          >
+            <mat-form-field fxFlex="60" fxFlex.lt-md="100">
+              <mat-label>Start Date</mat-label>
+              <input
+                matInput
+                [matDatepicker]="startDatePicker"
+                placeholder="Start Date"
+                formControlName="startDate"
+                aria-label="The date that the print was started."
+              />
+              @if (printForm.controls['startDate'].hasError('required')) {
+                <mat-error>
+                  A Start Date is <strong>required</strong>
+                </mat-error>
+              }
+              <mat-datepicker-toggle
+                matSuffix
+                [for]="startDatePicker"
+              ></mat-datepicker-toggle>
+              <mat-datepicker #startDatePicker></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+              <mat-label>Start Time</mat-label>
+              <input
+                matInput
+                type="time"
+                step="1"
+                placeholder="Start Time"
+                formControlName="startTime"
+                aria-label="The time that the print was started."
+              />
+            </mat-form-field>
+          </div>
           <button
             fxFlex
-            style="margin-left: 10px; height: 72%"
-            mat-raised-button
+            style="margin-top: 0px; height: 56px"
+            mat-stroked-button
             type="button"
-            color="basic"
             (click)="setStartDateToNow()"
-            type="button"
             aria-label="Set the start date and time to now."
           >
             Now
@@ -186,7 +195,7 @@
         >
           <mat-form-field
             style="margin: 0px 5px 0px 0px"
-            fxFlex="50%"
+            fxFlex="30%"
             fxFlex.lt-md="100%"
           >
             <mat-label> Estimated Print Time</mat-label>
@@ -194,35 +203,47 @@
               id="edit-print-estimated-print-time"
               matInput
               type="text"
-              placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
+              placeholder="Ex: 6h 31m 15s  or  2 hours 10 min"
               formControlName="estimatedPrintTimeInSeconds"
               (change)="getEstimatedCompletedDate()"
             />
           </mat-form-field>
-          <mat-form-field style="margin: 0" fxFlex="50%" fxFlex.lt-md="100%">
-            <input
-              matInput
-              [ngxMatDatetimePicker]="estimatedPicker"
-              placeholder="Estimated Completed Date and Time"
-              [ngModel]="estimatedCompletedDate"
-              [ngModelOptions]="{ standalone: true }"
-              [disabled]="true"
-              aria-label="The estimated date and time of completion."
-            />
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="estimatedPicker"
-            ></mat-datepicker-toggle>
-            <ngx-mat-datetime-picker
-              #estimatedPicker
-              [showSpinners]="true"
-              [showSeconds]="true"
-              [touchUi]="true"
-              color="primary"
-              [enableMeridian]="true"
-            >
-            </ngx-mat-datetime-picker>
-          </mat-form-field>
+          <div style="margin: 0" fxFlex="70%" fxFlex.lt-md="100%">
+            <div fxLayout="row" fxLayoutGap="5px" fxLayout.lt-md="column">
+              <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+                <mat-label>Est. Completion Date</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="estimatedDatePicker"
+                  placeholder="Estimated Completion Date"
+                  [ngModel]="getEstimatedCompletedDateOnly()"
+                  [ngModelOptions]="{ standalone: true }"
+                  [disabled]="true"
+                  aria-label="The estimated date of completion."
+                />
+                <mat-datepicker-toggle
+                  matSuffix
+                  [for]="estimatedDatePicker"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #estimatedDatePicker></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+                <mat-label>Est. Completion Time</mat-label>
+                <input
+                  matInput
+                  type="time"
+                  step="1"
+                  placeholder="Estimated Completion Time"
+                  [ngModel]="getEstimatedCompletedTimeOnly()"
+                  [ngModelOptions]="{ standalone: true }"
+                  [disabled]="true"
+                  aria-label="The estimated time of completion."
+                />
+              </mat-form-field>
+              <!-- Empty space to align with the "Now" button in the actual completion section -->
+              <div fxFlex="20" fxFlex.lt-md="100"></div>
+            </div>
+          </div>
         </div>
         <!-- Actual -->
         <div
@@ -234,7 +255,7 @@
         >
           <mat-form-field
             style="margin: 0px 5px 0px 0px"
-            fxFlex="50%"
+            fxFlex="30%"
             fxFlex.lt-md="100%"
           >
             <mat-label> Actual Print Time</mat-label>
@@ -243,47 +264,54 @@
               matInput
               type="text"
               formControlName="printTimeInSeconds"
-              placeholder="Ex: 6h 31m 15s  or  2 hours 10 min 20 sec"
+              placeholder="Ex: 6h 31m 15s  or  2 hours 10 min"
               (change)="getActualCompletedDate()"
             />
           </mat-form-field>
-          <div fxFlex="50%" fxFlex.lt-md="100%">
-            <mat-form-field style="margin: 0" fxFlex="grow">
-              <input
-                matInput
-                [ngxMatDatetimePicker]="actualPicker"
-                placeholder="Completed Date and Time"
-                [ngModel]="actualCompletedDate"
-                (ngModelChange)="updateActualCompletedDate($event)"
-                [ngModelOptions]="{ standalone: true }"
-                aria-label="The date and time of completion."
-              />
-              <mat-datepicker-toggle
-                matSuffix
-                [for]="actualPicker"
-              ></mat-datepicker-toggle>
-              <ngx-mat-datetime-picker
-                #actualPicker
-                [showSpinners]="true"
-                [showSeconds]="true"
-                [touchUi]="true"
-                color="primary"
-                [enableMeridian]="true"
+          <div fxFlex="70%" fxFlex.lt-md="100%">
+            <div fxLayout="row" fxLayoutGap="5px" fxLayout.lt-md="column">
+              <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+                <mat-label>Completion Date</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="actualDatePicker"
+                  placeholder="Completion Date"
+                  [ngModel]="getActualCompletedDateOnly()"
+                  (ngModelChange)="updateActualCompletedDateOnly($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  aria-label="The date of completion."
+                />
+                <mat-datepicker-toggle
+                  matSuffix
+                  [for]="actualDatePicker"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #actualDatePicker></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+                <mat-label>Completion Time</mat-label>
+                <input
+                  matInput
+                  type="time"
+                  step="1"
+                  placeholder="Completion Time"
+                  [ngModel]="getActualCompletedTimeOnly()"
+                  (ngModelChange)="updateActualCompletedTimeOnly($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  aria-label="The time of completion."
+                />
+              </mat-form-field>
+              <button
+                fxFlex="20"
+                fxFlex.lt-md="100"
+                style="margin-top: 10px; height: 56px"
+                mat-stroked-button
+                type="button"
+                (click)="setActualCompletedDateToNow()"
+                aria-label="Set the Completed Date to now."
               >
-              </ngx-mat-datetime-picker>
-            </mat-form-field>
-            <button
-              fxFlex
-              style="margin-left: 10px; height: 72%"
-              mat-raised-button
-              type="button"
-              color="basic"
-              (click)="setActualCompletedDateToNow()"
-              type="button"
-              aria-label="Set the Completed Date to now."
-            >
-              Now
-            </button>
+                Now
+              </button>
+            </div>
           </div>
         </div>
         <!-- Material Usage -->
@@ -295,29 +323,31 @@
             type="button"
             mat-raised-button
             (click)="addNewFilamentUsage()"
-            color="accent"
+            color="primary"
             style="margin-bottom: 5px"
           >
             Add New
             {{ materialCategoryNameForSelectedPrinter | titlecase }} Record
           </button>
         </div>
-        <div formArrayName="filamentUsage">
+        <div
+          formArrayName="filamentUsage"
+          cdkDropList
+          (cdkDropListDropped)="dropFilament($event)"
+        >
           @for (
             printFilament of filamentUsage.controls;
             track printFilament;
             let printFilamentIndex = $index
           ) {
-            <div style="margin-bottom: 10px">
+            <div style="margin-bottom: 10px" cdkDrag>
               <div [formGroupName]="printFilamentIndex">
-                <mat-card
-                  class="mat-elevation-z4"
-                  fxFlex="grow"
-                  fxFlexFill
-                  fxLayout="row"
-                >
+                <mat-card class="mat-elevation-z4 filament-entry-card">
                   <mat-card-content>
-                    <div fxFlex="grow" fxLayout="column">
+                    <div class="filament-drag-handle" cdkDragHandle>
+                      <mat-icon>drag_indicator</mat-icon>
+                    </div>
+                    <div class="filament-info-column">
                       <div fxFlex>
                         <div
                           class="filament-color-cell"
@@ -330,11 +360,25 @@
                           }"
                         ></div>
                       </div>
-                      <div fxFlex class="filament-section">
-                        {{
-                          printFilament.get('filament').value?.displayName ||
-                            'Other'
-                        }}
+                      <div fxFlex class="filament-section filament-name">
+                        @if (printFilament.get('filament').value !== null) {
+                          <a
+                            [href]="
+                              '/materials/' +
+                              printFilament.get('filament').value?.id
+                            "
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="filament-link"
+                          >
+                            {{
+                              printFilament.get('filament').value?.displayName
+                            }}
+                          </a>
+                        }
+                        @if (printFilament.get('filament').value === null) {
+                          <span>Other</span>
+                        }
                       </div>
                       @if (
                         printFilament.get('filament').value?.colorName !== ''
@@ -405,29 +449,17 @@
                           }}{{ defaultFilamentPriceSetting?.value }}*
                         </div>
                       }
-                      <div fxFlex>
-                        <button
-                          type="button"
-                          mat-raised-button
-                          (click)="removeFilament(printFilamentIndex)"
-                          aria-label="Delete Filament"
-                        >
-                          <mat-icon>delete</mat-icon>Delete
-                        </button>
-                      </div>
                     </div>
-                    <div fxFlex="grow" fxLayout="column">
-                      <div fxFlex="grow" fxFlexFill>
+                    <div class="filament-actions-column">
+                      <div class="button-row">
                         <button
-                          fxFlex="grow"
-                          mat-raised-button
-                          color="accent"
+                          mat-stroked-button
                           (click)="
                             searchFilament(printFilament.get('filament'))
                           "
                           type="button"
-                          style="margin-bottom: 5px"
                         >
+                          <mat-icon>swap_horiz</mat-icon>
                           {{
                             printFilament.get('filament')?.value !== null
                               ? 'Change'
@@ -437,13 +469,73 @@
                             materialCategoryNameForSelectedPrinter | titlecase
                           }}
                         </button>
+                        @if (filamentUsage.length > 1) {
+                          <button
+                            type="button"
+                            mat-stroked-button
+                            [matMenuTriggerFor]="swapMenu"
+                            aria-label="Swap Data with Another Filament"
+                          >
+                            <mat-icon>swap_vert</mat-icon>Swap Data
+                          </button>
+                          <mat-menu #swapMenu="matMenu">
+                            @for (
+                              otherFilament of filamentUsage.controls;
+                              track otherFilament;
+                              let otherIndex = $index
+                            ) {
+                              @if (otherIndex !== printFilamentIndex) {
+                                <button
+                                  mat-menu-item
+                                  (click)="
+                                    swapFilamentData(
+                                      printFilamentIndex,
+                                      otherIndex
+                                    )
+                                  "
+                                >
+                                  <span class="swap-menu-item">
+                                    <mat-icon>swap_vert</mat-icon>
+                                    <div
+                                      class="swap-color-indicator"
+                                      [ngStyle]="{
+                                        'background-color': otherFilament.get(
+                                          'filament'
+                                        ).value?.colorHex
+                                          ? '#' +
+                                            otherFilament.get('filament').value
+                                              ?.colorHex
+                                          : '#ccc',
+                                      }"
+                                    ></div>
+                                    <span>
+                                      Swap with #{{ otherIndex + 1 }}:
+                                      {{
+                                        otherFilament.get('filament')?.value
+                                          ?.displayName || 'Other'
+                                      }}
+                                    </span>
+                                  </span>
+                                </button>
+                              }
+                            }
+                          </mat-menu>
+                        }
+                        <button
+                          type="button"
+                          mat-stroked-button
+                          (click)="removeFilament(printFilamentIndex)"
+                          aria-label="Delete Filament"
+                        >
+                          <mat-icon>delete</mat-icon>Delete
+                        </button>
                       </div>
-                      <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                      <div class="input-row">
                         @if (
                           printFilament.get('estimatedSource').value ===
                           printFilamentSourceMeasurementTypes.Weight
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field>
                             <mat-label>
                               Estimated
                               {{
@@ -527,7 +619,7 @@
                           printFilament.get('estimatedSource').value ===
                           printFilamentSourceMeasurementTypes.Volume
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field>
                             <mat-label>
                               Estimated
                               {{
@@ -560,7 +652,7 @@
                             }
                           </mat-form-field>
                         }
-                        <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                        <mat-form-field style="flex: 0 0 120px">
                           <mat-label>Measure</mat-label>
                           <mat-select
                             formControlName="estimatedSource"
@@ -592,12 +684,12 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
-                      <div fxFlex="grow" fxLayout="row" fxLayout.lt-md="column">
+                      <div class="input-row">
                         @if (
                           printFilament.get('source').value ===
                           printFilamentSourceMeasurementTypes.Weight
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field>
                             <mat-label>
                               Actual
                               {{
@@ -672,7 +764,7 @@
                           printFilament.get('source').value ===
                           printFilamentSourceMeasurementTypes.Volume
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field>
                             <mat-label>
                               Actual
                               {{
@@ -703,7 +795,7 @@
                             }
                           </mat-form-field>
                         }
-                        <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                        <mat-form-field style="flex: 0 0 120px">
                           <mat-label>Measure</mat-label>
                           <mat-select formControlName="source">
                             <mat-option
@@ -730,7 +822,7 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
-                      <mat-form-field fxFlex="grow" fxFlexFill>
+                      <mat-form-field>
                         <mat-label>
                           {{
                             printFilament.get('filament').value === null
@@ -766,7 +858,28 @@
                               printFilament.get('filament').value
                                 ?.purchasePriceValue !== null
                             "
+                            [ngClass]="{
+                              'price-error': getEstimatedPrice(
+                                $any(printFilament)
+                              ).includes('('),
+                            }"
                           >
+                            @if (
+                              getEstimatedPrice($any(printFilament)).includes(
+                                '('
+                              )
+                            ) {
+                              <mat-icon
+                                inline
+                                style="
+                                  font-size: 16px;
+                                  width: 16px;
+                                  height: 16px;
+                                  vertical-align: text-bottom;
+                                "
+                                >warning</mat-icon
+                              >
+                            }
                             {{ getEstimatedPrice($any(printFilament)) }}
                           </div>
                           @if (
@@ -789,7 +902,28 @@
                                 printFilament.get('filament').value
                                   ?.purchasePriceValue !== null
                               "
+                              [ngClass]="{
+                                'price-error': getActualPrice(
+                                  $any(printFilament)
+                                ).includes('('),
+                              }"
                             >
+                              @if (
+                                getActualPrice($any(printFilament)).includes(
+                                  '('
+                                )
+                              ) {
+                                <mat-icon
+                                  inline
+                                  style="
+                                    font-size: 16px;
+                                    width: 16px;
+                                    height: 16px;
+                                    vertical-align: text-bottom;
+                                  "
+                                  >warning</mat-icon
+                                >
+                              }
                               {{ getActualPrice($any(printFilament)) }}
                             </div>
                           }
@@ -876,9 +1010,8 @@
             <button
               fxFlex
               style="margin-left: 10px; height: 72%"
-              mat-raised-button
+              mat-stroked-button
               type="button"
-              color="accent"
               (click)="
                 this.changeDefaultViewStatus(
                   this.printForm.get('viewStatus').value
@@ -898,6 +1031,7 @@
         >
       </mat-card-content>
       <mat-card-actions
+        class="sticky-actions"
         fxLayout
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
@@ -906,10 +1040,9 @@
           <div fxFlex="grow" fxFlexFill>
             <button
               id="edit-print-copy-btn"
-              mat-raised-button
+              mat-stroked-button
               [disabled]="printForm.dirty || saving"
               type="button"
-              color="accent"
               title="{{
                 printForm.dirty || saving
                   ? 'Save changes before copying'

@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-users',
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss'],
+  standalone: false,
 })
 export class UsersComponent {
   constructor() {}

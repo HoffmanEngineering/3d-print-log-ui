@@ -50,11 +50,6 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-modal.component';
-import {
-  NgxMatDatetimePickerModule,
-  NgxMatTimepickerModule,
-} from '@angular-material-components/datetime-picker';
-import { NgxMatMomentModule } from '@angular-material-components/moment-adapter';
 import { AdComponent } from './ad/ad.component';
 import { AdsenseModule } from 'ng2-adsense';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -115,9 +110,6 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     ClipboardModule,
     MatProgressSpinnerModule,
     MatProgressBarModule,
-    NgxMatDatetimePickerModule,
-    NgxMatTimepickerModule,
-    NgxMatMomentModule,
     AdsenseModule,
     DragDropModule,
   ],
@@ -168,9 +160,6 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     AccountDeactivationBannerComponent,
     MatProgressSpinnerModule,
     MatProgressBarModule,
-    NgxMatDatetimePickerModule,
-    NgxMatTimepickerModule,
-    NgxMatMomentModule,
     AdsenseModule,
     AdComponent,
     DragDropModule,

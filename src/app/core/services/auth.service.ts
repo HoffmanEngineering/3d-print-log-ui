@@ -12,6 +12,7 @@ import {
 } from 'rxjs';
 import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { NotificationService } from './notification.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
 
 export interface UserProfileInfo {
@@ -80,7 +81,8 @@ export class AuthService {
 
   constructor(
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private notificationService: NotificationService
   ) {}
 
   // When calling, options can be passed if desired
@@ -217,6 +219,9 @@ export class AuthService {
   }
 
   logout() {
+    // Stop notification polling
+    this.notificationService.stopPolling();
+
     // Ensure Auth0 client instance exists
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log out

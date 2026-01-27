@@ -151,6 +151,11 @@
         }
       </div>
     </div>
+    @if (auth.loggedIn) {
+      <div fxFlex="50px" fxLayoutAlign="center center">
+        <app-notification-bell></app-notification-bell>
+      </div>
+    }
     <div [fxFlex]="auth.loggedIn ? '50px' : '200px'">
       @if (auth.loggedIn) {
         <button class="transparent" [matMenuTriggerFor]="profileMenu">

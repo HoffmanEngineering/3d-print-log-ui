@@ -85,6 +85,14 @@ const routes: Routes = [
       import('./apikeys/apikeys.module').then((m) => m.ApikeysModule),
   },
   {
+    path: 'notifications',
+    loadChildren: () =>
+      import('./notifications/notifications.module').then(
+        (m) => m.NotificationsModule
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'home-redirect',
     canActivate: [HomepageRedirectGuard],
     pathMatch: 'full',

@@ -27,6 +27,36 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.30.0': {
+      title: '1.30.0 - Notifications are Here!',
+      body: `<p>
+Stay informed with the new <strong>Notifications</strong> feature! 3D Print Log will now
+notify you about important events related to your prints and account.
+</p>
+<p>
+Click the bell icon in the navigation bar to view your notifications. You'll receive
+notifications for events like print status updates from your connected printers,
+comments on your prints, and system announcements.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.29.0': {
       title: '1.29.0- Slic3r Post-Processing Uploader v1.1.0 Released',
       body: `<p>

@@ -1,0 +1,116 @@
+<button
+  mat-icon-button
+  [matMenuTriggerFor]="notificationMenu"
+  (menuOpened)="onMenuOpened()"
+  aria-label="Notifications"
+  class="notification-bell-button"
+>
+  <mat-icon
+    [matBadge]="unreadCount()"
+    [matBadgeHidden]="!hasUnread()"
+    matBadgeColor="accent"
+    matBadgeSize="small"
+  >
+    notifications
+  </mat-icon>
+</button>
+
+<mat-menu #notificationMenu="matMenu" class="notification-menu" xPosition="before" panelClass="notification-menu-panel">
+  <div class="notification-header" (click)="$event.stopPropagation()">
+    <span class="notification-title">Notifications</span>
+    @if (hasUnread()) {
+      <button
+        mat-button
+        color="primary"
+        class="mark-all-read-btn"
+        (click)="markAllAsRead(); $event.stopPropagation()"
+      >
+        Mark all read
+      </button>
+    }
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="notification-list" (click)="$event.stopPropagation()">
+    @if (loading()) {
+      <div class="notification-loading">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    } @else if (notifications().length === 0) {
+      <div class="notification-empty">
+        <mat-icon>notifications_none</mat-icon>
+        <span>No notifications</span>
+      </div>
+    } @else {
+      @for (notification of notifications(); track notification.id) {
+        @if (notification.actionUrl) {
+          <a
+            mat-menu-item
+            [routerLink]="getUrlPath(notification.actionUrl)"
+            [fragment]="getUrlFragment(notification.actionUrl)"
+            class="notification-item"
+            [class.unread]="!notification.isRead"
+            (click)="onNotificationClick(notification)"
+          >
+            <div class="notification-item-content">
+              <mat-icon
+                class="notification-icon"
+                [class]="getNotificationIconClass(notification.type)"
+              >
+                {{ getNotificationIcon(notification.type) }}
+              </mat-icon>
+              <div class="notification-text">
+                <span class="notification-item-title">{{ notification.title }}</span>
+                @if (notification.message) {
+                  <span class="notification-message">{{ notification.message }}</span>
+                }
+                <span class="notification-time">{{ getTimeAgo(notification.createdDate) }}</span>
+              </div>
+              @if (!notification.isRead) {
+                <span class="unread-indicator"></span>
+              }
+            </div>
+          </a>
+        } @else {
+          <div
+            mat-menu-item
+            class="notification-item"
+            [class.unread]="!notification.isRead"
+            (click)="onNotificationClick(notification)"
+          >
+            <div class="notification-item-content">
+              <mat-icon
+                class="notification-icon"
+                [class]="getNotificationIconClass(notification.type)"
+              >
+                {{ getNotificationIcon(notification.type) }}
+              </mat-icon>
+              <div class="notification-text">
+                <span class="notification-item-title">{{ notification.title }}</span>
+                @if (notification.message) {
+                  <span class="notification-message">{{ notification.message }}</span>
+                }
+                <span class="notification-time">{{ getTimeAgo(notification.createdDate) }}</span>
+              </div>
+              @if (!notification.isRead) {
+                <span class="unread-indicator"></span>
+              }
+            </div>
+          </div>
+        }
+      }
+    }
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <a
+    mat-menu-item
+    routerLink="/notifications"
+    class="view-all-link"
+  >
+    <span>View all notifications</span>
+    <mat-icon>arrow_forward</mat-icon>
+  </a>
+</mat-menu>

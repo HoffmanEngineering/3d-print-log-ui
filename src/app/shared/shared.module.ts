@@ -5,6 +5,7 @@ import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -50,6 +51,7 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-modal.component';
+import { NotificationBellComponent } from './notification-bell/notification-bell.component';
 import { AdComponent } from './ad/ad.component';
 import { AdsenseModule } from 'ng2-adsense';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -105,6 +107,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     MatSliderModule,
     MatSlideToggleModule,
     MatAutocompleteModule,
+    MatBadgeModule,
     MatTooltipModule,
     MatDialogModule,
     ClipboardModule,
@@ -112,6 +115,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     MatProgressBarModule,
     AdsenseModule,
     DragDropModule,
+    NotificationBellComponent,
   ],
   exports: [
     CommonModule,
@@ -145,6 +149,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     MatSlideToggleModule,
     MatTooltipModule,
     MatAutocompleteModule,
+    MatBadgeModule,
     MatDialogModule,
     ClipboardModule,
     DurationPipe,
@@ -163,6 +168,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     AdsenseModule,
     AdComponent,
     DragDropModule,
+    NotificationBellComponent,
   ],
 })
 export class SharedModule {}

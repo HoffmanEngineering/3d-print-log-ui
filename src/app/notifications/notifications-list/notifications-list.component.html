@@ -1,0 +1,157 @@
+<div class="notifications-container">
+  <div class="notifications-header">
+    <h1>Notifications</h1>
+    <div class="header-actions">
+      <mat-slide-toggle
+        [checked]="unreadOnly()"
+        (change)="toggleUnreadOnly()"
+        color="primary"
+      >
+        Show unread only
+      </mat-slide-toggle>
+
+      @if (hasUnreadNotifications()) {
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="markAllAsRead()"
+        >
+          <mat-icon>done_all</mat-icon>
+          Mark all read
+        </button>
+      }
+
+      @if (notifications().length > 0) {
+        <button
+          mat-stroked-button
+          color="warn"
+          (click)="deleteAllNotifications()"
+        >
+          <mat-icon>delete_sweep</mat-icon>
+          Delete all
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+    </div>
+  } @else if (notifications().length === 0) {
+    <div class="empty-state">
+      <mat-icon>notifications_none</mat-icon>
+      <h2>No notifications</h2>
+      <p>
+        @if (unreadOnly()) {
+          You have no unread notifications.
+        } @else {
+          You don't have any notifications yet.
+        }
+      </p>
+    </div>
+  } @else {
+    <div class="notifications-list">
+      @for (notification of notifications(); track notification.id) {
+        <mat-card
+          class="notification-card"
+          [class.unread]="!notification.isRead"
+          [class.clickable]="notification.actionUrl"
+        >
+          @if (notification.actionUrl) {
+            <a
+              class="notification-link"
+              [routerLink]="getUrlPath(notification.actionUrl)"
+              [fragment]="getUrlFragment(notification.actionUrl)"
+              (click)="onNotificationClick(notification)"
+            >
+              <mat-card-content>
+                <div class="notification-content">
+                  <div class="notification-icon-wrapper">
+                    @if (notification.triggeredByUser?.profilePicture) {
+                      <img
+                        class="user-avatar"
+                        [src]="notification.triggeredByUser.profilePicture"
+                        [alt]="notification.triggeredByUser.displayName"
+                      />
+                    } @else {
+                      <mat-icon
+                        class="notification-icon"
+                        [class]="getNotificationIconClass(notification.type)"
+                      >
+                        {{ getNotificationIcon(notification.type) }}
+                      </mat-icon>
+                    }
+                  </div>
+
+                  <div class="notification-text">
+                    <span class="notification-title">{{ notification.title }}</span>
+                    @if (notification.message) {
+                      <span class="notification-message">{{ notification.message }}</span>
+                    }
+                    <span class="notification-time">{{ getTimeAgo(notification.createdDate) }}</span>
+                  </div>
+
+                  <div class="notification-actions">
+                    @if (!notification.isRead) {
+                      <span class="unread-indicator" matTooltip="Unread"></span>
+                    }
+                  </div>
+                </div>
+              </mat-card-content>
+            </a>
+          } @else {
+            <mat-card-content>
+              <div class="notification-content">
+                <div class="notification-icon-wrapper">
+                  @if (notification.triggeredByUser?.profilePicture) {
+                    <img
+                      class="user-avatar"
+                      [src]="notification.triggeredByUser.profilePicture"
+                      [alt]="notification.triggeredByUser.displayName"
+                    />
+                  } @else {
+                    <mat-icon
+                      class="notification-icon"
+                      [class]="getNotificationIconClass(notification.type)"
+                    >
+                      {{ getNotificationIcon(notification.type) }}
+                    </mat-icon>
+                  }
+                </div>
+
+                <div class="notification-text">
+                  <span class="notification-title">{{ notification.title }}</span>
+                  @if (notification.message) {
+                    <span class="notification-message">{{ notification.message }}</span>
+                  }
+                  <span class="notification-time">{{ getTimeAgo(notification.createdDate) }}</span>
+                </div>
+
+                <div class="notification-actions">
+                  @if (!notification.isRead) {
+                    <span class="unread-indicator" matTooltip="Unread"></span>
+                  }
+                </div>
+              </div>
+            </mat-card-content>
+          }
+          <button
+            mat-icon-button
+            class="delete-button"
+            matTooltip="Delete"
+            (click)="deleteNotification(notification, $event)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-card>
+      }
+
+      @if (loadingMore()) {
+        <div class="loading-more">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+      }
+    </div>
+  }
+</div>

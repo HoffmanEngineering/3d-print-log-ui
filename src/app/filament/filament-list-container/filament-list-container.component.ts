@@ -17,6 +17,10 @@ import { MaterialCategory } from 'src/app/core/services/material-categories.serv
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import {
+  QrLabelDialogComponent,
+  QrLabelDialogData,
+} from 'src/app/shared/qr-label-dialog/qr-label-dialog.component';
 
 @Component({
   selector: 'app-filament-list-container',
@@ -325,5 +329,22 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       .subscribe((_) => {
         filament.isFavorite = newIsFavorite;
       });
+  }
+
+  public printQrLabel(filament: FilamentSummary) {
+    this.dialog.open(QrLabelDialogComponent, {
+      data: { filaments: [filament] } as QrLabelDialogData,
+      width: '600px',
+    });
+  }
+
+  public printAllLabels() {
+    if (this.filaments.length === 0) {
+      return;
+    }
+    this.dialog.open(QrLabelDialogComponent, {
+      data: { filaments: this.filaments } as QrLabelDialogData,
+      width: '800px',
+    });
   }
 }

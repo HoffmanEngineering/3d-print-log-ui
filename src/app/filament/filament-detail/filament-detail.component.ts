@@ -32,8 +32,14 @@ import {
   FilamentDetail,
   FilamentService,
   FilamentSourceMeasurement,
+  FilamentSummary,
 } from '../../core/services/filament.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  QrLabelDialogComponent,
+  QrLabelDialogData,
+} from 'src/app/shared/qr-label-dialog/qr-label-dialog.component';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
@@ -88,8 +94,8 @@ export class FilamentDetailComponent
     private el: ElementRef,
     private location: Location,
     private readonly loggingService: LoggingService,
-
-    private readonly userSettingService: UserSettingService
+    private readonly userSettingService: UserSettingService,
+    private readonly dialog: MatDialog
   ) {}
 
   @HostListener('window:beforeunload')
@@ -679,5 +685,51 @@ export class FilamentDetailComponent
     });
 
     return category?.name ?? '';
+  }
+
+  public printQrLabel(): void {
+    const filamentId = this.filamentForm.get('id')?.value;
+    if (!filamentId) {
+      this.toastr.warning(
+        'Please save the material first before printing a QR label.',
+        'Material Not Saved'
+      );
+      return;
+    }
+
+    // Create a FilamentSummary from the current form data for the dialog
+    const filamentSummary: FilamentSummary = {
+      id: filamentId,
+      displayName: this.filamentForm.get('displayName')?.value ?? '',
+      brand: this.filamentForm.get('brand')?.value ?? '',
+      materialCategoryNickname:
+        this.filamentForm.get('materialCategoryNickname')?.value ?? '',
+      materialType: this.filamentForm.get('materialType')?.value ?? '',
+      materialDensityGramPerCubicCm:
+        this.filamentForm.get('materialDensityGramPerCubicCm')?.value ?? 0,
+      colorName: this.filamentForm.get('colorName')?.value ?? '',
+      colorHex: this.getColorHex(this.filamentForm.get('colorHex')?.value),
+      recommendedTemp: this.filamentForm.get('recommendedTemp')?.value ?? null,
+      isActive: this.filamentForm.get('isActive')?.value ?? true,
+      notes: this.filamentForm.get('notes')?.value ?? '',
+      isFavorite: this.filamentForm.get('isFavorite')?.value ?? false,
+      createdDate: new Date().toISOString(),
+      filamentRemaining: null,
+      filamentLengthRemainingInM: null,
+      filamentVolumeRemainingInMl: null,
+      purchasePriceValue:
+        this.filamentForm.get('purchasePriceValue')?.value ?? '',
+      initialNominalWeightMg:
+        (this.filamentForm.get('initialNominalWeightG')?.value ?? 0) * 1000,
+      diameterMm: this.filamentForm.get('diameterMm')?.value ?? 1.75,
+      loadedInPrinter: null,
+      storageLocation: this.filamentForm.get('storageLocation')?.value ?? '',
+      materialCategory: null,
+    };
+
+    this.dialog.open(QrLabelDialogComponent, {
+      data: { filaments: [filamentSummary] } as QrLabelDialogData,
+      width: '600px',
+    });
   }
 }

@@ -15,6 +15,13 @@ table {
   margin-top: 5px;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 5px;
+}
+
 .search-fields {
   display: inline;
   margin-left: 10px;

@@ -20,15 +20,27 @@
     }
   </div>
   <div class="header">
-    <button
-      mat-raised-button
-      routerLink="new"
-      type="button"
-      color="accent"
-      id="add-new-filament"
-    >
-      Add New Material
-    </button>
+    <div class="header-buttons">
+      <button
+        mat-raised-button
+        routerLink="new"
+        type="button"
+        color="accent"
+        id="add-new-filament"
+      >
+        Add New Material
+      </button>
+      <button
+        mat-raised-button
+        type="button"
+        (click)="printAllLabels()"
+        [disabled]="filaments.length === 0"
+        matTooltip="Print QR labels for all materials on this page"
+      >
+        <mat-icon>qr_code_2</mat-icon>
+        Print Labels
+      </button>
+    </div>
     <div class="search-fields">
       <mat-form-field>
         <mat-label> Search: </mat-label
@@ -253,6 +265,14 @@
             [routerLink]="['copy', filament.id]"
             ><mat-icon>file_copy</mat-icon>Duplicate</a
           >
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="Print QR Label for {{ filament.displayName }}"
+            (click)="printQrLabel(filament)"
+          >
+            <mat-icon>qr_code_2</mat-icon>Print QR Label
+          </button>
           @if (filament?.loadedInPrinter?.id) {
             <a
               class="menu-link"

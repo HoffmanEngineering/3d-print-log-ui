@@ -829,16 +829,29 @@
         fxLayoutAlign="space-between center"
         fxLayoutGap="15px"
       >
-        <button
-          mat-raised-button
-          type="submit"
-          [disabled]="saving"
-          color="primary"
-          [class.spinner]="saving"
-          id="edit-filament-submit-btn"
-        >
-          Submit
-        </button>
+        <div fxLayout fxLayoutGap="10px">
+          <button
+            mat-raised-button
+            type="submit"
+            [disabled]="saving"
+            color="primary"
+            [class.spinner]="saving"
+            id="edit-filament-submit-btn"
+          >
+            Submit
+          </button>
+          @if (this.filamentForm.get('id').value !== null) {
+            <button
+              mat-raised-button
+              type="button"
+              (click)="printQrLabel()"
+              matTooltip="Print a QR code label for this material"
+            >
+              <mat-icon>qr_code_2</mat-icon>
+              Print QR Label
+            </button>
+          }
+        </div>
         <button
           id="edit-filament-cancel-btn"
           mat-raised-button

@@ -46,6 +46,7 @@
     "ng2-adsense": "^13.0.0",
     "ngx-toastr": "^19.0.0",
     "parse-duration": "^1.0.2",
+    "qrcode": "^1.5.4",
     "rxjs": "^7.8.1",
     "tslib": "^2.3.1",
     "zone.js": "^0.15.1"
@@ -66,6 +67,7 @@
     "@types/jasmine": "^5.1.4",
     "@types/jasminewd2": "^2.0.10",
     "@types/node": "^22.18.8",
+    "@types/qrcode": "^1.5.5",
     "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.16.1",
     "cypress": "^13.13.1",

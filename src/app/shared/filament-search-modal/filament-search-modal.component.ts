@@ -53,6 +53,9 @@ export class FilamentSearchModalComponent {
     this.loggingService.logEvent('FilamentSearchModal_ToggleViewMode', {
       mode: newMode,
     });
+    if (newMode === 'scanner') {
+      this.loggingService.logEvent('QrScanner_Opened');
+    }
   }
 
   retryScan() {
@@ -66,6 +69,10 @@ export class FilamentSearchModalComponent {
     });
 
     if (!result.success) {
+      this.loggingService.logEvent('QrScanner_Error', {
+        errorType: 'invalid_qr',
+        error: result.error || 'Not a 3D Print Log filament label',
+      });
       this.scanError.set(
         result.error || 'This QR code is not a 3D Print Log filament label'
       );
@@ -73,6 +80,10 @@ export class FilamentSearchModalComponent {
     }
 
     if (!result.filamentId) {
+      this.loggingService.logEvent('QrScanner_Error', {
+        errorType: 'no_filament_id',
+        error: 'Could not extract filament ID',
+      });
       this.scanError.set('Could not extract filament ID from QR code');
       return;
     }
@@ -83,6 +94,9 @@ export class FilamentSearchModalComponent {
     this.filamentService.getFilamentDetail(result.filamentId).subscribe({
       next: (filament: FilamentDetail) => {
         this.loading.set(false);
+        this.loggingService.logEvent('QrScanner_Success', {
+          filamentId: filament.id,
+        });
         this.loggingService.logEvent('FilamentSearchModal_QrFilamentSelected', {
           filamentId: filament.id,
         });
@@ -118,8 +132,16 @@ export class FilamentSearchModalComponent {
       error: (err) => {
         this.loading.set(false);
         if (err.status === 404) {
+          this.loggingService.logEvent('QrScanner_Error', {
+            errorType: 'filament_not_found',
+            filamentId: result.filamentId,
+          });
           this.scanError.set('Filament not found. It may have been deleted.');
         } else {
+          this.loggingService.logEvent('QrScanner_Error', {
+            errorType: 'api_error',
+            status: err.status,
+          });
           this.scanError.set(
             'Unable to look up filament. Please check your connection.'
           );

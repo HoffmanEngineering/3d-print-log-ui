@@ -7,6 +7,7 @@ import {
   QrLabelDialogData,
 } from './qr-label-dialog.component';
 import { QrCodeService } from 'src/app/core/services/qr-code.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 
 describe('QrLabelDialogComponent', () => {
@@ -14,6 +15,7 @@ describe('QrLabelDialogComponent', () => {
   let fixture: ComponentFixture<QrLabelDialogComponent>;
   let mockDialogRef: jasmine.SpyObj<MatDialogRef<QrLabelDialogComponent>>;
   let mockQrCodeService: jasmine.SpyObj<QrCodeService>;
+  let mockLoggingService: jasmine.SpyObj<LoggingService>;
 
   const mockFilament: FilamentSummary = {
     id: 'test-id-123',
@@ -50,6 +52,7 @@ describe('QrLabelDialogComponent', () => {
       'generateSvg',
       'generateFilamentUrl',
     ]);
+    mockLoggingService = jasmine.createSpyObj('LoggingService', ['logEvent']);
 
     mockQrCodeService.generateFilamentUrl.and.callFake(
       (id: string) => `https://example.com/materials/${id}`
@@ -64,6 +67,7 @@ describe('QrLabelDialogComponent', () => {
         { provide: MatDialogRef, useValue: mockDialogRef },
         { provide: MAT_DIALOG_DATA, useValue: mockDialogData },
         { provide: QrCodeService, useValue: mockQrCodeService },
+        { provide: LoggingService, useValue: mockLoggingService },
       ],
     }).compileComponents();
 
@@ -215,6 +219,7 @@ describe('QrLabelDialogComponent', () => {
             useValue: { filaments: multipleFilaments },
           },
           { provide: QrCodeService, useValue: mockQrCodeService },
+          { provide: LoggingService, useValue: mockLoggingService },
         ],
       }).compileComponents();
 

@@ -9,7 +9,11 @@ import {
 } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,6 +22,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { FilamentSummary } from 'src/app/core/services/filament.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { QrCodeService } from 'src/app/core/services/qr-code.service';
 
 export interface QrLabelDialogData {
@@ -71,6 +76,7 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   private readonly dialogRef = inject(MatDialogRef<QrLabelDialogComponent>);
   private readonly data = inject<QrLabelDialogData>(MAT_DIALOG_DATA);
   private readonly qrCodeService = inject(QrCodeService);
+  private readonly loggingService = inject(LoggingService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly document = inject(DOCUMENT);
 
@@ -123,6 +129,9 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   }));
 
   ngOnInit(): void {
+    this.loggingService.logEvent('QrLabelDialog_Opened', {
+      materialCount: this.data.filaments.length,
+    });
     this.generateQrCodes();
   }
 
@@ -159,6 +168,14 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   }
 
   print(): void {
+    this.loggingService.logEvent('QrLabelDialog_Print', {
+      materialCount: this.labels().length,
+      paperSize: this.paperSize(),
+      columns: this.columns(),
+      rows: this.rows(),
+      labelSize: this.labelSize(),
+    });
+
     // Open a new window for printing
     const printWindow = window.open('', '_blank');
     if (!printWindow) {

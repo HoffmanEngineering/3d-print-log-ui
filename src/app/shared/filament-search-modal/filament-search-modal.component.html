@@ -1,9 +1,47 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title>Select Filament</h2>
+  <button
+    mat-icon-button
+    (click)="toggleViewMode()"
+    [matTooltip]="viewMode() === 'list' ? 'Scan QR Code' : 'Show List'"
+    class="scan-toggle-button"
+  >
+    <mat-icon>{{ viewMode() === 'list' ? 'qr_code_scanner' : 'list' }}</mat-icon>
+  </button>
+</div>
+
 <mat-dialog-content>
-  <app-filament-list
-    (filamentSelected)="handleFilamentSelected($event)"
-    [filterByMaterialCategory]="data.filterByMaterialCategory"
-  ></app-filament-list>
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Looking up filament...</p>
+    </div>
+  } @else {
+    @switch (viewMode()) {
+      @case ('list') {
+        <app-filament-list
+          (filamentSelected)="handleFilamentSelected($event)"
+          [filterByMaterialCategory]="data.filterByMaterialCategory"
+        ></app-filament-list>
+      }
+      @case ('scanner') {
+        @if (scanError()) {
+          <div class="scan-error">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ scanError() }}</span>
+            <button mat-button color="primary" (click)="retryScan()">
+              Try Again
+            </button>
+          </div>
+        }
+        @if (!scanError()) {
+          <app-qr-scanner (scanned)="handleQrScanned($event)"></app-qr-scanner>
+        }
+      }
+    }
+  }
 </mat-dialog-content>
+
 <mat-dialog-actions align="end">
   <div
     matTooltip="Only one 'Other' filament record allowed per print."

@@ -1,0 +1,52 @@
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px 0 24px;
+
+  h2 {
+    margin: 0;
+  }
+
+  .scan-toggle-button {
+    margin-right: -8px;
+  }
+}
+
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
+
+  p {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+.scan-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  margin-bottom: 16px;
+
+  mat-icon {
+    color: #f44336;
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  button {
+    flex-shrink: 0;
+  }
+}

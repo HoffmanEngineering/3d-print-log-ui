@@ -1,0 +1,88 @@
+app-qr-scanner {
+  display: block;
+
+  .qr-scanner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    min-height: 350px;
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 300px;
+
+    p {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 300px;
+    text-align: center;
+    padding: 24px;
+
+    .error-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: rgba(0, 0, 0, 0.38);
+    }
+
+    .error-message {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.6);
+      max-width: 300px;
+      line-height: 1.5;
+    }
+  }
+
+  .qr-reader {
+    width: 100%;
+    max-width: 400px;
+    min-height: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+
+    &.hidden {
+      display: none;
+    }
+
+    video {
+      border-radius: 8px;
+      width: 100% !important;
+    }
+
+    #qr-shaded-region {
+      border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+  }
+
+  .camera-selector {
+    width: 100%;
+    max-width: 300px;
+
+    mat-form-field {
+      width: 100%;
+    }
+  }
+
+  .scan-instructions {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.6);
+    text-align: center;
+    font-size: 14px;
+  }
+}

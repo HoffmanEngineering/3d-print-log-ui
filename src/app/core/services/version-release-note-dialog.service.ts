@@ -27,6 +27,37 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.31.0': {
+      title: '1.31.0 - QR Code Labels for Filament Spools',
+      body: `<p>
+Quickly identify and select your filament spools with the new <strong>QR Code Labels</strong> feature!
+Print QR code labels for your filament spools and scan them to instantly select the filament when
+adding prints.
+</p>
+<p>
+Generate labels from the Materials List by selecting filaments and clicking "Print Labels". When
+starting a new print, use the QR scanner to quickly select the correct filament without searching
+through your collection.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.30.0': {
       title: '1.30.0 - Notifications are Here!',
       body: `<p>

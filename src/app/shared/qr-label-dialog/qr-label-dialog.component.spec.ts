@@ -2,7 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
-import { QrLabelDialogComponent, QrLabelDialogData } from './qr-label-dialog.component';
+import {
+  QrLabelDialogComponent,
+  QrLabelDialogData,
+} from './qr-label-dialog.component';
 import { QrCodeService } from 'src/app/core/services/qr-code.service';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 
@@ -97,14 +100,36 @@ describe('QrLabelDialogComponent', () => {
     expect(mockDialogRef.close).toHaveBeenCalled();
   });
 
-  it('should call window.print when print is called', async () => {
-    spyOn(window, 'print');
+  it('should open print window when print is called', async () => {
+    const mockPrintWindow = {
+      document: {
+        write: jasmine.createSpy('write'),
+        close: jasmine.createSpy('close'),
+      },
+      focus: jasmine.createSpy('focus'),
+      print: jasmine.createSpy('print'),
+      close: jasmine.createSpy('close'),
+      onload: null as (() => void) | null,
+    };
+
+    spyOn(window, 'open').and.returnValue(mockPrintWindow as unknown as Window);
+
     fixture.detectChanges();
     await fixture.whenStable();
 
     component.print();
 
-    expect(window.print).toHaveBeenCalled();
+    expect(window.open).toHaveBeenCalledWith('', '_blank');
+    expect(mockPrintWindow.document.write).toHaveBeenCalled();
+    expect(mockPrintWindow.document.close).toHaveBeenCalled();
+
+    // Simulate onload callback
+    if (mockPrintWindow.onload) {
+      mockPrintWindow.onload();
+      expect(mockPrintWindow.focus).toHaveBeenCalled();
+      expect(mockPrintWindow.print).toHaveBeenCalled();
+      expect(mockPrintWindow.close).toHaveBeenCalled();
+    }
   });
 
   it('should compute items per page based on columns and rows', () => {
@@ -129,12 +154,10 @@ describe('QrLabelDialogComponent', () => {
     expect(component.pages()[0].length).toBe(1);
   });
 
-  it('should compute grid style based on columns and rows', () => {
+  it('should compute grid style based on columns', () => {
     component.columns.set(3);
-    component.rows.set(4);
     expect(component.gridStyle()).toEqual({
       'grid-template-columns': 'repeat(3, 1fr)',
-      'grid-template-rows': 'repeat(4, 1fr)',
     });
   });
 

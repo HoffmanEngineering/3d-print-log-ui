@@ -36,6 +36,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public totalCount: number;
 
   public displayedColumns: string[] = [
+    'select',
     'isFavorite',
     'colorHex',
     'displayName',
@@ -48,6 +49,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     'isActive',
     'more',
   ];
+
+  public selectedFilaments = new Map<string, FilamentSummary>();
 
   public debouncedUpdateFilter;
 
@@ -228,6 +231,11 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       if (shouldDelete) {
         this.filamentService.deleteFilament(filament.id).subscribe(
           (_) => {
+            // Remove from selection if selected
+            if (this.selectedFilaments.has(filament.id)) {
+              this.selectedFilaments.delete(filament.id);
+              this.selectedFilaments = new Map(this.selectedFilaments);
+            }
             this.updateFilter().then(() => {
               this.toastrService.success(
                 'Material removed successfully.',
@@ -339,12 +347,69 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   }
 
   public printAllLabels() {
-    if (this.filaments.length === 0) {
+    const filamentsToPrint = this.hasSelection()
+      ? Array.from(this.selectedFilaments.values())
+      : this.filaments;
+
+    if (filamentsToPrint.length === 0) {
       return;
     }
     this.dialog.open(QrLabelDialogComponent, {
-      data: { filaments: this.filaments } as QrLabelDialogData,
+      data: { filaments: filamentsToPrint } as QrLabelDialogData,
       width: '800px',
     });
+  }
+
+  // Selection methods
+  public isSelected(filament: FilamentSummary): boolean {
+    return this.selectedFilaments.has(filament.id);
+  }
+
+  public toggleSelection(filament: FilamentSummary): void {
+    if (this.selectedFilaments.has(filament.id)) {
+      this.selectedFilaments.delete(filament.id);
+    } else {
+      this.selectedFilaments.set(filament.id, filament);
+    }
+    // Reassign to trigger change detection
+    this.selectedFilaments = new Map(this.selectedFilaments);
+  }
+
+  public toggleSelectAll(): void {
+    if (this.isAllOnPageSelected()) {
+      // Deselect all on current page
+      this.filaments.forEach((f) => this.selectedFilaments.delete(f.id));
+    } else {
+      // Select all on current page
+      this.filaments.forEach((f) => this.selectedFilaments.set(f.id, f));
+    }
+    // Reassign to trigger change detection
+    this.selectedFilaments = new Map(this.selectedFilaments);
+  }
+
+  public isAllOnPageSelected(): boolean {
+    return (
+      this.filaments.length > 0 &&
+      this.filaments.every((f) => this.selectedFilaments.has(f.id))
+    );
+  }
+
+  public isIndeterminate(): boolean {
+    const selectedOnPage = this.filaments.filter((f) =>
+      this.selectedFilaments.has(f.id)
+    ).length;
+    return selectedOnPage > 0 && selectedOnPage < this.filaments.length;
+  }
+
+  public hasSelection(): boolean {
+    return this.selectedFilaments.size > 0;
+  }
+
+  public clearSelection(): void {
+    this.selectedFilaments = new Map();
+  }
+
+  public getSelectionCount(): number {
+    return this.selectedFilaments.size;
   }
 }

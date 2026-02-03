@@ -44,15 +44,36 @@ This works with any phone camera or QR scanner app out of the box. The `/materia
    - Select "Print QR Label"
    - Opens dialog with single label
 
-2. **Filament List - Toolbar**
+2. **Filament List - Toolbar (with Selection)**
 
-   - Click "Print Labels" button in the toolbar
-   - Opens dialog with labels for all filaments on the current page
+   - Use checkboxes to select specific filaments across searches/pages
+   - Selections persist across pagination and filter changes within the session
+   - Click "Print Labels (X)" button to print labels for selected filaments
+   - Or click "Print Labels" with no selection to print all visible on page
 
 3. **Filament Detail Page**
    - Click "Print QR Label" button (next to Submit)
    - Only visible for saved filaments (not new)
    - Opens dialog with single label
+
+### Multi-Select Feature
+
+The filament list supports checkbox selection for printing labels for specific filaments:
+
+- **Checkbox column**: First column in the table with checkboxes for each row
+- **Select all**: Header checkbox selects/deselects all filaments on the current page
+- **Selection persistence**: Selections persist across pagination and search/filter changes within the same session
+- **Selection indicator**: Toolbar shows "X selected" badge when items are selected
+- **Clear selection**: Click "Clear" button to deselect all
+- **Visual feedback**: Selected rows are highlighted with a subtle background color
+
+**Workflow for printing labels across different searches:**
+
+1. Search for first set of filaments (e.g., "blue PLA")
+2. Check the boxes for the filaments you want
+3. Search for another set (e.g., "PETG")
+4. Check additional filaments - previous selections are preserved
+5. Click "Print Labels (X)" to print labels for all selected filaments
 
 ### QR Scanner (Filament Selection)
 
@@ -342,6 +363,22 @@ dialogRef.afterClosed().subscribe((filament) => {
 - [ ] Change label size and verify label dimensions
 - [ ] Print and verify output matches preview
 - [ ] Print multiple pages and verify page breaks
+
+**Multi-Select:**
+
+- [ ] Checkbox column appears as first column in filament list
+- [ ] Click checkbox to select a filament (row highlights)
+- [ ] Click checkbox again to deselect
+- [ ] Header checkbox selects all visible filaments
+- [ ] Header checkbox shows indeterminate state when some selected
+- [ ] "X selected" badge appears in toolbar when items selected
+- [ ] "Print Labels (X)" shows count when items selected
+- [ ] Search/filter and verify selections persist
+- [ ] Paginate and verify selections persist
+- [ ] Select filaments across multiple searches
+- [ ] Click "Print Labels (X)" and verify only selected filaments print
+- [ ] Click "Clear" to clear all selections
+- [ ] With no selection, "Print Labels" prints all visible on page
 
 **QR Scanning:**
 

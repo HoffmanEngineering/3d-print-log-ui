@@ -8,6 +8,12 @@ table {
     cursor: pointer;
     background-color: rgba(0, 0, 0, 0.05);
   }
+  [mat-row].selected {
+    background-color: rgba(63, 81, 181, 0.08);
+  }
+  [mat-row].selected:hover {
+    background-color: rgba(63, 81, 181, 0.12);
+  }
 }
 
 .header {
@@ -20,6 +26,43 @@ table {
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 5px;
+  align-items: center;
+}
+
+.selection-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+}
+
+.selection-count {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.clear-selection-btn {
+  min-width: unset;
+  padding: 0 8px;
+  line-height: 24px;
+  font-size: 13px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 2px;
+  }
+}
+
+.mat-column-select {
+  flex: 0 0 48px !important;
+  width: 48px !important;
+  padding-right: 0 !important;
 }
 
 .search-fields {
@@ -63,7 +106,8 @@ table {
 }
 
 /* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
-mat-checkbox {
+/* Checkbox margin for filter checkboxes only, not table select column */
+.search-fields mat-checkbox {
   margin-right: 25px;
 }
 

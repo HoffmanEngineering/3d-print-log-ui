@@ -81,6 +81,67 @@ Follow the patterns in `.github/copilot-instructions.md`:
 - Test files are co-located with source files (`*.spec.ts`)
 - E2E tests use Cypress with base URL `https://localhost:4200`
 
+### Unit Test Patterns
+
+**Standalone components** use `imports` in TestBed:
+
+```typescript
+await TestBed.configureTestingModule({
+  imports: [MyComponent, NoopAnimationsModule],
+  providers: [{ provide: MyService, useValue: mockService }],
+}).compileComponents();
+```
+
+**Module-based components** use `declarations`:
+
+```typescript
+await TestBed.configureTestingModule({
+  declarations: [MyComponent],
+  imports: [MatDialogModule],
+  providers: [...],
+}).compileComponents();
+```
+
+**Mocking services** with Jasmine:
+
+```typescript
+const mockService = jasmine.createSpyObj<MyService>('MyService', ['methodName']);
+mockService.methodName.and.returnValue(of(mockData));
+```
+
+**Async operations** require `fixture.detectChanges()` and `await fixture.whenStable()`:
+
+```typescript
+fixture.detectChanges();
+await fixture.whenStable();
+expect(component.data()).toEqual(expected);
+```
+
+## Analytics & Metrics
+
+Use `LoggingService` to track user actions and errors.
+
+### Logging Events
+
+```typescript
+private readonly loggingService = inject(LoggingService);
+
+// Track user action with properties
+this.loggingService.logEvent('ComponentName_ActionName', {
+  property1: value1,
+  property2: value2,
+});
+
+// Track exceptions
+this.loggingService.logException(error);
+```
+
+### Naming Convention
+
+- Event names follow `ComponentName_ActionName` pattern (e.g., `QrLabelDialog_Print`, `FilamentSearchModal_FilamentSelected`)
+- Use descriptive action names: `Opened`, `Closed`, `Selected`, `Error`, `Success`
+- Include relevant context in properties (counts, IDs, settings used)
+
 ## Documentation
 
 All user-facing documentation lives in the `src/documentation` directory.

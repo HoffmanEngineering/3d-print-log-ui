@@ -199,6 +199,115 @@
   </p>
 
   <hr />
+  <h3 id="qr-labels">QR Code Labels</h3>
+  <p>
+    3D Print Log can generate printable QR code labels for your material spools.
+    Stick a label on your spool, then scan it with any phone camera or QR
+    scanner app to quickly navigate to that material's detail page.
+  </p>
+
+  <h4 id="qr-printing">Printing Labels</h4>
+  <p>There are several ways to print QR code labels:</p>
+  <ul>
+    <li>
+      <strong>From the Materials List</strong> - Click the
+      <mat-icon inline>more_horiz</mat-icon> menu on any row and select
+      <strong>Print QR Label</strong>.
+    </li>
+    <li>
+      <strong>Bulk Print from Toolbar</strong> - Click the
+      <strong>Print Labels</strong> button in the toolbar to print labels for
+      all materials on the current page.
+    </li>
+    <li>
+      <strong>From Material Detail Page</strong> - Click the
+      <strong>Print QR Label</strong> button next to the Submit button when
+      viewing a saved material.
+    </li>
+  </ul>
+
+  <h4 id="qr-multi-select">Multi-Select for Bulk Printing</h4>
+  <p>
+    You can select specific materials to print labels for using the checkboxes
+    in the first column of the Materials List:
+  </p>
+  <ul>
+    <li>
+      <strong>Select Individual Materials</strong> - Click the checkbox next to
+      each material you want to include.
+    </li>
+    <li>
+      <strong>Select All on Page</strong> - Click the checkbox in the header
+      row to select or deselect all materials on the current page.
+    </li>
+    <li>
+      <strong>Selections Persist</strong> - Your selections are preserved when
+      you search, filter, or paginate. This lets you select materials across
+      different searches.
+    </li>
+    <li>
+      <strong>Print Selected</strong> - When materials are selected, the
+      toolbar shows <strong>Print Labels (X)</strong> where X is the number
+      selected. Click to print labels for only the selected materials.
+    </li>
+    <li>
+      <strong>Clear Selection</strong> - Click the <strong>Clear</strong>
+      button next to the selection count to deselect all materials.
+    </li>
+  </ul>
+
+  <h4 id="qr-dialog">Label Settings</h4>
+  <p>
+    When printing labels, a dialog appears where you can customize the layout:
+  </p>
+  <ul>
+    <li>
+      <strong>Paper Size</strong> - Choose A4, Letter, or A5 to match your
+      printer paper.
+    </li>
+    <li>
+      <strong>Columns</strong> - Number of labels per row (1-4).
+    </li>
+    <li>
+      <strong>Rows</strong> - Number of labels per column (3-10).
+    </li>
+    <li>
+      <strong>Label Size</strong> - Small (50×25mm), Medium (70×30mm), or Large
+      (90×35mm).
+    </li>
+  </ul>
+  <p>
+    Each label displays the QR code, material name, brand, material type, color
+    swatch with color name, and nozzle temperature (if set).
+  </p>
+
+  <h4 id="qr-scanning">Scanning QR Codes</h4>
+  <p>
+    When selecting a material (for example, when editing a Print or Printer),
+    you can scan a QR code label instead of searching manually:
+  </p>
+  <ol>
+    <li>Click to select a material to open the search dialog.</li>
+    <li>
+      Click the <mat-icon inline>qr_code_scanner</mat-icon> icon in the dialog
+      header to switch to scanner mode.
+    </li>
+    <li>Grant camera permission when prompted by your browser.</li>
+    <li>
+      Point your camera at a material's QR code label. The material will be
+      automatically looked up and selected.
+    </li>
+    <li>
+      Use the camera dropdown to switch between cameras if your device has
+      multiple cameras.
+    </li>
+    <li>
+      Click the <mat-icon inline>list</mat-icon> icon to return to the search
+      list view.
+    </li>
+  </ol>
+
+  <hr />
   <h3 id="loaded_filament">Loaded Material</h3>
   <p>
     Printers can have one or more materials considered "loaded", meaning they

@@ -55,6 +55,8 @@ import { NotificationBellComponent } from './notification-bell/notification-bell
 import { AdComponent } from './ad/ad.component';
 import { AdsenseModule } from 'ng2-adsense';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { QrLabelDialogComponent } from './qr-label-dialog/qr-label-dialog.component';
+import { QrScannerComponent } from './qr-scanner/qr-scanner.component';
 
 @NgModule({
   declarations: [
@@ -116,6 +118,8 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     AdsenseModule,
     DragDropModule,
     NotificationBellComponent,
+    QrLabelDialogComponent,
+    QrScannerComponent,
   ],
   exports: [
     CommonModule,
@@ -169,6 +173,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     AdComponent,
     DragDropModule,
     NotificationBellComponent,
+    QrLabelDialogComponent,
   ],
 })
 export class SharedModule {}

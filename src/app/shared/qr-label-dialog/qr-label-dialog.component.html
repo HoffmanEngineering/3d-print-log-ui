@@ -1,0 +1,98 @@
+<h2 mat-dialog-title>Print QR Labels</h2>
+
+<mat-dialog-content class="dialog-content">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Generating QR codes...</p>
+    </div>
+  } @else {
+    <div class="settings-panel no-print">
+      <mat-form-field appearance="outline">
+        <mat-label>Paper Size</mat-label>
+        <mat-select [ngModel]="paperSize()" (ngModelChange)="paperSize.set($event)">
+          @for (size of paperSizeOptions; track size.value) {
+            <mat-option [value]="size.value">{{ size.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Columns</mat-label>
+        <mat-select [ngModel]="columns()" (ngModelChange)="columns.set($event)">
+          @for (col of columnOptions; track col) {
+            <mat-option [value]="col">{{ col }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Rows</mat-label>
+        <mat-select [ngModel]="rows()" (ngModelChange)="rows.set($event)">
+          @for (row of rowOptions; track row) {
+            <mat-option [value]="row">{{ row }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Label Size</mat-label>
+        <mat-select [ngModel]="labelSize()" (ngModelChange)="labelSize.set($event)">
+          @for (size of labelSizeOptions; track size.value) {
+            <mat-option [value]="size.value">{{ size.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="page-info no-print">
+      {{ labels().length }} labels across {{ pages().length }} page(s)
+    </div>
+
+    <div class="print-container">
+      @for (page of pages(); track $index; let pageIdx = $index) {
+        <div class="print-page" [ngStyle]="pageStyle()">
+          <div class="print-page-grid" [ngStyle]="gridStyle()">
+            @for (label of page; track label.filament.id) {
+              <div class="label-card" [class]="labelClass()">
+                <div class="qr-code" [innerHTML]="label.qrCodeSvg"></div>
+                <div class="label-info">
+                  <div class="filament-name">{{ label.filament.displayName }}</div>
+                  @if (label.filament.brand) {
+                    <div class="filament-brand">{{ label.filament.brand }}</div>
+                  }
+                  <div class="filament-material">{{ label.filament.materialType }}</div>
+                  <div class="filament-color">
+                    <span
+                      class="color-swatch"
+                      [ngStyle]="getColorStyle(label.filament.colorHex)"
+                    ></span>
+                    <span>{{ label.filament.colorName || 'Unknown' }}</span>
+                  </div>
+                  @if (label.filament.recommendedTemp) {
+                    <div class="filament-temp">
+                      Nozzle: {{ label.filament.recommendedTemp }}°C
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cancel</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="print()"
+    [disabled]="loading()"
+  >
+    <mat-icon>print</mat-icon>
+    Print
+  </button>
+</mat-dialog-actions>

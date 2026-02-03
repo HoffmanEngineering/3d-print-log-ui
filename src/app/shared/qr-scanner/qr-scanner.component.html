@@ -1,0 +1,44 @@
+<div class="qr-scanner-container">
+  @if (error()) {
+    <div class="error-container">
+      <mat-icon class="error-icon">videocam_off</mat-icon>
+      <p class="error-message">{{ error() }}</p>
+      <button mat-raised-button color="primary" (click)="retryScanning()">
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </div>
+  }
+
+  <div
+    id="qr-reader"
+    class="qr-reader"
+    [class.hidden]="error()"
+  ></div>
+
+  @if (!initializing() && !error() && cameras().length > 1) {
+    <div class="camera-selector">
+      <mat-form-field appearance="outline">
+        <mat-label>Camera</mat-label>
+        <mat-select
+          [value]="selectedCamera()"
+          (selectionChange)="onCameraChange($event.value)"
+        >
+          @for (camera of cameras(); track camera.id) {
+            <mat-option [value]="camera.id">
+              {{ camera.label || 'Camera ' + ($index + 1) }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
+
+  @if (initializing()) {
+    <p class="scan-instructions">Initializing camera...</p>
+  } @else if (scanning() && !error()) {
+    <p class="scan-instructions">
+      Point your camera at a filament QR code label
+    </p>
+  }
+</div>

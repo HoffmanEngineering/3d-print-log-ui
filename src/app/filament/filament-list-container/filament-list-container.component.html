@@ -20,15 +20,45 @@
     }
   </div>
   <div class="header">
-    <button
-      mat-raised-button
-      routerLink="new"
-      type="button"
-      color="accent"
-      id="add-new-filament"
-    >
-      Add New Material
-    </button>
+    <div class="header-buttons">
+      <button
+        mat-raised-button
+        routerLink="new"
+        type="button"
+        color="accent"
+        id="add-new-filament"
+      >
+        Add New Material
+      </button>
+      <button
+        mat-raised-button
+        type="button"
+        (click)="printAllLabels()"
+        [disabled]="filaments.length === 0 && !hasSelection()"
+        [matTooltip]="hasSelection() ? 'Print QR labels for selected materials' : 'Print QR labels for all materials on this page'"
+      >
+        <mat-icon>qr_code_2</mat-icon>
+        @if (hasSelection()) {
+          Print Labels ({{ getSelectionCount() }})
+        } @else {
+          Print Labels
+        }
+      </button>
+      @if (hasSelection()) {
+        <span class="selection-info" aria-live="polite">
+          <span class="selection-count">{{ getSelectionCount() }} selected</span>
+          <button
+            mat-button
+            type="button"
+            (click)="clearSelection()"
+            class="clear-selection-btn"
+          >
+            <mat-icon>close</mat-icon>
+            Clear
+          </button>
+        </span>
+      }
+    </div>
     <div class="search-fields">
       <mat-form-field>
         <mat-label> Search: </mat-label
@@ -86,6 +116,23 @@
     (matSortChange)="sortData($event)"
     [matSortDisableClear]="true"
   >
+    <ng-container matColumnDef="select">
+      <th mat-header-cell *matHeaderCellDef>
+        <mat-checkbox
+          (change)="toggleSelectAll()"
+          [checked]="isAllOnPageSelected()"
+          [indeterminate]="isIndeterminate()"
+          aria-label="Select all materials on this page"
+        ></mat-checkbox>
+      </th>
+      <td mat-cell *matCellDef="let filament" (click)="$event.stopPropagation()">
+        <mat-checkbox
+          [checked]="isSelected(filament)"
+          (change)="toggleSelection(filament)"
+          attr.aria-label="Select {{ filament.displayName }}"
+        ></mat-checkbox>
+      </td>
+    </ng-container>
     <ng-container matColumnDef="isFavorite">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let filament">
@@ -253,6 +300,14 @@
             [routerLink]="['copy', filament.id]"
             ><mat-icon>file_copy</mat-icon>Duplicate</a
           >
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="Print QR Label for {{ filament.displayName }}"
+            (click)="printQrLabel(filament)"
+          >
+            <mat-icon>qr_code_2</mat-icon>Print QR Label
+          </button>
           @if (filament?.loadedInPrinter?.id) {
             <a
               class="menu-link"
@@ -286,6 +341,7 @@
       mat-row
       *matRowDef="let row; columns: displayedColumns"
       [routerLink]="row.id"
+      [class.selected]="isSelected(row)"
       data-cy-filament-row
     ></tr>
   </table>

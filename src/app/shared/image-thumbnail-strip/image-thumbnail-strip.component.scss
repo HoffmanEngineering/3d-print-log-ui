@@ -1,0 +1,122 @@
+.thumbnail-strip {
+  margin-top: 8px;
+}
+
+.thumbnails {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px;
+}
+
+.thumbnail {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+  background: #f5f5f5;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &.selected {
+    border-color: #3f51b5;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+  }
+
+  .default-star {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #ffc107;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 2px;
+  }
+
+  .hover-actions {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    button {
+      color: white;
+      transform: scale(0.8);
+    }
+
+    .delete-btn:hover {
+      color: #f44336;
+    }
+
+    .set-default-btn:hover {
+      color: #ffc107;
+    }
+  }
+
+  &:hover .hover-actions {
+    display: flex;
+  }
+}
+
+.editable .thumbnail {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.add-button {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.limit-message {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+// CDK drag-drop styles
+.cdk-drag-preview {
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

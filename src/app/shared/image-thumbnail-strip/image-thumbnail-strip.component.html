@@ -1,0 +1,64 @@
+<div class="thumbnail-strip" [class.editable]="editable()">
+  @if (images().length > 1 || editable()) {
+    <div
+      class="thumbnails"
+      [cdkDropListDisabled]="!editable()"
+      cdkDropList
+      cdkDropListOrientation="horizontal"
+      (cdkDropListDropped)="onDrop($event)"
+    >
+      @for (image of images(); track image.id ?? $index) {
+        <div
+          class="thumbnail"
+          [class.selected]="image.id === selectedId()"
+          [class.is-default]="image.isDefault"
+          [cdkDragDisabled]="!editable()"
+          cdkDrag
+          (click)="onThumbnailClick(image)"
+        >
+          @if (image.url) {
+            <img [src]="image.url" alt="Print thumbnail" />
+          } @else {
+            <div class="placeholder">
+              <mat-icon>image</mat-icon>
+            </div>
+          }
+          @if (image.isDefault) {
+            <mat-icon class="default-star">star</mat-icon>
+          }
+          @if (editable()) {
+            <div class="hover-actions">
+              @if (!image.isDefault) {
+                <button
+                  mat-icon-button
+                  class="set-default-btn"
+                  (click)="onSetDefaultClick($event, image)"
+                  title="Set as default"
+                >
+                  <mat-icon>star_border</mat-icon>
+                </button>
+              }
+              <button
+                mat-icon-button
+                class="delete-btn"
+                (click)="onDeleteClick($event, image)"
+                title="Delete image"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
+      @if (editable() && canAddMore()) {
+        <button class="add-button" mat-stroked-button (click)="onAddClick()">
+          <mat-icon>add</mat-icon>
+        </button>
+      }
+    </div>
+
+    @if (editable() && !canAddMore()) {
+      <div class="limit-message">Maximum {{ maxImages() }} images reached</div>
+    }
+  }
+</div>

@@ -57,6 +57,7 @@ import { AdsenseModule } from 'ng2-adsense';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QrLabelDialogComponent } from './qr-label-dialog/qr-label-dialog.component';
 import { QrScannerComponent } from './qr-scanner/qr-scanner.component';
+import { ImageThumbnailStripComponent } from './image-thumbnail-strip/image-thumbnail-strip.component';
 
 @NgModule({
   declarations: [
@@ -120,6 +121,7 @@ import { QrScannerComponent } from './qr-scanner/qr-scanner.component';
     NotificationBellComponent,
     QrLabelDialogComponent,
     QrScannerComponent,
+    ImageThumbnailStripComponent,
   ],
   exports: [
     CommonModule,
@@ -174,6 +176,7 @@ import { QrScannerComponent } from './qr-scanner/qr-scanner.component';
     DragDropModule,
     NotificationBellComponent,
     QrLabelDialogComponent,
+    ImageThumbnailStripComponent,
   ],
 })
 export class SharedModule {}

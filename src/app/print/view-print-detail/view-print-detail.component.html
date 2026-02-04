@@ -40,6 +40,11 @@
             </div>
           }
         </div>
+        <app-image-thumbnail-strip
+          [images]="printImages"
+          [selectedId]="selectedImage?.id"
+          (imageSelected)="onImageSelected($event)"
+        />
         <div></div>
       </mat-card-content>
       <mat-card-content

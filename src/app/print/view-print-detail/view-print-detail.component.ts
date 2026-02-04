@@ -24,6 +24,7 @@ export interface PrintImageValue {
   url?: string;
   file?: File;
   isDefault: boolean;
+  displayOrder: number;
 }
 
 @Component({
@@ -80,20 +81,18 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
       this.user = data.print.user;
 
       if (this.print.images?.length > 0) {
-        this.print.images.forEach((image) => {
-          const newImage: PrintImageValue = {
+        this.printImages = this.print.images
+          .map((image) => ({
             id: image.id,
             url: null,
             file: null,
             isDefault: image.isDefault,
-          };
+            displayOrder: image.displayOrder,
+          }))
+          .sort((a, b) => a.displayOrder - b.displayOrder);
 
-          if (image.isDefault) {
-            this.selectedImage = newImage;
-          }
-
-          this.printImages.push(newImage);
-        });
+        this.selectedImage =
+          this.printImages.find((i) => i.isDefault) || this.printImages[0];
       }
 
       this.metaService.setTitle(`${this.print.title} - 3D Print Log`);
@@ -155,5 +154,9 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
       .subscribe((comment) => {
         this.print.comments.push(comment);
       });
+  }
+
+  onImageSelected(image: PrintImageValue): void {
+    this.selectedImage = image;
   }
 }

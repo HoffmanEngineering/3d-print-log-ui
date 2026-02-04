@@ -52,6 +52,7 @@ import {
   PrintViewStatus,
 } from '../../core/services/print.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import { ThumbnailImage } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import {
   Currencies,
   Currency,
@@ -63,6 +64,7 @@ export interface PrintImageValue {
   url?: string;
   file?: File;
   isDefault: boolean;
+  displayOrder: number;
 }
 
 export interface PrintFilamentUsageFormValue {
@@ -224,6 +226,11 @@ export class EditPrintDetailComponent
    * The name of the selected printer's material category. Defaults to 'material' is none is selected
    */
   public materialCategoryNameForSelectedPrinter: string = 'material';
+
+  /**
+   * Whether a file is being dragged over the drop zone
+   */
+  public isDragOver = false;
 
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -725,20 +732,25 @@ export class EditPrintDetailComponent
     const imageArray = this.formBuilder.array<FormControl<PrintImageValue>>([]);
 
     if (print && print.images) {
-      print.images.forEach((image) => {
+      // Sort images by displayOrder before adding to form array
+      const sortedImages = [...print.images].sort(
+        (a, b) => a.displayOrder - b.displayOrder
+      );
+
+      sortedImages.forEach((image) => {
         const newImage: PrintImageValue = {
           id: image.id,
           url: image.url ?? null,
           file: null,
           isDefault: image.isDefault,
+          displayOrder: image.displayOrder,
         };
+        const newControl = this.createItem(newImage);
+        imageArray.push(newControl);
+
         if (newImage.isDefault) {
-          const newControl = this.createItem(newImage);
-          imageArray.insert(0, newControl);
           this.selectedImage = newControl;
           this.defaultImageIdOnLoad = image.id;
-        } else {
-          imageArray.push(this.createItem(newImage));
         }
       });
     }
@@ -1000,8 +1012,17 @@ export class EditPrintDetailComponent
     const target = event.target as HTMLInputElement;
     const files = target.files;
     if (files) {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      const currentCount = this.images.length;
+      const maxAllowed = 5 - currentCount;
+
+      if (maxAllowed <= 0) {
+        this.toastr.warning('Maximum 5 images allowed', 'Limit Reached');
+        return;
+      }
+
+      const filesToProcess = Array.from(files).slice(0, maxAllowed);
+
+      for (const file of filesToProcess) {
         if (!file.type.match(/image.*/)) {
           this.toastr.error(
             'Please select an image.',
@@ -1012,17 +1033,26 @@ export class EditPrintDetailComponent
 
         const reader = new FileReader();
         reader.onload = (e: any) => {
+          const maxOrder = this.images.controls.reduce(
+            (max, ctrl) => Math.max(max, ctrl.value.displayOrder ?? -1),
+            -1
+          );
+
           const newItem = this.createItem({
             file,
             url: e.target.result, // Base64 string for preview image
-            isDefault: false,
+            isDefault: this.images.length === 0,
             id: undefined,
+            displayOrder: maxOrder + 1,
           });
 
           newItem.markAllAsTouched();
           newItem.markAsDirty();
           this.images.push(newItem);
-          this.selectImage(newItem);
+
+          if (!this.selectedImage) {
+            this.selectedImage = newItem;
+          }
         };
         reader.readAsDataURL(file);
       }
@@ -1059,6 +1089,161 @@ export class EditPrintDetailComponent
     });
 
     image.value.isDefault = true;
+  }
+
+  onImagesReordered(reorderedImages: ThumbnailImage[]): void {
+    // Update form array to match new order
+    const controls = [...this.images.controls];
+
+    // Clear and re-add in new order
+    while (this.images.length) {
+      this.images.removeAt(0);
+    }
+
+    for (const img of reorderedImages) {
+      const control = controls.find(
+        (c) => c.value.id === img.id || c.value.url === img.url
+      );
+      if (control) {
+        control.patchValue({ displayOrder: img.displayOrder });
+        this.images.push(control);
+      }
+    }
+
+    this.images.markAsDirty();
+  }
+
+  onDefaultChanged(image: ThumbnailImage): void {
+    // Clear existing default
+    this.images.controls.forEach((ctrl) => {
+      if (ctrl.value.isDefault) {
+        ctrl.patchValue({ isDefault: false });
+      }
+    });
+
+    // Set new default
+    const control = this.images.controls.find(
+      (c) => c.value.id === image.id || c.value.url === image.url
+    );
+    if (control) {
+      control.patchValue({ isDefault: true });
+      this.selectedImage = control;
+    }
+
+    this.images.markAsDirty();
+  }
+
+  onImageDeleted(image: ThumbnailImage): void {
+    const index = this.images.controls.findIndex(
+      (c) => c.value.id === image.id || c.value.url === image.url
+    );
+    if (index === -1) return;
+
+    const control = this.images.at(index);
+    const wasDefault = control.value.isDefault;
+
+    // Track for API deletion if existing image
+    if (control.value.id) {
+      this.imageIdsToDelete.push(control.value.id);
+    }
+
+    this.images.removeAt(index);
+
+    // If deleted was default, promote next image
+    if (wasDefault && this.images.length > 0) {
+      const nextDefault = this.images.at(0);
+      nextDefault.patchValue({ isDefault: true });
+      this.selectedImage = nextDefault;
+    } else if (this.images.length === 0) {
+      this.selectedImage = null;
+    }
+
+    this.images.markAsDirty();
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+  }
+
+  onFileDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+
+    const files = event.dataTransfer?.files;
+    if (files) {
+      this.processDroppedFiles(files);
+    }
+  }
+
+  private processDroppedFiles(files: FileList): void {
+    const currentCount = this.images.length;
+    const maxAllowed = 5 - currentCount;
+
+    if (maxAllowed <= 0) {
+      this.toastr.warning('Maximum 5 images allowed', 'Limit Reached');
+      return;
+    }
+
+    const filesToProcess = Array.from(files).slice(0, maxAllowed);
+
+    for (const file of filesToProcess) {
+      if (!file.type.match(/image.*/)) {
+        this.toastr.error(`${file.name} is not an image`, 'Invalid File');
+        continue;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const maxOrder = this.images.controls.reduce(
+          (max, ctrl) => Math.max(max, ctrl.value.displayOrder ?? -1),
+          -1
+        );
+
+        const newItem = this.createItem({
+          file,
+          url: e.target.result,
+          isDefault: this.images.length === 0,
+          displayOrder: maxOrder + 1,
+        });
+        newItem.markAllAsTouched();
+        newItem.markAsDirty();
+        this.images.push(newItem);
+
+        if (!this.selectedImage) {
+          this.selectedImage = newItem;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  getImagesForStrip(): ThumbnailImage[] {
+    return this.images.controls
+      .map((ctrl) => ({
+        id: ctrl.value.id,
+        url: ctrl.value.url,
+        isDefault: ctrl.value.isDefault,
+        displayOrder: ctrl.value.displayOrder,
+      }))
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
+  onThumbnailSelected(image: ThumbnailImage): void {
+    const control = this.images.controls.find(
+      (c) => c.value.id === image.id || c.value.url === image.url
+    );
+    if (control) {
+      this.selectedImage = control;
+    }
   }
 
   onSubmit() {
@@ -1158,6 +1343,22 @@ export class EditPrintDetailComponent
               take(1),
               map(() => createdPrint)
             );
+          }),
+          mergeMap((createdPrint: PrintDetail) => {
+            // Reorder images if there are existing images with IDs
+            const imagesToReorder = this.images.controls
+              .filter((c) => c.value.id)
+              .map((c) => ({
+                imageId: c.value.id,
+                displayOrder: c.value.displayOrder,
+              }));
+
+            if (imagesToReorder.length > 0) {
+              return this.printService
+                .reorderImages(createdPrint.id, imagesToReorder)
+                .pipe(map(() => createdPrint));
+            }
+            return of(createdPrint);
           })
         )
         .subscribe(
@@ -1232,6 +1433,22 @@ export class EditPrintDetailComponent
               take(1),
               map(() => updatedPrint)
             );
+          }),
+          mergeMap((updatedPrint: PrintDetail) => {
+            // Reorder images if there are existing images with IDs
+            const imagesToReorder = this.images.controls
+              .filter((c) => c.value.id)
+              .map((c) => ({
+                imageId: c.value.id,
+                displayOrder: c.value.displayOrder,
+              }));
+
+            if (imagesToReorder.length > 0) {
+              return this.printService
+                .reorderImages(updatedPrint.id, imagesToReorder)
+                .pipe(map(() => updatedPrint));
+            }
+            return of(updatedPrint);
           })
         )
         .subscribe(

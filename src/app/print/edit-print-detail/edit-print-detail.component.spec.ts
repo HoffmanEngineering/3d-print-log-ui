@@ -133,4 +133,105 @@ describe('EditPrintDetailComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   }, 10000);
+
+  describe('Image Management', () => {
+    it('should enforce 5 image limit in detectFiles', () => {
+      // Add 5 mock images to the form
+      for (let i = 0; i < 5; i++) {
+        const mockImage = component['createItem']({
+          id: i + 1,
+          url: `data:image/png;base64,test${i}`,
+          isDefault: i === 0,
+          displayOrder: i,
+        });
+        component.images.push(mockImage);
+      }
+
+      expect(component.images.length).toBe(5);
+
+      // Try to add more - should be blocked
+      const mockEvent = {
+        target: {
+          files: [new File([''], 'test.png', { type: 'image/png' })],
+        },
+      } as unknown as Event;
+
+      component.detectFiles(mockEvent);
+
+      // Should still be 5 (limit enforced)
+      expect(component.images.length).toBe(5);
+    });
+
+    it('should update displayOrder when onImagesReordered is called', () => {
+      // Add mock images
+      const image1 = component['createItem']({
+        id: 1,
+        url: 'url1',
+        isDefault: true,
+        displayOrder: 0,
+      });
+      const image2 = component['createItem']({
+        id: 2,
+        url: 'url2',
+        isDefault: false,
+        displayOrder: 1,
+      });
+      component.images.push(image1);
+      component.images.push(image2);
+
+      // Reorder
+      component.onImagesReordered([
+        { id: 2, url: 'url2', isDefault: false, displayOrder: 0 },
+        { id: 1, url: 'url1', isDefault: true, displayOrder: 1 },
+      ]);
+
+      expect(component.images.at(0).value.id).toBe(2);
+      expect(component.images.at(1).value.id).toBe(1);
+    });
+
+    it('should promote next image when default is deleted', () => {
+      // Add mock images
+      const image1 = component['createItem']({
+        id: 1,
+        url: 'url1',
+        isDefault: true,
+        displayOrder: 0,
+      });
+      const image2 = component['createItem']({
+        id: 2,
+        url: 'url2',
+        isDefault: false,
+        displayOrder: 1,
+      });
+      component.images.push(image1);
+      component.images.push(image2);
+      component.selectedImage = image1;
+
+      // Delete the default image
+      component.onImageDeleted({
+        id: 1,
+        url: 'url1',
+        isDefault: true,
+        displayOrder: 0,
+      });
+
+      // Image 2 should now be default
+      expect(component.images.length).toBe(1);
+      expect(component.images.at(0).value.isDefault).toBe(true);
+      expect(component.selectedImage).toBe(component.images.at(0));
+    });
+
+    it('should set isDragOver on drag events', () => {
+      const mockDragEvent = {
+        preventDefault: () => {},
+        stopPropagation: () => {},
+      } as DragEvent;
+
+      component.onDragOver(mockDragEvent);
+      expect(component.isDragOver).toBe(true);
+
+      component.onDragLeave(mockDragEvent);
+      expect(component.isDragOver).toBe(false);
+    });
+  });
 });

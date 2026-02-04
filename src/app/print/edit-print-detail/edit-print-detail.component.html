@@ -18,70 +18,57 @@
           style="display: none"
           type="file"
           accept="image/*"
+          multiple
           class="custom-file-input form-control"
           id="files"
           (change)="detectFiles($event)"
         />
-        @if (images.length < 1) {
-          <button
-            type="button"
-            mat-stroked-button
-            (click)="imgFileInput.click()"
-          >
-            Upload Picture
-          </button>
-        }
-        @if (selectedImage && selectedImage.value) {
-          <div fxFlex class="card-img-top main-image">
-            <app-print-image
-              fxFlex
-              [printId]="printForm.get('id').value"
-              [imageId]="selectedImage.value.id"
-              [imageData]="selectedImage.value.url"
-              [showDeleteOnHover]="true"
-              (delete)="removeImage(selectedImage)"
-              (imageDataChange)="selectedImage.value.url = $event"
-            ></app-print-image>
-          </div>
-        }
-        @if (false) {
-          <div
-            class="images-preview mt-2"
-            fxLayout
-            fxLayoutAlign="center center"
-          >
-            @for (image of images.controls; track image; let i = $index) {
-              <div fxFlex formArrayName="images">
-                <div
-                  [formGroupName]="i"
-                  class="image-preview"
-                  [ngClass]="{
-                    isDefault: image?.value?.isDefault === true,
-                    isSelected: selectedImage === image,
-                  }"
-                  (click)="selectImage(image)"
-                >
-                  <!--
-                    <img
-                      [src]="$any(image).value.url"
-                      [ngClass]="{
-                      }"
-                      alt="Image Preview"
-                      (click)="selectImage(image)"
-                      />
-                    -->
-                  <app-print-image
-                    fxFlex
-                    [printId]="printForm.get('id').value"
-                    [imageId]="image.value.id"
-                    [imageData]="image.value.url"
-                    (imageDataChange)="image.value.url = $event"
-                  ></app-print-image>
-                </div>
-              </div>
-            }
-          </div>
-        }
+        <div
+          class="image-drop-zone"
+          [class.drag-over]="isDragOver"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onFileDrop($event)"
+        >
+          @if (isDragOver) {
+            <div class="drop-overlay">
+              <mat-icon>cloud_upload</mat-icon>
+              <span>Drop images here</span>
+            </div>
+          }
+          @if (images.length < 1) {
+            <button
+              type="button"
+              mat-stroked-button
+              (click)="imgFileInput.click()"
+            >
+              Upload Picture
+            </button>
+          }
+          @if (selectedImage && selectedImage.value) {
+            <div fxFlex class="card-img-top main-image">
+              <app-print-image
+                fxFlex
+                [printId]="printForm.get('id').value"
+                [imageId]="selectedImage.value.id"
+                [imageData]="selectedImage.value.url"
+                [showDeleteOnHover]="false"
+                (imageDataChange)="selectedImage.value.url = $event"
+              ></app-print-image>
+            </div>
+          }
+        </div>
+        <app-image-thumbnail-strip
+          [images]="getImagesForStrip()"
+          [selectedId]="selectedImage?.value?.id"
+          [editable]="true"
+          [maxImages]="5"
+          (imageSelected)="onThumbnailSelected($event)"
+          (imageDeleted)="onImageDeleted($event)"
+          (defaultChanged)="onDefaultChanged($event)"
+          (imagesReordered)="onImagesReordered($event)"
+          (addClicked)="imgFileInput.click()"
+        />
       </div>
       <mat-card-content
         fxFlex="grow"

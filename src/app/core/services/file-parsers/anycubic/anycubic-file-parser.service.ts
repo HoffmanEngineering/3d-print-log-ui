@@ -318,6 +318,7 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
         url: `data:image/png;base64,${base64Data}`,
         id: null,
         isDefault: true,
+        displayOrder: 0,
       };
 
       images.push(printImage);

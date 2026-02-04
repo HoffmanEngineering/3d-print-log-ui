@@ -98,6 +98,7 @@ export class CuraParserV1pt2pt0Service implements NewPrintParser {
           id: null,
           isDefault: true,
           url: 'data:image/png;base64,' + settings.snapshot,
+          displayOrder: 0,
         },
       ];
     }

@@ -47,6 +47,7 @@ import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
+  PrintImage,
   PrintService,
   PrintStatus,
   PrintViewStatus,
@@ -63,8 +64,8 @@ export interface PrintImageValue {
   id?: number;
   url?: string;
   file?: File;
-  isDefault: boolean;
-  displayOrder: number;
+  isDefault?: boolean;
+  displayOrder?: number;
 }
 
 export interface PrintFilamentUsageFormValue {
@@ -1485,12 +1486,14 @@ export class EditPrintDetailComponent
   }
 
   getPrintFromForm(): Omit<PrintDetail, 'comments'> {
-    const existingPrintImages = this.images.controls
+    const existingPrintImages: PrintImage[] = this.images.controls
       .filter((control) => control.value.id !== undefined)
-      .map((control) => {
+      .map((control, index) => {
         return {
           id: control.value.id,
-          isDefault: control.value.isDefault,
+          isDefault: control.value.isDefault ?? false,
+          displayOrder: control.value.displayOrder ?? index,
+          url: null,
         };
       });
 

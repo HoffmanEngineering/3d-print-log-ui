@@ -210,6 +210,7 @@ export class AuthService {
           redirect_uri: isCordova
             ? cordovaCallbackUri
             : `${window.location.origin}/callback`,
+          ...(isCordova && { prompt: 'select_account' }),
         },
       });
     });

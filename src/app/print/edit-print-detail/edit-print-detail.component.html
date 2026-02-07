@@ -30,19 +30,9 @@
         />
         @if (images.length < 1) {
           @if (isCordova) {
-            <button type="button" mat-stroked-button [matMenuTriggerFor]="imageSourceMenu">
+            <button type="button" mat-stroked-button (click)="cameraInput.click()">
               Upload Picture
             </button>
-            <mat-menu #imageSourceMenu="matMenu">
-              <button mat-menu-item (click)="cameraInput.click()">
-                <mat-icon>photo_camera</mat-icon>
-                <span>Take Photo</span>
-              </button>
-              <button mat-menu-item (click)="imgFileInput.click()">
-                <mat-icon>photo_library</mat-icon>
-                <span>Choose from Gallery</span>
-              </button>
-            </mat-menu>
           } @else {
             <button
               type="button"

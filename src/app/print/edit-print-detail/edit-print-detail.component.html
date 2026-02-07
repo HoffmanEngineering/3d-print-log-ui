@@ -18,18 +18,40 @@
           style="display: none"
           type="file"
           accept="image/*"
-          class="custom-file-input form-control"
-          id="files"
+          (change)="detectFiles($event)"
+        />
+        <input
+          #cameraInput
+          style="display: none"
+          type="file"
+          accept="image/*"
+          capture="environment"
           (change)="detectFiles($event)"
         />
         @if (images.length < 1) {
-          <button
-            type="button"
-            mat-stroked-button
-            (click)="imgFileInput.click()"
-          >
-            Upload Picture
-          </button>
+          @if (isCordova) {
+            <button type="button" mat-stroked-button [matMenuTriggerFor]="imageSourceMenu">
+              Upload Picture
+            </button>
+            <mat-menu #imageSourceMenu="matMenu">
+              <button mat-menu-item (click)="cameraInput.click()">
+                <mat-icon>photo_camera</mat-icon>
+                <span>Take Photo</span>
+              </button>
+              <button mat-menu-item (click)="imgFileInput.click()">
+                <mat-icon>photo_library</mat-icon>
+                <span>Choose from Gallery</span>
+              </button>
+            </mat-menu>
+          } @else {
+            <button
+              type="button"
+              mat-stroked-button
+              (click)="imgFileInput.click()"
+            >
+              Upload Picture
+            </button>
+          }
         }
         @if (selectedImage && selectedImage.value) {
           <div fxFlex class="card-img-top main-image">

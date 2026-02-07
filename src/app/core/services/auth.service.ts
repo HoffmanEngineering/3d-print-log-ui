@@ -12,10 +12,9 @@ import {
 } from 'rxjs';
 import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
-
-const isCordova = navigator.userAgent === 'Mozilla/5.0 Google PrintLog/1.2';
 const cordovaCallbackUri =
   'com.printlog.app://cordova/com.printlog.app/callback';
 

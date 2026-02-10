@@ -27,31 +27,31 @@
             <mat-icon class="default-star">star</mat-icon>
           }
           @if (editable()) {
-            <div class="hover-actions">
-              @if (!image.isDefault) {
-                <button
-                  mat-icon-button
-                  class="set-default-btn"
-                  (click)="onSetDefaultClick($event, image)"
-                  title="Set as default"
-                >
-                  <mat-icon>star_border</mat-icon>
-                </button>
-              }
+            @if (!image.isDefault) {
               <button
                 mat-icon-button
-                class="delete-btn"
-                (click)="onDeleteClick($event, image)"
-                title="Delete image"
+                class="set-default-btn"
+                type="button"
+                (click)="onSetDefaultClick($event, image)"
+                title="Set as default"
               >
-                <mat-icon>close</mat-icon>
+                <mat-icon>star_border</mat-icon>
               </button>
-            </div>
+            }
+            <button
+              mat-icon-button
+              class="delete-btn"
+              type="button"
+              (click)="onDeleteClick($event, image)"
+              title="Delete image"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
           }
         </div>
       }
-      @if (editable() && canAddMore()) {
-        <button class="add-button" mat-stroked-button (click)="onAddClick()">
+      @if (editable() && canAddMore() && images().length > 0) {
+        <button class="add-button" mat-stroked-button type="button" (click)="onAddClick()">
           <mat-icon>add</mat-icon>
         </button>
       }

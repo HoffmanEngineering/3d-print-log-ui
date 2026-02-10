@@ -7,12 +7,13 @@
   gap: 8px;
   overflow-x: auto;
   padding: 4px;
+  justify-content: center;
 }
 
 .thumbnail {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
@@ -47,43 +48,80 @@
     position: absolute;
     top: 2px;
     right: 2px;
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
+    font-size: 14px;
+    width: 18px;
+    height: 18px;
     color: #ffc107;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 50%;
-    padding: 2px;
-  }
-
-  .hover-actions {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+  }
 
-    button {
-      color: white;
-      transform: scale(0.8);
+  .delete-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    min-width: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      line-height: 14px;
+      margin: 0;
     }
 
-    .delete-btn:hover {
+    &:hover {
       color: #f44336;
-    }
-
-    .set-default-btn:hover {
-      color: #ffc107;
+      background: rgba(0, 0, 0, 0.9);
     }
   }
 
-  &:hover .hover-actions {
+  .set-default-btn {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    min-width: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s;
     display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      line-height: 14px;
+      margin: 0;
+    }
+
+    &:hover {
+      color: #ffc107;
+      background: rgba(0, 0, 0, 0.9);
+    }
+  }
+
+  &:hover .delete-btn,
+  &:hover .set-default-btn {
+    opacity: 1;
   }
 }
 
@@ -96,9 +134,14 @@
 }
 
 .add-button {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
   flex-shrink: 0;
+
+  .mat-icon {
+    margin: 0;
+  }
 }
 
 .limit-message {

@@ -84,7 +84,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
         this.printImages = this.print.images
           .map((image) => ({
             id: image.id,
-            url: null,
+            url: `${environment.printLogApiUrl}/api/Prints/${this.print.id}/image/${image.id}`,
             file: null,
             isDefault: image.isDefault,
             displayOrder: image.displayOrder,

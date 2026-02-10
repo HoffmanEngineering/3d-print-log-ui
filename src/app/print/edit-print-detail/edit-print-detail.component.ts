@@ -23,8 +23,8 @@ import { environment } from 'src/environments/environment';
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { forkJoin, Observable, of, Subscription } from 'rxjs';
-import { map, mergeMap, take } from 'rxjs/operators';
+import { concat, forkJoin, Observable, of, Subscription } from 'rxjs';
+import { map, mergeMap, take, toArray } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
@@ -741,7 +741,7 @@ export class EditPrintDetailComponent
       sortedImages.forEach((image) => {
         const newImage: PrintImageValue = {
           id: image.id,
-          url: image.url ?? null,
+          url: `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`,
           file: null,
           isDefault: image.isDefault,
           displayOrder: image.displayOrder,
@@ -1300,7 +1300,13 @@ export class EditPrintDetailComponent
               return of(createdPrint);
             }
 
-            const imagesToUpload = newImages.map((image) => {
+            // Sort by displayOrder to ensure correct sequence
+            const sortedImages = [...newImages].sort(
+              (a, b) =>
+                (a.value.displayOrder ?? 0) - (b.value.displayOrder ?? 0)
+            );
+
+            const imagesToUpload = sortedImages.map((image) => {
               if (image.value.file !== null && image.value.file !== undefined) {
                 return this.printService.uploadPrintImage(
                   createdPrint.id,
@@ -1317,8 +1323,9 @@ export class EditPrintDetailComponent
               );
             });
 
-            return forkJoin(imagesToUpload).pipe(
-              take(1),
+            // Upload images sequentially to preserve displayOrder
+            return concat(...imagesToUpload).pipe(
+              toArray(),
               map(() => createdPrint)
             );
           }),
@@ -1390,7 +1397,13 @@ export class EditPrintDetailComponent
               return of(updatedPrint);
             }
 
-            const imagesToUpload = newImages.map((image) => {
+            // Sort by displayOrder to ensure correct sequence
+            const sortedImages = [...newImages].sort(
+              (a, b) =>
+                (a.value.displayOrder ?? 0) - (b.value.displayOrder ?? 0)
+            );
+
+            const imagesToUpload = sortedImages.map((image) => {
               if (image.value.file !== null && image.value.file !== undefined) {
                 return this.printService.uploadPrintImage(
                   updatedPrint.id,
@@ -1407,8 +1420,9 @@ export class EditPrintDetailComponent
               );
             });
 
-            return forkJoin(imagesToUpload).pipe(
-              take(1),
+            // Upload images sequentially to preserve displayOrder
+            return concat(...imagesToUpload).pipe(
+              toArray(),
               map(() => updatedPrint)
             );
           }),

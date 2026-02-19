@@ -37,7 +37,7 @@ export class ImageThumbnailStripComponent {
   imageSelected = output<ThumbnailImage>();
   imageDeleted = output<ThumbnailImage>();
   defaultChanged = output<ThumbnailImage>();
-  imagesReordered = output<ThumbnailImage[]>();
+  imagesReordered = output<{ previousIndex: number; currentIndex: number }>();
   addClicked = output<void>();
 
   canAddMore = computed(() => this.images().length < this.maxImages());
@@ -63,15 +63,10 @@ export class ImageThumbnailStripComponent {
   onDrop(event: CdkDragDrop<ThumbnailImage[]>): void {
     if (!this.editable()) return;
 
-    const images = [...this.images()];
-    moveItemInArray(images, event.previousIndex, event.currentIndex);
-
-    // Update displayOrder based on new positions
-    const reordered = images.map((img, index) => ({
-      ...img,
-      displayOrder: index,
-    }));
-
-    this.imagesReordered.emit(reordered);
+    // Emit just the indices - let parent handle the reordering
+    this.imagesReordered.emit({
+      previousIndex: event.previousIndex,
+      currentIndex: event.currentIndex,
+    });
   }
 }

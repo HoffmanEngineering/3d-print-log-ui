@@ -7,7 +7,7 @@
       cdkDropListOrientation="horizontal"
       (cdkDropListDropped)="onDrop($event)"
     >
-      @for (image of images(); track image.id ?? $index) {
+      @for (image of images(); track image.id !== undefined ? image.id : `new-${$index}`; let index = $index) {
         <div
           class="thumbnail"
           [class.selected]="image.id === selectedId()"

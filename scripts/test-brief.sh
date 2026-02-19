@@ -6,7 +6,7 @@ exit_code=$?
 
 # Extract only lines with failures/errors/warnings
 failures=$(echo "$output" | grep -E "(FAILED|Error|✖)" | head -20)
-summary=$(echo "$output" | grep -E "^[0-9]+ (passing|failing)" | tail -1)
+summary=$(echo "$output" | grep -E "^TOTAL:" | tail -1)
 
 if [ -n "$failures" ]; then
   echo "$failures"

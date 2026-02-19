@@ -184,20 +184,20 @@ describe('EditPrintDetailComponent', () => {
       expect(image1.value.id).toBe(1);
       expect(image2.value.id).toBe(2);
 
-      // Reorder - swap the order
-      component.onImagesReordered([
-        { id: 2, url: 'url2', isDefault: false, displayOrder: 0 },
-        { id: 1, url: 'url1', isDefault: true, displayOrder: 1 },
-      ]);
+      // Reorder - swap the order (move image1 from index 0 to index 1)
+      component.onImagesReordered({
+        previousIndex: 0,
+        currentIndex: 1,
+      });
 
       // After reorder, array should have 2 elements and be reordered
       expect(component.images.length).toBe(2);
-      // The first control should now be image2 (with id=2)
-      expect(component.images.at(0)).toBe(image2);
-      expect(component.images.at(1)).toBe(image1);
+      // The first control should now have id=2 (image2)
+      expect(component.images.at(0)?.value.id).toBe(2);
+      expect(component.images.at(1)?.value.id).toBe(1);
       // DisplayOrder should be updated
-      expect(image2.value.displayOrder).toBe(0);
-      expect(image1.value.displayOrder).toBe(1);
+      expect(component.images.at(0)?.value.displayOrder).toBe(0);
+      expect(component.images.at(1)?.value.displayOrder).toBe(1);
     });
 
     it('should promote next image when default is deleted', () => {

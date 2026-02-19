@@ -1369,7 +1369,21 @@ export class EditPrintDetailComponent
             // Upload images sequentially to preserve displayOrder
             return concat(...imagesToUpload).pipe(
               toArray(),
-              map(() => createdPrint)
+              map((uploadResponses: any[]) => {
+                // Update form controls with newly uploaded image IDs
+                uploadResponses.forEach((response: any, index: number) => {
+                  if (response && response.id !== undefined) {
+                    const control = sortedImages[index];
+                    if (control) {
+                      control.setValue({
+                        ...control.value,
+                        id: response.id,
+                      });
+                    }
+                  }
+                });
+                return createdPrint;
+              })
             );
           }),
           mergeMap((createdPrint) => {
@@ -1466,7 +1480,21 @@ export class EditPrintDetailComponent
             // Upload images sequentially to preserve displayOrder
             return concat(...imagesToUpload).pipe(
               toArray(),
-              map(() => updatedPrint)
+              map((uploadResponses: any[]) => {
+                // Update form controls with newly uploaded image IDs
+                uploadResponses.forEach((response: any, index: number) => {
+                  if (response && response.id !== undefined) {
+                    const control = sortedImages[index];
+                    if (control) {
+                      control.setValue({
+                        ...control.value,
+                        id: response.id,
+                      });
+                    }
+                  }
+                });
+                return updatedPrint;
+              })
             );
           }),
           mergeMap((updatedPrint) => {

@@ -232,6 +232,35 @@ describe('EditPrintDetailComponent', () => {
       expect(component.selectedImage).toBe(component.images.at(0));
     });
 
+    it('should set the correct image as default when two images share the same displayOrder', () => {
+      // Two images with the same displayOrder (simulates race condition in upload)
+      const image1 = component['createItem']({
+        id: 10,
+        url: 'url-a',
+        isDefault: true,
+        displayOrder: 0,
+      });
+      const image2 = component['createItem']({
+        id: 11,
+        url: 'url-b',
+        isDefault: false,
+        displayOrder: 0, // same displayOrder as image1 - collision
+      });
+      component.images.push(image1);
+      component.images.push(image2);
+
+      // Set image2 as default - must find it by id, not displayOrder
+      component.onDefaultChanged({
+        id: 11,
+        url: 'url-b',
+        isDefault: false,
+        displayOrder: 0,
+      });
+
+      expect(component.images.at(0).value.isDefault).toBe(false); // image1 cleared
+      expect(component.images.at(1).value.isDefault).toBe(true); // image2 set
+    });
+
     it('should set isDragOver on drag events', () => {
       const mockDragEvent = {
         preventDefault: () => {},
@@ -242,6 +271,27 @@ describe('EditPrintDetailComponent', () => {
       expect(component.isDragOver).toBe(true);
 
       component.onDragLeave(mockDragEvent);
+      expect(component.isDragOver).toBe(false);
+    });
+
+    it('should not set isDragOver when at 5-image limit', () => {
+      for (let i = 0; i < 5; i++) {
+        component.images.push(
+          component['createItem']({
+            id: i + 1,
+            url: `url${i}`,
+            isDefault: i === 0,
+            displayOrder: i,
+          })
+        );
+      }
+
+      const mockDragEvent = {
+        preventDefault: () => {},
+        stopPropagation: () => {},
+      } as DragEvent;
+
+      component.onDragOver(mockDragEvent);
       expect(component.isDragOver).toBe(false);
     });
   });

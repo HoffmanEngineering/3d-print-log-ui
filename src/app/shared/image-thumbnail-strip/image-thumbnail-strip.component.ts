@@ -5,14 +5,9 @@ import {
   output,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import {
-  CdkDragDrop,
-  DragDropModule,
-  moveItemInArray,
-} from '@angular/cdk/drag-drop';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 
 export interface ThumbnailImage {
   id?: number;
@@ -26,7 +21,7 @@ export interface ThumbnailImage {
   templateUrl: './image-thumbnail-strip.component.html',
   styleUrls: ['./image-thumbnail-strip.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatIconModule, MatButtonModule, DragDropModule],
+  imports: [MatIconModule, MatButtonModule, DragDropModule],
 })
 export class ImageThumbnailStripComponent {
   images = input.required<ThumbnailImage[]>();

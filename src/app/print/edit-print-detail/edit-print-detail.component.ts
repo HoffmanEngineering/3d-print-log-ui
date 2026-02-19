@@ -1072,38 +1072,6 @@ export class EditPrintDetailComponent
     target.value = '';
   }
 
-  selectImage(image: FormControl<PrintImageValue>) {
-    this.selectedImage = image;
-    this.setAsDefault(image); // TODO: Get right-click menu to make default
-  }
-
-  removeImage(image: FormControl<PrintImageValue>) {
-    const imageId = image.value.id;
-    if (imageId) {
-      this.imageIdsToDelete.push(imageId);
-    }
-
-    const controlIndex = this.images.value.findIndex(
-      (value) => value === image.value
-    );
-
-    if (controlIndex > -1) {
-      this.images.removeAt(controlIndex);
-    }
-
-    if (image === this.selectedImage) {
-      this.selectedImage = null;
-    }
-  }
-
-  setAsDefault(image: FormControl<PrintImageValue>) {
-    this.images.controls.forEach((control) => {
-      control.setValue({ ...control.value, isDefault: false });
-    });
-
-    image.setValue({ ...image.value, isDefault: true });
-  }
-
   onImagesReordered(event: {
     previousIndex: number;
     currentIndex: number;
@@ -1139,9 +1107,8 @@ export class EditPrintDetailComponent
   }
 
   onDefaultChanged(image: ThumbnailImage): void {
-    // Find the control by matching displayOrder since that's the stable identifier after sorting
     const control = this.images.controls.find(
-      (c) => c.value.displayOrder === image.displayOrder
+      (c) => c.value.id === image.id || c.value.url === image.url
     );
 
     if (!control) {
@@ -1195,7 +1162,9 @@ export class EditPrintDetailComponent
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    this.isDragOver = true;
+    if (this.images.length < 5) {
+      this.isDragOver = true;
+    }
   }
 
   onDragLeave(event: DragEvent): void {

@@ -1,14 +1,73 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of } from 'rxjs';
 
 import { ViewPrintDetailComponent } from './view-print-detail.component';
+import { PrintService } from 'src/app/core/services/print.service';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 
-xdescribe('ViewPrintDetailComponent', () => {
+describe('ViewPrintDetailComponent', () => {
   let component: ViewPrintDetailComponent;
   let fixture: ComponentFixture<ViewPrintDetailComponent>;
 
+  const mockPrint = {
+    id: 1,
+    title: 'Test Print',
+    startDate: new Date(),
+    status: 0,
+    notes: '',
+    images: [],
+    comments: [],
+    printer: { make: 'Prusa', model: 'MK3S', name: '' },
+  };
+
+  const mockUser = {
+    id: 'user1',
+    displayName: 'Test User',
+    profilePicture: '',
+  };
+
   beforeEach(waitForAsync(() => {
+    const mockPrintService = jasmine.createSpyObj<PrintService>(
+      'PrintService',
+      ['addPrintComment']
+    );
+
+    const mockAuthService = jasmine.createSpyObj<AuthService>(
+      'AuthService',
+      [],
+      {
+        userProfile$: of(null),
+      }
+    );
+
+    const mockMetaService = jasmine.createSpyObj<MetaTagService>(
+      'MetaTagService',
+      ['setTitle', 'setSocialMediaTags']
+    );
+
     TestBed.configureTestingModule({
-      declarations: [ViewPrintDetailComponent],
+      declarations: [ViewPrintDetailComponent, DurationPipe],
+      imports: [RouterTestingModule],
+      providers: [
+        { provide: PrintService, useValue: mockPrintService },
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: MetaTagService, useValue: mockMetaService },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({
+              printers: [],
+              print: { print: mockPrint, user: mockUser },
+            }),
+          },
+        },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
   }));
 
@@ -23,14 +82,12 @@ xdescribe('ViewPrintDetailComponent', () => {
   });
 
   it('should render thumbnail strip when multiple images exist', () => {
-    // Update mock data to include multiple images with displayOrder
     component.printImages = [
       { id: 1, isDefault: true, displayOrder: 0 },
       { id: 2, isDefault: false, displayOrder: 1 },
     ];
     component.selectedImage = component.printImages[0];
     fixture.detectChanges();
-    // Verify ImageThumbnailStripComponent renders
     const thumbnailStrip = fixture.nativeElement.querySelector(
       'app-image-thumbnail-strip'
     );

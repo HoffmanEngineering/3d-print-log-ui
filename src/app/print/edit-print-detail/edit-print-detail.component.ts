@@ -1290,269 +1290,212 @@ export class EditPrintDetailComponent
     }
   }
 
+  /**
+   * Upload new images for a print
+   */
+  private uploadImages(
+    printId: number,
+    newImages: FormControl<PrintImageValue>[]
+  ): Observable<PrintDetail> {
+    if (newImages.length === 0) {
+      return of({ id: printId } as PrintDetail);
+    }
+
+    // Sort by displayOrder to ensure correct sequence
+    const sortedImages = [...newImages].sort(
+      (a, b) => (a.value.displayOrder ?? 0) - (b.value.displayOrder ?? 0)
+    );
+
+    const imagesToUpload = sortedImages.map((image) => {
+      if (image.value.file !== null && image.value.file !== undefined) {
+        return this.printService.uploadPrintImage(
+          printId,
+          image.value.file,
+          image.value.isDefault
+        );
+      }
+
+      // otherwise, assume its a new image from a data url:
+      return this.printService.uploadPrintImageFromDataUrl(
+        printId,
+        image.value.url,
+        image.value.isDefault
+      );
+    });
+
+    // Upload images sequentially to preserve displayOrder
+    return concat(...imagesToUpload).pipe(
+      toArray(),
+      map((uploadResponses: any[]) => {
+        // Update form controls with newly uploaded image IDs
+        uploadResponses.forEach((response: any, index: number) => {
+          if (response && response.id !== undefined) {
+            const control = sortedImages[index];
+            if (control) {
+              control.setValue({
+                ...control.value,
+                id: response.id,
+              });
+            }
+          }
+        });
+        return { id: printId } as PrintDetail;
+      })
+    );
+  }
+
+  /**
+   * Set a different image as default if selected
+   */
+  private setDefaultImage(
+    printId: number,
+    imageId: number | null
+  ): Observable<PrintDetail> {
+    if (!imageId) {
+      return of({ id: printId } as PrintDetail);
+    }
+
+    return this.printService
+      .setImageAsDefault(printId, imageId)
+      .pipe(map(() => ({ id: printId }) as PrintDetail));
+  }
+
+  /**
+   * Delete images marked for deletion
+   */
+  private deleteImages(printId: number): Observable<PrintDetail> {
+    if (this.imageIdsToDelete.length === 0) {
+      return of({ id: printId } as PrintDetail);
+    }
+
+    const imagesToDelete = this.imageIdsToDelete.map((imageId) => {
+      return this.printService.deleteImage(printId, imageId);
+    });
+
+    return forkJoin(imagesToDelete).pipe(
+      take(1),
+      map(() => ({ id: printId }) as PrintDetail)
+    );
+  }
+
+  /**
+   * Reorder images if there are images with IDs
+   */
+  private reorderImages(printId: number): Observable<PrintDetail> {
+    const imagesToReorder = this.images.controls
+      .filter((c) => c.value.id)
+      .map((c) => ({
+        imageId: c.value.id,
+        displayOrder: c.value.displayOrder,
+      }));
+
+    if (imagesToReorder.length === 0) {
+      return of({ id: printId } as PrintDetail);
+    }
+
+    return this.printService
+      .reorderImages(printId, imagesToReorder)
+      .pipe(map(() => ({ id: printId }) as PrintDetail));
+  }
+
   onSubmit() {
     this.saving = true;
 
-    // Validate
+    // Validate form
     this.printForm.markAllAsTouched();
     if (!this.printForm.valid) {
       this.saving = false;
-
-      // Loop through all controls, focusing the first invalid control.
-      for (const key of Object.keys(this.printForm.controls)) {
-        if (this.printForm.controls[key].invalid) {
-          const invalidControl = this.el.nativeElement.querySelector(
-            '[formcontrolname="' + key + '"]'
-          );
-          invalidControl.focus();
-          break;
-        }
-      }
+      this.focusFirstInvalidControl();
       return;
     }
 
-    const newPrint: Omit<PrintDetail, 'comments'> = this.getPrintFromForm();
-
+    // Extract print data
+    const newPrint = this.getPrintFromForm();
     const newImages = this.images.controls.filter(
       (control) => control.value.id === undefined || control.value.id === null
     );
+    const newDefaultImageId = this.getNewDefaultImageId();
 
-    // Check the selected default.
-    const selectedDefaultImage = this.images.controls.filter(
+    // Choose save method and execute pipeline
+    const savePrint =
+      newPrint.id === null
+        ? this.printService.addPrint(newPrint)
+        : this.printService.updatePrint(newPrint);
+
+    savePrint
+      .pipe(
+        mergeMap((print) => this.uploadImages(print.id, newImages)),
+        mergeMap((print) => this.setDefaultImage(print.id, newDefaultImageId)),
+        mergeMap((print) => this.deleteImages(print.id)),
+        mergeMap((print) => this.reorderImages(print.id))
+      )
+      .subscribe(
+        (print) => this.handleSaveSuccess(newPrint),
+        (err) => this.handleSaveError(err, newPrint)
+      );
+  }
+
+  /**
+   * Focus the first invalid form control
+   */
+  private focusFirstInvalidControl(): void {
+    for (const key of Object.keys(this.printForm.controls)) {
+      if (this.printForm.controls[key].invalid) {
+        const invalidControl = this.el.nativeElement.querySelector(
+          '[formcontrolname="' + key + '"]'
+        );
+        invalidControl.focus();
+        break;
+      }
+    }
+  }
+
+  /**
+   * Get the new default image ID if it changed
+   */
+  private getNewDefaultImageId(): number | null {
+    const selectedDefaultImage = this.images.controls.find(
       (control) => control.value.isDefault
     );
 
-    let newDefaultImageId = null;
-    // If the default image changed to another previously-saved image, then update the default.
-    if (selectedDefaultImage.length > 0) {
-      const defaultImage = selectedDefaultImage[0];
-      if (
-        defaultImage.value.id !== undefined &&
-        defaultImage.value.id !== this.defaultImageIdOnLoad
-      ) {
-        newDefaultImageId = defaultImage.value.id;
-      }
+    if (
+      selectedDefaultImage &&
+      selectedDefaultImage.value.id !== undefined &&
+      selectedDefaultImage.value.id !== this.defaultImageIdOnLoad
+    ) {
+      return selectedDefaultImage.value.id;
     }
 
+    return null;
+  }
+
+  /**
+   * Handle successful save
+   */
+  private handleSaveSuccess(newPrint: Omit<PrintDetail, 'comments'>): void {
+    // Only emit conversion for new prints
     if (newPrint.id === null) {
-      this.printService
-        .addPrint(newPrint)
-        .pipe(
-          mergeMap((createdPrint: PrintDetail) => {
-            if (newImages.length === 0) {
-              return of(createdPrint);
-            }
-
-            // Sort by displayOrder to ensure correct sequence
-            const sortedImages = [...newImages].sort(
-              (a, b) =>
-                (a.value.displayOrder ?? 0) - (b.value.displayOrder ?? 0)
-            );
-
-            const imagesToUpload = sortedImages.map((image) => {
-              if (image.value.file !== null && image.value.file !== undefined) {
-                return this.printService.uploadPrintImage(
-                  createdPrint.id,
-                  image.value.file,
-                  image.value.isDefault
-                );
-              }
-
-              // otherwise, assume its a new image from a data url:
-              return this.printService.uploadPrintImageFromDataUrl(
-                createdPrint.id,
-                image.value.url,
-                image.value.isDefault
-              );
-            });
-
-            // Upload images sequentially to preserve displayOrder
-            return concat(...imagesToUpload).pipe(
-              toArray(),
-              map((uploadResponses: any[]) => {
-                // Update form controls with newly uploaded image IDs
-                uploadResponses.forEach((response: any, index: number) => {
-                  if (response && response.id !== undefined) {
-                    const control = sortedImages[index];
-                    if (control) {
-                      control.setValue({
-                        ...control.value,
-                        id: response.id,
-                      });
-                    }
-                  }
-                });
-                return createdPrint;
-              })
-            );
-          }),
-          mergeMap((createdPrint) => {
-            if (newDefaultImageId) {
-              return this.printService
-                .setImageAsDefault(createdPrint.id, newDefaultImageId)
-                .pipe(map(() => createdPrint));
-            } else {
-              return of(createdPrint);
-            }
-          }),
-          mergeMap((createdPrint: PrintDetail) => {
-            if (this.imageIdsToDelete.length === 0) {
-              return of(createdPrint);
-            }
-
-            const imagesToDelete = this.imageIdsToDelete.map((imageId) => {
-              return this.printService.deleteImage(createdPrint.id, imageId);
-            });
-
-            return forkJoin(imagesToDelete).pipe(
-              take(1),
-              map(() => createdPrint)
-            );
-          }),
-          mergeMap((createdPrint: PrintDetail) => {
-            // Reorder images if there are existing images with IDs
-            const imagesToReorder = this.images.controls
-              .filter((c) => c.value.id)
-              .map((c) => ({
-                imageId: c.value.id,
-                displayOrder: c.value.displayOrder,
-              }));
-
-            if (imagesToReorder.length > 0) {
-              return this.printService
-                .reorderImages(createdPrint.id, imagesToReorder)
-                .pipe(map(() => createdPrint));
-            }
-            return of(createdPrint);
-          })
-        )
-        .subscribe(
-          (createdPrint) => {
-            this.analyticsService.emitConversion(
-              environment.googleAds.trafficSearchConversion
-            );
-
-            this.printForm.markAsPristine();
-            this.router.navigate(['/prints']).then(() => {
-              this.toastr.success('Save successful!');
-            });
-          },
-          (err) => {
-            this.saving = false;
-            this.loggingService.logTrace(
-              `PrintErr: ${JSON.stringify(newPrint)}`
-            );
-            this.loggingService.logException(err);
-          }
-        );
-    } else {
-      this.printService
-        .updatePrint(newPrint)
-        .pipe(
-          mergeMap((updatedPrint: PrintDetail) => {
-            if (newImages.length === 0) {
-              return of(updatedPrint);
-            }
-
-            // Sort by displayOrder to ensure correct sequence
-            const sortedImages = [...newImages].sort(
-              (a, b) =>
-                (a.value.displayOrder ?? 0) - (b.value.displayOrder ?? 0)
-            );
-
-            const imagesToUpload = sortedImages.map((image) => {
-              if (image.value.file !== null && image.value.file !== undefined) {
-                return this.printService.uploadPrintImage(
-                  updatedPrint.id,
-                  image.value.file,
-                  image.value.isDefault
-                );
-              }
-
-              // otherwise, assume its a new image from a data url:
-              return this.printService.uploadPrintImageFromDataUrl(
-                updatedPrint.id,
-                image.value.url,
-                image.value.isDefault
-              );
-            });
-
-            // Upload images sequentially to preserve displayOrder
-            return concat(...imagesToUpload).pipe(
-              toArray(),
-              map((uploadResponses: any[]) => {
-                // Update form controls with newly uploaded image IDs
-                uploadResponses.forEach((response: any, index: number) => {
-                  if (response && response.id !== undefined) {
-                    const control = sortedImages[index];
-                    if (control) {
-                      control.setValue({
-                        ...control.value,
-                        id: response.id,
-                      });
-                    }
-                  }
-                });
-                return updatedPrint;
-              })
-            );
-          }),
-          mergeMap((updatedPrint) => {
-            if (newDefaultImageId) {
-              return this.printService
-                .setImageAsDefault(updatedPrint.id, newDefaultImageId)
-                .pipe(map(() => updatedPrint));
-            } else {
-              return of(updatedPrint);
-            }
-          }),
-          mergeMap((updatedPrint: PrintDetail) => {
-            if (this.imageIdsToDelete.length === 0) {
-              return of(updatedPrint);
-            }
-
-            const imagesToDelete = this.imageIdsToDelete.map((imageId) => {
-              return this.printService.deleteImage(updatedPrint.id, imageId);
-            });
-
-            return forkJoin(imagesToDelete).pipe(
-              take(1),
-              map(() => updatedPrint)
-            );
-          }),
-          mergeMap((updatedPrint: PrintDetail) => {
-            // Reorder images if there are existing images with IDs
-            const imagesToReorder = this.images.controls
-              .filter((c) => c.value.id)
-              .map((c) => ({
-                imageId: c.value.id,
-                displayOrder: c.value.displayOrder,
-              }));
-
-            if (imagesToReorder.length > 0) {
-              return this.printService
-                .reorderImages(updatedPrint.id, imagesToReorder)
-                .pipe(map(() => updatedPrint));
-            }
-            return of(updatedPrint);
-          })
-        )
-        .subscribe(
-          (updatedPrint) => {
-            this.printForm.markAsPristine();
-            this.router.navigate(['/prints']).then(() => {
-              this.toastr.success('Save successful!');
-            });
-          },
-          (err) => {
-            this.saving = false;
-            this.loggingService.logTrace(
-              `PrintErr: ${JSON.stringify(newPrint)}`
-            );
-            this.loggingService.logException(err);
-          }
-        );
+      this.analyticsService.emitConversion(
+        environment.googleAds.trafficSearchConversion
+      );
     }
+
+    this.printForm.markAsPristine();
+    this.router.navigate(['/prints']).then(() => {
+      this.toastr.success('Save successful!');
+    });
+  }
+
+  /**
+   * Handle save error
+   */
+  private handleSaveError(
+    err: any,
+    newPrint: Omit<PrintDetail, 'comments'>
+  ): void {
+    this.saving = false;
+    this.loggingService.logTrace(`PrintErr: ${JSON.stringify(newPrint)}`);
+    this.loggingService.logException(err);
   }
 
   handleClose() {

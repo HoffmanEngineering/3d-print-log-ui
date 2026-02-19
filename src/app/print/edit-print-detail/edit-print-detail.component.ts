@@ -190,6 +190,12 @@ export class EditPrintDetailComponent
   private imageIdsToDelete: number[] = [];
 
   /**
+   * Cached images for thumbnail strip - memoized to prevent re-creation
+   * during drag-drop operations which would break CDK drag state
+   */
+  public cachedImagesForStrip: ThumbnailImage[] = [];
+
+  /**
    * If the form is currently saving.
    */
   public saving = false;
@@ -302,6 +308,7 @@ export class EditPrintDetailComponent
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
+      this.updateCachedImagesForStrip();
 
       // update print form with the last loaded filament
       const printIsNew = this.printForm.get('id').value === null;
@@ -1050,6 +1057,7 @@ export class EditPrintDetailComponent
           newItem.markAllAsTouched();
           newItem.markAsDirty();
           this.images.push(newItem);
+          this.updateCachedImagesForStrip();
 
           if (!this.selectedImage) {
             this.selectedImage = newItem;
@@ -1092,26 +1100,38 @@ export class EditPrintDetailComponent
     image.value.isDefault = true;
   }
 
-  onImagesReordered(reorderedImages: ThumbnailImage[]): void {
-    // Update form array to match new order
-    const controls = [...this.images.controls];
+  onImagesReordered(event: {
+    previousIndex: number;
+    currentIndex: number;
+  }): void {
+    const { previousIndex, currentIndex } = event;
 
-    // Clear and re-add in new order
-    while (this.images.length) {
+    // Get all current form values to preserve data
+    const allValues = this.images.controls.map((ctrl) => ctrl.getRawValue());
+
+    // Reorder the values array
+    const reorderedValues = [...allValues];
+    const [movedValue] = reorderedValues.splice(previousIndex, 1);
+    reorderedValues.splice(currentIndex, 0, movedValue);
+
+    // Update displayOrder for all values
+    reorderedValues.forEach((value, index) => {
+      value.displayOrder = index;
+    });
+
+    // Rebuild the FormArray with reordered values
+    // Clear existing controls
+    while (this.images.length > 0) {
       this.images.removeAt(0);
     }
 
-    for (const img of reorderedImages) {
-      const control = controls.find(
-        (c) => c.value.id === img.id || c.value.url === img.url
-      );
-      if (control) {
-        control.patchValue({ displayOrder: img.displayOrder });
-        this.images.push(control);
-      }
-    }
+    // Add controls back in new order
+    reorderedValues.forEach((value) => {
+      this.images.push(this.createItem(value));
+    });
 
     this.images.markAsDirty();
+    this.updateCachedImagesForStrip();
   }
 
   onDefaultChanged(image: ThumbnailImage): void {
@@ -1132,6 +1152,7 @@ export class EditPrintDetailComponent
     }
 
     this.images.markAsDirty();
+    this.updateCachedImagesForStrip();
   }
 
   onImageDeleted(image: ThumbnailImage): void {
@@ -1160,6 +1181,7 @@ export class EditPrintDetailComponent
     }
 
     this.images.markAsDirty();
+    this.updateCachedImagesForStrip();
   }
 
   onDragOver(event: DragEvent): void {
@@ -1218,6 +1240,7 @@ export class EditPrintDetailComponent
         newItem.markAllAsTouched();
         newItem.markAsDirty();
         this.images.push(newItem);
+        this.updateCachedImagesForStrip();
 
         if (!this.selectedImage) {
           this.selectedImage = newItem;
@@ -1227,8 +1250,12 @@ export class EditPrintDetailComponent
     }
   }
 
-  getImagesForStrip(): ThumbnailImage[] {
-    return this.images.controls
+  /**
+   * Update the cached images for strip. Called whenever images change.
+   * This is separate from the template to prevent re-creation during change detection.
+   */
+  private updateCachedImagesForStrip(): void {
+    this.cachedImagesForStrip = this.images.controls
       .map((ctrl) => ({
         id: ctrl.value.id,
         url: ctrl.value.url,
@@ -1236,6 +1263,10 @@ export class EditPrintDetailComponent
         displayOrder: ctrl.value.displayOrder,
       }))
       .sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
+  getImagesForStrip(): ThumbnailImage[] {
+    return this.cachedImagesForStrip;
   }
 
   onThumbnailSelected(image: ThumbnailImage): void {

@@ -53,3 +53,6 @@ Thumbs.db
 
 # Ignores for Cypress
 cypress.env.json
+
+# Git worktrees
+.worktrees/

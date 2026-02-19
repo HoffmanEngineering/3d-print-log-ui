@@ -1094,10 +1094,10 @@ export class EditPrintDetailComponent
 
   setAsDefault(image: FormControl<PrintImageValue>) {
     this.images.controls.forEach((control) => {
-      control.value.isDefault = false;
+      control.setValue({ ...control.value, isDefault: false });
     });
 
-    image.value.isDefault = true;
+    image.setValue({ ...image.value, isDefault: true });
   }
 
   onImagesReordered(event: {
@@ -1135,21 +1135,25 @@ export class EditPrintDetailComponent
   }
 
   onDefaultChanged(image: ThumbnailImage): void {
-    // Clear existing default
+    // Find the control by matching displayOrder since that's the stable identifier after sorting
+    const control = this.images.controls.find(
+      (c) => c.value.displayOrder === image.displayOrder
+    );
+
+    if (!control) {
+      return;
+    }
+
+    // Clear existing default - must preserve all other properties when patching
     this.images.controls.forEach((ctrl) => {
       if (ctrl.value.isDefault) {
-        ctrl.patchValue({ isDefault: false });
+        ctrl.setValue({ ...ctrl.value, isDefault: false });
       }
     });
 
-    // Set new default
-    const control = this.images.controls.find(
-      (c) => c.value.id === image.id || c.value.url === image.url
-    );
-    if (control) {
-      control.patchValue({ isDefault: true });
-      this.selectedImage = control;
-    }
+    // Set new default - must preserve all other properties when patching
+    control.setValue({ ...control.value, isDefault: true });
+    this.selectedImage = control;
 
     this.images.markAsDirty();
     this.updateCachedImagesForStrip();
@@ -1174,7 +1178,7 @@ export class EditPrintDetailComponent
     // If deleted was default, promote next image
     if (wasDefault && this.images.length > 0) {
       const nextDefault = this.images.at(0);
-      nextDefault.patchValue({ isDefault: true });
+      nextDefault.setValue({ ...nextDefault.value, isDefault: true });
       this.selectedImage = nextDefault;
     } else if (this.images.length === 0) {
       this.selectedImage = null;
@@ -1256,13 +1260,21 @@ export class EditPrintDetailComponent
    */
   private updateCachedImagesForStrip(): void {
     this.cachedImagesForStrip = this.images.controls
-      .map((ctrl) => ({
+      .map((ctrl, index) => ({
         id: ctrl.value.id,
         url: ctrl.value.url,
         isDefault: ctrl.value.isDefault,
         displayOrder: ctrl.value.displayOrder,
+        _index: index, // Keep track of original index for stable sorting
       }))
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+      .sort((a, b) => {
+        const orderA = a.displayOrder ?? a._index;
+        const orderB = b.displayOrder ?? b._index;
+        if (orderA !== orderB) return orderA - orderB;
+        // Stable sort: if displayOrder is the same, use original index
+        return a._index - b._index;
+      })
+      .map(({ _index, ...item }) => item); // Remove _index from final array
   }
 
   getImagesForStrip(): ThumbnailImage[] {

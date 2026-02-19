@@ -71,6 +71,7 @@
     "@types/qrcode": "^1.5.5",
     "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.16.1",
+    "baseline-browser-mapping": "^2.9.19",
     "cypress": "^13.13.1",
     "eslint": "^9.7.0",
     "husky": "^7.0.4",

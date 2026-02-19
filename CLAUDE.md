@@ -19,11 +19,11 @@ npm run build              # Production build
 # Testing
 npm test                   # Run unit tests with Karma (watch mode)
 npm run test:ci            # CI tests with ChromeHeadless and coverage
+npm run test:brief         # Token-efficient test output (CI mode, failures/warnings only)
 
 # Linting
 npm run lint               # Run ESLint
 npm run lint:fix           # Auto-fix lint issues
-npm run test:brief         # Token-efficient test output (CI mode, failures/warnings only)
 npm run lint:brief         # Token-efficient lint output (errors/warnings only)
 
 # E2E Tests

@@ -59,6 +59,7 @@ import {
   Currency,
 } from 'src/app/core/resolvers/currencies-resolver.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
+import { isCordova } from 'src/app/core/utils/platform';
 
 export interface PrintImageValue {
   id?: number;
@@ -152,6 +153,8 @@ export class EditPrintDetailComponent
     powder: UserSettingType.Prints_LastSelectedPowderMeasureType,
     wire: UserSettingType.Prints_LastSelectedWireMeasureType,
   };
+
+  public isCordova = isCordova;
 
   public printers: PrinterSummary[] = [];
 
@@ -1066,6 +1069,7 @@ export class EditPrintDetailComponent
         reader.readAsDataURL(file);
       }
     }
+    target.value = '';
   }
 
   selectImage(image: FormControl<PrintImageValue>) {

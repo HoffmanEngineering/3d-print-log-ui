@@ -23,6 +23,14 @@
           id="files"
           (change)="detectFiles($event)"
         />
+        <input
+          #cameraInput
+          style="display: none"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          (change)="detectFiles($event)"
+        />
         <div
           class="image-drop-zone"
           [class.drag-over]="isDragOver"
@@ -37,13 +45,19 @@
             </div>
           }
           @if (images.length < 1) {
-            <button
-              type="button"
-              mat-stroked-button
-              (click)="imgFileInput.click()"
-            >
-              Upload Picture
-            </button>
+            @if (isCordova) {
+              <button type="button" mat-stroked-button (click)="cameraInput.click()">
+                Upload Picture
+              </button>
+            } @else {
+              <button
+                type="button"
+                mat-stroked-button
+                (click)="imgFileInput.click()"
+              >
+                Upload Picture
+              </button>
+            }
           }
           @if (selectedImage && selectedImage.value) {
             <div fxFlex class="card-img-top main-image">

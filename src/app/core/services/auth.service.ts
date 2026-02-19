@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
 
@@ -12,8 +12,11 @@ import {
 } from 'rxjs';
 import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
+const cordovaCallbackUri =
+  'com.printlog.app://cordova/com.printlog.app/callback';
 
 export interface UserProfileInfo {
   id: number;
@@ -48,7 +51,9 @@ export class AuthService {
         clientId: environment.authentication.client_id,
         authorizationParams: {
           audience: environment.authentication.audience,
-          redirect_uri: `${window.location.origin}/callback`,
+          redirect_uri: isCordova
+            ? cordovaCallbackUri
+            : `${window.location.origin}/callback`,
         },
         cacheLocation: 'localstorage',
         useRefreshTokens: true,
@@ -82,8 +87,21 @@ export class AuthService {
   constructor(
     private router: Router,
     private userService: UserService,
-    private notificationService: NotificationService
-  ) {}
+    private notificationService: NotificationService,
+    private ngZone: NgZone
+  ) {
+    if (isCordova) {
+      (window as any).handleOpenURL = (url: string) => {
+        // Called by cordova-plugin-customurlscheme when the app receives a callback URL
+        if (url && url.indexOf('/callback?') !== -1) {
+          const qs = url.substring(url.indexOf('?'));
+          this.ngZone.run(() => {
+            this.router.navigateByUrl('/callback' + qs);
+          });
+        }
+      };
+    }
+  }
 
   // When calling, options can be passed if desired
   // https://auth0.github.io/auth0-spa-js/classes/auth0client.html#getuser
@@ -188,7 +206,10 @@ export class AuthService {
       client.loginWithRedirect({
         appState: { target: redirectPath },
         authorizationParams: {
-          redirect_uri: `${window.location.origin}/callback`,
+          redirect_uri: isCordova
+            ? cordovaCallbackUri
+            : `${window.location.origin}/callback`,
+          ...(isCordova && { prompt: 'select_account' }),
         },
       });
     });

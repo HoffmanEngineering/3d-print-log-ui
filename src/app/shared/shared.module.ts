@@ -58,6 +58,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QrLabelDialogComponent } from './qr-label-dialog/qr-label-dialog.component';
 import { QrScannerComponent } from './qr-scanner/qr-scanner.component';
 import { ImageThumbnailStripComponent } from './image-thumbnail-strip/image-thumbnail-strip.component';
+import { ImageCarouselComponent } from './image-carousel/image-carousel.component';
 
 @NgModule({
   declarations: [
@@ -122,6 +123,7 @@ import { ImageThumbnailStripComponent } from './image-thumbnail-strip/image-thum
     QrLabelDialogComponent,
     QrScannerComponent,
     ImageThumbnailStripComponent,
+    ImageCarouselComponent,
   ],
   exports: [
     CommonModule,
@@ -177,6 +179,7 @@ import { ImageThumbnailStripComponent } from './image-thumbnail-strip/image-thum
     NotificationBellComponent,
     QrLabelDialogComponent,
     ImageThumbnailStripComponent,
+    ImageCarouselComponent,
   ],
 })
 export class SharedModule {}

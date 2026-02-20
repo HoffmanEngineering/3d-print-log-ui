@@ -1,0 +1,48 @@
+.carousel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.45) !important;
+  color: white !important;
+  width: 48px !important;
+  height: 48px !important;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.65) !important;
+  }
+
+  &--left {
+    left: 4px;
+  }
+
+  &--right {
+    right: 4px;
+  }
+}
+
+// Desktop (precise pointer): show arrows only on container hover
+@media (pointer: fine) {
+  .nav-arrow {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .carousel-container:hover .nav-arrow {
+    opacity: 1;
+  }
+}
+
+// Mobile (coarse pointer): always show arrows
+@media (pointer: coarse) {
+  .nav-arrow {
+    opacity: 1;
+  }
+}

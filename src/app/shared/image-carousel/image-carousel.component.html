@@ -1,0 +1,29 @@
+<div
+  class="carousel-container"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)"
+>
+  @if (selectedIndex() > 0) {
+    <button
+      mat-icon-button
+      class="nav-arrow nav-arrow--left"
+      aria-label="Previous image"
+      (click)="prev()"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+  }
+
+  <ng-content />
+
+  @if (selectedIndex() < imageCount() - 1) {
+    <button
+      mat-icon-button
+      class="nav-arrow nav-arrow--right"
+      aria-label="Next image"
+      (click)="next()"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  }
+</div>

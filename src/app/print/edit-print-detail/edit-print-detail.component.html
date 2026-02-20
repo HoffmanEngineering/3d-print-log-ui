@@ -59,18 +59,24 @@
               </button>
             }
           }
-          @if (selectedImage && selectedImage.value) {
-            <div fxFlex class="card-img-top main-image">
-              <app-print-image
-                fxFlex
-                [printId]="printForm.get('id').value"
-                [imageId]="selectedImage.value.id"
-                [imageData]="selectedImage.value.url"
-                [showDeleteOnHover]="false"
-                (imageDataChange)="selectedImage.value.url = $event"
-              ></app-print-image>
-            </div>
-          }
+          <app-image-carousel
+            [imageCount]="getImagesForStrip().length"
+            [selectedIndex]="selectedImageIndex"
+            (indexChange)="onCarouselIndexChange($event)"
+          >
+            @if (selectedImage && selectedImage.value) {
+              <div fxFlex class="card-img-top main-image">
+                <app-print-image
+                  fxFlex
+                  [printId]="printForm.get('id').value"
+                  [imageId]="selectedImage.value.id"
+                  [imageData]="selectedImage.value.url"
+                  [showDeleteOnHover]="false"
+                  (imageDataChange)="selectedImage.value.url = $event"
+                ></app-print-image>
+              </div>
+            }
+          </app-image-carousel>
         </div>
         <app-image-thumbnail-strip
           [images]="getImagesForStrip()"

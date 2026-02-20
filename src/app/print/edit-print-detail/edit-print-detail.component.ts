@@ -187,6 +187,7 @@ export class EditPrintDetailComponent
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
   public selectedImage: FormControl<PrintImageValue> | null = null;
+  public selectedImageIndex = 0;
 
   public defaultImageIdOnLoad: number | null = null;
 
@@ -1258,6 +1259,21 @@ export class EditPrintDetailComponent
     const control = this.images.controls.find(
       (c) => c.value.id === image.id || c.value.url === image.url
     );
+    if (control) {
+      this.selectedImage = control;
+      this.selectedImageIndex = this.getImagesForStrip().findIndex(
+        (i) => i.id === image.id || i.url === image.url
+      );
+    }
+  }
+
+  onCarouselIndexChange(index: number): void {
+    this.selectedImageIndex = index;
+    const image = this.getImagesForStrip()[index];
+    if (!image) return;
+    const control = this.images.controls.find(
+      (c) => c.value.id === image.id || c.value.url === image.url
+    ) as FormControl<PrintImageValue>;
     if (control) {
       this.selectedImage = control;
     }

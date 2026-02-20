@@ -99,4 +99,40 @@ describe('ViewPrintDetailComponent', () => {
     component.onImageSelected(testImage);
     expect(component.selectedImage).toEqual(testImage);
   });
+
+  describe('carousel navigation', () => {
+    beforeEach(() => {
+      const mockPrintWithImages = {
+        ...mockPrint,
+        images: [
+          { id: 1, isDefault: true, displayOrder: 0 },
+          { id: 2, isDefault: false, displayOrder: 1 },
+        ],
+      };
+
+      TestBed.inject(ActivatedRoute).data = of({
+        printers: [],
+        print: { print: mockPrintWithImages, user: mockUser },
+      }) as any;
+
+      fixture = TestBed.createComponent(ViewPrintDetailComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('should initialise selectedImageIndex to the default image index', () => {
+      expect(component.selectedImageIndex).toBe(0);
+    });
+
+    it('should update selectedImageIndex when onCarouselIndexChange is called', () => {
+      component.onCarouselIndexChange(1);
+      expect(component.selectedImageIndex).toBe(1);
+      expect(component.selectedImage).toBe(component.printImages[1]);
+    });
+
+    it('should update selectedImageIndex when onImageSelected is called', () => {
+      component.onImageSelected(component.printImages[1]);
+      expect(component.selectedImageIndex).toBe(1);
+    });
+  });
 });

@@ -43,6 +43,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
 
   public printImages: PrintImageValue[] = [];
   public selectedImage: PrintImageValue = null;
+  public selectedImageIndex = 0;
 
   public printStatusTypes = PrintStatus;
 
@@ -93,6 +94,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
 
         this.selectedImage =
           this.printImages.find((i) => i.isDefault) || this.printImages[0];
+        this.selectedImageIndex = this.printImages.indexOf(this.selectedImage);
       }
 
       this.metaService.setTitle(`${this.print.title} - 3D Print Log`);
@@ -158,5 +160,11 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
 
   onImageSelected(image: PrintImageValue): void {
     this.selectedImage = image;
+    this.selectedImageIndex = this.printImages.indexOf(image);
+  }
+
+  onCarouselIndexChange(index: number): void {
+    this.selectedImageIndex = index;
+    this.selectedImage = this.printImages[index];
   }
 }

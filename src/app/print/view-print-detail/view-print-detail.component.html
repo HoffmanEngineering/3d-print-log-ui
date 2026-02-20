@@ -26,18 +26,24 @@
         fxLayoutAlign="start center"
         fxLayoutGap="10px"
       >
-        @if (selectedImage) {
-          <div class="main-image">
-            <app-print-image
-              fxFlex
-              [printId]="print.id"
-              [imageId]="selectedImage.id"
-              [imageData]="selectedImage.url"
-              [showDeleteOnHover]="false"
-              (imageDataChange)="selectedImage.url = $event"
-            ></app-print-image>
-          </div>
-        }
+        <app-image-carousel
+          [imageCount]="printImages.length"
+          [selectedIndex]="selectedImageIndex"
+          (indexChange)="onCarouselIndexChange($event)"
+        >
+          @if (selectedImage) {
+            <div class="main-image">
+              <app-print-image
+                fxFlex
+                [printId]="print.id"
+                [imageId]="selectedImage.id"
+                [imageData]="selectedImage.url"
+                [showDeleteOnHover]="false"
+                (imageDataChange)="selectedImage.url = $event"
+              ></app-print-image>
+            </div>
+          }
+        </app-image-carousel>
         <app-image-thumbnail-strip
           [images]="printImages"
           [selectedId]="selectedImage?.id"

@@ -145,5 +145,29 @@ describe('ImageThumbnailStripComponent', () => {
       const star = fixture.nativeElement.querySelector('.default-star');
       expect(star.getAttribute('aria-hidden')).toBe('true');
     });
+
+    describe('editable mode button labels', () => {
+      beforeEach(() => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.detectChanges();
+      });
+
+      it('should label delete button with image number', () => {
+        const deleteBtns =
+          fixture.nativeElement.querySelectorAll('.delete-btn');
+        expect(deleteBtns[0].getAttribute('aria-label')).toBe('Delete image 1');
+        expect(deleteBtns[1].getAttribute('aria-label')).toBe('Delete image 2');
+      });
+
+      it('should label set-default button with image number', () => {
+        // mockImages[0] isDefault=true so no set-default button; mockImages[1] isDefault=false
+        const setDefaultBtns =
+          fixture.nativeElement.querySelectorAll('.set-default-btn');
+        expect(setDefaultBtns.length).toBe(1);
+        expect(setDefaultBtns[0].getAttribute('aria-label')).toBe(
+          'Set image 2 as default'
+        );
+      });
+    });
   });
 });

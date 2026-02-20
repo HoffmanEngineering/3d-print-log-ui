@@ -52,7 +52,8 @@
     transition: opacity 0.2s ease;
   }
 
-  .carousel-container:hover .nav-arrow {
+  .carousel-container:hover .nav-arrow,
+  .carousel-container:focus-within .nav-arrow {
     opacity: 1;
   }
 }

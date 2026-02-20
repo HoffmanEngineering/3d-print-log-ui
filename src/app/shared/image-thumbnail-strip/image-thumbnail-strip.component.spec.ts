@@ -71,4 +71,28 @@ describe('ImageThumbnailStripComponent', () => {
     const addButton = fixture.nativeElement.querySelector('.add-button');
     expect(addButton).toBeTruthy();
   });
+
+  describe('getSelectLabel', () => {
+    it('should return "Image 1 of 2" for a non-default image at index 0', () => {
+      const image: ThumbnailImage = {
+        id: 1,
+        url: 'x',
+        isDefault: false,
+        displayOrder: 0,
+      };
+      fixture.componentRef.setInput('images', [image, mockImages[1]]);
+      fixture.detectChanges();
+      expect(component.getSelectLabel(image, 0)).toBe('Image 1 of 2');
+    });
+
+    it('should append ", default" for the default image', () => {
+      expect(component.getSelectLabel(mockImages[0], 0)).toBe(
+        'Image 1 of 2, default'
+      );
+    });
+
+    it('should reflect the correct total count', () => {
+      expect(component.getSelectLabel(mockImages[1], 1)).toBe('Image 2 of 2');
+    });
+  });
 });

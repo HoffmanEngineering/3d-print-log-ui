@@ -64,4 +64,9 @@ export class ImageThumbnailStripComponent {
       currentIndex: event.currentIndex,
     });
   }
+
+  getSelectLabel(image: ThumbnailImage, index: number): string {
+    const position = `Image ${index + 1} of ${this.images().length}`;
+    return image.isDefault ? `${position}, default` : position;
+  }
 }

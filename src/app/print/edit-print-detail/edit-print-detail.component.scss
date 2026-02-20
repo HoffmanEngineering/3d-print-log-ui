@@ -51,8 +51,9 @@ mat-card-title {
 
 .main-image {
   position: relative;
+  width: 100%;
   max-width: 400px;
-  max-height: 400px;
+  aspect-ratio: 1 / 1;
   margin-bottom: 16px;
 }
 

@@ -161,6 +161,52 @@ describe('ImageCarouselComponent', () => {
     });
   });
 
+  describe('keyboard navigation', () => {
+    function pressKey(key: string) {
+      const container = fixture.nativeElement.querySelector(
+        '.carousel-container'
+      );
+      container.dispatchEvent(
+        new KeyboardEvent('keydown', { key, bubbles: true })
+      );
+    }
+
+    it('should emit prev index on ArrowLeft', () => {
+      setup(3, 2);
+      const spy = spyOn(component.indexChange, 'emit');
+      pressKey('ArrowLeft');
+      expect(spy).toHaveBeenCalledWith(1);
+    });
+
+    it('should emit next index on ArrowRight', () => {
+      setup(3, 1);
+      const spy = spyOn(component.indexChange, 'emit');
+      pressKey('ArrowRight');
+      expect(spy).toHaveBeenCalledWith(2);
+    });
+
+    it('should not emit on ArrowLeft when at first image', () => {
+      setup(3, 0);
+      const spy = spyOn(component.indexChange, 'emit');
+      pressKey('ArrowLeft');
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should not emit on ArrowRight when at last image', () => {
+      setup(3, 2);
+      const spy = spyOn(component.indexChange, 'emit');
+      pressKey('ArrowRight');
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should not emit on unrelated keys', () => {
+      setup(3, 1);
+      const spy = spyOn(component.indexChange, 'emit');
+      pressKey('Enter');
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('accessibility — container', () => {
     it('should have role="group" on the container', () => {
       setup(3, 1);

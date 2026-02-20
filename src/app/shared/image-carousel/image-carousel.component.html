@@ -5,6 +5,7 @@
   [attr.aria-label]="label()"
   (touchstart)="onTouchStart($event)"
   (touchend)="onTouchEnd($event)"
+  (keydown)="onKeydown($event)"
 >
   <span class="sr-only" aria-live="polite" aria-atomic="true">
     Image {{ selectedIndex() + 1 }} of {{ imageCount() }}

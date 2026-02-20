@@ -46,4 +46,12 @@ export class ImageCarouselComponent {
       delta < 0 ? this.next() : this.prev();
     }
   }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'ArrowLeft') {
+      this.prev();
+    } else if (event.key === 'ArrowRight') {
+      this.next();
+    }
+  }
 }

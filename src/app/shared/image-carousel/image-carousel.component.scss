@@ -45,7 +45,7 @@
   }
 }
 
-// Desktop (precise pointer): show arrows only on container hover
+// Desktop (precise pointer): hide arrows until hover or keyboard focus
 @media (pointer: fine) {
   .nav-arrow {
     opacity: 0;

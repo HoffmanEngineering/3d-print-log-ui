@@ -1,7 +1,12 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .carousel-container {
   position: relative;
   display: flex;
-  align-items: center;
+  justify-content: center;
   width: 100%;
 }
 

@@ -5,6 +5,7 @@
 >
   @if (selectedIndex() > 0) {
     <button
+      type="button"
       mat-icon-button
       class="nav-arrow nav-arrow--left"
       aria-label="Previous image"
@@ -18,6 +19,7 @@
 
   @if (selectedIndex() < imageCount() - 1) {
     <button
+      type="button"
       mat-icon-button
       class="nav-arrow nav-arrow--right"
       aria-label="Next image"

@@ -194,5 +194,20 @@ describe('ImageCarouselComponent', () => {
       );
       expect(container.getAttribute('aria-label')).toBe('Print images');
     });
+
+    it('should render a live region with the current image position', () => {
+      setup(3, 1);
+      const live = fixture.nativeElement.querySelector('[aria-live="polite"]');
+      expect(live).toBeTruthy();
+      expect(live.textContent.trim()).toBe('Image 2 of 3');
+    });
+
+    it('should update the live region when the index changes', () => {
+      setup(3, 0);
+      const live = fixture.nativeElement.querySelector('[aria-live="polite"]');
+      expect(live.textContent.trim()).toBe('Image 1 of 3');
+      setup(3, 2);
+      expect(live.textContent.trim()).toBe('Image 3 of 3');
+    });
   });
 });

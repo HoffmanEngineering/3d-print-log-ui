@@ -6,6 +6,10 @@
   (touchstart)="onTouchStart($event)"
   (touchend)="onTouchEnd($event)"
 >
+  <span class="sr-only" aria-live="polite" aria-atomic="true">
+    Image {{ selectedIndex() + 1 }} of {{ imageCount() }}
+  </span>
+
   @if (selectedIndex() > 0) {
     <button
       type="button"

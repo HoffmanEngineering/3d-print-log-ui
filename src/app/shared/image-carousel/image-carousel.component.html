@@ -1,5 +1,8 @@
 <div
   class="carousel-container"
+  role="group"
+  aria-roledescription="carousel"
+  [attr.aria-label]="label()"
   (touchstart)="onTouchStart($event)"
   (touchend)="onTouchEnd($event)"
 >

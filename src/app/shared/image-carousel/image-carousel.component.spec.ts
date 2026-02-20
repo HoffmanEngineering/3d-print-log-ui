@@ -160,4 +160,39 @@ describe('ImageCarouselComponent', () => {
       expect(spy).not.toHaveBeenCalled();
     });
   });
+
+  describe('accessibility — container', () => {
+    it('should have role="group" on the container', () => {
+      setup(3, 1);
+      const container = fixture.nativeElement.querySelector(
+        '.carousel-container'
+      );
+      expect(container.getAttribute('role')).toBe('group');
+    });
+
+    it('should have aria-roledescription="carousel" on the container', () => {
+      setup(3, 1);
+      const container = fixture.nativeElement.querySelector(
+        '.carousel-container'
+      );
+      expect(container.getAttribute('aria-roledescription')).toBe('carousel');
+    });
+
+    it('should default aria-label to "Image gallery"', () => {
+      setup(3, 1);
+      const container = fixture.nativeElement.querySelector(
+        '.carousel-container'
+      );
+      expect(container.getAttribute('aria-label')).toBe('Image gallery');
+    });
+
+    it('should use the label input for aria-label when provided', () => {
+      fixture.componentRef.setInput('label', 'Print images');
+      setup(3, 1);
+      const container = fixture.nativeElement.querySelector(
+        '.carousel-container'
+      );
+      expect(container.getAttribute('aria-label')).toBe('Print images');
+    });
+  });
 });

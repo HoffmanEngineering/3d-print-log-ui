@@ -17,6 +17,7 @@ import { MatIconModule } from '@angular/material/icon';
 export class ImageCarouselComponent {
   imageCount = input.required<number>();
   selectedIndex = input<number>(0);
+  label = input<string>('Image gallery');
 
   indexChange = output<number>();
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
@@ -9,6 +9,7 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit {
   title = 'print-log-ui';

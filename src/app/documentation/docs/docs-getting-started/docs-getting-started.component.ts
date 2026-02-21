@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/core/services/auth.service';
 
@@ -7,6 +7,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
   templateUrl: './docs-getting-started.component.html',
   styleUrls: ['./docs-getting-started.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocsGettingStartedComponent {
   constructor(

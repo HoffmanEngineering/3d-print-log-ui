@@ -6,6 +6,7 @@ import {
   Inject,
   ViewChild,
 } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { capitalize, snakeCase } from 'lodash-es';
 import {
@@ -61,9 +62,9 @@ export class GcodeViewerModalComponent implements AfterViewInit {
           +(await this.getLastSelectedPrinter())?.value || null;
 
         if (lastSelectedPrinterId) {
-          this.lastSelectedPrinter = await this.printerService
-            .getPrinterDetail(lastSelectedPrinterId)
-            .toPromise();
+          this.lastSelectedPrinter = await lastValueFrom(
+            this.printerService.getPrinterDetail(lastSelectedPrinterId)
+          );
         }
 
         const action = {

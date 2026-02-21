@@ -1,0 +1,39 @@
+<div
+  class="carousel-container"
+  role="group"
+  aria-roledescription="carousel"
+  [attr.aria-label]="label()"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)"
+  (keydown)="onKeydown($event)"
+>
+  <span class="sr-only" aria-live="polite" aria-atomic="true">
+    Image {{ selectedIndex() + 1 }} of {{ imageCount() }}
+  </span>
+
+  @if (selectedIndex() > 0) {
+    <button
+      type="button"
+      mat-icon-button
+      class="nav-arrow nav-arrow--left"
+      aria-label="Previous image"
+      (click)="prev()"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+  }
+
+  <ng-content />
+
+  @if (selectedIndex() < imageCount() - 1) {
+    <button
+      type="button"
+      mat-icon-button
+      class="nav-arrow nav-arrow--right"
+      aria-label="Next image"
+      (click)="next()"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  }
+</div>

@@ -1,7 +1,8 @@
 .main-image {
   position: relative;
+  width: 100%;
   max-width: 400px;
-  max-height: 400px;
+  aspect-ratio: 1 / 1;
 }
 
 .grid-container {

@@ -47,6 +47,7 @@ export enum PrintFilamentSourceMeasurement {
 export interface PrintImage {
   id: number;
   isDefault: boolean;
+  displayOrder: number;
 
   /**
    * base64 encoded URLs.
@@ -492,6 +493,16 @@ export class PrintService {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
 
     return this.http.delete(url);
+  }
+
+  reorderImages(
+    printId: number,
+    images: { imageId: number; displayOrder: number }[]
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.baseApi}/api/Prints/${printId}/images/reorder`,
+      { images }
+    );
   }
 
   public addPrintComment(printId: number, commentBody: string) {

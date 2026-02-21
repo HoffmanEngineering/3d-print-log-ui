@@ -1,0 +1,73 @@
+<div class="thumbnail-strip" [class.editable]="editable()">
+  @if (images().length > 1 || editable()) {
+    <ul
+      class="thumbnails"
+      [cdkDropListDisabled]="!editable()"
+      cdkDropList
+      cdkDropListOrientation="horizontal"
+      (cdkDropListDropped)="onDrop($event)"
+    >
+      @for (image of images(); track image.id !== undefined ? image.id : `new-${$index}`; let index = $index) {
+        <li
+          class="thumbnail"
+          [class.selected]="image.id === selectedId()"
+          [class.is-default]="image.isDefault"
+          [cdkDragDisabled]="!editable()"
+          cdkDrag
+        >
+          <button
+            class="thumbnail-select"
+            type="button"
+            [attr.aria-label]="getSelectLabel(image, index)"
+            [attr.aria-current]="image.id === selectedId() ? 'true' : null"
+            (click)="onThumbnailClick(image)"
+          >
+            @if (image.url) {
+              <img [src]="image.url" alt="" />
+            } @else {
+              <div class="placeholder">
+                <mat-icon>image</mat-icon>
+              </div>
+            }
+            @if (image.isDefault) {
+              <mat-icon class="default-star" aria-hidden="true">star</mat-icon>
+            }
+          </button>
+          @if (editable()) {
+            @if (!image.isDefault) {
+              <button
+                mat-icon-button
+                class="set-default-btn"
+                type="button"
+                [attr.aria-label]="'Set image ' + (index + 1) + ' as default'"
+                (click)="onSetDefaultClick($event, image)"
+              >
+                <mat-icon>star_border</mat-icon>
+              </button>
+            }
+            <button
+              mat-icon-button
+              class="delete-btn"
+              type="button"
+              [attr.aria-label]="'Delete image ' + (index + 1)"
+              (click)="onDeleteClick($event, image)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </li>
+      }
+      @if (editable() && canAddMore() && images().length > 0) {
+        <li class="add-button-item">
+          <button class="add-button" mat-stroked-button type="button" (click)="onAddClick()">
+            <mat-icon>add</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (editable() && !canAddMore()) {
+      <div class="limit-message">Maximum {{ maxImages() }} images reached</div>
+    }
+  }
+</div>

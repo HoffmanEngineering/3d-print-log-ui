@@ -1,0 +1,66 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.carousel-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.45) !important;
+  color: white !important;
+  width: 48px !important;
+  height: 48px !important;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.65) !important;
+  }
+
+  &--left {
+    left: 4px;
+  }
+
+  &--right {
+    right: 4px;
+  }
+}
+
+// Desktop (precise pointer): hide arrows until hover or keyboard focus
+@media (pointer: fine) {
+  .nav-arrow {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .carousel-container:hover .nav-arrow,
+  .carousel-container:focus-within .nav-arrow {
+    opacity: 1;
+  }
+}
+
+// Mobile (coarse pointer): always show arrows
+@media (pointer: coarse) {
+  .nav-arrow {
+    opacity: 1;
+  }
+}

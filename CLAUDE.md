@@ -19,10 +19,12 @@ npm run build              # Production build
 # Testing
 npm test                   # Run unit tests with Karma (watch mode)
 npm run test:ci            # CI tests with ChromeHeadless and coverage
+npm run test:brief         # Token-efficient test output (CI mode, failures/warnings only)
 
 # Linting
 npm run lint               # Run ESLint
 npm run lint:fix           # Auto-fix lint issues
+npm run lint:brief         # Token-efficient lint output (errors/warnings only)
 
 # E2E Tests
 npm run e2e                # Open Cypress
@@ -31,6 +33,15 @@ npm run e2e                # Open Cypress
 npm run prettier           # Check formatting
 npm run prettier:fix       # Fix formatting
 ```
+
+### Token-Efficient Commands
+
+When communicating with Claude about test or lint failures, use these token-efficient variants to reduce output:
+
+- **`npm run test:brief`** - Runs tests in CI mode with only failures/warnings displayed
+- **`npm run lint:brief`** - Runs linting with only errors/warnings displayed
+
+These commands are optimized for minimal token usage while preserving actionable information about failures and warnings.
 
 ## Architecture
 

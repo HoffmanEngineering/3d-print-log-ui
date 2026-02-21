@@ -55,6 +55,7 @@ export class CopyPrintDetailResolverService {
                 id: null,
                 isDefault: image.isDefault,
                 url: image.url,
+                displayOrder: i,
               };
             }),
             filamentUsage: cleanedFilamentUsage,

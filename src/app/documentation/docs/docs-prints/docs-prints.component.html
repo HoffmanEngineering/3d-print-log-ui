@@ -19,7 +19,10 @@
     default columns are:
   </p>
   <ul>
-    <li><strong>Image</strong> - The saved image for the print.</li>
+    <li>
+      <strong>Image</strong> - The default image for the print. Prints can have
+      up to 5 images; the default image is the one shown in list views.
+    </li>
     <li><strong>Title</strong> - The title of the Print.</li>
     <li>
       <strong>Printer</strong> - The Name (Make - Model) of the 3D printer used.
@@ -118,10 +121,11 @@
     Give the print a <strong>Title</strong> and a <strong>Start Date</strong>,
     and select an active <strong>Printer</strong>. Optionally, enter the URL for
     where you found the 3D model. Use the
-    <strong>"Choose File" button</strong> to upload an image for the 3D print.
-    The <strong>Notes</strong> field can be used to record any additional
-    details you may want. Both the Title and Notes fields are searched in the
-    Print List, so use keywords in the notes to help make searching easier.
+    <strong>"Choose File" button</strong> to upload one or more images for the
+    3D print (up to 5 images total). The <strong>Notes</strong> field can be
+    used to record any additional details you may want. Both the Title and Notes
+    fields are searched in the Print List, so use keywords in the notes to help
+    make searching easier.
   </p>
   <p>
     The Estimated and Actual <strong>Print Time</strong> fields accept
@@ -198,6 +202,43 @@
     <button mat-raised-button color="primary">Submit</button> to update that 3D
     print.
   </p>
+  <h4 id="images">Managing Images</h4>
+  <p>
+    Each print can have up to <strong>5 images</strong>. When editing a print,
+    the image area supports the following:
+  </p>
+  <ul>
+    <li>
+      <strong>Add images</strong> — Click the <strong>Choose File</strong>
+      button or drag and drop image files onto the upload area to add more
+      images. You can also select multiple files at once. Adding images is
+      disabled once 5 images are attached.
+    </li>
+    <li>
+      <strong>Browse images</strong> — When a print has more than one image, a
+      thumbnail strip appears below the main image. Click any thumbnail to view
+      that image, or use the arrow buttons on the sides of the main image to
+      step through them. On touch devices, swipe left or right on the main
+      image to navigate.
+    </li>
+    <li>
+      <strong>Set the default image</strong> — The default image is shown in
+      the print list and on the public print view. It is marked with a
+      <mat-icon inline="true">star</mat-icon> in the thumbnail strip. To change
+      the default, hover over any other thumbnail and click the
+      <mat-icon inline="true">star_border</mat-icon> icon that appears.
+    </li>
+    <li>
+      <strong>Reorder images</strong> — Drag and drop thumbnails in the strip
+      to change the display order of your images.
+    </li>
+    <li>
+      <strong>Delete an image</strong> — Hover over a thumbnail and click the
+      <mat-icon inline="true">close</mat-icon> icon to remove that image.
+      Deletions take effect when you click
+      <button mat-raised-button color="primary">Submit</button>.
+    </li>
+  </ul>
   <hr />
   <h3 id="delete">Delete a Print</h3>
   <p>

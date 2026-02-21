@@ -26,7 +26,11 @@
         fxLayoutAlign="start center"
         fxLayoutGap="10px"
       >
-        <div fxLayout="row">
+        <app-image-carousel
+          [imageCount]="printImages.length"
+          [selectedIndex]="selectedImageIndex"
+          (indexChange)="onCarouselIndexChange($event)"
+        >
           @if (selectedImage) {
             <div class="main-image">
               <app-print-image
@@ -39,7 +43,12 @@
               ></app-print-image>
             </div>
           }
-        </div>
+        </app-image-carousel>
+        <app-image-thumbnail-strip
+          [images]="printImages"
+          [selectedId]="selectedImage?.id"
+          (imageSelected)="onImageSelected($event)"
+        />
         <div></div>
       </mat-card-content>
       <mat-card-content

@@ -51,8 +51,9 @@ mat-card-title {
 
 .main-image {
   position: relative;
+  width: 100%;
   max-width: 400px;
-  max-height: 400px;
+  aspect-ratio: 1 / 1;
   margin-bottom: 16px;
 }
 
@@ -280,5 +281,40 @@ mat-card-content {
 .desktop-margin-offset {
   @media (min-width: 960px) {
     margin-left: -10px;
+  }
+}
+
+// Image drop zone styles
+.image-drop-zone {
+  position: relative;
+  border: 2px dashed transparent;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+
+  &.drag-over {
+    border-color: #3f51b5;
+  }
+
+  .drop-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(63, 81, 181, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 10;
+    border-radius: 4px;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 8px;
+    }
   }
 }

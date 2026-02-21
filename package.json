@@ -1,6 +1,6 @@
 {
   "name": "print-log-ui",
-  "version": "1.31.0",
+  "version": "1.32.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
@@ -8,8 +8,10 @@
     "build": "ng build --configuration production --verbose",
     "test": "ng test",
     "test:ci": "ng test --no-watch --code-coverage --browsers ChromeHeadless",
+    "test:brief": "bash scripts/test-brief.sh",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
+    "lint:brief": "bash scripts/lint-brief.sh",
     "e2e": "cypress open",
     "source-map-explorer": "ng build --configuration production --sourceMap=true && source-map-explorer dist/print-log-ui/*",
     "prettier": "prettier --check src/**/*.*",
@@ -71,6 +73,7 @@
     "@types/qrcode": "^1.5.5",
     "@typescript-eslint/eslint-plugin": "^7.16.1",
     "@typescript-eslint/parser": "^7.16.1",
+    "baseline-browser-mapping": "^2.9.19",
     "cypress": "^13.13.1",
     "eslint": "^9.7.0",
     "husky": "^7.0.4",

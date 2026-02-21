@@ -24,6 +24,7 @@ export interface PrintImageValue {
   url?: string;
   file?: File;
   isDefault: boolean;
+  displayOrder: number;
 }
 
 @Component({
@@ -42,6 +43,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
 
   public printImages: PrintImageValue[] = [];
   public selectedImage: PrintImageValue = null;
+  public selectedImageIndex = 0;
 
   public printStatusTypes = PrintStatus;
 
@@ -80,20 +82,19 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
       this.user = data.print.user;
 
       if (this.print.images?.length > 0) {
-        this.print.images.forEach((image) => {
-          const newImage: PrintImageValue = {
+        this.printImages = this.print.images
+          .map((image) => ({
             id: image.id,
-            url: null,
+            url: `${environment.printLogApiUrl}/api/Prints/${this.print.id}/image/${image.id}`,
             file: null,
             isDefault: image.isDefault,
-          };
+            displayOrder: image.displayOrder,
+          }))
+          .sort((a, b) => a.displayOrder - b.displayOrder);
 
-          if (image.isDefault) {
-            this.selectedImage = newImage;
-          }
-
-          this.printImages.push(newImage);
-        });
+        this.selectedImage =
+          this.printImages.find((i) => i.isDefault) || this.printImages[0];
+        this.selectedImageIndex = this.printImages.indexOf(this.selectedImage);
       }
 
       this.metaService.setTitle(`${this.print.title} - 3D Print Log`);
@@ -155,5 +156,15 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
       .subscribe((comment) => {
         this.print.comments.push(comment);
       });
+  }
+
+  onImageSelected(image: PrintImageValue): void {
+    this.selectedImage = image;
+    this.selectedImageIndex = this.printImages.indexOf(image);
+  }
+
+  onCarouselIndexChange(index: number): void {
+    this.selectedImageIndex = index;
+    this.selectedImage = this.printImages[index];
   }
 }

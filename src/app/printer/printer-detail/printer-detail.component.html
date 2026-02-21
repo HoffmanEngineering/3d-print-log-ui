@@ -299,13 +299,7 @@
                       <div fxFlex style="padding-bottom: 10px">
                         <div
                           class="filament-color-cell"
-                          [ngStyle]="{
-                            'background-color': printFilament.get('filament')
-                              .value?.colorHex
-                              ? '#' +
-                                printFilament.get('filament').value?.colorHex
-                              : null,
-                          }"
+                          [style.background-color]="printFilament.get('filament').value?.colorHex ? '#' + printFilament.get('filament').value?.colorHex : null"
                         ></div>
                       </div>
                       <div fxFlex>

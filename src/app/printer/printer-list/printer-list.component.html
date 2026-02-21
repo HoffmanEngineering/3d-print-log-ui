@@ -69,7 +69,7 @@
               @if (pf.filament !== null) {
                 <div
                   class="filament-color-cell"
-                  [ngStyle]="{ 'background-color': '#' + pf.filament.colorHex }"
+                  [style.background-color]="'#' + pf.filament.colorHex"
                 ></div>
               }
             </div>

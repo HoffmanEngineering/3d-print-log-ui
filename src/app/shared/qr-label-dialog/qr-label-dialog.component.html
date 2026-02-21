@@ -65,7 +65,7 @@
                   <div class="filament-color">
                     <span
                       class="color-swatch"
-                      [ngStyle]="getColorStyle(label.filament.colorHex)"
+                      [style.background-color]="label.filament.colorHex ? '#' + label.filament.colorHex : '#cccccc'"
                     ></span>
                     <span>{{ label.filament.colorName || 'Unknown' }}</span>
                   </div>

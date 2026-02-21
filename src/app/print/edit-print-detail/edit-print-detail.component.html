@@ -851,11 +851,7 @@
                               printFilament.get('filament').value
                                 ?.purchasePriceValue !== null
                             "
-                            [ngClass]="{
-                              'price-error': getEstimatedPrice(
-                                $any(printFilament)
-                              ).includes('('),
-                            }"
+                            [class.price-error]="getEstimatedPrice($any(printFilament)).includes('(')"
                           >
                             @if (
                               getEstimatedPrice($any(printFilament)).includes(
@@ -895,11 +891,7 @@
                                 printFilament.get('filament').value
                                   ?.purchasePriceValue !== null
                               "
-                              [ngClass]="{
-                                'price-error': getActualPrice(
-                                  $any(printFilament)
-                                ).includes('('),
-                              }"
+                              [class.price-error]="getActualPrice($any(printFilament)).includes('(')"
                             >
                               @if (
                                 getActualPrice($any(printFilament)).includes(

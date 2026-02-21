@@ -696,7 +696,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
                   .navigate(['new', 'edit'], {
                     relativeTo: this.activatedRoute,
                   })
-                  .catch((err) => console.error(err));
+                  .catch((err) => this.loggingService.logException(err));
               }
             });
         };

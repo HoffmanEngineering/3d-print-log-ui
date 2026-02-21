@@ -58,33 +58,32 @@ Components updated:
 
 ## Medium Priority
 
-### Replace `[ngClass]` with `[class.*]` bindings (~10 instances)
+### ✅ Replace `[ngClass]` with `[class.*]` bindings
 
-- `analytics/prints-by-status/prints-by-status.component.html` — `[ngClass]="{ half: showData }"`, `[ngClass]="element.status"`
-- `users/user-profile/user-profile.component.html`
-- `settings/settings.component.html` — 5 instances
-- `print/edit-print-detail/edit-print-detail.component.html` — 2 instances
+- `analytics/prints-by-status/prints-by-status.component.html` — `[class.half]`, `[class]`
+- `settings/settings.component.html` — 5 instances replaced with paired `[class.mat-elevation-z5]` + `[class.editing-card]` bindings
+- `print/edit-print-detail/edit-print-detail.component.html` — 2 instances replaced with `[class.price-error]`
 
-### Remove `console.log/warn` statements (~8 instances)
+**Intentionally skipped:**
 
-Should use `LoggingService` instead. Instances in:
+- `users/user-profile/user-profile.component.html` — `[ngClass]` is inside a commented-out block, no action needed
 
-- `printer-maintenance.component.ts:332`
-- `core/services/file-parsers/cura/cura-slicer-file-parser.service.ts` — multiple
-- `core/services/auth.service.ts:65, 168`
-- `print/print-list/print-list.component.ts:699`
-- `print/edit-print-detail/edit-print-detail.component.ts:623`
+### ✅ Remove `console.log/warn` statements
 
-### Fix async Promise executor anti-pattern
+- `core/services/auth.service.ts` — removed 2 console statements from Observable pipes
+- `core/services/file-parsers/cura/cura-slicer-file-parser.service.ts` — removed 3 debug `console.log` calls
+- `printer-maintenance.component.ts` — removed debug log from validation guard
+- `print/edit-print-detail/edit-print-detail.component.ts` — replaced `console.warn` with `loggingService.logEvent`
+- `print/print-list/print-list.component.ts` — replaced `console.error` with `loggingService.logException`
+- `print/services/integration/cura-parser.service.ts` — replaced `console.warn` with `loggingService.logEvent`
 
-- `core/services/navigator-share.service.ts:17` — `new Promise(async (resolve, reject) => {...})`
+### ✅ Fix async Promise executor anti-pattern
 
-Use `async/await` directly or restructure to avoid the anti-pattern.
+- `core/services/navigator-share.service.ts` — refactored `share()` to a proper `async` method using `return`/`throw` instead of `new Promise(async ...)`. Also fixed a latent bug where the promise would hang indefinitely when both `text` and `url` were undefined.
 
-### Migrate remaining `*ngIf`/`*ngFor` to `@if`/`@for` (handful remaining)
+### ✅ Migrate remaining `*ngIf`/`*ngFor` to `@if`/`@for`
 
-- `users/user-profile/user-profile.component.html` — 3 instances
-- `filament/filament-detail/filament-detail.component.html` — 4 instances
+All instances found were inside HTML comments — no live code needed migrating.
 
 ---
 

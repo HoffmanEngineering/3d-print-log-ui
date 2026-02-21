@@ -620,9 +620,9 @@ export class EditPrintDetailComponent
         ];
 
       if (!materialUserSettingType) {
-        console.warn(
-          `Unknown material type ${materialCategoryName}, unable to save user setting.`
-        );
+        this.loggingService.logEvent('EditPrintDetail_UnknownMaterialType', {
+          materialCategoryName,
+        });
         return;
       }
 

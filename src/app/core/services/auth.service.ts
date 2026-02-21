@@ -62,7 +62,6 @@ export class AuthService {
   ).pipe(
     shareReplay(1), // Every subscription receives the same shared value
     catchError((err) => {
-      console.error('Error in Auth Client Creation', err);
       return throwError(err);
     })
   );
@@ -165,7 +164,6 @@ export class AuthService {
       catchError((err) => {
         if (err.error === 'missing_refresh_token') {
           if (this.loggedIn) {
-            console.log('Missing Refresh Token: Logging out');
             this.logout();
           }
         }

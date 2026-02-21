@@ -5,7 +5,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import {
   PrinterService,
   PrinterSummary,
-  PrinterSummaryWithFilament,
+  PrinterSummarySimple,
 } from '../../core/services/printer.service';
 
 import { Title } from '@angular/platform-browser';
@@ -22,7 +22,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   standalone: false,
 })
 export class PrinterListComponent implements OnInit {
-  public printers: PrinterSummaryWithFilament[] = [];
+  public printers: PrinterSummarySimple[] = [];
 
   public pageSize: number;
   public currentPage: number;
@@ -57,7 +57,7 @@ export class PrinterListComponent implements OnInit {
     this.titleService.setTitle('My Printers - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
-      const pagedResponse: PagedList<PrinterSummaryWithFilament> =
+      const pagedResponse: PagedList<PrinterSummarySimple> =
         data.printerList;
       this.handlePagedList(pagedResponse);
     });
@@ -96,7 +96,7 @@ export class PrinterListComponent implements OnInit {
     this.handlePagedList(response);
   }
 
-  public unloadAllFilament(printer: PrinterSummaryWithFilament) {
+  public unloadAllFilament(printer: PrinterSummarySimple) {
     this.printerService.unloadFilament(printer.id).subscribe(() => {
       this.updateFilter().then(() => {
         this.toastrService.success(
@@ -107,7 +107,7 @@ export class PrinterListComponent implements OnInit {
     });
   }
 
-  private handlePagedList(response: PagedList<PrinterSummaryWithFilament>) {
+  private handlePagedList(response: PagedList<PrinterSummarySimple>) {
     this.printers = response.items;
 
     this.currentPage = response.paging.currentPage;
@@ -115,7 +115,7 @@ export class PrinterListComponent implements OnInit {
     this.totalCount = response.paging.totalCount;
   }
 
-  public formatLoadedInFilament(printer: PrinterSummaryWithFilament) {
+  public formatLoadedInFilament(printer: PrinterSummarySimple) {
     let result = '';
     if (printer?.loadedFilaments?.length > 0) {
       result = printer.loadedFilaments
@@ -128,7 +128,7 @@ export class PrinterListComponent implements OnInit {
     return result;
   }
 
-  public deletePrinter(printer: PrinterSummaryWithFilament) {
+  public deletePrinter(printer: PrinterSummarySimple) {
     const dialogRef = this.dialog.open(SimpleDialogComponent, {
       maxWidth: '350px',
     });

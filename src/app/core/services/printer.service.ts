@@ -16,6 +16,39 @@ export interface PrinterSummary {
   category: PrinterCategory;
 }
 
+/**
+ * Lightweight filament summary for printer list displays.
+ * Excludes expensive calculated fields.
+ */
+export interface FilamentSummaryForPrinter {
+  id: string;
+  displayName: string;
+  brand: string;
+  materialType: string;
+  colorName: string;
+  colorHex: string;
+}
+
+/**
+ * Lightweight printer-filament relationship for summary views.
+ */
+export interface PrinterFilamentForSummary {
+  id: string;
+  filament: FilamentSummaryForPrinter;
+}
+
+/**
+ * Simplified printer summary for list displays.
+ * Excludes expensive calculated filament fields.
+ */
+export interface PrinterSummarySimple extends PrinterSummary {
+  loadedFilaments: PrinterFilamentForSummary[];
+}
+
+/**
+ * @deprecated Use PrinterSummarySimple instead.
+ * This interface includes expensive calculations not used by the UI.
+ */
 export interface PrinterSummaryWithFilament extends PrinterSummary {
   loadedFilaments: PrinterFilamentSummaryDto[];
 }
@@ -112,7 +145,7 @@ export class PrinterService {
     pageSize: number = 10,
     searchText: string = '',
     includeInactive: boolean = false
-  ): Observable<PagedList<PrinterSummaryWithFilament>> {
+  ): Observable<PagedList<PrinterSummarySimple>> {
     const url = `${this.baseApi}/api/printers/summary`;
 
     let params = new HttpParams()
@@ -124,7 +157,7 @@ export class PrinterService {
       params = params.set('searchText', searchText);
     }
 
-    return this.http.get<PagedList<PrinterSummaryWithFilament>>(url, {
+    return this.http.get<PagedList<PrinterSummarySimple>>(url, {
       params,
     });
   }

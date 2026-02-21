@@ -27,6 +27,32 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.32.0': {
+      title: '1.32.0 - Multi-Image Support & Accessibility',
+      body: `<p>
+Prints now support <strong>up to 5 images</strong>! Upload multiple photos of your print, browse
+between them with the new carousel navigation, reorder with drag-and-drop, and designate a default
+image to show in your print list.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.31.0': {
       title: '1.31.0 - QR Code Labels for Filament Spools',
       body: `<p>

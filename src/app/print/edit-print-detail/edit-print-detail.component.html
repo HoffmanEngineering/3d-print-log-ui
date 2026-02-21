@@ -60,7 +60,7 @@
             }
           }
           <app-image-carousel
-            [imageCount]="getImagesForStrip().length"
+            [imageCount]="cachedImagesForStrip.length"
             [selectedIndex]="selectedImageIndex"
             (indexChange)="onCarouselIndexChange($event)"
           >
@@ -79,10 +79,10 @@
           </app-image-carousel>
         </div>
         <app-image-thumbnail-strip
-          [images]="getImagesForStrip()"
+          [images]="cachedImagesForStrip"
           [selectedId]="selectedImage?.value?.id"
           [editable]="true"
-          [maxImages]="5"
+          [maxImages]="MAX_IMAGES"
           (imageSelected)="onThumbnailSelected($event)"
           (imageDeleted)="onImageDeleted($event)"
           (defaultChanged)="onDefaultChanged($event)"

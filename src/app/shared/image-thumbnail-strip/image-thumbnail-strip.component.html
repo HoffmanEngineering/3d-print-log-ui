@@ -58,9 +58,11 @@
         </li>
       }
       @if (editable() && canAddMore() && images().length > 0) {
-        <button class="add-button" mat-stroked-button type="button" (click)="onAddClick()">
-          <mat-icon>add</mat-icon>
-        </button>
+        <li class="add-button-item">
+          <button class="add-button" mat-stroked-button type="button" (click)="onAddClick()">
+            <mat-icon>add</mat-icon>
+          </button>
+        </li>
       }
     </ul>
 

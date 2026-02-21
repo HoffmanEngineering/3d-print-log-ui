@@ -186,6 +186,8 @@ export class EditPrintDetailComponent
   public printViewStatusTypes = PrintViewStatus;
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
+  public readonly MAX_IMAGES = 5;
+
   public selectedImage: FormControl<PrintImageValue> | null = null;
   public selectedImageIndex = 0;
 
@@ -1025,10 +1027,13 @@ export class EditPrintDetailComponent
     const files = target.files;
     if (files) {
       const currentCount = this.images.length;
-      const maxAllowed = 5 - currentCount;
+      const maxAllowed = this.MAX_IMAGES - currentCount;
 
       if (maxAllowed <= 0) {
-        this.toastr.warning('Maximum 5 images allowed', 'Limit Reached');
+        this.toastr.warning(
+          `Maximum ${this.MAX_IMAGES} images allowed`,
+          'Limit Reached'
+        );
         return;
       }
 
@@ -1105,6 +1110,7 @@ export class EditPrintDetailComponent
 
     this.images.markAsDirty();
     this.updateCachedImagesForStrip();
+    this.syncSelectedImageIndex();
   }
 
   onDefaultChanged(image: ThumbnailImage): void {
@@ -1158,12 +1164,13 @@ export class EditPrintDetailComponent
 
     this.images.markAsDirty();
     this.updateCachedImagesForStrip();
+    this.syncSelectedImageIndex();
   }
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    if (this.images.length < 5) {
+    if (this.images.length < this.MAX_IMAGES) {
       this.isDragOver = true;
     }
   }
@@ -1171,7 +1178,12 @@ export class EditPrintDetailComponent
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    this.isDragOver = false;
+    if (
+      !event.relatedTarget ||
+      !(event.currentTarget as Element).contains(event.relatedTarget as Node)
+    ) {
+      this.isDragOver = false;
+    }
   }
 
   onFileDrop(event: DragEvent): void {
@@ -1187,10 +1199,13 @@ export class EditPrintDetailComponent
 
   private processDroppedFiles(files: FileList): void {
     const currentCount = this.images.length;
-    const maxAllowed = 5 - currentCount;
+    const maxAllowed = this.MAX_IMAGES - currentCount;
 
     if (maxAllowed <= 0) {
-      this.toastr.warning('Maximum 5 images allowed', 'Limit Reached');
+      this.toastr.warning(
+        `Maximum ${this.MAX_IMAGES} images allowed`,
+        'Limit Reached'
+      );
       return;
     }
 
@@ -1255,6 +1270,19 @@ export class EditPrintDetailComponent
     return this.cachedImagesForStrip;
   }
 
+  /**
+   * Recalculate selectedImageIndex to match the current position of selectedImage
+   * in cachedImagesForStrip. Called after reorder or delete operations.
+   */
+  private syncSelectedImageIndex(): void {
+    const idx = this.cachedImagesForStrip.findIndex(
+      (i) =>
+        i.id === this.selectedImage?.value.id ||
+        i.url === this.selectedImage?.value.url
+    );
+    this.selectedImageIndex = idx === -1 ? 0 : idx;
+  }
+
   onThumbnailSelected(image: ThumbnailImage): void {
     const control = this.images.controls.find(
       (c) => c.value.id === image.id || c.value.url === image.url
@@ -1300,7 +1328,7 @@ export class EditPrintDetailComponent
         return this.printService.uploadPrintImage(
           printId,
           image.value.file,
-          image.value.isDefault
+          image.value.isDefault ?? false
         );
       }
 
@@ -1308,7 +1336,7 @@ export class EditPrintDetailComponent
       return this.printService.uploadPrintImageFromDataUrl(
         printId,
         image.value.url,
-        image.value.isDefault
+        image.value.isDefault ?? false
       );
     });
 
@@ -1418,10 +1446,10 @@ export class EditPrintDetailComponent
         mergeMap((print) => this.deleteImages(print.id)),
         mergeMap((print) => this.reorderImages(print.id))
       )
-      .subscribe(
-        (print) => this.handleSaveSuccess(newPrint),
-        (err) => this.handleSaveError(err, newPrint)
-      );
+      .subscribe({
+        next: () => this.handleSaveSuccess(newPrint),
+        error: (err) => this.handleSaveError(err, newPrint),
+      });
   }
 
   /**
@@ -1469,6 +1497,7 @@ export class EditPrintDetailComponent
       );
     }
 
+    this.saving = false;
     this.printForm.markAsPristine();
     this.router.navigate(['/prints']).then(() => {
       this.toastr.success('Save successful!');

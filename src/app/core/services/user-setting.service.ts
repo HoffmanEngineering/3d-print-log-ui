@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
@@ -67,7 +68,7 @@ export class UserSettingService {
     userSettingTypeId: UserSettingType
   ): Promise<UserSetting | null> {
     if (this.userSettings.length === 0) {
-      await this.getCurrentUsersSettings().toPromise();
+      await lastValueFrom(this.getCurrentUsersSettings());
     }
 
     const existingSetting = this.userSettings.find(

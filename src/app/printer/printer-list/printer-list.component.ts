@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { lastValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
 import {
@@ -84,14 +85,14 @@ export class PrinterListComponent implements OnInit {
   public async updateFilter() {
     localStorage.setItem('printer_list_page_size', this.pageSize.toString(10));
 
-    const response = await this.printerService
-      .getCurrentUserPrinterSummaries(
+    const response = await lastValueFrom(
+      this.printerService.getCurrentUserPrinterSummaries(
         this.currentPage,
         this.pageSize,
         this.searchText,
         this.includeInactive
       )
-      .toPromise();
+    );
 
     this.handlePagedList(response);
   }

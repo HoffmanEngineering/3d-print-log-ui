@@ -1,9 +1,12 @@
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   OnInit,
   QueryList,
   ViewChildren,
+  inject,
 } from '@angular/core';
 import {
   FeedService,
@@ -15,18 +18,21 @@ import {
   templateUrl: './feed-list.component.html',
   styleUrls: ['./feed-list.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedListComponent implements OnInit {
   public feed: PrintFeedSummary[] = [];
 
   @ViewChildren('PrintSummaryCard') summaryCards: QueryList<ElementRef>;
 
-  constructor(private readonly feedService: FeedService) {}
+  private readonly feedService = inject(FeedService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
     const now = new Date();
     this.feedService.GetFeed(now).subscribe((feed) => {
       this.feed = feed;
+      this.cdr.markForCheck();
     });
   }
 
@@ -34,7 +40,7 @@ export class FeedListComponent implements OnInit {
     return new Promise((resolve) => {
       this.feedService.GetFeed(fromDate).subscribe((newFeedItems) => {
         this.feed = [...this.feed, ...newFeedItems];
-
+        this.cdr.markForCheck();
         resolve();
       });
     });

@@ -21,6 +21,12 @@ app-navbar {
   z-index: 2;
 }
 
+.ad-sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: flex-start;
+}
+
 .docs-markdown {
   min-height: 70vh;
 }
@@ -138,4 +144,3 @@ mat-checkbox.text-wrap {
     max-width: calc(100vw - 32px);
   }
 }
-

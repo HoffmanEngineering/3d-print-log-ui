@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  inject,
+} from '@angular/core';
 import { PrintService } from '../../core/services/print.service';
 
 @Component({
@@ -18,7 +26,8 @@ export class PrintImageComponent implements OnInit {
 
   public imageHovered = false;
 
-  constructor(private printService: PrintService) {}
+  private readonly printService = inject(PrintService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
     if (this.imageData === null && this.printId > 0 && this.imageId > 0) {
@@ -27,6 +36,7 @@ export class PrintImageComponent implements OnInit {
         .subscribe((data) => {
           this.imageData = data;
           this.imageDataChange.emit(data);
+          this.cdr.markForCheck();
         });
     }
   }

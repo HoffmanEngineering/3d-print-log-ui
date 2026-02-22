@@ -21,7 +21,9 @@
       @case ('list') {
         <app-filament-list
           (filamentSelected)="handleFilamentSelected($event)"
+          (selectionChanged)="selectedFilaments.set($event)"
           [filterByMaterialCategory]="data.filterByMaterialCategory"
+          [multiSelect]="data.multiSelect"
         ></app-filament-list>
       }
       @case ('scanner') {
@@ -43,20 +45,33 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <div
-    matTooltip="Only one 'Other' filament record allowed per print."
-    [matTooltipDisabled]="this.data.otherFilamentOption !== null"
-    style="margin-right: 5px"
-  >
+  @if (!data.multiSelect) {
+    <div
+      matTooltip="Only one 'Other' filament record allowed per print."
+      [matTooltipDisabled]="this.data.otherFilamentOption !== null"
+      style="margin-right: 5px"
+    >
+      <button
+        mat-raised-button
+        [disabled]="this.data.otherFilamentOption === null"
+        (click)="selectOtherFilament()"
+        color="basic"
+      >
+        Use Non-Tracked "Other" Filament
+      </button>
+    </div>
+  }
+  @if (data.multiSelect) {
     <button
       mat-raised-button
-      [disabled]="this.data.otherFilamentOption === null"
-      (click)="selectOtherFilament()"
-      color="basic"
+      color="accent"
+      [disabled]="selectedFilaments().length === 0"
+      (click)="confirmSelection()"
     >
-      Use Non-Tracked "Other" Filament
+      Add {{ selectedFilaments().length }}
+      {{ selectedFilaments().length === 1 ? 'Filament' : 'Filaments' }}
     </button>
-  </div>
+  }
   <button mat-button (click)="closeSelected()" cdkFocusInitial color="basic">
     Close
   </button>

@@ -99,53 +99,40 @@
           }
         </mat-select>
       </mat-form-field>
-
-      <mat-form-field>
-        <mat-label> Filter by Material</mat-label>
-        <mat-select
-          #filamentSelect
-          [(ngModel)]="filterByFilamentIds"
-          (ngModelChange)="this.currentPage = 1; updateFilter()"
-          multiple
-        >
-          @for (filament of filaments; track filament) {
-            <mat-option [value]="filament.id">
-              <!-- generate a span that is a box of 12 pixels wide of a specific color -->
+    </div>
+    <div class="filament-filter">
+      @if (filterByFilaments.length > 0) {
+        <mat-chip-set>
+          @for (filament of filterByFilaments; track filament.id) {
+            <mat-chip (removed)="removeFilamentFilter(filament)">
               <span
-                style="display: inline-block; width: 12px; height: 12px; background-color: #{{
-                  filament.colorHex
-                }}"
+                class="filament-color-dot"
+                [style.background-color]="'#' + filament.colorHex"
               ></span>
-              <span>
-                {{ getFilamentLabel(filament) }}
-              </span></mat-option
-            >
+              {{ getFilamentLabel(filament) }}
+              <button matChipRemove aria-label="Remove filament filter">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip>
           }
-        </mat-select>
-      </mat-form-field>
+        </mat-chip-set>
+      }
+      <button mat-raised-button (click)="searchFilament()" type="button">
+        <mat-icon>filter_list</mat-icon> Filter by Material
+      </button>
       <button
         mat-raised-button
-        color="accent"
-        (click)="searchFilament()"
-        type="button"
+        style="height: 36px"
+        [ngStyle.xs]="{
+          height: 'auto',
+          'white-space': 'normal',
+          'line-height': '26px',
+        }"
+        (click)="resetFilters()"
       >
-        Add Material to Filter
+        Reset Filters
       </button>
     </div>
-    <button
-      fxFlex="120px"
-      fxFlex.xs="80px"
-      style="height: 36px"
-      [ngStyle.xs]="{
-        height: 'auto',
-        'white-space': 'normal',
-        'line-height': '26px',
-      }"
-      mat-raised-button
-      (click)="resetFilters()"
-    >
-      Reset Filters
-    </button>
   </div>
 
   <!-- Mobile Card View -->

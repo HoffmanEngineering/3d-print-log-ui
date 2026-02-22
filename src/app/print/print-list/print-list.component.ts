@@ -1,11 +1,5 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import {
-  Component,
-  ElementRef,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -14,12 +8,9 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
-import { Observable, Subject, Subscription, of } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
-import {
-  FilamentService,
-  FilamentSummary,
-} from 'src/app/core/services/filament.service';
+import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
@@ -61,7 +52,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public printers: PrinterSummary[] = [];
   public filaments: FilamentSummary[] = [];
 
-  public filteredFilaments: Observable<FilamentSummary[]>;
   public pageSize: number;
   public currentPage: number;
   public totalCount: number;
@@ -174,8 +164,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public filterByPrinterIds: number[] = [];
 
   public filterByFilamentIds: string[] = [];
-
-  @ViewChild('filamentSelect', { static: true }) input: ElementRef;
+  public filterByFilaments: FilamentSummary[] = [];
 
   public printStatusTypes = PrintStatus;
 
@@ -215,8 +204,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private printService: PrintService,
     private readonly loggingService: LoggingService,
     private readonly gcodeParserService: GcodeFileParserService,
-    private readonly newPrintStoreService: NewPrintStoreService,
-    private readonly filamentService: FilamentService
+    private readonly newPrintStoreService: NewPrintStoreService
   ) {
     this.debouncedUpdateFilter = debounce(() => {
       this.isLoading = true;
@@ -294,6 +282,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
       this.printers = data.printers;
       this.filaments = data.filaments;
+
+      this.filterByFilaments = this.filterByFilamentIds
+        .map((id) => this.filaments.find((f) => f.id === id))
+        .filter((f) => f != null);
     });
 
     /**
@@ -362,8 +354,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
         JSON.stringify(this.displayedColumns)
       );
-
-      this.filteredFilaments = of(this.filaments);
     }
   }
 
@@ -399,6 +389,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.filterByStatus = null;
     this.filterByPrinterIds = [];
     this.filterByFilamentIds = [];
+    this.filterByFilaments = [];
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrintSummarySortColumn.StartDate;
@@ -742,14 +733,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public searchFilament() {
-    const otherFilamentOption: Partial<FilamentSummary> = {
-      id: EMPTY_GUID,
-      displayName: 'Other',
-    } as const;
-
     const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
       data: {
-        otherFilamentOption,
+        otherFilamentOption: null,
+        multiSelect: true,
       },
       height: '80svh',
       width: '80svw',
@@ -761,18 +748,28 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     dialogRef.componentInstance.dialogRef
       .afterClosed()
-      .subscribe((filament) => {
-        if (filament) {
-          if (filament === otherFilamentOption) {
-            this.filterByFilamentIds = [EMPTY_GUID];
-          } else {
-            if (!this.filterByFilamentIds.find((id) => id === filament.id)) {
+      .subscribe((filaments: FilamentSummary[] | null) => {
+        if (filaments?.length) {
+          for (const filament of filaments) {
+            if (!this.filterByFilamentIds.includes(filament.id)) {
               this.filterByFilamentIds.push(filament.id);
+              this.filterByFilaments.push(filament);
             }
           }
+          this.currentPage = 1;
+          this.updateFilter();
         }
-
-        this.updateFilter();
       });
+  }
+
+  public removeFilamentFilter(filament: FilamentSummary) {
+    this.filterByFilamentIds = this.filterByFilamentIds.filter(
+      (id) => id !== filament.id
+    );
+    this.filterByFilaments = this.filterByFilaments.filter(
+      (f) => f.id !== filament.id
+    );
+    this.currentPage = 1;
+    this.updateFilter();
   }
 }

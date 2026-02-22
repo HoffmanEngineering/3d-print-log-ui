@@ -62,12 +62,25 @@
   <table
     mat-table
     [dataSource]="filaments"
+    class="filament-table"
     matSort
     [matSortActive]="sortColumn"
     [matSortDirection]="sortDirection === 1 ? 'asc' : 'desc'"
     (matSortChange)="sortData($event)"
     [matSortDisableClear]="true"
   >
+    @if (multiSelect) {
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let filament">
+          <mat-checkbox
+            [checked]="selectedFilaments.has(filament.id)"
+            (click)="$event.stopPropagation()"
+            (change)="toggleSelection(filament)"
+          ></mat-checkbox>
+        </td>
+      </ng-container>
+    }
     <ng-container matColumnDef="isFavorite">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let filament">
@@ -240,9 +253,9 @@
       mat-row
       tabindex="0"
       *matRowDef="let row; columns: displayedColumns"
-      (click)="this.filamentSelected.emit(row)"
-      (keyup.enter)="this.filamentSelected.emit(row)"
-      (keyup.space)="this.filamentSelected.emit(row)"
+      (click)="multiSelect ? toggleSelection(row) : filamentSelected.emit(row)"
+      (keyup.enter)="multiSelect ? toggleSelection(row) : filamentSelected.emit(row)"
+      (keyup.space)="multiSelect ? toggleSelection(row) : filamentSelected.emit(row)"
       data-cy-filament-row
     ></tr>
   </table>

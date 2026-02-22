@@ -11,6 +11,7 @@ import { QrScanResult } from 'src/app/core/services/qr-scanner.service';
 export interface DialogData {
   otherFilamentOption: any;
   filterByMaterialCategory: string;
+  multiSelect?: boolean;
 }
 
 export type ViewMode = 'list' | 'scanner';
@@ -30,10 +31,21 @@ export class FilamentSearchModalComponent {
   readonly viewMode = signal<ViewMode>('list');
   readonly scanError = signal<string | null>(null);
   readonly loading = signal(false);
+  readonly selectedFilaments = signal<FilamentSummary[]>([]);
 
   handleFilamentSelected(filament: FilamentSummary) {
+    if (this.data.multiSelect) {
+      return;
+    }
     this.loggingService.logEvent('FilamentSearchModal_FilamentSelected');
     this.dialogRef.close(filament);
+  }
+
+  confirmSelection() {
+    this.loggingService.logEvent('FilamentSearchModal_MultiSelectConfirmed', {
+      count: this.selectedFilaments().length,
+    });
+    this.dialogRef.close(this.selectedFilaments());
   }
 
   selectOtherFilament() {

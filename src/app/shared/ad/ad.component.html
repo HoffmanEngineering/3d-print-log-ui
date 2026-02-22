@@ -1,10 +1,6 @@
-<div
-  style="
-    max-width: 1200px;
-    text-align: center;
-    margin: 0 auto;
-    padding-top: 5px;
-  "
->
-  <ng-adsense></ng-adsense>
-</div>
+<aside aria-label="Advertisement" class="ad-wrapper">
+  <ng-adsense
+    [adSlot]="adSlot()"
+    [fullWidthResponsive]="fullWidthResponsive()"
+  ></ng-adsense>
+</aside>

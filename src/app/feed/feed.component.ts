@@ -7,6 +7,4 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FeedComponent {
-  constructor() {}
-}
+export class FeedComponent {}

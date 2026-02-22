@@ -1,4 +1,4 @@
-<div fxLayout="row" fxLayoutAlign="center">
+<div fxLayout="row" fxLayoutAlign="center start" fxLayoutGap="24px">
   <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
     <form
       [formGroup]="printerForm"
@@ -390,4 +390,7 @@
     </form>
     <app-ad></app-ad>
   </mat-card>
+  <div fxHide fxShow.gt-md fxFlex="300px" class="ad-sidebar">
+    <app-sidebar-ad></app-sidebar-ad>
+  </div>
 </div>

@@ -53,6 +53,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
 import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-modal.component';
 import { NotificationBellComponent } from './notification-bell/notification-bell.component';
 import { AdComponent } from './ad/ad.component';
+import { SidebarAdComponent } from './ad/sidebar-ad.component';
 import { AdsenseModule } from 'ng2-adsense';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QrLabelDialogComponent } from './qr-label-dialog/qr-label-dialog.component';
@@ -83,6 +84,7 @@ import { ImageCarouselComponent } from './image-carousel/image-carousel.componen
     AccountDeactivationBannerComponent,
     GcodeViewerModalComponent,
     AdComponent,
+    SidebarAdComponent,
   ],
   imports: [
     CommonModule,
@@ -175,6 +177,7 @@ import { ImageCarouselComponent } from './image-carousel/image-carousel.componen
     MatProgressBarModule,
     AdsenseModule,
     AdComponent,
+    SidebarAdComponent,
     DragDropModule,
     NotificationBellComponent,
     QrLabelDialogComponent,

@@ -28,6 +28,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.32.1': {
+      redirect: '1.32.0',
+    },
     '1.32.0': {
       title: '1.32.0 - Multi-Image Support & Accessibility',
       body: `<p>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-ad',
@@ -7,5 +7,6 @@ import { Component } from '@angular/core';
   standalone: false,
 })
 export class AdComponent {
-  constructor() {}
+  @Input() adSlot: number = null;
+  @Input() fullWidthResponsive: boolean = true;
 }

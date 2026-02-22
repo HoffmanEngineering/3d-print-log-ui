@@ -15,7 +15,7 @@ export class FilamentListResolverService {
     return this.filamentService
       .getCurrentUserFilamentSummaries(
         1,
-        100,
+        1000,
         FilamentSortColumns.DisplayName,
         SortDirection.Asc
       )

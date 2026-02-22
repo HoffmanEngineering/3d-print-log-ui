@@ -117,11 +117,6 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
       ...flatMap(fixedExtrudersValues, (obj) => Object.keys(obj)),
     ]);
 
-    console.log(
-      'createNoteForMultipleExtruders',
-      uniqueGeneralKeys,
-      uniqueValueKeys
-    );
     // Now format the note:
 
     let note = '';
@@ -157,7 +152,6 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
       note = note + '\n';
     }
 
-    console.log(note);
     return note;
   }
   formatSetting(
@@ -251,7 +245,6 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
       note = note + '\n';
     }
 
-    console.log(note);
     return note;
   }
   convertKeys(obj: { [key: string]: string }): { [key: string]: string } {

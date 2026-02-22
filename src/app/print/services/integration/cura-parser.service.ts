@@ -21,7 +21,7 @@ export class CuraParserService implements NewPrintParser {
   async parse(params: ParamMap): Promise<PrintDetail> {
     if (!params.has('plugin_version')) {
       // Cura plugin will always have the plugin_version, so
-      console.warn('No Cura Plugin Version detected');
+      this.loggingService.logEvent('CuraParser_NoCuraPluginVersionDetected');
       return null;
     }
 

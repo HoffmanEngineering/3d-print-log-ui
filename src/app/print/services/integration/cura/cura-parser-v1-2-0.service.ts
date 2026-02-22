@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ParamMap } from '@angular/router';
+import { lastValueFrom } from 'rxjs';
 import { capitalize, snakeCase } from 'lodash-es';
 import { CuraSettingServiceService } from 'src/app/core/services/cura-setting-service.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -33,9 +34,9 @@ export class CuraParserV1pt2pt0Service implements NewPrintParser {
   async parse(params: ParamMap): Promise<PrintDetail> {
     const settingId = params.get('settingId');
 
-    const curaData = await this.curaSettingService
-      .getSettings(settingId)
-      .toPromise();
+    const curaData = await lastValueFrom(
+      this.curaSettingService.getSettings(settingId)
+    );
 
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { environment } from 'src/environments/environment';
@@ -1457,6 +1458,6 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
     dialogRef.componentInstance.yesColor = 'primary';
     dialogRef.componentInstance.noText = '';
 
-    return dialogRef.afterClosed().toPromise();
+    return lastValueFrom(dialogRef.afterClosed());
   }
 }

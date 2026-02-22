@@ -329,7 +329,6 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
     }
 
     if (this.dateError || this.printerError) {
-      console.log(this.dateError, this.printerError);
       return;
     }
 

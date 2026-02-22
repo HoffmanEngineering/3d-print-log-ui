@@ -358,13 +358,7 @@
                       <div fxFlex>
                         <div
                           class="filament-color-cell"
-                          [ngStyle]="{
-                            'background-color': printFilament.get('filament')
-                              .value?.colorHex
-                              ? '#' +
-                                printFilament.get('filament').value?.colorHex
-                              : null,
-                          }"
+                          [style.background-color]="printFilament.get('filament').value?.colorHex ? '#' + printFilament.get('filament').value?.colorHex : null"
                         ></div>
                       </div>
                       <div fxFlex class="filament-section filament-name">
@@ -505,15 +499,7 @@
                                     <mat-icon>swap_vert</mat-icon>
                                     <div
                                       class="swap-color-indicator"
-                                      [ngStyle]="{
-                                        'background-color': otherFilament.get(
-                                          'filament'
-                                        ).value?.colorHex
-                                          ? '#' +
-                                            otherFilament.get('filament').value
-                                              ?.colorHex
-                                          : '#ccc',
-                                      }"
+                                      [style.background-color]="otherFilament.get('filament').value?.colorHex ? '#' + otherFilament.get('filament').value?.colorHex : '#ccc'"
                                     ></div>
                                     <span>
                                       Swap with #{{ otherIndex + 1 }}:
@@ -865,11 +851,7 @@
                               printFilament.get('filament').value
                                 ?.purchasePriceValue !== null
                             "
-                            [ngClass]="{
-                              'price-error': getEstimatedPrice(
-                                $any(printFilament)
-                              ).includes('('),
-                            }"
+                            [class.price-error]="getEstimatedPrice($any(printFilament)).includes('(')"
                           >
                             @if (
                               getEstimatedPrice($any(printFilament)).includes(
@@ -909,11 +891,7 @@
                                 printFilament.get('filament').value
                                   ?.purchasePriceValue !== null
                               "
-                              [ngClass]="{
-                                'price-error': getActualPrice(
-                                  $any(printFilament)
-                                ).includes('('),
-                              }"
+                              [class.price-error]="getActualPrice($any(printFilament)).includes('(')"
                             >
                               @if (
                                 getActualPrice($any(printFilament)).includes(

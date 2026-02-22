@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { AuthService } from '../core/services/auth.service';
 
@@ -7,6 +7,7 @@ import { AuthService } from '../core/services/auth.service';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit {
   constructor(

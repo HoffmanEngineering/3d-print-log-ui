@@ -4,7 +4,7 @@
   </mat-card-header>
   <mat-card-content id="ordersByStatus" #ordersByStatus>
     <div id="chartAndDataContainer">
-      <div id="chartContainer" [ngClass]="{ half: showData }">
+      <div id="chartContainer" [class.half]="showData">
         <app-donut-chart
           #ordersByStatusChart
           [data]="chartData"
@@ -24,7 +24,7 @@
                 <td
                   mat-cell
                   *matCellDef="let element"
-                  [ngClass]="element.status"
+                  [class]="element.status"
                 >
                   &#9632;
                 </td>

@@ -436,10 +436,4 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   close(): void {
     this.dialogRef.close();
   }
-
-  getColorStyle(colorHex: string): { [key: string]: string } {
-    return {
-      'background-color': colorHex ? `#${colorHex}` : '#cccccc',
-    };
-  }
 }

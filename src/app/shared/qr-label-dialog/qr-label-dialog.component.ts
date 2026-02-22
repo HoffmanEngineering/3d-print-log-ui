@@ -24,6 +24,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { QrCodeService } from 'src/app/core/services/qr-code.service';
+import { MatInputModule } from '@angular/material/input';
 
 export interface QrLabelDialogData {
   filaments: FilamentSummary[];
@@ -70,6 +71,7 @@ const LABEL_DIMENSIONS: Record<LabelSize, { width: number; height: number }> = {
     MatFormFieldModule,
     MatSelectModule,
     MatProgressSpinnerModule,
+    MatInputModule,
   ],
 })
 export class QrLabelDialogComponent implements OnInit, OnDestroy {
@@ -82,6 +84,7 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
 
   readonly columns = signal(2);
   readonly rows = signal(5);
+  readonly copies = signal(1);
   readonly labelSize = signal<LabelSize>('medium');
   readonly paperSize = signal<PaperSize>('A4');
   readonly loading = signal(true);
@@ -102,8 +105,12 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
 
   readonly itemsPerPage = computed(() => this.columns() * this.rows());
 
+  readonly displayLabels = computed(() =>
+    this.labels().flatMap((label) => Array(this.copies()).fill(label))
+  );
+
   readonly pages = computed(() => {
-    const allLabels = this.labels();
+    const allLabels = this.displayLabels();
     const perPage = this.itemsPerPage();
     const pageArray: LabelData[][] = [];
 
@@ -163,6 +170,7 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
     });
 
     const labels = await Promise.all(labelPromises);
+
     this.labels.set(labels);
     this.loading.set(false);
   }
@@ -170,6 +178,8 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   print(): void {
     this.loggingService.logEvent('QrLabelDialog_Print', {
       materialCount: this.labels().length,
+      copies: this.copies(),
+      totalLabels: this.displayLabels().length,
       paperSize: this.paperSize(),
       columns: this.columns(),
       rows: this.rows(),

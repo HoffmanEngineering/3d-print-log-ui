@@ -187,14 +187,35 @@ describe('QrLabelDialogComponent', () => {
     expect(component.labelClass()).toBe('label-large');
   });
 
-  it('should return correct color style', () => {
-    const style = component.getColorStyle('FF0000');
-    expect(style['background-color']).toBe('#FF0000');
+  it('should apply correct background color for non-empty colorHex', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const swatch = fixture.nativeElement.querySelector(
+      '.color-swatch'
+    ) as HTMLElement;
+    expect(swatch.style.backgroundColor).toBe('rgb(255, 0, 0)');
   });
 
-  it('should return default color when colorHex is empty', () => {
-    const style = component.getColorStyle('');
-    expect(style['background-color']).toBe('#cccccc');
+  it('should apply default background color when colorHex is empty', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    (component.labels as any).set([
+      {
+        filament: { ...mockFilament, colorHex: '' },
+        qrCodeSvg: '',
+        qrCodeSvgString: '',
+        url: '',
+      },
+    ]);
+    fixture.detectChanges();
+
+    const swatch = fixture.nativeElement.querySelector(
+      '.color-swatch'
+    ) as HTMLElement;
+    expect(swatch.style.backgroundColor).toBe('rgb(204, 204, 204)');
   });
 
   describe('with multiple filaments across pages', () => {

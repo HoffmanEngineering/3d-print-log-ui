@@ -1,16 +1,16 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import {
   FilamentService,
   FilamentSortColumns,
-  FilamentSummary,
 } from '../../core/services/filament.service';
 import { map } from 'rxjs';
 
 @Injectable()
 export class FilamentListResolverService {
+  private readonly filamentService = inject(FilamentService);
+
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.filamentService
       .getCurrentUserFilamentSummaries(
@@ -21,5 +21,4 @@ export class FilamentListResolverService {
       )
       .pipe(map((pagedResult) => pagedResult.items));
   }
-  constructor(private filamentService: FilamentService) {}
 }

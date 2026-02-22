@@ -104,12 +104,15 @@
       @if (filterByFilaments.length > 0) {
         <mat-chip-set>
           @for (filament of filterByFilaments; track filament.id) {
-            <mat-chip (removed)="removeFilamentFilter(filament)">
+            <mat-chip
+              (removed)="removeFilamentFilter(filament)"
+              [matTooltip]="getFilamentLabel(filament)"
+            >
               <span
                 class="filament-color-dot"
                 [style.background-color]="'#' + filament.colorHex"
               ></span>
-              {{ getFilamentLabel(filament) }}
+              <span class="filament-chip-label">{{ getFilamentLabel(filament) }}</span>
               <button matChipRemove aria-label="Remove filament filter">
                 <mat-icon>cancel</mat-icon>
               </button>

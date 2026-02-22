@@ -20,7 +20,6 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
-  EMPTY_GUID,
   FilamentPrice,
   FilamentPriceInvalid,
   PrintFilamentSourceMeasurement,
@@ -265,9 +264,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       }
 
       if (params.has('filterByFilamentId')) {
-        this.filterByFilamentIds = params
-          .getAll('filterByFilamentId')
-          .map((id) => id);
+        this.filterByFilamentIds = params.getAll('filterByFilamentId');
       } else {
         this.filterByFilamentIds = [];
       }
@@ -746,20 +743,18 @@ export class PrintListComponent implements OnInit, OnDestroy {
       },
     });
 
-    dialogRef.componentInstance.dialogRef
-      .afterClosed()
-      .subscribe((filaments: FilamentSummary[] | null) => {
-        if (filaments?.length) {
-          for (const filament of filaments) {
-            if (!this.filterByFilamentIds.includes(filament.id)) {
-              this.filterByFilamentIds.push(filament.id);
-              this.filterByFilaments.push(filament);
-            }
+    dialogRef.afterClosed().subscribe((filaments: FilamentSummary[] | null) => {
+      if (filaments?.length) {
+        for (const filament of filaments) {
+          if (!this.filterByFilamentIds.includes(filament.id)) {
+            this.filterByFilamentIds.push(filament.id);
+            this.filterByFilaments.push(filament);
           }
-          this.currentPage = 1;
-          this.updateFilter();
         }
-      });
+        this.currentPage = 1;
+        this.updateFilter();
+      }
+    });
   }
 
   public removeFilamentFilter(filament: FilamentSummary) {

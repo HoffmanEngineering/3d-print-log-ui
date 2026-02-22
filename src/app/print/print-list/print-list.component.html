@@ -103,6 +103,7 @@
       <mat-form-field>
         <mat-label> Filter by Material</mat-label>
         <mat-select
+          #filamentSelect
           [(ngModel)]="filterByFilamentIds"
           (ngModelChange)="this.currentPage = 1; updateFilter()"
           multiple

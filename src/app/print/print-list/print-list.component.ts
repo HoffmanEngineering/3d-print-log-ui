@@ -1,5 +1,11 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -8,9 +14,12 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
-import { Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, of } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
-import { FilamentSummary } from 'src/app/core/services/filament.service';
+import {
+  FilamentService,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
@@ -51,6 +60,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
   public printers: PrinterSummary[] = [];
   public filaments: FilamentSummary[] = [];
+
+  public filteredFilaments: Observable<FilamentSummary[]>;
   public pageSize: number;
   public currentPage: number;
   public totalCount: number;
@@ -164,6 +175,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public filterByFilamentIds: string[] = [];
 
+  @ViewChild('filamentSelect', { static: true }) input: ElementRef;
+
   public printStatusTypes = PrintStatus;
 
   public printSummarySortColumns = PrintSummarySortColumn;
@@ -202,7 +215,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private printService: PrintService,
     private readonly loggingService: LoggingService,
     private readonly gcodeParserService: GcodeFileParserService,
-    private readonly newPrintStoreService: NewPrintStoreService
+    private readonly newPrintStoreService: NewPrintStoreService,
+    private readonly filamentService: FilamentService
   ) {
     this.debouncedUpdateFilter = debounce(() => {
       this.isLoading = true;
@@ -348,6 +362,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
         JSON.stringify(this.displayedColumns)
       );
+
+      this.filteredFilaments = of(this.filaments);
     }
   }
 

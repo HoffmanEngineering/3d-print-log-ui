@@ -466,7 +466,14 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public getFilamentLabel(filament: FilamentSummary) {
-    return `${filament.displayName} - ${filament.brand} - ${filament.materialType} - ${filament.colorName}`;
+    return [
+      filament.displayName,
+      filament.brand,
+      filament.materialType,
+      filament.colorName,
+    ]
+      .filter(Boolean)
+      .join(' - ');
   }
 
   public deletePrint(print: PrintSummary) {

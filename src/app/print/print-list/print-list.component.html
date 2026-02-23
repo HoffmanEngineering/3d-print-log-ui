@@ -120,7 +120,17 @@
           }
         </mat-chip-set>
       }
-      <button mat-raised-button (click)="searchFilament()" type="button">
+      <button
+        mat-raised-button
+        style="height: 36px"
+        [ngStyle.xs]="{
+          height: 'auto',
+          'white-space': 'normal',
+          'line-height': '26px',
+        }"
+        (click)="searchFilament()"
+        type="button"
+      >
         <mat-icon>filter_list</mat-icon> Filter by Material
       </button>
       <button

@@ -85,6 +85,9 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   readonly columns = signal(2);
   readonly rows = signal(5);
   readonly copies = signal(1);
+  readonly safeCopies = computed(() =>
+    Math.max(1, Math.min(10, this.copies()))
+  );
   readonly labelSize = signal<LabelSize>('medium');
   readonly paperSize = signal<PaperSize>('A4');
   readonly loading = signal(true);
@@ -106,7 +109,7 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   readonly itemsPerPage = computed(() => this.columns() * this.rows());
 
   readonly displayLabels = computed(() =>
-    this.labels().flatMap((label) => Array(this.copies()).fill(label))
+    this.labels().flatMap((label) => Array(this.safeCopies()).fill(label))
   );
 
   readonly pages = computed(() => {
@@ -178,7 +181,7 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   print(): void {
     this.loggingService.logEvent('QrLabelDialog_Print', {
       materialCount: this.labels().length,
-      copies: this.copies(),
+      copies: this.safeCopies(),
       totalLabels: this.displayLabels().length,
       paperSize: this.paperSize(),
       columns: this.columns(),

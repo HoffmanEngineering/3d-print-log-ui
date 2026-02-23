@@ -181,6 +181,21 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public isLoading = false;
 
+  public isFilterPanelOpen = false;
+
+  get activeFilterCount(): number {
+    let count = 0;
+    if (this.filterByStatus !== null && (this.filterByStatus as number) !== -1)
+      count++;
+    if (this.filterByPrinterIds.length > 0) count++;
+    if (this.filterByFilamentIds.length > 0) count++;
+    return count;
+  }
+
+  public toggleFilterPanel(): void {
+    this.isFilterPanelOpen = !this.isFilterPanelOpen;
+  }
+
   public printSearchSubscription: Subscription | null = null;
 
   private subscriptions: Subscription = new Subscription();
@@ -283,6 +298,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
       this.filterByFilaments = this.filterByFilamentIds
         .map((id) => this.filaments.find((f) => f.id === id))
         .filter((f) => f != null);
+
+      if (this.activeFilterCount > 0) {
+        this.isFilterPanelOpen = true;
+      }
     });
 
     /**
@@ -387,6 +406,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.filterByPrinterIds = [];
     this.filterByFilamentIds = [];
     this.filterByFilaments = [];
+    this.isFilterPanelOpen = false;
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrintSummarySortColumn.StartDate;

@@ -11,8 +11,73 @@ table {
 }
 
 .header {
-  margin-left: 5px;
-  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 8px 0;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-buttons {
+  display: flex;
+  flex-shrink: 0;
+
+  .expand-btn {
+    min-width: 36px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+.search-field {
+  flex: 1;
+  min-width: 160px;
+}
+
+.filter-toggle-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// Collapsible filter panel
+.filter-panel {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease;
+
+  &.filter-panel--open {
+    max-height: 300px;
+    opacity: 1;
+  }
+}
+
+.filter-panel-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 8px;
+}
+
+.filter-field {
+  min-width: 130px;
+}
+
+.filament-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .filament-color-cell {
@@ -32,13 +97,6 @@ table {
   // -moz-box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
   // box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
   border: 1px solid rgba(0, 0, 0, 0.15);
-}
-
-.filament-filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .filament-color-dot {

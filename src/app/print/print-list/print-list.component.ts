@@ -181,7 +181,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public isLoading = false;
 
-  public isFilterPanelOpen = false;
+  public isFilterPanelOpen =
+    typeof window !== 'undefined' && window.innerWidth >= 600;
 
   readonly activeFilterCount = computed(() => {
     let count = 0;

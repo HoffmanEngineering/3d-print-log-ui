@@ -11,52 +11,74 @@
         Add New Filament
       </button>
     }
-    <div class="search-fields">
-      <mat-form-field>
-        <mat-label> Search: </mat-label
-        ><input
+    <div class="filter-bar">
+      <mat-form-field class="search-field" subscriptSizing="dynamic">
+        <mat-label>Search</mat-label>
+        <input
           id="filament-list-search-input"
           matInput
           type="text"
           [(ngModel)]="searchText"
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
-      /></mat-form-field>
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="includeInactive"
-        (ngModelChange)="updateFilter()"
-        >Include Inactive</mat-checkbox
-      >
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="showFavoritesOnly"
-        (ngModelChange)="updateFilter()"
-        >Show Favorites Only</mat-checkbox
-      >
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="showLoadedFilamentOnly"
-        (ngModelChange)="updateFilter()"
-        >Show Loaded Filament Only</mat-checkbox
-      >
-      <mat-form-field>
-        <mat-label> Filter by Category: </mat-label>
-        <mat-select
-          [(ngModel)]="_filterByMaterialCategory"
-          (ngModelChange)="updateFilter()"
-        >
-          <mat-option value=""> No Filter </mat-option>
-          @for (
-            materialCategory of materialCategories;
-            track materialCategory
-          ) {
-            <mat-option [value]="materialCategory.nickname">{{
-              materialCategory.name
-            }}</mat-option>
-          }
-        </mat-select>
+        />
       </mat-form-field>
+      <button
+        mat-button
+        class="filter-toggle-btn"
+        (click)="toggleFilterPanel()"
+        [attr.aria-expanded]="isFilterPanelOpen"
+        aria-controls="filament-filter-panel"
+      >
+        <mat-icon>filter_list</mat-icon>
+        Filters
+        @if (activeFilterCount > 0) {
+          <span class="filter-count-badge">({{ activeFilterCount }})</span>
+        }
+      </button>
+    </div>
+    <div
+      id="filament-filter-panel"
+      class="filter-panel"
+      [class.filter-panel--open]="isFilterPanelOpen"
+    >
+      <div class="filter-panel-inner">
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="includeInactive"
+          (ngModelChange)="updateFilter()"
+          >Include Inactive</mat-checkbox
+        >
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="showFavoritesOnly"
+          (ngModelChange)="updateFilter()"
+          >Show Favorites Only</mat-checkbox
+        >
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="showLoadedFilamentOnly"
+          (ngModelChange)="updateFilter()"
+          >Show Loaded Filament Only</mat-checkbox
+        >
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Filter by Category</mat-label>
+          <mat-select
+            [(ngModel)]="_filterByMaterialCategory"
+            (ngModelChange)="updateFilter()"
+          >
+            <mat-option value="">No Filter</mat-option>
+            @for (
+              materialCategory of materialCategories;
+              track materialCategory
+            ) {
+              <mat-option [value]="materialCategory.nickname">{{
+                materialCategory.name
+              }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
     </div>
   </div>
   <table

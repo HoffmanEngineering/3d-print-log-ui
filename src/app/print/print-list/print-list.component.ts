@@ -769,6 +769,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       },
       height: '80svh',
       width: '80svw',
+      maxWidth: '100vw',
       position: {
         top: '5vh',
         left: '5vw',

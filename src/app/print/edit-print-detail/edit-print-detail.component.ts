@@ -1689,6 +1689,7 @@ export class EditPrintDetailComponent
       },
       height: '80vh',
       width: '80vw',
+      maxWidth: '100vw',
     });
 
     dialogRef.componentInstance.dialogRef

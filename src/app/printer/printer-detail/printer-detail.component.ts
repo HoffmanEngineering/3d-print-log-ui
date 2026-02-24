@@ -389,6 +389,7 @@ export class PrinterDetailComponent
       data: {
         otherFilamentOption: null,
       },
+      maxWidth: '100vw',
     });
 
     dialogRef.componentInstance.dialogRef

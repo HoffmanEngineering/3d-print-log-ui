@@ -12,6 +12,9 @@ export class FilamentListResolverService {
   private readonly filamentService = inject(FilamentService);
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    // Known limitation: fetches up to 1000 filaments. Users with more than 1000
+    // filaments will have chips fail to restore on page load for IDs beyond the
+    // first 1000 results, though the server-side filter still applies correctly.
     return this.filamentService
       .getCurrentUserFilamentSummaries(
         1,

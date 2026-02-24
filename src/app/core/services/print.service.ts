@@ -276,7 +276,7 @@ export class PrintService {
 
     if (filterByFilamentIds?.length > 0) {
       for (const id of filterByFilamentIds) {
-        params = params.append('filterByFilamentIds', id.toString());
+        params = params.append('filterByFilamentIds', id);
       }
     }
 

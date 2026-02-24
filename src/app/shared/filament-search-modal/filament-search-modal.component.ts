@@ -139,7 +139,17 @@ export class FilamentSearchModalComponent {
           materialCategory: null as any,
         };
 
-        this.dialogRef.close(summary);
+        if (this.data.multiSelect) {
+          // In multi-select mode: add to selection and switch back to list
+          // so the user can confirm or add more filaments
+          this.selectedFilaments.update((current) => {
+            if (current.some((f) => f.id === summary.id)) return current;
+            return [...current, summary];
+          });
+          this.viewMode.set('list');
+        } else {
+          this.dialogRef.close(summary);
+        }
       },
       error: (err) => {
         this.loading.set(false);

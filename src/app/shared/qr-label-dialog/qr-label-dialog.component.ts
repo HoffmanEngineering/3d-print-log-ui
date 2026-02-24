@@ -446,6 +446,10 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
     return div.innerHTML;
   }
 
+  clampCopies(): void {
+    this.copies.set(this.safeCopies());
+  }
+
   close(): void {
     this.dialogRef.close();
   }

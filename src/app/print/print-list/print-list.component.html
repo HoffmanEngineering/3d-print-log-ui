@@ -52,11 +52,12 @@
         mat-raised-button
         type="button"
         class="filter-toggle-btn"
-        [matBadge]="activeFilterCount || null"
+        [matBadge]="activeFilterCount() || null"
         matBadgeColor="accent"
         matBadgeSize="small"
-        [matBadgeHidden]="activeFilterCount === 0"
+        [matBadgeHidden]="activeFilterCount() === 0"
         [attr.aria-expanded]="isFilterPanelOpen"
+        aria-controls="filter-panel"
         (click)="toggleFilterPanel()"
       >
         <mat-icon>{{ isFilterPanelOpen ? 'expand_less' : 'tune' }}</mat-icon>
@@ -65,13 +66,13 @@
     </div>
 
     <!-- Row 2: Collapsible filter panel -->
-    <div class="filter-panel" [class.filter-panel--open]="isFilterPanelOpen">
+    <div id="filter-panel" class="filter-panel" [class.filter-panel--open]="isFilterPanelOpen">
       <div class="filter-panel-inner">
         <mat-form-field class="filter-field" subscriptSizing="dynamic">
           <mat-label>Status</mat-label>
           <mat-select
-            [(ngModel)]="filterByStatus"
-            (ngModelChange)="this.currentPage = 1; updateFilter()"
+            [ngModel]="filterByStatus()"
+            (ngModelChange)="filterByStatus.set($event); currentPage = 1; updateFilter()"
           >
             <mat-option [value]="-1">All</mat-option>
             <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
@@ -90,8 +91,8 @@
         <mat-form-field class="filter-field" subscriptSizing="dynamic">
           <mat-label>Filter by Printers</mat-label>
           <mat-select
-            [(ngModel)]="filterByPrinterIds"
-            (ngModelChange)="this.currentPage = 1; updateFilter()"
+            [ngModel]="filterByPrinterIds()"
+            (ngModelChange)="filterByPrinterIds.set($event); currentPage = 1; updateFilter()"
             multiple
           >
             @for (printer of printers; track printer) {
@@ -105,20 +106,20 @@
         <button mat-raised-button (click)="searchFilament()" type="button">
           <mat-icon>filter_list</mat-icon> Filter by Material
         </button>
-        <button mat-raised-button (click)="resetFilters()">
+        <button type="button" mat-raised-button (click)="resetFilters()">
           Reset Filters
         </button>
 
-        @if (filterByFilaments.length > 0) {
+        @if (filterByFilaments().length > 0) {
           <mat-chip-set class="filament-chips">
-            @for (filament of filterByFilaments; track filament.id) {
+            @for (filament of filterByFilaments(); track filament.id) {
               <mat-chip
                 (removed)="removeFilamentFilter(filament)"
                 [matTooltip]="getFilamentLabel(filament)"
               >
                 <span
                   class="filament-color-dot"
-                  [style.background-color]="'#' + filament.colorHex"
+                  [style.background-color]="filament.colorHex ? '#' + filament.colorHex : '#cccccc'"
                 ></span>
                 <span class="filament-chip-label">{{
                   getFilamentLabel(filament)

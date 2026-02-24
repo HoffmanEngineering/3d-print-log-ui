@@ -1,5 +1,5 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -158,12 +158,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public searchText = '';
 
-  public filterByStatus: PrintStatus | null = null;
+  public filterByStatus = signal<PrintStatus | null>(null);
 
-  public filterByPrinterIds: number[] = [];
+  public filterByPrinterIds = signal<number[]>([]);
 
-  public filterByFilamentIds: string[] = [];
-  public filterByFilaments: FilamentSummary[] = [];
+  public filterByFilamentIds = signal<string[]>([]);
+  public filterByFilaments = signal<FilamentSummary[]>([]);
 
   public printStatusTypes = PrintStatus;
 
@@ -183,14 +183,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public isFilterPanelOpen = false;
 
-  get activeFilterCount(): number {
+  readonly activeFilterCount = computed(() => {
     let count = 0;
-    if (this.filterByStatus !== null && (this.filterByStatus as number) !== -1)
+    if (
+      this.filterByStatus() !== null &&
+      (this.filterByStatus() as number) !== -1
+    )
       count++;
-    if (this.filterByPrinterIds.length > 0) count++;
-    if (this.filterByFilamentIds.length > 0) count++;
+    if (this.filterByPrinterIds().length > 0) count++;
+    if (this.filterByFilamentIds().length > 0) count++;
     return count;
-  }
+  });
 
   public toggleFilterPanel(): void {
     this.isFilterPanelOpen = !this.isFilterPanelOpen;
@@ -261,7 +264,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.searchText = params.get('searchText');
       }
       if (params.has('filterByStatus')) {
-        this.filterByStatus = +params.get('filterByStatus');
+        this.filterByStatus.set(+params.get('filterByStatus'));
       }
       if (params.has('sortDirection')) {
         this.sortDirection = +params.get('sortDirection');
@@ -271,17 +274,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
       }
 
       if (params.has('filterByPrinterId')) {
-        this.filterByPrinterIds = params
-          .getAll('filterByPrinterId')
-          .map((id) => +id);
+        this.filterByPrinterIds.set(
+          params.getAll('filterByPrinterId').map((id) => +id)
+        );
       } else {
-        this.filterByPrinterIds = [];
+        this.filterByPrinterIds.set([]);
       }
 
       if (params.has('filterByFilamentId')) {
-        this.filterByFilamentIds = params.getAll('filterByFilamentId');
+        this.filterByFilamentIds.set(params.getAll('filterByFilamentId'));
       } else {
-        this.filterByFilamentIds = [];
+        this.filterByFilamentIds.set([]);
       }
     });
 
@@ -295,11 +298,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
       this.printers = data.printers;
       this.filaments = data.filaments;
 
-      this.filterByFilaments = this.filterByFilamentIds
-        .map((id) => this.filaments.find((f) => f.id === id))
-        .filter((f) => f != null);
+      this.filterByFilaments.set(
+        this.filterByFilamentIds()
+          .map((id) => this.filaments.find((f) => f.id === id))
+          .filter((f) => f != null)
+      );
 
-      if (this.activeFilterCount > 0) {
+      if (this.activeFilterCount() > 0) {
         this.isFilterPanelOpen = true;
       }
     });
@@ -402,11 +407,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public resetFilters() {
     this.currentPage = 1;
     this.searchText = '';
-    this.filterByStatus = null;
-    this.filterByPrinterIds = [];
-    this.filterByFilamentIds = [];
-    this.filterByFilaments = [];
-    this.isFilterPanelOpen = false;
+    this.filterByStatus.set(null);
+    this.filterByPrinterIds.set([]);
+    this.filterByFilamentIds.set([]);
+    this.filterByFilaments.set([]);
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrintSummarySortColumn.StartDate;
@@ -425,9 +429,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
           pageNumber: this.currentPage,
           pageSize: this.pageSize,
           searchText: this.searchText || '',
-          filterByStatus: this.filterByStatus,
-          filterByPrinterId: this.filterByPrinterIds,
-          filterByFilamentId: this.filterByFilamentIds,
+          filterByStatus: this.filterByStatus(),
+          filterByPrinterId: this.filterByPrinterIds(),
+          filterByFilamentId: this.filterByFilamentIds(),
           sortDirection: this.sortDirection,
           sortColumn: this.sortColumn,
           t: new Date().getTime(),
@@ -442,9 +446,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.currentPage,
             this.pageSize,
             this.searchText || '',
-            this.filterByStatus,
-            this.filterByPrinterIds,
-            this.filterByFilamentIds,
+            this.filterByStatus(),
+            this.filterByPrinterIds(),
+            this.filterByFilamentIds(),
             this.sortDirection,
             this.sortColumn
           )
@@ -773,9 +777,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe((filaments: FilamentSummary[] | null) => {
       if (filaments?.length) {
         for (const filament of filaments) {
-          if (!this.filterByFilamentIds.includes(filament.id)) {
-            this.filterByFilamentIds.push(filament.id);
-            this.filterByFilaments.push(filament);
+          if (!this.filterByFilamentIds().includes(filament.id)) {
+            this.filterByFilamentIds.update((ids) => [...ids, filament.id]);
+            this.filterByFilaments.update((fs) => [...fs, filament]);
           }
         }
         this.currentPage = 1;
@@ -785,11 +789,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public removeFilamentFilter(filament: FilamentSummary) {
-    this.filterByFilamentIds = this.filterByFilamentIds.filter(
-      (id) => id !== filament.id
+    this.filterByFilamentIds.update((ids) =>
+      ids.filter((id) => id !== filament.id)
     );
-    this.filterByFilaments = this.filterByFilaments.filter(
-      (f) => f.id !== filament.id
+    this.filterByFilaments.update((fs) =>
+      fs.filter((f) => f.id !== filament.id)
     );
     this.currentPage = 1;
     this.updateFilter();

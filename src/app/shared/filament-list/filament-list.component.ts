@@ -58,6 +58,23 @@ export class FilamentListComponent implements OnInit {
 
   public showFavoritesOnly = false;
   public showLoadedFilamentOnly = false;
+
+  public isFilterPanelOpen =
+    typeof window !== 'undefined' && window.innerWidth >= 600;
+
+  public toggleFilterPanel(): void {
+    this.isFilterPanelOpen = !this.isFilterPanelOpen;
+  }
+
+  public get activeFilterCount(): number {
+    let count = 0;
+    if (this.includeInactive) count++;
+    if (this.showFavoritesOnly) count++;
+    if (this.showLoadedFilamentOnly) count++;
+    if (this._filterByMaterialCategory) count++;
+    return count;
+  }
+
   public searchText = '';
 
   public materialCategories: MaterialCategory[] = [];

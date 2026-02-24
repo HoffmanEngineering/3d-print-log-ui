@@ -281,6 +281,74 @@
       data-cy-filament-row
     ></tr>
   </table>
+  <!-- Mobile card list (shown < 600px via CSS, table hidden) -->
+  <div class="filament-cards">
+    @for (filament of filaments; track filament.id) {
+      <div
+        class="filament-card"
+        tabindex="0"
+        [class.filament-card--selected]="selectedFilaments.has(filament.id)"
+        (click)="multiSelect ? toggleSelection(filament) : filamentSelected.emit(filament)"
+        (keyup.enter)="multiSelect ? toggleSelection(filament) : filamentSelected.emit(filament)"
+        (keyup.space)="multiSelect ? toggleSelection(filament) : filamentSelected.emit(filament)"
+        data-cy-filament-card
+      >
+        <div
+          class="card-swatch"
+          [style.background-color]="'#' + filament.colorHex"
+        ></div>
+        <div class="card-content">
+          <div class="card-row-primary">
+            <span class="card-name">{{ filament.displayName }}</span>
+            @if (!filament.isActive) {
+              <span class="card-chip card-chip--inactive">Inactive</span>
+            }
+            <span class="card-chip">{{ filament.materialType }}</span>
+            <span class="card-spacer"></span>
+            <span class="card-weight">
+              {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}g
+            </span>
+            @if (multiSelect) {
+              <mat-checkbox
+                [checked]="selectedFilaments.has(filament.id)"
+                (click)="$event.stopPropagation()"
+                (change)="toggleSelection(filament)"
+              ></mat-checkbox>
+            } @else {
+              <button
+                mat-button
+                class="transparent card-favorite-btn"
+                [class.not-favorite-icon]="!filament.isFavorite"
+                [attr.aria-label]="
+                  filament.isFavorite
+                    ? 'Remove ' + filament.displayName + ' from favorites'
+                    : 'Add ' + filament.displayName + ' to favorites'
+                "
+                (click)="
+                  $event.preventDefault();
+                  $event.stopPropagation();
+                  toggleFavorite(filament)
+                "
+              >
+                <mat-icon>{{
+                  filament.isFavorite ? 'star' : 'star_border'
+                }}</mat-icon>
+              </button>
+            }
+          </div>
+          <div class="card-row-secondary">
+            {{ filament.brand }}@if (filament.colorName) {
+              &nbsp;·&nbsp;{{ filament.colorName }}
+            }@if (filament.storageLocation) {
+              &nbsp;·&nbsp;{{ filament.storageLocation }}
+            }@if (filament.loadedInPrinter) {
+              &nbsp;·&nbsp;Loaded: {{ getPrinterLabel(filament) }}
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
   @if (totalCount === 0) {
     <div class="no-filament">
       No filaments found. Add a new filament or try a different search.

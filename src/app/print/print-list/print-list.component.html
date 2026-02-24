@@ -1,119 +1,138 @@
 <div fxLayout="column" fxLayoutAlign="center">
-  <div
-    class="header"
-    fxFlex="grow"
-    fxLayout
-    fxLayoutAlign="start center"
-    fxLayoutGap="5px"
-  >
-    <div fxFlex="150px" fxFlex.xs="120px" fxLayout="row">
-      <button
-        fxFlex="grow"
-        style="height: 36px"
-        class="no-right-radius"
-        mat-raised-button
-        routerLink="new/edit"
-        type="button"
-        color="accent"
-        id="add-new-print"
-        [ngStyle.xs]="{
-          height: 'auto',
-          'white-space': 'normal',
-          'line-height': '26px',
-        }"
-      >
-        Add New Print
-      </button>
-      <button
-        fxFlex="28px"
-        style="height: 36px; padding-left: 0; padding-right: 0"
-        [ngStyle.xs]="{
-          height: 'auto',
-          'white-space': 'normal',
-          'line-height': '26px',
-        }"
-        class="no-left-radius"
-        mat-raised-button
-        [matMenuTriggerFor]="printAddOptions"
-        type="button"
-        color="accent"
-        id="menu"
-      >
-        <mat-icon>expand_more</mat-icon>
-      </button>
-      <mat-menu #printAddOptions="matMenu">
-        <button mat-menu-item color="accent" (click)="gcodeInput.click()">
-          Add Print From Gcode
+  <div class="header">
+    <!-- Row 1: Always visible — action buttons, search, filter toggle -->
+    <div class="header-top">
+      <div class="action-buttons">
+        <button
+          class="no-right-radius"
+          mat-raised-button
+          routerLink="new/edit"
+          type="button"
+          color="accent"
+          id="add-new-print"
+        >
+          Add New Print
         </button>
-      </mat-menu>
-      <input
-        #gcodeInput
-        style="display: none"
-        type="file"
-        accept=".gcode,.g,.txt,.gco,.gx"
-        class="custom-file-input form-control"
-        id="files"
-        (change)="parseGcode($event)"
-      />
-    </div>
-    <div fxLayoutGap="10px">
-      <mat-form-field>
-        <mat-label> Search: </mat-label
-        ><input
+        <button
+          class="no-left-radius expand-btn"
+          mat-raised-button
+          [matMenuTriggerFor]="printAddOptions"
+          type="button"
+          color="accent"
+          id="menu"
+        >
+          <mat-icon>expand_more</mat-icon>
+        </button>
+        <mat-menu #printAddOptions="matMenu">
+          <button mat-menu-item color="accent" (click)="gcodeInput.click()">
+            Add Print From Gcode
+          </button>
+        </mat-menu>
+        <input
+          #gcodeInput
+          style="display: none"
+          type="file"
+          accept=".gcode,.g,.txt,.gco,.gx"
+          class="custom-file-input form-control"
+          id="files"
+          (change)="parseGcode($event)"
+        />
+      </div>
+      <mat-form-field class="search-field" subscriptSizing="dynamic">
+        <mat-label>Search</mat-label>
+        <input
           matInput
           type="text"
           [(ngModel)]="searchText"
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
-      /></mat-form-field>
-      <mat-form-field>
-        <mat-label> Status</mat-label>
-        <mat-select
-          [(ngModel)]="filterByStatus"
-          (ngModelChange)="this.currentPage = 1; updateFilter()"
-        >
-          <mat-option [value]="-1">All</mat-option>
-          <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
-          <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
-          <mat-option [value]="printStatusTypes.Success">Success</mat-option>
-          <mat-option [value]="printStatusTypes.PartialSuccess"
-            >Partial Success</mat-option
-          >
-          <mat-option [value]="printStatusTypes.Cancelled"
-            >Cancelled</mat-option
-          >
-          <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
-        </mat-select>
+        />
       </mat-form-field>
-      <mat-form-field>
-        <mat-label> Filter by Printers</mat-label>
-        <mat-select
-          [(ngModel)]="filterByPrinterIds"
-          (ngModelChange)="this.currentPage = 1; updateFilter()"
-          multiple
-        >
-          @for (printer of printers; track printer) {
-            <mat-option [value]="printer.id">{{
-              getPrinterLabel(printer)
-            }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <button
+        mat-raised-button
+        type="button"
+        class="filter-toggle-btn"
+        [matBadge]="activeFilterCount() || null"
+        matBadgeColor="accent"
+        matBadgeSize="small"
+        [matBadgeHidden]="activeFilterCount() === 0"
+        [attr.aria-expanded]="isFilterPanelOpen"
+        aria-controls="filter-panel"
+        (click)="toggleFilterPanel()"
+      >
+        <mat-icon>{{ isFilterPanelOpen ? 'expand_less' : 'tune' }}</mat-icon>
+        Filters
+      </button>
     </div>
-    <button
-      fxFlex="120px"
-      fxFlex.xs="80px"
-      style="height: 36px"
-      [ngStyle.xs]="{
-        height: 'auto',
-        'white-space': 'normal',
-        'line-height': '26px',
-      }"
-      mat-raised-button
-      (click)="resetFilters()"
-    >
-      Reset Filters
-    </button>
+
+    <!-- Row 2: Collapsible filter panel -->
+    <div id="filter-panel" class="filter-panel" [class.filter-panel--open]="isFilterPanelOpen">
+      <div class="filter-panel-inner">
+        <mat-form-field class="filter-field" subscriptSizing="dynamic">
+          <mat-label>Status</mat-label>
+          <mat-select
+            [ngModel]="filterByStatus()"
+            (ngModelChange)="filterByStatus.set($event); currentPage = 1; updateFilter()"
+          >
+            <mat-option [value]="-1">All</mat-option>
+            <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
+            <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
+            <mat-option [value]="printStatusTypes.Success">Success</mat-option>
+            <mat-option [value]="printStatusTypes.PartialSuccess"
+              >Partial Success</mat-option
+            >
+            <mat-option [value]="printStatusTypes.Cancelled"
+              >Cancelled</mat-option
+            >
+            <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="filter-field" subscriptSizing="dynamic">
+          <mat-label>Filter by Printers</mat-label>
+          <mat-select
+            [ngModel]="filterByPrinterIds()"
+            (ngModelChange)="filterByPrinterIds.set($event); currentPage = 1; updateFilter()"
+            multiple
+          >
+            @for (printer of printers; track printer) {
+              <mat-option [value]="printer.id">{{
+                getPrinterLabel(printer)
+              }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-raised-button (click)="searchFilament()" type="button">
+          <mat-icon>filter_list</mat-icon> Filter by Material
+        </button>
+        <button type="button" mat-raised-button (click)="resetFilters()">
+          Reset Filters
+        </button>
+
+        @if (filterByFilaments().length > 0) {
+          <mat-chip-set class="filament-chips">
+            @for (filament of filterByFilaments(); track filament.id) {
+              <mat-chip
+                (removed)="removeFilamentFilter(filament)"
+                [matTooltip]="getFilamentLabel(filament)"
+              >
+                <span
+                  class="filament-color-dot"
+                  [style.background-color]="filament.colorHex ? '#' + filament.colorHex : '#cccccc'"
+                ></span>
+                <span class="filament-chip-label">{{
+                  getFilamentLabel(filament)
+                }}</span>
+                <button matChipRemove aria-label="Remove filament filter">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip>
+            }
+          </mat-chip-set>
+        }
+      </div>
+    </div>
   </div>
 
   <!-- Mobile Card View -->

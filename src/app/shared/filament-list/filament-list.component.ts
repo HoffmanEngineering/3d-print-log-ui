@@ -25,7 +25,11 @@ export class FilamentListComponent implements OnInit {
   @Input()
   public showAddFilamentButton: false;
 
+  @Input()
+  public multiSelect = false;
+
   public filaments: FilamentSummary[] = [];
+  public selectedFilaments = new Map<string, FilamentSummary>();
 
   public pageSize: number;
   public currentPage: number;
@@ -70,6 +74,9 @@ export class FilamentListComponent implements OnInit {
   @Output()
   public filamentSelected = new EventEmitter<FilamentSummary>();
 
+  @Output()
+  public selectionChanged = new EventEmitter<FilamentSummary[]>();
+
   constructor(
     private filamentService: FilamentService,
     private materialCategoryService: MaterialCategoryService
@@ -78,6 +85,10 @@ export class FilamentListComponent implements OnInit {
   }
 
   ngOnInit() {
+    if (this.multiSelect) {
+      this.displayedColumns = ['select', ...this.displayedColumns];
+    }
+
     let defaultPageSize = 10;
     const savedPageSize = localStorage.getItem('filament_list_page_size');
     if (savedPageSize) {
@@ -168,6 +179,15 @@ export class FilamentListComponent implements OnInit {
     } else {
       return `${(printer.make + ' ' + printer.model).trim()}`;
     }
+  }
+
+  public toggleSelection(filament: FilamentSummary) {
+    if (this.selectedFilaments.has(filament.id)) {
+      this.selectedFilaments.delete(filament.id);
+    } else {
+      this.selectedFilaments.set(filament.id, filament);
+    }
+    this.selectionChanged.emit(Array.from(this.selectedFilaments.values()));
   }
 
   public toggleFavorite(filament: FilamentSummary) {

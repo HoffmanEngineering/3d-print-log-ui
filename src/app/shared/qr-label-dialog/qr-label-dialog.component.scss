@@ -24,9 +24,9 @@
   gap: 16px;
   margin-bottom: 16px;
   flex-wrap: wrap;
-
+  padding-top: 4px;
   mat-form-field {
-    width: 150px;
+    width: auto;
   }
 }
 

@@ -49,7 +49,11 @@ describe('PrintListComponent', () => {
     };
 
     const mockActivatedRoute = {
-      data: of({ printList: mockPrintPagedResult }),
+      data: of({
+        printList: mockPrintPagedResult,
+        printers: [],
+        filaments: [],
+      }),
       queryParamMap: of({ has: () => false }),
       snapshot: {},
     };
@@ -112,7 +116,11 @@ describe('PrintListComponent', () => {
       },
     };
 
-    (mockActivatedRoute.data = of({ printList: mockPrintPagedResult })),
+    (mockActivatedRoute.data = of({
+      printList: mockPrintPagedResult,
+      printers: [],
+      filaments: [],
+    })),
       // Act
       fixture.detectChanges();
 
@@ -185,7 +193,11 @@ describe('PrintListComponent', () => {
       },
     };
 
-    (mockActivatedRoute.data = of({ printList: mockPrintPagedResult })),
+    (mockActivatedRoute.data = of({
+      printList: mockPrintPagedResult,
+      printers: [],
+      filaments: [],
+    })),
       // Act
       fixture.detectChanges();
 
@@ -227,6 +239,18 @@ describe('PrintListComponent', () => {
       'No Active Printers',
       jasmine.any(Object)
     );
+  });
+
+  it('should keep the filter panel open when resetFilters is called', () => {
+    // Arrange
+    fixture.detectChanges();
+    component.isFilterPanelOpen = true;
+
+    // Act
+    component.resetFilters();
+
+    // Assert
+    expect(component.isFilterPanelOpen).toBeTrue();
   });
 
   it('should redirect to printers/new when the Printer Redirect toast is tapped.', () => {

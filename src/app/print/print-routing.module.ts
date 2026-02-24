@@ -17,6 +17,7 @@ import { LastSelectedPrinterSettingResolverService } from './resolvers/last-sele
 import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
 import { PrintListResolverService } from './resolvers/print-list-resolver.service';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
+import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 
 const routes: Routes = [
   {
@@ -28,6 +29,7 @@ const routes: Routes = [
         resolve: {
           printList: PrintListResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
+          filaments: FilamentListResolverService,
           preferredCurrencySymbolSetting: CurrencySymbolResolverService,
           defaultFilamentPriceSetting:
             DefaultFilamentPriceSettingResolverService,

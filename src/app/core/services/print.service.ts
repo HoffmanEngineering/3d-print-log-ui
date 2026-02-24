@@ -246,6 +246,7 @@ export class PrintService {
     searchText: string = '',
     filterByStatus: PrintStatus | null = null,
     filterByPrinterIds: number[] = [],
+    filterByFilamentIds: string[] = [],
     sortDirection = SortDirection.Desc,
     sortColumn = PrintSummarySortColumn.StartDate,
     userId?: number
@@ -270,6 +271,12 @@ export class PrintService {
     if (filterByPrinterIds?.length > 0) {
       for (const id of filterByPrinterIds) {
         params = params.append('filterByPrinterIds', id.toString());
+      }
+    }
+
+    if (filterByFilamentIds?.length > 0) {
+      for (const id of filterByFilamentIds) {
+        params = params.append('filterByFilamentIds', id);
       }
     }
 

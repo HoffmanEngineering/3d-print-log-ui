@@ -1,5 +1,5 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -32,6 +32,7 @@ import {
 import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
+import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 
 export interface ColumnDefinition {
   key: string;
@@ -48,6 +49,8 @@ export interface ColumnDefinition {
 export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
   public printers: PrinterSummary[] = [];
+  public filaments: FilamentSummary[] = [];
+
   public pageSize: number;
   public currentPage: number;
   public totalCount: number;
@@ -155,9 +158,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public searchText = '';
 
-  public filterByStatus: PrintStatus | null = null;
+  public filterByStatus = signal<PrintStatus | null>(null);
 
-  public filterByPrinterIds: number[] = [];
+  public filterByPrinterIds = signal<number[]>([]);
+
+  public filterByFilamentIds = signal<string[]>([]);
+  public filterByFilaments = signal<FilamentSummary[]>([]);
 
   public printStatusTypes = PrintStatus;
 
@@ -174,6 +180,24 @@ export class PrintListComponent implements OnInit, OnDestroy {
   mobileQuery: MediaQueryList;
 
   public isLoading = false;
+
+  public isFilterPanelOpen = false;
+
+  readonly activeFilterCount = computed(() => {
+    let count = 0;
+    if (
+      this.filterByStatus() !== null &&
+      (this.filterByStatus() as number) !== -1
+    )
+      count++;
+    if (this.filterByPrinterIds().length > 0) count++;
+    if (this.filterByFilamentIds().length > 0) count++;
+    return count;
+  });
+
+  public toggleFilterPanel(): void {
+    this.isFilterPanelOpen = !this.isFilterPanelOpen;
+  }
 
   public printSearchSubscription: Subscription | null = null;
 
@@ -240,7 +264,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.searchText = params.get('searchText');
       }
       if (params.has('filterByStatus')) {
-        this.filterByStatus = +params.get('filterByStatus');
+        this.filterByStatus.set(+params.get('filterByStatus'));
       }
       if (params.has('sortDirection')) {
         this.sortDirection = +params.get('sortDirection');
@@ -250,11 +274,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
       }
 
       if (params.has('filterByPrinterId')) {
-        this.filterByPrinterIds = params
-          .getAll('filterByPrinterId')
-          .map((id) => +id);
+        this.filterByPrinterIds.set(
+          params.getAll('filterByPrinterId').map((id) => +id)
+        );
       } else {
-        this.filterByPrinterIds = [];
+        this.filterByPrinterIds.set([]);
+      }
+
+      if (params.has('filterByFilamentId')) {
+        this.filterByFilamentIds.set(params.getAll('filterByFilamentId'));
+      } else {
+        this.filterByFilamentIds.set([]);
       }
     });
 
@@ -266,6 +296,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
       this.handlePagedList(pagedResponse);
 
       this.printers = data.printers;
+      this.filaments = data.filaments;
+
+      this.filterByFilaments.set(
+        this.filterByFilamentIds()
+          .map((id) => this.filaments.find((f) => f.id === id))
+          .filter((f) => f != null)
+      );
+
+      if (this.activeFilterCount() > 0) {
+        this.isFilterPanelOpen = true;
+      }
     });
 
     /**
@@ -366,8 +407,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public resetFilters() {
     this.currentPage = 1;
     this.searchText = '';
-    this.filterByStatus = null;
-    this.filterByPrinterIds = [];
+    this.filterByStatus.set(null);
+    this.filterByPrinterIds.set([]);
+    this.filterByFilamentIds.set([]);
+    this.filterByFilaments.set([]);
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrintSummarySortColumn.StartDate;
@@ -386,8 +429,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
           pageNumber: this.currentPage,
           pageSize: this.pageSize,
           searchText: this.searchText || '',
-          filterByStatus: this.filterByStatus,
-          filterByPrinterId: this.filterByPrinterIds,
+          filterByStatus: this.filterByStatus(),
+          filterByPrinterId: this.filterByPrinterIds(),
+          filterByFilamentId: this.filterByFilamentIds(),
           sortDirection: this.sortDirection,
           sortColumn: this.sortColumn,
           t: new Date().getTime(),
@@ -402,8 +446,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.currentPage,
             this.pageSize,
             this.searchText || '',
-            this.filterByStatus,
-            this.filterByPrinterIds,
+            this.filterByStatus(),
+            this.filterByPrinterIds(),
+            this.filterByFilamentIds(),
             this.sortDirection,
             this.sortColumn
           )
@@ -444,17 +489,27 @@ export class PrintListComponent implements OnInit, OnDestroy {
     }
   }
 
+  public getFilamentLabel(filament: FilamentSummary) {
+    return [
+      filament.displayName,
+      filament.brand,
+      filament.materialType,
+      filament.colorName,
+    ]
+      .filter(Boolean)
+      .join(' - ');
+  }
+
   public deletePrint(print: PrintSummary) {
     const dialogRef = this.dialog.open(SimpleDialogComponent, {
       maxWidth: '350px',
     });
-    (dialogRef.componentInstance as any).title = 'Delete?';
+    dialogRef.componentInstance.title = 'Delete?';
     // eslint-disable-next-line max-len
-    (dialogRef.componentInstance as any).body =
-      `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
-    (dialogRef.componentInstance as any).yesText = 'Delete';
-    (dialogRef.componentInstance as any).yesColor = 'warn';
-    (dialogRef.componentInstance as any).noText = 'Cancel';
+    dialogRef.componentInstance.body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
+    dialogRef.componentInstance.yesText = 'Delete';
+    dialogRef.componentInstance.yesColor = 'warn';
+    dialogRef.componentInstance.noText = 'Cancel';
 
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {
@@ -703,5 +758,44 @@ export class PrintListComponent implements OnInit, OnDestroy {
         reader.readAsText(file);
       }
     }
+  }
+
+  public searchFilament() {
+    const dialogRef = this.dialog.open(FilamentSearchModalComponent, {
+      data: {
+        otherFilamentOption: null,
+        multiSelect: true,
+      },
+      height: '80svh',
+      width: '80svw',
+      position: {
+        top: '5vh',
+        left: '5vw',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((filaments: FilamentSummary[] | null) => {
+      if (filaments?.length) {
+        for (const filament of filaments) {
+          if (!this.filterByFilamentIds().includes(filament.id)) {
+            this.filterByFilamentIds.update((ids) => [...ids, filament.id]);
+            this.filterByFilaments.update((fs) => [...fs, filament]);
+          }
+        }
+        this.currentPage = 1;
+        this.updateFilter();
+      }
+    });
+  }
+
+  public removeFilamentFilter(filament: FilamentSummary) {
+    this.filterByFilamentIds.update((ids) =>
+      ids.filter((id) => id !== filament.id)
+    );
+    this.filterByFilaments.update((fs) =>
+      fs.filter((f) => f.id !== filament.id)
+    );
+    this.currentPage = 1;
+    this.updateFilter();
   }
 }

@@ -16,7 +16,7 @@ import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
 const cordovaCallbackUri =
-  'com.printlog.app://cordova/com.printlog.app/callback';
+  'com.hoffmanengineering.printlog://cordova/com.hoffmanengineering.printlog/callback';
 
 export interface UserProfileInfo {
   id: number;

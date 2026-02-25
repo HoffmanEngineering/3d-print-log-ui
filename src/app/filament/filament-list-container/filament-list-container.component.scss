@@ -17,16 +17,72 @@ table {
 }
 
 .header {
-  margin-left: 5px;
-  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 8px 0;
 }
 
-.header-buttons {
+.header-top {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 5px;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  flex: 1;
+  min-width: 160px;
+}
+
+.filter-toggle-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  ::ng-deep .mat-badge-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.filter-panel {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease;
+
+  &.filter-panel--open {
+    max-height: 300px;
+    opacity: 1;
+  }
+}
+
+.filter-panel-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  mat-checkbox {
+    margin-right: 0;
+  }
+}
+
+.filter-field {
+  min-width: 150px;
 }
 
 .selection-info {
@@ -65,11 +121,6 @@ table {
   padding-right: 0 !important;
 }
 
-.search-fields {
-  display: inline;
-  margin-left: 10px;
-}
-
 .mat-column-colorHex {
   flex: 0 0 70px !important;
   width: 70px !important;
@@ -103,12 +154,6 @@ table {
 .mat-column-more {
   flex: 0 0 1% !important;
   width: 1% !important;
-}
-
-/* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
-/* Checkbox margin for filter checkboxes only, not table select column */
-.search-fields mat-checkbox {
-  margin-right: 25px;
 }
 
 .not-favorite-icon {

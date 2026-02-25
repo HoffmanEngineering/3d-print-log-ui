@@ -379,6 +379,135 @@
       data-cy-filament-row
     ></tr>
   </table>
+  <!-- Mobile card list (shown < 600px via CSS, table hidden) -->
+  <div class="filament-cards">
+    @for (filament of filaments; track filament.id) {
+      <div
+        class="filament-card"
+        [class.filament-card--selected]="isSelected(filament)"
+        tabindex="0"
+        [routerLink]="[filament.id]"
+        data-cy-filament-card
+      >
+        <div
+          class="card-swatch"
+          [style.background-color]="'#' + filament.colorHex"
+        ></div>
+        <div class="card-content">
+          <div class="card-row-primary">
+            <span class="card-name">{{ filament.displayName }}</span>
+            <span class="card-spacer"></span>
+            <span class="card-weight">
+              {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}g
+            </span>
+          </div>
+          <div class="card-row-material">
+            <span class="card-chip">{{ filament.materialType }}</span>
+            @if (!filament.isActive) {
+              <span class="card-chip card-chip--inactive">Inactive</span>
+            }
+          </div>
+          <div class="card-row-secondary">
+            {{ filament.brand }}@if (filament.colorName) {
+              &nbsp;·&nbsp;{{ filament.colorName }}
+            }@if (filament.storageLocation) {
+              &nbsp;·&nbsp;{{ filament.storageLocation }}
+            }@if (filament.loadedInPrinter) {
+              &nbsp;·&nbsp;Loaded: {{ getPrinterLabel(filament) }}
+            }
+          </div>
+        </div>
+        <div
+          class="card-actions"
+          (click)="$event.preventDefault(); $event.stopPropagation()"
+        >
+          <mat-checkbox
+            [checked]="isSelected(filament)"
+            (change)="toggleSelection(filament)"
+            [attr.aria-label]="'Select ' + filament.displayName"
+          ></mat-checkbox>
+          <button
+            mat-button
+            class="transparent card-favorite-btn"
+            [class.not-favorite-icon]="!filament.isFavorite"
+            [attr.aria-label]="
+              filament.isFavorite
+                ? 'Remove ' + filament.displayName + ' from favorites'
+                : 'Add ' + filament.displayName + ' to favorites'
+            "
+            (click)="toggleFavorite(filament)"
+          >
+            <mat-icon>{{
+              filament.isFavorite ? 'star' : 'star_border'
+            }}</mat-icon>
+          </button>
+          <button
+            mat-button
+            class="transparent"
+            [attr.aria-label]="'More options for ' + filament.displayName"
+            [matMenuTriggerFor]="cardMenu"
+            data-cy-more-button
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #cardMenu="matMenu">
+            <a
+              class="menu-link"
+              mat-menu-item
+              [routerLink]="[filament.id]"
+              [attr.aria-label]="'Edit Material ' + filament.displayName"
+            >
+              <mat-icon>edit</mat-icon>Edit
+            </a>
+            <a
+              class="menu-link"
+              mat-menu-item
+              [routerLink]="['copy', filament.id]"
+              [attr.aria-label]="'Duplicate Material ' + filament.displayName"
+            >
+              <mat-icon>file_copy</mat-icon>Duplicate
+            </a>
+            <button
+              type="button"
+              mat-menu-item
+              [attr.aria-label]="'Print QR Label for ' + filament.displayName"
+              (click)="printQrLabel(filament)"
+            >
+              <mat-icon>qr_code_2</mat-icon>Print QR Label
+            </button>
+            @if (filament?.loadedInPrinter?.id) {
+              <a
+                class="menu-link"
+                mat-menu-item
+                [routerLink]="['/', 'printers', filament.loadedInPrinter.id]"
+              >
+                <mat-icon>open_in_browser</mat-icon>Go To Loaded Printer
+              </a>
+            }
+            <hr />
+            <button
+              type="button"
+              mat-menu-item
+              [attr.aria-label]="
+                'Mark Material ' + filament.displayName + ' as empty.'
+              "
+              (click)="markAsEmpty(filament)"
+            >
+              <mat-icon>hide_source</mat-icon>Mark As Empty
+            </button>
+            <button
+              type="button"
+              mat-menu-item
+              [attr.aria-label]="'Delete Material ' + filament.displayName"
+              (click)="deleteFilament(filament)"
+            >
+              <mat-icon>delete</mat-icon>Delete
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+    }
+  </div>
   @if (totalCount === 0) {
     <div class="no-filament">
       No Materials found. Add a new Material or try a different search.

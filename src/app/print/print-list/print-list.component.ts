@@ -768,11 +768,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
         multiSelect: true,
       },
       height: '80svh',
-      width: '80svw',
+      width: '95vw',
       maxWidth: '100vw',
       position: {
         top: '5vh',
-        left: '5vw',
       },
     });
 

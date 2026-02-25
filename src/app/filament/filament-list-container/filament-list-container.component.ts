@@ -437,4 +437,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     this.currentPage = 1;
     this.updateFilter();
   }
+
+  public navigateToFilament(id: string): void {
+    this.router.navigate([id], { relativeTo: this.activatedRoute });
+  }
 }

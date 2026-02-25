@@ -386,7 +386,7 @@
         class="filament-card"
         [class.filament-card--selected]="isSelected(filament)"
         tabindex="0"
-        [routerLink]="[filament.id]"
+        (click)="navigateToFilament(filament.id)"
         (keyup.enter)="navigateToFilament(filament.id)"
         (keyup.space)="$event.preventDefault(); navigateToFilament(filament.id)"
         data-cy-filament-card

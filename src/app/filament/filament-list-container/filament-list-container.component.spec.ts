@@ -6,12 +6,16 @@ describe('FilamentListContainerComponent (isolated)', () => {
   let component: FilamentListContainerComponent;
 
   // Minimal router stub: constructor subscribes to router.events at construction time
-  const routerStub = { events: EMPTY, navigate: () => Promise.resolve(true) };
+  const routerStub = {
+    events: EMPTY,
+    navigate: (..._args: unknown[]) => Promise.resolve(true),
+  };
+  const activatedRouteStub = {};
 
   beforeEach(() => {
     // Construct with minimal stubs — only testing pure methods
     component = new FilamentListContainerComponent(
-      null as any, // ActivatedRoute
+      activatedRouteStub as any, // ActivatedRoute
       null as any, // FilamentService
       null as any, // Title
       routerStub as any, // Router
@@ -109,6 +113,17 @@ describe('FilamentListContainerComponent (isolated)', () => {
       spyOn(component, 'updateFilter');
       component.resetFilters();
       expect(component.updateFilter).toHaveBeenCalled();
+    });
+  });
+
+  describe('navigateToFilament', () => {
+    it('navigates to the filament detail route', () => {
+      spyOn(routerStub, 'navigate');
+      component.navigateToFilament('abc-123');
+      expect(routerStub.navigate).toHaveBeenCalledWith(
+        ['abc-123'],
+        jasmine.objectContaining({ relativeTo: jasmine.anything() })
+      );
     });
   });
 });

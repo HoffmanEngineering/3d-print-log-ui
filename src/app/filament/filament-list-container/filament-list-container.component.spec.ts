@@ -86,6 +86,7 @@ describe('FilamentListContainerComponent (isolated)', () => {
 
   describe('resetFilters', () => {
     it('resets all filter fields to defaults', () => {
+      component.searchText = 'test';
       component.showFavoritesOnly = true;
       component.showLoadedFilamentOnly = true;
       component.includeInactive = true;
@@ -96,10 +97,12 @@ describe('FilamentListContainerComponent (isolated)', () => {
 
       component.resetFilters();
 
+      expect(component.searchText).toBe('');
       expect(component.showFavoritesOnly).toBeFalse();
       expect(component.showLoadedFilamentOnly).toBeFalse();
       expect(component.includeInactive).toBeFalse();
       expect(component.filterByMaterialCategory).toBe('');
+      expect(component.currentPage).toBe(1);
     });
 
     it('calls updateFilter after resetting', () => {

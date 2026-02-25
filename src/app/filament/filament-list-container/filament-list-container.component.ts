@@ -429,6 +429,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   }
 
   public resetFilters(): void {
+    this.searchText = '';
     this.showFavoritesOnly = false;
     this.showLoadedFilamentOnly = false;
     this.includeInactive = false;

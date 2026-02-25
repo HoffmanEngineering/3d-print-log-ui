@@ -1687,8 +1687,8 @@ export class EditPrintDetailComponent
         otherFilamentOption: EditPrintDetailComponent.OTHER_FILAMENT_OPTION,
         filterByMaterialCategory: material,
       },
-      height: '80vh',
-      width: '80vw',
+      height: '90svh',
+      width: '95vw',
       maxWidth: '100vw',
     });
 

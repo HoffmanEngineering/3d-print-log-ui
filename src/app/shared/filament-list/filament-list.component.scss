@@ -1,3 +1,27 @@
+// ── Host / root layout ───────────────────────────────────────────────────────
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.filament-list-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+// ── Table ────────────────────────────────────────────────────────────────────
+
 table {
   width: 100%;
   th,

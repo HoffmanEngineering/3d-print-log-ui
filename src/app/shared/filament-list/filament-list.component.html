@@ -1,4 +1,4 @@
-<div>
+<div class="filament-list-root">
   <div class="header">
     @if (showAddFilamentButton) {
       <button
@@ -81,6 +81,7 @@
       </div>
     </div>
   </div>
+  <div class="scroll-area">
   <table
     mat-table
     [dataSource]="filaments"
@@ -354,6 +355,7 @@
       No filaments found. Add a new filament or try a different search.
     </div>
   }
+  </div>
   <mat-paginator
     [length]="totalCount"
     [pageSize]="pageSize"

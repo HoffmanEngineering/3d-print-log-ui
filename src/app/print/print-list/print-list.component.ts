@@ -767,7 +767,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         otherFilamentOption: null,
         multiSelect: true,
       },
-      height: '80svh',
+      height: '90svh',
       width: '95vw',
       maxWidth: '100vw',
       position: {

@@ -29,12 +29,13 @@
         (click)="toggleFilterPanel()"
         [attr.aria-expanded]="isFilterPanelOpen"
         aria-controls="filament-filter-panel"
+        [matBadge]="activeFilterCount || null"
+        matBadgeColor="accent"
+        matBadgeSize="small"
+        [matBadgeHidden]="activeFilterCount === 0"
       >
         <mat-icon>{{ isFilterPanelOpen ? 'expand_less' : 'tune' }}</mat-icon>
         Filters
-        @if (activeFilterCount > 0) {
-          <span class="filter-count-badge">({{ activeFilterCount }})</span>
-        }
       </button>
     </div>
     <div
@@ -301,40 +302,15 @@
         <div class="card-content">
           <div class="card-row-primary">
             <span class="card-name">{{ filament.displayName }}</span>
-            @if (!filament.isActive) {
-              <span class="card-chip card-chip--inactive">Inactive</span>
-            }
-            <span class="card-chip">{{ filament.materialType }}</span>
             <span class="card-spacer"></span>
             <span class="card-weight">
               {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}g
             </span>
-            @if (multiSelect) {
-              <mat-checkbox
-                [checked]="selectedFilaments.has(filament.id)"
-                (click)="$event.stopPropagation()"
-                (change)="toggleSelection(filament)"
-              ></mat-checkbox>
-            } @else {
-              <button
-                mat-button
-                class="transparent card-favorite-btn"
-                [class.not-favorite-icon]="!filament.isFavorite"
-                [attr.aria-label]="
-                  filament.isFavorite
-                    ? 'Remove ' + filament.displayName + ' from favorites'
-                    : 'Add ' + filament.displayName + ' to favorites'
-                "
-                (click)="
-                  $event.preventDefault();
-                  $event.stopPropagation();
-                  toggleFavorite(filament)
-                "
-              >
-                <mat-icon>{{
-                  filament.isFavorite ? 'star' : 'star_border'
-                }}</mat-icon>
-              </button>
+          </div>
+          <div class="card-row-material">
+            <span class="card-chip">{{ filament.materialType }}</span>
+            @if (!filament.isActive) {
+              <span class="card-chip card-chip--inactive">Inactive</span>
             }
           </div>
           <div class="card-row-secondary">
@@ -346,6 +322,35 @@
               &nbsp;·&nbsp;Loaded: {{ getPrinterLabel(filament) }}
             }
           </div>
+        </div>
+        <div class="card-actions">
+          @if (multiSelect) {
+            <mat-checkbox
+              [checked]="selectedFilaments.has(filament.id)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleSelection(filament)"
+            ></mat-checkbox>
+          } @else {
+            <button
+              mat-button
+              class="transparent card-favorite-btn"
+              [class.not-favorite-icon]="!filament.isFavorite"
+              [attr.aria-label]="
+                filament.isFavorite
+                  ? 'Remove ' + filament.displayName + ' from favorites'
+                  : 'Add ' + filament.displayName + ' to favorites'
+              "
+              (click)="
+                $event.preventDefault();
+                $event.stopPropagation();
+                toggleFavorite(filament)
+              "
+            >
+              <mat-icon>{{
+                filament.isFavorite ? 'star' : 'star_border'
+              }}</mat-icon>
+            </button>
+          }
         </div>
       </div>
     }

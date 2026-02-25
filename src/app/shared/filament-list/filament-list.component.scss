@@ -57,10 +57,13 @@ table {
 .filter-toggle-btn {
   flex-shrink: 0;
   white-space: nowrap;
-}
 
-.filter-count-badge {
-  margin-left: 2px;
+  // Ensure the matBadge number is vertically centred within the bubble.
+  ::ng-deep .mat-badge-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 // ── Collapsible filter panel ────────────────────────────────────────────────
@@ -168,7 +171,7 @@ mat-checkbox {
   .card-swatch {
     width: 40px;
     min-width: 40px;
-    height: 48px;
+    align-self: stretch;
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 4px;
     flex-shrink: 0;
@@ -177,6 +180,9 @@ mat-checkbox {
   .card-content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .card-row-primary {
@@ -221,16 +227,30 @@ mat-checkbox {
     flex-shrink: 0;
   }
 
+  .card-actions {
+    flex-shrink: 0;
+    align-self: center;
+
+    mat-checkbox {
+      margin-right: -4px;
+    }
+  }
+
   .card-favorite-btn {
     flex-shrink: 0;
     min-width: unset;
     padding: 0 4px;
   }
 
+  .card-row-material {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   .card-row-secondary {
     font-size: 12px;
     color: rgba(0, 0, 0, 0.54);
-    margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

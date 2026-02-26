@@ -30,9 +30,15 @@ describe('FilamentSpoolIconComponent', () => {
     expect(barrel.getAttribute('fill')).toBe('#FF5733');
   });
 
-  it('should show a black barrel when color is empty', () => {
+  it('should default to black barrel when color is empty', () => {
     fixture.detectChanges();
     const barrel = fixture.nativeElement.querySelector('.spool-barrel');
-    expect(barrel.getAttribute('fill')).toBe('#');
+    expect(barrel.getAttribute('fill')).toBe('#000000');
+  });
+
+  it('should mark the SVG as aria-hidden', () => {
+    fixture.detectChanges();
+    const svg = fixture.nativeElement.querySelector('svg');
+    expect(svg.getAttribute('aria-hidden')).toBe('true');
   });
 });

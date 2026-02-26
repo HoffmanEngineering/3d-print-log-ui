@@ -6,7 +6,12 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilamentSpoolIconComponent {
+  private static readonly HEX_PATTERN = /^[0-9A-Fa-f]{3,8}$/;
+
   color = input<string>('');
 
-  protected fillColor = computed(() => `#${this.color()}`);
+  protected fillColor = computed(() => {
+    const c = this.color();
+    return c && FilamentSpoolIconComponent.HEX_PATTERN.test(c) ? `#${c}` : '#000000';
+  });
 }

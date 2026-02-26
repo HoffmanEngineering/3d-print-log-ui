@@ -28,6 +28,33 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.34.0': {
+      title: '1.34.0 - Materials Page Mobile Redesign',
+      body: `<p>
+The <strong>Materials page</strong> has a brand new mobile layout with card-based design! Each card
+now shows a custom <strong>filament spool icon</strong> rendered in the material's actual color.
+Bottle materials automatically get a bottle icon instead. The filter bar has also been updated
+with a collapsible panel matching the Print List.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
+  <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.33.0': {
       title: '1.33.0 - Filter Prints by Material',
       body: `<p>

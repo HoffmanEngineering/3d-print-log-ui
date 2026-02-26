@@ -1,9 +1,9 @@
 <!--
-  3D-perspective filament spool SVG. Front-left view shows:
-    - Charcoal front flange (dominant face, left)
-    - Filament-colored barrel (wound filament strip, right)
-    - Darker back flange peeking around the right edge
-    - Hub hole punched through front flange center
+  Front-on filament spool SVG. Concentric circles (back to front):
+    - Outer flange ring (charcoal border)
+    - Wound filament ring (dynamic color — the large visible area)
+    - Center hub (charcoal)
+    - Axle hole (dark)
 -->
 <svg
   viewBox="0 0 80 80"
@@ -11,31 +11,21 @@
   aria-hidden="true"
   focusable="false"
 >
-  <!-- Back flange (receding, darker) -->
-  <ellipse cx="54" cy="40" rx="18" ry="24" fill="#1a1a1a" />
+  <!-- Outer flange -->
+  <circle cx="40" cy="40" r="36" fill="#2d2d2d" />
 
-  <!-- Barrel: wound filament — dynamic fill color -->
-  <!-- Path: top of front flange → top of back flange → arc right side of back flange → bottom of front flange → close -->
-  <path
+  <!-- Wound filament ring — dynamic fill color -->
+  <circle
     class="spool-barrel"
     [attr.fill]="fillColor()"
-    d="M 24 12 L 54 16 A 18 24 0 0 1 54 64 L 24 68 Z"
-  />
-
-  <!-- Front flange (dominant face) -->
-  <ellipse cx="24" cy="40" rx="22" ry="28" fill="#2d2d2d" />
-
-  <!-- Rim highlight for 3D depth -->
-  <ellipse
-    cx="24"
+    cx="40"
     cy="40"
-    rx="22"
-    ry="28"
-    fill="none"
-    stroke="#3d3d3d"
-    stroke-width="1.5"
+    r="30"
   />
 
-  <!-- Hub hole -->
-  <ellipse cx="24" cy="40" rx="8" ry="10" fill="#111111" />
+  <!-- Center hub -->
+  <circle cx="40" cy="40" r="12" fill="#2d2d2d" />
+
+  <!-- Axle hole -->
+  <circle cx="40" cy="40" r="7" fill="#111111" />
 </svg>

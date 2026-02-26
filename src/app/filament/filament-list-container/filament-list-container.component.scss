@@ -201,13 +201,14 @@ table {
     }
   }
 
-  .card-swatch {
-    width: 40px;
-    min-width: 40px;
-    align-self: stretch;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
+  .card-swatch-icon {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .card-content {

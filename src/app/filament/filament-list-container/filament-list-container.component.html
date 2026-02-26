@@ -390,10 +390,10 @@
         (keyup.space)="$event.preventDefault(); navigateToFilament(filament.id)"
         data-cy-filament-card
       >
-        <div
-          class="card-swatch"
-          [style.background-color]="'#' + filament.colorHex"
-        ></div>
+        <app-filament-spool-icon
+          [color]="filament.colorHex"
+          class="card-swatch-icon"
+        />
         <div class="card-content">
           <div class="card-row-primary">
             <span class="card-name">{{ filament.displayName }}</span>

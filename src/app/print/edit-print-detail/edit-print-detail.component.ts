@@ -754,7 +754,9 @@ export class EditPrintDetailComponent
       sortedImages.forEach((image) => {
         const newImage: PrintImageValue = {
           id: image.id,
-          url: `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`,
+          url: image.id
+            ? `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`
+            : image.url,
           file: null,
           isDefault: image.isDefault,
           displayOrder: image.displayOrder,

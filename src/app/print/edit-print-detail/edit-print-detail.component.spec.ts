@@ -7,7 +7,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
-import { PrintService } from 'src/app/core/services/print.service';
+import {
+  PrintDetail,
+  PrintService,
+  PrintStatus,
+} from 'src/app/core/services/print.service';
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { EditPrintDetailComponent } from './edit-print-detail.component';
 
@@ -259,6 +263,41 @@ describe('EditPrintDetailComponent', () => {
 
       expect(component.images.at(0).value.isDefault).toBe(false); // image1 cleared
       expect(component.images.at(1).value.isDefault).toBe(true); // image2 set
+    });
+
+    it('should use the base64 data URL for a slicer snapshot image that has no ID', () => {
+      const snapshotUrl = 'data:image/png;base64,abc123snapshot';
+
+      const printWithSnapshot: PrintDetail = {
+        id: null,
+        title: 'Test Print',
+        printerId: null,
+        startDate: new Date(),
+        estimatedPrintTimeInSeconds: null,
+        estimatedFilamentUsageMg: null,
+        printTimeInSeconds: null,
+        filamentUsageMg: null,
+        filamentType: '',
+        notes: '',
+        url: '',
+        fileName: '',
+        status: PrintStatus.Pending,
+        viewStatus: null,
+        images: [
+          { id: null, isDefault: true, displayOrder: 0, url: snapshotUrl },
+        ],
+        allowComments: null,
+        createdByUserId: null,
+        comments: [],
+        filamentUsage: [],
+      };
+
+      const form = component.buildFormFromPrintDetail(printWithSnapshot);
+      const imagesArray = form.get('images') as any;
+
+      expect(imagesArray.length).toBe(1);
+      expect(imagesArray.at(0).value.url).toBe(snapshotUrl);
+      expect(imagesArray.at(0).value.url).not.toContain('null');
     });
 
     it('should set isDragOver on drag events', () => {

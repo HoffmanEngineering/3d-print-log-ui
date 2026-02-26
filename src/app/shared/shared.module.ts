@@ -60,7 +60,9 @@ import { QrLabelDialogComponent } from './qr-label-dialog/qr-label-dialog.compon
 import { QrScannerComponent } from './qr-scanner/qr-scanner.component';
 import { ImageThumbnailStripComponent } from './image-thumbnail-strip/image-thumbnail-strip.component';
 import { ImageCarouselComponent } from './image-carousel/image-carousel.component';
+import { BottleIconComponent } from './bottle-icon/bottle-icon.component';
 import { FilamentSpoolIconComponent } from './filament-spool-icon/filament-spool-icon.component';
+import { MaterialIconComponent } from './material-icon/material-icon.component';
 
 @NgModule({
   declarations: [
@@ -128,6 +130,8 @@ import { FilamentSpoolIconComponent } from './filament-spool-icon/filament-spool
     ImageThumbnailStripComponent,
     ImageCarouselComponent,
     FilamentSpoolIconComponent,
+    BottleIconComponent,
+    MaterialIconComponent,
   ],
   exports: [
     CommonModule,
@@ -186,6 +190,8 @@ import { FilamentSpoolIconComponent } from './filament-spool-icon/filament-spool
     ImageThumbnailStripComponent,
     ImageCarouselComponent,
     FilamentSpoolIconComponent,
+    BottleIconComponent,
+    MaterialIconComponent,
   ],
 })
 export class SharedModule {}

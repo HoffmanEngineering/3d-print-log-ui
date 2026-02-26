@@ -21,6 +21,7 @@ table {
   flex-direction: column;
   gap: 4px;
   padding: 8px 8px 0;
+  overflow-x: hidden;
 }
 
 .header-top {
@@ -173,6 +174,10 @@ table {
 
   .filament-cards {
     display: block;
+  }
+
+  .action-buttons {
+    width: 100%;
   }
 
   .filament-card {

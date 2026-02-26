@@ -60,6 +60,7 @@ import { QrLabelDialogComponent } from './qr-label-dialog/qr-label-dialog.compon
 import { QrScannerComponent } from './qr-scanner/qr-scanner.component';
 import { ImageThumbnailStripComponent } from './image-thumbnail-strip/image-thumbnail-strip.component';
 import { ImageCarouselComponent } from './image-carousel/image-carousel.component';
+import { FilamentSpoolIconComponent } from './filament-spool-icon/filament-spool-icon.component';
 
 @NgModule({
   declarations: [
@@ -126,6 +127,7 @@ import { ImageCarouselComponent } from './image-carousel/image-carousel.componen
     QrScannerComponent,
     ImageThumbnailStripComponent,
     ImageCarouselComponent,
+    FilamentSpoolIconComponent,
   ],
   exports: [
     CommonModule,
@@ -183,6 +185,7 @@ import { ImageCarouselComponent } from './image-carousel/image-carousel.componen
     QrLabelDialogComponent,
     ImageThumbnailStripComponent,
     ImageCarouselComponent,
+    FilamentSpoolIconComponent,
   ],
 })
 export class SharedModule {}

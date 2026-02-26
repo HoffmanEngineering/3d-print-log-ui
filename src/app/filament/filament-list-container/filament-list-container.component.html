@@ -20,91 +20,124 @@
     }
   </div>
   <div class="header">
-    <div class="header-buttons">
-      <button
-        mat-raised-button
-        routerLink="new"
-        type="button"
-        color="accent"
-        id="add-new-filament"
-      >
-        Add New Material
-      </button>
-      <button
-        mat-raised-button
-        type="button"
-        (click)="printAllLabels()"
-        [disabled]="filaments.length === 0 && !hasSelection()"
-        [matTooltip]="hasSelection() ? 'Print QR labels for selected materials' : 'Print QR labels for all materials on this page'"
-      >
-        <mat-icon>qr_code_2</mat-icon>
+    <!-- Row 1: Always visible — action buttons, search, filter toggle -->
+    <div class="header-top">
+      <div class="action-buttons">
+        <button
+          mat-raised-button
+          routerLink="new"
+          type="button"
+          color="accent"
+          id="add-new-filament"
+        >
+          Add New Material
+        </button>
+        <button
+          mat-raised-button
+          type="button"
+          (click)="printAllLabels()"
+          [disabled]="filaments.length === 0 && !hasSelection()"
+          [matTooltip]="
+            hasSelection()
+              ? 'Print QR labels for selected materials'
+              : 'Print QR labels for all materials on this page'
+          "
+        >
+          <mat-icon>qr_code_2</mat-icon>
+          @if (hasSelection()) {
+            Print Labels ({{ getSelectionCount() }})
+          } @else {
+            Print Labels
+          }
+        </button>
         @if (hasSelection()) {
-          Print Labels ({{ getSelectionCount() }})
-        } @else {
-          Print Labels
+          <span class="selection-info" aria-live="polite">
+            <span class="selection-count">{{ getSelectionCount() }} selected</span>
+            <button
+              mat-button
+              type="button"
+              (click)="clearSelection()"
+              class="clear-selection-btn"
+            >
+              <mat-icon>close</mat-icon>
+              Clear
+            </button>
+          </span>
         }
-      </button>
-      @if (hasSelection()) {
-        <span class="selection-info" aria-live="polite">
-          <span class="selection-count">{{ getSelectionCount() }} selected</span>
-          <button
-            mat-button
-            type="button"
-            (click)="clearSelection()"
-            class="clear-selection-btn"
-          >
-            <mat-icon>close</mat-icon>
-            Clear
-          </button>
-        </span>
-      }
-    </div>
-    <div class="search-fields">
-      <mat-form-field>
-        <mat-label> Search: </mat-label
-        ><input
+      </div>
+      <mat-form-field class="search-field" subscriptSizing="dynamic">
+        <mat-label>Search</mat-label>
+        <input
           id="filament-list-search-input"
           matInput
           type="text"
           [(ngModel)]="searchText"
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
-      /></mat-form-field>
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="includeInactive"
-        (ngModelChange)="updateFilter()"
-        >Include Inactive</mat-checkbox
-      >
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="showFavoritesOnly"
-        (ngModelChange)="updateFilter()"
-        >Show Favorites Only</mat-checkbox
-      >
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="showLoadedFilamentOnly"
-        (ngModelChange)="updateFilter()"
-        >Show Loaded Materials Only</mat-checkbox
-      >
-      <mat-form-field>
-        <mat-label> Filter by Category: </mat-label>
-        <mat-select
-          [(ngModel)]="filterByMaterialCategory"
-          (ngModelChange)="updateFilter()"
-        >
-          <mat-option value=""> No Filter </mat-option>
-          @for (
-            materialCategory of materialCategories;
-            track materialCategory
-          ) {
-            <mat-option [value]="materialCategory.nickname">{{
-              materialCategory.name
-            }}</mat-option>
-          }
-        </mat-select>
+        />
       </mat-form-field>
+      <button
+        mat-raised-button
+        type="button"
+        class="filter-toggle-btn"
+        [matBadge]="activeFilterCount || null"
+        matBadgeColor="accent"
+        matBadgeSize="small"
+        [attr.aria-expanded]="isFilterPanelOpen"
+        aria-controls="filter-panel"
+        (click)="toggleFilterPanel()"
+      >
+        <mat-icon>{{ isFilterPanelOpen ? 'expand_less' : 'tune' }}</mat-icon>
+        Filters
+      </button>
+    </div>
+
+    <!-- Row 2: Collapsible filter panel -->
+    <div
+      id="filter-panel"
+      class="filter-panel"
+      [class.filter-panel--open]="isFilterPanelOpen"
+    >
+      <div class="filter-panel-inner">
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="includeInactive"
+          (ngModelChange)="updateFilter()"
+          >Include Inactive</mat-checkbox
+        >
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="showFavoritesOnly"
+          (ngModelChange)="updateFilter()"
+          >Show Favorites Only</mat-checkbox
+        >
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="showLoadedFilamentOnly"
+          (ngModelChange)="updateFilter()"
+          >Show Loaded Materials Only</mat-checkbox
+        >
+        <mat-form-field class="filter-field" subscriptSizing="dynamic">
+          <mat-label>Filter by Category</mat-label>
+          <mat-select
+            [(ngModel)]="filterByMaterialCategory"
+            (ngModelChange)="updateFilter()"
+          >
+            <mat-option value="">No Filter</mat-option>
+            @for (
+              materialCategory of materialCategories;
+              track materialCategory
+            ) {
+              <mat-option [value]="materialCategory.nickname">{{
+                materialCategory.name
+              }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button type="button" mat-raised-button (click)="resetFilters()">
+          Reset Filters
+        </button>
+      </div>
     </div>
   </div>
   <table
@@ -345,6 +378,138 @@
       data-cy-filament-row
     ></tr>
   </table>
+  <!-- Mobile card list (shown < 600px via CSS, table hidden) -->
+  <div class="filament-cards">
+    @for (filament of filaments; track filament.id) {
+      <div
+        class="filament-card"
+        [class.filament-card--selected]="isSelected(filament)"
+        tabindex="0"
+        (click)="navigateToFilament(filament.id)"
+        (keyup.enter)="navigateToFilament(filament.id)"
+        (keyup.space)="$event.preventDefault(); navigateToFilament(filament.id)"
+        data-cy-filament-card
+      >
+        <app-material-icon
+          [color]="filament.colorHex"
+          [categoryNickname]="filament.materialCategory?.nickname"
+          class="card-swatch-icon"
+        />
+        <div class="card-content">
+          <div class="card-row-primary">
+            <span class="card-name">{{ filament.displayName }}</span>
+            <span class="card-spacer"></span>
+            <span class="card-weight">
+              {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}g
+            </span>
+          </div>
+          <div class="card-row-material">
+            <span class="card-chip">{{ filament.materialType }}</span>
+            @if (!filament.isActive) {
+              <span class="card-chip card-chip--inactive">Inactive</span>
+            }
+          </div>
+          <div class="card-row-secondary">
+            {{ filament.brand }}@if (filament.colorName) {
+              &nbsp;·&nbsp;{{ filament.colorName }}
+            }@if (filament.storageLocation) {
+              &nbsp;·&nbsp;{{ filament.storageLocation }}
+            }@if (filament.loadedInPrinter) {
+              &nbsp;·&nbsp;Loaded: {{ getPrinterLabel(filament) }}
+            }
+          </div>
+        </div>
+        <div
+          class="card-actions"
+          (click)="$event.stopPropagation()"
+        >
+          <mat-checkbox
+            [checked]="isSelected(filament)"
+            (change)="toggleSelection(filament)"
+            [attr.aria-label]="'Select ' + filament.displayName"
+          ></mat-checkbox>
+          <button
+            mat-button
+            class="transparent card-favorite-btn"
+            [class.not-favorite-icon]="!filament.isFavorite"
+            [attr.aria-label]="
+              filament.isFavorite
+                ? 'Remove ' + filament.displayName + ' from favorites'
+                : 'Add ' + filament.displayName + ' to favorites'
+            "
+            (click)="toggleFavorite(filament)"
+          >
+            <mat-icon>{{
+              filament.isFavorite ? 'star' : 'star_border'
+            }}</mat-icon>
+          </button>
+          <button
+            mat-button
+            class="transparent card-more-btn"
+            [attr.aria-label]="'More options for ' + filament.displayName"
+            [matMenuTriggerFor]="cardMenu"
+            data-cy-more-button
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #cardMenu="matMenu">
+            <a
+              class="menu-link"
+              mat-menu-item
+              [routerLink]="[filament.id]"
+              [attr.aria-label]="'Edit Material ' + filament.displayName"
+            >
+              <mat-icon>edit</mat-icon>Edit
+            </a>
+            <a
+              class="menu-link"
+              mat-menu-item
+              [routerLink]="['copy', filament.id]"
+              [attr.aria-label]="'Duplicate Material ' + filament.displayName"
+            >
+              <mat-icon>file_copy</mat-icon>Duplicate
+            </a>
+            <button
+              type="button"
+              mat-menu-item
+              [attr.aria-label]="'Print QR Label for ' + filament.displayName"
+              (click)="printQrLabel(filament)"
+            >
+              <mat-icon>qr_code_2</mat-icon>Print QR Label
+            </button>
+            @if (filament?.loadedInPrinter?.id) {
+              <a
+                class="menu-link"
+                mat-menu-item
+                [routerLink]="['/', 'printers', filament.loadedInPrinter.id]"
+              >
+                <mat-icon>open_in_browser</mat-icon>Go To Loaded Printer
+              </a>
+            }
+            <hr />
+            <button
+              type="button"
+              mat-menu-item
+              [attr.aria-label]="
+                'Mark Material ' + filament.displayName + ' as empty.'
+              "
+              (click)="markAsEmpty(filament)"
+            >
+              <mat-icon>hide_source</mat-icon>Mark As Empty
+            </button>
+            <button
+              type="button"
+              mat-menu-item
+              [attr.aria-label]="'Delete Material ' + filament.displayName"
+              (click)="deleteFilament(filament)"
+            >
+              <mat-icon>delete</mat-icon>Delete
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+    }
+  </div>
   @if (totalCount === 0) {
     <div class="no-filament">
       No Materials found. Add a new Material or try a different search.

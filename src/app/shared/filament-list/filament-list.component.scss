@@ -1,3 +1,27 @@
+// ── Host / root layout ───────────────────────────────────────────────────────
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.filament-list-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+// ── Table ────────────────────────────────────────────────────────────────────
+
 table {
   width: 100%;
   th,
@@ -15,10 +39,59 @@ table {
   margin-top: 5px;
 }
 
-.search-fields {
-  display: inline;
-  margin-left: 10px;
+// ── Filter bar ──────────────────────────────────────────────────────────────
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
 }
+
+.search-field {
+  flex: 1;
+  min-width: 160px;
+}
+
+.filter-toggle-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  // Ensure the matBadge number is vertically centred within the bubble.
+  ::ng-deep .mat-badge-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// ── Collapsible filter panel ────────────────────────────────────────────────
+
+.filter-panel {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease;
+
+  &.filter-panel--open {
+    max-height: 400px;
+    opacity: 1;
+  }
+}
+
+.filter-panel-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+// ── Existing column/cell styles ─────────────────────────────────────────────
 
 .mat-column-colorHex {
   flex: 0 0 70px !important;
@@ -27,20 +100,12 @@ table {
 
 .filament-color-cell {
   display: flex;
-  justify-content: center; /* align horizontal */
-  align-items: center; /* align vertical */
+  justify-content: center;
+  align-items: center;
   width: 60px;
   height: 30px;
   position: relative;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
   margin-right: 10px;
-
-  // -webkit-box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
-  // -moz-box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
-  // box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
@@ -55,7 +120,6 @@ table {
   width: 1% !important;
 }
 
-/* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version. */
 mat-checkbox {
   margin-right: 25px;
 }
@@ -68,7 +132,131 @@ mat-checkbox {
   opacity: 100%;
 }
 
-@media screen and (max-width: 550px) {
+// ── Mobile card list ─────────────────────────────────────────────────────────
+
+// Cards hidden on desktop; table shown.
+.filament-cards {
+  display: none;
+}
+
+@media screen and (max-width: 599px) {
+  // Hide table, show cards.
+  table.filament-table {
+    display: none;
+  }
+
+  .filament-cards {
+    display: block;
+  }
+
+  .filament-card {
+    display: flex;
+    align-items: center;
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    gap: 10px;
+
+    &:hover,
+    &:focus {
+      background-color: rgba(0, 0, 0, 0.05);
+      outline: none;
+    }
+
+    &--selected {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .card-swatch {
+    width: 40px;
+    min-width: 40px;
+    align-self: stretch;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .card-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .card-row-primary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .card-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .card-chip {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.08);
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1.4;
+
+    &--inactive {
+      background: #ffccbc;
+      color: #bf360c;
+    }
+  }
+
+  .card-spacer {
+    flex: 1;
+  }
+
+  .card-weight {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.6);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .card-actions {
+    flex-shrink: 0;
+    align-self: center;
+
+    mat-checkbox {
+      margin-right: -4px;
+    }
+  }
+
+  .card-favorite-btn {
+    flex-shrink: 0;
+    min-width: unset;
+    padding: 0 4px;
+  }
+
+  .card-row-material {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-row-secondary {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.54);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Small screen paginator padding fix (keep existing behavior).
   th.mat-mdc-header-cell:last-of-type,
   td.mat-mdc-cell:last-of-type,
   td.mat-mdc-footer-cell:last-of-type {

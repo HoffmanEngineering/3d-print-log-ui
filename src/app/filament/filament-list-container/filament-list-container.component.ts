@@ -412,4 +412,33 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public getSelectionCount(): number {
     return this.selectedFilaments.size;
   }
+
+  public isFilterPanelOpen = false;
+
+  public toggleFilterPanel(): void {
+    this.isFilterPanelOpen = !this.isFilterPanelOpen;
+  }
+
+  public get activeFilterCount(): number {
+    let count = 0;
+    if (this.showFavoritesOnly) count++;
+    if (this.showLoadedFilamentOnly) count++;
+    if (this.includeInactive) count++;
+    if (this.filterByMaterialCategory) count++;
+    return count;
+  }
+
+  public resetFilters(): void {
+    this.searchText = '';
+    this.showFavoritesOnly = false;
+    this.showLoadedFilamentOnly = false;
+    this.includeInactive = false;
+    this.filterByMaterialCategory = '';
+    this.currentPage = 1;
+    this.updateFilter();
+  }
+
+  public navigateToFilament(id: string): void {
+    this.router.navigate([id], { relativeTo: this.activatedRoute });
+  }
 }

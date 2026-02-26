@@ -181,7 +181,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public isLoading = false;
 
-  public isFilterPanelOpen = false;
+  public isFilterPanelOpen =
+    typeof window !== 'undefined' && window.innerWidth >= 600;
 
   readonly activeFilterCount = computed(() => {
     let count = 0;
@@ -766,11 +767,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
         otherFilamentOption: null,
         multiSelect: true,
       },
-      height: '80svh',
-      width: '80svw',
+      height: '90svh',
+      width: '95vw',
+      maxWidth: '100vw',
       position: {
         top: '5vh',
-        left: '5vw',
       },
     });
 

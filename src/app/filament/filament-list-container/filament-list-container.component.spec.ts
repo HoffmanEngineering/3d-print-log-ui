@@ -1,39 +1,129 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-
+import { EMPTY } from 'rxjs';
 import { FilamentListContainerComponent } from './filament-list-container.component';
 
-xdescribe('FilamentListContainerComponent', () => {
+// Isolated unit tests for pure methods — no TestBed needed
+describe('FilamentListContainerComponent (isolated)', () => {
   let component: FilamentListContainerComponent;
-  let fixture: ComponentFixture<FilamentListContainerComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [FilamentListContainerComponent],
-      providers: [
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            data: of({
-              printers: null,
-              lastSelectedPrinterSetting: null,
-              defaultPrintViewStatusSetting: null,
-              print: { print: { printerId: 1, notes: '' } },
-            }),
-          },
-        },
-      ],
-    }).compileComponents();
-  });
+  // Minimal router stub: constructor subscribes to router.events at construction time
+  const routerStub = {
+    events: EMPTY,
+    navigate: (..._args: unknown[]) => Promise.resolve(true),
+  };
+  const activatedRouteStub = {};
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FilamentListContainerComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    // Construct with minimal stubs — only testing pure methods
+    component = new FilamentListContainerComponent(
+      activatedRouteStub as any, // ActivatedRoute
+      null as any, // FilamentService
+      null as any, // Title
+      routerStub as any, // Router
+      null as any, // MatDialog
+      null as any // ToastrService
+    );
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  describe('toggleFilterPanel', () => {
+    it('opens the filter panel when closed', () => {
+      component.isFilterPanelOpen = false;
+      component.toggleFilterPanel();
+      expect(component.isFilterPanelOpen).toBeTrue();
+    });
+
+    it('closes the filter panel when open', () => {
+      component.isFilterPanelOpen = true;
+      component.toggleFilterPanel();
+      expect(component.isFilterPanelOpen).toBeFalse();
+    });
+  });
+
+  describe('activeFilterCount', () => {
+    it('returns 0 when no filters are active', () => {
+      component.showFavoritesOnly = false;
+      component.showLoadedFilamentOnly = false;
+      component.includeInactive = false;
+      component.filterByMaterialCategory = '';
+      expect(component.activeFilterCount).toBe(0);
+    });
+
+    it('counts showFavoritesOnly', () => {
+      component.showFavoritesOnly = true;
+      component.showLoadedFilamentOnly = false;
+      component.includeInactive = false;
+      component.filterByMaterialCategory = '';
+      expect(component.activeFilterCount).toBe(1);
+    });
+
+    it('counts showLoadedFilamentOnly', () => {
+      component.showFavoritesOnly = false;
+      component.showLoadedFilamentOnly = true;
+      component.includeInactive = false;
+      component.filterByMaterialCategory = '';
+      expect(component.activeFilterCount).toBe(1);
+    });
+
+    it('counts includeInactive', () => {
+      component.showFavoritesOnly = false;
+      component.showLoadedFilamentOnly = false;
+      component.includeInactive = true;
+      component.filterByMaterialCategory = '';
+      expect(component.activeFilterCount).toBe(1);
+    });
+
+    it('counts filterByMaterialCategory when set', () => {
+      component.showFavoritesOnly = false;
+      component.showLoadedFilamentOnly = false;
+      component.includeInactive = false;
+      component.filterByMaterialCategory = 'PLA';
+      expect(component.activeFilterCount).toBe(1);
+    });
+
+    it('counts all four active filters', () => {
+      component.showFavoritesOnly = true;
+      component.showLoadedFilamentOnly = true;
+      component.includeInactive = true;
+      component.filterByMaterialCategory = 'PETG';
+      expect(component.activeFilterCount).toBe(4);
+    });
+  });
+
+  describe('resetFilters', () => {
+    it('resets all filter fields to defaults', () => {
+      component.searchText = 'test';
+      component.showFavoritesOnly = true;
+      component.showLoadedFilamentOnly = true;
+      component.includeInactive = true;
+      component.filterByMaterialCategory = 'PLA';
+
+      // Stub updateFilter so it doesn't throw (router is null)
+      spyOn(component, 'updateFilter');
+
+      component.resetFilters();
+
+      expect(component.searchText).toBe('');
+      expect(component.showFavoritesOnly).toBeFalse();
+      expect(component.showLoadedFilamentOnly).toBeFalse();
+      expect(component.includeInactive).toBeFalse();
+      expect(component.filterByMaterialCategory).toBe('');
+      expect(component.currentPage).toBe(1);
+    });
+
+    it('calls updateFilter after resetting', () => {
+      spyOn(component, 'updateFilter');
+      component.resetFilters();
+      expect(component.updateFilter).toHaveBeenCalled();
+    });
+  });
+
+  describe('navigateToFilament', () => {
+    it('navigates to the filament detail route', () => {
+      spyOn(routerStub, 'navigate');
+      component.navigateToFilament('abc-123');
+      expect(routerStub.navigate).toHaveBeenCalledWith(
+        ['abc-123'],
+        jasmine.objectContaining({ relativeTo: jasmine.anything() })
+      );
+    });
   });
 });

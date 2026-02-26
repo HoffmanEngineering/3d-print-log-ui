@@ -754,7 +754,9 @@ export class EditPrintDetailComponent
       sortedImages.forEach((image) => {
         const newImage: PrintImageValue = {
           id: image.id,
-          url: `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`,
+          url: image.id
+            ? `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`
+            : image.url,
           file: null,
           isDefault: image.isDefault,
           displayOrder: image.displayOrder,
@@ -1687,8 +1689,9 @@ export class EditPrintDetailComponent
         otherFilamentOption: EditPrintDetailComponent.OTHER_FILAMENT_OPTION,
         filterByMaterialCategory: material,
       },
-      height: '80vh',
-      width: '80vw',
+      height: '90svh',
+      width: '95vw',
+      maxWidth: '100vw',
     });
 
     dialogRef.componentInstance.dialogRef

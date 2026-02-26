@@ -1,4 +1,4 @@
-<div>
+<div class="filament-list-root">
   <div class="header">
     @if (showAddFilamentButton) {
       <button
@@ -11,54 +11,78 @@
         Add New Filament
       </button>
     }
-    <div class="search-fields">
-      <mat-form-field>
-        <mat-label> Search: </mat-label
-        ><input
+    <div class="filter-bar">
+      <mat-form-field class="search-field" subscriptSizing="dynamic">
+        <mat-label>Search</mat-label>
+        <input
           id="filament-list-search-input"
           matInput
           type="text"
           [(ngModel)]="searchText"
           (ngModelChange)="debouncedUpdateFilter()"
           autocomplete="off"
-      /></mat-form-field>
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="includeInactive"
-        (ngModelChange)="updateFilter()"
-        >Include Inactive</mat-checkbox
-      >
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="showFavoritesOnly"
-        (ngModelChange)="updateFilter()"
-        >Show Favorites Only</mat-checkbox
-      >
-      <mat-checkbox
-        type="checkbox"
-        [(ngModel)]="showLoadedFilamentOnly"
-        (ngModelChange)="updateFilter()"
-        >Show Loaded Filament Only</mat-checkbox
-      >
-      <mat-form-field>
-        <mat-label> Filter by Category: </mat-label>
-        <mat-select
-          [(ngModel)]="_filterByMaterialCategory"
-          (ngModelChange)="updateFilter()"
-        >
-          <mat-option value=""> No Filter </mat-option>
-          @for (
-            materialCategory of materialCategories;
-            track materialCategory
-          ) {
-            <mat-option [value]="materialCategory.nickname">{{
-              materialCategory.name
-            }}</mat-option>
-          }
-        </mat-select>
+        />
       </mat-form-field>
+      <button
+        mat-button
+        class="filter-toggle-btn"
+        (click)="toggleFilterPanel()"
+        [attr.aria-expanded]="isFilterPanelOpen"
+        aria-controls="filament-filter-panel"
+        [matBadge]="activeFilterCount || null"
+        matBadgeColor="accent"
+        matBadgeSize="small"
+        [matBadgeHidden]="activeFilterCount === 0"
+      >
+        <mat-icon>{{ isFilterPanelOpen ? 'expand_less' : 'tune' }}</mat-icon>
+        Filters
+      </button>
+    </div>
+    <div
+      id="filament-filter-panel"
+      class="filter-panel"
+      [class.filter-panel--open]="isFilterPanelOpen"
+    >
+      <div class="filter-panel-inner">
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="includeInactive"
+          (ngModelChange)="updateFilter()"
+          >Include Inactive</mat-checkbox
+        >
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="showFavoritesOnly"
+          (ngModelChange)="updateFilter()"
+          >Show Favorites Only</mat-checkbox
+        >
+        <mat-checkbox
+          type="checkbox"
+          [(ngModel)]="showLoadedFilamentOnly"
+          (ngModelChange)="updateFilter()"
+          >Show Loaded Filament Only</mat-checkbox
+        >
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Filter by Category</mat-label>
+          <mat-select
+            [(ngModel)]="_filterByMaterialCategory"
+            (ngModelChange)="updateFilter()"
+          >
+            <mat-option value="">No Filter</mat-option>
+            @for (
+              materialCategory of materialCategories;
+              track materialCategory
+            ) {
+              <mat-option [value]="materialCategory.nickname">{{
+                materialCategory.name
+              }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
     </div>
   </div>
+  <div class="scroll-area">
   <table
     mat-table
     [dataSource]="filaments"
@@ -259,11 +283,84 @@
       data-cy-filament-row
     ></tr>
   </table>
+  <!-- Mobile card list (shown < 600px via CSS, table hidden) -->
+  <div class="filament-cards">
+    @for (filament of filaments; track filament.id) {
+      <div
+        class="filament-card"
+        tabindex="0"
+        [class.filament-card--selected]="selectedFilaments.has(filament.id)"
+        (click)="multiSelect ? toggleSelection(filament) : filamentSelected.emit(filament)"
+        (keyup.enter)="multiSelect ? toggleSelection(filament) : filamentSelected.emit(filament)"
+        (keyup.space)="multiSelect ? toggleSelection(filament) : filamentSelected.emit(filament)"
+        data-cy-filament-card
+      >
+        <div
+          class="card-swatch"
+          [style.background-color]="'#' + filament.colorHex"
+        ></div>
+        <div class="card-content">
+          <div class="card-row-primary">
+            <span class="card-name">{{ filament.displayName }}</span>
+            <span class="card-spacer"></span>
+            <span class="card-weight">
+              {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}g
+            </span>
+          </div>
+          <div class="card-row-material">
+            <span class="card-chip">{{ filament.materialType }}</span>
+            @if (!filament.isActive) {
+              <span class="card-chip card-chip--inactive">Inactive</span>
+            }
+          </div>
+          <div class="card-row-secondary">
+            {{ filament.brand }}@if (filament.colorName) {
+              &nbsp;·&nbsp;{{ filament.colorName }}
+            }@if (filament.storageLocation) {
+              &nbsp;·&nbsp;{{ filament.storageLocation }}
+            }@if (filament.loadedInPrinter) {
+              &nbsp;·&nbsp;Loaded: {{ getPrinterLabel(filament) }}
+            }
+          </div>
+        </div>
+        <div class="card-actions">
+          @if (multiSelect) {
+            <mat-checkbox
+              [checked]="selectedFilaments.has(filament.id)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleSelection(filament)"
+            ></mat-checkbox>
+          } @else {
+            <button
+              mat-button
+              class="transparent card-favorite-btn"
+              [class.not-favorite-icon]="!filament.isFavorite"
+              [attr.aria-label]="
+                filament.isFavorite
+                  ? 'Remove ' + filament.displayName + ' from favorites'
+                  : 'Add ' + filament.displayName + ' to favorites'
+              "
+              (click)="
+                $event.preventDefault();
+                $event.stopPropagation();
+                toggleFavorite(filament)
+              "
+            >
+              <mat-icon>{{
+                filament.isFavorite ? 'star' : 'star_border'
+              }}</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
   @if (totalCount === 0) {
     <div class="no-filament">
       No filaments found. Add a new filament or try a different search.
     </div>
   }
+  </div>
   <mat-paginator
     [length]="totalCount"
     [pageSize]="pageSize"

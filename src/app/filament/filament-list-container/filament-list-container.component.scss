@@ -272,10 +272,12 @@ table {
     }
   }
 
-  .card-favorite-btn {
+  .card-favorite-btn,
+  .card-more-btn {
     flex-shrink: 0;
     min-width: unset;
-    padding: 0 4px;
+    padding: 0 6px;
+    margin-right: -6px;
   }
 
   .card-row-material {

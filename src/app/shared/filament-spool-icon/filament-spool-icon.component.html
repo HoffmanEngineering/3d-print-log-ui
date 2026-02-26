@@ -1,9 +1,9 @@
 <!--
-  Front-on filament spool SVG. Concentric circles (back to front):
-    - Outer flange ring (charcoal border)
-    - Wound filament ring (dynamic color — the large visible area)
-    - Center hub (charcoal)
-    - Axle hole (dark)
+  Front-on filament spool SVG. All dark elements are rings (no solid fills),
+  so the card background shows through the open center.
+    - Outer flange: stroke-only ring (r=34, stroke-width=4 → spans r32–36)
+    - Wound filament: donut path (outer r=32, inner r=12, evenodd)
+    - Hub ring: thin stroke circle at r=12, open center
 -->
 <svg
   viewBox="0 0 80 80"
@@ -11,21 +11,19 @@
   aria-hidden="true"
   focusable="false"
 >
-  <!-- Outer flange -->
-  <circle cx="40" cy="40" r="36" fill="#2d2d2d" />
+  <!-- Outer flange rim — stroke-only so center stays transparent -->
+  <circle cx="40" cy="40" r="34" fill="none" stroke="#2d2d2d" stroke-width="4" />
 
-  <!-- Wound filament ring — dynamic fill color -->
-  <circle
+  <!-- Wound filament donut — dynamic fill, evenodd punches out the center -->
+  <!-- Outer circle r=32, inner circle r=12 -->
+  <path
     class="spool-barrel"
     [attr.fill]="fillColor()"
-    cx="40"
-    cy="40"
-    r="30"
+    fill-rule="evenodd"
+    d="M 8 40 A 32 32 0 1 1 72 40 A 32 32 0 1 1 8 40 Z
+       M 28 40 A 12 12 0 1 1 52 40 A 12 12 0 1 1 28 40 Z"
   />
 
-  <!-- Center hub -->
-  <circle cx="40" cy="40" r="12" fill="#2d2d2d" />
-
-  <!-- Axle hole -->
-  <circle cx="40" cy="40" r="7" fill="#111111" />
+  <!-- Thin hub ring — open center shows card background -->
+  <circle cx="40" cy="40" r="12" fill="none" stroke="#2d2d2d" stroke-width="2" />
 </svg>

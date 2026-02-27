@@ -93,6 +93,14 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: 'subscription',
+    loadChildren: () =>
+      import('./subscription/subscription.module').then(
+        (m) => m.SubscriptionModule
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'home-redirect',
     canActivate: [HomepageRedirectGuard],
     pathMatch: 'full',

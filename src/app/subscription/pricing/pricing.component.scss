@@ -1,0 +1,51 @@
+.subtitle {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 1.1em;
+  margin-bottom: 16px;
+}
+
+.plan-card {
+  text-align: center;
+
+  &.recommended {
+    border: 2px solid #ff4081;
+  }
+
+  .price {
+    margin: 16px 0;
+
+    .amount {
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+
+    .period {
+      font-size: 1.1em;
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  .price-detail {
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 0.9em;
+    margin-top: -8px;
+  }
+
+  .features {
+    text-align: left;
+    padding-left: 20px;
+
+    li {
+      margin-bottom: 8px;
+    }
+  }
+
+  mat-card-actions {
+    padding: 16px;
+  }
+}
+
+.current-plan-card {
+  max-width: 500px;
+  text-align: center;
+}

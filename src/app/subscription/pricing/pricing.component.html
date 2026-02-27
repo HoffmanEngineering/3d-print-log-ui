@@ -1,0 +1,88 @@
+<div fxLayout="row" fxLayoutAlign="center">
+  <div fxFlex="900px" fxFlex.lt-md="100%" style="padding: 16px">
+    <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="16px">
+      <h1>3D Print Log Pro</h1>
+      <p class="subtitle">Remove ads and unlock premium features</p>
+
+      @if (isPro()) {
+        <mat-card appearance="outlined" class="current-plan-card">
+          <mat-card-content>
+            <p>
+              You're on the <strong>Pro</strong> plan. Thank you for your
+              support!
+            </p>
+            <p>
+              Manage your billing in
+              <a routerLink="/settings">Settings</a>.
+            </p>
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <div
+          fxLayout="row"
+          fxLayout.lt-sm="column"
+          fxLayoutGap="16px"
+          fxLayoutAlign="center stretch"
+        >
+          <mat-card appearance="outlined" class="plan-card" fxFlex="300px">
+            <mat-card-header>
+              <mat-card-title>Monthly</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="price">
+                <span class="amount">$2.99</span>
+                <span class="period">/month</span>
+              </div>
+              <ul class="features">
+                <li>Ad-free experience</li>
+                <li>Up to 20 images per print</li>
+                <li>File attachments (gcode, STL, 3MF)</li>
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="checkout('pro_monthly')"
+                [disabled]="checkoutLoading"
+                [class.spinner]="checkoutLoading"
+              >
+                Subscribe Monthly
+              </button>
+            </mat-card-actions>
+          </mat-card>
+
+          <mat-card appearance="outlined" class="plan-card recommended" fxFlex="300px">
+            <mat-card-header>
+              <mat-card-title>Annual</mat-card-title>
+              <mat-card-subtitle>Save 16%</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="price">
+                <span class="amount">$29.99</span>
+                <span class="period">/year</span>
+              </div>
+              <p class="price-detail">That's just $2.50/month</p>
+              <ul class="features">
+                <li>Ad-free experience</li>
+                <li>Up to 20 images per print</li>
+                <li>File attachments (gcode, STL, 3MF)</li>
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <button
+                mat-raised-button
+                color="accent"
+                (click)="checkout('pro_annual')"
+                [disabled]="checkoutLoading"
+                [class.spinner]="checkoutLoading"
+              >
+                Subscribe Annually
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      }
+    </div>
+  </div>
+</div>

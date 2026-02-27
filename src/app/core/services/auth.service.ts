@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core';
+import { inject, Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
 
@@ -14,6 +14,7 @@ import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
+import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
 const cordovaCallbackUri =
   'com.hoffmanengineering.printlog://cordova/com.hoffmanengineering.printlog/callback';
@@ -83,6 +84,8 @@ export class AuthService {
   // Create a local property for login status
   loggedIn: boolean = null;
 
+  private readonly subscriptionService = inject(SubscriptionService);
+
   constructor(
     private router: Router,
     private userService: UserService,
@@ -108,6 +111,7 @@ export class AuthService {
     return this.auth0Client$.pipe(
       concatMap((client: Auth0Client) => from(client.getUser())),
       tap((user) => {
+        this.subscriptionService.loadSubscription();
         this.userService.getCurrentUserDetail().subscribe((currentUser) => {
           if (currentUser.displayName === null) {
             const userInfo: UserDetailDto = {

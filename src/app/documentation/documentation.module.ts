@@ -21,6 +21,7 @@ import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.com
 import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
 import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
 import { DocsSlic3rUploaderComponent } from './docs/docs-slic3r-uploader/docs-slic3r-uploader.component';
+import { DocsProSubscriptionComponent } from './docs/docs-pro-subscription/docs-pro-subscription.component';
 
 @NgModule({
   declarations: [
@@ -40,6 +41,7 @@ import { DocsSlic3rUploaderComponent } from './docs/docs-slic3r-uploader/docs-sl
     DocsTermsComponent,
     DocsPrivacyPolicyComponent,
     DocsSlic3rUploaderComponent,
+    DocsProSubscriptionComponent,
   ],
   imports: [
     CommonModule,

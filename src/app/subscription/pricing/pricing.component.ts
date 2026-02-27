@@ -21,15 +21,15 @@ export class PricingComponent implements OnInit {
   readonly isPro = this.subscriptionService.isPro;
   readonly plan = this.subscriptionService.plan;
 
-  checkoutLoading = false;
+  checkoutLoadingPlan: string | null = null;
 
   ngOnInit(): void {
     this.loggingService.logEvent('Pricing_PageViewed');
   }
 
   checkout(planId: string): void {
-    if (this.checkoutLoading) return;
-    this.checkoutLoading = true;
+    if (this.checkoutLoadingPlan !== null) return;
+    this.checkoutLoadingPlan = planId;
 
     this.loggingService.logEvent('Pricing_CheckoutClicked', { planId });
 
@@ -38,7 +38,7 @@ export class PricingComponent implements OnInit {
         window.location.href = result.url;
       },
       error: () => {
-        this.checkoutLoading = false;
+        this.checkoutLoadingPlan = null;
       },
     });
   }

@@ -74,23 +74,6 @@
                 >Analytics</a
               >
             }
-            @if (auth.loggedIn && !isPro()) {
-              <a
-                mat-button
-                class="link upgrade-link"
-                routerLink="/subscription"
-                routerLinkActive="active"
-                matTooltip="Unlock Pro features"
-              >
-                <mat-icon>star</mat-icon>
-                Upgrade to Pro
-              </a>
-            }
-            @if (auth.loggedIn && isPro()) {
-              <span class="pro-badge" matTooltip="You're on the Pro plan">
-                <mat-icon>star</mat-icon> Pro
-              </span>
-            }
             <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
               About
             </button>
@@ -120,6 +103,23 @@
                 >Version v{{ versionNumber }}</a
               >
             </mat-menu>
+            @if (auth.loggedIn && !isPro()) {
+              <a
+                mat-button
+                class="link upgrade-link"
+                routerLink="/subscription"
+                routerLinkActive="active"
+                matTooltip="Unlock Pro features"
+              >
+                <mat-icon>star</mat-icon>
+                Upgrade to Pro
+              </a>
+            }
+            @if (auth.loggedIn && isPro()) {
+              <span class="pro-badge" matTooltip="You're on the Pro plan">
+                <mat-icon>star</mat-icon> Pro
+              </span>
+            }
           }
         </div>
         @if (this.mobileQuery.matches) {
@@ -133,23 +133,6 @@
                   routerLinkActive="active"
                   >Analytics</a
                 >
-              }
-              @if (auth.loggedIn && !isPro()) {
-                <a
-                  mat-button
-                  class="link upgrade-link"
-                  routerLink="/subscription"
-                  routerLinkActive="active"
-                  matTooltip="Unlock Pro features"
-                >
-                  <mat-icon>star</mat-icon>
-                  Upgrade to Pro
-                </a>
-              }
-              @if (auth.loggedIn && isPro()) {
-                <span class="pro-badge" matTooltip="You're on the Pro plan">
-                  <mat-icon>star</mat-icon> Pro
-                </span>
               }
               <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
                 About
@@ -180,6 +163,23 @@
                   >Version v{{ versionNumber }}</a
                 >
               </mat-menu>
+              @if (auth.loggedIn && !isPro()) {
+                <a
+                  mat-button
+                  class="link upgrade-link"
+                  routerLink="/subscription"
+                  routerLinkActive="active"
+                  matTooltip="Unlock Pro features"
+                >
+                  <mat-icon>star</mat-icon>
+                  Upgrade to Pro
+                </a>
+              }
+              @if (auth.loggedIn && isPro()) {
+                <span class="pro-badge" matTooltip="You're on the Pro plan">
+                  <mat-icon>star</mat-icon> Pro
+                </span>
+              }
             </ng-container>
           </div>
         }

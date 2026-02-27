@@ -5,10 +5,16 @@
 }
 
 .plan-card {
+  display: flex;
+  flex-direction: column;
   text-align: center;
 
   &.recommended {
     border: 2px solid #ff4081;
+  }
+
+  mat-card-content {
+    flex: 1;
   }
 
   .price {
@@ -41,6 +47,8 @@
   }
 
   mat-card-actions {
+    display: flex;
+    justify-content: center;
     padding: 16px;
   }
 }

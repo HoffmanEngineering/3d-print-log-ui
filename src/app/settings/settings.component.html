@@ -317,6 +317,41 @@
       </div>
       <hr />
       <div fxFlex="grow" fxFlexFill>
+        <h2>Subscription</h2>
+        @if (subscriptionService.isPro()) {
+          <div>
+            <p>
+              <strong>Plan:</strong>
+              {{
+                subscriptionService.plan() === 'pro_monthly'
+                  ? 'Pro Monthly'
+                  : 'Pro Annual'
+              }}
+            </p>
+            @if (subscriptionService.currentPeriodEnd()) {
+              <p>
+                <strong>Renews:</strong>
+                {{ subscriptionService.currentPeriodEnd() | date: 'mediumDate' }}
+              </p>
+            }
+            @if (subscriptionService.cancelAtPeriodEnd()) {
+              <p style="color: #f44336">
+                Your subscription will not renew at the end of the current period.
+              </p>
+            }
+            <button mat-raised-button color="primary" (click)="manageSubscription()">
+              Manage Billing
+            </button>
+          </div>
+        } @else {
+          <p>You're on the free plan.</p>
+          <button mat-raised-button color="accent" routerLink="/subscription">
+            Upgrade to Pro
+          </button>
+        }
+      </div>
+      <hr />
+      <div fxFlex="grow" fxFlexFill>
         <h2>Export Data</h2>
         <p>Save your prints as a csv file.</p>
         <button

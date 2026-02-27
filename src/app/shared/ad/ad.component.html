@@ -1,6 +1,8 @@
-<aside aria-label="Advertisement" class="ad-wrapper">
-  <ng-adsense
-    [adSlot]="adSlot()"
-    [fullWidthResponsive]="fullWidthResponsive()"
-  ></ng-adsense>
-</aside>
+@if (!isPro()) {
+  <aside aria-label="Advertisement" class="ad-wrapper">
+    <ng-adsense
+      [adSlot]="adSlot()"
+      [fullWidthResponsive]="fullWidthResponsive()"
+    ></ng-adsense>
+  </aside>
+}

@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+} from '@angular/core';
+import { SubscriptionService } from '../../core/services/subscription.service';
 
 @Component({
   selector: 'app-ad',
@@ -8,6 +14,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdComponent {
+  private readonly subscriptionService = inject(SubscriptionService);
   adSlot = input<number | null>(null);
   fullWidthResponsive = input<boolean>(true);
+  readonly isPro = this.subscriptionService.isPro;
 }

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { LoggingService } from '../../core/services/logging.service';
 
@@ -9,7 +14,7 @@ import { LoggingService } from '../../core/services/logging.service';
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PricingComponent {
+export class PricingComponent implements OnInit {
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly loggingService = inject(LoggingService);
 
@@ -17,6 +22,10 @@ export class PricingComponent {
   readonly plan = this.subscriptionService.plan;
 
   checkoutLoading = false;
+
+  ngOnInit(): void {
+    this.loggingService.logEvent('Pricing_PageViewed');
+  }
 
   checkout(planId: string): void {
     if (this.checkoutLoading) return;

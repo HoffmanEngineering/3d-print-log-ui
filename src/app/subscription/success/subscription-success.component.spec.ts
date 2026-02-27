@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SharedModule } from '../../shared/shared.module';
 import { SubscriptionSuccessComponent } from './subscription-success.component';
+import { LoggingService } from '../../core/services/logging.service';
 
 describe('SubscriptionSuccessComponent', () => {
   let component: SubscriptionSuccessComponent;
@@ -13,7 +14,14 @@ describe('SubscriptionSuccessComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [SubscriptionSuccessComponent],
       imports: [SharedModule, RouterTestingModule],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SubscriptionSuccessComponent);

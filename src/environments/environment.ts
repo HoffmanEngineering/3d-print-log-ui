@@ -28,6 +28,10 @@ export const environment = {
   googleAds: {
     trafficSearchConversion: '',
   },
+  stripe: {
+    proMonthlyPriceId: '',
+    proAnnualPriceId: '',
+  },
 };
 
 /*

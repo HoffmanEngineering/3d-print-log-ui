@@ -24,4 +24,8 @@ export const environment = {
   googleAds: {
     trafficSearchConversion: 'AW-837103521/Zn4kCLWd85IDEKHflI8D',
   },
+  stripe: {
+    proMonthlyPriceId: '',
+    proAnnualPriceId: '',
+  },
 };

@@ -226,6 +226,11 @@ export class EditPrintDetailComponent
   /** The actual datetime of completion. Used as a display and input, but any changes will drive the PrintTimeInSeconds control. */
   public actualCompletedDate: Date | null = null;
   actualCompletedDateSubscription: Subscription | undefined;
+  /** Raw user-entered completion date (calendar day only). Tracked separately to avoid millisecond-truncation
+   * corrupting the date when updating time independently of date. */
+  private rawCompletionDate: Date | null = null;
+  /** Raw user-entered completion time string (HH:mm:ss). Stored so time entered before date is not lost. */
+  private rawCompletionTime: string | null = null;
 
   public currencies: Currencies;
 
@@ -1853,6 +1858,14 @@ export class EditPrintDetailComponent
     this.actualCompletedDate = moment(startDate)
       .add(printTimeInSeconds, 's')
       .toDate();
+
+    // Seed raw values from the computed date on initial load (before any user interaction)
+    if (this.rawCompletionDate === null && this.rawCompletionTime === null) {
+      this.rawCompletionDate = new Date(this.actualCompletedDate);
+      this.rawCompletionTime = moment(this.actualCompletedDate).format(
+        'HH:mm:ss'
+      );
+    }
   }
 
   public updateActualCompletedDate(newDate: Date) {
@@ -1862,7 +1875,7 @@ export class EditPrintDetailComponent
       return '';
     }
 
-    const difference = moment(newDate).diff(startDate, 's');
+    const difference = Math.round(moment(newDate).diff(startDate, 'ms') / 1000);
 
     this.printForm.controls.printTimeInSeconds.setValue(
       this.parseIntoString(difference)
@@ -1871,7 +1884,10 @@ export class EditPrintDetailComponent
   }
 
   public setActualCompletedDateToNow() {
-    this.updateActualCompletedDate(new Date());
+    const now = new Date();
+    this.rawCompletionDate = now;
+    this.rawCompletionTime = moment(now).format('HH:mm:ss');
+    this.updateActualCompletedDate(now);
   }
 
   // Helper methods for the separate date/time picker implementation
@@ -1886,23 +1902,26 @@ export class EditPrintDetailComponent
   }
 
   public getActualCompletedDateOnly(): Date | null {
-    return this.actualCompletedDate ? this.actualCompletedDate : null;
+    // Return the raw user-entered date so the date picker always reflects what the user typed,
+    // not the computed actualCompletedDate (which has ms-truncation drift).
+    return this.rawCompletionDate;
   }
 
   public getActualCompletedTimeOnly(): string {
-    return this.actualCompletedDate
-      ? moment(this.actualCompletedDate).format('HH:mm:ss')
-      : '';
+    // Return the raw user-entered time string so the time picker reflects what the user typed.
+    return this.rawCompletionTime ?? '';
   }
 
   public updateActualCompletedDateOnly(newDate: Date) {
+    this.rawCompletionDate = newDate || null;
+
     if (!newDate) {
       this.actualCompletedDate = null;
       return;
     }
 
-    // Combine the new date with the existing time (if any)
-    const existingTime = this.getActualCompletedTimeOnly();
+    // Combine the new date with the existing raw time (if any), so time entered before date is not lost
+    const existingTime = this.rawCompletionTime;
     const [hours, minutes, seconds] = existingTime
       ? existingTime.split(':').map(Number)
       : [0, 0, 0];
@@ -1917,11 +1936,15 @@ export class EditPrintDetailComponent
   }
 
   public updateActualCompletedTimeOnly(newTime: string) {
+    // Always save the raw time — even before a date is entered — so it is applied when date is set
+    this.rawCompletionTime = newTime || null;
+
     if (!newTime) {
       return;
     }
 
-    const existingDate = this.getActualCompletedDateOnly();
+    // Use the raw completion date (not the computed actualCompletedDate) to avoid ms-truncation drift
+    const existingDate = this.rawCompletionDate;
     if (!existingDate) {
       return;
     }
@@ -1952,6 +1975,7 @@ export class EditPrintDetailComponent
       .hour(hours)
       .minute(minutes)
       .second(seconds || 0)
+      .millisecond(0)
       .toDate();
   }
 }

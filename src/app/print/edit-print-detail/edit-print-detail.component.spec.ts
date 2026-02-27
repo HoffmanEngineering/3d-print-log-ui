@@ -436,6 +436,138 @@ describe('EditPrintDetailComponent', () => {
     });
   });
 
+  describe('Completion date/time calculation', () => {
+    // Start: Feb 18 2026 22:41:46 with 963ms sub-second noise from the API
+    const START_DATE_WITH_MS = new Date(2026, 1, 18, 22, 41, 46, 963);
+    const START_TIME_STR = '22:41:46';
+    // Completion: Feb 19 2026 14:30:00 → 15h 48m 14s after start (when ms is stripped)
+    const COMPLETION_DATE = new Date(2026, 1, 19); // midnight local
+    const COMPLETION_TIME_STR = '14:30:00';
+    const EXPECTED_PRINT_TIME = '15h 48m 14s ';
+
+    beforeEach(() => {
+      component.printForm.get('startDate').setValue(START_DATE_WITH_MS);
+      component.printForm.get('startTime').setValue(START_TIME_STR);
+    });
+
+    describe('getCombinedStartDateTime', () => {
+      it('should strip sub-second precision so diff calculations are not off by a second', () => {
+        const result = component.getCombinedStartDateTime();
+        expect(result.getMilliseconds()).toBe(0);
+      });
+
+      it('should combine the startDate and startTime fields correctly', () => {
+        const result = component.getCombinedStartDateTime();
+        expect(result.getHours()).toBe(22);
+        expect(result.getMinutes()).toBe(41);
+        expect(result.getSeconds()).toBe(46);
+      });
+    });
+
+    describe('updateActualCompletedTimeOnly — time entered before date', () => {
+      it('should store the time even when no completion date is set yet', () => {
+        component.updateActualCompletedTimeOnly(COMPLETION_TIME_STR);
+
+        expect(component['rawCompletionTime']).toBe(COMPLETION_TIME_STR);
+        expect(component.actualCompletedDate).toBeNull();
+        expect(
+          component.printForm.controls.printTimeInSeconds.value
+        ).toBeFalsy();
+      });
+
+      it('should apply the previously stored time when a date is subsequently entered', () => {
+        component.updateActualCompletedTimeOnly(COMPLETION_TIME_STR);
+        component.updateActualCompletedDateOnly(COMPLETION_DATE);
+
+        expect(component.getActualCompletedTimeOnly()).toBe(
+          COMPLETION_TIME_STR
+        );
+        expect(component.actualCompletedDate).not.toBeNull();
+      });
+
+      it('should calculate the correct printTimeInSeconds when time is entered before date', () => {
+        component.updateActualCompletedTimeOnly(COMPLETION_TIME_STR);
+        component.updateActualCompletedDateOnly(COMPLETION_DATE);
+
+        expect(component.printForm.controls.printTimeInSeconds.value).toBe(
+          EXPECTED_PRINT_TIME
+        );
+      });
+    });
+
+    describe('updateActualCompletedDateOnly then updateActualCompletedTimeOnly — normal order', () => {
+      it('should calculate the correct printTimeInSeconds when date is entered before time', () => {
+        component.updateActualCompletedDateOnly(COMPLETION_DATE);
+        component.updateActualCompletedTimeOnly(COMPLETION_TIME_STR);
+
+        expect(component.printForm.controls.printTimeInSeconds.value).toBe(
+          EXPECTED_PRINT_TIME
+        );
+      });
+
+      it('should show the user-entered date in getActualCompletedDateOnly, not the computed date', () => {
+        // Pre-fix: actualCompletedDate drifted to Feb 18 due to ms truncation;
+        // the date picker then showed Feb 18 instead of Feb 19.
+        component.updateActualCompletedDateOnly(COMPLETION_DATE);
+
+        const pickerDate = component.getActualCompletedDateOnly();
+        expect(pickerDate).not.toBeNull();
+        expect(pickerDate.getMonth()).toBe(1); // February (0-indexed)
+        expect(pickerDate.getDate()).toBe(19); // Must be 19, not 18
+      });
+
+      it('should show the user-entered time in getActualCompletedTimeOnly', () => {
+        component.updateActualCompletedDateOnly(COMPLETION_DATE);
+        component.updateActualCompletedTimeOnly(COMPLETION_TIME_STR);
+
+        expect(component.getActualCompletedTimeOnly()).toBe(
+          COMPLETION_TIME_STR
+        );
+      });
+    });
+
+    describe('getActualCompletedDate — seeding from existing printTimeInSeconds on load', () => {
+      it('should seed rawCompletionDate and rawCompletionTime when a print with existing printTimeInSeconds is loaded', () => {
+        component.printForm.controls.printTimeInSeconds.setValue('1h 30m 0s');
+        component.getActualCompletedDate();
+
+        expect(component['rawCompletionDate']).not.toBeNull();
+        expect(component['rawCompletionTime']).not.toBeNull();
+        expect(component.actualCompletedDate).not.toBeNull();
+      });
+
+      it('should not overwrite rawCompletionDate once the user has set it via the date picker', () => {
+        // Seed from load
+        component.printForm.controls.printTimeInSeconds.setValue('1h 0m 0s');
+        component.getActualCompletedDate();
+        const seededDate = component['rawCompletionDate'];
+
+        // User then picks a new date
+        const userPickedDate = new Date(2026, 1, 20);
+        component.updateActualCompletedDateOnly(userPickedDate);
+
+        expect(component['rawCompletionDate']).not.toEqual(seededDate);
+        expect(component['rawCompletionDate'].getDate()).toBe(20);
+      });
+    });
+
+    describe('setActualCompletedDateToNow', () => {
+      it('should populate rawCompletionDate and rawCompletionTime with the current datetime', () => {
+        const before = new Date();
+        component.setActualCompletedDateToNow();
+        const after = new Date();
+
+        const rawDate = component['rawCompletionDate'];
+        const rawTime = component['rawCompletionTime'];
+
+        expect(rawDate).not.toBeNull();
+        expect(rawDate.getTime()).toBeGreaterThanOrEqual(before.getTime());
+        expect(rawDate.getTime()).toBeLessThanOrEqual(after.getTime());
+        expect(rawTime).toMatch(/^\d{2}:\d{2}:\d{2}$/);
+      });
+    });
+  });
+
   describe('Save handling', () => {
     it('should reset saving to false after handleSaveSuccess', () => {
       const router = TestBed.inject(Router);

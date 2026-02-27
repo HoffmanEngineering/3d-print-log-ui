@@ -28,6 +28,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.34.1': {
+      redirect: '1.34.0',
+    },
     '1.34.0': {
       title: '1.34.0 - Materials Page Mobile Redesign',
       body: `<p>

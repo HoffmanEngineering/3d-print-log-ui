@@ -1056,6 +1056,10 @@ export class EditPrintDetailComponent
             `Free accounts allow ${this.maxImages()} images. Upgrade to Pro for up to 20.`,
             'Image Limit Reached'
           );
+          this.loggingService.logEvent('EditPrint_ImageLimitUpgradePrompt', {
+            currentCount: this.images.length,
+            maxImages: this.maxImages(),
+          });
         }
         return;
       }
@@ -1235,6 +1239,10 @@ export class EditPrintDetailComponent
           `Free accounts allow ${this.maxImages()} images. Upgrade to Pro for up to 20.`,
           'Image Limit Reached'
         );
+        this.loggingService.logEvent('EditPrint_ImageLimitUpgradePrompt', {
+          currentCount: this.images.length,
+          maxImages: this.maxImages(),
+        });
       }
       return;
     }

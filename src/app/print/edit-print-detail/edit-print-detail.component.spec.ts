@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { NO_ERRORS_SCHEMA, Signal, signal } from '@angular/core';
+import {
+  NO_ERRORS_SCHEMA,
+  Signal,
+  WritableSignal,
+  signal,
+} from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -452,6 +457,75 @@ describe('EditPrintDetailComponent', () => {
 
       // image3 is now at index 1 after image2 is removed
       expect(component.selectedImageIndex).toBe(1);
+    });
+
+    describe('Toast branching on image limit', () => {
+      let toastrService: jasmine.SpyObj<ToastrService>;
+      let isProSignal: WritableSignal<boolean>;
+
+      beforeEach(() => {
+        toastrService = TestBed.inject(
+          ToastrService
+        ) as jasmine.SpyObj<ToastrService>;
+        const subscriptionService = TestBed.inject(SubscriptionService);
+        isProSignal =
+          subscriptionService.isPro as unknown as WritableSignal<boolean>;
+
+        // Fill to the subscription limit (maxImagesPerPrint = 20)
+        for (let i = 0; i < 20; i++) {
+          component.images.push(
+            component['createItem']({
+              id: i + 1,
+              url: `url${i}`,
+              isDefault: i === 0,
+              displayOrder: i,
+            })
+          );
+        }
+      });
+
+      afterEach(() => {
+        // Restore Pro status for other tests
+        isProSignal.set(true);
+      });
+
+      it('should call toastr.warning (not info) when a Pro user hits the image limit in detectFiles', () => {
+        isProSignal.set(true);
+
+        const mockEvent = {
+          target: {
+            files: [new File([''], 'test.png', { type: 'image/png' })],
+            value: '',
+          },
+        } as unknown as Event;
+
+        component.detectFiles(mockEvent);
+
+        expect(toastrService.warning).toHaveBeenCalledOnceWith(
+          'Maximum 20 images allowed',
+          'Limit Reached'
+        );
+        expect(toastrService.info).not.toHaveBeenCalled();
+      });
+
+      it('should call toastr.info (not warning) when a free user hits the image limit in detectFiles', () => {
+        isProSignal.set(false);
+
+        const mockEvent = {
+          target: {
+            files: [new File([''], 'test.png', { type: 'image/png' })],
+            value: '',
+          },
+        } as unknown as Event;
+
+        component.detectFiles(mockEvent);
+
+        expect(toastrService.info).toHaveBeenCalledOnceWith(
+          'Free accounts allow 20 images. Upgrade to Pro for up to 20.',
+          'Image Limit Reached'
+        );
+        expect(toastrService.warning).not.toHaveBeenCalled();
+      });
     });
   });
 

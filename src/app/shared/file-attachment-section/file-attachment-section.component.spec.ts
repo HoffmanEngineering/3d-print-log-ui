@@ -7,6 +7,7 @@ import { PrintFileService } from 'src/app/core/services/print-file.service';
 import { ToastrService } from 'ngx-toastr';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
+import { LoggingService } from 'src/app/core/services/logging.service';
 
 describe('FileAttachmentSectionComponent', () => {
   let component: FileAttachmentSectionComponent;
@@ -51,6 +52,13 @@ describe('FileAttachmentSectionComponent', () => {
         { provide: SubscriptionService, useValue: mockSubscriptionService },
         { provide: PrintFileService, useValue: mockPrintFileService },
         { provide: ToastrService, useValue: mockToastrService },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', [
+            'logEvent',
+            'logException',
+          ]),
+        },
       ],
     }).compileComponents();
 
@@ -120,6 +128,13 @@ describe('FileAttachmentSectionComponent (free user)', () => {
         { provide: SubscriptionService, useValue: mockFreeSubscriptionService },
         { provide: PrintFileService, useValue: mockPrintFileService },
         { provide: ToastrService, useValue: mockToastrService },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', [
+            'logEvent',
+            'logException',
+          ]),
+        },
       ],
     }).compileComponents();
 

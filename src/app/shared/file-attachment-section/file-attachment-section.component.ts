@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   input,
   OnInit,
   output,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -22,6 +24,8 @@ import {
   FileAttachmentListComponent,
   FileAttachmentItem,
 } from '../file-attachment-list/file-attachment-list.component';
+
+type TrackedFileItem = FileAttachmentItem & { trackingId?: string };
 
 @Component({
   selector: 'app-file-attachment-section',
@@ -49,11 +53,12 @@ export class FileAttachmentSectionComponent implements OnInit {
   private readonly printFileService = inject(PrintFileService);
   private readonly toastr = inject(ToastrService);
   private readonly loggingService = inject(LoggingService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly isPro = this.subscriptionService.isPro;
   readonly maxFiles = this.subscriptionService.maxFilesPerPrint;
 
-  readonly files = signal<FileAttachmentItem[]>([]);
+  readonly files = signal<TrackedFileItem[]>([]);
 
   readonly uploadedFileCount = computed(
     () => this.files().filter((f) => f.status === 'uploaded').length
@@ -90,21 +95,24 @@ export class FileAttachmentSectionComponent implements OnInit {
   }
 
   loadFiles(): void {
-    this.printFileService.getFiles(this.printId()).subscribe((files) => {
-      this.files.set(
-        files.map((f) => ({
-          ...f,
-          status: 'uploaded' as const,
-        }))
-      );
-    });
+    this.printFileService
+      .getFiles(this.printId())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((files) => {
+        this.files.set(
+          files.map((f) => ({
+            ...f,
+            status: 'uploaded' as const,
+          }))
+        );
+      });
   }
 
   onFilesSelected(selectedFiles: File[]): void {
     for (const file of selectedFiles) {
       const validation = this.printFileService.validateFile(file);
       if (!validation.valid) {
-        this.toastr.warning(validation.error!, 'Invalid File');
+        this.toastr.warning(validation.error ?? 'Invalid file', 'Invalid File');
         continue;
       }
 
@@ -121,16 +129,17 @@ export class FileAttachmentSectionComponent implements OnInit {
   }
 
   private uploadFile(file: File): void {
-    const item: FileAttachmentItem = {
+    const trackingId = crypto.randomUUID();
+    const item: TrackedFileItem = {
       originalFileName: file.name,
       sizeBytes: file.size,
       contentType: file.type || 'application/octet-stream',
       status: 'uploading',
       uploadPercent: 0,
+      trackingId,
     };
 
     this.files.update((list) => [...list, item]);
-    const index = this.files().length - 1;
 
     this.printFileService
       .getUploadUrl(this.printId(), file.name, item.contentType, file.size)
@@ -138,7 +147,7 @@ export class FileAttachmentSectionComponent implements OnInit {
         switchMap((urlResponse) =>
           this.printFileService.uploadToSasUrl(urlResponse.sasUrl, file).pipe(
             switchMap((progress) => {
-              this.updateFileAtIndex(index, {
+              this.updateFileByTrackingId(trackingId, {
                 uploadPercent: progress.percent,
               });
               if (progress.percent === 100) {
@@ -152,13 +161,14 @@ export class FileAttachmentSectionComponent implements OnInit {
               return [];
             })
           )
-        )
+        ),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (confirmed) => {
           if (confirmed) {
-            this.updateFileAtIndex(index, {
-              id: confirmed.id,
+            this.updateFileByTrackingId(trackingId, {
+              id: (confirmed as { id: number }).id,
               status: 'uploaded',
               uploadPercent: 100,
             });
@@ -169,7 +179,7 @@ export class FileAttachmentSectionComponent implements OnInit {
           }
         },
         error: (err) => {
-          this.updateFileAtIndex(index, {
+          this.updateFileByTrackingId(trackingId, {
             status: 'error',
             errorMessage: 'Upload failed. Please try again.',
           });
@@ -180,28 +190,40 @@ export class FileAttachmentSectionComponent implements OnInit {
 
   onDownloadFile(file: FileAttachmentItem): void {
     if (!file.id) return;
-    this.printFileService.getDownloadUrl(this.printId(), file.id).subscribe({
-      next: (res) => {
-        window.open(res.url, '_blank');
-        this.loggingService.logEvent('FileAttachment_Downloaded', {
-          fileId: file.id,
-        });
-      },
-      error: () => this.toastr.error('Failed to get download link', 'Error'),
-    });
+    this.printFileService
+      .getDownloadUrl(this.printId(), file.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          window.open(res.url, '_blank');
+          this.loggingService.logEvent('FileAttachment_Downloaded', {
+            fileId: file.id,
+          });
+        },
+        error: (err) => {
+          this.toastr.error('Failed to get download link', 'Error');
+          this.loggingService.logException(err);
+        },
+      });
   }
 
   onDeleteFile(file: FileAttachmentItem): void {
     if (file.id) {
-      this.printFileService.deleteFile(this.printId(), file.id).subscribe({
-        next: () => {
-          this.files.update((list) => list.filter((f) => f !== file));
-          this.loggingService.logEvent('FileAttachment_Deleted', {
-            fileId: file.id,
-          });
-        },
-        error: () => this.toastr.error('Failed to delete file', 'Error'),
-      });
+      this.printFileService
+        .deleteFile(this.printId(), file.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.files.update((list) => list.filter((f) => f !== file));
+            this.loggingService.logEvent('FileAttachment_Deleted', {
+              fileId: file.id,
+            });
+          },
+          error: (err) => {
+            this.toastr.error('Failed to delete file', 'Error');
+            this.loggingService.logException(err);
+          },
+        });
     } else {
       // Remove pending/error files that haven't been saved
       this.files.update((list) => list.filter((f) => f !== file));
@@ -212,12 +234,12 @@ export class FileAttachmentSectionComponent implements OnInit {
     this.allowFileDownloadsChange.emit(checked);
   }
 
-  private updateFileAtIndex(
-    index: number,
-    updates: Partial<FileAttachmentItem>
+  private updateFileByTrackingId(
+    trackingId: string,
+    updates: Partial<TrackedFileItem>
   ): void {
     this.files.update((list) =>
-      list.map((f, i) => (i === index ? { ...f, ...updates } : f))
+      list.map((f) => (f.trackingId === trackingId ? { ...f, ...updates } : f))
     );
   }
 

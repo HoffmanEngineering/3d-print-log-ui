@@ -8,6 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { FileAttachmentItem } from '../file-attachment-list/file-attachment-list.component';
 
 describe('FileAttachmentSectionComponent', () => {
   let component: FileAttachmentSectionComponent;
@@ -84,6 +85,43 @@ describe('FileAttachmentSectionComponent', () => {
     fixture.detectChanges();
     expect(component.formattedQuotaUsage()).toContain('5.0 GB');
     expect(component.formattedQuotaUsage()).toContain('50.0 GB');
+  });
+
+  it('should show toastr warning for invalid file', () => {
+    const mockToastr = TestBed.inject(
+      ToastrService
+    ) as jasmine.SpyObj<ToastrService>;
+    mockPrintFileService.validateFile.and.returnValue({
+      valid: false,
+      error: 'Bad file type',
+    });
+    fixture.componentRef.setInput('editable', true);
+    fixture.detectChanges();
+    component.onFilesSelected([new File([''], 'test.xyz')]);
+    expect(mockToastr.warning).toHaveBeenCalledWith(
+      'Bad file type',
+      'Invalid File'
+    );
+  });
+
+  it('should emit allowFileDownloadsChange when toggle changes', () => {
+    fixture.detectChanges();
+    const spy = spyOn(component.allowFileDownloadsChange, 'emit');
+    component.onAllowDownloadsToggle(true);
+    expect(spy).toHaveBeenCalledWith(true);
+  });
+
+  it('should remove file from list when deleting unsaved file', () => {
+    fixture.detectChanges();
+    const pendingFile: FileAttachmentItem = {
+      originalFileName: 'test.gcode',
+      sizeBytes: 1024,
+      contentType: 'application/octet-stream',
+      status: 'error',
+    };
+    component.files.set([pendingFile]);
+    component.onDeleteFile(pendingFile);
+    expect(component.files()).toEqual([]);
   });
 });
 

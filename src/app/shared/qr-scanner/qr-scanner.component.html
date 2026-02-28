@@ -10,11 +10,7 @@
     </div>
   }
 
-  <div
-    id="qr-reader"
-    class="qr-reader"
-    [class.hidden]="error()"
-  ></div>
+  <div id="qr-reader" class="qr-reader" [class.hidden]="error()"></div>
 
   @if (!initializing() && !error() && cameras().length > 1) {
     <div class="camera-selector">

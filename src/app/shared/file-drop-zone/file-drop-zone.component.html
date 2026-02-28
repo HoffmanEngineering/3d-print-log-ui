@@ -15,8 +15,13 @@
   } @else {
     <div class="drop-content">
       <mat-icon>attach_file</mat-icon>
-      <span>Drop files here or <label class="file-input-label" for="fileInput">browse</label></span>
-      <span class="hint">{{ acceptExtensions().join(', ') }} · Max 200MB per file</span>
+      <span
+        >Drop files here or
+        <label class="file-input-label" for="fileInput">browse</label></span
+      >
+      <span class="hint"
+        >{{ acceptExtensions().join(', ') }} · Max 200MB per file</span
+      >
     </div>
   }
   <input

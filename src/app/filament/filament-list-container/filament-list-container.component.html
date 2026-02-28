@@ -52,7 +52,9 @@
         </button>
         @if (hasSelection()) {
           <span class="selection-info" aria-live="polite">
-            <span class="selection-count">{{ getSelectionCount() }} selected</span>
+            <span class="selection-count"
+              >{{ getSelectionCount() }} selected</span
+            >
             <button
               mat-button
               type="button"
@@ -158,7 +160,11 @@
           aria-label="Select all materials on this page"
         ></mat-checkbox>
       </th>
-      <td mat-cell *matCellDef="let filament" (click)="$event.stopPropagation()">
+      <td
+        mat-cell
+        *matCellDef="let filament"
+        (click)="$event.stopPropagation()"
+      >
         <mat-checkbox
           [checked]="isSelected(filament)"
           (change)="toggleSelection(filament)"
@@ -410,19 +416,19 @@
             }
           </div>
           <div class="card-row-secondary">
-            {{ filament.brand }}@if (filament.colorName) {
+            {{ filament.brand }}
+            @if (filament.colorName) {
               &nbsp;·&nbsp;{{ filament.colorName }}
-            }@if (filament.storageLocation) {
+            }
+            @if (filament.storageLocation) {
               &nbsp;·&nbsp;{{ filament.storageLocation }}
-            }@if (filament.loadedInPrinter) {
+            }
+            @if (filament.loadedInPrinter) {
               &nbsp;·&nbsp;Loaded: {{ getPrinterLabel(filament) }}
             }
           </div>
         </div>
-        <div
-          class="card-actions"
-          (click)="$event.stopPropagation()"
-        >
+        <div class="card-actions" (click)="$event.stopPropagation()">
           <mat-checkbox
             [checked]="isSelected(filament)"
             (change)="toggleSelection(filament)"

@@ -18,8 +18,12 @@
       <div
         fxFlex="grow"
         fxFlexFill
-        [class.mat-elevation-z5]="profileViewStatus !== this.userDetailsOnLoad.viewStatus"
-        [class.editing-card]="profileViewStatus !== this.userDetailsOnLoad.viewStatus"
+        [class.mat-elevation-z5]="
+          profileViewStatus !== this.userDetailsOnLoad.viewStatus
+        "
+        [class.editing-card]="
+          profileViewStatus !== this.userDetailsOnLoad.viewStatus
+        "
       >
         <div>
           <label
@@ -79,8 +83,14 @@
       <div
         fxFlex="grow"
         fxFlexFill
-        [class.mat-elevation-z5]="printViewStatus?.toString() !== this.defaultPrintViewStatusSettingOnLoad?.value.toString()"
-        [class.editing-card]="printViewStatus?.toString() !== this.defaultPrintViewStatusSettingOnLoad?.value.toString()"
+        [class.mat-elevation-z5]="
+          printViewStatus?.toString() !==
+          this.defaultPrintViewStatusSettingOnLoad?.value.toString()
+        "
+        [class.editing-card]="
+          printViewStatus?.toString() !==
+          this.defaultPrintViewStatusSettingOnLoad?.value.toString()
+        "
       >
         <div>
           <label
@@ -142,8 +152,14 @@
       <div
         fxFlex="grow"
         fxFlexFill
-        [class.mat-elevation-z5]="preferredCurrency?.toString() !== this.preferredCurrencyNameSettingOnLoad?.value.toString()"
-        [class.editing-card]="preferredCurrency?.toString() !== this.preferredCurrencyNameSettingOnLoad?.value.toString()"
+        [class.mat-elevation-z5]="
+          preferredCurrency?.toString() !==
+          this.preferredCurrencyNameSettingOnLoad?.value.toString()
+        "
+        [class.editing-card]="
+          preferredCurrency?.toString() !==
+          this.preferredCurrencyNameSettingOnLoad?.value.toString()
+        "
       >
         <div>
           <label
@@ -204,8 +220,14 @@
       <div
         fxFlex="grow"
         fxFlexFill
-        [class.mat-elevation-z5]="defaultFilamentDiameterMm?.toString() !== this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()"
-        [class.editing-card]="defaultFilamentDiameterMm?.toString() !== this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()"
+        [class.mat-elevation-z5]="
+          defaultFilamentDiameterMm?.toString() !==
+          this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()
+        "
+        [class.editing-card]="
+          defaultFilamentDiameterMm?.toString() !==
+          this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()
+        "
       >
         <div>
           <label
@@ -261,8 +283,14 @@
       <div
         fxFlex="grow"
         fxFlexFill
-        [class.mat-elevation-z5]="defaultFilamentPrice?.toString() !== this.defaultFilamentPriceSettingOnLoad?.value.toString()"
-        [class.editing-card]="defaultFilamentPrice?.toString() !== this.defaultFilamentPriceSettingOnLoad?.value.toString()"
+        [class.mat-elevation-z5]="
+          defaultFilamentPrice?.toString() !==
+          this.defaultFilamentPriceSettingOnLoad?.value.toString()
+        "
+        [class.editing-card]="
+          defaultFilamentPrice?.toString() !==
+          this.defaultFilamentPriceSettingOnLoad?.value.toString()
+        "
       >
         <div>
           <label
@@ -331,15 +359,22 @@
             @if (subscriptionService.currentPeriodEnd()) {
               <p>
                 <strong>Renews:</strong>
-                {{ subscriptionService.currentPeriodEnd() | date: 'mediumDate' }}
+                {{
+                  subscriptionService.currentPeriodEnd() | date: 'mediumDate'
+                }}
               </p>
             }
             @if (subscriptionService.cancelAtPeriodEnd()) {
               <p style="color: #f44336">
-                Your subscription will not renew at the end of the current period.
+                Your subscription will not renew at the end of the current
+                period.
               </p>
             }
-            <button mat-raised-button color="primary" (click)="manageSubscription()">
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="manageSubscription()"
+            >
               Manage Billing
             </button>
           </div>

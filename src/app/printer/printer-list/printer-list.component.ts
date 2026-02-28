@@ -58,8 +58,7 @@ export class PrinterListComponent implements OnInit {
     this.titleService.setTitle('My Printers - 3D Print Log');
 
     this.activatedRoute.data.subscribe((data) => {
-      const pagedResponse: PagedList<PrinterSummarySimple> =
-        data.printerList;
+      const pagedResponse: PagedList<PrinterSummarySimple> = data.printerList;
       this.handlePagedList(pagedResponse);
     });
   }

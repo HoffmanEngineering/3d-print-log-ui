@@ -144,10 +144,7 @@ export class NotificationsListComponent implements OnInit {
     });
   }
 
-  deleteNotification(
-    notification: NotificationSummaryDto,
-    event: Event
-  ): void {
+  deleteNotification(notification: NotificationSummaryDto, event: Event): void {
     event.stopPropagation();
     this.notificationService.deleteNotification(notification.id).subscribe({
       next: () => {

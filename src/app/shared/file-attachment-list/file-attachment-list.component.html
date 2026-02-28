@@ -1,7 +1,9 @@
 <div class="file-attachment-list">
-  @for (file of files(); track (file.id ?? file.originalFileName)) {
+  @for (file of files(); track file.id ?? file.originalFileName) {
     <div class="file-row">
-      <mat-icon class="file-icon">{{ getFileIcon(file.originalFileName) }}</mat-icon>
+      <mat-icon class="file-icon">{{
+        getFileIcon(file.originalFileName)
+      }}</mat-icon>
 
       <div class="file-info">
         <span class="file-name">{{ file.originalFileName }}</span>
@@ -15,19 +17,29 @@
         }
 
         @if (file.status === 'error') {
-          <span class="error-message">{{ file.errorMessage ?? 'Upload failed' }}</span>
+          <span class="error-message">{{
+            file.errorMessage ?? 'Upload failed'
+          }}</span>
         }
       </div>
 
       <div class="file-actions">
         @if (file.status === 'uploaded' && canDownload()) {
-          <button mat-icon-button (click)="onDownload(file)" aria-label="Download file">
+          <button
+            mat-icon-button
+            (click)="onDownload(file)"
+            aria-label="Download file"
+          >
             <mat-icon>download</mat-icon>
           </button>
         }
 
         @if (editable() && file.status !== 'uploading') {
-          <button mat-icon-button (click)="onDelete(file)" aria-label="Delete file">
+          <button
+            mat-icon-button
+            (click)="onDelete(file)"
+            aria-label="Delete file"
+          >
             <mat-icon>delete</mat-icon>
           </button>
         }

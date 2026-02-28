@@ -46,7 +46,11 @@
           }
           @if (images.length < 1) {
             @if (isCordova) {
-              <button type="button" mat-stroked-button (click)="cameraInput.click()">
+              <button
+                type="button"
+                mat-stroked-button
+                (click)="cameraInput.click()"
+              >
                 Upload Picture
               </button>
             } @else {
@@ -358,7 +362,12 @@
                       <div fxFlex>
                         <div
                           class="filament-color-cell"
-                          [style.background-color]="printFilament.get('filament').value?.colorHex ? '#' + printFilament.get('filament').value?.colorHex : null"
+                          [style.background-color]="
+                            printFilament.get('filament').value?.colorHex
+                              ? '#' +
+                                printFilament.get('filament').value?.colorHex
+                              : null
+                          "
                         ></div>
                       </div>
                       <div fxFlex class="filament-section filament-name">
@@ -499,7 +508,14 @@
                                     <mat-icon>swap_vert</mat-icon>
                                     <div
                                       class="swap-color-indicator"
-                                      [style.background-color]="otherFilament.get('filament').value?.colorHex ? '#' + otherFilament.get('filament').value?.colorHex : '#ccc'"
+                                      [style.background-color]="
+                                        otherFilament.get('filament').value
+                                          ?.colorHex
+                                          ? '#' +
+                                            otherFilament.get('filament').value
+                                              ?.colorHex
+                                          : '#ccc'
+                                      "
                                     ></div>
                                     <span>
                                       Swap with #{{ otherIndex + 1 }}:
@@ -851,7 +867,11 @@
                               printFilament.get('filament').value
                                 ?.purchasePriceValue !== null
                             "
-                            [class.price-error]="getEstimatedPrice($any(printFilament)).includes('(')"
+                            [class.price-error]="
+                              getEstimatedPrice($any(printFilament)).includes(
+                                '('
+                              )
+                            "
                           >
                             @if (
                               getEstimatedPrice($any(printFilament)).includes(
@@ -891,7 +911,11 @@
                                 printFilament.get('filament').value
                                   ?.purchasePriceValue !== null
                               "
-                              [class.price-error]="getActualPrice($any(printFilament)).includes('(')"
+                              [class.price-error]="
+                                getActualPrice($any(printFilament)).includes(
+                                  '('
+                                )
+                              "
                             >
                               @if (
                                 getActualPrice($any(printFilament)).includes(
@@ -1020,12 +1044,19 @@
             [printId]="printForm.get('id')?.value"
             [editable]="true"
             [isOwner]="true"
-            [allowFileDownloads]="printForm.get('allowFileDownloads')?.value ?? false"
-            (allowFileDownloadsChange)="printForm.get('allowFileDownloads')?.setValue($event); printForm.get('allowFileDownloads')?.markAsDirty()"
+            [allowFileDownloads]="
+              printForm.get('allowFileDownloads')?.value ?? false
+            "
+            (allowFileDownloadsChange)="
+              printForm.get('allowFileDownloads')?.setValue($event);
+              printForm.get('allowFileDownloads')?.markAsDirty()
+            "
           ></app-file-attachment-section>
         } @else {
-          <p style="opacity: 0.5; font-size: 13px; margin-top: 8px;">
-            <mat-icon style="font-size: 16px; vertical-align: middle;">attach_file</mat-icon>
+          <p style="opacity: 0.5; font-size: 13px; margin-top: 8px">
+            <mat-icon style="font-size: 16px; vertical-align: middle"
+              >attach_file</mat-icon
+            >
             Save the print first to attach files.
           </p>
         }

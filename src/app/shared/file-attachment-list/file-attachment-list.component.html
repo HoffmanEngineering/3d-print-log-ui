@@ -1,5 +1,5 @@
 <div class="file-attachment-list">
-  @for (file of files(); track file.originalFileName) {
+  @for (file of files(); track (file.id ?? file.originalFileName)) {
     <div class="file-row">
       <mat-icon class="file-icon">{{ getFileIcon(file.originalFileName) }}</mat-icon>
 
@@ -15,7 +15,7 @@
         }
 
         @if (file.status === 'error') {
-          <span class="error-message">{{ file.errorMessage }}</span>
+          <span class="error-message">{{ file.errorMessage ?? 'Upload failed' }}</span>
         }
       </div>
 

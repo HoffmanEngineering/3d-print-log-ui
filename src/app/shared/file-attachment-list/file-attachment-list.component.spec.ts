@@ -134,4 +134,19 @@ describe('FileAttachmentListComponent', () => {
     expect(component.getFileIcon('model.obj')).toBe('view_in_ar');
     expect(component.getFileIcon('document.pdf')).toBe('insert_drive_file');
   });
+
+  it('should show fallback error message when errorMessage is not set', () => {
+    const errorFiles: FileAttachmentItem[] = [
+      {
+        originalFileName: 'bad.gcode',
+        sizeBytes: 1024,
+        contentType: 'application/octet-stream',
+        status: 'error',
+      },
+    ];
+    fixture.componentRef.setInput('files', errorFiles);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Upload failed');
+  });
 });

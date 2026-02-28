@@ -1014,6 +1014,21 @@
           id="edit-allow-comments"
           >Allow Comments</mat-checkbox
         >
+        <!-- File Attachments Section -->
+        @if (printForm.get('id')?.value) {
+          <app-file-attachment-section
+            [printId]="printForm.get('id')?.value"
+            [editable]="true"
+            [isOwner]="true"
+            [allowFileDownloads]="printForm.get('allowFileDownloads')?.value ?? false"
+            (allowFileDownloadsChange)="printForm.get('allowFileDownloads')?.setValue($event); printForm.get('allowFileDownloads')?.markAsDirty()"
+          ></app-file-attachment-section>
+        } @else {
+          <p style="opacity: 0.5; font-size: 13px; margin-top: 8px;">
+            <mat-icon style="font-size: 16px; vertical-align: middle;">attach_file</mat-icon>
+            Save the print first to attach files.
+          </p>
+        }
       </mat-card-content>
       <mat-card-actions
         class="sticky-actions"

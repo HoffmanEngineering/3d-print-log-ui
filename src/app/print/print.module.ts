@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AdsenseModule } from 'ng2-adsense';
 import { PrintService } from '../core/services/print.service';
 import { SharedModule } from '../shared/shared.module';
+import { FileAttachmentSectionComponent } from '../shared/file-attachment-section/file-attachment-section.component';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintCommentsComponent } from './print-comments/print-comments.component';
 import { PrintListComponent } from './print-list/print-list.component';
@@ -41,6 +42,7 @@ import { FilamentListResolverService } from './resolvers/filament-list-resolver.
     ReactiveFormsModule,
     SharedModule,
     AdsenseModule,
+    FileAttachmentSectionComponent,
   ],
   providers: [
     PrintDetailResolverService,

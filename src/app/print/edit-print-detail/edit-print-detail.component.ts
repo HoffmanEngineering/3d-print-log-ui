@@ -117,6 +117,7 @@ export interface PrintFormValue {
   viewStatus: PrintViewStatus;
   images: PrintImageValue[];
   allowComments: boolean;
+  allowFileDownloads: boolean;
 }
 
 @Component({
@@ -181,6 +182,7 @@ export class EditPrintDetailComponent
     viewStatus: FormControl<PrintViewStatus>;
     images: FormArray<FormControl<PrintImageValue>>;
     allowComments: FormControl<boolean>;
+    allowFileDownloads: FormControl<boolean>;
   }>;
 
   public printStatusTypes = PrintStatus;
@@ -749,6 +751,7 @@ export class EditPrintDetailComponent
     viewStatus: FormControl<PrintViewStatus>;
     images: FormArray<FormControl<PrintImageValue>>;
     allowComments: FormControl<boolean>;
+    allowFileDownloads: FormControl<boolean>;
   }> {
     const imageArray = this.formBuilder.array<FormControl<PrintImageValue>>([]);
 
@@ -887,6 +890,10 @@ export class EditPrintDetailComponent
             ? !!this.lastAllowCommentsSetting.value
             : true,
       ],
+      allowFileDownloads: new FormControl<boolean>(
+        print?.allowFileDownloads ?? false,
+        { nonNullable: true }
+      ),
     });
   }
 

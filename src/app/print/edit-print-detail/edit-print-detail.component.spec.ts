@@ -39,7 +39,7 @@ describe('EditPrintDetailComponent', () => {
 
     const mockToastrService = jasmine.createSpyObj<ToastrService>(
       'ToastrService',
-      ['success', 'error', 'warning']
+      ['success', 'error', 'warning', 'info']
     );
 
     const mockTitleService = jasmine.createSpyObj<Title>('Title', ['setTitle']);

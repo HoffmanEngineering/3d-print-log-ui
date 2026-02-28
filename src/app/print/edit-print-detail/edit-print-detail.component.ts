@@ -1039,10 +1039,17 @@ export class EditPrintDetailComponent
       const maxAllowed = this.maxImages() - currentCount;
 
       if (maxAllowed <= 0) {
-        this.toastr.warning(
-          `Maximum ${this.maxImages()} images allowed`,
-          'Limit Reached'
-        );
+        if (this.subscriptionService.isPro()) {
+          this.toastr.warning(
+            `Maximum ${this.maxImages()} images allowed`,
+            'Limit Reached'
+          );
+        } else {
+          this.toastr.info(
+            `Free accounts allow ${this.maxImages()} images. Upgrade to Pro for up to 20.`,
+            'Image Limit Reached'
+          );
+        }
         return;
       }
 
@@ -1211,10 +1218,17 @@ export class EditPrintDetailComponent
     const maxAllowed = this.maxImages() - currentCount;
 
     if (maxAllowed <= 0) {
-      this.toastr.warning(
-        `Maximum ${this.maxImages()} images allowed`,
-        'Limit Reached'
-      );
+      if (this.subscriptionService.isPro()) {
+        this.toastr.warning(
+          `Maximum ${this.maxImages()} images allowed`,
+          'Limit Reached'
+        );
+      } else {
+        this.toastr.info(
+          `Free accounts allow ${this.maxImages()} images. Upgrade to Pro for up to 20.`,
+          'Image Limit Reached'
+        );
+      }
       return;
     }
 

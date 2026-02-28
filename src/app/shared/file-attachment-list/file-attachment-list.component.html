@@ -1,0 +1,41 @@
+<div class="file-attachment-list">
+  @for (file of files(); track file.originalFileName) {
+    <div class="file-row">
+      <mat-icon class="file-icon">{{ getFileIcon(file.originalFileName) }}</mat-icon>
+
+      <div class="file-info">
+        <span class="file-name">{{ file.originalFileName }}</span>
+        <span class="file-size">{{ formatSize(file.sizeBytes) }}</span>
+
+        @if (file.status === 'uploading') {
+          <mat-progress-bar
+            mode="determinate"
+            [value]="file.uploadPercent ?? 0"
+          ></mat-progress-bar>
+        }
+
+        @if (file.status === 'error') {
+          <span class="error-message">{{ file.errorMessage }}</span>
+        }
+      </div>
+
+      <div class="file-actions">
+        @if (file.status === 'uploaded' && canDownload()) {
+          <button mat-icon-button (click)="onDownload(file)" aria-label="Download file">
+            <mat-icon>download</mat-icon>
+          </button>
+        }
+
+        @if (editable() && file.status !== 'uploading') {
+          <button mat-icon-button (click)="onDelete(file)" aria-label="Delete file">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+      </div>
+    </div>
+  } @empty {
+    <div class="empty-state">
+      <span>No files attached</span>
+    </div>
+  }
+</div>

@@ -228,6 +228,15 @@
           </button>
         </div>
       </mat-card-actions>
+      <!-- File Attachments -->
+      <mat-card-content style="width: 100%">
+        <app-file-attachment-section
+          [printId]="print.id"
+          [editable]="false"
+          [isOwner]="currentUser?.id === user?.id"
+          [allowFileDownloads]="print.allowFileDownloads ?? false"
+        ></app-file-attachment-section>
+      </mat-card-content>
       <mat-card-content style="width: 100%">
         <app-print-comments
           [printId]="print.id"

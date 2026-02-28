@@ -9,6 +9,10 @@ export interface SubscriptionDto {
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   isPro: boolean;
+  maxImagesPerPrint: number;
+  maxFilesPerPrint: number;
+  maxFileStorageBytes: number;
+  usedFileStorageBytes: number;
 }
 
 @Injectable({
@@ -28,6 +32,18 @@ export class SubscriptionService {
   );
   readonly cancelAtPeriodEnd = computed(
     () => this._subscription()?.cancelAtPeriodEnd ?? false
+  );
+  readonly maxImagesPerPrint = computed(
+    () => this._subscription()?.maxImagesPerPrint ?? 5
+  );
+  readonly maxFilesPerPrint = computed(
+    () => this._subscription()?.maxFilesPerPrint ?? 0
+  );
+  readonly maxFileStorageBytes = computed(
+    () => this._subscription()?.maxFileStorageBytes ?? 0
+  );
+  readonly usedFileStorageBytes = computed(
+    () => this._subscription()?.usedFileStorageBytes ?? 0
   );
 
   loadSubscription(): void {

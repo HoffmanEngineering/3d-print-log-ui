@@ -1633,6 +1633,7 @@ export class EditPrintDetailComponent
       images: existingPrintImages,
       createdByUserId: null,
       allowComments: this.printForm.controls.allowComments.value,
+      allowFileDownloads: this.printForm.controls.allowFileDownloads.value,
     };
 
     return print;

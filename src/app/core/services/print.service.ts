@@ -161,6 +161,7 @@ export interface PutPrintDetailDTO {
   status: PrintStatus;
   viewStatus: PrintViewStatus;
   allowComments: boolean;
+  allowFileDownloads?: boolean;
 }
 
 export interface PrintDetail {
@@ -401,6 +402,7 @@ export class PrintService {
       id: print.id,
       viewStatus: print.viewStatus,
       allowComments: print.allowComments,
+      allowFileDownloads: print.allowFileDownloads,
     };
 
     return this.http.put<any>(url, printDto);

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,6 +25,7 @@ import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterService } from 'src/app/core/services/printer.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
 
 describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
@@ -71,6 +72,18 @@ describe('EditPrintDetailComponent', () => {
       ['emitConversion']
     );
 
+    const mockSubscriptionService = jasmine.createSpyObj(
+      'SubscriptionService',
+      [],
+      {
+        isPro: signal(true),
+        maxImagesPerPrint: signal(20),
+        maxFilesPerPrint: signal(5),
+        maxFileStorageBytes: signal(53687091200),
+        usedFileStorageBytes: signal(0),
+      }
+    );
+
     TestBed.configureTestingModule({
       declarations: [EditPrintDetailComponent],
       imports: [
@@ -96,6 +109,7 @@ describe('EditPrintDetailComponent', () => {
           useValue: mockPrinterPromptService,
         },
         { provide: LoggingService, useValue: mockLogger },
+        { provide: SubscriptionService, useValue: mockSubscriptionService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -138,10 +152,14 @@ describe('EditPrintDetailComponent', () => {
     expect(component).toBeTruthy();
   }, 10000);
 
+  it('should use maxImagesPerPrint from subscription service', () => {
+    expect(component.maxImages()).toBe(20);
+  });
+
   describe('Image Management', () => {
-    it('should enforce 5 image limit in detectFiles', () => {
-      // Add 5 mock images to the form
-      for (let i = 0; i < 5; i++) {
+    it('should enforce image limit from subscription in detectFiles', () => {
+      // Add 20 mock images to the form (matches mock maxImagesPerPrint signal value)
+      for (let i = 0; i < 20; i++) {
         const mockImage = component['createItem']({
           id: i + 1,
           url: `data:image/png;base64,test${i}`,
@@ -151,7 +169,7 @@ describe('EditPrintDetailComponent', () => {
         component.images.push(mockImage);
       }
 
-      expect(component.images.length).toBe(5);
+      expect(component.images.length).toBe(20);
 
       // Try to add more - should be blocked
       const mockEvent = {
@@ -162,8 +180,8 @@ describe('EditPrintDetailComponent', () => {
 
       component.detectFiles(mockEvent);
 
-      // Should still be 5 (limit enforced)
-      expect(component.images.length).toBe(5);
+      // Should still be 20 (limit enforced)
+      expect(component.images.length).toBe(20);
     });
 
     it('should update displayOrder when onImagesReordered is called', () => {
@@ -313,8 +331,9 @@ describe('EditPrintDetailComponent', () => {
       expect(component.isDragOver).toBe(false);
     });
 
-    it('should not set isDragOver when at 5-image limit', () => {
-      for (let i = 0; i < 5; i++) {
+    it('should not set isDragOver when at subscription image limit', () => {
+      // Fill to the subscription limit (mock maxImagesPerPrint = 20)
+      for (let i = 0; i < 20; i++) {
         component.images.push(
           component['createItem']({
             id: i + 1,

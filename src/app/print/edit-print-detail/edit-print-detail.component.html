@@ -82,7 +82,7 @@
           [images]="cachedImagesForStrip"
           [selectedId]="selectedImage?.value?.id"
           [editable]="true"
-          [maxImages]="MAX_IMAGES"
+          [maxImages]="maxImages()"
           (imageSelected)="onThumbnailSelected($event)"
           (imageDeleted)="onImageDeleted($event)"
           (defaultChanged)="onDefaultChanged($event)"

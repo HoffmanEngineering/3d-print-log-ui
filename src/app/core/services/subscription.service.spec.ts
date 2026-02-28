@@ -32,6 +32,22 @@ describe('SubscriptionService', () => {
     expect(service.isPro()).toBeFalse();
   });
 
+  it('should default maxImagesPerPrint to 5', () => {
+    expect(service.maxImagesPerPrint()).toBe(5);
+  });
+
+  it('should default maxFilesPerPrint to 0', () => {
+    expect(service.maxFilesPerPrint()).toBe(0);
+  });
+
+  it('should default maxFileStorageBytes to 0', () => {
+    expect(service.maxFileStorageBytes()).toBe(0);
+  });
+
+  it('should default usedFileStorageBytes to 0', () => {
+    expect(service.usedFileStorageBytes()).toBe(0);
+  });
+
   it('should default status to none', () => {
     expect(service.status()).toBe('none');
   });
@@ -44,6 +60,10 @@ describe('SubscriptionService', () => {
         currentPeriodEnd: '2026-03-27T00:00:00Z',
         cancelAtPeriodEnd: false,
         isPro: true,
+        maxImagesPerPrint: 20,
+        maxFilesPerPrint: 5,
+        maxFileStorageBytes: 53687091200,
+        usedFileStorageBytes: 1048576,
       };
 
       service.loadSubscription();

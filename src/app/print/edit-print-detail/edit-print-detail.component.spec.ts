@@ -462,6 +462,7 @@ describe('EditPrintDetailComponent', () => {
     describe('Toast branching on image limit', () => {
       let toastrService: jasmine.SpyObj<ToastrService>;
       let isProSignal: WritableSignal<boolean>;
+      let maxImagesSignal: WritableSignal<number>;
 
       beforeEach(() => {
         toastrService = TestBed.inject(
@@ -470,8 +471,20 @@ describe('EditPrintDetailComponent', () => {
         const subscriptionService = TestBed.inject(SubscriptionService);
         isProSignal =
           subscriptionService.isPro as unknown as WritableSignal<boolean>;
+        maxImagesSignal =
+          subscriptionService.maxImagesPerPrint as unknown as WritableSignal<number>;
+      });
 
-        // Fill to the subscription limit (maxImagesPerPrint = 20)
+      afterEach(() => {
+        // Restore defaults for other tests
+        isProSignal.set(true);
+        maxImagesSignal.set(20);
+      });
+
+      it('should call toastr.warning (not info) when a Pro user hits the image limit in detectFiles', () => {
+        isProSignal.set(true);
+
+        // Fill to the Pro limit (20 images)
         for (let i = 0; i < 20; i++) {
           component.images.push(
             component['createItem']({
@@ -482,15 +495,6 @@ describe('EditPrintDetailComponent', () => {
             })
           );
         }
-      });
-
-      afterEach(() => {
-        // Restore Pro status for other tests
-        isProSignal.set(true);
-      });
-
-      it('should call toastr.warning (not info) when a Pro user hits the image limit in detectFiles', () => {
-        isProSignal.set(true);
 
         const mockEvent = {
           target: {
@@ -510,6 +514,19 @@ describe('EditPrintDetailComponent', () => {
 
       it('should call toastr.info (not warning) when a free user hits the image limit in detectFiles', () => {
         isProSignal.set(false);
+        maxImagesSignal.set(5);
+
+        // Fill to the free limit (5 images)
+        for (let i = 0; i < 5; i++) {
+          component.images.push(
+            component['createItem']({
+              id: i + 1,
+              url: `url${i}`,
+              isDefault: i === 0,
+              displayOrder: i,
+            })
+          );
+        }
 
         const mockEvent = {
           target: {
@@ -521,7 +538,7 @@ describe('EditPrintDetailComponent', () => {
         component.detectFiles(mockEvent);
 
         expect(toastrService.info).toHaveBeenCalledOnceWith(
-          'Free accounts allow 20 images. Upgrade to Pro for up to 20.',
+          'Free accounts allow 5 images per print. Upgrade to Pro for more.',
           'Image Limit Reached'
         );
         expect(toastrService.warning).not.toHaveBeenCalled();

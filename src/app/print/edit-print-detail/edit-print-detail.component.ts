@@ -1053,7 +1053,7 @@ export class EditPrintDetailComponent
           );
         } else {
           this.toastr.info(
-            `Free accounts allow ${this.maxImages()} images. Upgrade to Pro for up to 20.`,
+            `Free accounts allow ${this.maxImages()} images per print. Upgrade to Pro for more.`,
             'Image Limit Reached'
           );
           this.loggingService.logEvent('EditPrint_ImageLimitUpgradePrompt', {
@@ -1236,7 +1236,7 @@ export class EditPrintDetailComponent
         );
       } else {
         this.toastr.info(
-          `Free accounts allow ${this.maxImages()} images. Upgrade to Pro for up to 20.`,
+          `Free accounts allow ${this.maxImages()} images per print. Upgrade to Pro for more.`,
           'Image Limit Reached'
         );
         this.loggingService.logEvent('EditPrint_ImageLimitUpgradePrompt', {

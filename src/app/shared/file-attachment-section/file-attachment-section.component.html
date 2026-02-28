@@ -1,0 +1,50 @@
+<section class="file-attachment-section">
+  @if (isPro()) {
+  <div class="section-header">
+    <h3>
+      <mat-icon>attach_file</mat-icon>
+      File Attachments
+      <span class="file-count">{{ uploadedFileCount() }} / {{ maxFiles() }}</span>
+    </h3>
+    @if (editable()) {
+    <span class="quota" [class.warning]="quotaWarning() === 'warning'" [class.full]="quotaWarning() === 'full'">
+      {{ formattedQuotaUsage() }}
+    </span>
+    }
+  </div>
+
+  @if (editable()) {
+  <mat-slide-toggle
+    [checked]="allowFileDownloads()"
+    (change)="onAllowDownloadsToggle($event.checked)"
+    class="downloads-toggle"
+  >
+    Allow others to download files
+  </mat-slide-toggle>
+
+  @if (canAddMore() && quotaWarning() !== 'full') {
+  <app-file-drop-zone (filesSelected)="onFilesSelected($event)"></app-file-drop-zone>
+  } @else if (quotaWarning() === 'full') {
+  <p class="storage-full">Storage full. Delete files to free up space.</p>
+  }
+  }
+
+  <app-file-attachment-list
+    [files]="files()"
+    [editable]="editable()"
+    [canDownload]="canDownload()"
+    (download)="onDownloadFile($event)"
+    (delete)="onDeleteFile($event)"
+  ></app-file-attachment-list>
+  } @else {
+  <!-- Free user teaser -->
+  <div class="pro-teaser">
+    <mat-icon>attach_file</mat-icon>
+    <span>Attach gcode, STL, and 3MF files</span>
+    <a [routerLink]="['/subscription']" class="pro-badge">
+      <mat-icon>star</mat-icon>
+      Pro
+    </a>
+  </div>
+  }
+</section>

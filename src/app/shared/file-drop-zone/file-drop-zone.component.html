@@ -2,6 +2,7 @@
   class="drop-zone"
   [class.drag-over]="isDragOver()"
   [class.disabled]="disabled()"
+  (dragenter)="onDragEnter($event)"
   (dragover)="onDragOver($event)"
   (dragleave)="onDragLeave()"
   (drop)="onDrop($event)"
@@ -22,7 +23,7 @@
     id="fileInput"
     type="file"
     hidden
-    [attr.accept]="acceptString"
+    [accept]="acceptString()"
     multiple
     (change)="onFileInputChange($event)"
   />

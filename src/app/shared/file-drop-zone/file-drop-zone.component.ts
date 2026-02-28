@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   signal,
@@ -22,8 +23,15 @@ export class FileDropZoneComponent {
 
   isDragOver = signal(false);
 
-  get acceptString(): string {
-    return this.acceptExtensions().join(',');
+  readonly acceptString = computed(() => this.acceptExtensions().join(','));
+
+  private dragCounter = 0;
+
+  onDragEnter(event: DragEvent): void {
+    event.preventDefault();
+    if (this.disabled()) return;
+    this.dragCounter++;
+    this.isDragOver.set(true);
   }
 
   onDragOver(event: DragEvent): void {
@@ -35,19 +43,29 @@ export class FileDropZoneComponent {
   }
 
   onDragLeave(): void {
-    this.isDragOver.set(false);
+    this.dragCounter--;
+    if (this.dragCounter <= 0) {
+      this.dragCounter = 0;
+      this.isDragOver.set(false);
+    }
   }
 
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
+    this.dragCounter = 0;
     this.isDragOver.set(false);
 
     if (this.disabled()) return;
 
-    const files = Array.from(event.dataTransfer?.files ?? []);
-    if (files.length > 0) {
-      this.filesSelected.emit(files);
+    const allFiles = Array.from(event.dataTransfer?.files ?? []);
+    const filtered = allFiles.filter((file) => {
+      const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+      return this.acceptExtensions().includes(ext);
+    });
+
+    if (filtered.length > 0) {
+      this.filesSelected.emit(filtered);
     }
   }
 

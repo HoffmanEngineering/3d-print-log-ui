@@ -182,4 +182,50 @@ describe('FileDropZoneComponent', () => {
     component.onDrop(event);
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('should keep isDragOver true after entering a child element (dragenter twice, dragleave once)', () => {
+    const enterEvent = new DragEvent('dragenter');
+    Object.defineProperty(enterEvent, 'preventDefault', {
+      value: jasmine.createSpy(),
+    });
+
+    component.onDragEnter(enterEvent);
+    component.onDragEnter(enterEvent);
+    component.onDragLeave();
+
+    expect(component.isDragOver()).toBe(true);
+  });
+
+  it('should NOT emit when a file with a disallowed extension is dropped', () => {
+    fixture.componentRef.setInput('acceptExtensions', ['.gcode', '.stl']);
+    fixture.detectChanges();
+
+    const spy = spyOn(component.filesSelected, 'emit');
+
+    const file = new File(['content'], 'document.pdf', {
+      type: 'application/pdf',
+    });
+    const mockFileList = {
+      0: file,
+      length: 1,
+      item: (index: number) => (index === 0 ? file : null),
+      [Symbol.iterator]: function* () {
+        yield file;
+      },
+    } as unknown as FileList;
+
+    const event = new DragEvent('drop');
+    Object.defineProperty(event, 'preventDefault', {
+      value: jasmine.createSpy(),
+    });
+    Object.defineProperty(event, 'stopPropagation', {
+      value: jasmine.createSpy(),
+    });
+    Object.defineProperty(event, 'dataTransfer', {
+      value: { files: mockFileList },
+    });
+
+    component.onDrop(event);
+    expect(spy).not.toHaveBeenCalled();
+  });
 });

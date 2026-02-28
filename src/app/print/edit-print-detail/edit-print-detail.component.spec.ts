@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Signal, signal } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -72,15 +72,15 @@ describe('EditPrintDetailComponent', () => {
       ['emitConversion']
     );
 
-    const mockSubscriptionService = jasmine.createSpyObj(
+    const mockSubscriptionService = jasmine.createSpyObj<SubscriptionService>(
       'SubscriptionService',
       [],
       {
-        isPro: signal(true),
-        maxImagesPerPrint: signal(20),
-        maxFilesPerPrint: signal(5),
-        maxFileStorageBytes: signal(53687091200),
-        usedFileStorageBytes: signal(0),
+        isPro: signal(true) as Signal<boolean>,
+        maxImagesPerPrint: signal(20) as Signal<number>,
+        maxFilesPerPrint: signal(5) as Signal<number>,
+        maxFileStorageBytes: signal(53687091200) as Signal<number>,
+        usedFileStorageBytes: signal(0) as Signal<number>,
       }
     );
 

@@ -1,6 +1,7 @@
 <div class="thumbnail-strip" [class.editable]="editable()">
   @if (images().length > 1 || editable()) {
     <ul
+      #thumbnailList
       class="thumbnails"
       [cdkDropListDisabled]="!editable()"
       cdkDropList

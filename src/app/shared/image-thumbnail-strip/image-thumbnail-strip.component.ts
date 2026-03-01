@@ -4,6 +4,9 @@ import {
   input,
   output,
   computed,
+  viewChild,
+  ElementRef,
+  effect,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,6 +37,22 @@ export class ImageThumbnailStripComponent {
   defaultChanged = output<ThumbnailImage>();
   imagesReordered = output<{ previousIndex: number; currentIndex: number }>();
   addClicked = output<void>();
+
+  private readonly thumbnailList =
+    viewChild<ElementRef<HTMLUListElement>>('thumbnailList');
+
+  constructor() {
+    effect(() => {
+      const selectedId = this.selectedId();
+      const list = this.thumbnailList()?.nativeElement;
+      if (!list || selectedId === undefined) return;
+
+      queueMicrotask(() => {
+        const selected = list.querySelector<HTMLLIElement>('li.selected');
+        selected?.scrollIntoView({ block: 'nearest', inline: 'center' });
+      });
+    });
+  }
 
   canAddMore = computed(() => this.images().length < this.maxImages());
 

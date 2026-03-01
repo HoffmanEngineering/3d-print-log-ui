@@ -170,4 +170,26 @@ describe('ImageThumbnailStripComponent', () => {
       });
     });
   });
+
+  describe('auto-scroll', () => {
+    it('should call scrollIntoView on the selected thumbnail when selectedId changes', async () => {
+      const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+      fixture.componentRef.setInput('selectedId', 2);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(scrollSpy).toHaveBeenCalledWith({
+        block: 'nearest',
+        inline: 'center',
+      });
+    });
+
+    it('should not throw when selectedId is undefined', async () => {
+      fixture.componentRef.setInput('selectedId', undefined);
+      expect(() => {
+        fixture.detectChanges();
+      }).not.toThrow();
+    });
+  });
 });

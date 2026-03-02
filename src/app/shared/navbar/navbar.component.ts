@@ -5,9 +5,11 @@ import {
   NgZone,
   OnDestroy,
   OnInit,
+  inject,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -27,6 +29,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;
+
+  private readonly subscriptionService = inject(SubscriptionService);
+  readonly isPro = this.subscriptionService.isPro;
 
   constructor(
     public auth: AuthService,

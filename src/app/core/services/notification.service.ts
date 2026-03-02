@@ -1,6 +1,12 @@
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { NGX_LOADING_BAR_IGNORED } from '@ngx-loading-bar/http-client';
-import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
+import {
+  computed,
+  DestroyRef,
+  inject,
+  Injectable,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval, Observable, Subject } from 'rxjs';
 import { map, startWith, switchMap, tap } from 'rxjs/operators';
@@ -113,9 +119,7 @@ export class NotificationService {
     this.refreshTrigger$
       .pipe(
         startWith(undefined),
-        switchMap(() =>
-          interval(this.POLLING_INTERVAL_MS).pipe(startWith(0))
-        ),
+        switchMap(() => interval(this.POLLING_INTERVAL_MS).pipe(startWith(0))),
         switchMap(() => this.fetchUnreadCount()),
         takeUntilDestroyed(this.destroyRef)
       )

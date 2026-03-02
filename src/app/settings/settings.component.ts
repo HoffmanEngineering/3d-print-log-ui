@@ -1,5 +1,5 @@
 import { KeyValue } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../core/services/auth.service';
@@ -19,6 +19,7 @@ import {
   Currencies,
   Currency,
 } from '../core/resolvers/currencies-resolver.service';
+import { SubscriptionService } from '../core/services/subscription.service';
 
 @Component({
   selector: 'app-settings',
@@ -80,6 +81,8 @@ export class SettingsComponent implements OnInit {
     private readonly metaService: MetaTagService,
     private readonly toastrService: ToastrService
   ) {}
+
+  readonly subscriptionService = inject(SubscriptionService);
 
   ngOnInit(): void {
     this.metaService.setTitle('Settings - 3D Print Log');
@@ -284,6 +287,12 @@ export class SettingsComponent implements OnInit {
     this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
       ? this.defaultFilamentPriceSettingOnLoad.value
       : null;
+  }
+
+  public manageSubscription(): void {
+    this.subscriptionService.createPortalSession().subscribe((result) => {
+      window.location.href = result.url;
+    });
   }
 
   public export() {

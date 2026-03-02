@@ -66,17 +66,25 @@
     </div>
 
     <!-- Row 2: Collapsible filter panel -->
-    <div id="filter-panel" class="filter-panel" [class.filter-panel--open]="isFilterPanelOpen">
+    <div
+      id="filter-panel"
+      class="filter-panel"
+      [class.filter-panel--open]="isFilterPanelOpen"
+    >
       <div class="filter-panel-inner">
         <mat-form-field class="filter-field" subscriptSizing="dynamic">
           <mat-label>Status</mat-label>
           <mat-select
             [ngModel]="filterByStatus()"
-            (ngModelChange)="filterByStatus.set($event); currentPage = 1; updateFilter()"
+            (ngModelChange)="
+              filterByStatus.set($event); currentPage = 1; updateFilter()
+            "
           >
             <mat-option [value]="-1">All</mat-option>
             <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
-            <mat-option [value]="printStatusTypes.Printing">Printing</mat-option>
+            <mat-option [value]="printStatusTypes.Printing"
+              >Printing</mat-option
+            >
             <mat-option [value]="printStatusTypes.Success">Success</mat-option>
             <mat-option [value]="printStatusTypes.PartialSuccess"
               >Partial Success</mat-option
@@ -92,7 +100,9 @@
           <mat-label>Filter by Printers</mat-label>
           <mat-select
             [ngModel]="filterByPrinterIds()"
-            (ngModelChange)="filterByPrinterIds.set($event); currentPage = 1; updateFilter()"
+            (ngModelChange)="
+              filterByPrinterIds.set($event); currentPage = 1; updateFilter()
+            "
             multiple
           >
             @for (printer of printers; track printer) {
@@ -119,7 +129,9 @@
               >
                 <span
                   class="filament-color-dot"
-                  [style.background-color]="filament.colorHex ? '#' + filament.colorHex : '#cccccc'"
+                  [style.background-color]="
+                    filament.colorHex ? '#' + filament.colorHex : '#cccccc'
+                  "
                 ></span>
                 <span class="filament-chip-label">{{
                   getFilamentLabel(filament)

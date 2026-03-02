@@ -10,6 +10,7 @@ import { INavData } from 'src/app/shared/sidebar/types';
 export class DocSidebarComponent {
   public navItems: INavData[] = [
     { name: 'Getting Started', url: '/docs/getting-started' },
+    { name: 'Pro Subscription', url: '/docs/pro-subscription' },
     { divider: true },
     { name: 'Prints', url: '/docs/prints' },
     { name: 'Materials', url: '/docs/materials' },

@@ -1,15 +1,26 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal, computed } from '@angular/core';
 import { AdComponent } from './ad.component';
+import { SubscriptionService } from '../../core/services/subscription.service';
 
 describe('AdComponent', () => {
   let component: AdComponent;
   let fixture: ComponentFixture<AdComponent>;
+  let isProSignal: ReturnType<typeof signal<boolean>>;
 
   beforeEach(async () => {
+    isProSignal = signal(false);
+
+    const mockSubscriptionService = {
+      isPro: computed(() => isProSignal()),
+    };
+
     await TestBed.configureTestingModule({
       declarations: [AdComponent],
       schemas: [NO_ERRORS_SCHEMA],
+      providers: [
+        { provide: SubscriptionService, useValue: mockSubscriptionService },
+      ],
     }).compileComponents();
   });
 
@@ -45,10 +56,19 @@ describe('AdComponent', () => {
     expect(component.fullWidthResponsive()).toBeFalse();
   });
 
-  it('should render an aside with aria-label Advertisement', () => {
+  it('should render an aside with aria-label Advertisement when not Pro', () => {
     const aside = fixture.nativeElement.querySelector(
       'aside[aria-label="Advertisement"]'
     );
     expect(aside).toBeTruthy();
+  });
+
+  it('should not render the ad aside when user is Pro', () => {
+    isProSignal.set(true);
+    fixture.detectChanges();
+    const aside = fixture.nativeElement.querySelector(
+      'aside[aria-label="Advertisement"]'
+    );
+    expect(aside).toBeNull();
   });
 });

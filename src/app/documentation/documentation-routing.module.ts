@@ -16,6 +16,7 @@ import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.com
 import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
 import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
 import { DocsSlic3rUploaderComponent } from './docs/docs-slic3r-uploader/docs-slic3r-uploader.component';
+import { DocsProSubscriptionComponent } from './docs/docs-pro-subscription/docs-pro-subscription.component';
 
 const routes: Routes = [
   {
@@ -36,6 +37,7 @@ const routes: Routes = [
       { path: 'octoprint-webhook', component: DocsOctoprintWebhookComponent },
       { path: 'klipper', component: DocsMoonrakerComponent },
       { path: 'slic3r-uploader', component: DocsSlic3rUploaderComponent },
+      { path: 'pro-subscription', component: DocsProSubscriptionComponent },
       { path: 'release-notes', component: DocsReleaseNotesComponent },
       { path: 'about', component: DocsAboutComponent },
       { path: 'privacy-policy', component: DocsPrivacyPolicyComponent },

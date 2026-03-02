@@ -1,0 +1,87 @@
+.file-attachment-section {
+  padding: 16px 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .file-count {
+    font-size: 14px;
+    font-weight: 400;
+    opacity: 0.6;
+  }
+}
+
+.quota {
+  font-size: 12px;
+  opacity: 0.5;
+
+  &.warning {
+    color: #ffb74d;
+    opacity: 1;
+  }
+
+  &.full {
+    color: #ef5350;
+    opacity: 1;
+  }
+}
+
+.downloads-toggle {
+  margin-bottom: 12px;
+  display: block;
+}
+
+.storage-full {
+  text-align: center;
+  color: #ef5350;
+  padding: 16px;
+}
+
+.pro-teaser {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  opacity: 0.6;
+
+  mat-icon {
+    opacity: 0.5;
+  }
+
+  .pro-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #ffd740;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+    margin-left: auto;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      opacity: 1;
+    }
+  }
+}

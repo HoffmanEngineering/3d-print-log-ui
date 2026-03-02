@@ -11,11 +11,7 @@
       </mat-slide-toggle>
 
       @if (hasUnreadNotifications()) {
-        <button
-          mat-stroked-button
-          color="primary"
-          (click)="markAllAsRead()"
-        >
+        <button mat-stroked-button color="primary" (click)="markAllAsRead()">
           <mat-icon>done_all</mat-icon>
           Mark all read
         </button>
@@ -85,11 +81,17 @@
                   </div>
 
                   <div class="notification-text">
-                    <span class="notification-title">{{ notification.title }}</span>
+                    <span class="notification-title">{{
+                      notification.title
+                    }}</span>
                     @if (notification.message) {
-                      <span class="notification-message">{{ notification.message }}</span>
+                      <span class="notification-message">{{
+                        notification.message
+                      }}</span>
                     }
-                    <span class="notification-time">{{ getTimeAgo(notification.createdDate) }}</span>
+                    <span class="notification-time">{{
+                      getTimeAgo(notification.createdDate)
+                    }}</span>
                   </div>
 
                   <div class="notification-actions">
@@ -121,11 +123,17 @@
                 </div>
 
                 <div class="notification-text">
-                  <span class="notification-title">{{ notification.title }}</span>
+                  <span class="notification-title">{{
+                    notification.title
+                  }}</span>
                   @if (notification.message) {
-                    <span class="notification-message">{{ notification.message }}</span>
+                    <span class="notification-message">{{
+                      notification.message
+                    }}</span>
                   }
-                  <span class="notification-time">{{ getTimeAgo(notification.createdDate) }}</span>
+                  <span class="notification-time">{{
+                    getTimeAgo(notification.createdDate)
+                  }}</span>
                 </div>
 
                 <div class="notification-actions">

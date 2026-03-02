@@ -1,0 +1,35 @@
+<div
+  class="drop-zone"
+  [class.drag-over]="isDragOver()"
+  [class.disabled]="disabled()"
+  (dragenter)="onDragEnter($event)"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave()"
+  (drop)="onDrop($event)"
+>
+  @if (isDragOver()) {
+    <div class="drop-overlay">
+      <mat-icon>cloud_upload</mat-icon>
+      <span>Drop files here</span>
+    </div>
+  } @else {
+    <div class="drop-content">
+      <mat-icon>attach_file</mat-icon>
+      <span
+        >Drop files here or
+        <label class="file-input-label" for="fileInput">browse</label></span
+      >
+      <span class="hint"
+        >{{ acceptExtensions().join(', ') }} · Max 200MB per file</span
+      >
+    </div>
+  }
+  <input
+    id="fileInput"
+    type="file"
+    hidden
+    [accept]="acceptString()"
+    multiple
+    (change)="onFileInputChange($event)"
+  />
+</div>

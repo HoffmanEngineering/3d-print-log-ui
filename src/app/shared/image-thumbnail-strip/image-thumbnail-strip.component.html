@@ -1,16 +1,21 @@
 <div class="thumbnail-strip" [class.editable]="editable()">
   @if (images().length > 1 || editable()) {
     <ul
+      #thumbnailList
       class="thumbnails"
       [cdkDropListDisabled]="!editable()"
       cdkDropList
       cdkDropListOrientation="horizontal"
       (cdkDropListDropped)="onDrop($event)"
     >
-      @for (image of images(); track image.id !== undefined ? image.id : `new-${$index}`; let index = $index) {
+      @for (
+        image of images();
+        track image.id !== undefined ? image.id : `new-${$index}`;
+        let index = $index
+      ) {
         <li
           class="thumbnail"
-          [class.selected]="image.id === selectedId()"
+          [class.selected]="image.id !== undefined ? image.id === selectedId() : (image.url !== undefined && image.url === selectedUrl())"
           [class.is-default]="image.isDefault"
           [cdkDragDisabled]="!editable()"
           cdkDrag
@@ -19,7 +24,7 @@
             class="thumbnail-select"
             type="button"
             [attr.aria-label]="getSelectLabel(image, index)"
-            [attr.aria-current]="image.id === selectedId() ? 'true' : null"
+            [attr.aria-current]="(image.id !== undefined ? image.id === selectedId() : (image.url !== undefined && image.url === selectedUrl())) ? 'true' : null"
             (click)="onThumbnailClick(image)"
           >
             @if (image.url) {
@@ -59,7 +64,12 @@
       }
       @if (editable() && canAddMore() && images().length > 0) {
         <li class="add-button-item">
-          <button class="add-button" mat-stroked-button type="button" (click)="onAddClick()">
+          <button
+            class="add-button"
+            mat-stroked-button
+            type="button"
+            (click)="onAddClick()"
+          >
             <mat-icon>add</mat-icon>
           </button>
         </li>

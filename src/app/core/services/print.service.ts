@@ -140,6 +140,7 @@ export interface PrintDetailDTO {
   images?: PrintImage[];
   createdByUserId: number;
   allowComments: boolean;
+  allowFileDownloads?: boolean;
   comments: Comment[];
 }
 
@@ -160,6 +161,7 @@ export interface PutPrintDetailDTO {
   status: PrintStatus;
   viewStatus: PrintViewStatus;
   allowComments: boolean;
+  allowFileDownloads?: boolean;
 }
 
 export interface PrintDetail {
@@ -181,6 +183,7 @@ export interface PrintDetail {
 
   viewStatus: PrintViewStatus;
   allowComments: boolean;
+  allowFileDownloads?: boolean;
 
   images?: PrintImage[];
   createdByUserId: number;
@@ -328,6 +331,7 @@ export class PrintService {
           createdByUserId: newPrint.createdByUserId,
           comments,
           allowComments: newPrint.allowComments,
+          allowFileDownloads: newPrint.allowFileDownloads ?? false,
         };
         return print;
       })
@@ -398,6 +402,7 @@ export class PrintService {
       id: print.id,
       viewStatus: print.viewStatus,
       allowComments: print.allowComments,
+      allowFileDownloads: print.allowFileDownloads,
     };
 
     return this.http.put<any>(url, printDto);

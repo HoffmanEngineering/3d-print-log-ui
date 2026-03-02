@@ -60,6 +60,7 @@ import {
 } from 'src/app/core/resolvers/currencies-resolver.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { isCordova } from 'src/app/core/utils/platform';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -116,6 +117,7 @@ export interface PrintFormValue {
   viewStatus: PrintViewStatus;
   images: PrintImageValue[];
   allowComments: boolean;
+  allowFileDownloads: boolean;
 }
 
 @Component({
@@ -180,13 +182,12 @@ export class EditPrintDetailComponent
     viewStatus: FormControl<PrintViewStatus>;
     images: FormArray<FormControl<PrintImageValue>>;
     allowComments: FormControl<boolean>;
+    allowFileDownloads: FormControl<boolean>;
   }>;
 
   public printStatusTypes = PrintStatus;
   public printViewStatusTypes = PrintViewStatus;
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
-
-  public readonly MAX_IMAGES = 5;
 
   public selectedImage: FormControl<PrintImageValue> | null = null;
   public selectedImageIndex = 0;
@@ -266,6 +267,9 @@ export class EditPrintDetailComponent
   public readonly dialog = inject(MatDialog);
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly subscriptionService = inject(SubscriptionService);
+
+  public readonly maxImages = this.subscriptionService.maxImagesPerPrint;
 
   // Help to get all photos controls as form array.
   get images(): FormArray<FormControl<PrintImageValue>> {
@@ -747,6 +751,7 @@ export class EditPrintDetailComponent
     viewStatus: FormControl<PrintViewStatus>;
     images: FormArray<FormControl<PrintImageValue>>;
     allowComments: FormControl<boolean>;
+    allowFileDownloads: FormControl<boolean>;
   }> {
     const imageArray = this.formBuilder.array<FormControl<PrintImageValue>>([]);
 
@@ -885,6 +890,10 @@ export class EditPrintDetailComponent
             ? !!this.lastAllowCommentsSetting.value
             : true,
       ],
+      allowFileDownloads: new FormControl<boolean>(
+        print?.allowFileDownloads ?? false,
+        { nonNullable: true }
+      ),
     });
   }
 
@@ -1034,13 +1043,24 @@ export class EditPrintDetailComponent
     const files = target.files;
     if (files) {
       const currentCount = this.images.length;
-      const maxAllowed = this.MAX_IMAGES - currentCount;
+      const maxAllowed = this.maxImages() - currentCount;
 
       if (maxAllowed <= 0) {
-        this.toastr.warning(
-          `Maximum ${this.MAX_IMAGES} images allowed`,
-          'Limit Reached'
-        );
+        if (this.subscriptionService.isPro()) {
+          this.toastr.warning(
+            `Maximum ${this.maxImages()} images allowed`,
+            'Limit Reached'
+          );
+        } else {
+          this.toastr.info(
+            `Free accounts allow ${this.maxImages()} images per print. Upgrade to Pro for more.`,
+            'Image Limit Reached'
+          );
+          this.loggingService.logEvent('EditPrint_ImageLimitUpgradePrompt', {
+            currentCount: this.images.length,
+            maxImages: this.maxImages(),
+          });
+        }
         return;
       }
 
@@ -1177,7 +1197,7 @@ export class EditPrintDetailComponent
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    if (this.images.length < this.MAX_IMAGES) {
+    if (this.images.length < this.maxImages()) {
       this.isDragOver = true;
     }
   }
@@ -1206,13 +1226,24 @@ export class EditPrintDetailComponent
 
   private processDroppedFiles(files: FileList): void {
     const currentCount = this.images.length;
-    const maxAllowed = this.MAX_IMAGES - currentCount;
+    const maxAllowed = this.maxImages() - currentCount;
 
     if (maxAllowed <= 0) {
-      this.toastr.warning(
-        `Maximum ${this.MAX_IMAGES} images allowed`,
-        'Limit Reached'
-      );
+      if (this.subscriptionService.isPro()) {
+        this.toastr.warning(
+          `Maximum ${this.maxImages()} images allowed`,
+          'Limit Reached'
+        );
+      } else {
+        this.toastr.info(
+          `Free accounts allow ${this.maxImages()} images per print. Upgrade to Pro for more.`,
+          'Image Limit Reached'
+        );
+        this.loggingService.logEvent('EditPrint_ImageLimitUpgradePrompt', {
+          currentCount: this.images.length,
+          maxImages: this.maxImages(),
+        });
+      }
       return;
     }
 
@@ -1282,22 +1313,25 @@ export class EditPrintDetailComponent
    * in cachedImagesForStrip. Called after reorder or delete operations.
    */
   private syncSelectedImageIndex(): void {
+    const selId = this.selectedImage?.value.id;
+    const selUrl = this.selectedImage?.value.url;
     const idx = this.cachedImagesForStrip.findIndex(
-      (i) =>
-        i.id === this.selectedImage?.value.id ||
-        i.url === this.selectedImage?.value.url
+      (i) => (selId !== undefined && i.id === selId) || i.url === selUrl
     );
     this.selectedImageIndex = idx === -1 ? 0 : idx;
   }
 
   onThumbnailSelected(image: ThumbnailImage): void {
     const control = this.images.controls.find(
-      (c) => c.value.id === image.id || c.value.url === image.url
+      (c) =>
+        (image.id !== undefined && c.value.id === image.id) ||
+        c.value.url === image.url
     );
     if (control) {
       this.selectedImage = control;
       this.selectedImageIndex = this.getImagesForStrip().findIndex(
-        (i) => i.id === image.id || i.url === image.url
+        (i) =>
+          (image.id !== undefined && i.id === image.id) || i.url === image.url
       );
     }
   }
@@ -1307,7 +1341,9 @@ export class EditPrintDetailComponent
     const image = this.getImagesForStrip()[index];
     if (!image) return;
     const control = this.images.controls.find(
-      (c) => c.value.id === image.id || c.value.url === image.url
+      (c) =>
+        (image.id !== undefined && c.value.id === image.id) ||
+        c.value.url === image.url
     ) as FormControl<PrintImageValue>;
     if (control) {
       this.selectedImage = control;
@@ -1610,6 +1646,7 @@ export class EditPrintDetailComponent
       images: existingPrintImages,
       createdByUserId: null,
       allowComments: this.printForm.controls.allowComments.value,
+      allowFileDownloads: this.printForm.controls.allowFileDownloads.value,
     };
 
     return print;

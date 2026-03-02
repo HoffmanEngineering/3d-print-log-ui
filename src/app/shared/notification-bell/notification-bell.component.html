@@ -15,7 +15,12 @@
   </mat-icon>
 </button>
 
-<mat-menu #notificationMenu="matMenu" class="notification-menu" xPosition="before" panelClass="notification-menu-panel">
+<mat-menu
+  #notificationMenu="matMenu"
+  class="notification-menu"
+  xPosition="before"
+  panelClass="notification-menu-panel"
+>
   <div class="notification-header" (click)="$event.stopPropagation()">
     <span class="notification-title">Notifications</span>
     @if (hasUnread()) {
@@ -61,11 +66,17 @@
                 {{ getNotificationIcon(notification.type) }}
               </mat-icon>
               <div class="notification-text">
-                <span class="notification-item-title">{{ notification.title }}</span>
+                <span class="notification-item-title">{{
+                  notification.title
+                }}</span>
                 @if (notification.message) {
-                  <span class="notification-message">{{ notification.message }}</span>
+                  <span class="notification-message">{{
+                    notification.message
+                  }}</span>
                 }
-                <span class="notification-time">{{ getTimeAgo(notification.createdDate) }}</span>
+                <span class="notification-time">{{
+                  getTimeAgo(notification.createdDate)
+                }}</span>
               </div>
               @if (!notification.isRead) {
                 <span class="unread-indicator"></span>
@@ -87,11 +98,17 @@
                 {{ getNotificationIcon(notification.type) }}
               </mat-icon>
               <div class="notification-text">
-                <span class="notification-item-title">{{ notification.title }}</span>
+                <span class="notification-item-title">{{
+                  notification.title
+                }}</span>
                 @if (notification.message) {
-                  <span class="notification-message">{{ notification.message }}</span>
+                  <span class="notification-message">{{
+                    notification.message
+                  }}</span>
                 }
-                <span class="notification-time">{{ getTimeAgo(notification.createdDate) }}</span>
+                <span class="notification-time">{{
+                  getTimeAgo(notification.createdDate)
+                }}</span>
               </div>
               @if (!notification.isRead) {
                 <span class="unread-indicator"></span>
@@ -105,11 +122,7 @@
 
   <mat-divider></mat-divider>
 
-  <a
-    mat-menu-item
-    routerLink="/notifications"
-    class="view-all-link"
-  >
+  <a mat-menu-item routerLink="/notifications" class="view-all-link">
     <span>View all notifications</span>
     <mat-icon>arrow_forward</mat-icon>
   </a>

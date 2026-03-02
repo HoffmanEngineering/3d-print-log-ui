@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 
 @Component({
   selector: 'app-filament-spool-icon',
@@ -12,6 +17,8 @@ export class FilamentSpoolIconComponent {
 
   protected fillColor = computed(() => {
     const c = this.color();
-    return c && FilamentSpoolIconComponent.HEX_PATTERN.test(c) ? `#${c}` : '#000000';
+    return c && FilamentSpoolIconComponent.HEX_PATTERN.test(c)
+      ? `#${c}`
+      : '#000000';
   });
 }

@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .thumbnail-strip {
   margin-top: 8px;
 }
@@ -9,7 +14,13 @@
   gap: 8px;
   overflow-x: auto;
   padding: 4px;
-  justify-content: center;
+  justify-content: safe center;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
 }
 
 .thumbnail {

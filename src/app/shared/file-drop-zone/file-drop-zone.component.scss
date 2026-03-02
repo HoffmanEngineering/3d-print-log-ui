@@ -1,0 +1,44 @@
+.drop-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.drag-over {
+    border-color: #69f0ae;
+    background: rgba(105, 240, 174, 0.08);
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.drop-overlay,
+.drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    opacity: 0.6;
+  }
+}
+
+.hint {
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.file-input-label {
+  color: #69f0ae;
+  cursor: pointer;
+  text-decoration: underline;
+}

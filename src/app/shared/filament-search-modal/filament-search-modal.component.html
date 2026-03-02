@@ -6,7 +6,9 @@
     [matTooltip]="viewMode() === 'list' ? 'Scan QR Code' : 'Show List'"
     class="scan-toggle-button"
   >
-    <mat-icon>{{ viewMode() === 'list' ? 'qr_code_scanner' : 'list' }}</mat-icon>
+    <mat-icon>{{
+      viewMode() === 'list' ? 'qr_code_scanner' : 'list'
+    }}</mat-icon>
   </button>
 </div>
 

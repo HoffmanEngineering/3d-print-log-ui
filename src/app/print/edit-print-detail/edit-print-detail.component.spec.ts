@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import {
+  NO_ERRORS_SCHEMA,
+  Signal,
+  WritableSignal,
+  signal,
+} from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,6 +30,7 @@ import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterService } from 'src/app/core/services/printer.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
 
 describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
@@ -38,7 +44,7 @@ describe('EditPrintDetailComponent', () => {
 
     const mockToastrService = jasmine.createSpyObj<ToastrService>(
       'ToastrService',
-      ['success', 'error', 'warning']
+      ['success', 'error', 'warning', 'info']
     );
 
     const mockTitleService = jasmine.createSpyObj<Title>('Title', ['setTitle']);
@@ -71,6 +77,18 @@ describe('EditPrintDetailComponent', () => {
       ['emitConversion']
     );
 
+    const mockSubscriptionService = jasmine.createSpyObj<SubscriptionService>(
+      'SubscriptionService',
+      [],
+      {
+        isPro: signal(true) as Signal<boolean>,
+        maxImagesPerPrint: signal(20) as Signal<number>,
+        maxFilesPerPrint: signal(5) as Signal<number>,
+        maxFileStorageBytes: signal(53687091200) as Signal<number>,
+        usedFileStorageBytes: signal(0) as Signal<number>,
+      }
+    );
+
     TestBed.configureTestingModule({
       declarations: [EditPrintDetailComponent],
       imports: [
@@ -96,6 +114,7 @@ describe('EditPrintDetailComponent', () => {
           useValue: mockPrinterPromptService,
         },
         { provide: LoggingService, useValue: mockLogger },
+        { provide: SubscriptionService, useValue: mockSubscriptionService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -138,10 +157,14 @@ describe('EditPrintDetailComponent', () => {
     expect(component).toBeTruthy();
   }, 10000);
 
+  it('should use maxImagesPerPrint from subscription service', () => {
+    expect(component.maxImages()).toBe(20);
+  });
+
   describe('Image Management', () => {
-    it('should enforce 5 image limit in detectFiles', () => {
-      // Add 5 mock images to the form
-      for (let i = 0; i < 5; i++) {
+    it('should enforce image limit from subscription in detectFiles', () => {
+      // Add 20 mock images to the form (matches mock maxImagesPerPrint signal value)
+      for (let i = 0; i < 20; i++) {
         const mockImage = component['createItem']({
           id: i + 1,
           url: `data:image/png;base64,test${i}`,
@@ -151,7 +174,7 @@ describe('EditPrintDetailComponent', () => {
         component.images.push(mockImage);
       }
 
-      expect(component.images.length).toBe(5);
+      expect(component.images.length).toBe(20);
 
       // Try to add more - should be blocked
       const mockEvent = {
@@ -162,8 +185,8 @@ describe('EditPrintDetailComponent', () => {
 
       component.detectFiles(mockEvent);
 
-      // Should still be 5 (limit enforced)
-      expect(component.images.length).toBe(5);
+      // Should still be 20 (limit enforced)
+      expect(component.images.length).toBe(20);
     });
 
     it('should update displayOrder when onImagesReordered is called', () => {
@@ -313,8 +336,9 @@ describe('EditPrintDetailComponent', () => {
       expect(component.isDragOver).toBe(false);
     });
 
-    it('should not set isDragOver when at 5-image limit', () => {
-      for (let i = 0; i < 5; i++) {
+    it('should not set isDragOver when at subscription image limit', () => {
+      // Fill to the subscription limit (mock maxImagesPerPrint = 20)
+      for (let i = 0; i < 20; i++) {
         component.images.push(
           component['createItem']({
             id: i + 1,
@@ -433,6 +457,92 @@ describe('EditPrintDetailComponent', () => {
 
       // image3 is now at index 1 after image2 is removed
       expect(component.selectedImageIndex).toBe(1);
+    });
+
+    describe('Toast branching on image limit', () => {
+      let toastrService: jasmine.SpyObj<ToastrService>;
+      let isProSignal: WritableSignal<boolean>;
+      let maxImagesSignal: WritableSignal<number>;
+
+      beforeEach(() => {
+        toastrService = TestBed.inject(
+          ToastrService
+        ) as jasmine.SpyObj<ToastrService>;
+        const subscriptionService = TestBed.inject(SubscriptionService);
+        isProSignal =
+          subscriptionService.isPro as unknown as WritableSignal<boolean>;
+        maxImagesSignal =
+          subscriptionService.maxImagesPerPrint as unknown as WritableSignal<number>;
+      });
+
+      afterEach(() => {
+        // Restore defaults for other tests
+        isProSignal.set(true);
+        maxImagesSignal.set(20);
+      });
+
+      it('should call toastr.warning (not info) when a Pro user hits the image limit in detectFiles', () => {
+        isProSignal.set(true);
+
+        // Fill to the Pro limit (20 images)
+        for (let i = 0; i < 20; i++) {
+          component.images.push(
+            component['createItem']({
+              id: i + 1,
+              url: `url${i}`,
+              isDefault: i === 0,
+              displayOrder: i,
+            })
+          );
+        }
+
+        const mockEvent = {
+          target: {
+            files: [new File([''], 'test.png', { type: 'image/png' })],
+            value: '',
+          },
+        } as unknown as Event;
+
+        component.detectFiles(mockEvent);
+
+        expect(toastrService.warning).toHaveBeenCalledOnceWith(
+          'Maximum 20 images allowed',
+          'Limit Reached'
+        );
+        expect(toastrService.info).not.toHaveBeenCalled();
+      });
+
+      it('should call toastr.info (not warning) when a free user hits the image limit in detectFiles', () => {
+        isProSignal.set(false);
+        maxImagesSignal.set(5);
+
+        // Fill to the free limit (5 images)
+        for (let i = 0; i < 5; i++) {
+          component.images.push(
+            component['createItem']({
+              id: i + 1,
+              url: `url${i}`,
+              isDefault: i === 0,
+              displayOrder: i,
+            })
+          );
+        }
+
+        const mockEvent = {
+          target: {
+            files: [new File([''], 'test.png', { type: 'image/png' })],
+            value: '',
+          },
+        } as unknown as Event;
+
+        component.detectFiles(mockEvent);
+
+        expect(toastrService.info).toHaveBeenCalledOnceWith(
+          'Free accounts allow 5 images per print. Upgrade to Pro for more.',
+          'Image Limit Reached'
+        );
+        expect(toastrService.warning).not.toHaveBeenCalled();
+      });
     });
   });
 

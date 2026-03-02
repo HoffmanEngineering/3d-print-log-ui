@@ -28,6 +28,10 @@ export const environment = {
   googleAds: {
     trafficSearchConversion: '',
   },
+  stripe: {
+    proMonthlyPriceId: 'price_1T5XDzFYDvupkrWux9g8k5Hy',
+    proAnnualPriceId: 'price_1T5XDzFYDvupkrWuS7tZCMtW',
+  },
 };
 
 /*

@@ -67,7 +67,10 @@ describe('PrintListComponent', () => {
 
     const mockPrintService = jasmine.createSpyObj<PrintService>(
       'PrintService',
-      ['deletePrint']
+      ['deletePrint', 'getPrintSummaries']
+    );
+    mockPrintService.getPrintSummaries.and.returnValue(
+      of(mockPrintPagedResult)
     );
 
     TestBed.configureTestingModule({

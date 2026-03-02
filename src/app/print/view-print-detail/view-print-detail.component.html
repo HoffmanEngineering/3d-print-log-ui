@@ -1,4 +1,9 @@
-<div fxLayout="row" fxLayoutAlign="center start" fxLayoutGap="24px" style="width: 100%">
+<div
+  fxLayout="row"
+  fxLayoutAlign="center start"
+  fxLayoutGap="24px"
+  style="width: 100%"
+>
   <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
     <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="10px">
       <mat-card-header fxFlex="grow">
@@ -228,6 +233,15 @@
           </button>
         </div>
       </mat-card-actions>
+      <!-- File Attachments -->
+      <mat-card-content style="width: 100%">
+        <app-file-attachment-section
+          [printId]="print.id"
+          [editable]="false"
+          [isOwner]="currentUser?.id === user?.id"
+          [allowFileDownloads]="print.allowFileDownloads ?? false"
+        ></app-file-attachment-section>
+      </mat-card-content>
       <mat-card-content style="width: 100%">
         <app-print-comments
           [printId]="print.id"

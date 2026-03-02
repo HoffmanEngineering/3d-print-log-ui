@@ -277,6 +277,13 @@ mat-card-content {
   padding-bottom: 80px; // Space for sticky buttons + ad
 }
 
+// Constrain the image/thumbnail wrapper to its parent form width so the
+// thumbnail strip can scroll horizontally rather than overflowing the card.
+form > div {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 // Desktop margin offset (compensates for mat-form-field margins on desktop only)
 .desktop-margin-offset {
   @media (min-width: 960px) {

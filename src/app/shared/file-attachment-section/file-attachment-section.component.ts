@@ -172,6 +172,7 @@ export class FileAttachmentSectionComponent implements OnInit {
               status: 'uploaded',
               uploadPercent: 100,
             });
+            this.subscriptionService.incrementUsedStorage(file.size);
             this.loggingService.logEvent('FileAttachment_Uploaded', {
               extension: file.name.split('.').pop(),
               sizeBytes: file.size,
@@ -215,6 +216,7 @@ export class FileAttachmentSectionComponent implements OnInit {
         .subscribe({
           next: () => {
             this.files.update((list) => list.filter((f) => f !== file));
+            this.subscriptionService.decrementUsedStorage(file.sizeBytes);
             this.loggingService.logEvent('FileAttachment_Deleted', {
               fileId: file.id,
             });

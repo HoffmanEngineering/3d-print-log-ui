@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import { FileAttachmentSectionComponent } from './file-attachment-section.component';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -16,7 +21,7 @@ describe('FileAttachmentSectionComponent', () => {
 
   const mockSubscriptionService = jasmine.createSpyObj(
     'SubscriptionService',
-    [],
+    ['incrementUsedStorage', 'decrementUsedStorage'],
     {
       isPro: signal(true),
       maxFilesPerPrint: signal(5),
@@ -103,6 +108,64 @@ describe('FileAttachmentSectionComponent', () => {
       'Invalid File'
     );
   });
+
+  it('should call confirmUpload exactly once when upload completes', fakeAsync(() => {
+    mockPrintFileService.validateFile.and.returnValue({ valid: true });
+    mockPrintFileService.getUploadUrl.and.returnValue(
+      of({ sasUrl: 'https://blob.example.com/sas', blobPath: '1/1/abc.gcode' })
+    );
+    // Emit a mix of in-progress and completion events — only one 100% event
+    mockPrintFileService.uploadToSasUrl.and.returnValue(
+      of(
+        { percent: 50, loaded: 512, total: 1024 },
+        { percent: 99, loaded: 1023, total: 1024 },
+        { percent: 100, loaded: 1024, total: 1024 }
+      )
+    );
+    mockPrintFileService.confirmUpload.and.returnValue(
+      of({
+        id: 1,
+        originalFileName: 'test.gcode',
+        sizeBytes: 1024,
+        contentType: 'application/octet-stream',
+        displayOrder: 1,
+      })
+    );
+
+    fixture.componentRef.setInput('editable', true);
+    fixture.detectChanges();
+
+    component.onFilesSelected([
+      new File(['x'], 'test.gcode', { type: 'application/octet-stream' }),
+    ]);
+    tick();
+
+    expect(mockPrintFileService.confirmUpload).toHaveBeenCalledTimes(1);
+    expect(mockSubscriptionService.incrementUsedStorage).toHaveBeenCalledWith(
+      1
+    );
+  }));
+
+  it('should decrement used storage quota when a file is deleted', fakeAsync(() => {
+    mockPrintFileService.deleteFile.and.returnValue(of(undefined));
+
+    const uploadedFile: FileAttachmentItem = {
+      id: 99,
+      originalFileName: 'benchy.gcode',
+      sizeBytes: 2048,
+      contentType: 'application/octet-stream',
+      status: 'uploaded',
+    };
+    fixture.detectChanges();
+    component.files.set([uploadedFile]);
+
+    component.onDeleteFile(uploadedFile);
+    tick();
+
+    expect(mockSubscriptionService.decrementUsedStorage).toHaveBeenCalledWith(
+      2048
+    );
+  }));
 
   it('should emit allowFileDownloadsChange when toggle changes', () => {
     fixture.detectChanges();

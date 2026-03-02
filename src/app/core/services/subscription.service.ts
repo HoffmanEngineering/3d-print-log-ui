@@ -52,6 +52,23 @@ export class SubscriptionService {
     });
   }
 
+  incrementUsedStorage(bytes: number): void {
+    this._subscription.update((s) =>
+      s ? { ...s, usedFileStorageBytes: s.usedFileStorageBytes + bytes } : s
+    );
+  }
+
+  decrementUsedStorage(bytes: number): void {
+    this._subscription.update((s) =>
+      s
+        ? {
+            ...s,
+            usedFileStorageBytes: Math.max(0, s.usedFileStorageBytes - bytes),
+          }
+        : s
+    );
+  }
+
   createCheckoutSession(planId: string): Observable<{ url: string }> {
     return this.http.post<{ url: string }>(`${this.baseApiUrl}/checkout`, {
       planId,

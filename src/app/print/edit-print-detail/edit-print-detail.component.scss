@@ -298,6 +298,13 @@ form > div {
   border-radius: 4px;
   transition: border-color 0.2s;
 
+  // Center the upload-picture placeholder button when no images exist yet.
+  // Needed because the outer container now spans full width.
+  > button {
+    display: block;
+    margin: 0 auto;
+  }
+
   &.drag-over {
     border-color: #3f51b5;
   }

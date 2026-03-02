@@ -109,7 +109,10 @@ export class PrintFileService {
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable) {
           observer.next({
-            percent: Math.round((event.loaded / event.total) * 100),
+            percent: Math.min(
+              Math.round((event.loaded / event.total) * 100),
+              99
+            ),
             loaded: event.loaded,
             total: event.total,
           });

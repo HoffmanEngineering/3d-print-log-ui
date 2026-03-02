@@ -1313,22 +1313,25 @@ export class EditPrintDetailComponent
    * in cachedImagesForStrip. Called after reorder or delete operations.
    */
   private syncSelectedImageIndex(): void {
+    const selId = this.selectedImage?.value.id;
+    const selUrl = this.selectedImage?.value.url;
     const idx = this.cachedImagesForStrip.findIndex(
-      (i) =>
-        i.id === this.selectedImage?.value.id ||
-        i.url === this.selectedImage?.value.url
+      (i) => (selId !== undefined && i.id === selId) || i.url === selUrl
     );
     this.selectedImageIndex = idx === -1 ? 0 : idx;
   }
 
   onThumbnailSelected(image: ThumbnailImage): void {
     const control = this.images.controls.find(
-      (c) => c.value.id === image.id || c.value.url === image.url
+      (c) =>
+        (image.id !== undefined && c.value.id === image.id) ||
+        c.value.url === image.url
     );
     if (control) {
       this.selectedImage = control;
       this.selectedImageIndex = this.getImagesForStrip().findIndex(
-        (i) => i.id === image.id || i.url === image.url
+        (i) =>
+          (image.id !== undefined && i.id === image.id) || i.url === image.url
       );
     }
   }
@@ -1338,7 +1341,9 @@ export class EditPrintDetailComponent
     const image = this.getImagesForStrip()[index];
     if (!image) return;
     const control = this.images.controls.find(
-      (c) => c.value.id === image.id || c.value.url === image.url
+      (c) =>
+        (image.id !== undefined && c.value.id === image.id) ||
+        c.value.url === image.url
     ) as FormControl<PrintImageValue>;
     if (control) {
       this.selectedImage = control;

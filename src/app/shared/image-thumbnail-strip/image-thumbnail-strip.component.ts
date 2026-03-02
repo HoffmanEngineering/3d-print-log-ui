@@ -29,6 +29,7 @@ export interface ThumbnailImage {
 export class ImageThumbnailStripComponent {
   images = input.required<ThumbnailImage[]>();
   selectedId = input<number | undefined>();
+  selectedUrl = input<string | undefined>();
   editable = input(false);
   maxImages = input(5);
 
@@ -44,8 +45,10 @@ export class ImageThumbnailStripComponent {
   constructor() {
     effect(() => {
       const selectedId = this.selectedId();
+      const selectedUrl = this.selectedUrl();
       const list = this.thumbnailList()?.nativeElement;
-      if (!list || selectedId === undefined) return;
+      if (!list || (selectedId === undefined && selectedUrl === undefined))
+        return;
 
       queueMicrotask(() => {
         const selected = list.querySelector<HTMLLIElement>('li.selected');

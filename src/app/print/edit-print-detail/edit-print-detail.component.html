@@ -85,6 +85,7 @@
         <app-image-thumbnail-strip
           [images]="cachedImagesForStrip"
           [selectedId]="selectedImage?.value?.id"
+          [selectedUrl]="selectedImage?.value?.url"
           [editable]="true"
           [maxImages]="maxImages()"
           (imageSelected)="onThumbnailSelected($event)"

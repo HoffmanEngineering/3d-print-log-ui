@@ -44,6 +44,20 @@
       (download)="onDownloadFile($event)"
       (delete)="onDeleteFile($event)"
     ></app-file-attachment-list>
+  } @else if (allowFileDownloads() && files().length > 0) {
+    <!-- Non-Pro viewer: show read-only list when owner has enabled downloads -->
+    <div class="section-header">
+      <h3>
+        <mat-icon>attach_file</mat-icon>
+        File Attachments
+      </h3>
+    </div>
+    <app-file-attachment-list
+      [files]="files()"
+      [editable]="false"
+      [canDownload]="true"
+      (download)="onDownloadFile($event)"
+    ></app-file-attachment-list>
   } @else {
     <!-- Free user teaser -->
     <div class="pro-teaser">

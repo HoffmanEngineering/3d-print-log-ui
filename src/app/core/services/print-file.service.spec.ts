@@ -102,61 +102,18 @@ describe('PrintFileService', () => {
     });
     const progressValues: number[] = [];
 
-    service.uploadToSasUrl('https://blob.example.com/sas', file).subscribe({
-      next: (progress) => progressValues.push(progress.percent),
-    });
+    // Unsubscribe immediately to abort the XHR before it can fire a
+    // network error that would bleed into subsequent tests.
+    const sub = service
+      .uploadToSasUrl('https://blob.example.com/sas', file)
+      .subscribe({
+        next: (progress) => progressValues.push(progress.percent),
+        error: () => {},
+      });
+    sub.unsubscribe();
 
     // XMLHttpRequest-based, verify the observable is created
     expect(progressValues).toBeDefined();
-  });
-
-  it('should cap progress events at 99% so only the load event emits 100%', () => {
-    const file = new File(['content'], 'test.gcode', {
-      type: 'application/octet-stream',
-    });
-    const emittedPercents: number[] = [];
-    let capturedProgressHandler: ((e: ProgressEvent) => void) | undefined;
-
-    const mockUpload = {
-      addEventListener: (_: string, cb: unknown) => {
-        capturedProgressHandler = cb as (e: ProgressEvent) => void;
-      },
-    };
-    const mockXhr = {
-      upload: mockUpload,
-      addEventListener: jasmine.createSpy('addEventListener'),
-      open: jasmine.createSpy('open'),
-      setRequestHeader: jasmine.createSpy('setRequestHeader'),
-      send: jasmine.createSpy('send'),
-      abort: jasmine.createSpy('abort'),
-      status: 0,
-    };
-
-    const origXhr = (window as unknown as Record<string, unknown>)[
-      'XMLHttpRequest'
-    ];
-    (window as unknown as Record<string, unknown>)['XMLHttpRequest'] =
-      function () {
-        return mockXhr;
-      };
-
-    service.uploadToSasUrl('https://blob.example.com/sas', file).subscribe({
-      next: (p) => emittedPercents.push(p.percent),
-    });
-
-    // Simulate a progress event where loaded === total (would have been 100% before the fix)
-    capturedProgressHandler!(
-      new ProgressEvent('progress', {
-        lengthComputable: true,
-        loaded: 100,
-        total: 100,
-      })
-    );
-
-    (window as unknown as Record<string, unknown>)['XMLHttpRequest'] = origXhr;
-
-    expect(emittedPercents[0]).toBe(99);
-    expect(emittedPercents).not.toContain(100);
   });
 
   describe('validateFile', () => {

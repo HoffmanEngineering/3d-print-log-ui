@@ -28,6 +28,34 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.35.0': {
+      title: '1.35.0 - 3D Print Log Pro',
+      body: `<p>
+<a href="/subscription"><strong>3D Print Log Pro</strong></a> is here! Don't worry, <strong>all functionality remains free forever</strong>. Pro is for those who want an <strong>ad-free experience</strong>, help support 3D Print Log development, and get additional cloud storage in return.
+Pro subscribers get additional photo storage and <strong>file attachments</strong>
+(store G-code, project files, and more directly on your prints).
+Manage your subscription anytime from the Settings page.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.34.1': {
       redirect: '1.34.0',
     },
@@ -750,7 +778,7 @@ Download the new version today for the latest features.
       title: '1.16.4 - Android App Released!',
       body: `<p>
   3D Print Log now has an Android App! Download the
-  <a href="https://play.google.com/store/apps/details?id=com.printlog.app"
+  <a href="https://play.google.com/store/apps/details?id=com.hoffmanengineering.printlog"
     >3D Print Log App from the Google Play Store</a
   >, and start logging your prints and filament usage from your mobile device!
 </p>
@@ -1461,11 +1489,10 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
       if (this.isRedirect(release)) {
         release = this.getRedirectedReleaseNotes(release, lastDisplayedVersion);
       }
+      this.setLastLoggedInVersion(newVersion);
       if (release) {
         await this.showReleaseNote(release);
       }
-
-      this.setLastLoggedInVersion(newVersion);
     }
   }
 

@@ -74,6 +74,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public materialCategories: MaterialCategory[] = [];
 
   public filterByMaterialCategory: string = '';
+  public storageLocations: string[] = [];
+  public filterByStorageLocation: string = '';
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -118,6 +120,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
         this.filterByMaterialCategory = params.get('filterByMaterialCategory');
       }
 
+      if (params.has('filterByStorageLocation')) {
+        this.filterByStorageLocation = params.get('filterByStorageLocation') ?? '';
+      }
+
       if (params.has('includeInactive')) {
         this.includeInactive =
           params.get('includeInactive').toLowerCase() === 'true';
@@ -148,6 +154,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
     this.activatedRoute.data.subscribe((data) => {
       this.materialCategories = data.materialCategories;
+      this.storageLocations = data.storageLocations ?? [];
 
       const pagedResponse: PagedList<FilamentSummary> = data.filamentList;
       this.handlePagedList(pagedResponse);
@@ -182,6 +189,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
           showFavoritesOnly: this.showFavoritesOnly,
           showLoadedFilamentOnly: this.showLoadedFilamentOnly,
           filterByMaterialCategory: this.filterByMaterialCategory || '',
+          filterByStorageLocation: this.filterByStorageLocation || '',
           sortDirection: this.sortDirection,
           sortColumn: this.sortColumn,
           t: new Date().getTime(),
@@ -201,7 +209,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
             this.includeInactive,
             this.showFavoritesOnly,
             this.showLoadedFilamentOnly,
-            this.filterByMaterialCategory
+            this.filterByMaterialCategory,
+            this.filterByStorageLocation
           )
           .subscribe(
             (filaments) => {
@@ -425,6 +434,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     if (this.showLoadedFilamentOnly) count++;
     if (this.includeInactive) count++;
     if (this.filterByMaterialCategory) count++;
+    if (this.filterByStorageLocation) count++;
     return count;
   }
 
@@ -434,6 +444,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     this.showLoadedFilamentOnly = false;
     this.includeInactive = false;
     this.filterByMaterialCategory = '';
+    this.filterByStorageLocation = '';
     this.currentPage = 1;
     this.updateFilter();
   }

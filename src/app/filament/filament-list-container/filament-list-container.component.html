@@ -136,6 +136,19 @@
             }
           </mat-select>
         </mat-form-field>
+        <mat-form-field class="filter-field" subscriptSizing="dynamic">
+          <mat-label>Filter by Storage Location</mat-label>
+          <mat-select
+            [(ngModel)]="filterByStorageLocation"
+            (ngModelChange)="updateFilter()"
+          >
+            <mat-option value="">No Filter</mat-option>
+            @for (location of storageLocations; track location) {
+              <mat-option [value]="location">{{ location }}</mat-option>
+            }
+            <mat-option value="__unassigned__">Unassigned</mat-option>
+          </mat-select>
+        </mat-form-field>
         <button type="button" mat-raised-button (click)="resetFilters()">
           Reset Filters
         </button>

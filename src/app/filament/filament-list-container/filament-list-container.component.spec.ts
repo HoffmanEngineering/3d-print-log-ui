@@ -79,12 +79,22 @@ describe('FilamentListContainerComponent (isolated)', () => {
       expect(component.activeFilterCount).toBe(1);
     });
 
-    it('counts all four active filters', () => {
+    it('counts filterByStorageLocation when set', () => {
+      component.showFavoritesOnly = false;
+      component.showLoadedFilamentOnly = false;
+      component.includeInactive = false;
+      component.filterByMaterialCategory = '';
+      component.filterByStorageLocation = 'Box 1';
+      expect(component.activeFilterCount).toBe(1);
+    });
+
+    it('counts all five active filters', () => {
       component.showFavoritesOnly = true;
       component.showLoadedFilamentOnly = true;
       component.includeInactive = true;
       component.filterByMaterialCategory = 'PETG';
-      expect(component.activeFilterCount).toBe(4);
+      component.filterByStorageLocation = 'Box 1';
+      expect(component.activeFilterCount).toBe(5);
     });
   });
 
@@ -95,6 +105,7 @@ describe('FilamentListContainerComponent (isolated)', () => {
       component.showLoadedFilamentOnly = true;
       component.includeInactive = true;
       component.filterByMaterialCategory = 'PLA';
+      component.filterByStorageLocation = 'Box 2';
 
       // Stub updateFilter so it doesn't throw (router is null)
       spyOn(component, 'updateFilter');
@@ -106,6 +117,7 @@ describe('FilamentListContainerComponent (isolated)', () => {
       expect(component.showLoadedFilamentOnly).toBeFalse();
       expect(component.includeInactive).toBeFalse();
       expect(component.filterByMaterialCategory).toBe('');
+      expect(component.filterByStorageLocation).toBe('');
       expect(component.currentPage).toBe(1);
     });
 

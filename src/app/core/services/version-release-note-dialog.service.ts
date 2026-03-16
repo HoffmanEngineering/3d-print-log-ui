@@ -28,6 +28,31 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.36.0': {
+      title: '1.36.0 - Filter Materials by Storage Location',
+      body: `<p>
+You can now <strong>filter your materials list by storage location</strong>. Head to the <a href="/materials">Materials</a> page, open the Filters panel, and use the new <em>Filter by Storage Location</em> dropdown to narrow down to a specific box or shelf. Select <em>Unassigned</em> to find filaments that haven't been assigned a storage location yet.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.35.0': {
       title: '1.35.0 - 3D Print Log Pro',
       body: `<p>

@@ -24,6 +24,8 @@ export class FilamentListResolverService {
       includeInactive,
       showFavoritesOnly,
       showLoadedFilamentOnly,
+      filterByMaterialCategory = '',
+      filterByStorageLocation = '',
       sortDirection = SortDirection.Desc,
       sortColumn = FilamentSortColumns.FilamentRemaining,
     } = route.queryParams;
@@ -36,7 +38,9 @@ export class FilamentListResolverService {
       searchText,
       includeInactive,
       showFavoritesOnly,
-      showLoadedFilamentOnly
+      showLoadedFilamentOnly,
+      filterByMaterialCategory,
+      filterByStorageLocation
     );
   }
   constructor(private filamentService: FilamentService) {}

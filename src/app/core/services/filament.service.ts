@@ -149,7 +149,8 @@ export class FilamentService {
     includeInactive?: boolean,
     showFavoritesOnly?: boolean,
     showLoadedFilamentOnly?: boolean,
-    filterByMaterialCategoryNickname?: string
+    filterByMaterialCategoryNickname?: string,
+    filterByStorageLocation?: string
   ): Observable<PagedList<FilamentSummary>> {
     const url = `${this.baseApi}/api/Filaments`;
 
@@ -171,6 +172,10 @@ export class FilamentService {
         'filterByMaterialCategoryNickname',
         filterByMaterialCategoryNickname.trim()
       );
+    }
+
+    if (filterByStorageLocation !== undefined && filterByStorageLocation !== '') {
+      params = params.set('filterByStorageLocation', filterByStorageLocation.trim());
     }
 
     if (includeInactive !== undefined) {

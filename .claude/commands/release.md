@@ -77,8 +77,9 @@ Add a new release note entry at the beginning of the `releaseNotes` object:
 [Summary paragraph - keep it shorter than the full release notes]
 </p>
 <p>
-  <strong>Support development of 3D Print Log:</strong><br />Buy me a coffee by
-  <a
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
     href="https://paypal.me/hoffmanengineering"
     rel="noreferrer noopener"
     target="_blank"

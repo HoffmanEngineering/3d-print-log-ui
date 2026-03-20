@@ -28,6 +28,36 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.36.1': {
+      title: '1.36.1 - Android App Returns to Google Play',
+      body: `<p>
+The <strong>3D Print Log Android App</strong> is back on the
+<a href="https://play.google.com/store/apps/details?id=com.hoffmanengineering.printlog" rel="noreferrer noopener" target="_blank">Google Play Store</a>!
+If you had the previous version installed, please uninstall it and install the new app. The old app will not auto-update. Your data is safe, it's stored in the cloud and will be there when you sign in to the new app.
+</p>
+<p>
+The new app features a better sign-in experience and improved camera permission handling for the multiple print images and Material QR Code scanning features.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.36.0': {
       title: '1.36.0 - Filter Materials by Storage Location',
       body: `<p>

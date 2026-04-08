@@ -1,0 +1,1440 @@
+{
+  "printers": [
+    {
+      "make": "Afinia",
+      "model": "H+1(HS)"
+    },
+    {
+      "make": "Anker",
+      "model": "M5"
+    },
+    {
+      "make": "Anker",
+      "model": "M5 All-Metal Hot End"
+    },
+    {
+      "make": "Anker",
+      "model": "M5C"
+    },
+    {
+      "make": "Anycubic",
+      "model": "4Max Pro"
+    },
+    {
+      "make": "Anycubic",
+      "model": "4Max Pro 2"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Chiron"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra 2"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra 2 Max"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra 2 Neo"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra 2 Plus"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra 2 Pro"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra 3"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra Max"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra Plus"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra S1"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Predator"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Vyper"
+    },
+    {
+      "make": "Anycubic",
+      "model": "i3 Mega S"
+    },
+    {
+      "make": "Anycubic",
+      "model": "Kobra Neo"
+    },
+    {
+      "make": "Artillery",
+      "model": "Genius"
+    },
+    {
+      "make": "Artillery",
+      "model": "Genius Pro"
+    },
+    {
+      "make": "Artillery",
+      "model": "Hornet"
+    },
+    {
+      "make": "Artillery",
+      "model": "M1 Pro"
+    },
+    {
+      "make": "Artillery",
+      "model": "Sidewinder X1"
+    },
+    {
+      "make": "Artillery",
+      "model": "Sidewinder X2"
+    },
+    {
+      "make": "Artillery",
+      "model": "Sidewinder X3 Plus"
+    },
+    {
+      "make": "Artillery",
+      "model": "Sidewinder X3 Pro"
+    },
+    {
+      "make": "Artillery",
+      "model": "Sidewinder X4 Plus"
+    },
+    {
+      "make": "Artillery",
+      "model": "Sidewinder X4 Pro"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "A1"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "A1 mini"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "H2D"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "H2D Pro"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "H2S"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "P1P"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "P1S"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "P2S"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "X1"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "X1 Carbon"
+    },
+    {
+      "make": "Bambu Lab",
+      "model": "X1E"
+    },
+    {
+      "make": "BIQU",
+      "model": "B1"
+    },
+    {
+      "make": "BIQU",
+      "model": "BX"
+    },
+    {
+      "make": "BIQU",
+      "model": "Hurakan"
+    },
+    {
+      "make": "BLOCKS",
+      "model": "Pro S100"
+    },
+    {
+      "make": "BLOCKS",
+      "model": "RD50 V2"
+    },
+    {
+      "make": "BLOCKS",
+      "model": "RF50"
+    },
+    {
+      "make": "Chuanying",
+      "model": "X1"
+    },
+    {
+      "make": "Co Print",
+      "model": "ChromaSet"
+    },
+    {
+      "make": "CoLiDo",
+      "model": "160 V2"
+    },
+    {
+      "make": "CoLiDo",
+      "model": "DIY 4.0"
+    },
+    {
+      "make": "CoLiDo",
+      "model": "DIY 4.0 V2"
+    },
+    {
+      "make": "CoLiDo",
+      "model": "SR1"
+    },
+    {
+      "make": "CoLiDo",
+      "model": "X16"
+    },
+    {
+      "make": "Comgrow",
+      "model": "T300"
+    },
+    {
+      "make": "Comgrow",
+      "model": "T500"
+    },
+    {
+      "make": "Construct",
+      "model": "1"
+    },
+    {
+      "make": "Construct",
+      "model": "1 XL"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10 Max"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10 SE"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10 V2"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10 V3"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-6 Max"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-6 SE"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-M4"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 Pro"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 S1"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 S1 Plus"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 S1 Pro"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 V2"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 V2 Neo"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 V3"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 V3 KE"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 V3 Plus"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 V3 SE"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-5"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-5 Max"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-5 Plus"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-5 Pro (2019)"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-5 S1"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-5S"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-6"
+    },
+    {
+      "make": "Creality",
+      "model": "Hi"
+    },
+    {
+      "make": "Creality",
+      "model": "K1"
+    },
+    {
+      "make": "Creality",
+      "model": "K1 Max"
+    },
+    {
+      "make": "Creality",
+      "model": "K1 SE"
+    },
+    {
+      "make": "Creality",
+      "model": "K1C"
+    },
+    {
+      "make": "Creality",
+      "model": "K2"
+    },
+    {
+      "make": "Creality",
+      "model": "K2 Plus"
+    },
+    {
+      "make": "Creality",
+      "model": "K2 Pro"
+    },
+    {
+      "make": "Creality",
+      "model": "Sermoon V1"
+    },
+    {
+      "make": "Cubicon",
+      "model": "xCeler-I"
+    },
+    {
+      "make": "Cubicon",
+      "model": "xCeler-Plus"
+    },
+    {
+      "make": "Generic",
+      "model": "Klipper Printer"
+    },
+    {
+      "make": "Generic",
+      "model": "Marlin Printer"
+    },
+    {
+      "make": "Generic",
+      "model": "RRF Printer"
+    },
+    {
+      "make": "Generic",
+      "model": "ToolChanger Printer"
+    },
+    {
+      "make": "DeltaMaker",
+      "model": "2"
+    },
+    {
+      "make": "DeltaMaker",
+      "model": "2T"
+    },
+    {
+      "make": "DeltaMaker",
+      "model": "2XT"
+    },
+    {
+      "make": "Dremel",
+      "model": "3D20"
+    },
+    {
+      "make": "Dremel",
+      "model": "3D40"
+    },
+    {
+      "make": "Dremel",
+      "model": "3D45"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Centauri"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Centauri Carbon"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Centauri Carbon 2"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 2"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 2D"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 2S"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 3"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 3 Max"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 3 Plus"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 3 Pro"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 4"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 4 Max"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 4 Plus"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune 4 Pro"
+    },
+    {
+      "make": "Elegoo",
+      "model": "Neptune X"
+    },
+    {
+      "make": "Elegoo",
+      "model": "OrangeStorm Giga"
+    },
+    {
+      "make": "Eryone",
+      "model": "Eryone ER20"
+    },
+    {
+      "make": "Eryone",
+      "model": "Eryone ER20 Klipper"
+    },
+    {
+      "make": "Eryone",
+      "model": "Thinker X400"
+    },
+    {
+      "make": "Flashforge",
+      "model": "AD5X"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Artemis"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Adventurer 3 Series"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Adventurer 4 Series"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Adventurer 5M"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Adventurer 5M Pro"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Guider 2s"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Guider 3 Ultra"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Guider4"
+    },
+    {
+      "make": "Flashforge",
+      "model": "Guider4 Pro"
+    },
+    {
+      "make": "FLSun",
+      "model": "Q5"
+    },
+    {
+      "make": "FLSun",
+      "model": "QQ-S Pro"
+    },
+    {
+      "make": "FLSun",
+      "model": "S1"
+    },
+    {
+      "make": "FLSun",
+      "model": "Super Racer (SR)"
+    },
+    {
+      "make": "FLSun",
+      "model": "T1"
+    },
+    {
+      "make": "FLSun",
+      "model": "V400"
+    },
+    {
+      "make": "FlyingBear",
+      "model": "Ghost 6"
+    },
+    {
+      "make": "FlyingBear",
+      "model": "Ghost7"
+    },
+    {
+      "make": "FlyingBear",
+      "model": "Reborn3"
+    },
+    {
+      "make": "FlyingBear",
+      "model": "S1"
+    },
+    {
+      "make": "Folgertech",
+      "model": "FT-5"
+    },
+    {
+      "make": "Folgertech",
+      "model": "FT-6"
+    },
+    {
+      "make": "Folgertech",
+      "model": "i3"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A10 M"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A10 Pro"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A10 T"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A20"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A20 M"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A20 T"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A30 M"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A30 Pro"
+    },
+    {
+      "make": "Geeetech",
+      "model": "A30 T"
+    },
+    {
+      "make": "Geeetech",
+      "model": "M1"
+    },
+    {
+      "make": "Geeetech",
+      "model": "Mizar"
+    },
+    {
+      "make": "Geeetech",
+      "model": "Mizar M"
+    },
+    {
+      "make": "Geeetech",
+      "model": "Mizar Max"
+    },
+    {
+      "make": "Geeetech",
+      "model": "Mizar Pro"
+    },
+    {
+      "make": "Geeetech",
+      "model": "Mizar S"
+    },
+    {
+      "make": "Geeetech",
+      "model": "Thunder"
+    },
+    {
+      "make": "Ginger",
+      "model": "G1"
+    },
+    {
+      "make": "InfiMech",
+      "model": "EX"
+    },
+    {
+      "make": "InfiMech",
+      "model": "EX+APS"
+    },
+    {
+      "make": "InfiMech",
+      "model": "TX"
+    },
+    {
+      "make": "InfiMech",
+      "model": "TX Hardened Steel Nozzle"
+    },
+    {
+      "make": "innovatiQ",
+      "model": "TiQ2"
+    },
+    {
+      "make": "innovatiQ",
+      "model": "TiQ8"
+    },
+    {
+      "make": "Kingroon",
+      "model": "KLP1"
+    },
+    {
+      "make": "Kingroon",
+      "model": "KP3S 3.0"
+    },
+    {
+      "make": "Kingroon",
+      "model": "KP3S PRO S1"
+    },
+    {
+      "make": "Kingroon",
+      "model": "KP3S PRO V2"
+    },
+    {
+      "make": "Kingroon",
+      "model": "KP3S V1"
+    },
+    {
+      "make": "LONGER",
+      "model": "LK10"
+    },
+    {
+      "make": "LONGER",
+      "model": "LK10 Plus"
+    },
+    {
+      "make": "Lulzbot Taz",
+      "model": "4 or 5"
+    },
+    {
+      "make": "Lulzbot Taz",
+      "model": "6"
+    },
+    {
+      "make": "Lulzbot Taz",
+      "model": "Pro Dual"
+    },
+    {
+      "make": "Lulzbot Taz",
+      "model": "Pro S"
+    },
+    {
+      "make": "M3D Enabler D8500 MM",
+      "model": "Model"
+    },
+    {
+      "make": "MM",
+      "model": "BoneKing"
+    },
+    {
+      "make": "MM",
+      "model": "hj SK"
+    },
+    {
+      "make": "MM",
+      "model": "hqs SF"
+    },
+    {
+      "make": "MM",
+      "model": "hqs hj"
+    },
+    {
+      "make": "MM",
+      "model": "slb"
+    },
+    {
+      "make": "Mellow",
+      "model": "M1"
+    },
+    {
+      "make": "OpenEYE Peacock",
+      "model": "V2"
+    },
+    {
+      "make": "Orca Arena X1",
+      "model": "Carbon"
+    },
+    {
+      "make": "Peopoly Magneto",
+      "model": "X"
+    },
+    {
+      "make": "Phrozen",
+      "model": "Arco"
+    },
+    {
+      "make": "The",
+      "model": "Positron"
+    },
+    {
+      "make": "Prusa",
+      "model": "CORE One"
+    },
+    {
+      "make": "Prusa",
+      "model": "CORE One HF"
+    },
+    {
+      "make": "Prusa",
+      "model": "CORE One L"
+    },
+    {
+      "make": "Prusa",
+      "model": "CORE One L HF"
+    },
+    {
+      "make": "Prusa",
+      "model": "MINI"
+    },
+    {
+      "make": "Prusa",
+      "model": "MINI IS"
+    },
+    {
+      "make": "Prusa",
+      "model": "MK3.5"
+    },
+    {
+      "make": "Prusa",
+      "model": "MK3S"
+    },
+    {
+      "make": "Prusa",
+      "model": "MK4"
+    },
+    {
+      "make": "Prusa",
+      "model": "MK4S"
+    },
+    {
+      "make": "Prusa",
+      "model": "MK4S HF"
+    },
+    {
+      "make": "Prusa",
+      "model": "XL"
+    },
+    {
+      "make": "Prusa",
+      "model": "XL 5T"
+    },
+    {
+      "make": "Qidi",
+      "model": "Q1 Pro"
+    },
+    {
+      "make": "Qidi",
+      "model": "Q2"
+    },
+    {
+      "make": "Qidi",
+      "model": "Q2C"
+    },
+    {
+      "make": "Qidi",
+      "model": "X-CF Pro"
+    },
+    {
+      "make": "Qidi",
+      "model": "X-Max"
+    },
+    {
+      "make": "Qidi",
+      "model": "X-Max 3"
+    },
+    {
+      "make": "Qidi",
+      "model": "X-Max 4"
+    },
+    {
+      "make": "Qidi",
+      "model": "X-Plus"
+    },
+    {
+      "make": "Qidi",
+      "model": "X-Plus 3"
+    },
+    {
+      "make": "Qidi",
+      "model": "X-Plus 4"
+    },
+    {
+      "make": "Qidi",
+      "model": "X-Smart 3"
+    },
+    {
+      "make": "Raise3D",
+      "model": "Pro3"
+    },
+    {
+      "make": "Raise3D",
+      "model": "Pro3 Plus"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Cast"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 3 200"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 3 300"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 3 400"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 3 500"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 300"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 400"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 500"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 HYBRID 300"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 HYBRID 400"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 HYBRID 500"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 300"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 300 COPY MODE"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 300 MIRROR MODE"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 400"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 400 COPY MODE"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 400 MIRROR MODE"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 500"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 500 COPY MODE"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Core 4 IDEX 500 MIRROR MODE"
+    },
+    {
+      "make": "RatRig",
+      "model": "V-Minion"
+    },
+    {
+      "make": "re3D",
+      "model": "Gigabot 4"
+    },
+    {
+      "make": "re3D",
+      "model": "Gigabot 4 XLT"
+    },
+    {
+      "make": "re3D",
+      "model": "Terabot 4"
+    },
+    {
+      "make": "re3D",
+      "model": "Gigabot X2"
+    },
+    {
+      "make": "re3D",
+      "model": "Gigabot X2 XLT"
+    },
+    {
+      "make": "re3D",
+      "model": "Terabot X2"
+    },
+    {
+      "make": "E3NG",
+      "model": "v1.2S"
+    },
+    {
+      "make": "RolohaunDesign",
+      "model": "Rolohaun Delta Flyer Refit"
+    },
+    {
+      "make": "RolohaunDesign",
+      "model": "Rook MK1 LDO"
+    },
+    {
+      "make": "SecKit",
+      "model": "SecKit SK-Tank"
+    },
+    {
+      "make": "SecKit",
+      "model": "Seckit Go3"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A250"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A250 BKit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A250 Dual"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A250 Dual BKit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A250 Dual QS+B Kit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A250 Dual QSKit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A250 QS+B Kit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A250 QSKit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A350"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A350 BKit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A350 Dual"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A350 Dual BKit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A350 Dual QS+B Kit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A350 Dual QSKit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A350 QS+B Kit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "A350 QSKit"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "Artisan"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "J1"
+    },
+    {
+      "make": "Snapmaker",
+      "model": "U1"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV01"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV01 Pro"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV02"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV05"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV06"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV06 ACE"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV06 Plus"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV06 Plus ACE"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV07"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV07 Plus"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV08"
+    },
+    {
+      "make": "Sovol",
+      "model": "SV08 MAX"
+    },
+    {
+      "make": "Sovol",
+      "model": "Zero"
+    },
+    {
+      "make": "Tiertime",
+      "model": "UP300 HS"
+    },
+    {
+      "make": "Tiertime",
+      "model": "UP310 Pro"
+    },
+    {
+      "make": "Tiertime",
+      "model": "UP400 Pro"
+    },
+    {
+      "make": "Tiertime",
+      "model": "UP600 HS"
+    },
+    {
+      "make": "Tronxy X5SA 400 Marlin",
+      "model": "Firmware"
+    },
+    {
+      "make": "TwoTrees",
+      "model": "SK1"
+    },
+    {
+      "make": "TwoTrees",
+      "model": "SP-5 Klipper"
+    },
+    {
+      "make": "UltiMaker",
+      "model": "2"
+    },
+    {
+      "make": "Troodon 2.0 -",
+      "model": "Klipper"
+    },
+    {
+      "make": "Troodon 2.0 -",
+      "model": "RRF"
+    },
+    {
+      "make": "Volumic",
+      "model": "EXO42"
+    },
+    {
+      "make": "Volumic",
+      "model": "EXO42 IDRE"
+    },
+    {
+      "make": "Volumic",
+      "model": "EXO42 Performance"
+    },
+    {
+      "make": "Volumic",
+      "model": "EXO42 Stage 2"
+    },
+    {
+      "make": "Volumic",
+      "model": "EXO65"
+    },
+    {
+      "make": "Volumic",
+      "model": "EXO65 IDRE"
+    },
+    {
+      "make": "Volumic",
+      "model": "EXO65 Performance"
+    },
+    {
+      "make": "Volumic",
+      "model": "EXO65 Stage 2"
+    },
+    {
+      "make": "Volumic",
+      "model": "SH65"
+    },
+    {
+      "make": "Volumic",
+      "model": "SH65 IDRE"
+    },
+    {
+      "make": "Volumic",
+      "model": "SH65 Performance"
+    },
+    {
+      "make": "Volumic",
+      "model": "SH65 Stage 2"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS20MK2"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS30MK2"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS30MK3"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS30MK3 Stage 2"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS30SC"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS30SC2"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS30SC2 Performance"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS30SC2 Stage 2"
+    },
+    {
+      "make": "Volumic",
+      "model": "VS30ULTRA"
+    },
+    {
+      "make": "Voron",
+      "model": "0.1"
+    },
+    {
+      "make": "Voron",
+      "model": "2.4 250"
+    },
+    {
+      "make": "Voron",
+      "model": "2.4 300"
+    },
+    {
+      "make": "Voron",
+      "model": "2.4 350"
+    },
+    {
+      "make": "Voron",
+      "model": "Switchwire 250"
+    },
+    {
+      "make": "Voron",
+      "model": "Trident 250"
+    },
+    {
+      "make": "Voron",
+      "model": "Trident 300"
+    },
+    {
+      "make": "Voron",
+      "model": "Trident 350"
+    },
+    {
+      "make": "Voxelab Aquila",
+      "model": "X2"
+    },
+    {
+      "make": "Vzbot",
+      "model": "235 AWD"
+    },
+    {
+      "make": "Vzbot",
+      "model": "330 AWD"
+    },
+    {
+      "make": "D12",
+      "model": "230 PRO M2 DIRECT"
+    },
+    {
+      "make": "D12",
+      "model": "230 PRO M2 MONO DUAL"
+    },
+    {
+      "make": "D12",
+      "model": "230 PRO M2 MONO DUAL PoopTool"
+    },
+    {
+      "make": "D12",
+      "model": "230 PRO SMARTPAD DIRECT"
+    },
+    {
+      "make": "D12",
+      "model": "230 PRO SMARTPAD MONO DUAL"
+    },
+    {
+      "make": "D12",
+      "model": "230 PRO SMARTPAD MONO DUAL PoopTool"
+    },
+    {
+      "make": "D12",
+      "model": "300 PRO M2 DIRECT"
+    },
+    {
+      "make": "D12",
+      "model": "300 PRO M2 MONO DUAL"
+    },
+    {
+      "make": "D12",
+      "model": "300 PRO M2 MONO DUAL PoopTool"
+    },
+    {
+      "make": "D12",
+      "model": "300 PRO SMARTPAD DIRECT"
+    },
+    {
+      "make": "D12",
+      "model": "300 PRO SMARTPAD MONO DUAL"
+    },
+    {
+      "make": "D12",
+      "model": "300 PRO SMARTPAD MONO DUAL PoopTool"
+    },
+    {
+      "make": "D12",
+      "model": "500 PRO M2 DIRECT"
+    },
+    {
+      "make": "D12",
+      "model": "500 PRO M2 MONO DUAL"
+    },
+    {
+      "make": "D12",
+      "model": "500 PRO M2 MONO DUAL PoopTool"
+    },
+    {
+      "make": "D12",
+      "model": "500 PRO SMARTPAD DIRECT"
+    },
+    {
+      "make": "D12",
+      "model": "500 PRO SMARTPAD MONO DUAL"
+    },
+    {
+      "make": "D12",
+      "model": "500 PRO SMARTPAD MONO DUAL PoopTool"
+    },
+    {
+      "make": "Wanhao",
+      "model": "D12-300"
+    },
+    {
+      "make": "WEMAKE3D",
+      "model": "PhoenixProV1"
+    },
+    {
+      "make": "WEMAKE3D",
+      "model": "TinyBotV1"
+    },
+    {
+      "make": "WonderMaker",
+      "model": "ZR"
+    },
+    {
+      "make": "WonderMaker",
+      "model": "ZR Ultra"
+    },
+    {
+      "make": "WonderMaker",
+      "model": "ZR Ultra S"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S1000"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S1000 Dual"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S300"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S300 Dual"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S400"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S400 Dual"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S600"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S600 Dual"
+    },
+    {
+      "make": "Z-Bolt",
+      "model": "S800 Dual"
+    }
+  ]
+}

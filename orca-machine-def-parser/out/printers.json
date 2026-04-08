@@ -729,8 +729,8 @@
       "model": "Pro S"
     },
     {
-      "make": "M3D Enabler D8500 MM",
-      "model": "Model"
+      "make": "M3D Enabler",
+      "model": "D8500 MM Model"
     },
     {
       "make": "MM",
@@ -1002,11 +1002,11 @@
     },
     {
       "make": "SecKit",
-      "model": "SecKit SK-Tank"
+      "model": "SK-Tank"
     },
     {
       "make": "SecKit",
-      "model": "Seckit Go3"
+      "model": "Go3"
     },
     {
       "make": "Snapmaker",
@@ -1153,8 +1153,8 @@
       "model": "UP600 HS"
     },
     {
-      "make": "Tronxy X5SA 400 Marlin",
-      "model": "Firmware"
+      "make": "Tronxy X5SA",
+      "model": "400 Marlin Firmware"
     },
     {
       "make": "TwoTrees",
@@ -1169,12 +1169,12 @@
       "model": "2"
     },
     {
-      "make": "Troodon 2.0 -",
-      "model": "Klipper"
+      "make": "Troodon 2.0",
+      "model": "- Klipper"
     },
     {
-      "make": "Troodon 2.0 -",
-      "model": "RRF"
+      "make": "Troodon 2.0",
+      "model": "- RRF"
     },
     {
       "make": "Volumic",

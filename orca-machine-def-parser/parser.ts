@@ -22,18 +22,22 @@ const SKIP_VENDOR_NAMES = new Set(['Custom']);
  *   ["Creality Ender-3", "Creality CR-10 Max"]              → "Creality"
  *   ["Anet A2", "Anet A8"]                                  → "Anet"
  */
-function detectCommonPrefix(names: string[]): string {
+function detectCommonPrefix(names: string[], vendorName: string): string {
   if (names.length === 0) return '';
 
   const splitNames = names.map((n) => n.split(' '));
+  const wordCap = vendorName.split(' ').length + 1;
   // Never consume the last word — every model must have a non-empty model string
-  const maxPrefixLen = Math.min(...splitNames.map((n) => n.length)) - 1;
+  const maxPrefixLen = Math.min(
+    Math.min(...splitNames.map((n) => n.length)) - 1,
+    wordCap
+  );
 
   const prefixWords: string[] = [];
   for (let i = 0; i < maxPrefixLen; i++) {
     const word = splitNames[0][i];
-    if (splitNames.every((n) => n[i] === word)) {
-      prefixWords.push(word);
+    if (splitNames.every((n) => n[i].toLowerCase() === word.toLowerCase())) {
+      prefixWords.push(word); // preserve original casing from first model name
     } else {
       break;
     }
@@ -50,7 +54,13 @@ function detectCommonPrefix(names: string[]): string {
     if (!file.endsWith('.json') || SKIP_FILES.has(file)) continue;
 
     const filePath = path.join(orcaProfilesDir, file);
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    let data: any;
+    try {
+      data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (e: any) {
+      console.error(`Skipping ${file}: ${e.message}`);
+      continue;
+    }
 
     const vendorName: string = (data.name ?? '').toString();
     const modelList: Array<{ name: string }> = data.machine_model_list ?? [];
@@ -59,7 +69,7 @@ function detectCommonPrefix(names: string[]): string {
     if (SKIP_VENDOR_NAMES.has(vendorName)) continue;
 
     const modelNames = modelList.map((m) => m.name);
-    const prefix = detectCommonPrefix(modelNames);
+    const prefix = detectCommonPrefix(modelNames, vendorName);
     const make = prefix || vendorName;
 
     for (const modelName of modelNames) {

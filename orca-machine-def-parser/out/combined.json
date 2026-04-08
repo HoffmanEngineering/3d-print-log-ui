@@ -578,7 +578,23 @@
     },
     {
       "make": "Creality",
+      "model": "CR-10"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10 Max"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10 Mini"
+    },
+    {
+      "make": "Creality",
       "model": "CR-10 SE"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10 Smart"
     },
     {
       "make": "Creality",
@@ -590,7 +606,51 @@
     },
     {
       "make": "Creality",
+      "model": "CR-100"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10S"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10S Pro"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10S4"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-10S5"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-20"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-20 Pro"
+    },
+    {
+      "make": "Creality",
       "model": "CR-6 Max"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-6 SE"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-M4"
+    },
+    {
+      "make": "Creality",
+      "model": "CR-X"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-2"
     },
     {
       "make": "Creality",
@@ -598,7 +658,35 @@
     },
     {
       "make": "Creality",
+      "model": "Ender-3 / Ender-3 v2"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 Max"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 Pro"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 S1"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 S1 Plus"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 S1 Pro"
+    },
+    {
+      "make": "Creality",
       "model": "Ender-3 V2"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 v2 Neo"
     },
     {
       "make": "Creality",
@@ -606,7 +694,23 @@
     },
     {
       "make": "Creality",
+      "model": "Ender-3 V3 KE"
+    },
+    {
+      "make": "Creality",
       "model": "Ender-3 V3 Plus"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-3 V3 SE"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-4"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-5"
     },
     {
       "make": "Creality",
@@ -614,11 +718,23 @@
     },
     {
       "make": "Creality",
+      "model": "Ender-5 Plus"
+    },
+    {
+      "make": "Creality",
       "model": "Ender-5 Pro (2019)"
     },
     {
       "make": "Creality",
+      "model": "Ender-5 S1"
+    },
+    {
+      "make": "Creality",
       "model": "Ender-5S"
+    },
+    {
+      "make": "Creality",
+      "model": "Ender-6"
     },
     {
       "make": "Creality",
@@ -627,6 +743,10 @@
     {
       "make": "Creality",
       "model": "K1"
+    },
+    {
+      "make": "Creality",
+      "model": "K1 Max"
     },
     {
       "make": "Creality",
@@ -650,134 +770,14 @@
     },
     {
       "make": "Creality",
-      "model": "Sermoon V1"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-10"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-10 Max"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-10 Mini"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-10 Smart"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-100"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-10S"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-10S Pro"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-10S4"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-10S5"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-20"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-20 Pro"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-6 SE"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-M4"
-    },
-    {
-      "make": "Creality3D",
-      "model": "CR-X"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-2"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 / Ender-3 v2"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 Max"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 Pro"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 S1"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 S1 Plus"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 S1 Pro"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 v2 Neo"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 V3 KE"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-3 V3 SE"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-4"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-5"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-5 Plus"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-5 S1"
-    },
-    {
-      "make": "Creality3D",
-      "model": "Ender-6"
-    },
-    {
-      "make": "Creality3D",
-      "model": "K1 Max"
-    },
-    {
-      "make": "Creality3D",
       "model": "Sermoon D1"
     },
     {
-      "make": "Creality3D",
+      "make": "Creality",
+      "model": "Sermoon V1"
+    },
+    {
+      "make": "Creality",
       "model": "Sermoon V1 & V1 Pro"
     },
     {
@@ -3253,111 +3253,111 @@
       "model": "Mr Bot 280"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "2"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "2 Extended"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "2 Extended with Olsson"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "2 Extended+"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "2 Go"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "2 with Olsson Block"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "2+"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "2+ Connect"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "3"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "3 Extended"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "MakerBot Replicator+"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "MakerBot Sketch"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "MakerBot Sketch Large"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "MakerBot Sketch Sprint"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "Original"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "Original Dual Extrusion"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "Original+"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "Ultimaker B.V."
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker Factor 4"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker Method"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker Method X"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker Method XL"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker S3"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker S5"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker S6"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker S7"
     },
     {
-      "make": "Ultimaker",
+      "make": "UltiMaker",
       "model": "UltiMaker S8"
     },
     {

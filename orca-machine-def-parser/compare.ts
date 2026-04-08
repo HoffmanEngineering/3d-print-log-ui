@@ -44,22 +44,54 @@ function sortPrinters(list: Printer[]): Printer[] {
   );
 }
 
-(async () => {
-  const curaList: { printers: Printer[] } = JSON.parse(
-    fs.readFileSync(curaOutputFile, 'utf8')
+function readJsonOrFail<T>(filePath: string, hint: string): T {
+  if (!fs.existsSync(filePath)) {
+    console.error(`Missing required file: ${filePath}\n  Hint: ${hint}`);
+    process.exit(1);
+  }
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
+}
+
+(() => {
+  const curaList = readJsonOrFail<{ printers: Printer[] }>(
+    curaOutputFile,
+    'Run: npm run parse-cura'
   );
-  const orcaList: { printers: Printer[] } = JSON.parse(
-    fs.readFileSync(orcaOutputFile, 'utf8')
+  const orcaList = readJsonOrFail<{ printers: Printer[] }>(
+    orcaOutputFile,
+    'Run: npm run parse-orca'
   );
-  const aliases: Record<string, string> = JSON.parse(
-    fs.readFileSync(aliasFile, 'utf8')
+  const aliases = readJsonOrFail<Record<string, string>>(
+    aliasFile,
+    'File should exist at orca-machine-def-parser/make-aliases.json'
   );
 
+  // Warn on duplicate normalized keys in Cura input (Map would silently drop them)
+  const curaKeysSeen = new Set<string>();
+  for (const p of curaList.printers) {
+    const key = printerKey(p, aliases);
+    if (curaKeysSeen.has(key)) {
+      console.warn(
+        `Duplicate Cura key (will be de-duped): ${p.make} | ${p.model}`
+      );
+    }
+    curaKeysSeen.add(key);
+  }
+
+  // Normalize make values using alias map so output is consistent
+  const normalizePrinter = (p: Printer): Printer => ({
+    ...p,
+    make: applyAliases(p.make, aliases),
+  });
+
+  const normalizedCura = curaList.printers.map(normalizePrinter);
+  const normalizedOrca = orcaList.printers.map(normalizePrinter);
+
   const curaMap = new Map<string, Printer>(
-    curaList.printers.map((p) => [printerKey(p, aliases), p])
+    normalizedCura.map((p) => [printerKey(p, aliases), p])
   );
   const orcaMap = new Map<string, Printer>(
-    orcaList.printers.map((p) => [printerKey(p, aliases), p])
+    normalizedOrca.map((p) => [printerKey(p, aliases), p])
   );
 
   const matched: Printer[] = [];
@@ -81,16 +113,14 @@ function sortPrinters(list: Printer[]): Printer[] {
   }
 
   // Combined = all Cura entries + Orca entries not already in Cura
-  const combined = sortPrinters([...curaList.printers, ...onlyInOrca]);
+  const combined = sortPrinters([...normalizedCura, ...onlyInOrca]);
 
-  const coverage = ((matched.length / curaList.printers.length) * 100).toFixed(
-    1
-  );
+  const coverage = ((matched.length / normalizedCura.length) * 100).toFixed(1);
 
   const pad = (n: number) => String(n).padStart(4);
 
-  console.log(`Cura total:  ${pad(curaList.printers.length)}`);
-  console.log(`Orca total:  ${pad(orcaList.printers.length)}`);
+  console.log(`Cura total:  ${pad(normalizedCura.length)}`);
+  console.log(`Orca total:  ${pad(normalizedOrca.length)}`);
   console.log('');
   console.log(
     `In Orca, not in Cura:  ${pad(onlyInOrca.length)}  (newer printers Cura lacks)`

@@ -28,6 +28,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.36.2': {
+      redirect: '1.36.1',
+    },
     '1.36.1': {
       title: '1.36.1 - Android App Returns to Google Play',
       body: `<p>

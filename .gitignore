@@ -49,6 +49,10 @@ testem.log
 Thumbs.db
 
 /cura-machine-def-parser/out
+
+# OrcaSlicer parser output (regeneratable — run npm run parse-orca / npm run compare-printers)
+/orca-machine-def-parser/out/*.json
+
 /test_reports
 
 # Ignores for Cypress

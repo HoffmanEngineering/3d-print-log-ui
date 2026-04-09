@@ -1,6 +1,6 @@
 {
   "name": "print-log-ui",
-  "version": "1.36.1",
+  "version": "1.36.2",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
@@ -17,6 +17,8 @@
     "prettier": "prettier --check src/**/*.*",
     "prettier:fix": "prettier --write src/**/*.*",
     "parse-cura": "ts-node --project cura-machine-def-parser/tsconfig.json cura-machine-def-parser/parser.ts",
+    "parse-orca": "ts-node --project orca-machine-def-parser/tsconfig.json orca-machine-def-parser/parser.ts",
+    "compare-printers": "ts-node --project orca-machine-def-parser/tsconfig.json orca-machine-def-parser/compare.ts",
     "prepare": "husky install"
   },
   "private": true,

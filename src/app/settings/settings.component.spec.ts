@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 
@@ -142,11 +142,24 @@ describe('SettingsComponent', () => {
 
   describe('theme toggle', () => {
     it('renders toggle group with the current theme mode selected', () => {
+      // Set the mock mode to 'dark' to verify the [value] binding reflects signal state
+      const mockThemeService = TestBed.inject(
+        ThemeService
+      ) as jasmine.SpyObj<ThemeService>;
+      (mockThemeService.mode as WritableSignal<ThemeMode>).set('dark');
+
       fixture.detectChanges();
+
       const toggleGroup = fixture.nativeElement.querySelector(
         'mat-button-toggle-group'
       );
       expect(toggleGroup).toBeTruthy();
+      const darkToggle = fixture.nativeElement.querySelector(
+        'mat-button-toggle[value="dark"]'
+      );
+      expect(
+        darkToggle.classList.contains('mat-button-toggle-checked')
+      ).toBeTrue();
     });
 
     it('calls themeService.setMode with the correct value when toggle changes', () => {

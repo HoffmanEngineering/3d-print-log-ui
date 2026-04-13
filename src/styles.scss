@@ -13,6 +13,10 @@ body {
   background-color: #fafafa;
 }
 
+body.dark-theme {
+  background-color: #121212;
+}
+
 app-navbar {
   position: fixed;
   top: 0;

@@ -88,7 +88,7 @@ Import `MatButtonToggleModule` into `SettingsModule`.
 
 **Global body background** — `background-color: #fafafa` in `styles.scss` must be overridden. Handled in `theme.scss` under `body.dark-theme`.
 
-**D3 donut chart** (`src/app/shared/panels/donut-chart/`) — SVG text labels and legend text are hardcoded dark. Override SVG `text` fill under `body.dark-theme .donut-chart` in the component SCSS, or pass an effective-theme input to the component.
+**D3 donut chart** (`src/app/shared/panels/donut-chart/`) — SVG text labels and legend text are hardcoded dark. Override SVG `text` fill under `body.dark-theme .donut-chart` in the component's SCSS file. No changes to the D3 component's TypeScript API needed.
 
 **Filament color swatches** — add a subtle `1px solid rgba(255,255,255,0.15)` border under `body.dark-theme` so very dark swatches (black, dark navy) are visible against dark card backgrounds.
 

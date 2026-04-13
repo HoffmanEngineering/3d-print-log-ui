@@ -415,3 +415,67 @@ table {
     background-color: rgba(0, 0, 0, 0.02);
   }
 }
+
+body.dark-theme {
+  .status-badge {
+    &.status-1 {
+      // Pending
+      background-color: rgba(97, 97, 97, 0.25);
+      color: #bdbdbd;
+
+      .meta-icon {
+        color: #9e9e9e;
+      }
+    }
+
+    &.status-2 {
+      // Printing
+      background-color: rgba(2, 119, 189, 0.2);
+      color: #4fc3f7;
+
+      .meta-icon {
+        color: #4fc3f7;
+      }
+    }
+
+    &.status-3 {
+      // Success
+      background-color: rgba(46, 125, 50, 0.2);
+      color: #81c784;
+
+      .meta-icon {
+        color: #81c784;
+      }
+    }
+
+    &.status-4 {
+      // Cancelled
+      background-color: rgba(106, 27, 154, 0.2);
+      color: #ce93d8;
+
+      .meta-icon {
+        color: #ce93d8;
+      }
+    }
+
+    &.status-5 {
+      // Failed
+      background-color: rgba(198, 40, 40, 0.2);
+      color: #ef9a9a;
+
+      .meta-icon {
+        color: #ef9a9a;
+      }
+    }
+
+    &.status-6 {
+      // Partial Success
+      background-color: rgba(245, 127, 23, 0.2);
+      color: #ffcc02;
+
+      .meta-icon {
+        color: #ffcc02;
+      }
+    }
+  }
+}

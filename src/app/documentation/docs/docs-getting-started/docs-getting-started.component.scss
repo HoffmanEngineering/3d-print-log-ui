@@ -276,6 +276,79 @@
   font-size: 0.95rem;
 }
 
+/* Dark Mode Overrides */
+:host-context(body.dark-theme) {
+  .hero-title,
+  .section-heading,
+  .final-cta-heading {
+    color: rgba(255, 255, 255, 0.87);
+  }
+
+  .hero-subtitle,
+  .section-subtitle,
+  .cta-subtext,
+  .final-cta-text,
+  .final-cta-subtext {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .section-divider {
+    border-top-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .benefit-card {
+    background: #2a2a2a;
+
+    &:hover {
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    h3 {
+      color: rgba(255, 255, 255, 0.87);
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  .step {
+    background: #2a2a2a;
+
+    &:hover {
+      background: #333;
+    }
+
+    .step-content {
+      h3 {
+        color: rgba(255, 255, 255, 0.87);
+      }
+
+      p {
+        color: rgba(255, 255, 255, 0.6);
+      }
+    }
+  }
+
+  .feature-item {
+    &:hover {
+      background: #2a2a2a;
+    }
+
+    span {
+      color: rgba(255, 255, 255, 0.87);
+    }
+  }
+
+  .final-cta-section {
+    background: linear-gradient(
+      135deg,
+      rgba(102, 126, 234, 0.12) 0%,
+      rgba(118, 75, 162, 0.12) 100%
+    );
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero-title {

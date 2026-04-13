@@ -1,0 +1,4 @@
+/* ViewEncapsulation.None — body.dark-theme selectors work as-is, no :host-context needed */
+body.dark-theme app-donut-chart text {
+  fill: #e0e0e0;
+}

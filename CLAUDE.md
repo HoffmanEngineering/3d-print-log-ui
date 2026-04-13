@@ -161,3 +161,14 @@ All user-facing documentation lives in the `src/documentation` directory.
 - Each integration should have it's own documentation page (integrations, mobile app, etc)
 - Update existing documentation with new functionality
 - Documentation should be written in clear english, designed to be understandable by the user.
+
+## Azure DevOps
+
+Kanban board (no sprints/iterations). Work items are **User Stories** only.
+
+- **Org:** `https://dev.azure.com/HoffmanEngineering`
+- **Project:** `3D Print Log`
+- **Tags:** `Tier 1/2/3` (priority), `User Feedback`, plus area tags (`Integration`, `Mobile`, etc.)
+- Use `az boards --help` for CLI syntax at runtime
+
+When asked to "work on story #N": fetch the work item with the az CLI, implement the feature, then mark it `Closed` when done.

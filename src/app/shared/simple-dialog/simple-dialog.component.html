@@ -1,7 +1,7 @@
 @if (title) {
   <h1 mat-dialog-title>{{ title }}</h1>
 }
-<div mat-dialog-content [innerHtml]="body" style="color: #000000de"></div>
+<div mat-dialog-content [innerHtml]="body"></div>
 <mat-dialog-actions align="end">
   @if (noText !== '') {
     <button mat-button (click)="onNoClick()" [color]="noColor">
@@ -9,7 +9,7 @@
     </button>
   }
   <button
-    mat-button
+    mat-flat-button
     [mat-dialog-close]="true"
     cdkFocusInitial
     [color]="yesColor"

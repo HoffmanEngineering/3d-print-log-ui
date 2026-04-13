@@ -77,6 +77,10 @@ mat-toolbar {
   border-top-right-radius: 3px;
 }
 
+:host-context(body.dark-theme) mat-toolbar {
+  background-color: var(--brand-toolbar-bg);
+}
+
 @media (max-width: 959px) {
   mat-toolbar {
     border-radius: 0px;

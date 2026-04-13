@@ -60,3 +60,5 @@ cypress.env.json
 
 # Git worktrees
 .worktrees/
+# Superpowers brainstorm sessions
+.superpowers/

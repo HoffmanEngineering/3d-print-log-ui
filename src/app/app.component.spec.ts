@@ -43,6 +43,7 @@ describe('AppComponent (ThemeService)', () => {
   let mockGoogleAnalyticsService: jasmine.SpyObj<GoogleAnalyticsService>;
   let mockLoggingService: jasmine.SpyObj<LoggingService>;
   let mockReleaseNotesService: jasmine.SpyObj<VersionReleaseNoteDialogService>;
+  let mockThemeService: jasmine.SpyObj<ThemeService>;
 
   beforeEach(waitForAsync(() => {
     mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', [
@@ -60,6 +61,10 @@ describe('AppComponent (ThemeService)', () => {
         ['checkLastLoggedInVersion']
       );
 
+    mockThemeService = jasmine.createSpyObj<ThemeService>('ThemeService', [
+      'initialize',
+    ]);
+
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
       declarations: [AppComponent],
@@ -74,13 +79,13 @@ describe('AppComponent (ThemeService)', () => {
           provide: VersionReleaseNoteDialogService,
           useValue: mockReleaseNotesService,
         },
+        { provide: ThemeService, useValue: mockThemeService },
       ],
     }).compileComponents();
   }));
 
   it('calls themeService.initialize() on ngOnInit', () => {
     const themeService = TestBed.inject(ThemeService);
-    spyOn(themeService, 'initialize');
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     expect(themeService.initialize).toHaveBeenCalledTimes(1);

@@ -28,6 +28,31 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.37.0': {
+      title: '1.37.0 - Dark Mode',
+      body: `<p>
+3D Print Log now supports <strong>Dark Mode</strong>! Head to <a href="/settings">Settings</a> to choose between <strong>Light</strong>, <strong>Dark</strong>, or <strong>System</strong> theme. System mode automatically follows your device's preference and updates in real time. The entire app has been updated with dark-friendly colors for cards, charts, status badges, filament swatches, and more.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.36.2': {
       redirect: '1.36.1',
     },

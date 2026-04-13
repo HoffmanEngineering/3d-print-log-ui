@@ -24,6 +24,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSortModule } from '@angular/material/sort';
@@ -114,6 +115,7 @@ import { MaterialIconComponent } from './material-icon/material-icon.component';
     MatSidenavModule,
     MatListModule,
     MatSliderModule,
+    MatButtonToggleModule,
     MatSlideToggleModule,
     MatAutocompleteModule,
     MatBadgeModule,
@@ -162,6 +164,7 @@ import { MaterialIconComponent } from './material-icon/material-icon.component';
     MatListModule,
     SidebarComponent,
     MatSliderModule,
+    MatButtonToggleModule,
     MatSlideToggleModule,
     MatTooltipModule,
     MatAutocompleteModule,

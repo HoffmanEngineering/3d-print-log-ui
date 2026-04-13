@@ -20,6 +20,8 @@ import {
   Currency,
 } from '../core/resolvers/currencies-resolver.service';
 import { SubscriptionService } from '../core/services/subscription.service';
+import { ThemeService, ThemeMode } from '../core/services/theme.service';
+import { LoggingService } from '../core/services/logging.service';
 
 @Component({
   selector: 'app-settings',
@@ -83,6 +85,13 @@ export class SettingsComponent implements OnInit {
   ) {}
 
   readonly subscriptionService = inject(SubscriptionService);
+  readonly themeService = inject(ThemeService);
+  private readonly loggingService = inject(LoggingService);
+
+  setThemeMode(mode: ThemeMode): void {
+    this.themeService.setMode(mode);
+    this.loggingService.logEvent('Settings_ThemeModeChanged', { mode });
+  }
 
   ngOnInit(): void {
     this.metaService.setTitle('Settings - 3D Print Log');

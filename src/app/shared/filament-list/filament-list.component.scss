@@ -269,7 +269,7 @@ mat-checkbox {
   }
 }
 
-body.dark-theme {
+:host-context(body.dark-theme) {
   .filament-color-cell,
   .card-swatch {
     border-color: rgba(255, 255, 255, 0.2);

@@ -2,3 +2,13 @@
   padding: 10px;
   border-radius: 5px;
 }
+
+hr {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  width: 100%;
+
+  :host-context(body.dark-theme) & {
+    border-top-color: rgba(255, 255, 255, 0.12);
+  }
+}

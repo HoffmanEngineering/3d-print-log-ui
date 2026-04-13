@@ -62,6 +62,10 @@
   padding: 64px 16px;
   color: rgba(0, 0, 0, 0.54);
 
+  :host-context(body.dark-theme) & {
+    color: rgba(255, 255, 255, 0.54);
+  }
+
   mat-icon {
     font-size: 72px;
     width: 72px;
@@ -74,6 +78,10 @@
     font-size: 20px;
     font-weight: 500;
     color: rgba(0, 0, 0, 0.87);
+
+    :host-context(body.dark-theme) & {
+      color: rgba(255, 255, 255, 0.87);
+    }
   }
 
   p {
@@ -125,6 +133,10 @@
     transition: opacity 0.2s;
     color: rgba(0, 0, 0, 0.54);
     z-index: 1;
+
+    :host-context(body.dark-theme) & {
+      color: rgba(255, 255, 255, 0.54);
+    }
 
     &:hover {
       color: #f44336;
@@ -212,12 +224,20 @@
     color: rgba(0, 0, 0, 0.6);
     line-height: 1.4;
     word-wrap: break-word;
+
+    :host-context(body.dark-theme) & {
+      color: rgba(255, 255, 255, 0.6);
+    }
   }
 
   .notification-time {
     font-size: 12px;
     color: rgba(0, 0, 0, 0.54);
     margin-top: 4px;
+
+    :host-context(body.dark-theme) & {
+      color: rgba(255, 255, 255, 0.54);
+    }
   }
 }
 

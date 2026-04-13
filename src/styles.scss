@@ -139,12 +139,44 @@ mat-checkbox.text-wrap {
 }
 
 /* Notification menu panel styles (mat-menu renders outside component) */
-.notification-menu-panel {
+/* Note: panelClass does not render in DOM; the actual class is "notification-menu" from class= attribute */
+.notification-menu {
   min-width: 320px;
   max-width: 400px;
 
   @media (max-width: 450px) {
     min-width: calc(100vw - 32px);
     max-width: calc(100vw - 32px);
+  }
+}
+
+/* cdk-drag-preview is teleported to body during drag — must be global, not in component SCSS */
+body.dark-theme .cdk-drag-preview {
+  background-color: #2a2a2a;
+}
+
+/* Dark mode overrides for notification menu panel
+   Must be global because mat-menu teleports outside the component host. */
+body.dark-theme .notification-menu {
+  .notification-item {
+    .notification-message {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .notification-time {
+      color: rgba(255, 255, 255, 0.54);
+    }
+
+    .notification-item-title {
+      color: rgba(255, 255, 255, 0.87);
+    }
+  }
+
+  .notification-empty {
+    color: rgba(255, 255, 255, 0.54);
+  }
+
+  .view-all-link {
+    color: #90caf9;
   }
 }

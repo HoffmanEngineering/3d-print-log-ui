@@ -416,7 +416,27 @@ table {
   }
 }
 
-body.dark-theme {
+:host-context(body.dark-theme) {
+  .card-image {
+    background-color: #2a2a2a;
+  }
+
+  .meta-item {
+    color: rgba(255, 255, 255, 0.6);
+
+    .meta-icon {
+      color: rgba(255, 255, 255, 0.54);
+    }
+  }
+
+  .material-name {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .filter-panel-inner {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
   .status-badge {
     &.status-1 {
       // Pending
@@ -478,8 +498,4 @@ body.dark-theme {
       }
     }
   }
-}
-
-body.dark-theme .card-image {
-  background-color: #2a2a2a;
 }

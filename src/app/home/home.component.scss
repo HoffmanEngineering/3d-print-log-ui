@@ -311,6 +311,10 @@ mat-toolbar {
   height: auto;
 }
 
+:host-context(body.dark-theme) mat-toolbar {
+  background-color: var(--brand-toolbar-bg);
+}
+
 .wrapper {
   display: inline-block;
   height: 100%;

@@ -40,6 +40,11 @@ describe('ThemeService', () => {
     expect(service.mode()).toBe('dark');
   });
 
+  it('defaults to system when localStorage contains an invalid value', () => {
+    buildService('invalid-value');
+    expect(service.mode()).toBe('system');
+  });
+
   it('setMode(dark) adds dark-theme class to body', () => {
     buildService();
     service.setMode('dark');
@@ -79,6 +84,13 @@ describe('ThemeService', () => {
       'change',
       jasmine.any(Function)
     );
+  });
+
+  it('initialize() called twice only registers one listener', () => {
+    buildService();
+    service.initialize();
+    service.initialize();
+    expect(mockMediaQuery.addEventListener).toHaveBeenCalledTimes(1);
   });
 
   it('media query change re-applies theme only when mode is system', () => {

@@ -8,16 +8,30 @@ export type ThemeMode = 'light' | 'system' | 'dark';
 })
 export class ThemeService {
   private readonly STORAGE_KEY = 'theme-mode';
+  private readonly VALID_MODES: readonly ThemeMode[] = [
+    'light',
+    'system',
+    'dark',
+  ];
   private readonly document = inject(DOCUMENT);
-  private readonly mediaQuery = window.matchMedia(
-    '(prefers-color-scheme: dark)'
-  );
+  private initialized = false;
 
-  readonly mode = signal<ThemeMode>(
-    (localStorage.getItem(this.STORAGE_KEY) as ThemeMode) ?? 'system'
-  );
+  private get mediaQuery(): MediaQueryList {
+    return window.matchMedia('(prefers-color-scheme: dark)');
+  }
+
+  readonly mode = signal<ThemeMode>(this.loadSavedMode());
+
+  private loadSavedMode(): ThemeMode {
+    const saved = localStorage.getItem(this.STORAGE_KEY);
+    return this.VALID_MODES.includes(saved as ThemeMode)
+      ? (saved as ThemeMode)
+      : 'system';
+  }
 
   initialize(): void {
+    if (this.initialized) return;
+    this.initialized = true;
     this.applyTheme(this.mode());
     this.mediaQuery.addEventListener('change', () => {
       if (this.mode() === 'system') {

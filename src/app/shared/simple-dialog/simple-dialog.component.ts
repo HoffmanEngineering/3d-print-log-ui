@@ -11,9 +11,9 @@ import { DialogData } from 'src/app/print/print-share-dialog/print-share-dialog.
 export class SimpleDialogComponent {
   @Input() public title: string;
   @Input() public yesText = 'Yes';
-  @Input() public yesColor = 'basic';
+  @Input() public yesColor = 'primary';
   @Input() public noText = 'No';
-  @Input() public noColor = 'basic';
+  @Input() public noColor = 'primary';
   @Input() public body: string;
 
   constructor(

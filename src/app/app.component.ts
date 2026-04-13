@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
+import { ThemeService } from './core/services/theme.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
 
 @Component({
@@ -21,10 +22,12 @@ export class AppComponent implements OnInit {
     private auth: AuthService,
     private googleAnalytics: GoogleAnalyticsService,
     private loggingService: LoggingService,
-    private releaseNotesService: VersionReleaseNoteDialogService
+    private releaseNotesService: VersionReleaseNoteDialogService,
+    private themeService: ThemeService
   ) {}
 
   ngOnInit() {
+    this.themeService.initialize();
     this.auth.localAuthSetup();
 
     this.auth.userProfile$.subscribe((user) => {

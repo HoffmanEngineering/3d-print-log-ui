@@ -13,7 +13,12 @@ body {
   background-color: #fafafa;
 }
 
+:root {
+  --brand-toolbar-bg: #3f51b5; // indigo-500
+}
+
 body.dark-theme {
+  --brand-toolbar-bg: #283593; // indigo-800: same hue, toned down for dark mode
   background-color: #121212;
 }
 

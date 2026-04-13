@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, computed, OnInit } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
@@ -13,6 +13,10 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
 })
 export class AppComponent implements OnInit {
   title = 'print-log-ui';
+
+  readonly loadingBarColor = computed(() =>
+    this.themeService.isDark() ? '#283593' : '#3f51b5'
+  );
 
   /**
    * Be careful when removing "unused" dependencies from here.

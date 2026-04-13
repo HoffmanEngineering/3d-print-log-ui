@@ -7,6 +7,7 @@ import { GoogleAnalyticsService } from './core/services/google-analytics.service
 import { LoggingService } from './core/services/logging.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
 import { of } from 'rxjs';
+import { signal } from '@angular/core';
 
 xdescribe('AppComponent', () => {
   beforeEach(waitForAsync(() => {
@@ -64,6 +65,7 @@ describe('AppComponent (ThemeService)', () => {
     mockThemeService = jasmine.createSpyObj<ThemeService>('ThemeService', [
       'initialize',
     ]);
+    (mockThemeService as any).isDark = signal(false);
 
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],

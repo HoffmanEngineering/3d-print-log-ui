@@ -21,6 +21,7 @@ export class ThemeService {
   }
 
   readonly mode = signal<ThemeMode>(this.loadSavedMode());
+  readonly isDark = signal<boolean>(false);
 
   private loadSavedMode(): ThemeMode {
     const saved = localStorage.getItem(this.STORAGE_KEY);
@@ -49,6 +50,7 @@ export class ThemeService {
   private applyTheme(mode: ThemeMode): void {
     const isDark =
       mode === 'dark' || (mode === 'system' && this.mediaQuery.matches);
+    this.isDark.set(isDark);
     this.document.body.classList.toggle('dark-theme', isDark);
   }
 }

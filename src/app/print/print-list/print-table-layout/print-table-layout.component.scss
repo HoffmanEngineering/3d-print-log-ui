@@ -39,3 +39,7 @@ mat-form-field {
 .cdk-drop-list-dragging :not(.cdk-drag-placeholder) {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
+
+body.dark-theme .cdk-drag-preview {
+  background-color: #2a2a2a;
+}

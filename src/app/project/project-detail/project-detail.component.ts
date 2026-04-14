@@ -1,10 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,7 +15,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import {
   ProjectService,
@@ -54,6 +56,7 @@ export class ProjectDetailComponent implements OnInit {
   private readonly printService = inject(PrintService);
   private readonly dialog = inject(MatDialog);
   private readonly titleService = inject(Title);
+  private readonly destroyRef = inject(DestroyRef);
 
   project = signal<ProjectDetailDto | null>(null);
   prints = signal<PrintSummary[]>([]);
@@ -64,18 +67,21 @@ export class ProjectDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
-    this.projectService.getProjectById(id).subscribe({
-      next: (p) => {
-        this.project.set(p);
-        this.titleService.setTitle(`${p.name} | 3D Print Log`);
-        this.loading.set(false);
-        this.loadPrints(id);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.router.navigate(['/prints']);
-      },
-    });
+    this.projectService
+      .getProjectById(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (p) => {
+          this.project.set(p);
+          this.titleService.setTitle(`${p.name} | 3D Print Log`);
+          this.loading.set(false);
+          this.loadPrints(id);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.router.navigate(['/prints']);
+        },
+      });
   }
 
   loadPrints(projectId: string): void {
@@ -105,14 +111,17 @@ export class ProjectDetailComponent implements OnInit {
         cancelText: 'Remove project only — keep prints',
       },
     });
-    ref.afterClosed().subscribe((deleteAll) => {
-      if (deleteAll === undefined) return;
-      const projectId = this.project()!.id;
-      this.projectService
-        .deleteProject(projectId, !!deleteAll)
-        .pipe(take(1))
-        .subscribe(() => this.router.navigate(['/prints']));
-    });
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((deleteAll) => {
+        if (deleteAll === undefined) return;
+        const projectId = this.project()!.id;
+        this.projectService
+          .deleteProject(projectId, !!deleteAll)
+          .pipe(take(1))
+          .subscribe(() => this.router.navigate(['/prints']));
+      });
   }
 
   onStatusChange(status: ProjectStatus): void {

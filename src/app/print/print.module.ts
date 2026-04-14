@@ -24,6 +24,7 @@ import { CuraParserV1pt2pt0Service } from './services/integration/cura/cura-pars
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 import { PrintTableLayoutComponent } from './print-list/print-table-layout/print-table-layout.component';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
+import { ProjectChipComponent } from '../shared/project-chip/project-chip.component';
 
 @NgModule({
   declarations: [
@@ -43,6 +44,7 @@ import { FilamentListResolverService } from './resolvers/filament-list-resolver.
     SharedModule,
     AdsenseModule,
     FileAttachmentSectionComponent,
+    ProjectChipComponent,
   ],
   providers: [
     PrintDetailResolverService,

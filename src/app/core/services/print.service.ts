@@ -121,6 +121,7 @@ export interface PrintSummary {
 
   projectId?: string;
   projectName?: string;
+  projectStatus?: import('./project.service').ProjectStatus;
 }
 
 export interface PrintDetailDTO {

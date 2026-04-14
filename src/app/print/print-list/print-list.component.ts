@@ -50,6 +50,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
   public printers: PrinterSummary[] = [];
   public filaments: FilamentSummary[] = [];
+  public filterByProjectId: string | null = null;
 
   public pageSize: number;
   public currentPage: number;
@@ -451,7 +452,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.filterByPrinterIds(),
             this.filterByFilamentIds(),
             this.sortDirection,
-            this.sortColumn
+            this.sortColumn,
+            undefined,
+            this.filterByProjectId ?? undefined
           )
           .subscribe(
             (prints) => {
@@ -618,6 +621,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public navigateToPrint(printId: number): void {
     this.router.navigate([printId], { relativeTo: this.activatedRoute });
+  }
+
+  public onProjectChipClicked(projectId: string | undefined): void {
+    if (!projectId) return;
+    this.filterByProjectId = projectId;
+    this.currentPage = 1;
+    this.loadPrints();
   }
 
   public getPrintEndDate(print: PrintSummary) {

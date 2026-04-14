@@ -118,6 +118,9 @@ export interface PrintSummary {
    * The number of comments on the print.
    */
   commentCount: number;
+
+  projectId?: string;
+  projectName?: string;
 }
 
 export interface PrintDetailDTO {
@@ -142,6 +145,8 @@ export interface PrintDetailDTO {
   allowComments: boolean;
   allowFileDownloads?: boolean;
   comments: Comment[];
+  projectId?: string;
+  projectName?: string;
 }
 
 export interface PutPrintDetailDTO {
@@ -162,6 +167,8 @@ export interface PutPrintDetailDTO {
   viewStatus: PrintViewStatus;
   allowComments: boolean;
   allowFileDownloads?: boolean;
+  projectId?: string;
+  newProjectName?: string;
 }
 
 export interface PrintDetail {
@@ -188,6 +195,8 @@ export interface PrintDetail {
   images?: PrintImage[];
   createdByUserId: number;
   comments: Comment[];
+  projectId?: string;
+  projectName?: string;
 }
 
 /**
@@ -210,6 +219,8 @@ export interface AddPrintDTO {
 
   viewStatus: PrintViewStatus;
   allowComments: boolean;
+  projectId?: string;
+  newProjectName?: string;
 }
 
 export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
@@ -252,7 +263,8 @@ export class PrintService {
     filterByFilamentIds: string[] = [],
     sortDirection = SortDirection.Desc,
     sortColumn = PrintSummarySortColumn.StartDate,
-    userId?: number
+    userId?: number,
+    filterByProjectId?: string
   ): Observable<PagedList<PrintSummary>> {
     const url = `${this.baseApi}/api/Prints/summary`;
     const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
@@ -285,6 +297,10 @@ export class PrintService {
 
     if (userId !== undefined) {
       params = params.set('userId', userId.toString(10));
+    }
+
+    if (filterByProjectId) {
+      params = params.set('filterByProjectId', filterByProjectId);
     }
 
     return this.http.get<PagedList<PrintSummary>>(url, { params, headers });

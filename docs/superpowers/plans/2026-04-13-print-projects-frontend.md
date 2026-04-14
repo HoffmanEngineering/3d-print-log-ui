@@ -276,7 +276,32 @@ projectId?: string;
 projectName?: string;
 ```
 
-- [ ] **Step 5: Build to verify no TypeScript errors**
+- [ ] **Step 5: Add `filterByProjectId` parameter to `getPrintSummaries` in `print.service.ts`**
+
+Add `filterByProjectId?: string` as the last parameter of `getPrintSummaries`, and pass it as a query param when set:
+
+```typescript
+getPrintSummaries(
+  pageNumber: number = 1,
+  pageSize: number = 10,
+  searchText: string = '',
+  filterByStatus: PrintStatus | null = null,
+  filterByPrinterIds: number[] = [],
+  filterByFilamentIds: string[] = [],
+  sortDirection = SortDirection.Desc,
+  sortColumn = PrintSummarySortColumn.StartDate,
+  userId?: number,
+  filterByProjectId?: string
+): Observable<PagedList<PrintSummary>> {
+  // ... existing param building ...
+  if (filterByProjectId) {
+    params = params.set('filterByProjectId', filterByProjectId);
+  }
+  // ... rest of existing implementation unchanged
+}
+```
+
+- [ ] **Step 6: Build to verify no TypeScript errors**
 
 ```bash
 npm run build:dev 2>&1 | grep -E "error|Error" | head -20
@@ -854,9 +879,7 @@ Expected: FAIL — component does not exist.
 - [ ] **Step 3: Create `project-selector.component.ts`**
 
 ```typescript
-import {
-  ChangeDetectionStrategy, Component, OnInit, input, output, inject, signal
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, input, output, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -867,30 +890,14 @@ import { CommonModule } from '@angular/common';
 import { debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
 import { ProjectService, ProjectSummaryDto, ProjectStatus } from 'src/app/core/services/project.service';
 
-export interface ProjectSelection {
-  type: 'existing';
-  projectId: string;
-  projectName: string;
-  projectStatus: ProjectStatus;
-} | {
-  type: 'new';
-  newProjectName: string;
-}
+export type ProjectSelection = { type: 'existing'; projectId: string; projectName: string; projectStatus: ProjectStatus } | { type: 'new'; newProjectName: string };
 
 @Component({
   selector: 'app-project-selector',
   templateUrl: './project-selector.component.html',
   styleUrls: ['./project-selector.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatAutocompleteModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatIconModule,
-    MatButtonModule,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, MatAutocompleteModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule],
 })
 export class ProjectSelectorComponent implements OnInit {
   initialProjectId = input<string | null>(null);
@@ -908,7 +915,7 @@ export class ProjectSelectorComponent implements OnInit {
 
   ngOnInit(): void {
     // Load all projects (max 100 — sufficient for typical usage)
-    this.projectService.getProjectSummaries(1, 100).subscribe(result => {
+    this.projectService.getProjectSummaries(1, 100).subscribe((result) => {
       this.allProjects.set(result.items);
     });
 
@@ -917,20 +924,14 @@ export class ProjectSelectorComponent implements OnInit {
       this.searchControl.setValue(this.initialProjectName()!);
     }
 
-    this.searchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(150),
-      distinctUntilChanged(),
-    ).subscribe(value => this.filterProjects(value ?? ''));
+    this.searchControl.valueChanges.pipe(startWith(''), debounceTime(150), distinctUntilChanged()).subscribe((value) => this.filterProjects(value ?? ''));
   }
 
   filterProjects(query: string): void {
     const q = query.toLowerCase().trim();
-    const filtered = this.allProjects().filter(p =>
-      p.name.toLowerCase().includes(q)
-    );
+    const filtered = this.allProjects().filter((p) => p.name.toLowerCase().includes(q));
     this.filteredProjects.set(filtered);
-    this.showNewOption.set(q.length > 0 && !filtered.some(p => p.name.toLowerCase() === q));
+    this.showNewOption.set(q.length > 0 && !filtered.some((p) => p.name.toLowerCase() === q));
   }
 
   selectExistingProject(project: ProjectSummaryDto): void {

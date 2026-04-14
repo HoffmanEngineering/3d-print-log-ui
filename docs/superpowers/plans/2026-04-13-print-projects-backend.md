@@ -505,9 +505,7 @@ namespace PrintLogApi.Profiles
                     opt => opt.MapFrom(src => src.Images
                         .Where(i => i.IsDefault)
                         .Select(i => i.Id)
-                        .FirstOrDefault()))
-                .ForMember(dest => dest.CreatedByUserId,
-                    opt => opt.Ignore());
+                        .FirstOrDefault()));
 
             CreateMap<Project, ProjectDetailDto>()
                 .ForMember(dest => dest.CreatedDate,

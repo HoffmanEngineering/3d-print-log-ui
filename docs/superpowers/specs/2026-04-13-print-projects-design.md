@@ -84,6 +84,12 @@ A print with `ProjectId = null` is a standalone print — no behavioral change t
 | `DELETE` | `/api/Projects/{id}/images/{imageId}`  | Required | Remove a project image.                                                                                                                                                                 |
 | `PUT`    | `/api/Projects/{id}/images/reorder`    | Required | Reorder project images. Mirrors existing print image reorder endpoint.                                                                                                                  |
 
+### New: `FeedController` (or similar)
+
+| Method | Route               | Auth     | Description                                                                                                                                                                                                                                         |
+| ------ | ------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/Feed/grouped` | Required | Paged, interleaved list of project rows and standalone print rows sorted chronologically. Each item has a discriminator (`type: "project" \| "print"`). Project items include aggregate stats; print items mirror the existing print summary shape. |
+
 ### Modified: `PrintsController`
 
 **`GET /api/Prints/summary`**
@@ -122,11 +128,18 @@ Current behavior, unchanged except:
 
 A separate view using a different backend path — does not share pagination with the flat list.
 
-- Calls `GET /api/Projects` (paged) — the paginator reads "Page 1 of N projects"
-- Each project appears as a **collapsible row** showing: project name, status badge, print count, total print time, total filament weight, estimated cost
-- Rows are sorted chronologically by project `CreatedDate`
-- Expanding a project row lazy-loads its prints via `GET /api/Prints/summary?filterByProjectId=xxx` — no pagination on this sub-list (projects are bounded sets)
-- Standalone prints (no project) appear as a separate collapsible section at the end: "Ungrouped Prints", sorted by start date descending. This section uses the existing paginated `/api/Prints/summary` endpoint (with no `filterByProjectId`) and has its own paginator if the user has many standalone prints.
+Calls a new `GET /api/Feed/grouped` endpoint (or similar name) that returns a **single interleaved, chronologically sorted list** of two row types:
+
+- **Project rows** — sorted by project `CreatedDate`
+- **Standalone print rows** — prints with no project, sorted by `StartDate`
+
+Both types are merged and paged together so the user sees a single unified timeline. The paginator reads "Page 1 of N items."
+
+Each **project row** shows: project name, status badge, print count, total print time, total filament weight, estimated cost. Expanding it lazy-loads the project's prints via `GET /api/Prints/summary?filterByProjectId=xxx` — no sub-pagination needed (projects are bounded sets).
+
+Each **standalone print row** renders as a standard print card/row, identical to the flat view.
+
+> **Note:** The interleaved query joins two entity types into one sorted page — complexity and performance should be validated during implementation. If the query proves too costly, falling back to two separate sections (projects on top, ungrouped prints below) is a viable alternative.
 
 ### Print Add/Edit Form
 

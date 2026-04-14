@@ -26,6 +26,7 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
 import { PrintTableLayoutComponent } from './print-list/print-table-layout/print-table-layout.component';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { ProjectChipComponent } from '../shared/project-chip/project-chip.component';
+import { ProjectSelectorComponent } from '../shared/project-selector/project-selector.component';
 import { PrintGroupedViewComponent } from './print-list/print-grouped-view/print-grouped-view.component';
 
 @NgModule({
@@ -47,6 +48,7 @@ import { PrintGroupedViewComponent } from './print-list/print-grouped-view/print
     AdsenseModule,
     FileAttachmentSectionComponent,
     ProjectChipComponent,
+    ProjectSelectorComponent,
     MatButtonToggleModule,
     PrintGroupedViewComponent,
   ],

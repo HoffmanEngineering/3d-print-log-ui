@@ -198,6 +198,7 @@ export interface PrintDetail {
   comments: Comment[];
   projectId?: string;
   projectName?: string;
+  newProjectName?: string;
 }
 
 /**
@@ -374,6 +375,8 @@ export class PrintService {
       viewStatus: newPrint.viewStatus,
       allowComments: newPrint.allowComments,
       filamentUsage: newPrint.filamentUsage,
+      projectId: newPrint.projectId,
+      newProjectName: newPrint.newProjectName,
     };
 
     return this.http.post<any>(url, printDto);
@@ -420,6 +423,8 @@ export class PrintService {
       viewStatus: print.viewStatus,
       allowComments: print.allowComments,
       allowFileDownloads: print.allowFileDownloads,
+      projectId: print.projectId,
+      newProjectName: print.newProjectName,
     };
 
     return this.http.put<any>(url, printDto);

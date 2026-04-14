@@ -350,6 +350,8 @@ export class PrintService {
           comments,
           allowComments: newPrint.allowComments,
           allowFileDownloads: newPrint.allowFileDownloads ?? false,
+          projectId: newPrint.projectId,
+          projectName: newPrint.projectName,
         };
         return print;
       })

@@ -1,4 +1,14 @@
 <div fxLayout="column" fxLayoutAlign="center">
+  <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
+    <mat-button-toggle value="list">All Prints</mat-button-toggle>
+    <mat-button-toggle value="grouped">Grouped by Project</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  @if (viewMode === 'grouped') {
+    <app-print-grouped-view />
+  }
+
+  @if (viewMode === 'list') {
   <div class="header">
     <!-- Row 1: Always visible — action buttons, search, filter toggle -->
     <div class="header-top">
@@ -794,4 +804,5 @@
   >
   </mat-paginator>
   <app-ad></app-ad>
+  } <!-- end @if (viewMode === 'list') -->
 </div>

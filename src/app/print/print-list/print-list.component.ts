@@ -159,6 +159,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public searchText = '';
 
+  public viewMode: 'list' | 'grouped' = 'list';
+
   public filterByStatus = signal<PrintStatus | null>(null);
 
   public filterByPrinterIds = signal<number[]>([]);
@@ -627,7 +629,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     if (!projectId) return;
     this.filterByProjectId = projectId;
     this.currentPage = 1;
-    this.loadPrints();
+    this.updateFilter();
   }
 
   public getPrintEndDate(print: PrintSummary) {

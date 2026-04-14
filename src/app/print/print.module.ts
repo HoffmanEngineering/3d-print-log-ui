@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 import { AdsenseModule } from 'ng2-adsense';
 import { PrintService } from '../core/services/print.service';
@@ -25,6 +26,7 @@ import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.
 import { PrintTableLayoutComponent } from './print-list/print-table-layout/print-table-layout.component';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { ProjectChipComponent } from '../shared/project-chip/project-chip.component';
+import { PrintGroupedViewComponent } from './print-list/print-grouped-view/print-grouped-view.component';
 
 @NgModule({
   declarations: [
@@ -45,6 +47,8 @@ import { ProjectChipComponent } from '../shared/project-chip/project-chip.compon
     AdsenseModule,
     FileAttachmentSectionComponent,
     ProjectChipComponent,
+    MatButtonToggleModule,
+    PrintGroupedViewComponent,
   ],
   providers: [
     PrintDetailResolverService,

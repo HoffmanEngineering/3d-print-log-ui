@@ -115,7 +115,7 @@ Current behavior, unchanged except:
 
 **Project summary header** (shown when filtered to a project):
 
-- Project name, status badge, total print time, total filament used, estimated cost
+- Project name, status badge, total print time, total filament used, estimated cost — stats sourced from `GET /api/Projects/{id}`
 - Link to the full project detail page
 
 #### Grouped by Project
@@ -126,7 +126,7 @@ A separate view using a different backend path — does not share pagination wit
 - Each project appears as a **collapsible row** showing: project name, status badge, print count, total print time, total filament weight, estimated cost
 - Rows are sorted chronologically by project `CreatedDate`
 - Expanding a project row lazy-loads its prints via `GET /api/Prints/summary?filterByProjectId=xxx` — no pagination on this sub-list (projects are bounded sets)
-- Standalone prints (no project) appear as a separate collapsible section at the end: "Ungrouped Prints"
+- Standalone prints (no project) appear as a separate collapsible section at the end: "Ungrouped Prints", sorted by start date descending. This section uses the existing paginated `/api/Prints/summary` endpoint (with no `filterByProjectId`) and has its own paginator if the user has many standalone prints.
 
 ### Print Add/Edit Form
 
@@ -135,8 +135,8 @@ A **project selector** field is added near the top of the form, alongside the pr
 - Rendered as an autocomplete input
 - Searching displays matching existing projects by name
 - Typing a name that doesn't exist surfaces an inline option: **"Create project: [name]"**
-- Selecting "Create project" stores the name as pending state on the form — no API call yet
-- On form save, if a `newProjectName` is pending, the backend creates the project and assigns the print in one transaction (see API section)
+- Selecting "Create project" stores the name as pending state on the form — no API call yet. The new project chip displays with an "In Progress" status badge and a "(new)" indicator.
+- On form save, if a `newProjectName` is pending, the backend creates the project (defaulting to status: InProgress, viewStatus: Private) and assigns the print in one transaction (see API section)
 - Field is optional — leaving it blank produces a standalone print
 - Once a project is selected, a small status badge appears next to the name
 

@@ -84,11 +84,11 @@ A print with `ProjectId = null` is a standalone print — no behavioral change t
 | `DELETE` | `/api/Projects/{id}/images/{imageId}`  | Required | Remove a project image.                                                                                                                                                                 |
 | `PUT`    | `/api/Projects/{id}/images/reorder`    | Required | Reorder project images. Mirrors existing print image reorder endpoint.                                                                                                                  |
 
-### New: `FeedController` (or similar)
+### Modified: `PrintsController` (additional endpoint)
 
-| Method | Route               | Auth     | Description                                                                                                                                                                                                                                         |
-| ------ | ------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET`  | `/api/Feed/grouped` | Required | Paged, interleaved list of project rows and standalone print rows sorted chronologically. Each item has a discriminator (`type: "project" \| "print"`). Project items include aggregate stats; print items mirror the existing print summary shape. |
+| Method | Route                 | Auth     | Description                                                                                                                                                                                                                                         |
+| ------ | --------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/Prints/grouped` | Required | Paged, interleaved list of project rows and standalone print rows sorted chronologically. Each item has a discriminator (`type: "project" \| "print"`). Project items include aggregate stats; print items mirror the existing print summary shape. |
 
 ### Modified: `PrintsController`
 
@@ -128,7 +128,7 @@ Current behavior, unchanged except:
 
 A separate view using a different backend path — does not share pagination with the flat list.
 
-Calls a new `GET /api/Feed/grouped` endpoint (or similar name) that returns a **single interleaved, chronologically sorted list** of two row types:
+Calls a new `GET /api/Prints/grouped` endpoint (or similar name) that returns a **single interleaved, chronologically sorted list** of two row types:
 
 - **Project rows** — sorted by project `CreatedDate`
 - **Standalone print rows** — prints with no project, sorted by `StartDate`

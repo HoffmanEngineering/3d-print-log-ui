@@ -1,0 +1,28 @@
+.project-chip {
+  cursor: pointer;
+  font-size: 0.75rem;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.status-in-progress {
+    background-color: #1976d2;
+  }
+  &.status-complete {
+    background-color: #388e3c;
+  }
+  &.status-on-hold {
+    background-color: #f57c00;
+  }
+  &.status-cancelled {
+    background-color: #757575;
+  }
+}

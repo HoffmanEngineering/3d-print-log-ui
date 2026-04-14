@@ -35,6 +35,7 @@ Users want to group related prints together under a "project" to track total tim
 Project
   Id              Guid (PK)
   Name            string (max 100, required)
+  Reference       string (nullable, max 100) — freeform order/customer reference (e.g. "Order #42", "Jane Smith")
   Description     string (nullable)
   Url             string (nullable, max 1000) — model source URL (Printables, MakerWorld, etc.)
   Status          enum: InProgress=1, Complete=2, OnHold=3, Cancelled=4
@@ -77,8 +78,8 @@ A print with `ProjectId = null` is a standalone print — no behavioral change t
 | -------- | -------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET`    | `/api/Projects`                        | Required | Paged list of the authenticated user's projects. Each item includes: id, name, status, viewStatus, print count, total print time, total filament weight, estimated cost, default image. |
 | `GET`    | `/api/Projects/{id}`                   | Optional | Full project detail — metadata, aggregate stats, and print summaries. Public/Unlisted projects are accessible without auth (mirrors print behavior).                                    |
-| `POST`   | `/api/Projects`                        | Required | Create a new project. Body: `{ name, status?, description?, url?, viewStatus? }`. Returns the created project including its GUID.                                                       |
-| `PUT`    | `/api/Projects/{id}`                   | Required | Update project metadata (name, description, url, status, viewStatus). Owner only.                                                                                                       |
+| `POST`   | `/api/Projects`                        | Required | Create a new project. Body: `{ name, status?, reference?, description?, url?, viewStatus? }`. Returns the created project including its GUID.                                           |
+| `PUT`    | `/api/Projects/{id}`                   | Required | Update project metadata (name, reference, description, url, status, viewStatus). Owner only.                                                                                            |
 | `DELETE` | `/api/Projects/{id}?deletePrints=bool` | Required | Delete a project. If `deletePrints=true`, also deletes all member prints. If `deletePrints=false` (default), prints are unlinked and become standalone. Owner only.                     |
 | `POST`   | `/api/Projects/{id}/images`            | Required | Upload one or more images to a project.                                                                                                                                                 |
 | `DELETE` | `/api/Projects/{id}/images/{imageId}`  | Required | Remove a project image.                                                                                                                                                                 |
@@ -121,7 +122,8 @@ Current behavior, unchanged except:
 
 **Project summary header** (shown when filtered to a project):
 
-- Project name, status badge, total print time, total filament used, estimated cost — stats sourced from `GET /api/Projects/{id}`
+- Project name, total print time, total filament used, estimated cost — stats sourced from `GET /api/Projects/{id}`
+- **Status dropdown** — owner can change project status directly from the header without navigating to the detail page
 - Link to the full project detail page
 
 #### Grouped by Project
@@ -152,8 +154,9 @@ A **project selector** field is added near the top of the form, alongside the pr
 - On form save, if a `newProjectName` is pending, the backend creates the project (defaulting to status: InProgress, viewStatus: Private) and assigns the print in one transaction (see API section)
 - Field is optional — leaving it blank produces a standalone print
 - Once a project is selected, a small status badge appears next to the name
+- **Removing from a project**: clearing the project selector field (via a clear button or backspace) and saving will unlink the print from its project, making it a standalone print
 
-**Duplicate print** — inherits the `projectId` of the source print. No additional prompt.
+**Duplicate print** — the duplicate form pre-populates the project field with the source print's project, so the user can see the inherited assignment and change it before saving if needed.
 
 ### Project Detail Page
 
@@ -165,6 +168,7 @@ Accessible publicly for Public/Unlisted projects (no auth required), mirroring p
 
 - Project name (editable inline for owner)
 - Status badge (editable via dropdown for owner)
+- Reference — freeform order/customer reference field, editable for owner (e.g. "Order #42")
 - Description (editable for owner)
 - Source URL — displayed as a link, editable for owner
 - Visibility selector (owner only)
@@ -208,9 +212,25 @@ Accessible publicly for Public/Unlisted projects (no auth required), mirroring p
 
 ---
 
+## Documentation
+
+A new documentation page must be created in `src/documentation` for the Projects feature, covering:
+
+- What a project is and when to use one
+- How to create a project (inline from the print form, or from the Prints area)
+- How to add prints to a project and remove them
+- How to view project totals (time, filament, cost)
+- How to share a project publicly
+- How to delete a project (and the difference between unlinking vs. deleting prints)
+
+The existing Prints documentation page should be updated to mention the new project chip, the grouped view toggle, and the project filter.
+
+---
+
 ## Out of Scope (Future Considerations)
 
 - Duplicating an entire project (with all its prints) — mentioned as a likely user workflow but not in this story
+- Bulk-assigning multiple prints to a project from the print list (checkbox multi-select + project picker)
 - Project-level comments
 - Sharing/collaborating on a project with other users
 - Project templates

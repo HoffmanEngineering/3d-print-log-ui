@@ -84,3 +84,45 @@
   padding-left: 48px;
   font-size: 0.85em;
 }
+
+.print-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 50px;
+  max-width: 50px;
+  min-height: 50px;
+  min-width: 50px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
+.print-image-medium {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 100px;
+  max-width: 100px;
+  min-height: 100px;
+  min-width: 100px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
+.print-image-large {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 250px;
+  max-width: 250px;
+  min-height: 250px;
+  min-width: 250px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  margin-right: 10px;
+  overflow: hidden;
+}

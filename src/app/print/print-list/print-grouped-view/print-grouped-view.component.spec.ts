@@ -5,7 +5,9 @@ import {
   tick,
 } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { PrintGroupedViewComponent } from './print-grouped-view.component';
 import {
   ProjectService,
@@ -16,6 +18,7 @@ import {
   PrintStatus,
   PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { PagedList } from 'src/app/core/types/paging';
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -92,6 +95,16 @@ describe('PrintGroupedViewComponent', () => {
     );
     mockPrintService.getPrintSummaries.and.returnValue(of(makePagedList([])));
 
+    const mockToastrService = jasmine.createSpyObj<ToastrService>(
+      'ToastrService',
+      ['success', 'error']
+    );
+    const mockDialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    const mockLoggingService = jasmine.createSpyObj<LoggingService>(
+      'LoggingService',
+      ['logEvent', 'logException']
+    );
+
     await TestBed.configureTestingModule({
       imports: [
         PrintGroupedViewComponent,
@@ -102,6 +115,9 @@ describe('PrintGroupedViewComponent', () => {
       providers: [
         { provide: ProjectService, useValue: mockProjectService },
         { provide: PrintService, useValue: mockPrintService },
+        { provide: ToastrService, useValue: mockToastrService },
+        { provide: MatDialog, useValue: mockDialog },
+        { provide: LoggingService, useValue: mockLoggingService },
       ],
     }).compileComponents();
 

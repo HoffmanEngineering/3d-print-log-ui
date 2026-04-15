@@ -9,13 +9,17 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   GroupedFeedItemDto,
   ProjectService,
+  ProjectStatus,
 } from 'src/app/core/services/project.service';
 import {
   PrintService,
@@ -28,6 +32,8 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
+import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 
 export type GroupedRow =
   | { kind: 'project'; item: GroupedFeedItemDto }
@@ -46,6 +52,11 @@ export class PrintGroupedViewComponent implements OnInit {
   private readonly projectService = inject(ProjectService);
   private readonly printService = inject(PrintService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
+  private readonly toastrService = inject(ToastrService);
+  private readonly loggingService = inject(LoggingService);
+
+  readonly printStatusTypes = PrintStatus;
 
   // ---- Inputs from PrintListComponent ----
   searchText = input<string>('');
@@ -206,6 +217,72 @@ export class PrintGroupedViewComponent implements OnInit {
       default:
         return '';
     }
+  }
+
+  getProjectStatusLabel(status: ProjectStatus | undefined): string {
+    switch (status) {
+      case ProjectStatus.InProgress:
+        return 'In Progress';
+      case ProjectStatus.Complete:
+        return 'Complete';
+      case ProjectStatus.OnHold:
+        return 'On Hold';
+      case ProjectStatus.Cancelled:
+        return 'Cancelled';
+      default:
+        return '';
+    }
+  }
+
+  trackByRow = (_index: number, row: GroupedRow): string => {
+    switch (row.kind) {
+      case 'project':
+        return `project-${row.item.projectId}`;
+      case 'print':
+        return `print-${row.item.print?.id}`;
+      case 'expanded-print':
+        return `expanded-${row.projectId}-${row.print.id}`;
+      case 'more-prints':
+        return `more-${row.projectId}`;
+    }
+  };
+
+  share(print: PrintSummary): void {
+    this.loggingService.logEvent('PrintGroupedView_ShareClicked', {
+      printId: print.id,
+    });
+    this.dialog.open(PrintShareDialogComponent, {
+      width: '300px',
+      minWidth: '300px',
+      data: { printId: print.id },
+    });
+  }
+
+  deletePrint(print: PrintSummary): void {
+    const dialogRef = this.dialog.open(SimpleDialogComponent, {
+      maxWidth: '350px',
+    });
+    dialogRef.componentInstance.title = 'Delete?';
+    dialogRef.componentInstance.body = `Are you sure you want to delete print "${print.title}"? <br /><br /> This action cannot be undone.`;
+    dialogRef.componentInstance.yesText = 'Delete';
+    dialogRef.componentInstance.yesColor = 'warn';
+    dialogRef.componentInstance.noText = 'Cancel';
+
+    dialogRef.afterClosed().subscribe((shouldDelete) => {
+      if (shouldDelete) {
+        this.printService.deletePrint(print.id).subscribe(() => {
+          this.toastrService.success('Print removed successfully.', 'Success');
+          this.loadFeed();
+        });
+      }
+    });
+  }
+
+  changeStatus(id: number, newStatus: PrintStatus): void {
+    this.printService.updatePrintStatus(id, newStatus).subscribe(() => {
+      this.toastrService.success('Status Updated.', 'Success');
+      this.loadFeed();
+    });
   }
 
   private buildFlatRows(items: GroupedFeedItemDto[]): GroupedRow[] {

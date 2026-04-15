@@ -181,11 +181,31 @@ export class PrintGroupedViewComponent implements OnInit {
       });
   }
 
-  getPrinterLabel(printer: PrinterSummary): string {
+  getPrinterLabel(printer: PrinterSummary | null | undefined): string {
+    if (!printer) return '';
     if (printer.name && printer.name !== '') {
       return `${printer.name} - (${(printer.make + ' ' + printer.model).trim()})`;
     }
     return `${(printer.make + ' ' + printer.model).trim()}`;
+  }
+
+  getStatus(status: PrintStatus | undefined): string {
+    switch (status) {
+      case PrintStatus.Pending:
+        return 'Pending';
+      case PrintStatus.Printing:
+        return 'Printing';
+      case PrintStatus.Success:
+        return 'Success';
+      case PrintStatus.PartialSuccess:
+        return 'Partial Success';
+      case PrintStatus.Cancelled:
+        return 'Cancelled';
+      case PrintStatus.Failed:
+        return 'Failed';
+      default:
+        return '';
+    }
   }
 
   private buildFlatRows(items: GroupedFeedItemDto[]): GroupedRow[] {

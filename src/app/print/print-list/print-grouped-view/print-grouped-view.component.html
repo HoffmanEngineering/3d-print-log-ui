@@ -3,45 +3,344 @@
     <mat-spinner diameter="40" />
   </div>
 } @else if (!feed()?.items?.length) {
-  <p class="empty-state">No prints yet. Start logging a print to see it here.</p>
+  <p class="empty-state">No prints found. Try adjusting your search or filters.</p>
 } @else {
-  <mat-table [dataSource]="flatRows()">
-    <!-- Project row definition -->
-    <ng-container matColumnDef="project-row">
-      <mat-cell *matCellDef="let row">
+
+  <table
+    aria-label="Prints grouped by project"
+    aria-live="polite"
+    mat-table
+    [dataSource]="flatRows()"
+  >
+
+    <!-- ===================== COLUMN DEFINITIONS ===================== -->
+
+    <!-- image -->
+    <ng-container matColumnDef="image">
+      <th mat-header-cell *matHeaderCellDef>Image</th>
+      <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
-          <div class="project-row" (click)="onProjectToggle(row.item.projectId!, row.item.printCount ?? 0)">
-            <app-project-chip [projectName]="row.item.projectName!" [projectStatus]="row.item.projectStatus!" />
-            <span class="project-meta">
-              {{ row.item.printCount }} prints &middot;
-              {{ row.item.totalPrintTimeInSeconds | duration }} &middot;
-              {{ (row.item.totalFilamentWeightMg ?? 0) / 1000 | number:'1.0-1' }}g
-            </span>
+          <mat-icon class="project-icon">folder</mat-icon>
+        } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
+          <div class="print-image">
+            <app-print-image
+              [printId]="row.kind === 'expanded-print' ? row.print.id : row.item.print?.id"
+              [imageId]="row.kind === 'expanded-print' ? row.print.defaultPrintImageId : row.item.print?.defaultPrintImageId"
+            />
           </div>
         }
-        @if (row.kind === 'print') {
-          <div class="standalone-print-row">
-            <a [routerLink]="['/prints', row.item.print?.id]">{{ row.item.print?.title }}</a>
-            <span>{{ row.item.print?.startDate | date:'mediumDate' }}</span>
-          </div>
-        }
-        @if (row.kind === 'expanded-print') {
-          <div class="expanded-print-row">
-            <a [routerLink]="['/prints', row.print.id]">{{ row.print.title }}</a>
-            <span>{{ row.print.startDate | date:'mediumDate' }}</span>
-          </div>
-        }
-        @if (row.kind === 'more-prints') {
-          <div class="more-prints-row">
-            <span>+ {{ row.count }} more prints not matching current filters</span>
-          </div>
-        }
-      </mat-cell>
+      </td>
     </ng-container>
 
-    <!-- Single displayed column -->
-    <mat-row *matRowDef="let row; columns: ['project-row']"></mat-row>
-  </mat-table>
+    <!-- image-medium -->
+    <ng-container matColumnDef="image-medium">
+      <th mat-header-cell *matHeaderCellDef>Image</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          <mat-icon class="project-icon">folder</mat-icon>
+        } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
+          <div class="print-image-medium">
+            <app-print-image
+              [printId]="row.kind === 'expanded-print' ? row.print.id : row.item.print?.id"
+              [imageId]="row.kind === 'expanded-print' ? row.print.defaultPrintImageId : row.item.print?.defaultPrintImageId"
+            />
+          </div>
+        }
+      </td>
+    </ng-container>
+
+    <!-- image-large -->
+    <ng-container matColumnDef="image-large">
+      <th mat-header-cell *matHeaderCellDef>Image</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          <mat-icon class="project-icon">folder</mat-icon>
+        } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
+          <div class="print-image-large">
+            <app-print-image
+              [printId]="row.kind === 'expanded-print' ? row.print.id : row.item.print?.id"
+              [imageId]="row.kind === 'expanded-print' ? row.print.defaultPrintImageId : row.item.print?.defaultPrintImageId"
+            />
+          </div>
+        }
+      </td>
+    </ng-container>
+
+    <!-- title -->
+    <ng-container matColumnDef="title">
+      <th mat-header-cell *matHeaderCellDef>Title</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          <div class="project-title-cell">
+            <button mat-icon-button (click)="$event.stopPropagation(); onProjectToggle(row.item.projectId!, row.item.printCount ?? 0)" class="expand-btn">
+              <mat-icon>{{ expandedProjectPrints().has(row.item.projectId!) ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </button>
+            <strong>{{ row.item.projectName }}</strong>
+            <app-project-chip [projectName]="row.item.projectName!" [projectStatus]="row.item.projectStatus!" />
+          </div>
+        } @else if (row.kind === 'expanded-print') {
+          <div class="expanded-print-title">{{ row.print.title }}</div>
+        } @else {
+          {{ row.item.print?.title }}
+        }
+      </td>
+    </ng-container>
+
+    <!-- printer -->
+    <ng-container matColumnDef="printer">
+      <th mat-header-cell *matHeaderCellDef>Printer</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          @for (printer of row.item.printers; track printer.id) {
+            <div>{{ getPrinterLabel(printer) }}</div>
+          }
+        } @else if (row.kind === 'expanded-print') {
+          {{ getPrinterLabel(row.print.printer) }}
+        } @else {
+          {{ getPrinterLabel(row.item.print?.printer) }}
+        }
+      </td>
+    </ng-container>
+
+    <!-- start-date -->
+    <ng-container matColumnDef="start-date">
+      <th mat-header-cell *matHeaderCellDef>Start Date</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          {{ row.item.sortDate | date }}
+        } @else if (row.kind === 'expanded-print') {
+          {{ row.print.startDate | date }}
+        } @else {
+          {{ row.item.print?.startDate | date }}
+        }
+      </td>
+    </ng-container>
+
+    <!-- start-time -->
+    <ng-container matColumnDef="start-time">
+      <th mat-header-cell *matHeaderCellDef>Start Time</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'expanded-print') {
+          {{ row.print.startDate | date:'mediumTime' }}
+        } @else if (row.kind === 'print') {
+          {{ row.item.print?.startDate | date:'mediumTime' }}
+        }
+      </td>
+    </ng-container>
+
+    <!-- start-date-time -->
+    <ng-container matColumnDef="start-date-time">
+      <th mat-header-cell *matHeaderCellDef>Start Date/Time</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'expanded-print') {
+          {{ row.print.startDate | date:'medium' }}
+        } @else if (row.kind === 'print') {
+          {{ row.item.print?.startDate | date:'medium' }}
+        }
+      </td>
+    </ng-container>
+
+    <!-- end-date -->
+    <ng-container matColumnDef="end-date">
+      <th mat-header-cell *matHeaderCellDef>End Date</th>
+      <td mat-cell *matCellDef="let row">
+        <!-- End date not shown for project rows -->
+      </td>
+    </ng-container>
+
+    <!-- end-time -->
+    <ng-container matColumnDef="end-time">
+      <th mat-header-cell *matHeaderCellDef>End Time</th>
+      <td mat-cell *matCellDef="let row"></td>
+    </ng-container>
+
+    <!-- end-date-time -->
+    <ng-container matColumnDef="end-date-time">
+      <th mat-header-cell *matHeaderCellDef>End Date/Time</th>
+      <td mat-cell *matCellDef="let row"></td>
+    </ng-container>
+
+    <!-- status -->
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          <app-project-chip [projectName]="row.item.projectName!" [projectStatus]="row.item.projectStatus!" />
+        } @else if (row.kind === 'expanded-print') {
+          {{ getStatus(row.print.status) }}
+        } @else if (row.kind === 'print') {
+          {{ getStatus(row.item.print?.status) }}
+        }
+      </td>
+    </ng-container>
+
+    <!-- printTime -->
+    <ng-container matColumnDef="printTime">
+      <th mat-header-cell *matHeaderCellDef>Print Time</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          {{ row.item.totalPrintTimeInSeconds | duration }}
+        } @else if (row.kind === 'expanded-print') {
+          @if (row.print.printTimeInSeconds) {
+            {{ row.print.printTimeInSeconds | duration }}
+          } @else {
+            <span matTooltip="Estimated">{{ row.print.estimatedPrintTimeInSeconds | duration }} *</span>
+          }
+        } @else if (row.kind === 'print') {
+          @if (row.item.print?.printTimeInSeconds) {
+            {{ row.item.print.printTimeInSeconds | duration }}
+          } @else {
+            <span matTooltip="Estimated">{{ row.item.print?.estimatedPrintTimeInSeconds | duration }} *</span>
+          }
+        }
+      </td>
+    </ng-container>
+
+    <!-- filamentSummary -->
+    <ng-container matColumnDef="filamentSummary">
+      <th mat-header-cell *matHeaderCellDef>Materials</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          <div class="filament-list">
+            @for (fu of row.item.filamentUsage; track fu.id) {
+              <div class="filament-row">
+                @if (fu.filament) {
+                  <div class="filament-color-cell" [style.background-color]="'#' + fu.filament.colorHex"></div>
+                  <span>{{ fu.filament.displayName }}</span>
+                  <span>{{ (fu.amountMg ?? 0) / 1000 | number:'1.0-1' }}g</span>
+                }
+              </div>
+            }
+          </div>
+        } @else if (row.kind === 'expanded-print') {
+          <div class="filament-list">
+            @for (fu of row.print.filamentUsage; track fu.id) {
+              <div class="filament-row">
+                @if (fu.filament) {
+                  <div class="filament-color-cell" [style.background-color]="'#' + fu.filament.colorHex"></div>
+                  <span>{{ fu.filament.displayName }}</span>
+                  @if (fu.amountMg) { <span>{{ fu.amountMg / 1000 | number:'1.0-1' }}g</span> }
+                  @else { <span>{{ fu.estimatedAmountMg / 1000 | number:'1.0-1' }}g *</span> }
+                }
+              </div>
+            }
+          </div>
+        } @else if (row.kind === 'print') {
+          <div class="filament-list">
+            @for (fu of row.item.print?.filamentUsage; track fu.id) {
+              <div class="filament-row">
+                @if (fu.filament) {
+                  <div class="filament-color-cell" [style.background-color]="'#' + fu.filament.colorHex"></div>
+                  <span>{{ fu.filament.displayName }}</span>
+                  @if (fu.amountMg) { <span>{{ fu.amountMg / 1000 | number:'1.0-1' }}g</span> }
+                  @else { <span>{{ fu.estimatedAmountMg / 1000 | number:'1.0-1' }}g *</span> }
+                }
+              </div>
+            }
+          </div>
+        }
+      </td>
+    </ng-container>
+
+    <!-- totalFilamentUsage -->
+    <ng-container matColumnDef="totalFilamentUsage">
+      <th mat-header-cell *matHeaderCellDef>Total Material (g)</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          {{ (row.item.totalFilamentWeightMg ?? 0) / 1000 | number:'1.0-1' }}
+        } @else if (row.kind === 'expanded-print') {
+          {{ row.print.totalFilamentWeightMg / 1000 | number:'1.0-1' }}
+        } @else if (row.kind === 'print') {
+          {{ row.item.print?.totalFilamentWeightMg / 1000 | number:'1.0-1' }}
+        }
+      </td>
+    </ng-container>
+
+    <!-- totalCost -->
+    <ng-container matColumnDef="totalCost">
+      <th mat-header-cell *matHeaderCellDef>Total Cost</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind !== 'project') {
+          &mdash;
+        }
+      </td>
+    </ng-container>
+
+    <!-- commentCount -->
+    <ng-container matColumnDef="commentCount">
+      <th mat-header-cell *matHeaderCellDef>Comments</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'expanded-print') {
+          {{ row.print.commentCount }}
+        } @else if (row.kind === 'print') {
+          {{ row.item.print?.commentCount }}
+        }
+      </td>
+    </ng-container>
+
+    <!-- more -->
+    <ng-container matColumnDef="more">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let row" (click)="$event.stopPropagation()">
+        @if (row.kind === 'project') {
+          <a mat-icon-button [routerLink]="['/projects', row.item.projectId]" matTooltip="View project">
+            <mat-icon>open_in_new</mat-icon>
+          </a>
+        } @else if (row.kind === 'expanded-print') {
+          <a mat-icon-button [routerLink]="['/prints', row.print.id]" matTooltip="View print">
+            <mat-icon>open_in_new</mat-icon>
+          </a>
+        } @else if (row.kind === 'print') {
+          <a mat-icon-button [routerLink]="['/prints', row.item.print?.id]" matTooltip="View print">
+            <mat-icon>open_in_new</mat-icon>
+          </a>
+        }
+      </td>
+    </ng-container>
+
+    <!-- Special spanning column for "more prints" rows -->
+    <ng-container matColumnDef="more-prints-col">
+      <td mat-cell *matCellDef="let row" [attr.colspan]="displayedColumns().length" class="more-prints-cell">
+        + {{ row.count }} more print{{ row.count === 1 ? '' : 's' }} not shown by current filters
+      </td>
+    </ng-container>
+
+    <!-- ===================== ROW DEFINITIONS ===================== -->
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+
+    <!-- Project row — clickable to expand/collapse -->
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns(); when: isProjectRow"
+      class="project-row"
+      (click)="onProjectToggle(row.item.projectId!, row.item.printCount ?? 0)"
+    ></tr>
+
+    <!-- Ungrouped print row -->
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns(); when: isPrintRow"
+      class="print-row"
+      [routerLink]="['/prints', row.item.print?.id]"
+    ></tr>
+
+    <!-- Expanded print row (inside a project) -->
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns(); when: isExpandedPrintRow"
+      class="expanded-print-row"
+      [routerLink]="['/prints', row.print.id]"
+    ></tr>
+
+    <!-- +X more prints row -->
+    <tr
+      mat-row
+      *matRowDef="let row; columns: ['more-prints-col']; when: isMorePrintsRow"
+      class="more-prints-row"
+    ></tr>
+
+  </table>
 
   <mat-paginator
     [length]="feed()!.paging.totalCount"

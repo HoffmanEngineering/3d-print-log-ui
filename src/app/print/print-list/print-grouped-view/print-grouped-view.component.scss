@@ -28,3 +28,59 @@
   margin-top: 8px;
   font-size: 0.875rem;
 }
+
+.project-row {
+  cursor: pointer;
+  font-weight: 500;
+  background-color: rgba(0, 0, 0, 0.02);
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.expanded-print-row {
+  cursor: pointer;
+  border-left: 3px solid var(--mdc-theme-primary, #3f51b5);
+
+  td:first-child {
+    padding-left: 24px;
+  }
+}
+
+.project-title-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-icon {
+  opacity: 0.6;
+}
+
+.filament-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-block: 4px;
+}
+
+.filament-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filament-color-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.more-prints-cell {
+  color: rgba(0, 0, 0, 0.54);
+  font-style: italic;
+  padding-left: 48px;
+  font-size: 0.85em;
+}

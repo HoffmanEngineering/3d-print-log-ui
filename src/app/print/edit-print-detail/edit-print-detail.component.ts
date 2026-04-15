@@ -336,7 +336,6 @@ export class EditPrintDetailComponent
           type: 'existing',
           projectId: data.print.print.projectId,
           projectName: data.print.print.projectName ?? '',
-          projectStatus: null as any,
         };
       }
       this.printForm = this.buildFormFromPrintDetail(data.print.print);

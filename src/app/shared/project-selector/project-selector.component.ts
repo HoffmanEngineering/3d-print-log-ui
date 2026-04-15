@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   input,
   output,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,7 +28,7 @@ export type ProjectSelection =
       type: 'existing';
       projectId: string;
       projectName: string;
-      projectStatus: ProjectStatus;
+      projectStatus?: ProjectStatus;
     }
   | { type: 'new'; newProjectName: string };
 
@@ -52,6 +54,7 @@ export class ProjectSelectorComponent implements OnInit {
   projectSelected = output<ProjectSelection | null>();
 
   private readonly projectService = inject(ProjectService);
+  private readonly destroyRef = inject(DestroyRef);
 
   searchControl = new FormControl<string>('');
   allProjects = signal<ProjectSummaryDto[]>([]);
@@ -60,16 +63,24 @@ export class ProjectSelectorComponent implements OnInit {
   showNewOption = signal(false);
 
   ngOnInit(): void {
-    this.projectService.getProjectSummaries(1, 100).subscribe((result) => {
-      this.allProjects.set(result.items);
-    });
+    this.projectService
+      .getProjectSummaries(1, 100)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        this.allProjects.set(result.items);
+      });
 
     if (this.initialProjectId() && this.initialProjectName()) {
       this.searchControl.setValue(this.initialProjectName()!);
     }
 
     this.searchControl.valueChanges
-      .pipe(startWith(''), debounceTime(150), distinctUntilChanged())
+      .pipe(
+        startWith(''),
+        debounceTime(150),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((value) => this.filterProjects(value ?? ''));
   }
 

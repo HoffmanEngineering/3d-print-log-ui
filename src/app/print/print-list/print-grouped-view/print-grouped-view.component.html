@@ -5,45 +5,43 @@
 } @else if (!feed()?.items?.length) {
   <p class="empty-state">No prints yet. Start logging a print to see it here.</p>
 } @else {
-  <mat-accordion multi>
-    @for (item of feed()!.items; track item.sortDate) {
-      @if (item.type === 'project') {
-        <mat-expansion-panel (opened)="onProjectExpand(item.projectId!)">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <app-project-chip [projectName]="item.projectName!" [projectStatus]="item.projectStatus!" />
-            </mat-panel-title>
-            <mat-panel-description>
-              {{ item.printCount }} prints &middot; {{ item.totalPrintTimeInSeconds | duration }} &middot; {{ (item.totalFilamentWeightMg ?? 0) / 1000 | number:'1.0-1' }}g
-            </mat-panel-description>
-          </mat-expansion-panel-header>
+  <mat-table [dataSource]="flatRows()">
+    <!-- Project row definition -->
+    <ng-container matColumnDef="project-row">
+      <mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          <div class="project-row" (click)="onProjectToggle(row.item.projectId!, row.item.printCount ?? 0)">
+            <app-project-chip [projectName]="row.item.projectName!" [projectStatus]="row.item.projectStatus!" />
+            <span class="project-meta">
+              {{ row.item.printCount }} prints &middot;
+              {{ row.item.totalPrintTimeInSeconds | duration }} &middot;
+              {{ (row.item.totalFilamentWeightMg ?? 0) / 1000 | number:'1.0-1' }}g
+            </span>
+          </div>
+        }
+        @if (row.kind === 'print') {
+          <div class="standalone-print-row">
+            <a [routerLink]="['/prints', row.item.print?.id]">{{ row.item.print?.title }}</a>
+            <span>{{ row.item.print?.startDate | date:'mediumDate' }}</span>
+          </div>
+        }
+        @if (row.kind === 'expanded-print') {
+          <div class="expanded-print-row">
+            <a [routerLink]="['/prints', row.print.id]">{{ row.print.title }}</a>
+            <span>{{ row.print.startDate | date:'mediumDate' }}</span>
+          </div>
+        }
+        @if (row.kind === 'more-prints') {
+          <div class="more-prints-row">
+            <span>+ {{ row.count }} more prints not matching current filters</span>
+          </div>
+        }
+      </mat-cell>
+    </ng-container>
 
-          @if (loadingProjectId() === item.projectId) {
-            <mat-spinner diameter="24" />
-          } @else {
-            <div class="project-prints">
-              @for (print of expandedProjectPrints().get(item.projectId!) ?? []; track print.id) {
-                <div class="project-print-row">
-                  <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
-                  <span>{{ print.startDate | date:'mediumDate' }}</span>
-                </div>
-              }
-              <a [routerLink]="['/projects', item.projectId]" class="view-project-link">View full project &rarr;</a>
-            </div>
-          }
-        </mat-expansion-panel>
-      } @else {
-        <mat-expansion-panel disabled>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <a [routerLink]="['/prints', item.print?.id]">{{ item.print?.title }}</a>
-            </mat-panel-title>
-            <mat-panel-description>{{ item.print?.startDate | date:'mediumDate' }}</mat-panel-description>
-          </mat-expansion-panel-header>
-        </mat-expansion-panel>
-      }
-    }
-  </mat-accordion>
+    <!-- Single displayed column -->
+    <mat-row *matRowDef="let row; columns: ['project-row']"></mat-row>
+  </mat-table>
 
   <mat-paginator
     [length]="feed()!.paging.totalCount"

@@ -1,14 +1,5 @@
 <div fxLayout="column" fxLayoutAlign="center">
-  <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
-    <mat-button-toggle value="list">All Prints</mat-button-toggle>
-    <mat-button-toggle value="grouped">Grouped by Project</mat-button-toggle>
-  </mat-button-toggle-group>
-
-  @if (viewMode === 'grouped') {
-    <app-print-grouped-view />
-  }
-
-  @if (viewMode === 'list') {
+  <!-- Header: always visible regardless of view mode -->
   <div class="header">
     <!-- Row 1: Always visible — action buttons, search, filter toggle -->
     <div class="header-top">
@@ -157,6 +148,27 @@
     </div>
   </div>
 
+  <!-- View toggle -->
+  <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
+    <mat-button-toggle value="list">All Prints</mat-button-toggle>
+    <mat-button-toggle value="grouped">Grouped by Project</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <!-- Grouped view -->
+  @if (viewMode === 'grouped') {
+    <app-print-grouped-view
+      [searchText]="searchText"
+      [filterByStatus]="filterByStatus()"
+      [filterByPrinterIds]="filterByPrinterIds()"
+      [filterByFilamentIds]="filterByFilamentIds()"
+      [sortColumn]="sortColumn"
+      [sortDirection]="sortDirection"
+      [displayedColumns]="displayedColumns"
+    />
+  }
+
+  <!-- List view: mobile cards + desktop table + paginator -->
+  @if (viewMode === 'list') {
   <!-- Mobile Card View -->
   <div class="mobile-card-view" fxHide.gt-sm>
     @for (print of prints; track print.id) {

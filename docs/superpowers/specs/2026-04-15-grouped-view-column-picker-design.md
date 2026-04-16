@@ -5,7 +5,7 @@
 
 ## Goal
 
-Add a "Change table layout" column picker to the Grouped By Project table view, separate from the All Prints column picker. Each view stores its own column preferences in localStorage. The shared `PrintTableLayoutComponent` dialog gains a `title` field so the modal heading reflects which view is being configured.
+Add a "Change table layout" column picker to the Grouped By Project table view, separate from the All Prints column picker. Each view stores its own column preferences in localStorage. The shared `PrintTableLayoutComponent` dialog gains a `title` field so the modal heading reflects which view is being configured. As part of this work, implement the three currently-blank columns (`end-date`, `end-time`, `end-date-time`) for print rows, and implement `totalCost` for both project rows (aggregate) and print rows.
 
 ---
 
@@ -27,11 +27,18 @@ Add a "Change table layout" column picker to the Grouped By Project table view, 
 - Add `openTableLayout()` method — opens `PrintTableLayoutComponent` with `title: 'Grouped View Table Layout'`, wires up the `changeEvent` Subject, saves to `grouped_table_displayed_columns` localStorage key, always appends `more` at the end
 - Add "Change table layout" button to the `more` column `<th mat-header-cell>`, as a `mat-menu` item with a `table_rows` icon — matching the All Prints pattern exactly
 - Log a `PrintGroupedViewLayoutChanged` analytics event on dialog close
+- Add `defaultFilamentPriceSetting = input<UserSetting | null>(null)` and `preferredCurrencySymbolSetting = input<UserSetting | null>(null)` inputs (passed from `PrintListComponent`, used for cost calculation)
+- Add `getPrintEndDate(print: PrintSummary): Date | null` — same logic as `PrintListComponent`: `startDate + actual print time` (or estimated if no actual); returns `null` if neither time is set
+- Add `getTotalFilamentCost(filamentUsage: PrintFilamentSummaryDto[]): string` — calls `PrintService.calculateTotalPrintCost()` using the `defaultFilamentPriceSetting` and `preferredCurrencySymbolSetting` inputs; returns the formatted price string or empty string if not calculable
+- **Implement `end-date` column**: blank for project rows; `getPrintEndDate(print) | date` for print/expanded-print rows
+- **Implement `end-time` column**: blank for project rows; `getPrintEndDate(print) | date:'mediumTime'` for print/expanded-print rows
+- **Implement `end-date-time` column**: blank for project rows; `getPrintEndDate(print) | date:'medium'` for print/expanded-print rows
+- **Implement `totalCost` column**: `getTotalFilamentCost(row.item.filamentUsage)` for project rows; `getTotalFilamentCost(print.filamentUsage)` for print/expanded-print rows
 
 ### `PrintListComponent`
 
 - Remove `[displayedColumns]="displayedColumns"` binding from `<app-print-grouped-view>` in the template
-- No changes to `print-list.component.ts`
+- Pass `[defaultFilamentPriceSetting]="defaultFilamentPriceSetting"` and `[preferredCurrencySymbolSetting]="preferredCurrencySymbolSetting"` to `<app-print-grouped-view>`
 
 ---
 
@@ -49,14 +56,14 @@ The grouped table already defines `matColumnDef` for all of these. The picker of
 | `start-date`         | Start Date      | Most recent print date (`sortDate`) for project rows; individual start date for print rows                    |
 | `start-time`         | Start Time      | Blank for project rows; start time for print rows                                                             |
 | `start-date-time`    | Start Date/Time | Blank for project rows; start date/time for print rows                                                        |
-| `end-date`           | End Date        | Blank for all rows (not implemented)                                                                          |
-| `end-time`           | End Time        | Blank for all rows (not implemented)                                                                          |
-| `end-date-time`      | End Date/Time   | Blank for all rows (not implemented)                                                                          |
+| `end-date`           | End Date        | Blank for project rows; computed end date (`startDate + print time`) for print rows                           |
+| `end-time`           | End Time        | Blank for project rows; computed end time for print rows                                                      |
+| `end-date-time`      | End Date/Time   | Blank for project rows; computed end date/time for print rows                                                 |
 | `status`             | Status          | Project status label for project rows; print status for print rows                                            |
 | `printTime`          | Print Time      | Total project print time for project rows; individual print time (actual or estimated\*) for print rows       |
 | `filamentSummary`    | Filament        | Aggregated filament list with color swatches and weights for project rows; per-print filament list for prints |
 | `totalFilamentUsage` | Total Material  | Total filament weight in grams for all row types                                                              |
-| `totalCost`          | Total Cost      | Blank for project rows; em-dash for print rows (not yet implemented)                                          |
+| `totalCost`          | Total Cost      | Aggregate filament cost across all project prints for project rows; per-print filament cost for print rows    |
 | `commentCount`       | Comments        | Blank for project rows; comment count for print rows                                                          |
 
 ---
@@ -77,3 +84,4 @@ The grouped table already defines `matColumnDef` for all of these. The picker of
 - All Prints column preferences are unaffected
 - Mobile card view in the grouped view is unaffected
 - The `displayedColumns` input is removed from `PrintGroupedViewComponent`; `PrintGroupedViewComponent.spec.ts` must be updated accordingly
+- End date/time columns remain blank for project rows — a project spans multiple prints so there is no single meaningful end date

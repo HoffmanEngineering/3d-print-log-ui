@@ -188,7 +188,7 @@
                             @if (fu.filament) {
                               <div class="material-color" [style.background-color]="'#' + fu.filament.colorHex" [title]="fu.filament.colorName || 'No color name'"></div>
                               <span class="material-name">
-                                {{ fu.filament?.displayName }}
+                                {{ fu.filament.displayName }}
                                 @if (fu.amountMg !== null && fu.amountMg > 0) {
                                   ({{ fu.amountMg / 1000 | number:'1.0-1' }}g)
                                 } @else if (fu.estimatedAmountMg !== null && fu.estimatedAmountMg > 0) {

@@ -39,25 +39,25 @@ Add a "Change table layout" column picker to the Grouped By Project table view, 
 
 The grouped table already defines `matColumnDef` for all of these. The picker offers all of them (except `more`, which is fixed):
 
-| Key                  | Display Name    | Description                                           |
-| -------------------- | --------------- | ----------------------------------------------------- |
-| `image`              | Image (Small)   | Default image as a small thumbnail                    |
-| `image-medium`       | Image (Medium)  | Default image as a medium thumbnail                   |
-| `image-large`        | Image (Large)   | Default image as a large thumbnail                    |
-| `title`              | Title           | Project name or print title                           |
-| `printer`            | Printer         | Make and model (blank for project rows)               |
-| `start-date`         | Start Date      | Start date (blank for project rows)                   |
-| `start-time`         | Start Time      | Start time (blank for project rows)                   |
-| `start-date-time`    | Start Date/Time | Start date/time (blank for project rows)              |
-| `end-date`           | End Date        | End date (blank for project rows)                     |
-| `end-time`           | End Time        | End time (blank for project rows)                     |
-| `end-date-time`      | End Date/Time   | End date/time (blank for project rows)                |
-| `status`             | Status          | Project status or print status                        |
-| `printTime`          | Print Time      | Total time (projects) or individual time (prints)     |
-| `filamentSummary`    | Filament        | Aggregated filaments (projects) or per-print (prints) |
-| `totalFilamentUsage` | Total Filament  | Total filament weight                                 |
-| `totalCost`          | Total Cost      | Total cost                                            |
-| `commentCount`       | Comments        | Comment count                                         |
+| Key                  | Display Name    | Description                                                                                                   |
+| -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `image`              | Image (Small)   | Folder icon for project rows; small print thumbnail for print rows                                            |
+| `image-medium`       | Image (Medium)  | Folder icon for project rows; medium print thumbnail for print rows                                           |
+| `image-large`        | Image (Large)   | Folder icon for project rows; large print thumbnail for print rows                                            |
+| `title`              | Title           | Expand/collapse button + project name + status chip for project rows; print title for print rows              |
+| `printer`            | Printer         | List of all printers used in the project for project rows; individual printer for print rows                  |
+| `start-date`         | Start Date      | Most recent print date (`sortDate`) for project rows; individual start date for print rows                    |
+| `start-time`         | Start Time      | Blank for project rows; start time for print rows                                                             |
+| `start-date-time`    | Start Date/Time | Blank for project rows; start date/time for print rows                                                        |
+| `end-date`           | End Date        | Blank for all rows (not implemented)                                                                          |
+| `end-time`           | End Time        | Blank for all rows (not implemented)                                                                          |
+| `end-date-time`      | End Date/Time   | Blank for all rows (not implemented)                                                                          |
+| `status`             | Status          | Project status label for project rows; print status for print rows                                            |
+| `printTime`          | Print Time      | Total project print time for project rows; individual print time (actual or estimated\*) for print rows       |
+| `filamentSummary`    | Filament        | Aggregated filament list with color swatches and weights for project rows; per-print filament list for prints |
+| `totalFilamentUsage` | Total Material  | Total filament weight in grams for all row types                                                              |
+| `totalCost`          | Total Cost      | Blank for project rows; em-dash for print rows (not yet implemented)                                          |
+| `commentCount`       | Comments        | Blank for project rows; comment count for print rows                                                          |
 
 ---
 

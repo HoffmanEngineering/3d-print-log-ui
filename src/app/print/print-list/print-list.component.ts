@@ -549,6 +549,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       minWidth: '450px',
       disableClose: true,
       data: {
+        title: 'All Prints Table Layout',
         allPossibleColumns: this.allPossibleColumns.filter(
           (column) => column.key !== 'more'
         ),

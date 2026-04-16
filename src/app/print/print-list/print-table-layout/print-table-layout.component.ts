@@ -8,6 +8,7 @@ import { MediaMatcher } from '@angular/cdk/layout';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 export interface DialogData {
+  title: string;
   allPossibleColumns: ColumnDefinition[];
   currentColumns: string[];
   changeEvent: Subject<string[]>;

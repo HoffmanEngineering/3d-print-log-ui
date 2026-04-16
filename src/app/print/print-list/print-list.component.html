@@ -190,7 +190,7 @@
                 <app-project-chip
                   [projectName]="print.projectName"
                   [projectStatus]="print.projectStatus!"
-                  (chipClicked)="onProjectChipClicked(print.projectId)"
+                  [projectId]="print.projectId"
                 />
               }
 
@@ -436,7 +436,7 @@
           <app-project-chip
             [projectName]="print.projectName"
             [projectStatus]="print.projectStatus!"
-            (chipClicked)="onProjectChipClicked(print.projectId)"
+            [projectId]="print.projectId"
           />
         }
       </td>

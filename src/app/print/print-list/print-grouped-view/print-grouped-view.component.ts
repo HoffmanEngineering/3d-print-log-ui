@@ -219,6 +219,25 @@ export class PrintGroupedViewComponent implements OnInit {
     }
   }
 
+  getStatusIcon(status: PrintStatus | undefined): string {
+    switch (status) {
+      case PrintStatus.Pending:
+        return 'pending_actions';
+      case PrintStatus.Printing:
+        return 'play_circle_outline';
+      case PrintStatus.Success:
+        return 'check_circle_outline';
+      case PrintStatus.PartialSuccess:
+        return 'rule';
+      case PrintStatus.Cancelled:
+        return 'remove_circle_outline';
+      case PrintStatus.Failed:
+        return 'error_outline';
+      default:
+        return 'help_outline';
+    }
+  }
+
   getProjectStatusLabel(status: ProjectStatus | undefined): string {
     switch (status) {
       case ProjectStatus.InProgress:

@@ -46,7 +46,7 @@
                 </div>
               </div>
               <div class="card-actions" (click)="$event.stopPropagation()">
-                <button mat-icon-button [matMenuTriggerFor]="projectCardMenu" attr.aria-label="More options for {{ row.item.projectName }}">
+                <button mat-icon-button [matMenuTriggerFor]="projectCardMenu" [attr.aria-label]="'More options for ' + row.item.projectName">
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #projectCardMenu="matMenu">
@@ -62,89 +62,91 @@
       @if (row.kind === 'print') {
         <!-- Standalone print card -->
         @let p = row.item.print;
-        <mat-card class="print-card" [routerLink]="['/prints', p?.id]">
-          <mat-card-content>
-            <div class="card-layout">
-              <div class="card-image">
-                <app-print-image [printId]="p?.id" [imageId]="p?.defaultPrintImageId" />
-              </div>
-              <div class="card-content">
-                <h3 class="card-title">{{ p?.title }}</h3>
-                <div class="card-meta">
-                  <div class="meta-item">
-                    <mat-icon class="meta-icon">print</mat-icon>
-                    <span>{{ getPrinterLabel(p?.printer) }}</span>
-                  </div>
-                  <div class="meta-item">
-                    <mat-icon class="meta-icon">calendar_today</mat-icon>
-                    <span>{{ p?.startDate | date }}</span>
-                  </div>
-                  <div class="meta-item">
-                    <mat-icon class="meta-icon">timer</mat-icon>
-                    <span>
-                      @if (p?.printTimeInSeconds && p.printTimeInSeconds > 0) {
-                        {{ p.printTimeInSeconds | duration }}
-                      } @else if (p?.estimatedPrintTimeInSeconds && p.estimatedPrintTimeInSeconds > 0) {
-                        {{ p.estimatedPrintTimeInSeconds | duration }} *
-                      } @else {
-                        --
-                      }
-                    </span>
-                  </div>
-                  @if (p?.filamentUsage && p.filamentUsage.length > 0) {
-                    <div class="meta-item materials-section">
-                      <div class="materials-container">
-                        @for (fu of p.filamentUsage; track fu.id) {
-                          <div class="material-chip">
-                            @if (fu.filament !== null) {
-                              <div class="material-color" [style.background-color]="'#' + fu.filament.colorHex" [title]="fu.filament.colorName || 'No color name'"></div>
-                              <span class="material-name">
-                                {{ fu.filament?.displayName }}
-                                @if (fu.amountMg !== null && fu.amountMg > 0) {
-                                  ({{ fu.amountMg / 1000 | number:'1.0-1' }}g)
-                                } @else if (fu.estimatedAmountMg !== null && fu.estimatedAmountMg > 0) {
-                                  ({{ fu.estimatedAmountMg / 1000 | number:'1.0-1' }}g*)
-                                }
-                              </span>
-                            } @else {
-                              <span class="material-name">{{ fu.notes }}</span>
-                            }
-                          </div>
-                        }
-                      </div>
+        @if (p) {
+          <mat-card class="print-card" [routerLink]="['/prints', p.id]">
+            <mat-card-content>
+              <div class="card-layout">
+                <div class="card-image">
+                  <app-print-image [printId]="p.id" [imageId]="p.defaultPrintImageId" />
+                </div>
+                <div class="card-content">
+                  <h3 class="card-title">{{ p.title }}</h3>
+                  <div class="card-meta">
+                    <div class="meta-item">
+                      <mat-icon class="meta-icon">print</mat-icon>
+                      <span>{{ getPrinterLabel(p.printer) }}</span>
                     </div>
-                  }
-                  <div class="meta-item status-badge" [class]="'status-' + p?.status">
-                    <mat-icon class="meta-icon">{{ getStatusIcon(p?.status) }}</mat-icon>
-                    <span>{{ getStatus(p?.status) }}</span>
+                    <div class="meta-item">
+                      <mat-icon class="meta-icon">calendar_today</mat-icon>
+                      <span>{{ p.startDate | date }}</span>
+                    </div>
+                    <div class="meta-item">
+                      <mat-icon class="meta-icon">timer</mat-icon>
+                      <span>
+                        @if (p.printTimeInSeconds && p.printTimeInSeconds > 0) {
+                          {{ p.printTimeInSeconds | duration }}
+                        } @else if (p.estimatedPrintTimeInSeconds && p.estimatedPrintTimeInSeconds > 0) {
+                          {{ p.estimatedPrintTimeInSeconds | duration }} *
+                        } @else {
+                          --
+                        }
+                      </span>
+                    </div>
+                    @if (p.filamentUsage && p.filamentUsage.length > 0) {
+                      <div class="meta-item materials-section">
+                        <div class="materials-container">
+                          @for (fu of p.filamentUsage; track fu.id) {
+                            <div class="material-chip">
+                              @if (fu.filament) {
+                                <div class="material-color" [style.background-color]="'#' + fu.filament.colorHex" [title]="fu.filament.colorName || 'No color name'"></div>
+                                <span class="material-name">
+                                  {{ fu.filament.displayName }}
+                                  @if (fu.amountMg !== null && fu.amountMg > 0) {
+                                    ({{ fu.amountMg / 1000 | number:'1.0-1' }}g)
+                                  } @else if (fu.estimatedAmountMg !== null && fu.estimatedAmountMg > 0) {
+                                    ({{ fu.estimatedAmountMg / 1000 | number:'1.0-1' }}g*)
+                                  }
+                                </span>
+                              } @else {
+                                <span class="material-name">{{ fu.notes }}</span>
+                              }
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                    <div class="meta-item status-badge" [class]="'status-' + p.status">
+                      <mat-icon class="meta-icon">{{ getStatusIcon(p.status) }}</mat-icon>
+                      <span>{{ getStatus(p.status) }}</span>
+                    </div>
                   </div>
                 </div>
+                <div class="card-actions" (click)="$event.stopPropagation()">
+                  <button mat-icon-button [matMenuTriggerFor]="printCardMenu" [attr.aria-label]="'More options for ' + p.title">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #printCardMenu="matMenu">
+                    <a class="menu-link" mat-menu-item [routerLink]="['/prints', p.id, 'edit']"><mat-icon>edit</mat-icon>Edit</a>
+                    <a class="menu-link" mat-menu-item [routerLink]="['/prints', p.id]"><mat-icon>launch</mat-icon>View</a>
+                    <button type="button" mat-menu-item (click)="share(p)"><mat-icon>share</mat-icon>Share</button>
+                    <a class="menu-link" mat-menu-item [routerLink]="['/prints/copy', p.id]"><mat-icon>file_copy</mat-icon>Duplicate</a>
+                    <button type="button" mat-menu-item (click)="deletePrint(p)"><mat-icon>delete</mat-icon>Delete</button>
+                    <hr />
+                    <button mat-menu-item [matMenuTriggerFor]="printCardStatusMenu">Change Print Status</button>
+                  </mat-menu>
+                  <mat-menu #printCardStatusMenu="matMenu">
+                    <button type="button" mat-menu-item (click)="changeStatus(p.id, printStatusTypes.Pending)"><mat-icon>pending_actions</mat-icon>Pending</button>
+                    <button type="button" mat-menu-item (click)="changeStatus(p.id, printStatusTypes.Printing)"><mat-icon>play_circle_outline</mat-icon>Printing</button>
+                    <button type="button" mat-menu-item (click)="changeStatus(p.id, printStatusTypes.Success)"><mat-icon>done</mat-icon>Success</button>
+                    <button type="button" mat-menu-item (click)="changeStatus(p.id, printStatusTypes.PartialSuccess)"><mat-icon>rule</mat-icon>Partial Success</button>
+                    <button type="button" mat-menu-item (click)="changeStatus(p.id, printStatusTypes.Failed)"><mat-icon>phonelink_off</mat-icon>Failed</button>
+                    <button type="button" mat-menu-item (click)="changeStatus(p.id, printStatusTypes.Cancelled)"><mat-icon>remove_circle_outline</mat-icon>Cancelled</button>
+                  </mat-menu>
+                </div>
               </div>
-              <div class="card-actions" (click)="$event.stopPropagation()">
-                <button mat-icon-button [matMenuTriggerFor]="printCardMenu" attr.aria-label="More options for {{ p?.title }}">
-                  <mat-icon>more_vert</mat-icon>
-                </button>
-                <mat-menu #printCardMenu="matMenu">
-                  <a class="menu-link" mat-menu-item [routerLink]="['/prints', p?.id, 'edit']"><mat-icon>edit</mat-icon>Edit</a>
-                  <a class="menu-link" mat-menu-item [routerLink]="['/prints', p?.id]"><mat-icon>launch</mat-icon>View</a>
-                  <button type="button" mat-menu-item (click)="share(p)"><mat-icon>share</mat-icon>Share</button>
-                  <a class="menu-link" mat-menu-item [routerLink]="['/prints/copy', p?.id]"><mat-icon>file_copy</mat-icon>Duplicate</a>
-                  <button type="button" mat-menu-item (click)="deletePrint(p)"><mat-icon>delete</mat-icon>Delete</button>
-                  <hr />
-                  <button mat-menu-item [matMenuTriggerFor]="printCardStatusMenu">Change Print Status</button>
-                </mat-menu>
-                <mat-menu #printCardStatusMenu="matMenu">
-                  <button type="button" mat-menu-item (click)="changeStatus(p?.id, printStatusTypes.Pending)"><mat-icon>pending_actions</mat-icon>Pending</button>
-                  <button type="button" mat-menu-item (click)="changeStatus(p?.id, printStatusTypes.Printing)"><mat-icon>play_circle_outline</mat-icon>Printing</button>
-                  <button type="button" mat-menu-item (click)="changeStatus(p?.id, printStatusTypes.Success)"><mat-icon>done</mat-icon>Success</button>
-                  <button type="button" mat-menu-item (click)="changeStatus(p?.id, printStatusTypes.PartialSuccess)"><mat-icon>rule</mat-icon>Partial Success</button>
-                  <button type="button" mat-menu-item (click)="changeStatus(p?.id, printStatusTypes.Failed)"><mat-icon>phonelink_off</mat-icon>Failed</button>
-                  <button type="button" mat-menu-item (click)="changeStatus(p?.id, printStatusTypes.Cancelled)"><mat-icon>remove_circle_outline</mat-icon>Cancelled</button>
-                </mat-menu>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
+            </mat-card-content>
+          </mat-card>
+        }
       }
       @if (row.kind === 'expanded-print') {
         <!-- Expanded print card (child of a project) -->
@@ -183,7 +185,7 @@
                       <div class="materials-container">
                         @for (fu of ep.filamentUsage; track fu.id) {
                           <div class="material-chip">
-                            @if (fu.filament !== null) {
+                            @if (fu.filament) {
                               <div class="material-color" [style.background-color]="'#' + fu.filament.colorHex" [title]="fu.filament.colorName || 'No color name'"></div>
                               <span class="material-name">
                                 {{ fu.filament?.displayName }}
@@ -208,7 +210,7 @@
                 </div>
               </div>
               <div class="card-actions" (click)="$event.stopPropagation()">
-                <button mat-icon-button [matMenuTriggerFor]="epCardMenu" attr.aria-label="More options for {{ ep.title }}">
+                <button mat-icon-button [matMenuTriggerFor]="epCardMenu" [attr.aria-label]="'More options for ' + ep.title">
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #epCardMenu="matMenu">
@@ -521,7 +523,7 @@
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let row" (click)="$event.preventDefault(); $event.stopPropagation()">
         @if (row.kind === 'project') {
-          <button mat-button class="transparent" [matMenuTriggerFor]="projectMenu" attr.aria-label="More options for {{ row.item.projectName }}">
+          <button mat-button class="transparent" [matMenuTriggerFor]="projectMenu" [attr.aria-label]="'More options for ' + row.item.projectName">
             <mat-icon>more_horiz</mat-icon>
           </button>
           <mat-menu #projectMenu="matMenu">
@@ -531,7 +533,7 @@
           </mat-menu>
         } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
           @let print = row.kind === 'expanded-print' ? row.print : row.item.print;
-          <button mat-button class="transparent" [matMenuTriggerFor]="printMenu" attr.aria-label="More options for {{ print?.title }}">
+          <button mat-button class="transparent" [matMenuTriggerFor]="printMenu" [attr.aria-label]="'More options for ' + print?.title">
             <mat-icon>more_horiz</mat-icon>
           </button>
           <mat-menu #printMenu="matMenu">

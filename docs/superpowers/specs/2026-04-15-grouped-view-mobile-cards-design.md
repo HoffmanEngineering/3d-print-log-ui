@@ -25,7 +25,7 @@ Mirrors the print card structure:
 └─────────────────────────────────────────┘
 ```
 
-- **Thumbnail:** fetched via `ProjectService.getProjectImage(projectId, imageId)` if `defaultProjectImageId` is set; otherwise a `folder` mat-icon. Fetched images cached in a `projectImages = signal<Map<string, string>>(new Map())` on the component to avoid re-fetching on expand/collapse.
+- **Thumbnail:** always a `folder` mat-icon (project image support is deferred to a future spec).
 - **Status chip:** `<app-project-chip>` with project name and status.
 - **Meta row:** print count (e.g. "5 prints"), total print time via `duration` pipe.
 - **Materials:** aggregated `filamentUsage` list — color dot, display name, summed weight in grams.
@@ -51,30 +51,6 @@ Tapping navigates to `/prints/:id`. Appears immediately below its parent project
 
 ---
 
-## Data Changes
-
-### `ProjectService.getProjectImage()`
-
-New method added to `project.service.ts`:
-
-```typescript
-getProjectImage(projectId: string, imageId: number): Observable<string>
-```
-
-Same implementation pattern as `PrintService.getPrintImage()`: GET `/api/Projects/{projectId}/images/{imageId}` as a blob, convert to base64 data URL via `FileReader`. Uses `allow-anonymous-request` header.
-
-### Component state
-
-Add to `PrintGroupedViewComponent`:
-
-```typescript
-projectImages = signal<Map<string, string>>(new Map());
-```
-
-When a project card is rendered with a non-zero `defaultProjectImageId`, and no cache entry exists yet, call `getProjectImage()` and store the result in the map. Use a simple `ngOnInit`-style effect or an `effect()` tied to the feed signal to trigger loads for visible project rows.
-
----
-
 ## Template Structure
 
 ```html
@@ -91,8 +67,7 @@ When a project card is rendered with a non-zero `defaultProjectImageId`, and no 
 
 ## Files Changed
 
-- **Modify:** `src/app/core/services/project.service.ts` — add `getProjectImage()`
-- **Modify:** `src/app/print/print-list/print-grouped-view/print-grouped-view.component.ts` — add `projectImages` signal, image loading logic
+- **Modify:** `src/app/print/print-list/print-grouped-view/print-grouped-view.component.ts` — add `getStatusIcon()` helper
 - **Modify:** `src/app/print/print-list/print-grouped-view/print-grouped-view.component.html` — add mobile card section, add `fxHide.lt-md` to table
 - **Modify:** `src/app/print/print-list/print-grouped-view/print-grouped-view.component.scss` — add mobile card styles matching all-prints card CSS
 

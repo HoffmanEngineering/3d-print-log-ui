@@ -6,9 +6,10 @@
     <mat-card-header>
       @if (!isEditing()) {
       <mat-card-title>{{ p.name }}</mat-card-title>
-      @if (p.reference) {
+      }
+      @if (!isEditing() && p.reference) {
       <mat-card-subtitle>{{ p.reference }}</mat-card-subtitle>
-      } }
+      }
       <div class="header-actions">
         <mat-select [value]="p.status" (selectionChange)="onStatusChange($event.value)">
           <mat-option [value]="ProjectStatus.InProgress">In Progress</mat-option>

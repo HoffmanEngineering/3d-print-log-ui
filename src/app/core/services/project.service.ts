@@ -34,6 +34,7 @@ export interface ProjectImageDto {
 export interface ProjectImageValue {
   id?: number;
   url?: string;
+  /** Populated only for newly staged (not yet uploaded) images. */
   file?: File;
   isDefault: boolean;
   displayOrder: number;

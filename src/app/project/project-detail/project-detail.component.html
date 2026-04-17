@@ -2,48 +2,55 @@
 <div class="loading-center"><mat-spinner /></div>
 } @else if (project(); as p) {
 <div class="project-detail-layout">
-  @if (isEditing()) {
-  <app-project-edit-form
-    [project]="p"
-    [isSaving]="isSaving()"
-    (saved)="onSave($event)"
-    (cancelled)="onCancelEdit()"
-  />
-  } @else {
   <mat-card appearance="outlined">
     <mat-card-header>
+      @if (!isEditing()) {
       <mat-card-title>{{ p.name }}</mat-card-title>
       @if (p.reference) {
       <mat-card-subtitle>{{ p.reference }}</mat-card-subtitle>
-      }
+      } }
       <div class="header-actions">
-        @if (isOwner()) {
-        <button mat-icon-button data-testid="edit-button" (click)="onEditClick()">
-          <mat-icon>edit</mat-icon>
-        </button>
-        }
         <mat-select [value]="p.status" (selectionChange)="onStatusChange($event.value)">
           <mat-option [value]="ProjectStatus.InProgress">In Progress</mat-option>
           <mat-option [value]="ProjectStatus.Complete">Complete</mat-option>
           <mat-option [value]="ProjectStatus.OnHold">On Hold</mat-option>
           <mat-option [value]="ProjectStatus.Cancelled">Cancelled</mat-option>
         </mat-select>
-        <button mat-icon-button [matMenuTriggerFor]="menu">
+        @if (isOwner() && !isEditing()) {
+        <button mat-icon-button data-testid="edit-button" aria-label="Edit project" (click)="onEditClick()">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
           <mat-icon>more_vert</mat-icon>
         </button>
         <mat-menu #menu="matMenu">
-          <button mat-menu-item (click)="onDeleteProject()"><mat-icon>delete</mat-icon> Delete project</button>
+          <button mat-menu-item (click)="onDeleteProject()">
+            <mat-icon>delete</mat-icon> Delete project
+          </button>
         </mat-menu>
+        }
       </div>
     </mat-card-header>
 
     <mat-card-content>
+      @if (isEditing()) {
+      <app-project-edit-form [project]="p" [isSaving]="isSaving()" (saved)="onSave($event)" (cancelled)="onCancelEdit()" />
+      <div class="images-section">
+        @if (images().length > 0) {
+        <app-image-carousel [imageCount]="images().length" [selectedIndex]="selectedImageIndex()" (indexChange)="selectedImageIndex.set($event)">
+          <img [src]="images()[selectedImageIndex()].url" [alt]="'Project image ' + (selectedImageIndex() + 1)" class="carousel-image" />
+        </app-image-carousel>
+        }
+        <app-image-thumbnail-strip [images]="images()" [selectedId]="images()[selectedImageIndex()]?.id" [editable]="true" [maxImages]="5" (imageSelected)="onImageSelected($event)" (imageDeleted)="onImageDeleted($event)" (defaultChanged)="onDefaultChanged($event)" (imagesReordered)="onImagesReordered($event)" (addClicked)="onAddImageClicked()" />
+        <input #fileInput type="file" accept="image/*" style="display:none" (change)="onFileSelected($event)" />
+      </div>
+      } @else {
       @if (p.description) {
       <p>{{ p.description }}</p>
-      } @if (p.url) {
+      }
+      @if (p.url) {
       <p><a [href]="p.url" target="_blank" rel="noopener">View model source</a></p>
       }
-
       <div class="stats-bar">
         <div class="stat">
           <span class="label">Prints</span>
@@ -55,9 +62,18 @@
         </div>
         <div class="stat">
           <span class="label">Filament Used</span>
-          <span class="value">{{ (p.totalFilamentWeightMg / 1000) | number:'1.0-1' }}g</span>
+          <span class="value">{{ (p.totalFilamentWeightMg / 1000) | number : "1.0-1" }}g</span>
         </div>
       </div>
+      @if (carouselImages().length > 0) {
+      <div class="images-section">
+        <app-image-carousel [imageCount]="carouselImages().length" [selectedIndex]="selectedImageIndex()" (indexChange)="selectedImageIndex.set($event)">
+          <img [src]="carouselImages()[selectedImageIndex()].url" [alt]="'Project image ' + (selectedImageIndex() + 1)" class="carousel-image" />
+        </app-image-carousel>
+        <app-image-thumbnail-strip [images]="carouselImages()" [selectedId]="carouselImages()[selectedImageIndex()]?.id" [editable]="false" (imageSelected)="onImageSelected($event)" />
+      </div>
+      }
+      }
     </mat-card-content>
   </mat-card>
 
@@ -67,13 +83,12 @@
       @for (print of prints(); track print.id) {
       <div class="print-row">
         <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
-        <span>{{ print.startDate | date:'mediumDate' }}</span>
+        <span>{{ print.startDate | date : "mediumDate" }}</span>
       </div>
       } @empty {
       <p>No prints in this project yet.</p>
       }
     </mat-card-content>
   </mat-card>
-  }
 </div>
 }

@@ -53,3 +53,15 @@
     border-bottom: none;
   }
 }
+
+.images-section {
+  margin-top: 16px;
+}
+
+.carousel-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  display: block;
+  border-radius: 4px;
+}

@@ -40,6 +40,8 @@ import { LoggingService } from 'src/app/core/services/logging.service';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.component';
+import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
+import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -58,6 +60,8 @@ import { environment } from 'src/environments/environment';
     MatProgressSpinnerModule,
     SharedModule,
     ProjectEditFormComponent,
+    ImageCarouselComponent,
+    ImageThumbnailStripComponent,
   ],
 })
 export class ProjectDetailComponent implements OnInit {

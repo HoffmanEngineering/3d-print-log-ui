@@ -540,7 +540,26 @@
 
     <!-- more -->
     <ng-container matColumnDef="more">
-      <th mat-header-cell *matHeaderCellDef></th>
+      <th mat-header-cell *matHeaderCellDef (click)="$event.preventDefault(); $event.stopPropagation()">
+        <button
+          mat-button
+          class="transparent"
+          [matMenuTriggerFor]="groupedTableSettingsMenu"
+          aria-label="Change the layout of the grouped table."
+        >
+          <mat-icon>table_rows</mat-icon>Change table layout
+        </button>
+        <mat-menu #groupedTableSettingsMenu="matMenu">
+          <button
+            type="button"
+            mat-menu-item
+            aria-label="Change the layout of the grouped table."
+            (click)="openTableLayout()"
+          >
+            <mat-icon>table_rows</mat-icon>Change table layout
+          </button>
+        </mat-menu>
+      </th>
       <td mat-cell *matCellDef="let row" (click)="$event.preventDefault(); $event.stopPropagation()">
         @if (row.kind === 'project') {
           <button mat-button class="transparent" [matMenuTriggerFor]="projectMenu" [attr.aria-label]="'More options for ' + row.item.projectName">

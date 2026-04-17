@@ -18,7 +18,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
-import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, of } from 'rxjs';
@@ -52,7 +51,6 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./project-detail.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     RouterLink,
     MatCardModule,
     MatButtonModule,

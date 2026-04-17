@@ -5,6 +5,7 @@ import {
   tick,
 } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MediaMatcher } from '@angular/cdk/layout';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -80,8 +81,19 @@ describe('PrintGroupedViewComponent', () => {
   let ref: ComponentRef<PrintGroupedViewComponent>;
   let mockProjectService: jasmine.SpyObj<ProjectService>;
   let mockPrintService: jasmine.SpyObj<PrintService>;
+  let mockMediaMatcher: { matchMedia: jasmine.Spy };
 
   beforeEach(async () => {
+    localStorage.clear();
+    mockMediaMatcher = {
+      matchMedia: jasmine.createSpy('matchMedia').and.returnValue({
+        matches: false,
+        addListener: jasmine.createSpy('addListener'),
+        removeListener: jasmine.createSpy('removeListener'),
+        addEventListener: jasmine.createSpy('addEventListener'),
+        removeEventListener: jasmine.createSpy('removeEventListener'),
+      }),
+    };
     mockProjectService = jasmine.createSpyObj<ProjectService>(
       'ProjectService',
       ['getGroupedFeed']
@@ -123,6 +135,7 @@ describe('PrintGroupedViewComponent', () => {
         { provide: ToastrService, useValue: mockToastrService },
         { provide: MatDialog, useValue: mockDialog },
         { provide: LoggingService, useValue: mockLoggingService },
+        { provide: MediaMatcher, useValue: mockMediaMatcher },
       ],
     }).compileComponents();
 

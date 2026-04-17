@@ -9,11 +9,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { MediaMatcher } from '@angular/cdk/layout';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import moment from 'moment';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -37,6 +38,8 @@ import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
+import { ColumnDefinition } from '../print-list.component';
+import { PrintTableLayoutComponent } from '../print-table-layout/print-table-layout.component';
 
 export type GroupedRow =
   | { kind: 'project'; item: GroupedFeedItemDto }
@@ -61,6 +64,10 @@ export class PrintGroupedViewComponent implements OnInit {
 
   readonly printStatusTypes = PrintStatus;
 
+  private readonly mediaMatcher = inject(MediaMatcher);
+  private readonly GROUPED_TABLE_DISPLAYED_COLUMNS =
+    'grouped_table_displayed_columns';
+
   // ---- Inputs from PrintListComponent ----
   searchText = input<string>('');
   filterByStatus = input<PrintStatus | null>(null);
@@ -68,7 +75,7 @@ export class PrintGroupedViewComponent implements OnInit {
   filterByFilamentIds = input<string[]>([]);
   sortColumn = input<PrintSummarySortColumn>(PrintSummarySortColumn.StartDate);
   sortDirection = input<SortDirection>(SortDirection.Desc);
-  displayedColumns = input<string[]>([]);
+  displayedColumns = signal<string[]>(this.loadDisplayedColumns());
   defaultFilamentPriceSetting = input<UserSetting | null>(null);
   preferredCurrencySymbolSetting = input<UserSetting | null>(null);
 
@@ -336,6 +343,155 @@ export class PrintGroupedViewComponent implements OnInit {
     this.printService.updatePrintStatus(id, newStatus).subscribe(() => {
       this.toastrService.success('Status Updated.', 'Success');
       this.loadFeed();
+    });
+  }
+
+  private loadDisplayedColumns(): string[] {
+    const stored = JSON.parse(
+      localStorage.getItem(this.GROUPED_TABLE_DISPLAYED_COLUMNS) ?? 'null'
+    );
+    if (Array.isArray(stored) && stored.every((e) => typeof e === 'string')) {
+      return stored;
+    }
+    const defaults = this.mediaMatcher.matchMedia('(max-width: 800px)').matches
+      ? ['title', 'status', 'more']
+      : ['title', 'status', 'printTime', 'filamentSummary', 'more'];
+    localStorage.setItem(
+      this.GROUPED_TABLE_DISPLAYED_COLUMNS,
+      JSON.stringify(defaults)
+    );
+    return defaults;
+  }
+
+  readonly allPossibleGroupedColumns: ColumnDefinition[] = [
+    {
+      key: 'image',
+      displayName: 'Image (Small)',
+      description:
+        'Folder icon for project rows; small print thumbnail for print rows.',
+    },
+    {
+      key: 'image-medium',
+      displayName: 'Image (Medium)',
+      description:
+        'Folder icon for project rows; medium print thumbnail for print rows.',
+    },
+    {
+      key: 'image-large',
+      displayName: 'Image (Large)',
+      description:
+        'Folder icon for project rows; large print thumbnail for print rows.',
+    },
+    {
+      key: 'title',
+      displayName: 'Title',
+      description:
+        'Project name with expand/collapse for project rows; print title for print rows.',
+    },
+    {
+      key: 'printer',
+      displayName: 'Printer',
+      description:
+        'All printers used in the project for project rows; individual printer for print rows.',
+    },
+    {
+      key: 'start-date',
+      displayName: 'Start Date',
+      description:
+        'Most recent print date for project rows; individual start date for print rows.',
+    },
+    {
+      key: 'start-time',
+      displayName: 'Start Time',
+      description: 'Start time for print rows.',
+    },
+    {
+      key: 'start-date-time',
+      displayName: 'Start Date/Time',
+      description: 'Start date/time for print rows.',
+    },
+    {
+      key: 'end-date',
+      displayName: 'End Date',
+      description: 'Computed end date for print rows.',
+    },
+    {
+      key: 'end-time',
+      displayName: 'End Time',
+      description: 'Computed end time for print rows.',
+    },
+    {
+      key: 'end-date-time',
+      displayName: 'End Date/Time',
+      description: 'Computed end date/time for print rows.',
+    },
+    {
+      key: 'status',
+      displayName: 'Status',
+      description:
+        'Project status for project rows; print status for print rows.',
+    },
+    {
+      key: 'printTime',
+      displayName: 'Print Time',
+      description:
+        'Total project print time for project rows; individual print time for print rows.',
+    },
+    {
+      key: 'filamentSummary',
+      displayName: 'Filament',
+      description:
+        'Aggregated filaments for project rows; per-print filaments for print rows.',
+    },
+    {
+      key: 'totalFilamentUsage',
+      displayName: 'Total Material (g)',
+      description: 'Total filament weight in grams.',
+    },
+    {
+      key: 'totalCost',
+      displayName: 'Total Cost',
+      description:
+        'Aggregate filament cost for project rows; per-print cost for print rows.',
+    },
+    {
+      key: 'commentCount',
+      displayName: 'Comments',
+      description: 'Comment count for print rows.',
+    },
+  ];
+
+  openTableLayout(): void {
+    const onSelectionChange = new Subject<string[]>();
+
+    const subscription = onSelectionChange.subscribe((selectedColumns) => {
+      this.displayedColumns.set([
+        ...selectedColumns.filter((col) => col !== 'more'),
+        'more',
+      ]);
+      localStorage.setItem(
+        this.GROUPED_TABLE_DISPLAYED_COLUMNS,
+        JSON.stringify(this.displayedColumns())
+      );
+    });
+
+    const dialogRef = this.dialog.open(PrintTableLayoutComponent, {
+      width: '450px',
+      minWidth: '450px',
+      disableClose: true,
+      data: {
+        title: 'Grouped View Table Layout',
+        allPossibleColumns: this.allPossibleGroupedColumns,
+        currentColumns: this.displayedColumns(),
+        changeEvent: onSelectionChange,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      subscription.unsubscribe();
+      this.loggingService.logEvent('PrintGroupedViewLayoutChanged', {
+        columns: JSON.stringify(this.displayedColumns()),
+      });
     });
   }
 

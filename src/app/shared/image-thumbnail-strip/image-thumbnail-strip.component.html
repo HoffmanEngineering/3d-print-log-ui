@@ -28,7 +28,7 @@
             (click)="onThumbnailClick(image)"
           >
             @if (image.url) {
-              <img [src]="image.url" alt="" />
+              <img [src]="image.url | authImage | async" alt="" />
             } @else {
               <div class="placeholder">
                 <mat-icon>image</mat-icon>

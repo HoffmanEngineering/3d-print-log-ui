@@ -8,9 +8,11 @@ import {
   ElementRef,
   effect,
 } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { AuthImagePipe } from '../pipes/auth-image.pipe';
 
 export interface ThumbnailImage {
   id?: number;
@@ -24,7 +26,7 @@ export interface ThumbnailImage {
   templateUrl: './image-thumbnail-strip.component.html',
   styleUrls: ['./image-thumbnail-strip.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, MatButtonModule, DragDropModule],
+  imports: [MatIconModule, MatButtonModule, DragDropModule, AuthImagePipe, AsyncPipe],
 })
 export class ImageThumbnailStripComponent {
   images = input.required<ThumbnailImage[]>();

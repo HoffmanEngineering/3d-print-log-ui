@@ -335,6 +335,11 @@ describe('PrintGroupedViewComponent', () => {
   }));
 
   describe('getPrintEndDate', () => {
+    it('returns null when print is undefined', () => {
+      fixture.detectChanges();
+      expect(component.getPrintEndDate(undefined)).toBeNull();
+    });
+
     it('returns null when print has no times', () => {
       fixture.detectChanges();
       const print = {

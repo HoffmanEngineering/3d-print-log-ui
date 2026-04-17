@@ -554,6 +554,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
           (column) => column.key !== 'more'
         ),
         currentColumns: this.displayedColumns,
+        defaultColumns: [
+          'image',
+          'title',
+          'printer',
+          'start-date',
+          'status',
+          'printTime',
+          'filamentSummary',
+          'commentCount',
+          'more',
+        ],
         changeEvent: onSelectionChange,
       },
     });

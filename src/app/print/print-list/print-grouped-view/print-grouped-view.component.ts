@@ -265,7 +265,8 @@ export class PrintGroupedViewComponent implements OnInit {
     }
   }
 
-  getPrintEndDate(print: PrintSummary): Date | null {
+  getPrintEndDate(print: PrintSummary | undefined | null): Date | null {
+    if (!print) return null;
     if (
       print.startDate &&
       (print.estimatedPrintTimeInSeconds > 0 || print.printTimeInSeconds > 0)
@@ -487,6 +488,13 @@ export class PrintGroupedViewComponent implements OnInit {
         title: 'Grouped View Table Layout',
         allPossibleColumns: this.allPossibleGroupedColumns,
         currentColumns: this.displayedColumns(),
+        defaultColumns: [
+          'title',
+          'status',
+          'printTime',
+          'filamentSummary',
+          'more',
+        ],
         changeEvent: onSelectionChange,
       },
     });

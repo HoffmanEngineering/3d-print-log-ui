@@ -134,4 +134,42 @@ describe('ProjectDetailComponent', () => {
     fixture.detectChanges();
     expect(component.isEditing()).toBe(false);
   });
+
+  it('should call updateProject and re-fetch project on save', async () => {
+    mockProjectService.updateProject.and.returnValue(of(mockProject));
+    mockProjectService.uploadImage = jasmine
+      .createSpy()
+      .and.returnValue(
+        of({ id: 10, isDefault: false, displayOrder: 0 } as any)
+      );
+    mockProjectService.reorderImages.and.returnValue(of(void 0));
+    mockProjectService.setDefaultImage.and.returnValue(of(void 0));
+    mockProjectService.deleteImage.and.returnValue(of(void 0));
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+    component.onEditClick();
+
+    component.onSave({
+      name: 'Updated Name',
+      reference: '',
+      description: '',
+      url: '',
+      viewStatus: ProjectViewStatus.Public,
+    });
+
+    await fixture.whenStable();
+
+    expect(mockProjectService.updateProject).toHaveBeenCalledWith(
+      'abc-123',
+      jasmine.objectContaining({
+        name: 'Updated Name',
+        status: ProjectStatus.InProgress,
+      })
+    );
+    // Called once on init, once after save
+    expect(mockProjectService.getProjectById).toHaveBeenCalledTimes(2);
+    expect(component.isEditing()).toBe(false);
+    expect(component.isSaving()).toBe(false);
+  });
 });

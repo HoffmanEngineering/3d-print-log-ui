@@ -21,10 +21,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
-import { take } from 'rxjs/operators';
+import { concat, forkJoin, of } from 'rxjs';
+import { mergeMap, take, toArray } from 'rxjs/operators';
 import {
   ProjectService,
   ProjectDetailDto,
+  ProjectImageDto,
   ProjectImageValue,
   ProjectEditFormValue,
   ProjectStatus,
@@ -180,7 +182,112 @@ export class ProjectDetailComponent implements OnInit {
     this.loggingService.logEvent('ProjectDetail_EditCancelled');
   }
 
-  onSave(_formValue: ProjectEditFormValue): void {}
+  onSave(formValue: ProjectEditFormValue): void {
+    const p = this.project()!;
+    const dto: PutProjectDto = {
+      id: p.id,
+      name: formValue.name,
+      reference: formValue.reference || undefined,
+      description: formValue.description || undefined,
+      url: formValue.url || undefined,
+      status: p.status,
+      viewStatus: formValue.viewStatus,
+    };
+
+    const snapshot = this.images();
+    const newImages = snapshot
+      .filter((img) => !img.id)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+    const existingImages = snapshot.filter((img) => !!img.id);
+    const defaultImage = snapshot.find((img) => img.isDefault);
+    const idsToDelete = [...this.imageIdsToDelete];
+
+    this.isSaving.set(true);
+
+    let uploadedIds: number[] = [];
+
+    const upload$ =
+      newImages.length === 0
+        ? of([] as ProjectImageDto[])
+        : concat(
+            ...newImages.map((img) =>
+              this.projectService.uploadImage(p.id, img.file!)
+            )
+          ).pipe(toArray());
+
+    this.projectService
+      .updateProject(p.id, dto)
+      .pipe(
+        mergeMap(() => upload$),
+        mergeMap((uploadResults: ProjectImageDto[]) => {
+          uploadedIds = uploadResults.map((r) => r.id);
+
+          let defaultId: number | null = defaultImage?.id ?? null;
+          if (!defaultId) {
+            const newDefaultIdx = newImages.findIndex((img) => img.isDefault);
+            if (newDefaultIdx >= 0)
+              defaultId = uploadedIds[newDefaultIdx] ?? null;
+          }
+          const defaultChanged =
+            defaultId !== null && defaultId !== this.defaultImageIdOnLoad;
+
+          return defaultChanged && defaultId
+            ? this.projectService.setDefaultImage(p.id, defaultId)
+            : of(null);
+        }),
+        mergeMap(() =>
+          idsToDelete.length === 0
+            ? of(null)
+            : forkJoin(
+                idsToDelete.map((id) =>
+                  this.projectService.deleteImage(p.id, id)
+                )
+              )
+        ),
+        mergeMap(() => {
+          const existingOrdered = existingImages
+            .filter((img) => !idsToDelete.includes(img.id!))
+            .map((img) => ({ id: img.id!, displayOrder: img.displayOrder }));
+
+          const newOrdered = newImages
+            .map((img, i) => ({
+              id: uploadedIds[i],
+              displayOrder: img.displayOrder,
+            }))
+            .filter((x) => x.id !== undefined) as {
+            id: number;
+            displayOrder: number;
+          }[];
+
+          const orderedIds = [...existingOrdered, ...newOrdered]
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((x) => x.id);
+
+          return orderedIds.length === 0
+            ? of(null)
+            : this.projectService.reorderImages(p.id, orderedIds);
+        }),
+        mergeMap(() => this.projectService.getProjectById(p.id)),
+        take(1)
+      )
+      .subscribe({
+        next: (updated) => {
+          this.project.set(updated);
+          this.isEditing.set(false);
+          this.isSaving.set(false);
+          this.images.set([]);
+          this.imageIdsToDelete = [];
+          this.loggingService.logEvent('ProjectDetail_Saved', {
+            hasNewImages: newImages.length > 0,
+            deletedImageCount: idsToDelete.length,
+            reordered: snapshot.length > 1,
+          });
+        },
+        error: () => {
+          this.isSaving.set(false);
+        },
+      });
+  }
 
   onAddImageClicked(): void {
     this.fileInputRef.nativeElement.click();

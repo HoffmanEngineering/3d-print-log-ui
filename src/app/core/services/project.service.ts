@@ -31,6 +31,22 @@ export interface ProjectImageDto {
   url?: string;
 }
 
+export interface ProjectImageValue {
+  id?: number;
+  url?: string;
+  file?: File;
+  isDefault: boolean;
+  displayOrder: number;
+}
+
+export interface ProjectEditFormValue {
+  name: string;
+  reference: string;
+  description: string;
+  url: string;
+  viewStatus: ProjectViewStatus;
+}
+
 export interface ProjectSummaryDto {
   id: string;
   name: string;
@@ -174,6 +190,13 @@ export class ProjectService {
     return this.http.put<void>(
       `${this.baseApi}/api/Projects/${projectId}/images/reorder`,
       orderedImageIds
+    );
+  }
+
+  setDefaultImage(projectId: string, imageId: number): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseApi}/api/Projects/${projectId}/images/${imageId}/set-as-default`,
+      {}
     );
   }
 

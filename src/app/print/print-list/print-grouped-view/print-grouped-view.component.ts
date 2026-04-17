@@ -275,7 +275,7 @@ export class PrintGroupedViewComponent implements OnInit {
   }
 
   getTotalFilamentCost(filamentUsage: PrintFilamentSummaryDto[]): string {
-    const defaultPrice = this.defaultFilamentPriceSetting()?.value ?? null;
+    const defaultPrice = this.defaultFilamentPriceSetting()?.value;
     const symbol = this.preferredCurrencySymbolSetting()?.value ?? '$';
     const total = this.printService.calculateTotalPrintCost(
       filamentUsage,

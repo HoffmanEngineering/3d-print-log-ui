@@ -332,6 +332,16 @@ describe('PrintGroupedViewComponent', () => {
       expect(component.getPrintEndDate(print)).toBeNull();
     });
 
+    it('returns null when startDate is not set', () => {
+      fixture.detectChanges();
+      const print = {
+        startDate: undefined,
+        printTimeInSeconds: 3600,
+        estimatedPrintTimeInSeconds: 0,
+      } as any;
+      expect(component.getPrintEndDate(print)).toBeNull();
+    });
+
     it('returns startDate + actual time when printTimeInSeconds is set', () => {
       fixture.detectChanges();
       const start = new Date('2024-01-01T10:00:00Z');

@@ -384,20 +384,36 @@
     <ng-container matColumnDef="end-date">
       <th mat-header-cell *matHeaderCellDef>End Date</th>
       <td mat-cell *matCellDef="let row">
-        <!-- End date not shown for project rows -->
+        @if (row.kind === 'expanded-print') {
+          {{ getPrintEndDate(row.print) | date }}
+        } @else if (row.kind === 'print') {
+          {{ getPrintEndDate(row.item.print) | date }}
+        }
       </td>
     </ng-container>
 
     <!-- end-time -->
     <ng-container matColumnDef="end-time">
       <th mat-header-cell *matHeaderCellDef>End Time</th>
-      <td mat-cell *matCellDef="let row"></td>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'expanded-print') {
+          {{ getPrintEndDate(row.print) | date:'mediumTime' }}
+        } @else if (row.kind === 'print') {
+          {{ getPrintEndDate(row.item.print) | date:'mediumTime' }}
+        }
+      </td>
     </ng-container>
 
     <!-- end-date-time -->
     <ng-container matColumnDef="end-date-time">
       <th mat-header-cell *matHeaderCellDef>End Date/Time</th>
-      <td mat-cell *matCellDef="let row"></td>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'expanded-print') {
+          {{ getPrintEndDate(row.print) | date:'medium' }}
+        } @else if (row.kind === 'print') {
+          {{ getPrintEndDate(row.item.print) | date:'medium' }}
+        }
+      </td>
     </ng-container>
 
     <!-- status -->
@@ -500,8 +516,12 @@
     <ng-container matColumnDef="totalCost">
       <th mat-header-cell *matHeaderCellDef>Total Cost</th>
       <td mat-cell *matCellDef="let row">
-        @if (row.kind !== 'project') {
-          &mdash;
+        @if (row.kind === 'project') {
+          {{ getTotalFilamentCost(row.item.filamentUsage ?? []) }}
+        } @else if (row.kind === 'expanded-print') {
+          {{ getTotalFilamentCost(row.print.filamentUsage) }}
+        } @else if (row.kind === 'print') {
+          {{ getTotalFilamentCost(row.item.print?.filamentUsage ?? []) }}
         }
       </td>
     </ng-container>

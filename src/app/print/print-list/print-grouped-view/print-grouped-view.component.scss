@@ -31,7 +31,6 @@
 
 .project-row {
   cursor: pointer;
-  font-weight: 500;
   background-color: rgba(0, 0, 0, 0.02);
 
   &:hover {
@@ -74,6 +73,7 @@
   height: 28px;
   padding: 0 8px;
   min-width: unset;
+  white-space: nowrap;
 
   mat-icon {
     font-size: 16px;

@@ -571,59 +571,11 @@
     <ng-container matColumnDef="filamentSummary">
       <th mat-header-cell *matHeaderCellDef>Materials</th>
       <td mat-cell *matCellDef="let print">
-        <div
-          gdColumns="max-content max-content max-content max-content"
-          gdRows="auto"
-          gdGap="10px"
-          style="padding-inline: 10px; padding-block: 5px"
-        >
-          @for (fu of print.filamentUsage; track fu; let i = $index) {
-            <div gdColumn="1" [gdRow]="i">
-              @if (fu.filament !== null) {
-                <div
-                  class="filament-color-cell"
-                  [style.background-color]="'#' + fu.filament.colorHex"
-                ></div>
-              }
-            </div>
-            <div gdColumn="2" [gdRow]="i">
-              @if (fu.filament !== null) {
-                <a
-                  [routerLink]="['/filament', fu.filament.id]"
-                  (click)="$event.preventDefault(); $event.stopPropagation()"
-                  >{{ fu.filament?.displayName }}</a
-                >
-                @if (fu.filament?.colorName) {
-                  ({{ fu.filament?.colorName }})
-                }
-              } @else {
-                {{ fu.notes }}
-              }
-            </div>
-            <div gdColumn="3" [gdRow]="i">
-              @if (fu.amountMg !== null && fu.amountMg > 0) {
-                {{ fu.amountMg / 1000 | number: '1.0-1' }} g
-              } @else {
-                <div matTooltip="* indicates Estimated Material Usage">
-                  {{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }} g *
-                </div>
-              }
-            </div>
-            <div
-              gdColumn="4"
-              [gdRow]="i"
-              matTooltip="* indicates default material price used"
-            >
-              @if (fu.amountMg !== null && fu.amountMg > 0) {
-                {{ getActualPrice(fu) }}
-              } @else {
-                <div>
-                  {{ getEstimatedPrice(fu) }}
-                </div>
-              }
-            </div>
-          }
-        </div>
+        <app-filament-usage-summary
+          [filamentUsage]="print.filamentUsage"
+          [defaultFilamentPrice]="defaultFilamentPriceSetting?.value"
+          [currencySymbol]="preferredCurrencySymbolSetting?.value ?? '$'"
+        />
       </td>
     </ng-container>
     <ng-container matColumnDef="totalFilamentUsage">

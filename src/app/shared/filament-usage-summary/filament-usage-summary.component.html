@@ -1,0 +1,38 @@
+<div class="filament-grid">
+  @for (fu of filamentUsage(); track fu) {
+    <div>
+      @if (fu.filament !== null) {
+        <div class="filament-color-cell" [style.background-color]="'#' + fu.filament.colorHex"></div>
+      }
+    </div>
+    <div>
+      @if (fu.filament !== null) {
+        <a
+          [routerLink]="['/filament', fu.filament.id]"
+          (click)="$event.preventDefault(); $event.stopPropagation()"
+        >{{ fu.filament?.displayName }}</a>
+        @if (fu.filament?.colorName) {
+          ({{ fu.filament?.colorName }})
+        }
+      } @else {
+        {{ fu.notes }}
+      }
+    </div>
+    <div>
+      @if (fu.amountMg !== null && fu.amountMg > 0) {
+        {{ fu.amountMg / 1000 | number: '1.0-1' }} g
+      } @else {
+        <div matTooltip="* indicates Estimated Material Usage">
+          {{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }} g *
+        </div>
+      }
+    </div>
+    <div matTooltip="* indicates default material price used">
+      @if (fu.amountMg !== null && fu.amountMg > 0) {
+        {{ getActualPrice(fu) }}
+      } @else {
+        <div>{{ getEstimatedPrice(fu) }}</div>
+      }
+    </div>
+  }
+</div>

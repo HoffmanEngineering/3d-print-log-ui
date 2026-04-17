@@ -7,8 +7,9 @@ import {
   ProjectViewStatus,
 } from 'src/app/core/services/project.service';
 import { PrintService } from 'src/app/core/services/print.service';
+import { AuthService } from 'src/app/core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -28,12 +29,22 @@ const mockProject: ProjectDetailDto = {
 
 describe('ProjectDetailComponent', () => {
   let fixture: ComponentFixture<ProjectDetailComponent>;
+  let component: ProjectDetailComponent;
   let mockProjectService: jasmine.SpyObj<ProjectService>;
+  let currentUserSubject: BehaviorSubject<any>;
 
   beforeEach(async () => {
     mockProjectService = jasmine.createSpyObj<ProjectService>(
       'ProjectService',
-      ['getProjectById', 'deleteProject', 'updateProject']
+      [
+        'getProjectById',
+        'deleteProject',
+        'updateProject',
+        'uploadImage',
+        'deleteImage',
+        'reorderImages',
+        'setDefaultImage',
+      ]
     );
     mockProjectService.getProjectById.and.returnValue(of(mockProject));
 
@@ -47,11 +58,15 @@ describe('ProjectDetailComponent', () => {
       })
     );
 
+    currentUserSubject = new BehaviorSubject({ id: 1 });
+    const mockAuthService = { userProfile$: currentUserSubject.asObservable() };
+
     await TestBed.configureTestingModule({
       imports: [ProjectDetailComponent, NoopAnimationsModule],
       providers: [
         { provide: ProjectService, useValue: mockProjectService },
         { provide: PrintService, useValue: mockPrintService },
+        { provide: AuthService, useValue: mockAuthService },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { params: { id: 'abc-123' } } },
@@ -65,6 +80,7 @@ describe('ProjectDetailComponent', () => {
 
     fixture = TestBed.createComponent(ProjectDetailComponent);
     fixture.detectChanges();
+    component = fixture.componentInstance;
   });
 
   it('should display project name', async () => {
@@ -77,5 +93,45 @@ describe('ProjectDetailComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('2');
+  });
+
+  it('should show edit button for owner', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const editButton = fixture.nativeElement.querySelector(
+      '[data-testid="edit-button"]'
+    );
+    expect(editButton).toBeTruthy();
+  });
+
+  it('should not show edit button for non-owner', async () => {
+    currentUserSubject.next({ id: 99 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const editButton = fixture.nativeElement.querySelector(
+      '[data-testid="edit-button"]'
+    );
+    expect(editButton).toBeNull();
+  });
+
+  it('should enter edit mode and show form when edit button clicked', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const editButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="edit-button"]'
+    );
+    editButton.click();
+    fixture.detectChanges();
+    const form = fixture.nativeElement.querySelector('app-project-edit-form');
+    expect(form).toBeTruthy();
+  });
+
+  it('should exit edit mode on cancel', async () => {
+    await fixture.whenStable();
+    component.onEditClick();
+    fixture.detectChanges();
+    component.onCancelEdit();
+    fixture.detectChanges();
+    expect(component.isEditing()).toBe(false);
   });
 });

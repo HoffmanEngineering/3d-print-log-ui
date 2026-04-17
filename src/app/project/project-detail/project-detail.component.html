@@ -2,6 +2,14 @@
 <div class="loading-center"><mat-spinner /></div>
 } @else if (project(); as p) {
 <div class="project-detail-layout">
+  @if (isEditing()) {
+  <app-project-edit-form
+    [project]="p"
+    [isSaving]="isSaving()"
+    (saved)="onSave($event)"
+    (cancelled)="onCancelEdit()"
+  />
+  } @else {
   <mat-card appearance="outlined">
     <mat-card-header>
       <mat-card-title>{{ p.name }}</mat-card-title>
@@ -9,6 +17,11 @@
       <mat-card-subtitle>{{ p.reference }}</mat-card-subtitle>
       }
       <div class="header-actions">
+        @if (isOwner()) {
+        <button mat-icon-button data-testid="edit-button" (click)="onEditClick()">
+          <mat-icon>edit</mat-icon>
+        </button>
+        }
         <mat-select [value]="p.status" (selectionChange)="onStatusChange($event.value)">
           <mat-option [value]="ProjectStatus.InProgress">In Progress</mat-option>
           <mat-option [value]="ProjectStatus.Complete">Complete</mat-option>
@@ -61,5 +74,6 @@
       }
     </mat-card-content>
   </mat-card>
+  }
 </div>
 }

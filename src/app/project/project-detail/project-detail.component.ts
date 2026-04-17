@@ -21,12 +21,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
-import { concat, forkJoin, of } from 'rxjs';
-import { mergeMap, take, toArray } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 import {
   ProjectService,
   ProjectDetailDto,
-  ProjectImageDto,
   ProjectImageValue,
   ProjectEditFormValue,
   ProjectStatus,
@@ -178,9 +176,7 @@ export class ProjectDetailComponent implements OnInit {
     this.loggingService.logEvent('ProjectDetail_EditCancelled');
   }
 
-  onSave(_formValue: ProjectEditFormValue): void {
-    // implemented in Task 6
-  }
+  onSave(_formValue: ProjectEditFormValue): void {}
 
   onAddImageClicked(): void {
     this.fileInputRef.nativeElement.click();

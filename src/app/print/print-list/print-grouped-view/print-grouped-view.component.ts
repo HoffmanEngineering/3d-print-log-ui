@@ -15,6 +15,7 @@ import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
+import moment from 'moment';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   GroupedFeedItemDto,
@@ -22,11 +23,13 @@ import {
   ProjectStatus,
 } from 'src/app/core/services/project.service';
 import {
+  PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
   PrintSummary,
   PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
+import { UserSetting } from 'src/app/core/services/user-setting.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
@@ -66,6 +69,8 @@ export class PrintGroupedViewComponent implements OnInit {
   sortColumn = input<PrintSummarySortColumn>(PrintSummarySortColumn.StartDate);
   sortDirection = input<SortDirection>(SortDirection.Desc);
   displayedColumns = input<string[]>([]);
+  defaultFilamentPriceSetting = input<UserSetting | null>(null);
+  preferredCurrencySymbolSetting = input<UserSetting | null>(null);
 
   // ---- Internal state ----
   feed = signal<PagedList<GroupedFeedItemDto> | null>(null);
@@ -251,6 +256,36 @@ export class PrintGroupedViewComponent implements OnInit {
       default:
         return '';
     }
+  }
+
+  getPrintEndDate(print: PrintSummary): Date | null {
+    if (
+      print.startDate &&
+      (print.estimatedPrintTimeInSeconds > 0 || print.printTimeInSeconds > 0)
+    ) {
+      const printTime =
+        print.printTimeInSeconds > 0
+          ? print.printTimeInSeconds
+          : print.estimatedPrintTimeInSeconds > 0
+            ? print.estimatedPrintTimeInSeconds
+            : 0;
+      return moment(print.startDate).add(printTime, 'seconds').toDate();
+    }
+    return null;
+  }
+
+  getTotalFilamentCost(filamentUsage: PrintFilamentSummaryDto[]): string {
+    const defaultPrice = this.defaultFilamentPriceSetting()?.value ?? null;
+    const symbol = this.preferredCurrencySymbolSetting()?.value ?? '$';
+    const total = this.printService.calculateTotalPrintCost(
+      filamentUsage,
+      symbol,
+      defaultPrice
+    );
+    if (total.total.valid) {
+      return total.total.formattedPrice;
+    }
+    return '';
   }
 
   trackByRow = (_index: number, row: GroupedRow): string => {

@@ -88,7 +88,12 @@ describe('PrintGroupedViewComponent', () => {
     );
     mockPrintService = jasmine.createSpyObj<PrintService>('PrintService', [
       'getPrintSummaries',
+      'calculateTotalPrintCost',
     ]);
+    mockPrintService.calculateTotalPrintCost.and.returnValue({
+      prices: [],
+      total: { valid: false, message: 'Cannot calculate total' },
+    });
 
     mockProjectService.getGroupedFeed.and.returnValue(
       of(makePagedList([mockProjectItem, mockPrintItem]))
@@ -315,4 +320,68 @@ describe('PrintGroupedViewComponent', () => {
     // Expanded state should be cleared
     expect(component.expandedProjectPrints().size).toBe(0);
   }));
+
+  describe('getPrintEndDate', () => {
+    it('returns null when print has no times', () => {
+      fixture.detectChanges();
+      const print = {
+        startDate: new Date('2024-01-01'),
+        printTimeInSeconds: 0,
+        estimatedPrintTimeInSeconds: 0,
+      } as any;
+      expect(component.getPrintEndDate(print)).toBeNull();
+    });
+
+    it('returns startDate + actual time when printTimeInSeconds is set', () => {
+      fixture.detectChanges();
+      const start = new Date('2024-01-01T10:00:00Z');
+      const print = {
+        startDate: start,
+        printTimeInSeconds: 3600,
+        estimatedPrintTimeInSeconds: 0,
+      } as any;
+      const result = component.getPrintEndDate(print);
+      expect(result).not.toBeNull();
+      expect(result!.getTime()).toBe(
+        new Date('2024-01-01T11:00:00Z').getTime()
+      );
+    });
+
+    it('falls back to estimated time when printTimeInSeconds is 0', () => {
+      fixture.detectChanges();
+      const start = new Date('2024-01-01T10:00:00Z');
+      const print = {
+        startDate: start,
+        printTimeInSeconds: 0,
+        estimatedPrintTimeInSeconds: 1800,
+      } as any;
+      const result = component.getPrintEndDate(print);
+      expect(result).not.toBeNull();
+      expect(result!.getTime()).toBe(
+        new Date('2024-01-01T10:30:00Z').getTime()
+      );
+    });
+  });
+
+  describe('getTotalFilamentCost', () => {
+    it('returns empty string when cost cannot be calculated', () => {
+      fixture.detectChanges();
+      expect(component.getTotalFilamentCost([])).toBe('');
+    });
+
+    it('returns formatted price when cost is valid', () => {
+      mockPrintService.calculateTotalPrintCost.and.returnValue({
+        prices: [],
+        total: {
+          valid: true,
+          formattedPrice: '$1.50',
+          price: null as any,
+          symbol: '$',
+          usesDefaultPrice: false,
+        },
+      });
+      fixture.detectChanges();
+      expect(component.getTotalFilamentCost([])).toBe('$1.50');
+    });
+  });
 });

@@ -798,6 +798,8 @@ export class PrintService {
         symbol: currencySymbol,
         usesDefaultPrice: isUsingDefaultFilamentPrice,
       };
+    } else {
+      return { valid: false, message: '(Unknown measurement source)' };
     }
   }
 }

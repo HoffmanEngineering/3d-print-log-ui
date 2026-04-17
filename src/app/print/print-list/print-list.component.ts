@@ -157,7 +157,20 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public searchText = '';
 
-  public viewMode: 'list' | 'grouped' = 'list';
+  private readonly VIEW_MODE_KEY = 'print_list_view_mode';
+
+  private _viewMode: 'list' | 'grouped' =
+    (localStorage.getItem('print_list_view_mode') as 'list' | 'grouped') ??
+    'list';
+
+  get viewMode(): 'list' | 'grouped' {
+    return this._viewMode;
+  }
+
+  set viewMode(value: 'list' | 'grouped') {
+    this._viewMode = value;
+    localStorage.setItem(this.VIEW_MODE_KEY, value);
+  }
 
   public filterByStatus = signal<PrintStatus | null>(null);
 

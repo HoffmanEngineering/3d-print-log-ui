@@ -347,11 +347,15 @@ export class PrintGroupedViewComponent implements OnInit {
   }
 
   private loadDisplayedColumns(): string[] {
-    const stored = JSON.parse(
-      localStorage.getItem(this.GROUPED_TABLE_DISPLAYED_COLUMNS) ?? 'null'
-    );
-    if (Array.isArray(stored) && stored.every((e) => typeof e === 'string')) {
-      return stored;
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem(this.GROUPED_TABLE_DISPLAYED_COLUMNS) ?? 'null'
+      );
+      if (Array.isArray(stored) && stored.every((e) => typeof e === 'string')) {
+        return stored;
+      }
+    } catch {
+      // Corrupted localStorage value — fall through to defaults
     }
     const defaults = this.mediaMatcher.matchMedia('(max-width: 800px)').matches
       ? ['title', 'status', 'more']
@@ -488,6 +492,7 @@ export class PrintGroupedViewComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(() => {
+      onSelectionChange.complete();
       subscription.unsubscribe();
       this.loggingService.logEvent('PrintGroupedViewLayoutChanged', {
         columns: JSON.stringify(this.displayedColumns()),

@@ -35,7 +35,6 @@
 
     <mat-card-content>
       @if (isEditing()) {
-      <app-project-edit-form [project]="p" [isSaving]="isSaving()" (saved)="onSave($event)" (cancelled)="onCancelEdit()" />
       <div class="images-section">
         @if (images().length > 0) {
         <app-image-carousel [imageCount]="images().length" [selectedIndex]="selectedImageIndex()" (indexChange)="selectedImageIndex.set($event)">
@@ -45,7 +44,16 @@
         <app-image-thumbnail-strip [images]="images()" [selectedId]="images()[selectedImageIndex()]?.id" [editable]="true" [maxImages]="5" (imageSelected)="onImageSelected($event)" (imageDeleted)="onImageDeleted($event)" (defaultChanged)="onDefaultChanged($event)" (imagesReordered)="onImagesReordered($event)" (addClicked)="onAddImageClicked()" />
         <input #fileInput type="file" accept="image/*" style="display:none" (change)="onFileSelected($event)" />
       </div>
+      <app-project-edit-form [project]="p" [isSaving]="isSaving()" (saved)="onSave($event)" (cancelled)="onCancelEdit()" />
       } @else {
+      @if (carouselImages().length > 0) {
+      <div class="images-section">
+        <app-image-carousel [imageCount]="carouselImages().length" [selectedIndex]="selectedImageIndex()" (indexChange)="selectedImageIndex.set($event)">
+          <img [src]="carouselImages()[selectedImageIndex()].resolvedUrl" [alt]="'Project image ' + (selectedImageIndex() + 1)" class="carousel-image" />
+        </app-image-carousel>
+        <app-image-thumbnail-strip [images]="carouselImages()" [selectedId]="carouselImages()[selectedImageIndex()]?.id" [editable]="false" (imageSelected)="onImageSelected($event)" />
+      </div>
+      }
       @if (p.description) {
       <p>{{ p.description }}</p>
       }
@@ -66,14 +74,6 @@
           <span class="value">{{ (p.totalFilamentWeightMg / 1000) | number : "1.0-1" }}g</span>
         </div>
       </div>
-      @if (carouselImages().length > 0) {
-      <div class="images-section">
-        <app-image-carousel [imageCount]="carouselImages().length" [selectedIndex]="selectedImageIndex()" (indexChange)="selectedImageIndex.set($event)">
-          <img [src]="carouselImages()[selectedImageIndex()].resolvedUrl" [alt]="'Project image ' + (selectedImageIndex() + 1)" class="carousel-image" />
-        </app-image-carousel>
-        <app-image-thumbnail-strip [images]="carouselImages()" [selectedId]="carouselImages()[selectedImageIndex()]?.id" [editable]="false" (imageSelected)="onImageSelected($event)" />
-      </div>
-      }
       }
     </mat-card-content>
   </mat-card>

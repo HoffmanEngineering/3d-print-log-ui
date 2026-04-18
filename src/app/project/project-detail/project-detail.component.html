@@ -39,7 +39,7 @@
       <div class="images-section">
         @if (images().length > 0) {
         <app-image-carousel [imageCount]="images().length" [selectedIndex]="selectedImageIndex()" (indexChange)="selectedImageIndex.set($event)">
-          <img [src]="images()[selectedImageIndex()].url | authImage | async" [alt]="'Project image ' + (selectedImageIndex() + 1)" class="carousel-image" />
+          <img [src]="images()[selectedImageIndex()].resolvedUrl" [alt]="'Project image ' + (selectedImageIndex() + 1)" class="carousel-image" />
         </app-image-carousel>
         }
         <app-image-thumbnail-strip [images]="images()" [selectedId]="images()[selectedImageIndex()]?.id" [editable]="true" [maxImages]="5" (imageSelected)="onImageSelected($event)" (imageDeleted)="onImageDeleted($event)" (defaultChanged)="onDefaultChanged($event)" (imagesReordered)="onImagesReordered($event)" (addClicked)="onAddImageClicked()" />
@@ -69,7 +69,7 @@
       @if (carouselImages().length > 0) {
       <div class="images-section">
         <app-image-carousel [imageCount]="carouselImages().length" [selectedIndex]="selectedImageIndex()" (indexChange)="selectedImageIndex.set($event)">
-          <img [src]="carouselImages()[selectedImageIndex()].url | authImage | async" [alt]="'Project image ' + (selectedImageIndex() + 1)" class="carousel-image" />
+          <img [src]="carouselImages()[selectedImageIndex()].resolvedUrl" [alt]="'Project image ' + (selectedImageIndex() + 1)" class="carousel-image" />
         </app-image-carousel>
         <app-image-thumbnail-strip [images]="carouselImages()" [selectedId]="carouselImages()[selectedImageIndex()]?.id" [editable]="false" (imageSelected)="onImageSelected($event)" />
       </div>

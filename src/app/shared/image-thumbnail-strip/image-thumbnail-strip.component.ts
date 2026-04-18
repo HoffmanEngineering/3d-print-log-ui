@@ -9,6 +9,7 @@ import {
   effect,
 } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { SafeUrl } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
@@ -17,6 +18,7 @@ import { AuthImagePipe } from '../pipes/auth-image.pipe';
 export interface ThumbnailImage {
   id?: number;
   url?: string;
+  resolvedUrl?: SafeUrl;
   isDefault: boolean;
   displayOrder: number;
 }

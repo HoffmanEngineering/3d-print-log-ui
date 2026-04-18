@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { SafeUrl } from '@angular/platform-browser';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
 import { PrinterSummary } from './printer.service';
@@ -34,6 +35,7 @@ export interface ProjectImageDto {
 export interface ProjectImageValue {
   id?: number;
   url?: string;
+  resolvedUrl?: SafeUrl;
   /** Populated only for newly staged (not yet uploaded) images. */
   file?: File;
   isDefault: boolean;

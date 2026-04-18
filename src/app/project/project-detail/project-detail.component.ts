@@ -18,7 +18,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
-import { Title } from '@angular/platform-browser';
+import { DomSanitizer, SafeUrl, Title } from '@angular/platform-browser';
+import { HttpClient } from '@angular/common/http';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, of } from 'rxjs';
 import { mergeMap, take, toArray } from 'rxjs/operators';
@@ -74,8 +75,12 @@ export class ProjectDetailComponent implements OnInit {
   private readonly titleService = inject(Title);
   private readonly destroyRef = inject(DestroyRef);
   private readonly loggingService = inject(LoggingService);
+  private readonly http = inject(HttpClient);
+  private readonly sanitizer = inject(DomSanitizer);
 
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
+
+  private readonly resolvedUrls = signal<Map<number, SafeUrl>>(new Map());
 
   project = signal<ProjectDetailDto | null>(null);
   prints = signal<PrintSummary[]>([]);
@@ -99,11 +104,13 @@ export class ProjectDetailComponent implements OnInit {
   carouselImages = computed<ProjectImageValue[]>(() => {
     const p = this.project();
     if (!p || p.images.length === 0) return [];
+    const resolved = this.resolvedUrls();
     return [...p.images]
       .sort((a, b) => a.displayOrder - b.displayOrder)
       .map((img) => ({
         id: img.id,
         url: `${environment.printLogApiUrl}/api/Projects/${p.id}/images/${img.id}`,
+        resolvedUrl: resolved.get(img.id),
         isDefault: img.isDefault,
         displayOrder: img.displayOrder,
       }));
@@ -127,11 +134,30 @@ export class ProjectDetailComponent implements OnInit {
           this.titleService.setTitle(`${p.name} | 3D Print Log`);
           this.loading.set(false);
           this.loadPrints(id);
+          this.preloadImages(id, p.images.map((i) => i.id));
         },
         error: () => {
           this.loading.set(false);
           this.router.navigate(['/prints']);
         },
+      });
+  }
+
+  private preloadImages(projectId: string, imageIds: number[]): void {
+    const cached = this.resolvedUrls();
+    imageIds
+      .filter((id) => !cached.has(id))
+      .forEach((imageId) => {
+        const url = `${environment.printLogApiUrl}/api/Projects/${projectId}/images/${imageId}`;
+        this.http
+          .get(url, { responseType: 'blob' })
+          .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+          .subscribe((blob) => {
+            const safeUrl = this.sanitizer.bypassSecurityTrustUrl(
+              URL.createObjectURL(blob)
+            );
+            this.resolvedUrls.update((m) => new Map(m).set(imageId, safeUrl));
+          });
       });
   }
 
@@ -158,10 +184,12 @@ export class ProjectDetailComponent implements OnInit {
     const sorted = [...p.images].sort(
       (a, b) => a.displayOrder - b.displayOrder
     );
+    const resolved = this.resolvedUrls();
     this.images.set(
       sorted.map((img) => ({
         id: img.id,
         url: `${environment.printLogApiUrl}/api/Projects/${p.id}/images/${img.id}`,
+        resolvedUrl: resolved.get(img.id),
         isDefault: img.isDefault,
         displayOrder: img.displayOrder,
       }))
@@ -275,6 +303,7 @@ export class ProjectDetailComponent implements OnInit {
           this.isSaving.set(false);
           this.images.set([]);
           this.imageIdsToDelete = [];
+          this.preloadImages(p.id, updated.images.map((i) => i.id));
           this.loggingService.logEvent('ProjectDetail_Saved', {
             hasNewImages: newImages.length > 0,
             deletedImageCount: idsToDelete.length,
@@ -299,6 +328,7 @@ export class ProjectDetailComponent implements OnInit {
     const newImage: ProjectImageValue = {
       file,
       url,
+      resolvedUrl: this.sanitizer.bypassSecurityTrustUrl(url),
       isDefault: this.images().length === 0,
       displayOrder: this.images().length,
     };

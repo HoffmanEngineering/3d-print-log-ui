@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProjectDetailComponent } from './project-detail.component';
 import {
   ProjectService,
@@ -75,6 +77,8 @@ describe('ProjectDetailComponent', () => {
           provide: MatDialog,
           useValue: jasmine.createSpyObj('MatDialog', ['open']),
         },
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     }).compileComponents();
 

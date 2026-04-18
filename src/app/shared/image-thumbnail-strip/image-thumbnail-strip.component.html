@@ -27,8 +27,8 @@
             [attr.aria-current]="(image.id !== undefined ? image.id === selectedId() : (image.url !== undefined && image.url === selectedUrl())) ? 'true' : null"
             (click)="onThumbnailClick(image)"
           >
-            @if (image.url) {
-              <img [src]="image.url | authImage | async" alt="" />
+            @if (image.resolvedUrl || image.url) {
+              <img [src]="image.resolvedUrl ?? (image.url | authImage | async)" alt="" />
             } @else {
               <div class="placeholder">
                 <mat-icon>image</mat-icon>

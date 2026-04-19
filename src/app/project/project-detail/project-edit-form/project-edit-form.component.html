@@ -1,26 +1,41 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
   <mat-form-field appearance="outline">
     <mat-label>Name</mat-label>
-    <input matInput formControlName="name" data-testid="name-input" required />
+    <input matInput formControlName="name" data-testid="name-input" required maxlength="100" />
     @if (form.controls.name.hasError('required')) {
       <mat-error>Name is required</mat-error>
+    }
+    @if (form.controls.name.hasError('maxlength')) {
+      <mat-error>Name must be 100 characters or fewer</mat-error>
     }
   </mat-form-field>
 
   <mat-form-field appearance="outline">
     <mat-label>Reference</mat-label>
-    <input matInput formControlName="reference" data-testid="reference-input" />
+    <input matInput formControlName="reference" data-testid="reference-input" maxlength="100" />
     <mat-hint>e.g. "Voron 2.4 R2"</mat-hint>
+    @if (form.controls.reference.hasError('maxlength')) {
+      <mat-error>Reference must be 100 characters or fewer</mat-error>
+    }
   </mat-form-field>
 
   <mat-form-field appearance="outline">
     <mat-label>Description</mat-label>
-    <textarea matInput formControlName="description" rows="3"></textarea>
+    <textarea matInput formControlName="description" rows="3" maxlength="5000"></textarea>
+    @if (5000 - (form.controls.description.value?.length ?? 0) < 1000) {
+      <mat-hint align="end">{{ 5000 - (form.controls.description.value?.length ?? 0) }} characters remaining</mat-hint>
+    }
+    @if (form.controls.description.hasError('maxlength')) {
+      <mat-error>Description must be 5000 characters or fewer</mat-error>
+    }
   </mat-form-field>
 
   <mat-form-field appearance="outline">
     <mat-label>Model Source URL</mat-label>
-    <input matInput formControlName="url" type="url" />
+    <input matInput formControlName="url" type="url" maxlength="1000" />
+    @if (form.controls.url.hasError('maxlength')) {
+      <mat-error>URL must be 1000 characters or fewer</mat-error>
+    }
   </mat-form-field>
 
   <mat-form-field appearance="outline">

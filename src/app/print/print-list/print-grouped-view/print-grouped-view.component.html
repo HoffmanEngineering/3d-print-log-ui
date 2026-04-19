@@ -19,15 +19,10 @@
           <mat-card-content>
             <div class="card-layout">
               <div class="card-image">
-                <mat-icon
-                  style="
-                    font-size: 48px;
-                    width: 48px;
-                    height: 48px;
-                    opacity: 0.4;
-                  "
-                  >folder</mat-icon
-                >
+                <app-project-image
+                  [projectId]="row.item.projectId!"
+                  [imageId]="row.item.defaultProjectImageId"
+                />
               </div>
               <div class="card-content">
                 <h3 class="card-title">{{ row.item.projectName }}</h3>
@@ -523,7 +518,10 @@
       <th mat-header-cell *matHeaderCellDef>Image</th>
       <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
-          <mat-icon class="project-icon">folder</mat-icon>
+          <app-project-image
+            [projectId]="row.item.projectId!"
+            [imageId]="row.item.defaultProjectImageId"
+          />
         } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
           <div class="print-image">
             <app-print-image
@@ -548,7 +546,10 @@
       <th mat-header-cell *matHeaderCellDef>Image</th>
       <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
-          <mat-icon class="project-icon">folder</mat-icon>
+          <app-project-image
+            [projectId]="row.item.projectId!"
+            [imageId]="row.item.defaultProjectImageId"
+          />
         } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
           <div class="print-image-medium">
             <app-print-image
@@ -573,7 +574,10 @@
       <th mat-header-cell *matHeaderCellDef>Image</th>
       <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
-          <mat-icon class="project-icon">folder</mat-icon>
+          <app-project-image
+            [projectId]="row.item.projectId!"
+            [imageId]="row.item.defaultProjectImageId"
+          />
         } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
           <div class="print-image-large">
             <app-print-image

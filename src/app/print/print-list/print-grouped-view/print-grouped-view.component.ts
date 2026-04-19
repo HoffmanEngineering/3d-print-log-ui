@@ -36,6 +36,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
+import { ProjectImageComponent } from 'src/app/shared/project-image/project-image.component';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 import { ColumnDefinition } from '../print-list.component';
@@ -52,7 +53,12 @@ export type GroupedRow =
   templateUrl: './print-grouped-view.component.html',
   styleUrls: ['./print-grouped-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SharedModule, ProjectChipComponent, RouterLink],
+  imports: [
+    SharedModule,
+    ProjectChipComponent,
+    RouterLink,
+    ProjectImageComponent,
+  ],
 })
 export class PrintGroupedViewComponent implements OnInit {
   private readonly projectService = inject(ProjectService);

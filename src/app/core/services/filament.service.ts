@@ -174,8 +174,14 @@ export class FilamentService {
       );
     }
 
-    if (filterByStorageLocation !== undefined && filterByStorageLocation !== '') {
-      params = params.set('filterByStorageLocation', filterByStorageLocation.trim());
+    if (
+      filterByStorageLocation !== undefined &&
+      filterByStorageLocation !== ''
+    ) {
+      params = params.set(
+        'filterByStorageLocation',
+        filterByStorageLocation.trim()
+      );
     }
 
     if (includeInactive !== undefined) {

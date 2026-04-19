@@ -134,7 +134,10 @@ export class ProjectDetailComponent implements OnInit {
           this.titleService.setTitle(`${p.name} | 3D Print Log`);
           this.loading.set(false);
           this.loadPrints(id);
-          this.preloadImages(id, p.images.map((i) => i.id));
+          this.preloadImages(
+            id,
+            p.images.map((i) => i.id)
+          );
         },
         error: () => {
           this.loading.set(false);
@@ -303,7 +306,10 @@ export class ProjectDetailComponent implements OnInit {
           this.isSaving.set(false);
           this.images.set([]);
           this.imageIdsToDelete = [];
-          this.preloadImages(p.id, updated.images.map((i) => i.id));
+          this.preloadImages(
+            p.id,
+            updated.images.map((i) => i.id)
+          );
           this.loggingService.logEvent('ProjectDetail_Saved', {
             hasNewImages: newImages.length > 0,
             deletedImageCount: idsToDelete.length,

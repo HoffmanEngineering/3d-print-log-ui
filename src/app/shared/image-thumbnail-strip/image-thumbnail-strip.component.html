@@ -15,7 +15,11 @@
       ) {
         <li
           class="thumbnail"
-          [class.selected]="image.id !== undefined ? image.id === selectedId() : (image.url !== undefined && image.url === selectedUrl())"
+          [class.selected]="
+            image.id !== undefined
+              ? image.id === selectedId()
+              : image.url !== undefined && image.url === selectedUrl()
+          "
           [class.is-default]="image.isDefault"
           [cdkDragDisabled]="!editable()"
           cdkDrag
@@ -24,11 +28,22 @@
             class="thumbnail-select"
             type="button"
             [attr.aria-label]="getSelectLabel(image, index)"
-            [attr.aria-current]="(image.id !== undefined ? image.id === selectedId() : (image.url !== undefined && image.url === selectedUrl())) ? 'true' : null"
+            [attr.aria-current]="
+              (
+                image.id !== undefined
+                  ? image.id === selectedId()
+                  : image.url !== undefined && image.url === selectedUrl()
+              )
+                ? 'true'
+                : null
+            "
             (click)="onThumbnailClick(image)"
           >
             @if (image.resolvedUrl || image.url) {
-              <img [src]="image.resolvedUrl ?? (image.url | authImage | async)" alt="" />
+              <img
+                [src]="image.resolvedUrl ?? (image.url | authImage | async)"
+                alt=""
+              />
             } @else {
               <div class="placeholder">
                 <mat-icon>image</mat-icon>

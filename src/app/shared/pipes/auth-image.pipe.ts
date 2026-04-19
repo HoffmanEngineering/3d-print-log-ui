@@ -11,8 +11,12 @@ export class AuthImagePipe implements PipeTransform {
 
   transform(url: string | undefined): Observable<SafeUrl | null> {
     if (!url) return of(null);
-    return this.http.get(url, { responseType: 'blob' }).pipe(
-      map((blob) => this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob)))
-    );
+    return this.http
+      .get(url, { responseType: 'blob' })
+      .pipe(
+        map((blob) =>
+          this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob))
+        )
+      );
   }
 }

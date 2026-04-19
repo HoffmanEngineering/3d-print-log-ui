@@ -1,6 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ProjectService, ProjectStatus, ProjectViewStatus, AddProjectDto } from './project.service';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
+import {
+  ProjectService,
+  ProjectStatus,
+  ProjectViewStatus,
+  AddProjectDto,
+} from './project.service';
 import { environment } from 'src/environments/environment.unittest';
 
 describe('ProjectService', () => {
@@ -28,9 +36,17 @@ describe('ProjectService', () => {
       expect(result.name).toBe('Voron Build');
     });
 
-    const req = httpMock.expectOne(`${environment.printLogApiUrl}/api/Projects`);
+    const req = httpMock.expectOne(
+      `${environment.printLogApiUrl}/api/Projects`
+    );
     expect(req.request.method).toBe('POST');
-    req.flush({ id: 'some-guid', name: 'Voron Build', status: 1, viewStatus: 3, printCount: 0 });
+    req.flush({
+      id: 'some-guid',
+      name: 'Voron Build',
+      status: 1,
+      viewStatus: 3,
+      printCount: 0,
+    });
   });
 
   it('should get project summaries', () => {
@@ -39,6 +55,9 @@ describe('ProjectService', () => {
     });
     const req = httpMock.expectOne((r) => r.url.includes('/api/Projects'));
     expect(req.request.method).toBe('GET');
-    req.flush({ items: [], paging: { totalCount: 0, pageNumber: 1, pageSize: 10 } });
+    req.flush({
+      items: [],
+      paging: { totalCount: 0, pageNumber: 1, pageSize: 10 },
+    });
   });
 });

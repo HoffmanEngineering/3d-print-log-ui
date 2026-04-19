@@ -28,7 +28,13 @@ export interface ThumbnailImage {
   templateUrl: './image-thumbnail-strip.component.html',
   styleUrls: ['./image-thumbnail-strip.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, MatButtonModule, DragDropModule, AuthImagePipe, AsyncPipe],
+  imports: [
+    MatIconModule,
+    MatButtonModule,
+    DragDropModule,
+    AuthImagePipe,
+    AsyncPipe,
+  ],
 })
 export class ImageThumbnailStripComponent {
   images = input.required<ThumbnailImage[]>();

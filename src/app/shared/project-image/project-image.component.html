@@ -1,0 +1,7 @@
+<div class="wrapper">
+  @if (imageData()) {
+    <img [src]="imageData()" class="fade-in" alt="Project image" />
+  } @else {
+    <mat-icon class="folder-icon">folder</mat-icon>
+  }
+</div>

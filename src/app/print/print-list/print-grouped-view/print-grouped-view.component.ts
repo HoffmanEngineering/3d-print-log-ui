@@ -379,19 +379,19 @@ export class PrintGroupedViewComponent implements OnInit {
       key: 'image',
       displayName: 'Image (Small)',
       description:
-        'Folder icon for project rows; small print thumbnail for print rows.',
+        'Default project image (or folder icon if none) for project rows; small print thumbnail for print rows.',
     },
     {
       key: 'image-medium',
       displayName: 'Image (Medium)',
       description:
-        'Folder icon for project rows; medium print thumbnail for print rows.',
+        'Default project image (or folder icon if none) for project rows; medium print thumbnail for print rows.',
     },
     {
       key: 'image-large',
       displayName: 'Image (Large)',
       description:
-        'Folder icon for project rows; large print thumbnail for print rows.',
+        'Default project image (or folder icon if none) for project rows; large print thumbnail for print rows.',
     },
     {
       key: 'title',

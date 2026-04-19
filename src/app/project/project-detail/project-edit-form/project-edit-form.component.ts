@@ -58,10 +58,10 @@ export class ProjectEditFormComponent implements OnInit {
   ngOnInit(): void {
     const p = this.project();
     this.form = this.fb.nonNullable.group({
-      name: [p.name, Validators.required],
-      reference: [p.reference ?? ''],
-      description: [p.description ?? ''],
-      url: [p.url ?? ''],
+      name: [p.name, [Validators.required, Validators.maxLength(100)]],
+      reference: [p.reference ?? '', Validators.maxLength(100)],
+      description: [p.description ?? '', Validators.maxLength(5000)],
+      url: [p.url ?? '', Validators.maxLength(1000)],
       viewStatus: [p.viewStatus],
     });
   }

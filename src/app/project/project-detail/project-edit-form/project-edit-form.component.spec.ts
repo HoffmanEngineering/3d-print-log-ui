@@ -83,4 +83,44 @@ describe('ProjectEditFormComponent', () => {
 
     expect(cancelled).toBe(true);
   });
+
+  it('should not emit saved when name exceeds 100 characters', () => {
+    const savedValues: any[] = [];
+    component.saved.subscribe((v) => savedValues.push(v));
+
+    component.form.patchValue({ name: 'a'.repeat(101) });
+    component.onSubmit();
+
+    expect(savedValues.length).toBe(0);
+  });
+
+  it('should not emit saved when reference exceeds 100 characters', () => {
+    const savedValues: any[] = [];
+    component.saved.subscribe((v) => savedValues.push(v));
+
+    component.form.patchValue({ reference: 'a'.repeat(101) });
+    component.onSubmit();
+
+    expect(savedValues.length).toBe(0);
+  });
+
+  it('should not emit saved when description exceeds 5000 characters', () => {
+    const savedValues: any[] = [];
+    component.saved.subscribe((v) => savedValues.push(v));
+
+    component.form.patchValue({ description: 'a'.repeat(5001) });
+    component.onSubmit();
+
+    expect(savedValues.length).toBe(0);
+  });
+
+  it('should not emit saved when url exceeds 1000 characters', () => {
+    const savedValues: any[] = [];
+    component.saved.subscribe((v) => savedValues.push(v));
+
+    component.form.patchValue({ url: 'a'.repeat(1001) });
+    component.onSubmit();
+
+    expect(savedValues.length).toBe(0);
+  });
 });

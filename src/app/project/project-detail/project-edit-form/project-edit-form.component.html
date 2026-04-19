@@ -1,9 +1,24 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
   <mat-form-field appearance="outline">
     <mat-label>Name</mat-label>
-    <input matInput formControlName="name" data-testid="name-input" required maxlength="100" />
+    <input
+      matInput
+      formControlName="name"
+      data-testid="name-input"
+      required
+      maxlength="100"
+    />
     @if (form.controls.name.hasError('required')) {
       <mat-error>Name is required</mat-error>
+    }
+    @if (
+      100 - (form.controls.name.value?.length ?? 0) < 50 &&
+      !form.controls.name.hasError('maxlength')
+    ) {
+      <mat-hint align="end"
+        >{{ 100 - (form.controls.name.value?.length ?? 0) }} characters
+        remaining</mat-hint
+      >
     }
     @if (form.controls.name.hasError('maxlength')) {
       <mat-error>Name must be 100 characters or fewer</mat-error>
@@ -12,8 +27,23 @@
 
   <mat-form-field appearance="outline">
     <mat-label>Reference</mat-label>
-    <input matInput formControlName="reference" data-testid="reference-input" maxlength="100" />
+    <input
+      matInput
+      formControlName="reference"
+      placeholder="Order number, customer name, etc"
+      data-testid="reference-input"
+      maxlength="100"
+    />
     <mat-hint>e.g. "Voron 2.4 R2"</mat-hint>
+    @if (
+      100 - (form.controls.reference.value?.length ?? 0) < 50 &&
+      !form.controls.reference.hasError('maxlength')
+    ) {
+      <mat-hint align="end"
+        >{{ 100 - (form.controls.reference.value?.length ?? 0) }} characters
+        remaining</mat-hint
+      >
+    }
     @if (form.controls.reference.hasError('maxlength')) {
       <mat-error>Reference must be 100 characters or fewer</mat-error>
     }
@@ -21,9 +51,20 @@
 
   <mat-form-field appearance="outline">
     <mat-label>Description</mat-label>
-    <textarea matInput formControlName="description" rows="3" maxlength="5000"></textarea>
-    @if (5000 - (form.controls.description.value?.length ?? 0) < 1000 && !form.controls.description.hasError('maxlength')) {
-      <mat-hint align="end">{{ 5000 - (form.controls.description.value?.length ?? 0) }} characters remaining</mat-hint>
+    <textarea
+      matInput
+      formControlName="description"
+      rows="3"
+      maxlength="5000"
+    ></textarea>
+    @if (
+      5000 - (form.controls.description.value?.length ?? 0) < 1000 &&
+      !form.controls.description.hasError('maxlength')
+    ) {
+      <mat-hint align="end"
+        >{{ 5000 - (form.controls.description.value?.length ?? 0) }} characters
+        remaining</mat-hint
+      >
     }
     @if (form.controls.description.hasError('maxlength')) {
       <mat-error>Description must be 5000 characters or fewer</mat-error>
@@ -33,6 +74,15 @@
   <mat-form-field appearance="outline">
     <mat-label>Model Source URL</mat-label>
     <input matInput formControlName="url" type="url" maxlength="1000" />
+    @if (
+      1000 - (form.controls.url.value?.length ?? 0) < 100 &&
+      !form.controls.url.hasError('maxlength')
+    ) {
+      <mat-hint align="end"
+        >{{ 1000 - (form.controls.url.value?.length ?? 0) }} characters
+        remaining</mat-hint
+      >
+    }
     @if (form.controls.url.hasError('maxlength')) {
       <mat-error>URL must be 1000 characters or fewer</mat-error>
     }
@@ -48,11 +98,25 @@
   </mat-form-field>
 
   <div class="form-actions">
-    <button mat-button type="button" (click)="onCancel()" [disabled]="isSaving()">
+    <button
+      mat-button
+      type="button"
+      (click)="onCancel()"
+      [disabled]="isSaving()"
+    >
       Cancel
     </button>
-    <button mat-flat-button color="primary" type="submit" [disabled]="isSaving()">
-      @if (isSaving()) { Saving… } @else { Save }
+    <button
+      mat-flat-button
+      color="primary"
+      type="submit"
+      [disabled]="isSaving()"
+    >
+      @if (isSaving()) {
+        Saving…
+      } @else {
+        Save
+      }
     </button>
   </div>
 </form>

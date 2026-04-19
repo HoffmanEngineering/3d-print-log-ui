@@ -1,6 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, fromEvent, of } from 'rxjs';
+import { catchError, concatMap, map, take } from 'rxjs/operators';
 import { SafeUrl } from '@angular/platform-browser';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
@@ -200,6 +201,22 @@ export class ProjectService {
     return this.http.post<void>(
       `${this.baseApi}/api/Projects/${projectId}/images/${imageId}/set-as-default`,
       {}
+    );
+  }
+
+  getProjectImage(projectId: string, imageId: number): Observable<string> {
+    const url = `${this.baseApi}/api/Projects/${projectId}/images/${imageId}`;
+    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
+
+    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
+      concatMap((blob) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        return fromEvent(reader, 'load');
+      }),
+      take(1),
+      map((e) => (e.target as FileReader).result as string),
+      catchError(() => of(''))
     );
   }
 

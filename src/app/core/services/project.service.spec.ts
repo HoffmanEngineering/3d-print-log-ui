@@ -60,4 +60,36 @@ describe('ProjectService', () => {
       paging: { totalCount: 0, pageNumber: 1, pageSize: 10 },
     });
   });
+
+  describe('getProjectImage', () => {
+    it('fetches image blob and returns base64 data URL', (done) => {
+      const projectId = 'abc-123';
+      const imageId = 7;
+      const fakeBlob = new Blob(['fake'], { type: 'image/png' });
+
+      service.getProjectImage(projectId, imageId).subscribe((result) => {
+        expect(result).toContain('data:');
+        done();
+      });
+
+      const req = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/Projects/${projectId}/images/${imageId}`
+      );
+      expect(req.request.headers.has('allow-anonymous-request')).toBeTrue();
+      req.flush(fakeBlob);
+    });
+
+    it('returns empty string on HTTP error', (done) => {
+      service.getProjectImage('abc-123', 7).subscribe((result) => {
+        expect(result).toBe('');
+        done();
+      });
+
+      httpMock
+        .expectOne(
+          `${environment.printLogApiUrl}/api/Projects/abc-123/images/7`
+        )
+        .flush(new Blob(), { status: 404, statusText: 'Not Found' });
+    });
+  });
 });

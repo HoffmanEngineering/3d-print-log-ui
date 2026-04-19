@@ -22,7 +22,7 @@
   <mat-form-field appearance="outline">
     <mat-label>Description</mat-label>
     <textarea matInput formControlName="description" rows="3" maxlength="5000"></textarea>
-    @if (5000 - (form.controls.description.value?.length ?? 0) < 1000) {
+    @if (5000 - (form.controls.description.value?.length ?? 0) < 1000 && !form.controls.description.hasError('maxlength')) {
       <mat-hint align="end">{{ 5000 - (form.controls.description.value?.length ?? 0) }} characters remaining</mat-hint>
     }
     @if (form.controls.description.hasError('maxlength')) {

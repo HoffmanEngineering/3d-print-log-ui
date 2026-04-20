@@ -762,7 +762,7 @@
         } @else if (row.kind === 'expanded-print') {
           @if (row.print.printTimeInSeconds) {
             {{ row.print.printTimeInSeconds | duration }}
-          } @else {
+          } @else if (row.print.estimatedPrintTimeInSeconds) {
             <span matTooltip="Estimated"
               >{{ row.print.estimatedPrintTimeInSeconds | duration }} *</span
             >
@@ -770,7 +770,7 @@
         } @else if (row.kind === 'print') {
           @if (row.item.print?.printTimeInSeconds) {
             {{ row.item.print.printTimeInSeconds | duration }}
-          } @else {
+          } @else if (row.item.print?.estimatedPrintTimeInSeconds) {
             <span matTooltip="Estimated"
               >{{
                 row.item.print?.estimatedPrintTimeInSeconds | duration
@@ -1046,6 +1046,7 @@
   <mat-paginator
     [length]="feed()!.paging.totalCount"
     [pageSize]="pageSize"
+    [pageSizeOptions]="[5, 10, 25, 100]"
     [pageIndex]="pageNumber() - 1"
     (page)="onPageChange($event)"
   />

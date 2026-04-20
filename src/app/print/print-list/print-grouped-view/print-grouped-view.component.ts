@@ -89,7 +89,7 @@ export class PrintGroupedViewComponent implements OnInit {
   feed = signal<PagedList<GroupedFeedItemDto> | null>(null);
   loading = signal(true);
   pageNumber = signal(1);
-  readonly pageSize = 20;
+  pageSize = +(localStorage.getItem('print_list_page_size') ?? 10);
 
   expandedProjectPrints = signal<Map<string, PrintSummary[]>>(new Map());
 
@@ -176,6 +176,8 @@ export class PrintGroupedViewComponent implements OnInit {
 
   onPageChange(event: PageEvent): void {
     this.pageNumber.set(event.pageIndex + 1);
+    this.pageSize = event.pageSize;
+    localStorage.setItem('print_list_page_size', event.pageSize.toString(10));
     this.expandedProjectPrints.set(new Map());
     this.loadFeed();
   }

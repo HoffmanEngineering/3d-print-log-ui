@@ -28,6 +28,7 @@ import { FilamentListResolverService } from './resolvers/filament-list-resolver.
 import { ProjectChipComponent } from '../shared/project-chip/project-chip.component';
 import { ProjectSelectorComponent } from '../shared/project-selector/project-selector.component';
 import { PrintGroupedViewComponent } from './print-list/print-grouped-view/print-grouped-view.component';
+import { PrintCardComponent } from './print-card/print-card.component';
 
 @NgModule({
   declarations: [
@@ -51,6 +52,7 @@ import { PrintGroupedViewComponent } from './print-list/print-grouped-view/print
     ProjectSelectorComponent,
     MatButtonToggleModule,
     PrintGroupedViewComponent,
+    PrintCardComponent,
   ],
   providers: [
     PrintDetailResolverService,

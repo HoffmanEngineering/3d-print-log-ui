@@ -3,7 +3,10 @@
     <div class="card-layout">
       <!-- Image Section -->
       <div class="card-image">
-        <mat-icon class="image-placeholder">image</mat-icon>
+        <app-print-image
+          [printId]="print().id"
+          [imageId]="print().defaultPrintImageId"
+        />
       </div>
 
       <!-- Content Section -->

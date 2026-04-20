@@ -1,0 +1,19 @@
+<mat-card class="print-card" [routerLink]="['/prints', print().id]">
+  <mat-card-content>
+    <div class="card-layout">
+      <div class="card-content">
+        <h3 class="card-title">{{ print().title }}</h3>
+        <div class="card-meta">
+          <div class="meta-item">
+            <mat-icon class="meta-icon">print</mat-icon>
+            <span>{{ getPrinterLabel(print().printer) }}</span>
+          </div>
+          <div class="meta-item status-badge" [class]="'status-' + print().status">
+            <mat-icon class="meta-icon">{{ getStatusIcon(print()) }}</mat-icon>
+            <span>{{ getStatus(print()) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

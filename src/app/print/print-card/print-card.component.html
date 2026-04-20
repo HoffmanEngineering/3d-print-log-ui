@@ -81,10 +81,7 @@
             </div>
           }
 
-          <div
-            class="meta-item status-badge"
-            [class]="'status-' + print().status"
-          >
+          <div [class]="'meta-item status-badge status-' + print().status">
             <mat-icon class="meta-icon">{{ getStatusIcon(print()) }}</mat-icon>
             <span>{{ getStatus(print()) }}</span>
           </div>

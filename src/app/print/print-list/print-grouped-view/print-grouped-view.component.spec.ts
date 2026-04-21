@@ -149,7 +149,7 @@ describe('PrintGroupedViewComponent', () => {
     tick(500);
     expect(mockProjectService.getGroupedFeed).toHaveBeenCalledWith(
       1,
-      20,
+      10,
       '',
       null,
       [],
@@ -179,7 +179,7 @@ describe('PrintGroupedViewComponent', () => {
 
     expect(mockProjectService.getGroupedFeed).toHaveBeenCalledWith(
       1,
-      20,
+      10,
       '',
       PrintStatus.Success,
       [],
@@ -202,7 +202,7 @@ describe('PrintGroupedViewComponent', () => {
     tick(200);
     expect(mockProjectService.getGroupedFeed).toHaveBeenCalledWith(
       1,
-      20,
+      10,
       'benchy',
       null,
       [],

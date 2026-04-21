@@ -187,14 +187,15 @@ describe('ProjectDetailComponent', () => {
   });
 
   it('should call PrintService.deletePrint when onPrintDeleted is called and confirmed', async () => {
-    const mockDialogService = TestBed.inject(
-      MatDialog
-    ) as jasmine.SpyObj<MatDialog>;
+    await fixture.whenStable();
+    fixture.detectChanges();
     const mockDialogRef = {
       afterClosed: () => of(true),
       componentInstance: {},
     } as any;
-    mockDialogService.open.and.returnValue(mockDialogRef);
+    // Spy directly on the component's injected dialog instance — SharedModule provides
+    // the real MatDialog via MatDialogModule, which shadows the root-injector mock.
+    spyOn((component as any).dialog, 'open').and.returnValue(mockDialogRef);
 
     const print: PrintSummary = {
       id: 7,

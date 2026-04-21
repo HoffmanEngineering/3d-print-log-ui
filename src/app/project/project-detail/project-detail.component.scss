@@ -42,18 +42,6 @@
   }
 }
 
-.print-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
 .description {
   white-space: pre-wrap;
 }

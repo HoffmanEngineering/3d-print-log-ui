@@ -36,7 +36,9 @@ import {
 import {
   PrintService,
   PrintSummary,
+  PrintStatus,
 } from 'src/app/core/services/print.service';
+import { PrintCardComponent } from 'src/app/print/print-card/print-card.component';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -63,6 +65,7 @@ import { environment } from 'src/environments/environment';
     ProjectEditFormComponent,
     ImageCarouselComponent,
     ImageThumbnailStripComponent,
+    PrintCardComponent,
   ],
 })
 export class ProjectDetailComponent implements OnInit {
@@ -180,6 +183,39 @@ export class ProjectDetailComponent implements OnInit {
       )
       .pipe(take(1))
       .subscribe((result) => this.prints.set(result.items));
+  }
+
+  onPrintDeleted(print: PrintSummary): void {
+    const dialogRef = this.dialog.open(SimpleDialogComponent, {
+      maxWidth: '350px',
+    });
+    dialogRef.componentInstance.title = 'Delete?';
+    dialogRef.componentInstance.body = `Are you sure you want to delete print "${print.title}"?<br /><br />This action cannot be undone.`;
+    dialogRef.componentInstance.yesText = 'Delete';
+    dialogRef.componentInstance.yesColor = 'warn';
+    dialogRef.componentInstance.noText = 'Cancel';
+    dialogRef
+      .afterClosed()
+      .pipe(take(1))
+      .subscribe((shouldDelete) => {
+        if (shouldDelete) {
+          this.printService
+            .deletePrint(print.id)
+            .pipe(take(1))
+            .subscribe(() => {
+              this.loadPrints(this.project()!.id);
+            });
+        }
+      });
+  }
+
+  onPrintStatusChanged(event: { id: number; status: PrintStatus }): void {
+    this.printService
+      .updatePrintStatus(event.id, event.status)
+      .pipe(take(1))
+      .subscribe(() => {
+        this.loadPrints(this.project()!.id);
+      });
   }
 
   onEditClick(): void {

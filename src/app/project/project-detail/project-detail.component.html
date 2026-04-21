@@ -147,10 +147,11 @@
       <mat-card-header><mat-card-title>Prints</mat-card-title></mat-card-header>
       <mat-card-content>
         @for (print of prints(); track print.id) {
-          <div class="print-row">
-            <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
-            <span>{{ print.startDate | date: 'mediumDate' }}</span>
-          </div>
+          <app-print-card
+            [print]="print"
+            (deleted)="onPrintDeleted($event)"
+            (statusChanged)="onPrintStatusChanged($event)"
+          />
         } @empty {
           <p>No prints in this project yet.</p>
         }

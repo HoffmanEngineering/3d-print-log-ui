@@ -8,7 +8,11 @@ import {
   ProjectStatus,
   ProjectViewStatus,
 } from 'src/app/core/services/project.service';
-import { PrintService } from 'src/app/core/services/print.service';
+import {
+  PrintService,
+  PrintSummary,
+  PrintStatus,
+} from 'src/app/core/services/print.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
@@ -33,6 +37,7 @@ describe('ProjectDetailComponent', () => {
   let fixture: ComponentFixture<ProjectDetailComponent>;
   let component: ProjectDetailComponent;
   let mockProjectService: jasmine.SpyObj<ProjectService>;
+  let mockPrintService: jasmine.SpyObj<PrintService>;
   let currentUserSubject: BehaviorSubject<any>;
 
   beforeEach(async () => {
@@ -50,15 +55,19 @@ describe('ProjectDetailComponent', () => {
     );
     mockProjectService.getProjectById.and.returnValue(of(mockProject));
 
-    const mockPrintService = jasmine.createSpyObj('PrintService', [
+    mockPrintService = jasmine.createSpyObj('PrintService', [
       'getPrintSummaries',
+      'deletePrint',
+      'updatePrintStatus',
     ]);
     mockPrintService.getPrintSummaries.and.returnValue(
       of({
         items: [],
-        paging: { totalCount: 0, pageNumber: 1, pageSize: 100, totalPages: 0 },
+        paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
       })
     );
+    mockPrintService.deletePrint.and.returnValue(of(null));
+    mockPrintService.updatePrintStatus.and.returnValue(of(null));
 
     currentUserSubject = new BehaviorSubject({ id: 1 });
     const mockAuthService = { userProfile$: currentUserSubject.asObservable() };
@@ -175,5 +184,46 @@ describe('ProjectDetailComponent', () => {
     expect(mockProjectService.getProjectById).toHaveBeenCalledTimes(2);
     expect(component.isEditing()).toBe(false);
     expect(component.isSaving()).toBe(false);
+  });
+
+  it('should call PrintService.deletePrint when onPrintDeleted is called and confirmed', async () => {
+    const mockDialogService = TestBed.inject(
+      MatDialog
+    ) as jasmine.SpyObj<MatDialog>;
+    const mockDialogRef = {
+      afterClosed: () => of(true),
+      componentInstance: {},
+    } as any;
+    mockDialogService.open.and.returnValue(mockDialogRef);
+
+    const print: PrintSummary = {
+      id: 7,
+      title: 'Test Print',
+      printer: { id: 1, make: 'Prusa', model: 'MK4', name: '' } as any,
+      status: PrintStatus.Success,
+      defaultPrintImageId: 0,
+      createdByUserId: 1,
+      estimatedPrintTimeInSeconds: 0,
+      printTimeInSeconds: 0,
+      sumActualFilamentWeightMg: 0,
+      sumEstimatedFilamentWeightMg: 0,
+      totalFilamentWeightMg: 0,
+      filamentUsage: [],
+      commentCount: 0,
+    };
+
+    component.onPrintDeleted(print);
+    await fixture.whenStable();
+
+    expect(mockPrintService.deletePrint).toHaveBeenCalledWith(7);
+  });
+
+  it('should call PrintService.updatePrintStatus when onPrintStatusChanged is called', async () => {
+    component.onPrintStatusChanged({ id: 7, status: PrintStatus.Failed });
+    await fixture.whenStable();
+    expect(mockPrintService.updatePrintStatus).toHaveBeenCalledWith(
+      7,
+      PrintStatus.Failed
+    );
   });
 });

@@ -16,6 +16,9 @@
       <mat-icon>close</mat-icon>
     </button>
   }
+  @if (isDefaultView() && !selectedProject()) {
+    <mat-hint>Showing active projects — type to search all</mat-hint>
+  }
   <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
     @for (project of filteredProjects(); track project.id) {
       <mat-option
@@ -25,6 +28,9 @@
         {{ project.name }}
         @if (project.reference) {
           <span class="reference"> — {{ project.reference }}</span>
+        }
+        @if (!isDefaultView() && project.status !== ProjectStatus.InProgress) {
+          <span class="status-label">{{ getStatusLabel(project.status) }}</span>
         }
       </mat-option>
     }

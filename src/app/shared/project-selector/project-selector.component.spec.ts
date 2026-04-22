@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { ProjectSelectorComponent } from './project-selector.component';
 import {
   ProjectService,
@@ -37,7 +42,7 @@ describe('ProjectSelectorComponent', () => {
     mockProjectService.getProjectSummaries.and.returnValue(
       of({
         items: mockProjects,
-        paging: { totalCount: 1, currentPage: 1, pageSize: 100, totalPages: 1 },
+        paging: { totalCount: 1, currentPage: 1, pageSize: 25, totalPages: 1 },
       })
     );
 
@@ -51,21 +56,59 @@ describe('ProjectSelectorComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProjectSelectorComponent);
-    fixture.detectChanges();
+    // detectChanges is called inside each fakeAsync test so timers register in the fake zone
   });
 
-  it('should load projects on init', async () => {
-    await fixture.whenStable();
+  it('should load active projects by default on init', fakeAsync(() => {
+    fixture.detectChanges(); // triggers ngOnInit, registers debounce timer in fake zone
+    tick(250);
     fixture.detectChanges();
-    expect(mockProjectService.getProjectSummaries).toHaveBeenCalled();
-  });
+    expect(mockProjectService.getProjectSummaries).toHaveBeenCalledWith(1, 25, {
+      status: ProjectStatus.InProgress,
+      sortBy: 'updatedDate',
+    });
+    expect(fixture.componentInstance.isDefaultView()).toBeTrue();
+  }));
 
-  it('should emit null when selection is cleared', () => {
+  it('should search all projects when user types', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(250); // initial load
+    fixture.componentInstance.searchControl.setValue('voron');
+    tick(250); // debounce for search
+    fixture.detectChanges();
+    expect(mockProjectService.getProjectSummaries).toHaveBeenCalledWith(1, 25, {
+      search: 'voron',
+    });
+    expect(fixture.componentInstance.isDefaultView()).toBeFalse();
+  }));
+
+  it('should reload defaults when search is cleared', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(250); // initial load
+    fixture.componentInstance.searchControl.setValue('voron');
+    tick(250); // search
+    fixture.componentInstance.searchControl.setValue('');
+    tick(250); // reload defaults
+    fixture.detectChanges();
+    expect(fixture.componentInstance.isDefaultView()).toBeTrue();
+    expect(
+      mockProjectService.getProjectSummaries.calls.mostRecent().args
+    ).toEqual([
+      1,
+      25,
+      { status: ProjectStatus.InProgress, sortBy: 'updatedDate' },
+    ]);
+  }));
+
+  it('should emit null when selection is cleared', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(250); // initial load
     const emitted: any[] = [];
     fixture.componentInstance.projectSelected.subscribe((v: any) =>
       emitted.push(v)
     );
     fixture.componentInstance.clearProject();
+    tick(250); // debounce from setValue('')
     expect(emitted[0]).toBeNull();
-  });
+  }));
 });

@@ -134,11 +134,19 @@ export class ProjectService {
 
   getProjectSummaries(
     pageNumber = 1,
-    pageSize = 10
+    pageSize = 10,
+    options: {
+      search?: string;
+      status?: ProjectStatus;
+      sortBy?: 'updatedDate' | 'createdDate';
+    } = {}
   ): Observable<PagedList<ProjectSummaryDto>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('pageNumber', pageNumber)
       .set('pageSize', pageSize);
+    if (options.search) params = params.set('search', options.search);
+    if (options.status != null) params = params.set('status', options.status);
+    if (options.sortBy) params = params.set('sortBy', options.sortBy);
     return this.http.get<PagedList<ProjectSummaryDto>>(
       `${this.baseApi}/api/Projects`,
       { params }

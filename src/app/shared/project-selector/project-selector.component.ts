@@ -16,7 +16,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
-import { debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  startWith,
+  switchMap,
+} from 'rxjs/operators';
 import {
   ProjectService,
   ProjectSummaryDto,
@@ -56,43 +61,47 @@ export class ProjectSelectorComponent implements OnInit {
   private readonly projectService = inject(ProjectService);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly ProjectStatus = ProjectStatus;
+
   searchControl = new FormControl<string>('');
-  allProjects = signal<ProjectSummaryDto[]>([]);
   filteredProjects = signal<ProjectSummaryDto[]>([]);
   selectedProject = signal<ProjectSelection | null>(null);
   showNewOption = signal(false);
+  isDefaultView = signal(true);
 
   ngOnInit(): void {
-    this.projectService
-      .getProjectSummaries(1, 100)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
-        this.allProjects.set(result.items);
-      });
-
     if (this.initialProjectId() && this.initialProjectName()) {
-      this.searchControl.setValue(this.initialProjectName()!);
+      this.searchControl.setValue(this.initialProjectName()!, {
+        emitEvent: false,
+      });
     }
 
     this.searchControl.valueChanges
       .pipe(
-        startWith(''),
-        debounceTime(150),
+        startWith(this.searchControl.value ?? ''),
+        debounceTime(250),
         distinctUntilChanged(),
+        switchMap((value) => {
+          const q = (value ?? '').trim();
+          if (q.length === 0) {
+            this.isDefaultView.set(true);
+            return this.projectService.getProjectSummaries(1, 25, {
+              status: ProjectStatus.InProgress,
+              sortBy: 'updatedDate',
+            });
+          }
+          this.isDefaultView.set(false);
+          return this.projectService.getProjectSummaries(1, 25, { search: q });
+        }),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((value) => this.filterProjects(value ?? ''));
-  }
-
-  filterProjects(query: string): void {
-    const q = query.toLowerCase().trim();
-    const filtered = this.allProjects().filter((p) =>
-      p.name.toLowerCase().includes(q)
-    );
-    this.filteredProjects.set(filtered);
-    this.showNewOption.set(
-      q.length > 0 && !filtered.some((p) => p.name.toLowerCase() === q)
-    );
+      .subscribe((result) => {
+        this.filteredProjects.set(result.items);
+        const q = (this.searchControl.value ?? '').trim().toLowerCase();
+        this.showNewOption.set(
+          q.length > 0 && !result.items.some((p) => p.name.toLowerCase() === q)
+        );
+      });
   }
 
   selectExistingProject(project: ProjectSummaryDto): void {
@@ -118,8 +127,21 @@ export class ProjectSelectorComponent implements OnInit {
 
   clearProject(): void {
     this.selectedProject.set(null);
-    this.searchControl.setValue('', { emitEvent: false });
+    this.searchControl.setValue('');
     this.projectSelected.emit(null);
+  }
+
+  getStatusLabel(status: ProjectStatus): string {
+    switch (status) {
+      case ProjectStatus.Complete:
+        return 'Complete';
+      case ProjectStatus.OnHold:
+        return 'On Hold';
+      case ProjectStatus.Cancelled:
+        return 'Cancelled';
+      default:
+        return '';
+    }
   }
 
   displayFn(name: string): string {

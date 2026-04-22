@@ -6,3 +6,10 @@
   color: var(--mat-sys-on-surface-variant);
   font-size: 0.875em;
 }
+
+.status-label {
+  margin-left: 8px;
+  font-size: 0.75em;
+  color: var(--mat-sys-on-surface-variant);
+  font-style: italic;
+}

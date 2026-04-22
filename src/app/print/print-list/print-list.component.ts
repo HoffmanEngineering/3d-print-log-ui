@@ -826,4 +826,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.currentPage = 1;
     this.updateFilter();
   }
+
+  public navigateToNewProject(): void {
+    this.router.navigate(['/projects', 'new']);
+  }
 }

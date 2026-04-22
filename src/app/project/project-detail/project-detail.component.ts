@@ -55,7 +55,6 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./project-detail.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,

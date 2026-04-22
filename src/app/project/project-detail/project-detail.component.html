@@ -11,18 +11,24 @@
           <mat-card-subtitle>{{ p.reference }}</mat-card-subtitle>
         }
         <div class="header-actions">
-          <mat-select
-            [value]="p.status"
-            panelWidth=""
-            (selectionChange)="onStatusChange($event.value)"
-          >
-            <mat-option [value]="ProjectStatus.InProgress"
-              >In Progress</mat-option
+          @if (!isCreating()) {
+            <mat-select
+              [value]="p.status"
+              panelWidth=""
+              (selectionChange)="onStatusChange($event.value)"
             >
-            <mat-option [value]="ProjectStatus.Complete">Complete</mat-option>
-            <mat-option [value]="ProjectStatus.OnHold">On Hold</mat-option>
-            <mat-option [value]="ProjectStatus.Cancelled">Cancelled</mat-option>
-          </mat-select>
+              <mat-option [value]="ProjectStatus.InProgress"
+                >In Progress</mat-option
+              >
+              <mat-option [value]="ProjectStatus.Complete"
+                >Complete</mat-option
+              >
+              <mat-option [value]="ProjectStatus.OnHold">On Hold</mat-option>
+              <mat-option [value]="ProjectStatus.Cancelled"
+                >Cancelled</mat-option
+              >
+            </mat-select>
+          }
           @if (isOwner() && !isEditing()) {
             <button
               mat-icon-button
@@ -143,19 +149,23 @@
       </mat-card-content>
     </mat-card>
 
-    <mat-card appearance="outlined" class="prints-card">
-      <mat-card-header><mat-card-title>Prints</mat-card-title></mat-card-header>
-      <mat-card-content>
-        @for (print of prints(); track print.id) {
-          <app-print-card
-            [print]="print"
-            (deleted)="onPrintDeleted($event)"
-            (statusChanged)="onPrintStatusChanged($event)"
-          />
-        } @empty {
-          <p>No prints in this project yet.</p>
-        }
-      </mat-card-content>
-    </mat-card>
+    @if (!isCreating()) {
+      <mat-card appearance="outlined" class="prints-card">
+        <mat-card-header>
+          <mat-card-title>Prints</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @for (print of prints(); track print.id) {
+            <app-print-card
+              [print]="print"
+              (deleted)="onPrintDeleted($event)"
+              (statusChanged)="onPrintStatusChanged($event)"
+            />
+          } @empty {
+            <p>No prints in this project yet.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
   </div>
 }

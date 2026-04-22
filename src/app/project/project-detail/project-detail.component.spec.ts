@@ -313,4 +313,10 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
   it('should not be loading', () => {
     expect(component.loading()).toBe(false);
   });
+
+  it('should navigate to /prints when onCancelEdit is called in create mode', () => {
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    component.onCancelEdit();
+    expect(router.navigate).toHaveBeenCalledWith(['/prints']);
+  });
 });

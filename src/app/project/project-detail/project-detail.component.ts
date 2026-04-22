@@ -267,6 +267,10 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   onCancelEdit(): void {
+    if (this.isCreating()) {
+      this.router.navigate(['/prints']);
+      return;
+    }
     this.isEditing.set(false);
     this.images.set([]);
     this.imageIdsToDelete = [];

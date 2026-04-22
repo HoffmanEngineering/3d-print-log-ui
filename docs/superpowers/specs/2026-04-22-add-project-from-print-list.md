@@ -136,14 +136,17 @@ onSave(formValue: ProjectEditFormValue): void {
 
 ### UI suppression in create mode
 
-The following are hidden via `@if (!isCreating())` in the template:
+Since create mode sets `isEditing(true)`, most UI suppression is already handled by existing template conditions:
 
-- The print list section
-- The image carousel (view-only) / image thumbnail strip
-- The status selector (`mat-select` for `ProjectStatus`)
-- The delete button / kebab menu
+- The view-mode carousel and thumbnail strip are already in the `@else` block — never shown when editing
+- The edit/delete buttons are already gated by `isOwner() && !isEditing()` — already hidden
 
-The edit form (`ProjectEditFormComponent`) renders in both modes — it is the only content shown in create mode.
+Only two elements need an explicit `@if (!isCreating())` guard:
+
+- **The status selector** (`mat-select` for `ProjectStatus`) — calling `onStatusChange()` with an empty ID would fire a PUT request against a non-existent project
+- **The prints card** — meaningless for a brand new project
+
+Image upload is **fully supported** in create mode. The editable `ImageThumbnailStripComponent` (with its add button) and the hidden `#fileInput` are both inside `@if (isEditing())`, so they render automatically. Staged images are uploaded in `onCreate()` after the project is created.
 
 ---
 

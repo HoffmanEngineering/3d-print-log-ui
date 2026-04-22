@@ -31,6 +31,7 @@ import {
   ProjectEditFormValue,
   ProjectStatus,
   ProjectViewStatus,
+  AddProjectDto,
   PutProjectDto,
 } from 'src/app/core/services/project.service';
 import {
@@ -278,6 +279,76 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   onSave(formValue: ProjectEditFormValue): void {
+    if (this.isCreating()) {
+      this.onCreate(formValue);
+    } else {
+      this.onUpdate(formValue);
+    }
+  }
+
+  private onCreate(formValue: ProjectEditFormValue): void {
+    const dto: AddProjectDto = {
+      name: formValue.name,
+      reference: formValue.reference || undefined,
+      description: formValue.description || undefined,
+      url: formValue.url || undefined,
+      status: ProjectStatus.InProgress,
+      viewStatus: formValue.viewStatus,
+    };
+
+    const stagedImages = [...this.images()].sort(
+      (a, b) => a.displayOrder - b.displayOrder
+    );
+
+    this.isSaving.set(true);
+    let createdId: string;
+    let uploadedIds: number[] = [];
+
+    this.projectService
+      .createProject(dto)
+      .pipe(
+        mergeMap((created) => {
+          createdId = created.id;
+          return stagedImages.length === 0
+            ? of([] as ProjectImageDto[])
+            : concat(
+                ...stagedImages.map((img) =>
+                  this.projectService.uploadImage(createdId, img.file!)
+                )
+              ).pipe(toArray());
+        }),
+        mergeMap((uploadResults: ProjectImageDto[]) => {
+          uploadedIds = uploadResults.map((r) => r.id);
+          const defaultImage = stagedImages.find((img) => img.isDefault);
+          if (!defaultImage) return of(null);
+          const defaultIdx = stagedImages.indexOf(defaultImage);
+          const defaultId = uploadedIds[defaultIdx];
+          return defaultId
+            ? this.projectService.setDefaultImage(createdId, defaultId)
+            : of(null);
+        }),
+        mergeMap(() =>
+          uploadedIds.length === 0
+            ? of(null)
+            : this.projectService.reorderImages(createdId, uploadedIds)
+        ),
+        take(1)
+      )
+      .subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.loggingService.logEvent('ProjectDetail_Created', {
+            hasImages: stagedImages.length > 0,
+          });
+          this.router.navigate(['/projects', createdId]);
+        },
+        error: () => {
+          this.isSaving.set(false);
+        },
+      });
+  }
+
+  private onUpdate(formValue: ProjectEditFormValue): void {
     const p = this.project()!;
     const dto: PutProjectDto = {
       id: p.id,

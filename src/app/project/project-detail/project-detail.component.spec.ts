@@ -319,4 +319,43 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
     component.onCancelEdit();
     expect(router.navigate).toHaveBeenCalledWith(['/prints']);
   });
+
+  it('should call createProject with form values on save', async () => {
+    mockProjectService.reorderImages.and.returnValue(of(void 0));
+
+    component.onSave({
+      name: 'My New Project',
+      reference: '',
+      description: '',
+      url: '',
+      viewStatus: ProjectViewStatus.Private,
+    });
+
+    await fixture.whenStable();
+
+    expect(mockProjectService.createProject).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        name: 'My New Project',
+        status: ProjectStatus.InProgress,
+        viewStatus: ProjectViewStatus.Private,
+      })
+    );
+  });
+
+  it('should navigate to the new project after successful creation', async () => {
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    mockProjectService.reorderImages.and.returnValue(of(void 0));
+
+    component.onSave({
+      name: 'My New Project',
+      reference: '',
+      description: '',
+      url: '',
+      viewStatus: ProjectViewStatus.Private,
+    });
+
+    await fixture.whenStable();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/projects', 'new-guid-123']);
+  });
 });

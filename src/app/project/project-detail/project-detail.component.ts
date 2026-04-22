@@ -122,31 +122,57 @@ export class ProjectDetailComponent implements OnInit {
   readonly ProjectStatus = ProjectStatus;
   readonly ProjectViewStatus = ProjectViewStatus;
 
+  readonly isCreating = computed(() => this.project()?.id === '');
+
+  private emptyProject(): ProjectDetailDto {
+    return {
+      id: '',
+      name: '',
+      status: ProjectStatus.InProgress,
+      viewStatus: ProjectViewStatus.Private,
+      createdDate: new Date(),
+      createdByUserId: 0,
+      printCount: 0,
+      totalPrintTimeInSeconds: 0,
+      totalEstimatedPrintTimeInSeconds: 0,
+      totalFilamentWeightMg: 0,
+      images: [],
+    };
+  }
+
   ngOnInit(): void {
     this.authService.userProfile$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((user) => this.currentUserId.set(user?.id ?? null));
 
     const id = this.route.snapshot.params['id'];
-    this.projectService
-      .getProjectById(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (p) => {
-          this.project.set(p);
-          this.titleService.setTitle(`${p.name} | 3D Print Log`);
-          this.loading.set(false);
-          this.loadPrints(id);
-          this.preloadImages(
-            id,
-            p.images.map((i) => i.id)
-          );
-        },
-        error: () => {
-          this.loading.set(false);
-          this.router.navigate(['/prints']);
-        },
-      });
+
+    if (id === 'new') {
+      this.project.set(this.emptyProject());
+      this.titleService.setTitle('New Project | 3D Print Log');
+      this.loading.set(false);
+      this.isEditing.set(true);
+    } else {
+      this.projectService
+        .getProjectById(id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (p) => {
+            this.project.set(p);
+            this.titleService.setTitle(`${p.name} | 3D Print Log`);
+            this.loading.set(false);
+            this.loadPrints(id);
+            this.preloadImages(
+              id,
+              p.images.map((i) => i.id)
+            );
+          },
+          error: () => {
+            this.loading.set(false);
+            this.router.navigate(['/prints']);
+          },
+        });
+    }
   }
 
   private preloadImages(projectId: string, imageIds: number[]): void {

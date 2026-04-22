@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
 import { ProjectDetailComponent } from './project-detail.component';
 import {
   ProjectService,
@@ -226,5 +227,90 @@ describe('ProjectDetailComponent', () => {
       7,
       PrintStatus.Failed
     );
+  });
+});
+
+describe('ProjectDetailComponent — create mode (id === "new")', () => {
+  let fixture: ComponentFixture<ProjectDetailComponent>;
+  let component: ProjectDetailComponent;
+  let mockProjectService: jasmine.SpyObj<ProjectService>;
+
+  beforeEach(async () => {
+    mockProjectService = jasmine.createSpyObj<ProjectService>(
+      'ProjectService',
+      [
+        'getProjectById',
+        'createProject',
+        'deleteProject',
+        'updateProject',
+        'uploadImage',
+        'deleteImage',
+        'reorderImages',
+        'setDefaultImage',
+      ]
+    );
+    mockProjectService.createProject.and.returnValue(
+      of({ ...mockProject, id: 'new-guid-123' })
+    );
+
+    const mockPrintService = jasmine.createSpyObj('PrintService', [
+      'getPrintSummaries',
+      'deletePrint',
+      'updatePrintStatus',
+    ]);
+    mockPrintService.getPrintSummaries.and.returnValue(
+      of({
+        items: [],
+        paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
+      })
+    );
+
+    const currentUserSubject = new BehaviorSubject({ id: 1 });
+    const mockAuthService = {
+      userProfile$: currentUserSubject.asObservable(),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [ProjectDetailComponent, NoopAnimationsModule],
+      providers: [
+        { provide: ProjectService, useValue: mockProjectService },
+        { provide: PrintService, useValue: mockPrintService },
+        { provide: AuthService, useValue: mockAuthService },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { params: { id: 'new' } } },
+        },
+        {
+          provide: MatDialog,
+          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+        },
+        {
+          provide: Router,
+          useValue: jasmine.createSpyObj('Router', ['navigate']),
+        },
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProjectDetailComponent);
+    fixture.detectChanges();
+    component = fixture.componentInstance;
+  });
+
+  it('should not call getProjectById', () => {
+    expect(mockProjectService.getProjectById).not.toHaveBeenCalled();
+  });
+
+  it('should be in editing mode immediately', () => {
+    expect(component.isEditing()).toBe(true);
+  });
+
+  it('isCreating should be true', () => {
+    expect(component.isCreating()).toBe(true);
+  });
+
+  it('should not be loading', () => {
+    expect(component.loading()).toBe(false);
   });
 });

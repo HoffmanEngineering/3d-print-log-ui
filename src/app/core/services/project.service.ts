@@ -154,8 +154,10 @@ export class ProjectService {
   }
 
   getProjectById(id: string): Observable<ProjectDetailDto> {
+    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
     return this.http.get<ProjectDetailDto>(
-      `${this.baseApi}/api/Projects/${id}`
+      `${this.baseApi}/api/Projects/${id}`,
+      { headers }
     );
   }
 

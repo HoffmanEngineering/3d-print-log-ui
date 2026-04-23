@@ -171,7 +171,17 @@
               (statusChanged)="onPrintStatusChanged($event)"
             />
           } @empty {
-            <p>No prints in this project yet.</p>
+            @if (hiddenPrintCount() === 0) {
+              <p>No prints in this project yet.</p>
+            }
+          }
+          @if (hiddenPrintCount() > 0) {
+            <p class="private-prints-note">
+              <mat-icon inline>lock</mat-icon>
+              {{ hiddenPrintCount() }}
+              {{ hiddenPrintCount() === 1 ? 'print is' : 'prints are' }} private
+              and not shown
+            </p>
           }
         </mat-card-content>
       </mat-card>

@@ -19,7 +19,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { DomSanitizer, SafeUrl, Title } from '@angular/platform-browser';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, of } from 'rxjs';
 import { mergeMap, take, toArray } from 'rxjs/operators';
@@ -124,6 +124,12 @@ export class ProjectDetailComponent implements OnInit {
 
   readonly isCreating = computed(() => this.project()?.id === '');
 
+  readonly hiddenPrintCount = computed(() => {
+    const p = this.project();
+    if (!p) return 0;
+    return Math.max(0, p.printCount - this.prints().length);
+  });
+
   private emptyProject(): ProjectDetailDto {
     return {
       id: '',
@@ -177,12 +183,16 @@ export class ProjectDetailComponent implements OnInit {
 
   private preloadImages(projectId: string, imageIds: number[]): void {
     const cached = this.resolvedUrls();
+    const anonHeaders = new HttpHeaders().set(
+      'allow-anonymous-request',
+      'true'
+    );
     imageIds
       .filter((id) => !cached.has(id))
       .forEach((imageId) => {
         const url = `${environment.printLogApiUrl}/api/Projects/${projectId}/images/${imageId}`;
         this.http
-          .get(url, { responseType: 'blob' })
+          .get(url, { responseType: 'blob', headers: anonHeaders })
           .pipe(take(1), takeUntilDestroyed(this.destroyRef))
           .subscribe((blob) => {
             const safeUrl = this.sanitizer.bypassSecurityTrustUrl(
@@ -194,6 +204,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadPrints(projectId: string): void {
+    const ownerId = this.project()?.createdByUserId;
     this.printService
       .getPrintSummaries(
         1,
@@ -204,7 +215,7 @@ export class ProjectDetailComponent implements OnInit {
         [],
         undefined,
         undefined,
-        undefined,
+        ownerId,
         projectId
       )
       .pipe(take(1))

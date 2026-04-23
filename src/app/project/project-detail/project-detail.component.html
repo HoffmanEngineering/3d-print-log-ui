@@ -57,6 +57,15 @@
       <mat-card-content>
         @if (isEditing()) {
           <div class="images-section">
+            @if (images().length === 0) {
+              <button
+                type="button"
+                mat-stroked-button
+                (click)="onAddImageClicked()"
+              >
+                Upload Image
+              </button>
+            }
             @if (images().length > 0) {
               <app-image-carousel
                 [imageCount]="images().length"

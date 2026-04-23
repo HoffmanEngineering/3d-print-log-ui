@@ -1,5 +1,5 @@
 <div class="thumbnail-strip" [class.editable]="editable()">
-  @if (images().length > 1 || editable()) {
+  @if (images().length > 1 || (editable() && images().length > 0)) {
     <ul
       #thumbnailList
       class="thumbnails"

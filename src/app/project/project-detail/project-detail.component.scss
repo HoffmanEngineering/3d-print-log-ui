@@ -48,6 +48,9 @@
 
 .images-section {
   margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .carousel-image {

@@ -1,28 +1,63 @@
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
 import {
+  FilamentDetail,
   FilamentService,
-  FilamentSortColumns,
 } from '../../core/services/filament.service';
-import { SortDirection } from '../../core/types/sort-request';
 import { FilamentListResolverService } from './filament-list-resolver.service';
 
 describe('FilamentListResolverService', () => {
   let service: FilamentListResolverService;
   let mockFilamentService: jasmine.SpyObj<FilamentService>;
 
-  const mockPagedResult = {
-    items: [{ id: 'abc', displayName: 'Test Filament' } as any],
-    paging: { currentPage: 1, pageSize: 1000, totalCount: 1, totalPages: 1 },
+  const mockDetail: FilamentDetail = {
+    id: 'abc',
+    displayName: 'Test Filament',
+    brand: 'TestBrand',
+    materialCategoryNickname: 'PLA',
+    materialType: 'PLA',
+    materialDensityGramPerCubicCm: 1.24,
+    colorName: 'Black',
+    colorHex: '000000',
+    diameterMm: 1.75,
+    initialTotalWeightMg: null,
+    source: null as any,
+    initialNominalWeightMg: null,
+    initialNominalLengthM: null,
+    initialNominalVolumeMl: null,
+    spoolWeightMg: null,
+    tempRangeStart: null,
+    tempRangeEnd: null,
+    recommendedTemp: 215,
+    recommendedBedTemp: null,
+    isActive: true,
+    purchaseDate: null,
+    purchaseLocation: '',
+    purchasePriceValue: '0',
+    purchasePriceCurrency: 'USD',
+    purchaseNotes: '',
+    storageLocation: 'Shelf 1',
+    initialLayerTimeS: null,
+    layerTimeS: null,
+    meltingTemperature: null,
+    inertGas: '',
+    materialRefreshRatio: null,
+    notes: '',
+    isFavorite: false,
+    filamentAdjustments: [],
   };
+
+  function makeRoute(ids: string[]): ActivatedRouteSnapshot {
+    return {
+      queryParamMap: { getAll: (_key: string) => ids },
+    } as any;
+  }
 
   beforeEach(() => {
     mockFilamentService = jasmine.createSpyObj<FilamentService>(
       'FilamentService',
-      ['getCurrentUserFilamentSummaries']
-    );
-    mockFilamentService.getCurrentUserFilamentSummaries.and.returnValue(
-      of(mockPagedResult)
+      ['getFilamentDetail']
     );
 
     TestBed.configureTestingModule({
@@ -38,23 +73,38 @@ describe('FilamentListResolverService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should resolve to the items array from the paged result', (done) => {
-    service.resolve(null, null).subscribe((items) => {
-      expect(items).toEqual(mockPagedResult.items);
+  it('should return an empty array when no filterByFilamentId params are present', (done) => {
+    service.resolve(makeRoute([]), null).subscribe((items) => {
+      expect(items).toEqual([]);
+      expect(mockFilamentService.getFilamentDetail).not.toHaveBeenCalled();
       done();
     });
   });
 
-  it('should request page 1 with 1000 items sorted by display name ascending', () => {
-    service.resolve(null, null).subscribe();
+  it('should fetch details for each filterByFilamentId and map to summaries', (done) => {
+    mockFilamentService.getFilamentDetail.and.returnValue(of(mockDetail));
 
-    expect(
-      mockFilamentService.getCurrentUserFilamentSummaries
-    ).toHaveBeenCalledWith(
-      1,
-      1000,
-      FilamentSortColumns.DisplayName,
-      SortDirection.Asc
+    service.resolve(makeRoute(['abc']), null).subscribe((items) => {
+      expect(mockFilamentService.getFilamentDetail).toHaveBeenCalledWith('abc');
+      expect(items.length).toBe(1);
+      expect(items[0].id).toBe('abc');
+      expect(items[0].displayName).toBe('Test Filament');
+      expect(items[0].colorHex).toBe('000000');
+      done();
+    });
+  });
+
+  it('should fetch details for multiple filterByFilamentId params', (done) => {
+    const detail2 = { ...mockDetail, id: 'def', displayName: 'Other Filament' };
+    mockFilamentService.getFilamentDetail.and.callFake((id: string) =>
+      of(id === 'abc' ? mockDetail : detail2)
     );
+
+    service.resolve(makeRoute(['abc', 'def']), null).subscribe((items) => {
+      expect(items.length).toBe(2);
+      expect(items[0].id).toBe('abc');
+      expect(items[1].id).toBe('def');
+      done();
+    });
   });
 });

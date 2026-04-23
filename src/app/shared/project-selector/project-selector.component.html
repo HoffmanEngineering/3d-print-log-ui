@@ -1,10 +1,10 @@
-<mat-form-field appearance="outline" class="project-selector-field">
+<mat-form-field class="project-selector-field">
   <mat-label>Project (optional)</mat-label>
   <input
     matInput
     [formControl]="searchControl"
     [matAutocomplete]="auto"
-    placeholder="Search or create a project..."
+    placeholder="Showing active projects — type to search or create a project"
   />
   @if (selectedProject()) {
     <button
@@ -15,9 +15,6 @@
     >
       <mat-icon>close</mat-icon>
     </button>
-  }
-  @if (isDefaultView() && !selectedProject()) {
-    <mat-hint>Showing active projects — type to search all</mat-hint>
   }
   <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
     @for (project of filteredProjects(); track project.id) {

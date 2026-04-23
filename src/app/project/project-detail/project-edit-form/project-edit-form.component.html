@@ -1,5 +1,5 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <mat-form-field appearance="outline">
+  <mat-form-field>
     <mat-label>Name</mat-label>
     <input
       matInput
@@ -25,7 +25,7 @@
     }
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field>
     <mat-label>Reference</mat-label>
     <input
       matInput
@@ -49,7 +49,7 @@
     }
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field>
     <mat-label>Description</mat-label>
     <textarea
       matInput
@@ -71,7 +71,7 @@
     }
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field>
     <mat-label>Model Source URL</mat-label>
     <input matInput formControlName="url" type="url" maxlength="1000" />
     @if (
@@ -88,7 +88,7 @@
     }
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field>
     <mat-label>Visibility</mat-label>
     <mat-select formControlName="viewStatus">
       <mat-option [value]="ProjectViewStatus.Public">Public</mat-option>

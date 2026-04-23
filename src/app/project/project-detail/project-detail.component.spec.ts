@@ -252,6 +252,9 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
     mockProjectService.createProject.and.returnValue(
       of({ ...mockProject, id: 'new-guid-123' })
     );
+    mockProjectService.getProjectById.and.returnValue(
+      of({ ...mockProject, id: 'new-guid-123' })
+    );
 
     const mockPrintService = jasmine.createSpyObj('PrintService', [
       'getPrintSummaries',
@@ -342,7 +345,7 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
     );
   });
 
-  it('should navigate to the new project after successful creation', async () => {
+  it('should exit edit mode, set the created project, and update the URL after successful creation', async () => {
     const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
     mockProjectService.reorderImages.and.returnValue(of(void 0));
 
@@ -356,6 +359,13 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
 
     await fixture.whenStable();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/projects', 'new-guid-123']);
+    expect(component.isEditing()).toBe(false);
+    expect(component.isSaving()).toBe(false);
+    expect(component.project()?.id).toBe('new-guid-123');
+    expect(component.isCreating()).toBe(false);
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/projects', 'new-guid-123'],
+      { replaceUrl: true }
+    );
   });
 });

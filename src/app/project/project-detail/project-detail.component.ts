@@ -331,15 +331,24 @@ export class ProjectDetailComponent implements OnInit {
             ? of(null)
             : this.projectService.reorderImages(createdId, uploadedIds)
         ),
+        mergeMap(() => this.projectService.getProjectById(createdId)),
         take(1)
       )
       .subscribe({
-        next: () => {
+        next: (updated) => {
+          this.project.set(updated);
+          this.isEditing.set(false);
           this.isSaving.set(false);
+          this.images.set([]);
+          this.imageIdsToDelete = [];
+          this.preloadImages(
+            updated.id,
+            updated.images.map((i) => i.id)
+          );
           this.loggingService.logEvent('ProjectDetail_Created', {
             hasImages: stagedImages.length > 0,
           });
-          this.router.navigate(['/projects', createdId]);
+          this.router.navigate(['/projects', updated.id], { replaceUrl: true });
         },
         error: () => {
           this.isSaving.set(false);

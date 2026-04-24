@@ -65,6 +65,11 @@ mat-select {
   min-width: 103px;
 }
 
+.status-label {
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .private-prints-note {
   display: flex;
   align-items: center;

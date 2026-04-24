@@ -10,7 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -123,6 +123,21 @@ export class ProjectDetailComponent implements OnInit {
   readonly ProjectViewStatus = ProjectViewStatus;
 
   readonly isCreating = computed(() => this.project()?.id === '');
+
+  readonly statusLabel = computed(() => {
+    switch (this.project()?.status) {
+      case ProjectStatus.InProgress:
+        return 'In Progress';
+      case ProjectStatus.Complete:
+        return 'Complete';
+      case ProjectStatus.OnHold:
+        return 'On Hold';
+      case ProjectStatus.Cancelled:
+        return 'Cancelled';
+      default:
+        return '';
+    }
+  });
 
   readonly hiddenPrintCount = computed(() => {
     const p = this.project();
@@ -564,28 +579,48 @@ export class ProjectDetailComponent implements OnInit {
     this.projectService
       .updateProject(p.id, dto)
       .pipe(take(1))
-      .subscribe((updated) => this.project.set(updated));
+      .subscribe({
+        next: (updated) => this.project.set(updated),
+        error: () => this.project.set({ ...p }),
+      });
   }
 
   onDeleteProject(): void {
-    const ref = this.dialog.open(SimpleDialogComponent, {
-      data: {
-        title: 'Delete Project',
-        message: 'What would you like to do with the prints in this project?',
-        confirmText: 'Delete project and all prints',
-        cancelText: 'Remove project only — keep prints',
-      },
+    const p = this.project()!;
+    const confirmRef = this.dialog.open(SimpleDialogComponent, {
+      maxWidth: '450px',
     });
-    ref
+    confirmRef.componentInstance.title = 'Delete Project';
+    confirmRef.componentInstance.body = `Are you sure you want to delete <strong>${p.name}</strong>? This cannot be undone.`;
+    confirmRef.componentInstance.yesText = 'Delete Project';
+    confirmRef.componentInstance.yesColor = 'warn';
+    confirmRef.componentInstance.noText = 'Cancel';
+
+    confirmRef
       .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((deleteAll) => {
-        if (deleteAll === undefined) return;
-        const projectId = this.project()!.id;
-        this.projectService
-          .deleteProject(projectId, !!deleteAll)
+      .pipe(take(1))
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        const printsRef = this.dialog.open(SimpleDialogComponent, {
+          maxWidth: '450px',
+        });
+        printsRef.componentInstance.title = 'Delete Prints?';
+        printsRef.componentInstance.body = `Do you also want to delete the prints in this project?`;
+        printsRef.componentInstance.yesText = 'Delete prints too';
+        printsRef.componentInstance.yesColor = 'warn';
+        printsRef.componentInstance.noText = 'Keep prints';
+
+        printsRef
+          .afterClosed()
           .pipe(take(1))
-          .subscribe(() => this.router.navigate(['/prints']));
+          .subscribe((deleteAll) => {
+            const projectId = p.id;
+            this.projectService
+              .deleteProject(projectId, deleteAll === true)
+              .pipe(take(1))
+              .subscribe(() => this.router.navigate(['/prints']));
+          });
       });
   }
 }

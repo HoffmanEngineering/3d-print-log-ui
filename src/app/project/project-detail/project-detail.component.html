@@ -11,7 +11,7 @@
           <mat-card-subtitle>{{ p.reference }}</mat-card-subtitle>
         }
         <div class="header-actions">
-          @if (!isCreating()) {
+          @if (!isCreating() && isOwner()) {
             <mat-select
               [value]="p.status"
               panelWidth=""
@@ -28,6 +28,9 @@
                 >Cancelled</mat-option
               >
             </mat-select>
+          }
+          @if (!isCreating() && !isOwner()) {
+            <span class="status-label">{{ statusLabel() }}</span>
           }
           @if (isOwner() && !isEditing()) {
             <button

@@ -29,9 +29,9 @@ export class VersionReleaseNoteDialogService {
 
   private releaseNotes: ReleaseNoteHistory = {
     '1.38.0': {
-      title: '1.38.0 - Print Projects',
+      title: '1.38.0 - Projects',
       body: `<p>
-<strong>Print Projects</strong> are here! Organize your prints into projects with names, descriptions, statuses, and images. Each project has a dedicated page showing all associated prints. Assign prints to projects from the edit form, and use the new <strong>Grouped View</strong> in the <a href="/prints">Print List</a> to see your projects with print counts and total costs at a glance.
+<strong>Projects</strong> are here! Organize your prints into projects with names, descriptions, statuses, and images. Each project has a dedicated page showing all associated prints. Assign prints to projects from the print edit form, and use the new <strong>Grouped View</strong> in the <a href="/prints">Print List</a> to see your projects with print counts and total costs at a glance.
 </p>
 <p>
   <strong>Support development of 3D Print Log:</strong><br />

@@ -13,6 +13,7 @@ export class DocSidebarComponent {
     { name: 'Pro Subscription', url: '/docs/pro-subscription' },
     { divider: true },
     { name: 'Prints', url: '/docs/prints' },
+    { name: 'Projects', url: '/docs/projects' },
     { name: 'Materials', url: '/docs/materials' },
     { name: 'Printers', url: '/docs/printers' },
     { name: 'Analytics', url: '/docs/analytics' },

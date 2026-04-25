@@ -17,6 +17,7 @@ import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-priv
 import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
 import { DocsSlic3rUploaderComponent } from './docs/docs-slic3r-uploader/docs-slic3r-uploader.component';
 import { DocsProSubscriptionComponent } from './docs/docs-pro-subscription/docs-pro-subscription.component';
+import { DocsProjectsComponent } from './docs/docs-projects/docs-projects.component';
 
 const routes: Routes = [
   {
@@ -29,6 +30,7 @@ const routes: Routes = [
       },
       { path: 'printers', component: DocsPrintersComponent },
       { path: 'prints', component: DocsPrintsComponent },
+      { path: 'projects', component: DocsProjectsComponent },
       { path: 'filaments', redirectTo: 'materials' },
       { path: 'materials', component: DocsFilamentsComponent },
       { path: 'analytics', component: DocsAnalyticsComponent },

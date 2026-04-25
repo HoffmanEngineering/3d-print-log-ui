@@ -281,4 +281,14 @@ describe('PrintListComponent', () => {
     // Assert
     expect(routerSpy).toHaveBeenCalledWith(['printers', 'new']);
   });
+
+  it('should navigate to /projects/new when navigateToNewProject is called', () => {
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.returnValue(
+      Promise.resolve(true)
+    );
+    component.navigateToNewProject();
+    expect(navigateSpy).toHaveBeenCalledWith(['/projects', 'new']);
+  });
 });

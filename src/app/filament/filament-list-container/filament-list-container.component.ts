@@ -121,7 +121,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       }
 
       if (params.has('filterByStorageLocation')) {
-        this.filterByStorageLocation = params.get('filterByStorageLocation') ?? '';
+        this.filterByStorageLocation =
+          params.get('filterByStorageLocation') ?? '';
       }
 
       if (params.has('includeInactive')) {

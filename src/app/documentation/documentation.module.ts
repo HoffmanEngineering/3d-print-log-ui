@@ -22,6 +22,7 @@ import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
 import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
 import { DocsSlic3rUploaderComponent } from './docs/docs-slic3r-uploader/docs-slic3r-uploader.component';
 import { DocsProSubscriptionComponent } from './docs/docs-pro-subscription/docs-pro-subscription.component';
+import { DocsProjectsComponent } from './docs/docs-projects/docs-projects.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { DocsProSubscriptionComponent } from './docs/docs-pro-subscription/docs-
     DocsPrivacyPolicyComponent,
     DocsSlic3rUploaderComponent,
     DocsProSubscriptionComponent,
+    DocsProjectsComponent,
   ],
   imports: [
     CommonModule,

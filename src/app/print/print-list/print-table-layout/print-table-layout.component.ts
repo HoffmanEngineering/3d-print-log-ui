@@ -4,12 +4,13 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { ColumnDefinition } from '../print-list.component';
 import { Subject } from 'rxjs';
-import { MediaMatcher } from '@angular/cdk/layout';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 export interface DialogData {
+  title: string;
   allPossibleColumns: ColumnDefinition[];
   currentColumns: string[];
+  defaultColumns: string[];
   changeEvent: Subject<string[]>;
 }
 
@@ -31,7 +32,6 @@ export class PrintTableLayoutComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
 
     private toastrService: ToastrService,
-    private media: MediaMatcher,
     @Inject(DOCUMENT) private readonly document: Document
   ) {}
 
@@ -109,37 +109,9 @@ export class PrintTableLayoutComponent implements OnInit {
   }
 
   resetToDefaults() {
-    const mobileQuery = this.media.matchMedia('(max-width: 800px)');
-
     this.allColumns = [...this.initialAllColumns];
 
-    let defaultColumns: string[];
-
-    // Initialize with defaults for size;
-    if (mobileQuery.matches) {
-      defaultColumns = [
-        'image',
-        'title',
-        'printer',
-        'start-date',
-        'status',
-        'more',
-      ];
-    } else {
-      defaultColumns = [
-        'image',
-        'title',
-        'printer',
-        'start-date',
-        'status',
-        'printTime',
-        'filamentSummary',
-        'commentCount',
-        'more',
-      ];
-    }
-
-    this.selectedColumns = defaultColumns;
+    this.selectedColumns = [...this.data.defaultColumns];
 
     this.changeEvent.next(this.selectedColumns);
   }

@@ -50,7 +50,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
   public printers: PrinterSummary[] = [];
   public filaments: FilamentSummary[] = [];
-
   public pageSize: number;
   public currentPage: number;
   public totalCount: number;
@@ -157,6 +156,21 @@ export class PrintListComponent implements OnInit, OnDestroy {
   ];
 
   public searchText = '';
+
+  private readonly VIEW_MODE_KEY = 'print_list_view_mode';
+
+  private _viewMode: 'list' | 'grouped' =
+    (localStorage.getItem('print_list_view_mode') as 'list' | 'grouped') ??
+    'list';
+
+  get viewMode(): 'list' | 'grouped' {
+    return this._viewMode;
+  }
+
+  set viewMode(value: 'list' | 'grouped') {
+    this._viewMode = value;
+    localStorage.setItem(this.VIEW_MODE_KEY, value);
+  }
 
   public filterByStatus = signal<PrintStatus | null>(null);
 
@@ -451,7 +465,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.filterByPrinterIds(),
             this.filterByFilamentIds(),
             this.sortDirection,
-            this.sortColumn
+            this.sortColumn,
+            undefined
           )
           .subscribe(
             (prints) => {
@@ -547,10 +562,22 @@ export class PrintListComponent implements OnInit, OnDestroy {
       minWidth: '450px',
       disableClose: true,
       data: {
+        title: 'All Prints Table Layout',
         allPossibleColumns: this.allPossibleColumns.filter(
           (column) => column.key !== 'more'
         ),
         currentColumns: this.displayedColumns,
+        defaultColumns: [
+          'image',
+          'title',
+          'printer',
+          'start-date',
+          'status',
+          'printTime',
+          'filamentSummary',
+          'commentCount',
+          'more',
+        ],
         changeEvent: onSelectionChange,
       },
     });
@@ -798,5 +825,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
     );
     this.currentPage = 1;
     this.updateFilter();
+  }
+
+  public navigateToNewProject(): void {
+    this.router.navigate(['/projects', 'new']);
   }
 }

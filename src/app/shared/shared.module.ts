@@ -64,6 +64,8 @@ import { ImageCarouselComponent } from './image-carousel/image-carousel.componen
 import { BottleIconComponent } from './bottle-icon/bottle-icon.component';
 import { FilamentSpoolIconComponent } from './filament-spool-icon/filament-spool-icon.component';
 import { MaterialIconComponent } from './material-icon/material-icon.component';
+import { FilamentUsageSummaryComponent } from './filament-usage-summary/filament-usage-summary.component';
+import { AuthImagePipe } from './pipes/auth-image.pipe';
 
 @NgModule({
   declarations: [
@@ -134,6 +136,8 @@ import { MaterialIconComponent } from './material-icon/material-icon.component';
     FilamentSpoolIconComponent,
     BottleIconComponent,
     MaterialIconComponent,
+    FilamentUsageSummaryComponent,
+    AuthImagePipe,
   ],
   exports: [
     CommonModule,
@@ -195,6 +199,8 @@ import { MaterialIconComponent } from './material-icon/material-icon.component';
     FilamentSpoolIconComponent,
     BottleIconComponent,
     MaterialIconComponent,
+    FilamentUsageSummaryComponent,
+    AuthImagePipe,
   ],
 })
 export class SharedModule {}

@@ -138,6 +138,13 @@
             <mat-error> A Printer is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
+        <app-project-selector
+          fxFlex="grow"
+          fxFlexFill
+          [initialProjectId]="printDetail?.projectId ?? null"
+          [initialProjectName]="printDetail?.projectName ?? null"
+          (projectSelected)="onProjectSelected($event)"
+        />
         <div fxFlex="grow" fxFlexFill>
           <div
             class="input-row desktop-margin-offset"

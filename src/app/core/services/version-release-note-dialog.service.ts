@@ -28,6 +28,31 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.38.0': {
+      title: '1.38.0 - Projects',
+      body: `<p>
+<strong>Projects</strong> are here! Organize your prints into projects with names, descriptions, statuses, and images. Each project has a dedicated page showing all associated prints. Assign prints to projects from the print edit form, and use the new <strong>Grouped View</strong> in the <a href="/prints">Print List</a> to see your projects with print counts and total costs at a glance.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.37.0': {
       title: '1.37.0 - Dark Mode',
       body: `<p>

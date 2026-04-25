@@ -25,6 +25,11 @@ const routes: Routes = [
       import('./print/print.module').then((m) => m.PrintModule),
   },
   {
+    path: 'projects',
+    loadChildren: () =>
+      import('./project/project.module').then((m) => m.ProjectModule),
+  },
+  {
     path: 'printers',
     loadChildren: () =>
       import('./printer/printer.module').then((m) => m.PrinterModule),

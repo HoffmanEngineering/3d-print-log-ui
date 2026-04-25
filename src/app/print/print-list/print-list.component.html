@@ -1,4 +1,5 @@
 <div fxLayout="column" fxLayoutAlign="center">
+  <!-- Header: always visible regardless of view mode -->
   <div class="header">
     <!-- Row 1: Always visible — action buttons, search, filter toggle -->
     <div class="header-top">
@@ -26,6 +27,9 @@
         <mat-menu #printAddOptions="matMenu">
           <button mat-menu-item color="accent" (click)="gcodeInput.click()">
             Add Print From Gcode
+          </button>
+          <button mat-menu-item (click)="navigateToNewProject()">
+            Add a Project
           </button>
         </mat-menu>
         <input
@@ -147,635 +151,436 @@
     </div>
   </div>
 
-  <!-- Mobile Card View -->
-  <div class="mobile-card-view" fxHide.gt-sm>
-    @for (print of prints; track print.id) {
-      <mat-card class="print-card" (click)="navigateToPrint(print.id)">
-        <mat-card-content>
-          <div class="card-layout">
-            <!-- Image Section -->
-            <div class="card-image">
-              <app-print-image
-                [printId]="print.id"
-                [imageId]="print.defaultPrintImageId"
-              ></app-print-image>
-            </div>
+  <!-- View toggle -->
+  <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
+    <mat-button-toggle value="list">All Prints</mat-button-toggle>
+    <mat-button-toggle value="grouped">Grouped by Project</mat-button-toggle>
+  </mat-button-toggle-group>
 
-            <!-- Content Section -->
-            <div class="card-content">
-              <h3 class="card-title">{{ print.title }}</h3>
+  <!-- Grouped view -->
+  @if (viewMode === 'grouped') {
+    <app-print-grouped-view
+      [searchText]="searchText"
+      [filterByStatus]="filterByStatus()"
+      [filterByPrinterIds]="filterByPrinterIds()"
+      [filterByFilamentIds]="filterByFilamentIds()"
+      [sortColumn]="sortColumn"
+      [sortDirection]="sortDirection"
+      [defaultFilamentPriceSetting]="defaultFilamentPriceSetting"
+      [preferredCurrencySymbolSetting]="preferredCurrencySymbolSetting"
+    />
+  }
 
-              <div class="card-meta">
-                <div class="meta-item">
-                  <mat-icon class="meta-icon">print</mat-icon>
-                  <span>{{ getPrinterLabel(print.printer) }}</span>
-                </div>
+  <!-- List view: mobile cards + desktop table + paginator -->
+  @if (viewMode === 'list') {
+    <!-- Mobile Card View -->
+    <div class="mobile-card-view" fxHide.gt-sm>
+      @for (print of prints; track print.id) {
+        <app-print-card
+          [print]="print"
+          (deleted)="deletePrint($event)"
+          (statusChanged)="changeStatus($event.id, $event.status)"
+        />
+      }
+      @if (totalCount === 0) {
+        <div class="no-prints">
+          No prints found. Add a new print or try a different search.
+        </div>
+      }
+    </div>
 
-                <div class="meta-item">
-                  <mat-icon class="meta-icon">calendar_today</mat-icon>
-                  <span>{{ print.startDate | date }}</span>
-                </div>
-
-                <div class="meta-item">
-                  <mat-icon class="meta-icon">timer</mat-icon>
-                  <span>
-                    @if (
-                      print.printTimeInSeconds !== null &&
-                      print.printTimeInSeconds > 0
-                    ) {
-                      {{ print.printTimeInSeconds | duration }}
-                    } @else if (
-                      print.estimatedPrintTimeInSeconds !== null &&
-                      print.estimatedPrintTimeInSeconds > 0
-                    ) {
-                      {{ print.estimatedPrintTimeInSeconds | duration }} *
-                    } @else {
-                      --
-                    }
-                  </span>
-                </div>
-
-                <!-- Materials Section -->
-                @if (print.filamentUsage && print.filamentUsage.length > 0) {
-                  <div class="meta-item materials-section">
-                    <div class="materials-container">
-                      @for (
-                        fu of print.filamentUsage;
-                        track fu;
-                        let i = $index
-                      ) {
-                        <div class="material-chip">
-                          @if (fu.filament !== null) {
-                            <div
-                              class="material-color"
-                              [style.background-color]="
-                                '#' + fu.filament.colorHex
-                              "
-                              [title]="fu.filament.colorName || 'No color name'"
-                            ></div>
-                            <span class="material-name">
-                              {{ fu.filament?.displayName }}
-                              @if (fu.amountMg !== null && fu.amountMg > 0) {
-                                ({{ fu.amountMg / 1000 | number: '1.0-1' }}g)
-                              } @else if (
-                                fu.estimatedAmountMg !== null &&
-                                fu.estimatedAmountMg > 0
-                              ) {
-                                ({{
-                                  fu.estimatedAmountMg / 1000 | number: '1.0-1'
-                                }}g*)
-                              }
-                            </span>
-                          } @else {
-                            <span class="material-name">{{ fu.notes }}</span>
-                          }
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-
-                <div
-                  class="meta-item status-badge"
-                  [class]="'status-' + print.status"
-                >
-                  <mat-icon class="meta-icon">{{
-                    getStatusIcon(print)
-                  }}</mat-icon>
-                  <span>{{ getStatus(print) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Actions Section -->
-            <div class="card-actions" (click)="$event.stopPropagation()">
-              <button
-                mat-icon-button
-                [matMenuTriggerFor]="cardMenu"
-                attr.aria-label="More options for {{ print.title }}"
-              >
-                <mat-icon>more_vert</mat-icon>
-              </button>
-              <mat-menu #cardMenu="matMenu">
-                <a
-                  class="menu-link"
-                  mat-menu-item
-                  [routerLink]="[print.id, 'edit']"
-                >
-                  <mat-icon>edit</mat-icon>Edit
-                </a>
-                <a class="menu-link" mat-menu-item [routerLink]="[print.id]">
-                  <mat-icon>launch</mat-icon>View
-                </a>
-                <button type="button" mat-menu-item (click)="share(print)">
-                  <mat-icon>share</mat-icon>Share
-                </button>
-                <a
-                  class="menu-link"
-                  mat-menu-item
-                  [routerLink]="['copy', print.id]"
-                >
-                  <mat-icon>file_copy</mat-icon>Duplicate
-                </a>
-                <button
-                  type="button"
-                  mat-menu-item
-                  (click)="deletePrint(print)"
-                >
-                  <mat-icon>delete</mat-icon>Delete
-                </button>
-                <hr />
-                <button mat-menu-item [matMenuTriggerFor]="printStatusMenu">
-                  Change Print Status
-                </button>
-              </mat-menu>
-              <mat-menu #printStatusMenu="matMenu">
-                <button
-                  type="button"
-                  mat-menu-item
-                  (click)="changeStatus(print.id, printStatusTypes.Pending)"
-                >
-                  <mat-icon>pending_actions</mat-icon>Pending
-                </button>
-                <button
-                  type="button"
-                  mat-menu-item
-                  (click)="changeStatus(print.id, printStatusTypes.Printing)"
-                >
-                  <mat-icon>play_circle_outline</mat-icon>Printing
-                </button>
-                <button
-                  type="button"
-                  mat-menu-item
-                  (click)="changeStatus(print.id, printStatusTypes.Success)"
-                >
-                  <mat-icon>done</mat-icon>Success
-                </button>
-                <button
-                  type="button"
-                  mat-menu-item
-                  (click)="
-                    changeStatus(print.id, printStatusTypes.PartialSuccess)
-                  "
-                >
-                  <mat-icon>rule</mat-icon>Partial Success
-                </button>
-                <button
-                  type="button"
-                  mat-menu-item
-                  (click)="changeStatus(print.id, printStatusTypes.Failed)"
-                >
-                  <mat-icon>phonelink_off</mat-icon>Failed
-                </button>
-                <button
-                  type="button"
-                  mat-menu-item
-                  (click)="changeStatus(print.id, printStatusTypes.Cancelled)"
-                >
-                  <mat-icon>remove_circle_outline</mat-icon>Cancelled
-                </button>
-              </mat-menu>
-            </div>
+    <!-- Desktop Table View -->
+    <table
+      fxFlex="grow"
+      fxHide.lt-md
+      aria-label="Print List"
+      aria-live="polite"
+      mat-table
+      [dataSource]="prints"
+      matSort
+      (matSortChange)="sortData($event)"
+      [matSortDisableClear]="true"
+    >
+      <ng-container matColumnDef="image">
+        <th mat-header-cell *matHeaderCellDef>Image</th>
+        <td mat-cell *matCellDef="let print">
+          <div class="print-image">
+            <app-print-image
+              [printId]="print.id"
+              [imageId]="print.defaultPrintImageId"
+            ></app-print-image>
           </div>
-        </mat-card-content>
-      </mat-card>
-    }
-    @if (totalCount === 0) {
-      <div class="no-prints">
-        No prints found. Add a new print or try a different search.
-      </div>
-    }
-  </div>
-
-  <!-- Desktop Table View -->
-  <table
-    fxFlex="grow"
-    fxHide.lt-md
-    aria-label="Print List"
-    aria-live="polite"
-    mat-table
-    [dataSource]="prints"
-    matSort
-    (matSortChange)="sortData($event)"
-    [matSortDisableClear]="true"
-  >
-    <ng-container matColumnDef="image">
-      <th mat-header-cell *matHeaderCellDef>Image</th>
-      <td mat-cell *matCellDef="let print">
-        <div class="print-image">
-          <app-print-image
-            [printId]="print.id"
-            [imageId]="print.defaultPrintImageId"
-          ></app-print-image>
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="image-medium">
-      <th mat-header-cell *matHeaderCellDef>Image</th>
-      <td mat-cell *matCellDef="let print">
-        <div class="print-image-medium">
-          <app-print-image
-            [printId]="print.id"
-            [imageId]="print.defaultPrintImageId"
-          ></app-print-image>
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="image-large">
-      <th mat-header-cell *matHeaderCellDef>Image</th>
-      <td mat-cell *matCellDef="let print">
-        <div class="print-image-large">
-          <app-print-image
-            [printId]="print.id"
-            [imageId]="print.defaultPrintImageId"
-          ></app-print-image>
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="title">
-      <th
-        scope="col"
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="printSummarySortColumns.Title"
-      >
-        Title
-      </th>
-      <td mat-cell *matCellDef="let print">{{ print.title }}</td>
-    </ng-container>
-    <ng-container matColumnDef="printer">
-      <th mat-header-cell *matHeaderCellDef>Printer</th>
-      <td mat-cell *matCellDef="let print">
-        {{ getPrinterLabel(print.printer) }}
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="start-date">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="printSummarySortColumns.StartDate"
-      >
-        Start Date
-      </th>
-      <td mat-cell *matCellDef="let print">{{ print.startDate | date }}</td>
-    </ng-container>
-    <ng-container matColumnDef="start-time">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="printSummarySortColumns.StartDate"
-      >
-        Start Time
-      </th>
-      <td mat-cell *matCellDef="let print">
-        {{ print.startDate | date: 'mediumTime' }}
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="start-date-time">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="printSummarySortColumns.StartDate"
-      >
-        Start Date/Time
-      </th>
-      <td mat-cell *matCellDef="let print">
-        {{ print.startDate | date: 'medium' }}
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="end-date">
-      <th mat-header-cell *matHeaderCellDef>End Date</th>
-      <td mat-cell *matCellDef="let print">
-        <div
-          matTooltip="* indicates Estimated End Time"
-          [matTooltipDisabled]="
-            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
-          "
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="image-medium">
+        <th mat-header-cell *matHeaderCellDef>Image</th>
+        <td mat-cell *matCellDef="let print">
+          <div class="print-image-medium">
+            <app-print-image
+              [printId]="print.id"
+              [imageId]="print.defaultPrintImageId"
+            ></app-print-image>
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="image-large">
+        <th mat-header-cell *matHeaderCellDef>Image</th>
+        <td mat-cell *matCellDef="let print">
+          <div class="print-image-large">
+            <app-print-image
+              [printId]="print.id"
+              [imageId]="print.defaultPrintImageId"
+            ></app-print-image>
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="title">
+        <th
+          scope="col"
+          mat-header-cell
+          *matHeaderCellDef
+          [mat-sort-header]="printSummarySortColumns.Title"
         >
-          {{ getPrintEndDate(print) | date }}
-          @if (
-            (print.printTimeInSeconds === null ||
-              print.printTimeInSeconds === undefined ||
-              print.printTimeInSeconds === 0) &&
-            print.estimatedPrintTimeInSeconds !== null &&
-            print.estimatedPrintTimeInSeconds > 0
-          ) {
-            *
+          Title
+        </th>
+        <td mat-cell *matCellDef="let print">
+          {{ print.title }}
+          @if (print.projectName) {
+            <app-project-chip
+              [projectName]="print.projectName"
+              [projectStatus]="print.projectStatus!"
+              [projectId]="print.projectId"
+            />
           }
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="end-time">
-      <th mat-header-cell *matHeaderCellDef>End Time</th>
-      <td mat-cell *matCellDef="let print">
-        <div
-          matTooltip="* indicates Estimated End Time"
-          [matTooltipDisabled]="
-            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
-          "
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="printer">
+        <th mat-header-cell *matHeaderCellDef>Printer</th>
+        <td mat-cell *matCellDef="let print">
+          {{ getPrinterLabel(print.printer) }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="start-date">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          [mat-sort-header]="printSummarySortColumns.StartDate"
         >
-          {{ getPrintEndDate(print) | date: 'mediumTime' }}
-          @if (
-            (print.printTimeInSeconds === null ||
-              print.printTimeInSeconds === undefined ||
-              print.printTimeInSeconds === 0) &&
-            print.estimatedPrintTimeInSeconds !== null &&
-            print.estimatedPrintTimeInSeconds > 0
-          ) {
-            *
-          }
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="end-date-time">
-      <th mat-header-cell *matHeaderCellDef>End Date/Time</th>
-      <td mat-cell *matCellDef="let print">
-        <div
-          matTooltip="* indicates Estimated End Time"
-          [matTooltipDisabled]="
-            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
-          "
+          Start Date
+        </th>
+        <td mat-cell *matCellDef="let print">{{ print.startDate | date }}</td>
+      </ng-container>
+      <ng-container matColumnDef="start-time">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          [mat-sort-header]="printSummarySortColumns.StartDate"
         >
-          {{ getPrintEndDate(print) | date: 'medium' }}
-          @if (
-            (print.printTimeInSeconds === null ||
-              print.printTimeInSeconds === undefined ||
-              print.printTimeInSeconds === 0) &&
-            print.estimatedPrintTimeInSeconds !== null &&
-            print.estimatedPrintTimeInSeconds > 0
-          ) {
-            *
-          }
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="printTime">
-      <th mat-header-cell *matHeaderCellDef>Print Time</th>
-      <td mat-cell *matCellDef="let print">
-        @if (
-          print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
-        ) {
-          {{ print.printTimeInSeconds | duration }}
-        } @else {
-          <div matTooltip="* indicates Estimated Print Time">
-            {{ print.estimatedPrintTimeInSeconds | duration }}
+          Start Time
+        </th>
+        <td mat-cell *matCellDef="let print">
+          {{ print.startDate | date: 'mediumTime' }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="start-date-time">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          [mat-sort-header]="printSummarySortColumns.StartDate"
+        >
+          Start Date/Time
+        </th>
+        <td mat-cell *matCellDef="let print">
+          {{ print.startDate | date: 'medium' }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="end-date">
+        <th mat-header-cell *matHeaderCellDef>End Date</th>
+        <td mat-cell *matCellDef="let print">
+          <div
+            matTooltip="* indicates Estimated End Time"
+            [matTooltipDisabled]="
+              print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+            "
+          >
+            {{ getPrintEndDate(print) | date }}
             @if (
+              (print.printTimeInSeconds === null ||
+                print.printTimeInSeconds === undefined ||
+                print.printTimeInSeconds === 0) &&
               print.estimatedPrintTimeInSeconds !== null &&
               print.estimatedPrintTimeInSeconds > 0
             ) {
               *
             }
           </div>
-        }
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="filamentSummary">
-      <th mat-header-cell *matHeaderCellDef>Materials</th>
-      <td mat-cell *matCellDef="let print">
-        <div
-          gdColumns="max-content max-content max-content max-content"
-          gdRows="auto"
-          gdGap="10px"
-          style="padding-inline: 10px; padding-block: 5px"
-        >
-          @for (fu of print.filamentUsage; track fu; let i = $index) {
-            <div gdColumn="1" [gdRow]="i">
-              @if (fu.filament !== null) {
-                <div
-                  class="filament-color-cell"
-                  [style.background-color]="'#' + fu.filament.colorHex"
-                ></div>
-              }
-            </div>
-            <div gdColumn="2" [gdRow]="i">
-              @if (fu.filament !== null) {
-                <a
-                  [routerLink]="['/filament', fu.filament.id]"
-                  (click)="$event.preventDefault(); $event.stopPropagation()"
-                  >{{ fu.filament?.displayName }}</a
-                >
-                @if (fu.filament?.colorName) {
-                  ({{ fu.filament?.colorName }})
-                }
-              } @else {
-                {{ fu.notes }}
-              }
-            </div>
-            <div gdColumn="3" [gdRow]="i">
-              @if (fu.amountMg !== null && fu.amountMg > 0) {
-                {{ fu.amountMg / 1000 | number: '1.0-1' }} g
-              } @else {
-                <div matTooltip="* indicates Estimated Material Usage">
-                  {{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }} g *
-                </div>
-              }
-            </div>
-            <div
-              gdColumn="4"
-              [gdRow]="i"
-              matTooltip="* indicates default material price used"
-            >
-              @if (fu.amountMg !== null && fu.amountMg > 0) {
-                {{ getActualPrice(fu) }}
-              } @else {
-                <div>
-                  {{ getEstimatedPrice(fu) }}
-                </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="end-time">
+        <th mat-header-cell *matHeaderCellDef>End Time</th>
+        <td mat-cell *matCellDef="let print">
+          <div
+            matTooltip="* indicates Estimated End Time"
+            [matTooltipDisabled]="
+              print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+            "
+          >
+            {{ getPrintEndDate(print) | date: 'mediumTime' }}
+            @if (
+              (print.printTimeInSeconds === null ||
+                print.printTimeInSeconds === undefined ||
+                print.printTimeInSeconds === 0) &&
+              print.estimatedPrintTimeInSeconds !== null &&
+              print.estimatedPrintTimeInSeconds > 0
+            ) {
+              *
+            }
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="end-date-time">
+        <th mat-header-cell *matHeaderCellDef>End Date/Time</th>
+        <td mat-cell *matCellDef="let print">
+          <div
+            matTooltip="* indicates Estimated End Time"
+            [matTooltipDisabled]="
+              print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+            "
+          >
+            {{ getPrintEndDate(print) | date: 'medium' }}
+            @if (
+              (print.printTimeInSeconds === null ||
+                print.printTimeInSeconds === undefined ||
+                print.printTimeInSeconds === 0) &&
+              print.estimatedPrintTimeInSeconds !== null &&
+              print.estimatedPrintTimeInSeconds > 0
+            ) {
+              *
+            }
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="printTime">
+        <th mat-header-cell *matHeaderCellDef>Print Time</th>
+        <td mat-cell *matCellDef="let print">
+          @if (
+            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+          ) {
+            {{ print.printTimeInSeconds | duration }}
+          } @else {
+            <div matTooltip="* indicates Estimated Print Time">
+              {{ print.estimatedPrintTimeInSeconds | duration }}
+              @if (
+                print.estimatedPrintTimeInSeconds !== null &&
+                print.estimatedPrintTimeInSeconds > 0
+              ) {
+                *
               }
             </div>
           }
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="totalFilamentUsage">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        [mat-sort-header]="printSummarySortColumns.FilamentUsage"
-      >
-        Total Material (g)
-      </th>
-      <td mat-cell *matCellDef="let print">
-        {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="totalCost">
-      <th mat-header-cell *matHeaderCellDef>Total Cost</th>
-      <td mat-cell *matCellDef="let print">
-        {{ getTotalFilamentCost(print.filamentUsage) }}
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let print">{{ getStatus(print) }}</td>
-    </ng-container>
-    <ng-container matColumnDef="commentCount">
-      <th mat-header-cell *matHeaderCellDef>Comments</th>
-      <td mat-cell *matCellDef="let print">{{ print.commentCount }}</td>
-    </ng-container>
-    <ng-container matColumnDef="more">
-      <th
-        mat-header-cell
-        *matHeaderCellDef
-        (click)="$event.preventDefault(); $event.stopPropagation()"
-      >
-        <button
-          mat-button
-          class="transparent"
-          attr.aria-label="Open table settings"
-          [matMenuTriggerFor]="tableSettingsMenu"
-          data-cy-table-settings
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="filamentSummary">
+        <th mat-header-cell *matHeaderCellDef>Materials</th>
+        <td mat-cell *matCellDef="let print">
+          <app-filament-usage-summary
+            [filamentUsage]="print.filamentUsage"
+            [defaultFilamentPrice]="defaultFilamentPriceSetting?.value"
+            [currencySymbol]="preferredCurrencySymbolSetting?.value ?? '$'"
+          />
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="totalFilamentUsage">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          [mat-sort-header]="printSummarySortColumns.FilamentUsage"
         >
-          <mat-icon>settings</mat-icon>
-        </button>
-        <mat-menu #tableSettingsMenu="matMenu">
-          <button
-            type="button"
-            mat-menu-item
-            attr.aria-label="Change the layout of the print table."
-            (click)="openPrintTableLayout()"
-          >
-            <mat-icon>table_rows</mat-icon>Change table layout
-          </button>
-        </mat-menu>
-      </th>
-      <td
-        mat-cell
-        *matCellDef="let print"
-        (click)="$event.preventDefault(); $event.stopPropagation()"
-      >
-        <button
-          mat-button
-          class="transparent"
-          attr.aria-label="More options for {{ print.title }}"
-          [matMenuTriggerFor]="aboutMenu"
-          data-cy-more-button
+          Total Material (g)
+        </th>
+        <td mat-cell *matCellDef="let print">
+          {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="totalCost">
+        <th mat-header-cell *matHeaderCellDef>Total Cost</th>
+        <td mat-cell *matCellDef="let print">
+          {{ getTotalFilamentCost(print.filamentUsage) }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let print">{{ getStatus(print) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="commentCount">
+        <th mat-header-cell *matHeaderCellDef>Comments</th>
+        <td mat-cell *matCellDef="let print">{{ print.commentCount }}</td>
+      </ng-container>
+      <ng-container matColumnDef="more">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          (click)="$event.preventDefault(); $event.stopPropagation()"
         >
-          <mat-icon>more_horiz</mat-icon>
-        </button>
-        <mat-menu #aboutMenu="matMenu">
-          <!-- <button mat-menu-item>Fee</button> -->
-          <a
-            class="menu-link"
-            mat-menu-item
-            attr.aria-label="Edit {{ print.title }}"
-            [routerLink]="[print.id, 'edit']"
-            data-cy-edit-menu-option
-            ><mat-icon>edit</mat-icon>Edit</a
-          >
-          <a
-            class="menu-link"
-            mat-menu-item
-            attr.aria-label="View {{ print.title }}"
-            [routerLink]="[print.id]"
-            ><mat-icon>launch</mat-icon>View</a
-          >
           <button
-            type="button"
-            mat-menu-item
-            attr.aria-label="Share {{ print.title }}"
-            (click)="share(print)"
+            mat-button
+            class="transparent"
+            attr.aria-label="Open table settings"
+            [matMenuTriggerFor]="tableSettingsMenu"
+            data-cy-table-settings
           >
-            <mat-icon>share</mat-icon>Share
+            <mat-icon>settings</mat-icon>
           </button>
-          <a
-            class="menu-link"
-            mat-menu-item
-            attr.aria-label="Duplicate {{ print.title }}"
-            [routerLink]="['copy', print.id]"
-            ><mat-icon>file_copy</mat-icon>Duplicate</a
-          >
+          <mat-menu #tableSettingsMenu="matMenu">
+            <button
+              type="button"
+              mat-menu-item
+              attr.aria-label="Change the layout of the print table."
+              (click)="openPrintTableLayout()"
+            >
+              <mat-icon>table_rows</mat-icon>Change table layout
+            </button>
+          </mat-menu>
+        </th>
+        <td
+          mat-cell
+          *matCellDef="let print"
+          (click)="$event.preventDefault(); $event.stopPropagation()"
+        >
           <button
-            type="button"
-            mat-menu-item
-            attr.aria-label="Delete {{ print.title }}"
-            (click)="deletePrint(print)"
+            mat-button
+            class="transparent"
+            attr.aria-label="More options for {{ print.title }}"
+            [matMenuTriggerFor]="aboutMenu"
+            data-cy-more-button
           >
-            <mat-icon>delete</mat-icon>Delete
+            <mat-icon>more_horiz</mat-icon>
           </button>
-          <hr />
-          <button
-            mat-menu-item
-            attr.aria-label="Change print status for {{ print.title }}"
-            [matMenuTriggerFor]="printStatusMenu"
-            data-cy-print-status
-          >
-            Change Print Status
-          </button>
-        </mat-menu>
-        <mat-menu #printStatusMenu="matMenu">
-          <button
-            type="button"
-            mat-menu-item
-            aria-label="Change status to Pending"
-            (click)="changeStatus(print.id, printStatusTypes.Pending)"
-          >
-            <mat-icon>pending_actions</mat-icon>Pending
-          </button>
-          <button
-            type="button"
-            mat-menu-item
-            aria-label="Change status to Printing"
-            (click)="changeStatus(print.id, printStatusTypes.Printing)"
-          >
-            <mat-icon>play_circle_outline</mat-icon>Printing
-          </button>
-          <button
-            type="button"
-            mat-menu-item
-            aria-label="Change status to Success"
-            (click)="changeStatus(print.id, printStatusTypes.Success)"
-          >
-            <mat-icon>done</mat-icon>Success
-          </button>
-          <button
-            type="button"
-            mat-menu-item
-            aria-label="Change status to Success"
-            (click)="changeStatus(print.id, printStatusTypes.PartialSuccess)"
-          >
-            <mat-icon>rule</mat-icon>Partial Success
-          </button>
-          <button
-            type="button"
-            mat-menu-item
-            aria-label="Change status to Failed"
-            (click)="changeStatus(print.id, printStatusTypes.Failed)"
-          >
-            <mat-icon>phonelink_off</mat-icon>Failed
-          </button>
-          <button
-            type="button"
-            mat-menu-item
-            aria-label="Change status to Cancelled"
-            (click)="changeStatus(print.id, printStatusTypes.Cancelled)"
-          >
-            <mat-icon>remove_circle_outline</mat-icon>Cancelled
-          </button>
-        </mat-menu>
-      </td>
-    </ng-container>
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr
-      scope="row"
-      mat-row
-      *matRowDef="let row; columns: displayedColumns"
-      [routerLink]="row.id"
-      [attr.cy-print-row]="row.id"
-    ></tr>
-  </table>
-  @if (totalCount === 0) {
-    <div class="no-prints">
-      No prints found. Add a new print or try a different search.
-    </div>
+          <mat-menu #aboutMenu="matMenu">
+            <!-- <button mat-menu-item>Fee</button> -->
+            <a
+              class="menu-link"
+              mat-menu-item
+              attr.aria-label="Edit {{ print.title }}"
+              [routerLink]="[print.id, 'edit']"
+              data-cy-edit-menu-option
+              ><mat-icon>edit</mat-icon>Edit</a
+            >
+            <a
+              class="menu-link"
+              mat-menu-item
+              attr.aria-label="View {{ print.title }}"
+              [routerLink]="[print.id]"
+              ><mat-icon>launch</mat-icon>View</a
+            >
+            <button
+              type="button"
+              mat-menu-item
+              attr.aria-label="Share {{ print.title }}"
+              (click)="share(print)"
+            >
+              <mat-icon>share</mat-icon>Share
+            </button>
+            <a
+              class="menu-link"
+              mat-menu-item
+              attr.aria-label="Duplicate {{ print.title }}"
+              [routerLink]="['copy', print.id]"
+              ><mat-icon>file_copy</mat-icon>Duplicate</a
+            >
+            <button
+              type="button"
+              mat-menu-item
+              attr.aria-label="Delete {{ print.title }}"
+              (click)="deletePrint(print)"
+            >
+              <mat-icon>delete</mat-icon>Delete
+            </button>
+            <hr />
+            <button
+              mat-menu-item
+              attr.aria-label="Change print status for {{ print.title }}"
+              [matMenuTriggerFor]="printStatusMenu"
+              data-cy-print-status
+            >
+              Change Print Status
+            </button>
+          </mat-menu>
+          <mat-menu #printStatusMenu="matMenu">
+            <button
+              type="button"
+              mat-menu-item
+              aria-label="Change status to Pending"
+              (click)="changeStatus(print.id, printStatusTypes.Pending)"
+            >
+              <mat-icon>pending_actions</mat-icon>Pending
+            </button>
+            <button
+              type="button"
+              mat-menu-item
+              aria-label="Change status to Printing"
+              (click)="changeStatus(print.id, printStatusTypes.Printing)"
+            >
+              <mat-icon>play_circle_outline</mat-icon>Printing
+            </button>
+            <button
+              type="button"
+              mat-menu-item
+              aria-label="Change status to Success"
+              (click)="changeStatus(print.id, printStatusTypes.Success)"
+            >
+              <mat-icon>done</mat-icon>Success
+            </button>
+            <button
+              type="button"
+              mat-menu-item
+              aria-label="Change status to Success"
+              (click)="changeStatus(print.id, printStatusTypes.PartialSuccess)"
+            >
+              <mat-icon>rule</mat-icon>Partial Success
+            </button>
+            <button
+              type="button"
+              mat-menu-item
+              aria-label="Change status to Failed"
+              (click)="changeStatus(print.id, printStatusTypes.Failed)"
+            >
+              <mat-icon>phonelink_off</mat-icon>Failed
+            </button>
+            <button
+              type="button"
+              mat-menu-item
+              aria-label="Change status to Cancelled"
+              (click)="changeStatus(print.id, printStatusTypes.Cancelled)"
+            >
+              <mat-icon>remove_circle_outline</mat-icon>Cancelled
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        scope="row"
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        [routerLink]="row.id"
+        [attr.cy-print-row]="row.id"
+      ></tr>
+    </table>
+    @if (totalCount === 0) {
+      <div class="no-prints">
+        No prints found. Add a new print or try a different search.
+      </div>
+    }
+    <mat-paginator
+      [pageIndex]="currentPage - 1"
+      [length]="totalCount"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      (page)="pageChange($event)"
+    >
+    </mat-paginator>
+    <app-ad></app-ad>
   }
-  <mat-paginator
-    [pageIndex]="currentPage - 1"
-    [length]="totalCount"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5, 10, 25, 100]"
-    (page)="pageChange($event)"
-  >
-  </mat-paginator>
-  <app-ad></app-ad>
+  <!-- end @if (viewMode === 'list') -->
 </div>

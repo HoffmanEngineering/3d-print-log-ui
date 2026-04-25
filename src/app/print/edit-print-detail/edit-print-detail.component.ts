@@ -61,6 +61,10 @@ import {
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { isCordova } from 'src/app/core/utils/platform';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import {
+  ProjectSelectorComponent,
+  ProjectSelection,
+} from 'src/app/shared/project-selector/project-selector.component';
 
 export interface PrintImageValue {
   id?: number;
@@ -157,6 +161,10 @@ export class EditPrintDetailComponent
   };
 
   public isCordova = isCordova;
+
+  public printDetail: PrintDetail | null = null;
+
+  public pendingProjectSelection: ProjectSelection | null = null;
 
   public printers: PrinterSummary[] = [];
 
@@ -322,6 +330,14 @@ export class EditPrintDetailComponent
 
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
+      this.printDetail = data.print.print;
+      if (data.print.print?.projectId) {
+        this.pendingProjectSelection = {
+          type: 'existing',
+          projectId: data.print.print.projectId,
+          projectName: data.print.print.projectName ?? '',
+        };
+      }
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
       this.updateCachedImagesForStrip();
 
@@ -1563,6 +1579,10 @@ export class EditPrintDetailComponent
     this.router.navigate(['/prints']);
   }
 
+  onProjectSelected(selection: ProjectSelection | null): void {
+    this.pendingProjectSelection = selection;
+  }
+
   /**
    * Helper function to convert empty strings to null for numeric fields
    */
@@ -1648,6 +1668,14 @@ export class EditPrintDetailComponent
       allowComments: this.printForm.controls.allowComments.value,
       allowFileDownloads: this.printForm.controls.allowFileDownloads.value,
     };
+
+    if (this.pendingProjectSelection?.type === 'existing') {
+      print.projectId = this.pendingProjectSelection.projectId;
+      print.newProjectName = undefined;
+    } else if (this.pendingProjectSelection?.type === 'new') {
+      print.newProjectName = this.pendingProjectSelection.newProjectName;
+      print.projectId = undefined;
+    }
 
     return print;
   }

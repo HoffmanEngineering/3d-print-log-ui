@@ -1,5 +1,5 @@
 <div class="thumbnail-strip" [class.editable]="editable()">
-  @if (images().length > 1 || editable()) {
+  @if (images().length > 1 || (editable() && images().length > 0)) {
     <ul
       #thumbnailList
       class="thumbnails"
@@ -15,7 +15,11 @@
       ) {
         <li
           class="thumbnail"
-          [class.selected]="image.id !== undefined ? image.id === selectedId() : (image.url !== undefined && image.url === selectedUrl())"
+          [class.selected]="
+            image.id !== undefined
+              ? image.id === selectedId()
+              : image.url !== undefined && image.url === selectedUrl()
+          "
           [class.is-default]="image.isDefault"
           [cdkDragDisabled]="!editable()"
           cdkDrag
@@ -24,11 +28,22 @@
             class="thumbnail-select"
             type="button"
             [attr.aria-label]="getSelectLabel(image, index)"
-            [attr.aria-current]="(image.id !== undefined ? image.id === selectedId() : (image.url !== undefined && image.url === selectedUrl())) ? 'true' : null"
+            [attr.aria-current]="
+              (
+                image.id !== undefined
+                  ? image.id === selectedId()
+                  : image.url !== undefined && image.url === selectedUrl()
+              )
+                ? 'true'
+                : null
+            "
             (click)="onThumbnailClick(image)"
           >
-            @if (image.url) {
-              <img [src]="image.url" alt="" />
+            @if (image.resolvedUrl || image.url) {
+              <img
+                [src]="image.resolvedUrl ?? (image.url | authImage | async)"
+                alt=""
+              />
             } @else {
               <div class="placeholder">
                 <mat-icon>image</mat-icon>
@@ -62,7 +77,7 @@
           }
         </li>
       }
-      @if (editable() && canAddMore() && images().length > 0) {
+      @if (editable() && canAddMore()) {
         <li class="add-button-item">
           <button
             class="add-button"

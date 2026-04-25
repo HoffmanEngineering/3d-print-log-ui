@@ -1,0 +1,98 @@
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.project-detail-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.project-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+  width: 100%;
+  padding: 16px;
+}
+
+.ad-sidebar {
+  display: none;
+  width: 300px;
+  flex-shrink: 0;
+  padding-top: 16px;
+
+  @media (min-width: 1100px) {
+    display: block;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.stats-bar {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .label {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+  .value {
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+}
+
+.description {
+  white-space: pre-wrap;
+}
+
+.images-section {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.carousel-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  display: block;
+  border-radius: 4px;
+}
+
+mat-select {
+  min-width: 103px;
+}
+
+.status-label {
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.private-prints-note {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+}

@@ -1,0 +1,43 @@
+<mat-form-field class="project-selector-field">
+  <mat-label>Project (optional)</mat-label>
+  <input
+    matInput
+    [formControl]="searchControl"
+    [matAutocomplete]="auto"
+    placeholder="Showing active projects — type to search or create a project"
+  />
+  @if (selectedProject()) {
+    <button
+      matSuffix
+      mat-icon-button
+      aria-label="Clear"
+      (click)="clearProject()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+    @for (project of filteredProjects(); track project.id) {
+      <mat-option
+        [value]="project.name"
+        (click)="selectExistingProject(project)"
+      >
+        {{ project.name }}
+        @if (project.reference) {
+          <span class="reference"> — {{ project.reference }}</span>
+        }
+        @if (!isDefaultView() && project.status !== ProjectStatus.InProgress) {
+          <span class="status-label">{{ getStatusLabel(project.status) }}</span>
+        }
+      </mat-option>
+    }
+    @if (showNewOption()) {
+      <mat-option
+        [value]="searchControl.value"
+        (click)="selectNewProject(searchControl.value!)"
+      >
+        <mat-icon>add</mat-icon> Create project: "{{ searchControl.value }}"
+      </mat-option>
+    }
+  </mat-autocomplete>
+</mat-form-field>

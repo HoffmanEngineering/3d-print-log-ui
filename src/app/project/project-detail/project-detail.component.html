@@ -1,9 +1,13 @@
 @if (loading()) {
   <div class="loading-center"><mat-spinner /></div>
 } @else if (project(); as p) {
-  <div class="project-detail-layout">
+  <div class="project-detail-page">
+    <div class="project-detail-layout">
     <mat-card appearance="outlined">
       <mat-card-header>
+        @if (isEditing()) {
+          <mat-card-title>{{ isCreating() ? 'New Project' : 'Edit Project' }}</mat-card-title>
+        }
         @if (!isEditing()) {
           <mat-card-title>{{ p.name }}</mat-card-title>
         }
@@ -189,5 +193,10 @@
         </mat-card-content>
       </mat-card>
     }
+      <app-ad></app-ad>
+    </div>
+    <div class="ad-sidebar">
+      <app-sidebar-ad></app-sidebar-ad>
+    </div>
   </div>
 }

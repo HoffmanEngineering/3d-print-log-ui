@@ -43,7 +43,6 @@ export class FilamentListResolverService {
             diameterMm: d.diameterMm ?? 0,
             loadedInPrinter: null,
             storageLocation: d.storageLocation,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             materialCategory: null as any,
           })
         )

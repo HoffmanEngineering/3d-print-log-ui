@@ -34,7 +34,6 @@
       data-testid="reference-input"
       maxlength="100"
     />
-    <mat-hint>e.g. "Voron 2.4 R2"</mat-hint>
     @if (
       100 - (form.controls.reference.value?.length ?? 0) < 50 &&
       !form.controls.reference.hasError('maxlength')

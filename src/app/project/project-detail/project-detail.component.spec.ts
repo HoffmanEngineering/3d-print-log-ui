@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
+import { ADSENSE_TOKEN } from 'ng2-adsense';
 import { ProjectDetailComponent } from './project-detail.component';
 import {
   ProjectService,
@@ -86,6 +87,10 @@ describe('ProjectDetailComponent', () => {
         {
           provide: MatDialog,
           useValue: jasmine.createSpyObj('MatDialog', ['open']),
+        },
+        {
+          provide: ADSENSE_TOKEN,
+          useValue: { adClient: 'ca-pub-0', adSlot: 0 },
         },
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -228,6 +233,29 @@ describe('ProjectDetailComponent', () => {
       PrintStatus.Failed
     );
   });
+
+  it('should show "Edit Project" as card title when editing', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    component.onEditClick();
+    fixture.detectChanges();
+    const title = fixture.nativeElement.querySelector('mat-card-title');
+    expect(title?.textContent?.trim()).toBe('Edit Project');
+  });
+
+  it('should include an ad component', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const ad = fixture.nativeElement.querySelector('app-ad');
+    expect(ad).toBeTruthy();
+  });
+
+  it('should include a sidebar ad component', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const sidebarAd = fixture.nativeElement.querySelector('app-sidebar-ad');
+    expect(sidebarAd).toBeTruthy();
+  });
 });
 
 describe('ProjectDetailComponent — create mode (id === "new")', () => {
@@ -291,6 +319,10 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
           provide: Router,
           useValue: jasmine.createSpyObj('Router', ['navigate']),
         },
+        {
+          provide: ADSENSE_TOKEN,
+          useValue: { adClient: 'ca-pub-0', adSlot: 0 },
+        },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
@@ -299,6 +331,12 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
     fixture = TestBed.createComponent(ProjectDetailComponent);
     fixture.detectChanges();
     component = fixture.componentInstance;
+  });
+
+  it('should show "New Project" as card title in create mode', () => {
+    fixture.detectChanges();
+    const title = fixture.nativeElement.querySelector('mat-card-title');
+    expect(title?.textContent?.trim()).toBe('New Project');
   });
 
   it('should not call getProjectById', () => {

@@ -4,13 +4,31 @@
   padding: 48px;
 }
 
+.project-detail-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+}
+
 .project-detail-layout {
   display: flex;
   flex-direction: column;
   gap: 16px;
   max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
   padding: 16px;
+}
+
+.ad-sidebar {
+  display: none;
+  width: 300px;
+  flex-shrink: 0;
+  padding-top: 16px;
+
+  @media (min-width: 1100px) {
+    display: block;
+  }
 }
 
 .header-actions {

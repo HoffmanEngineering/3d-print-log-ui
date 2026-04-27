@@ -9,10 +9,11 @@ import {
   providedIn: 'root',
 })
 export class DefaultElectricityWattageSettingResolverService {
+  constructor(private readonly userSettingService: UserSettingService) {}
+
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.userSettingService.getCurrentUsersSettingByType(
       UserSettingType.Electricity_DefaultWattageW
     );
   }
-  constructor(private readonly userSettingService: UserSettingService) {}
 }

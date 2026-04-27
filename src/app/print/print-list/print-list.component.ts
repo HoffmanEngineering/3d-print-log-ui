@@ -22,6 +22,7 @@ import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialo
 import {
   FilamentPrice,
   FilamentPriceInvalid,
+  FilamentPriceValid,
   PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
   PrintService,
@@ -821,8 +822,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
       currencySymbol: symbol,
     });
     if (materialTotal.total.valid && electricityResult.valid) {
-      return (materialTotal.total as any).price
-        .add((electricityResult as any).cost)
+      return (materialTotal.total as FilamentPriceValid).price
+        .add(electricityResult.cost)
         .format({
           symbol,
           decimal: Intl.NumberFormat()

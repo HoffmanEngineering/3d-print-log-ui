@@ -24,6 +24,7 @@ import {
   ProjectStatus,
 } from 'src/app/core/services/project.service';
 import {
+  FilamentPriceValid,
   PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
@@ -334,7 +335,7 @@ export class PrintGroupedViewComponent implements OnInit {
       currencySymbol: symbol,
     });
     if (materialTotal.total.valid && electricityResult.valid) {
-      const combined = (materialTotal.total as any).price
+      const combined = (materialTotal.total as FilamentPriceValid).price
         .add(electricityResult.cost)
         .format({
           symbol,
@@ -350,7 +351,7 @@ export class PrintGroupedViewComponent implements OnInit {
       return combined;
     }
     if (materialTotal.total.valid)
-      return (materialTotal.total as any).formattedPrice;
+      return (materialTotal.total as FilamentPriceValid).formattedPrice;
     if (electricityResult.valid) return electricityResult.formattedCost;
     return '';
   }

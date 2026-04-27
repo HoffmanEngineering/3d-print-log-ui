@@ -26,6 +26,8 @@ export enum UserSettingType {
   Prints_LastSelectedResinMeasureType = 9,
   Prints_LastSelectedPowderMeasureType = 10,
   Prints_LastSelectedWireMeasureType = 11,
+  Electricity_KwhRate = 12,
+  Electricity_DefaultWattageW = 13,
 }
 
 export interface UserSetting {

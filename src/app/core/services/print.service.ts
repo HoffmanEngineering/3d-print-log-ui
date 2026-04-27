@@ -242,6 +242,23 @@ export type FilamentPriceInvalid = {
 
 export type FilamentPrice = FilamentPriceValid | FilamentPriceInvalid;
 
+export type ElectricityCostValid = {
+  valid: true;
+  cost: currency;
+  formattedCost: string;
+  symbol: string;
+  usesDefaultWattage: boolean;
+  wattageW: number;
+  printTimeHours: number;
+};
+
+export type ElectricityCostInvalid = {
+  valid: false;
+  message: string;
+};
+
+export type ElectricityCost = ElectricityCostValid | ElectricityCostInvalid;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -674,6 +691,72 @@ export class PrintService {
     return {
       prices,
       total,
+    };
+  }
+
+  public calculateElectricityCost({
+    printTimeSeconds,
+    kwhRate,
+    printerWattageW,
+    defaultWattageW,
+    currencySymbol,
+  }: {
+    printTimeSeconds: number | null | undefined;
+    kwhRate: string | null | undefined;
+    printerWattageW: number | null | undefined;
+    defaultWattageW: string | null | undefined;
+    currencySymbol: string;
+  }): ElectricityCost {
+    if (!printTimeSeconds || printTimeSeconds <= 0) {
+      return { valid: false, message: '' };
+    }
+
+    if (!kwhRate) {
+      return { valid: false, message: '(Electricity rate not set)' };
+    }
+
+    const effectiveWattage =
+      printerWattageW != null
+        ? printerWattageW
+        : defaultWattageW != null
+          ? Number(defaultWattageW)
+          : null;
+
+    if (effectiveWattage == null || isNaN(effectiveWattage)) {
+      return { valid: false, message: '(Printer wattage not set)' };
+    }
+
+    const usesDefaultWattage = printerWattageW == null;
+    const printTimeHours = printTimeSeconds / 3600;
+    const kwhUsed = (effectiveWattage / 1000) * printTimeHours;
+    const cost = currency(kwhUsed * Number(kwhRate));
+
+    function getDecimalSeparator() {
+      return Intl.NumberFormat()
+        .formatToParts(100000.1)
+        .find((part) => part.type === 'decimal').value;
+    }
+
+    function getGroupSeparator() {
+      return Intl.NumberFormat()
+        .formatToParts(100000.1)
+        .find((part) => part.type === 'group').value;
+    }
+
+    const currencyFormat = {
+      symbol: currencySymbol,
+      decimal: getDecimalSeparator(),
+      separator: getGroupSeparator(),
+    };
+
+    return {
+      valid: true,
+      cost,
+      formattedCost: cost.format(currencyFormat),
+      symbol: currencySymbol,
+      usesDefaultWattage,
+      wattageW: effectiveWattage,
+      printTimeHours,
     };
   }
 

@@ -84,6 +84,8 @@ export class PrintGroupedViewComponent implements OnInit {
   displayedColumns = signal<string[]>(this.loadDisplayedColumns());
   defaultFilamentPriceSetting = input<UserSetting | null>(null);
   preferredCurrencySymbolSetting = input<UserSetting | null>(null);
+  defaultElectricityKwhRateSetting = input<UserSetting | null>(null);
+  defaultElectricityWattageSetting = input<UserSetting | null>(null);
 
   // ---- Internal state ----
   feed = signal<PagedList<GroupedFeedItemDto> | null>(null);
@@ -301,6 +303,55 @@ export class PrintGroupedViewComponent implements OnInit {
     if (total.total.valid) {
       return total.total.formattedPrice;
     }
+    return '';
+  }
+
+  public getElectricityCost(print: PrintSummary): string {
+    const result = this.printService.calculateElectricityCost({
+      printTimeSeconds:
+        print.printTimeInSeconds ?? print.estimatedPrintTimeInSeconds,
+      kwhRate: this.defaultElectricityKwhRateSetting()?.value,
+      printerWattageW: print.printer?.wattageW,
+      defaultWattageW: this.defaultElectricityWattageSetting()?.value,
+      currencySymbol: this.preferredCurrencySymbolSetting()?.value ?? '$',
+    });
+    return result.valid ? result.formattedCost : '';
+  }
+
+  public getTotalCombinedCost(print: PrintSummary): string {
+    const symbol = this.preferredCurrencySymbolSetting()?.value ?? '$';
+    const materialTotal = this.printService.calculateTotalPrintCost(
+      print.filamentUsage,
+      symbol,
+      this.defaultFilamentPriceSetting()?.value
+    );
+    const electricityResult = this.printService.calculateElectricityCost({
+      printTimeSeconds:
+        print.printTimeInSeconds ?? print.estimatedPrintTimeInSeconds,
+      kwhRate: this.defaultElectricityKwhRateSetting()?.value,
+      printerWattageW: print.printer?.wattageW,
+      defaultWattageW: this.defaultElectricityWattageSetting()?.value,
+      currencySymbol: symbol,
+    });
+    if (materialTotal.total.valid && electricityResult.valid) {
+      const combined = (materialTotal.total as any).price
+        .add(electricityResult.cost)
+        .format({
+          symbol,
+          decimal:
+            Intl.NumberFormat()
+              .formatToParts(100000.1)
+              .find((p) => p.type === 'decimal')?.value ?? '.',
+          separator:
+            Intl.NumberFormat()
+              .formatToParts(100000.1)
+              .find((p) => p.type === 'group')?.value ?? ',',
+        });
+      return combined;
+    }
+    if (materialTotal.total.valid)
+      return (materialTotal.total as any).formattedPrice;
+    if (electricityResult.valid) return electricityResult.formattedCost;
     return '';
   }
 

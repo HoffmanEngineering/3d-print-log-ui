@@ -829,9 +829,9 @@
         @if (row.kind === 'project') {
           {{ getTotalFilamentCost(row.item.filamentUsage ?? []) }}
         } @else if (row.kind === 'expanded-print') {
-          {{ getTotalFilamentCost(row.print.filamentUsage ?? []) }}
+          {{ getTotalCombinedCost(row.print) }}
         } @else if (row.kind === 'print') {
-          {{ getTotalFilamentCost(row.item.print?.filamentUsage ?? []) }}
+          {{ getTotalCombinedCost(row.item.print) }}
         }
       </td>
     </ng-container>

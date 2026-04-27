@@ -369,6 +369,7 @@ export class PrinterDetailComponent
           ? printer.hasHeatedChamber
           : false,
       ],
+      wattageW: [printer?.wattageW ?? null, [Validators.min(0)]],
     });
 
     return form;
@@ -514,6 +515,7 @@ export class PrinterDetailComponent
       hasHeatedChamber: this.printerForm.controls.hasHeatedChamber.enabled
         ? this.printerForm.controls.hasHeatedChamber.value
         : undefined,
+      wattageW: this.printerForm.controls.wattageW.value ?? undefined,
     };
 
     return printer;

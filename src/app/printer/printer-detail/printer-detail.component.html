@@ -267,6 +267,17 @@
             >Has Heated Chamber</mat-checkbox
           >
         }
+        <mat-form-field fxFlex="grow">
+          <mat-label>Average Wattage (W)</mat-label>
+          <input
+            matInput
+            type="number"
+            min="0"
+            formControlName="wattageW"
+            placeholder="e.g. 150"
+          />
+          <mat-hint>Leave blank to use your default wattage from Settings.</mat-hint>
+        </mat-form-field>
         <h2>Loaded Materials</h2>
         <div fxFlex="grow" fxFlexFill>
           <button

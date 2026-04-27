@@ -42,6 +42,7 @@ import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-mod
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   EMPTY_GUID,
+  ElectricityCost,
   FilamentPrice,
   FilamentPriceInvalid,
   PrintDetail,
@@ -249,6 +250,10 @@ export class EditPrintDetailComponent
 
   public defaultFilamentPriceSetting: UserSetting | null = null;
 
+  public defaultElectricityKwhRateSetting: UserSetting | null = null;
+
+  public defaultElectricityWattageSetting: UserSetting | null = null;
+
   /**
    * The name of the selected printer's material category. Defaults to 'material' is none is selected
    */
@@ -329,6 +334,12 @@ export class EditPrintDetailComponent
       this.lastMaterialMeasureSettings = data.lastMaterialMeasureSettings;
 
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
+
+      this.defaultElectricityKwhRateSetting =
+        data.defaultElectricityKwhRateSetting;
+
+      this.defaultElectricityWattageSetting =
+        data.defaultElectricityWattageSetting;
 
       this.printDetail = data.print.print;
       if (data.print.print?.projectId) {
@@ -1045,6 +1056,36 @@ export class EditPrintDetailComponent
     } else {
       return (price as FilamentPriceInvalid).message;
     }
+  }
+
+  public getElectricityPreview(): ElectricityCost {
+    const selectedPrinterId = this.printForm.controls.printerId.value;
+    const selectedPrinter = this.printers.find(
+      (p) => p.id === selectedPrinterId
+    );
+
+    const actualTimeSeconds = this.parseAsSeconds(
+      this.printForm.controls.printTimeInSeconds.value
+    );
+    const estimatedTimeSeconds = this.parseAsSeconds(
+      this.printForm.controls.estimatedPrintTimeInSeconds.value
+    );
+    const timeSeconds = actualTimeSeconds ?? estimatedTimeSeconds ?? null;
+
+    return this.printService.calculateElectricityCost({
+      printTimeSeconds: timeSeconds,
+      kwhRate: this.defaultElectricityKwhRateSetting?.value,
+      printerWattageW: selectedPrinter?.wattageW,
+      defaultWattageW: this.defaultElectricityWattageSetting?.value,
+      currencySymbol: this.preferredCurrency?.symbol ?? '$',
+    });
+  }
+
+  public isEstimatedElectricityPreview(): boolean {
+    const actualTimeSeconds = this.parseAsSeconds(
+      this.printForm.controls.printTimeInSeconds.value
+    );
+    return !actualTimeSeconds || actualTimeSeconds <= 0;
   }
 
   // We will create multiple form controls inside defined form controls photos.

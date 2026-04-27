@@ -8,6 +8,8 @@ import { CurrencyNameResolverService } from '../core/resolvers/currency-name-res
 import { CurrencySymbolResolverService } from '../core/resolvers/currency-symbol-resolver.service';
 import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/current-user-printer-summary-resolver.service';
 import { DefaultFilamentPriceSettingResolverService } from '../core/resolvers/default-filament-price-setting-resolver.service';
+import { DefaultElectricityKwhRateSettingResolverService } from '../core/resolvers/default-electricity-kwh-rate-setting-resolver.service';
+import { DefaultElectricityWattageSettingResolverService } from '../core/resolvers/default-electricity-wattage-setting-resolver.service';
 import { DefaultPrintViewStatusSettingResolverService } from '../core/resolvers/default-print-view-status-setting-resolver.service';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintListComponent } from './print-list/print-list.component';
@@ -33,6 +35,10 @@ const routes: Routes = [
           preferredCurrencySymbolSetting: CurrencySymbolResolverService,
           defaultFilamentPriceSetting:
             DefaultFilamentPriceSettingResolverService,
+          defaultElectricityKwhRateSetting:
+            DefaultElectricityKwhRateSettingResolverService,
+          defaultElectricityWattageSetting:
+            DefaultElectricityWattageSettingResolverService,
         },
       },
       {
@@ -51,6 +57,10 @@ const routes: Routes = [
           currencies: CurrenciesResolverService,
           preferredCurrencyNameSetting: CurrencyNameResolverService,
           preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          defaultElectricityKwhRateSetting:
+            DefaultElectricityKwhRateSettingResolverService,
+          defaultElectricityWattageSetting:
+            DefaultElectricityWattageSettingResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -70,6 +80,10 @@ const routes: Routes = [
           currencies: CurrenciesResolverService,
           preferredCurrencyNameSetting: CurrencyNameResolverService,
           preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          defaultElectricityKwhRateSetting:
+            DefaultElectricityKwhRateSettingResolverService,
+          defaultElectricityWattageSetting:
+            DefaultElectricityWattageSettingResolverService,
         },
         canActivate: [AuthGuard],
         canDeactivate: [PendingChangesGuard],
@@ -84,6 +98,11 @@ const routes: Routes = [
         component: ViewPrintDetailComponent,
         resolve: {
           print: PrintDetailResolverService,
+          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          defaultElectricityKwhRateSetting:
+            DefaultElectricityKwhRateSettingResolverService,
+          defaultElectricityWattageSetting:
+            DefaultElectricityWattageSettingResolverService,
         },
       },
     ],

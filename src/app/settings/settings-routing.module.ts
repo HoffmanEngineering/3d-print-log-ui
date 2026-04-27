@@ -9,6 +9,8 @@ import { CurrentUserDetailResolverService } from './resolvers/current-user-detai
 import { SettingsComponent } from './settings.component';
 import { DefaultFilamentDiameterSettingResolverService } from '../core/resolvers/default-filament-diameter-setting-resolver.service';
 import { DefaultFilamentPriceSettingResolverService } from '../core/resolvers/default-filament-price-setting-resolver.service';
+import { DefaultElectricityKwhRateSettingResolverService } from '../core/resolvers/default-electricity-kwh-rate-setting-resolver.service';
+import { DefaultElectricityWattageSettingResolverService } from '../core/resolvers/default-electricity-wattage-setting-resolver.service';
 
 const routes: Routes = [
   {
@@ -24,6 +26,10 @@ const routes: Routes = [
       defaultFilamentDiameterMmSetting:
         DefaultFilamentDiameterSettingResolverService,
       defaultFilamentPriceSetting: DefaultFilamentPriceSettingResolverService,
+      defaultElectricityKwhRateSetting:
+        DefaultElectricityKwhRateSettingResolverService,
+      defaultElectricityWattageSetting:
+        DefaultElectricityWattageSettingResolverService,
     },
   },
 ];

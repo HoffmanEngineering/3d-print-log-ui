@@ -168,6 +168,8 @@
       [sortDirection]="sortDirection"
       [defaultFilamentPriceSetting]="defaultFilamentPriceSetting"
       [preferredCurrencySymbolSetting]="preferredCurrencySymbolSetting"
+      [defaultElectricityKwhRateSetting]="defaultElectricityKwhRateSetting"
+      [defaultElectricityWattageSetting]="defaultElectricityWattageSetting"
     />
   }
 
@@ -404,8 +406,19 @@
       </ng-container>
       <ng-container matColumnDef="totalCost">
         <th mat-header-cell *matHeaderCellDef>Total Cost</th>
+        <td
+          mat-cell
+          *matCellDef="let print"
+          [matTooltip]="getTotalCombinedCostTooltip(print)"
+          [matTooltipDisabled]="!getTotalCombinedCostTooltip(print)"
+        >
+          {{ getTotalCombinedCost(print) }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="electricityCost">
+        <th mat-header-cell *matHeaderCellDef>Electricity Cost</th>
         <td mat-cell *matCellDef="let print">
-          {{ getTotalFilamentCost(print.filamentUsage) }}
+          {{ getElectricityCost(print) }}
         </td>
       </ng-container>
       <ng-container matColumnDef="status">

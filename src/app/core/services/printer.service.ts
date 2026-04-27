@@ -13,6 +13,7 @@ export interface PrinterSummary {
   make: string;
   model: string;
   isActive: boolean;
+  wattageW?: number | null;
   category: PrinterCategory;
 }
 
@@ -81,6 +82,7 @@ export interface PrinterDetail {
   screenResolutionYPixels?: number;
   hasHeatedBed?: boolean;
   hasHeatedChamber?: boolean;
+  wattageW?: number | null;
 }
 
 export interface PrinterFilamentSummaryDto {
@@ -119,6 +121,7 @@ export interface AddPrinterDetailDto {
   screenResolutionYPixels?: number;
   hasHeatedBed?: boolean;
   hasHeatedChamber?: boolean;
+  wattageW?: number | null;
 }
 
 export interface AddPrinterFilamentSummaryDto {
@@ -240,6 +243,7 @@ export class PrinterService {
       screenResolutionYPixels: printer.screenResolutionYPixels,
       hasHeatedBed: printer.hasHeatedBed,
       hasHeatedChamber: printer.hasHeatedChamber,
+      wattageW: printer.wattageW,
     };
 
     return printDto;

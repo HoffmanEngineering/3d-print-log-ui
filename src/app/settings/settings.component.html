@@ -343,6 +343,137 @@
           </div>
         }
       </div>
+      <hr />
+      <div fxFlex="grow" fxFlexFill>
+        <h2>Electricity Cost</h2>
+        <p>Track the electricity cost of each print based on your kWh rate and printer wattage.</p>
+      </div>
+      <div
+        fxFlex="grow"
+        fxFlexFill
+        [class.mat-elevation-z5]="
+          defaultElectricityKwhRate?.toString() !==
+          defaultElectricityKwhRateSettingOnLoad?.value?.toString()
+        "
+        [class.editing-card]="
+          defaultElectricityKwhRate?.toString() !==
+          defaultElectricityKwhRateSettingOnLoad?.value?.toString()
+        "
+      >
+        <div>
+          <label
+            for="default-electricity-kwh-rate"
+            style="margin-right: 10px"
+            matTooltip="Your electricity rate from your bill, in currency per kWh."
+            matTooltipPosition="right"
+          >
+            Electricity Rate ({{ preferredCurrencySymbolSettingOnLoad?.value ?? '$' }}/kWh)
+            <mat-icon inline>info</mat-icon>:</label
+          >
+          <input
+            id="default-electricity-kwh-rate"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="defaultElectricityKwhRate"
+            placeholder="e.g. 0.15"
+          />
+        </div>
+        @if (
+          defaultElectricityKwhRate?.toString() !==
+          defaultElectricityKwhRateSettingOnLoad?.value?.toString()
+        ) {
+          <div>
+            <div
+              style="margin-top: 10px"
+              fxLayout
+              fxLayoutAlign="center center"
+              fxLayoutGap="15px"
+            >
+              <button
+                mat-raised-button
+                type="submit"
+                color="primary"
+                (click)="saveDefaultElectricityKwhRate(defaultElectricityKwhRate)"
+              >
+                Save Electricity Rate
+              </button>
+              <button
+                mat-raised-button
+                type="button"
+                class="close"
+                (click)="defaultElectricityKwhRate = defaultElectricityKwhRateSettingOnLoad?.value ?? null"
+                color="warn"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+      <div
+        fxFlex="grow"
+        fxFlexFill
+        [class.mat-elevation-z5]="
+          defaultElectricityWattageW?.toString() !==
+          defaultElectricityWattageSettingOnLoad?.value?.toString()
+        "
+        [class.editing-card]="
+          defaultElectricityWattageW?.toString() !==
+          defaultElectricityWattageSettingOnLoad?.value?.toString()
+        "
+      >
+        <div>
+          <label
+            for="default-electricity-wattage"
+            style="margin-right: 10px"
+            matTooltip="Default printer wattage used for printers without a specific wattage set. Typical FDM printers use 50–300W."
+            matTooltipPosition="right"
+          >
+            Default Printer Wattage (W)
+            <mat-icon inline>info</mat-icon>:</label
+          >
+          <input
+            id="default-electricity-wattage"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="defaultElectricityWattageW"
+            placeholder="e.g. 150"
+          />
+        </div>
+        @if (
+          defaultElectricityWattageW?.toString() !==
+          defaultElectricityWattageSettingOnLoad?.value?.toString()
+        ) {
+          <div>
+            <div
+              style="margin-top: 10px"
+              fxLayout
+              fxLayoutAlign="center center"
+              fxLayoutGap="15px"
+            >
+              <button
+                mat-raised-button
+                type="submit"
+                color="primary"
+                (click)="saveDefaultElectricityWattage(defaultElectricityWattageW)"
+              >
+                Save Default Wattage
+              </button>
+              <button
+                mat-raised-button
+                type="button"
+                class="close"
+                (click)="defaultElectricityWattageW = defaultElectricityWattageSettingOnLoad?.value ?? null"
+                color="warn"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+      </div>
       <div fxFlex="grow" fxFlexFill>
         <label
           for="theme-mode"

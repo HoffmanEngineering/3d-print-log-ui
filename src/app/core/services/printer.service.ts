@@ -14,6 +14,7 @@ export interface PrinterSummary {
   model: string;
   isActive: boolean;
   wattageW?: number | null;
+  printTimeInSeconds?: number | null;
   category: PrinterCategory;
 }
 

@@ -199,38 +199,35 @@
           </div>
           @if (getElectricityCost(); as electricityCost) {
             @if (electricityCost.valid) {
-              <div style="margin-top: 8px">
-                <h3>Electricity Cost:</h3>
-                <p
-                  [matTooltip]="
-                    electricityCost.usesDefaultWattage
-                      ? 'Using default wattage of ' +
-                        electricityCost.wattageW +
-                        'W — set a printer-specific wattage for more accuracy'
-                      : null
+              <h3 style="margin-top: 8px">Electricity Cost:</h3>
+              <p
+                style="margin-top: 8px"
+                [matTooltip]="
+                  electricityCost.usesDefaultWattage
+                    ? 'Using default wattage of ' +
+                      electricityCost.wattageW +
+                      'W — set a printer-specific wattage for more accuracy'
+                    : null
+                "
+              >
+                {{ electricityCost.formattedCost
+                }}{{ electricityCost.usesDefaultWattage ? '*' : '' }}
+              </p>
+            } @else if ($any(electricityCost).message) {
+              <h3 style="margin-top: 8px">Electricity Cost:</h3>
+              <p style="margin-top: 8px">
+                <mat-icon
+                  inline
+                  style="
+                    font-size: 16px;
+                    width: 16px;
+                    height: 16px;
+                    vertical-align: text-bottom;
                   "
+                  >warning</mat-icon
                 >
-                  {{ electricityCost.formattedCost
-                  }}{{ electricityCost.usesDefaultWattage ? '*' : '' }}
-                </p>
-              </div>
-            } @else if (electricityCost.message) {
-              <div style="margin-top: 8px">
-                <h3>Electricity Cost:</h3>
-                <p>
-                  <mat-icon
-                    inline
-                    style="
-                      font-size: 16px;
-                      width: 16px;
-                      height: 16px;
-                      vertical-align: text-bottom;
-                    "
-                    >warning</mat-icon
-                  >
-                  {{ electricityCost.message }}
-                </p>
-              </div>
+                {{ $any(electricityCost).message }}
+              </p>
             }
           }
           <h3>Notes:</h3>

@@ -320,18 +320,19 @@ export class SettingsComponent implements OnInit {
   }
 
   saveDefaultElectricityKwhRate(newRate: string) {
+    const rateStr = newRate?.toString();
     if (this.defaultElectricityKwhRateSettingOnLoad) {
       this.userSettingService
         .updateUserSetting(
           this.defaultElectricityKwhRateSettingOnLoad.id,
-          newRate
+          rateStr
         )
         .subscribe((setting) => {
           this.defaultElectricityKwhRateSettingOnLoad = setting;
         });
     } else {
       this.userSettingService
-        .addUserSetting(UserSettingType.Electricity_KwhRate, newRate)
+        .addUserSetting(UserSettingType.Electricity_KwhRate, rateStr)
         .subscribe((setting) => {
           this.defaultElectricityKwhRateSettingOnLoad = setting;
         });
@@ -340,18 +341,19 @@ export class SettingsComponent implements OnInit {
   }
 
   saveDefaultElectricityWattage(newWattage: string) {
+    const wattageStr = newWattage?.toString();
     if (this.defaultElectricityWattageSettingOnLoad) {
       this.userSettingService
         .updateUserSetting(
           this.defaultElectricityWattageSettingOnLoad.id,
-          newWattage
+          wattageStr
         )
         .subscribe((setting) => {
           this.defaultElectricityWattageSettingOnLoad = setting;
         });
     } else {
       this.userSettingService
-        .addUserSetting(UserSettingType.Electricity_DefaultWattageW, newWattage)
+        .addUserSetting(UserSettingType.Electricity_DefaultWattageW, wattageStr)
         .subscribe((setting) => {
           this.defaultElectricityWattageSettingOnLoad = setting;
         });

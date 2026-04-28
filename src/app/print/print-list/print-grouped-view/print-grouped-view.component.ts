@@ -17,6 +17,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import moment from 'moment';
+import currency from 'currency.js';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   GroupedFeedItemDto,
@@ -24,6 +25,7 @@ import {
   ProjectStatus,
 } from 'src/app/core/services/project.service';
 import {
+  ElectricityCostValid,
   FilamentPriceValid,
   PrintFilamentSummaryDto,
   PrintService,
@@ -293,16 +295,61 @@ export class PrintGroupedViewComponent implements OnInit {
     return null;
   }
 
-  getTotalFilamentCost(filamentUsage: PrintFilamentSummaryDto[]): string {
-    const defaultPrice = this.defaultFilamentPriceSetting()?.value;
+  getProjectTotalCost(item: GroupedFeedItemDto): string {
     const symbol = this.preferredCurrencySymbolSetting()?.value ?? '$';
-    const total = this.printService.calculateTotalPrintCost(
-      filamentUsage,
+    const kwhRate = this.defaultElectricityKwhRateSetting()?.value;
+    const defaultWattageW = this.defaultElectricityWattageSetting()?.value;
+
+    const materialTotal = this.printService.calculateTotalPrintCost(
+      item.filamentUsage ?? [],
       symbol,
-      defaultPrice
+      this.defaultFilamentPriceSetting()?.value
     );
-    if (total.total.valid) {
-      return total.total.formattedPrice;
+
+    const currencyFormat = {
+      symbol,
+      decimal:
+        Intl.NumberFormat()
+          .formatToParts(100000.1)
+          .find((p) => p.type === 'decimal')?.value ?? '.',
+      separator:
+        Intl.NumberFormat()
+          .formatToParts(100000.1)
+          .find((p) => p.type === 'group')?.value ?? ',',
+    };
+
+    const printers = item.printers ?? [];
+    if (printers.length > 0 && kwhRate) {
+      let electricityTotal = currency(0);
+      let hasElectricity = false;
+      for (const printer of printers) {
+        if (!printer.printTimeInSeconds) continue;
+        const result = this.printService.calculateElectricityCost({
+          printTimeSeconds: printer.printTimeInSeconds,
+          kwhRate,
+          printerWattageW: printer.wattageW,
+          defaultWattageW,
+          currencySymbol: symbol,
+        });
+        if (result.valid) {
+          electricityTotal = electricityTotal.add(
+            (result as ElectricityCostValid).cost
+          );
+          hasElectricity = true;
+        }
+      }
+      if (materialTotal.total.valid && hasElectricity) {
+        return (materialTotal.total as FilamentPriceValid).price
+          .add(electricityTotal)
+          .format(currencyFormat);
+      }
+      if (hasElectricity) {
+        return electricityTotal.format(currencyFormat);
+      }
+    }
+
+    if (materialTotal.total.valid) {
+      return (materialTotal.total as FilamentPriceValid).formattedPrice;
     }
     return '';
   }

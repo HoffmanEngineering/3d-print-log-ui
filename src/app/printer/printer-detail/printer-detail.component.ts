@@ -62,6 +62,8 @@ export class PrinterDetailComponent
 
   public modelHasFocus = false;
 
+  public wattageHasFocus = false;
+
   // Help to get all printer loaded filament controls as form array.
   get loadedFilaments(): UntypedFormArray {
     return this.printerForm.get('loadedFilaments') as UntypedFormArray;

@@ -343,6 +343,26 @@
           </div>
         }
       </div>
+      <div fxFlex="grow" fxFlexFill>
+        <label
+          for="theme-mode"
+          style="margin-right: 10px"
+          matTooltip="Controls whether the app uses a light or dark color scheme."
+          matTooltipPosition="right"
+        >
+          Theme <mat-icon inline>info</mat-icon>:
+        </label>
+        <mat-button-toggle-group
+          id="theme-mode"
+          [value]="themeService.mode()"
+          (change)="setThemeMode($event.value)"
+          hideSingleSelectionIndicator
+        >
+          <mat-button-toggle value="light">☀️ Light</mat-button-toggle>
+          <mat-button-toggle value="system">🌓 System</mat-button-toggle>
+          <mat-button-toggle value="dark">🌙 Dark</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
       <hr />
       <div fxFlex="grow" fxFlexFill>
         <h2>Electricity Cost</h2>
@@ -473,26 +493,6 @@
             </div>
           </div>
         }
-      </div>
-      <div fxFlex="grow" fxFlexFill>
-        <label
-          for="theme-mode"
-          style="margin-right: 10px"
-          matTooltip="Controls whether the app uses a light or dark color scheme."
-          matTooltipPosition="right"
-        >
-          Theme <mat-icon inline>info</mat-icon>:
-        </label>
-        <mat-button-toggle-group
-          id="theme-mode"
-          [value]="themeService.mode()"
-          (change)="setThemeMode($event.value)"
-          hideSingleSelectionIndicator
-        >
-          <mat-button-toggle value="light">☀️ Light</mat-button-toggle>
-          <mat-button-toggle value="system">🌓 System</mat-button-toggle>
-          <mat-button-toggle value="dark">🌙 Dark</mat-button-toggle>
-        </mat-button-toggle-group>
       </div>
       <hr />
       <div fxFlex="grow" fxFlexFill>

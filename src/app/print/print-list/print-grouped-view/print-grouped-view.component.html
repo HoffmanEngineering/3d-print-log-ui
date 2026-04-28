@@ -827,7 +827,7 @@
       <th mat-header-cell *matHeaderCellDef>Total Cost</th>
       <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
-          {{ getTotalFilamentCost(row.item.filamentUsage ?? []) }}
+          {{ getProjectTotalCost(row.item) }}
         } @else if (row.kind === 'expanded-print') {
           {{ getTotalCombinedCost(row.print) }}
         } @else if (row.kind === 'print') {

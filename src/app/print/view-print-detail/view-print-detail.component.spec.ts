@@ -3,6 +3,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
+import currency from 'currency.js';
 
 import { ViewPrintDetailComponent } from './view-print-detail.component';
 import { PrintService } from 'src/app/core/services/print.service';
@@ -34,8 +35,18 @@ describe('ViewPrintDetailComponent', () => {
   beforeEach(waitForAsync(() => {
     const mockPrintService = jasmine.createSpyObj<PrintService>(
       'PrintService',
-      ['addPrintComment']
+      ['addPrintComment', 'calculateElectricityCost']
     );
+
+    mockPrintService.calculateElectricityCost.and.returnValue({
+      valid: true,
+      cost: currency(0.5),
+      formattedCost: '$0.50',
+      symbol: '$',
+      wattageW: 150,
+      usesDefaultWattage: false,
+      printTimeHours: 2,
+    });
 
     const mockAuthService = jasmine.createSpyObj<AuthService>(
       'AuthService',
@@ -63,6 +74,9 @@ describe('ViewPrintDetailComponent', () => {
             data: of({
               printers: [],
               print: { print: mockPrint, user: mockUser },
+              preferredCurrencySymbolSetting: { value: '$' },
+              defaultElectricityKwhRateSetting: { value: 0.12 },
+              defaultElectricityWattageSetting: { value: 150 },
             }),
           },
         },
@@ -113,6 +127,9 @@ describe('ViewPrintDetailComponent', () => {
       TestBed.inject(ActivatedRoute).data = of({
         printers: [],
         print: { print: mockPrintWithImages, user: mockUser },
+        preferredCurrencySymbolSetting: { value: '$' },
+        defaultElectricityKwhRateSetting: { value: 0.12 },
+        defaultElectricityWattageSetting: { value: 150 },
       }) as any;
 
       fixture = TestBed.createComponent(ViewPrintDetailComponent);

@@ -28,6 +28,31 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.39.0': {
+      title: '1.39.0 - Electricity Cost Tracking',
+      body: `<p>
+<strong>Electricity Cost Tracking</strong> is here! Set your printer's wattage and your electricity rate in <a href="/settings">Settings</a> to automatically calculate the electricity cost for every print. Costs appear in the print list, print view, grouped project view, and are factored into total cost calculations — so you always know the true cost of every print.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.38.0': {
       title: '1.38.0 - Projects',
       body: `<p>

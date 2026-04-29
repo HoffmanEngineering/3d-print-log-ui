@@ -800,7 +800,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       currencySymbol: symbol,
     });
     if (materialTotal.total.valid && electricityResult.valid) {
-      return `Material: ${materialTotal.total.formattedPrice} + Electricity: ${electricityResult.formattedCost}`;
+      return `Material: ${materialTotal.total.formattedPrice}\nElectricity: ${electricityResult.formattedCost}`;
     }
     return '';
   }

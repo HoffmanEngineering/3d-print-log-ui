@@ -411,6 +411,7 @@
           *matCellDef="let print"
           [matTooltip]="getTotalCombinedCostTooltip(print)"
           [matTooltipDisabled]="!getTotalCombinedCostTooltip(print)"
+          matTooltipClass="multiline-tooltip"
         >
           {{ getTotalCombinedCost(print) }}
         </td>

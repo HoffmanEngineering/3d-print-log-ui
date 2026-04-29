@@ -827,11 +827,23 @@
       <th mat-header-cell *matHeaderCellDef>Total Cost</th>
       <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
-          {{ getProjectTotalCost(row.item) }}
+          <span
+            [matTooltip]="getProjectTotalCostTooltip(row.item)"
+            [matTooltipDisabled]="!getProjectTotalCostTooltip(row.item)"
+            matTooltipClass="multiline-tooltip"
+          >{{ getProjectTotalCost(row.item) }}</span>
         } @else if (row.kind === 'expanded-print') {
-          {{ getTotalCombinedCost(row.print) }}
+          <span
+            [matTooltip]="getTotalCombinedCostTooltip(row.print)"
+            [matTooltipDisabled]="!getTotalCombinedCostTooltip(row.print)"
+            matTooltipClass="multiline-tooltip"
+          >{{ getTotalCombinedCost(row.print) }}</span>
         } @else if (row.kind === 'print') {
-          {{ getTotalCombinedCost(row.item.print) }}
+          <span
+            [matTooltip]="getTotalCombinedCostTooltip(row.item.print)"
+            [matTooltipDisabled]="!getTotalCombinedCostTooltip(row.item.print)"
+            matTooltipClass="multiline-tooltip"
+          >{{ getTotalCombinedCost(row.item.print) }}</span>
         }
       </td>
     </ng-container>

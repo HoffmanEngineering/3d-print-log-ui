@@ -366,6 +366,45 @@ export class PrintGroupedViewComponent implements OnInit {
     return result.valid ? result.formattedCost : '';
   }
 
+  getProjectElectricityCost(item: GroupedFeedItemDto): string {
+    const symbol = this.preferredCurrencySymbolSetting()?.value ?? '$';
+    const kwhRate = this.defaultElectricityKwhRateSetting()?.value;
+    const defaultWattageW = this.defaultElectricityWattageSetting()?.value;
+    if (!kwhRate) return '';
+
+    const currencyFormat = {
+      symbol,
+      decimal:
+        Intl.NumberFormat()
+          .formatToParts(100000.1)
+          .find((p) => p.type === 'decimal')?.value ?? '.',
+      separator:
+        Intl.NumberFormat()
+          .formatToParts(100000.1)
+          .find((p) => p.type === 'group')?.value ?? ',',
+    };
+
+    let electricityTotal = currency(0);
+    let hasElectricity = false;
+    for (const printer of item.printers ?? []) {
+      if (!printer.printTimeInSeconds) continue;
+      const result = this.printService.calculateElectricityCost({
+        printTimeSeconds: printer.printTimeInSeconds,
+        kwhRate,
+        printerWattageW: printer.wattageW,
+        defaultWattageW,
+        currencySymbol: symbol,
+      });
+      if (result.valid) {
+        electricityTotal = electricityTotal.add(
+          (result as ElectricityCostValid).cost
+        );
+        hasElectricity = true;
+      }
+    }
+    return hasElectricity ? electricityTotal.format(currencyFormat) : '';
+  }
+
   public getTotalCombinedCostTooltip(print: PrintSummary): string {
     const symbol = this.preferredCurrencySymbolSetting()?.value ?? '$';
     const materialTotal = this.printService.calculateTotalPrintCost(
@@ -648,6 +687,12 @@ export class PrintGroupedViewComponent implements OnInit {
       displayName: 'Total Cost',
       description:
         'Aggregate filament cost for project rows; per-print cost for print rows.',
+    },
+    {
+      key: 'electricityCost',
+      displayName: 'Electricity Cost',
+      description:
+        'Total electricity cost for project rows; per-print electricity cost for print rows.',
     },
     {
       key: 'commentCount',

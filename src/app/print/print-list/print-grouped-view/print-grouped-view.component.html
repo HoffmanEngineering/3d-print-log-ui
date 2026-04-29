@@ -848,6 +848,20 @@
       </td>
     </ng-container>
 
+    <!-- electricityCost -->
+    <ng-container matColumnDef="electricityCost">
+      <th mat-header-cell *matHeaderCellDef>Electricity Cost</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.kind === 'project') {
+          {{ getProjectElectricityCost(row.item) }}
+        } @else if (row.kind === 'expanded-print') {
+          {{ getElectricityCost(row.print) }}
+        } @else if (row.kind === 'print') {
+          {{ getElectricityCost(row.item.print) }}
+        }
+      </td>
+    </ng-container>
+
     <!-- commentCount -->
     <ng-container matColumnDef="commentCount">
       <th mat-header-cell *matHeaderCellDef>Comments</th>

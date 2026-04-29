@@ -381,10 +381,16 @@ export class PrintGroupedViewComponent implements OnInit {
       defaultWattageW: this.defaultElectricityWattageSetting()?.value,
       currencySymbol: symbol,
     });
-    if (materialTotal.total.valid && electricityResult.valid) {
-      return `Material: ${(materialTotal.total as FilamentPriceValid).formattedPrice}\nElectricity: ${electricityResult.formattedCost}`;
+    const parts: string[] = [];
+    if (materialTotal.total.valid) {
+      parts.push(
+        `Material: ${(materialTotal.total as FilamentPriceValid).formattedPrice}`
+      );
     }
-    return '';
+    if (electricityResult.valid) {
+      parts.push(`Electricity: ${electricityResult.formattedCost}`);
+    }
+    return parts.join('\n');
   }
 
   getProjectTotalCostTooltip(item: GroupedFeedItemDto): string {
@@ -399,9 +405,9 @@ export class PrintGroupedViewComponent implements OnInit {
     );
 
     const printers = item.printers ?? [];
+    let electricityTotal = currency(0);
+    let hasElectricity = false;
     if (printers.length > 0 && kwhRate) {
-      let electricityTotal = currency(0);
-      let hasElectricity = false;
       for (const printer of printers) {
         if (!printer.printTimeInSeconds) continue;
         const result = this.printService.calculateElectricityCost({
@@ -418,22 +424,29 @@ export class PrintGroupedViewComponent implements OnInit {
           hasElectricity = true;
         }
       }
-      if (materialTotal.total.valid && hasElectricity) {
-        const currencyFormat = {
-          symbol,
-          decimal:
-            Intl.NumberFormat()
-              .formatToParts(100000.1)
-              .find((p) => p.type === 'decimal')?.value ?? '.',
-          separator:
-            Intl.NumberFormat()
-              .formatToParts(100000.1)
-              .find((p) => p.type === 'group')?.value ?? ',',
-        };
-        return `Material: ${(materialTotal.total as FilamentPriceValid).formattedPrice}\nElectricity: ${electricityTotal.format(currencyFormat)}`;
-      }
     }
-    return '';
+
+    const parts: string[] = [];
+    if (materialTotal.total.valid) {
+      parts.push(
+        `Material: ${(materialTotal.total as FilamentPriceValid).formattedPrice}`
+      );
+    }
+    if (hasElectricity) {
+      const currencyFormat = {
+        symbol,
+        decimal:
+          Intl.NumberFormat()
+            .formatToParts(100000.1)
+            .find((p) => p.type === 'decimal')?.value ?? '.',
+        separator:
+          Intl.NumberFormat()
+            .formatToParts(100000.1)
+            .find((p) => p.type === 'group')?.value ?? ',',
+      };
+      parts.push(`Electricity: ${electricityTotal.format(currencyFormat)}`);
+    }
+    return parts.join('\n');
   }
 
   public getTotalCombinedCost(print: PrintSummary): string {

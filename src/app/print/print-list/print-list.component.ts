@@ -799,10 +799,14 @@ export class PrintListComponent implements OnInit, OnDestroy {
       defaultWattageW: this.defaultElectricityWattageSetting?.value,
       currencySymbol: symbol,
     });
-    if (materialTotal.total.valid && electricityResult.valid) {
-      return `Material: ${materialTotal.total.formattedPrice}\nElectricity: ${electricityResult.formattedCost}`;
+    const parts: string[] = [];
+    if (materialTotal.total.valid) {
+      parts.push(`Material: ${materialTotal.total.formattedPrice}`);
     }
-    return '';
+    if (electricityResult.valid) {
+      parts.push(`Electricity: ${electricityResult.formattedCost}`);
+    }
+    return parts.join('\n');
   }
 
   public getTotalCombinedCost(print: PrintSummary): string {

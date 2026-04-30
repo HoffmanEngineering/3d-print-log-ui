@@ -333,6 +333,28 @@
             </div>
           </div>
         </div>
+        @if (getElectricityPreview(); as preview) {
+          @if (preview.valid) {
+            <div fxFlex="grow" fxFlexFill style="font-size: 0.9em; color: #666; margin-bottom: 4px">
+              Electricity cost: {{ (isEstimatedElectricityPreview() ? '~' : '') + preview.formattedCost }}
+            </div>
+          } @else if ($any(preview).message) {
+            <div fxFlex="grow" fxFlexFill style="font-size: 0.9em; color: #888; margin-bottom: 4px">
+              <mat-icon
+                inline
+                style="
+                  font-size: 14px;
+                  width: 14px;
+                  height: 14px;
+                  vertical-align: text-bottom;
+                "
+                >warning</mat-icon
+              >
+              {{ $any(preview).message }} —
+              <a routerLink="/settings">configure in Settings</a>
+            </div>
+          }
+        }
         <!-- Material Usage -->
         <div fxFlex="grow" fxFlexFill>
           <h2>

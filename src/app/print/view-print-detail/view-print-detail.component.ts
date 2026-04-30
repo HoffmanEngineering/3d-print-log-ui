@@ -13,11 +13,13 @@ import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { environment } from 'src/environments/environment';
 import {
+  ElectricityCost,
   PrintDetail,
   PrintFilamentSourceMeasurement,
   PrintService,
   PrintStatus,
 } from '../../core/services/print.service';
+import { UserSetting } from 'src/app/core/services/user-setting.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -53,6 +55,10 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
 
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
+  public preferredCurrencySymbolSetting: UserSetting | null = null;
+  public defaultElectricityKwhRateSetting: UserSetting | null = null;
+  public defaultElectricityWattageSetting: UserSetting | null = null;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -80,6 +86,12 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
 
       this.print = data.print.print;
       this.user = data.print.user;
+
+      this.preferredCurrencySymbolSetting = data.preferredCurrencySymbolSetting;
+      this.defaultElectricityKwhRateSetting =
+        data.defaultElectricityKwhRateSetting;
+      this.defaultElectricityWattageSetting =
+        data.defaultElectricityWattageSetting;
 
       if (this.print.images?.length > 0) {
         this.printImages = this.print.images
@@ -166,5 +178,16 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   onCarouselIndexChange(index: number): void {
     this.selectedImageIndex = index;
     this.selectedImage = this.printImages[index];
+  }
+
+  public getElectricityCost(): ElectricityCost {
+    return this.printService.calculateElectricityCost({
+      printTimeSeconds:
+        this.print.printTimeInSeconds ?? this.print.estimatedPrintTimeInSeconds,
+      kwhRate: this.defaultElectricityKwhRateSetting?.value,
+      printerWattageW: this.print.printer?.wattageW,
+      defaultWattageW: this.defaultElectricityWattageSetting?.value,
+      currencySymbol: this.preferredCurrencySymbolSetting?.value ?? '$',
+    });
   }
 }

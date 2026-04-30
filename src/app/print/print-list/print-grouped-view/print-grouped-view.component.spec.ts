@@ -391,13 +391,13 @@ describe('PrintGroupedViewComponent', () => {
     });
   });
 
-  describe('getTotalFilamentCost', () => {
+  describe('getProjectTotalCost', () => {
     it('returns empty string when cost cannot be calculated', () => {
       fixture.detectChanges();
-      expect(component.getTotalFilamentCost([])).toBe('');
+      expect(component.getProjectTotalCost(mockProjectItem)).toBe('');
     });
 
-    it('returns formatted price when cost is valid', () => {
+    it('returns formatted price when material cost is valid', () => {
       mockPrintService.calculateTotalPrintCost.and.returnValue({
         prices: [],
         total: {
@@ -409,7 +409,7 @@ describe('PrintGroupedViewComponent', () => {
         },
       });
       fixture.detectChanges();
-      expect(component.getTotalFilamentCost([])).toBe('$1.50');
+      expect(component.getProjectTotalCost(mockProjectItem)).toBe('$1.50');
     });
   });
 });

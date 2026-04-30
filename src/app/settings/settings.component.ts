@@ -41,6 +41,8 @@ export class SettingsComponent implements OnInit {
 
   public defaultFilamentDiameterMmSettingOnLoad: UserSetting | null = null;
   public defaultFilamentPriceSettingOnLoad: UserSetting | null = null;
+  public defaultElectricityKwhRateSettingOnLoad: UserSetting | null = null;
+  public defaultElectricityWattageSettingOnLoad: UserSetting | null = null;
 
   public deactivateHasBeenClicked = false;
 
@@ -67,6 +69,16 @@ export class SettingsComponent implements OnInit {
    * NgModel for Default Filament Price
    */
   public defaultFilamentPrice: string = null;
+
+  /**
+   * NgModel for Default Electricity kWh Rate
+   */
+  public defaultElectricityKwhRate: string = null;
+
+  /**
+   * NgModel for Default Electricity Wattage
+   */
+  public defaultElectricityWattageW: string = null;
 
   public exportInProgress = false;
 
@@ -131,6 +143,15 @@ export class SettingsComponent implements OnInit {
       this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
         ? this.defaultFilamentPriceSettingOnLoad.value
         : null;
+
+      this.defaultElectricityKwhRateSettingOnLoad =
+        data.defaultElectricityKwhRateSetting;
+      this.defaultElectricityWattageSettingOnLoad =
+        data.defaultElectricityWattageSetting;
+      this.defaultElectricityKwhRate =
+        this.defaultElectricityKwhRateSettingOnLoad?.value ?? null;
+      this.defaultElectricityWattageW =
+        this.defaultElectricityWattageSettingOnLoad?.value ?? null;
     });
 
     this.authService.userProfile$.subscribe((user) => {
@@ -296,6 +317,48 @@ export class SettingsComponent implements OnInit {
     this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
       ? this.defaultFilamentPriceSettingOnLoad.value
       : null;
+  }
+
+  saveDefaultElectricityKwhRate(newRate: string) {
+    const rateStr = newRate?.toString();
+    if (this.defaultElectricityKwhRateSettingOnLoad) {
+      this.userSettingService
+        .updateUserSetting(
+          this.defaultElectricityKwhRateSettingOnLoad.id,
+          rateStr
+        )
+        .subscribe((setting) => {
+          this.defaultElectricityKwhRateSettingOnLoad = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(UserSettingType.Electricity_KwhRate, rateStr)
+        .subscribe((setting) => {
+          this.defaultElectricityKwhRateSettingOnLoad = setting;
+        });
+    }
+    this.loggingService.logEvent('Settings_ElectricityKwhRateChanged');
+  }
+
+  saveDefaultElectricityWattage(newWattage: string) {
+    const wattageStr = newWattage?.toString();
+    if (this.defaultElectricityWattageSettingOnLoad) {
+      this.userSettingService
+        .updateUserSetting(
+          this.defaultElectricityWattageSettingOnLoad.id,
+          wattageStr
+        )
+        .subscribe((setting) => {
+          this.defaultElectricityWattageSettingOnLoad = setting;
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(UserSettingType.Electricity_DefaultWattageW, wattageStr)
+        .subscribe((setting) => {
+          this.defaultElectricityWattageSettingOnLoad = setting;
+        });
+    }
+    this.loggingService.logEvent('Settings_ElectricityDefaultWattageChanged');
   }
 
   public manageSubscription(): void {

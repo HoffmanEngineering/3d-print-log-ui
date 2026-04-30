@@ -250,6 +250,24 @@
             }
           </mat-form-field>
         }
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Average Wattage (W)</mat-label>
+          <input
+            matInput
+            type="number"
+            min="0"
+            formControlName="wattageW"
+            placeholder="e.g. 150"
+            (focus)="wattageHasFocus = true"
+            (blur)="wattageHasFocus = false"
+          />
+          @if (wattageHasFocus) {
+            <mat-hint>Leave blank to use your default wattage from Settings.</mat-hint>
+          }
+          @if (printerForm.controls['wattageW'].hasError('min')) {
+            <mat-error>Wattage cannot be negative</mat-error>
+          }
+        </mat-form-field>
         <!-- Checkboxes for hasHeatedBed and hasHeatedChamber-->
         @if (printerForm.get('hasHeatedBed').enabled) {
           <mat-checkbox

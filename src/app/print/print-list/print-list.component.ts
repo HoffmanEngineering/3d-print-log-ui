@@ -22,6 +22,7 @@ import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialo
 import {
   FilamentPrice,
   FilamentPriceInvalid,
+  FilamentPriceValid,
   PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
   PrintService,
@@ -137,6 +138,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
       description: 'Displays the total print cost.',
     },
     {
+      key: 'electricityCost',
+      displayName: 'Electricity Cost',
+      description:
+        'Displays the electricity cost based on print time and printer wattage.',
+    },
+    {
       key: 'commentCount',
       displayName: 'Comment Count',
       description: 'Displays the number of comments',
@@ -225,6 +232,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public preferredCurrencySymbolSetting: UserSetting | null = null;
 
+  public defaultElectricityKwhRateSetting: UserSetting | null = null;
+
+  public defaultElectricityWattageSetting: UserSetting | null = null;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private printerRedirectPromptService: PrinterRedirectPromptService,
@@ -306,6 +317,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.activatedRoute.data.subscribe((data) => {
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
       this.preferredCurrencySymbolSetting = data.preferredCurrencySymbolSetting;
+      this.defaultElectricityKwhRateSetting =
+        data.defaultElectricityKwhRateSetting;
+      this.defaultElectricityWattageSetting =
+        data.defaultElectricityWattageSetting;
 
       const pagedResponse: PagedList<PrintSummary> = data.printList;
       this.handlePagedList(pagedResponse);
@@ -749,6 +764,85 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     if (total.total.valid) {
       return `${total.total.formattedPrice}`;
+    }
+    return '';
+  }
+
+  public getElectricityCost(print: PrintSummary): string {
+    const result = this.printService.calculateElectricityCost({
+      printTimeSeconds:
+        print.printTimeInSeconds ?? print.estimatedPrintTimeInSeconds,
+      kwhRate: this.defaultElectricityKwhRateSetting?.value,
+      printerWattageW: print.printer?.wattageW,
+      defaultWattageW: this.defaultElectricityWattageSetting?.value,
+      currencySymbol: this.preferredCurrencySymbolSetting?.value ?? '$',
+    });
+    if (result.valid) {
+      return result.formattedCost;
+    }
+    return '';
+  }
+
+  public getTotalCombinedCostTooltip(print: PrintSummary): string {
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+    const symbol = this.preferredCurrencySymbolSetting?.value ?? '$';
+    const materialTotal = this.printService.calculateTotalPrintCost(
+      print.filamentUsage,
+      symbol,
+      defaultPrice
+    );
+    const electricityResult = this.printService.calculateElectricityCost({
+      printTimeSeconds:
+        print.printTimeInSeconds ?? print.estimatedPrintTimeInSeconds,
+      kwhRate: this.defaultElectricityKwhRateSetting?.value,
+      printerWattageW: print.printer?.wattageW,
+      defaultWattageW: this.defaultElectricityWattageSetting?.value,
+      currencySymbol: symbol,
+    });
+    const parts: string[] = [];
+    if (materialTotal.total.valid) {
+      parts.push(`Material: ${materialTotal.total.formattedPrice}`);
+    }
+    if (electricityResult.valid) {
+      parts.push(`Electricity: ${electricityResult.formattedCost}`);
+    }
+    return parts.join('\n');
+  }
+
+  public getTotalCombinedCost(print: PrintSummary): string {
+    const defaultPrice = this.defaultFilamentPriceSetting?.value ?? null;
+    const symbol = this.preferredCurrencySymbolSetting?.value ?? '$';
+    const materialTotal = this.printService.calculateTotalPrintCost(
+      print.filamentUsage,
+      symbol,
+      defaultPrice
+    );
+    const electricityResult = this.printService.calculateElectricityCost({
+      printTimeSeconds:
+        print.printTimeInSeconds ?? print.estimatedPrintTimeInSeconds,
+      kwhRate: this.defaultElectricityKwhRateSetting?.value,
+      printerWattageW: print.printer?.wattageW,
+      defaultWattageW: this.defaultElectricityWattageSetting?.value,
+      currencySymbol: symbol,
+    });
+    if (materialTotal.total.valid && electricityResult.valid) {
+      return (materialTotal.total as FilamentPriceValid).price
+        .add(electricityResult.cost)
+        .format({
+          symbol,
+          decimal: Intl.NumberFormat()
+            .formatToParts(100000.1)
+            .find((p) => p.type === 'decimal').value,
+          separator: Intl.NumberFormat()
+            .formatToParts(100000.1)
+            .find((p) => p.type === 'group').value,
+        });
+    }
+    if (materialTotal.total.valid) {
+      return materialTotal.total.formattedPrice;
+    }
+    if (electricityResult.valid) {
+      return electricityResult.formattedCost;
     }
     return '';
   }

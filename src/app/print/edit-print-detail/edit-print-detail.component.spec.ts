@@ -39,7 +39,11 @@ describe('EditPrintDetailComponent', () => {
   beforeEach(waitForAsync(() => {
     const mockPrintService = jasmine.createSpyObj<PrintService>(
       'PrintService',
-      { addPrint: of(), calculatePrintCost: { valid: false, message: '' } }
+      {
+        addPrint: of(),
+        calculatePrintCost: { valid: false, message: '' },
+        calculateElectricityCost: { valid: false, message: '' },
+      }
     );
 
     const mockToastrService = jasmine.createSpyObj<ToastrService>(
@@ -122,6 +126,12 @@ describe('EditPrintDetailComponent', () => {
               printers: [],
               lastSelectedPrinterSetting: null,
               defaultPrintViewStatusSetting: null,
+              defaultFilamentPriceSetting: null,
+              defaultElectricityKwhRateSetting: null,
+              defaultElectricityWattageSetting: null,
+              lastAllowCommentsSetting: null,
+              lastMaterialMeasureSettings: {},
+              preferredCurrencyNameSetting: null,
               print: { print: { printerId: 1, notes: '' } },
               currencies: {
                 USD: {

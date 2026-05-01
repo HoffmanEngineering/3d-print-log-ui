@@ -62,3 +62,6 @@ cypress.env.json
 .worktrees/
 # Superpowers brainstorm sessions
 .superpowers/
+
+# Claude Code local settings (personal permissions/paths — not for committing)
+.claude/settings.local.json

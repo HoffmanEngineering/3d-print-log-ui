@@ -208,6 +208,34 @@ Before going public, complete at least one successful end-to-end deployment from
 
 ---
 
+## AI Agent Considerations
+
+### Files and their public status
+
+| File                              | Tracked             | Public-safe                                                   |
+| --------------------------------- | ------------------- | ------------------------------------------------------------- |
+| `CLAUDE.md`                       | Yes                 | Yes — contains architecture and conventions only. No secrets. |
+| `.claude/settings.json`           | Yes (if created)    | Yes — project-wide tool permissions, no personal data         |
+| `.claude/settings.local.json`     | **No — gitignored** | No — contains personal paths and permission overrides         |
+| `.claude/commands/`               | Yes                 | Yes — custom slash commands, useful for contributors          |
+| `.github/copilot-instructions.md` | Yes                 | Yes — GitHub Copilot conventions                              |
+
+`settings.local.json` was previously tracked in git and has been removed (`git rm --cached`) as part of this migration. It is now gitignored.
+
+### CLAUDE.md updates required before going public
+
+The current `CLAUDE.md` contains an Azure DevOps section with the internal org URL and `az boards` CLI references. These must be replaced with the equivalent GitHub workflow (`gh` CLI, GitHub Issues) as part of Phase 5.
+
+### Prompt injection protection
+
+A malicious contributor could submit a PR modifying `CLAUDE.md` or `.claude/` to inject instructions that manipulate AI agents acting on behalf of maintainers. Mitigation: add `CLAUDE.md` and `.claude/` to `CODEOWNERS` so any changes require maintainer review. This is already covered by Phase 5's CODEOWNERS setup.
+
+### AGENTS.md
+
+Not required — `CLAUDE.md` is sufficient for Claude Code. If support for other AI coding tools (Copilot, Cursor, etc.) becomes a goal, an `AGENTS.md` at the repo root (with `CLAUDE.md` as a symlink or duplicate) is the cross-tool standard.
+
+---
+
 ## Out of Scope
 
 The following are explicitly deferred to a future project:

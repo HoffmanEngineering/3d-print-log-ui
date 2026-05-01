@@ -94,6 +94,8 @@ A `docker-compose.yml` in the API repo starts two containers:
 - **SQL Server** — identical behavior to production, cross-platform, no LocalDB dependency
 - **Azurite** — Microsoft's local Azure Blob Storage emulator, behaves identically to Azure Storage
 
+Both containers use **persistent named Docker volumes** so data survives container restarts and `docker compose down`. A contributor who needs a clean slate (e.g. to test migrations from scratch) can run `docker compose down -v` to wipe volumes explicitly — this is an intentional opt-in, not the default.
+
 Connection strings for both are pre-configured in `appsettings.Development.example.json`. A contributor runs `docker compose up` then starts the API — no manual database install required.
 
 Note: Azurite is the right choice for developer setup. For future end-user self-hosting, Azurite would be replaced by a local filesystem implementation behind an `IFileStorageService` abstraction — that work is out of scope here.

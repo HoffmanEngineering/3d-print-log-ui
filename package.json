@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
+    "start:auth0": "ng serve --ssl --host 0.0.0.0 --configuration=auth0-dev",
     "build:dev": "ng build --verbose",
     "build": "ng build --configuration production --verbose",
     "test": "ng test",

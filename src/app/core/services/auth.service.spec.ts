@@ -35,31 +35,35 @@ describe('AuthService', () => {
     });
   });
 
-  afterEach(() => {
-    (environment as any).devAuthBypass = false;
-  });
+  describe('when devAuthBypass is true', () => {
+    beforeEach(() => {
+      (environment as any).devAuthBypass = true;
+    });
 
-  it('should be created', () => {
-    (environment as any).devAuthBypass = true;
-    const service: AuthService = TestBed.inject(AuthService);
-    expect(service).toBeTruthy();
-  });
+    afterEach(() => {
+      (environment as any).devAuthBypass = false;
+    });
 
-  it('should emit mock user profile and set loggedIn=true when devAuthBypass is true', (done) => {
-    (environment as any).devAuthBypass = true;
-    const service = TestBed.inject(AuthService);
+    it('should be created', () => {
+      const service: AuthService = TestBed.inject(AuthService);
+      expect(service).toBeTruthy();
+    });
 
-    service.localAuthSetup();
+    it('should emit mock user profile and set loggedIn=true when devAuthBypass is true', (done) => {
+      const service = TestBed.inject(AuthService);
 
-    service.userProfile$
-      .pipe(
-        filter((profile) => profile !== null),
-        take(1)
-      )
-      .subscribe((profile) => {
-        expect(profile).not.toBeNull();
-        expect(service.loggedIn).toBeTrue();
-        done();
-      });
+      service.localAuthSetup();
+
+      service.userProfile$
+        .pipe(
+          filter((profile) => profile !== null),
+          take(1)
+        )
+        .subscribe((profile) => {
+          expect(profile).not.toBeNull();
+          expect(service.loggedIn).toBeTrue();
+          done();
+        });
+    });
   });
 });

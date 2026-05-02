@@ -56,7 +56,7 @@ npm run lint
 
 ## Submitting a PR
 
-- Fork the repo and create a branch from `master`
+- Fork the repo and create a branch from `main`
 - Make your changes with tests
 - Run `npm run test:ci` and `npm run lint` to verify
 - Open a pull request — CI runs automatically

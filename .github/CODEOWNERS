@@ -1,3 +1,5 @@
+* @ChristopherHoffman
+
 # Maintainer review required for CI/CD, auth, and AI agent config changes
 .github/workflows/          @ChristopherHoffman
 .github/CODEOWNERS          @ChristopherHoffman

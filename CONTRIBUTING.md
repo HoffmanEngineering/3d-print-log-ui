@@ -23,10 +23,14 @@ Thank you for your interest in contributing!
    ```
 
 3. **Start the dev server**
+
    ```bash
    npm start
    ```
+
    The app will be available at `https://localhost:4200`.
+
+   HTTPS works out of the box — a self-signed localhost certificate is committed to the repo at `ssl/server.crt` and `ssl/server.key`. Chrome trusts it silently; Firefox will show a one-time "Accept the Risk" prompt on first visit.
 
 ## Dev Auth Bypass
 

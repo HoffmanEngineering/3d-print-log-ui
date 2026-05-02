@@ -77,6 +77,14 @@
                   "maximumError": "10kb"
                 }
               ]
+            },
+            "auth0-dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.auth0-dev.ts"
+                }
+              ]
             }
           }
         },
@@ -91,6 +99,9 @@
           "configurations": {
             "production": {
               "buildTarget": "print-log-ui:build:production"
+            },
+            "auth0-dev": {
+              "buildTarget": "print-log-ui:build:auth0-dev"
             }
           }
         },

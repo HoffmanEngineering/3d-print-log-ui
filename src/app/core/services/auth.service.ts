@@ -5,6 +5,7 @@ import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
 import {
   BehaviorSubject,
   combineLatest,
+  EMPTY,
   from,
   Observable,
   of,
@@ -45,27 +46,29 @@ export interface UserProfileInfo {
 })
 export class AuthService {
   // Create an observable of Auth0 instance of client
-  auth0Client$ = (
-    from(
-      createAuth0Client({
-        domain: environment.authentication.domain,
-        clientId: environment.authentication.client_id,
-        authorizationParams: {
-          audience: environment.authentication.audience,
-          redirect_uri: isCordova
-            ? cordovaCallbackUri
-            : `${window.location.origin}/callback`,
-        },
-        cacheLocation: 'localstorage',
-        useRefreshTokens: true,
-      })
-    ) as Observable<Auth0Client>
-  ).pipe(
-    shareReplay(1), // Every subscription receives the same shared value
-    catchError((err) => {
-      return throwError(err);
-    })
-  );
+  auth0Client$ = environment.devAuthBypass
+    ? EMPTY
+    : (
+        from(
+          createAuth0Client({
+            domain: environment.authentication.domain,
+            clientId: environment.authentication.client_id,
+            authorizationParams: {
+              audience: environment.authentication.audience,
+              redirect_uri: isCordova
+                ? cordovaCallbackUri
+                : `${window.location.origin}/callback`,
+            },
+            cacheLocation: 'localstorage',
+            useRefreshTokens: true,
+          })
+        ) as Observable<Auth0Client>
+      ).pipe(
+        shareReplay(1), // Every subscription receives the same shared value
+        catchError((err) => {
+          return throwError(err);
+        })
+      );
   // Define observables for SDK methods that return promises by default
   // For each Auth0 SDK method, first ensure the client instance is ready
   // concatMap: Using the client instance, call SDK method; SDK returns a promise
@@ -177,9 +180,26 @@ export class AuthService {
     ) as unknown as Observable<string>; // TODO: Figure out why getTokenSilently isn't giving the right type
   }
 
+  private readonly devMockProfile: UserProfileInfo = {
+    id: 1,
+    profilePicture:
+      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="%23666"/><text x="20" y="26" text-anchor="middle" font-size="16" fill="white">D</text></svg>',
+    coverPicture: '',
+    displayName: 'Dev User',
+    bio: '',
+    deactivationDateTime: null,
+    viewStatus: ProfileViewStatus.Public,
+  };
+
   localAuthSetup() {
     // This should only be called on app initialization
     // Set up local authentication streams
+
+    if (environment.devAuthBypass) {
+      this.loggedIn = true;
+      this.userProfileSubject$.next(this.devMockProfile);
+      return;
+    }
 
     const checkAuth$ = this.isAuthenticated$.pipe(
       concatMap((loggedIn: boolean) => {
@@ -200,6 +220,9 @@ export class AuthService {
   }
 
   login(redirectPath: string = '/') {
+    if (environment.devAuthBypass) {
+      return;
+    }
     // A desired redirect path can be passed to login method
     // (e.g., from a route guard)
     // Ensure Auth0 client instance exists
@@ -242,6 +265,9 @@ export class AuthService {
   }
 
   logout() {
+    if (environment.devAuthBypass) {
+      return;
+    }
     // Stop notification polling
     this.notificationService.stopPolling();
 

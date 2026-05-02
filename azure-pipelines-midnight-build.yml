@@ -8,7 +8,7 @@ schedules:
     displayName: 'Daily Midnight Build'
     branches:
       include:
-        - master
+        - main
 
 pool:
   vmImage: 'ubuntu-latest'

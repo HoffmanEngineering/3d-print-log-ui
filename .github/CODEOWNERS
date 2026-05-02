@@ -1,0 +1,11 @@
+* @ChristopherHoffman
+
+# Maintainer review required for CI/CD, auth, and AI agent config changes
+.github/workflows/          @ChristopherHoffman
+.github/CODEOWNERS          @ChristopherHoffman
+CLAUDE.md                   @ChristopherHoffman
+.claude/                    @ChristopherHoffman
+src/app/core/guards/        @ChristopherHoffman
+src/app/core/http/auth-interceptor.service.ts  @ChristopherHoffman
+src/app/core/services/auth.service.ts          @ChristopherHoffman
+src/environments/           @ChristopherHoffman

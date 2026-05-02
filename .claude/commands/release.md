@@ -124,7 +124,7 @@ After making the changes, ask the user to review the release notes. Show them wh
 Remind the user:
 
 1. Create a merge/pull request for the release branch
-2. After the PR is merged into master, create a git tag:
+2. After the PR is merged into main, create a git tag:
    ```bash
    git tag vX.X.X
    git push origin vX.X.X

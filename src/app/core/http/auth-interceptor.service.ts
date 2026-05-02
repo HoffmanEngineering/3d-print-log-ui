@@ -7,6 +7,7 @@ import {
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, mergeMap } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 import { AuthService } from '../services/auth.service';
 
 @Injectable({
@@ -15,10 +16,25 @@ import { AuthService } from '../services/auth.service';
 export class AuthInterceptorService implements HttpInterceptor {
   constructor(private auth: AuthService) {}
 
+  protected getLocationSearch(): string {
+    return window.location.search;
+  }
+
   intercept(
     req: HttpRequest<any>,
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
+    if (environment.devAuthBypass) {
+      const params = new URLSearchParams(this.getLocationSearch());
+      const userId = params.get('devUserId') ?? '1';
+      const devReq = req.clone({
+        headers: req.headers
+          .delete('allow-anonymous-request')
+          .set('X-Dev-User-Id', userId),
+      });
+      return next.handle(devReq);
+    }
+
     return this.auth.getTokenSilently$().pipe(
       mergeMap((token) => {
         const tokenReq = req.clone({

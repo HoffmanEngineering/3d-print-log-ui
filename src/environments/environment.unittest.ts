@@ -7,6 +7,7 @@ export const environment = {
   production: false,
   printLogApiUrl: 'https://unittest.3dprintlog.dev',
   version: packageInfo.version,
+  devAuthBypass: false,
   authentication: {
     domain: 'unittest.3dprintlog.dev',
     client_id: '123-456',

@@ -62,3 +62,13 @@ cypress.env.json
 .worktrees/
 # Superpowers brainstorm sessions
 .superpowers/
+
+# Claude Code local settings (personal permissions/paths — not for committing)
+.claude/settings.local.json
+
+# Production and staging environment files contain sensitive keys — never commit
+src/environments/environment.prod.ts
+src/environments/environment.staging.ts
+
+# Auth0 dev environment — requires a real Auth0 tenant, copy from example
+src/environments/environment.auth0-dev.ts

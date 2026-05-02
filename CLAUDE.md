@@ -162,13 +162,14 @@ All user-facing documentation lives in the `src/documentation` directory.
 - Update existing documentation with new functionality
 - Documentation should be written in clear english, designed to be understandable by the user.
 
-## Azure DevOps
+## GitHub
 
-Kanban board (no sprints/iterations). Work items are **User Stories** only.
+Issues and PRs are managed on GitHub.
 
-- **Org:** `https://dev.azure.com/HoffmanEngineering`
-- **Project:** `3D Print Log`
-- **Tags:** `Tier 1/2/3` (priority), `User Feedback`, plus area tags (`Integration`, `Mobile`, etc.)
-- Use `az boards --help` for CLI syntax at runtime
+- **Org:** `https://github.com/HoffmanEngineering`
+- **UI repo:** `https://github.com/HoffmanEngineering/3d-print-log-ui`
+- **API repo:** `https://github.com/HoffmanEngineering/3d-print-log-api`
 
-When asked to "work on story #N": fetch the work item with the az CLI, implement the feature, then mark it `Closed` when done.
+Use `gh issue list`, `gh pr create`, `gh pr view` for CLI operations.
+
+When asked to "work on issue #N": fetch the issue with `gh issue view N`, implement the feature, open a PR with `gh pr create`.

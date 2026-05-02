@@ -177,9 +177,25 @@ export class AuthService {
     ) as unknown as Observable<string>; // TODO: Figure out why getTokenSilently isn't giving the right type
   }
 
+  private readonly devMockProfile: UserProfileInfo = {
+    id: 0,
+    profilePicture: '',
+    coverPicture: '',
+    displayName: 'Dev User',
+    bio: '',
+    deactivationDateTime: null,
+    viewStatus: ProfileViewStatus.Public,
+  };
+
   localAuthSetup() {
     // This should only be called on app initialization
     // Set up local authentication streams
+
+    if (environment.devAuthBypass) {
+      this.loggedIn = true;
+      this.userProfileSubject$.next(this.devMockProfile);
+      return;
+    }
 
     const checkAuth$ = this.isAuthenticated$.pipe(
       concatMap((loggedIn: boolean) => {
@@ -200,6 +216,9 @@ export class AuthService {
   }
 
   login(redirectPath: string = '/') {
+    if (environment.devAuthBypass) {
+      return;
+    }
     // A desired redirect path can be passed to login method
     // (e.g., from a route guard)
     // Ensure Auth0 client instance exists
@@ -242,6 +261,9 @@ export class AuthService {
   }
 
   logout() {
+    if (environment.devAuthBypass) {
+      return;
+    }
     // Stop notification polling
     this.notificationService.stopPolling();
 

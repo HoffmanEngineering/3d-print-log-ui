@@ -58,6 +58,9 @@ Thumbs.db
 # Ignores for Cypress
 cypress.env.json
 
+# Internal planning and design docs — keep local, not for the public repo
+docs/
+
 # Git worktrees
 .worktrees/
 # Superpowers brainstorm sessions

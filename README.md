@@ -1,13 +1,34 @@
-# 3D Print Log
+<p align="center">
+  <img src=".github/assets/logo.png" alt="3D Print Log" width="500" />
+</p>
 
 [![CI](https://github.com/HoffmanEngineering/3d-print-log-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/HoffmanEngineering/3d-print-log-ui/actions/workflows/ci.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 The frontend for [3D Print Log](https://3dprintlog.com) — a web application for tracking 3D prints, printers, and filaments.
 
+**Live app:** https://3dprintlog.com
+
+<p align="center">
+  <img src="src/assets/Homepage_PrinterList_fd6e7f73bf3f.png" alt="Print log" height="400" />
+  <img src="src/assets/Homepage_Filament_34b0aa09478611.png" alt="Materials" height="400" />
+  <img src="src/assets/Homepage_Analytics_56744e5428bda.png" alt="Analytics" height="400" />
+</p>
+
+## Features
+
+- Log prints with photos, notes, slicer settings, filament usage, and per-print cost tracking
+- Direct slicer plugins for Cura and Slic3r-based slicers (OrcaSlicer, PrusaSlicer, Bambu Studio, and more) — log prints straight from your slicer without manual G-code uploads
+- Direct integration with OctoPrint and Klipper/Moonraker for automatic print tracking
+- Manage printers and track maintenance history
+- Manage material inventory (filament, resin, and more) with usage and remaining quantity tracking, and QR code labels for quick spool lookup
+- View analytics and statistics across your print history
+- Share prints on a public feed
+- Integrate with external tools via API keys
+
 ## Getting Started
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for local development setup.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, configuration, and running tests.
 
 ## Tech Stack
 
@@ -16,10 +37,22 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for local development setup.
 - Auth0 SPA SDK
 - Azure Static Web Apps
 
+## Infrastructure
+
+The production environment runs on Azure (Static Web Apps for the frontend). It is manually managed — there is no infrastructure-as-code in this repo. PRs that require infrastructure changes (new environment variables, auth configuration, hosting config) should call that out explicitly in the PR description.
+
 ## Related Repos
 
 - [3d-print-log-api](https://github.com/HoffmanEngineering/3d-print-log-api) — the backend API
 - [3d-print-log-cura-plugin](https://github.com/HoffmanEngineering/3d-print-log-cura-plugin) — Cura integration
+
+## Support Development
+
+If you find 3D Print Log useful, consider supporting its development:
+
+- [**Subscribe to Pro**](https://3dprintlog.com/subscription) for an ad-free experience and extra cloud storage
+- [**Donate via PayPal**](https://paypal.me/hoffmanengineering) to buy me a coffee
+- [**Become a Patron**](https://www.patreon.com/HoffmanEngineering) on Patreon
 
 ## License
 

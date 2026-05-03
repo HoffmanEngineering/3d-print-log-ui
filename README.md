@@ -1,4 +1,6 @@
-# 3D Print Log
+<p align="center">
+  <img src=".github/assets/logo.png" alt="3D Print Log" width="500" />
+</p>
 
 [![CI](https://github.com/HoffmanEngineering/3d-print-log-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/HoffmanEngineering/3d-print-log-ui/actions/workflows/ci.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -36,6 +38,14 @@ The production environment runs on Azure (Static Web Apps for the frontend). It 
 
 - [3d-print-log-api](https://github.com/HoffmanEngineering/3d-print-log-api) — the backend API
 - [3d-print-log-cura-plugin](https://github.com/HoffmanEngineering/3d-print-log-cura-plugin) — Cura integration
+
+## Support Development
+
+If you find 3D Print Log useful, consider supporting its development:
+
+- [**Subscribe to Pro**](https://3dprintlog.com/subscription) for an ad-free experience and extra cloud storage
+- [**Donate via PayPal**](https://paypal.me/hoffmanengineering) to buy me a coffee
+- [**Become a Patron**](https://www.patreon.com/HoffmanEngineering) on Patreon
 
 ## License
 

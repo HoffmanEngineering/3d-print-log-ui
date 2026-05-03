@@ -11,10 +11,11 @@ The frontend for [3D Print Log](https://3dprintlog.com) — a web application fo
 
 ## Features
 
-- Log prints with photos, notes, slicer settings, and per-print cost tracking
-- Import print settings automatically by uploading G-code files (Cura, PrusaSlicer, OrcaSlicer, Creality Print, Anycubic)
+- Log prints with photos, notes, slicer settings, filament usage, and per-print cost tracking
+- Direct slicer plugins for Cura and Slic3r-based slicers (OrcaSlicer, PrusaSlicer, Bambu Studio, and more) — log prints straight from your slicer without manual G-code uploads
+- Direct integration with OctoPrint and Klipper/Moonraker for automatic print tracking
 - Manage printers and track maintenance history
-- Manage filament inventory with QR code labels for quick spool lookup
+- Manage material inventory (filament, resin, and more) with usage and remaining quantity tracking, and QR code labels for quick spool lookup
 - View analytics and statistics across your print history
 - Share prints on a public feed
 - Integrate with external tools via API keys

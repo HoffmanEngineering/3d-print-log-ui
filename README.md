@@ -9,6 +9,12 @@ The frontend for [3D Print Log](https://3dprintlog.com) — a web application fo
 
 **Live app:** https://3dprintlog.com
 
+<p align="center">
+  <img src="src/assets/Homepage_PrinterList_fd6e7f73bf3f.png" alt="Print log" width="30%" />
+  <img src="src/assets/Homepage_Filament_34b0aa09478611.png" alt="Materials" width="30%" />
+  <img src="src/assets/Homepage_Analytics_56744e5428bda.png" alt="Analytics" width="30%" />
+</p>
+
 ## Features
 
 - Log prints with photos, notes, slicer settings, filament usage, and per-print cost tracking

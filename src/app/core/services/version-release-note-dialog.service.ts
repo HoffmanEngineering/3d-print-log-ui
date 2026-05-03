@@ -28,6 +28,34 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.40.0': {
+      title: '1.40.0 - Open Source',
+      body: `<p>
+<strong>3D Print Log is now open source!</strong> After years of requests, the full source code for both the UI and API are publicly available on GitHub. Whether you want to self-host, contribute a feature, or just explore how it works — you're warmly invited.
+</p>
+<p>
+  Find the code at <a href="https://github.com/HoffmanEngineering/3d-print-log-ui" rel="noreferrer noopener" target="_blank">3d-print-log-ui</a> and <a href="https://github.com/HoffmanEngineering/3d-print-log-api" rel="noreferrer noopener" target="_blank">3d-print-log-api</a> on GitHub. Issues, feature requests, and pull requests are all welcome!
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.39.0': {
       title: '1.39.0 - Electricity Cost Tracking',
       body: `<p>

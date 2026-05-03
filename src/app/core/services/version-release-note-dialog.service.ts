@@ -31,7 +31,7 @@ export class VersionReleaseNoteDialogService {
     '1.40.0': {
       title: '1.40.0 - Open Source',
       body: `<p>
-<strong>3D Print Log is now open source!</strong> After years of requests, the full source code for both the UI and API are publicly available on GitHub. Whether you want to self-host, contribute a feature, or just explore how it works — you're warmly invited.
+<strong>3D Print Log is now open source!</strong> After years of requests, the full source code for both the UI and API are publicly available on GitHub. Whether you want to self-host, contribute a feature, or just explore how it works, the community is open to everyone.
 </p>
 <p>
   Find the code at <a href="https://github.com/HoffmanEngineering/3d-print-log-ui" rel="noreferrer noopener" target="_blank">3d-print-log-ui</a> and <a href="https://github.com/HoffmanEngineering/3d-print-log-api" rel="noreferrer noopener" target="_blank">3d-print-log-api</a> on GitHub. Issues, feature requests, and pull requests are all welcome!

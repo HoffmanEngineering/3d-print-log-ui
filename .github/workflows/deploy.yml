@@ -41,4 +41,4 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: /
-          output_location: dist/print-log-ui
+          output_location: dist/print-log-ui/browser

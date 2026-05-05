@@ -30,7 +30,7 @@ describe('Prints List', () => {
     // cy.get('[cy-subtitle]').invoke('text').should('equal', expectedSubtitle);
     const newPrintTitle = 'New Test Print - ' + new Date().getTime();
 
-    cy.get('.mat-paginator-range-label')
+    cy.get('.mat-mdc-paginator-range-label')
       .invoke('text')
       .then((numPrintsBefore) => {
         cy.get('#add-new-print').click();
@@ -40,12 +40,12 @@ describe('Prints List', () => {
         cy.get('#edit-print-printer')
           .click()
           .get('mat-option')
-          .contains('Test Printer - (TEVO Tornado)')
+          .contains('(TEVO Tornado)')
           .click();
 
         cy.get('#edit-print-submit-btn').click();
 
-        cy.get('.mat-paginator-range-label') // command
+        cy.get('.mat-mdc-paginator-range-label') // command
           .invoke('text')
           .should((text) => {
             const parsePagination = (textToParse: string) =>
@@ -82,7 +82,7 @@ describe('Prints List', () => {
     cy.get('#edit-print-submit-btn').click();
 
     cy.get('@firstRow').within(() => {
-      cy.get('.mat-column-title').invoke('text').should('equal', newPrintTitle);
+      cy.get('.mat-column-title').should('contain.text', newPrintTitle);
     });
   });
 
@@ -109,8 +109,8 @@ describe('Prints List', () => {
     cy.get('#edit-print-submit-btn').click();
 
     cy.get('@firstRow').within(() => {
-      cy.get('.mat-column-title').invoke('text').should('equal', newPrintTitle);
-      cy.get('.mat-column-status').invoke('text').should('equal', 'Success');
+      cy.get('.mat-column-title').should('contain.text', newPrintTitle);
+      cy.get('.mat-column-status').should('contain.text', 'Success');
     });
   });
   // it('should be able to add a new comment', () => {

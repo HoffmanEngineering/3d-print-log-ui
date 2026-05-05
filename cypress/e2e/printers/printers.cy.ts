@@ -52,8 +52,7 @@ describe('Prints List', () => {
   it('should be able to edit an existing print', () => {
     cy.visit('/printers');
 
-    cy.server();
-    cy.route('/api/printers/*').as('getPrinters');
+    cy.intercept('GET', '/api/printers*').as('getPrinters');
 
     cy.get('#printer-list-search-input').clear().type('New Test Printer');
     cy.wait('@getPrinters');

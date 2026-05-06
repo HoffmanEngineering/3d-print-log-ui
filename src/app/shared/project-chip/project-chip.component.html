@@ -1,4 +1,4 @@
-<mat-chip class="project-chip" (click)="onClick($event)">
+<mat-chip class="project-chip" data-cy="project-chip" (click)="onClick($event)">
   <span class="status-dot" [class]="statusClass"></span>
   {{ projectName() }}
 </mat-chip>

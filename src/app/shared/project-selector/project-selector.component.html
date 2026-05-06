@@ -4,6 +4,7 @@
     matInput
     [formControl]="searchControl"
     [matAutocomplete]="auto"
+    data-cy="project-selector-input"
     placeholder="Showing active projects — type to search or create a project"
   />
   @if (selectedProject()) {
@@ -34,6 +35,7 @@
     @if (showNewOption()) {
       <mat-option
         [value]="searchControl.value"
+        data-cy="project-new-option"
         (click)="selectNewProject(searchControl.value!)"
       >
         <mat-icon>add</mat-icon> Create project: "{{ searchControl.value }}"

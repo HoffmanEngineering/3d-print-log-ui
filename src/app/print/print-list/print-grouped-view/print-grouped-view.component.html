@@ -25,7 +25,7 @@
                 />
               </div>
               <div class="card-content">
-                <h3 class="card-title">{{ row.item.projectName }}</h3>
+                <h3 class="card-title" data-cy="grouped-project-name">{{ row.item.projectName }}</h3>
                 <app-project-chip
                   [projectName]="row.item.projectName!"
                   [projectStatus]="row.item.projectStatus!"
@@ -609,7 +609,7 @@
       <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
           <div class="project-title-cell">
-            <strong>{{ row.item.projectName }}</strong>
+            <strong data-cy="grouped-project-name">{{ row.item.projectName }}</strong>
             <button
               mat-stroked-button
               class="expand-btn"

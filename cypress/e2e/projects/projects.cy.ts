@@ -50,4 +50,83 @@ describe('Projects', () => {
       updatedName
     );
   });
+
+  it('should assign a print to an existing project via the Print Edit page', () => {
+    cy.visit('/projects/new');
+    cy.intercept('POST', '/api/Projects').as('createProject');
+
+    const projectName = 'Assign Test Project - ' + new Date().getTime();
+    cy.get('[data-testid="name-input"]').type(projectName);
+    cy.get('[data-cy="project-save-btn"]').click();
+    cy.wait('@createProject');
+
+    cy.visit('/prints');
+    cy.get('[cy-print-row]').first().click();
+    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
+    cy.get('mat-option').contains(projectName).click();
+    cy.get('#edit-print-submit-btn').click();
+
+    cy.get('[cy-print-row]')
+      .first()
+      .within(() => {
+        cy.get('[data-cy="project-chip"]').should('contain.text', projectName);
+      });
+  });
+
+  it('should create a new project via the project selector on the Print Edit page', () => {
+    const newProjectName = 'Selector Test Project - ' + new Date().getTime();
+
+    cy.visit('/prints');
+    cy.get('[cy-print-row]').first().click();
+    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy="project-selector-input"]').clear().type(newProjectName);
+    cy.get('[data-cy="project-new-option"]').click();
+    cy.get('#edit-print-submit-btn').click();
+
+    cy.get('[cy-print-row]')
+      .first()
+      .within(() => {
+        cy.get('[data-cy="project-chip"]').should(
+          'contain.text',
+          newProjectName
+        );
+      });
+  });
+
+  it('should display the project chip in All Prints view', () => {
+    const projectName = 'Badge Test Project - ' + new Date().getTime();
+
+    cy.visit('/prints');
+    cy.get('[cy-print-row]').first().click();
+    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
+    cy.get('[data-cy="project-new-option"]').click();
+    cy.get('#edit-print-submit-btn').click();
+
+    cy.get('[cy-print-row]')
+      .first()
+      .within(() => {
+        cy.get('[data-cy="project-chip"]')
+          .should('be.visible')
+          .should('contain.text', projectName);
+      });
+  });
+
+  it('should display the project in Grouped View', () => {
+    const projectName = 'Grouped Test Project - ' + new Date().getTime();
+
+    cy.visit('/prints');
+    cy.get('[cy-print-row]').first().click();
+    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
+    cy.get('[data-cy="project-new-option"]').click();
+    cy.get('#edit-print-submit-btn').click();
+
+    cy.get('mat-button-toggle[value="grouped"]').click();
+
+    cy.get('[data-cy="grouped-project-name"]', { timeout: 10000 })
+      .filter(':visible')
+      .should('contain.text', projectName);
+  });
 });

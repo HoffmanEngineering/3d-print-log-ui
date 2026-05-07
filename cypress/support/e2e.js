@@ -17,5 +17,9 @@
 import './commands';
 import '@testing-library/cypress/add-commands';
 
+// Suppress uncaught exceptions from third-party scripts (e.g. AdSense)
+// so they don't fail tests when the session is created on a cold run.
+Cypress.on('uncaught:exception', () => false);
+
 // Alternatively you can use CommonJS syntax:
 // require('./commands')

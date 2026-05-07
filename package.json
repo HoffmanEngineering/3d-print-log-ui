@@ -14,6 +14,7 @@
     "lint:fix": "ng lint --fix",
     "lint:brief": "bash scripts/lint-brief.sh",
     "e2e": "cypress open",
+    "e2e:ci": "cypress run",
     "source-map-explorer": "ng build --configuration production --sourceMap=true && source-map-explorer dist/print-log-ui/*",
     "prettier": "prettier --check src/**/*.*",
     "prettier:fix": "prettier --write src/**/*.*",

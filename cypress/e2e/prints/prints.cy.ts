@@ -92,7 +92,7 @@ describe('Prints List', () => {
     cy.get('[cy-print-row]').first().as('firstRow');
 
     cy.get('@firstRow').within(() => {
-      cy.get('[data-cy-more-button]').click();
+      cy.get('[data-cy-more-button]').click({ force: true });
     });
 
     cy.get('[data-cy-edit-menu-option]').click();

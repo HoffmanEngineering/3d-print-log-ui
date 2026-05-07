@@ -101,7 +101,41 @@ describe('Print List Filters', () => {
   });
 
   it('printer multi-select filter narrows results', () => {
-    // TODO
+    cy.visit('/prints');
+
+    // Ensure filter panel is open
+    cy.get('#filter-panel').then(($panel) => {
+      if (!$panel.hasClass('filter-panel--open')) {
+        cy.get('[aria-controls="filter-panel"]').click();
+      }
+    });
+    cy.get('#filter-panel').should('have.class', 'filter-panel--open');
+
+    // Open the printer multi-select and capture the first option's name
+    cy.findByRole('combobox', { name: /filter by printers/i }).click();
+    cy.get('mat-option')
+      .first()
+      .then(($opt) => {
+        const printerName = $opt.text().trim();
+
+        // Select that printer and close the panel
+        cy.wrap($opt).click();
+        cy.get('body').type('{esc}');
+
+        // All visible rows show that printer's name in the printer column
+        cy.get('[cy-print-row]').each(($row) => {
+          cy.wrap($row)
+            .find('.mat-column-printer')
+            .should('contain.text', printerName);
+        });
+      });
+
+    // Badge shows 1 active filter
+    cy.get('.filter-toggle-btn .mat-badge-content').should('have.text', '1');
+
+    // Reset → badge hidden
+    cy.findByRole('button', { name: /reset filters/i }).click();
+    cy.get('.filter-toggle-btn').should('have.class', 'mat-badge-hidden');
   });
 
   it('filament chip filter narrows results and chip removal restores them', () => {

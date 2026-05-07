@@ -68,7 +68,36 @@ describe('Print List Filters', () => {
   });
 
   it('status filter narrows results and reset clears it', () => {
-    // TODO
+    const printTitle = 'Status Test Print - ' + new Date().getTime();
+
+    // Create a Pending print
+    cy.intercept('POST', '/api/Prints/').as('createPrint');
+    cy.visit('/prints/new/edit');
+    cy.get('#edit-print-title').type(printTitle);
+    cy.get('#edit-print-printer').click();
+    cy.get('mat-option').first().click();
+    cy.get('#edit-print-submit-btn').click();
+    cy.wait('@createPrint');
+
+    // Visit /prints — ensure filter panel is open
+    cy.visit('/prints');
+    cy.get('#filter-panel').then(($panel) => {
+      if (!$panel.hasClass('filter-panel--open')) {
+        cy.get('[aria-controls="filter-panel"]').click();
+      }
+    });
+    cy.get('#filter-panel').should('have.class', 'filter-panel--open');
+
+    // Filter by Status = Success → Pending print is absent
+    cy.findByRole('combobox', { name: /status/i }).click();
+    cy.findByRole('option', { name: 'Success' }).click();
+    cy.get('[cy-print-row]').contains(printTitle).should('not.exist');
+    cy.get('.filter-toggle-btn .mat-badge-content').should('have.text', '1');
+
+    // Reset → Pending print reappears, badge hidden
+    cy.findByRole('button', { name: /reset filters/i }).click();
+    cy.contains('[cy-print-row]', printTitle).should('exist');
+    cy.get('.filter-toggle-btn').should('have.class', 'mat-badge-hidden');
   });
 
   it('printer multi-select filter narrows results', () => {

@@ -42,7 +42,29 @@ describe('Print List Filters', () => {
   });
 
   it('search text narrows results', () => {
-    // TODO
+    const printTitle = 'Search Test Print - ' + new Date().getTime();
+
+    // Create a print with a unique title
+    cy.intercept('POST', '/api/Prints/').as('createPrint');
+    cy.visit('/prints/new/edit');
+    cy.get('#edit-print-title').type(printTitle);
+    cy.get('#edit-print-printer').click();
+    cy.get('mat-option').first().click();
+    cy.get('#edit-print-submit-btn').click();
+    cy.wait('@createPrint');
+
+    // Visit /prints — multiple rows exist
+    cy.visit('/prints');
+    cy.get('[cy-print-row]').should('have.length.greaterThan', 1);
+
+    // Type unique title → exactly one row, containing that title
+    cy.findByRole('textbox', { name: /search/i }).type(printTitle);
+    cy.get('[cy-print-row]').should('have.length', 1);
+    cy.get('[cy-print-row]').should('contain.text', printTitle);
+
+    // Clear search → multiple rows visible again
+    cy.findByRole('textbox', { name: /search/i }).clear();
+    cy.get('[cy-print-row]').should('have.length.greaterThan', 1);
   });
 
   it('status filter narrows results and reset clears it', () => {

@@ -71,17 +71,28 @@ cy.findByRole('button', { name: /reset filters/i }).click();
 
 ### Clicking print rows safely
 
-Print rows (`[cy-print-row]`) contain filament summary links with `[routerLink]`. A plain `.click()` on the row can land on a filament link and navigate away. Always target the title column:
+Print rows (`[cy-print-row]`) contain two kinds of intercepting elements:
+
+1. **Filament summary links** — have `[routerLink]` and navigate to `/materials/{id}`
+2. **Project chips** — have `(click)` with `event.stopPropagation()`, which prevents the row's `routerLink` from firing
+
+The safest pattern when you know the print title is `.find('.mat-column-title')` **only if the title cell has no project chip**. When in doubt, or when the print may already have a project assigned, navigate by ID instead:
 
 ```typescript
+// ✓ always safe — works regardless of filament links or project chips
+cy.get('[cy-print-row]')
+  .first()
+  .invoke('attr', 'cy-print-row')
+  .then((printId) => {
+    cy.visit(`/prints/${printId}`);
+  });
+
+// ✓ safe when you know the print title and it has no project chip
+cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
+
 // ✗ may navigate to filament detail
 cy.contains('[cy-print-row]', printTitle).click();
-
-// ✓ safe
-cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
 ```
-
-`$event.preventDefault()` on the filament link does **not** stop Angular RouterLink navigation — RouterLink ignores `defaultPrevented` from sibling handlers.
 
 ## Common Patterns
 
@@ -98,4 +109,23 @@ Use a timestamp suffix for test data to avoid collisions between runs:
 ```typescript
 const ts = new Date().getTime();
 const printTitle = 'My Test Print - ' + ts;
+```
+
+When multiple names share the same timestamp (e.g. a filament + print created in the same test), capture `ts` once and reuse it — don't call `getTime()` twice.
+
+## Custom Commands
+
+- **`cy.createPrint(title, options?)`** — creates a new print via `/prints/new/edit`, waits for the POST to complete, and leaves you on `/prints`. Pass `{ printer: 'Name' }` to select a specific printer; defaults to the first available option.
+- **`cy.openFilterPanel()`** — ensures the filter panel is open. Idempotent — safe to call even if the panel is already open.
+
+### Intercept ordering
+
+Always register `cy.intercept` **before** the action that triggers the request. The filament search modal fires a GET when it opens — register the intercept before clicking `#add-new-filament-usage-btn`, not after:
+
+```typescript
+// ✓ correct — intercept registered before the trigger
+cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
+cy.get('#add-new-filament-usage-btn').click();
+cy.get('[data-cy="select-filament-btn"]').click();
+cy.wait('@getFilamentsModal');
 ```

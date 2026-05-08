@@ -37,11 +37,8 @@ describe('Prints List', () => {
 
         cy.get('#edit-print-title').type(newPrintTitle);
 
-        cy.get('#edit-print-printer')
-          .click()
-          .get('mat-option')
-          .contains('(TEVO Tornado)')
-          .click();
+        cy.get('#edit-print-printer').click();
+        cy.get('mat-option').first().click();
 
         cy.get('#edit-print-submit-btn').click();
 
@@ -69,9 +66,12 @@ describe('Prints List', () => {
     //   }
     // });
 
-    cy.get('[cy-print-row]').first().as('firstRow');
-
-    cy.get('@firstRow').click();
+    cy.get('[cy-print-row]')
+      .first()
+      .invoke('attr', 'cy-print-row')
+      .then((printId) => {
+        cy.visit(`/prints/${printId}`);
+      });
 
     const newPrintTitle = 'Edit Test Print - ' + new Date().getTime();
 
@@ -81,9 +81,7 @@ describe('Prints List', () => {
 
     cy.get('#edit-print-submit-btn').click();
 
-    cy.get('@firstRow').within(() => {
-      cy.get('.mat-column-title').should('contain.text', newPrintTitle);
-    });
+    cy.contains('[cy-print-row]', newPrintTitle).should('exist');
   });
 
   it('should be able to edit an existing print through the dropdown menu', () => {

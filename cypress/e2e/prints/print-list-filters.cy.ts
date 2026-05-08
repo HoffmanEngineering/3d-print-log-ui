@@ -101,40 +101,83 @@ describe('Print List Filters', () => {
   });
 
   it('printer multi-select filter narrows results', () => {
-    cy.visit('/prints');
+    const ts = new Date().getTime();
+    const printerA = 'Filter Printer A - ' + ts;
+    const printerB = 'Filter Printer B - ' + ts;
 
-    // Ensure filter panel is open
+    // Create Printer A
+    cy.visit('/printers');
+    cy.get('#add-new-printer').click();
+    cy.get('#edit-printer-name').type(printerA);
+    cy.get('#edit-printer-make').type('TestMake');
+    cy.get('#edit-printer-model').type('ModelA');
+    cy.get('#edit-printer-filament-diameter').clear().type('1.75');
+    cy.get('#edit-printer-nozzle-diameter').clear().type('0.4');
+    cy.get('#edit-printer-submit-btn').click();
+
+    // Create Printer B
+    cy.get('#add-new-printer').click();
+    cy.get('#edit-printer-name').type(printerB);
+    cy.get('#edit-printer-make').type('TestMake');
+    cy.get('#edit-printer-model').type('ModelB');
+    cy.get('#edit-printer-filament-diameter').clear().type('1.75');
+    cy.get('#edit-printer-nozzle-diameter').clear().type('0.4');
+    cy.get('#edit-printer-submit-btn').click();
+
+    const printTitleA = 'Printer A Print - ' + ts;
+    const printTitleB = 'Printer B Print - ' + ts;
+
+    // Create a print using Printer A
+    cy.intercept('POST', '/api/Prints/').as('createPrintA');
+    cy.visit('/prints/new/edit');
+    cy.get('#edit-print-title').type(printTitleA);
+    cy.get('#edit-print-printer').click();
+    cy.contains('mat-option', printerA).click();
+    cy.get('#edit-print-submit-btn').click();
+    cy.wait('@createPrintA');
+
+    // Create a print using Printer B
+    cy.intercept('POST', '/api/Prints/').as('createPrintB');
+    cy.visit('/prints/new/edit');
+    cy.get('#edit-print-title').type(printTitleB);
+    cy.get('#edit-print-printer').click();
+    cy.contains('mat-option', printerB).click();
+    cy.get('#edit-print-submit-btn').click();
+    cy.wait('@createPrintB');
+
+    // Visit /prints and clear any leftover filters
+    cy.visit('/prints');
     cy.get('#filter-panel').then(($panel) => {
       if (!$panel.hasClass('filter-panel--open')) {
         cy.get('[aria-controls="filter-panel"]').click();
       }
     });
     cy.get('#filter-panel').should('have.class', 'filter-panel--open');
+    cy.findByRole('button', { name: /reset filters/i }).click();
 
-    // Open the printer multi-select and capture the first option's name
+    // Both prints are visible with no filter active
+    cy.contains('[cy-print-row]', printTitleA).should('exist');
+    cy.contains('[cy-print-row]', printTitleB).should('exist');
+
+    // Select Printer A from the multi-select
     cy.findByRole('combobox', { name: /filter by printers/i }).click();
-    cy.get('mat-option')
-      .first()
-      .then(($opt) => {
-        const printerName = $opt.text().trim();
+    cy.contains('mat-option', printerA).click();
+    cy.get('body').type('{esc}');
 
-        // Select that printer and close the panel
-        cy.wrap($opt).click();
-        cy.get('body').type('{esc}');
-
-        // All visible rows show that printer's name in the printer column
-        cy.get('[cy-print-row]').each(($row) => {
-          cy.wrap($row)
-            .find('.mat-column-printer')
-            .should('contain.text', printerName);
-        });
-      });
+    // All visible rows show Printer A; Printer B print is absent
+    cy.get('[cy-print-row]').each(($row) => {
+      cy.wrap($row)
+        .find('.mat-column-printer')
+        .should('contain.text', printerA);
+    });
+    cy.contains('[cy-print-row]', printTitleB).should('not.exist');
 
     // Badge shows 1 active filter
     cy.get('.filter-toggle-btn .mat-badge-content').should('have.text', '1');
 
-    // Reset → badge hidden
+    // Reset → Printer B print reappears, badge hidden
     cy.findByRole('button', { name: /reset filters/i }).click();
+    cy.contains('[cy-print-row]', printTitleB).should('exist');
     cy.get('.filter-toggle-btn').should('have.class', 'mat-badge-hidden');
   });
 

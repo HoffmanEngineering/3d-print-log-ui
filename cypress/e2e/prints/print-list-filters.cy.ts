@@ -182,6 +182,80 @@ describe('Print List Filters', () => {
   });
 
   it('filament chip filter narrows results and chip removal restores them', () => {
-    // TODO
+    const filamentName = 'Filter Test Filament - ' + new Date().getTime();
+    const printTitle = 'Filter Test Print - ' + new Date().getTime();
+
+    // Create a filament
+    cy.visit('/filament');
+    cy.get('#add-new-filament').click();
+    cy.get('#edit-filament-name').type(filamentName);
+    cy.get('mat-select[formControlName="materialCategoryNickname"]')
+      .click()
+      .get('mat-option')
+      .first()
+      .click();
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.get('#edit-filament-total-weight').clear().type('1000');
+    cy.get('#filament-inital-nominal-weight')
+      .clear({ force: true })
+      .type('800', { force: true });
+    cy.get('#edit-filament-submit-btn').click();
+
+    // Create a print and attach the filament to it
+    cy.intercept('POST', '/api/Prints/').as('createPrint');
+    cy.visit('/prints/new/edit');
+    cy.get('#edit-print-title').type(printTitle);
+    cy.get('#edit-print-printer').click();
+    cy.get('mat-option').first().click();
+    cy.get('#edit-print-submit-btn').click();
+    cy.wait('@createPrint');
+
+    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
+    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('#add-new-filament-usage-btn').click();
+    cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
+    cy.get('[data-cy="select-filament-btn"]').click();
+    cy.wait('@getFilamentsModal');
+    cy.get('#filament-list-search-input').clear().type(filamentName);
+    cy.wait('@getFilamentsModal');
+    cy.get('[data-cy-filament-row]').first().click();
+    cy.get('#edit-print-actual-filament-used-gram-0').clear().type('50');
+    cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+    cy.get('#edit-print-submit-btn').click();
+    cy.wait('@updatePrint');
+
+    // Visit /prints, clear any leftover filters, ensure panel is open
+    cy.visit('/prints');
+    cy.get('#filter-panel').then(($panel) => {
+      if (!$panel.hasClass('filter-panel--open')) {
+        cy.get('[aria-controls="filter-panel"]').click();
+      }
+    });
+    cy.get('#filter-panel').should('have.class', 'filter-panel--open');
+    cy.findByRole('button', { name: /reset filters/i }).click();
+    cy.contains('[cy-print-row]', printTitle).should('exist');
+
+    // Open filament filter modal, search and select the filament
+    cy.intercept('GET', '/api/Filaments*').as('getFilamentsFilter');
+    cy.findByRole('button', { name: /filter by material/i }).click();
+    cy.wait('@getFilamentsFilter');
+    cy.get('#filament-list-search-input').clear().type(filamentName);
+    cy.wait('@getFilamentsFilter');
+    cy.get('[data-cy-filament-row]').first().click();
+    // Multi-select mode: confirm with the "Add N Filament(s)" button
+    cy.contains('button', /add.*filament/i).click();
+
+    // Chip appears, badge shows 1, and the created print is visible
+    cy.get('mat-chip').should('exist');
+    cy.get('.filter-toggle-btn .mat-badge-content').should('have.text', '1');
+    cy.contains('[cy-print-row]', printTitle).should('exist');
+
+    // Remove the chip → badge hidden, print still visible (filter cleared)
+    cy.findByRole('button', { name: /remove filament filter/i }).click();
+    cy.get('.filter-toggle-btn').should('have.class', 'mat-badge-hidden');
+    cy.contains('[cy-print-row]', printTitle).should('exist');
   });
 });

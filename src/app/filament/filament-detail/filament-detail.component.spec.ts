@@ -69,6 +69,7 @@ describe('FilamentDetailComponent', () => {
             data: of({
               filament: null,
               materials: [],
+              materialCategories: [],
             }),
           },
         },

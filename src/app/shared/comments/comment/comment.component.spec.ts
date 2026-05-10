@@ -32,28 +32,29 @@ describe('CommentComponent', () => {
   let component: CommentComponent;
   let fixture: ComponentFixture<CommentComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
+  beforeEach(waitForAsync(async () => {
+    await TestBed.configureTestingModule({
       declarations: [CommentComponent, HumanizePipe],
       imports: [MatMenuModule, NoopAnimationsModule],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
-  }));
 
-  it('should create', () => {
+    // Create the fixture and assign shared inputs — do NOT call detectChanges()
+    // here so each test can set showDelete before the first change detection
+    // (avoids NG0100 in Angular v21)
     fixture = TestBed.createComponent(CommentComponent);
     component = fixture.componentInstance;
     component.comment = MOCK_COMMENT;
+  }));
+
+  it('should create', () => {
+    component.showDelete = false;
     fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
   it('should show the More menu when showDelete property is true', () => {
-    // Arrange - set showDelete before initial detectChanges so the @if
-    // branch is stable from the start (avoids NG0100 in Angular v21)
-    fixture = TestBed.createComponent(CommentComponent);
-    component = fixture.componentInstance;
-    component.comment = MOCK_COMMENT;
+    // Arrange
     component.showDelete = true;
 
     // Act
@@ -68,9 +69,6 @@ describe('CommentComponent', () => {
 
   it('should not show the More menu when showDelete property is false', () => {
     // Arrange
-    fixture = TestBed.createComponent(CommentComponent);
-    component = fixture.componentInstance;
-    component.comment = MOCK_COMMENT;
     component.showDelete = false;
 
     // Act

@@ -9,7 +9,7 @@
           <mat-card-title>{{ isCreating() ? 'New Project' : 'Edit Project' }}</mat-card-title>
         }
         @if (!isEditing()) {
-          <mat-card-title>{{ p.name }}</mat-card-title>
+          <mat-card-title data-cy="project-name-title">{{ p.name }}</mat-card-title>
         }
         @if (!isEditing() && p.reference) {
           <mat-card-subtitle>{{ p.reference }}</mat-card-subtitle>

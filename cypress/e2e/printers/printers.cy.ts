@@ -24,7 +24,7 @@ describe('Prints List', () => {
     const newMake = 'TestMake';
     const newModel = 'TestModel';
 
-    cy.get('.mat-paginator-range-label')
+    cy.get('.mat-mdc-paginator-range-label')
       .invoke('text')
       .then((numPrintersBefore) => {
         cy.get('#add-new-printer').click();
@@ -37,7 +37,7 @@ describe('Prints List', () => {
 
         cy.get('#edit-printer-submit-btn').click();
 
-        cy.get('.mat-paginator-range-label') // command
+        cy.get('.mat-mdc-paginator-range-label') // command
           .invoke('text')
           .should((text) => {
             const parsePagination = (textToParse: string) =>
@@ -52,8 +52,7 @@ describe('Prints List', () => {
   it('should be able to edit an existing print', () => {
     cy.visit('/printers');
 
-    cy.server();
-    cy.route('/api/printers/*').as('getPrinters');
+    cy.intercept('GET', '/api/printers/*').as('getPrinters');
 
     cy.get('#printer-list-search-input').clear().type('New Test Printer');
     cy.wait('@getPrinters');

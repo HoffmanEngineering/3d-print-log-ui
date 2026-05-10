@@ -27,7 +27,9 @@ npm run lint:fix           # Auto-fix lint issues
 npm run lint:brief         # Token-efficient lint output (errors/warnings only)
 
 # E2E Tests
-npm run e2e                # Open Cypress
+npm run e2e                # Open Cypress interactively
+npx cypress run            # Run all E2E tests headlessly
+npx cypress run --spec cypress/e2e/prints/print-list-filters.cy.ts  # Run a single spec
 
 # Formatting
 npm run prettier           # Check formatting

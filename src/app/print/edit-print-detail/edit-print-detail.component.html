@@ -361,6 +361,7 @@
             {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage:
           </h2>
           <button
+            id="add-new-filament-usage-btn"
             type="button"
             mat-raised-button
             (click)="addNewFilamentUsage()"
@@ -493,6 +494,7 @@
                     <div class="filament-actions-column">
                       <div class="button-row">
                         <button
+                          data-cy="select-filament-btn"
                           mat-stroked-button
                           (click)="
                             searchFilament(printFilament.get('filament'))
@@ -561,6 +563,7 @@
                           </mat-menu>
                         }
                         <button
+                          data-cy="delete-filament-btn"
                           type="button"
                           mat-stroked-button
                           (click)="removeFilament(printFilamentIndex)"

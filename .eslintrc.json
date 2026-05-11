@@ -35,7 +35,9 @@
             "style": "camelCase",
             "type": "attribute"
           }
-        ]
+        ],
+        "@angular-eslint/prefer-inject": "off",
+        "@angular-eslint/prefer-standalone": "off"
       }
     },
     {

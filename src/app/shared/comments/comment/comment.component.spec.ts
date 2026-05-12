@@ -1,11 +1,11 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { MatMenuModule } from '@angular/material/menu';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 
 import { HumanizePipe } from '../../pipes/humanize.pipe';
 import { CommentComponent } from './comment.component';
+import { MatMenuModule } from '@angular/material/menu';
 
 const MOCK_COMMENT = {
   id: 123,
@@ -39,45 +39,33 @@ describe('CommentComponent', () => {
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
-    // Create the fixture and assign shared inputs — do NOT call detectChanges()
-    // here so each test can set showDelete before the first change detection
-    // (avoids NG0100 in Angular v21)
     fixture = TestBed.createComponent(CommentComponent);
     component = fixture.componentInstance;
-    component.comment = MOCK_COMMENT;
+    fixture.componentRef.setInput('comment', MOCK_COMMENT);
+    fixture.detectChanges();
   }));
 
   it('should create', () => {
-    component.showDelete = false;
-    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
   it('should show the More menu when showDelete property is true', () => {
-    // Arrange
-    component.showDelete = true;
-
-    // Act
+    fixture.componentRef.setInput('showDelete', true);
     fixture.detectChanges();
 
-    // Assert
-    const buttonSelector = `#comment${component.comment.id}MoreButton`;
-    const btn = fixture.debugElement.query(By.css(buttonSelector));
-
+    const btn = fixture.debugElement.query(
+      By.css(`#comment${component.comment().id}MoreButton`)
+    );
     expect(btn).not.toBeNull();
   });
 
   it('should not show the More menu when showDelete property is false', () => {
-    // Arrange
-    component.showDelete = false;
-
-    // Act
+    fixture.componentRef.setInput('showDelete', false);
     fixture.detectChanges();
 
-    // Assert
-    const buttonSelector = `#comment${component.comment.id}MoreButton`;
-    const btn = fixture.debugElement.query(By.css(buttonSelector));
-
+    const btn = fixture.debugElement.query(
+      By.css(`#comment${component.comment().id}MoreButton`)
+    );
     expect(btn).toBeNull();
   });
 });

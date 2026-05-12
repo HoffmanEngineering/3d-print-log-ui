@@ -1,42 +1,38 @@
 <mat-card appearance="outlined" class="mat-elevation-z1">
   <mat-card-header>
-    @if (comment.createdBy.profilePicture) {
-      <img mat-card-avatar [src]="comment.createdBy.profilePicture" />
+    @if (comment().createdBy.profilePicture) {
+      <img mat-card-avatar [src]="comment().createdBy.profilePicture" />
     }
-    <!-- <mat-card-title>
-    <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
-  </mat-card-title> -->
     <mat-card-subtitle>
-      <a [routerLink]="['/users', comment.createdBy.id]">{{
-        comment.createdBy.displayName
+      <a [routerLink]="['/users', comment().createdBy.id]">{{
+        comment().createdBy.displayName
       }}</a>
       <span
-        matTooltip="{{ comment.createdDate | date: 'medium' }}"
+        matTooltip="{{ comment().createdDate | date: 'medium' }}"
         style="padding-left: 5px"
-        >{{ comment.createdDate | humanize }}</span
+        >{{ comment().createdDate | humanize }}</span
       >
     </mat-card-subtitle>
-    <div fxFlex></div>
-    @if (showDelete) {
-      <button
-        id="comment{{ comment.id }}MoreButton"
-        mat-button
-        class="transparent more-button"
-        [matMenuTriggerFor]="aboutMenu"
-        data-cy-more-button
-      >
-        <mat-icon>more_horiz</mat-icon>
-      </button>
-    }
-    <mat-menu #aboutMenu="matMenu">
-      @if (showDelete) {
-        <button type="button" mat-menu-item (click)="delete.emit()">
-          <mat-icon>delete</mat-icon>Delete
+    <div fxFlex>
+      @if (showDelete()) {
+        <button
+          id="comment{{ comment().id }}MoreButton"
+          mat-button
+          class="transparent more-button"
+          [matMenuTriggerFor]="aboutMenu"
+          data-cy-more-button
+        >
+          <mat-icon>more_horiz</mat-icon>
         </button>
+        <mat-menu #aboutMenu="matMenu">
+          <button type="button" mat-menu-item (click)="delete.emit()">
+            <mat-icon>delete</mat-icon>Delete
+          </button>
+        </mat-menu>
       }
-    </mat-menu>
+    </div>
   </mat-card-header>
   <mat-card-content>
-    <p style="padding-top: 5px; white-space: pre-wrap">{{ comment.body }}</p>
+    <p style="padding-top: 5px; white-space: pre-wrap">{{ comment().body }}</p>
   </mat-card-content>
 </mat-card>

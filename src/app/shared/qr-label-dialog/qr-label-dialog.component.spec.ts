@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  flushMicrotasks,
+} from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
@@ -87,9 +92,10 @@ describe('QrLabelDialogComponent', () => {
     expect(component.loading()).toBe(true);
   });
 
-  it('should generate QR codes on init', async () => {
-    fixture.detectChanges();
-    await fixture.whenStable();
+  it('should generate QR codes on init', fakeAsync(() => {
+    fixture.detectChanges(); // triggers ngOnInit → generateQrCodes()
+    flushMicrotasks(); // resolves Promise.resolve() from generateSvg mock
+    fixture.detectChanges(); // propagates signal updates (loading, labels) to view
 
     expect(mockQrCodeService.generateFilamentUrl).toHaveBeenCalledWith(
       'test-id-123'
@@ -97,7 +103,7 @@ describe('QrLabelDialogComponent', () => {
     expect(mockQrCodeService.generateSvg).toHaveBeenCalled();
     expect(component.loading()).toBe(false);
     expect(component.labels().length).toBe(1);
-  });
+  }));
 
   it('should close dialog when close is called', () => {
     component.close();
@@ -146,9 +152,10 @@ describe('QrLabelDialogComponent', () => {
     expect(component.itemsPerPage()).toBe(12);
   });
 
-  it('should compute pages array based on labels and items per page', async () => {
+  it('should compute pages array based on labels and items per page', fakeAsync(() => {
     fixture.detectChanges();
-    await fixture.whenStable();
+    flushMicrotasks();
+    fixture.detectChanges();
 
     component.columns.set(2);
     component.rows.set(5);
@@ -156,7 +163,7 @@ describe('QrLabelDialogComponent', () => {
     // With 1 label and 10 items per page, should have 1 page
     expect(component.pages().length).toBe(1);
     expect(component.pages()[0].length).toBe(1);
-  });
+  }));
 
   it('should compute grid style based on columns', () => {
     component.columns.set(3);
@@ -187,20 +194,21 @@ describe('QrLabelDialogComponent', () => {
     expect(component.labelClass()).toBe('label-large');
   });
 
-  it('should apply correct background color for non-empty colorHex', async () => {
+  it('should apply correct background color for non-empty colorHex', fakeAsync(() => {
     fixture.detectChanges();
-    await fixture.whenStable();
+    flushMicrotasks();
     fixture.detectChanges();
 
     const swatch = fixture.nativeElement.querySelector(
       '.color-swatch'
     ) as HTMLElement;
     expect(swatch.style.backgroundColor).toBe('rgb(255, 0, 0)');
-  });
+  }));
 
-  it('should apply default background color when colorHex is empty', async () => {
+  it('should apply default background color when colorHex is empty', fakeAsync(() => {
     fixture.detectChanges();
-    await fixture.whenStable();
+    flushMicrotasks();
+    fixture.detectChanges();
 
     (component.labels as any).set([
       {
@@ -216,7 +224,7 @@ describe('QrLabelDialogComponent', () => {
       '.color-swatch'
     ) as HTMLElement;
     expect(swatch.style.backgroundColor).toBe('rgb(204, 204, 204)');
-  });
+  }));
 
   describe('with multiple filaments across pages', () => {
     const multipleFilaments: FilamentSummary[] = Array.from(
@@ -248,17 +256,19 @@ describe('QrLabelDialogComponent', () => {
       component = fixture.componentInstance;
     });
 
-    it('should generate QR codes for all filaments', async () => {
+    it('should generate QR codes for all filaments', fakeAsync(() => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      flushMicrotasks();
+      fixture.detectChanges();
 
       expect(mockQrCodeService.generateSvg).toHaveBeenCalledTimes(15);
       expect(component.labels().length).toBe(15);
-    });
+    }));
 
-    it('should split labels into multiple pages', async () => {
+    it('should split labels into multiple pages', fakeAsync(() => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      flushMicrotasks();
+      fixture.detectChanges();
 
       // Default: 2 columns x 5 rows = 10 items per page
       // 15 labels = 2 pages (10 + 5)
@@ -268,6 +278,6 @@ describe('QrLabelDialogComponent', () => {
       expect(component.pages().length).toBe(2);
       expect(component.pages()[0].length).toBe(10);
       expect(component.pages()[1].length).toBe(5);
-    });
+    }));
   });
 });

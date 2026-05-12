@@ -88,14 +88,16 @@ describe('ViewPrintDetailComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(ViewPrintDetailComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   it('should create', () => {
+    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
   it('should render thumbnail strip when multiple images exist', () => {
+    // Set printImages before the first detectChanges to avoid NG0100
+    // (imageCount binding on app-image-carousel would change 0 → 2 after check)
     component.printImages = [
       { id: 1, isDefault: true, displayOrder: 0 },
       { id: 2, isDefault: false, displayOrder: 1 },
@@ -109,6 +111,7 @@ describe('ViewPrintDetailComponent', () => {
   });
 
   it('should update selectedImage when onImageSelected is called', () => {
+    fixture.detectChanges();
     const testImage = { id: 2, isDefault: false, displayOrder: 1 };
     component.onImageSelected(testImage);
     expect(component.selectedImage).toEqual(testImage);

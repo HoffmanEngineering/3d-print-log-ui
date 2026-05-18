@@ -1,43 +1,213 @@
 <!--
   Front-on filament spool SVG. All dark elements are rings (no solid fills),
   so the card background shows through the open center.
-    - Outer flange: stroke-only ring (r=34, stroke-width=4 → spans r32–36)
+    - Outer flange: stroke-only ring (r=34, stroke-width=4)
     - Wound filament: donut path (outer r=32, inner r=12, evenodd)
     - Hub ring: thin stroke circle at r=12, open center
 -->
 <svg
-  viewBox="0 0 80 80"
+  [style.filter]="finishType() === FilamentFinishType.Matte ? 'saturate(0.65) brightness(0.85)' : null"
+  viewBox="-6 -6 92 92"
   xmlns="http://www.w3.org/2000/svg"
   aria-hidden="true"
   focusable="false"
+  overflow="visible"
 >
-  <!-- Outer flange rim — stroke-only so center stays transparent -->
-  <circle
-    cx="40"
-    cy="40"
-    r="34"
-    fill="none"
-    stroke="#2d2d2d"
-    stroke-width="4"
-  />
+  <defs>
+    <!-- Gradient for Gradient / Rainbow patterns -->
+    @if (useGradient()) {
+      <linearGradient [id]="gradientId()" x1="0%" y1="0%" x2="100%" y2="0%">
+        @for (stop of gradientStops(); track $index) {
+          <stop [attr.offset]="stop.offset" [attr.stop-color]="stop.color" />
+        }
+      </linearGradient>
+    }
 
-  <!-- Wound filament donut — dynamic fill, evenodd punches out the center -->
-  <!-- Outer circle r=32, inner circle r=12 -->
-  <path
-    class="spool-barrel"
-    [attr.fill]="fillColor()"
-    fill-rule="evenodd"
-    d="M 8 40 A 32 32 0 1 1 72 40 A 32 32 0 1 1 8 40 Z
-       M 28 40 A 12 12 0 1 1 52 40 A 12 12 0 1 1 28 40 Z"
-  />
+    <!-- ClipPaths for Multi pattern -->
+    @for (seg of clipSegments(); track seg.id) {
+      <clipPath [id]="seg.id">
+        <rect [attr.x]="seg.x" y="0" [attr.width]="seg.width" height="80" />
+      </clipPath>
+    }
 
-  <!-- Thin hub ring — open center shows card background -->
-  <circle
-    cx="40"
-    cy="40"
-    r="12"
-    fill="none"
-    stroke="#2d2d2d"
-    stroke-width="2"
-  />
+    <!-- Silk sheen gradient -->
+    @if (finishType() === FilamentFinishType.Silk) {
+      <linearGradient [id]="uid + '-silk'" x1="15%" y1="10%" x2="55%" y2="60%">
+        <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.5" />
+        <stop offset="60%"  stop-color="#ffffff" stop-opacity="0.05" />
+        <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+      </linearGradient>
+    }
+
+    <!-- GITD glow filter -->
+    @if (hasEffect(FilamentEffect.GlowInDark)) {
+      <filter [id]="uid + '-glow'" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="5" result="blur" />
+        <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+    }
+
+    <!-- Fluorescent UV filter -->
+    @if (hasEffect(FilamentEffect.Fluorescent)) {
+      <filter [id]="uid + '-uv'" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="4" result="blur" />
+        <feColorMatrix in="blur" type="matrix"
+          values="0.3 0 0.8 0 0  0 0 0.5 0 0  1.2 0 0.8 0 0  0 0 0 1 0"
+          result="uv-color" />
+        <feMerge><feMergeNode in="uv-color" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+    }
+
+    <!-- Sparkle glow filter -->
+    @if (hasEffect(FilamentEffect.Sparkle)) {
+      <filter [id]="uid + '-sp'" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="1.5" result="b" />
+        <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+    }
+
+    <!-- Carbon fiber weave pattern -->
+    @if (hasEffect(FilamentEffect.CarbonFiber)) {
+      <pattern [id]="uid + '-cf'" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+        <rect width="6" height="6" fill="#1a1a1a" />
+        <rect x="0" y="0" width="3" height="3" fill="#2e2e2e" />
+        <rect x="3" y="3" width="3" height="3" fill="#2e2e2e" />
+      </pattern>
+    }
+
+    <!-- Glass fiber crosshatch pattern -->
+    @if (hasEffect(FilamentEffect.GlassFiber)) {
+      <pattern [id]="uid + '-gf'" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">
+        <rect width="5" height="5" fill="#c8d8e8" />
+        <line x1="0" y1="0" x2="5" y2="5" stroke="#e8f0f8" stroke-width="1" opacity="0.7" />
+        <line x1="5" y1="0" x2="0" y2="5" stroke="#a8b8c8" stroke-width="0.5" opacity="0.4" />
+      </pattern>
+    }
+
+    <!-- Wood grain gradient -->
+    @if (hasEffect(FilamentEffect.WoodFill)) {
+      <linearGradient [id]="uid + '-wood'" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#8b4513" stop-opacity="0.5" />
+        <stop offset="40%"  stop-color="#cd853f" stop-opacity="0.3" />
+        <stop offset="70%"  stop-color="#8b4513" stop-opacity="0.5" />
+        <stop offset="100%" stop-color="#6b3310" stop-opacity="0.4" />
+      </linearGradient>
+    }
+
+    <!-- Metal fill gradient -->
+    @if (hasEffect(FilamentEffect.MetalFill)) {
+      <linearGradient [id]="uid + '-metal'" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#e8a044" stop-opacity="0.55" />
+        <stop offset="40%"  stop-color="#7b4000" stop-opacity="0.4" />
+        <stop offset="75%"  stop-color="#cd7f32" stop-opacity="0.55" />
+        <stop offset="100%" stop-color="#e8a044" stop-opacity="0.3" />
+      </linearGradient>
+    }
+  </defs>
+
+  <!-- Outer flange rim -->
+  <circle cx="40" cy="40" r="34" fill="none" stroke="#2d2d2d" stroke-width="4" />
+
+  <!-- === Wound filament — color pattern === -->
+
+  <!-- Solid -->
+  @if (colorPattern() === ColorPatternType.Solid) {
+    <path
+      class="spool-barrel"
+      [attr.fill]="fillColor()"
+      [attr.fill-opacity]="fillOpacity()"
+      [attr.filter]="hasEffect(FilamentEffect.GlowInDark) ? 'url(#' + uid + '-glow)' : (hasEffect(FilamentEffect.Fluorescent) ? 'url(#' + uid + '-uv)' : null)"
+      fill-rule="evenodd"
+      [attr.d]="DONUT"
+    />
+  }
+
+  <!-- Multi: one clipped path per color -->
+  @for (seg of clipSegments(); track seg.id) {
+    <path
+      fill-rule="evenodd"
+      [attr.fill]="seg.color"
+      [attr.fill-opacity]="fillOpacity()"
+      [attr.clip-path]="'url(#' + seg.id + ')'"
+      [attr.d]="DONUT"
+    />
+  }
+
+  <!-- Gradient / Rainbow -->
+  @if (useGradient()) {
+    <path
+      class="spool-barrel"
+      [attr.fill]="'url(#' + gradientId() + ')'"
+      [attr.fill-opacity]="fillOpacity()"
+      [attr.filter]="hasEffect(FilamentEffect.GlowInDark) ? 'url(#' + uid + '-glow)' : (hasEffect(FilamentEffect.Fluorescent) ? 'url(#' + uid + '-uv)' : null)"
+      fill-rule="evenodd"
+      [attr.d]="DONUT"
+    />
+  }
+
+  <!-- === Effect overlays (on top of fill, below hub ring) === -->
+
+  <!-- Silk specular sheen -->
+  @if (finishType() === FilamentFinishType.Silk) {
+    <path
+      fill-rule="evenodd"
+      [attr.fill]="'url(#' + uid + '-silk)'"
+      [attr.d]="DONUT"
+    />
+  }
+
+  <!-- Carbon fiber overlay -->
+  @if (hasEffect(FilamentEffect.CarbonFiber)) {
+    <path
+      fill-rule="evenodd"
+      [attr.fill]="'url(#' + uid + '-cf)'"
+      fill-opacity="0.85"
+      [attr.d]="DONUT"
+    />
+  }
+
+  <!-- Glass fiber overlay -->
+  @if (hasEffect(FilamentEffect.GlassFiber)) {
+    <path
+      fill-rule="evenodd"
+      [attr.fill]="'url(#' + uid + '-gf)'"
+      fill-opacity="0.65"
+      [attr.d]="DONUT"
+    />
+  }
+
+  <!-- Wood fill overlay (semi-transparent grain on top of base color) -->
+  @if (hasEffect(FilamentEffect.WoodFill)) {
+    <path
+      fill-rule="evenodd"
+      [attr.fill]="'url(#' + uid + '-wood)'"
+      [attr.d]="DONUT"
+    />
+    <!-- Grain lines -->
+    <path d="M 14 32 Q 22 30 28 36 Q 34 42 44 38 Q 54 34 66 37"
+          fill="none" stroke="#5a3010" stroke-width="1" opacity="0.35" />
+    <path d="M 10 46 Q 20 44 30 50 Q 40 56 52 50 Q 62 44 70 48"
+          fill="none" stroke="#5a3010" stroke-width="1" opacity="0.25" />
+  }
+
+  <!-- Metal fill overlay -->
+  @if (hasEffect(FilamentEffect.MetalFill)) {
+    <path
+      fill-rule="evenodd"
+      [attr.fill]="'url(#' + uid + '-metal)'"
+      [attr.d]="DONUT"
+    />
+  }
+
+  <!-- Hub ring -->
+  <circle cx="40" cy="40" r="12" fill="none" stroke="#2d2d2d" stroke-width="2" />
+
+  <!-- Sparkle dots (above hub ring so they're always visible) -->
+  @if (hasEffect(FilamentEffect.Sparkle)) {
+    <circle class="sparkle-dot" cx="22" cy="26" r="2.2" fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <circle class="sparkle-dot sparkle-dot--2" cx="58" cy="20" r="1.8" fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <circle class="sparkle-dot sparkle-dot--3" cx="62" cy="52" r="2"   fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <circle class="sparkle-dot sparkle-dot--4" cx="30" cy="58" r="1.6" fill="#fff5a0" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <circle class="sparkle-dot sparkle-dot--5" cx="48" cy="16" r="1.5" fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+  }
 </svg>

@@ -27,9 +27,12 @@ import {
 } from 'src/app/core/services/user-setting.service';
 import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import {
+  ColorPatternType,
   FilamentAdjustment,
   FilamentAdjustmentSourceMeasurement,
   FilamentDetail,
+  FilamentEffect,
+  FilamentFinishType,
   FilamentService,
   FilamentSourceMeasurement,
   FilamentSummary,
@@ -607,6 +610,12 @@ export class FilamentDetailComponent
       filamentAdjustments: adjustments,
       isActive: this.filamentForm.controls.isActive.value,
       isFavorite: this.filamentForm.controls.isFavorite.value,
+      colorPattern: ColorPatternType.Solid,
+      colors: [
+        this.getColorHex(this.filamentForm.controls.colorHex.value) ?? '000000',
+      ],
+      finishType: FilamentFinishType.Standard,
+      effects: [] as FilamentEffect[],
     };
 
     return filament;
@@ -725,6 +734,12 @@ export class FilamentDetailComponent
       loadedInPrinter: null,
       storageLocation: this.filamentForm.get('storageLocation')?.value ?? '',
       materialCategory: null,
+      colorPattern: ColorPatternType.Solid,
+      colors: [
+        this.getColorHex(this.filamentForm.get('colorHex')?.value) ?? '000000',
+      ],
+      finishType: FilamentFinishType.Standard,
+      effects: [] as FilamentEffect[],
     };
 
     this.dialog.open(QrLabelDialogComponent, {

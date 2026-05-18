@@ -6,7 +6,7 @@
     - Hub ring: thin stroke circle at r=12, open center
 -->
 <svg
-  [style.filter]="finishType() === FilamentFinishType.Matte ? 'saturate(0.65) brightness(0.85)' : null"
+  [style.filter]="finishType() === FilamentFinishType.Matte ? 'saturate(0.82) brightness(0.94)' : null"
   viewBox="-6 -6 92 92"
   xmlns="http://www.w3.org/2000/svg"
   aria-hidden="true"
@@ -115,6 +115,12 @@
   <!-- Outer flange rim -->
   <circle cx="40" cy="40" r="34" fill="none" stroke="#2d2d2d" stroke-width="4" />
 
+  <!-- Hub ring — drawn before the glow group so the bloom paints over it, same as the outer rim -->
+  <circle cx="40" cy="40" r="12" fill="none" stroke="#2d2d2d" stroke-width="2" />
+
+  <!-- Glow / UV filter wraps fill + overlays so all edges bloom consistently -->
+  <g [attr.filter]="hasEffect(FilamentEffect.GlowInDark) ? 'url(#' + uid + '-glow)' : (hasEffect(FilamentEffect.Fluorescent) ? 'url(#' + uid + '-uv)' : null)">
+
   <!-- === Wound filament — color pattern === -->
 
   <!-- Solid -->
@@ -123,7 +129,6 @@
       class="spool-barrel"
       [attr.fill]="fillColor()"
       [attr.fill-opacity]="fillOpacity()"
-      [attr.filter]="hasEffect(FilamentEffect.GlowInDark) ? 'url(#' + uid + '-glow)' : (hasEffect(FilamentEffect.Fluorescent) ? 'url(#' + uid + '-uv)' : null)"
       fill-rule="evenodd"
       [attr.d]="DONUT"
     />
@@ -146,7 +151,6 @@
       class="spool-barrel"
       [attr.fill]="'url(#' + gradientId() + ')'"
       [attr.fill-opacity]="fillOpacity()"
-      [attr.filter]="hasEffect(FilamentEffect.GlowInDark) ? 'url(#' + uid + '-glow)' : (hasEffect(FilamentEffect.Fluorescent) ? 'url(#' + uid + '-uv)' : null)"
       fill-rule="evenodd"
       [attr.d]="DONUT"
     />
@@ -208,15 +212,25 @@
     />
   }
 
-  <!-- Hub ring -->
-  <circle cx="40" cy="40" r="12" fill="none" stroke="#2d2d2d" stroke-width="2" />
+  </g>
 
-  <!-- Sparkle dots (above hub ring so they're always visible) -->
+  <!-- Sparkle stars (above hub ring so they're always visible) -->
   @if (hasEffect(FilamentEffect.Sparkle)) {
-    <circle class="sparkle-dot" cx="22" cy="26" r="2.2" fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
-    <circle class="sparkle-dot sparkle-dot--2" cx="58" cy="20" r="1.8" fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
-    <circle class="sparkle-dot sparkle-dot--3" cx="62" cy="52" r="2"   fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
-    <circle class="sparkle-dot sparkle-dot--4" cx="30" cy="58" r="1.6" fill="#fff5a0" [attr.filter]="'url(#' + uid + '-sp)'" />
-    <circle class="sparkle-dot sparkle-dot--5" cx="48" cy="16" r="1.5" fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <!-- 4-point stars with 8 vertices: outer points on axes, inner points at 45° (inner r ≈ outer r * 0.4) -->
+    <path class="sparkle-dot"
+      d="M22,23.2 L22.78,25.22 L24.8,26 L22.78,26.78 L22,28.8 L21.22,26.78 L19.2,26 L21.22,25.22 Z"
+      fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <path class="sparkle-dot sparkle-dot--2"
+      d="M58,17.7 L58.64,19.36 L60.3,20 L58.64,20.64 L58,22.3 L57.36,20.64 L55.7,20 L57.36,19.36 Z"
+      fill="#fff5a0" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <path class="sparkle-dot sparkle-dot--3"
+      d="M62,49.5 L62.71,51.29 L64.5,52 L62.71,52.71 L62,54.5 L61.29,52.71 L59.5,52 L61.29,51.29 Z"
+      fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <path class="sparkle-dot sparkle-dot--4"
+      d="M30,56 L30.57,57.43 L32,58 L30.57,58.57 L30,60 L29.43,58.57 L28,58 L29.43,57.43 Z"
+      fill="#fff5a0" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <path class="sparkle-dot sparkle-dot--5"
+      d="M48,14.1 L48.53,15.47 L49.9,16 L48.53,16.53 L48,17.9 L47.47,16.53 L46.1,16 L47.47,15.47 Z"
+      fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
   }
 </svg>

@@ -1,11 +1,12 @@
 <svg
-  [style.filter]="finishType() === FilamentFinishType.Matte ? 'saturate(0.65) brightness(0.85)' : null"
+  [style.filter]="finishType() === FilamentFinishType.Matte ? 'saturate(0.82) brightness(0.94)' : null"
   viewBox="0 0 80 80"
   width="100%"
   height="100%"
   xmlns="http://www.w3.org/2000/svg"
   aria-hidden="true"
   focusable="false"
+  overflow="visible"
 >
   <defs>
     <!-- Vertical gradient (top-to-bottom) for Gradient / Rainbow -->
@@ -102,14 +103,18 @@
   <!-- Cap -->
   <rect x="18" y="2" width="44" height="14" rx="2" fill="#2d2d2d" />
 
-  <!-- Bottle body — Solid -->
+  <!-- Bottle outline — drawn before glow group so bloom paints over it (dark stroke would cancel glow if inside group) -->
+  <path fill="none" stroke="#2d2d2d" stroke-width="2.5" stroke-linejoin="round" [attr.d]="BOTTLE_BODY" />
+
+  <!-- Glow / UV filter wraps fill + overlays so all edges bloom consistently -->
+  <g [attr.filter]="hasEffect(FilamentEffect.GlowInDark) ? 'url(#' + uid + '-glow)' : (hasEffect(FilamentEffect.Fluorescent) ? 'url(#' + uid + '-uv)' : null)">
+
+  <!-- Bottle body — Solid (fill only; stroke handled by outline above) -->
   @if (colorPattern() === ColorPatternType.Solid) {
     <path
       class="bottle-body"
       [attr.fill]="fillColor()"
       [attr.fill-opacity]="fillOpacity()"
-      [attr.filter]="hasEffect(FilamentEffect.GlowInDark) ? 'url(#' + uid + '-glow)' : (hasEffect(FilamentEffect.Fluorescent) ? 'url(#' + uid + '-uv)' : null)"
-      stroke="#2d2d2d" stroke-width="2.5" stroke-linejoin="round"
       [attr.d]="BOTTLE_BODY"
     />
   }
@@ -120,48 +125,52 @@
       [attr.fill]="seg.color"
       [attr.fill-opacity]="fillOpacity()"
       [attr.clip-path]="'url(#' + seg.id + ')'"
-      stroke="none"
       [attr.d]="BOTTLE_BODY"
     />
   }
-  @if (colorPattern() === ColorPatternType.Multi) {
-    <path fill="none" stroke="#2d2d2d" stroke-width="2.5" stroke-linejoin="round" [attr.d]="BOTTLE_BODY" />
-  }
 
-  <!-- Bottle body — Gradient / Rainbow -->
+  <!-- Bottle body — Gradient / Rainbow (fill only; stroke handled by outline above) -->
   @if (useGradient()) {
     <path
       class="bottle-body"
       [attr.fill]="'url(#' + gradientId() + ')'"
       [attr.fill-opacity]="fillOpacity()"
-      [attr.filter]="hasEffect(FilamentEffect.GlowInDark) ? 'url(#' + uid + '-glow)' : (hasEffect(FilamentEffect.Fluorescent) ? 'url(#' + uid + '-uv)' : null)"
-      stroke="#2d2d2d" stroke-width="2.5" stroke-linejoin="round"
       [attr.d]="BOTTLE_BODY"
     />
   }
 
   <!-- Effect overlays -->
   @if (finishType() === FilamentFinishType.Silk) {
-    <path [attr.fill]="'url(#' + uid + '-silk)'" stroke="none" [attr.d]="BOTTLE_BODY" />
+    <path [attr.fill]="'url(#' + uid + '-silk)'" [attr.d]="BOTTLE_BODY" />
   }
   @if (hasEffect(FilamentEffect.CarbonFiber)) {
-    <path [attr.fill]="'url(#' + uid + '-cf)'" fill-opacity="0.85" stroke="none" [attr.d]="BOTTLE_BODY" />
+    <path [attr.fill]="'url(#' + uid + '-cf)'" fill-opacity="0.85" [attr.d]="BOTTLE_BODY" />
   }
   @if (hasEffect(FilamentEffect.GlassFiber)) {
-    <path [attr.fill]="'url(#' + uid + '-gf)'" fill-opacity="0.65" stroke="none" [attr.d]="BOTTLE_BODY" />
+    <path [attr.fill]="'url(#' + uid + '-gf)'" fill-opacity="0.65" [attr.d]="BOTTLE_BODY" />
   }
   @if (hasEffect(FilamentEffect.WoodFill)) {
-    <path [attr.fill]="'url(#' + uid + '-wood)'" stroke="none" [attr.d]="BOTTLE_BODY" />
+    <path [attr.fill]="'url(#' + uid + '-wood)'" [attr.d]="BOTTLE_BODY" />
   }
   @if (hasEffect(FilamentEffect.MetalFill)) {
-    <path [attr.fill]="'url(#' + uid + '-metal)'" stroke="none" [attr.d]="BOTTLE_BODY" />
+    <path [attr.fill]="'url(#' + uid + '-metal)'" [attr.d]="BOTTLE_BODY" />
   }
 
-  <!-- Sparkle dots -->
+  </g>
+
+  <!-- Sparkle stars (4-point, 8 vertices: outer points on axes, inner at 45°) -->
   @if (hasEffect(FilamentEffect.Sparkle)) {
-    <circle class="sparkle-dot"      cx="30" cy="35" r="2"   fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
-    <circle class="sparkle-dot sparkle-dot--2" cx="55" cy="50" r="1.8" fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
-    <circle class="sparkle-dot sparkle-dot--3" cx="28" cy="60" r="1.6" fill="#fff5a0" [attr.filter]="'url(#' + uid + '-sp)'" />
-    <circle class="sparkle-dot sparkle-dot--4" cx="52" cy="28" r="1.5" fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <path class="sparkle-dot"
+      d="M30,32.5 L30.71,34.29 L32.5,35 L30.71,35.71 L30,37.5 L29.29,35.71 L27.5,35 L29.29,34.29 Z"
+      fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <path class="sparkle-dot sparkle-dot--2"
+      d="M55,47.7 L55.64,49.36 L57.3,50 L55.64,50.64 L55,52.3 L54.36,50.64 L52.7,50 L54.36,49.36 Z"
+      fill="#fff5a0" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <path class="sparkle-dot sparkle-dot--3"
+      d="M28,58 L28.57,59.43 L30,60 L28.57,60.57 L28,62 L27.43,60.57 L26,60 L27.43,59.43 Z"
+      fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
+    <path class="sparkle-dot sparkle-dot--4"
+      d="M52,26.1 L52.53,27.47 L53.9,28 L52.53,28.53 L52,29.9 L51.47,28.53 L50.1,28 L51.47,27.47 Z"
+      fill="#ffe97a" [attr.filter]="'url(#' + uid + '-sp)'" />
   }
 </svg>

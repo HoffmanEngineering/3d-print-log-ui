@@ -133,9 +133,7 @@
               >
                 <span
                   class="filament-color-dot"
-                  [style.background-color]="
-                    filament.colorHex ? '#' + filament.colorHex : '#cccccc'
-                  "
+                  [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern"
                 ></span>
                 <span class="filament-chip-label">{{
                   getFilamentLabel(filament)

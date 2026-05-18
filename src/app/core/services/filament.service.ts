@@ -15,6 +15,30 @@ export enum FilamentSourceMeasurement {
   Volume = 3,
 }
 
+export enum ColorPatternType {
+  Solid = 1,
+  Multi = 2,
+  Gradient = 3,
+  Rainbow = 4,
+}
+
+export enum FilamentFinishType {
+  Standard = 1,
+  Silk = 2,
+  Matte = 3,
+}
+
+export enum FilamentEffect {
+  Sparkle = 1,
+  GlowInDark = 2,
+  Translucent = 3,
+  CarbonFiber = 4,
+  WoodFill = 5,
+  MetalFill = 6,
+  Fluorescent = 7,
+  GlassFiber = 8,
+}
+
 export interface FilamentDetail {
   id: string;
   displayName: string;
@@ -24,6 +48,10 @@ export interface FilamentDetail {
   materialDensityGramPerCubicCm: number;
   colorName: string;
   colorHex: string;
+  colorPattern: ColorPatternType;
+  colors: string[]; // hex without #; colors[0] always equals colorHex
+  finishType: FilamentFinishType;
+  effects: FilamentEffect[];
   diameterMm: number | null;
   initialTotalWeightMg: number | null;
   source: FilamentSourceMeasurement;
@@ -62,6 +90,10 @@ export interface FilamentSummary {
   materialDensityGramPerCubicCm: number;
   colorName: string;
   colorHex: string;
+  colorPattern: ColorPatternType;
+  colors: string[];
+  finishType: FilamentFinishType;
+  effects: FilamentEffect[];
   recommendedTemp: number | null;
   isActive: boolean;
   notes: string;
@@ -150,7 +182,10 @@ export class FilamentService {
     showFavoritesOnly?: boolean,
     showLoadedFilamentOnly?: boolean,
     filterByMaterialCategoryNickname?: string,
-    filterByStorageLocation?: string
+    filterByStorageLocation?: string,
+    colorPatterns?: ColorPatternType[],
+    finishTypes?: FilamentFinishType[],
+    effects?: FilamentEffect[]
   ): Observable<PagedList<FilamentSummary>> {
     const url = `${this.baseApi}/api/Filaments`;
 
@@ -197,6 +232,22 @@ export class FilamentService {
         'showLoadedFilamentOnly',
         showLoadedFilamentOnly.toString()
       );
+    }
+
+    if (colorPatterns?.length) {
+      colorPatterns.forEach((p) => {
+        params = params.append('colorPatterns', p.toString());
+      });
+    }
+    if (finishTypes?.length) {
+      finishTypes.forEach((t) => {
+        params = params.append('finishTypes', t.toString());
+      });
+    }
+    if (effects?.length) {
+      effects.forEach((e) => {
+        params = params.append('effects', e.toString());
+      });
     }
 
     return this.http.get<PagedList<FilamentSummary>>(url, { params });

@@ -91,7 +91,7 @@ export interface FilamentSummary {
   colorName: string;
   colorHex: string;
   colorPattern: ColorPatternType;
-  colors: string[];
+  colors: string[]; // hex without #; colors[0] always equals colorHex
   finishType: FilamentFinishType;
   effects: FilamentEffect[];
   recommendedTemp: number | null;

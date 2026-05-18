@@ -79,6 +79,68 @@
             }
           </mat-select>
         </mat-form-field>
+
+        <!-- Color Pattern filter -->
+        <div>
+          <mat-label>Color Pattern</mat-label>
+          <mat-chip-listbox multiple>
+            <mat-chip-option
+              (click)="toggleColorPattern(ColorPatternType.Multi)"
+              [selected]="filterByColorPatterns.includes(ColorPatternType.Multi)">
+              Multi-Color
+            </mat-chip-option>
+            <mat-chip-option
+              (click)="toggleColorPattern(ColorPatternType.Gradient)"
+              [selected]="filterByColorPatterns.includes(ColorPatternType.Gradient)">
+              Gradient
+            </mat-chip-option>
+            <mat-chip-option
+              (click)="toggleColorPattern(ColorPatternType.Rainbow)"
+              [selected]="filterByColorPatterns.includes(ColorPatternType.Rainbow)">
+              Rainbow
+            </mat-chip-option>
+          </mat-chip-listbox>
+        </div>
+
+        <!-- Finish Type filter -->
+        <div>
+          <mat-label>Finish</mat-label>
+          <mat-chip-listbox multiple>
+            <mat-chip-option
+              (click)="toggleFinishType(FilamentFinishType.Silk)"
+              [selected]="filterByFinishTypes.includes(FilamentFinishType.Silk)">
+              Silk / Glossy
+            </mat-chip-option>
+            <mat-chip-option
+              (click)="toggleFinishType(FilamentFinishType.Matte)"
+              [selected]="filterByFinishTypes.includes(FilamentFinishType.Matte)">
+              Matte / Satin
+            </mat-chip-option>
+          </mat-chip-listbox>
+        </div>
+
+        <!-- Effects filter -->
+        <div>
+          <mat-label>Effects</mat-label>
+          <mat-chip-listbox multiple>
+            @for (effect of [
+              { value: FilamentEffect.Sparkle,     label: 'Sparkle' },
+              { value: FilamentEffect.GlowInDark,  label: 'Glow-in-Dark' },
+              { value: FilamentEffect.Translucent, label: 'Translucent' },
+              { value: FilamentEffect.CarbonFiber, label: 'Carbon Fiber' },
+              { value: FilamentEffect.WoodFill,    label: 'Wood Fill' },
+              { value: FilamentEffect.MetalFill,   label: 'Metal Fill' },
+              { value: FilamentEffect.Fluorescent, label: 'Fluorescent' },
+              { value: FilamentEffect.GlassFiber,  label: 'Glass Fiber' }
+            ]; track effect.value) {
+              <mat-chip-option
+                (click)="toggleEffect(effect.value)"
+                [selected]="filterByEffects.includes(effect.value)">
+                {{ effect.label }}
+              </mat-chip-option>
+            }
+          </mat-chip-listbox>
+        </div>
       </div>
     </div>
   </div>
@@ -149,7 +211,7 @@
         <td mat-cell *matCellDef="let filament">
           <div
             class="filament-color-cell"
-            [style.background-color]="'#' + filament.colorHex"
+            [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern"
           ></div>
         </td>
       </ng-container>
@@ -317,7 +379,7 @@
         >
           <div
             class="card-swatch"
-            [style.background-color]="'#' + filament.colorHex"
+            [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern"
           ></div>
           <div class="card-content">
             <div class="card-row-primary">

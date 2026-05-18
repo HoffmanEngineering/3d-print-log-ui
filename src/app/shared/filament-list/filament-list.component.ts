@@ -4,6 +4,9 @@ import { Sort } from '@angular/material/sort';
 import { debounce } from 'lodash-es';
 
 import {
+  ColorPatternType,
+  FilamentEffect,
+  FilamentFinishType,
   FilamentService,
   FilamentSortColumns,
   FilamentSummary,
@@ -59,6 +62,14 @@ export class FilamentListComponent implements OnInit {
   public showFavoritesOnly = false;
   public showLoadedFilamentOnly = false;
 
+  public filterByColorPatterns: ColorPatternType[] = [];
+  public filterByFinishTypes: FilamentFinishType[] = [];
+  public filterByEffects: FilamentEffect[] = [];
+
+  public readonly ColorPatternType = ColorPatternType;
+  public readonly FilamentFinishType = FilamentFinishType;
+  public readonly FilamentEffect = FilamentEffect;
+
   public isFilterPanelOpen =
     typeof window !== 'undefined' && window.innerWidth >= 600;
 
@@ -72,6 +83,9 @@ export class FilamentListComponent implements OnInit {
     if (this.showFavoritesOnly) count++;
     if (this.showLoadedFilamentOnly) count++;
     if (this._filterByMaterialCategory) count++;
+    if (this.filterByColorPatterns.length) count++;
+    if (this.filterByFinishTypes.length) count++;
+    if (this.filterByEffects.length) count++;
     return count;
   }
 
@@ -154,7 +168,13 @@ export class FilamentListComponent implements OnInit {
         this.includeInactive,
         this.showFavoritesOnly,
         this.showLoadedFilamentOnly,
-        this.filterByMaterialCategory
+        this.filterByMaterialCategory,
+        undefined,
+        this.filterByColorPatterns.length
+          ? this.filterByColorPatterns
+          : undefined,
+        this.filterByFinishTypes.length ? this.filterByFinishTypes : undefined,
+        this.filterByEffects.length ? this.filterByEffects : undefined
       )
       .subscribe((response) => {
         this.handlePagedList(response);
@@ -205,6 +225,27 @@ export class FilamentListComponent implements OnInit {
       this.selectedFilaments.set(filament.id, filament);
     }
     this.selectionChanged.emit(Array.from(this.selectedFilaments.values()));
+  }
+
+  public toggleColorPattern(pattern: ColorPatternType): void {
+    const idx = this.filterByColorPatterns.indexOf(pattern);
+    if (idx >= 0) this.filterByColorPatterns.splice(idx, 1);
+    else this.filterByColorPatterns.push(pattern);
+    this.debouncedUpdateFilter();
+  }
+
+  public toggleFinishType(finish: FilamentFinishType): void {
+    const idx = this.filterByFinishTypes.indexOf(finish);
+    if (idx >= 0) this.filterByFinishTypes.splice(idx, 1);
+    else this.filterByFinishTypes.push(finish);
+    this.debouncedUpdateFilter();
+  }
+
+  public toggleEffect(effect: FilamentEffect): void {
+    const idx = this.filterByEffects.indexOf(effect);
+    if (idx >= 0) this.filterByEffects.splice(idx, 1);
+    else this.filterByEffects.push(effect);
+    this.debouncedUpdateFilter();
   }
 
   public toggleFavorite(filament: FilamentSummary) {

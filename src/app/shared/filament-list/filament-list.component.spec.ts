@@ -1,7 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { FilamentListComponent } from './filament-list.component';
-import { FilamentService } from 'src/app/core/services/filament.service';
+import {
+  ColorPatternType,
+  FilamentEffect,
+  FilamentFinishType,
+  FilamentService,
+} from 'src/app/core/services/filament.service';
 import { MaterialCategoryService } from 'src/app/core/services/material-categories.service';
 
 describe('FilamentListComponent', () => {
@@ -156,6 +161,88 @@ describe('FilamentListComponent', () => {
       c.showLoadedFilamentOnly = true;
       c['_filterByMaterialCategory'] = 'PETG';
       expect(c.activeFilterCount).toBe(4);
+    });
+
+    it('should count filterByColorPatterns when non-empty', () => {
+      const c = new FilamentListComponent(
+        mockFilamentService,
+        mockMaterialCategoryService
+      );
+      c.filterByColorPatterns = [ColorPatternType.Multi];
+      expect(c.activeFilterCount).toBe(1);
+    });
+
+    it('should count filterByFinishTypes when non-empty', () => {
+      const c = new FilamentListComponent(
+        mockFilamentService,
+        mockMaterialCategoryService
+      );
+      c.filterByFinishTypes = [FilamentFinishType.Silk];
+      expect(c.activeFilterCount).toBe(1);
+    });
+
+    it('should count filterByEffects when non-empty', () => {
+      const c = new FilamentListComponent(
+        mockFilamentService,
+        mockMaterialCategoryService
+      );
+      c.filterByEffects = [FilamentEffect.Sparkle];
+      expect(c.activeFilterCount).toBe(1);
+    });
+  });
+
+  describe('new color/finish/effect filters passed to service', () => {
+    it('should pass colorPatterns to getCurrentUserFilamentSummaries when set', () => {
+      const c = new FilamentListComponent(
+        mockFilamentService,
+        mockMaterialCategoryService
+      );
+      c.filterByColorPatterns = [ColorPatternType.Gradient];
+      c.updateFilter();
+      const callArgs =
+        mockFilamentService.getCurrentUserFilamentSummaries.calls.mostRecent()
+          .args;
+      // colorPatterns is the 11th argument (index 10)
+      expect(callArgs[10]).toEqual([ColorPatternType.Gradient]);
+    });
+
+    it('should pass undefined for colorPatterns when array is empty', () => {
+      const c = new FilamentListComponent(
+        mockFilamentService,
+        mockMaterialCategoryService
+      );
+      c.filterByColorPatterns = [];
+      c.updateFilter();
+      const callArgs =
+        mockFilamentService.getCurrentUserFilamentSummaries.calls.mostRecent()
+          .args;
+      expect(callArgs[10]).toBeUndefined();
+    });
+
+    it('should pass finishTypes to getCurrentUserFilamentSummaries when set', () => {
+      const c = new FilamentListComponent(
+        mockFilamentService,
+        mockMaterialCategoryService
+      );
+      c.filterByFinishTypes = [FilamentFinishType.Matte];
+      c.updateFilter();
+      const callArgs =
+        mockFilamentService.getCurrentUserFilamentSummaries.calls.mostRecent()
+          .args;
+      expect(callArgs[11]).toEqual([FilamentFinishType.Matte]);
+    });
+
+    it('should pass effects to getCurrentUserFilamentSummaries when set', () => {
+      const c = new FilamentListComponent(
+        mockFilamentService,
+        mockMaterialCategoryService
+      );
+      c.filterByEffects = [FilamentEffect.GlowInDark];
+      c.updateFilter();
+      const callArgs =
+        mockFilamentService.getCurrentUserFilamentSummaries.calls.mostRecent()
+          .args;
+      expect(callArgs[12]).toEqual([FilamentEffect.GlowInDark]);
     });
   });
 });

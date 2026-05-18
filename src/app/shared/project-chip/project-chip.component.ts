@@ -8,14 +8,13 @@ import {
 import { Router } from '@angular/router';
 import { MatChipsModule } from '@angular/material/chips';
 import { ProjectStatus } from 'src/app/core/services/project.service';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-project-chip',
   templateUrl: './project-chip.component.html',
   styleUrls: ['./project-chip.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatChipsModule, CommonModule],
+  imports: [MatChipsModule],
 })
 export class ProjectChipComponent {
   private readonly router = inject(Router);

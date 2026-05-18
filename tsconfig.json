@@ -15,6 +15,9 @@
     "typeRoots": [
       "node_modules/@types"
     ],
+    "paths": {
+      "parse-duration": ["src/typings/parse-duration"]
+    },
     "lib": [
       "esnext",
       "dom"

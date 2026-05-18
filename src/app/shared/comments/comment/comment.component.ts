@@ -1,4 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+} from '@angular/core';
 import { Comment } from 'src/app/core/services/comment.service';
 
 @Component({
@@ -6,13 +11,10 @@ import { Comment } from 'src/app/core/services/comment.service';
   templateUrl: './comment.component.html',
   styleUrls: ['./comment.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommentComponent {
-  @Input() comment: Comment;
-
-  @Input() public showDelete = false;
-
-  @Output() public delete: EventEmitter<void> = new EventEmitter();
-
-  constructor() {}
+  comment = input.required<Comment>();
+  showDelete = input<boolean>(false);
+  delete = output<void>();
 }

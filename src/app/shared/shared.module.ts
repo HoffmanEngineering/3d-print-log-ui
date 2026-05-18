@@ -66,6 +66,7 @@ import { FilamentSpoolIconComponent } from './filament-spool-icon/filament-spool
 import { MaterialIconComponent } from './material-icon/material-icon.component';
 import { FilamentUsageSummaryComponent } from './filament-usage-summary/filament-usage-summary.component';
 import { AuthImagePipe } from './pipes/auth-image.pipe';
+import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-style.pipe';
 
 @NgModule({
   declarations: [
@@ -91,6 +92,7 @@ import { AuthImagePipe } from './pipes/auth-image.pipe';
     GcodeViewerModalComponent,
     AdComponent,
     SidebarAdComponent,
+    FilamentColorSwatchStylePipe,
   ],
   imports: [
     CommonModule,
@@ -201,6 +203,7 @@ import { AuthImagePipe } from './pipes/auth-image.pipe';
     MaterialIconComponent,
     FilamentUsageSummaryComponent,
     AuthImagePipe,
+    FilamentColorSwatchStylePipe,
   ],
 })
 export class SharedModule {}

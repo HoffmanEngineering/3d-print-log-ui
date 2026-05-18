@@ -150,7 +150,7 @@
 
         <!-- Dynamic color pickers -->
         <div fxFlex="grow" fxFlexFill formArrayName="colors">
-          @for (ctrl of colorsFormArray.controls; track $index) {
+          @for (ctrl of colorsFormArray.controls; track ctrl) {
             <div
               style="
                 display: flex;
@@ -200,7 +200,7 @@
           ) {
             <div
               [style]="
-                colorsFormArray.value
+                normalizedColors
                   | filamentColorSwatchStyle
                     : filamentForm.get('colorPattern')!.value
               "
@@ -223,10 +223,10 @@
 
         <!-- Finish type -->
         <div fxFlex="grow" fxFlexFill>
-          <mat-label>Finish</mat-label>
+          <h3 style="margin-bottom: 8px">Finish</h3>
           <mat-button-toggle-group
             formControlName="finishType"
-            style="margin-top: 6px"
+            style="margin-bottom: 16px"
           >
             <mat-button-toggle [value]="FilamentFinishType.Standard"
               >Standard</mat-button-toggle
@@ -242,9 +242,9 @@
 
         <!-- Effects chips -->
         <div fxFlex="grow" fxFlexFill>
-          <mat-label>Effects</mat-label>
+          <h3 style="margin-bottom: 8px">Effects</h3>
           <div
-            style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px"
+            style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px"
           >
             @for (
               effect of [
@@ -279,12 +279,12 @@
         >
           <app-material-icon
             style="width: 120px; height: 120px"
-            [color]="colorsFormArray.value[0]"
+            [color]="normalizedColors[0] ?? ''"
             [categoryNickname]="
               filamentForm.get('materialCategoryNickname')!.value
             "
             [colorPattern]="filamentForm.get('colorPattern')!.value"
-            [colors]="colorsFormArray.value"
+            [colors]="normalizedColors"
             [finishType]="filamentForm.get('finishType')!.value"
             [effects]="filamentForm.get('effects')!.value ?? []"
           />

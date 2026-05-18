@@ -84,6 +84,13 @@
       </pattern>
     }
 
+    <!-- Donut clip path — used to mask grain lines to the ring area only -->
+    @if (hasEffect(FilamentEffect.WoodFill)) {
+      <clipPath [id]="uid + '-donut'">
+        <path [attr.d]="DONUT" clip-rule="evenodd" />
+      </clipPath>
+    }
+
     <!-- Wood grain gradient -->
     @if (hasEffect(FilamentEffect.WoodFill)) {
       <linearGradient [id]="uid + '-wood'" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -183,11 +190,13 @@
       [attr.fill]="'url(#' + uid + '-wood)'"
       [attr.d]="DONUT"
     />
-    <!-- Grain lines -->
+    <!-- Grain lines — clipped to the donut ring so they don't cross the center hole -->
     <path d="M 14 32 Q 22 30 28 36 Q 34 42 44 38 Q 54 34 66 37"
-          fill="none" stroke="#5a3010" stroke-width="1" opacity="0.35" />
+          fill="none" stroke="#5a3010" stroke-width="1" opacity="0.35"
+          [attr.clip-path]="'url(#' + uid + '-donut)'" />
     <path d="M 10 46 Q 20 44 30 50 Q 40 56 52 50 Q 62 44 70 48"
-          fill="none" stroke="#5a3010" stroke-width="1" opacity="0.25" />
+          fill="none" stroke="#5a3010" stroke-width="1" opacity="0.25"
+          [attr.clip-path]="'url(#' + uid + '-donut)'" />
   }
 
   <!-- Metal fill overlay -->

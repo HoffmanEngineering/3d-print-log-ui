@@ -132,6 +132,10 @@ export class FilamentDetailComponent
     return this.filamentForm.get('colors') as UntypedFormArray;
   }
 
+  // Colors with '#' stripped — kept in sync via valueChanges so OnPush children react
+  normalizedColors: string[] = [];
+  private colorsSubscription: Subscription;
+
   ngOnInit() {
     this.titleService.setTitle('Filament Details - 3D Print Log');
 
@@ -149,6 +153,13 @@ export class FilamentDetailComponent
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
+
+      this.normalizedColors = this.computeNormalizedColors();
+      this.colorsSubscription = this.colorsFormArray.valueChanges.subscribe(
+        () => {
+          this.normalizedColors = this.computeNormalizedColors();
+        }
+      );
 
       this.recalculateFormFieldsForSelectedMaterialCategory(
         this.filamentForm.get('materialCategoryNickname').value
@@ -300,6 +311,13 @@ export class FilamentDetailComponent
 
   ngOnDestroy(): void {
     this.materialCategorySubscription?.unsubscribe();
+    this.colorsSubscription?.unsubscribe();
+  }
+
+  private computeNormalizedColors(): string[] {
+    return (this.colorsFormArray.value as string[]).map((c) =>
+      c.replace('#', '')
+    );
   }
 
   private _filter(value: string): Material[] {
@@ -416,7 +434,7 @@ export class FilamentDetailComponent
         (filament?.colors?.length
           ? filament.colors
           : [filament?.colorHex ?? '000000']
-        ).map((c) => this.formBuilder.control(c))
+        ).map((c) => this.formBuilder.control('#' + c.replace('#', '')))
       ),
 
       diameterMm: [
@@ -511,16 +529,16 @@ export class FilamentDetailComponent
       while (arr.length > 1) arr.removeAt(arr.length - 1);
     } else if (pattern === ColorPatternType.Gradient) {
       while (arr.length > 2) arr.removeAt(arr.length - 1);
-      while (arr.length < 2) arr.push(this.formBuilder.control('000000'));
+      while (arr.length < 2) arr.push(this.formBuilder.control('#000000'));
     } else {
       // Multi, Rainbow: ensure at least 2
-      while (arr.length < 2) arr.push(this.formBuilder.control('000000'));
+      while (arr.length < 2) arr.push(this.formBuilder.control('#000000'));
     }
   }
 
   addColorStop(): void {
     if (this.colorsFormArray.length < 8) {
-      this.colorsFormArray.push(this.formBuilder.control('000000'));
+      this.colorsFormArray.push(this.formBuilder.control('#000000'));
     }
   }
 
@@ -533,7 +551,9 @@ export class FilamentDetailComponent
   applyRainbowPreset(colors: string[]): void {
     const arr = this.colorsFormArray;
     while (arr.length > 0) arr.removeAt(0);
-    colors.forEach((c) => arr.push(this.formBuilder.control(c)));
+    colors.forEach((c) =>
+      arr.push(this.formBuilder.control('#' + c.replace('#', '')))
+    );
   }
 
   toggleEffect(effect: FilamentEffect): void {
@@ -685,14 +705,14 @@ export class FilamentDetailComponent
       isActive: this.filamentForm.controls.isActive.value,
       isFavorite: this.filamentForm.controls.isFavorite.value,
       colorPattern: this.filamentForm.get('colorPattern')!.value,
-      colors: this.colorsFormArray.value,
+      colors: this.normalizedColors,
       finishType: this.filamentForm.get('finishType')!.value,
       effects: this.filamentForm.get('effects')!.value ?? [],
     };
 
     // Keep colorHex in sync with colors[0]
-    if (this.colorsFormArray.value?.length > 0) {
-      filament.colorHex = this.colorsFormArray.value[0];
+    if (this.normalizedColors.length > 0) {
+      filament.colorHex = this.normalizedColors[0];
     }
 
     return filament;

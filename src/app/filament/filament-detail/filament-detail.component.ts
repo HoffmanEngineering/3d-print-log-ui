@@ -87,6 +87,24 @@ export class FilamentDetailComponent
 
   public filamentSourceMeasurement = FilamentSourceMeasurement;
 
+  public readonly ColorPatternType = ColorPatternType;
+  public readonly FilamentFinishType = FilamentFinishType;
+  public readonly FilamentEffect = FilamentEffect;
+
+  public readonly rainbowPresets = [
+    {
+      label: 'Classic',
+      colors: ['ff4d4d', 'ff9f40', 'ffe040', '6bcb77', '4d96ff', 'c44dff'],
+    },
+    {
+      label: 'Ocean',
+      colors: ['0077b6', '00b4d8', '48cae4', '90e0ef', 'ade8f4'],
+    },
+    { label: 'Sunset', colors: ['ff6b6b', 'ffd93d', 'ff9f40', 'f06543'] },
+    { label: 'Galaxy', colors: ['1a1a2e', '7c8cf8', 'c44dff', 'f72585'] },
+    { label: 'Forest', colors: ['2d6a4f', '52b788', '95d5b2', 'd8f3dc'] },
+  ];
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -108,6 +126,10 @@ export class FilamentDetailComponent
 
   get filamentAdjustments() {
     return this.filamentForm.get('filamentAdjustments') as UntypedFormArray;
+  }
+
+  get colorsFormArray(): UntypedFormArray {
+    return this.filamentForm.get('colors') as UntypedFormArray;
   }
 
   ngOnInit() {
@@ -387,6 +409,15 @@ export class FilamentDetailComponent
       colorHex: [
         filament && filament.colorHex ? '#' + filament.colorHex : '#000000',
       ],
+      colorPattern: [filament?.colorPattern ?? ColorPatternType.Solid],
+      finishType: [filament?.finishType ?? FilamentFinishType.Standard],
+      effects: [filament?.effects ?? []],
+      colors: this.formBuilder.array(
+        (filament?.colors?.length
+          ? filament.colors
+          : [filament?.colorHex ?? '000000']
+        ).map((c) => this.formBuilder.control(c))
+      ),
 
       diameterMm: [
         filament?.diameterMm
@@ -469,6 +500,49 @@ export class FilamentDetailComponent
 
   removeAdjustment(index: number) {
     this.filamentAdjustments.removeAt(index);
+  }
+
+  onColorPatternChange(): void {
+    const pattern = this.filamentForm.get('colorPattern')!
+      .value as ColorPatternType;
+    const arr = this.colorsFormArray;
+
+    if (pattern === ColorPatternType.Solid) {
+      while (arr.length > 1) arr.removeAt(arr.length - 1);
+    } else if (pattern === ColorPatternType.Gradient) {
+      while (arr.length > 2) arr.removeAt(arr.length - 1);
+      while (arr.length < 2) arr.push(this.formBuilder.control('000000'));
+    } else {
+      // Multi, Rainbow: ensure at least 2
+      while (arr.length < 2) arr.push(this.formBuilder.control('000000'));
+    }
+  }
+
+  addColorStop(): void {
+    if (this.colorsFormArray.length < 8) {
+      this.colorsFormArray.push(this.formBuilder.control('000000'));
+    }
+  }
+
+  removeColorStop(index: number): void {
+    if (this.colorsFormArray.length > 2) {
+      this.colorsFormArray.removeAt(index);
+    }
+  }
+
+  applyRainbowPreset(colors: string[]): void {
+    const arr = this.colorsFormArray;
+    while (arr.length > 0) arr.removeAt(0);
+    colors.forEach((c) => arr.push(this.formBuilder.control(c)));
+  }
+
+  toggleEffect(effect: FilamentEffect): void {
+    const current: FilamentEffect[] =
+      this.filamentForm.get('effects')!.value ?? [];
+    const idx = current.indexOf(effect);
+    const updated =
+      idx >= 0 ? current.filter((e) => e !== effect) : [...current, effect];
+    this.filamentForm.get('effects')!.setValue(updated);
   }
 
   onSubmit() {
@@ -610,13 +684,16 @@ export class FilamentDetailComponent
       filamentAdjustments: adjustments,
       isActive: this.filamentForm.controls.isActive.value,
       isFavorite: this.filamentForm.controls.isFavorite.value,
-      colorPattern: ColorPatternType.Solid,
-      colors: [
-        this.getColorHex(this.filamentForm.controls.colorHex.value) ?? '000000',
-      ],
-      finishType: FilamentFinishType.Standard,
-      effects: [] as FilamentEffect[],
+      colorPattern: this.filamentForm.get('colorPattern')!.value,
+      colors: this.colorsFormArray.value,
+      finishType: this.filamentForm.get('finishType')!.value,
+      effects: this.filamentForm.get('effects')!.value ?? [],
     };
+
+    // Keep colorHex in sync with colors[0]
+    if (this.colorsFormArray.value?.length > 0) {
+      filament.colorHex = this.colorsFormArray.value[0];
+    }
 
     return filament;
   }
@@ -734,12 +811,20 @@ export class FilamentDetailComponent
       loadedInPrinter: null,
       storageLocation: this.filamentForm.get('storageLocation')?.value ?? '',
       materialCategory: null,
-      colorPattern: ColorPatternType.Solid,
-      colors: [
-        this.getColorHex(this.filamentForm.get('colorHex')?.value) ?? '000000',
-      ],
-      finishType: FilamentFinishType.Standard,
-      effects: [] as FilamentEffect[],
+      colorPattern:
+        this.filamentForm.get('colorPattern')?.value ?? ColorPatternType.Solid,
+      colors:
+        this.colorsFormArray.value?.length > 0
+          ? this.colorsFormArray.value
+          : [
+              this.getColorHex(this.filamentForm.get('colorHex')?.value) ??
+                '000000',
+            ],
+      finishType:
+        this.filamentForm.get('finishType')?.value ??
+        FilamentFinishType.Standard,
+      effects:
+        (this.filamentForm.get('effects')?.value as FilamentEffect[]) ?? [],
     };
 
     this.dialog.open(QrLabelDialogComponent, {

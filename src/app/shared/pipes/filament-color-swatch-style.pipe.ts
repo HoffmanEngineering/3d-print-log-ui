@@ -55,7 +55,7 @@ export class FilamentColorSwatchStylePipe implements PipeTransform {
   ): { type: 'solid' | 'gradient'; value: string } {
     if (!colors?.length) return { type: 'solid', value: '#000000' };
 
-    const hex = (c: string) => `#${c}`;
+    const hex = (c: string) => (c.startsWith('#') ? c : `#${c}`);
 
     switch (pattern) {
       case ColorPatternType.Gradient:

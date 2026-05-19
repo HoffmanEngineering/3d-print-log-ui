@@ -193,6 +193,8 @@ describe('Color Pattern — swatch rendering', () => {
       .type('1.24', { force: true });
     cy.contains('mat-button-toggle', 'Rainbow').click();
     cy.contains('button', 'Classic').click();
+    // Wait for Angular to apply preset (6 pickers must exist before submitting)
+    cy.get('input[type="color"]').should('have.length', 6);
     cy.get('#edit-filament-submit-btn').click();
     cy.wait('@createFilament');
 
@@ -211,5 +213,93 @@ describe('Color Pattern — swatch rendering', () => {
         const rgbMatches = style!.match(/rgb\(/g) ?? [];
         expect(rgbMatches.length).to.be.at.least(6);
       });
+  });
+});
+
+describe('Finish Type — swatch rendering', () => {
+  beforeEach(() => {
+    cy.login();
+  });
+
+  it('Standard: swatch has background color, no filter or shimmer background-image', () => {
+    const name = 'Standard Finish Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-row]')
+      .first()
+      .find('.filament-color-cell')
+      .invoke('attr', 'style')
+      .then((style) => {
+        expect(style).to.include('background');
+        expect(style).not.to.include('filter');
+        expect(style).not.to.include('linear-gradient(110deg');
+      });
+  });
+
+  it('Silk: swatch has shimmer background-image and background-size: 200%', () => {
+    const name = 'Silk Finish Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-button-toggle', 'Silk / Glossy').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-row]')
+      .first()
+      .find('.filament-color-cell')
+      .invoke('attr', 'style')
+      .then((style) => {
+        expect(style).to.include('background-image');
+        expect(style).to.include('linear-gradient(110deg');
+        expect(style).to.include('background-size: 200%');
+      });
+  });
+
+  it('Matte: swatch has filter with saturate and brightness', () => {
+    const name = 'Matte Finish Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-button-toggle', 'Matte / Satin').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-row]')
+      .first()
+      .find('.filament-color-cell')
+      .invoke('attr', 'style')
+      .should('include', 'filter: saturate(0.6) brightness(0.95)');
   });
 });

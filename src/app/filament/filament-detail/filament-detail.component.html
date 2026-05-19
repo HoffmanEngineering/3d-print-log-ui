@@ -199,6 +199,7 @@
             filamentForm.get('colorPattern')!.value === ColorPatternType.Rainbow
           ) {
             <div
+              data-cy="gradient-preview"
               [style]="
                 normalizedColors
                   | filamentColorSwatchStyle

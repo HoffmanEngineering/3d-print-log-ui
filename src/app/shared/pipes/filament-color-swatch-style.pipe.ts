@@ -5,7 +5,7 @@ import {
   FilamentFinishType,
 } from '../../core/services/filament.service';
 
-@Pipe({ name: 'filamentColorSwatchStyle', pure: true, standalone: false })
+@Pipe({ name: 'filamentColorSwatchStyle', pure: true })
 export class FilamentColorSwatchStylePipe implements PipeTransform {
   transform(
     colors: string[],

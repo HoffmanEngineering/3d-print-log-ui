@@ -31,6 +31,7 @@ import { PrinterService } from 'src/app/core/services/printer.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
 
 describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
@@ -105,6 +106,7 @@ describe('EditPrintDetailComponent', () => {
         MatMomentDateModule,
         MatCheckboxModule,
         MatDialogModule,
+        FilamentColorSwatchStylePipe,
       ],
       providers: [
         { provide: PrintService, useValue: mockPrintService },

@@ -92,7 +92,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     GcodeViewerModalComponent,
     AdComponent,
     SidebarAdComponent,
-    FilamentColorSwatchStylePipe,
   ],
   imports: [
     CommonModule,
@@ -140,6 +139,7 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     MaterialIconComponent,
     FilamentUsageSummaryComponent,
     AuthImagePipe,
+    FilamentColorSwatchStylePipe,
   ],
   exports: [
     CommonModule,

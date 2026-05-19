@@ -68,9 +68,9 @@
             <div gdColumn="1" [gdRow]="i">
               @if (pf.filament !== null) {
                 <div
-                  class="filament-color-cell"
-                  [style]="pf.filament.colors | filamentColorSwatchStyle : pf.filament.colorPattern : pf.filament.finishType : pf.filament.effects"
-                ></div>
+                class="filament-color-cell"
+                [style.background-color]="'#' + pf.filament.colorHex"
+              ></div>
               }
             </div>
             <div gdColumn="2" [gdRow]="i">

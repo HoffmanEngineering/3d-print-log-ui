@@ -69,7 +69,7 @@
               @if (pf.filament !== null) {
                 <div
                   class="filament-color-cell"
-                  [style.background-color]="'#' + pf.filament.colorHex"
+                  [style]="pf.filament.colors | filamentColorSwatchStyle : pf.filament.colorPattern : pf.filament.finishType : pf.filament.effects"
                 ></div>
               }
             </div>

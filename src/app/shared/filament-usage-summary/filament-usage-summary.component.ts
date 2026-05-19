@@ -13,13 +13,14 @@ import {
   PrintFilamentSummaryDto,
   PrintService,
 } from 'src/app/core/services/print.service';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 @Component({
   selector: 'app-filament-usage-summary',
   templateUrl: './filament-usage-summary.component.html',
   styleUrls: ['./filament-usage-summary.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, MatTooltipModule],
+  imports: [CommonModule, RouterLink, MatTooltipModule, SharedModule],
 })
 export class FilamentUsageSummaryComponent {
   private readonly printService = inject(PrintService);

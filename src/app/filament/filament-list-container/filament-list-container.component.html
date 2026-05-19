@@ -229,7 +229,7 @@
       <td mat-cell *matCellDef="let filament">
         <div
           class="filament-color-cell"
-          [style.background-color]="'#' + filament.colorHex"
+          [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern : filament.finishType : filament.effects"
         ></div>
       </td>
     </ng-container>

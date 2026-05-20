@@ -303,3 +303,345 @@ describe('Finish Type — swatch rendering', () => {
       .should('include', 'filter: saturate(0.6) brightness(0.95)');
   });
 });
+
+describe('Effects — swatch rendering', () => {
+  beforeEach(() => {
+    cy.login();
+  });
+
+  // ── CSS-pipe effects: assert on table swatch inline style ──────────────────
+
+  it('GlowInDark: table swatch has green box-shadow', () => {
+    const name = 'GlowInDark Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Glow-in-Dark').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-row]')
+      .first()
+      .find('.filament-color-cell')
+      .invoke('attr', 'style')
+      .then((style) => {
+        expect(style).to.include('box-shadow');
+        expect(style).to.match(/rgba\(120,\s*255,\s*120/);
+      });
+  });
+
+  it('Translucent: table swatch has opacity: 0.7', () => {
+    const name = 'Translucent Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Translucent').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-row]')
+      .first()
+      .find('.filament-color-cell')
+      .invoke('attr', 'style')
+      .should('include', 'opacity: 0.7');
+  });
+
+  // ── Icon-level effects: assert on SVG elements in the card view (< 600px) ──
+  // Cards are CSS-only hidden at >= 600px. cy.viewport(599, 900) exposes them.
+
+  it('Sparkle: card icon SVG contains path.sparkle-dot elements', () => {
+    const name = 'Sparkle Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Sparkle').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.viewport(599, 900);
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-card]')
+      .first()
+      .find('path.sparkle-dot')
+      .should('have.length.greaterThan', 0);
+  });
+
+  it('Wood Fill: card icon SVG defs contain wood linearGradient', () => {
+    const name = 'WoodFill Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Wood Fill').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.viewport(599, 900);
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-card]')
+      .first()
+      .find('linearGradient[id*="-wood"]')
+      .should('exist');
+  });
+
+  it('GlowInDark: card icon SVG defs contain glow filter', () => {
+    const name = 'GlowIcon Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Glow-in-Dark').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.viewport(599, 900);
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-card]')
+      .first()
+      .find('filter[id*="-glow"]')
+      .should('exist');
+  });
+
+  it('Carbon Fiber: card icon SVG defs contain carbon-fiber pattern', () => {
+    const name = 'CarbonFiber Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Carbon Fiber').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.viewport(599, 900);
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-card]')
+      .first()
+      .find('pattern[id*="-cf"]')
+      .should('exist');
+  });
+
+  it('Metal Fill: card icon SVG defs contain metal linearGradient', () => {
+    const name = 'MetalFill Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Metal Fill').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.viewport(599, 900);
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-card]')
+      .first()
+      .find('linearGradient[id*="-metal"]')
+      .should('exist');
+  });
+
+  it('Fluorescent: card icon SVG defs contain UV filter', () => {
+    const name = 'Fluorescent Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Fluorescent').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.viewport(599, 900);
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-card]')
+      .first()
+      .find('filter[id*="-uv"]')
+      .should('exist');
+  });
+
+  it('Glass Fiber: card icon SVG defs contain glass-fiber pattern', () => {
+    const name = 'GlassFiber Test - ' + Date.now();
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(name);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-chip-option', 'Glass Fiber').click();
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.viewport(599, 900);
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.visit('/filament');
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(name);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-card]')
+      .first()
+      .find('pattern[id*="-gf"]')
+      .should('exist');
+  });
+});
+
+describe('Cross-screen swatch rendering', () => {
+  beforeEach(() => {
+    cy.login();
+  });
+
+  it('Print list: gradient filament swatch shows linear-gradient in print row', () => {
+    const ts = Date.now();
+    const filamentName = 'CrossScreen Gradient - ' + ts;
+    const printTitle = 'CrossScreen Print List - ' + ts;
+
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(filamentName);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-button-toggle', 'Gradient').click();
+    cy.get('input[type="color"]')
+      .eq(0)
+      .invoke('val', '#0077b6')
+      .trigger('input')
+      .trigger('change');
+    cy.get('input[type="color"]')
+      .eq(1)
+      .invoke('val', '#90e0ef')
+      .trigger('input')
+      .trigger('change');
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.createPrint(printTitle);
+
+    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
+    cy.get('button[data-cy-edit-btn]').click();
+
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.get('#add-new-filament-usage-btn').click();
+    cy.get('[data-cy="select-filament-btn"]').click();
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(filamentName);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-row]').should('have.length.greaterThan', 0);
+    cy.get('[data-cy-filament-row]').first().click();
+
+    cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+    cy.get('#edit-print-submit-btn').click();
+    cy.wait('@updatePrint');
+
+    cy.visit('/prints');
+    cy.findByRole('button', { name: /reset filters/i }).click();
+    cy.contains('[cy-print-row]', printTitle)
+      .find('.filament-color-cell')
+      .invoke('attr', 'style')
+      .should('include', 'linear-gradient');
+  });
+
+  it('Edit-print-detail: gradient filament swatch shows linear-gradient in usage section', () => {
+    const ts = Date.now();
+    const filamentName = 'CrossScreen Gradient2 - ' + ts;
+    const printTitle = 'CrossScreen EditDetail - ' + ts;
+
+    cy.intercept('POST', '/api/Filaments').as('createFilament');
+    cy.visit('/filament/new');
+    cy.get('#edit-filament-name').type(filamentName);
+    cy.get('#edit-filament-material-type').type('PLA');
+    cy.get('#edit-filament-density')
+      .clear({ force: true })
+      .type('1.24', { force: true });
+    cy.contains('mat-button-toggle', 'Gradient').click();
+    cy.get('input[type="color"]')
+      .eq(0)
+      .invoke('val', '#0077b6')
+      .trigger('input')
+      .trigger('change');
+    cy.get('input[type="color"]')
+      .eq(1)
+      .invoke('val', '#90e0ef')
+      .trigger('input')
+      .trigger('change');
+    cy.get('#edit-filament-submit-btn').click();
+    cy.wait('@createFilament');
+
+    cy.createPrint(printTitle);
+
+    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
+    cy.get('button[data-cy-edit-btn]').click();
+
+    cy.intercept('GET', '/api/Filaments*').as('getFilaments');
+    cy.get('#add-new-filament-usage-btn').click();
+    cy.get('[data-cy="select-filament-btn"]').click();
+    cy.wait('@getFilaments');
+    cy.get('#filament-list-search-input').clear().type(filamentName);
+    cy.wait('@getFilaments');
+    cy.get('[data-cy-filament-row]').should('have.length.greaterThan', 0);
+    cy.get('[data-cy-filament-row]').first().click();
+
+    cy.get('.filament-color-cell')
+      .invoke('attr', 'style')
+      .should('include', 'linear-gradient');
+  });
+});

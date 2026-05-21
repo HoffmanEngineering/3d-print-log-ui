@@ -69,10 +69,20 @@ export class ProjectSelectorComponent implements OnInit {
   isDefaultView = signal(true);
 
   ngOnInit(): void {
-    if (this.initialProjectId() && this.initialProjectName()) {
-      this.searchControl.setValue(this.initialProjectName()!, {
-        emitEvent: false,
-      });
+    if (this.initialProjectId()) {
+      if (this.initialProjectName()) {
+        this.applyInitialProject(
+          this.initialProjectId()!,
+          this.initialProjectName()!
+        );
+      } else {
+        this.projectService
+          .getProjectById(this.initialProjectId()!)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((project) => {
+            this.applyInitialProject(project.id, project.name, project.status);
+          });
+      }
     }
 
     this.searchControl.valueChanges
@@ -101,6 +111,21 @@ export class ProjectSelectorComponent implements OnInit {
           q.length > 0 && !result.items.some((p) => p.name.toLowerCase() === q)
         );
       });
+  }
+
+  private applyInitialProject(
+    projectId: string,
+    projectName: string,
+    projectStatus?: ProjectStatus
+  ): void {
+    const initial: ProjectSelection = {
+      type: 'existing',
+      projectId,
+      projectName,
+      projectStatus,
+    };
+    this.selectedProject.set(initial);
+    this.searchControl.setValue(projectName, { emitEvent: false });
   }
 
   selectExistingProject(project: ProjectSummaryDto): void {

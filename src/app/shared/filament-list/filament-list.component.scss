@@ -106,7 +106,9 @@ table {
   height: 30px;
   position: relative;
   margin-right: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .no-filament {
@@ -172,7 +174,9 @@ mat-checkbox {
     width: 40px;
     min-width: 40px;
     align-self: stretch;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      0 1px 4px rgba(0, 0, 0, 0.18);
     border-radius: 4px;
     flex-shrink: 0;
   }
@@ -272,6 +276,8 @@ mat-checkbox {
 :host-context(body.dark-theme) {
   .filament-color-cell,
   .card-swatch {
-    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.15),
+      0 1px 4px rgba(0, 0, 0, 0.4);
   }
 }

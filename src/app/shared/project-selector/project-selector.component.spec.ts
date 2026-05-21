@@ -8,6 +8,7 @@ import { ProjectSelectorComponent } from './project-selector.component';
 import {
   ProjectService,
   ProjectSummaryDto,
+  ProjectDetailDto,
   ProjectStatus,
   ProjectViewStatus,
 } from 'src/app/core/services/project.service';
@@ -37,13 +38,20 @@ describe('ProjectSelectorComponent', () => {
   beforeEach(async () => {
     mockProjectService = jasmine.createSpyObj<ProjectService>(
       'ProjectService',
-      ['getProjectSummaries']
+      ['getProjectSummaries', 'getProjectById']
     );
     mockProjectService.getProjectSummaries.and.returnValue(
       of({
         items: mockProjects,
         paging: { totalCount: 1, currentPage: 1, pageSize: 25, totalPages: 1 },
       })
+    );
+    mockProjectService.getProjectById.and.returnValue(
+      of({
+        id: 'abc',
+        name: 'Voron Build',
+        status: ProjectStatus.InProgress,
+      } as ProjectDetailDto)
     );
 
     await TestBed.configureTestingModule({
@@ -109,6 +117,69 @@ describe('ProjectSelectorComponent', () => {
     );
     fixture.componentInstance.clearProject();
     tick(250); // debounce from setValue('')
+    expect(emitted[0]).toBeNull();
+  }));
+
+  it('should initialize selectedProject signal when initial project inputs are provided', fakeAsync(() => {
+    fixture.componentRef.setInput('initialProjectId', 'abc');
+    fixture.componentRef.setInput('initialProjectName', 'Voron Build');
+    fixture.detectChanges();
+    tick(250);
+
+    const selected = fixture.componentInstance.selectedProject();
+    expect(selected).not.toBeNull();
+    expect(selected?.type).toBe('existing');
+    if (selected?.type === 'existing') {
+      expect(selected.projectId).toBe('abc');
+      expect(selected.projectName).toBe('Voron Build');
+    }
+    expect(fixture.componentInstance.searchControl.value).toBe('Voron Build');
+  }));
+
+  it('should show clear button when initial project is provided', fakeAsync(() => {
+    fixture.componentRef.setInput('initialProjectId', 'abc');
+    fixture.componentRef.setInput('initialProjectName', 'Voron Build');
+    fixture.detectChanges();
+    tick(250);
+    fixture.detectChanges();
+
+    const clearButton = fixture.nativeElement.querySelector(
+      'button[aria-label="Clear"]'
+    );
+    expect(clearButton).not.toBeNull();
+  }));
+
+  it('should fetch project by id and initialize when only initialProjectId is provided', fakeAsync(() => {
+    fixture.componentRef.setInput('initialProjectId', 'abc');
+    fixture.detectChanges();
+    tick(250);
+    fixture.detectChanges();
+
+    expect(mockProjectService.getProjectById).toHaveBeenCalledWith('abc');
+    const selected = fixture.componentInstance.selectedProject();
+    expect(selected).not.toBeNull();
+    expect(selected?.type).toBe('existing');
+    if (selected?.type === 'existing') {
+      expect(selected.projectId).toBe('abc');
+      expect(selected.projectName).toBe('Voron Build');
+    }
+    expect(fixture.componentInstance.searchControl.value).toBe('Voron Build');
+  }));
+
+  it('should clear selectedProject and emit null when clear button clicked after initial project', fakeAsync(() => {
+    fixture.componentRef.setInput('initialProjectId', 'abc');
+    fixture.componentRef.setInput('initialProjectName', 'Voron Build');
+    fixture.detectChanges();
+    tick(250);
+
+    const emitted: any[] = [];
+    fixture.componentInstance.projectSelected.subscribe((v: any) =>
+      emitted.push(v)
+    );
+    fixture.componentInstance.clearProject();
+    tick(250);
+
+    expect(fixture.componentInstance.selectedProject()).toBeNull();
     expect(emitted[0]).toBeNull();
   }));
 });

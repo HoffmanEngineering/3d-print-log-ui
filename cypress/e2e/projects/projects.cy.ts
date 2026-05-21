@@ -103,6 +103,79 @@ describe('Projects', () => {
       });
   });
 
+  it('should show the assigned project name when re-entering the print edit page', () => {
+    const ts = new Date().getTime();
+    const projectName = 'Edit Display Test Project - ' + ts;
+
+    cy.intercept('POST', '/api/Projects').as('createProject');
+    cy.visit('/projects/new');
+    cy.get('[data-testid="name-input"]').type(projectName);
+    cy.get('[data-cy="project-save-btn"]').click();
+    cy.wait('@createProject');
+
+    cy.visit('/prints');
+    cy.get('[cy-print-row]')
+      .first()
+      .invoke('attr', 'cy-print-row')
+      .then((printId) => {
+        cy.visit(`/prints/${printId}`);
+        cy.get('button[data-cy-edit-btn]').click();
+
+        cy.intercept('PUT', '/api/Prints/*').as('assignPrint');
+        cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
+        cy.get('mat-option').contains(projectName).click();
+        cy.get('#edit-print-submit-btn').click();
+        cy.wait('@assignPrint');
+
+        cy.visit(`/prints/${printId}`);
+        cy.get('button[data-cy-edit-btn]').click();
+
+        cy.get('[data-cy="project-selector-input"]').should(
+          'have.value',
+          projectName
+        );
+        cy.get('button[aria-label="Clear"]').should('be.visible');
+      });
+  });
+
+  it('should allow removing a print from a project via the clear button', () => {
+    const ts = new Date().getTime();
+    const projectName = 'Remove Test Project - ' + ts;
+
+    cy.intercept('POST', '/api/Projects').as('createProject');
+    cy.visit('/projects/new');
+    cy.get('[data-testid="name-input"]').type(projectName);
+    cy.get('[data-cy="project-save-btn"]').click();
+    cy.wait('@createProject');
+
+    cy.visit('/prints');
+    cy.get('[cy-print-row]')
+      .first()
+      .invoke('attr', 'cy-print-row')
+      .then((printId) => {
+        cy.visit(`/prints/${printId}`);
+        cy.get('button[data-cy-edit-btn]').click();
+
+        cy.intercept('PUT', '/api/Prints/*').as('assignPrint');
+        cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
+        cy.get('mat-option').contains(projectName).click();
+        cy.get('#edit-print-submit-btn').click();
+        cy.wait('@assignPrint');
+
+        cy.visit(`/prints/${printId}`);
+        cy.get('button[data-cy-edit-btn]').click();
+
+        cy.intercept('PUT', '/api/Prints/*').as('removePrint');
+        cy.get('button[aria-label="Clear"]').click();
+        cy.get('#edit-print-submit-btn').click();
+        cy.wait('@removePrint');
+
+        cy.get(`[cy-print-row="${printId}"]`).within(() => {
+          cy.get('[data-cy="project-chip"]').should('not.exist');
+        });
+      });
+  });
+
   it('should display the project in Grouped View', () => {
     const projectName = 'Grouped Test Project - ' + new Date().getTime();
 

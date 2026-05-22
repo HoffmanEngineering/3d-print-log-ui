@@ -13,13 +13,19 @@ import {
   PrintFilamentSummaryDto,
   PrintService,
 } from 'src/app/core/services/print.service';
+import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
 
 @Component({
   selector: 'app-filament-usage-summary',
   templateUrl: './filament-usage-summary.component.html',
   styleUrls: ['./filament-usage-summary.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, MatTooltipModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatTooltipModule,
+    FilamentColorSwatchStylePipe,
+  ],
 })
 export class FilamentUsageSummaryComponent {
   private readonly printService = inject(PrintService);

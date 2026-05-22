@@ -10,6 +10,7 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
+import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
 
 describe('ViewPrintDetailComponent', () => {
   let component: ViewPrintDetailComponent;
@@ -63,7 +64,7 @@ describe('ViewPrintDetailComponent', () => {
 
     TestBed.configureTestingModule({
       declarations: [ViewPrintDetailComponent, DurationPipe],
-      imports: [RouterTestingModule],
+      imports: [RouterTestingModule, FilamentColorSwatchStylePipe],
       providers: [
         { provide: PrintService, useValue: mockPrintService },
         { provide: AuthService, useValue: mockAuthService },

@@ -1,5 +1,17 @@
 @if (isSpoolType()) {
-  <app-filament-spool-icon [color]="color()" />
+  <app-filament-spool-icon
+    [color]="color()"
+    [colorPattern]="colorPattern()"
+    [colors]="colors()"
+    [finishType]="finishType()"
+    [effects]="effects()"
+  />
 } @else {
-  <app-bottle-icon [color]="color()" />
+  <app-bottle-icon
+    [color]="color()"
+    [colorPattern]="colorPattern()"
+    [colors]="colors()"
+    [finishType]="finishType()"
+    [effects]="effects()"
+  />
 }

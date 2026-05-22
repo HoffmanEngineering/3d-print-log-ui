@@ -1,0 +1,22 @@
+.sparkle-dot {
+  animation: sparkle-twinkle 1.8s ease-in-out infinite;
+}
+.sparkle-dot--2 {
+  animation-delay: 0.6s;
+}
+.sparkle-dot--3 {
+  animation-delay: 1.2s;
+}
+.sparkle-dot--4 {
+  animation-delay: 0.9s;
+}
+
+@keyframes sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}

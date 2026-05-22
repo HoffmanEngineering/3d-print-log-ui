@@ -13,7 +13,12 @@ import {
 } from './qr-label-dialog.component';
 import { QrCodeService } from 'src/app/core/services/qr-code.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { FilamentSummary } from 'src/app/core/services/filament.service';
+import {
+  ColorPatternType,
+  FilamentEffect,
+  FilamentFinishType,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 
 describe('QrLabelDialogComponent', () => {
   let component: QrLabelDialogComponent;
@@ -31,6 +36,10 @@ describe('QrLabelDialogComponent', () => {
     materialDensityGramPerCubicCm: 1.24,
     colorName: 'Red',
     colorHex: 'FF0000',
+    colorPattern: ColorPatternType.Solid,
+    colors: ['FF0000'],
+    finishType: FilamentFinishType.Standard,
+    effects: [] as FilamentEffect[],
     recommendedTemp: 210,
     isActive: true,
     notes: '',

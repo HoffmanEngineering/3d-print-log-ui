@@ -2,7 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
 import {
+  ColorPatternType,
   FilamentDetail,
+  FilamentEffect,
+  FilamentFinishType,
   FilamentService,
 } from '../../core/services/filament.service';
 import { FilamentListResolverService } from './filament-list-resolver.service';
@@ -20,6 +23,10 @@ describe('FilamentListResolverService', () => {
     materialDensityGramPerCubicCm: 1.24,
     colorName: 'Black',
     colorHex: '000000',
+    colorPattern: ColorPatternType.Solid,
+    colors: ['000000'],
+    finishType: FilamentFinishType.Standard,
+    effects: [] as FilamentEffect[],
     diameterMm: 1.75,
     initialTotalWeightMg: null,
     source: null as any,

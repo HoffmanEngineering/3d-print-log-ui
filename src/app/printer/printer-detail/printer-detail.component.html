@@ -317,12 +317,7 @@
                       <div fxFlex style="padding-bottom: 10px">
                         <div
                           class="filament-color-cell"
-                          [style.background-color]="
-                            printFilament.get('filament').value?.colorHex
-                              ? '#' +
-                                printFilament.get('filament').value?.colorHex
-                              : null
-                          "
+                          [style]="printFilament.get('filament').value?.colors | filamentColorSwatchStyle : printFilament.get('filament').value?.colorPattern : printFilament.get('filament').value?.finishType : printFilament.get('filament').value?.effects"
                         ></div>
                       </div>
                       <div fxFlex>

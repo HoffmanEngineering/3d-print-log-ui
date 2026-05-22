@@ -3,6 +3,9 @@ import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import {
+  ColorPatternType,
+  FilamentEffect,
+  FilamentFinishType,
   FilamentService,
   FilamentSortColumns,
   FilamentSummary,
@@ -30,6 +33,16 @@ export class FilamentListResolverService {
       sortColumn = FilamentSortColumns.FilamentRemaining,
     } = route.queryParams;
 
+    const colorPatterns = route.queryParamMap
+      .getAll('colorPatterns')
+      .map(Number) as ColorPatternType[];
+    const finishTypes = route.queryParamMap
+      .getAll('finishTypes')
+      .map(Number) as FilamentFinishType[];
+    const effects = route.queryParamMap
+      .getAll('effects')
+      .map(Number) as FilamentEffect[];
+
     return this.filamentService.getCurrentUserFilamentSummaries(
       pageNumber,
       pageSize,
@@ -40,7 +53,10 @@ export class FilamentListResolverService {
       showFavoritesOnly,
       showLoadedFilamentOnly,
       filterByMaterialCategory,
-      filterByStorageLocation
+      filterByStorageLocation,
+      colorPatterns.length ? colorPatterns : undefined,
+      finishTypes.length ? finishTypes : undefined,
+      effects.length ? effects : undefined
     );
   }
   constructor(private filamentService: FilamentService) {}

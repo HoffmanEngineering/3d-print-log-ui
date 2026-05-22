@@ -391,15 +391,14 @@
                     </div>
                     <div class="filament-info-column">
                       <div fxFlex>
-                        <div
-                          class="filament-color-cell"
-                          [style.background-color]="
-                            printFilament.get('filament').value?.colorHex
-                              ? '#' +
-                                printFilament.get('filament').value?.colorHex
-                              : null
-                          "
-                        ></div>
+                        @if (printFilament.get('filament').value; as filament) {
+                          <div
+                            class="filament-color-cell"
+                            [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern : filament.finishType : filament.effects"
+                          ></div>
+                        } @else {
+                          <div class="filament-color-cell"></div>
+                        }
                       </div>
                       <div fxFlex class="filament-section filament-name">
                         @if (printFilament.get('filament').value !== null) {
@@ -538,17 +537,14 @@
                                 >
                                   <span class="swap-menu-item">
                                     <mat-icon>swap_vert</mat-icon>
-                                    <div
-                                      class="swap-color-indicator"
-                                      [style.background-color]="
-                                        otherFilament.get('filament').value
-                                          ?.colorHex
-                                          ? '#' +
-                                            otherFilament.get('filament').value
-                                              ?.colorHex
-                                          : '#ccc'
-                                      "
-                                    ></div>
+                                    @if (otherFilament.get('filament').value; as filament) {
+                                      <div
+                                        class="swap-color-indicator"
+                                        [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern : filament.finishType : filament.effects"
+                                      ></div>
+                                    } @else {
+                                      <div class="swap-color-indicator" style="background: #ccc"></div>
+                                    }
                                     <span>
                                       Swap with #{{ otherIndex + 1 }}:
                                       {{

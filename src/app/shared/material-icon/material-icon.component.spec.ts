@@ -1,5 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MaterialIconComponent } from './material-icon.component';
+import {
+  ColorPatternType,
+  FilamentEffect,
+  FilamentFinishType,
+} from '../../core/services/filament.service';
 
 describe('MaterialIconComponent', () => {
   let fixture: ComponentFixture<MaterialIconComponent>;
@@ -63,5 +68,23 @@ describe('MaterialIconComponent', () => {
     fixture.detectChanges();
     const bottle = fixture.nativeElement.querySelector('app-bottle-icon');
     expect(bottle).not.toBeNull();
+  });
+
+  it('passes colorPattern, colors, finishType, effects to spool icon for filament category', () => {
+    fixture.componentRef.setInput('categoryNickname', 'filament');
+    fixture.componentRef.setInput('color', 'ff0000');
+    fixture.componentRef.setInput('colorPattern', ColorPatternType.Rainbow);
+    fixture.componentRef.setInput('colors', ['ff0000', '00ff00', '0000ff']);
+    fixture.componentRef.setInput('finishType', FilamentFinishType.Silk);
+    fixture.componentRef.setInput('effects', [FilamentEffect.Sparkle]);
+    fixture.detectChanges();
+
+    // The spool icon should be rendered (not bottle)
+    const spoolIcon = fixture.nativeElement.querySelector(
+      'app-filament-spool-icon'
+    );
+    expect(spoolIcon).toBeTruthy();
+    const bottleIcon = fixture.nativeElement.querySelector('app-bottle-icon');
+    expect(bottleIcon).toBeFalsy();
   });
 });

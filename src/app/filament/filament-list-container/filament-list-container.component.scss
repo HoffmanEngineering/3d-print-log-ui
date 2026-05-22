@@ -44,9 +44,24 @@ table {
   min-width: 160px;
 }
 
+.clear-filters-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .filter-toggle-btn {
   flex-shrink: 0;
   white-space: nowrap;
+
+  ::ng-deep .mat-badge-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &.mat-badge-hidden ::ng-deep .mat-badge-content {
+    display: none;
+  }
 }
 
 .filter-panel {
@@ -58,8 +73,15 @@ table {
     opacity 0.2s ease;
 
   &.filter-panel--open {
-    max-height: 300px;
+    max-height: 500px;
+    overflow-y: auto;
     opacity: 1;
+  }
+}
+
+@media screen and (max-width: 599px), screen and (max-height: 500px) {
+  .filter-panel--open {
+    max-height: 180px;
   }
 }
 
@@ -78,6 +100,19 @@ table {
 
 .filter-field {
   min-width: 150px;
+}
+
+.filter-chip-group {
+  padding-left: 10px;
+  border-left: 2px solid rgba(0, 0, 0, 0.12);
+}
+
+.filter-panel
+  ::ng-deep
+  mat-chip-listbox
+  .mat-mdc-chip-option.cdk-keyboard-focused {
+  outline: 2px solid rgba(0, 0, 0, 0.75);
+  outline-offset: 2px;
 }
 
 .selection-info {
@@ -134,10 +169,9 @@ table {
   left: 0;
   margin-right: 10px;
 
-  // -webkit-box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
-  // -moz-box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
-  // box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.75);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .no-filament {
@@ -296,7 +330,20 @@ table {
 }
 
 :host-context(body.dark-theme) {
-  .card-swatch-icon {
-    border-color: rgba(255, 255, 255, 0.2);
+  .filament-color-cell {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.15),
+      0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+
+  .filter-chip-group {
+    border-left-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .filter-panel
+    ::ng-deep
+    mat-chip-listbox
+    .mat-mdc-chip-option.cdk-keyboard-focused {
+    outline-color: rgba(255, 255, 255, 0.75);
   }
 }

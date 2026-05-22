@@ -106,42 +106,199 @@
             required
           />
         </mat-form-field>
+        <!-- Color pattern selector -->
+        <div fxFlex="grow" fxFlexFill>
+          <h3 style="margin-bottom: 8px">Color</h3>
+          <mat-button-toggle-group
+            formControlName="colorPattern"
+            (change)="onColorPatternChange()"
+            style="margin-bottom: 16px"
+          >
+            <mat-button-toggle [value]="ColorPatternType.Solid"
+              >Solid</mat-button-toggle
+            >
+            <mat-button-toggle [value]="ColorPatternType.Multi"
+              >Multi-Color</mat-button-toggle
+            >
+            <mat-button-toggle [value]="ColorPatternType.Gradient"
+              >Gradient</mat-button-toggle
+            >
+            <mat-button-toggle [value]="ColorPatternType.Rainbow"
+              >Rainbow</mat-button-toggle
+            >
+          </mat-button-toggle-group>
+        </div>
+
+        <!-- Rainbow presets (shown only when Rainbow is selected) -->
+        @if (
+          filamentForm.get('colorPattern')!.value === ColorPatternType.Rainbow
+        ) {
+          <div fxFlex="grow" fxFlexFill style="margin-bottom: 8px">
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              @for (preset of rainbowPresets; track preset.label) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="applyRainbowPreset(preset.colors)"
+                >
+                  {{ preset.label }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Dynamic color pickers -->
+        <div fxFlex="grow" fxFlexFill formArrayName="colors">
+          @for (ctrl of colorsFormArray.controls; track ctrl) {
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 8px;
+              "
+            >
+              <mat-form-field style="width: 120px">
+                <mat-label>
+                  @if (
+                    filamentForm.get('colorPattern')!.value ===
+                    ColorPatternType.Gradient
+                  ) {
+                    {{ $index === 0 ? 'Start' : 'End' }}
+                  } @else {
+                    Color {{ $index + 1 }}
+                  }
+                </mat-label>
+                <input matInput type="color" [formControlName]="$index" />
+              </mat-form-field>
+
+              @if (
+                filamentForm.get('colorPattern')!.value !==
+                  ColorPatternType.Solid &&
+                filamentForm.get('colorPattern')!.value !==
+                  ColorPatternType.Gradient &&
+                colorsFormArray.length > 2
+              ) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="removeColorStop($index)"
+                  aria-label="Remove color"
+                >
+                  <mat-icon>remove_circle_outline</mat-icon>
+                </button>
+              }
+            </div>
+          }
+
+          <!-- Gradient preview strip -->
+          @if (
+            filamentForm.get('colorPattern')!.value ===
+              ColorPatternType.Gradient ||
+            filamentForm.get('colorPattern')!.value === ColorPatternType.Rainbow
+          ) {
+            <div
+              data-cy="gradient-preview"
+              [style]="
+                normalizedColors
+                  | filamentColorSwatchStyle
+                    : filamentForm.get('colorPattern')!.value
+              "
+              style="height: 10px; border-radius: 5px; margin-bottom: 12px"
+            ></div>
+          }
+
+          @if (
+            filamentForm.get('colorPattern')!.value !==
+              ColorPatternType.Solid &&
+            filamentForm.get('colorPattern')!.value !==
+              ColorPatternType.Gradient &&
+            colorsFormArray.length < 8
+          ) {
+            <button mat-stroked-button type="button" (click)="addColorStop()">
+              <mat-icon>add</mat-icon> Add color
+            </button>
+          }
+        </div>
+
+        <!-- Finish type -->
+        <div fxFlex="grow" fxFlexFill>
+          <h3 style="margin-bottom: 8px">Finish</h3>
+          <mat-button-toggle-group
+            formControlName="finishType"
+            style="margin-bottom: 16px"
+          >
+            <mat-button-toggle [value]="FilamentFinishType.Standard"
+              >Standard</mat-button-toggle
+            >
+            <mat-button-toggle [value]="FilamentFinishType.Silk"
+              >Silk / Glossy</mat-button-toggle
+            >
+            <mat-button-toggle [value]="FilamentFinishType.Matte"
+              >Matte / Satin</mat-button-toggle
+            >
+          </mat-button-toggle-group>
+        </div>
+
+        <!-- Effects chips -->
+        <div fxFlex="grow" fxFlexFill>
+          <h3 style="margin-bottom: 8px">Effects</h3>
+          <mat-chip-listbox
+            multiple
+            style="margin-bottom: 16px"
+            [value]="filamentForm.get('effects')!.value ?? []"
+            (change)="onEffectsChange($event)"
+          >
+            @for (
+              effect of [
+                { value: FilamentEffect.Sparkle, label: 'Sparkle' },
+                { value: FilamentEffect.GlowInDark, label: 'Glow-in-Dark' },
+                { value: FilamentEffect.Translucent, label: 'Translucent' },
+                { value: FilamentEffect.CarbonFiber, label: 'Carbon Fiber' },
+                { value: FilamentEffect.WoodFill, label: 'Wood Fill' },
+                { value: FilamentEffect.MetalFill, label: 'Metal Fill' },
+                { value: FilamentEffect.Fluorescent, label: 'Fluorescent' },
+                { value: FilamentEffect.GlassFiber, label: 'Glass Fiber' },
+              ];
+              track effect.value
+            ) {
+              <mat-chip-option [value]="effect.value">
+                {{ effect.label }}
+              </mat-chip-option>
+            }
+          </mat-chip-listbox>
+        </div>
+
+        <!-- Live spool preview -->
         <div
           fxFlex="grow"
           fxFlexFill
-          fxLayout="row"
-          fxLayout.lt-md="column"
-          style="margin-inline: 10px"
+          style="display: flex; justify-content: center; margin: 12px 0"
         >
-          <mat-form-field
-            fxFlex
-            fxFlex.lt-md="100%"
-            style="margin-left: 0"
-            ngStyle.lt-md="margin-inline: 0"
-          >
-            <mat-label>Color</mat-label>
-            <input
-              id="edit-filament-color-hex"
-              matInput
-              type="color"
-              formControlName="colorHex"
-            />
-          </mat-form-field>
-          <mat-form-field
-            fxFlex
-            fxFlex.lt-md="100%"
-            style="margin-right: 0"
-            ngStyle.lt-md="margin-inline: 0"
-          >
-            <mat-label>Color Name</mat-label>
-            <input
-              id="edit-filament-color"
-              matInput
-              type="text"
-              formControlName="colorName"
-            />
-          </mat-form-field>
+          <app-material-icon
+            style="width: 120px; height: 120px"
+            [color]="normalizedColors[0] ?? ''"
+            [categoryNickname]="
+              filamentForm.get('materialCategoryNickname')!.value
+            "
+            [colorPattern]="filamentForm.get('colorPattern')!.value"
+            [colors]="normalizedColors"
+            [finishType]="filamentForm.get('finishType')!.value"
+            [effects]="filamentForm.get('effects')!.value ?? []"
+          />
         </div>
+
+        <!-- Color Name -->
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Color Name</mat-label>
+          <input
+            id="edit-filament-color"
+            matInput
+            type="text"
+            formControlName="colorName"
+          />
+        </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Brand</mat-label>
           <input

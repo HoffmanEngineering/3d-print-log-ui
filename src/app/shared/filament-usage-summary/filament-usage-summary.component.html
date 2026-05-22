@@ -4,7 +4,7 @@
       @if (fu.filament !== null) {
         <div
           class="filament-color-cell"
-          [style.background-color]="'#' + fu.filament.colorHex"
+          [style]="fu.filament.colors | filamentColorSwatchStyle : fu.filament.colorPattern : fu.filament.finishType : fu.filament.effects"
         ></div>
       }
     </div>

@@ -12,7 +12,7 @@ import { PrintCommentsComponent } from './print-comments/print-comments.componen
 import { PrintListComponent } from './print-list/print-list.component';
 import { PrintRoutingModule } from './print-routing.module';
 import { PrintShareDialogComponent } from './print-share-dialog/print-share-dialog.component';
-import { PrintComponent } from './print.component';
+
 import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-resolver.service';
 import { LastFilamentMeasureSettingResolverService } from './resolvers/last-filament-measure-setting-resolver.service';
 import { LastSelectedPrinterSettingResolverService } from './resolvers/last-selected-printer-setting-resolver.service';
@@ -32,7 +32,6 @@ import { PrintCardComponent } from './print-card/print-card.component';
 
 @NgModule({
   declarations: [
-    PrintComponent,
     PrintListComponent,
     EditPrintDetailComponent,
     ViewPrintDetailComponent,

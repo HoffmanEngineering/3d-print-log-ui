@@ -64,6 +64,12 @@ table {
     align-items: center;
     justify-content: center;
   }
+
+  // Material uses visibility:hidden for mat-badge-hidden, which hides the number
+  // but leaves the coloured circle painted. Use display:none instead.
+  &.mat-badge-hidden ::ng-deep .mat-badge-content {
+    display: none;
+  }
 }
 
 // ── Collapsible filter panel ────────────────────────────────────────────────
@@ -78,7 +84,14 @@ table {
 
   &.filter-panel--open {
     max-height: 400px;
+    overflow-y: auto;
     opacity: 1;
+  }
+}
+
+@media screen and (max-width: 599px), screen and (max-height: 500px) {
+  .filter-panel--open {
+    max-height: 180px;
   }
 }
 
@@ -89,6 +102,19 @@ table {
   flex-wrap: wrap;
   padding: 8px 0;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.filter-chip-group {
+  padding-left: 10px;
+  border-left: 2px solid rgba(0, 0, 0, 0.12);
+}
+
+.filter-panel
+  ::ng-deep
+  mat-chip-listbox
+  .mat-mdc-chip-option.cdk-keyboard-focused {
+  outline: 2px solid rgba(0, 0, 0, 0.75);
+  outline-offset: 2px;
 }
 
 // ── Existing column/cell styles ─────────────────────────────────────────────
@@ -123,7 +149,7 @@ table {
 }
 
 mat-checkbox {
-  margin-right: 25px;
+  margin-right: 10px;
 }
 
 .not-favorite-icon {
@@ -279,5 +305,16 @@ mat-checkbox {
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.15),
       0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+
+  .filter-chip-group {
+    border-left-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .filter-panel
+    ::ng-deep
+    mat-chip-listbox
+    .mat-mdc-chip-option.cdk-keyboard-focused {
+    outline-color: rgba(255, 255, 255, 0.75);
   }
 }

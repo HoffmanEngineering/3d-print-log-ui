@@ -81,9 +81,14 @@
         </mat-form-field>
 
         <!-- Color Pattern filter -->
-        <div>
+        <div class="filter-chip-group">
           <mat-label>Color Pattern</mat-label>
           <mat-chip-listbox multiple>
+            <mat-chip-option
+              (click)="toggleColorPattern(ColorPatternType.Solid)"
+              [selected]="filterByColorPatterns.includes(ColorPatternType.Solid)">
+              Solid
+            </mat-chip-option>
             <mat-chip-option
               (click)="toggleColorPattern(ColorPatternType.Multi)"
               [selected]="filterByColorPatterns.includes(ColorPatternType.Multi)">
@@ -103,9 +108,14 @@
         </div>
 
         <!-- Finish Type filter -->
-        <div>
+        <div class="filter-chip-group">
           <mat-label>Finish</mat-label>
           <mat-chip-listbox multiple>
+            <mat-chip-option
+              (click)="toggleFinishType(FilamentFinishType.Standard)"
+              [selected]="filterByFinishTypes.includes(FilamentFinishType.Standard)">
+              Standard
+            </mat-chip-option>
             <mat-chip-option
               (click)="toggleFinishType(FilamentFinishType.Silk)"
               [selected]="filterByFinishTypes.includes(FilamentFinishType.Silk)">
@@ -120,7 +130,7 @@
         </div>
 
         <!-- Effects filter -->
-        <div>
+        <div class="filter-chip-group">
           <mat-label>Effects</mat-label>
           <mat-chip-listbox multiple>
             @for (effect of [

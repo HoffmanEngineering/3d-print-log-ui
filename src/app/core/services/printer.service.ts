@@ -4,7 +4,12 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PagedList } from 'src/app/core/types/paging';
 import { environment } from 'src/environments/environment';
-import { FilamentSummary } from './filament.service';
+import {
+  ColorPatternType,
+  FilamentEffect,
+  FilamentFinishType,
+  FilamentSummary,
+} from './filament.service';
 import { PrinterCategory } from './printer-categories.service';
 
 export interface PrinterSummary {
@@ -29,6 +34,10 @@ export interface FilamentSummaryForPrinter {
   materialType: string;
   colorName: string;
   colorHex: string;
+  colorPattern: ColorPatternType;
+  colors: string[];
+  finishType: FilamentFinishType;
+  effects: FilamentEffect[];
 }
 
 /**

@@ -37,3 +37,19 @@ hr {
   width: auto;
   margin: 0;
 }
+
+.filament-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filament-color-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}

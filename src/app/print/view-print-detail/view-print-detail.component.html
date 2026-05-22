@@ -129,7 +129,13 @@
               }
               @if (printFilament.filament !== null) {
                 <h3>Filament:</h3>
-                <p>{{ printFilament.filament.displayName }}</p>
+                <p class="filament-name-cell">
+                  <span
+                    class="filament-color-swatch"
+                    [style]="printFilament.filament.colors | filamentColorSwatchStyle : printFilament.filament.colorPattern : printFilament.filament.finishType : printFilament.filament.effects"
+                  ></span>
+                  {{ printFilament.filament.displayName }}
+                </p>
                 @if (
                   printFilament.estimatedSource ===
                   printFilamentSourceMeasurementTypes.Length

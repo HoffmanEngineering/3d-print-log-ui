@@ -9,6 +9,9 @@ import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import {
+  ColorPatternType,
+  FilamentEffect,
+  FilamentFinishType,
   FilamentService,
   FilamentSortColumns,
   FilamentSummary,
@@ -54,6 +57,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   public debouncedUpdateFilter;
 
+  readonly ColorPatternType = ColorPatternType;
+  readonly FilamentFinishType = FilamentFinishType;
+  readonly FilamentEffect = FilamentEffect;
+
   public filamentSortColumns = FilamentSortColumns;
   public sortColumn = FilamentSortColumns.FilamentRemaining;
   public sortDirection = SortDirection.Desc;
@@ -76,6 +83,9 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public filterByMaterialCategory: string = '';
   public storageLocations: string[] = [];
   public filterByStorageLocation: string = '';
+  public filterByColorPatterns: ColorPatternType[] = [];
+  public filterByFinishTypes: FilamentFinishType[] = [];
+  public filterByEffects: FilamentEffect[] = [];
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -151,6 +161,16 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       if (params.has('pageSize')) {
         this.pageSize = +params.get('pageSize');
       }
+
+      this.filterByColorPatterns = params
+        .getAll('colorPatterns')
+        .map((v) => +v as ColorPatternType);
+      this.filterByFinishTypes = params
+        .getAll('finishTypes')
+        .map((v) => +v as FilamentFinishType);
+      this.filterByEffects = params
+        .getAll('effects')
+        .map((v) => +v as FilamentEffect);
     });
 
     this.activatedRoute.data.subscribe((data) => {
@@ -191,6 +211,13 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
           showLoadedFilamentOnly: this.showLoadedFilamentOnly,
           filterByMaterialCategory: this.filterByMaterialCategory || '',
           filterByStorageLocation: this.filterByStorageLocation || '',
+          colorPatterns: this.filterByColorPatterns.length
+            ? this.filterByColorPatterns
+            : null,
+          finishTypes: this.filterByFinishTypes.length
+            ? this.filterByFinishTypes
+            : null,
+          effects: this.filterByEffects.length ? this.filterByEffects : null,
           sortDirection: this.sortDirection,
           sortColumn: this.sortColumn,
           t: new Date().getTime(),
@@ -211,7 +238,14 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
             this.showFavoritesOnly,
             this.showLoadedFilamentOnly,
             this.filterByMaterialCategory,
-            this.filterByStorageLocation
+            this.filterByStorageLocation,
+            this.filterByColorPatterns.length
+              ? this.filterByColorPatterns
+              : undefined,
+            this.filterByFinishTypes.length
+              ? this.filterByFinishTypes
+              : undefined,
+            this.filterByEffects.length ? this.filterByEffects : undefined
           )
           .subscribe(
             (filaments) => {
@@ -436,7 +470,34 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     if (this.includeInactive) count++;
     if (this.filterByMaterialCategory) count++;
     if (this.filterByStorageLocation) count++;
+    count += this.filterByColorPatterns.length;
+    count += this.filterByFinishTypes.length;
+    count += this.filterByEffects.length;
     return count;
+  }
+
+  public toggleColorPattern(pattern: ColorPatternType): void {
+    const idx = this.filterByColorPatterns.indexOf(pattern);
+    if (idx >= 0) this.filterByColorPatterns.splice(idx, 1);
+    else this.filterByColorPatterns.push(pattern);
+    this.currentPage = 1;
+    this.updateFilter();
+  }
+
+  public toggleFinishType(finish: FilamentFinishType): void {
+    const idx = this.filterByFinishTypes.indexOf(finish);
+    if (idx >= 0) this.filterByFinishTypes.splice(idx, 1);
+    else this.filterByFinishTypes.push(finish);
+    this.currentPage = 1;
+    this.updateFilter();
+  }
+
+  public toggleEffect(effect: FilamentEffect): void {
+    const idx = this.filterByEffects.indexOf(effect);
+    if (idx >= 0) this.filterByEffects.splice(idx, 1);
+    else this.filterByEffects.push(effect);
+    this.currentPage = 1;
+    this.updateFilter();
   }
 
   public resetFilters(): void {
@@ -446,6 +507,9 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     this.includeInactive = false;
     this.filterByMaterialCategory = '';
     this.filterByStorageLocation = '';
+    this.filterByColorPatterns = [];
+    this.filterByFinishTypes = [];
+    this.filterByEffects = [];
     this.currentPage = 1;
     this.updateFilter();
   }

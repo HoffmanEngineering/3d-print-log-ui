@@ -85,6 +85,7 @@
         [matBadge]="activeFilterCount || null"
         matBadgeColor="accent"
         matBadgeSize="small"
+        [matBadgeHidden]="activeFilterCount === 0"
         [attr.aria-expanded]="isFilterPanelOpen"
         aria-controls="filter-panel"
         (click)="toggleFilterPanel()"
@@ -92,6 +93,18 @@
         <mat-icon>{{ isFilterPanelOpen ? 'expand_less' : 'tune' }}</mat-icon>
         Filters
       </button>
+      @if (activeFilterCount > 0) {
+        <button
+          mat-button
+          type="button"
+          class="clear-filters-btn"
+          (click)="resetFilters()"
+          matTooltip="Clear all filters"
+        >
+          <mat-icon>close</mat-icon>
+          Clear Filters
+        </button>
+      }
     </div>
 
     <!-- Row 2: Collapsible filter panel -->
@@ -149,9 +162,78 @@
             <mat-option value="__unassigned__">Unassigned</mat-option>
           </mat-select>
         </mat-form-field>
-        <button type="button" mat-raised-button (click)="resetFilters()">
-          Reset Filters
-        </button>
+        <!-- Color Pattern filter -->
+        <div class="filter-chip-group">
+          <mat-label>Color Pattern</mat-label>
+          <mat-chip-listbox multiple>
+            <mat-chip-option
+              (click)="toggleColorPattern(ColorPatternType.Solid)"
+              [selected]="filterByColorPatterns.includes(ColorPatternType.Solid)">
+              Solid
+            </mat-chip-option>
+            <mat-chip-option
+              (click)="toggleColorPattern(ColorPatternType.Multi)"
+              [selected]="filterByColorPatterns.includes(ColorPatternType.Multi)">
+              Multi-Color
+            </mat-chip-option>
+            <mat-chip-option
+              (click)="toggleColorPattern(ColorPatternType.Gradient)"
+              [selected]="filterByColorPatterns.includes(ColorPatternType.Gradient)">
+              Gradient
+            </mat-chip-option>
+            <mat-chip-option
+              (click)="toggleColorPattern(ColorPatternType.Rainbow)"
+              [selected]="filterByColorPatterns.includes(ColorPatternType.Rainbow)">
+              Rainbow
+            </mat-chip-option>
+          </mat-chip-listbox>
+        </div>
+
+        <!-- Finish Type filter -->
+        <div class="filter-chip-group">
+          <mat-label>Finish</mat-label>
+          <mat-chip-listbox multiple>
+            <mat-chip-option
+              (click)="toggleFinishType(FilamentFinishType.Standard)"
+              [selected]="filterByFinishTypes.includes(FilamentFinishType.Standard)">
+              Standard
+            </mat-chip-option>
+            <mat-chip-option
+              (click)="toggleFinishType(FilamentFinishType.Silk)"
+              [selected]="filterByFinishTypes.includes(FilamentFinishType.Silk)">
+              Silk / Glossy
+            </mat-chip-option>
+            <mat-chip-option
+              (click)="toggleFinishType(FilamentFinishType.Matte)"
+              [selected]="filterByFinishTypes.includes(FilamentFinishType.Matte)">
+              Matte / Satin
+            </mat-chip-option>
+          </mat-chip-listbox>
+        </div>
+
+        <!-- Effects filter -->
+        <div class="filter-chip-group">
+          <mat-label>Effects</mat-label>
+          <mat-chip-listbox multiple>
+            @for (effect of [
+              { value: FilamentEffect.Sparkle,     label: 'Sparkle' },
+              { value: FilamentEffect.GlowInDark,  label: 'Glow-in-Dark' },
+              { value: FilamentEffect.Translucent, label: 'Translucent' },
+              { value: FilamentEffect.CarbonFiber, label: 'Carbon Fiber' },
+              { value: FilamentEffect.WoodFill,    label: 'Wood Fill' },
+              { value: FilamentEffect.MetalFill,   label: 'Metal Fill' },
+              { value: FilamentEffect.Fluorescent, label: 'Fluorescent' },
+              { value: FilamentEffect.GlassFiber,  label: 'Glass Fiber' }
+            ]; track effect.value) {
+              <mat-chip-option
+                (click)="toggleEffect(effect.value)"
+                [selected]="filterByEffects.includes(effect.value)">
+                {{ effect.label }}
+              </mat-chip-option>
+            }
+          </mat-chip-listbox>
+        </div>
+
       </div>
     </div>
   </div>

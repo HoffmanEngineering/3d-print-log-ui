@@ -59,7 +59,7 @@ Thumbs.db
 cypress.env.json
 
 # Internal planning and design docs — keep local, not for the public repo
-docs/
+/docs/
 
 # Git worktrees
 .worktrees/

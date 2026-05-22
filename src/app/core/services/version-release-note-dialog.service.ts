@@ -28,6 +28,31 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.41.0': {
+      title: '1.41.0 - Multi-Color Materials',
+      body: `<p>
+<strong>Multi-Color Material Support</strong> is here! Materials now support color patterns (solid, multi, gradient, and rainbow), finish types (standard, silk, and matte), and special effects (sparkle, glow-in-the-dark, translucent, carbon fiber, wood fill, metal fill, fluorescent, and glass fiber). Swatches throughout the app now render as rich gradient previews that reflect your filament's actual appearance, including the materials list, print list, printer list, and print detail pages.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.40.0': {
       title: '1.40.0 - Open Source',
       body: `<p>

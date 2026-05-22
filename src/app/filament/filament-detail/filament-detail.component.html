@@ -244,8 +244,11 @@
         <!-- Effects chips -->
         <div fxFlex="grow" fxFlexFill>
           <h3 style="margin-bottom: 8px">Effects</h3>
-          <div
-            style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px"
+          <mat-chip-listbox
+            multiple
+            style="margin-bottom: 16px"
+            [value]="filamentForm.get('effects')!.value ?? []"
+            (change)="onEffectsChange($event)"
           >
             @for (
               effect of [
@@ -260,16 +263,11 @@
               ];
               track effect.value
             ) {
-              <mat-chip-option
-                [selected]="
-                  filamentForm.get('effects')!.value?.includes(effect.value)
-                "
-                (click)="toggleEffect(effect.value)"
-              >
+              <mat-chip-option [value]="effect.value">
                 {{ effect.label }}
               </mat-chip-option>
             }
-          </div>
+          </mat-chip-listbox>
         </div>
 
         <!-- Live spool preview -->

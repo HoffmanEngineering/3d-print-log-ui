@@ -39,6 +39,7 @@ import {
 } from '../../core/services/filament.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 import { MatDialog } from '@angular/material/dialog';
+import { MatChipListboxChange } from '@angular/material/chips';
 import {
   QrLabelDialogComponent,
   QrLabelDialogData,
@@ -556,13 +557,8 @@ export class FilamentDetailComponent
     );
   }
 
-  toggleEffect(effect: FilamentEffect): void {
-    const current: FilamentEffect[] =
-      this.filamentForm.get('effects')!.value ?? [];
-    const idx = current.indexOf(effect);
-    const updated =
-      idx >= 0 ? current.filter((e) => e !== effect) : [...current, effect];
-    this.filamentForm.get('effects')!.setValue(updated);
+  onEffectsChange(event: MatChipListboxChange): void {
+    this.filamentForm.get('effects')!.setValue(event.value ?? []);
   }
 
   onSubmit() {

@@ -17,7 +17,6 @@ import {
   NotificationType,
   UnreadCountResponse,
 } from '../types/notification';
-import moment from 'moment';
 
 /**
  * Get the Material icon name for a notification type.
@@ -171,7 +170,7 @@ export class NotificationService {
           // Map dates from strings to Date objects
           items: response.items.map((notification) => ({
             ...notification,
-            createdDate: moment.utc(notification.createdDate).toDate(),
+            createdDate: new Date(notification.createdDate),
           })),
         }))
       );

@@ -5,7 +5,6 @@ import {
 } from './services/print-statistics.service';
 
 import { Title } from '@angular/platform-browser';
-import moment from 'moment';
 import {
   PrinterService,
   PrinterSummary,
@@ -95,36 +94,40 @@ export class AnalyticsComponent implements OnInit {
   }
 
   getDateSelection(): { fromDate: Date; toDate: Date } {
-    let fromDate: Date | null = null;
-    let toDate: Date | null = null;
+    const endOfToday = (): Date => {
+      const d = new Date();
+      d.setHours(23, 59, 59, 999);
+      return d;
+    };
+    const startOfDaysAgo = (n: number): Date => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    };
 
     switch (this.dateSelection) {
       case AnalyticTimeSelection.Today:
-        toDate = moment().endOf('day').toDate();
-        fromDate = moment().startOf('day').toDate();
-        break;
-      case AnalyticTimeSelection.Yesterday:
-        toDate = moment().subtract(1, 'days').endOf('day').toDate();
-        fromDate = moment().subtract(1, 'days').startOf('day').toDate();
-        break;
+        return { fromDate: startOfDaysAgo(0), toDate: endOfToday() };
+      case AnalyticTimeSelection.Yesterday: {
+        const from = startOfDaysAgo(1);
+        const to = new Date(from);
+        to.setHours(23, 59, 59, 999);
+        return { fromDate: from, toDate: to };
+      }
       case AnalyticTimeSelection.Last7Days:
-        toDate = moment().endOf('day').toDate();
-        fromDate = moment().subtract(6, 'days').startOf('day').toDate();
-        break;
+        return { fromDate: startOfDaysAgo(6), toDate: endOfToday() };
       case AnalyticTimeSelection.Last30Days:
-        toDate = moment().endOf('day').toDate();
-        fromDate = moment().subtract(29, 'days').startOf('day').toDate();
-        break;
+        return { fromDate: startOfDaysAgo(29), toDate: endOfToday() };
       case AnalyticTimeSelection.Last365Days:
-        toDate = moment().endOf('day').toDate();
-        fromDate = moment().subtract(364, 'days').startOf('day').toDate();
-        break;
+        return { fromDate: startOfDaysAgo(364), toDate: endOfToday() };
       case AnalyticTimeSelection.AllTime:
-        toDate = moment().endOf('day').toDate();
-        fromDate = moment('1901-01-01T00:00:00.000').toDate();
-        break;
+        return {
+          fromDate: new Date('1901-01-01T00:00:00.000'),
+          toDate: endOfToday(),
+        };
+      default:
+        return { fromDate: startOfDaysAgo(29), toDate: endOfToday() };
     }
-
-    return { fromDate, toDate };
   }
 }

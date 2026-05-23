@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import moment from 'moment';
 import { PrintSummary, PrintStatus } from 'src/app/core/services/print.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -89,7 +88,7 @@ export class PrintCardComponent {
           : (print.estimatedPrintTimeInSeconds ?? 0) > 0
             ? print.estimatedPrintTimeInSeconds!
             : 0;
-      return moment(print.startDate).add(printTime, 'seconds').toDate();
+      return new Date(new Date(print.startDate).getTime() + printTime * 1000);
     }
     return null;
   }

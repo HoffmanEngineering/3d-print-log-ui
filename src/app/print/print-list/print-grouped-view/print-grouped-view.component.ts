@@ -16,7 +16,6 @@ import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
-import moment from 'moment';
 import currency from 'currency.js';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
@@ -290,7 +289,7 @@ export class PrintGroupedViewComponent implements OnInit {
           : print.estimatedPrintTimeInSeconds > 0
             ? print.estimatedPrintTimeInSeconds
             : 0;
-      return moment(print.startDate).add(printTime, 'seconds').toDate();
+      return new Date(new Date(print.startDate).getTime() + printTime * 1000);
     }
     return null;
   }

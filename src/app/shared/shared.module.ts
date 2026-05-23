@@ -3,14 +3,13 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -45,6 +44,7 @@ import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
 import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog/parser-unavailable-dialog.component';
 import { DurationPipe } from './pipes/duration.pipe';
 import { HumanizePipe } from './pipes/humanize.pipe';
+import { LocaleDatePipe } from './pipes/locale-date.pipe';
 import { MaterialNamePipe } from './pipes/material-name.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
@@ -83,6 +83,7 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     DonutChartComponent,
     CommentComponent,
     HumanizePipe,
+    LocaleDatePipe,
     SimpleDialogComponent,
     ParserUnavailableDialogComponent,
     MaterialNamePipe,
@@ -156,7 +157,7 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatMomentDateModule,
+    MatNativeDateModule,
     MatPaginatorModule,
     MatDividerModule,
     FlexLayoutModule,
@@ -185,6 +186,7 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     DonutChartComponent,
     CommentComponent,
     HumanizePipe,
+    LocaleDatePipe,
     MaterialNamePipe,
     FilamentSearchModalComponent,
     AccountDeactivationBannerComponent,
@@ -204,6 +206,9 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     FilamentUsageSummaryComponent,
     AuthImagePipe,
     FilamentColorSwatchStylePipe,
+  ],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useFactory: () => navigator.language },
   ],
 })
 export class SharedModule {}

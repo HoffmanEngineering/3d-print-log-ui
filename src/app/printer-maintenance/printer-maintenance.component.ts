@@ -5,7 +5,6 @@ import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash';
-import moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { EMPTY_GUID } from '../core/services/print.service';
@@ -285,7 +284,11 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
     this.entries = [
       {
         id: EMPTY_GUID,
-        date: moment().startOf('day').toDate().toISOString(),
+        date: (() => {
+          const d = new Date();
+          d.setHours(0, 0, 0, 0);
+          return d;
+        })().toISOString(),
         done: false,
         printerId: null,
         printer: null,

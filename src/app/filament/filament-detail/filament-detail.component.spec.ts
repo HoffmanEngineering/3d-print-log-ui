@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatMomentDateModule } from '@angular/material-moment-adapter';
+import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -60,7 +60,7 @@ describe('FilamentDetailComponent', () => {
         MatSelectModule,
         MatDatepickerModule,
         MatCheckboxModule,
-        MatMomentDateModule,
+        MatNativeDateModule,
         MatAutocompleteModule,
         MatButtonToggleModule,
         MatChipsModule,
@@ -70,6 +70,7 @@ describe('FilamentDetailComponent', () => {
         { provide: ToastrService, useValue: mockToastrservice },
         { provide: UserSettingService, useValue: mockUserSettingService },
         { provide: LoggingService, useValue: mockLogger },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
         {
           provide: ActivatedRoute,
           useValue: {

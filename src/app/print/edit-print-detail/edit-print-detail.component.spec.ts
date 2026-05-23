@@ -20,7 +20,7 @@ import {
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { EditPrintDetailComponent } from './edit-print-detail.component';
 
-import { MatMomentDateModule } from '@angular/material-moment-adapter';
+import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -103,7 +103,7 @@ describe('EditPrintDetailComponent', () => {
         MatInputModule,
         MatSelectModule,
         MatDatepickerModule,
-        MatMomentDateModule,
+        MatNativeDateModule,
         MatCheckboxModule,
         MatDialogModule,
         FilamentColorSwatchStylePipe,
@@ -121,6 +121,7 @@ describe('EditPrintDetailComponent', () => {
         },
         { provide: LoggingService, useValue: mockLogger },
         { provide: SubscriptionService, useValue: mockSubscriptionService },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
         {
           provide: ActivatedRoute,
           useValue: {

@@ -5,7 +5,6 @@ import {
   OnInit,
   SimpleChanges,
 } from '@angular/core';
-import moment from 'moment';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
 
 @Component({
@@ -45,11 +44,13 @@ export class StatsComponent implements OnChanges {
     }
   }
   calculateTotalFilamentUsageLast30Days() {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
       .getUsersTotalFilamentUsage(
         this.userId,
-        moment().startOf('day').subtract(30, 'days').toDate(),
-        moment().endOf('day').toDate()
+        new Date(new Date().setHours(0, 0, 0, 0) - 30 * 86_400_000),
+        endOfToday
       )
       .subscribe((result) => {
         const totalFilamentUsage = +(result ?? 0) / 1000;
@@ -57,53 +58,49 @@ export class StatsComponent implements OnChanges {
       });
   }
   calculatePrintCountTotalFilamentUsage() {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
-      .getUsersTotalFilamentUsage(
-        this.userId,
-        this.MIN_DATE,
-        moment().endOf('day').toDate()
-      )
+      .getUsersTotalFilamentUsage(this.userId, this.MIN_DATE, endOfToday)
       .subscribe((result) => {
         const totalFilamentUsage = +(result ?? 0) / 1000;
         this.totalFilamentUsageInG = `${totalFilamentUsage} (g)`;
       });
   }
   calculateTotalPrintTimeLast30Days() {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
       .getUsersTotalPrintTimeInSeconds(
         this.userId,
-        moment().startOf('day').subtract(30, 'days').toDate(),
-        moment().endOf('day').toDate()
+        new Date(new Date().setHours(0, 0, 0, 0) - 30 * 86_400_000),
+        endOfToday
       )
       .subscribe((result) => {
-        const duration = moment.duration(result, 'seconds');
-
-        const durationString = this.getTotalDurationString(duration);
+        const durationString = this.formatTotalDuration(result);
 
         this.totalPrintTimeLast30Days = durationString;
       });
   }
   calculateTotalPrintTime() {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
-      .getUsersTotalPrintTimeInSeconds(
-        this.userId,
-        this.MIN_DATE,
-        moment().endOf('day').toDate()
-      )
+      .getUsersTotalPrintTimeInSeconds(this.userId, this.MIN_DATE, endOfToday)
       .subscribe((result) => {
-        const duration = moment.duration(result, 'seconds');
-
-        const durationString = this.getTotalDurationString(duration);
+        const durationString = this.formatTotalDuration(result);
 
         this.totalPrintTimeTotal = durationString;
       });
   }
   calculatePrintCountLast30Days() {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
       .getUsersPrintCount(
         this.userId,
-        moment().startOf('day').subtract(30, 'days').toDate(),
-        moment().endOf('day').toDate()
+        new Date(new Date().setHours(0, 0, 0, 0) - 30 * 86_400_000),
+        endOfToday
       )
       .subscribe((result) => {
         this.printCountLast30Days = result;
@@ -121,40 +118,34 @@ export class StatsComponent implements OnChanges {
   }
 
   calculatePrintCount() {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
-      .getUsersPrintCount(
-        this.userId,
-        this.MIN_DATE,
-        moment().endOf('day').toDate()
-      )
+      .getUsersPrintCount(this.userId, this.MIN_DATE, endOfToday)
       .subscribe((result) => {
         this.printCountTotal = result;
       });
   }
 
-  private getTotalDurationString(duration: moment.Duration) {
-    let durationString = '';
-    if (duration.years() > 0) {
-      durationString += `${duration.years()}\xa0year(s) `;
-    }
-    if (duration.months() > 0) {
-      durationString += `${duration.months()}\xa0month(s) `;
-    }
-    if (duration.days() > 0) {
-      durationString += `${duration.days()}\xa0day(s) `;
-    }
-    if (duration.hours() > 0) {
-      durationString += `${duration.hours()}\xa0hour(s) `;
-    }
-    if (duration.minutes() > 0) {
-      durationString += `${duration.minutes()}\xa0minute(s) `;
-    }
-    if (duration.seconds() > 0) {
-      durationString += `${duration.seconds()}\xa0second(s) `;
-    }
-    if (durationString === '') {
-      durationString = 'No Print Time Recorded';
-    }
-    return durationString;
+  private formatTotalDuration(totalSeconds: number): string {
+    const years = Math.floor(totalSeconds / (365 * 86_400));
+    let remaining = totalSeconds % (365 * 86_400);
+    const months = Math.floor(remaining / (30 * 86_400));
+    remaining = remaining % (30 * 86_400);
+    const days = Math.floor(remaining / 86_400);
+    remaining = remaining % 86_400;
+    const hours = Math.floor(remaining / 3600);
+    const minutes = Math.floor((remaining % 3600) / 60);
+    const seconds = Math.floor(remaining % 60);
+
+    let result = '';
+    if (years > 0) result += `${years}\xa0year(s) `;
+    if (months > 0) result += `${months}\xa0month(s) `;
+    if (days > 0) result += `${days}\xa0day(s) `;
+    if (hours > 0) result += `${hours}\xa0hour(s) `;
+    if (minutes > 0) result += `${minutes}\xa0minute(s) `;
+    if (seconds > 0) result += `${seconds}\xa0second(s) `;
+    if (result === '') result = 'No Print Time Recorded';
+    return result;
   }
 }

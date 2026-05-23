@@ -1,6 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import moment from 'moment';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { PrintStatus } from './print.service';
@@ -61,7 +60,7 @@ export class FeedService {
           for (const print of results) {
             mappedResult.push({
               ...print,
-              createdDate: moment(print.createdDate).toDate(),
+              createdDate: new Date(print.createdDate),
             });
           }
 

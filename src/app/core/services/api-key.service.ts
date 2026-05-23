@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import moment from 'moment';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -56,8 +55,8 @@ export class ApiKeyService {
         return response.map((key) => {
           return {
             ...key,
-            createdDate: moment.utc(key.createdDate).toDate(),
-            updatedDate: moment.utc(key.updatedDate).toDate(),
+            createdDate: new Date(key.createdDate),
+            updatedDate: new Date(key.updatedDate),
           };
         });
       })

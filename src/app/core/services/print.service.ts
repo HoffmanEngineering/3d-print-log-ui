@@ -5,8 +5,6 @@ import { catchError, concatMap, map, switchMap, take } from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { environment } from 'src/environments/environment';
 
-import moment from 'moment';
-
 import {
   ImageResizerService,
   IResizeImageOptions,
@@ -334,12 +332,8 @@ export class PrintService {
         const comments: Comment[] = [];
         for (const comment of newPrint.comments) {
           const formattedComment: Comment = { ...comment };
-          formattedComment.createdDate = moment
-            .utc(comment.createdDate)
-            .toDate();
-          formattedComment.updatedDate = moment
-            .utc(comment.updatedDate)
-            .toDate();
+          formattedComment.createdDate = new Date(comment.createdDate);
+          formattedComment.updatedDate = new Date(comment.updatedDate);
           comments.push(formattedComment);
         }
 
@@ -353,9 +347,7 @@ export class PrintService {
           printTimeInSeconds: newPrint.printTimeInSeconds,
           printerId: newPrint.printerId,
           printer: newPrint.printer,
-          startDate: newPrint.startDate
-            ? moment(newPrint.startDate).toDate()
-            : null,
+          startDate: newPrint.startDate ? new Date(newPrint.startDate) : null,
           status: newPrint.status,
           title: newPrint.title,
           url: newPrint.url,
@@ -568,8 +560,8 @@ export class PrintService {
     return this.http.post<Comment>(url, dto).pipe(
       map((comment) => {
         const formattedComment: Comment = { ...comment };
-        formattedComment.createdDate = moment.utc(comment.createdDate).toDate();
-        formattedComment.updatedDate = moment.utc(comment.updatedDate).toDate();
+        formattedComment.createdDate = new Date(comment.createdDate);
+        formattedComment.updatedDate = new Date(comment.updatedDate);
 
         return formattedComment;
       })

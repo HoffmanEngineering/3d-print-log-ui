@@ -6,7 +6,6 @@ import { Sort } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
-import moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
@@ -674,7 +673,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
             ? print.estimatedPrintTimeInSeconds
             : 0;
 
-      return moment(print.startDate).add(printTime, 'seconds').toDate();
+      return new Date(new Date(print.startDate).getTime() + printTime * 1000);
     }
 
     return null;

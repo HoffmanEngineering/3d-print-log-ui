@@ -15,7 +15,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import moment from 'moment';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import parse from 'parse-duration';
 import { environment } from 'src/environments/environment';
@@ -869,17 +868,17 @@ export class EditPrintDetailComponent
       startDate: [
         print
           ? print.startDate
-            ? moment(print.startDate).toDate()
-            : moment().toDate()
-          : moment().toDate(),
+            ? new Date(print.startDate)
+            : new Date()
+          : new Date(),
         Validators.required,
       ],
       startTime: [
         print
           ? print.startDate
-            ? moment(print.startDate).format('HH:mm:ss')
-            : moment().format('HH:mm:ss')
-          : moment().format('HH:mm:ss'),
+            ? new Date(print.startDate).toTimeString().slice(0, 8)
+            : new Date().toTimeString().slice(0, 8)
+          : new Date().toTimeString().slice(0, 8),
         Validators.required,
       ],
       estimatedPrintTimeInSeconds: [
@@ -1735,28 +1734,16 @@ export class EditPrintDetailComponent
       return '';
     }
 
-    const duration = moment.duration(seconds, 'seconds');
+    const days = Math.floor(seconds / 86_400);
+    const hours = Math.floor((seconds % 86_400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
     let result = '';
-
-    if (Math.floor(duration.asDays()) > 0) {
-      result += `${Math.floor(duration.asDays())}d `;
-    }
-
-    if (duration.hours() > 0) {
-      result += `${duration.hours()}h `;
-    }
-
-    if (duration.minutes() > 0) {
-      result += `${duration.minutes()}m `;
-    }
-
-    if (duration.seconds() > 0) {
-      result += `${duration.seconds()}s `;
-    }
-
-    if (duration.milliseconds() > 0) {
-      result += `${duration.milliseconds()}ms `;
-    }
+    if (days > 0) result += `${days}d `;
+    if (hours > 0) result += `${hours}h `;
+    if (minutes > 0) result += `${minutes}m `;
+    if (secs > 0) result += `${secs}s `;
     return result;
   }
 
@@ -1913,7 +1900,7 @@ export class EditPrintDetailComponent
   public setStartDateToNow() {
     const now = new Date();
     this.printForm.get('startDate').setValue(now);
-    this.printForm.get('startTime').setValue(moment(now).format('HH:mm:ss'));
+    this.printForm.get('startTime').setValue(now.toTimeString().slice(0, 8));
   }
 
   public getEstimatedCompletedDate() {
@@ -1936,9 +1923,9 @@ export class EditPrintDetailComponent
       return;
     }
 
-    this.estimatedCompletedDate = moment(startDate)
-      .add(estimatedPrintTimeInSeconds, 's')
-      .toDate();
+    this.estimatedCompletedDate = new Date(
+      startDate.getTime() + estimatedPrintTimeInSeconds * 1000
+    );
   }
 
   getActualCompletedDate() {
@@ -1961,16 +1948,16 @@ export class EditPrintDetailComponent
       return;
     }
 
-    this.actualCompletedDate = moment(startDate)
-      .add(printTimeInSeconds, 's')
-      .toDate();
+    this.actualCompletedDate = new Date(
+      startDate.getTime() + printTimeInSeconds * 1000
+    );
 
     // Seed raw values from the computed date on initial load (before any user interaction)
     if (this.rawCompletionDate === null && this.rawCompletionTime === null) {
       this.rawCompletionDate = new Date(this.actualCompletedDate);
-      this.rawCompletionTime = moment(this.actualCompletedDate).format(
-        'HH:mm:ss'
-      );
+      this.rawCompletionTime = this.actualCompletedDate
+        .toTimeString()
+        .slice(0, 8);
     }
   }
 
@@ -1981,7 +1968,9 @@ export class EditPrintDetailComponent
       return '';
     }
 
-    const difference = Math.round(moment(newDate).diff(startDate, 'ms') / 1000);
+    const difference = Math.round(
+      (new Date(newDate).getTime() - startDate.getTime()) / 1000
+    );
 
     this.printForm.controls.printTimeInSeconds.setValue(
       this.parseIntoString(difference)
@@ -1992,7 +1981,7 @@ export class EditPrintDetailComponent
   public setActualCompletedDateToNow() {
     const now = new Date();
     this.rawCompletionDate = now;
-    this.rawCompletionTime = moment(now).format('HH:mm:ss');
+    this.rawCompletionTime = now.toTimeString().slice(0, 8);
     this.updateActualCompletedDate(now);
   }
 
@@ -2003,7 +1992,7 @@ export class EditPrintDetailComponent
 
   public getEstimatedCompletedTimeOnly(): string {
     return this.estimatedCompletedDate
-      ? moment(this.estimatedCompletedDate).format('HH:mm:ss')
+      ? this.estimatedCompletedDate.toTimeString().slice(0, 8)
       : '';
   }
 
@@ -2032,11 +2021,8 @@ export class EditPrintDetailComponent
       ? existingTime.split(':').map(Number)
       : [0, 0, 0];
 
-    const combinedDateTime = moment(newDate)
-      .hour(hours)
-      .minute(minutes)
-      .second(seconds)
-      .toDate();
+    const combinedDateTime = new Date(newDate);
+    combinedDateTime.setHours(hours, minutes, seconds, 0);
 
     this.updateActualCompletedDate(combinedDateTime);
   }
@@ -2057,11 +2043,8 @@ export class EditPrintDetailComponent
 
     const [hours, minutes, seconds] = newTime.split(':').map(Number);
 
-    const combinedDateTime = moment(existingDate)
-      .hour(hours)
-      .minute(minutes)
-      .second(seconds || 0)
-      .toDate();
+    const combinedDateTime = new Date(existingDate);
+    combinedDateTime.setHours(hours, minutes, seconds || 0, 0);
 
     this.updateActualCompletedDate(combinedDateTime);
   }
@@ -2077,11 +2060,8 @@ export class EditPrintDetailComponent
 
     const [hours, minutes, seconds] = time.split(':').map(Number);
 
-    return moment(date)
-      .hour(hours)
-      .minute(minutes)
-      .second(seconds || 0)
-      .millisecond(0)
-      .toDate();
+    const combined = new Date(date);
+    combined.setHours(hours, minutes, seconds || 0, 0);
+    return combined;
   }
 }

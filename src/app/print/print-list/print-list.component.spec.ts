@@ -16,6 +16,7 @@ import {
 } from 'src/app/core/services/print.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
+import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
 import { PrintListComponent } from './print-list.component';
@@ -74,7 +75,7 @@ describe('PrintListComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [PrintListComponent, DurationPipe],
+      declarations: [PrintListComponent, DurationPipe, LocaleDatePipe],
       imports: [
         RouterTestingModule,
         MatDialogModule,

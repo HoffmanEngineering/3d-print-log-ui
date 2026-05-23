@@ -268,7 +268,7 @@
         >
           Start Date
         </th>
-        <td mat-cell *matCellDef="let print">{{ print.startDate | date }}</td>
+        <td mat-cell *matCellDef="let print">{{ print.startDate | localeDate }}</td>
       </ng-container>
       <ng-container matColumnDef="start-time">
         <th
@@ -279,7 +279,7 @@
           Start Time
         </th>
         <td mat-cell *matCellDef="let print">
-          {{ print.startDate | date: 'mediumTime' }}
+          {{ print.startDate | localeDate: 'time' }}
         </td>
       </ng-container>
       <ng-container matColumnDef="start-date-time">
@@ -291,7 +291,7 @@
           Start Date/Time
         </th>
         <td mat-cell *matCellDef="let print">
-          {{ print.startDate | date: 'medium' }}
+          {{ print.startDate | localeDate: 'datetime' }}
         </td>
       </ng-container>
       <ng-container matColumnDef="end-date">
@@ -303,7 +303,7 @@
               print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
             "
           >
-            {{ getPrintEndDate(print) | date }}
+            {{ getPrintEndDate(print) | localeDate }}
             @if (
               (print.printTimeInSeconds === null ||
                 print.printTimeInSeconds === undefined ||
@@ -325,7 +325,7 @@
               print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
             "
           >
-            {{ getPrintEndDate(print) | date: 'mediumTime' }}
+            {{ getPrintEndDate(print) | localeDate: 'time' }}
             @if (
               (print.printTimeInSeconds === null ||
                 print.printTimeInSeconds === undefined ||
@@ -347,7 +347,7 @@
               print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
             "
           >
-            {{ getPrintEndDate(print) | date: 'medium' }}
+            {{ getPrintEndDate(print) | localeDate: 'datetime' }}
             @if (
               (print.printTimeInSeconds === null ||
                 print.printTimeInSeconds === undefined ||

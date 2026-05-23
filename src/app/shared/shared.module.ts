@@ -207,6 +207,8 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     AuthImagePipe,
     FilamentColorSwatchStylePipe,
   ],
-  providers: [{ provide: MAT_DATE_LOCALE, useValue: navigator.language }],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useFactory: () => navigator.language },
+  ],
 })
 export class SharedModule {}

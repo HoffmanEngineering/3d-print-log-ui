@@ -1,6 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { isFinite } from 'lodash-es';
-import moment from 'moment';
 import { PrintStatistic } from '../services/print-statistics.service';
 
 @Component({
@@ -36,37 +35,24 @@ export class TotalPrintTimeComponent implements OnChanges {
       0
     );
 
-    const duration = moment.duration(totalPrintTimeInSeconds, 'seconds');
+    const years = Math.floor(totalPrintTimeInSeconds / (365 * 86_400));
+    let remaining = totalPrintTimeInSeconds % (365 * 86_400);
+    const months = Math.floor(remaining / (30 * 86_400));
+    remaining = remaining % (30 * 86_400);
+    const days = Math.floor(remaining / 86_400);
+    remaining = remaining % 86_400;
+    const hours = Math.floor(remaining / 3600);
+    const minutes = Math.floor((remaining % 3600) / 60);
+    const seconds = Math.floor(remaining % 60);
 
     let durationString = '';
-
-    if (duration.years() > 0) {
-      durationString += `${duration.years()} year(s) `;
-    }
-
-    if (duration.months() > 0) {
-      durationString += `${duration.months()} month(s) `;
-    }
-
-    if (duration.days() > 0) {
-      durationString += `${duration.days()} day(s) `;
-    }
-
-    if (duration.hours() > 0) {
-      durationString += `${duration.hours()} hour(s) `;
-    }
-
-    if (duration.minutes() > 0) {
-      durationString += `${duration.minutes()} minute(s) `;
-    }
-
-    if (duration.seconds() > 0) {
-      durationString += `${duration.seconds()} second(s) `;
-    }
-
-    if (durationString === '') {
-      durationString = 'No Print Time Recorded';
-    }
+    if (years > 0) durationString += `${years} year(s) `;
+    if (months > 0) durationString += `${months} month(s) `;
+    if (days > 0) durationString += `${days} day(s) `;
+    if (hours > 0) durationString += `${hours} hour(s) `;
+    if (minutes > 0) durationString += `${minutes} minute(s) `;
+    if (seconds > 0) durationString += `${seconds} second(s) `;
+    if (durationString === '') durationString = 'No Print Time Recorded';
 
     this.totalPrintTime = durationString;
   }

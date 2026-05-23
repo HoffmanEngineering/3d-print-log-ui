@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import moment from 'moment';
 
 @Pipe({
   name: 'duration',
@@ -11,28 +10,19 @@ export class DurationPipe implements PipeTransform {
       return '';
     }
 
-    const duration = moment.duration(value, 'seconds');
+    const totalSeconds = Number(value);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const ms = Math.round((totalSeconds % 1) * 1000);
+
     let result = '';
-
-    if (Math.floor(duration.asDays()) > 0) {
-      result += `${Math.floor(duration.asDays())}d `;
-    }
-
-    if (duration.hours() > 0) {
-      result += `${duration.hours()}h `;
-    }
-
-    if (duration.minutes() > 0) {
-      result += `${duration.minutes()}m `;
-    }
-
-    if (duration.seconds() > 0) {
-      result += `${duration.seconds()}s `;
-    }
-
-    if (duration.milliseconds() > 0) {
-      result += `${duration.milliseconds()}ms `;
-    }
+    if (days > 0) result += `${days}d `;
+    if (hours > 0) result += `${hours}h `;
+    if (minutes > 0) result += `${minutes}m `;
+    if (seconds > 0) result += `${seconds}s `;
+    if (ms > 0) result += `${ms}ms `;
     return result;
   }
 }

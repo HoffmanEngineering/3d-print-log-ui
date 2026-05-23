@@ -2,7 +2,6 @@ import { Location } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit, DOCUMENT } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import moment from 'moment';
 import { Subscription } from 'rxjs';
 import {
   AuthService,
@@ -120,7 +119,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
     const title = `${this.print.title} | 3D Print Log`;
     const description = `${this.print.title} printed by ${
       this.user.displayName
-    } on ${moment(this.print.startDate).format('LL')}`;
+    } on ${new Intl.DateTimeFormat(navigator.language, { dateStyle: 'long' }).format(new Date(this.print.startDate))}`;
     const imageUrl = this.selectedImage
       ? `${environment.printLogApiUrl}/api/Prints/${this.print.id}/image/${this.selectedImage.id}`
       : '';

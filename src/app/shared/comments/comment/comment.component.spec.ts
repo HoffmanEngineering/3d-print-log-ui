@@ -4,6 +4,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 
 import { HumanizePipe } from '../../pipes/humanize.pipe';
+import { LocaleDatePipe } from '../../pipes/locale-date.pipe';
 import { CommentComponent } from './comment.component';
 import { MatMenuModule } from '@angular/material/menu';
 
@@ -34,7 +35,7 @@ describe('CommentComponent', () => {
 
   beforeEach(waitForAsync(async () => {
     await TestBed.configureTestingModule({
-      declarations: [CommentComponent, HumanizePipe],
+      declarations: [CommentComponent, HumanizePipe, LocaleDatePipe],
       imports: [MatMenuModule, NoopAnimationsModule],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

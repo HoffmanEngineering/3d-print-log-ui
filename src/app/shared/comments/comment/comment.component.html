@@ -8,7 +8,7 @@
         comment().createdBy.displayName
       }}</a>
       <span
-        matTooltip="{{ comment().createdDate | date: 'medium' }}"
+        matTooltip="{{ comment().createdDate | localeDate: 'datetime' }}"
         style="padding-left: 5px"
         >{{ comment().createdDate | humanize }}</span
       >

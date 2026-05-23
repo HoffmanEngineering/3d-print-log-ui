@@ -10,13 +10,13 @@
       <mat-card-subtitle>
         Printed by
         <a [routerLink]="['/users', userId]">{{ userName }}</a> on
-        {{ print.startDate | date: 'longDate' }}
+        {{ print.startDate | localeDate: 'long' }}
       </mat-card-subtitle>
     }
     @if (!userId || !userName) {
       <mat-card-subtitle>
         Printed on
-        {{ print.startDate | date: 'longDate' }}
+        {{ print.startDate | localeDate: 'long' }}
       </mat-card-subtitle>
     }
   </mat-card-header>

@@ -785,18 +785,21 @@
             [filamentUsage]="row.item.filamentUsage ?? []"
             [defaultFilamentPrice]="defaultFilamentPriceSetting()?.value"
             [currencySymbol]="preferredCurrencySymbolSetting()?.value ?? '$'"
+            [preferredUnit]="preferredUnit()"
           />
         } @else if (row.kind === 'expanded-print') {
           <app-filament-usage-summary
             [filamentUsage]="row.print.filamentUsage ?? []"
             [defaultFilamentPrice]="defaultFilamentPriceSetting()?.value"
             [currencySymbol]="preferredCurrencySymbolSetting()?.value ?? '$'"
+            [preferredUnit]="preferredUnit()"
           />
         } @else if (row.kind === 'print') {
           <app-filament-usage-summary
             [filamentUsage]="row.item.print?.filamentUsage ?? []"
             [defaultFilamentPrice]="defaultFilamentPriceSetting()?.value"
             [currencySymbol]="preferredCurrencySymbolSetting()?.value ?? '$'"
+            [preferredUnit]="preferredUnit()"
           />
         }
       </td>

@@ -27,6 +27,7 @@ import {
   ElectricityCostValid,
   FilamentPriceValid,
   PrintFilamentSummaryDto,
+  PrintFilamentSourceMeasurement,
   PrintService,
   PrintStatus,
   PrintSummary,
@@ -88,6 +89,9 @@ export class PrintGroupedViewComponent implements OnInit {
   preferredCurrencySymbolSetting = input<UserSetting | null>(null);
   defaultElectricityKwhRateSetting = input<UserSetting | null>(null);
   defaultElectricityWattageSetting = input<UserSetting | null>(null);
+  preferredUnit = input<PrintFilamentSourceMeasurement>(
+    PrintFilamentSourceMeasurement.Weight
+  );
 
   // ---- Internal state ----
   feed = signal<PagedList<GroupedFeedItemDto> | null>(null);

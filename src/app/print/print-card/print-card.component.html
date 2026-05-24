@@ -63,13 +63,14 @@
                       ></div>
                       <span class="material-name">
                         {{ fu.filament?.displayName }}
-                        @if (fu.amountMg !== null && fu.amountMg > 0) {
-                          ({{ fu.amountMg / 1000 | number: '1.0-1' }}g)
-                        } @else if (
-                          fu.estimatedAmountMg !== null &&
-                          fu.estimatedAmountMg > 0
-                        ) {
-                          ({{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }}g*)
+                        @if (getPreferredDisplay(fu); as display) {
+                          <span
+                            [matTooltip]="display.isFallback
+                              ? display.fallbackTooltip
+                              : (display.isEstimated ? '* indicates Estimated Material Usage' : null)"
+                          >
+                            ({{ display.displayString }}@if (display.isEstimated) { * })
+                          </span>
                         }
                       </span>
                     } @else {

@@ -23,6 +23,7 @@ import {
   ElectricityCost,
   PrintDetail,
   PrintFilamentSourceMeasurement,
+  PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
 } from '../../core/services/print.service';
@@ -31,6 +32,7 @@ import {
   UserSettingService,
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
+import { FilamentPreferredDisplayResult } from 'src/app/shared/utils/filament-display.utils';
 
 export interface PrintImageValue {
   id?: number;
@@ -217,5 +219,153 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
       defaultWattageW: this.defaultElectricityWattageSetting?.value,
       currencySymbol: this.preferredCurrencySymbolSetting?.value ?? '$',
     });
+  }
+
+  getPreferredActualDisplay(
+    fu: PrintFilamentSummaryDto
+  ): FilamentPreferredDisplayResult | null {
+    const preferred = this.preferredFilamentUnit();
+    if (
+      preferred === PrintFilamentSourceMeasurement.Weight &&
+      (fu.amountMg ?? 0) > 0
+    ) {
+      return {
+        displayString: `${(fu.amountMg / 1000).toFixed(1)} grams`,
+        isEstimated: false,
+        isFallback: false,
+        fallbackTooltip: null,
+      };
+    }
+    if (
+      preferred === PrintFilamentSourceMeasurement.Length &&
+      (fu.lengthInM ?? 0) > 0
+    ) {
+      return {
+        displayString: `${fu.lengthInM.toFixed(1)} meters`,
+        isEstimated: false,
+        isFallback: false,
+        fallbackTooltip: null,
+      };
+    }
+    if (
+      preferred === PrintFilamentSourceMeasurement.Volume &&
+      (fu.volumeMl ?? 0) > 0
+    ) {
+      return {
+        displayString: `${fu.volumeMl.toFixed(1)} ml`,
+        isEstimated: false,
+        isFallback: false,
+        fallbackTooltip: null,
+      };
+    }
+    // Fallback to source actual value
+    if (
+      fu.source === PrintFilamentSourceMeasurement.Weight &&
+      (fu.amountMg ?? 0) > 0
+    ) {
+      return {
+        displayString: `${(fu.amountMg / 1000).toFixed(1)} grams`,
+        isEstimated: false,
+        isFallback: true,
+        fallbackTooltip: 'Preferred unit unavailable — showing source unit',
+      };
+    }
+    if (
+      fu.source === PrintFilamentSourceMeasurement.Length &&
+      (fu.lengthInM ?? 0) > 0
+    ) {
+      return {
+        displayString: `${fu.lengthInM.toFixed(1)} meters`,
+        isEstimated: false,
+        isFallback: true,
+        fallbackTooltip: 'Preferred unit unavailable — showing source unit',
+      };
+    }
+    if (
+      fu.source === PrintFilamentSourceMeasurement.Volume &&
+      (fu.volumeMl ?? 0) > 0
+    ) {
+      return {
+        displayString: `${fu.volumeMl.toFixed(1)} ml`,
+        isEstimated: false,
+        isFallback: true,
+        fallbackTooltip: 'Preferred unit unavailable — showing source unit',
+      };
+    }
+    return null;
+  }
+
+  getPreferredEstimatedDisplay(
+    fu: PrintFilamentSummaryDto
+  ): FilamentPreferredDisplayResult | null {
+    const preferred = this.preferredFilamentUnit();
+    if (
+      preferred === PrintFilamentSourceMeasurement.Weight &&
+      (fu.estimatedAmountMg ?? 0) > 0
+    ) {
+      return {
+        displayString: `${(fu.estimatedAmountMg / 1000).toFixed(1)} grams`,
+        isEstimated: true,
+        isFallback: false,
+        fallbackTooltip: null,
+      };
+    }
+    if (
+      preferred === PrintFilamentSourceMeasurement.Length &&
+      (fu.estimatedLengthInM ?? 0) > 0
+    ) {
+      return {
+        displayString: `${fu.estimatedLengthInM.toFixed(1)} meters`,
+        isEstimated: true,
+        isFallback: false,
+        fallbackTooltip: null,
+      };
+    }
+    if (
+      preferred === PrintFilamentSourceMeasurement.Volume &&
+      (fu.estimatedVolumeMl ?? 0) > 0
+    ) {
+      return {
+        displayString: `${fu.estimatedVolumeMl.toFixed(1)} ml`,
+        isEstimated: true,
+        isFallback: false,
+        fallbackTooltip: null,
+      };
+    }
+    // Fallback to estimated source value
+    if (
+      fu.estimatedSource === PrintFilamentSourceMeasurement.Weight &&
+      (fu.estimatedAmountMg ?? 0) > 0
+    ) {
+      return {
+        displayString: `${(fu.estimatedAmountMg / 1000).toFixed(1)} grams`,
+        isEstimated: true,
+        isFallback: true,
+        fallbackTooltip: 'Preferred unit unavailable — showing source unit',
+      };
+    }
+    if (
+      fu.estimatedSource === PrintFilamentSourceMeasurement.Length &&
+      (fu.estimatedLengthInM ?? 0) > 0
+    ) {
+      return {
+        displayString: `${fu.estimatedLengthInM.toFixed(1)} meters`,
+        isEstimated: true,
+        isFallback: true,
+        fallbackTooltip: 'Preferred unit unavailable — showing source unit',
+      };
+    }
+    if (
+      fu.estimatedSource === PrintFilamentSourceMeasurement.Volume &&
+      (fu.estimatedVolumeMl ?? 0) > 0
+    ) {
+      return {
+        displayString: `${fu.estimatedVolumeMl.toFixed(1)} ml`,
+        isEstimated: true,
+        isFallback: true,
+        fallbackTooltip: 'Preferred unit unavailable — showing source unit',
+      };
+    }
+    return null;
   }
 }

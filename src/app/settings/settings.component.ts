@@ -48,8 +48,8 @@ export class SettingsComponent implements OnInit {
   public defaultElectricityKwhRateSettingOnLoad: UserSetting | null = null;
   public defaultElectricityWattageSettingOnLoad: UserSetting | null = null;
   public preferredFilamentDisplayUnitSettingOnLoad: UserSetting | null = null;
-  public preferredFilamentDisplayUnit: PrintFilamentSourceMeasurement =
-    PrintFilamentSourceMeasurement.Weight;
+  public preferredFilamentDisplayUnit: PrintFilamentSourceMeasurement | null =
+    null;
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
   public deactivateHasBeenClicked = false;
@@ -167,7 +167,7 @@ export class SettingsComponent implements OnInit {
         .preferredFilamentDisplayUnitSettingOnLoad
         ? (+this.preferredFilamentDisplayUnitSettingOnLoad
             .value as PrintFilamentSourceMeasurement)
-        : PrintFilamentSourceMeasurement.Weight;
+        : null;
     });
 
     this.authService.userProfile$.subscribe((user) => {
@@ -370,7 +370,7 @@ export class SettingsComponent implements OnInit {
       .preferredFilamentDisplayUnitSettingOnLoad
       ? (+this.preferredFilamentDisplayUnitSettingOnLoad
           .value as PrintFilamentSourceMeasurement)
-      : PrintFilamentSourceMeasurement.Weight;
+      : null;
   }
 
   saveDefaultElectricityKwhRate(newRate: string) {

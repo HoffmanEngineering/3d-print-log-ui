@@ -140,6 +140,7 @@
                 <hr />
               }
             }
+            <!-- Legacy weight-only fields: displayed in grams regardless of preferred unit (no length/volume data available) -->
             @if (
               (print.filamentUsageMg !== null && print.filamentUsageMg > 0) ||
               (print.estimatedFilamentUsageMg !== null &&

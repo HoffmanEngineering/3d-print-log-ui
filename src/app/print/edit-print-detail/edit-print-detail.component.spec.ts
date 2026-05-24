@@ -56,7 +56,10 @@ describe('EditPrintDetailComponent', () => {
 
     const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
       'UserSettingService',
-      ['updateUserSetting']
+      ['updateUserSetting', 'getCurrentUsersSettingByType']
+    );
+    mockUserSettingService.getCurrentUsersSettingByType.and.returnValue(
+      Promise.resolve(null)
     );
 
     const mockPrinterPromptService =

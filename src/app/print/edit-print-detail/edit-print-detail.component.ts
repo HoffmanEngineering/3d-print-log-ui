@@ -5,6 +5,7 @@ import {
   OnInit,
   inject,
   DestroyRef,
+  signal,
 } from '@angular/core';
 import {
   AbstractControl,
@@ -161,6 +162,10 @@ export class EditPrintDetailComponent
   };
 
   public isCordova = isCordova;
+
+  public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
+    PrintFilamentSourceMeasurement.Weight
+  );
 
   public printDetail: PrintDetail | null = null;
 
@@ -419,6 +424,18 @@ export class EditPrintDetailComponent
       this.getEstimatedCompletedDate();
       this.getActualCompletedDate();
     });
+
+    this.userSettingService
+      .getCurrentUsersSettingByType(
+        UserSettingType.Prints_PreferredFilamentDisplayUnit
+      )
+      .then((setting) => {
+        if (setting) {
+          this.preferredFilamentUnit.set(
+            +setting.value as PrintFilamentSourceMeasurement
+          );
+        }
+      });
 
     /**
      * Show the Add Printer prompt if needed.
@@ -1895,6 +1912,38 @@ export class EditPrintDetailComponent
     itemTwo: FilamentSummary
   ) {
     return itemOne && itemTwo && itemOne.id === itemTwo.id;
+  }
+
+  getPreferredUnitSecondaryDisplay(
+    formGroup: FilamentUsageFormGroup,
+    isEstimated: boolean
+  ): string | null {
+    const sourceField = isEstimated ? 'estimatedSource' : 'source';
+    const source = formGroup.get(sourceField)
+      ?.value as PrintFilamentSourceMeasurement;
+
+    if (source === this.preferredFilamentUnit()) return null;
+
+    if (
+      this.preferredFilamentUnit() === PrintFilamentSourceMeasurement.Weight
+    ) {
+      const field = isEstimated ? 'estimatedAmountG' : 'amountG';
+      const v = formGroup.get(field)?.value as number | null;
+      return v != null && v > 0 ? `≈ ${v.toFixed(1)}g` : null;
+    }
+
+    if (
+      this.preferredFilamentUnit() === PrintFilamentSourceMeasurement.Length
+    ) {
+      const field = isEstimated ? 'estimatedLengthInM' : 'lengthInM';
+      const v = formGroup.get(field)?.value as number | null;
+      return v != null && v > 0 ? `≈ ${v.toFixed(1)}m` : null;
+    }
+
+    // Volume
+    const field = isEstimated ? 'estimatedVolumeMl' : 'volumeMl';
+    const v = formGroup.get(field)?.value as number | null;
+    return v != null && v > 0 ? `≈ ${v.toFixed(1)}ml` : null;
   }
 
   public setStartDateToNow() {

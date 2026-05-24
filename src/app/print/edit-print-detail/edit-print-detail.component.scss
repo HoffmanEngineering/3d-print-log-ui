@@ -301,6 +301,14 @@ form > div {
   }
 }
 
+.preferred-unit-hint {
+  font-size: 0.75rem;
+  color: var(--mat-sys-outline);
+  display: block;
+  margin-top: -4px;
+  margin-bottom: 4px;
+}
+
 // Image drop zone styles
 .image-drop-zone {
   position: relative;

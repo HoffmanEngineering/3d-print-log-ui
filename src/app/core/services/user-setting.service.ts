@@ -28,6 +28,7 @@ export enum UserSettingType {
   Prints_LastSelectedWireMeasureType = 11,
   Electricity_KwhRate = 12,
   Electricity_DefaultWattageW = 13,
+  Prints_PreferredFilamentDisplayUnit = 14,
 }
 
 export interface UserSetting {

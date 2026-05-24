@@ -11,6 +11,7 @@ import { DefaultFilamentDiameterSettingResolverService } from '../core/resolvers
 import { DefaultFilamentPriceSettingResolverService } from '../core/resolvers/default-filament-price-setting-resolver.service';
 import { DefaultElectricityKwhRateSettingResolverService } from '../core/resolvers/default-electricity-kwh-rate-setting-resolver.service';
 import { DefaultElectricityWattageSettingResolverService } from '../core/resolvers/default-electricity-wattage-setting-resolver.service';
+import { PreferredFilamentDisplayUnitSettingResolverService } from '../core/resolvers/preferred-filament-display-unit-setting-resolver.service';
 
 const routes: Routes = [
   {
@@ -30,6 +31,8 @@ const routes: Routes = [
         DefaultElectricityKwhRateSettingResolverService,
       defaultElectricityWattageSetting:
         DefaultElectricityWattageSettingResolverService,
+      preferredFilamentDisplayUnitSetting:
+        PreferredFilamentDisplayUnitSettingResolverService,
     },
   },
 ];

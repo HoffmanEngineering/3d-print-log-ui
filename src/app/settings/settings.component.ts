@@ -4,7 +4,11 @@ import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
-import { PrintService, PrintViewStatus } from '../core/services/print.service';
+import {
+  PrintFilamentSourceMeasurement,
+  PrintService,
+  PrintViewStatus,
+} from '../core/services/print.service';
 import {
   UserSetting,
   UserSettingService,
@@ -43,6 +47,10 @@ export class SettingsComponent implements OnInit {
   public defaultFilamentPriceSettingOnLoad: UserSetting | null = null;
   public defaultElectricityKwhRateSettingOnLoad: UserSetting | null = null;
   public defaultElectricityWattageSettingOnLoad: UserSetting | null = null;
+  public preferredFilamentDisplayUnitSettingOnLoad: UserSetting | null = null;
+  public preferredFilamentDisplayUnit: PrintFilamentSourceMeasurement =
+    PrintFilamentSourceMeasurement.Weight;
+  public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
   public deactivateHasBeenClicked = false;
 
@@ -152,6 +160,14 @@ export class SettingsComponent implements OnInit {
         this.defaultElectricityKwhRateSettingOnLoad?.value ?? null;
       this.defaultElectricityWattageW =
         this.defaultElectricityWattageSettingOnLoad?.value ?? null;
+
+      this.preferredFilamentDisplayUnitSettingOnLoad =
+        data.preferredFilamentDisplayUnitSetting;
+      this.preferredFilamentDisplayUnit = this
+        .preferredFilamentDisplayUnitSettingOnLoad
+        ? (+this.preferredFilamentDisplayUnitSettingOnLoad
+            .value as PrintFilamentSourceMeasurement)
+        : PrintFilamentSourceMeasurement.Weight;
     });
 
     this.authService.userProfile$.subscribe((user) => {
@@ -317,6 +333,44 @@ export class SettingsComponent implements OnInit {
     this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
       ? this.defaultFilamentPriceSettingOnLoad.value
       : null;
+  }
+
+  savePreferredFilamentDisplayUnit(newUnit: PrintFilamentSourceMeasurement) {
+    if (this.preferredFilamentDisplayUnitSettingOnLoad) {
+      this.userSettingService
+        .updateUserSetting(
+          this.preferredFilamentDisplayUnitSettingOnLoad.id,
+          newUnit.toString()
+        )
+        .subscribe((setting) => {
+          this.preferredFilamentDisplayUnitSettingOnLoad = setting;
+          this.loggingService.logEvent(
+            'Settings_PreferredFilamentDisplayUnitChanged',
+            { unit: newUnit }
+          );
+        });
+    } else {
+      this.userSettingService
+        .addUserSetting(
+          UserSettingType.Prints_PreferredFilamentDisplayUnit,
+          newUnit.toString()
+        )
+        .subscribe((setting) => {
+          this.preferredFilamentDisplayUnitSettingOnLoad = setting;
+          this.loggingService.logEvent(
+            'Settings_PreferredFilamentDisplayUnitChanged',
+            { unit: newUnit }
+          );
+        });
+    }
+  }
+
+  cancelPreferredFilamentDisplayUnit() {
+    this.preferredFilamentDisplayUnit = this
+      .preferredFilamentDisplayUnitSettingOnLoad
+      ? (+this.preferredFilamentDisplayUnitSettingOnLoad
+          .value as PrintFilamentSourceMeasurement)
+      : PrintFilamentSourceMeasurement.Weight;
   }
 
   saveDefaultElectricityKwhRate(newRate: string) {

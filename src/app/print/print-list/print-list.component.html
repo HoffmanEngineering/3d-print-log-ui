@@ -168,6 +168,7 @@
       [preferredCurrencySymbolSetting]="preferredCurrencySymbolSetting"
       [defaultElectricityKwhRateSetting]="defaultElectricityKwhRateSetting"
       [defaultElectricityWattageSetting]="defaultElectricityWattageSetting"
+      [preferredUnit]="preferredFilamentUnit()"
     />
   }
 
@@ -180,6 +181,7 @@
           [print]="print"
           (deleted)="deletePrint($event)"
           (statusChanged)="changeStatus($event.id, $event.status)"
+          [preferredUnit]="preferredFilamentUnit()"
         />
       }
       @if (totalCount === 0) {

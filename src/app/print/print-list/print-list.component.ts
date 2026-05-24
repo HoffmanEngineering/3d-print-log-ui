@@ -1,5 +1,12 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -13,7 +20,11 @@ import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
-import { UserSetting } from 'src/app/core/services/user-setting.service';
+import {
+  UserSetting,
+  UserSettingService,
+  UserSettingType,
+} from 'src/app/core/services/user-setting.service';
 import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
@@ -227,6 +238,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private readonly PRINT_TABLE_DISPLAYED_COLUMNS =
     'print_table_displayed_columns';
 
+  public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
+    PrintFilamentSourceMeasurement.Weight
+  );
+  private readonly userSettingService = inject(UserSettingService);
+
   public defaultFilamentPriceSetting: UserSetting | null = null;
 
   public preferredCurrencySymbolSetting: UserSetting | null = null;
@@ -405,6 +421,18 @@ export class PrintListComponent implements OnInit, OnDestroy {
         JSON.stringify(this.displayedColumns)
       );
     }
+
+    this.userSettingService
+      .getCurrentUsersSettingByType(
+        UserSettingType.Prints_PreferredFilamentDisplayUnit
+      )
+      .then((setting) => {
+        if (setting) {
+          this.preferredFilamentUnit.set(
+            +setting.value as PrintFilamentSourceMeasurement
+          );
+        }
+      });
   }
 
   public pageChange(pageEvent: PageEvent) {

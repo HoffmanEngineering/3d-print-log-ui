@@ -1,5 +1,13 @@
 import { Location } from '@angular/common';
-import { Component, Inject, OnDestroy, OnInit, DOCUMENT } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  DOCUMENT,
+  inject,
+  signal,
+} from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -18,7 +26,11 @@ import {
   PrintService,
   PrintStatus,
 } from '../../core/services/print.service';
-import { UserSetting } from 'src/app/core/services/user-setting.service';
+import {
+  UserSetting,
+  UserSettingService,
+  UserSettingType,
+} from 'src/app/core/services/user-setting.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -57,6 +69,11 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   public preferredCurrencySymbolSetting: UserSetting | null = null;
   public defaultElectricityKwhRateSetting: UserSetting | null = null;
   public defaultElectricityWattageSetting: UserSetting | null = null;
+
+  public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
+    PrintFilamentSourceMeasurement.Weight
+  );
+  private readonly userSettingService = inject(UserSettingService);
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -112,6 +129,18 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
 
       this.setMetaTags();
     });
+
+    this.userSettingService
+      .getCurrentUsersSettingByType(
+        UserSettingType.Prints_PreferredFilamentDisplayUnit
+      )
+      .then((setting) => {
+        if (setting) {
+          this.preferredFilamentUnit.set(
+            +setting.value as PrintFilamentSourceMeasurement
+          );
+        }
+      });
   }
 
   setMetaTags() {

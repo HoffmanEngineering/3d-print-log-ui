@@ -38,6 +38,8 @@ describe('Filament Usage', () => {
     cy.wait('@getFilamentsModal');
     cy.get('[data-cy-filament-row]').should('have.length.greaterThan', 0);
     cy.get('[data-cy-filament-row]').first().click();
+    cy.get('#edit-print-actual-measure-type-0').click();
+    cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('100');
     cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
@@ -69,6 +71,8 @@ describe('Filament Usage', () => {
     cy.wait('@getFilamentsModal1');
     cy.get('[data-cy-filament-row]').should('have.length.greaterThan', 0);
     cy.get('[data-cy-filament-row]').first().click();
+    cy.get('#edit-print-actual-measure-type-0').click();
+    cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('50');
 
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal2');
@@ -77,6 +81,8 @@ describe('Filament Usage', () => {
     cy.wait('@getFilamentsModal2');
     cy.get('[data-cy-filament-row]').should('have.length.greaterThan', 0);
     cy.get('[data-cy-filament-row]').first().click();
+    cy.get('#edit-print-actual-measure-type-1').click();
+    cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-1').clear().type('30');
 
     cy.intercept('PUT', '/api/Prints/*').as('updatePrint');

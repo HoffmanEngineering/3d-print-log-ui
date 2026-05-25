@@ -690,9 +690,6 @@
                             }
                           </mat-form-field>
                         }
-                        @if (getPreferredUnitSecondaryDisplay($any(printFilament), true); as secondary) {
-                          <span class="preferred-unit-hint">{{ secondary }}</span>
-                        }
                         <mat-form-field style="flex: 0 0 120px">
                           <mat-label>Measure</mat-label>
                           <mat-select
@@ -725,6 +722,9 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
+                      @if (getPreferredUnitSecondaryDisplay($any(printFilament), true); as secondary) {
+                        <span class="preferred-unit-hint">{{ secondary }}</span>
+                      }
                       <div class="input-row">
                         @if (
                           printFilament.get('source').value ===
@@ -836,12 +836,14 @@
                             }
                           </mat-form-field>
                         }
-                        @if (getPreferredUnitSecondaryDisplay($any(printFilament), false); as secondary) {
-                          <span class="preferred-unit-hint">{{ secondary }}</span>
-                        }
                         <mat-form-field style="flex: 0 0 120px">
                           <mat-label>Measure</mat-label>
-                          <mat-select formControlName="source">
+                          <mat-select
+                            id="edit-print-actual-measure-type-{{
+                              printFilamentIndex
+                            }}"
+                            formControlName="source"
+                          >
                             <mat-option
                               [value]="
                                 printFilamentSourceMeasurementTypes.Weight
@@ -866,6 +868,9 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
+                      @if (getPreferredUnitSecondaryDisplay($any(printFilament), false); as secondary) {
+                        <span class="preferred-unit-hint">{{ secondary }}</span>
+                      }
                       <mat-form-field>
                         <mat-label>
                           {{

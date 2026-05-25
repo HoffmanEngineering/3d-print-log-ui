@@ -54,6 +54,7 @@ import {
   PrintViewStatus,
 } from '../../core/services/print.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import { convertFilamentValue } from 'src/app/shared/utils/filament-display.utils';
 import { ThumbnailImage } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import {
   Currencies,
@@ -1921,29 +1922,44 @@ export class EditPrintDetailComponent
     const sourceField = isEstimated ? 'estimatedSource' : 'source';
     const source = formGroup.get(sourceField)
       ?.value as PrintFilamentSourceMeasurement;
+    const preferred = this.preferredFilamentUnit();
 
-    if (source === this.preferredFilamentUnit()) return null;
+    if (source === preferred) return null;
 
-    if (
-      this.preferredFilamentUnit() === PrintFilamentSourceMeasurement.Weight
-    ) {
-      const field = isEstimated ? 'estimatedAmountG' : 'amountG';
-      const v = formGroup.get(field)?.value as number | null;
-      return v != null && v > 0 ? `≈ ${v.toFixed(1)}g` : null;
+    // Get the source value in its native unit (weight stored as grams in form)
+    let sourceValueNative: number | null = null;
+    if (source === PrintFilamentSourceMeasurement.Weight) {
+      const v = formGroup.get(isEstimated ? 'estimatedAmountG' : 'amountG')
+        ?.value as number | null;
+      sourceValueNative = v != null && v > 0 ? v * 1000 : null; // g → mg
+    } else if (source === PrintFilamentSourceMeasurement.Length) {
+      const v = formGroup.get(isEstimated ? 'estimatedLengthInM' : 'lengthInM')
+        ?.value as number | null;
+      sourceValueNative = v != null && v > 0 ? v : null;
+    } else {
+      const v = formGroup.get(isEstimated ? 'estimatedVolumeMl' : 'volumeMl')
+        ?.value as number | null;
+      sourceValueNative = v != null && v > 0 ? v : null;
     }
 
-    if (
-      this.preferredFilamentUnit() === PrintFilamentSourceMeasurement.Length
-    ) {
-      const field = isEstimated ? 'estimatedLengthInM' : 'lengthInM';
-      const v = formGroup.get(field)?.value as number | null;
-      return v != null && v > 0 ? `≈ ${v.toFixed(1)}m` : null;
-    }
+    if (sourceValueNative === null) return null;
 
-    // Volume
-    const field = isEstimated ? 'estimatedVolumeMl' : 'volumeMl';
-    const v = formGroup.get(field)?.value as number | null;
-    return v != null && v > 0 ? `≈ ${v.toFixed(1)}ml` : null;
+    const filament = formGroup.get('filament')?.value as FilamentSummary | null;
+    const converted = convertFilamentValue(
+      sourceValueNative,
+      source,
+      preferred,
+      filament
+    );
+    if (converted === null) return null;
+
+    if (preferred === PrintFilamentSourceMeasurement.Weight) {
+      return `≈ ${(converted / 1000).toFixed(1)}g`;
+    }
+    if (preferred === PrintFilamentSourceMeasurement.Length) {
+      return `≈ ${converted.toFixed(1)}m`;
+    }
+    return `≈ ${converted.toFixed(1)}ml`;
   }
 
   public setStartDateToNow() {

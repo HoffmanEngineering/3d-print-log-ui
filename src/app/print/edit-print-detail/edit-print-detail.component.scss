@@ -305,8 +305,10 @@ form > div {
   font-size: 0.75rem;
   color: var(--mat-sys-outline);
   display: block;
-  margin-top: -4px;
-  margin-bottom: 4px;
+  // Pull hint up past mat-form-field's subscript area (~20px) and the column gap (8px)
+  margin-top: -24px;
+  margin-bottom: 8px;
+  padding-left: 16px;
 }
 
 // Image drop zone styles

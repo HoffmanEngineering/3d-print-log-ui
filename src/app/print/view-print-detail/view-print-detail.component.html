@@ -102,7 +102,7 @@
                       actual.isFallback ? actual.fallbackTooltip : null
                     "
                   >
-                    {{ actual.displayString }}
+                    {{ actual.displayString }}@if (actual.isFallback) { * }
                   </p>
                 }
               }
@@ -132,7 +132,7 @@
                       actual.isFallback ? actual.fallbackTooltip : null
                     "
                   >
-                    {{ actual.displayString }}
+                    {{ actual.displayString }}@if (actual.isFallback) { * }
                   </p>
                 }
               }

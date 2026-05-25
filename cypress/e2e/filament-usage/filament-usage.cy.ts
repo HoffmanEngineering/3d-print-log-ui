@@ -3,6 +3,22 @@ describe('Filament Usage', () => {
     cy.login();
   });
 
+  // The new-print form may auto-fill filament entries from the printer's loaded filament,
+  // and legacy prints may produce an "Other" entry from old filamentType/filamentUsageMg
+  // fields. Both kinds have EMPTY_GUID ids (unsaved) so deleting them requires no dialog.
+  // Call this after navigating to the edit form to clear any pre-existing entries before
+  // adding test-specific ones.
+  const clearPrefilledFilamentEntries = () => {
+    // Wait for the form to finish rendering before counting entries.
+    cy.get('#add-new-filament-usage-btn').should('exist');
+    cy.get('body').then(($body) => {
+      const count = $body.find('[data-cy="delete-filament-btn"]').length;
+      for (let i = 0; i < count; i++) {
+        cy.get('[data-cy="delete-filament-btn"]').first().click();
+      }
+    });
+  };
+
   it('should track remaining weight when filament is used in a print', () => {
     const ts = new Date().getTime();
     const filamentName = 'Weight Test Filament - ' + ts;
@@ -28,8 +44,12 @@ describe('Filament Usage', () => {
 
     cy.createPrint(printTitle);
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.contains('[cy-print-row]', printTitle)
+      .invoke('attr', 'cy-print-row')
+      .then((printId) => {
+        cy.visit(`/prints/${printId}/edit`);
+      });
+    clearPrefilledFilamentEntries();
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
     cy.get('#add-new-filament-usage-btn').click();
     cy.get('[data-cy="select-filament-btn"]').click();
@@ -63,8 +83,13 @@ describe('Filament Usage', () => {
 
     cy.createPrint(printTitle);
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.contains('[cy-print-row]', printTitle)
+      .invoke('attr', 'cy-print-row')
+      .then((printId) => {
+        cy.wrap(printId).as('printId');
+        cy.visit(`/prints/${printId}/edit`);
+      });
+    clearPrefilledFilamentEntries();
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal1');
     cy.get('#add-new-filament-usage-btn').click();
     cy.get('[data-cy="select-filament-btn"]').first().click();
@@ -89,8 +114,9 @@ describe('Filament Usage', () => {
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').should('be.visible').click();
+    cy.get('@printId').then((printId) => {
+      cy.visit(`/prints/${printId}/edit`);
+    });
     cy.get('.filament-entry-card').should('have.length', 2);
   });
 
@@ -99,28 +125,37 @@ describe('Filament Usage', () => {
 
     cy.createPrint(printTitle);
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.contains('[cy-print-row]', printTitle)
+      .invoke('attr', 'cy-print-row')
+      .then((printId) => {
+        cy.wrap(printId).as('printId');
+        cy.visit(`/prints/${printId}/edit`);
+      });
+    clearPrefilledFilamentEntries();
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
     cy.get('#add-new-filament-usage-btn').click();
     cy.get('[data-cy="select-filament-btn"]').click();
     cy.wait('@getFilamentsModal');
     cy.get('[data-cy-filament-row]').should('have.length.greaterThan', 0);
     cy.get('[data-cy-filament-row]').first().click();
+    cy.get('#edit-print-actual-measure-type-0').click();
+    cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('50');
     cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').should('be.visible').click();
+    cy.get('@printId').then((printId) => {
+      cy.visit(`/prints/${printId}/edit`);
+    });
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('75');
     cy.intercept('PUT', '/api/Prints/*').as('updatePrint2');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint2');
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').should('be.visible').click();
+    cy.get('@printId').then((printId) => {
+      cy.visit(`/prints/${printId}/edit`);
+    });
     cy.get('#edit-print-actual-filament-used-gram-0').should(
       'have.value',
       '75'
@@ -132,21 +167,29 @@ describe('Filament Usage', () => {
 
     cy.createPrint(printTitle);
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.contains('[cy-print-row]', printTitle)
+      .invoke('attr', 'cy-print-row')
+      .then((printId) => {
+        cy.wrap(printId).as('printId');
+        cy.visit(`/prints/${printId}/edit`);
+      });
+    clearPrefilledFilamentEntries();
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
     cy.get('#add-new-filament-usage-btn').click();
     cy.get('[data-cy="select-filament-btn"]').click();
     cy.wait('@getFilamentsModal');
     cy.get('[data-cy-filament-row]').should('have.length.greaterThan', 0);
     cy.get('[data-cy-filament-row]').first().click();
+    cy.get('#edit-print-actual-measure-type-0').click();
+    cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('50');
     cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').should('be.visible').click();
+    cy.get('@printId').then((printId) => {
+      cy.visit(`/prints/${printId}/edit`);
+    });
     cy.get('[data-cy="delete-filament-btn"]').click();
     cy.get('mat-dialog-container').contains('button', 'Delete').click();
     cy.get('.filament-entry-card').should('not.exist');
@@ -154,8 +197,9 @@ describe('Filament Usage', () => {
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint2');
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
-    cy.get('button[data-cy-edit-btn]').should('be.visible').click();
+    cy.get('@printId').then((printId) => {
+      cy.visit(`/prints/${printId}/edit`);
+    });
     cy.get('.filament-entry-card').should('not.exist');
   });
 });

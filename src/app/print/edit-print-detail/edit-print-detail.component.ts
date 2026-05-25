@@ -849,8 +849,10 @@ export class EditPrintDetailComponent
     }
 
     // Convert the old filamentType/FilamentUsage properties into the new Filament Usage format.
+    // Skip when modern filament usage records already exist to avoid duplicate entries.
     if (
       print &&
+      printFilamentUsageArray.length === 0 &&
       (!(print.filamentType === null || print.filamentType === '') ||
         print.filamentUsageMg > 0 ||
         print.estimatedFilamentUsageMg > 0)

@@ -147,7 +147,10 @@ describe('Print List Filters', () => {
 
     cy.createPrint(printTitle);
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
+    cy.contains('[cy-print-row]', printTitle)
+      .find('.mat-column-title')
+      .first()
+      .click();
     cy.get('button[data-cy-edit-btn]').click();
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
     cy.get('#add-new-filament-usage-btn').click();

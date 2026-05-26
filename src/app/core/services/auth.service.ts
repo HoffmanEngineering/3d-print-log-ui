@@ -17,6 +17,7 @@ import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
 import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
+import { UserSettingService } from './user-setting.service';
 const cordovaCallbackUri =
   'com.hoffmanengineering.printlog://cordova/com.hoffmanengineering.printlog/callback';
 
@@ -88,6 +89,7 @@ export class AuthService {
   loggedIn: boolean = null;
 
   private readonly subscriptionService = inject(SubscriptionService);
+  private readonly userSettingService = inject(UserSettingService);
 
   constructor(
     private router: Router,
@@ -270,6 +272,7 @@ export class AuthService {
     }
     // Stop notification polling
     this.notificationService.stopPolling();
+    this.userSettingService.clearCache();
 
     // Ensure Auth0 client instance exists
     this.auth0Client$.subscribe((client: Auth0Client) => {

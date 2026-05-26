@@ -358,7 +358,7 @@
         <div>
           <label
             style="margin-right: 10px"
-            matTooltip="The unit used to display filament usage on prints."
+            matTooltip="The unit used to display filament usage on prints. 'As Recorded' shows each value in the unit it was originally entered."
             matTooltipPosition="right"
           >
             Preferred Filament Display Unit
@@ -368,6 +368,11 @@
             [(ngModel)]="preferredFilamentDisplayUnit"
             aria-label="Preferred filament display unit"
           >
+            <mat-button-toggle
+              [value]="printFilamentSourceMeasurementTypes.AsRecorded"
+            >
+              As Recorded
+            </mat-button-toggle>
             <mat-button-toggle
               [value]="printFilamentSourceMeasurementTypes.Weight"
             >

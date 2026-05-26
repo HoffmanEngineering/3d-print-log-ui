@@ -11,6 +11,7 @@ export interface FilamentPreferredDisplayResult {
 }
 
 const UNIT_LABELS: Record<PrintFilamentSourceMeasurement, string> = {
+  [PrintFilamentSourceMeasurement.AsRecorded]: 'source',
   [PrintFilamentSourceMeasurement.Weight]: 'weight',
   [PrintFilamentSourceMeasurement.Length]: 'length',
   [PrintFilamentSourceMeasurement.Volume]: 'volume',
@@ -154,6 +155,17 @@ export function getActualPreferredDisplay(
   fu: PrintFilamentSummaryDto,
   preferredUnit: PrintFilamentSourceMeasurement
 ): FilamentPreferredDisplayResult | null {
+  if (preferredUnit === PrintFilamentSourceMeasurement.AsRecorded) {
+    const srcActual = actualValue(fu, fu.source);
+    if (srcActual === null) return null;
+    return {
+      displayString: formatValue(srcActual, fu.source),
+      isEstimated: false,
+      isFallback: false,
+      fallbackTooltip: null,
+    };
+  }
+
   const direct = actualValue(fu, preferredUnit);
   if (direct !== null) {
     return {
@@ -200,6 +212,17 @@ export function getEstimatedPreferredDisplay(
   fu: PrintFilamentSummaryDto,
   preferredUnit: PrintFilamentSourceMeasurement
 ): FilamentPreferredDisplayResult | null {
+  if (preferredUnit === PrintFilamentSourceMeasurement.AsRecorded) {
+    const srcEst = estimatedValue(fu, fu.estimatedSource);
+    if (srcEst === null) return null;
+    return {
+      displayString: formatValue(srcEst, fu.estimatedSource),
+      isEstimated: true,
+      isFallback: false,
+      fallbackTooltip: null,
+    };
+  }
+
   const direct = estimatedValue(fu, preferredUnit);
   if (direct !== null) {
     return {
@@ -245,6 +268,28 @@ export function getFilamentPreferredDisplay(
   fu: PrintFilamentSummaryDto,
   preferredUnit: PrintFilamentSourceMeasurement
 ): FilamentPreferredDisplayResult | null {
+  if (preferredUnit === PrintFilamentSourceMeasurement.AsRecorded) {
+    const srcActual = actualValue(fu, fu.source);
+    if (srcActual !== null) {
+      return {
+        displayString: formatValue(srcActual, fu.source),
+        isEstimated: false,
+        isFallback: false,
+        fallbackTooltip: null,
+      };
+    }
+    const srcEst = estimatedValue(fu, fu.estimatedSource);
+    if (srcEst !== null) {
+      return {
+        displayString: formatValue(srcEst, fu.estimatedSource),
+        isEstimated: true,
+        isFallback: false,
+        fallbackTooltip: null,
+      };
+    }
+    return null;
+  }
+
   // Direct match in actual data
   const preferred = actualValue(fu, preferredUnit);
   if (preferred !== null) {

@@ -165,7 +165,7 @@ export class EditPrintDetailComponent
   public isCordova = isCordova;
 
   public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
-    PrintFilamentSourceMeasurement.Weight
+    PrintFilamentSourceMeasurement.AsRecorded
   );
 
   public printDetail: PrintDetail | null = null;

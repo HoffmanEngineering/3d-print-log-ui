@@ -239,7 +239,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     'print_table_displayed_columns';
 
   public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
-    PrintFilamentSourceMeasurement.Weight
+    PrintFilamentSourceMeasurement.AsRecorded
   );
   private readonly userSettingService = inject(UserSettingService);
 

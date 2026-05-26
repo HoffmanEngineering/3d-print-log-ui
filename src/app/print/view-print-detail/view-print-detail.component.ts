@@ -77,7 +77,7 @@ export class ViewPrintDetailComponent implements OnInit, OnDestroy {
   public defaultElectricityWattageSetting: UserSetting | null = null;
 
   public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
-    PrintFilamentSourceMeasurement.Weight
+    PrintFilamentSourceMeasurement.AsRecorded
   );
   private readonly userSettingService = inject(UserSettingService);
 

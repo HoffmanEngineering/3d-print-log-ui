@@ -468,7 +468,7 @@
             matTooltip="Your electricity rate from your bill, in currency per kWh."
             matTooltipPosition="right"
           >
-            Electricity Rate ({{ preferredCurrencySymbolSettingOnLoad?.value ?? '$' }}/kWh)
+            Electricity Rate ({{ currencies[preferredCurrency]?.symbol ?? '$' }}/kWh)
             <mat-icon inline>info</mat-icon>:</label
           >
           <input

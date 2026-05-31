@@ -44,7 +44,8 @@ Format for new release notes:
 
 ```html
 <h3 id="vX.X.X">X.X.X - [Short Title]</h3>
-<p>[Summary paragraph describing the main changes]</p>
+<p>[Summary paragraph for the first major feature. Use parentheses instead of em dashes.]</p>
+<p>[Second paragraph for additional major features, if any. Each distinct feature gets its own paragraph.]</p>
 <h4>Full List of Changes:</h4>
 <ul>
   <li><strong>[Feature/Fix Name]</strong> - [Description]</li>
@@ -137,5 +138,19 @@ Remind the user:
 - Group related changes together
 - Use bold for feature names
 - Include links to relevant documentation pages where applicable
-- For the dialog body (version-release-note-dialog.service.ts), keep it concise - 1-2 paragraphs max
 - The full release notes HTML can be more detailed with bullet lists
+- **Never use em dashes (—)** in prose; use parentheses instead where a parenthetical is needed
+
+### HTML Release Notes (`docs-release-notes.component.html`)
+
+- Use separate `<p>` paragraphs for each distinct major feature — do not run multiple features together in one paragraph
+- The summary paragraph(s) should read as a narrative description, not a changelog list
+- The bullet list is where full detail lives; the paragraph(s) above are the "why it matters" summary
+
+### Dialog Body (`version-release-note-dialog.service.ts`)
+
+- **Tone**: Match the style of existing entries — enthusiastic and user-focused. Look at prior entries before writing.
+- **Lead with the feature name bolded**: e.g. `<strong>Feature Name</strong> is here! Description...` — not `This release adds a <strong>Feature Name</strong> setting...`
+- **One feature per sentence or paragraph**: Do not chain multiple features with semicolons. If there are two notable features, give each its own sentence or paragraph.
+- **Keep it concise**: 1–2 short paragraphs max (excluding the support/donation paragraph)
+- **Title**: If the release has two or more notable features, reflect both in the title, e.g. `X.X.0 - Feature One & Feature Two`

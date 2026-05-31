@@ -28,6 +28,31 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.42.0': {
+      title: '1.42.0 - Preferred Filament Units & Date Localization',
+      body: `<p>
+<strong>Preferred Filament Display Unit</strong> is here! Choose how filament usage displays throughout the app (as recorded, in grams, or in meters) from the Settings page. This release also brings <strong>locale-aware date formatting</strong>, so dates and times now display in your browser's regional format.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.41.0': {
       title: '1.41.0 - Multi-Color Materials',
       body: `<p>

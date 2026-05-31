@@ -2,6 +2,45 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.42.0">1.42.0 - Preferred Filament Units</h3>
+  <p>
+    This release introduces a <strong>Preferred Filament Display Unit</strong> setting, letting you
+    choose how filament usage appears throughout 3D Print Log (as originally recorded, in grams,
+    or in meters). Your preference is applied consistently across the print list, print detail,
+    filament usage summaries, and the edit print form.
+  </p>
+  <p>
+    Dates and times throughout the app now use your browser's locale for proper regional formatting
+    (e.g., MM/DD/YYYY vs. DD/MM/YYYY). Date and time pickers are also localized, so entering dates
+    feels natural no matter where you are.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Preferred Filament Display Unit</strong> - A new setting on the
+      <a routerLink="/settings">Settings</a> page lets you choose how filament usage displays
+      throughout the app: as recorded, in grams, or in meters. The preference is applied across the
+      print list, print detail, filament usage summaries, and the edit print form.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/36" rel="noreferrer noopener" target="_blank">PR #36</a>)
+    </li>
+    <li>
+      <strong>Locale-Aware Date Formatting</strong> - Dates and times are now formatted using your
+      browser's locale via the native <code>Intl.DateTimeFormat</code> API, ensuring proper
+      regional display regardless of your location.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/34" rel="noreferrer noopener" target="_blank">PR #34</a>)
+    </li>
+    <li>
+      <strong>Removed moment.js</strong> - The app no longer depends on moment.js, reducing bundle
+      size and replacing it with modern native Date APIs throughout.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/34" rel="noreferrer noopener" target="_blank">PR #34</a>)
+    </li>
+    <li>
+      <strong>Bug Fix: Settings Currency Label</strong> - The electricity rate input label in
+      Settings now correctly reflects the currently selected currency symbol.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/37" rel="noreferrer noopener" target="_blank">PR #37</a>)
+    </li>
+  </ul>
+
   <h3 id="v1.41.0">1.41.0 - Multi-Color Materials</h3>
   <p>
     This release brings <strong>Multi-Color Material Support</strong> to 3D Print Log! Materials

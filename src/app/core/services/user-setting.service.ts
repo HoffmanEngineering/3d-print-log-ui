@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -28,6 +28,7 @@ export enum UserSettingType {
   Prints_LastSelectedWireMeasureType = 11,
   Electricity_KwhRate = 12,
   Electricity_DefaultWattageW = 13,
+  Prints_PreferredFilamentDisplayUnit = 14,
 }
 
 export interface UserSetting {
@@ -61,38 +62,48 @@ export interface AddUserSettingDto {
   providedIn: 'root',
 })
 export class UserSettingService {
+  private readonly http = inject(HttpClient);
   private readonly baseApiUrl = `${environment.printLogApiUrl}/api/Users/me/user-settings`;
-  private userSettings: UserSetting[] = [];
-
-  constructor(private readonly http: HttpClient) {}
+  private settingsMap = new Map<UserSettingType, UserSetting>();
+  private loaded = false;
+  private loadingPromise: Promise<Map<UserSettingType, UserSetting>> | null =
+    null;
 
   public async getCurrentUsersSettingByType(
     userSettingTypeId: UserSettingType
   ): Promise<UserSetting | null> {
-    if (this.userSettings.length === 0) {
-      await lastValueFrom(this.getCurrentUsersSettings());
+    if (!this.loaded) {
+      if (!this.loadingPromise) {
+        this.loadingPromise = lastValueFrom(this.fetchSettings()).finally(
+          () => {
+            this.loadingPromise = null;
+          }
+        );
+      }
+      await this.loadingPromise;
     }
 
-    const existingSetting = this.userSettings.find(
-      (setting) => setting.userSettingTypeId === userSettingTypeId
-    );
-    return existingSetting ?? null;
+    return this.settingsMap.get(userSettingTypeId) ?? null;
   }
 
-  getCurrentUsersSettings() {
+  clearCache() {
+    this.settingsMap.clear();
+    this.loaded = false;
+    this.loadingPromise = null;
+  }
+
+  private fetchSettings() {
     return this.http.get<UserSettingDto[]>(this.baseApiUrl).pipe(
-      map((settingDto) => {
-        const newSettings: UserSetting[] = [];
-
-        for (const setting of settingDto) {
-          const newSetting: UserSetting = this.formatUserSettingDto(setting);
-
-          newSettings.push(newSetting);
+      map((dtos) => {
+        const result = new Map<UserSettingType, UserSetting>();
+        for (const dto of dtos) {
+          result.set(dto.userSettingTypeId, this.formatUserSettingDto(dto));
         }
-        return newSettings;
+        return result;
       }),
       tap((settings) => {
-        this.userSettings = settings;
+        this.settingsMap = settings;
+        this.loaded = true;
       })
     );
   }
@@ -109,23 +120,12 @@ export class UserSettingService {
   }
 
   updateUserSetting(id: number, newValue: string) {
-    const dto: UpdateUserSettingDto = {
-      id,
-      value: newValue,
-    };
+    const dto: UpdateUserSettingDto = { id, value: newValue };
 
     return this.http.put<UserSettingDto>(this.baseApiUrl, dto).pipe(
       map((settingDto) => this.formatUserSettingDto(settingDto)),
       tap((updatedSetting) => {
-        const existingSetting = this.userSettings.findIndex(
-          (u) => u.id === updatedSetting.id
-        );
-
-        if (existingSetting !== -1) {
-          this.userSettings[existingSetting] = updatedSetting;
-        } else {
-          this.userSettings.push(updatedSetting);
-        }
+        this.settingsMap.set(updatedSetting.userSettingTypeId, updatedSetting);
       })
     );
   }
@@ -138,16 +138,8 @@ export class UserSettingService {
 
     return this.http.post<UserSettingDto>(this.baseApiUrl, dto).pipe(
       map((settingDto) => this.formatUserSettingDto(settingDto)),
-      tap((updatedSetting) => {
-        const existingSetting = this.userSettings.findIndex(
-          (u) => (u.id = updatedSetting.id)
-        );
-
-        if (existingSetting !== -1) {
-          this.userSettings[existingSetting] = updatedSetting;
-        } else {
-          this.userSettings.push(updatedSetting);
-        }
+      tap((newSetting) => {
+        this.settingsMap.set(newSetting.userSettingTypeId, newSetting);
       })
     );
   }

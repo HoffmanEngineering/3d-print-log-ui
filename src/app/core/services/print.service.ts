@@ -37,6 +37,7 @@ export enum PrintViewStatus {
 }
 
 export enum PrintFilamentSourceMeasurement {
+  AsRecorded = 0,
   Weight = 1,
   Length = 2,
   Volume = 3,

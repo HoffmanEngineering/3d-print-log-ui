@@ -147,7 +147,10 @@ describe('Print List Filters', () => {
 
     cy.createPrint(printTitle);
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
+    cy.contains('[cy-print-row]', printTitle)
+      .find('.mat-column-title')
+      .first()
+      .click();
     cy.get('button[data-cy-edit-btn]').click();
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
     cy.get('#add-new-filament-usage-btn').click();
@@ -156,6 +159,8 @@ describe('Print List Filters', () => {
     cy.get('#filament-list-search-input').clear().type(filamentName);
     cy.wait('@getFilamentsModal');
     cy.get('[data-cy-filament-row]').first().click();
+    cy.get('#edit-print-actual-measure-type-0').click();
+    cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('50');
     cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();

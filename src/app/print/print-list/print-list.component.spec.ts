@@ -14,6 +14,7 @@ import {
   PrintStatus,
   PrintSummary,
 } from 'src/app/core/services/print.service';
+import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
@@ -74,6 +75,14 @@ describe('PrintListComponent', () => {
       of(mockPrintPagedResult)
     );
 
+    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
+      'UserSettingService',
+      ['getCurrentUsersSettingByType']
+    );
+    mockUserSettingService.getCurrentUsersSettingByType.and.returnValue(
+      Promise.resolve(null)
+    );
+
     TestBed.configureTestingModule({
       declarations: [PrintListComponent, DurationPipe, LocaleDatePipe],
       imports: [
@@ -92,6 +101,7 @@ describe('PrintListComponent', () => {
         { provide: Title, useValue: mockTitleService },
         { provide: ToastrService, useValue: mockToastrService },
         { provide: PrintService, useValue: mockPrintService },
+        { provide: UserSettingService, useValue: mockUserSettingService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

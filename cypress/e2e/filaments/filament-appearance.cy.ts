@@ -576,7 +576,10 @@ describe('Cross-screen swatch rendering', () => {
 
     cy.createPrint(printTitle);
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
+    cy.contains('[cy-print-row]', printTitle)
+      .find('.mat-column-title')
+      .first()
+      .click();
     cy.get('button[data-cy-edit-btn]').click();
 
     cy.intercept('GET', '/api/Filaments*').as('getFilaments');
@@ -628,7 +631,10 @@ describe('Cross-screen swatch rendering', () => {
 
     cy.createPrint(printTitle);
 
-    cy.contains('[cy-print-row]', printTitle).find('.mat-column-title').click();
+    cy.contains('[cy-print-row]', printTitle)
+      .find('.mat-column-title')
+      .first()
+      .click();
     cy.get('button[data-cy-edit-btn]').click();
 
     cy.intercept('GET', '/api/Filaments*').as('getFilaments');

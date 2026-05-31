@@ -10,10 +10,15 @@ import { CommonModule } from '@angular/common';
 import {
   FilamentPrice,
   FilamentPriceInvalid,
+  PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
   PrintService,
 } from 'src/app/core/services/print.service';
 import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
+import {
+  FilamentPreferredDisplayResult,
+  getFilamentPreferredDisplay,
+} from 'src/app/shared/utils/filament-display.utils';
 
 @Component({
   selector: 'app-filament-usage-summary',
@@ -33,6 +38,9 @@ export class FilamentUsageSummaryComponent {
   filamentUsage = input<PrintFilamentSummaryDto[]>([]);
   defaultFilamentPrice = input<string | null | undefined>(null);
   currencySymbol = input<string>('$');
+  preferredUnit = input<PrintFilamentSourceMeasurement>(
+    PrintFilamentSourceMeasurement.Weight
+  );
 
   getActualPrice(fu: PrintFilamentSummaryDto): string {
     return this.formatFilamentPrice(
@@ -68,5 +76,11 @@ export class FilamentUsageSummaryComponent {
       return price.formattedPrice + (price.usesDefaultPrice ? '*' : '');
     }
     return (price as FilamentPriceInvalid).message;
+  }
+
+  getPreferredDisplay(
+    fu: PrintFilamentSummaryDto
+  ): FilamentPreferredDisplayResult | null {
+    return getFilamentPreferredDisplay(fu, this.preferredUnit());
   }
 }

@@ -7,12 +7,21 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { PrintSummary, PrintStatus } from 'src/app/core/services/print.service';
+import {
+  PrintSummary,
+  PrintStatus,
+  PrintFilamentSourceMeasurement,
+  PrintFilamentSummaryDto,
+} from 'src/app/core/services/print.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
+import {
+  FilamentPreferredDisplayResult,
+  getFilamentPreferredDisplay,
+} from 'src/app/shared/utils/filament-display.utils';
 
 @Component({
   selector: 'app-print-card',
@@ -29,6 +38,15 @@ export class PrintCardComponent {
   readonly deleted = output<PrintSummary>();
   readonly statusChanged = output<{ id: number; status: PrintStatus }>();
   readonly printStatusTypes = PrintStatus;
+  readonly preferredUnit = input<PrintFilamentSourceMeasurement>(
+    PrintFilamentSourceMeasurement.Weight
+  );
+
+  getPreferredDisplay(
+    fu: PrintFilamentSummaryDto
+  ): FilamentPreferredDisplayResult | null {
+    return getFilamentPreferredDisplay(fu, this.preferredUnit());
+  }
 
   onDeleteClicked(): void {
     this.deleted.emit(this.print());

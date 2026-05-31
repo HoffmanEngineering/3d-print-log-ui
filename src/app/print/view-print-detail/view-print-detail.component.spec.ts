@@ -9,6 +9,7 @@ import { ViewPrintDetailComponent } from './view-print-detail.component';
 import { PrintService } from 'src/app/core/services/print.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
@@ -63,6 +64,14 @@ describe('ViewPrintDetailComponent', () => {
       ['setTitle', 'setSocialMediaTags']
     );
 
+    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
+      'UserSettingService',
+      ['getCurrentUsersSettingByType']
+    );
+    mockUserSettingService.getCurrentUsersSettingByType.and.returnValue(
+      Promise.resolve(null)
+    );
+
     TestBed.configureTestingModule({
       declarations: [ViewPrintDetailComponent, DurationPipe, LocaleDatePipe],
       imports: [RouterTestingModule, FilamentColorSwatchStylePipe],
@@ -70,6 +79,7 @@ describe('ViewPrintDetailComponent', () => {
         { provide: PrintService, useValue: mockPrintService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: MetaTagService, useValue: mockMetaService },
+        { provide: UserSettingService, useValue: mockUserSettingService },
         {
           provide: ActivatedRoute,
           useValue: {

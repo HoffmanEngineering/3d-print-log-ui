@@ -343,6 +343,87 @@
           </div>
         }
       </div>
+      <div
+        fxFlex="grow"
+        fxFlexFill
+        [class.mat-elevation-z5]="
+          preferredFilamentDisplayUnit?.toString() !==
+          this.preferredFilamentDisplayUnitSettingOnLoad?.value?.toString()
+        "
+        [class.editing-card]="
+          preferredFilamentDisplayUnit?.toString() !==
+          this.preferredFilamentDisplayUnitSettingOnLoad?.value?.toString()
+        "
+      >
+        <div>
+          <label
+            style="margin-right: 10px"
+            matTooltip="The unit used to display filament usage on prints. 'As Recorded' shows each value in the unit it was originally entered."
+            matTooltipPosition="right"
+          >
+            Preferred Filament Display Unit
+            <mat-icon inline>info</mat-icon>:
+          </label>
+          <mat-button-toggle-group
+            [(ngModel)]="preferredFilamentDisplayUnit"
+            aria-label="Preferred filament display unit"
+          >
+            <mat-button-toggle
+              [value]="printFilamentSourceMeasurementTypes.AsRecorded"
+            >
+              As Recorded
+            </mat-button-toggle>
+            <mat-button-toggle
+              [value]="printFilamentSourceMeasurementTypes.Weight"
+            >
+              Weight (g)
+            </mat-button-toggle>
+            <mat-button-toggle
+              [value]="printFilamentSourceMeasurementTypes.Length"
+            >
+              Length (m)
+            </mat-button-toggle>
+            <mat-button-toggle
+              [value]="printFilamentSourceMeasurementTypes.Volume"
+            >
+              Volume (ml)
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+        @if (
+          preferredFilamentDisplayUnit?.toString() !==
+          this.preferredFilamentDisplayUnitSettingOnLoad?.value?.toString()
+        ) {
+          <div>
+            <div
+              style="margin-top: 10px"
+              fxLayout
+              fxLayoutAlign="center center"
+              fxLayoutGap="15px"
+            >
+              <button
+                mat-raised-button
+                type="submit"
+                color="primary"
+                (click)="
+                  savePreferredFilamentDisplayUnit(preferredFilamentDisplayUnit)
+                "
+              >
+                Save Preferred Filament Display Unit
+              </button>
+              <button
+                mat-raised-button
+                type="button"
+                class="close"
+                (click)="cancelPreferredFilamentDisplayUnit()"
+                color="warn"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+      </div>
       <div fxFlex="grow" fxFlexFill>
         <label
           for="theme-mode"

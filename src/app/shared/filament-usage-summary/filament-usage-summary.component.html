@@ -23,11 +23,13 @@
       }
     </div>
     <div>
-      @if (fu.amountMg !== null && fu.amountMg > 0) {
-        {{ fu.amountMg / 1000 | number: '1.0-1' }} g
-      } @else {
-        <div matTooltip="* indicates Estimated Material Usage">
-          {{ fu.estimatedAmountMg / 1000 | number: '1.0-1' }} g *
+      @if (getPreferredDisplay(fu); as display) {
+        <div
+          [matTooltip]="display.isFallback
+            ? display.fallbackTooltip
+            : (display.isEstimated ? '* indicates Estimated Material Usage' : null)"
+        >
+          {{ display.displayString }}@if (display.isEstimated) { * }
         </div>
       }
     </div>

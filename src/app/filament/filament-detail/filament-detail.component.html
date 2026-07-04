@@ -582,6 +582,20 @@
           >
             Add New Adjustment
           </button>
+          @if (canShowSpoolCalculator) {
+            <button
+              id="spool-calc-button"
+              type="button"
+              mat-raised-button
+              color="primary"
+              [disabled]="filamentForm.dirty"
+              [matTooltip]="spoolCalculatorTooltip"
+              (click)="openSpoolWeightCalculator()"
+              style="margin-bottom: 5px; margin-left: 5px"
+            >
+              Adjust from measured weight
+            </button>
+          }
         </div>
         <div formArrayName="filamentAdjustments" fxFlex="grow" fxFlexFill>
           @for (

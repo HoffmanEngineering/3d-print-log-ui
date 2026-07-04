@@ -79,6 +79,13 @@ export interface FilamentDetail {
   notes: string;
   isFavorite: boolean;
   filamentAdjustments: FilamentAdjustment[];
+
+  /**
+   * Server-computed remaining filament weight in mg (nominal − print usage +
+   * weight adjustments). Null when nominal weight is absent. Read-only: the
+   * server ignores it on write, so writers may omit it.
+   */
+  filamentRemaining?: number | null;
 }
 
 export interface FilamentSummary {

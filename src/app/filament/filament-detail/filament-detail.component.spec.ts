@@ -12,8 +12,12 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
   ColorPatternType,
+  FilamentAdjustmentSourceMeasurement,
   FilamentService,
 } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -123,5 +127,186 @@ describe('FilamentDetailComponent', () => {
       component.addColorStop();
       expect(component.colorsFormArray.length).toBe(8);
     });
+  });
+});
+
+describe('FilamentDetailComponent - spool weight calculator', () => {
+  let calcComponent: FilamentDetailComponent;
+  let calcFixture: ComponentFixture<FilamentDetailComponent>;
+  let mockDialog: jasmine.SpyObj<MatDialog>;
+
+  const baseFilament = {
+    id: 'filament-1',
+    displayName: 'Test',
+    materialType: 'PLA',
+    materialDensityGramPerCubicCm: 1.24,
+    spoolWeightMg: 150000,
+    initialTotalWeightMg: 1150000,
+    initialNominalWeightMg: 1000000,
+    filamentRemaining: 500000,
+    filamentAdjustments: [],
+    colors: [],
+  };
+
+  async function setup(filamentOverrides: Record<string, unknown>) {
+    mockDialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+
+    const mockFilamentService = jasmine.createSpyObj<FilamentService>(
+      'FilamentService',
+      {
+        getFilamentBrands: of({ brands: [] }),
+        getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
+        getFilamentStorageLocations: of({ storageLocations: [] }),
+      }
+    );
+    const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
+      'success',
+    ]);
+    const mockUserSettings = jasmine.createSpyObj<UserSettingService>(
+      'UserSettingService',
+      ['updateUserSetting']
+    );
+    const mockLog = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logException',
+      'logEvent',
+    ]);
+
+    await TestBed.configureTestingModule({
+      declarations: [FilamentDetailComponent],
+      imports: [
+        RouterTestingModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatInputModule,
+        MatSelectModule,
+        MatDatepickerModule,
+        MatCheckboxModule,
+        MatNativeDateModule,
+        MatAutocompleteModule,
+        MatButtonToggleModule,
+        MatChipsModule,
+        MatButtonModule,
+        MatTooltipModule,
+      ],
+      providers: [
+        { provide: FilamentService, useValue: mockFilamentService },
+        { provide: ToastrService, useValue: mockToastr },
+        { provide: UserSettingService, useValue: mockUserSettings },
+        { provide: LoggingService, useValue: mockLog },
+        { provide: MatDialog, useValue: mockDialog },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({
+              filament: { ...baseFilament, ...filamentOverrides },
+              materials: [],
+              materialCategories: [],
+            }),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    calcFixture = TestBed.createComponent(FilamentDetailComponent);
+    calcComponent = calcFixture.componentInstance;
+    calcFixture.detectChanges();
+  }
+
+  it('shows the calculator when saved, remaining known, and spool weight resolvable', async () => {
+    await setup({});
+    expect(calcComponent.canShowSpoolCalculator).toBeTrue();
+  });
+
+  it('hides the calculator when filamentRemaining is null', async () => {
+    await setup({ filamentRemaining: null });
+    expect(calcComponent.canShowSpoolCalculator).toBeFalse();
+  });
+
+  it('hides the calculator when spool weight cannot be resolved', async () => {
+    await setup({
+      spoolWeightMg: 0,
+      initialTotalWeightMg: 1000000,
+      initialNominalWeightMg: 1000000,
+    });
+    expect(calcComponent.canShowSpoolCalculator).toBeFalse();
+  });
+
+  it('renders the calculator button disabled while the form is dirty', async () => {
+    await setup({});
+    calcComponent.filamentForm.markAsDirty();
+    calcFixture.detectChanges();
+
+    const button: HTMLButtonElement | null =
+      calcFixture.nativeElement.querySelector('#spool-calc-button');
+    expect(button).not.toBeNull();
+    expect(button!.disabled).toBeTrue();
+  });
+
+  it('exposes a save-first tooltip when dirty and a help tooltip when pristine', async () => {
+    await setup({});
+    expect(calcComponent.spoolCalculatorTooltip).toContain('measured weight');
+
+    calcComponent.filamentForm.markAsDirty();
+    expect(calcComponent.spoolCalculatorTooltip).toContain('Save your changes');
+  });
+
+  it('does not open the dialog when the form is dirty', async () => {
+    await setup({});
+    calcComponent.filamentForm.markAsDirty();
+
+    calcComponent.openSpoolWeightCalculator();
+
+    expect(mockDialog.open).not.toHaveBeenCalled();
+  });
+
+  it('appends a fully-formed weight adjustment row, logs, and marks the form dirty on confirm', async () => {
+    await setup({});
+    mockDialog.open.and.returnValue({
+      afterClosed: () =>
+        of({
+          adjustmentG: -200,
+          measuredTotalWeightG: 450,
+          note: 'measured note',
+        }),
+    } as MatDialogRef<unknown>);
+
+    const before = calcComponent.filamentAdjustments.length;
+    calcComponent.openSpoolWeightCalculator();
+
+    expect(calcComponent.filamentAdjustments.length).toBe(before + 1);
+    const added = calcComponent.filamentAdjustments.at(
+      calcComponent.filamentAdjustments.length - 1
+    );
+    expect(added.get('source')!.value).toBe(
+      FilamentAdjustmentSourceMeasurement.Weight
+    );
+    expect(added.get('amountG')!.value).toBe(-200);
+    expect(added.get('lengthInM')!.value).toBeNull();
+    expect(added.get('volumeMl')!.value).toBeNull();
+    expect(added.get('filamentId')!.value).toBe('filament-1');
+    expect(added.get('notes')!.value).toBe('measured note');
+    expect(calcComponent.filamentForm.dirty).toBeTrue();
+
+    const logSpy = TestBed.inject(LoggingService).logEvent as jasmine.Spy;
+    expect(logSpy).toHaveBeenCalledWith(
+      'SpoolWeightCalculator_AdjustmentAdded',
+      {
+        measuredTotalWeightG: 450,
+        adjustmentG: -200,
+      }
+    );
+  });
+
+  it('does nothing when the dialog is cancelled', async () => {
+    await setup({});
+    mockDialog.open.and.returnValue({
+      afterClosed: () => of(undefined),
+    } as MatDialogRef<unknown>);
+
+    const before = calcComponent.filamentAdjustments.length;
+    calcComponent.openSpoolWeightCalculator();
+
+    expect(calcComponent.filamentAdjustments.length).toBe(before);
   });
 });

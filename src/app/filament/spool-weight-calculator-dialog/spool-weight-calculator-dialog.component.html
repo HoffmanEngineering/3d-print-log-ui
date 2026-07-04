@@ -1,0 +1,66 @@
+<h2 mat-dialog-title>Adjust from Measured Weight</h2>
+
+<mat-dialog-content>
+  <p>
+    Weigh the whole spool, then enter the total below. We'll calculate the
+    adjustment needed to match what you actually have.
+  </p>
+
+  <div class="calc-facts">
+    <div>
+      <span class="calc-label">Spool weight</span>
+      <span class="calc-value">{{ spoolWeightG }} g</span>
+    </div>
+    <div>
+      <span class="calc-label">Currently tracked remaining</span>
+      <span class="calc-value">{{ filamentRemainingG }} g</span>
+    </div>
+  </div>
+
+  <mat-form-field class="calc-input" appearance="fill">
+    <mat-label>Current measured total weight (g)</mat-label>
+    <input
+      matInput
+      type="number"
+      inputmode="decimal"
+      [formControl]="measuredTotalWeightControl"
+      id="spool-calc-measured-weight"
+    />
+  </mat-form-field>
+
+  @if (preview(); as result) {
+    <div class="calc-result">
+      <div>
+        <span class="calc-label">Measured remaining</span>
+        <span class="calc-value">{{ result.measuredRemainingMg / 1000 }} g</span>
+      </div>
+      <div>
+        <span class="calc-label">Adjustment</span>
+        <span class="calc-value calc-adjustment"
+          >{{ result.adjustmentMg > 0 ? '+' : ''
+          }}{{ result.adjustmentMg / 1000 }} g</span
+        >
+      </div>
+      @if (result.negativeRemaining) {
+        <p class="calc-warning">
+          <mat-icon inline>warning</mat-icon>
+          The measured weight is below the spool weight, which implies a negative
+          remaining amount. Double-check the spool weight and your measurement.
+        </p>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button
+    mat-raised-button
+    color="primary"
+    type="button"
+    [disabled]="preview() === null"
+    (click)="confirm()"
+  >
+    Add Adjustment
+  </button>
+</mat-dialog-actions>

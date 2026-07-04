@@ -1,0 +1,37 @@
+.calc-facts,
+.calc-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 12px 0;
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+}
+
+.calc-input {
+  width: 100%;
+}
+
+.calc-label {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.calc-value {
+  font-weight: 600;
+}
+
+.calc-adjustment {
+  font-size: 1.1rem;
+}
+
+.calc-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b26a00;
+  margin-top: 8px;
+}

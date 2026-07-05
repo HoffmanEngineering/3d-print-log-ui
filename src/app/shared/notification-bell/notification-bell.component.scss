@@ -1,5 +1,8 @@
 .notification-bell-button {
-  color: inherit;
+  // The toolbar background is always a dark indigo. Inheriting Material's
+  // on-primary text color made the icon dark once the dark theme switched to a
+  // lighter primary, so pin it to white to stay visible on the toolbar.
+  color: white;
 }
 
 .notification-header {

@@ -12,8 +12,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 8px;
+  flex-wrap: nowrap;
   margin: 20px 0 4px;
 }
 
@@ -21,8 +21,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1 1 90px;
-  min-width: 80px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .calc-state-label {
@@ -30,12 +30,14 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .calc-state-value {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 600;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .calc-arrow {

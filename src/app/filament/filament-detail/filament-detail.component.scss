@@ -23,3 +23,12 @@ mat-card-title {
 .mat-mdc-form-field:not(.mat-focused) .mat-mdc-form-field-hint {
   display: none;
 }
+
+// Keep the adjustment action buttons left-aligned and evenly spaced,
+// wrapping cleanly onto multiple lines on narrow screens.
+.adjustment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 5px;
+}

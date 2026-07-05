@@ -108,7 +108,7 @@
 }
 
 .more-prints-cell {
-  color: rgba(0, 0, 0, 0.54);
+  color: var(--app-text-tertiary);
   font-style: italic;
   padding-left: 48px;
   font-size: 0.85em;
@@ -364,7 +364,7 @@
 
 .more-prints-mobile-row {
   text-align: center;
-  color: rgba(0, 0, 0, 0.54);
+  color: var(--app-text-tertiary);
   font-style: italic;
   font-size: 0.85em;
   padding: 4px 8px;

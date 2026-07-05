@@ -1,5 +1,5 @@
 .subtitle {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--app-text-secondary);
   font-size: 1.1em;
   margin-bottom: 16px;
 }
@@ -27,12 +27,12 @@
 
     .period {
       font-size: 1.1em;
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--app-text-secondary);
     }
   }
 
   .price-detail {
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--app-text-secondary);
     font-size: 0.9em;
     margin-top: -8px;
   }

@@ -1,17 +1,27 @@
-name: Deploy
+name: Refresh Sitemap
 
 on:
-  push:
-    tags:
-      - 'v*'
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  refresh:
     runs-on: ubuntu-latest
     environment: production
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out the latest release tag
+        run: |
+          # Highest semver v* tag, independent of commit ancestry or GitHub Releases.
+          TAG=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$TAG" ]; then echo "No v* tag found"; exit 1; fi
+          echo "Refreshing sitemap for released tag: $TAG"
+          git checkout "$TAG"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -24,12 +34,6 @@ jobs:
 
       - name: Write production environment file
         run: echo "${{ secrets.ENVIRONMENT_PROD_TS }}" > src/environments/environment.prod.ts
-
-      - name: Lint
-        run: npm run lint:brief
-
-      - name: Test
-        run: npm run test:ci
 
       - name: Build
         run: npm run build

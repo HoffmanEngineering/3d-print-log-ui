@@ -573,15 +573,33 @@
               ></a
             >
           </h3>
-          <button
-            type="button"
-            mat-raised-button
-            (click)="addAdjustment()"
-            color="accent"
-            style="margin-bottom: 5px"
-          >
-            Add New Adjustment
-          </button>
+          <div class="adjustment-actions">
+            <button
+              type="button"
+              mat-raised-button
+              (click)="addAdjustment()"
+              color="accent"
+            >
+              Add New Adjustment
+            </button>
+            @if (canShowSpoolCalculator) {
+              <span
+                class="spool-calc-tooltip-wrapper"
+                [matTooltip]="spoolCalculatorTooltip"
+              >
+                <button
+                  id="spool-calc-button"
+                  type="button"
+                  mat-raised-button
+                  color="primary"
+                  [disabled]="filamentForm.dirty"
+                  (click)="openSpoolWeightCalculator()"
+                >
+                  Adjust from measured weight
+                </button>
+              </span>
+            }
+          </div>
         </div>
         <div formArrayName="filamentAdjustments" fxFlex="grow" fxFlexFill>
           @for (

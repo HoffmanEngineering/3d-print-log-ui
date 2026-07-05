@@ -44,6 +44,12 @@ import {
   QrLabelDialogComponent,
   QrLabelDialogData,
 } from 'src/app/shared/qr-label-dialog/qr-label-dialog.component';
+import {
+  SpoolWeightCalculatorDialogComponent,
+  SpoolWeightCalculatorDialogData,
+  SpoolWeightCalculatorDialogResult,
+} from '../spool-weight-calculator-dialog/spool-weight-calculator-dialog.component';
+import { resolveSpoolWeightMg } from '../spool-weight-calculator-dialog/spool-weight-adjustment.util';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
@@ -57,6 +63,7 @@ export class FilamentDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy
 {
   public filamentForm: UntypedFormGroup;
+  public loadedFilament: FilamentDetail | null = null;
   public saving = false;
 
   public materials: Material[] = [];
@@ -154,6 +161,7 @@ export class FilamentDetailComponent
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
+      this.loadedFilament = (data.filament as FilamentDetail) ?? null;
 
       this.normalizedColors = this.computeNormalizedColors();
       this.colorsSubscription = this.colorsFormArray.valueChanges.subscribe(
@@ -519,6 +527,90 @@ export class FilamentDetailComponent
 
   removeAdjustment(index: number) {
     this.filamentAdjustments.removeAt(index);
+  }
+
+  get canShowSpoolCalculator(): boolean {
+    const f = this.loadedFilament;
+    if (!f || !f.id) {
+      return false;
+    }
+    if (f.filamentRemaining === null || f.filamentRemaining === undefined) {
+      return false;
+    }
+    return (
+      resolveSpoolWeightMg(
+        f.spoolWeightMg,
+        f.initialTotalWeightMg,
+        f.initialNominalWeightMg
+      ) !== null
+    );
+  }
+
+  get spoolCalculatorTooltip(): string {
+    return this.filamentForm.dirty
+      ? 'Save your changes before using the calculator'
+      : "Calculate an adjustment from the spool's measured weight";
+  }
+
+  openSpoolWeightCalculator(): void {
+    const f = this.loadedFilament;
+    if (!f) {
+      return;
+    }
+
+    // The launch button is disabled while the form is dirty; guard the method
+    // too so the saved filamentRemaining the calculator reads always matches
+    // the form (see spec: available only when pristine).
+    if (this.filamentForm.dirty) {
+      return;
+    }
+
+    const spoolWeightMg = resolveSpoolWeightMg(
+      f.spoolWeightMg,
+      f.initialTotalWeightMg,
+      f.initialNominalWeightMg
+    );
+    if (
+      spoolWeightMg === null ||
+      f.filamentRemaining === null ||
+      f.filamentRemaining === undefined
+    ) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(SpoolWeightCalculatorDialogComponent, {
+      data: {
+        spoolWeightMg,
+        filamentRemainingMg: f.filamentRemaining,
+      } as SpoolWeightCalculatorDialogData,
+      width: '500px',
+    });
+
+    dialogRef
+      .afterClosed()
+      .subscribe((result: SpoolWeightCalculatorDialogResult | undefined) => {
+        if (!result) {
+          return;
+        }
+
+        this.filamentAdjustments.push(
+          this.buildFilamentAdjustmentFormGroup(
+            EMPTY_GUID,
+            f.id ?? EMPTY_GUID,
+            FilamentAdjustmentSourceMeasurement.Weight,
+            result.adjustmentG,
+            null,
+            null,
+            result.note
+          )
+        );
+        this.filamentForm.markAsDirty();
+
+        this.loggingService.logEvent('SpoolWeightCalculator_AdjustmentAdded', {
+          measuredTotalWeightG: result.measuredTotalWeightG,
+          adjustmentG: result.adjustmentG,
+        });
+      });
   }
 
   onColorPatternChange(): void {

@@ -583,17 +583,21 @@
               Add New Adjustment
             </button>
             @if (canShowSpoolCalculator) {
-              <button
-                id="spool-calc-button"
-                type="button"
-                mat-raised-button
-                color="primary"
-                [disabled]="filamentForm.dirty"
+              <span
+                class="spool-calc-tooltip-wrapper"
                 [matTooltip]="spoolCalculatorTooltip"
-                (click)="openSpoolWeightCalculator()"
               >
-                Adjust from measured weight
-              </button>
+                <button
+                  id="spool-calc-button"
+                  type="button"
+                  mat-raised-button
+                  color="primary"
+                  [disabled]="filamentForm.dirty"
+                  (click)="openSpoolWeightCalculator()"
+                >
+                  Adjust from measured weight
+                </button>
+              </span>
             }
           </div>
         </div>

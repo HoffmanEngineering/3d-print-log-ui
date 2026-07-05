@@ -32,3 +32,15 @@ mat-card-title {
   gap: 5px;
   margin-bottom: 5px;
 }
+
+// The calculator tooltip lives on this wrapper so it still shows while the
+// button is disabled. Native disabled buttons swallow the pointer events the
+// tooltip relies on, so the disabled button is made transparent to them and
+// the wrapper receives the hover instead.
+.spool-calc-tooltip-wrapper {
+  display: inline-flex;
+
+  button:disabled {
+    pointer-events: none;
+  }
+}

@@ -28,6 +28,9 @@ jobs:
       - name: Test
         run: npm run test:ci
 
+      - name: Sitemap unit tests
+        run: npm run test:sitemap
+
       - name: Build (dev/base config)
         run: npm run build:dev
 

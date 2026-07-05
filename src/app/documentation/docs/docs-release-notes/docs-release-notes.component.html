@@ -2,6 +2,28 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.43.1">1.43.1 - Dark Mode Readability Fixes</h3>
+  <p>
+    This patch improves readability in dark mode. Several spots that showed hard-to-read dark text
+    on the dark background (such as the material list cards on mobile and the spool weight calculator
+    dialog) now use theme-aware colors, and focused input fields use a lighter, more legible blue.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Readable text on dark surfaces</strong> - Text that was hardcoded to a dark color
+      (including the material card brand and remaining weight, and the spool weight calculator) now
+      follows the active theme, so it stays legible in dark mode.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/41" rel="noreferrer noopener" target="_blank">PR #41</a>)
+    </li>
+    <li>
+      <strong>Lighter focused inputs</strong> - Focused form fields (and other primary accents like
+      buttons and tabs) now use a lighter blue in dark mode, so the focused label and underline are
+      easier to read against the dark background.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/41" rel="noreferrer noopener" target="_blank">PR #41</a>)
+    </li>
+  </ul>
+
   <h3 id="v1.43.0">1.43.0 - Spool Weight Calculator</h3>
   <p>
     This release adds a <strong>Spool Weight Adjustment Calculator</strong> to the material detail

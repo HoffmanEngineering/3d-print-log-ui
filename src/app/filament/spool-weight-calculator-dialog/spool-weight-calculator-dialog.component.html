@@ -2,23 +2,12 @@
 
 <mat-dialog-content>
   <p>
-    Weigh the whole spool, then enter the total below. We'll calculate the
-    adjustment needed to match what you actually have.
+    Weigh the whole spool, then enter the total below. We'll work out the
+    adjustment to match what you actually have.
   </p>
 
-  <div class="calc-facts">
-    <div>
-      <span class="calc-label">Spool weight</span>
-      <span class="calc-value">{{ spoolWeightG }} g</span>
-    </div>
-    <div>
-      <span class="calc-label">Currently tracked remaining</span>
-      <span class="calc-value">{{ filamentRemainingG }} g</span>
-    </div>
-  </div>
-
   <mat-form-field class="calc-input" appearance="fill">
-    <mat-label>Current measured total weight (g)</mat-label>
+    <mat-label>Measured total weight (g)</mat-label>
     <input
       matInput
       type="number"
@@ -26,29 +15,38 @@
       [formControl]="measuredTotalWeightControl"
       id="spool-calc-measured-weight"
     />
+    <span matTextSuffix>g</span>
   </mat-form-field>
+  <p class="calc-spool-note">Empty spool weight: {{ spoolWeightG }} g</p>
 
   @if (preview(); as result) {
-    <div class="calc-result">
-      <div>
-        <span class="calc-label">Measured remaining</span>
-        <span class="calc-value">{{ result.measuredRemainingMg / 1000 }} g</span>
+    <div class="calc-compare">
+      <div class="calc-state">
+        <span class="calc-state-label">Tracked</span>
+        <span class="calc-state-value">{{ filamentRemainingG }} g</span>
       </div>
-      <div>
-        <span class="calc-label">Adjustment</span>
-        <span class="calc-value calc-adjustment"
+
+      <div class="calc-arrow">
+        <mat-icon>arrow_forward</mat-icon>
+        <span class="calc-adjustment"
           >{{ result.adjustmentMg > 0 ? '+' : ''
           }}{{ result.adjustmentMg / 1000 }} g</span
         >
       </div>
-      @if (result.negativeRemaining) {
-        <p class="calc-warning">
-          <mat-icon inline>warning</mat-icon>
-          The measured weight is below the spool weight, which implies a negative
-          remaining amount. Double-check the spool weight and your measurement.
-        </p>
-      }
+
+      <div class="calc-state">
+        <span class="calc-state-label">Measured</span>
+        <span class="calc-state-value">{{ result.measuredRemainingMg / 1000 }} g</span>
+      </div>
     </div>
+
+    @if (result.negativeRemaining) {
+      <p class="calc-warning">
+        <mat-icon inline>warning</mat-icon>
+        The measured weight is below the spool weight, which implies a negative
+        remaining amount. Double-check the spool weight and your measurement.
+      </p>
+    }
   }
 </mat-dialog-content>
 

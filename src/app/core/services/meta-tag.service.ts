@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 
 export class MetaTag {
@@ -26,6 +27,8 @@ export class MetaTagService {
   private readonly twitterTitleMeta: string = 'twitter:text:title';
   private readonly twitterImageMeta: string = 'twitter:image';
 
+  private readonly document = inject(DOCUMENT);
+
   constructor(
     private titleService: Title,
     private metaService: Meta
@@ -33,6 +36,40 @@ export class MetaTagService {
 
   public setTitle(title: string): void {
     this.titleService.setTitle(title);
+  }
+
+  public setSeoTags(opts: {
+    url: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+  }): void {
+    this.setTitle(opts.title); // sets the document <title> (setSocialMediaTags does NOT)
+    this.setSocialMediaTags(
+      opts.url,
+      opts.title,
+      opts.description,
+      opts.imageUrl
+    );
+    this.metaService.updateTag({ property: 'og:type', content: 'website' });
+    this.metaService.updateTag({ property: 'og:url', content: opts.url });
+    this.metaService.updateTag({
+      name: 'twitter:card',
+      content: 'summary_large_image',
+    });
+    this.setCanonical(opts.url);
+  }
+
+  private setCanonical(url: string): void {
+    let link = this.document.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]'
+    );
+    if (!link) {
+      link = this.document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(link);
+    }
+    link.setAttribute('href', url);
   }
 
   public setSocialMediaTags(

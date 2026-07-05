@@ -22,8 +22,7 @@
     "parse-cura": "ts-node --project cura-machine-def-parser/tsconfig.json cura-machine-def-parser/parser.ts",
     "parse-orca": "ts-node --project orca-machine-def-parser/tsconfig.json orca-machine-def-parser/parser.ts",
     "compare-printers": "ts-node --project orca-machine-def-parser/tsconfig.json orca-machine-def-parser/compare.ts",
-    "prepare": "husky install",
-    "serve:ssr:print-log-ui": "node dist/print-log-ui/server/server.mjs"
+    "prepare": "husky install"
   },
   "private": true,
   "dependencies": {
@@ -50,7 +49,6 @@
     "ajv": "^8.20.0",
     "currency.js": "^2.0.4",
     "d3": "^7.9.0",
-    "express": "^5.1.0",
     "html5-qrcode": "^2.3.8",
     "lodash-es": "^4.18.1",
     "ng2-adsense": "^13.0.0",
@@ -75,7 +73,6 @@
     "@testing-library/cypress": "^10.1.3",
     "@types/cypress": "^1.1.6",
     "@types/d3": "^7.4.3",
-    "@types/express": "^5.0.1",
     "@types/jasmine": "^5.1.15",
     "@types/jasminewd2": "^2.0.13",
     "@types/node": "^22.19.18",

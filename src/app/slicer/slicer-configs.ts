@@ -35,6 +35,13 @@ export const SLICER_CONFIGS: Record<string, SlicerConfig> = {
       'https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/releases',
     downloadLabel: 'Download the uploader on GitHub',
     docsRoute: '/docs/slic3r-uploader',
+    relatedForks: [
+      { route: '/snapmaker-orca', name: 'Snapmaker Orca' },
+      { route: '/anycubic-slicer', name: 'Anycubic Slicer Next' },
+      { route: '/elegoo-slicer', name: 'Elegoo Slicer' },
+      { route: '/qidi-studio', name: 'QIDI Studio' },
+      { route: '/orca-flashforge', name: 'Orca-FlashForge' },
+    ],
   },
   cura: {
     route: 'cura',

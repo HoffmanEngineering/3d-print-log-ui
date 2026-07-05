@@ -287,6 +287,20 @@ img {
   opacity: 0.9;
 }
 
+.footer-slicer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    opacity: 0.9;
+  }
+}
+
 // Legacy styles
 h1 {
   text-align: center;

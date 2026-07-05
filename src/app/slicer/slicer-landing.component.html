@@ -1,0 +1,40 @@
+<main class="slicer-landing">
+  <h1>{{ config.h1 }}</h1>
+  <p class="intro">{{ config.intro }}</p>
+
+  @if (config.uniqueHook) {
+    <p class="hook">{{ config.uniqueHook }}</p>
+  }
+
+  <ol class="steps">
+    @for (step of config.steps; track step) {
+      <li>{{ step }}</li>
+    }
+  </ol>
+
+  <p>
+    <a [href]="config.downloadUrl" target="_blank" rel="noopener">{{
+      config.downloadLabel
+    }}</a>
+  </p>
+
+  @if (config.relatedForks?.length) {
+    <section class="forks">
+      <h2>OrcaSlicer forks</h2>
+      <ul>
+        @for (fork of config.relatedForks; track fork.route) {
+          <li><a [routerLink]="fork.route">{{ fork.name }}</a></li>
+        }
+      </ul>
+    </section>
+  }
+
+  <nav class="links">
+    <a [routerLink]="config.docsRoute">Full setup guide</a>
+    @if (config.hubRoute) {
+      <a [routerLink]="config.hubRoute">All OrcaSlicer forks</a>
+    }
+    <a routerLink="/">3D Print Log home</a>
+    <a routerLink="/docs/release-notes">Release notes</a>
+  </nav>
+</main>

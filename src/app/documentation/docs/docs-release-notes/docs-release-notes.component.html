@@ -2,6 +2,31 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.43.0">1.43.0 - Spool Weight Calculator</h3>
+  <p>
+    This release adds a <strong>Spool Weight Adjustment Calculator</strong> to the material detail
+    page. Instead of working out a filament adjustment by hand, weigh the whole spool, enter the
+    measured total, and 3D Print Log calculates the exact adjustment needed to match what you
+    actually have left (then adds it to your adjustments, ready to review before you save).
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Spool Weight Adjustment Calculator</strong> - On the
+      <a routerLink="/materials">Materials</a> detail page, use "Adjust from measured weight" to
+      reconcile your tracked remaining filament with a scale reading. It combines the spool weight
+      and the currently tracked remaining amount into a clear before (tracked) and after (measured)
+      comparison, and adds the resulting adjustment for you.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/39" rel="noreferrer noopener" target="_blank">PR #39</a>)
+    </li>
+    <li>
+      <strong>Works with any tracked unit</strong> - The calculator supports materials tracked by
+      weight, length, or volume, converting your measured weight into the correct adjustment
+      automatically.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/39" rel="noreferrer noopener" target="_blank">PR #39</a>)
+    </li>
+  </ul>
+
   <h3 id="v1.42.0">1.42.0 - Preferred Filament Units</h3>
   <p>
     This release introduces a <strong>Preferred Filament Display Unit</strong> setting, letting you

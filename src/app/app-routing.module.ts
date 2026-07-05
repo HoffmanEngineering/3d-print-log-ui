@@ -139,6 +139,31 @@ const routes: Routes = [
     data: { slicerKey: 'orcaslicer' },
   },
   {
+    path: 'snapmaker-orca',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'snapmaker-orca' },
+  },
+  {
+    path: 'anycubic-slicer',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'anycubic-slicer' },
+  },
+  {
+    path: 'elegoo-slicer',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'elegoo-slicer' },
+  },
+  {
+    path: 'qidi-studio',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'qidi-studio' },
+  },
+  {
+    path: 'orca-flashforge',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'orca-flashforge' },
+  },
+  {
     path: '',
     component: HomeComponent,
     pathMatch: 'full',

@@ -108,4 +108,109 @@ export const SLICER_CONFIGS: Record<string, SlicerConfig> = {
     downloadLabel: 'Download the uploader on GitHub',
     docsRoute: '/docs/slic3r-uploader',
   },
+  'snapmaker-orca': {
+    route: 'snapmaker-orca',
+    title: 'Track Prints from Snapmaker Orca | 3D Print Log',
+    metaDescription:
+      'Automatically log every Snapmaker Orca print in 3D Print Log. Send print time, filament usage, and settings straight from Snapmaker Orca. Free.',
+    h1: 'Log 3D Prints from Snapmaker Orca',
+    intro:
+      'Snapmaker Orca is built on OrcaSlicer, so it works with the same 3D Print Log uploader.',
+    uniqueHook:
+      'Snapmaker Orca ships tuned for Snapmaker machines such as the Artisan and the J1 IDEX printer. It keeps the OrcaSlicer post-processing workflow, so the uploader script installs the same way it does in OrcaSlicer.',
+    steps: [
+      'Download the 3D Print Log uploader from GitHub.',
+      'In Snapmaker Orca, add the uploader as a post-processing script under Process settings.',
+      'Slice and print. Your print is logged automatically.',
+    ],
+    downloadUrl:
+      'https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/releases',
+    downloadLabel: 'Download the uploader on GitHub',
+    docsRoute: '/docs/slic3r-uploader',
+    hubRoute: '/orcaslicer',
+  },
+  'anycubic-slicer': {
+    route: 'anycubic-slicer',
+    title: 'Track Prints from Anycubic Slicer Next | 3D Print Log',
+    metaDescription:
+      'Automatically log every Anycubic Slicer Next print in 3D Print Log. Send print time, filament usage, and settings straight from Anycubic Slicer Next. Free.',
+    h1: 'Log 3D Prints from Anycubic Slicer Next',
+    intro:
+      'Anycubic Slicer Next is built on OrcaSlicer, so it works with the same 3D Print Log uploader.',
+    uniqueHook:
+      'Anycubic Slicer Next is the OrcaSlicer-based slicer Anycubic ships for the Kobra 3 and Photon series machines. It keeps the OrcaSlicer post-processing workflow, so the uploader script installs the same way.',
+    steps: [
+      'Download the 3D Print Log uploader from GitHub.',
+      'In Anycubic Slicer Next, add the uploader as a post-processing script under Process settings.',
+      'Slice and print. Your print is logged automatically.',
+    ],
+    downloadUrl:
+      'https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/releases',
+    downloadLabel: 'Download the uploader on GitHub',
+    docsRoute: '/docs/slic3r-uploader',
+    hubRoute: '/orcaslicer',
+  },
+  'elegoo-slicer': {
+    route: 'elegoo-slicer',
+    title: 'Track Prints from Elegoo Slicer | 3D Print Log',
+    metaDescription:
+      'Automatically log every Elegoo Slicer print in 3D Print Log. Send print time, filament usage, and settings straight from Elegoo Slicer. Free.',
+    h1: 'Log 3D Prints from Elegoo Slicer',
+    intro:
+      'Elegoo Slicer is built on OrcaSlicer, so it works with the same 3D Print Log uploader.',
+    uniqueHook:
+      'Elegoo Slicer ships with Elegoo printers such as the Centauri Carbon. It keeps the OrcaSlicer post-processing workflow, so the uploader script installs the same way.',
+    steps: [
+      'Download the 3D Print Log uploader from GitHub.',
+      'In Elegoo Slicer, add the uploader as a post-processing script under Process settings.',
+      'Slice and print. Your print is logged automatically.',
+    ],
+    downloadUrl:
+      'https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/releases',
+    downloadLabel: 'Download the uploader on GitHub',
+    docsRoute: '/docs/slic3r-uploader',
+    hubRoute: '/orcaslicer',
+  },
+  'qidi-studio': {
+    route: 'qidi-studio',
+    title: 'Track Prints from QIDI Studio | 3D Print Log',
+    metaDescription:
+      'Automatically log every QIDI Studio print in 3D Print Log. Send print time, filament usage, and settings straight from QIDI Studio. Free.',
+    h1: 'Log 3D Prints from QIDI Studio',
+    intro:
+      'QIDI Studio is built on OrcaSlicer, so it works with the same 3D Print Log uploader.',
+    uniqueHook:
+      'QIDI Studio is the OrcaSlicer-based slicer QIDI ships for its high-speed machines such as the Q1 Pro and the Plus4. It keeps the OrcaSlicer post-processing workflow, so the uploader script installs the same way.',
+    steps: [
+      'Download the 3D Print Log uploader from GitHub.',
+      'In QIDI Studio, add the uploader as a post-processing script under Process settings.',
+      'Slice and print. Your print is logged automatically.',
+    ],
+    downloadUrl:
+      'https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/releases',
+    downloadLabel: 'Download the uploader on GitHub',
+    docsRoute: '/docs/slic3r-uploader',
+    hubRoute: '/orcaslicer',
+  },
+  'orca-flashforge': {
+    route: 'orca-flashforge',
+    title: 'Track Prints from Orca-FlashForge | 3D Print Log',
+    metaDescription:
+      'Automatically log every Orca-FlashForge print in 3D Print Log. Send print time, filament usage, and settings straight from Orca-FlashForge. Free.',
+    h1: 'Log 3D Prints from Orca-FlashForge',
+    intro:
+      'Orca-FlashForge is built on OrcaSlicer, so it works with the same 3D Print Log uploader.',
+    uniqueHook:
+      'Orca-FlashForge is the OrcaSlicer-based slicer FlashForge ships for machines such as the Adventurer 5M and the AD5X. It keeps the OrcaSlicer post-processing workflow, so the uploader script installs the same way.',
+    steps: [
+      'Download the 3D Print Log uploader from GitHub.',
+      'In Orca-FlashForge, add the uploader as a post-processing script under Process settings.',
+      'Slice and print. Your print is logged automatically.',
+    ],
+    downloadUrl:
+      'https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/releases',
+    downloadLabel: 'Download the uploader on GitHub',
+    docsRoute: '/docs/slic3r-uploader',
+    hubRoute: '/orcaslicer',
+  },
 };

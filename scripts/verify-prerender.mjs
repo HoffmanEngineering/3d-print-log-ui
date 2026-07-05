@@ -113,8 +113,32 @@ if (hub) {
   }
 }
 
-for (const f of ['robots.txt', 'sitemap.xml']) {
-  if (!existsSync(`${DIST}/${f}`)) errors.push(`missing ${f}`);
+// robots.txt is a static asset and must always ship.
+if (!existsSync(`${DIST}/robots.txt`)) errors.push('missing robots.txt');
+
+// sitemap.xml is generated at deploy time by scripts/generate-sitemap.mjs, not on
+// PR builds. When present it must be a sitemap index referencing sitemap-pages.xml,
+// and sitemap-pages.xml must list every marketing route.
+if (existsSync(`${DIST}/sitemap.xml`)) {
+  const idx = readFileSync(`${DIST}/sitemap.xml`, 'utf8');
+  if (!/<sitemapindex\b/i.test(idx)) {
+    errors.push('sitemap.xml is not a <sitemapindex>');
+  }
+  if (!idx.includes('/sitemap-pages.xml')) {
+    errors.push('sitemap.xml index does not reference sitemap-pages.xml');
+  }
+  const pagesFile = `${DIST}/sitemap-pages.xml`;
+  if (!existsSync(pagesFile)) {
+    errors.push('missing sitemap-pages.xml');
+  } else {
+    const pages = readFileSync(pagesFile, 'utf8');
+    for (const r of MARKETING_ROUTES) {
+      const u = `${ORIGIN}/${r}`;
+      if (!pages.includes(`<loc>${u}</loc>`)) {
+        errors.push(`sitemap-pages.xml missing ${u}`);
+      }
+    }
+  }
 }
 
 if (errors.length) {

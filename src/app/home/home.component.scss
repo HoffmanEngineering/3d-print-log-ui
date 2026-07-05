@@ -313,6 +313,10 @@ mat-toolbar {
 
 :host-context(body.dark-theme) mat-toolbar {
   background-color: var(--brand-toolbar-bg);
+  // The dark theme's lighter primary makes Material's on-primary contrast color
+  // dark, so hero/footer text would render near-invisible on this dark toolbar.
+  // Force white to match the dark indigo background.
+  color: white;
 }
 
 .wrapper {

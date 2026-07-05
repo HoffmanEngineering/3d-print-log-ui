@@ -12,6 +12,10 @@
 
 :host-context(body.dark-theme) .example-toolbar {
   background-color: var(--brand-toolbar-bg);
+  // The dark theme's lighter primary makes Material's on-primary contrast color
+  // dark, so the "Documentation" heading and the menu icon would render near-
+  // invisible on this dark toolbar. Force white to match the dark background.
+  color: white;
 }
 
 h1.example-app-name {

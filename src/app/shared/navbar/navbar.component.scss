@@ -65,6 +65,15 @@ a:not([mat-menu-item]) {
   }
 }
 
+// The toolbar background is always a dark indigo, but the menu-trigger buttons
+// (Printers, About) are <button> elements that inherit Material's on-primary
+// text color rather than the white forced on the <a> links above. When the dark
+// theme switched primary to a lighter indigo, that contrast color became dark
+// and the buttons rendered near-invisible. Force them white to match the links.
+button.link {
+  color: white;
+}
+
 .profile-picture {
   vertical-align: middle;
   width: 50px;

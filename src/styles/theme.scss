@@ -18,10 +18,16 @@ $light-theme: mat.m2-define-light-theme(
   )
 );
 
+// Dark mode uses a lighter primary (indigo A100) so focused inputs and other
+// primary accents stay readable on the dark surface. Indigo 500 (#3f51b5) is
+// too dark against #121212 — the focused input label/underline become hard to
+// read.
+$dark-primary: mat.m2-define-palette(mat.$m2-indigo-palette, A100);
+
 $dark-theme: mat.m2-define-dark-theme(
   (
     color: (
-      primary: $primary,
+      primary: $dark-primary,
       accent: $accent,
       warn: $warn,
     ),
@@ -83,6 +89,18 @@ html {
     0px 24px 38px 3px rgba(0, 0, 0, 0.14), 0px 9px 46px 8px rgba(0, 0, 0, 0.12);
 
   @include mat.all-component-themes($light-theme);
+
+  // Semantic text colors that follow the active theme. Use these instead of
+  // hardcoded rgba(0, 0, 0, x) so text stays readable on the dark surface.
+  // Light values match Material's standard on-surface emphasis levels.
+  --app-text-primary: rgba(0, 0, 0, 0.87);
+  --app-text-strong: rgba(0, 0, 0, 0.7);
+  --app-text-secondary: rgba(0, 0, 0, 0.6);
+  --app-text-tertiary: rgba(0, 0, 0, 0.54);
+  --app-text-hint: rgba(0, 0, 0, 0.38);
+  // Accent-colored text that needs a lighter variant on the dark surface.
+  --app-accent-info-text: #1565c0;
+  --app-accent-warn-text: #b26a00;
 }
 
 // mat-elevation-z* class rules are not emitted by the custom M2 theme (only the prebuilt does this).
@@ -117,4 +135,14 @@ body.dark-theme {
   color-scheme: dark;
   background-color: #121212;
   color: #e0e0e0;
+
+  // On the dark surface, on-surface text switches to white at matching
+  // emphasis levels (hint bumped slightly for legibility on #121212).
+  --app-text-primary: rgba(255, 255, 255, 0.87);
+  --app-text-strong: rgba(255, 255, 255, 0.87);
+  --app-text-secondary: rgba(255, 255, 255, 0.7);
+  --app-text-tertiary: rgba(255, 255, 255, 0.6);
+  --app-text-hint: rgba(255, 255, 255, 0.5);
+  --app-accent-info-text: #64b5f6;
+  --app-accent-warn-text: #ffb74d;
 }

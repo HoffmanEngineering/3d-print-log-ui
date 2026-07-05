@@ -252,7 +252,7 @@ mat-checkbox {
 
   .card-weight {
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--app-text-secondary);
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -280,7 +280,7 @@ mat-checkbox {
 
   .card-row-secondary {
     font-size: 12px;
-    color: rgba(0, 0, 0, 0.54);
+    color: var(--app-text-tertiary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

@@ -15,7 +15,7 @@
 
   p {
     margin: 0;
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--app-text-secondary);
   }
 }
 
@@ -32,7 +32,7 @@
 
 .page-info {
   margin-bottom: 16px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--app-text-secondary);
   font-size: 14px;
 }
 

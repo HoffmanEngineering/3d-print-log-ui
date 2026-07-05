@@ -129,7 +129,7 @@ mat-card-title {
     display: flex;
     align-items: center;
     cursor: grab;
-    color: rgba(0, 0, 0, 0.54);
+    color: var(--app-text-tertiary);
 
     &:active {
       cursor: grabbing;

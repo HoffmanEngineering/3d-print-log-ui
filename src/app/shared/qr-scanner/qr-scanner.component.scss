@@ -20,7 +20,7 @@ app-qr-scanner {
 
     p {
       margin: 0;
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--app-text-secondary);
     }
   }
 
@@ -38,12 +38,12 @@ app-qr-scanner {
       font-size: 64px;
       width: 64px;
       height: 64px;
-      color: rgba(0, 0, 0, 0.38);
+      color: var(--app-text-hint);
     }
 
     .error-message {
       margin: 0;
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--app-text-secondary);
       max-width: 300px;
       line-height: 1.5;
     }
@@ -81,7 +81,7 @@ app-qr-scanner {
 
   .scan-instructions {
     margin: 0;
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--app-text-secondary);
     text-align: center;
     font-size: 14px;
   }

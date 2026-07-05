@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  PLATFORM_ID,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { AuthService } from '../core/services/auth.service';
 
@@ -10,6 +17,8 @@ import { AuthService } from '../core/services/auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit {
+  readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   constructor(
     public auth: AuthService,
     private titleService: Title

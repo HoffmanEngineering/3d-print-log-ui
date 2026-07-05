@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 
 import { environment } from 'src/environments/environment';
@@ -9,7 +10,10 @@ declare let gtag: Function;
   providedIn: 'root',
 })
 export class GoogleAnalyticsService {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   constructor(public router: Router) {
+    if (!this.isBrowser) return;
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         gtag('config', environment.googleAnalyticsId, {

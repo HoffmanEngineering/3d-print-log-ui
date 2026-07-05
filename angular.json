@@ -50,6 +50,8 @@
                 "src/ads.txt",
                 "src/staticwebapp.config.json"
               ],
+              "server": "src/main.server.ts",
+              "outputMode": "static",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -119,10 +121,7 @@
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "assets": ["src/favicon_1293b2036.ico", "src/assets"],
-            "styles": [
-              "src/styles/theme.scss",
-              "src/styles.scss"
-            ],
+            "styles": ["src/styles/theme.scss", "src/styles.scss"],
             "fileReplacements": [
               {
                 "replace": "src/environments/environment.ts",

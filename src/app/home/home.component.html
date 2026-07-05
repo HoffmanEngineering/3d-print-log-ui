@@ -42,7 +42,9 @@
     </div>
   </section>
 
-  <app-ad></app-ad>
+  @if (isBrowser) {
+    <app-ad></app-ad>
+  }
 
   <!-- Features Grid Section -->
   <section fxFlex="grow" class="example-grid features-section">

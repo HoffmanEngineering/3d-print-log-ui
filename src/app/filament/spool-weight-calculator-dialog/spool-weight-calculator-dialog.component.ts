@@ -5,6 +5,7 @@ import {
   inject,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
@@ -80,6 +81,26 @@ export class SpoolWeightCalculatorDialogComponent {
       this.data.spoolWeightMg,
       this.data.filamentRemainingMg
     );
+  });
+
+  // The numeric preview updates instantly, but the "below spool weight" warning
+  // is driven off a debounced value so it does not flash while the user is still
+  // typing an intermediate number (e.g. "1" before "187").
+  private readonly debouncedMeasuredValue = toSignal(
+    this.measuredTotalWeightControl.valueChanges.pipe(debounceTime(500)),
+    { initialValue: this.measuredTotalWeightControl.value }
+  );
+
+  readonly showNegativeWarning = computed<boolean>(() => {
+    const measuredG = this.debouncedMeasuredValue();
+    if (measuredG == null || measuredG <= 0) {
+      return false;
+    }
+    return calculateSpoolAdjustment(
+      measuredG * 1000,
+      this.data.spoolWeightMg,
+      this.data.filamentRemainingMg
+    ).negativeRemaining;
   });
 
   confirm(): void {

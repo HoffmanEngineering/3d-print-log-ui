@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
@@ -77,16 +82,25 @@ describe('SpoolWeightCalculatorDialogComponent', () => {
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
 
-  it('renders the negative-remaining warning but still allows confirm', () => {
+  it('shows the numeric preview immediately but debounces the negative-remaining warning', fakeAsync(() => {
     // Measured 100 g total is below the 150 g spool weight -> negative remaining
     component.measuredTotalWeightControl.setValue(100);
     fixture.detectChanges();
 
-    const warning: HTMLElement | null =
-      fixture.nativeElement.querySelector('.calc-warning');
-    expect(warning).not.toBeNull();
-
+    // Preview is immediate; the warning is not shown yet (debounce pending).
     expect(component.preview()).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.calc-warning')).toBeNull();
+
+    // After the debounce elapses, the warning appears.
+    tick(500);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.calc-warning')).not.toBeNull();
+  }));
+
+  it('still allows confirm when the measurement is below the spool weight', () => {
+    component.measuredTotalWeightControl.setValue(100);
+    expect(component.preview()).not.toBeNull();
+
     component.confirm();
     expect(dialogRef.close).toHaveBeenCalledTimes(1);
   });

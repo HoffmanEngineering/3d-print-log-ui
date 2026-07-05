@@ -40,7 +40,7 @@
       </div>
     </div>
 
-    @if (result.negativeRemaining) {
+    @if (showNegativeWarning()) {
       <p class="calc-warning">
         <mat-icon inline>warning</mat-icon>
         The measured weight is below the spool weight, which implies a negative

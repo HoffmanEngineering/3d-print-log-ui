@@ -1,18 +1,15 @@
 import { readFileSync, existsSync } from 'node:fs';
+import {
+  SITE_ORIGIN,
+  MARKETING_ROUTES,
+  TIER1,
+  HUB,
+  FORKS,
+} from './marketing-routes.mjs';
 
 const DIST = 'dist/print-log-ui/browser';
-const ORIGIN = 'https://www.3dprintlog.com';
-
-const TIER1 = ['cura', 'prusaslicer', 'bambu-studio', 'creality-print'];
-const HUB = 'orcaslicer';
-const FORKS = [
-  'snapmaker-orca',
-  'anycubic-slicer',
-  'elegoo-slicer',
-  'qidi-studio',
-  'orca-flashforge',
-];
-const routes = ['', ...TIER1, HUB, ...FORKS];
+const ORIGIN = SITE_ORIGIN;
+const routes = MARKETING_ROUTES;
 
 const errors = [];
 const titles = new Map();

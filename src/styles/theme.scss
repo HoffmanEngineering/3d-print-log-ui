@@ -18,10 +18,16 @@ $light-theme: mat.m2-define-light-theme(
   )
 );
 
+// Dark mode uses a lighter primary (indigo A100) so focused inputs and other
+// primary accents stay readable on the dark surface. Indigo 500 (#3f51b5) is
+// too dark against #121212 — the focused input label/underline become hard to
+// read.
+$dark-primary: mat.m2-define-palette(mat.$m2-indigo-palette, A100);
+
 $dark-theme: mat.m2-define-dark-theme(
   (
     color: (
-      primary: $primary,
+      primary: $dark-primary,
       accent: $accent,
       warn: $warn,
     ),

@@ -2,6 +2,22 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.43.11">1.43.11 - QR Label Printing Fix</h3>
+  <p>
+    Fixed a bug where the Print QR Labels dialog would get stuck on "Generating QR codes" and never
+    finish. QR label generation now works again, and if anything does go wrong the dialog shows a
+    clear message with a retry option instead of spinning forever.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>QR label generation fixed</strong> - Resolved an issue introduced in 1.43.9 where the
+      QR code library failed to load in production, leaving the Print Labels dialog stuck on the
+      loading spinner.
+    </li>
+  </ul>
+  <hr />
+
   <h3 id="v1.43.10">1.43.10 - Faster Page Loads</h3>
   <p>
     More behind-the-scenes work to speed up the app. The initial download was slimmed down further by

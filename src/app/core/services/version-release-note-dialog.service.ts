@@ -28,6 +28,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.43.11': {
+      redirect: '1.43.10',
+    },
     '1.43.10': {
       redirect: '1.43.9',
     },

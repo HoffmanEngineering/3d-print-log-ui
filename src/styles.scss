@@ -21,8 +21,14 @@ body {
   --brand-toolbar-bg: #3f51b5; // indigo-500
 }
 
-body.dark-theme {
+html.dark-theme {
   --brand-toolbar-bg: #283593; // indigo-800: same hue, toned down for dark mode
+  background-color: #121212;
+}
+
+// The dark theme class lives on <html> (set before first paint), so the opaque
+// body background must be re-colored explicitly or it covers the html background.
+html.dark-theme body {
   background-color: #121212;
 }
 
@@ -160,13 +166,13 @@ mat-checkbox.text-wrap {
 }
 
 /* cdk-drag-preview is teleported to body during drag — must be global, not in component SCSS */
-body.dark-theme .cdk-drag-preview {
+html.dark-theme .cdk-drag-preview {
   background-color: #2a2a2a;
 }
 
 /* Dark mode overrides for notification menu panel
    Must be global because mat-menu teleports outside the component host. */
-body.dark-theme .notification-menu {
+html.dark-theme .notification-menu {
   .notification-item {
     .notification-message {
       color: rgba(255, 255, 255, 0.6);

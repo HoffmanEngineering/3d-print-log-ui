@@ -277,7 +277,7 @@
 }
 
 /* Dark Mode Overrides */
-:host-context(body.dark-theme) {
+:host-context(html.dark-theme) {
   .hero-title,
   .section-heading,
   .final-cta-heading {

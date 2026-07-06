@@ -26,16 +26,51 @@
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="canonical" href="https://www.3dprintlog.com/" />
     <meta name="theme-color" content="#3F50B5" />
+    <!-- Apply the saved theme before the first paint to avoid a light-mode flash
+         on prerendered pages. Runs before any stylesheet so the class is set on
+         <html> before render. Keep in sync with ThemeService (key 'theme-mode'). -->
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem('theme-mode') || 'system';
+          var isDark =
+            mode === 'dark' ||
+            (mode === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark-theme');
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', '#283593');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" type="image/x-icon" href="favicon_1293b2036.ico" />
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <!-- Load fonts without blocking rendering, so the pre-paint theme script
+         below is not delayed behind these external stylesheets. -->
     <link
       href="https://fonts.googleapis.com/css?family=Roboto:light,regular,medium,thin,italic,mediumitalic,bold&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css?family=Roboto:light,regular,medium,thin,italic,mediumitalic,bold&display=swap"
+        rel="stylesheet"
+      />
+      <link
+        href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet"
+      />
+    </noscript>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script
       async
@@ -61,24 +96,6 @@
     ></script>
   </head>
   <body>
-    <!-- Apply the saved theme before first paint to avoid a light-mode flash on
-         prerendered pages. Keep in sync with ThemeService (key 'theme-mode'). -->
-    <script>
-      (function () {
-        try {
-          var mode = localStorage.getItem('theme-mode') || 'system';
-          var isDark =
-            mode === 'dark' ||
-            (mode === 'system' &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches);
-          if (isDark) {
-            document.body.classList.add('dark-theme');
-            var meta = document.querySelector('meta[name="theme-color"]');
-            if (meta) meta.setAttribute('content', '#283593');
-          }
-        } catch (e) {}
-      })();
-    </script>
     <app-root></app-root>
   </body>
 </html>

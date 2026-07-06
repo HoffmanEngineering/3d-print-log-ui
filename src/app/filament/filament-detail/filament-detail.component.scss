@@ -9,7 +9,7 @@ mat-form-field {
   outline-offset: 2px;
 }
 
-:host-context(body.dark-theme) {
+:host-context(html.dark-theme) {
   ::ng-deep mat-chip-listbox .mat-mdc-chip-option.cdk-keyboard-focused {
     outline-color: rgba(255, 255, 255, 0.75);
   }

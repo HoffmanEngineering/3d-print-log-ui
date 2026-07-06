@@ -130,7 +130,7 @@ html {
   box-shadow: var(--mat-app-elevation-shadow-level-8);
 }
 
-body.dark-theme {
+html.dark-theme {
   @include mat.all-component-colors($dark-theme);
   color-scheme: dark;
   background-color: #121212;

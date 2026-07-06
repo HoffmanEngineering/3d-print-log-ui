@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import * as QRCode from 'qrcode';
 
 export interface QrCodeOptions {
   width?: number;
@@ -25,6 +24,15 @@ const DEFAULT_OPTIONS: QrCodeOptions = {
   providedIn: 'root',
 })
 export class QrCodeService {
+  // Cache the import *promise* (not the resolved module) so concurrent first
+  // calls share one dynamic import instead of racing two.
+  private qrcodeModule: Promise<typeof import('qrcode')> | null = null;
+
+  /** Loads the qrcode library on demand, caching the promise after the first call. */
+  private loadQrcode(): Promise<typeof import('qrcode')> {
+    return (this.qrcodeModule ??= import('qrcode'));
+  }
+
   /**
    * Generates a QR code as an SVG string.
    * @param data The data to encode in the QR code
@@ -36,6 +44,7 @@ export class QrCodeService {
     options: QrCodeOptions = {}
   ): Promise<string> {
     const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
+    const QRCode = await this.loadQrcode();
 
     return QRCode.toString(data, {
       type: 'svg',
@@ -57,6 +66,7 @@ export class QrCodeService {
     options: QrCodeOptions = {}
   ): Promise<string> {
     const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
+    const QRCode = await this.loadQrcode();
 
     return QRCode.toDataURL(data, {
       width: mergedOptions.width,

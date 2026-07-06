@@ -2,6 +2,22 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.43.4">1.43.4 - Dark Mode Flash Fix</h3>
+  <p>
+    This patch fixes a brief flash of light mode when opening 3D Print Log with dark mode enabled. Your
+    saved theme is now applied before the page first renders, so dark mode users go straight to dark
+    with no flicker.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>No more dark mode flash</strong> - Pages now apply your saved theme before they first
+      paint, removing the momentary light-mode flash on load (most noticeable on the slicer landing
+      pages).
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/47" rel="noreferrer noopener" target="_blank">PR #47</a>)
+    </li>
+  </ul>
+
   <h3 id="v1.43.3">1.43.3 - SEO &amp; Sitemap Improvements</h3>
   <p>
     This release focuses on search-engine visibility. 3D Print Log now publishes dedicated landing

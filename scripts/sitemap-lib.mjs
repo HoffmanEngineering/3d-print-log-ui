@@ -55,3 +55,7 @@ export function contentUrls(origin, segment, ids) {
     return `${origin}/${segment}/${encodeURIComponent(String(id))}`;
   });
 }
+
+export function pageUrls(origin, routes) {
+  return routes.map((r) => `${origin}/${r}`);
+}

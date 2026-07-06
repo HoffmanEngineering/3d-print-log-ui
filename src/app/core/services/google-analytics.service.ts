@@ -4,8 +4,6 @@ import { NavigationEnd, Router } from '@angular/router';
 
 import { environment } from 'src/environments/environment';
 
-declare let gtag: Function;
-
 @Injectable({
   providedIn: 'root',
 })
@@ -16,7 +14,7 @@ export class GoogleAnalyticsService {
     if (!this.isBrowser) return;
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
-        gtag('config', environment.googleAnalyticsId, {
+        this.gtag('config', environment.googleAnalyticsMeasurementId, {
           page_path: event.urlAfterRedirects,
         });
       }
@@ -30,7 +28,7 @@ export class GoogleAnalyticsService {
     eventLabel: string = null,
     eventValue: number = null
   ) {
-    gtag('event', eventName, {
+    this.gtag('event', eventName, {
       eventCategory,
       eventLabel,
       eventAction,
@@ -39,6 +37,18 @@ export class GoogleAnalyticsService {
   }
 
   public emitConversion(sendTo: string) {
-    gtag('event', 'conversion', { send_to: sendTo });
+    this.gtag('event', 'conversion', { send_to: sendTo });
+  }
+
+  /**
+   * Resolve the global gtag off `window` and no-op when it is absent, so a
+   * missing/not-yet-loaded gtag bootstrap never throws a ReferenceError.
+   */
+  private gtag(...args: unknown[]): void {
+    if (!this.isBrowser) return;
+    const w = window as unknown as { gtag?: (...a: unknown[]) => void };
+    if (typeof w.gtag === 'function') {
+      w.gtag(...args);
+    }
   }
 }

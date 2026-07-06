@@ -13,7 +13,7 @@ export const environment = {
     client_id: 'Z08zKCebdjkBK7Ew281y1W2g2LGBp2SZ',
     audience: 'https://dev.3dprintlog.com/api',
   },
-  googleAnalyticsId: 'UA-65004387-7',
+  googleAnalyticsMeasurementId: 'G-4TEMNSY6QX',
   appInsights: {
     instrumentationKey: 'aea218c9-705c-4566-89ec-ec01aca375b4',
   },

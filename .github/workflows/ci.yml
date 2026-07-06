@@ -28,5 +28,17 @@ jobs:
       - name: Test
         run: npm run test:ci
 
-      - name: Build
+      - name: Sitemap unit tests
+        run: npm run test:sitemap
+
+      - name: Build (dev/base config)
         run: npm run build:dev
+
+      - name: Generate CI production environment
+        run: cp src/environments/environment.prod.example.ts src/environments/environment.prod.ts
+
+      - name: Build (production prerender)
+        run: npm run build
+
+      - name: Verify prerendered output
+        run: node scripts/verify-prerender.mjs

@@ -208,7 +208,11 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     FilamentColorSwatchStylePipe,
   ],
   providers: [
-    { provide: MAT_DATE_LOCALE, useFactory: () => navigator.language },
+    {
+      provide: MAT_DATE_LOCALE,
+      useFactory: () =>
+        typeof navigator !== 'undefined' ? navigator.language : 'en-US',
+    },
   ],
 })
 export class SharedModule {}

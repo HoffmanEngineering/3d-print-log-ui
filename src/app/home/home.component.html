@@ -42,7 +42,9 @@
     </div>
   </section>
 
-  <app-ad></app-ad>
+  @if (isBrowser) {
+    <app-ad></app-ad>
+  }
 
   <!-- Features Grid Section -->
   <section fxFlex="grow" class="example-grid features-section">
@@ -110,19 +112,16 @@
       <div class="section homepage-desc feature-content feature-4-content">
         <h2>Automatically Upload with Slicer Integrations</h2>
         <p>
-          The
-          <a routerLink="/docs/cura-plugin" class="feature-link"
-            >3D Print Log plugin</a
-          >
-          for Ultimaker Cura makes it easy to send print information and
-          settings directly from your slicer.
-        </p>
-        <p>
-          We also have integrations for Slic3r-based slicers like OrcaSlicer,
-          PrusaSlicer, Super Slicer and Bambu Studio by using our
-          <a routerLink="/docs/slic3r-uploader" class="feature-link"
-            >Slic3r Uploader</a
-          >
+          Send prints straight from your slicer. 3D Print Log works with
+          <a routerLink="/orcaslicer" class="feature-link">OrcaSlicer</a>,
+          <a routerLink="/bambu-studio" class="feature-link">Bambu Studio</a>,
+          <a routerLink="/prusaslicer" class="feature-link">PrusaSlicer</a>,
+          <a routerLink="/creality-print" class="feature-link"
+            >Creality Print</a
+          >, SuperSlicer, and
+          <a routerLink="/cura" class="feature-link">Ultimaker Cura</a>, filling
+          in your print details and settings automatically. Cura uses our
+          Marketplace plugin; the others use our post-processing uploader.
         </p>
         <p>
           And you can setup
@@ -178,6 +177,13 @@
           routerLink="/docs/getting-started"
           >Get started</a
         >
+        <nav class="footer-slicer-links" aria-label="Slicer integrations">
+          <a routerLink="/orcaslicer">OrcaSlicer</a>
+          <a routerLink="/bambu-studio">Bambu Studio</a>
+          <a routerLink="/prusaslicer">PrusaSlicer</a>
+          <a routerLink="/creality-print">Creality Print</a>
+          <a routerLink="/cura">Cura</a>
+        </nav>
       </div>
     </mat-toolbar>
   </footer>

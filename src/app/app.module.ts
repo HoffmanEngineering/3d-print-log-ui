@@ -4,7 +4,11 @@ import {
   withInterceptorsFromDi,
 } from '@angular/common/http';
 import { ErrorHandler, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+import {
+  BrowserModule,
+  provideClientHydration,
+  withEventReplay,
+} from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LoadingBarModule } from '@ngx-loading-bar/core';
 import { LoadingBarHttpClientModule } from '@ngx-loading-bar/http-client';
@@ -52,6 +56,7 @@ import { SharedModule } from './shared/shared.module';
     },
     { provide: ErrorHandler, useClass: ErrorHandlerService },
     provideHttpClient(withInterceptorsFromDi()),
+    provideClientHydration(withEventReplay()),
   ],
 })
 export class AppModule {}

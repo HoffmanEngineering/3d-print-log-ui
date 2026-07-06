@@ -75,3 +75,5 @@ src/environments/environment.staging.ts
 
 # Auth0 dev environment — requires a real Auth0 tenant, copy from example
 src/environments/environment.auth0-dev.ts
+
+.sitemap-smoke/

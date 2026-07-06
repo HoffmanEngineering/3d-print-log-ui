@@ -58,9 +58,16 @@ npm test
 # Run a specific test file
 npm test -- --include='src/app/path/to/file.spec.ts'
 
+# Unit tests for the sitemap generator scripts
+npm run test:sitemap
+
 # Open Cypress for E2E tests
 npm run e2e
 ```
+
+## Prerendering
+
+`npm run build` prerenders the marketing/SEO routes to static HTML via `@angular/ssr`. Prerendering runs components in Node, so keep new code SSR-safe: guard any browser global (`window`, `document`, `localStorage`, `navigator`) with `isPlatformBrowser(inject(PLATFORM_ID))`, or the production build fails. CI runs `scripts/verify-prerender.mjs` to gate the prerendered output. The `sitemap.xml` is generated at deploy time (`scripts/generate-sitemap.mjs`), not committed.
 
 ## Linting
 

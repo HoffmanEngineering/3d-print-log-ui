@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -38,7 +38,7 @@ npm run prettier:fix       # Fix formatting
 
 ### Token-Efficient Commands
 
-When communicating with Claude about test or lint failures, use these token-efficient variants to reduce output:
+When communicating with Codex about test or lint failures, use these token-efficient variants to reduce output:
 
 - **`npm run test:brief`** - Runs tests in CI mode with only failures/warnings displayed
 - **`npm run lint:brief`** - Runs linting with only errors/warnings displayed

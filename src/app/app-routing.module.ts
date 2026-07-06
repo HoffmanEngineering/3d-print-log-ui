@@ -5,6 +5,7 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { HomepageRedirectGuard } from './core/guards/homepage-redirect.guard';
 import { PendingChangesGuard } from './core/guards/pending-changes.guard';
 import { HomeComponent } from './home/home.component';
+import { SlicerLandingComponent } from './slicer/slicer-landing.component';
 import { CallbackComponent } from './shared/callback/callback.component';
 import { FeedbackComponent } from './shared/feedback/feedback.component';
 import { UserProfileComponent } from './shared/user-profile/user-profile.component';
@@ -110,6 +111,57 @@ const routes: Routes = [
     canActivate: [HomepageRedirectGuard],
     pathMatch: 'full',
     children: [],
+  },
+  // Slicer landing pages (prerendered marketing routes).
+  {
+    path: 'cura',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'cura' },
+  },
+  {
+    path: 'prusaslicer',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'prusaslicer' },
+  },
+  {
+    path: 'bambu-studio',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'bambu-studio' },
+  },
+  {
+    path: 'creality-print',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'creality-print' },
+  },
+  {
+    path: 'orcaslicer',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'orcaslicer' },
+  },
+  {
+    path: 'snapmaker-orca',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'snapmaker-orca' },
+  },
+  {
+    path: 'anycubic-slicer',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'anycubic-slicer' },
+  },
+  {
+    path: 'elegoo-slicer',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'elegoo-slicer' },
+  },
+  {
+    path: 'qidi-studio',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'qidi-studio' },
+  },
+  {
+    path: 'orca-flashforge',
+    component: SlicerLandingComponent,
+    data: { slicerKey: 'orca-flashforge' },
   },
   {
     path: '',

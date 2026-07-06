@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import {
   ApplicationInsights,
   DistributedTracingModes,
@@ -11,7 +12,9 @@ import { environment } from 'src/environments/environment';
 export class LoggingService {
   appInsights: ApplicationInsights;
   constructor() {
+    const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
     if (
+      isBrowser &&
       environment &&
       environment.appInsights &&
       environment.appInsights.instrumentationKey &&

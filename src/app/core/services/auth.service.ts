@@ -1,4 +1,5 @@
-import { inject, Injectable, NgZone } from '@angular/core';
+import { inject, Injectable, NgZone, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
 
@@ -46,30 +47,33 @@ export interface UserProfileInfo {
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   // Create an observable of Auth0 instance of client
-  auth0Client$ = environment.devAuthBypass
-    ? EMPTY
-    : (
-        from(
-          createAuth0Client({
-            domain: environment.authentication.domain,
-            clientId: environment.authentication.client_id,
-            authorizationParams: {
-              audience: environment.authentication.audience,
-              redirect_uri: isCordova
-                ? cordovaCallbackUri
-                : `${window.location.origin}/callback`,
-            },
-            cacheLocation: 'localstorage',
-            useRefreshTokens: true,
+  auth0Client$ =
+    !this.isBrowser || environment.devAuthBypass
+      ? EMPTY
+      : (
+          from(
+            createAuth0Client({
+              domain: environment.authentication.domain,
+              clientId: environment.authentication.client_id,
+              authorizationParams: {
+                audience: environment.authentication.audience,
+                redirect_uri: isCordova
+                  ? cordovaCallbackUri
+                  : `${window.location.origin}/callback`,
+              },
+              cacheLocation: 'localstorage',
+              useRefreshTokens: true,
+            })
+          ) as Observable<Auth0Client>
+        ).pipe(
+          shareReplay(1), // Every subscription receives the same shared value
+          catchError((err) => {
+            return throwError(err);
           })
-        ) as Observable<Auth0Client>
-      ).pipe(
-        shareReplay(1), // Every subscription receives the same shared value
-        catchError((err) => {
-          return throwError(err);
-        })
-      );
+        );
   // Define observables for SDK methods that return promises by default
   // For each Auth0 SDK method, first ensure the client instance is ready
   // concatMap: Using the client instance, call SDK method; SDK returns a promise
@@ -196,6 +200,11 @@ export class AuthService {
   localAuthSetup() {
     // This should only be called on app initialization
     // Set up local authentication streams
+
+    // Auth0 depends on browser globals; skip entirely during prerender.
+    if (!this.isBrowser) {
+      return;
+    }
 
     if (environment.devAuthBypass) {
       this.loggedIn = true;

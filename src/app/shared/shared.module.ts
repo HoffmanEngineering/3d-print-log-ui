@@ -31,13 +31,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
-import { AccountDeactivationBannerComponent } from './account-deactivation-banner/account-deactivation-banner.component';
-import { CallbackComponent } from './callback/callback.component';
 import { CommentComponent } from './comments/comment/comment.component';
-import { FeedbackComponent } from './feedback/feedback.component';
 import { FilamentListComponent } from './filament-list/filament-list.component';
 import { FilamentSearchModalComponent } from './filament-search-modal/filament-search-modal.component';
-import { NavbarComponent } from './navbar/navbar.component';
 import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
 import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component';
 import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
@@ -50,7 +46,6 @@ import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
-import { UserProfileComponent } from './user-profile/user-profile.component';
 import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-modal.component';
 import { NotificationBellComponent } from './notification-bell/notification-bell.component';
 import { AdComponent } from './ad/ad.component';
@@ -70,10 +65,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
 
 @NgModule({
   declarations: [
-    NavbarComponent,
-    CallbackComponent,
-    UserProfileComponent,
-    FeedbackComponent,
     SidebarComponent,
     DurationPipe,
     PrintSummaryCardComponent,
@@ -83,15 +74,12 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     DonutChartComponent,
     CommentComponent,
     HumanizePipe,
-    LocaleDatePipe,
     SimpleDialogComponent,
     ParserUnavailableDialogComponent,
     MaterialNamePipe,
     FilamentListComponent,
     FilamentSearchModalComponent,
-    AccountDeactivationBannerComponent,
     GcodeViewerModalComponent,
-    AdComponent,
     SidebarAdComponent,
   ],
   imports: [
@@ -141,12 +129,11 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     FilamentUsageSummaryComponent,
     AuthImagePipe,
     FilamentColorSwatchStylePipe,
+    LocaleDatePipe,
+    AdComponent,
   ],
   exports: [
     CommonModule,
-    NavbarComponent,
-    CallbackComponent,
-    UserProfileComponent,
     MatMenuModule,
     MatSliderModule,
     MatToolbarModule,
@@ -189,7 +176,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     LocaleDatePipe,
     MaterialNamePipe,
     FilamentSearchModalComponent,
-    AccountDeactivationBannerComponent,
     MatProgressSpinnerModule,
     MatProgressBarModule,
     AdsenseModule,

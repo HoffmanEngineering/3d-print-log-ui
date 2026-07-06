@@ -4,13 +4,14 @@ import {
   inject,
   input,
 } from '@angular/core';
+import { AdsenseModule } from 'ng2-adsense';
 import { SubscriptionService } from '../../core/services/subscription.service';
 
 @Component({
   selector: 'app-ad',
   templateUrl: './ad.component.html',
   styleUrls: ['./ad.component.scss'],
-  standalone: false,
+  imports: [AdsenseModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdComponent {

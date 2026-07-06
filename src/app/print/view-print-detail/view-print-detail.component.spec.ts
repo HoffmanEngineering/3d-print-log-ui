@@ -73,8 +73,12 @@ describe('ViewPrintDetailComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [ViewPrintDetailComponent, DurationPipe, LocaleDatePipe],
-      imports: [RouterTestingModule, FilamentColorSwatchStylePipe],
+      declarations: [ViewPrintDetailComponent, DurationPipe],
+      imports: [
+        RouterTestingModule,
+        FilamentColorSwatchStylePipe,
+        LocaleDatePipe,
+      ],
       providers: [
         { provide: PrintService, useValue: mockPrintService },
         { provide: AuthService, useValue: mockAuthService },

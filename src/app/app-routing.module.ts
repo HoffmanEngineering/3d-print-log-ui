@@ -6,18 +6,21 @@ import { HomepageRedirectGuard } from './core/guards/homepage-redirect.guard';
 import { PendingChangesGuard } from './core/guards/pending-changes.guard';
 import { HomeComponent } from './home/home.component';
 import { SlicerLandingComponent } from './slicer/slicer-landing.component';
-import { CallbackComponent } from './shared/callback/callback.component';
-import { FeedbackComponent } from './shared/feedback/feedback.component';
-import { UserProfileComponent } from './shared/user-profile/user-profile.component';
 
 const routes: Routes = [
   {
     path: 'callback',
-    component: CallbackComponent,
+    loadComponent: () =>
+      import('./shared/callback/callback.component').then(
+        (m) => m.CallbackComponent
+      ),
   },
   {
     path: 'profile',
-    component: UserProfileComponent,
+    loadComponent: () =>
+      import('./shared/user-profile/user-profile.component').then(
+        (m) => m.UserProfileComponent
+      ),
     canActivate: [AuthGuard],
   },
   {
@@ -44,11 +47,15 @@ const routes: Routes = [
   },
   {
     path: 'home',
-    loadChildren: () => import('./home/home.module').then((m) => m.HomeModule),
+    redirectTo: '',
+    pathMatch: 'full',
   },
   {
     path: 'feedback',
-    component: FeedbackComponent,
+    loadComponent: () =>
+      import('./shared/feedback/feedback.component').then(
+        (m) => m.FeedbackComponent
+      ),
     canActivate: [AuthGuard],
     canDeactivate: [PendingChangesGuard],
   },

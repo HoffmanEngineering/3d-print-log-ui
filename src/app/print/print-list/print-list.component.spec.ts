@@ -84,8 +84,9 @@ describe('PrintListComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [PrintListComponent, DurationPipe, LocaleDatePipe],
+      declarations: [PrintListComponent, DurationPipe],
       imports: [
+        LocaleDatePipe,
         RouterTestingModule,
         MatDialogModule,
         MatMenuModule,

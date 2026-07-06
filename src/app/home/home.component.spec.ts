@@ -8,7 +8,7 @@ xdescribe('HomeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [HomeComponent],
+      imports: [HomeComponent],
     }).compileComponents();
   }));
 

@@ -12,7 +12,6 @@ const FORMAT_OPTIONS: Record<LocaleDateFormat, Intl.DateTimeFormatOptions> = {
 
 @Pipe({
   name: 'localeDate',
-  standalone: false,
 })
 export class LocaleDatePipe implements PipeTransform {
   transform(

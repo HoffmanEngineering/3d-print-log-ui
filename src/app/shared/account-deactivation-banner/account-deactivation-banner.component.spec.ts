@@ -8,7 +8,7 @@ xdescribe('AccountDeactivationBannerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [AccountDeactivationBannerComponent],
+      imports: [AccountDeactivationBannerComponent],
     }).compileComponents();
   });
 

@@ -3,10 +3,17 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup,
   FormGroupDirective,
+  ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { FlexLayoutModule } from '@ngbracket/ngx-layout';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
@@ -20,7 +27,15 @@ import {
   selector: 'app-feedback',
   templateUrl: './feedback.component.html',
   styleUrls: ['./feedback.component.scss'],
-  standalone: false,
+  imports: [
+    ReactiveFormsModule,
+    FlexLayoutModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatButtonModule,
+  ],
 })
 export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
   @ViewChild(FormGroupDirective, { static: true })

@@ -1,15 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/user.service';
 import { SimpleDialogComponent } from '../simple-dialog/simple-dialog.component';
+import { LocaleDatePipe } from '../pipes/locale-date.pipe';
 
 @Component({
   selector: 'app-account-deactivation-banner',
   templateUrl: './account-deactivation-banner.component.html',
   styleUrls: ['./account-deactivation-banner.component.scss'],
-  standalone: false,
+  imports: [FlexLayoutModule, MatButtonModule, LocaleDatePipe],
 })
 export class AccountDeactivationBannerComponent implements OnInit, OnDestroy {
   userProfileSubscription: Subscription;

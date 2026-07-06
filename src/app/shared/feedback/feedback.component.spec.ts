@@ -8,7 +8,7 @@ xdescribe('FeedbackComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [FeedbackComponent],
+      imports: [FeedbackComponent],
     }).compileComponents();
   }));
 

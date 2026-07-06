@@ -29,6 +29,7 @@
               "src/assets",
               "src/ads.txt",
               "src/robots.txt",
+              "src/llms.txt",
               "src/staticwebapp.config.json"
             ],
             "styles": [
@@ -50,6 +51,7 @@
                 "src/assets",
                 "src/ads.txt",
                 "src/robots.txt",
+                "src/llms.txt",
                 "src/staticwebapp.config.json"
               ],
               "server": "src/main.server.ts",

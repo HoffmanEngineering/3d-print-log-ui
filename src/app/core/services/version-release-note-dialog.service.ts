@@ -29,10 +29,10 @@ export class VersionReleaseNoteDialogService {
 
   private releaseNotes: ReleaseNoteHistory = {
     '1.43.10': {
-      redirect: '1.43.7',
+      redirect: '1.43.9',
     },
     '1.43.9': {
-      redirect: '1.43.7',
+      redirect: '1.43.8',
     },
     '1.43.8': {
       redirect: '1.43.7',

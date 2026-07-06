@@ -16,40 +16,56 @@ jobs:
           fetch-depth: 0
 
       - name: Check out the latest release tag
+        id: tag
         run: |
           # Highest semver v* tag, independent of commit ancestry or GitHub Releases.
           TAG=$(git tag -l 'v*' --sort=-v:refname | head -n1)
           if [ -z "$TAG" ]; then echo "No v* tag found"; exit 1; fi
           echo "Refreshing sitemap for released tag: $TAG"
           git checkout "$TAG"
+          # The latest tag may predate this workflow (i.e. the sitemap generator was
+          # not yet part of a release). Skip gracefully instead of failing daily until
+          # the first release that includes these scripts is cut.
+          if [ ! -f scripts/generate-sitemap.mjs ]; then
+            echo "Tag $TAG has no sitemap generator; nothing to refresh yet. Skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Node
+        if: steps.tag.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.tag.outputs.skip != 'true'
         run: npm ci
 
       - name: Write production environment file
+        if: steps.tag.outputs.skip != 'true'
         run: echo "${{ secrets.ENVIRONMENT_PROD_TS }}" > src/environments/environment.prod.ts
 
       - name: Build
+        if: steps.tag.outputs.skip != 'true'
         run: npm run build
 
       - name: Sitemap unit tests
+        if: steps.tag.outputs.skip != 'true'
         run: npm run test:sitemap
 
       - name: Generate sitemap
+        if: steps.tag.outputs.skip != 'true'
         run: node scripts/generate-sitemap.mjs
         env:
           SITEMAP_API_URL: https://api.3dprintlog.com
 
       - name: Verify prerendered output and sitemap index
+        if: steps.tag.outputs.skip != 'true'
         run: node scripts/verify-prerender.mjs
 
       - name: Deploy to Azure Static Web Apps (prebuilt)
+        if: steps.tag.outputs.skip != 'true'
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}

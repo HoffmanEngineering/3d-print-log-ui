@@ -17,9 +17,13 @@ async function fetchIds(path) {
   const res = await fetch(`${API_URL}${path}`);
   if (!res.ok) throw new Error(`${path} -> HTTP ${res.status}`);
   const data = await res.json();
-  if (!Array.isArray(data) || data.length === 0) {
-    throw new Error(`${path} -> empty or not an array`);
+  if (!Array.isArray(data)) {
+    throw new Error(`${path} -> response is not a JSON array`);
   }
+  // An empty array is a valid state (a new or staging environment with no public
+  // content yet). Marketing pages still produce a sitemap; the content chunks are
+  // simply omitted. Only a failed request or a non-array shape is fatal, so a real
+  // API outage never silently ships a thin sitemap.
   return data;
 }
 

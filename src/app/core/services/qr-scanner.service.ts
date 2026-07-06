@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Html5Qrcode, CameraDevice } from 'html5-qrcode';
+import type { Html5Qrcode, CameraDevice } from 'html5-qrcode';
 
 export interface QrScanResult {
   success: boolean;
@@ -14,6 +14,16 @@ export interface QrScanResult {
 export class QrScannerService {
   private html5QrCode: Html5Qrcode | null = null;
 
+  // Cache the import *promise* (not the resolved module) so concurrent first
+  // calls share one dynamic import instead of racing two.
+  private html5QrcodeModule: Promise<typeof import('html5-qrcode')> | null =
+    null;
+
+  /** Loads the html5-qrcode library on demand, caching the promise after the first call. */
+  private loadHtml5Qrcode(): Promise<typeof import('html5-qrcode')> {
+    return (this.html5QrcodeModule ??= import('html5-qrcode'));
+  }
+
   /**
    * Starts scanning for QR codes using the device camera.
    * @param elementId The ID of the HTML element to render the camera viewfinder
@@ -27,6 +37,7 @@ export class QrScannerService {
   ): Promise<void> {
     await this.stopScanning();
 
+    const { Html5Qrcode } = await this.loadHtml5Qrcode();
     this.html5QrCode = new Html5Qrcode(elementId);
 
     const config = {
@@ -116,6 +127,7 @@ export class QrScannerService {
    * @returns Promise resolving to an array of camera devices
    */
   async getCameras(): Promise<CameraDevice[]> {
+    const { Html5Qrcode } = await this.loadHtml5Qrcode();
     return Html5Qrcode.getCameras();
   }
 }

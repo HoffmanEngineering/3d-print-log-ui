@@ -28,9 +28,29 @@ export class QrCodeService {
   // calls share one dynamic import instead of racing two.
   private qrcodeModule: Promise<typeof import('qrcode')> | null = null;
 
-  /** Loads the qrcode library on demand, caching the promise after the first call. */
+  /**
+   * The raw dynamic import. Isolated so tests can simulate how the production
+   * build resolves the module (see loadQrcode for why that matters).
+   */
+  protected importQrcode(): Promise<typeof import('qrcode')> {
+    return import('qrcode');
+  }
+
+  /**
+   * Loads the qrcode library on demand, caching the promise after the first call.
+   *
+   * `qrcode` is a CommonJS module. When the production build code-splits it into
+   * its own chunk, esbuild emits a default-only export, so the dynamically
+   * imported namespace exposes the real API (`toString`, `toDataURL`, ...) under
+   * `.default`. Because an ESM namespace object has a null prototype, accessing
+   * `.toString` directly on it yields `undefined` (not a function) and throws at
+   * call time. Unwrap `.default` so callers always get the real API, in both the
+   * split (prod) and inlined (test/dev) builds.
+   */
   private loadQrcode(): Promise<typeof import('qrcode')> {
-    return (this.qrcodeModule ??= import('qrcode'));
+    return (this.qrcodeModule ??= this.importQrcode().then(
+      (m) => (m as { default?: typeof import('qrcode') }).default ?? m
+    ));
   }
 
   /**

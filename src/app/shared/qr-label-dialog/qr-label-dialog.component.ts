@@ -91,6 +91,7 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   readonly labelSize = signal<LabelSize>('medium');
   readonly paperSize = signal<PaperSize>('A4');
   readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
   readonly labels = signal<LabelData[]>([]);
 
   readonly columnOptions = [1, 2, 3, 4];
@@ -155,6 +156,7 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
 
   private async generateQrCodes(): Promise<void> {
     this.loading.set(true);
+    this.error.set(null);
 
     const labelPromises = this.data.filaments.map(async (filament) => {
       const url = this.qrCodeService.generateFilamentUrl(filament.id);
@@ -172,10 +174,23 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
       };
     });
 
-    const labels = await Promise.all(labelPromises);
+    try {
+      const labels = await Promise.all(labelPromises);
+      this.labels.set(labels);
+    } catch (error) {
+      // Never leave the dialog stuck on the spinner: surface the failure so the
+      // user can retry or close instead of waiting forever.
+      this.loggingService.logException(error as Error);
+      this.error.set(
+        'Something went wrong generating the QR codes. Please try again.'
+      );
+    } finally {
+      this.loading.set(false);
+    }
+  }
 
-    this.labels.set(labels);
-    this.loading.set(false);
+  retry(): void {
+    this.generateQrCodes();
   }
 
   print(): void {

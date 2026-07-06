@@ -6,6 +6,15 @@
       <mat-spinner diameter="40"></mat-spinner>
       <p>Generating QR codes...</p>
     </div>
+  } @else if (error()) {
+    <div class="error-container">
+      <mat-icon color="warn">error_outline</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-stroked-button color="primary" (click)="retry()">
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </div>
   } @else {
     <div class="settings-panel no-print">
       <mat-form-field appearance="outline">

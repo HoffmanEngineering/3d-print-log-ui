@@ -1,5 +1,26 @@
 import { TestBed } from '@angular/core/testing';
+import { Injectable } from '@angular/core';
 import { QrCodeService } from './qr-code.service';
+
+/**
+ * Simulates how the *production* build resolves `import('qrcode')`: the CommonJS
+ * library is code-split into its own chunk that esbuild emits as a default-only
+ * export, and the dynamically imported ESM namespace has a null prototype (so
+ * `namespace.toString` is undefined, not Object.prototype.toString). Reproduces
+ * the bug where the QR label dialog hung on "Generating QR Codes".
+ */
+@Injectable()
+class ProdShapedQrCodeService extends QrCodeService {
+  override importQrcode(): Promise<typeof import('qrcode')> {
+    const api = {
+      toString: () => Promise.resolve('<svg>default-export</svg>'),
+      toDataURL: () => Promise.resolve('data:image/png;base64,default'),
+    };
+    // Default-only, null-prototype namespace (matches the split prod chunk).
+    const ns = Object.assign(Object.create(null), { default: api });
+    return Promise.resolve(ns as unknown as typeof import('qrcode'));
+  }
+}
 
 describe('QrCodeService', () => {
   let service: QrCodeService;
@@ -11,6 +32,22 @@ describe('QrCodeService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  describe('CommonJS default-export interop (production split chunk)', () => {
+    it('unwraps .default so generateSvg resolves instead of hanging', async () => {
+      const prodService = new ProdShapedQrCodeService();
+      const svg = await prodService.generateSvg('https://example.com/x');
+      expect(svg).toBe('<svg>default-export</svg>');
+    });
+
+    it('unwraps .default for generateDataUrl too', async () => {
+      const prodService = new ProdShapedQrCodeService();
+      const dataUrl = await prodService.generateDataUrl(
+        'https://example.com/x'
+      );
+      expect(dataUrl).toBe('data:image/png;base64,default');
+    });
   });
 
   describe('generateSvg', () => {

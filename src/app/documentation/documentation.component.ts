@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   inject,
   NgZone,
   OnDestroy,
@@ -11,6 +12,7 @@ import {
   PLATFORM_ID,
   ViewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -40,6 +42,7 @@ export class DocumentationComponent
   private readonly router = inject(Router);
   private readonly metaTagService = inject(MetaTagService);
   private readonly structuredData = inject(StructuredDataService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('snav', { static: true }) snav;
 
@@ -79,8 +82,14 @@ export class DocumentationComponent
 
   ngOnInit() {
     this.applySeoForUrl(this.router.url);
+    // takeUntilDestroyed prevents the destroyed docs component from reacting to a
+    // later NavigationEnd (e.g. navigating to '/' or a slicer page) and clearing
+    // the structured data those pages just set.
     this.router.events
-      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((e) => this.applySeoForUrl(e.urlAfterRedirects));
 
     // document is unavailable during Node prerendering; only load the YouTube API

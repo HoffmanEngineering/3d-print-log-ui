@@ -20,8 +20,7 @@ describe('NavbarComponent', () => {
       isPro: signal(false),
     };
     TestBed.configureTestingModule({
-      declarations: [NavbarComponent],
-      imports: [RouterTestingModule, MatMenuModule],
+      imports: [NavbarComponent, RouterTestingModule, MatMenuModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: SubscriptionService, useValue: mockSubscriptionService },

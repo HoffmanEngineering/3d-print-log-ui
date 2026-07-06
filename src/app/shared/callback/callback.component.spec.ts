@@ -8,7 +8,7 @@ xdescribe('CallbackComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [CallbackComponent],
+      imports: [CallbackComponent],
     }).compileComponents();
   }));
 

@@ -35,8 +35,8 @@ describe('CommentComponent', () => {
 
   beforeEach(waitForAsync(async () => {
     await TestBed.configureTestingModule({
-      declarations: [CommentComponent, HumanizePipe, LocaleDatePipe],
-      imports: [MatMenuModule, NoopAnimationsModule],
+      declarations: [CommentComponent, HumanizePipe],
+      imports: [MatMenuModule, NoopAnimationsModule, LocaleDatePipe],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 

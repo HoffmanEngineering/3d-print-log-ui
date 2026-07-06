@@ -6,8 +6,9 @@ import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
+import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { of } from 'rxjs';
-import { signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 
 xdescribe('AppComponent', () => {
   beforeEach(waitForAsync(() => {
@@ -67,9 +68,15 @@ describe('AppComponent (ThemeService)', () => {
     ]);
     (mockThemeService as any).isDark = signal(false);
 
+    const mockAdsenseLoader = jasmine.createSpyObj<AdsenseLoaderService>(
+      'AdsenseLoaderService',
+      ['load']
+    );
+
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
       declarations: [AppComponent],
+      schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         {
@@ -82,6 +89,7 @@ describe('AppComponent (ThemeService)', () => {
           useValue: mockReleaseNotesService,
         },
         { provide: ThemeService, useValue: mockThemeService },
+        { provide: AdsenseLoaderService, useValue: mockAdsenseLoader },
       ],
     }).compileComponents();
   }));

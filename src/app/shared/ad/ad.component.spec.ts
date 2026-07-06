@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, signal, computed } from '@angular/core';
+import { AdsenseModule } from 'ng2-adsense';
 import { AdComponent } from './ad.component';
 import { SubscriptionService } from '../../core/services/subscription.service';
 
@@ -16,7 +17,10 @@ describe('AdComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [AdComponent],
+      imports: [
+        AdComponent,
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
+      ],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: SubscriptionService, useValue: mockSubscriptionService },

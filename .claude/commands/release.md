@@ -60,13 +60,17 @@ Place the new section after the `<hr />` and before the previous version's `<h3>
 Update `src/app/core/services/version-release-note-dialog.service.ts`:
 
 **For Patch releases:**
-Add a redirect entry at the beginning of the `releaseNotes` object:
+Add a redirect entry at the beginning of the `releaseNotes` object.
+
+**The `redirect` MUST point to the immediately-preceding published version** (the entry directly below the new one), NOT to an older version that has real notes. Redirects must form an unbroken step-down chain: `1.43.10 -> 1.43.9 -> 1.43.8 -> 1.43.7 -> ...`. Do NOT jump (e.g. `1.43.10 -> 1.43.7`).
 
 ```typescript
-'X.X.Z': {
-  redirect: 'X.X.Y',  // Previous minor/major version
+'X.Y.Z': {
+  redirect: 'X.Y.(Z-1)',  // the version directly below this one in the list
 },
 ```
+
+**Why this matters:** `getRedirectedReleaseNotes()` walks the redirect chain and stops (shows no dialog) as soon as a `redirect` value equals the version the user last saw. A sequential chain means a user upgrading from the previous patch sees nothing (correct for a technical release), while a user coming from further back walks down to the most recent real feature note. A chain that jumps over versions breaks this guard and can re-show an old popup to users who already dismissed it. Note the component does no semver math — the version is only used as an object key and with `!==` equality — so multi-digit patches like `1.43.10` are fine as keys.
 
 **For Major or Minor releases:**
 Add a new release note entry at the beginning of the `releaseNotes` object:

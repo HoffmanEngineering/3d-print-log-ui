@@ -2,6 +2,22 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.43.10">1.43.10 - Faster Page Loads</h3>
+  <p>
+    More behind-the-scenes work to speed up the app. The initial download was slimmed down further by
+    loading large shared interface code only when a page actually needs it, so the app becomes usable
+    sooner. There are no visible changes (everything works exactly as before, just faster).
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Smaller initial download</strong> - Heavy shared interface libraries now load on demand
+      with the pages that use them instead of up front, reducing the amount of code the browser
+      processes before the app is ready.
+    </li>
+  </ul>
+  <hr />
+
   <h3 id="v1.43.9">1.43.9 - Faster Initial Load</h3>
   <p>
     The app now starts up faster. Several heavy behind-the-scenes libraries (analytics and QR code

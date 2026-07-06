@@ -34,9 +34,10 @@ function makeFakeModule(
 
 /** Test subclass that forces the "browser + key" deferral path and controls the import. */
 class TestableLoggingService extends LoggingService {
-  importResult: Promise<any> = Promise.reject(
-    new Error('importResult not set')
-  );
+  // Default to a never-settling promise: every test assigns importResult before
+  // calling runInitialize(), and an eagerly-rejected default would surface as an
+  // unhandled rejection (order-dependent Karma failure).
+  importResult: Promise<any> = new Promise<never>(() => {});
   protected override isTelemetryEnabled(): boolean {
     return true;
   }

@@ -2,6 +2,25 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.43.9">1.43.9 - Faster Initial Load</h3>
+  <p>
+    The app now starts up faster. Several heavy behind-the-scenes libraries (analytics and QR code
+    tools) no longer load up front. They now load only when they are actually needed, which reduces
+    the amount of code the browser has to download and process before the page becomes usable.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Deferred analytics loading</strong> - The usage analytics library now loads after the
+      page has finished painting instead of blocking the initial load.
+    </li>
+    <li>
+      <strong>On-demand QR code tools</strong> - The QR code scanner and generator libraries now load
+      only when you open the scanner or create a label, keeping them out of the initial download.
+    </li>
+  </ul>
+  <hr />
+
   <h3 id="v1.43.8">1.43.8 - Faster, More Accessible Homepage</h3>
   <p>
     The homepage now loads faster and feels more responsive. Advertising scripts wait until you start

@@ -1,3 +1,4 @@
+import { Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from 'src/environments/environment';
 import { LoggingService } from './logging.service';
@@ -33,6 +34,7 @@ function makeFakeModule(
 }
 
 /** Test subclass that forces the "browser + key" deferral path and controls the import. */
+@Injectable()
 class TestableLoggingService extends LoggingService {
   // Default to a never-settling promise: every test assigns importResult before
   // calling runInitialize(), and an eagerly-rejected default would surface as an

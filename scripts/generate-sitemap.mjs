@@ -1,7 +1,17 @@
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { chunk, buildUrlset, buildIndex, contentUrls } from './sitemap-lib.mjs';
-import { MARKETING_ROUTES, SITE_ORIGIN } from './marketing-routes.mjs';
+import {
+  chunk,
+  buildUrlset,
+  buildIndex,
+  contentUrls,
+  pageUrls,
+} from './sitemap-lib.mjs';
+import {
+  MARKETING_ROUTES,
+  DOC_ROUTES,
+  SITE_ORIGIN,
+} from './marketing-routes.mjs';
 
 const API_URL = (
   process.env.SITEMAP_API_URL || 'https://api.3dprintlog.com'
@@ -41,12 +51,12 @@ async function main() {
 
   if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
 
-  const pageUrls = MARKETING_ROUTES.map((r) => `${ORIGIN}/${r}`);
+  const staticPageUrls = pageUrls(ORIGIN, [...MARKETING_ROUTES, ...DOC_ROUTES]);
   const printUrls = contentUrls(ORIGIN, 'prints', printIds);
   const userUrls = contentUrls(ORIGIN, 'users', userIds);
 
   const files = [];
-  writeFileSync(join(OUT_DIR, 'sitemap-pages.xml'), buildUrlset(pageUrls));
+  writeFileSync(join(OUT_DIR, 'sitemap-pages.xml'), buildUrlset(staticPageUrls));
   files.push('sitemap-pages.xml');
   writeChunks('sitemap-prints', printUrls, files);
   writeChunks('sitemap-users', userUrls, files);
@@ -59,7 +69,7 @@ async function main() {
 
   console.log(
     `Sitemap generated in ${OUT_DIR}: ${files.length} child sitemaps ` +
-      `(${pageUrls.length} pages, ${printUrls.length} prints, ${userUrls.length} users).`
+      `(${staticPageUrls.length} pages, ${printUrls.length} prints, ${userUrls.length} users).`
   );
 }
 

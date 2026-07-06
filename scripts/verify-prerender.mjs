@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import {
   SITE_ORIGIN,
   MARKETING_ROUTES,
+  DOC_ROUTES,
   TIER1,
   HUB,
   FORKS,
@@ -56,7 +57,7 @@ function uniq(map, key, value, file, label) {
   else map.set(value, file);
 }
 
-for (const r of routes) {
+for (const r of [...routes, ...DOC_ROUTES]) {
   const doc = read(r);
   if (!doc) continue;
   const { file, html } = doc;
@@ -137,7 +138,7 @@ if (existsSync(`${DIST}/sitemap.xml`)) {
     errors.push('missing sitemap-pages.xml');
   } else {
     const pages = readFileSync(pagesFile, 'utf8');
-    for (const r of MARKETING_ROUTES) {
+    for (const r of [...MARKETING_ROUTES, ...DOC_ROUTES]) {
       const u = `${ORIGIN}/${r}`;
       if (!pages.includes(`<loc>${u}</loc>`)) {
         errors.push(`sitemap-pages.xml missing ${u}`);
@@ -153,5 +154,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `Prerender verification passed: ${routes.length} routes; unique titles+descriptions, OG/Twitter, canonicals, fork hooks + hub links, homepage link graph, crawl files.`
+  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, fork hooks + hub links, homepage link graph, crawl files.`
 );

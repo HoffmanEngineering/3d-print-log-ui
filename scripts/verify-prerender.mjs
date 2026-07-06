@@ -74,6 +74,11 @@ for (const r of routes) {
     errors.push(`${file}: missing og:type`);
   if (metaContent(html, 'name="twitter:card"') !== 'summary_large_image')
     errors.push(`${file}: missing/wrong twitter:card`);
+  // Pre-paint theme script: without it the prerendered (light) HTML flashes before
+  // ThemeService applies the saved dark theme on boot.
+  if (!(html.includes("localStorage.getItem('theme-mode')") &&
+        html.includes("classList.add('dark-theme')")))
+    errors.push(`${file}: missing pre-paint theme script (dark-mode flash guard)`);
 }
 
 // Fork pages: each must link to the hub in body and carry its own hook (checked via a

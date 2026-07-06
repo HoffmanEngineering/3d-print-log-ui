@@ -57,6 +57,24 @@
     ></script>
   </head>
   <body class="mat-app-background">
+    <!-- Apply the saved theme before first paint to avoid a light-mode flash on
+         prerendered pages. Keep in sync with ThemeService (key 'theme-mode'). -->
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem('theme-mode') || 'system';
+          var isDark =
+            mode === 'dark' ||
+            (mode === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.body.classList.add('dark-theme');
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', '#283593');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <app-root></app-root>
   </body>
 </html>

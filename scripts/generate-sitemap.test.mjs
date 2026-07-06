@@ -6,7 +6,9 @@ import {
   buildUrlset,
   buildIndex,
   contentUrls,
+  pageUrls,
 } from './sitemap-lib.mjs';
+import { MARKETING_ROUTES, DOC_ROUTES } from './marketing-routes.mjs';
 
 test('chunk splits into size-bounded groups', () => {
   const items = Array.from({ length: 25 }, (_, i) => i);
@@ -59,4 +61,26 @@ test('contentUrls rejects null/undefined/object ids', () => {
   assert.throws(() => contentUrls('https://x', 'prints', [1, null]));
   assert.throws(() => contentUrls('https://x', 'prints', [{ id: 1 }]));
   assert.throws(() => contentUrls('https://x', 'prints', [undefined]));
+});
+
+test('pageUrls prefixes each route with the origin', () => {
+  assert.deepEqual(pageUrls('https://x', ['', 'docs/prints']), [
+    'https://x/',
+    'https://x/docs/prints',
+  ]);
+});
+
+test('DOC_ROUTES lists the 15 concrete doc pages under docs/', () => {
+  assert.equal(DOC_ROUTES.length, 15);
+  assert.ok(DOC_ROUTES.every((r) => r.startsWith('docs/')));
+  assert.ok(DOC_ROUTES.includes('docs/getting-started'));
+  assert.ok(DOC_ROUTES.includes('docs/privacy-policy'));
+  // No redirect-only or disabled routes.
+  assert.ok(!DOC_ROUTES.includes('docs/filaments'));
+  assert.ok(!DOC_ROUTES.includes('docs/terms-of-service'));
+});
+
+test('DOC_ROUTES do not overlap MARKETING_ROUTES', () => {
+  const overlap = DOC_ROUTES.filter((r) => MARKETING_ROUTES.includes(r));
+  assert.deepEqual(overlap, []);
 });

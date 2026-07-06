@@ -1,14 +1,21 @@
 import { MediaMatcher } from '@angular/cdk/layout';
+import { isPlatformBrowser } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  inject,
   NgZone,
   OnDestroy,
   OnInit,
+  PLATFORM_ID,
   ViewChild,
 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { MetaTagService } from '../core/services/meta-tag.service';
+import { getDocSeoTags } from './doc-seo.config';
 
 let apiLoaded = false;
 
@@ -23,6 +30,10 @@ export class DocumentationComponent
 {
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;
+
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly router = inject(Router);
+  private readonly metaTagService = inject(MetaTagService);
 
   @ViewChild('snav', { static: true }) snav;
 
@@ -61,15 +72,31 @@ export class DocumentationComponent
   }
 
   ngOnInit() {
-    this.title.setTitle('Documentation - 3D Print Log');
+    this.applySeoForUrl(this.router.url);
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => this.applySeoForUrl(e.urlAfterRedirects));
 
-    if (!apiLoaded) {
+    // document is unavailable during Node prerendering; only load the YouTube API
+    // in the browser.
+    if (isPlatformBrowser(this.platformId) && !apiLoaded) {
       // This code loads the IFrame Player API code asynchronously, according to the instructions at
       // https://developers.google.com/youtube/iframe_api_reference#Getting_Started
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
       document.body.appendChild(tag);
       apiLoaded = true;
+    }
+  }
+
+  private applySeoForUrl(url: string): void {
+    // '/docs/prints?x=1#y' -> 'docs/prints'
+    const path = url.split(/[?#]/)[0].replace(/^\/+/, '');
+    const tags = getDocSeoTags(path);
+    if (tags) {
+      this.metaTagService.setSeoTags(tags);
+    } else {
+      this.title.setTitle('Documentation - 3D Print Log');
     }
   }
 

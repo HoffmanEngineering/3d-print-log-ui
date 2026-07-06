@@ -32,7 +32,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, configuration, and runni
 
 ## Tech Stack
 
-- Angular 20
+- Angular 21 (with static prerendering/SSG of marketing routes via `@angular/ssr`)
 - Angular Material
 - Auth0 SPA SDK
 - Azure Static Web Apps
@@ -40,6 +40,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, configuration, and runni
 ## Infrastructure
 
 The production environment runs on Azure (Static Web Apps for the frontend). It is manually managed — there is no infrastructure-as-code in this repo. PRs that require infrastructure changes (new environment variables, auth configuration, hosting config) should call that out explicitly in the PR description.
+
+The `sitemap.xml` is generated at deploy time from the public API (`scripts/generate-sitemap.mjs`) and shipped with the prebuilt output; a scheduled workflow refreshes it daily from the latest release tag.
 
 ## Related Repos
 

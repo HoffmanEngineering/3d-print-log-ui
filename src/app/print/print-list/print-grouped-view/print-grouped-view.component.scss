@@ -370,7 +370,7 @@
   padding: 4px 8px;
 }
 
-:host-context(body.dark-theme) {
+:host-context(html.dark-theme) {
   .card-image {
     background-color: #2a2a2a;
   }

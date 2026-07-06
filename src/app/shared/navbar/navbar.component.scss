@@ -86,7 +86,7 @@ mat-toolbar {
   border-top-right-radius: 3px;
 }
 
-:host-context(body.dark-theme) mat-toolbar {
+:host-context(html.dark-theme) mat-toolbar {
   background-color: var(--brand-toolbar-bg);
 }
 

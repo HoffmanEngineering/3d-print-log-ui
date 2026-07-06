@@ -299,7 +299,7 @@ mat-checkbox {
   }
 }
 
-:host-context(body.dark-theme) {
+:host-context(html.dark-theme) {
   .filament-color-cell,
   .card-swatch {
     box-shadow:

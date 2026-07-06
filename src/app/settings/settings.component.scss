@@ -8,7 +8,7 @@ hr {
   border-top: 1px solid rgba(0, 0, 0, 0.12);
   width: 100%;
 
-  :host-context(body.dark-theme) & {
+  :host-context(html.dark-theme) & {
     border-top-color: rgba(255, 255, 255, 0.12);
   }
 }

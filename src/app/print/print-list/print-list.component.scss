@@ -215,7 +215,7 @@ table {
   }
 }
 
-:host-context(body.dark-theme) {
+:host-context(html.dark-theme) {
   .filter-panel-inner {
     border-top-color: rgba(255, 255, 255, 0.08);
   }

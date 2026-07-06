@@ -275,7 +275,7 @@ mat-card-title {
   border-radius: 0 0 4px 4px;
 }
 
-:host-context(body.dark-theme) {
+:host-context(html.dark-theme) {
   .sticky-actions {
     background: #1e1e1e;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);

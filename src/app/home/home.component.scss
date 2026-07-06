@@ -325,7 +325,7 @@ mat-toolbar {
   height: auto;
 }
 
-:host-context(body.dark-theme) mat-toolbar {
+:host-context(html.dark-theme) mat-toolbar {
   background-color: var(--brand-toolbar-bg);
   // The dark theme's lighter primary makes Material's on-primary contrast color
   // dark, so hero/footer text would render near-invisible on this dark toolbar.

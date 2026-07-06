@@ -58,6 +58,6 @@ export class ThemeService {
       mode === 'dark' ||
       (mode === 'system' && !!this.mediaQuery && this.mediaQuery.matches);
     this.isDark.set(isDark);
-    this.document.body.classList.toggle('dark-theme', isDark);
+    this.document.documentElement.classList.toggle('dark-theme', isDark);
   }
 }

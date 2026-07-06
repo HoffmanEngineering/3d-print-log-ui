@@ -1,0 +1,12 @@
+# 3D Print Log
+
+> 3D Print Log is a web app for tracking 3D prints, printers, filament, and print statistics, with direct-send integrations for OrcaSlicer, Bambu Studio, PrusaSlicer, Cura, Creality Print, and Anycubic slicers.
+
+## Key pages
+
+- [Home](https://www.3dprintlog.com/): Overview and free account signup.
+- [Documentation](https://www.3dprintlog.com/docs/getting-started): Getting started, features, and integrations.
+
+## Notes
+
+- Public print and user pages are indexable; authenticated app data requires an account.

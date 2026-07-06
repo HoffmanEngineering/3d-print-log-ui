@@ -156,6 +156,21 @@ if (hub) {
 // robots.txt is a static asset and must always ship.
 if (!existsSync(`${DIST}/robots.txt`)) errors.push('missing robots.txt');
 
+// llms.txt must ship as a real Markdown file (not the SPA fallback HTML)
+// and expose at least one H1 so LLM crawlers can parse it.
+if (!existsSync(`${DIST}/llms.txt`)) {
+  errors.push('missing llms.txt');
+} else {
+  const llms = readFileSync(`${DIST}/llms.txt`, 'utf8');
+  const trimmed = llms.trimStart();
+  if (/^<!doctype|^<html/i.test(trimmed)) {
+    errors.push('llms.txt is HTML (SPA fallback), not Markdown');
+  }
+  if (!/^# .+/m.test(llms)) {
+    errors.push('llms.txt is missing an H1 heading');
+  }
+}
+
 // sitemap.xml is generated at deploy time by scripts/generate-sitemap.mjs, not on
 // PR builds. When present it must be a sitemap index referencing sitemap-pages.xml,
 // and sitemap-pages.xml must list every marketing route.

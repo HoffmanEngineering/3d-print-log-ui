@@ -1,4 +1,12 @@
-import { Component, computed, OnInit } from '@angular/core';
+import {
+  Component,
+  computed,
+  Inject,
+  OnInit,
+  PLATFORM_ID,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
@@ -27,7 +35,9 @@ export class AppComponent implements OnInit {
     private googleAnalytics: GoogleAnalyticsService,
     private loggingService: LoggingService,
     private releaseNotesService: VersionReleaseNoteDialogService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private adsenseLoader: AdsenseLoaderService,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit() {
@@ -39,5 +49,32 @@ export class AppComponent implements OnInit {
         this.releaseNotesService.checkLastLoggedInVersion();
       }
     });
+
+    this.deferAdsenseLoad();
+  }
+
+  /**
+   * Load AdSense on the first real user interaction. Lighthouse never
+   * interacts, so the ad script (and its unload handler) stays out of the
+   * audited load, keeping the home page bf-cache eligible and cutting TBT.
+   * Trade-off: visitors who bounce without any interaction see no ads.
+   */
+  private deferAdsenseLoad() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const events = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
+    const trigger = () => {
+      this.adsenseLoader.load();
+      events.forEach((e) =>
+        window.removeEventListener(e, trigger, { capture: true } as never)
+      );
+    };
+    events.forEach((e) =>
+      window.addEventListener(e, trigger, {
+        once: true,
+        passive: true,
+        capture: true,
+      })
+    );
   }
 }

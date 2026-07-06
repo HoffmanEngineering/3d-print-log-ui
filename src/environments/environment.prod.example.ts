@@ -10,7 +10,7 @@ export const environment = {
     client_id: 'YOUR_AUTH0_CLIENT_ID',
     audience: 'https://YOUR_AUTH0_AUDIENCE',
   },
-  googleAnalyticsId: 'YOUR_GA_ID',
+  googleAnalyticsMeasurementId: 'YOUR_GA_MEASUREMENT_ID',
   appInsights: {
     instrumentationKey: 'YOUR_APPINSIGHTS_KEY',
   },

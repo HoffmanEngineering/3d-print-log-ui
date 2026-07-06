@@ -10,9 +10,9 @@ The frontend for [3D Print Log](https://3dprintlog.com) — a web application fo
 **Live app:** https://3dprintlog.com
 
 <table align="center"><tr>
-  <td><img src="src/assets/Homepage_PrinterList_fd6e7f73bf3f.png" alt="Print log" height="300" /></td>
-  <td><img src="src/assets/Homepage_Filament_34b0aa09478611.png" alt="Materials" height="300" /></td>
-  <td><img src="src/assets/Homepage_Analytics_56744e5428bda.png" alt="Analytics" height="300" /></td>
+  <td><img src="src/assets/Homepage_PrinterList_fd6e7f73bf3f.webp" alt="Print log" height="300" /></td>
+  <td><img src="src/assets/Homepage_Filament_34b0aa09478611.webp" alt="Materials" height="300" /></td>
+  <td><img src="src/assets/Homepage_Analytics_56744e5428bda.webp" alt="Analytics" height="300" /></td>
 </tr></table>
 
 ## Features

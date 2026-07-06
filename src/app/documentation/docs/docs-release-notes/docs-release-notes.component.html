@@ -2,6 +2,43 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.43.8">1.43.8 - Faster, More Accessible Homepage</h3>
+  <p>
+    The homepage now loads faster and feels more responsive. Advertising scripts wait until you start
+    interacting with the page instead of loading up front, the example images were converted to a
+    lighter format, and retired tracking code was removed. Together these reduce the time before the
+    page becomes usable.
+  </p>
+  <p>
+    The pink accent color used for buttons and highlights was deepened so text and controls meet
+    accessibility contrast guidelines, making them easier to read for everyone.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Deferred ad loading</strong> - Advertising scripts now load on your first interaction
+      with the page, which restores the browser's back/forward cache and reduces the time the page is
+      blocked while starting up.
+    </li>
+    <li>
+      <strong>Lighter homepage images</strong> - The example screenshots on the homepage are now
+      served in the WebP format for smaller, faster downloads.
+    </li>
+    <li>
+      <strong>Improved color contrast</strong> - The accent color was adjusted to meet WCAG 4.5:1
+      contrast guidelines for better readability and accessibility.
+    </li>
+    <li>
+      <strong>Analytics cleanup</strong> - Removed retired Universal Analytics tags and fixed
+      per-page analytics tracking so visit data is recorded correctly.
+    </li>
+    <li>
+      <strong>Better AI and search discoverability</strong> - Added an llms.txt file so AI assistants
+      can understand how the site is organized.
+      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/55" rel="noreferrer noopener" target="_blank">PR #55</a>)
+    </li>
+  </ul>
+
   <h3 id="v1.43.7">1.43.7 - Better Search Engine Understanding</h3>
   <p>
     The homepage, slicer guides, and every documentation page now describe themselves to search

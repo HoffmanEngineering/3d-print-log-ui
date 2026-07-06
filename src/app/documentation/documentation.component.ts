@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   inject,
   NgZone,
   OnDestroy,
@@ -11,10 +12,16 @@ import {
   PLATFORM_ID,
   ViewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { MetaTagService } from '../core/services/meta-tag.service';
+import { StructuredDataService } from '../core/services/structured-data.service';
+import {
+  buildDocArticle,
+  buildDocBreadcrumb,
+} from '../core/structured-data/doc-schema';
 import { getDocSeoTags } from './doc-seo.config';
 
 let apiLoaded = false;
@@ -34,6 +41,8 @@ export class DocumentationComponent
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
   private readonly metaTagService = inject(MetaTagService);
+  private readonly structuredData = inject(StructuredDataService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('snav', { static: true }) snav;
 
@@ -73,8 +82,14 @@ export class DocumentationComponent
 
   ngOnInit() {
     this.applySeoForUrl(this.router.url);
+    // takeUntilDestroyed prevents the destroyed docs component from reacting to a
+    // later NavigationEnd (e.g. navigating to '/' or a slicer page) and clearing
+    // the structured data those pages just set.
     this.router.events
-      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((e) => this.applySeoForUrl(e.urlAfterRedirects));
 
     // document is unavailable during Node prerendering; only load the YouTube API
@@ -95,8 +110,13 @@ export class DocumentationComponent
     const tags = getDocSeoTags(path);
     if (tags) {
       this.metaTagService.setSeoTags(tags);
+      this.structuredData.setJsonLd([
+        buildDocArticle(tags),
+        buildDocBreadcrumb(tags),
+      ]);
     } else {
       this.title.setTitle('Documentation - 3D Print Log');
+      this.structuredData.setJsonLd([]);
     }
   }
 

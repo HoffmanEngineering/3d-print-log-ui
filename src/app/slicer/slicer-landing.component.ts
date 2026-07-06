@@ -6,6 +6,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MetaTagService } from '../core/services/meta-tag.service';
+import { StructuredDataService } from '../core/services/structured-data.service';
+import { buildSlicerHowTo } from '../core/structured-data/slicer-schema';
 import { SLICER_CONFIGS, siteUrl, ogImage } from './slicer-configs';
 
 @Component({
@@ -19,6 +21,7 @@ import { SLICER_CONFIGS, siteUrl, ogImage } from './slicer-configs';
 export class SlicerLandingComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly meta = inject(MetaTagService);
+  private readonly structuredData = inject(StructuredDataService);
   readonly config =
     SLICER_CONFIGS[this.route.snapshot.data['slicerKey'] as string];
 
@@ -29,5 +32,7 @@ export class SlicerLandingComponent implements OnInit {
       description: this.config.metaDescription,
       imageUrl: ogImage,
     });
+
+    this.structuredData.setJsonLd([buildSlicerHowTo(this.config)]);
   }
 }

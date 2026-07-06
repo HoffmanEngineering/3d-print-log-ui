@@ -37,6 +37,22 @@ function canonicalHref(html) {
   }
   return '';
 }
+// Parse the page's <script type="application/ld+json"> and return the set of
+// @type strings found in its @graph. Returns null if missing/invalid JSON.
+function jsonLdTypes(html) {
+  const m = html.match(
+    /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i
+  );
+  if (!m) return null;
+  let data;
+  try {
+    data = JSON.parse(m[1]);
+  } catch {
+    return null;
+  }
+  const graph = Array.isArray(data['@graph']) ? data['@graph'] : [];
+  return new Set(graph.map((n) => n && n['@type']).filter(Boolean));
+}
 function read(route) {
   const file = `${DIST}/${route ? route + '/' : ''}index.html`;
   if (!existsSync(file)) {
@@ -80,6 +96,24 @@ for (const r of [...routes, ...DOC_ROUTES]) {
   if (!(html.includes("localStorage.getItem('theme-mode')") &&
         html.includes("classList.add('dark-theme')")))
     errors.push(`${file}: missing pre-paint theme script (dark-mode flash guard)`);
+  // Structured data (JSON-LD): every prerendered page carries a valid @graph with
+  // the @type(s) expected for its route class.
+  const types = jsonLdTypes(html);
+  if (!types) {
+    errors.push(`${file}: missing or invalid JSON-LD (application/ld+json)`);
+  } else {
+    const expected =
+      r === ''
+        ? ['WebApplication', 'Organization']
+        : DOC_ROUTES.includes(r)
+          ? ['TechArticle', 'BreadcrumbList']
+          : ['HowTo'];
+    for (const t of expected) {
+      if (!types.has(t)) {
+        errors.push(`${file}: JSON-LD missing @type "${t}"`);
+      }
+    }
+  }
 }
 
 // Fork pages: each must link to the hub in body and carry its own hook (checked via a
@@ -154,5 +188,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, fork hooks + hub links, homepage link graph, crawl files.`
+  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files.`
 );

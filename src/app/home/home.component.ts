@@ -8,6 +8,11 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
+import { StructuredDataService } from '../core/services/structured-data.service';
+import {
+  buildOrganization,
+  buildSoftwareApplication,
+} from '../core/structured-data/app-schema';
 
 @Component({
   selector: 'app-home',
@@ -21,7 +26,8 @@ export class HomeComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
-    private meta: MetaTagService
+    private meta: MetaTagService,
+    private structuredData: StructuredDataService
   ) {}
 
   ngOnInit() {
@@ -33,5 +39,10 @@ export class HomeComponent implements OnInit {
       imageUrl:
         'https://www.3dprintlog.com/assets/3d-print-log-logo_8b178eb1339b.svg',
     });
+
+    this.structuredData.setJsonLd([
+      buildSoftwareApplication(),
+      buildOrganization(),
+    ]);
   }
 }

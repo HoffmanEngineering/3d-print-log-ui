@@ -10,6 +10,14 @@ describe('AdsenseLoaderService', () => {
   });
 
   it('injects the AdSense loader once and is idempotent', () => {
+    // Other specs (e.g. AppComponent's interaction listeners, which are not
+    // torn down between specs) can leave a real loader <script> in the shared
+    // document. That would make load() early-return and break this spec
+    // depending on execution order, so start from a clean slate.
+    document
+      .querySelectorAll('script[data-adsense-loader]')
+      .forEach((s) => s.remove());
+
     // Capture the script element without actually inserting it into the test
     // document — appending a live adsbygoogle.js <script> makes a real network
     // request and starts filling stray ad slots from other specs, which hangs

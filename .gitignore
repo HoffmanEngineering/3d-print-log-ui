@@ -59,6 +59,7 @@ Thumbs.db
 cypress.env.json
 cypress/screenshots/
 cypress/videos/
+cypress/downloads/
 
 # Internal planning and design docs — keep local, not for the public repo
 /docs/

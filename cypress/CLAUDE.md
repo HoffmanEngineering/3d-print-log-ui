@@ -129,3 +129,39 @@ cy.get('#add-new-filament-usage-btn').click();
 cy.get('[data-cy="select-filament-btn"]').click();
 cy.wait('@getFilamentsModal');
 ```
+
+## Refreshing home-page screenshots
+
+The three home feature images (`Homepage_PrinterList`, `Homepage_Filament`,
+`Homepage_Analytics`, each light + dark) are generated, not hand-captured.
+
+**To refresh after a UI change:**
+
+    npm run capture:home:all
+
+This boots the dev server, runs `cypress/e2e/home/capture-home-screenshots.cy.ts`
+under `cypress.config.capture.ts` (Chrome at 2× device-scale-factor) to produce
+6 PNGs from the fixtures in `cypress/fixtures/demo/`, then runs
+`scripts/process-home-screenshots.mjs` to write hashed WebP into `src/assets/`
+and rewrite the `ngSrc` refs in `home.component.html`. Review the diff (6 images
+
+- the template) and commit.
+
+If a dev server is already running on 4200, just run the two steps directly:
+`npm run capture:home` then `npm run capture:home:process`.
+
+- Runs in **Chrome** (`--browser chrome`); Electron ignores
+  `--force-device-scale-factor`, so the DPR hook only takes effect in Chrome.
+- Demo data is fixture-driven (`cypress/fixtures/demo/manifest.ts`); the capture
+  **fails** if any `/api/**` request escapes the fixtures. When you add a page
+  call, add its stub to `FIXTURE_ROUTES`.
+- Demo print photos and their provenance live in `cypress/fixtures/demo/images/`
+  (fetched by `scripts/fetch-demo-images.mjs`).
+- The spec hides the nav bar, ad slots, and the filter panel, neutralizes
+  AdSense, and waits for async print thumbnails and the d3 status-donut
+  animation to settle before shooting.
+- The post-process caps intrinsic width at 1400px so images stay crisp on HiDPI
+  without tripping NgOptimizedImage "oversized" warnings.
+- Theme swap is class-based (`html.dark-theme`) so the correct variant shows at
+  first paint — do not switch to a hydration-gated `@if`.
+- Out of scope: the 4th "Cura marketplace" integration image is not regenerated.

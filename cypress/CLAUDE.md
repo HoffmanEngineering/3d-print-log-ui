@@ -143,9 +143,8 @@ This boots the dev server, runs `cypress/e2e/home/capture-home-screenshots.cy.ts
 under `cypress.config.capture.ts` (Chrome at 2× device-scale-factor) to produce
 6 PNGs from the fixtures in `cypress/fixtures/demo/`, then runs
 `scripts/process-home-screenshots.mjs` to write hashed WebP into `src/assets/`
-and rewrite the `ngSrc` refs in `home.component.html`. Review the diff (6 images
-
-- the template) and commit.
+and rewrite the `ngSrc` refs in `home.component.html`. Review the diff (the 6
+images plus the template) and commit.
 
 If a dev server is already running on 4200, just run the two steps directly:
 `npm run capture:home` then `npm run capture:home:process`.

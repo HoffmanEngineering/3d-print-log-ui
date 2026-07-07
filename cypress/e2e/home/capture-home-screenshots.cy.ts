@@ -119,7 +119,7 @@ describe('Capture home screenshots', () => {
         const unhandled: string[] = [];
         cy.login();
         stubApi(unhandled);
-        cy.viewport(1440, 1200);
+        cy.viewport(target.viewport[0], target.viewport[1]);
         // Set client state in onBeforeLoad so the pre-paint theme script in
         // index.html reads the right theme-mode before first paint.
         cy.visit(target.route, {

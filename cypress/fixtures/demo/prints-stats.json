@@ -1,0 +1,20 @@
+[
+  { "id": 5001, "printerID": 101, "startDate": "2020-05-04T00:00:00+00:00", "estimatedPrintTimeInSeconds": 14400, "estimatedFilamentUsageMg": 62000, "printTimeInSeconds": 14100, "filamentUsageMg": 61500, "status": 3 },
+  { "id": 5002, "printerID": 102, "startDate": "2020-05-09T00:00:00+00:00", "estimatedPrintTimeInSeconds": 9000, "estimatedFilamentUsageMg": 38000, "printTimeInSeconds": 9200, "filamentUsageMg": 38500, "status": 3 },
+  { "id": 5003, "printerID": 103, "startDate": "2020-05-15T00:00:00+00:00", "estimatedPrintTimeInSeconds": 18000, "estimatedFilamentUsageMg": 25000, "printTimeInSeconds": 18300, "filamentUsageMg": 25200, "status": 3 },
+  { "id": 5004, "printerID": 101, "startDate": "2020-05-21T00:00:00+00:00", "estimatedPrintTimeInSeconds": 7200, "estimatedFilamentUsageMg": 31000, "printTimeInSeconds": 3600, "filamentUsageMg": 15500, "status": 5 },
+  { "id": 5005, "printerID": 102, "startDate": "2020-05-27T00:00:00+00:00", "estimatedPrintTimeInSeconds": 21600, "estimatedFilamentUsageMg": 88000, "printTimeInSeconds": 21800, "filamentUsageMg": 88400, "status": 3 },
+  { "id": 5006, "printerID": 101, "startDate": "2020-06-03T00:00:00+00:00", "estimatedPrintTimeInSeconds": 12600, "estimatedFilamentUsageMg": 54000, "printTimeInSeconds": 12750, "filamentUsageMg": 54300, "status": 6 },
+  { "id": 5007, "printerID": 103, "startDate": "2020-06-10T00:00:00+00:00", "estimatedPrintTimeInSeconds": 16200, "estimatedFilamentUsageMg": 22000, "printTimeInSeconds": 16500, "filamentUsageMg": 22100, "status": 3 },
+  { "id": 5008, "printerID": 102, "startDate": "2020-06-17T00:00:00+00:00", "estimatedPrintTimeInSeconds": 10800, "estimatedFilamentUsageMg": 46000, "printTimeInSeconds": 5400, "filamentUsageMg": 23000, "status": 4 },
+  { "id": 5009, "printerID": 101, "startDate": "2020-06-24T00:00:00+00:00", "estimatedPrintTimeInSeconds": 25200, "estimatedFilamentUsageMg": 102000, "printTimeInSeconds": 25600, "filamentUsageMg": 102800, "status": 3 },
+  { "id": 5010, "printerID": 102, "startDate": "2020-07-01T00:00:00+00:00", "estimatedPrintTimeInSeconds": 8100, "estimatedFilamentUsageMg": 34000, "printTimeInSeconds": 8250, "filamentUsageMg": 34200, "status": 3 },
+  { "id": 5011, "printerID": 103, "startDate": "2020-07-08T00:00:00+00:00", "estimatedPrintTimeInSeconds": 19800, "estimatedFilamentUsageMg": 28000, "printTimeInSeconds": 20100, "filamentUsageMg": 28300, "status": 3 },
+  { "id": 5012, "printerID": 101, "startDate": "2020-07-15T00:00:00+00:00", "estimatedPrintTimeInSeconds": 13500, "estimatedFilamentUsageMg": 58000, "printTimeInSeconds": 13650, "filamentUsageMg": 58200, "status": 6 },
+  { "id": 5013, "printerID": 102, "startDate": "2020-07-22T00:00:00+00:00", "estimatedPrintTimeInSeconds": 6300, "estimatedFilamentUsageMg": 27000, "printTimeInSeconds": null, "filamentUsageMg": 0, "status": 5 },
+  { "id": 5014, "printerID": 101, "startDate": "2020-07-29T00:00:00+00:00", "estimatedPrintTimeInSeconds": 17100, "estimatedFilamentUsageMg": 72000, "printTimeInSeconds": 17400, "filamentUsageMg": 72500, "status": 3 },
+  { "id": 5015, "printerID": 103, "startDate": "2020-08-05T00:00:00+00:00", "estimatedPrintTimeInSeconds": 15300, "estimatedFilamentUsageMg": 21000, "printTimeInSeconds": 15450, "filamentUsageMg": 21150, "status": 3 },
+  { "id": 5016, "printerID": 102, "startDate": "2020-08-12T00:00:00+00:00", "estimatedPrintTimeInSeconds": 11700, "estimatedFilamentUsageMg": 49000, "printTimeInSeconds": 11850, "filamentUsageMg": 49300, "status": 3 },
+  { "id": 5017, "printerID": 101, "startDate": "2020-08-19T00:00:00+00:00", "estimatedPrintTimeInSeconds": 23400, "estimatedFilamentUsageMg": 95000, "printTimeInSeconds": 23800, "filamentUsageMg": 95600, "status": 3 },
+  { "id": 5018, "printerID": 102, "startDate": "2020-08-26T00:00:00+00:00", "estimatedPrintTimeInSeconds": 9900, "estimatedFilamentUsageMg": 42000, "printTimeInSeconds": 10050, "filamentUsageMg": 42200, "status": 3 }
+]

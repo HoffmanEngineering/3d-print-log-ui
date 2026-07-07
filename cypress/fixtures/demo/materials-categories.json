@@ -1,0 +1,28 @@
+[
+  {
+    "nickname": "filament",
+    "name": "Filament",
+    "description": "A single continuous filament of material",
+    "hasDiameter": true,
+    "showNozzleTemperature": true,
+    "showBedTemperature": true,
+    "showMeltingTemperature": false,
+    "showRecommendedInitialLayerTimeInSeconds": false,
+    "showRecommendedLayerTimeInSeconds": false,
+    "showMaterialRefreshRatio": false,
+    "showInertGas": false
+  },
+  {
+    "nickname": "resin",
+    "name": "Resin",
+    "description": "A liquid photopolymer resin",
+    "hasDiameter": false,
+    "showNozzleTemperature": false,
+    "showBedTemperature": false,
+    "showMeltingTemperature": false,
+    "showRecommendedInitialLayerTimeInSeconds": true,
+    "showRecommendedLayerTimeInSeconds": true,
+    "showMaterialRefreshRatio": false,
+    "showInertGas": false
+  }
+]

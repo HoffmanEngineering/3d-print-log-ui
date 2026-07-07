@@ -1,0 +1,110 @@
+{
+  "paging": { "currentPage": 1, "totalPages": 1, "pageSize": 10, "totalCount": 3 },
+  "items": [
+    {
+      "id": 101,
+      "name": "Living Room",
+      "make": "Bambu Lab",
+      "model": "A1",
+      "isActive": true,
+      "wattageW": 350,
+      "printTimeInSeconds": null,
+      "category": {
+        "nickname": "FFF",
+        "name": "Fused Filament Fabrication",
+        "description": "Material extruded through a nozzle.",
+        "materialCategory": {
+          "nickname": "filament",
+          "name": "Filament",
+          "description": "A single continuous filament of material",
+          "hasDiameter": true,
+          "showNozzleTemperature": true,
+          "showBedTemperature": true,
+          "showMeltingTemperature": false,
+          "showRecommendedInitialLayerTimeInSeconds": false,
+          "showRecommendedLayerTimeInSeconds": false,
+          "showMaterialRefreshRatio": false,
+          "showInertGas": false
+        },
+        "showNozzleDiameter": true,
+        "showFilamentDiameter": true,
+        "showBeamDiameter": false,
+        "showBedSize": true,
+        "showScreenResolution": false,
+        "showHasHeatedBed": true,
+        "showHasHeatedChamber": true
+      },
+      "loadedFilaments": []
+    },
+    {
+      "id": 102,
+      "name": "Workshop",
+      "make": "Prusa",
+      "model": "MK4S",
+      "isActive": true,
+      "wattageW": 120,
+      "printTimeInSeconds": null,
+      "category": {
+        "nickname": "FFF",
+        "name": "Fused Filament Fabrication",
+        "description": "Material extruded through a nozzle.",
+        "materialCategory": {
+          "nickname": "filament",
+          "name": "Filament",
+          "description": "A single continuous filament of material",
+          "hasDiameter": true,
+          "showNozzleTemperature": true,
+          "showBedTemperature": true,
+          "showMeltingTemperature": false,
+          "showRecommendedInitialLayerTimeInSeconds": false,
+          "showRecommendedLayerTimeInSeconds": false,
+          "showMaterialRefreshRatio": false,
+          "showInertGas": false
+        },
+        "showNozzleDiameter": true,
+        "showFilamentDiameter": true,
+        "showBeamDiameter": false,
+        "showBedSize": true,
+        "showScreenResolution": false,
+        "showHasHeatedBed": true,
+        "showHasHeatedChamber": true
+      },
+      "loadedFilaments": []
+    },
+    {
+      "id": 103,
+      "name": "Resin Station",
+      "make": "Anycubic",
+      "model": "Photon Mono M7 Pro",
+      "isActive": true,
+      "wattageW": 120,
+      "printTimeInSeconds": null,
+      "category": {
+        "nickname": "MSLA",
+        "name": "Masked Stereolithography",
+        "description": "Resin cured by a masked LCD light source.",
+        "materialCategory": {
+          "nickname": "resin",
+          "name": "Resin",
+          "description": "A liquid photopolymer resin",
+          "hasDiameter": false,
+          "showNozzleTemperature": false,
+          "showBedTemperature": false,
+          "showMeltingTemperature": false,
+          "showRecommendedInitialLayerTimeInSeconds": true,
+          "showRecommendedLayerTimeInSeconds": true,
+          "showMaterialRefreshRatio": false,
+          "showInertGas": false
+        },
+        "showNozzleDiameter": false,
+        "showFilamentDiameter": false,
+        "showBeamDiameter": false,
+        "showBedSize": false,
+        "showScreenResolution": true,
+        "showHasHeatedBed": false,
+        "showHasHeatedChamber": false
+      },
+      "loadedFilaments": []
+    }
+  ]
+}

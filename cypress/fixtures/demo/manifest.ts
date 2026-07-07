@@ -49,6 +49,11 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
     url: '**/api/Prints/stats*',
     fixture: 'demo/prints-stats.json',
   },
+  {
+    method: 'GET',
+    url: '**/api/notifications/unread-count*',
+    fixture: 'demo/notifications-unread-count.json',
+  },
 ];
 
 export const CAPTURE_TARGETS: CaptureTarget[] = [

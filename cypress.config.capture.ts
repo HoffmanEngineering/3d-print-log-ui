@@ -8,6 +8,7 @@ export default defineConfig({
   e2e: {
     baseUrl: 'https://localhost:4200',
     experimentalSessionAndOrigin: true,
+    supportFile: 'cypress/support/e2e.js',
     specPattern: 'cypress/e2e/home/capture-home-screenshots.cy.ts',
     setupNodeEvents(on, config) {
       // Reuse existing plugins (session bypass etc.)

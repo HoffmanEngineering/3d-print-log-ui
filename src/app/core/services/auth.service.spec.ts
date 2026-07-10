@@ -65,5 +65,20 @@ describe('AuthService', () => {
           done();
         });
     });
+
+    it('sets loggedIn=false and emits no profile when the dev anonymous flag is set', () => {
+      sessionStorage.setItem('devAnonymous', 'true');
+      const service = TestBed.inject(AuthService);
+
+      let latestProfile: unknown = 'unset';
+      service.userProfile$.subscribe((p) => (latestProfile = p));
+
+      service.localAuthSetup();
+
+      expect(service.loggedIn).toBeFalse();
+      expect(latestProfile).toBeNull(); // BehaviorSubject initial null, never overwritten
+
+      sessionStorage.removeItem('devAnonymous');
+    });
   });
 });

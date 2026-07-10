@@ -68,6 +68,16 @@ These commands are optimized for minimal token usage while preserving actionable
 - `allow-anonymous-request` header bypasses authentication for public endpoints
 - `AuthGuard` protects authenticated routes
 
+### Public / Anonymous Routes (don't break these)
+
+Some routes render for logged-out visitors (no `AuthGuard`) so public content is deep-linkable and shareable — e.g. `/prints/:id`, public user profiles, public materials. A logged-out request to an **auth-required** endpoint rejects with Auth0's `missing_refresh_token` (the interceptor only retries anonymously when the request carries the `allow-anonymous-request` header). This is easy to break because it works fine while you're logged in.
+
+When adding to a public route:
+
+- **Resolvers must tolerate a logged-out user.** A resolver whose observable/promise **rejects** cancels the Angular navigation, bouncing the visitor to `/` (see #66). Any data a public-route resolver fetches must either come from an endpoint the client calls with `allow-anonymous-request` **and** the API marks `[AllowAnonymous]`, or the service must degrade to a sensible default/`null` for anonymous users instead of throwing. Prefer fixing this in the **service** (one place) over each resolver — the same service is often also called from `ngOnInit`, where a rejection won't cancel navigation but will surface an unhandled promise rejection.
+- **Don't add auth-required sidecar data to a public route** (user settings, subscription, etc.) unless the service already returns anonymous-safe defaults. `UserSettingService.getCurrentUsersSettingByType` returns `null` for anonymous visitors by design — keep new settings consumers null-tolerant (`?.value`, `?? default`).
+- **Test logged-out locally without Auth0.** Under `devAuthBypass`, append `?devUserId=anonymous` to any URL to simulate a logged-out visitor (persisted per-tab in `sessionStorage`; `isDevAnonymous` in `src/app/core/utils/dev-anonymous.ts`). The Cypress spec `cypress/e2e/prints/public-print-anonymous.cy.ts` is the regression pattern — a public-route E2E that does **not** call `cy.login()`.
+
 ### Environment Configuration
 
 - `src/environments/environment.ts` - Development (localhost:5001 API)

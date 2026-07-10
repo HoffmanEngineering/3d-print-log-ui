@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from '../core/guards/auth.guard';
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { CurrencySymbolResolverService } from '../core/resolvers/currency-symbol-resolver.service';
 import { DefaultFilamentDiameterSettingResolverService } from '../core/resolvers/default-filament-diameter-setting-resolver.service';
@@ -14,13 +15,14 @@ import { MaterialResolverService } from './resolvers/material-resolver.service';
 import { MaterialCategoryResolverService } from '../core/resolvers/material-category-resolver.service';
 import { FilamentStorageLocationResolverService } from './resolvers/filament-storage-location-resolver.service';
 
-const routes: Routes = [
+export const filamentRoutes: Routes = [
   {
     path: '',
     children: [
       {
         path: '',
         component: FilamentListContainerComponent,
+        canActivate: [AuthGuard],
         resolve: {
           filamentList: FilamentListResolverService,
           materialCategories: MaterialCategoryResolverService,
@@ -30,6 +32,7 @@ const routes: Routes = [
       {
         path: 'copy/:id',
         component: FilamentDetailComponent,
+        canActivate: [AuthGuard],
         resolve: {
           filament: CopyFilamentDetailResolverService,
           materials: MaterialResolverService,
@@ -45,6 +48,7 @@ const routes: Routes = [
       {
         path: ':id',
         component: FilamentDetailComponent,
+        canActivate: [AuthGuard],
         resolve: {
           filament: FilamentDetailResolverService,
           materials: MaterialResolverService,
@@ -62,7 +66,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forChild(routes)],
+  imports: [RouterModule.forChild(filamentRoutes)],
   exports: [RouterModule],
 })
 export class FilamentRoutingModule {}

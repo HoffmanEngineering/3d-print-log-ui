@@ -42,7 +42,10 @@ describe('AuthInterceptorService', () => {
       '?devUserId=2'
     );
 
-    const req = new HttpRequest('GET', 'https://localhost:5001/api/prints');
+    const req = new HttpRequest(
+      'GET',
+      `${environment.printLogApiUrl}/api/prints`
+    );
     const next: HttpHandler = {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('X-Dev-User-Id')).toBe('2');
@@ -60,7 +63,10 @@ describe('AuthInterceptorService', () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
     spyOn(interceptor as any, 'getLocationSearch').and.returnValue('');
 
-    const req = new HttpRequest('GET', 'https://localhost:5001/api/prints');
+    const req = new HttpRequest(
+      'GET',
+      `${environment.printLogApiUrl}/api/prints`
+    );
     const next: HttpHandler = {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('X-Dev-User-Id')).toBe('1');
@@ -79,7 +85,7 @@ describe('AuthInterceptorService', () => {
 
     const req = new HttpRequest(
       'GET',
-      'https://localhost:5001/api/public',
+      `${environment.printLogApiUrl}/api/public`,
       null,
       {
         headers: new HttpHeaders({ 'allow-anonymous-request': 'true' }),
@@ -106,7 +112,7 @@ describe('AuthInterceptorService', () => {
 
     const req = new HttpRequest(
       'GET',
-      'https://localhost:5001/api/public',
+      `${environment.printLogApiUrl}/api/public`,
       null,
       { headers: new HttpHeaders({ 'allow-anonymous-request': 'true' }) }
     );
@@ -133,7 +139,7 @@ describe('AuthInterceptorService', () => {
     let handled = false;
     const req = new HttpRequest(
       'GET',
-      'https://localhost:5001/api/Users/me/user-settings'
+      `${environment.printLogApiUrl}/api/Users/me/user-settings`
     );
     const next: HttpHandler = {
       handle: () => {

@@ -313,6 +313,70 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
   });
 
+  it('treats the API host on a non-default port as untrusted', (done) => {
+    const interceptor = TestBed.inject(AuthInterceptorService);
+
+    // Same host, different port => different origin => not trusted.
+    const req = new HttpRequest(
+      'GET',
+      `https://${new URL(environment.printLogApiUrl).host}:8443/api/prints`
+    );
+    const next: HttpHandler = {
+      handle: (r: HttpRequest<any>) => {
+        expect(r.headers.get('Authorization')).toBeNull();
+        expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
+        done();
+        return of(new HttpResponse({ status: 200 })) as any;
+      },
+    };
+
+    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+  });
+
+  it('rejects a protocol-relative URL to the API host (scheme downgrade)', (done) => {
+    const interceptor = TestBed.inject(AuthInterceptorService);
+
+    // `//host/...` resolves against the http placeholder base, so the scheme
+    // becomes http and no longer matches the https API origin. Intentional.
+    const req = new HttpRequest(
+      'GET',
+      `//${new URL(environment.printLogApiUrl).host}/api/prints`
+    );
+    const next: HttpHandler = {
+      handle: (r: HttpRequest<any>) => {
+        expect(r.headers.get('Authorization')).toBeNull();
+        expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
+        done();
+        return of(new HttpResponse({ status: 200 })) as any;
+      },
+    };
+
+    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+  });
+
+  it('preserves a caller-supplied Authorization header on untrusted requests', (done) => {
+    // The gate only prevents credentials the interceptor itself adds; it does
+    // not strip headers the caller set deliberately.
+    const interceptor = TestBed.inject(AuthInterceptorService);
+
+    const req = new HttpRequest(
+      'GET',
+      'https://acct.blob.core.windows.net/container/img.png',
+      null,
+      { headers: new HttpHeaders({ Authorization: 'Bearer caller-supplied' }) }
+    );
+    const next: HttpHandler = {
+      handle: (r: HttpRequest<any>) => {
+        expect(r.headers.get('Authorization')).toBe('Bearer caller-supplied');
+        expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
+        done();
+        return of(new HttpResponse({ status: 200 })) as any;
+      },
+    };
+
+    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+  });
+
   it('short-circuits above dev logic for untrusted URLs in dev mode', (done) => {
     (environment as any).devAuthBypass = true;
     const interceptor = TestBed.inject(AuthInterceptorService);

@@ -24,6 +24,7 @@ describe('AuthInterceptorService', () => {
 
   afterEach(() => {
     (environment as any).devAuthBypass = false;
+    sessionStorage.removeItem('devAnonymous');
   });
 
   it('should be created', () => {
@@ -94,5 +95,60 @@ describe('AuthInterceptorService', () => {
     };
 
     interceptor.intercept(req, next).subscribe();
+  });
+
+  it('dispatches allow-anonymous requests without a dev user when devUserId=anonymous', (done) => {
+    (environment as any).devAuthBypass = true;
+    const interceptor = TestBed.inject(AuthInterceptorService);
+    spyOn(interceptor as any, 'getLocationSearch').and.returnValue(
+      '?devUserId=anonymous'
+    );
+
+    const req = new HttpRequest(
+      'GET',
+      'https://localhost:5001/api/public',
+      null,
+      { headers: new HttpHeaders({ 'allow-anonymous-request': 'true' }) }
+    );
+    const next: HttpHandler = {
+      handle: (r: HttpRequest<any>) => {
+        expect(r.headers.get('allow-anonymous-request')).toBeNull();
+        expect(r.headers.get('X-Dev-User-Id')).toBeNull();
+        expect(r.headers.get('Authorization')).toBeNull();
+        done();
+        return of(new HttpResponse({ status: 200 })) as any;
+      },
+    };
+
+    interceptor.intercept(req, next).subscribe();
+  });
+
+  it('errors before dispatch for auth-required requests when devUserId=anonymous', (done) => {
+    (environment as any).devAuthBypass = true;
+    const interceptor = TestBed.inject(AuthInterceptorService);
+    spyOn(interceptor as any, 'getLocationSearch').and.returnValue(
+      '?devUserId=anonymous'
+    );
+
+    let handled = false;
+    const req = new HttpRequest(
+      'GET',
+      'https://localhost:5001/api/Users/me/user-settings'
+    );
+    const next: HttpHandler = {
+      handle: () => {
+        handled = true;
+        return of(new HttpResponse({ status: 200 })) as any;
+      },
+    };
+
+    interceptor.intercept(req, next).subscribe({
+      next: () => fail('should not emit a response'),
+      error: (err) => {
+        expect(handled).toBeFalse();
+        expect(err.error).toBe('missing_refresh_token');
+        done();
+      },
+    });
   });
 });

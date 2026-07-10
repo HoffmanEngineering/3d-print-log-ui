@@ -19,6 +19,7 @@ import { NotificationService } from './notification.service';
 import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
 import { UserSettingService } from './user-setting.service';
+import { isDevAnonymous } from '../utils/dev-anonymous';
 const cordovaCallbackUri =
   'com.hoffmanengineering.printlog://cordova/com.hoffmanengineering.printlog/callback';
 
@@ -207,6 +208,11 @@ export class AuthService {
     }
 
     if (environment.devAuthBypass) {
+      if (isDevAnonymous(window.location.search)) {
+        // Dev-only: render the logged-out state for E2E / manual testing.
+        this.loggedIn = false;
+        return;
+      }
       this.loggedIn = true;
       this.userProfileSubject$.next(this.devMockProfile);
       return;

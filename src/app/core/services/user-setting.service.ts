@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { lastValueFrom, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 export enum UserSettingType {
@@ -102,8 +102,23 @@ export class UserSettingService {
         return result;
       }),
       tap((settings) => {
+        // Runs only on a successful response — caches real settings (incl. []).
         this.settingsMap = settings;
         this.loaded = true;
+      }),
+      catchError((err) => {
+        // For a logged-out visitor the auth interceptor rethrows Auth0's
+        // missing-refresh-token error before dispatching the request. Treat
+        // *only* that as "no settings" so a public view still renders.
+        // Deliberately NOT cached (this branch bypasses the tap above, so
+        // `loaded` stays false) so a later authenticated call refetches — this
+        // is what makes an in-process (Cordova) login recover.
+        if (err?.error === 'missing_refresh_token') {
+          return of(new Map<UserSettingType, UserSetting>());
+        }
+        // Surface everything else: server errors (HttpErrorResponse), response-
+        // mapping/programming errors, and unexpected auth failures.
+        return throwError(() => err);
       })
     );
   }

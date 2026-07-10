@@ -1,5 +1,10 @@
 {
-  "navigationFallback": {
-    "rewrite": "/index.html"
-  }
+  "routes": [
+    { "route": "/prints", "rewrite": "/shells/list-skeleton.html" },
+    { "route": "/materials", "rewrite": "/shells/list-skeleton.html" },
+    { "route": "/filament", "rewrite": "/shells/list-skeleton.html" },
+    { "route": "/printers", "rewrite": "/shells/list-skeleton.html" },
+    { "route": "/shells/*", "headers": { "cache-control": "no-cache" } }
+  ],
+  "navigationFallback": { "rewrite": "/shells/app-shell.html" }
 }

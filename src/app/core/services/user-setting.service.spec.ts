@@ -4,16 +4,20 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import {
+  HTTP_INTERCEPTORS,
+  HttpClient,
   provideHttpClient,
   withInterceptorsFromDi,
 } from '@angular/common/http';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, throwError } from 'rxjs';
 import {
   UserSettingService,
   UserSettingType,
   UserSettingDto,
 } from './user-setting.service';
 import { environment } from 'src/environments/environment';
+import { AuthService } from './auth.service';
+import { AuthInterceptorService } from '../http/auth-interceptor.service';
 
 const apiUrl = `${environment.printLogApiUrl}/api/Users/me/user-settings`;
 
@@ -97,6 +101,33 @@ describe('UserSettingService', () => {
       // Second call — no HTTP request should be made
       await service.getCurrentUsersSettingByType(UserSettingType.Currency_Name);
       httpTesting.expectNone(apiUrl);
+    });
+
+    it('rejects (does not swallow) when the fetch fails with an HttpErrorResponse', async () => {
+      const promise = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      httpTesting
+        .expectOne(apiUrl)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
+
+      await expectAsync(promise).toBeRejected();
+    });
+
+    it('does not cache an HttpErrorResponse failure (next call refetches)', async () => {
+      const first = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      httpTesting
+        .expectOne(apiUrl)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
+      await expectAsync(first).toBeRejected();
+
+      const second = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      httpTesting.expectOne(apiUrl).flush([]); // a second request IS made
+      await second;
     });
 
     it('deduplicates concurrent cache-miss requests into a single HTTP call', async () => {
@@ -249,5 +280,77 @@ describe('UserSettingService', () => {
       expect(resultA!.value).toBe('EUR');
       expect(resultB!.value).toBe('$');
     });
+  });
+});
+
+describe('UserSettingService — anonymous visitor (mocked HttpClient)', () => {
+  let service: UserSettingService;
+  let mockHttp: jasmine.SpyObj<HttpClient>;
+
+  beforeEach(() => {
+    mockHttp = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
+    mockHttp.get.and.returnValue(
+      throwError(() => ({ error: 'missing_refresh_token' }))
+    );
+
+    TestBed.configureTestingModule({
+      providers: [{ provide: HttpClient, useValue: mockHttp }],
+    });
+    service = TestBed.inject(UserSettingService);
+  });
+
+  it('resolves to null when the request fails before dispatch', async () => {
+    const result = await service.getCurrentUsersSettingByType(
+      UserSettingType.Currency_Symbol
+    );
+    expect(result).toBeNull();
+  });
+
+  it('does not cache the anonymous fallback (next call refetches)', async () => {
+    await service.getCurrentUsersSettingByType(UserSettingType.Currency_Symbol);
+    await service.getCurrentUsersSettingByType(UserSettingType.Currency_Symbol);
+    expect(mockHttp.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('UserSettingService — anonymous through the real interceptor', () => {
+  let service: UserSettingService;
+  let httpTesting: HttpTestingController;
+
+  beforeEach(() => {
+    (environment as any).devAuthBypass = false;
+    const mockAuth = jasmine.createSpyObj<AuthService>('AuthService', [
+      'getTokenSilently$',
+    ]);
+    mockAuth.getTokenSilently$.and.returnValue(
+      throwError(() => ({ error: 'missing_refresh_token' }))
+    );
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting(),
+        {
+          provide: HTTP_INTERCEPTORS,
+          useClass: AuthInterceptorService,
+          multi: true,
+        },
+        { provide: AuthService, useValue: mockAuth },
+      ],
+    });
+    service = TestBed.inject(UserSettingService);
+    httpTesting = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
+  });
+
+  it('returns null and never dispatches the settings request', async () => {
+    const result = await service.getCurrentUsersSettingByType(
+      UserSettingType.Currency_Symbol
+    );
+    expect(result).toBeNull();
+    httpTesting.expectNone(apiUrl);
   });
 });

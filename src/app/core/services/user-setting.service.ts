@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { lastValueFrom, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 export enum UserSettingType {
@@ -102,8 +102,24 @@ export class UserSettingService {
         return result;
       }),
       tap((settings) => {
+        // Runs only on a successful response — caches real settings (incl. []).
         this.settingsMap = settings;
         this.loaded = true;
+      }),
+      catchError((err) => {
+        if (err instanceof HttpErrorResponse) {
+          // The request reached the server (or failed at the network layer with
+          // status 0). This only happens for a logged-in user, since the
+          // interceptor never dispatches this endpoint anonymously. Surface it —
+          // preserves the current navigation-cancelling behavior for real errors.
+          return throwError(() => err);
+        }
+        // The request was never dispatched: the interceptor could not obtain a
+        // token for an anonymous visitor and rethrew the Auth0 token error.
+        // Treat as "no settings". Deliberately NOT cached (this branch bypasses
+        // the tap above, so `loaded` stays false) so a later authenticated call
+        // refetches — this is what makes an in-process (Cordova) login recover.
+        return of(new Map<UserSettingType, UserSetting>());
       })
     );
   }

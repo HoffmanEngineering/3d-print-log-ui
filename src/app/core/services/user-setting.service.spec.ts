@@ -114,6 +114,17 @@ describe('UserSettingService', () => {
       await expectAsync(promise).toBeRejected();
     });
 
+    it('rejects (does not swallow) a response-mapping/programming error', async () => {
+      const promise = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      // A null body makes `for (const dto of dtos)` throw inside the map — this
+      // is not the anonymous auth error and must not be swallowed as empty.
+      httpTesting.expectOne(apiUrl).flush(null);
+
+      await expectAsync(promise).toBeRejected();
+    });
+
     it('does not cache an HttpErrorResponse failure (next call refetches)', async () => {
       const first = service.getCurrentUsersSettingByType(
         UserSettingType.Currency_Symbol

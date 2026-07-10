@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -107,19 +107,18 @@ export class UserSettingService {
         this.loaded = true;
       }),
       catchError((err) => {
-        if (err instanceof HttpErrorResponse) {
-          // The request reached the server (or failed at the network layer with
-          // status 0). This only happens for a logged-in user, since the
-          // interceptor never dispatches this endpoint anonymously. Surface it —
-          // preserves the current navigation-cancelling behavior for real errors.
-          return throwError(() => err);
+        // For a logged-out visitor the auth interceptor rethrows Auth0's
+        // missing-refresh-token error before dispatching the request. Treat
+        // *only* that as "no settings" so a public view still renders.
+        // Deliberately NOT cached (this branch bypasses the tap above, so
+        // `loaded` stays false) so a later authenticated call refetches — this
+        // is what makes an in-process (Cordova) login recover.
+        if (err?.error === 'missing_refresh_token') {
+          return of(new Map<UserSettingType, UserSetting>());
         }
-        // The request was never dispatched: the interceptor could not obtain a
-        // token for an anonymous visitor and rethrew the Auth0 token error.
-        // Treat as "no settings". Deliberately NOT cached (this branch bypasses
-        // the tap above, so `loaded` stays false) so a later authenticated call
-        // refetches — this is what makes an in-process (Cordova) login recover.
-        return of(new Map<UserSettingType, UserSetting>());
+        // Surface everything else: server errors (HttpErrorResponse), response-
+        // mapping/programming errors, and unexpected auth failures.
+        return throwError(() => err);
       })
     );
   }

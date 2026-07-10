@@ -42,3 +42,6 @@ jobs:
 
       - name: Verify prerendered output
         run: node scripts/verify-prerender.mjs
+
+      - name: Verify shells
+        run: node scripts/verify-shells.mjs

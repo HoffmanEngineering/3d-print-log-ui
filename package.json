@@ -11,6 +11,7 @@
     "test:ci": "ng test --no-watch --code-coverage --browsers ChromeHeadless",
     "test:brief": "bash scripts/test-brief.sh",
     "test:sitemap": "node --test scripts/*.test.mjs",
+    "verify:shells": "node scripts/verify-shells.mjs",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
     "lint:brief": "bash scripts/lint-brief.sh",

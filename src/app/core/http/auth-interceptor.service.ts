@@ -9,6 +9,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AuthService } from '../services/auth.service';
+import { isDevAnonymous } from '../utils/dev-anonymous';
 
 @Injectable({
   providedIn: 'root',
@@ -25,7 +26,23 @@ export class AuthInterceptorService implements HttpInterceptor {
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
     if (environment.devAuthBypass) {
-      const params = new URLSearchParams(this.getLocationSearch());
+      const search = this.getLocationSearch();
+
+      if (isDevAnonymous(search)) {
+        // Simulate an unauthenticated visitor (dev-only, gated on devAuthBypass).
+        if (req.headers.get('allow-anonymous-request')) {
+          const anonReq = req.clone({
+            headers: req.headers.delete('allow-anonymous-request'),
+          });
+          return next.handle(anonReq);
+        }
+        // Mirror the real interceptor's pre-dispatch rethrow of the Auth0 token
+        // error (a non-HttpErrorResponse) so UserSettingService's anonymous
+        // fallback is exercised faithfully.
+        return throwError(() => ({ error: 'missing_refresh_token' }));
+      }
+
+      const params = new URLSearchParams(search);
       const userId = params.get('devUserId') ?? '1';
       const devReq = req.clone({
         headers: req.headers

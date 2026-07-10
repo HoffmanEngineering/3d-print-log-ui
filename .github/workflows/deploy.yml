@@ -45,6 +45,9 @@ jobs:
       - name: Verify prerendered output and sitemap index
         run: node scripts/verify-prerender.mjs
 
+      - name: Verify shells
+        run: node scripts/verify-shells.mjs
+
       - name: Deploy to Azure Static Web Apps (prebuilt)
         uses: Azure/static-web-apps-deploy@v1
         with:

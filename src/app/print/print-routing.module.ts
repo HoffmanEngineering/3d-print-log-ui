@@ -21,13 +21,14 @@ import { PrintListResolverService } from './resolvers/print-list-resolver.servic
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 
-const routes: Routes = [
+export const printRoutes: Routes = [
   {
     path: '',
     children: [
       {
         path: '',
         component: PrintListComponent,
+        canActivate: [AuthGuard],
         resolve: {
           printList: PrintListResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
@@ -44,6 +45,7 @@ const routes: Routes = [
       {
         path: 'copy/:id',
         component: EditPrintDetailComponent,
+        canActivate: [AuthGuard],
         resolve: {
           print: CopyPrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
@@ -111,6 +113,6 @@ const routes: Routes = [
 
 @NgModule({
   exports: [RouterModule],
-  imports: [RouterModule.forChild(routes)],
+  imports: [RouterModule.forChild(printRoutes)],
 })
 export class PrintRoutingModule {}

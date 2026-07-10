@@ -7,7 +7,7 @@ import { PendingChangesGuard } from './core/guards/pending-changes.guard';
 import { HomeComponent } from './home/home.component';
 import { SlicerLandingComponent } from './slicer/slicer-landing.component';
 
-const routes: Routes = [
+export const appRoutes: Routes = [
   {
     path: 'callback',
     loadComponent: () =>
@@ -44,6 +44,7 @@ const routes: Routes = [
       import('./printer-maintenance/printer-maintenance.module').then(
         (m) => m.PrinterMaintenanceModule
       ),
+    canActivate: [AuthGuard],
   },
   {
     path: 'home',
@@ -70,6 +71,7 @@ const routes: Routes = [
     path: 'analytics',
     loadChildren: () =>
       import('./analytics/analytics.module').then((m) => m.AnalyticsModule),
+    canActivate: [AuthGuard],
   },
   environment.features.userProfile
     ? {
@@ -82,6 +84,7 @@ const routes: Routes = [
     path: 'settings',
     loadChildren: () =>
       import('./settings/settings.module').then((m) => m.SettingsModule),
+    canActivate: [AuthGuard],
   },
   {
     path: 'filament',
@@ -96,6 +99,7 @@ const routes: Routes = [
     path: 'api-keys',
     loadChildren: () =>
       import('./apikeys/apikeys.module').then((m) => m.ApikeysModule),
+    canActivate: [AuthGuard],
   },
   {
     path: 'notifications',
@@ -178,6 +182,7 @@ const routes: Routes = [
   {
     path: 'feed',
     loadChildren: () => import('./feed/feed.module').then((m) => m.FeedModule),
+    canActivate: [AuthGuard],
   },
 
   {
@@ -189,7 +194,7 @@ const routes: Routes = [
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes, {
+    RouterModule.forRoot(appRoutes, {
       scrollPositionRestoration: 'enabled',
     }),
   ],

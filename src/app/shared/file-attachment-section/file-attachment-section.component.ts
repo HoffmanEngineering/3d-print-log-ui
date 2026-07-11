@@ -120,7 +120,17 @@ export class FileAttachmentSectionComponent implements OnInit {
           );
           this.loaded.set(true);
         },
-        error: () => this.loaded.set(true),
+        error: (err) => {
+          // Fail closed: without a known server baseline we cannot safely
+          // enforce the per-print limit, so leave `loaded` false (uploads
+          // stay blocked) and surface the failure instead of silently
+          // showing an empty list.
+          this.toastr.error(
+            'Could not load attachments. Refresh to try again.',
+            'Load Failed'
+          );
+          this.loggingService.logException(err);
+        },
       });
   }
 

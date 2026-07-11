@@ -298,6 +298,7 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
     mockPrintFileService.getFiles.calls.reset();
     mockPrintFileService.getUploadUrl.calls.reset();
     mockToastrService.warning.calls.reset();
+    mockToastrService.error.calls.reset();
     mockPrintFileService.getFiles.and.returnValue(of([]));
     mockPrintFileService.validateFile.and.returnValue({ valid: true });
     // Never completes: uploads stay in 'uploading' state so they hold a slot.
@@ -362,7 +363,8 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
     const u1 = new Subject();
     const u2 = new Subject();
     const u3 = new Subject();
-    mockPrintFileService.getUploadUrl.and.returnValues(u1, u2, u3);
+    const u4 = new Subject();
+    mockPrintFileService.getUploadUrl.and.returnValues(u1, u2, u3, u4);
 
     // Fill both slots with in-progress uploads.
     component.onFilesSelected([validFile('a.gcode'), validFile('b.gcode')]);
@@ -460,7 +462,7 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
     expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(1);
   });
 
-  it('allows uploads if the initial load fails', () => {
+  it('keeps uploads blocked and surfaces an error if the initial load fails', () => {
     const getFiles$ = new Subject<FileAttachmentItem[]>();
     mockPrintFileService.getFiles.and.returnValue(getFiles$);
 
@@ -473,7 +475,10 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
 
     getFiles$.error(new Error('load failed'));
 
+    // Fail closed: no known baseline -> uploads stay blocked, error surfaced.
     component.onFilesSelected([validFile('a.gcode')]);
-    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(1);
+    expect(mockPrintFileService.getUploadUrl).not.toHaveBeenCalled();
+    expect(component.canAddMore()).toBe(false);
+    expect(mockToastrService.error).toHaveBeenCalled();
   });
 });

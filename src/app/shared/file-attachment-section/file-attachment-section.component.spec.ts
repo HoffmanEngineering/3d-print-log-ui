@@ -431,4 +431,49 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
     expect(mockPrintFileService.getUploadUrl).not.toHaveBeenCalled();
     expect(component.activeFileCount()).toBe(0);
   });
+
+  it('does not admit uploads until the initial load resolves', () => {
+    const getFiles$ = new Subject<FileAttachmentItem[]>();
+    mockPrintFileService.getFiles.and.returnValue(getFiles$);
+
+    // Re-create so ngOnInit subscribes to the pending getFiles$.
+    fixture.destroy();
+    fixture = TestBed.createComponent(FileAttachmentSectionComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('printId', 1);
+    fixture.componentRef.setInput('editable', true);
+    fixture.detectChanges();
+
+    // Load still pending -> a selection starts NO upload.
+    component.onFilesSelected([validFile('early.gcode')]);
+    expect(mockPrintFileService.getUploadUrl).not.toHaveBeenCalled();
+
+    // Load resolves with one server file (half of maxFiles=2).
+    getFiles$.next([uploaded(7, 'saved.gcode')]);
+    getFiles$.complete();
+
+    // Now uploads are allowed and capped against the real baseline.
+    component.onFilesSelected([validFile('a.gcode'), validFile('b.gcode')]);
+    expect(component.activeFileCount()).toBeLessThanOrEqual(
+      component.maxFiles()
+    );
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows uploads if the initial load fails', () => {
+    const getFiles$ = new Subject<FileAttachmentItem[]>();
+    mockPrintFileService.getFiles.and.returnValue(getFiles$);
+
+    fixture.destroy();
+    fixture = TestBed.createComponent(FileAttachmentSectionComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('printId', 1);
+    fixture.componentRef.setInput('editable', true);
+    fixture.detectChanges();
+
+    getFiles$.error(new Error('load failed'));
+
+    component.onFilesSelected([validFile('a.gcode')]);
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(1);
+  });
 });

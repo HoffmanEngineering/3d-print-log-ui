@@ -60,6 +60,10 @@ export class FileAttachmentSectionComponent implements OnInit {
 
   readonly files = signal<TrackedFileItem[]>([]);
 
+  // True once the initial getFiles() load has resolved (or failed). Uploads are
+  // blocked until then so admissions are measured against the real baseline.
+  readonly loaded = signal(false);
+
   // Shown in the header ("N / max"): only fully-uploaded files.
   readonly uploadedFileCount = computed(
     () => this.files().filter((f) => f.status === 'uploaded').length
@@ -73,7 +77,7 @@ export class FileAttachmentSectionComponent implements OnInit {
   );
 
   readonly canAddMore = computed(
-    () => this.activeFileCount() < this.maxFiles()
+    () => this.loaded() && this.activeFileCount() < this.maxFiles()
   );
 
   readonly formattedQuotaUsage = computed(() => {
@@ -106,13 +110,17 @@ export class FileAttachmentSectionComponent implements OnInit {
     this.printFileService
       .getFiles(this.printId())
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((files) => {
-        this.files.set(
-          files.map((f) => ({
-            ...f,
-            status: 'uploaded' as const,
-          }))
-        );
+      .subscribe({
+        next: (files) => {
+          this.files.set(
+            files.map((f) => ({
+              ...f,
+              status: 'uploaded' as const,
+            }))
+          );
+          this.loaded.set(true);
+        },
+        error: () => this.loaded.set(true),
       });
   }
 

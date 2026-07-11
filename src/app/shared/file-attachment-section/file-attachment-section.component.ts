@@ -60,12 +60,20 @@ export class FileAttachmentSectionComponent implements OnInit {
 
   readonly files = signal<TrackedFileItem[]>([]);
 
+  // Shown in the header ("N / max"): only fully-uploaded files.
   readonly uploadedFileCount = computed(
     () => this.files().filter((f) => f.status === 'uploaded').length
   );
 
+  // Slot enforcement: any tracked file that is not in a terminal error state
+  // occupies a slot, so an in-progress upload reserves capacity and closes the
+  // batch-selection race. Errored uploads free their slot for a retry.
+  readonly activeFileCount = computed(
+    () => this.files().filter((f) => f.status !== 'error').length
+  );
+
   readonly canAddMore = computed(
-    () => this.uploadedFileCount() < this.maxFiles()
+    () => this.activeFileCount() < this.maxFiles()
   );
 
   readonly formattedQuotaUsage = computed(() => {

@@ -764,26 +764,19 @@ export class FilamentDetailComponent
       diameterMm: this.filamentForm.controls.diameterMm.value,
       displayName: this.filamentForm.controls.displayName.value,
       source: this.filamentForm.controls.source.value,
-      initialNominalWeightMg: !isNaN(
-        +this.filamentForm.controls.initialNominalWeightG.value
-      )
-        ? Math.round(
-            +this.filamentForm.controls.initialNominalWeightG.value * 1000
-          )
-        : null,
+      initialNominalWeightMg: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalWeightG.value,
+        1000
+      ),
       initialTotalWeightMg: Math.round(
         this.filamentForm.controls.initialTotalWeightG.value * 1000
       ),
-      initialNominalLengthM: !isNaN(
-        +this.filamentForm.controls.initialNominalLengthM.value
-      )
-        ? Math.round(+this.filamentForm.controls.initialNominalLengthM.value)
-        : null,
-      initialNominalVolumeMl: !isNaN(
-        +this.filamentForm.controls.initialNominalVolumeMl.value
-      )
-        ? Math.round(+this.filamentForm.controls.initialNominalVolumeMl.value)
-        : null,
+      initialNominalLengthM: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalLengthM.value
+      ),
+      initialNominalVolumeMl: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalVolumeMl.value
+      ),
       materialDensityGramPerCubicCm:
         this.filamentForm.controls.materialDensityGramPerCubicCm.value,
       materialType: this.filamentForm.controls.materialType.value,

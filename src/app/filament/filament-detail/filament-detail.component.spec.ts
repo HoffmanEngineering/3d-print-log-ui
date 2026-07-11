@@ -474,4 +474,33 @@ describe('FilamentDetailComponent - value serialization', () => {
     expect(adj.length).toBe(1);
     expect(adj[0].volumeMl).toBeNull();
   });
+
+  it('serializes empty nominal weight/length/volume as null', async () => {
+    await setupSerialization({
+      initialNominalWeightMg: 0, // loads initialNominalWeightG as null (>0 guard)
+      initialNominalLengthM: null,
+      initialNominalVolumeMl: null,
+    });
+
+    serComponent.onSubmit();
+
+    const saved = savedFilament();
+    expect(saved.initialNominalWeightMg).toBeNull();
+    expect(saved.initialNominalLengthM).toBeNull();
+    expect(saved.initialNominalVolumeMl).toBeNull();
+  });
+
+  it('serializes populated nominal fields to rounded values', async () => {
+    await setupSerialization({});
+    serComponent.filamentForm.get('initialNominalWeightG')!.setValue(1);
+    serComponent.filamentForm.get('initialNominalLengthM')!.setValue(330);
+    serComponent.filamentForm.get('initialNominalVolumeMl')!.setValue(800);
+
+    serComponent.onSubmit();
+
+    const saved = savedFilament();
+    expect(saved.initialNominalWeightMg).toBe(1000);
+    expect(saved.initialNominalLengthM).toBe(330);
+    expect(saved.initialNominalVolumeMl).toBe(800);
+  });
 });

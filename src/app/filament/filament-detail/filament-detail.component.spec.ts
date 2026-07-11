@@ -503,4 +503,28 @@ describe('FilamentDetailComponent - value serialization', () => {
     expect(saved.initialNominalLengthM).toBe(330);
     expect(saved.initialNominalVolumeMl).toBe(800);
   });
+
+  it('preserves a null adjustment weight across load and re-save', async () => {
+    await setupSerialization({
+      filamentAdjustments: [
+        {
+          id: 'adj-1',
+          filamentId: 'filament-1',
+          source: FilamentAdjustmentSourceMeasurement.Length,
+          amountMg: null,
+          lengthInM: 100,
+          volumeMl: null,
+          notes: '',
+        },
+      ],
+    });
+
+    // Submit without editing the loaded adjustment.
+    serComponent.onSubmit();
+
+    const adj = savedFilament().filamentAdjustments;
+    expect(adj.length).toBe(1);
+    expect(adj[0].amountMg).toBeNull(); // was silently becoming 0 on load
+    expect(adj[0].lengthInM).toBe(100);
+  });
 });

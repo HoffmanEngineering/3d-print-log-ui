@@ -411,7 +411,7 @@ export class FilamentDetailComponent
           adjustment.id,
           adjustment.filamentId,
           adjustment.source,
-          adjustment.amountMg / 1000,
+          adjustment.amountMg != null ? adjustment.amountMg / 1000 : null,
           adjustment.lengthInM,
           adjustment.volumeMl,
           adjustment.notes

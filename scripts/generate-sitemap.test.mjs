@@ -70,10 +70,11 @@ test('pageUrls prefixes each route with the origin', () => {
   ]);
 });
 
-test('DOC_ROUTES lists the 15 concrete doc pages under docs/', () => {
-  assert.equal(DOC_ROUTES.length, 15);
+test('DOC_ROUTES lists the 16 concrete doc pages under docs/', () => {
+  assert.equal(DOC_ROUTES.length, 16);
   assert.ok(DOC_ROUTES.every((r) => r.startsWith('docs/')));
   assert.ok(DOC_ROUTES.includes('docs/getting-started'));
+  assert.ok(DOC_ROUTES.includes('docs/mcp'));
   assert.ok(DOC_ROUTES.includes('docs/privacy-policy'));
   // No redirect-only or disabled routes.
   assert.ok(!DOC_ROUTES.includes('docs/filaments'));

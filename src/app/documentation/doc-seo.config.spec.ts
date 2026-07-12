@@ -4,9 +4,10 @@ import { ogImage } from '../slicer/slicer-configs';
 describe('doc-seo.config', () => {
   const paths = Object.keys(DOC_SEO);
 
-  it('covers all 15 doc routes', () => {
-    expect(paths.length).toBe(15);
+  it('covers all 16 doc routes', () => {
+    expect(paths.length).toBe(16);
     expect(paths).toContain('docs/getting-started');
+    expect(paths).toContain('docs/mcp');
     expect(paths).toContain('docs/privacy-policy');
   });
 

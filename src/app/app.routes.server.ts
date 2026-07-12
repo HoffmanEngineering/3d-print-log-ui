@@ -20,6 +20,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'docs/printers', renderMode: RenderMode.Prerender },
   { path: 'docs/analytics', renderMode: RenderMode.Prerender },
   { path: 'docs/android-app', renderMode: RenderMode.Prerender },
+  { path: 'docs/mcp', renderMode: RenderMode.Prerender },
   { path: 'docs/cura-plugin', renderMode: RenderMode.Prerender },
   { path: 'docs/octoprint-webhook', renderMode: RenderMode.Prerender },
   { path: 'docs/klipper', renderMode: RenderMode.Prerender },

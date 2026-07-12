@@ -1,0 +1,68 @@
+<article class="docs-mcp">
+  <h1>Connect an AI Assistant (MCP)</h1>
+
+  <p>
+    3D Print Log can connect to AI assistants such as
+    <strong>Claude</strong> and <strong>ChatGPT</strong> using the
+    <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener"
+      >Model Context Protocol (MCP)</a
+    >. Once connected, the assistant can read your prints, printers, and material
+    inventory to answer questions like &ldquo;how much PLA do I have left?&rdquo;
+    or &ldquo;summarize my prints this month.&rdquo;
+  </p>
+
+  <h2>What the assistant can and can&rsquo;t do</h2>
+  <ul>
+    <li>
+      <strong>Read-only.</strong> The assistant can view your own print data. It
+      cannot create, edit, or delete anything.
+    </li>
+    <li>
+      <strong>Your data only.</strong> It can only ever see records you created —
+      never another user&rsquo;s prints, even public ones.
+    </li>
+    <li>
+      <strong>No photos, comments, or files.</strong> Only structured data
+      (titles, statuses, material usage, dates, and stats) is shared.
+    </li>
+  </ul>
+
+  <h2>The MCP endpoint</h2>
+  <p>Point your AI client&rsquo;s custom MCP connector at:</p>
+  <pre class="endpoint"><code>{{ mcpEndpoint }}</code></pre>
+
+  <h2>Connect to Claude</h2>
+  <ol>
+    <li>
+      In Claude (web or desktop), open <strong>Settings → Connectors</strong> and
+      choose <strong>Add custom connector</strong>.
+    </li>
+    <li>Paste the MCP endpoint URL above.</li>
+    <li>
+      When prompted, <strong>sign in to 3D Print Log</strong> and
+      <strong>authorize</strong> read-only access to your print data.
+    </li>
+    <li>
+      Start a chat and ask about your prints, printers, or filament — Claude will
+      use the connector when relevant.
+    </li>
+  </ol>
+
+  <h2>Connect to ChatGPT</h2>
+  <ol>
+    <li>
+      In ChatGPT, open the custom connector / app setup and choose to add an MCP
+      server.
+    </li>
+    <li>Enter the MCP endpoint URL above.</li>
+    <li>Complete the sign-in and consent prompt to grant read-only access.</li>
+  </ol>
+
+  <h2>Managing connected assistants</h2>
+  <p>
+    You can review and disconnect connected AI assistants at any time from your
+    <a routerLink="/settings">Settings</a> page under
+    <strong>Connected AI Agents</strong>. Disconnecting immediately revokes access
+    for all connected assistants.
+  </p>
+</article>

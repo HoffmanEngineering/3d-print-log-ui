@@ -52,6 +52,11 @@ export const DOC_SEO: Record<string, DocSeo> = {
     description:
       'Install and use the 3D Print Log Android app to log prints, manage filament, and check stats from your phone. Setup and feature guide.',
   },
+  'docs/mcp': {
+    title: 'Connect an AI Assistant (MCP) | 3D Print Log Docs',
+    description:
+      'Connect Claude or ChatGPT to your 3D Print Log data with the Model Context Protocol. Give your AI assistant read-only access to prints, printers, and materials.',
+  },
   'docs/cura-plugin': {
     title: 'Cura Plugin | 3D Print Log Docs',
     description:
@@ -89,9 +94,7 @@ export const DOC_SEO: Record<string, DocSeo> = {
   },
 };
 
-export function getDocSeoTags(
-  path: string
-): {
+export function getDocSeoTags(path: string): {
   url: string;
   title: string;
   description: string;

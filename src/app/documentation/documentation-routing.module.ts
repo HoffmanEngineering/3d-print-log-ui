@@ -4,6 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { DocsAboutComponent } from './docs/docs-about/docs-about.component';
 import { DocsAnalyticsComponent } from './docs/docs-analytics/docs-analytics.component';
 import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-app.component';
+import { DocsMcpComponent } from './docs/docs-mcp/docs-mcp.component';
 import { DocsCuraPluginComponent } from './docs/docs-cura-plugin/docs-cura-plugin.component';
 import { DocsFilamentsComponent } from './docs/docs-filaments/docs-filaments.component';
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
@@ -35,6 +36,7 @@ const routes: Routes = [
       { path: 'materials', component: DocsFilamentsComponent },
       { path: 'analytics', component: DocsAnalyticsComponent },
       { path: 'android-app', component: DocsAndroidAppComponent },
+      { path: 'mcp', component: DocsMcpComponent },
       { path: 'cura-plugin', component: DocsCuraPluginComponent },
       { path: 'octoprint-webhook', component: DocsOctoprintWebhookComponent },
       { path: 'klipper', component: DocsMoonrakerComponent },

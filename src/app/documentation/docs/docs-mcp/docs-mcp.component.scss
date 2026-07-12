@@ -1,0 +1,18 @@
+.docs-mcp {
+  .endpoint {
+    padding: 12px 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    background: var(--mat-sys-surface-container-high, #f0f0f0);
+
+    code {
+      font-family: monospace;
+      word-break: break-all;
+    }
+  }
+
+  ol,
+  ul {
+    line-height: 1.6;
+  }
+}

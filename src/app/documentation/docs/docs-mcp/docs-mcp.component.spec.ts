@@ -38,10 +38,12 @@ describe('DocsMcpComponent', () => {
     expect(text).toContain('Your materials');
   });
 
-  it('does not promise print settings the assistant cannot read', () => {
-    // Layer heights, temperatures, and speeds live only in free-text notes, so the
-    // assistant cannot answer them. The page must say so rather than imply otherwise.
+  it('qualifies print settings as note-dependent rather than promising or denying them', () => {
+    // Layer height and speeds are not fields: they are readable only when a slicer
+    // integration saved a summary into the print's notes. The page must neither promise
+    // them outright nor deny them outright — a verified MCP run answered them from notes.
     const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('No print settings');
+    expect(text).toContain('Print settings only where you saved them');
+    expect(text).toContain('slicer integration');
   });
 });

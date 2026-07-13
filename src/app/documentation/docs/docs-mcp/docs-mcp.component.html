@@ -26,9 +26,13 @@
       (titles, statuses, material usage, dates, and stats) is shared.
     </li>
     <li>
-      <strong>No print settings.</strong> Layer heights, temperatures, and
-      speeds aren&rsquo;t available to the assistant, so it can&rsquo;t tell you
-      what settings a past print used.
+      <strong>Print settings only where you saved them.</strong> Layer height,
+      speeds, and temperatures aren&rsquo;t separate fields &mdash; they live in
+      a print&rsquo;s notes. If you imported the print through a
+      <a routerLink="/docs/integrations">slicer integration</a>, that summary is
+      saved for you and the assistant can read it back. For a print logged by
+      hand with no such notes, the assistant has nothing to read and can&rsquo;t
+      answer.
     </li>
   </ul>
 
@@ -56,6 +60,11 @@
       <strong>Your printers.</strong> &ldquo;What&rsquo;s loaded on my Bambu
       right now?&rdquo; and per-printer stats such as success rates and total
       print time.
+    </li>
+    <li>
+      <strong>The settings you used.</strong> &ldquo;What layer height and
+      speeds did I use on the soap dish?&rdquo; &mdash; answerable for prints
+      whose notes hold a slicer summary (see the limitation above).
     </li>
   </ul>
 

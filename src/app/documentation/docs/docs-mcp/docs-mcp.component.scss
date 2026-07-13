@@ -15,4 +15,32 @@
   ul {
     line-height: 1.6;
   }
+
+  .connection-details {
+    margin: 16px 0;
+
+    dt {
+      font-weight: 600;
+      margin-top: 12px;
+    }
+
+    dd {
+      margin: 4px 0 0;
+
+      code {
+        display: inline-block;
+        max-width: 100%;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-family: monospace;
+        word-break: break-all;
+        background: var(--mat-sys-surface-container-high, #f0f0f0);
+      }
+    }
+  }
+
+  .hint {
+    font-size: 0.9em;
+    opacity: 0.85;
+  }
 }

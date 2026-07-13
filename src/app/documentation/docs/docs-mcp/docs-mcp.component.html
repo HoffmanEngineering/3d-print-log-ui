@@ -68,9 +68,23 @@
     </li>
   </ul>
 
-  <h2>The MCP endpoint</h2>
-  <p>Point your AI client&rsquo;s custom MCP connector at:</p>
-  <pre class="endpoint"><code>{{ mcpEndpoint }}</code></pre>
+  <h2>What you&rsquo;ll need</h2>
+  <p>Two values. Your AI client asks for both.</p>
+  <dl class="connection-details">
+    <dt>MCP endpoint URL</dt>
+    <dd>
+      <code>{{ mcpEndpoint }}</code>
+    </dd>
+    <dt>OAuth Client ID</dt>
+    <dd>
+      <code>{{ mcpClientId }}</code>
+    </dd>
+  </dl>
+  <p class="hint">
+    The Client ID is the same for everyone and is safe to share &mdash; it
+    identifies the 3D Print Log connector, not you. There is no client secret.
+    You still sign in yourself, and the assistant only ever sees your own data.
+  </p>
 
   <h2>Connect to Claude</h2>
   <ol>
@@ -79,7 +93,11 @@
       <strong>Settings → Connectors</strong> and choose
       <strong>Add custom connector</strong>.
     </li>
-    <li>Paste the MCP endpoint URL above.</li>
+    <li>Paste the <strong>MCP endpoint URL</strong> above.</li>
+    <li>
+      Open <strong>Advanced settings</strong> and paste the
+      <strong>OAuth Client ID</strong>. Leave the client secret blank.
+    </li>
     <li>
       When prompted, <strong>sign in to 3D Print Log</strong> and
       <strong>authorize</strong> read-only access to your print data.
@@ -90,13 +108,24 @@
     </li>
   </ol>
 
+  <h2>Connect to Claude Code</h2>
+  <p>Run this, then use <code>/mcp</code> to sign in:</p>
+  <pre class="endpoint"><code>{{ claudeCodeCommand }}</code></pre>
+  <p class="hint">
+    If port 8400 is already in use on your machine, any port from
+    <strong>8400 to 8405</strong> will work.
+  </p>
+
   <h2>Connect to ChatGPT</h2>
   <ol>
     <li>
       In ChatGPT, open the custom connector / app setup and choose to add an MCP
       server.
     </li>
-    <li>Enter the MCP endpoint URL above.</li>
+    <li>
+      Enter the <strong>MCP endpoint URL</strong>, and the
+      <strong>OAuth Client ID</strong> where prompted.
+    </li>
     <li>Complete the sign-in and consent prompt to grant read-only access.</li>
   </ol>
 

@@ -31,6 +31,15 @@ describe('DocsMcpComponent', () => {
     expect(text).toContain(component.mcpEndpoint);
   });
 
+  it('shows the OAuth client id and the Claude Code command', () => {
+    // Without the client id a user cannot complete a connection at all: Dynamic Client
+    // Registration is disabled, so no client can discover it on its own.
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain(component.mcpClientId);
+    expect(text).toContain('Advanced settings');
+    expect(text).toContain(component.claudeCodeCommand);
+  });
+
   it('describes what the assistant can be asked, including printers', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('What you can ask');

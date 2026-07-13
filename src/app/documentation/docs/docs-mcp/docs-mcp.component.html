@@ -6,9 +6,9 @@
     <strong>Claude</strong> and <strong>ChatGPT</strong> using the
     <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener"
       >Model Context Protocol (MCP)</a
-    >. Once connected, the assistant can read your prints, printers, and material
-    inventory to answer questions like &ldquo;how much PLA do I have left?&rdquo;
-    or &ldquo;summarize my prints this month.&rdquo;
+    >. Once connected, the assistant can read your prints, printers, and
+    material inventory to answer questions like &ldquo;how much PLA do I have
+    left?&rdquo; or &ldquo;summarize my prints this month.&rdquo;
   </p>
 
   <h2>What the assistant can and can&rsquo;t do</h2>
@@ -18,12 +18,44 @@
       cannot create, edit, or delete anything.
     </li>
     <li>
-      <strong>Your data only.</strong> It can only ever see records you created —
-      never another user&rsquo;s prints, even public ones.
+      <strong>Your data only.</strong> It can only ever see records you created
+      — never another user&rsquo;s prints, even public ones.
     </li>
     <li>
       <strong>No photos, comments, or files.</strong> Only structured data
       (titles, statuses, material usage, dates, and stats) is shared.
+    </li>
+    <li>
+      <strong>No print settings.</strong> Layer heights, temperatures, and
+      speeds aren&rsquo;t available to the assistant, so it can&rsquo;t tell you
+      what settings a past print used.
+    </li>
+  </ul>
+
+  <h2>What you can ask</h2>
+  <ul>
+    <li>
+      <strong>Your prints.</strong> &ldquo;How many prints did I finish last
+      year, and how many failed?&rdquo; You can search by name or project —
+      &ldquo;what was that soap dish I printed?&rdquo; — and ask what a print
+      used, including each colour of a multi-colour print.
+    </li>
+    <li>
+      <strong>Your materials.</strong> &ldquo;What blue PLA do I have, and where
+      is each spool stored?&rdquo; Searches match whole words, so
+      <em>PLA</em> also finds <em>PLA+</em> and <em>PLA (Polylactic Acid)</em>,
+      and <em>blue</em> also finds <em>Light Blue</em>.
+    </li>
+    <li>
+      <strong>Enough for a print.</strong> &ldquo;I have a 300&nbsp;g model — do
+      I have blue PLA for it?&rdquo; The assistant reports whether a single
+      spool covers it, or only several spools combined — which would mean
+      swapping filament mid-print.
+    </li>
+    <li>
+      <strong>Your printers.</strong> &ldquo;What&rsquo;s loaded on my Bambu
+      right now?&rdquo; and per-printer stats such as success rates and total
+      print time.
     </li>
   </ul>
 
@@ -34,8 +66,9 @@
   <h2>Connect to Claude</h2>
   <ol>
     <li>
-      In Claude (web or desktop), open <strong>Settings → Connectors</strong> and
-      choose <strong>Add custom connector</strong>.
+      In Claude (web or desktop), open
+      <strong>Settings → Connectors</strong> and choose
+      <strong>Add custom connector</strong>.
     </li>
     <li>Paste the MCP endpoint URL above.</li>
     <li>
@@ -43,8 +76,8 @@
       <strong>authorize</strong> read-only access to your print data.
     </li>
     <li>
-      Start a chat and ask about your prints, printers, or filament — Claude will
-      use the connector when relevant.
+      Start a chat and ask about your prints, printers, or filament — Claude
+      will use the connector when relevant.
     </li>
   </ol>
 
@@ -62,7 +95,7 @@
   <p>
     You can review and disconnect connected AI assistants at any time from your
     <a routerLink="/settings">Settings</a> page under
-    <strong>Connected AI Agents</strong>. Disconnecting immediately revokes access
-    for all connected assistants.
+    <strong>Connected AI Agents</strong>. Disconnecting immediately revokes
+    access for all connected assistants.
   </p>
 </article>

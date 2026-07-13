@@ -30,4 +30,18 @@ describe('DocsMcpComponent', () => {
     expect(text).toContain('Connect to ChatGPT');
     expect(text).toContain(component.mcpEndpoint);
   });
+
+  it('describes what the assistant can be asked, including printers', () => {
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('What you can ask');
+    expect(text).toContain('Your printers');
+    expect(text).toContain('Your materials');
+  });
+
+  it('does not promise print settings the assistant cannot read', () => {
+    // Layer heights, temperatures, and speeds live only in free-text notes, so the
+    // assistant cannot answer them. The page must say so rather than imply otherwise.
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('No print settings');
+  });
 });

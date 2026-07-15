@@ -55,7 +55,7 @@ export const DOC_SEO: Record<string, DocSeo> = {
   'docs/mcp': {
     title: 'Connect an AI Assistant (MCP) | 3D Print Log Docs',
     description:
-      'Connect Claude or ChatGPT to your 3D Print Log data with the Model Context Protocol. Your AI assistant can read your prints, printers, and materials, and log and update prints on your behalf.',
+      'Connect Claude or ChatGPT to your 3D Print Log data via the Model Context Protocol. Read your prints, printers, and materials, and log or update prints for you.',
   },
   'docs/cura-plugin': {
     title: 'Cura Plugin | 3D Print Log Docs',

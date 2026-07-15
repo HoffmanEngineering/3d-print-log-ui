@@ -7,23 +7,37 @@
     <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener"
       >Model Context Protocol (MCP)</a
     >. Once connected, the assistant can read your prints, printers, and
-    material inventory to answer questions like &ldquo;how much PLA do I have
-    left?&rdquo; or &ldquo;summarize my prints this month.&rdquo;
+    material inventory &mdash; and, with your permission, log and update prints
+    and manage your projects and materials. That lets you ask things like
+    &ldquo;how much PLA do I have left?&rdquo; or say &ldquo;log the print I just
+    finished.&rdquo;
   </p>
 
   <h2>What the assistant can and can&rsquo;t do</h2>
   <ul>
     <li>
-      <strong>Read-only.</strong> The assistant can view your own print data. It
-      cannot create, edit, or delete anything.
+      <strong>Reads and writes your print data.</strong> The assistant can view
+      your prints, printers, and materials, and &mdash; with your permission
+      &mdash; log new prints, edit them, and manage your projects and material
+      inventory.
     </li>
     <li>
-      <strong>Your data only.</strong> It can only ever see records you created
-      — never another user&rsquo;s prints, even public ones.
+      <strong>It can&rsquo;t delete anything.</strong> There is no way for the
+      assistant to delete a print, project, or spool. Its changes are limited to
+      creating and editing.
+    </li>
+    <li>
+      <strong>Your data only.</strong> It can only ever see or change records you
+      created — never another user&rsquo;s prints, even public ones.
     </li>
     <li>
       <strong>No photos, comments, or files.</strong> Only structured data
       (titles, statuses, material usage, dates, and stats) is shared.
+    </li>
+    <li>
+      <strong>It won&rsquo;t touch your printer.</strong> Logging a print records
+      what happened — it never changes which filament is currently loaded on a
+      printer.
     </li>
     <li>
       <strong>Print settings only where you saved them.</strong> Layer height,
@@ -36,7 +50,7 @@
     </li>
   </ul>
 
-  <h2>What you can ask</h2>
+  <h2>Questions you can ask</h2>
   <ul>
     <li>
       <strong>Your prints.</strong> &ldquo;How many prints did I finish last
@@ -67,6 +81,52 @@
       whose notes hold a slicer summary (see the limitation above).
     </li>
   </ul>
+
+  <h2>Changes it can make for you</h2>
+  <p>
+    With your permission, the assistant can also make changes for you. It always
+    acts as you, on your own data.
+  </p>
+  <ul>
+    <li>
+      <strong>Log a finished print.</strong> &ldquo;Log that Benchy I just
+      finished on the Bambu — it used about 12&nbsp;g of the grey PLA.&rdquo; It
+      records the status, print time, notes, and material used, and can file the
+      print under a project.
+    </li>
+    <li>
+      <strong>Edit a print.</strong> &ldquo;Mark that print a partial success and
+      note that the top layer lifted.&rdquo; You can update the status, notes,
+      time, material usage, or which project a print belongs to.
+    </li>
+    <li>
+      <strong>Organize projects.</strong> &ldquo;Start a project called Desk
+      Organizer&rdquo; or &ldquo;mark the planter project complete.&rdquo; Create
+      and rename projects and set whether each one is private, unlisted, or
+      public.
+    </li>
+    <li>
+      <strong>Add a spool.</strong> &ldquo;Add a new 1&nbsp;kg spool of Prusament
+      Galaxy Black PLA.&rdquo; New material goes straight into your inventory.
+    </li>
+    <li>
+      <strong>Correct what&rsquo;s left.</strong> &ldquo;I weighed the grey PLA —
+      it&rsquo;s actually 640&nbsp;g now.&rdquo; Adjust a spool&rsquo;s remaining
+      amount up or down.
+    </li>
+    <li>
+      <strong>Retire or restore a spool.</strong> &ldquo;Retire the empty black
+      roll&rdquo; hides a finished spool from your inventory; you can bring it
+      back later.
+    </li>
+  </ul>
+  <p class="hint">
+    Logging is safe to repeat — asking twice for the same print won&rsquo;t
+    create a duplicate. Because a
+    <a routerLink="/docs/integrations">slicer integration</a> may already have
+    imported a print for you, the assistant will usually check before logging one
+    itself.
+  </p>
 
   <h2>What you&rsquo;ll need</h2>
   <p>Two values. Your AI client asks for both.</p>
@@ -100,11 +160,12 @@
     </li>
     <li>
       When prompted, <strong>sign in to 3D Print Log</strong> and
-      <strong>authorize</strong> read-only access to your print data.
+      <strong>authorize</strong> access to your print data.
     </li>
     <li>
-      Start a chat and ask about your prints, printers, or filament — Claude
-      will use the connector when relevant.
+      Start a chat and ask about your prints, printers, or filament — or ask
+      Claude to log or update a print. Claude will use the connector when
+      relevant.
     </li>
   </ol>
 
@@ -126,7 +187,10 @@
       Enter the <strong>MCP endpoint URL</strong>, and the
       <strong>OAuth Client ID</strong> where prompted.
     </li>
-    <li>Complete the sign-in and consent prompt to grant read-only access.</li>
+    <li>
+      Complete the sign-in and consent prompt to grant access to your print
+      data.
+    </li>
   </ol>
 
   <h2>Managing connected assistants</h2>

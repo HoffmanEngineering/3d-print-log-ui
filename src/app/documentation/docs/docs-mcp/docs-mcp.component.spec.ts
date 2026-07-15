@@ -42,9 +42,15 @@ describe('DocsMcpComponent', () => {
 
   it('describes what the assistant can be asked, including printers', () => {
     const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('What you can ask');
+    expect(text).toContain('Questions you can ask');
     expect(text).toContain('Your printers');
     expect(text).toContain('Your materials');
+  });
+
+  it('describes the write actions the assistant can take', () => {
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Changes it can make for you');
+    expect(text).toContain('Log a finished print');
   });
 
   it('qualifies print settings as note-dependent rather than promising or denying them', () => {

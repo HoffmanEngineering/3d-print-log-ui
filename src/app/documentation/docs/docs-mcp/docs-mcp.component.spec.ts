@@ -53,6 +53,15 @@ describe('DocsMcpComponent', () => {
     expect(text).toContain('Log a finished print');
   });
 
+  it('covers every entity the assistant can create, not just prints', () => {
+    // A verified MCP run created a printer and a resin as well as prints, so the page
+    // must not leave users thinking writes stop at prints and spools of filament.
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Add a printer');
+    expect(text).toContain('Add material');
+    expect(text).toContain('Update material details');
+  });
+
   it('qualifies print settings as note-dependent rather than promising or denying them', () => {
     // Layer height and speeds are not fields: they are readable only when a slicer
     // integration saved a summary into the print's notes. The page must neither promise

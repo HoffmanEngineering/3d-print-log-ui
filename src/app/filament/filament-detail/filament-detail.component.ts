@@ -411,7 +411,7 @@ export class FilamentDetailComponent
           adjustment.id,
           adjustment.filamentId,
           adjustment.source,
-          adjustment.amountMg / 1000,
+          adjustment.amountMg != null ? adjustment.amountMg / 1000 : null,
           adjustment.lengthInM,
           adjustment.volumeMl,
           adjustment.notes
@@ -517,7 +517,7 @@ export class FilamentDetailComponent
         EMPTY_GUID,
         this.filamentForm.get('id')?.value ?? EMPTY_GUID,
         FilamentAdjustmentSourceMeasurement.Weight,
-        0,
+        null,
         null,
         null,
         ''
@@ -702,14 +702,39 @@ export class FilamentDetailComponent
     this.location.back();
   }
 
+  private isBlank(value: unknown): boolean {
+    if (value === null || value === undefined) {
+      return true;
+    }
+    // Whitespace-only text is empty; without trimming, +'   ' coerces to 0
+    // and reintroduces the zero-vs-null bug on the unvalidated length/volume
+    // inputs.
+    if (typeof value === 'string') {
+      return value.trim() === '';
+    }
+    return false;
+  }
+
+  // null when blank, non-numeric, or non-finite; otherwise
+  // Math.round(value * multiplier). Number.isFinite rejects NaN AND Infinity,
+  // which would otherwise round to Infinity and serialize to null over the wire.
+  private toNullableRounded(value: unknown, multiplier = 1): number | null {
+    if (this.isBlank(value)) {
+      return null;
+    }
+    const n = +(value as number);
+    return Number.isFinite(n) ? Math.round(n * multiplier) : null;
+  }
+
   private getFilamentFromForm(): FilamentDetail {
     const adjustments = this.filamentAdjustments.controls
       .filter((adjustment) => {
         return (
-          adjustment.get('amountG').value !== 0 ||
-          adjustment.get('lengthInM').value !== 0 ||
-          adjustment.get('volumeMl').value !== 0 ||
-          adjustment.get('notes').value !== ''
+          this.toNullableRounded(adjustment.get('amountG').value, 1000) !==
+            null ||
+          this.toNullableRounded(adjustment.get('lengthInM').value) !== null ||
+          this.toNullableRounded(adjustment.get('volumeMl').value) !== null ||
+          !this.isBlank(adjustment.get('notes').value)
         );
       })
       .map((adjustment) => {
@@ -717,18 +742,12 @@ export class FilamentDetailComponent
           id: adjustment.get('id')?.value ?? EMPTY_GUID,
           filamentId: adjustment.get('filamentId')?.value ?? EMPTY_GUID,
           source: adjustment.get('source').value,
-          amountMg:
-            +adjustment.get('amountG').value !== null
-              ? Math.round(+adjustment.get('amountG').value * 1000)
-              : null,
-          lengthInM:
-            +adjustment.get('lengthInM').value !== null
-              ? Math.round(+adjustment.get('lengthInM').value)
-              : null,
-          volumeMl:
-            +adjustment.get('volumeMl').value !== null
-              ? Math.round(+adjustment.get('volumeMl').value)
-              : null,
+          amountMg: this.toNullableRounded(
+            adjustment.get('amountG').value,
+            1000
+          ),
+          lengthInM: this.toNullableRounded(adjustment.get('lengthInM').value),
+          volumeMl: this.toNullableRounded(adjustment.get('volumeMl').value),
           notes: adjustment.get('notes').value,
         };
 
@@ -745,26 +764,19 @@ export class FilamentDetailComponent
       diameterMm: this.filamentForm.controls.diameterMm.value,
       displayName: this.filamentForm.controls.displayName.value,
       source: this.filamentForm.controls.source.value,
-      initialNominalWeightMg: !isNaN(
-        +this.filamentForm.controls.initialNominalWeightG.value
-      )
-        ? Math.round(
-            +this.filamentForm.controls.initialNominalWeightG.value * 1000
-          )
-        : null,
+      initialNominalWeightMg: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalWeightG.value,
+        1000
+      ),
       initialTotalWeightMg: Math.round(
         this.filamentForm.controls.initialTotalWeightG.value * 1000
       ),
-      initialNominalLengthM: !isNaN(
-        +this.filamentForm.controls.initialNominalLengthM.value
-      )
-        ? Math.round(+this.filamentForm.controls.initialNominalLengthM.value)
-        : null,
-      initialNominalVolumeMl: !isNaN(
-        +this.filamentForm.controls.initialNominalVolumeMl.value
-      )
-        ? Math.round(+this.filamentForm.controls.initialNominalVolumeMl.value)
-        : null,
+      initialNominalLengthM: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalLengthM.value
+      ),
+      initialNominalVolumeMl: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalVolumeMl.value
+      ),
       materialDensityGramPerCubicCm:
         this.filamentForm.controls.materialDensityGramPerCubicCm.value,
       materialType: this.filamentForm.controls.materialType.value,

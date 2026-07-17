@@ -19,6 +19,7 @@ export class DocSidebarComponent {
     { name: 'Analytics', url: '/docs/analytics' },
     { divider: true },
     { name: 'Android App', url: '/docs/android-app' },
+    { name: 'Connect an AI Assistant', url: '/docs/mcp' },
     { name: 'Cura Plugin', url: '/docs/cura-plugin' },
     { name: 'Octoprint Webhook', url: '/docs/octoprint-webhook' },
     { name: 'Klipper/Moonraker', url: '/docs/klipper' },

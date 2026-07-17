@@ -13,6 +13,14 @@ Create a new release with release notes.
    git log v{current_version}..HEAD --oneline
    ```
 4. If there's no tag for the current version, look for the most recent tag
+5. Get the PR number for each change (needed for the release notes links, see below):
+   ```bash
+   git log v{current_version}..HEAD --merges --oneline
+   ```
+   Merge commits read `Merge pull request #N from <branch>`, which maps each PR number to the
+   branch (and therefore to the changes) it delivered. Squash-merged PRs instead carry the number
+   in the commit subject as `(#N)`. For anything still unmatched, fall back to
+   `gh pr list --state merged --limit 20 --json number,title,mergedAt`.
 
 ### 2. Ask User for Release Type
 
@@ -48,12 +56,27 @@ Format for new release notes:
 <p>[Second paragraph for additional major features, if any. Each distinct feature gets its own paragraph.]</p>
 <h4>Full List of Changes:</h4>
 <ul>
-  <li><strong>[Feature/Fix Name]</strong> - [Description]</li>
+  <li><strong>[Feature/Fix Name]</strong> - [Description] (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/[N]" rel="noreferrer noopener" target="_blank">PR #[N]</a>)</li>
   <!-- More list items as needed -->
 </ul>
 ```
 
 Place the new section after the `<hr />` and before the previous version's `<h3>`.
+
+**Always link the PR on every bullet where one exists.** Use the PR numbers gathered in step 1.
+
+- Link **every** bullet that has a PR, not just some. Partial coverage reads as though the
+  unlinked items are less real, which is worse than linking none.
+- One PR can back several bullets (a large feature PR often delivers more than one user-visible
+  change). Repeat the same link on each bullet it applies to.
+- If a change has no PR (committed straight to `main`), leave that bullet unlinked rather than
+  guessing at a number. Never invent or approximate a PR number.
+- Link the **UI** repo (`3d-print-log-ui`) by default, since these are the UI release notes. When a
+  feature is delivered mainly by the API, link the API PR too
+  (`https://github.com/HoffmanEngineering/3d-print-log-api/pull/[N]`) and label it `API PR #[N]` to
+  distinguish it.
+- Verify each PR is actually **merged** before linking it (`gh pr view [N] --json state`). Linking
+  an open or closed PR in shipped notes points users at something that isn't in the release.
 
 #### 4.3 Update Version Dialog Service
 
@@ -150,6 +173,9 @@ Remind the user:
 - Use separate `<p>` paragraphs for each distinct major feature — do not run multiple features together in one paragraph
 - The summary paragraph(s) should read as a narrative description, not a changelog list
 - The bullet list is where full detail lives; the paragraph(s) above are the "why it matters" summary
+- **Every bullet links its PR** where one exists (see 4.2). Keep PR links out of the summary paragraphs and the dialog body; they belong on the bullets only
+- Reference a prior **version** (not a PR) when it explains user-visible history, e.g. "an issue introduced in 1.43.9" — that means something to a user in a way a PR number does not
+- **Do not run `prettier --write` on this file.** It has pre-existing formatting drift, so a blanket rewrite reformats ~500 unrelated lines and buries the release diff. `prettier --check` also reports it as non-compliant for the same reason; that failure is expected and is not caused by your section. Hand-format your new section to match the surrounding style and confirm with `git diff --stat` that only your lines changed
 
 ### Dialog Body (`version-release-note-dialog.service.ts`)
 

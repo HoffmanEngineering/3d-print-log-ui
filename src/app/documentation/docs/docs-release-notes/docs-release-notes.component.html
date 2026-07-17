@@ -2,6 +2,97 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.44.0">1.44.0 - Connect an AI Assistant (MCP)</h3>
+  <p>
+    3D Print Log now connects to AI assistants like Claude and ChatGPT. Once connected, you can ask
+    about your prints, printers, and material inventory in your own words ("how much blue PLA do I
+    have left?" or "do I have enough for a 300 g model?"), and with your permission the assistant can
+    log and update prints, organize projects, add printers, and keep your spool inventory current.
+    The assistant can never delete anything, only ever sees data you created, and never touches the
+    printer itself. See <a routerLink="/docs/mcp">Connect an AI Assistant</a> for setup
+    instructions, and manage or disconnect assistants at any time from your
+    <a routerLink="/settings">Settings</a> page.
+  </p>
+  <p>
+    This release also includes a handful of fixes for filament values, image uploads, and public
+    print pages.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Connect an AI Assistant</strong> - Link Claude, Claude Code, or ChatGPT to your account
+      so it can read your prints, printers, and materials, and log or update them on your behalf.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/73"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #73</a
+      >)
+    </li>
+    <li>
+      <strong>Connected AI Agents settings</strong> - Review which assistants have access and
+      disconnect them at any time from the Settings page.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/73"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #73</a
+      >)
+    </li>
+    <li>
+      <strong>Empty filament values no longer save as zero</strong> - Leaving nominal weight, length,
+      volume, or an adjustment weight blank now keeps the field empty instead of recording a zero.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/72"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #72</a
+      >)
+    </li>
+    <li>
+      <strong>Image upload limit fixed</strong> - The per-print image limit is now enforced correctly
+      while uploads are still in progress, and uploads wait until existing files have finished
+      loading.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/70"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #70</a
+      >)
+    </li>
+    <li>
+      <strong>Private print details kept out of error reports</strong> - Fixed an issue where the
+      full contents of a print could be included in an internal error report if saving failed.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/71"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #71</a
+      >)
+    </li>
+    <li>
+      <strong>Public prints for logged-out visitors</strong> - Fixed an issue where a public print
+      page could bounce anonymous visitors back to the home page instead of showing the print.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/68"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #68</a
+      >)
+    </li>
+    <li>
+      <strong>Faster perceived load</strong> - Pages now show a lightweight loading shell while the
+      app starts up.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/67"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #67</a
+      >)
+    </li>
+  </ul>
+  <hr />
+
   <h3 id="v1.43.11">1.43.11 - QR Label Printing Fix</h3>
   <p>
     Fixed a bug where the Print QR Labels dialog would get stuck on "Generating QR codes" and never

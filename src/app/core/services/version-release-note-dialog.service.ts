@@ -34,7 +34,7 @@ export class VersionReleaseNoteDialogService {
 <strong>Connect an AI Assistant</strong> is here! 3D Print Log now works with Claude, ChatGPT, and other AI assistants, so you can just ask: "how much blue PLA do I have left?", "do I have enough for a 300 g model?", or "log that Benchy I finished on the Bambu." Your assistant reads your prints, printers, and inventory, and with your permission it can log and update prints, projects, printers, and materials (it can never delete anything, and it only ever sees your own data).
 </p>
 <p>
-Setup takes a minute and you can disconnect at any time from <a href="/settings">Settings</a>. See <a href="/docs/mcp">Connect an AI Assistant</a> to get started.
+Connecting uses the <strong>Model Context Protocol (MCP)</strong>, an open standard supported by Claude, Claude Code, and ChatGPT. Setup takes a minute and you can disconnect at any time from <a href="/settings">Settings</a>. See <a href="/docs/mcp">Connect an AI Assistant (MCP)</a> to get started.
 </p>
 <p>
   <strong>Support development of 3D Print Log:</strong><br />

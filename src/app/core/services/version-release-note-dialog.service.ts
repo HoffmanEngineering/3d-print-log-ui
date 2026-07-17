@@ -29,7 +29,7 @@ export class VersionReleaseNoteDialogService {
 
   private releaseNotes: ReleaseNoteHistory = {
     '1.44.0': {
-      title: '1.44.0 - Connect an AI Assistant',
+      title: '1.44.0 - Connect an AI Assistant (MCP)',
       body: `<p>
 <strong>Connect an AI Assistant</strong> is here! 3D Print Log now works with Claude, ChatGPT, and other AI assistants, so you can just ask: "how much blue PLA do I have left?", "do I have enough for a 300 g model?", or "log that Benchy I finished on the Bambu." Your assistant reads your prints, printers, and inventory, and with your permission it can log and update prints, projects, printers, and materials (it can never delete anything, and it only ever sees your own data).
 </p>

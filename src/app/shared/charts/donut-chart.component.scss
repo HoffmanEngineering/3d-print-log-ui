@@ -1,0 +1,89 @@
+.donut-chart {
+  display: grid;
+  gap: 0.75rem;
+  block-size: 100%;
+  // Legend below the ring on narrow containers, beside it when there is room.
+  grid-template-columns: 1fr;
+  align-items: center;
+
+  @container (min-width: 480px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  &__svg {
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 0;
+  }
+
+  &__slice {
+    cursor: pointer;
+    stroke: var(--chart-tooltip-bg);
+    stroke-width: 1.5;
+
+    &:hover {
+      opacity: 0.85;
+    }
+    &:focus-visible {
+      outline: none;
+      stroke: var(--chart-swatch-outline);
+      stroke-width: 2.5;
+    }
+  }
+
+  &__center-value {
+    font-size: 20px;
+    font-weight: 500;
+    fill: var(--chart-tooltip-text);
+  }
+  &__center-label {
+    font-size: 11px;
+    fill: var(--chart-axis-text);
+  }
+
+  &__legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.125rem;
+  }
+
+  &__legend-button {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 0.5rem;
+    inline-size: 100%;
+    // 44px touch target.
+    min-block-size: 44px;
+    padding: 0 0.25rem;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: start;
+    color: inherit;
+    font: inherit;
+  }
+
+  &__swatch {
+    inline-size: 12px;
+    block-size: 12px;
+    border-radius: 2px;
+    border: 1px solid var(--chart-swatch-outline);
+  }
+
+  &__legend-value {
+    font-variant-numeric: tabular-nums;
+  }
+  &__legend-percent {
+    color: var(--chart-empty-text);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .donut-chart__slice {
+    transition: opacity 120ms ease-in-out;
+  }
+}

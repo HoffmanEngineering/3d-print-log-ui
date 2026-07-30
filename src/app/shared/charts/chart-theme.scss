@@ -41,4 +41,8 @@ html.dark-theme {
   .chart-stroke-#{$i} {
     stroke: var(--chart-series-#{$i});
   }
+  // For HTML legend swatches, which take background-color rather than SVG fill.
+  .chart-bg-#{$i} {
+    background-color: var(--chart-series-#{$i});
+  }
 }

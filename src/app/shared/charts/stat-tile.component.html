@@ -1,0 +1,34 @@
+<mat-card appearance="outlined" class="stat-tile">
+  <span class="stat-tile__label">{{ label() }}</span>
+
+  @if (loading()) {
+    <span class="stat-tile__skeleton" aria-busy="true"></span>
+  } @else {
+    <span class="stat-tile__value" data-testid="stat-value">{{
+      display()
+    }}</span>
+
+    @if (delta(); as d) {
+      <span
+        class="stat-tile__delta"
+        [class.stat-tile__delta--up]="d.direction === 'up'"
+        [class.stat-tile__delta--down]="d.direction === 'down'"
+        data-testid="stat-delta"
+      >
+        <mat-icon inline>{{
+          d.direction === 'up' ? 'arrow_upward' : 'arrow_downward'
+        }}</mat-icon>
+        {{ d.percent | number: '1.0-0' }}%
+        <span class="cdk-visually-hidden"
+          >compared with the previous period</span
+        >
+      </span>
+    }
+
+    @if (coverageNote(); as note) {
+      <mat-icon class="stat-tile__info" inline [matTooltip]="note"
+        >info_outline</mat-icon
+      >
+    }
+  }
+</mat-card>

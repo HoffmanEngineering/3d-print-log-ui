@@ -222,5 +222,13 @@ describe('AnalyticsFilterBarComponent', () => {
       ) as HTMLButtonElement
     ).click();
     expect(phoneSheet.open).toHaveBeenCalled();
+
+    // Must pass a viewContainerRef. The sheet renders in the CDK overlay, outside this
+    // component's injector tree, and needs it to resolve the shell-provided filter store.
+    // Asserting only that open() was called let a sheet that could never construct pass.
+    const config = phoneSheet.open.calls.mostRecent().args[1];
+    expect(config?.viewContainerRef)
+      .withContext('sheet cannot resolve AnalyticsFilterStore without it')
+      .toBeTruthy();
   });
 });

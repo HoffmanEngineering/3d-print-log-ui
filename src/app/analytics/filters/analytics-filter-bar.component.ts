@@ -5,6 +5,7 @@ import {
   computed,
   inject,
   signal,
+  ViewContainerRef,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -55,6 +56,7 @@ interface ActiveChip {
 export class AnalyticsFilterBarComponent {
   readonly store = inject(AnalyticsFilterStore);
   private readonly bottomSheet = inject(MatBottomSheet);
+  private readonly viewContainerRef = inject(ViewContainerRef);
 
   /**
    * A container query cannot decide WHICH component opens, only how one looks, so the
@@ -180,6 +182,12 @@ export class AnalyticsFilterBarComponent {
   }
 
   openSheet(): void {
-    this.bottomSheet.open(AnalyticsFilterSheetComponent);
+    // The sheet is created in the CDK overlay, which sits outside this component's injector
+    // tree. AnalyticsFilterStore is a component-level provider on the shell, so without an
+    // explicit injector the sheet cannot resolve it, fails to construct, and simply never
+    // appears — a silent no-op on the only way to filter on a phone.
+    this.bottomSheet.open(AnalyticsFilterSheetComponent, {
+      viewContainerRef: this.viewContainerRef,
+    });
   }
 }

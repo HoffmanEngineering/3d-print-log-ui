@@ -1,0 +1,39 @@
+.analytics-filter-bar {
+  container-type: inline-size;
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  // Opaque so charts scroll underneath rather than showing through.
+  background: var(--mat-sys-surface, #fff);
+  padding-block: 0.5rem;
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__range,
+  &__custom {
+    min-inline-size: 11rem;
+    flex: 0 1 auto;
+  }
+
+  &__badge {
+    display: inline-block;
+    inline-size: 0;
+  }
+
+  &__compare {
+    margin-inline-start: auto;
+  }
+
+  &__chips {
+    margin-block-start: 0.25rem;
+  }
+}
+
+html.dark-theme .analytics-filter-bar {
+  background: var(--mat-sys-surface, #303030);
+}

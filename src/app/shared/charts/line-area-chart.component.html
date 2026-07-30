@@ -2,11 +2,12 @@
   class="line-area-chart"
   [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
   preserveAspectRatio="none"
-  aria-hidden="true"
 >
+  <!-- Decorative: the same values are on each point's label and in the frame's data table. -->
   @for (tick of axisTicks(); track tick.text + tick.x) {
     <text
       class="line-area-chart__axis-label"
+      aria-hidden="true"
       [attr.x]="tick.x"
       [attr.y]="tick.y"
       text-anchor="middle"
@@ -42,11 +43,13 @@
     >
       <title>{{ point.tooltip }}</title>
     </circle>
+    <!-- Purely visual; the hit circle above carries the label and the interaction. -->
     <circle
       class="line-area-chart__dot chart-fill-1"
       [attr.cx]="point.cx"
       [attr.cy]="point.cy"
       r="4"
+      aria-hidden="true"
     />
   }
 </svg>

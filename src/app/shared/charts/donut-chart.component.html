@@ -55,9 +55,6 @@
             [class]="'donut-chart__swatch chart-bg-' + slice.seriesIndex"
           ></span>
           <span class="donut-chart__legend-label">{{ slice.label }}</span>
-          <span class="cdk-visually-hidden"
-            >{{ percent(slice) | number: '1.0-1' }} percent</span
-          >
           <span class="donut-chart__legend-value">{{ slice.value }}</span>
           <span class="donut-chart__legend-percent"
             >{{ percent(slice) | number: '1.0-1' }}%</span

@@ -73,6 +73,18 @@ describe('LineAreaChartComponent', () => {
     expect(emitted?.date).toBe('2026-07-01');
   });
 
+  it('does not put focusable controls inside an aria-hidden subtree', () => {
+    // Same trap the bar chart had: focusable but unannounced is worse than either alone.
+    const el = render(900);
+
+    expect(el.querySelector('svg')!.getAttribute('aria-hidden')).toBeNull();
+
+    const hit = el.querySelector('circle.line-area-chart__hit')!;
+    expect(hit.getAttribute('tabindex')).toBe('0');
+    expect(hit.getAttribute('aria-label')).toBeTruthy();
+    expect(hit.closest('[aria-hidden="true"]')).toBeNull();
+  });
+
   it('survives a single point, whose time domain would otherwise be zero-width', () => {
     fixture.componentRef.setInput('points', [{ date: '2026-07-01', value: 4 }]);
     fixture.componentRef.setInput('width', 900);

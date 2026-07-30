@@ -147,25 +147,36 @@ export class AnalyticsFilterBarComponent {
   }
 
   /**
-   * The two ends arrive independently, so the pending start is held until an end exists.
-   * Committing on each change would fire a request for a half-specified range.
+   * The two ends arrive as independent (dateChange) events, so both are staged here and only
+   * a complete, ordered pair is committed.
+   *
+   * Staging BOTH ends matters: choosing a new start while a committed range exists must not
+   * pair that new start with the OLD end. Re-picking a later start would otherwise commit an
+   * inverted range (from > to), which the API rejects outright — the user would see an error
+   * simply for editing the first half of their own range. Picking a start therefore clears
+   * the staged end, matching what the picker does on screen.
    */
   private readonly pendingStart = signal<Date | null>(null);
+  private readonly pendingEnd = signal<Date | null>(null);
 
   onCustomStart(value: Date | null): void {
     this.pendingStart.set(value);
-    this.commitCustomRange(value, this.store.customTo());
+    this.pendingEnd.set(null);
+    this.commitCustomRange();
   }
 
   onCustomEnd(value: Date | null): void {
-    this.commitCustomRange(
-      this.pendingStart() ?? this.store.customFrom(),
-      value
-    );
+    this.pendingEnd.set(value);
+    this.commitCustomRange();
   }
 
-  private commitCustomRange(from: Date | null, to: Date | null): void {
-    if (from && to) this.store.setCustomRange(from, to);
+  private commitCustomRange(): void {
+    const from = this.pendingStart();
+    const to = this.pendingEnd();
+
+    if (!from || !to || from > to) return;
+
+    this.store.setCustomRange(from, to);
   }
 
   openSheet(): void {

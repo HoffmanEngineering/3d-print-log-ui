@@ -128,6 +128,29 @@ describe('AnalyticsFilterBarComponent', () => {
     expect(days).toBe(3);
   });
 
+  it('does not commit an inverted range while the start is being re-picked', () => {
+    // With a committed range, choosing a LATER start must not pair it with the OLD end: that
+    // commits from > to, which the API rejects, so the user sees an error for the act of
+    // editing their own range.
+    store.setPreset('custom');
+    fixture.componentInstance.onCustomStart(new Date(2026, 2, 1));
+    fixture.componentInstance.onCustomEnd(new Date(2026, 2, 3));
+    fixture.detectChanges();
+
+    fixture.componentInstance.onCustomStart(new Date(2026, 2, 10));
+    fixture.detectChanges();
+
+    // Still the last COMPLETE range; nothing inverted was committed.
+    expect(store.customFrom()).toEqual(new Date(2026, 2, 1));
+    expect(store.customTo()).toEqual(new Date(2026, 2, 3));
+
+    fixture.componentInstance.onCustomEnd(new Date(2026, 2, 12));
+    fixture.detectChanges();
+
+    expect(store.customFrom()).toEqual(new Date(2026, 2, 10));
+    expect(store.customTo()).toEqual(new Date(2026, 2, 12));
+  });
+
   it('does not apply a half-specified range', () => {
     store.setPreset('custom');
     fixture.detectChanges();

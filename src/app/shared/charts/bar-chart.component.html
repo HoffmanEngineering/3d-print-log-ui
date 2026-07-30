@@ -1,0 +1,35 @@
+<svg
+  class="bar-chart"
+  [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
+  [attr.data-orientation]="resolvedOrientation()"
+  preserveAspectRatio="none"
+  aria-hidden="true"
+>
+  @for (label of axisLabels(); track label.text) {
+    <text
+      class="bar-chart__axis-label"
+      [attr.x]="label.x"
+      [attr.y]="label.y"
+      [attr.text-anchor]="label.anchor"
+    >
+      {{ label.text }}
+    </text>
+  }
+
+  @for (segment of segments(); track segment.label + segment.seriesKey) {
+    <rect
+      [class]="'bar-chart__segment chart-fill-' + segment.seriesIndex"
+      [attr.x]="segment.x"
+      [attr.y]="segment.y"
+      [attr.width]="segment.w"
+      [attr.height]="segment.h"
+      tabindex="0"
+      role="button"
+      [attr.aria-label]="segment.tooltip"
+      (click)="onSelect(segment)"
+      (keydown.enter)="onSelect(segment)"
+    >
+      <title>{{ segment.tooltip }}</title>
+    </rect>
+  }
+</svg>

@@ -1,0 +1,35 @@
+.bar-chart {
+  inline-size: 100%;
+  block-size: 100%;
+  display: block;
+
+  &__axis-label {
+    font-size: 11px;
+    fill: var(--chart-axis-text);
+  }
+
+  &__segment {
+    cursor: pointer;
+    // Touch targets: a thin segment still needs a usable hit area.
+    stroke: transparent;
+    stroke-width: 8;
+    paint-order: stroke;
+
+    &:hover,
+    &:focus-visible {
+      opacity: 0.85;
+      outline: none;
+    }
+
+    &:focus-visible {
+      stroke: var(--chart-swatch-outline);
+      stroke-width: 2;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bar-chart__segment {
+    transition: opacity 120ms ease-in-out;
+  }
+}

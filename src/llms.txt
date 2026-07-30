@@ -6,6 +6,17 @@
 
 - [Home](https://www.3dprintlog.com/): Overview and free account signup.
 - [Documentation](https://www.3dprintlog.com/docs/getting-started): Getting started, features, and integrations.
+- [Connect an AI Assistant (MCP)](https://www.3dprintlog.com/docs/mcp): How to connect Claude, Claude Code, or ChatGPT to a 3D Print Log account.
+- [Privacy Policy](https://www.3dprintlog.com/docs/privacy-policy): What data is stored, what is shared with a connected AI assistant, and how to delete an account.
+
+## MCP server
+
+3D Print Log has a remote MCP (Model Context Protocol) server, so an AI assistant can read and update a user's own print data on their behalf.
+
+- Endpoint: `https://api.3dprintlog.com/mcp` (Streamable HTTP)
+- Auth: OAuth 2.1. The user signs in to 3D Print Log and authorizes access; there is no API key. Setup instructions and the public OAuth client id are on the [MCP documentation page](https://www.3dprintlog.com/docs/mcp).
+- Read tools cover prints, printers, material inventory, projects, and per-printer statistics. Write tools log and edit prints, manage projects, printers, and materials, and adjust remaining filament.
+- Scoped to the authenticated user's own records, and no tool can delete anything.
 
 ## Notes
 

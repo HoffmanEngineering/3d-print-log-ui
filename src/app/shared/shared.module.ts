@@ -1,4 +1,4 @@
-import { ClipboardModule } from '@angular/cdk/clipboard';
+﻿import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@ngbracket/ngx-layout';
@@ -34,8 +34,6 @@ import { RouterModule } from '@angular/router';
 import { CommentComponent } from './comments/comment/comment.component';
 import { FilamentListComponent } from './filament-list/filament-list.component';
 import { FilamentSearchModalComponent } from './filament-search-modal/filament-search-modal.component';
-import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
-import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component';
 import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
 import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog/parser-unavailable-dialog.component';
 import { DurationPipe } from './pipes/duration.pipe';
@@ -70,8 +68,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     PrintSummaryCardComponent,
     PrintImageComponent,
     StatPanelComponent,
-    GraphPanelComponent,
-    DonutChartComponent,
     CommentComponent,
     HumanizePipe,
     SimpleDialogComponent,
@@ -169,8 +165,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     PrintSummaryCardComponent,
     PrintImageComponent,
     StatPanelComponent,
-    GraphPanelComponent,
-    DonutChartComponent,
     CommentComponent,
     HumanizePipe,
     LocaleDatePipe,

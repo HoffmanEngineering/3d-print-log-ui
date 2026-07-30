@@ -70,7 +70,7 @@ export const appRoutes: Routes = [
   {
     path: 'analytics',
     loadChildren: () =>
-      import('./analytics/analytics.module').then((m) => m.AnalyticsModule),
+      import('./analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES),
     canActivate: [AuthGuard],
   },
   environment.features.userProfile

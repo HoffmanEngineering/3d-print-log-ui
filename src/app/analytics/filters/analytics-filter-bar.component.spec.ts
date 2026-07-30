@@ -155,7 +155,9 @@ describe('AnalyticsFilterBarComponent', () => {
     expect(el.querySelector('[data-testid="printer-select"]')).toBeFalsy();
 
     (
-      el.querySelector('[data-testid="open-filters"]') as HTMLButtonElement
+      el.querySelector(
+        '[data-testid="mobile-filters-button"]'
+      ) as HTMLButtonElement
     ).click();
     expect(phoneSheet.open).toHaveBeenCalled();
   });

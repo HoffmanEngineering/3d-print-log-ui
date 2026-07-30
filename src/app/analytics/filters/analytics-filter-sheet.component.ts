@@ -12,7 +12,7 @@ import { AnalyticsFilterStore } from './analytics-filter.store';
   selector: 'app-analytics-filter-sheet',
   imports: [AnalyticsFilterControlsComponent, MatButtonModule],
   template: `
-    <div class="analytics-filter-sheet">
+    <div class="analytics-filter-sheet" data-testid="filter-sheet">
       <h2 class="analytics-filter-sheet__title">Filters</h2>
       <div class="analytics-filter-sheet__controls">
         <app-analytics-filter-controls />

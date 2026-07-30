@@ -95,9 +95,14 @@ describe('ChartFrameComponent', () => {
     fixture.componentRef.setInput('ariaSummary', '42 prints across 30 days');
     fixture.detectChanges();
 
+    // role="group", not role="img": an img's subtree is presentational, which would hide the
+    // focusable chart marks inside it from assistive tech while leaving them in the tab order.
     const region = (fixture.nativeElement as HTMLElement).querySelector(
-      '[role="img"]'
+      '[role="group"]'
     );
     expect(region?.getAttribute('aria-label')).toContain('42 prints');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[role="img"]')
+    ).toBeFalsy();
   });
 });

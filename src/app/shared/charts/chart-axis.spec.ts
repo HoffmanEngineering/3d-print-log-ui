@@ -1,4 +1,31 @@
-import { formatTickDate, tickCountForWidth } from './chart-axis';
+import {
+  formatTickDate,
+  parseLocalDate,
+  tickCountForWidth,
+} from './chart-axis';
+
+describe('parseLocalDate', () => {
+  it('keeps a date-only value on its civil date regardless of timezone', () => {
+    // `new Date("2026-07-01")` parses as UTC midnight, which is 30 June west of UTC. The API
+    // sends DateOnly for bucket starts, so that would label a whole chart a day early.
+    const parsed = parseLocalDate('2026-07-01');
+
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(6); // July
+    expect(parsed.getDate()).toBe(1);
+  });
+
+  it('renders a date-only bucket start with the same day the server labelled it', () => {
+    expect(formatTickDate(parseLocalDate('2026-07-01'), 'Day', true)).toBe(
+      '7/1'
+    );
+  });
+
+  it('leaves values carrying a time component to the normal parser', () => {
+    const parsed = parseLocalDate('2026-07-01T12:00:00Z');
+    expect(parsed.getTime()).toBe(Date.parse('2026-07-01T12:00:00Z'));
+  });
+});
 
 describe('tickCountForWidth', () => {
   it('thins ticks on narrow charts rather than overlapping labels', () => {

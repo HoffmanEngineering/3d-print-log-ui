@@ -99,7 +99,11 @@ export function resolvePresetRange(
 
 /**
  * Single owner of analytics filter state. The URL is its serialization, so every view is
- * linkable and the browser back button works.
+ * linkable, shareable, and survives a reload.
+ *
+ * Note it uses replaceUrl, so Back leaves the page rather than stepping through filter
+ * changes. That is deliberate — a select emits on every change, and pushing each one would
+ * make Back appear broken by walking a user through a dozen intermediate filter states.
  */
 @Injectable()
 export class AnalyticsFilterStore {

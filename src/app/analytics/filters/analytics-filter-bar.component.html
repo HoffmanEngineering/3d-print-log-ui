@@ -23,18 +23,21 @@
         data-testid="custom-range"
       >
         <mat-label>Custom range</mat-label>
+        <!--
+          Both ends report through (dateChange), whose $event.value is the parsed Date.
+          Reading `valueAsDate` off these inputs does NOT work: Material renders them as
+          type=text, where valueAsDate is undefined, so the range was never submitted.
+        -->
         <mat-date-range-input [rangePicker]="picker">
-          <input matStartDate placeholder="Start" #startInput />
+          <input
+            matStartDate
+            placeholder="Start"
+            (dateChange)="onCustomStart($event.value)"
+          />
           <input
             matEndDate
             placeholder="End"
-            #endInput
-            (dateChange)="
-              onCustomRange(
-                startInput.value ? $any(startInput).valueAsDate : null,
-                $event.value
-              )
-            "
+            (dateChange)="onCustomEnd($event.value)"
           />
         </mat-date-range-input>
         <mat-datepicker-toggle matIconSuffix [for]="picker" />

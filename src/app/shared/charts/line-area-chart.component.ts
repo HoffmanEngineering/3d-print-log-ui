@@ -9,6 +9,7 @@ import * as d3 from 'd3';
 import {
   TickGranularity,
   formatTickDate,
+  parseLocalDate,
   tickCountForWidth,
 } from './chart-axis';
 
@@ -62,7 +63,8 @@ export class LineAreaChartComponent {
     if (w <= 0 || h <= 0 || points.length === 0) return null;
 
     const parsed = points
-      .map((p) => ({ ...p, parsed: new Date(p.date) }))
+      // Same date-only hazard as the bar chart: a bucket start must stay on its civil date.
+      .map((p) => ({ ...p, parsed: parseLocalDate(p.date) }))
       .filter((p) => !Number.isNaN(p.parsed.getTime()));
     if (parsed.length === 0) return null;
 

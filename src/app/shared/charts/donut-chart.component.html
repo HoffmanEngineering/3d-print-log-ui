@@ -6,14 +6,17 @@
   >
     <g [attr.transform]="'translate(' + center().x + ',' + center().y + ')'">
       @for (slice of rendered(); track slice.key) {
+        <!--
+          The ring is a pointer affordance only, and the whole svg is aria-hidden. Every slice
+          has an exact counterpart in the legend below, which is a real <button> — giving the
+          slices tabindex/role too would put each action in the tab order twice and read it
+          out twice, and a focusable node inside an aria-hidden subtree is a focus trap for
+          screen-reader users (focusable but unannounced).
+        -->
         <path
           [class]="'donut-chart__slice chart-fill-' + slice.seriesIndex"
           [attr.d]="slice.path"
-          tabindex="0"
-          role="button"
-          [attr.aria-label]="slice.tooltip"
           (click)="onSelect(slice.key)"
-          (keydown.enter)="onSelect(slice.key)"
         >
           <title>{{ slice.tooltip }}</title>
         </path>
@@ -52,6 +55,9 @@
             [class]="'donut-chart__swatch chart-bg-' + slice.seriesIndex"
           ></span>
           <span class="donut-chart__legend-label">{{ slice.label }}</span>
+          <span class="cdk-visually-hidden"
+            >{{ percent(slice) | number: '1.0-1' }} percent</span
+          >
           <span class="donut-chart__legend-value">{{ slice.value }}</span>
           <span class="donut-chart__legend-percent"
             >{{ percent(slice) | number: '1.0-1' }}%</span

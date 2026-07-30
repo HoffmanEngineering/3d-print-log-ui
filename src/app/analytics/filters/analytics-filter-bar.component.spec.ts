@@ -101,6 +101,45 @@ describe('AnalyticsFilterBarComponent', () => {
     expect(el.querySelector('[data-testid="custom-range"]')).toBeTruthy();
   });
 
+  it('actually applies a custom range once both ends are chosen', () => {
+    // The previous version of this test only asserted the inputs APPEARED. The handler read
+    // `valueAsDate` off a Material text input, which is undefined, so the range silently never
+    // applied — visible inputs proved nothing about whether choosing dates did anything.
+    store.setPreset('custom');
+    fixture.detectChanges();
+
+    const from = new Date(2026, 2, 1);
+    const to = new Date(2026, 2, 3);
+
+    fixture.componentInstance.onCustomStart(from);
+    fixture.componentInstance.onCustomEnd(to);
+    fixture.detectChanges();
+
+    expect(store.preset()).toBe('custom');
+    expect(store.customFrom()).toEqual(from);
+    expect(store.customTo()).toEqual(to);
+
+    // Half-open: the end is exclusive, so 1-3 March inclusive spans three days.
+    const filter = store.filter();
+    const days =
+      (new Date(filter.toDate!).getTime() -
+        new Date(filter.fromDate!).getTime()) /
+      86_400_000;
+    expect(days).toBe(3);
+  });
+
+  it('does not apply a half-specified range', () => {
+    store.setPreset('custom');
+    fixture.detectChanges();
+
+    fixture.componentInstance.onCustomStart(new Date(2026, 2, 1));
+    fixture.detectChanges();
+
+    // A start with no end must not fire a request for a range that is not yet specified.
+    expect(store.customTo()).toBeNull();
+    expect(store.filter().fromDate).toBeNull();
+  });
+
   it('exposes the compare-to-previous toggle', () => {
     (
       (fixture.nativeElement as HTMLElement).querySelector(

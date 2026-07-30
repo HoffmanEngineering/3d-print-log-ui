@@ -31,10 +31,15 @@
   <div class="chart-frame__body">
     <div class="chart-frame__plot" #chartBody>
       @if (state() === 'ready') {
+        <!--
+          role="group", not role="img": an img's subtree is presentational, which would hide
+          the focusable chart marks inside it from assistive tech while they remained in the
+          tab order. A labelled group keeps the summary announced AND exposes the controls.
+        -->
         <div
           class="chart-frame__content"
           data-testid="chart-content"
-          role="img"
+          role="group"
           [attr.aria-label]="ariaSummary()"
         >
           <ng-content></ng-content>

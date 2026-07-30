@@ -5,8 +5,9 @@ import {
   tick,
 } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { Subject, throwError } from 'rxjs';
+import { PrintStatus } from 'src/app/core/services/print.service';
 import { AnalyticsFilterStore } from 'src/app/analytics/filters/analytics-filter.store';
 import { OverviewResponse } from 'src/app/analytics/models/analytics.models';
 import { AnalyticsService } from 'src/app/analytics/services/analytics.service';
@@ -141,6 +142,45 @@ describe('OverviewTabComponent', () => {
         '[data-testid="chart-retry"]'
       )
     ).toBeTruthy();
+  }));
+
+  it('labels a date-only bucket with the civil date the server sent', fakeAsync(() => {
+    // The series carries DateOnly ("2026-07-01"). Parsed as UTC it renders as 6/30 anywhere
+    // west of UTC, so the whole chart reads a day early for most of the Americas.
+    const subject = new Subject<OverviewResponse>();
+    analytics.getOverview.and.returnValue(subject);
+
+    fixture.detectChanges();
+    tick(300);
+    subject.next(response(3));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.barData()[0].label).toBe('7/1');
+  }));
+
+  it('navigates click-through using the param the print list actually reads', fakeAsync(() => {
+    const subject = new Subject<OverviewResponse>();
+    analytics.getOverview.and.returnValue(subject);
+    const router = TestBed.inject(Router);
+    const navigate = spyOn(router, 'navigate').and.resolveTo(true);
+
+    fixture.detectChanges();
+    tick(300);
+    subject.next(response(3));
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSliceSelect({ key: 'Failed' });
+
+    const [path, extras] = navigate.calls.mostRecent().args;
+    expect(path).toEqual(['/prints']);
+
+    // Singular: print-list-resolver.service.ts reads `filterByStatus`. The plural form has no
+    // client consumer, so sending it produced a link that looked filtered and was not.
+    const params = extras!.queryParams as Record<string, unknown>;
+    expect(params['filterByStatus']).toBe(PrintStatus.Failed);
+    expect(params['filterByStatuses']).toBeUndefined();
+    // A userId would turn the list into that user's PUBLIC prints only.
+    expect(params['userId']).toBeUndefined();
   }));
 
   it('reports an empty state rather than an error when there are no prints', fakeAsync(() => {

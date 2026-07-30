@@ -24,7 +24,10 @@ import {
   BarDatum,
   BarSeries,
 } from 'src/app/shared/charts/bar-chart.component';
-import { formatTickDate } from 'src/app/shared/charts/chart-axis';
+import {
+  formatTickDate,
+  parseLocalDate,
+} from 'src/app/shared/charts/chart-axis';
 import {
   ChartFrameComponent,
   ChartState,
@@ -148,7 +151,9 @@ export class OverviewTabComponent {
 
     const granularity = response.granularity;
     return response.series.map((bucket) => {
-      const date = new Date(bucket.localStart);
+      // localStart is a civil date the server already resolved in the user's timezone;
+      // parsing it as UTC would shift the label a day west of UTC.
+      const date = parseLocalDate(bucket.localStart);
       return {
         label: formatTickDate(date, granularity, true),
         fullLabel: formatTickDate(date, granularity, false),
@@ -201,19 +206,25 @@ export class OverviewTabComponent {
   }
 
   /**
+   * Uses `filterByStatus` — SINGULAR — because that is what the print list actually reads
+   * (print-list-resolver.service.ts and print-list.component.ts both bind the singular form).
+   * The plural `filterByStatuses` exists on the API but has no client consumer yet, so sending
+   * it produced a link that looked filtered and wasn't.
+   *
+   * The date range is deliberately NOT forwarded: the print list has no concept of one — not
+   * in its resolver, its service, or its filter panel — so those params would be dropped
+   * silently and imply a narrowing that never happened. Carrying the range through is a print
+   * list feature; the API side already supports it (/api/Prints/summary takes fromDate/toDate).
+   *
    * Never sends a userId: /api/Prints/summary treats one as "show this user's PUBLIC prints",
    * which would silently narrow the user's own list to what they have published.
    */
   private navigateToPrints(statusKey: string | null): void {
     const status = STATUS_SERIES.find((s) => s.key === statusKey)?.status;
-    const filter = this.store.filter();
+    if (status === undefined) return;
 
     void this.router.navigate(['/prints'], {
-      queryParams: {
-        fromDate: filter.fromDate,
-        toDate: filter.toDate,
-        filterByStatuses: status ?? null,
-      },
+      queryParams: { filterByStatus: status },
     });
   }
 }

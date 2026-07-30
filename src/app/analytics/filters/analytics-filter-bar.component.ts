@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -145,7 +146,25 @@ export class AnalyticsFilterBarComponent {
     this.store.setPreset(preset);
   }
 
-  onCustomRange(from: Date | null, to: Date | null): void {
+  /**
+   * The two ends arrive independently, so the pending start is held until an end exists.
+   * Committing on each change would fire a request for a half-specified range.
+   */
+  private readonly pendingStart = signal<Date | null>(null);
+
+  onCustomStart(value: Date | null): void {
+    this.pendingStart.set(value);
+    this.commitCustomRange(value, this.store.customTo());
+  }
+
+  onCustomEnd(value: Date | null): void {
+    this.commitCustomRange(
+      this.pendingStart() ?? this.store.customFrom(),
+      value
+    );
+  }
+
+  private commitCustomRange(from: Date | null, to: Date | null): void {
     if (from && to) this.store.setCustomRange(from, to);
   }
 

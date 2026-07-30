@@ -86,6 +86,19 @@ describe('BarChartComponent', () => {
     expect(emitted?.seriesKey).toBe('Success');
   });
 
+  it('does not put focusable controls inside an aria-hidden subtree', () => {
+    // A node that is focusable but hidden from assistive tech is a trap: a screen-reader user
+    // tabs onto it and hears nothing. Either the marks are exposed, or they are not focusable.
+    const el = render(900);
+
+    expect(el.querySelector('svg')!.getAttribute('aria-hidden')).toBeNull();
+
+    const segment = el.querySelector('rect.bar-chart__segment')!;
+    expect(segment.getAttribute('tabindex')).toBe('0');
+    expect(segment.getAttribute('aria-label')).toBeTruthy();
+    expect(segment.closest('[aria-hidden="true"]')).toBeNull();
+  });
+
   it('renders nothing but stays valid when data is empty', () => {
     fixture.componentRef.setInput('data', []);
     fixture.componentRef.setInput('series', series);

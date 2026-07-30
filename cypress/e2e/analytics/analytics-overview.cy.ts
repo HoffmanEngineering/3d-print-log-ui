@@ -58,15 +58,23 @@ describe('Analytics overview', () => {
     );
   });
 
-  it('clicking a donut slice opens the print list filtered by that status', () => {
+  it('clicking a donut slice opens the print list actually filtered by that status', () => {
     cy.viewport(1440, 900);
     cy.visit('/analytics');
+
+    // Assert on the REQUEST the print list makes, not just the URL text. Asserting the URL
+    // alone passed happily while the app ignored the param entirely and showed every print.
+    cy.intercept('GET', '**/api/Prints/summary*').as('printSummary');
 
     cy.get('[data-testid="donut-legend-item"]').first().click();
 
     cy.url().should('include', '/prints');
-    cy.url().should('include', 'filterByStatuses=');
+    cy.url().should('include', 'filterByStatus=');
     // Click-through must never leak a userId, which would turn it into a public query.
     cy.url().should('not.include', 'userId=');
+
+    cy.wait('@printSummary')
+      .its('request.url')
+      .should('include', 'filterByStatus=');
   });
 });

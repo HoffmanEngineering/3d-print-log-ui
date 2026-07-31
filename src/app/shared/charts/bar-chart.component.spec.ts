@@ -48,6 +48,33 @@ describe('BarChartComponent', () => {
     expect(el.querySelectorAll('rect.bar-chart__segment').length).toBe(3);
   });
 
+  it('positions repeated month labels in separate year buckets', () => {
+    fixture.componentRef.setInput('data', [
+      {
+        label: 'Jul',
+        fullLabel: 'Jul 2025',
+        values: { Success: 2, Failed: 0 },
+      },
+      {
+        label: 'Jul',
+        fullLabel: 'Jul 2026',
+        values: { Success: 3, Failed: 0 },
+      },
+    ]);
+    fixture.componentRef.setInput('series', series);
+    fixture.componentRef.setInput('width', 900);
+    fixture.componentRef.setInput('height', 300);
+    fixture.detectChanges();
+
+    const xPositions = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        'rect.bar-chart__segment'
+      )
+    ).map((segment) => segment.getAttribute('x'));
+
+    expect(new Set(xPositions).size).toBe(2);
+  });
+
   it('colours segments with theme classes, never literal fills', () => {
     const el = render(900);
     const segment = el.querySelector('rect.bar-chart__segment')!;

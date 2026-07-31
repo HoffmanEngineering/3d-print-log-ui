@@ -135,12 +135,12 @@ export class BarChartComponent {
     );
     const band = d3
       .scaleBand<string>()
-      .domain(this.data().map((datum) => datum.label))
+      .domain(this.data().map((datum) => datum.fullLabel))
       .range([0, innerW])
       .padding(0.2);
 
     return this.data().map((datum) => {
-      const x = this.margin.left + (band(datum.label) ?? 0);
+      const x = this.margin.left + (band(datum.fullLabel) ?? 0);
       return {
         datum,
         x,
@@ -171,7 +171,7 @@ export class BarChartComponent {
     if (this.resolvedOrientation() === 'vertical') {
       const band = d3
         .scaleBand<string>()
-        .domain(data.map((d) => d.label))
+        .domain(data.map((d) => d.fullLabel))
         .range([0, innerW])
         .padding(0.2);
       const value = d3.scaleLinear().domain([0, total]).range([innerH, 0]);
@@ -184,7 +184,7 @@ export class BarChartComponent {
           const y0 = value(cursor);
           const y1 = value(cursor + v);
           out.push({
-            x: this.margin.left + (band(d.label) ?? 0),
+            x: this.margin.left + (band(d.fullLabel) ?? 0),
             y: this.margin.top + y1,
             w: band.bandwidth(),
             h: Math.max(1, y0 - y1),
@@ -199,7 +199,7 @@ export class BarChartComponent {
     } else {
       const band = d3
         .scaleBand<string>()
-        .domain(data.map((d) => d.label))
+        .domain(data.map((d) => d.fullLabel))
         .range([0, innerH])
         .padding(0.2);
       const value = d3.scaleLinear().domain([0, total]).range([0, innerW]);
@@ -211,7 +211,7 @@ export class BarChartComponent {
           if (v <= 0) continue;
           out.push({
             x: this.margin.left + value(cursor),
-            y: this.margin.top + (band(d.label) ?? 0),
+            y: this.margin.top + (band(d.fullLabel) ?? 0),
             w: Math.max(1, value(v)),
             h: band.bandwidth(),
             seriesIndex: s.seriesIndex,
@@ -239,7 +239,7 @@ export class BarChartComponent {
 
     const band = d3
       .scaleBand<string>()
-      .domain(data.map((d) => d.label))
+      .domain(data.map((d) => d.fullLabel))
       .range(vertical ? [0, innerW] : [0, innerH])
       .padding(0.2);
 
@@ -252,13 +252,17 @@ export class BarChartComponent {
     return data
       .filter((_, i) => i % step === 0)
       .map((d) => ({
+        key: d.fullLabel,
         text: d.label,
         x: vertical
-          ? this.margin.left + (band(d.label) ?? 0) + band.bandwidth() / 2
+          ? this.margin.left + (band(d.fullLabel) ?? 0) + band.bandwidth() / 2
           : this.margin.left - 6,
         y: vertical
           ? this.margin.top + innerH + 18
-          : this.margin.top + (band(d.label) ?? 0) + band.bandwidth() / 2 + 4,
+          : this.margin.top +
+            (band(d.fullLabel) ?? 0) +
+            band.bandwidth() / 2 +
+            4,
         anchor: vertical ? 'middle' : 'end',
       }));
   });

@@ -199,3 +199,62 @@ export interface PrintersResponse {
   maintenance: MaintenanceEvent[];
   coverage: Coverage;
 }
+
+export interface SwatchDto {
+  colors: string[];
+  colorPattern: number;
+  finishType: number;
+  effects: number[];
+}
+
+export interface MaterialGroup {
+  key: string;
+  label: string;
+  printCount: number;
+  materialMg: number;
+  swatch: SwatchDto;
+}
+
+export interface MaterialSeriesBucket {
+  index: number;
+  localStart: string;
+  materialMgByType: Record<string, number>;
+}
+
+export interface SpoolRow {
+  filamentId: string;
+  label: string;
+  swatch: SwatchDto;
+  usedMg: number;
+  /** May be NEGATIVE — usage logged beyond the spool's initial weight. Show it, don't clamp it. */
+  remainingMg: number | null;
+  initialMg: number | null;
+  percentConsumed: number | null;
+  costConsumed: number | null;
+}
+
+export interface RunwayRow {
+  filamentId: string;
+  label: string;
+  swatch: SwatchDto;
+  remainingGrams: number;
+  burnRateGramsPerDay: number;
+  runwayDays: number | null;
+}
+
+export interface MaterialsResponse {
+  from: string | null;
+  to: string | null;
+  timeZone: string;
+  granularity: Exclude<AnalyticsGranularity, 'Auto'>;
+  currency: string | null;
+  byType: MaterialGroup[];
+  byBrand: MaterialGroup[];
+  byColor: MaterialGroup[];
+  consumptionOverTime: MaterialSeriesBucket[];
+  topSpools: SpoolRow[];
+  runway: RunwayRow[];
+  wasteGrams: Metric;
+  wasteCost: MoneyMetric;
+  coverage: Coverage;
+}

@@ -12,6 +12,7 @@ import { AnalyticsFilterBarComponent } from './filters/analytics-filter-bar.comp
 import { AnalyticsFilterStore } from './filters/analytics-filter.store';
 import { ActivityTabComponent } from './tabs/activity/activity-tab.component';
 import { OverviewTabComponent } from './tabs/overview/overview-tab.component';
+import { MaterialsTabComponent } from './tabs/materials/materials-tab.component';
 import { PrintersTabComponent } from './tabs/printers/printers-tab.component';
 
 /**
@@ -26,6 +27,7 @@ import { PrintersTabComponent } from './tabs/printers/printers-tab.component';
   imports: [
     ActivityTabComponent,
     AnalyticsFilterBarComponent,
+    MaterialsTabComponent,
     MatTabsModule,
     OverviewTabComponent,
     PrintersTabComponent,

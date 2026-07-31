@@ -46,6 +46,10 @@ let instanceCounter = 0;
  * are hex-validated upstream by normalizeHex, and anything that failed is already #000000.
  */
 @Component({
+  // An ATTRIBUTE selector on a real <g>, not an element. A custom element inside <svg> is
+  // parsed into the SVG namespace as an unknown element, and neither it nor its <defs>
+  // children render — so an app-prefixed element selector would silently produce no gradients.
+  // eslint-disable-next-line @angular-eslint/component-selector
   selector: 'g[appFilamentSvgDefs]',
   templateUrl: './filament-svg-defs.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

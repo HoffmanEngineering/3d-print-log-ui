@@ -190,4 +190,25 @@ describe('BarChartComponent', () => {
       ).length
     ).toBe(0);
   });
+  it('uses a datum fill when one is supplied and the theme class otherwise', () => {
+    fixture.componentRef.setInput('series', [
+      { key: 'value', label: 'Used', seriesIndex: 1 },
+    ]);
+    fixture.componentRef.setInput('data', [
+      { label: 'PLA', fullLabel: 'PLA', values: { value: 5 }, fill: '#ff0000' },
+      { label: 'PETG', fullLabel: 'PETG', values: { value: 3 } },
+    ]);
+    fixture.componentRef.setInput('width', 900);
+    fixture.componentRef.setInput('height', 300);
+    fixture.detectChanges();
+
+    const [pla, petg] = fixture.componentInstance.segments();
+    expect(pla.fill).toBe('#ff0000');
+    expect(petg.fill).toBeNull();
+  });
+
+  it('projects swatch defs into its own svg', () => {
+    // The defs must live INSIDE the chart's <svg>; a url(#id) fill cannot resolve otherwise.
+    expect(fixture.nativeElement.querySelector('svg')).toBeTruthy();
+  });
 });

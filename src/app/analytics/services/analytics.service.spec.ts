@@ -95,6 +95,16 @@ describe('AnalyticsService', () => {
     req.flush({});
   });
 
+  it('requests materials from its own endpoint', () => {
+    service.getMaterials(filter).subscribe();
+
+    const req = http.expectOne(
+      (r) => r.url === `${environment.printLogApiUrl}/api/analytics/materials`
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
+
   it('omits empty id arrays entirely rather than sending blanks', () => {
     service
       .getOverview({ ...filter, printerIds: [], statuses: [] })

@@ -1,0 +1,261 @@
+<div class="materials-tab">
+  <div class="materials-tab__tiles">
+    <app-stat-tile
+      label="Wasted filament"
+      format="grams"
+      [metric]="data()?.wasteGrams ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Cost of waste"
+      format="money"
+      [metric]="data()?.wasteCost ?? null"
+      [loading]="state() === 'loading'"
+    />
+  </div>
+
+  <div class="materials-tab__charts">
+    <app-chart-frame
+      class="materials-tab__chart"
+      #typeFrame
+      title="Filament by material type"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Grams of filament used per material type"
+      emptyMessage="No spool-tracked filament in this range yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="byTypeData()"
+        [series]="singleSeries"
+        [width]="typeFrame.width()"
+        [height]="typeFrame.height()"
+        orientation="horizontal"
+      >
+        <g appFilamentSvgDefs #typeDefs [swatches]="typeSwatches()"></g>
+      </app-bar-chart>
+
+      <table chartDataTable>
+        <caption>
+          Filament by material type
+        </caption>
+        <tbody>
+          @for (group of data()?.byType ?? []; track group.key) {
+            <tr>
+              <th scope="row">{{ group.label }}</th>
+              <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="materials-tab__chart"
+      #brandFrame
+      title="Filament by brand"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Grams of filament used per brand"
+      emptyMessage="No spool-tracked filament in this range yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="byBrandData()"
+        [series]="singleSeries"
+        [width]="brandFrame.width()"
+        [height]="brandFrame.height()"
+        orientation="horizontal"
+      >
+        <g appFilamentSvgDefs #brandDefs [swatches]="brandSwatches()"></g>
+      </app-bar-chart>
+
+      <table chartDataTable>
+        <caption>
+          Filament by brand
+        </caption>
+        <tbody>
+          @for (group of data()?.byBrand ?? []; track group.key) {
+            <tr>
+              <th scope="row">{{ group.label }}</th>
+              <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="materials-tab__chart"
+      #colorFrame
+      title="Filament by colour"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Grams of filament used per colour"
+      emptyMessage="No spool-tracked filament in this range yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="byColorData()"
+        [series]="singleSeries"
+        [width]="colorFrame.width()"
+        [height]="colorFrame.height()"
+        orientation="horizontal"
+      >
+        <g appFilamentSvgDefs #colorDefs [swatches]="colorSwatches()"></g>
+      </app-bar-chart>
+
+      <table chartDataTable>
+        <caption>
+          Filament by colour
+        </caption>
+        <tbody>
+          @for (group of data()?.byColor ?? []; track group.key) {
+            <tr>
+              <th scope="row">{{ group.label }}</th>
+              <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="materials-tab__chart"
+      #consumptionFrame
+      title="Consumption over time"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Grams of filament used per period, stacked by material type"
+      emptyMessage="No spool-tracked filament in this range yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="consumptionData()"
+        [series]="consumptionSeries()"
+        [width]="consumptionFrame.width()"
+        [height]="consumptionFrame.height()"
+      />
+      <table chartDataTable>
+        <caption>
+          Grams per period by material type
+        </caption>
+        <tbody>
+          @for (row of consumptionData(); track row.fullLabel) {
+            <tr>
+              <th scope="row">{{ row.fullLabel }}</th>
+              @for (series of consumptionSeries(); track series.key) {
+                <td>{{ series.label }}: {{ row.values[series.key] ?? 0 }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+  </div>
+
+  <app-chart-frame
+    class="materials-tab__chart materials-tab__chart--wide"
+    title="Top spools"
+    [state]="state()"
+    [coverage]="data()?.coverage ?? null"
+    ariaSummary="Most-used spools with remaining stock"
+    emptyMessage="No spool-tracked filament in this range yet."
+    (retry)="onRetry()"
+  >
+    <table class="materials-tab__spools">
+      <caption>
+        Most-used spools
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Spool</th>
+          <th scope="col">Used</th>
+          <th scope="col">Remaining</th>
+          <th scope="col">Consumed</th>
+          <th scope="col">Cost consumed</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (spool of data()?.topSpools ?? []; track spool.filamentId) {
+          <tr>
+            <th scope="row">
+              <!--
+                The LINK is the interactive element, not the row. A `(click)` on a <tr> is
+                invisible to the keyboard and to assistive technology, and spec §9's
+                click-through plus §11's touch/a11y rules both require a real control. A button
+                also gets the ≥44px target for free via padding.
+              -->
+              <button
+                type="button"
+                class="materials-tab__spool-link"
+                (click)="onSpoolSelect(spool.filamentId)"
+              >
+                <span
+                  class="materials-tab__swatch"
+                  [style]="
+                    spool.swatch.colors
+                      | filamentColorSwatchStyle
+                        : spool.swatch.colorPattern
+                        : spool.swatch.finishType
+                        : spool.swatch.effects
+                  "
+                  aria-hidden="true"
+                ></span>
+                {{ spool.label }}
+              </button>
+            </th>
+            <td>{{ grams(spool.usedMg) | number: '1.0-0' }} g</td>
+            <td>
+              {{
+                spool.remainingMg === null
+                  ? '—'
+                  : (grams(spool.remainingMg) | number: '1.0-0') + ' g'
+              }}
+            </td>
+            <td>
+              {{
+                spool.percentConsumed === null
+                  ? '—'
+                  : (spool.percentConsumed | number: '1.0-0') + '%'
+              }}
+            </td>
+            <td>
+              {{
+                spool.costConsumed === null
+                  ? '—'
+                  : (spool.costConsumed | number: '1.2-2')
+              }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </app-chart-frame>
+
+  @if (runningLow().length > 0) {
+    <section class="materials-tab__low">
+      <h3>Running low</h3>
+      <ul>
+        @for (row of runningLow(); track row.filamentId) {
+          <li>
+            <span
+              class="materials-tab__swatch"
+              [style]="
+                row.swatch.colors
+                  | filamentColorSwatchStyle
+                    : row.swatch.colorPattern
+                    : row.swatch.finishType
+                    : row.swatch.effects
+              "
+              aria-hidden="true"
+            ></span>
+            {{ row.label }} — {{ row.remainingGrams | number: '1.0-0' }} g left, about
+            {{ row.runwayDays | number: '1.0-0' }} days at
+            {{ row.burnRateGramsPerDay | number: '1.0-1' }} g/day
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

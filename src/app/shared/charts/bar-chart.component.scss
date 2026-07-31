@@ -93,3 +93,10 @@
     transition: opacity 120ms ease-in-out;
   }
 }
+
+.bar-chart__segment--swatch {
+  // Two black spools are otherwise indistinguishable, and dark colours vanish on the dark
+  // theme. Every swatch-filled mark gets a theme-contrast outline (spec §10).
+  stroke: var(--chart-swatch-outline);
+  stroke-width: 1;
+}

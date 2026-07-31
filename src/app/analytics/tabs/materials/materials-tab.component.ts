@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -39,6 +39,7 @@ const RUNNING_LOW_DAYS = 30;
   imports: [
     BarChartComponent,
     ChartFrameComponent,
+    CurrencyPipe,
     DecimalPipe,
     FilamentColorSwatchStylePipe,
     FilamentSvgDefsComponent,

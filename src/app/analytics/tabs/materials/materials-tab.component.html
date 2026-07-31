@@ -221,11 +221,16 @@
               }}
             </td>
             <td>
-              {{
-                spool.costConsumed === null
-                  ? '—'
-                  : (spool.costConsumed | number: '1.2-2')
-              }}
+              <!-- Formatted as money, not a bare decimal: "1.25" with no unit is not a cost,
+                   and the waste tile beside it is already currency-formatted. -->
+              @if (spool.costConsumed === null) {
+                —
+              } @else {
+                {{
+                  spool.costConsumed
+                    | currency: (data()?.currency ?? undefined) : 'symbol' : '1.2-2'
+                }}
+              }
             </td>
           </tr>
         }

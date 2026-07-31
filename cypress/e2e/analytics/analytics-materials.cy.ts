@@ -34,7 +34,10 @@ describe('Analytics — Materials tab', () => {
       const stops = $body.find('stop');
       stops.each((_, stop) => {
         const color = stop.getAttribute('stop-color');
-        if (color) expect(color).to.match(/^#[0-9a-fA-F]{3,6}$/);
+        // 3 or 6 digits exactly — {3,6} would also accept the 4- and 5-digit strings
+        // that the production validator (normalizeHex) rejects.
+        if (color)
+          expect(color).to.match(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
       });
     });
   });

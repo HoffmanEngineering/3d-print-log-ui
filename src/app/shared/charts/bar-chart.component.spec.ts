@@ -56,10 +56,10 @@ describe('BarChartComponent', () => {
     expect(segment.getAttribute('fill')).toBeNull();
   });
 
-  it('switches to horizontal bars on narrow widths so labels fit', () => {
+  it('keeps chronological time buckets as vertical columns on narrow widths', () => {
     expect(
       render(360).querySelector('svg')!.getAttribute('data-orientation')
-    ).toBe('horizontal');
+    ).toBe('vertical');
     expect(
       render(1200).querySelector('svg')!.getAttribute('data-orientation')
     ).toBe('vertical');
@@ -71,6 +71,43 @@ describe('BarChartComponent', () => {
         .querySelector('svg')!
         .getAttribute('data-orientation')
     ).toBe('vertical');
+  });
+
+  it('renders numeric y-axis ticks and grid lines for print counts', () => {
+    const el = render(900);
+    const labels = Array.from(
+      el.querySelectorAll('.bar-chart__value-label')
+    ).map((label) => label.textContent?.trim());
+
+    expect(labels).toContain('0');
+    expect(labels).toContain('5');
+    expect(el.querySelectorAll('.bar-chart__grid-line').length).toBeGreaterThan(
+      1
+    );
+  });
+
+  it('shows every nonzero segment immediately when the bucket is hovered', () => {
+    const el = render(900);
+    el.querySelector<SVGRectElement>(
+      '.bar-chart__bucket-hitbox'
+    )!.dispatchEvent(new MouseEvent('mouseenter'));
+    fixture.detectChanges();
+
+    const tooltip = el.querySelector('[data-testid="bar-tooltip"]');
+    expect(tooltip?.textContent).toContain('Success: 3');
+    expect(tooltip?.textContent).toContain('Failed: 1');
+  });
+
+  it('shows only the hovered segment in the immediate tooltip', () => {
+    const el = render(900);
+    el.querySelector<SVGRectElement>('.bar-chart__segment')!.dispatchEvent(
+      new MouseEvent('mouseenter')
+    );
+    fixture.detectChanges();
+
+    const tooltip = el.querySelector('[data-testid="bar-tooltip"]');
+    expect(tooltip?.textContent).toContain('Success: 3');
+    expect(tooltip?.textContent).not.toContain('Failed: 1');
   });
 
   it('emits the datum and series on segment activation for click-through', () => {

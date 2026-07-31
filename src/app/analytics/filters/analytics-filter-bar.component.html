@@ -6,10 +6,7 @@
       data-testid="date-range-select"
     >
       <mat-label>Date range</mat-label>
-      <mat-select
-        [value]="store.preset()"
-        (valueChange)="onPreset($event)"
-      >
+      <mat-select [value]="store.preset()" (valueChange)="onPreset($event)">
         @for (preset of presets; track preset.value) {
           <mat-option [value]="preset.value">{{ preset.label }}</mat-option>
         }
@@ -45,41 +42,53 @@
       </mat-form-field>
     }
 
-    @if (isPhone()) {
-      <button
-        mat-stroked-button
-        type="button"
-        data-testid="mobile-filters-button"
-        (click)="openSheet()"
-      >
-        <mat-icon>filter_list</mat-icon>
-        Filters
-        @if (store.activeChipCount() > 0) {
-          <span
-            class="analytics-filter-bar__badge"
-            [matBadge]="store.activeChipCount()"
-            matBadgeSize="small"
-          ></span>
-        }
-      </button>
-    } @else {
-      <app-analytics-filter-controls />
-    }
+    <div class="analytics-filter-bar__secondary">
+      @if (isPhone()) {
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="mobile-filters-button"
+          (click)="openSheet()"
+        >
+          <mat-icon>filter_list</mat-icon>
+          Filters
+          @if (store.activeChipCount() > 0) {
+            <span
+              class="analytics-filter-bar__badge"
+              [matBadge]="store.activeChipCount()"
+              matBadgeSize="small"
+            ></span>
+          }
+        </button>
+      } @else {
+        <app-analytics-filter-controls />
+      }
 
-    <mat-slide-toggle
-      class="analytics-filter-bar__compare"
-      data-testid="compare-toggle"
-      [checked]="store.comparePrevious()"
-      (change)="store.toggleComparePrevious()"
-    >
-      Compare to previous
-    </mat-slide-toggle>
+      <mat-slide-toggle
+        class="analytics-filter-bar__compare"
+        data-testid="compare-toggle"
+        [checked]="store.comparePrevious()"
+        (change)="store.toggleComparePrevious()"
+      >
+        Compare to previous
+      </mat-slide-toggle>
+    </div>
   </div>
 
   @if (activeChips().length > 0) {
-    <mat-chip-set class="analytics-filter-bar__chips" aria-label="Active filters">
+    <mat-chip-set
+      class="analytics-filter-bar__chips"
+      aria-label="Active filters"
+    >
       @for (chip of activeChips(); track chip.id) {
         <mat-chip data-testid="active-filter-chip">
+          @if (chip.colorHex) {
+            <span
+              class="analytics-filter-bar__material-color"
+              data-testid="material-color"
+              [style.background-color]="chip.colorHex"
+            ></span>
+          }
           {{ chip.label }}
           <button
             matChipRemove

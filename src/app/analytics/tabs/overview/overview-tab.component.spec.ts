@@ -158,6 +158,32 @@ describe('OverviewTabComponent', () => {
     expect(fixture.componentInstance.barData()[0].label).toBe('7/1');
   }));
 
+  it('sorts time buckets chronologically when the API returns newest first', fakeAsync(() => {
+    const subject = new Subject<OverviewResponse>();
+    analytics.getOverview.and.returnValue(subject);
+    const result = response(3);
+    result.granularity = 'Month';
+    result.series = [
+      {
+        index: 1,
+        localStart: '2026-07-01',
+        countsByStatus: { Success: 2, Failed: 0 },
+      },
+      {
+        index: 0,
+        localStart: '2026-06-01',
+        countsByStatus: { Success: 1, Failed: 0 },
+      },
+    ];
+    fixture.detectChanges();
+    tick(300);
+    subject.next(result);
+    fixture.detectChanges();
+    expect(
+      fixture.componentInstance.barData().map((item) => item.fullLabel)
+    ).toEqual(['Jun 2026', 'Jul 2026']);
+  }));
+
   it('navigates click-through using the param the print list actually reads', fakeAsync(() => {
     const subject = new Subject<OverviewResponse>();
     analytics.getOverview.and.returnValue(subject);

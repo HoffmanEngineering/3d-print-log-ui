@@ -26,9 +26,14 @@
     }
 
     @if (coverageNote(); as note) {
-      <mat-icon class="stat-tile__info" inline [matTooltip]="note"
+      <mat-icon
+        class="stat-tile__info"
+        inline
+        [matTooltip]="note"
+        [attr.aria-label]="'Data quality: ' + note"
         >info_outline</mat-icon
       >
+      <span class="cdk-visually-hidden">{{ note }}</span>
     }
   }
 </mat-card>

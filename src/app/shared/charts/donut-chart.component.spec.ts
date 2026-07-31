@@ -48,6 +48,23 @@ describe('DonutChartComponent', () => {
     ).toContain('90');
   });
 
+  it('sizes the center total to occupy most of the donut hole', () => {
+    fixture.componentRef.setInput('centerValue', '25');
+    fixture.componentRef.setInput('centerLabel', 'prints');
+    const el = render();
+
+    const valueSize = Number(
+      el.querySelector('.donut-chart__center-value')?.getAttribute('font-size')
+    );
+    const labelSize = Number(
+      el.querySelector('.donut-chart__center-label')?.getAttribute('font-size')
+    );
+
+    expect(valueSize).toBeGreaterThan(70);
+    expect(labelSize).toBeGreaterThan(20);
+    expect(valueSize).toBeLessThan(fixture.componentInstance.radius() * 1.24);
+  });
+
   it('emits the slice key on activation for click-through', () => {
     const el = render();
     let key: string | undefined;

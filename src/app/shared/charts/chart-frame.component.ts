@@ -16,6 +16,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Coverage } from 'src/app/analytics/models/analytics.models';
+import { formatCoverageNote } from './coverage-note';
 
 export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
 
@@ -72,31 +73,7 @@ export class ChartFrameComponent implements OnDestroy {
    * Reasons worth surfacing. Rendered as plain language because a raw enum name in the UI
    * tells the user nothing.
    */
-  readonly coverageNote = computed(() => {
-    const c = this.coverage();
-    if (!c || c.exclusions.length === 0) return null;
-
-    const labels: Record<string, (n: number) => string> = {
-      MaterialEstimated: (n) =>
-        `${n} print${n === 1 ? '' : 's'} use a slicer estimate for material`,
-      DurationEstimated: (n) =>
-        `${n} print${n === 1 ? '' : 's'} use a slicer estimate for duration`,
-      CurrencyMismatch: (n) =>
-        `${n} spool${n === 1 ? '' : 's'} excluded — different currency`,
-      PriceMissing: (n) =>
-        `${n} print${n === 1 ? '' : 's'} have no material price set`,
-      WattageMissing: () => 'Printer wattage is not set',
-      RateMissing: () => 'Electricity rate is not set',
-      RowCapExceeded: () => 'Too many prints to cost precisely in this range',
-      OutlierExcluded: (n) => `${n} outlier${n === 1 ? '' : 's'} excluded`,
-      SampleTooSmall: () => 'Not enough data yet',
-      Undated: (n) => `${n} print${n === 1 ? '' : 's'} have no date`,
-    };
-
-    return c.exclusions
-      .map((e) => labels[e.reason]?.(e.count) ?? `${e.reason}: ${e.count}`)
-      .join(' · ');
-  });
+  readonly coverageNote = computed(() => formatCoverageNote(this.coverage()));
 
   ngOnDestroy(): void {
     this.observer?.disconnect();

@@ -9,6 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Metric, MoneyMetric } from 'src/app/analytics/models/analytics.models';
+import { formatCoverageNote } from './coverage-note';
 
 export type StatFormat = 'number' | 'percent' | 'grams' | 'duration' | 'money';
 
@@ -46,12 +47,9 @@ export class StatTileComponent {
     } as const;
   });
 
-  readonly coverageNote = computed(() => {
-    const exclusions = this.metric()?.coverage?.exclusions ?? [];
-    return exclusions.length
-      ? exclusions.map((e) => `${e.reason}: ${e.count}`).join(' · ')
-      : null;
-  });
+  readonly coverageNote = computed(() =>
+    formatCoverageNote(this.metric()?.coverage)
+  );
 
   private formatValue(value: number): string {
     switch (this.format()) {

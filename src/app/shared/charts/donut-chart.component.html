@@ -27,16 +27,20 @@
       <text
         class="donut-chart__center-value"
         [attr.x]="center().x"
-        [attr.y]="center().y"
+        [attr.y]="centerTypography().valueY"
+        [attr.font-size]="centerTypography().valueSize"
         text-anchor="middle"
+        dominant-baseline="middle"
       >
         {{ centerValue() }}
       </text>
       <text
         class="donut-chart__center-label"
         [attr.x]="center().x"
-        [attr.y]="center().y + 18"
+        [attr.y]="centerTypography().labelY"
+        [attr.font-size]="centerTypography().labelSize"
         text-anchor="middle"
+        dominant-baseline="middle"
       >
         {{ centerLabel() }}
       </text>

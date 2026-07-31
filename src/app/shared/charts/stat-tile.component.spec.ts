@@ -102,4 +102,18 @@ describe('StatTileComponent', () => {
     });
     expect(el.querySelector('[data-testid="stat-delta"]')).toBeFalsy();
   });
+
+  it('explains coverage exclusions in plain language with the affected print count', () => {
+    const value = metric(48.1);
+    value.coverage.exclusions = [{ reason: 'MaterialEstimated', count: 2 }];
+
+    const el = render({
+      label: 'Estimated cost',
+      metric: value,
+      format: 'currency',
+    });
+
+    expect(el.textContent).toContain('2 prints use estimated material amounts');
+    expect(el.textContent).not.toContain('MaterialEstimated');
+  });
 });

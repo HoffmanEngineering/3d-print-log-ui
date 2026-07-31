@@ -79,6 +79,20 @@ export class DonutChartComponent {
     y: this.height() / 2,
   }));
 
+  readonly centerTypography = computed(() => {
+    const innerDiameter = this.radius() * 2 * 0.62;
+    const characterCount = Math.max(1, this.centerValue().length);
+    const valueSize = innerDiameter * Math.min(0.44, 0.92 / characterCount);
+    const labelSize = innerDiameter * 0.13;
+
+    return {
+      valueSize,
+      labelSize,
+      valueY: this.center().y - labelSize * 0.35,
+      labelY: this.center().y + valueSize * 0.42 + labelSize * 0.55,
+    };
+  });
+
   percent(slice: DonutSlice): number {
     const total = this.total();
     return total <= 0 ? 0 : (slice.value / total) * 100;

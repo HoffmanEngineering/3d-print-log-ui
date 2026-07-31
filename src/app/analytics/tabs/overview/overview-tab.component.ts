@@ -150,16 +150,22 @@ export class OverviewTabComponent {
     if (!response) return [];
 
     const granularity = response.granularity;
-    return response.series.map((bucket) => {
-      // localStart is a civil date the server already resolved in the user's timezone;
-      // parsing it as UTC would shift the label a day west of UTC.
-      const date = parseLocalDate(bucket.localStart);
-      return {
-        label: formatTickDate(date, granularity, true),
-        fullLabel: formatTickDate(date, granularity, false),
-        values: bucket.countsByStatus,
-      };
-    });
+    return [...response.series]
+      .sort(
+        (left, right) =>
+          left.localStart.localeCompare(right.localStart) ||
+          left.index - right.index
+      )
+      .map((bucket) => {
+        // localStart is a civil date the server already resolved in the user's timezone;
+        // parsing it as UTC would shift the label a day west of UTC.
+        const date = parseLocalDate(bucket.localStart);
+        return {
+          label: formatTickDate(date, granularity, true),
+          fullLabel: formatTickDate(date, granularity, false),
+          values: bucket.countsByStatus,
+        };
+      });
   });
 
   readonly donutSlices = computed<DonutSlice[]>(() => {

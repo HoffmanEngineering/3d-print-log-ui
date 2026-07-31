@@ -1,37 +1,102 @@
-<svg
-  class="bar-chart"
-  [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
-  [attr.data-orientation]="resolvedOrientation()"
-  preserveAspectRatio="none"
->
-  <!-- Axis text is decorative: the same values are announced on each segment's label and in
+<div class="bar-chart-shell" (mouseleave)="hideTooltip()">
+  <svg
+    class="bar-chart"
+    [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
+    [attr.data-orientation]="resolvedOrientation()"
+    preserveAspectRatio="none"
+  >
+    @for (tick of valueTicks(); track tick.value) {
+      <line
+        class="bar-chart__grid-line"
+        aria-hidden="true"
+        [attr.x1]="tick.x1"
+        [attr.x2]="tick.x2"
+        [attr.y1]="tick.y"
+        [attr.y2]="tick.y"
+      />
+      <text
+        class="bar-chart__value-label"
+        aria-hidden="true"
+        [attr.x]="tick.x1 - 6"
+        [attr.y]="tick.y + 4"
+        text-anchor="end"
+      >
+        {{ tick.value }}
+      </text>
+    }
+    <!-- Axis text is decorative: the same values are announced on each segment's label and in
        the frame's data table, so repeating them here would just be noise. -->
-  @for (label of axisLabels(); track label.text) {
-    <text
-      class="bar-chart__axis-label"
-      aria-hidden="true"
-      [attr.x]="label.x"
-      [attr.y]="label.y"
-      [attr.text-anchor]="label.anchor"
-    >
-      {{ label.text }}
-    </text>
-  }
+    @for (label of axisLabels(); track label.text) {
+      <text
+        class="bar-chart__axis-label"
+        aria-hidden="true"
+        [attr.x]="label.x"
+        [attr.y]="label.y"
+        [attr.text-anchor]="label.anchor"
+      >
+        {{ label.text }}
+      </text>
+    }
 
-  @for (segment of segments(); track segment.label + segment.seriesKey) {
-    <rect
-      [class]="'bar-chart__segment chart-fill-' + segment.seriesIndex"
-      [attr.x]="segment.x"
-      [attr.y]="segment.y"
-      [attr.width]="segment.w"
-      [attr.height]="segment.h"
-      tabindex="0"
-      role="button"
-      [attr.aria-label]="segment.tooltip"
-      (click)="onSelect(segment)"
-      (keydown.enter)="onSelect(segment)"
+    @for (bucket of bucketHitboxes(); track bucket.datum.label) {
+      <rect
+        class="bar-chart__bucket-hitbox"
+        aria-hidden="true"
+        [attr.x]="bucket.x"
+        [attr.y]="bucket.y"
+        [attr.width]="bucket.w"
+        [attr.height]="bucket.h"
+        (mouseenter)="showBucketTooltip(bucket)"
+      />
+    }
+
+    @if (tooltip(); as tip) {
+      <line
+        class="bar-chart__crosshair"
+        aria-hidden="true"
+        [attr.x1]="tip.crosshairX"
+        [attr.x2]="tip.crosshairX"
+        [attr.y1]="8"
+        [attr.y2]="height() - 28"
+      />
+    }
+
+    @for (segment of segments(); track segment.label + segment.seriesKey) {
+      <rect
+        [class]="'bar-chart__segment chart-fill-' + segment.seriesIndex"
+        [attr.x]="segment.x"
+        [attr.y]="segment.y"
+        [attr.width]="segment.w"
+        [attr.height]="segment.h"
+        tabindex="0"
+        role="button"
+        [attr.aria-label]="segment.tooltip"
+        (mouseenter)="showSegmentTooltip(segment)"
+        (focus)="showSegmentTooltip(segment)"
+        (blur)="hideTooltip()"
+        (click)="onSelect(segment)"
+        (keydown.enter)="onSelect(segment)"
+      >
+        <title>{{ segment.tooltip }}</title>
+      </rect>
+    }
+  </svg>
+
+  @if (tooltip(); as tip) {
+    <div
+      class="bar-chart__tooltip"
+      data-testid="bar-tooltip"
+      role="status"
+      [style.left.px]="tip.x"
+      [style.top.px]="tip.y"
     >
-      <title>{{ segment.tooltip }}</title>
-    </rect>
+      <strong>{{ tip.title }}</strong>
+      @for (line of tip.lines; track line.label) {
+        <span>
+          <i [class]="'chart-fill-' + line.seriesIndex"></i>
+          {{ line.label }}: {{ line.value }}
+        </span>
+      }
+    </div>
   }
-</svg>
+</div>

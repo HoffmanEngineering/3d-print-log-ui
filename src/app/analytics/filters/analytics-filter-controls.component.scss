@@ -4,5 +4,11 @@
 
 .analytics-filter-controls__field {
   min-inline-size: 10rem;
-  flex: 1 1 10rem;
+  flex: 1 1 0;
+}
+
+:host-context(.analytics-filter-sheet) .analytics-filter-controls__field {
+  inline-size: 100%;
+  min-inline-size: 0;
+  flex: 0 0 auto;
 }

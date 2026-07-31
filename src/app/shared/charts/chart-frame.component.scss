@@ -33,6 +33,7 @@
     flex: 1 1 auto;
     min-block-size: 0;
     padding: 0.5rem 1rem 1rem;
+    box-sizing: border-box;
     // Phone-first: taller aspect so labels fit; widens with the container.
     aspect-ratio: 4 / 3;
 
@@ -59,8 +60,7 @@
     inset: 0.5rem 1rem 1rem;
   }
 
-  &__content,
-  &__plot {
+  &__content {
     inline-size: 100%;
     block-size: 100%;
   }
@@ -96,6 +96,24 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+}
+
+:host(.overview-tab__chart--outcomes) .chart-frame__body {
+  min-block-size: 34rem;
+  aspect-ratio: auto;
+}
+
+@container (min-width: 480px) {
+  :host(.overview-tab__chart--outcomes) .chart-frame__body {
+    min-block-size: 0;
+    aspect-ratio: 3 / 2;
+  }
+}
+
+@container (min-width: 900px) {
+  :host(.overview-tab__chart--outcomes) .chart-frame__body {
+    aspect-ratio: 16 / 9;
   }
 }
 

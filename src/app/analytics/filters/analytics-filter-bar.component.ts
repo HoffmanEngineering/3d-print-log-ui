@@ -22,6 +22,10 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { map } from 'rxjs';
 import { PrintStatus } from 'src/app/core/services/print.service';
 import { AnalyticsFilterControlsComponent } from './analytics-filter-controls.component';
+import {
+  AnalyticsFilterOptionsService,
+  FilterOption,
+} from './analytics-filter-options.service';
 import { AnalyticsFilterSheetComponent } from './analytics-filter-sheet.component';
 import {
   AnalyticsFilterStore,
@@ -31,6 +35,7 @@ import {
 interface ActiveChip {
   id: string;
   label: string;
+  colorHex?: string;
   remove: () => void;
 }
 
@@ -57,6 +62,7 @@ export class AnalyticsFilterBarComponent {
   readonly store = inject(AnalyticsFilterStore);
   private readonly bottomSheet = inject(MatBottomSheet);
   private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly options = inject(AnalyticsFilterOptionsService);
 
   /**
    * A container query cannot decide WHICH component opens, only how one looks, so the
@@ -96,11 +102,17 @@ export class AnalyticsFilterBarComponent {
    */
   readonly activeChips = computed<ActiveChip[]>(() => {
     const chips: ActiveChip[] = [];
+    const printers = new Map<string | number, FilterOption>(
+      this.options.printers().map((option) => [option.id, option] as const)
+    );
+    const materials = new Map<string | number, FilterOption>(
+      this.options.materials().map((option) => [option.id, option] as const)
+    );
 
     for (const id of this.store.printerIds()) {
       chips.push({
         id: `printer-${id}`,
-        label: `Printer ${id}`,
+        label: printers.get(id)?.label ?? `Printer ${id}`,
         remove: () =>
           this.store.setPrinterIds(
             this.store.printerIds().filter((x) => x !== id)
@@ -111,7 +123,8 @@ export class AnalyticsFilterBarComponent {
     for (const id of this.store.filamentIds()) {
       chips.push({
         id: `material-${id}`,
-        label: 'Material',
+        label: materials.get(id)?.label ?? 'Material',
+        colorHex: materials.get(id)?.colorHex,
         remove: () =>
           this.store.setFilamentIds(
             this.store.filamentIds().filter((x) => x !== id)

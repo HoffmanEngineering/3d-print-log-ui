@@ -34,7 +34,18 @@ describe('AnalyticsFilterBarComponent', () => {
       ['getCurrentUserFilamentSummaries']
     );
     filamentService.getCurrentUserFilamentSummaries.and.returnValue(
-      of({ items: [] } as never)
+      of({
+        items: [
+          {
+            id: 'filament-1',
+            displayName: 'Galaxy Black',
+            brand: 'Polymaker',
+            materialType: 'PLA',
+            colorName: 'Black',
+            colorHex: '#111111',
+          },
+        ],
+      } as never)
     );
 
     await TestBed.configureTestingModule({
@@ -75,6 +86,31 @@ describe('AnalyticsFilterBarComponent', () => {
         '[data-testid="active-filter-chip"]'
       ).length
     ).toBe(1);
+  });
+
+  it('labels an active printer chip with the loaded printer name', () => {
+    store.setPrinterIds([1]);
+    fixture.detectChanges();
+    const chip = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="active-filter-chip"]'
+    );
+    expect(chip?.textContent).toContain('Ender');
+    expect(chip?.textContent).not.toContain('Printer 1');
+  });
+
+  it('renders an active material chip with its print-list identity and color', () => {
+    store.setFilamentIds(['filament-1']);
+    fixture.detectChanges();
+    const chip = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="active-filter-chip"]'
+    );
+    expect(chip?.textContent).toContain(
+      'Galaxy Black - Polymaker - PLA - Black'
+    );
+    expect(
+      chip?.querySelector<HTMLElement>('[data-testid="material-color"]')?.style
+        .backgroundColor
+    ).toBe('rgb(17, 17, 17)');
   });
 
   it('removing a chip clears that filter', () => {

@@ -4,16 +4,20 @@
   block-size: 100%;
   // Legend below the ring on narrow containers, beside it when there is room.
   grid-template-columns: 1fr;
+  grid-template-rows: minmax(12rem, 1fr) auto;
+  min-inline-size: 0;
   align-items: center;
 
   @container (min-width: 480px) {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
 
   &__svg {
     inline-size: 100%;
     block-size: 100%;
     min-block-size: 0;
+    min-inline-size: 0;
   }
 
   &__slice {
@@ -32,12 +36,10 @@
   }
 
   &__center-value {
-    font-size: 20px;
-    font-weight: 500;
+    font-weight: 600;
     fill: var(--chart-tooltip-text);
   }
   &__center-label {
-    font-size: 11px;
     fill: var(--chart-axis-text);
   }
 
@@ -47,17 +49,24 @@
     padding: 0;
     display: grid;
     gap: 0.125rem;
+    min-inline-size: 0;
+    padding-inline: 0.25rem;
+  }
+
+  &__legend-item {
+    min-inline-size: 0;
   }
 
   &__legend-button {
     display: grid;
-    grid-template-columns: auto 1fr auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 0.5rem;
     inline-size: 100%;
+    min-inline-size: 0;
     // 44px touch target.
     min-block-size: 44px;
-    padding: 0 0.25rem;
+    padding: 0 0.5rem;
     background: none;
     border: 0;
     cursor: pointer;
@@ -75,6 +84,11 @@
 
   &__legend-value {
     font-variant-numeric: tabular-nums;
+  }
+
+  &__legend-label {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
   }
   &__legend-percent {
     color: var(--chart-empty-text);

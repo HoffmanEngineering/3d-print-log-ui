@@ -40,6 +40,7 @@
 
   <div class="overview-tab__charts">
     <app-chart-frame
+      class="overview-tab__chart"
       #printsFrame
       title="Prints over time"
       [state]="state()"
@@ -74,6 +75,7 @@
     </app-chart-frame>
 
     <app-chart-frame
+      class="overview-tab__chart overview-tab__chart--outcomes"
       #statusFrame
       title="Outcomes"
       [state]="state()"
@@ -111,7 +113,9 @@
     <ul class="overview-tab__highlights">
       @for (item of highlights(); track item.caption) {
         <li class="overview-tab__highlight">
-          <span class="overview-tab__highlight-caption">{{ item.caption }}</span>
+          <span class="overview-tab__highlight-caption">{{
+            item.caption
+          }}</span>
           <span class="overview-tab__highlight-label">{{
             item.ref?.label
           }}</span>

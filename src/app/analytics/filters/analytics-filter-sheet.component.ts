@@ -39,6 +39,8 @@ import { AnalyticsFilterStore } from './analytics-filter.store';
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        max-block-size: min(55vh, 24rem);
+        overflow-y: auto;
       }
       .analytics-filter-sheet__actions {
         display: flex;

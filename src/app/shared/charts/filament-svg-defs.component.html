@@ -1,0 +1,33 @@
+<defs>
+  @for (def of defs(); track def.id) {
+    @if (def.gradientId) {
+      <linearGradient [attr.id]="def.gradientId" x1="0" y1="0" x2="1" y2="0">
+        @for (stop of def.stops; track $index) {
+          <stop [attr.offset]="stop.offset" [attr.stop-color]="stop.color" />
+        }
+        @if (def.descriptor.shimmer) {
+          <!-- Silk reads as a highlight band rather than a separate overlay element. -->
+          <stop offset="48%" stop-color="#ffffff" stop-opacity="0.3" />
+          <stop offset="52%" stop-color="#ffffff" stop-opacity="0" />
+        }
+      </linearGradient>
+    }
+
+    @if (def.filterId) {
+      <filter [attr.id]="def.filterId">
+        @if (def.descriptor.desaturate) {
+          <feColorMatrix type="saturate" values="0.6" />
+        }
+        @if (def.descriptor.glow) {
+          <feDropShadow
+            dx="0"
+            dy="0"
+            stdDeviation="2"
+            flood-color="rgb(120,255,120)"
+            flood-opacity="0.5"
+          />
+        }
+      </filter>
+    }
+  }
+</defs>

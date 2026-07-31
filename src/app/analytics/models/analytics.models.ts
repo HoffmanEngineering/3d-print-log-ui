@@ -26,6 +26,9 @@ export const ExclusionReason = {
   OutlierExcluded: 'OutlierExcluded',
   SampleTooSmall: 'SampleTooSmall',
   RowCapExceeded: 'RowCapExceeded',
+  DurationMissing: 'DurationMissing',
+  WindowTruncated: 'WindowTruncated',
+  UnattributedMaterial: 'UnattributedMaterial',
 } as const;
 
 export interface CoverageExclusion {

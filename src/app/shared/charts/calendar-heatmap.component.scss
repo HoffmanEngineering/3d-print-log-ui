@@ -1,0 +1,36 @@
+.calendar-heatmap {
+  // The SCROLL lives here, never on the page body. A phone shows the recent end and the user
+  // scrolls back; the page itself must not gain a horizontal scrollbar.
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  scroll-snap-type: x proximity;
+  direction: rtl; // start scrolled to the most recent week
+}
+
+.calendar-heatmap__svg {
+  direction: ltr; // undo the container trick for the content itself
+  display: block;
+}
+
+.calendar-heatmap__month {
+  font-size: 9px;
+  fill: var(--chart-axis-text);
+  scroll-snap-align: start;
+}
+
+.calendar-heatmap__cell {
+  stroke: var(--chart-swatch-outline);
+  stroke-width: 0.5;
+}
+
+.calendar-heatmap__hit {
+  fill: transparent;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--chart-axis-text);
+    outline-offset: 1px;
+  }
+}

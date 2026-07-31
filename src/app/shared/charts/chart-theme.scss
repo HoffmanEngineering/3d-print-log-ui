@@ -15,6 +15,14 @@
   --chart-tooltip-text: rgba(0, 0, 0, 0.87);
   --chart-swatch-outline: rgba(0, 0, 0, 0.45);
   --chart-empty-text: rgba(0, 0, 0, 0.54);
+
+  // Level 0 is "nothing happened" and is deliberately a surface tint, not the lightest step of
+  // the ramp — an empty day must never read as a quiet day.
+  --chart-heat-0: rgba(0, 0, 0, 0.06);
+  --chart-heat-1: #c6e48b;
+  --chart-heat-2: #7bc96f;
+  --chart-heat-3: #239a3b;
+  --chart-heat-4: #196127;
 }
 
 // ThemeService toggles `dark-theme` on <html>, before first paint (theme.service.ts:61).
@@ -32,6 +40,12 @@ html.dark-theme {
   --chart-tooltip-text: rgba(255, 255, 255, 0.92);
   --chart-swatch-outline: rgba(255, 255, 255, 0.6);
   --chart-empty-text: rgba(255, 255, 255, 0.6);
+
+  --chart-heat-0: rgba(255, 255, 255, 0.08);
+  --chart-heat-1: #0e4429;
+  --chart-heat-2: #006d32;
+  --chart-heat-3: #26a641;
+  --chart-heat-4: #39d353;
 }
 
 @for $i from 1 through 6 {
@@ -44,5 +58,11 @@ html.dark-theme {
   // For HTML legend swatches, which take background-color rather than SVG fill.
   .chart-bg-#{$i} {
     background-color: var(--chart-series-#{$i});
+  }
+}
+
+@for $i from 0 through 4 {
+  .chart-heat-#{$i} {
+    fill: var(--chart-heat-#{$i});
   }
 }

@@ -1,0 +1,45 @@
+<div class="calendar-heatmap">
+  @if (cells().length > 0) {
+    <svg
+      class="calendar-heatmap__svg"
+      [attr.width]="gridWidth()"
+      [attr.height]="gridHeight"
+      [attr.viewBox]="'0 0 ' + gridWidth() + ' ' + gridHeight"
+      role="img"
+    >
+      @for (label of monthLabels(); track label.x) {
+        <text class="calendar-heatmap__month" [attr.x]="label.x" [attr.y]="10">
+          {{ label.text }}
+        </text>
+      }
+
+      @for (cell of cells(); track cell.date) {
+        <g>
+          <rect
+            class="calendar-heatmap__cell chart-heat-{{ cell.level }}"
+            [attr.x]="cell.x"
+            [attr.y]="cell.y"
+            [attr.width]="cellSize"
+            [attr.height]="cellSize"
+            rx="2"
+          />
+          <rect
+            class="calendar-heatmap__hit"
+            [attr.x]="cell.x - (hitSize - cellSize) / 2"
+            [attr.y]="cell.y - (hitSize - cellSize) / 2"
+            [attr.width]="hitSize"
+            [attr.height]="hitSize"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="cell.label"
+            (click)="onSelect(cell)"
+            (keydown.enter)="onSelect(cell)"
+            (keydown.space)="onSelect(cell)"
+          >
+            <title>{{ cell.label }}</title>
+          </rect>
+        </g>
+      }
+    </svg>
+  }
+</div>

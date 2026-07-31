@@ -21,6 +21,14 @@ export interface BarDatum {
   /** Full label for tooltips and the accessible table. */
   fullLabel: string;
   values: Record<string, number>;
+  /**
+   * Optional per-datum fill — a hex colour or a `url(#…)` reference from
+   * filament-svg-defs. When absent the mark takes its series' theme class, which is the
+   * default and the right choice for anything that must stay readable at a glance.
+   */
+  fill?: string;
+  filter?: string | null;
+  fillOpacity?: number;
 }
 
 interface Segment {
@@ -32,6 +40,9 @@ interface Segment {
   seriesKey: string;
   label: string;
   tooltip: string;
+  fill: string | null;
+  filter: string | null;
+  fillOpacity: number;
 }
 
 interface BucketHitbox {
@@ -209,6 +220,9 @@ export class BarChartComponent {
             seriesKey: s.key,
             label: d.label,
             tooltip: `${d.fullLabel} — ${s.label}: ${v}`,
+            fill: d.fill ?? null,
+            filter: d.filter ?? null,
+            fillOpacity: d.fillOpacity ?? 1,
           });
           cursor += v;
         }
@@ -235,6 +249,9 @@ export class BarChartComponent {
             seriesKey: s.key,
             label: d.label,
             tooltip: `${d.fullLabel} — ${s.label}: ${v}`,
+            fill: d.fill ?? null,
+            filter: d.filter ?? null,
+            fillOpacity: d.fillOpacity ?? 1,
           });
           cursor += v;
         }

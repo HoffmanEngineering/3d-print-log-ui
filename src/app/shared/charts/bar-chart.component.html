@@ -5,6 +5,10 @@
     [attr.data-orientation]="resolvedOrientation()"
     preserveAspectRatio="none"
   >
+    <!-- Swatch gradients must live inside THIS svg: a url(#id) fill cannot resolve across
+         document fragments in some engines, and scoping them here keeps ids local. -->
+    <ng-content select="[appFilamentSvgDefs]" />
+
     @for (tick of valueTicks(); track tick.value) {
       <line
         class="bar-chart__grid-line"
@@ -63,7 +67,14 @@
 
   @for (segment of segments(); track segment.tooltip) {
       <rect
-        [class]="'bar-chart__segment chart-fill-' + segment.seriesIndex"
+        [class]="
+          segment.fill
+            ? 'bar-chart__segment bar-chart__segment--swatch'
+            : 'bar-chart__segment chart-fill-' + segment.seriesIndex
+        "
+        [attr.fill]="segment.fill"
+        [attr.filter]="segment.filter"
+        [attr.fill-opacity]="segment.fillOpacity"
         [attr.x]="segment.x"
         [attr.y]="segment.y"
         [attr.width]="segment.w"

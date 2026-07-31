@@ -1,9 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
+  effect,
   input,
   output,
+  viewChild,
 } from '@angular/core';
 import { CalendarDay } from 'src/app/analytics/models/analytics.models';
 import { parseLocalDate } from './chart-axis';
@@ -23,10 +26,19 @@ export interface CalendarMonthLabel {
   text: string;
 }
 
-const CELL = 11;
 const GAP = 2;
-const STEP = CELL + GAP;
 const TOP = 16; // room for the month labels
+
+/**
+ * Cell size is clamped, not free.
+ *
+ * The minimum keeps a 53-week calendar legible on a phone (below this the container scrolls
+ * instead of shrinking further). The maximum is what stops a SHORT range — a week-long
+ * filter is five or six columns — from inflating a handful of cells to fill a desktop
+ * panel, which turns a calendar into a wall of enormous squares.
+ */
+const MIN_STEP = 13;
+const MAX_STEP = 22;
 
 /**
  * A GitHub-style activity calendar: one column per week, one row per weekday with Sunday at the
@@ -50,8 +62,27 @@ export class CalendarHeatmapComponent {
 
   readonly daySelect = output<{ date: string }>();
 
-  /** Enlarged transparent hit area, so a 11px cell still meets the touch-target rule. */
-  readonly hitSize = 16;
+  /**
+   * Transparent hit area, never smaller than the cell it covers. At the minimum pitch it is
+   * deliberately LARGER, so a small cell still meets the touch-target rule without the grid
+   * being drawn any bigger.
+   */
+  readonly hitSize = computed(() => Math.max(16, this.cellSize()));
+
+  private readonly scroller =
+    viewChild<ElementRef<HTMLElement>>('calendarScroll');
+
+  constructor() {
+    // Open on the most recent week, which is the end a reader cares about. Done here rather
+    // than with `direction: rtl` on the container: that also right-aligns the grid when the
+    // panel is wider than the calendar, which left it stranded in the corner of the card.
+    // Setting scrollLeft is inert when there is nothing to scroll.
+    effect(() => {
+      this.cells();
+      const el = this.scroller()?.nativeElement;
+      if (el) el.scrollLeft = el.scrollWidth;
+    });
+  }
 
   private readonly thresholds = computed(() => {
     const active = this.days()
@@ -66,6 +97,30 @@ export class CalendarHeatmapComponent {
     return [at(0.25), at(0.5), at(0.75)];
   });
 
+  /** Week columns the grid needs, including the partial first week. */
+  private readonly columns = computed(() => {
+    const days = this.days();
+    if (days.length === 0) return 0;
+    return Math.ceil((parseLocalDate(days[0].date).getDay() + days.length) / 7);
+  });
+
+  /**
+   * Grid pitch, derived from the measured panel width so the calendar grows into the space
+   * it is given instead of being scaled up as a whole image.
+   */
+  private readonly step = computed(() => {
+    const columns = this.columns();
+    const available = this.width();
+    if (columns === 0 || available <= 0) return MIN_STEP;
+
+    return Math.max(
+      MIN_STEP,
+      Math.min(MAX_STEP, Math.floor(available / columns))
+    );
+  });
+
+  readonly cellSize = computed(() => this.step() - GAP);
+
   readonly cells = computed<CalendarCell[]>(() => {
     const days = this.days();
     if (days.length === 0) return [];
@@ -75,6 +130,7 @@ export class CalendarHeatmapComponent {
     // every subsequent weekday row by one.
     const offset = first.getDay();
     const thresholds = this.thresholds();
+    const step = this.step();
 
     return days.map((day, index) => {
       const slot = index + offset;
@@ -95,8 +151,8 @@ export class CalendarHeatmapComponent {
       return {
         date: day.date,
         count: day.count,
-        x: Math.floor(slot / 7) * STEP,
-        y: TOP + (slot % 7) * STEP,
+        x: Math.floor(slot / 7) * step,
+        y: TOP + (slot % 7) * step,
         level,
         label: `${date.toLocaleDateString(undefined, {
           weekday: 'short',
@@ -125,15 +181,13 @@ export class CalendarHeatmapComponent {
     return labels;
   });
 
-  /** The intrinsic width the grid needs. The container scrolls when it is narrower. */
+  /** The width the grid needs at the current pitch. The container scrolls when narrower. */
   readonly gridWidth = computed(() => {
-    const cells = this.cells();
-    return cells.length === 0 ? 0 : cells[cells.length - 1].x + CELL;
+    const columns = this.columns();
+    return columns === 0 ? 0 : columns * this.step();
   });
 
-  readonly gridHeight = TOP + 7 * STEP;
-
-  readonly cellSize = CELL;
+  readonly gridHeight = computed(() => TOP + 7 * this.step());
 
   onSelect(cell: CalendarCell): void {
     this.daySelect.emit({ date: cell.date });

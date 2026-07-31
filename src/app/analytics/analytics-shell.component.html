@@ -3,22 +3,26 @@
 
   <app-analytics-filter-bar />
 
-  <mat-tab-group [mat-stretch-tabs]="false" #tabGroup>
+  <mat-tab-group
+    [mat-stretch-tabs]="false"
+    [selectedIndex]="selectedIndex()"
+    (selectedIndexChange)="onTabChange($event)"
+  >
     <mat-tab label="Overview">
       <!-- Guarded so later phases' tabs only build on first activation. -->
-      @if (tabGroup.selectedIndex === 0) {
+      @if (selectedIndex() === 0) {
         <app-overview-tab />
       }
     </mat-tab>
 
     <mat-tab label="Activity">
-      @if (tabGroup.selectedIndex === 1) {
+      @if (selectedIndex() === 1) {
         <app-activity-tab />
       }
     </mat-tab>
 
     <mat-tab label="Printers">
-      @if (tabGroup.selectedIndex === 2) {
+      @if (selectedIndex() === 2) {
         <app-printers-tab />
       }
     </mat-tab>

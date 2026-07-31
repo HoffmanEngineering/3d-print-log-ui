@@ -1,21 +1,7 @@
 <div class="activity-tab">
-  <mat-button-toggle-group
-    class="activity-tab__metric"
-    aria-label="Metric to plot"
-    [value]="metric()"
-    (change)="setMetric($event.value)"
-  >
-    <mat-button-toggle value="count">Prints</mat-button-toggle>
-    <mat-button-toggle value="time">Print time</mat-button-toggle>
-    <mat-button-toggle value="filament">Filament</mat-button-toggle>
-    <mat-button-toggle value="cost" [disabled]="!costAvailable()"
-      >Cost</mat-button-toggle
-    >
-  </mat-button-toggle-group>
-
   <div class="activity-tab__charts">
     <app-chart-frame
-      class="activity-tab__chart activity-tab__chart--wide"
+      class="activity-tab__chart"
       #seriesFrame
       [title]="seriesLabels[metric()] + ' over time'"
       [state]="state()"
@@ -24,6 +10,26 @@
       emptyMessage="No prints in this date range yet."
       (retry)="onRetry()"
     >
+      <!--
+        Projected into THIS panel's header rather than floating above the tab. Sitting at
+        the top of the page it read as a global switch, while it only ever re-plots this
+        one chart; inside the card the scope is obvious without a word of explanation.
+      -->
+      <mat-button-toggle-group
+        chartActions
+        class="activity-tab__metric"
+        aria-label="Metric to plot"
+        [value]="metric()"
+        (change)="setMetric($event.value)"
+      >
+        <mat-button-toggle value="count">Prints</mat-button-toggle>
+        <mat-button-toggle value="time">Print time</mat-button-toggle>
+        <mat-button-toggle value="filament">Filament</mat-button-toggle>
+        <mat-button-toggle value="cost" [disabled]="!costAvailable()"
+          >Cost</mat-button-toggle
+        >
+      </mat-button-toggle-group>
+
       <app-bar-chart
         [data]="seriesData()"
         [series]="series"
@@ -46,9 +52,10 @@
     </app-chart-frame>
 
     <app-chart-frame
-      class="activity-tab__chart activity-tab__chart--wide"
+      class="activity-tab__chart"
       #calendarFrame
       title="Activity calendar"
+      fit="natural"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       [ariaSummary]="streakSummary()"

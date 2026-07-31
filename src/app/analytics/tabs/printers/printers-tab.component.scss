@@ -35,6 +35,15 @@
     padding: 0.25rem 0.5rem;
     text-align: start;
   }
+
+  td:last-child {
+    text-align: end;
+  }
+}
+
+.printers-tab__maintenance-empty {
+  margin: 0;
+  color: var(--chart-empty-text);
 }
 
 @container (min-width: 900px) {

@@ -16,6 +16,34 @@
     white-space: nowrap;
   }
 
+  // Every numeric column is right-aligned in BOTH the header and the body. Left-aligned
+  // digits of differing width are unreadable as a column, and the header label drifting
+  // away from the figures under it is what made the table look misaligned.
+  th:not(:first-child),
+  td:not(:first-child) {
+    text-align: end;
+  }
+
+  // A mat-button brings its own horizontal padding and min-width, which pushed each header
+  // label off the grid its column's values sit on. Stripped so the label starts exactly
+  // where the cell padding puts it.
+  //
+  // justify-content, not just text-align: the button lays its label out with flex and
+  // centres it, so text-align alone left every header floating mid-column above
+  // right-aligned figures — which is the misalignment that shows up on screen.
+  thead button {
+    padding: 0;
+    min-inline-size: 0;
+    font: inherit;
+    font-weight: 500;
+    inline-size: 100%;
+    justify-content: flex-end;
+  }
+
+  thead th:first-child button {
+    justify-content: flex-start;
+  }
+
   tbody tr {
     cursor: pointer;
   }

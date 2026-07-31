@@ -6,11 +6,21 @@
   max-inline-size: 100%;
   min-inline-size: 0;
   scroll-snap-type: x proximity;
-  direction: rtl; // start scrolled to the most recent week
+
+  // Centred when the grid is narrower than the panel — a short date range is only a few
+  // week-columns wide, and left-aligning it in a wide card reads as a rendering fault
+  // rather than as "you filtered to a short range". `safe` keeps the start edge reachable
+  // when it DOES overflow, which plain centring would clip.
+  display: flex;
+  justify-content: safe center;
+
+  // Deliberately NOT `direction: rtl`. That started the scroll at the recent end, but on a
+  // panel wider than the grid it also right-aligned the whole calendar, stranding it in the
+  // corner of the card. The component scrolls to the recent end itself, which does the same
+  // job only when there is actually something to scroll.
 }
 
 .calendar-heatmap__svg {
-  direction: ltr; // undo the container trick for the content itself
   display: block;
 }
 

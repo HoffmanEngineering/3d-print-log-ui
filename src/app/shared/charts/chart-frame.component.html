@@ -1,4 +1,8 @@
-<mat-card appearance="outlined" class="chart-frame">
+<mat-card
+  appearance="outlined"
+  class="chart-frame"
+  [class.chart-frame--natural]="fit() === 'natural'"
+>
   <div class="chart-frame__header">
     <h3 class="chart-frame__title">{{ title() }}</h3>
     @if (coverageNote()) {

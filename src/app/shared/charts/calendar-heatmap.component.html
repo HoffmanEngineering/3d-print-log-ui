@@ -1,10 +1,15 @@
-<div class="calendar-heatmap">
+<div class="calendar-heatmap" #calendarScroll>
   @if (cells().length > 0) {
+    <!--
+      Drawn at its natural size, NOT stretched to the container. The cells grow into the
+      available width via the pitch computed in the component, so a short range renders a
+      few normal-sized cells rather than a handful of enormous ones.
+    -->
     <svg
       class="calendar-heatmap__svg"
       [attr.width]="gridWidth()"
-      [attr.height]="gridHeight"
-      [attr.viewBox]="'0 0 ' + gridWidth() + ' ' + gridHeight"
+      [attr.height]="gridHeight()"
+      [attr.viewBox]="'0 0 ' + gridWidth() + ' ' + gridHeight()"
       role="img"
     >
       @for (label of monthLabels(); track label.x) {
@@ -19,16 +24,16 @@
             class="calendar-heatmap__cell chart-heat-{{ cell.level }}"
             [attr.x]="cell.x"
             [attr.y]="cell.y"
-            [attr.width]="cellSize"
-            [attr.height]="cellSize"
+            [attr.width]="cellSize()"
+            [attr.height]="cellSize()"
             rx="2"
           />
           <rect
             class="calendar-heatmap__hit"
-            [attr.x]="cell.x - (hitSize - cellSize) / 2"
-            [attr.y]="cell.y - (hitSize - cellSize) / 2"
-            [attr.width]="hitSize"
-            [attr.height]="hitSize"
+            [attr.x]="cell.x - (hitSize() - cellSize()) / 2"
+            [attr.y]="cell.y - (hitSize() - cellSize()) / 2"
+            [attr.width]="hitSize()"
+            [attr.height]="hitSize()"
             tabindex="0"
             role="button"
             [attr.aria-label]="cell.label"

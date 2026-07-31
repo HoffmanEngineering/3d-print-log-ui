@@ -11,6 +11,7 @@
   <app-chart-frame
     class="printers-tab__chart printers-tab__chart--wide"
     title="Printer comparison"
+    fit="natural"
     [state]="state()"
     [coverage]="data()?.coverage ?? null"
     ariaSummary="Per-printer prints, success rate, print time, filament, cost and utilization"
@@ -95,27 +96,39 @@
   <app-chart-frame
     class="printers-tab__chart printers-tab__chart--wide"
     title="Maintenance"
+    fit="natural"
     [state]="state()"
     [coverage]="data()?.coverage ?? null"
     ariaSummary="Completed maintenance events and their cost"
     emptyMessage="No completed maintenance in this range."
     (retry)="onRetry()"
   >
-    <table class="printers-tab__maintenance">
-      <caption>
-        Completed maintenance @if (maintenanceTotal() !== null) { — total
-        {{ maintenanceTotal() }} {{ data()?.currency }} }
-      </caption>
-      <tbody>
-        @for (event of data()?.maintenance ?? []; track event.id) {
-          <tr>
-            <th scope="row">{{ event.date }}</th>
-            <td>{{ event.category }}</td>
-            <td>{{ event.description }}</td>
-            <td>{{ event.cost === null ? '—' : event.cost }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <!--
+      chart-frame's emptyMessage keys off the TAB's state, which is 'ready' whenever the
+      user owns a printer — so an empty maintenance log rendered as a bare table with no
+      rows and no explanation. This panel reports its own emptiness.
+    -->
+    @if ((data()?.maintenance ?? []).length === 0) {
+      <p class="printers-tab__maintenance-empty">
+        No completed maintenance in this range.
+      </p>
+    } @else {
+      <table class="printers-tab__maintenance">
+        <caption>
+          Completed maintenance @if (maintenanceTotal() !== null) { — total
+          {{ maintenanceTotal() }} {{ data()?.currency }} }
+        </caption>
+        <tbody>
+          @for (event of data()?.maintenance ?? []; track event.id) {
+            <tr>
+              <th scope="row">{{ event.date }}</th>
+              <td>{{ event.category }}</td>
+              <td>{{ event.description }}</td>
+              <td>{{ event.cost === null ? '—' : event.cost }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </app-chart-frame>
 </div>

@@ -39,10 +39,33 @@
 
     @container (min-width: 600px) {
       aspect-ratio: 3 / 2;
+      // A ratio alone runs away as the panel widens: at 680px, 3/2 is already 450px tall,
+      // and at 1400px 16/9 is 790px — one chart fills the screen and everything else is
+      // below the fold. The cap wins over the ratio and keeps a panel readable at any
+      // width. Deliberately from 600px, not 900px: the container here is the CARD, and a
+      // two-column desktop grid gives each card roughly 680px, so a 900px floor never
+      // matched the panels that actually needed capping.
+      max-block-size: 20rem;
     }
     @container (min-width: 900px) {
       aspect-ratio: 16 / 9;
     }
+  }
+
+  // Height comes from the content, for widgets whose size is intrinsic rather than
+  // proportional (the calendar heatmap, the comparison table, the maintenance list).
+  &--natural &__body {
+    aspect-ratio: auto;
+    max-block-size: none;
+    // Only while loading/empty, where the overlaid skeleton and message have nothing to
+    // give the box a height of its own.
+    min-block-size: 5rem;
+  }
+
+  // In natural mode the plot is in normal flow, so the content it wraps sets the height.
+  &--natural &__plot {
+    position: static;
+    inset: auto;
   }
 
   // The measured box. Fills the body exactly, and holds nothing but the plot, so its

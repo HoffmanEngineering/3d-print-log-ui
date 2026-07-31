@@ -99,3 +99,103 @@ export interface OverviewResponse {
     priciestPrint: HighlightRef | null;
   };
 }
+
+export interface ActivitySeriesBucket {
+  index: number;
+  localStart: string;
+  count: number;
+  durationSeconds: number;
+  materialMg: number;
+  /** Null for the whole series when the server's cost row cap was exceeded. */
+  cost: number | null;
+}
+
+export interface CalendarDay {
+  date: string;
+  count: number;
+}
+
+export interface StreakSummary {
+  currentDays: number;
+  longestDays: number;
+  longestStart: string | null;
+  longestEnd: string | null;
+  busiestDate: string | null;
+  busiestDateCount: number;
+  /** 0-6, Sunday = 0. */
+  busiestWeekday: number | null;
+  busiestWeekdayCount: number;
+}
+
+export interface HistogramBucket {
+  label: string;
+  lowerSeconds: number;
+  upperSeconds: number | null;
+  count: number;
+}
+
+export interface MatrixCell {
+  weekday: number;
+  hour: number;
+  count: number;
+}
+
+export interface ActivityResponse {
+  from: string | null;
+  to: string | null;
+  timeZone: string;
+  granularity: Exclude<AnalyticsGranularity, 'Auto'>;
+  currency: string | null;
+  series: ActivitySeriesBucket[];
+  calendar: CalendarDay[];
+  calendarFrom: string | null;
+  calendarTo: string | null;
+  streaks: StreakSummary;
+  durationHistogram: HistogramBucket[];
+  startTimeMatrix: MatrixCell[];
+  coverage: Coverage;
+}
+
+export interface PrinterRow {
+  printerId: number;
+  name: string | null;
+  isIdle: boolean;
+  printCount: number;
+  successRatePercent: number | null;
+  printTimeSeconds: number;
+  materialMg: number;
+  avgDurationSeconds: number | null;
+  cost: number | null;
+  maintenanceCost: number | null;
+  utilizationPercent: number | null;
+  costPerPrintHour: number | null;
+}
+
+export interface PrinterSeriesBucket {
+  index: number;
+  localStart: string;
+  /** Keyed by printer id as a string. */
+  printSecondsByPrinterId: Record<string, number>;
+}
+
+export interface MaintenanceEvent {
+  id: string;
+  printerId: number;
+  date: string;
+  category: string | null;
+  description: string | null;
+  cost: number | null;
+}
+
+export interface PrintersResponse {
+  from: string | null;
+  to: string | null;
+  timeZone: string;
+  granularity: Exclude<AnalyticsGranularity, 'Auto'>;
+  currency: string | null;
+  printers: PrinterRow[];
+  timeSeries: PrinterSeriesBucket[];
+  fleetUtilizationPercent: Metric;
+  maintenance: MaintenanceEvent[];
+  coverage: Coverage;
+}

@@ -3,8 +3,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import {
+  ActivityResponse,
   AnalyticsFilterValue,
   OverviewResponse,
+  PrintersResponse,
 } from '../models/analytics.models';
 
 @Injectable({ providedIn: 'root' })
@@ -14,6 +16,18 @@ export class AnalyticsService {
 
   getOverview(filter: AnalyticsFilterValue): Observable<OverviewResponse> {
     return this.http.get<OverviewResponse>(`${this.baseUrl}/overview`, {
+      params: this.toHttpParams(filter),
+    });
+  }
+
+  getActivity(filter: AnalyticsFilterValue): Observable<ActivityResponse> {
+    return this.http.get<ActivityResponse>(`${this.baseUrl}/activity`, {
+      params: this.toHttpParams(filter),
+    });
+  }
+
+  getPrinters(filter: AnalyticsFilterValue): Observable<PrintersResponse> {
+    return this.http.get<PrintersResponse>(`${this.baseUrl}/printers`, {
       params: this.toHttpParams(filter),
     });
   }

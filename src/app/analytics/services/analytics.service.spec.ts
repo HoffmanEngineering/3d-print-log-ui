@@ -71,6 +71,30 @@ describe('AnalyticsService', () => {
     req.flush(null);
   });
 
+  it('requests activity with the same serialized filter as overview', () => {
+    const expected = service.toHttpParams(filter);
+
+    service.getActivity(filter).subscribe();
+
+    const req = http.expectOne(
+      (r) =>
+        r.url === `${environment.printLogApiUrl}/api/analytics/activity` &&
+        r.params.toString() === expected.toString()
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
+
+  it('requests printers from its own endpoint', () => {
+    service.getPrinters(filter).subscribe();
+
+    const req = http.expectOne(
+      (r) => r.url === `${environment.printLogApiUrl}/api/analytics/printers`
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
+
   it('omits empty id arrays entirely rather than sending blanks', () => {
     service
       .getOverview({ ...filter, printerIds: [], statuses: [] })

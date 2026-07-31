@@ -1,3 +1,12 @@
+// The host is what the ResizeObserver in this component measures, and a component element
+// is `display: inline` by default — an inline box reports a contentRect width of 0, which
+// would pin comparisonLayout to 'cards' at every viewport. chart-frame sidesteps this by
+// measuring an inner block; here the host itself has to be a block.
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
 .printers-tab {
   display: grid;
   gap: 0.5rem;

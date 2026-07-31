@@ -10,5 +10,11 @@
         <app-overview-tab />
       }
     </mat-tab>
+
+    <mat-tab label="Activity">
+      @if (tabGroup.selectedIndex === 1) {
+        <app-activity-tab />
+      }
+    </mat-tab>
   </mat-tab-group>
 </section>

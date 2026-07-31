@@ -9,6 +9,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute } from '@angular/router';
 import { AnalyticsFilterBarComponent } from './filters/analytics-filter-bar.component';
 import { AnalyticsFilterStore } from './filters/analytics-filter.store';
+import { ActivityTabComponent } from './tabs/activity/activity-tab.component';
 import { OverviewTabComponent } from './tabs/overview/overview-tab.component';
 
 /**
@@ -20,7 +21,12 @@ import { OverviewTabComponent } from './tabs/overview/overview-tab.component';
  */
 @Component({
   selector: 'app-analytics-shell',
-  imports: [AnalyticsFilterBarComponent, MatTabsModule, OverviewTabComponent],
+  imports: [
+    ActivityTabComponent,
+    AnalyticsFilterBarComponent,
+    MatTabsModule,
+    OverviewTabComponent,
+  ],
   providers: [AnalyticsFilterStore],
   templateUrl: './analytics-shell.component.html',
   styleUrls: ['./analytics-shell.component.scss'],

@@ -129,12 +129,22 @@ export class PrintersTabComponent implements OnDestroy {
     { key: 'value', label: 'Success rate', seriesIndex: 3 },
   ];
 
+  /**
+   * Summed from the PER-PRINTER totals, not from `maintenance`.
+   *
+   * `maintenance` is the display list, capped at 500 newest events; the API deliberately
+   * computes each printer's maintenanceCost from its own uncapped read for exactly this
+   * reason. Summing the capped list would quietly stop the headline total at 500 events
+   * while the per-printer column beside it kept counting — two numbers on one screen that
+   * disagree, with nothing on screen to explain why.
+   */
   readonly maintenanceTotal = computed(() => {
-    const events = this.data()?.maintenance ?? [];
-    const priced = events.filter((event) => event.cost !== null);
+    const priced = (this.data()?.printers ?? []).filter(
+      (printer) => printer.maintenanceCost !== null
+    );
     return priced.length === 0
       ? null
-      : priced.reduce((sum, e) => sum + (e.cost ?? 0), 0);
+      : priced.reduce((sum, p) => sum + (p.maintenanceCost ?? 0), 0);
   });
 
   onRetry(): void {

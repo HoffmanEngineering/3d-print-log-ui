@@ -152,6 +152,66 @@ describe('PrintersTabComponent', () => {
     expect(component.state()).toBe('empty');
   }));
 
+  it('totals maintenance from the per-printer figures, not the capped event list', fakeAsync(() => {
+    // The API caps the event LIST at 500 but computes maintenanceCost per printer from an
+    // uncapped read. Here the list shows one 4.00 event while the printer's real total is
+    // 900 — summing the list would report 4 and contradict the column beside it.
+    analytics.getPrinters.and.returnValue(
+      of(
+        response({
+          printers: [
+            {
+              printerId: 1,
+              name: 'Ender 3',
+              isIdle: false,
+              printCount: 4,
+              successRatePercent: 75,
+              printTimeSeconds: 7200,
+              materialMg: 60000,
+              avgDurationSeconds: 1800,
+              cost: 10,
+              maintenanceCost: 900,
+              utilizationPercent: 12,
+              costPerPrintHour: 2,
+            },
+          ],
+        })
+      )
+    );
+    setup();
+
+    expect(component.maintenanceTotal()).toBe(900);
+  }));
+
+  it('reports no maintenance total when no printer has a known cost', fakeAsync(() => {
+    analytics.getPrinters.and.returnValue(
+      of(
+        response({
+          printers: [
+            {
+              printerId: 1,
+              name: 'Ender 3',
+              isIdle: false,
+              printCount: 4,
+              successRatePercent: 75,
+              printTimeSeconds: 7200,
+              materialMg: 60000,
+              avgDurationSeconds: 1800,
+              cost: 10,
+              maintenanceCost: null,
+              utilizationPercent: 12,
+              costPerPrintHour: 2,
+            },
+          ],
+        })
+      )
+    );
+    setup();
+
+    // Null, not 0: "no readable price" is not "spent nothing".
+    expect(component.maintenanceTotal()).toBeNull();
+  }));
+
   it('fails the whole tab on an error', fakeAsync(() => {
     analytics.getPrinters.and.returnValue(throwError(() => new Error('boom')));
     setup();

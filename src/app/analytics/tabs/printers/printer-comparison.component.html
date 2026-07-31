@@ -1,0 +1,109 @@
+@if (layout() === 'table') {
+  <div class="printer-comparison__scroll">
+    <table class="printer-comparison__table">
+      <thead>
+        <tr>
+          @for (column of columns; track column.key) {
+            <th
+              scope="col"
+              [attr.aria-sort]="
+                sortColumn() === column.key
+                  ? sortAscending()
+                    ? 'ascending'
+                    : 'descending'
+                  : 'none'
+              "
+            >
+              <button mat-button type="button" (click)="sortBy(column.key)">
+                {{ column.label }}
+              </button>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of sorted(); track row.printerId) {
+          <tr (click)="onSelect(row)">
+            <th scope="row">{{ row.name }}</th>
+            @if (row.isIdle) {
+              <td [attr.colspan]="columns.length - 1">
+                No prints in this range
+              </td>
+            } @else {
+              <td>{{ row.printCount }}</td>
+              <td>
+                {{
+                  row.successRatePercent === null
+                    ? '—'
+                    : (row.successRatePercent | number: '1.0-0') + '%'
+                }}
+              </td>
+              <td>{{ hours(row.printTimeSeconds) | number: '1.0-1' }} h</td>
+              <td>{{ grams(row.materialMg) | number: '1.0-0' }} g</td>
+              <td>
+                {{
+                  row.avgDurationSeconds === null
+                    ? '—'
+                    : (hours(row.avgDurationSeconds) | number: '1.0-1') + ' h'
+                }}
+              </td>
+              <td>{{ row.cost === null ? '—' : (row.cost | number: '1.2-2') }}</td>
+              <td>
+                {{
+                  row.maintenanceCost === null
+                    ? '—'
+                    : (row.maintenanceCost | number: '1.2-2')
+                }}
+              </td>
+              <td>
+                {{
+                  row.utilizationPercent === null
+                    ? '—'
+                    : (row.utilizationPercent | number: '1.0-1') + '%'
+                }}
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <ul class="printer-comparison__cards">
+    @for (row of sorted(); track row.printerId) {
+      <li class="printer-comparison__card" (click)="onSelect(row)">
+        <h3 class="printer-comparison__card-title">{{ row.name }}</h3>
+        @if (row.isIdle) {
+          <p class="printer-comparison__idle">No prints in this range</p>
+        } @else {
+          <dl class="printer-comparison__pairs">
+            <dt>Prints</dt>
+            <dd>{{ row.printCount }}</dd>
+            <dt>Success</dt>
+            <dd>
+              {{
+                row.successRatePercent === null
+                  ? '—'
+                  : (row.successRatePercent | number: '1.0-0') + '%'
+              }}
+            </dd>
+            <dt>Print time</dt>
+            <dd>{{ hours(row.printTimeSeconds) | number: '1.0-1' }} h</dd>
+            <dt>Filament</dt>
+            <dd>{{ grams(row.materialMg) | number: '1.0-0' }} g</dd>
+            <dt>Cost</dt>
+            <dd>{{ row.cost === null ? '—' : (row.cost | number: '1.2-2') }}</dd>
+            <dt>Utilization</dt>
+            <dd>
+              {{
+                row.utilizationPercent === null
+                  ? '—'
+                  : (row.utilizationPercent | number: '1.0-1') + '%'
+              }}
+            </dd>
+          </dl>
+        }
+      </li>
+    }
+  </ul>
+}

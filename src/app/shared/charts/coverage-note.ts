@@ -22,6 +22,11 @@ export function formatCoverageNote(
       `${count} outlier${count === 1 ? '' : 's'} excluded`,
     SampleTooSmall: () => 'Not enough data yet',
     Undated: (count) => `${printCount(count)} have no date`,
+    DurationMissing: (count) =>
+      `${printCount(count)} ${count === 1 ? 'has' : 'have'} no recorded duration`,
+    WindowTruncated: () => 'Showing the most recent 53 weeks',
+    UnattributedMaterial: (count) =>
+      `${printCount(count)} used filament that is not linked to a spool, so it is not in these groups`,
   };
 
   return coverage.exclusions

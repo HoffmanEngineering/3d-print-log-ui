@@ -40,6 +40,17 @@ export class ChartFrameComponent implements OnDestroy {
   readonly coverage = input<Coverage | null>(null);
   readonly ariaSummary = input('');
 
+  /**
+   * How the body gets its height.
+   *
+   * 'aspect' (default) sizes the plot from an aspect ratio, which is right for charts that
+   * should scale with their container. 'natural' lets the projected content define the
+   * height, which is what an intrinsically-sized widget needs — a calendar heatmap is about
+   * 110px tall no matter how wide the panel is, and forcing 16/9 onto a full-width panel
+   * produced a 790px box with the content stranded in one corner.
+   */
+  readonly fit = input<'aspect' | 'natural'>('aspect');
+
   readonly retry = output<void>();
 
   private readonly body = viewChild<ElementRef<HTMLElement>>('chartBody');

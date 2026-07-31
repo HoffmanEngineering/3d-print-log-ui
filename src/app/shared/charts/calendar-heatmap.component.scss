@@ -1,0 +1,46 @@
+.calendar-heatmap {
+  // The SCROLL lives here, never on the page body. A phone shows the recent end and the user
+  // scrolls back; the page itself must not gain a horizontal scrollbar.
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  scroll-snap-type: x proximity;
+
+  // Centred when the grid is narrower than the panel — a short date range is only a few
+  // week-columns wide, and left-aligning it in a wide card reads as a rendering fault
+  // rather than as "you filtered to a short range". `safe` keeps the start edge reachable
+  // when it DOES overflow, which plain centring would clip.
+  display: flex;
+  justify-content: safe center;
+
+  // Deliberately NOT `direction: rtl`. That started the scroll at the recent end, but on a
+  // panel wider than the grid it also right-aligned the whole calendar, stranding it in the
+  // corner of the card. The component scrolls to the recent end itself, which does the same
+  // job only when there is actually something to scroll.
+}
+
+.calendar-heatmap__svg {
+  display: block;
+}
+
+.calendar-heatmap__month {
+  font-size: 9px;
+  fill: var(--chart-axis-text);
+  scroll-snap-align: start;
+}
+
+.calendar-heatmap__cell {
+  stroke: var(--chart-swatch-outline);
+  stroke-width: 0.5;
+}
+
+.calendar-heatmap__hit {
+  fill: transparent;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--chart-axis-text);
+    outline-offset: 1px;
+  }
+}

@@ -1,0 +1,46 @@
+@if (rendered().length > 0) {
+  <svg
+    class="matrix-heatmap"
+    [attr.width]="width()"
+    [attr.height]="height()"
+    [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
+    role="img"
+  >
+    @for (label of visibleColumnLabels(); track label.index) {
+      <text
+        class="matrix-heatmap__label"
+        [attr.x]="rowLabelWidth + label.index * cellWidth()"
+        [attr.y]="10"
+      >
+        {{ label.text }}
+      </text>
+    }
+
+    @for (label of rowLabels(); track label; let row = $index) {
+      <text
+        class="matrix-heatmap__label"
+        [attr.x]="0"
+        [attr.y]="columnLabelHeight + row * cellHeight() + cellHeight() / 2 + 3"
+      >
+        {{ label }}
+      </text>
+    }
+
+    @for (cell of rendered(); track cell.weekday + '-' + cell.hour) {
+      <rect
+        class="matrix-heatmap__cell chart-heat-{{ cell.level }}"
+        [attr.x]="cell.x"
+        [attr.y]="cell.y"
+        [attr.width]="cell.w"
+        [attr.height]="cell.h"
+        tabindex="0"
+        role="button"
+        [attr.aria-label]="cell.label"
+        (click)="onSelect(cell)"
+        (keydown.enter)="onSelect(cell)"
+      >
+        <title>{{ cell.label }}</title>
+      </rect>
+    }
+  </svg>
+}

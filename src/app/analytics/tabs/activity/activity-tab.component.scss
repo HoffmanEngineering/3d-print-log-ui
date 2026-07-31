@@ -1,0 +1,39 @@
+.activity-tab {
+  display: grid;
+  gap: 0.5rem;
+  container-type: inline-size;
+  min-inline-size: 0;
+}
+
+.activity-tab__metric {
+  // Sits in the panel header now, so it must not stretch the row.
+  flex: 0 0 auto;
+}
+
+.activity-tab__charts {
+  display: grid;
+  gap: 0.5rem;
+  // Container queries, not media queries: the side nav collapsing changes available width
+  // without a viewport change.
+  grid-template-columns: minmax(0, 1fr);
+  // Grid rows stretch by default, which dragged the naturally-short calendar panel up to
+  // the height of the tall chart beside it and reintroduced the empty space the natural
+  // fit exists to avoid.
+  align-items: start;
+}
+
+@container (min-width: 900px) {
+  .activity-tab__charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  // Nothing spans both columns any more. Full-width panels were what made a single chart
+  // taller than the viewport on a 1440px screen; the calendar pairs naturally beside the
+  // series chart at half width, and 53 weeks still fit there without scrolling.
+}
+
+.activity-tab__streaks {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--chart-axis-text);
+}

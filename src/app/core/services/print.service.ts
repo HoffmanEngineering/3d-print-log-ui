@@ -282,7 +282,13 @@ export class PrintService {
     sortDirection = SortDirection.Desc,
     sortColumn = PrintSummarySortColumn.StartDate,
     userId?: number,
-    filterByProjectId?: string
+    filterByProjectId?: string,
+    /**
+     * Half-open [fromDate, toDate), matching the API and the analytics contract. Passed as an
+     * object rather than two more positional arguments: this signature already has ten, and the
+     * pair is meaningless split apart.
+     */
+    dateRange?: { fromDate: string; toDate: string }
   ): Observable<PagedList<PrintSummary>> {
     const url = `${this.baseApi}/api/Prints/summary`;
     const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
@@ -319,6 +325,14 @@ export class PrintService {
 
     if (filterByProjectId) {
       params = params.set('filterByProjectId', filterByProjectId);
+    }
+
+    // Both ends or neither: the API rejects a half-supplied range with a 400, and sending one
+    // end alone would filter in a way the user never asked for.
+    if (dateRange?.fromDate && dateRange?.toDate) {
+      params = params
+        .set('fromDate', dateRange.fromDate)
+        .set('toDate', dateRange.toDate);
     }
 
     return this.http.get<PagedList<PrintSummary>>(url, { params, headers });

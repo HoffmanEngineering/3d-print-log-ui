@@ -1,0 +1,57 @@
+// The host is what the ResizeObserver in this component measures, and a component element
+// is `display: inline` by default — an inline box reports a contentRect width of 0, which
+// would pin comparisonLayout to 'cards' at every viewport. chart-frame sidesteps this by
+// measuring an inner block; here the host itself has to be a block.
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.printers-tab {
+  display: grid;
+  gap: 0.5rem;
+  container-type: inline-size;
+  min-inline-size: 0;
+}
+
+.printers-tab__tiles {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.printers-tab__charts {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.printers-tab__maintenance {
+  inline-size: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.25rem 0.5rem;
+    text-align: start;
+  }
+
+  td:last-child {
+    text-align: end;
+  }
+}
+
+.printers-tab__maintenance-empty {
+  margin: 0;
+  color: var(--chart-empty-text);
+}
+
+@container (min-width: 900px) {
+  .printers-tab__tiles {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .printers-tab__charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

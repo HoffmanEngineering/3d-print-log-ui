@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
@@ -22,6 +25,70 @@ describe('PrintService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  // Scoped so httpMock.verify() applies only to the requests these specs make; the rest of the
+  // file exercises pure calculation helpers that issue none.
+  describe('getPrintSummaries', () => {
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => httpMock.verify());
+
+    const emptyPage = {
+      items: [],
+      pageNumber: 1,
+      totalPages: 0,
+      totalCount: 0,
+    };
+
+    it('sends a half-open date range when one is supplied', () => {
+      service
+        .getPrintSummaries(
+          1,
+          10,
+          '',
+          null,
+          [],
+          [],
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          {
+            fromDate: '2026-07-01T00:00:00.000Z',
+            toDate: '2026-07-02T00:00:00.000Z',
+          }
+        )
+        .subscribe();
+
+      const request = httpMock.expectOne((candidate) =>
+        candidate.url.endsWith('/api/Prints/summary')
+      );
+
+      expect(request.request.params.get('fromDate')).toBe(
+        '2026-07-01T00:00:00.000Z'
+      );
+      expect(request.request.params.get('toDate')).toBe(
+        '2026-07-02T00:00:00.000Z'
+      );
+      request.flush(emptyPage);
+    });
+
+    it('omits the range parameters entirely when none is supplied', () => {
+      service.getPrintSummaries(1, 10).subscribe();
+
+      const request = httpMock.expectOne((candidate) =>
+        candidate.url.endsWith('/api/Prints/summary')
+      );
+
+      expect(request.request.params.has('fromDate')).toBeFalse();
+      expect(request.request.params.has('toDate')).toBeFalse();
+      request.flush(emptyPage);
+    });
   });
 
   describe('calculateElectricityCost', () => {

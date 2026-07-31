@@ -1,0 +1,157 @@
+<div class="activity-tab">
+  <div class="activity-tab__charts">
+    <app-chart-frame
+      class="activity-tab__chart"
+      #seriesFrame
+      [title]="seriesLabels[metric()] + ' over time'"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      [ariaSummary]="seriesAriaSummary()"
+      emptyMessage="No prints in this date range yet."
+      (retry)="onRetry()"
+    >
+      <!--
+        Projected into THIS panel's header rather than floating above the tab. Sitting at
+        the top of the page it read as a global switch, while it only ever re-plots this
+        one chart; inside the card the scope is obvious without a word of explanation.
+      -->
+      <mat-button-toggle-group
+        chartActions
+        class="activity-tab__metric"
+        aria-label="Metric to plot"
+        [value]="metric()"
+        (change)="setMetric($event.value)"
+      >
+        <mat-button-toggle value="count">Prints</mat-button-toggle>
+        <mat-button-toggle value="time">Print time</mat-button-toggle>
+        <mat-button-toggle value="filament">Filament</mat-button-toggle>
+        <mat-button-toggle value="cost" [disabled]="!costAvailable()"
+          >Cost</mat-button-toggle
+        >
+      </mat-button-toggle-group>
+
+      <app-bar-chart
+        [data]="seriesData()"
+        [series]="series"
+        [width]="seriesFrame.width()"
+        [height]="seriesFrame.height()"
+      />
+      <table chartDataTable>
+        <caption>
+          {{ seriesLabels[metric()] }} per period
+        </caption>
+        <tbody>
+          @for (row of seriesData(); track row.fullLabel) {
+            <tr>
+              <th scope="row">{{ row.fullLabel }}</th>
+              <td>{{ row.values['value'] }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="activity-tab__chart"
+      #calendarFrame
+      title="Activity calendar"
+      fit="natural"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      [ariaSummary]="streakSummary()"
+      emptyMessage="No prints in this date range yet."
+      (retry)="onRetry()"
+    >
+      <p class="activity-tab__streaks">{{ streakSummary() }}</p>
+      <app-calendar-heatmap
+        [days]="data()?.calendar ?? []"
+        [width]="calendarFrame.width()"
+        [height]="calendarFrame.height()"
+        (daySelect)="onDaySelect($event)"
+      />
+      <table chartDataTable>
+        <caption>
+          Prints per day
+        </caption>
+        <tbody>
+          @for (day of data()?.calendar ?? []; track day.date) {
+            <tr>
+              <th scope="row">{{ day.date }}</th>
+              <td>{{ day.count }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="activity-tab__chart"
+      #histogramFrame
+      title="How long prints take"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Distribution of print durations"
+      emptyMessage="No prints with a recorded duration yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="histogramData()"
+        [series]="series"
+        [width]="histogramFrame.width()"
+        [height]="histogramFrame.height()"
+      />
+      <table chartDataTable>
+        <caption>
+          Prints by duration
+        </caption>
+        <tbody>
+          @for (bucket of data()?.durationHistogram ?? []; track bucket.label) {
+            <tr>
+              <th scope="row">{{ bucket.label }}</th>
+              <td>{{ bucket.count }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="activity-tab__chart"
+      #matrixFrame
+      title="When you start prints"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Prints started by weekday and hour of day"
+      emptyMessage="No prints in this date range yet."
+      (retry)="onRetry()"
+    >
+      <app-matrix-heatmap
+        [cells]="data()?.startTimeMatrix ?? []"
+        [rowLabels]="weekdays"
+        [columnLabels]="hours"
+        [width]="matrixFrame.width()"
+        [height]="matrixFrame.height()"
+      />
+      <table chartDataTable>
+        <caption>
+          Prints started by weekday and hour
+        </caption>
+        <tbody>
+          @for (
+            cell of data()?.startTimeMatrix ?? [];
+            track cell.weekday + '-' + cell.hour
+          ) {
+            @if (cell.count > 0) {
+              <tr>
+                <th scope="row">
+                  {{ weekdays[cell.weekday] }} {{ cell.hour }}:00
+                </th>
+                <td>{{ cell.count }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+  </div>
+</div>

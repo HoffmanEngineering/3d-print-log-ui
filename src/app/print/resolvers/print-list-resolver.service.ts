@@ -24,7 +24,14 @@ export class PrintListResolverService {
       filterByStatus = null,
       sortDirection = SortDirection.Desc,
       sortColumn = PrintSummarySortColumn.StartDate,
+      fromDate = null,
+      toDate = null,
     } = route.queryParams;
+
+    // Both ends or neither: a half-open range with one end open is not a range, and sending
+    // one alone would filter in a way the user never asked for. The API 400s on a half-supplied
+    // pair, so this also keeps a hand-edited URL from breaking the page.
+    const dateRange = fromDate && toDate ? { fromDate, toDate } : undefined;
 
     const printerIds = route.queryParamMap
       .getAll('filterByPrinterId')
@@ -40,7 +47,10 @@ export class PrintListResolverService {
       printerIds,
       filamentIds,
       sortDirection,
-      sortColumn
+      sortColumn,
+      undefined,
+      undefined,
+      dateRange
     );
   }
   constructor(private printService: PrintService) {}

@@ -1,0 +1,154 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { Router } from '@angular/router';
+import {
+  BarChartComponent,
+  BarDatum,
+  BarSeries,
+} from 'src/app/shared/charts/bar-chart.component';
+import {
+  formatTickDate,
+  parseLocalDate,
+} from 'src/app/shared/charts/chart-axis';
+import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
+import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
+import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
+import { PrintersResponse } from '../../models/analytics.models';
+import { AnalyticsService } from '../../services/analytics.service';
+import { createTabData } from '../tab-data';
+import { PrinterComparisonComponent } from './printer-comparison.component';
+
+/** Below this the comparison table becomes a card list rather than a horizontal scroll. */
+const CARD_LAYOUT_BELOW = 700;
+
+@Component({
+  selector: 'app-printers-tab',
+  imports: [
+    BarChartComponent,
+    ChartFrameComponent,
+    PrinterComparisonComponent,
+    StatTileComponent,
+  ],
+  templateUrl: './printers-tab.component.html',
+  styleUrls: ['./printers-tab.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class PrintersTabComponent implements OnDestroy {
+  private readonly analytics = inject(AnalyticsService);
+  private readonly store = inject(AnalyticsFilterStore);
+  private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
+
+  private readonly tab = createTabData<PrintersResponse>(
+    this.store.filter,
+    (filter) => this.analytics.getPrinters(filter),
+    (response) => response.printers.every((printer) => printer.isIdle)
+  );
+
+  readonly data = this.tab.data;
+  readonly state = this.tab.state;
+
+  /**
+   * Measured from the host, not the window: the side nav collapsing changes the available
+   * width without a viewport change, exactly as chart-frame documents.
+   */
+  readonly comparisonLayout = signal<'table' | 'cards'>('table');
+
+  private observer?: ResizeObserver;
+
+  constructor() {
+    if (typeof ResizeObserver !== 'undefined') {
+      this.observer = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width;
+        if (width === undefined) return;
+        this.comparisonLayout.set(
+          width < CARD_LAYOUT_BELOW ? 'cards' : 'table'
+        );
+      });
+      this.observer.observe(this.host.nativeElement);
+    }
+  }
+
+  /**
+   * One series per printer, colours cycling through the six theme tokens. The key is the
+   * printer id as a string, matching PrinterSeriesBucket.printSecondsByPrinterId, so the
+   * stacked chart and the table are looking at the same identity.
+   */
+  readonly printerSeries = computed<BarSeries[]>(() =>
+    (this.data()?.printers ?? []).map((printer, index) => ({
+      key: String(printer.printerId),
+      label: printer.name ?? `Printer ${printer.printerId}`,
+      seriesIndex: (index % 6) + 1,
+    }))
+  );
+
+  readonly timeSeriesData = computed<BarDatum[]>(() => {
+    const response = this.data();
+    if (!response) return [];
+
+    return [...response.timeSeries]
+      .sort(
+        (left, right) =>
+          left.localStart.localeCompare(right.localStart) ||
+          left.index - right.index
+      )
+      .map((bucket) => {
+        const date = parseLocalDate(bucket.localStart);
+        const values: Record<string, number> = {};
+        for (const [printerId, seconds] of Object.entries(
+          bucket.printSecondsByPrinterId
+        )) {
+          values[printerId] = seconds / 3600;
+        }
+        return {
+          label: formatTickDate(date, response.granularity, true),
+          fullLabel: formatTickDate(date, response.granularity, false),
+          values,
+        };
+      });
+  });
+
+  readonly successRateData = computed<BarDatum[]>(() =>
+    (this.data()?.printers ?? [])
+      .filter((printer) => printer.successRatePercent !== null)
+      .map((printer) => ({
+        label: printer.name ?? `Printer ${printer.printerId}`,
+        fullLabel: printer.name ?? `Printer ${printer.printerId}`,
+        values: { value: printer.successRatePercent as number },
+      }))
+  );
+
+  readonly singleSeries: readonly BarSeries[] = [
+    { key: 'value', label: 'Success rate', seriesIndex: 3 },
+  ];
+
+  readonly maintenanceTotal = computed(() => {
+    const events = this.data()?.maintenance ?? [];
+    const priced = events.filter((event) => event.cost !== null);
+    return priced.length === 0
+      ? null
+      : priced.reduce((sum, e) => sum + (e.cost ?? 0), 0);
+  });
+
+  onRetry(): void {
+    this.tab.retry();
+  }
+
+  /** Never sends userId — that would narrow the list to the user's PUBLIC prints. */
+  onPrinterSelect(event: { printerId: number }): void {
+    void this.router.navigate(['/prints'], {
+      queryParams: { filterByPrinterId: event.printerId },
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+  }
+}

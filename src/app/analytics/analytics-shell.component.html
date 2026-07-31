@@ -16,5 +16,11 @@
         <app-activity-tab />
       }
     </mat-tab>
+
+    <mat-tab label="Printers">
+      @if (tabGroup.selectedIndex === 2) {
+        <app-printers-tab />
+      }
+    </mat-tab>
   </mat-tab-group>
 </section>

@@ -1,0 +1,63 @@
+.printer-comparison__scroll {
+  // The table scrolls inside its own box. The page body must never scroll horizontally.
+  overflow-x: auto;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.printer-comparison__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.25rem 0.5rem;
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    cursor: pointer;
+  }
+}
+
+.printer-comparison__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.printer-comparison__card {
+  padding: 0.5rem;
+  border: 1px solid var(--chart-grid);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.printer-comparison__card-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.printer-comparison__pairs {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.125rem 0.5rem;
+  margin: 0;
+
+  dt {
+    color: var(--chart-axis-text);
+  }
+
+  dd {
+    margin: 0;
+    text-align: end;
+  }
+}
+
+.printer-comparison__idle {
+  margin: 0;
+  color: var(--chart-empty-text);
+}

@@ -11,6 +11,7 @@ import { AnalyticsFilterBarComponent } from './filters/analytics-filter-bar.comp
 import { AnalyticsFilterStore } from './filters/analytics-filter.store';
 import { ActivityTabComponent } from './tabs/activity/activity-tab.component';
 import { OverviewTabComponent } from './tabs/overview/overview-tab.component';
+import { PrintersTabComponent } from './tabs/printers/printers-tab.component';
 
 /**
  * Owns the single AnalyticsFilterStore instance for the page. The filter bar, the mobile
@@ -26,6 +27,7 @@ import { OverviewTabComponent } from './tabs/overview/overview-tab.component';
     AnalyticsFilterBarComponent,
     MatTabsModule,
     OverviewTabComponent,
+    PrintersTabComponent,
   ],
   providers: [AnalyticsFilterStore],
   templateUrl: './analytics-shell.component.html',

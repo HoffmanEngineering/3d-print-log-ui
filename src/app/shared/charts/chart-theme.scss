@@ -1,0 +1,48 @@
+// Chart color tokens. d3 marks get classes (.chart-fill-1 … .chart-fill-6); CSS supplies the
+// fill, so switching themes never requires re-rendering a chart. Do NOT read isDark() in a
+// template to pick colors — that pops in after hydration on prerendered pages.
+:root {
+  --chart-series-1: #1f77b4;
+  --chart-series-2: #ff7f0e;
+  --chart-series-3: #2ca02c;
+  --chart-series-4: #d62728;
+  --chart-series-5: #9467bd;
+  --chart-series-6: #8c8c8c;
+
+  --chart-grid: rgba(0, 0, 0, 0.12);
+  --chart-axis-text: rgba(0, 0, 0, 0.68);
+  --chart-tooltip-bg: rgba(255, 255, 255, 0.98);
+  --chart-tooltip-text: rgba(0, 0, 0, 0.87);
+  --chart-swatch-outline: rgba(0, 0, 0, 0.45);
+  --chart-empty-text: rgba(0, 0, 0, 0.54);
+}
+
+// ThemeService toggles `dark-theme` on <html>, before first paint (theme.service.ts:61).
+html.dark-theme {
+  --chart-series-1: #6ab7ff;
+  --chart-series-2: #ffb74d;
+  --chart-series-3: #81c784;
+  --chart-series-4: #ef5350;
+  --chart-series-5: #b39ddb;
+  --chart-series-6: #bdbdbd;
+
+  --chart-grid: rgba(255, 255, 255, 0.16);
+  --chart-axis-text: rgba(255, 255, 255, 0.72);
+  --chart-tooltip-bg: rgba(33, 33, 33, 0.98);
+  --chart-tooltip-text: rgba(255, 255, 255, 0.92);
+  --chart-swatch-outline: rgba(255, 255, 255, 0.6);
+  --chart-empty-text: rgba(255, 255, 255, 0.6);
+}
+
+@for $i from 1 through 6 {
+  .chart-fill-#{$i} {
+    fill: var(--chart-series-#{$i});
+  }
+  .chart-stroke-#{$i} {
+    stroke: var(--chart-series-#{$i});
+  }
+  // For HTML legend swatches, which take background-color rather than SVG fill.
+  .chart-bg-#{$i} {
+    background-color: var(--chart-series-#{$i});
+  }
+}

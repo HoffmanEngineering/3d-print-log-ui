@@ -1,0 +1,17 @@
+.analytics-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 2rem;
+  // Nothing here may push the page wide; wide content scrolls in its own container.
+  max-inline-size: 100%;
+  // Unlike hidden, clip does not create an accidental scroll container that breaks
+  // the filter bar's sticky positioning relative to the app viewport.
+  overflow-x: clip;
+
+  &__heading {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+}

@@ -1,0 +1,85 @@
+<mat-card appearance="outlined" class="chart-frame">
+  <div class="chart-frame__header">
+    <h3 class="chart-frame__title">{{ title() }}</h3>
+    @if (coverageNote()) {
+      <button
+        type="button"
+        class="chart-frame__badge"
+        data-testid="coverage-badge"
+        [matTooltip]="coverageNote()!"
+        [attr.aria-label]="'Data quality: ' + coverageNote()"
+      >
+        <mat-icon inline>info_outline</mat-icon>
+        <!-- The note must exist in the DOM, not only in the tooltip: a tooltip is
+             pointer/focus-driven and is not reliably reachable by a screen reader
+             reading the card straight through. -->
+        <span class="cdk-visually-hidden">{{ coverageNote() }}</span>
+      </button>
+    }
+    <ng-content select="[chartActions]"></ng-content>
+  </div>
+
+  <!--
+    The outer body carries the aspect-ratio; #chartBody is the element actually measured
+    and holds ONLY the plotting area. It must not contain the skeleton, the empty/error
+    messages, or the a11y table: those have their own intrinsic heights, so measuring a box
+    that wraps them makes the reported size jump on every state transition and children
+    re-render at a size the chart never occupies. It also sits OUTSIDE the @switch so it
+    exists from the first frame — a ref that only appears in the 'ready' branch is null
+    while loading, and the first chart render would get width 0.
+  -->
+  <div class="chart-frame__body">
+    <div class="chart-frame__plot" #chartBody>
+      @if (state() === 'ready') {
+        <!--
+          role="group", not role="img": an img's subtree is presentational, which would hide
+          the focusable chart marks inside it from assistive tech while they remained in the
+          tab order. A labelled group keeps the summary announced AND exposes the controls.
+        -->
+        <div
+          class="chart-frame__content"
+          data-testid="chart-content"
+          role="group"
+          [attr.aria-label]="ariaSummary()"
+        >
+          <ng-content></ng-content>
+        </div>
+      }
+    </div>
+
+    @switch (state()) {
+      @case ('loading') {
+        <div
+          class="chart-frame__skeleton"
+          data-testid="chart-skeleton"
+          aria-busy="true"
+        ></div>
+      }
+      @case ('empty') {
+        <p class="chart-frame__message" data-testid="chart-empty">
+          {{ emptyMessage() }}
+        </p>
+      }
+      @case ('error') {
+        <div class="chart-frame__message">
+          <p>{{ errorMessage() }}</p>
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="chart-retry"
+            (click)="retry.emit()"
+          >
+            Try again
+          </button>
+        </div>
+      }
+      @default {
+        <!-- The same numbers as a table, for screen readers and as the CSV source of truth.
+             Outside #chartBody so it never contributes to the measured plot size. -->
+        <div class="chart-frame__a11y-table">
+          <ng-content select="[chartDataTable]"></ng-content>
+        </div>
+      }
+    }
+  </div>
+</mat-card>

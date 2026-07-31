@@ -1,0 +1,36 @@
+.line-area-chart {
+  inline-size: 100%;
+  block-size: 100%;
+  display: block;
+
+  &__axis-label {
+    font-size: 11px;
+    fill: var(--chart-axis-text);
+  }
+
+  &__area {
+    opacity: 0.18;
+  }
+
+  &__line {
+    stroke-width: 2;
+    fill: none;
+  }
+
+  // The real touch target. Transparent rather than display:none so it still receives
+  // pointer and keyboard events.
+  &__hit {
+    fill: transparent;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: none;
+      stroke: var(--chart-swatch-outline);
+      stroke-width: 2;
+    }
+  }
+
+  &__dot {
+    pointer-events: none;
+  }
+}

@@ -1,0 +1,50 @@
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.75rem 1rem;
+  position: relative;
+
+  &__label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--chart-empty-text);
+  }
+
+  &__value {
+    font-size: 1.5rem;
+    font-weight: 500;
+    line-height: 1.2;
+    // Long money values must shrink, not overflow, on a 2-across phone grid.
+    overflow-wrap: anywhere;
+  }
+
+  &__delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    font-size: 0.75rem;
+
+    &--up {
+      color: var(--chart-series-3);
+    }
+    &--down {
+      color: var(--chart-series-4);
+    }
+  }
+
+  &__info {
+    position: absolute;
+    inset-block-start: 0.5rem;
+    inset-inline-end: 0.5rem;
+    color: var(--chart-empty-text);
+  }
+
+  &__skeleton {
+    block-size: 1.8rem;
+    inline-size: 60%;
+    border-radius: 4px;
+    background: var(--chart-grid);
+  }
+}

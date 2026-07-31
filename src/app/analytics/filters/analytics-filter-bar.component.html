@@ -1,0 +1,106 @@
+<div class="analytics-filter-bar">
+  <div class="analytics-filter-bar__row">
+    <mat-form-field
+      appearance="outline"
+      class="analytics-filter-bar__range"
+      data-testid="date-range-select"
+    >
+      <mat-label>Date range</mat-label>
+      <mat-select [value]="store.preset()" (valueChange)="onPreset($event)">
+        @for (preset of presets; track preset.value) {
+          <mat-option [value]="preset.value">{{ preset.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (store.preset() === 'custom') {
+      <mat-form-field
+        appearance="outline"
+        class="analytics-filter-bar__custom"
+        data-testid="custom-range"
+      >
+        <mat-label>Custom range</mat-label>
+        <!--
+          Both ends report through (dateChange), whose $event.value is the parsed Date.
+          Reading `valueAsDate` off these inputs does NOT work: Material renders them as
+          type=text, where valueAsDate is undefined, so the range was never submitted.
+        -->
+        <mat-date-range-input [rangePicker]="picker">
+          <input
+            matStartDate
+            placeholder="Start"
+            (dateChange)="onCustomStart($event.value)"
+          />
+          <input
+            matEndDate
+            placeholder="End"
+            (dateChange)="onCustomEnd($event.value)"
+          />
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-date-range-picker #picker />
+      </mat-form-field>
+    }
+
+    <div class="analytics-filter-bar__secondary">
+      @if (isPhone()) {
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="mobile-filters-button"
+          (click)="openSheet()"
+        >
+          <mat-icon>filter_list</mat-icon>
+          Filters
+          @if (store.activeChipCount() > 0) {
+            <span
+              class="analytics-filter-bar__badge"
+              [matBadge]="store.activeChipCount()"
+              matBadgeSize="small"
+            ></span>
+          }
+        </button>
+      } @else {
+        <app-analytics-filter-controls />
+      }
+
+      <mat-slide-toggle
+        class="analytics-filter-bar__compare"
+        data-testid="compare-toggle"
+        [checked]="store.comparePrevious()"
+        (change)="store.toggleComparePrevious()"
+      >
+        Compare to previous
+      </mat-slide-toggle>
+    </div>
+  </div>
+
+  @if (activeChips().length > 0) {
+    <mat-chip-set
+      class="analytics-filter-bar__chips"
+      aria-label="Active filters"
+    >
+      @for (chip of activeChips(); track chip.id) {
+        <mat-chip data-testid="active-filter-chip">
+          @if (chip.colorHex) {
+            <span
+              class="analytics-filter-bar__material-color"
+              data-testid="material-color"
+              [style.background-color]="chip.colorHex"
+            ></span>
+          }
+          {{ chip.label }}
+          <button
+            matChipRemove
+            type="button"
+            data-testid="chip-remove"
+            [attr.aria-label]="'Remove ' + chip.label + ' filter'"
+            (click)="chip.remove()"
+          >
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip>
+      }
+    </mat-chip-set>
+  }
+</div>

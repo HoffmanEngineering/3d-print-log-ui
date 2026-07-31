@@ -596,13 +596,19 @@ export class PrintService {
         continue;
       }
 
-      // If actual has an amount, use it.
-      if (
-        (fu.source == PrintFilamentSourceMeasurement.Length &&
-          fu.lengthInM > 0) ||
-        (!(fu.source == PrintFilamentSourceMeasurement.Length) &&
-          fu.amountMg > 0)
-      ) {
+      // If actual has an amount, use it. The check must be made against the measurement the
+      // row is actually sourced from: a Volume-sourced row records volumeMl and leaves amountMg
+      // null, so testing amountMg alone sent it down the estimated path and — when there was no
+      // estimate — reported a confident $0.00 instead of its real cost.
+      // Pinned by print-cost-fixtures.spec.ts against the shared corpus.
+      const hasActual =
+        fu.source == PrintFilamentSourceMeasurement.Length
+          ? fu.lengthInM > 0
+          : fu.source == PrintFilamentSourceMeasurement.Volume
+            ? fu.volumeMl > 0
+            : fu.amountMg > 0;
+
+      if (hasActual) {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,

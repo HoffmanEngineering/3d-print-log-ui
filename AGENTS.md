@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file provides guidance to AI Agents like Claude Code (claude.ai/code) or Codex when working with code in this repository.
 
 ## Project Overview
 
@@ -38,7 +38,7 @@ npm run prettier:fix       # Fix formatting
 
 ### Token-Efficient Commands
 
-When communicating with Codex about test or lint failures, use these token-efficient variants to reduce output:
+When communicating with Claude about test or lint failures, use these token-efficient variants to reduce output:
 
 - **`npm run test:brief`** - Runs tests in CI mode with only failures/warnings displayed
 - **`npm run lint:brief`** - Runs linting with only errors/warnings displayed
@@ -67,6 +67,13 @@ These commands are optimized for minimal token usage while preserving actionable
 - `AuthInterceptorService` adds Bearer tokens to API requests
 - `allow-anonymous-request` header bypasses authentication for public endpoints
 - `AuthGuard` protects authenticated routes
+
+### Public / Anonymous Routes (don't break these)
+
+Routes without `AuthGuard` (e.g. `/prints/:id`, public profiles/materials) must render for logged-out visitors. A **rejected resolver cancels navigation and bounces to `/`** (#66) — and this only shows up logged-out, so it's easy to miss.
+
+- On a public route, resolvers/services must degrade to a default/`null` for anonymous users, never throw. Fix in the **service** (also protects `ngOnInit` callers), and keep settings consumers null-tolerant (`?.value`, `?? default`). Auth-required endpoints reject with `missing_refresh_token` unless the request sets `allow-anonymous-request` **and** the API marks them `[AllowAnonymous]`.
+- Test logged-out without Auth0: append `?devUserId=anonymous` (dev only; `isDevAnonymous` util). Regression pattern: `cypress/e2e/prints/public-print-anonymous.cy.ts` (a public-route E2E with no `cy.login()`).
 
 ### Environment Configuration
 

@@ -302,3 +302,49 @@ export interface CostsResponse {
   leastExpensive: PrintCostRef[];
   coverage: Coverage;
 }
+
+export interface ScatterBin {
+  estimated: number;
+  actual: number;
+  count: number;
+}
+
+export interface AccuracyGroup {
+  scope: string;
+  key: string;
+  label: string;
+  medianRatio: number | null;
+  sampleSize: number;
+  suppressedForSmallSample: boolean;
+}
+
+export interface AccuracyTrendBucket {
+  index: number;
+  localStart: string;
+  medianRatio: number | null;
+  sampleSize: number;
+}
+
+export interface AccuracyCallout {
+  scope: string;
+  key: string;
+  label: string;
+  dimension: string;
+  medianRatio: number;
+  sampleSize: number;
+}
+
+export interface AccuracyResponse {
+  from: string | null;
+  to: string | null;
+  timeZone: string;
+  granularity: Exclude<AnalyticsGranularity, 'Auto'>;
+  timeAccuracyMedian: Metric;
+  materialAccuracyMedian: Metric;
+  timeScatter: ScatterBin[];
+  byPrinter: AccuracyGroup[];
+  byMaterial: AccuracyGroup[];
+  biasTrend: AccuracyTrendBucket[];
+  callouts: AccuracyCallout[];
+  coverage: Coverage;
+}

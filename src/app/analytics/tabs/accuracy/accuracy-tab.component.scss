@@ -1,0 +1,59 @@
+.accuracy-tab {
+  display: grid;
+  gap: 0.5rem;
+  // Container queries, not media queries: the side nav collapsing changes available width
+  // without a viewport change.
+  container-type: inline-size;
+  min-inline-size: 0;
+}
+
+.accuracy-tab__tiles {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.accuracy-tab__charts {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  // Panels differ in natural height; stretching drags the short one to the tall one's size.
+  align-items: start;
+}
+
+@container (min-width: 900px) {
+  .accuracy-tab__charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .accuracy-tab__chart--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.accuracy-tab__callouts {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--chart-grid);
+  border-radius: 4px;
+
+  h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-inline-start: 1rem;
+  }
+}
+
+.accuracy-tab__groups {
+  inline-size: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.25rem 0.5rem;
+    text-align: start;
+  }
+}

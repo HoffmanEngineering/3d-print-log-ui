@@ -1,0 +1,151 @@
+<div class="accuracy-tab" #accuracyHost>
+  <div class="accuracy-tab__tiles">
+    <app-stat-tile
+      label="Time accuracy (actual ÷ estimated)"
+      format="number"
+      [metric]="data()?.timeAccuracyMedian ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Material accuracy (actual ÷ estimated)"
+      format="number"
+      [metric]="data()?.materialAccuracyMedian ?? null"
+      [loading]="state() === 'loading'"
+    />
+  </div>
+
+  @if (calloutMessages().length > 0) {
+    <section class="accuracy-tab__callouts" aria-labelledby="accuracy-callouts">
+      <h3 id="accuracy-callouts">What this means</h3>
+      <ul>
+        @for (message of calloutMessages(); track message) {
+          <li>{{ message }}</li>
+        }
+      </ul>
+    </section>
+  }
+
+  <div class="accuracy-tab__charts">
+    <app-chart-frame
+      class="accuracy-tab__chart accuracy-tab__chart--wide"
+      #scatterFrame
+      title="Actual vs estimated print time"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Each mark compares a group of prints' estimated and actual durations against a y equals x reference line"
+      emptyMessage="No prints with both an estimate and a measured time yet."
+      (retry)="onRetry()"
+    >
+      @if (showScatter()) {
+        <app-scatter-chart
+          [points]="scatterPoints()"
+          [width]="scatterFrame.width()"
+          [height]="scatterFrame.height()"
+          xLabel="Estimated"
+          yLabel="Actual"
+        />
+      } @else {
+        <app-bar-chart
+          [data]="byPrinterData()"
+          [series]="singleSeries"
+          [width]="scatterFrame.width()"
+          [height]="scatterFrame.height()"
+          orientation="horizontal"
+          (barSelect)="onBarSelect($event)"
+        />
+      }
+
+      <table chartDataTable>
+        <caption>
+          Estimated versus actual print time
+        </caption>
+        <tbody>
+          @for (
+            bin of data()?.timeScatter ?? [];
+            track bin.estimated + '-' + bin.actual
+          ) {
+            <tr>
+              <th scope="row">{{ bin.estimated }} s estimated</th>
+              <td>{{ bin.actual }} s actual, {{ bin.count }} prints</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="accuracy-tab__chart"
+      #trendFrame
+      title="Estimate bias over time"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="The median actual-to-estimated ratio for each period"
+      emptyMessage="Not enough prints per period to show a trend yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="biasTrendData()"
+        [series]="singleSeries"
+        [width]="trendFrame.width()"
+        [height]="trendFrame.height()"
+      />
+      <table chartDataTable>
+        <caption>
+          Median actual ÷ estimated per period
+        </caption>
+        <tbody>
+          @for (row of biasTrendData(); track row.fullLabel) {
+            <tr>
+              <th scope="row">{{ row.fullLabel }}</th>
+              <td>{{ row.values['value'] }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="accuracy-tab__chart"
+      title="By printer and material"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Median actual-to-estimated ratio for each printer and each material type"
+      emptyMessage="No groups with a usable estimate yet."
+      (retry)="onRetry()"
+    >
+      <table class="accuracy-tab__groups">
+        <caption>
+          Median actual ÷ estimated by group
+        </caption>
+        <tbody>
+          @for (group of data()?.byPrinter ?? []; track group.key) {
+            <tr>
+              <th scope="row">{{ group.label }}</th>
+              <td>
+                @if (group.suppressedForSmallSample) {
+                  Not enough data yet
+                } @else {
+                  {{ group.medianRatio }}
+                }
+              </td>
+              <td>n={{ group.sampleSize }}</td>
+            </tr>
+          }
+          @for (group of data()?.byMaterial ?? []; track group.key) {
+            <tr>
+              <th scope="row">{{ group.label }}</th>
+              <td>
+                @if (group.suppressedForSmallSample) {
+                  Not enough data yet
+                } @else {
+                  {{ group.medianRatio }}
+                }
+              </td>
+              <td>n={{ group.sampleSize }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+  </div>
+</div>

@@ -115,6 +115,16 @@ describe('AnalyticsService', () => {
     req.flush({});
   });
 
+  it('requests accuracy from its own endpoint', () => {
+    service.getAccuracy(filter).subscribe();
+
+    const req = http.expectOne(
+      (r) => r.url === `${environment.printLogApiUrl}/api/analytics/accuracy`
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
+
   it('omits empty id arrays entirely rather than sending blanks', () => {
     service
       .getOverview({ ...filter, printerIds: [], statuses: [] })

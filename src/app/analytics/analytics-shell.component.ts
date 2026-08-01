@@ -10,6 +10,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AnalyticsFilterBarComponent } from './filters/analytics-filter-bar.component';
 import { AnalyticsFilterStore } from './filters/analytics-filter.store';
+import { AccuracyTabComponent } from './tabs/accuracy/accuracy-tab.component';
 import { ActivityTabComponent } from './tabs/activity/activity-tab.component';
 import { CostsTabComponent } from './tabs/costs/costs-tab.component';
 import { OverviewTabComponent } from './tabs/overview/overview-tab.component';
@@ -26,6 +27,7 @@ import { PrintersTabComponent } from './tabs/printers/printers-tab.component';
 @Component({
   selector: 'app-analytics-shell',
   imports: [
+    AccuracyTabComponent,
     ActivityTabComponent,
     AnalyticsFilterBarComponent,
     CostsTabComponent,
@@ -55,6 +57,7 @@ export class AnalyticsShellComponent implements OnInit {
     'printers',
     'materials',
     'costs',
+    'accuracy',
   ] as const;
 
   readonly selectedIndex = signal(0);

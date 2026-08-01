@@ -16,6 +16,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
+import { CsvExport } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import {
   DonutChartComponent,
@@ -155,6 +156,29 @@ export class OverviewTabComponent {
       { caption: 'Longest print', ref: h.longestPrint },
     ].filter((item) => item.ref !== null);
   });
+
+  readonly seriesCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-overview-prints-over-time.csv',
+    columns: ['Period', 'Status', 'Prints'],
+    rows: [...(this.data()?.series ?? [])]
+      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+      .flatMap((bucket) =>
+        Object.entries(bucket.countsByStatus).map(([status, count]) => [
+          bucket.localStart,
+          status,
+          count,
+        ])
+      ),
+  }));
+
+  readonly statusCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-overview-outcomes.csv',
+    columns: ['Status', 'Prints'],
+    rows: (this.data()?.statusBreakdown ?? []).map((entry) => [
+      entry.status,
+      entry.count,
+    ]),
+  }));
 
   readonly seriesAriaSummary = computed(() => {
     const response = this.data();

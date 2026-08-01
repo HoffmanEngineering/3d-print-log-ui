@@ -19,6 +19,7 @@
       class="materials-tab__chart"
       #typeFrame
       title="Filament by material type"
+      [csv]="byTypeCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Grams of filament used per material type"
@@ -54,6 +55,7 @@
       class="materials-tab__chart"
       #brandFrame
       title="Filament by brand"
+      [csv]="byBrandCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Grams of filament used per brand"
@@ -89,6 +91,7 @@
       class="materials-tab__chart"
       #colorFrame
       title="Filament by colour"
+      [csv]="byColorCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Grams of filament used per colour"
@@ -124,6 +127,7 @@
       class="materials-tab__chart"
       #consumptionFrame
       title="Consumption over time"
+      [csv]="consumptionCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Grams of filament used per period, stacked by material type"
@@ -157,6 +161,7 @@
   <app-chart-frame
     class="materials-tab__chart materials-tab__chart--wide"
     title="Top spools"
+      [csv]="topSpoolsCsv()"
     [state]="state()"
     [coverage]="data()?.coverage ?? null"
     ariaSummary="Most-used spools with remaining stock"

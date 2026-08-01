@@ -17,6 +17,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
+import { CsvExport } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
@@ -138,6 +139,67 @@ export class PrintersTabComponent implements OnDestroy {
    * while the per-printer column beside it kept counting — two numbers on one screen that
    * disagree, with nothing on screen to explain why.
    */
+  readonly comparisonCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-printers-comparison.csv',
+    columns: [
+      'Printer',
+      'Prints',
+      'Success rate (%)',
+      'Print time (s)',
+      'Filament (g)',
+      'Avg duration (s)',
+      'Cost',
+      'Maintenance cost',
+      'Utilization (%)',
+      'Cost per print hour',
+    ],
+    rows: (this.data()?.printers ?? []).map((row) => [
+      row.name,
+      row.printCount,
+      row.successRatePercent,
+      row.printTimeSeconds,
+      row.materialMg / 1000,
+      row.avgDurationSeconds,
+      row.cost,
+      row.maintenanceCost,
+      row.utilizationPercent,
+      row.costPerPrintHour,
+    ]),
+  }));
+
+  readonly successCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-printers-success-rate.csv',
+    columns: ['Printer', 'Success rate (%)'],
+    rows: (this.data()?.printers ?? []).map((row) => [
+      row.name,
+      row.successRatePercent,
+    ]),
+  }));
+
+  readonly timeSeriesCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-printers-print-time.csv',
+    columns: ['Period', 'Printer id', 'Print time (s)'],
+    rows: [...(this.data()?.timeSeries ?? [])]
+      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+      .flatMap((bucket) =>
+        Object.entries(bucket.printSecondsByPrinterId).map(
+          ([printerId, seconds]) => [bucket.localStart, printerId, seconds]
+        )
+      ),
+  }));
+
+  readonly maintenanceCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-printers-maintenance.csv',
+    columns: ['Date', 'Printer id', 'Category', 'Description', 'Cost'],
+    rows: (this.data()?.maintenance ?? []).map((event) => [
+      event.date,
+      event.printerId,
+      event.category,
+      event.description,
+      event.cost,
+    ]),
+  }));
+
   readonly maintenanceTotal = computed(() => {
     const priced = (this.data()?.printers ?? []).filter(
       (printer) => printer.maintenanceCost !== null

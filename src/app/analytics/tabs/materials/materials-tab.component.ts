@@ -16,6 +16,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
+import { CsvExport } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import {
   FilamentSvgDefsComponent,
@@ -123,6 +124,59 @@ export class MaterialsTabComponent {
         };
       });
   });
+
+  private groupCsv(
+    name: string,
+    groups: { label: string; printCount: number; materialMg: number }[]
+  ): CsvExport {
+    return {
+      filename: `analytics-materials-by-${name}.csv`,
+      columns: ['Group', 'Prints', 'Filament (g)'],
+      rows: groups.map((group) => [
+        group.label,
+        group.printCount,
+        group.materialMg / 1000,
+      ]),
+    };
+  }
+
+  readonly byTypeCsv = computed<CsvExport>(() =>
+    this.groupCsv('type', this.data()?.byType ?? [])
+  );
+
+  readonly byBrandCsv = computed<CsvExport>(() =>
+    this.groupCsv('brand', this.data()?.byBrand ?? [])
+  );
+
+  readonly byColorCsv = computed<CsvExport>(() =>
+    this.groupCsv('colour', this.data()?.byColor ?? [])
+  );
+
+  readonly consumptionCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-materials-consumption.csv',
+    columns: ['Period', 'Material type', 'Filament (g)'],
+    rows: [...(this.data()?.consumptionOverTime ?? [])]
+      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+      .flatMap((bucket) =>
+        Object.entries(bucket.materialMgByType).map(([type, mg]) => [
+          bucket.localStart,
+          type,
+          mg / 1000,
+        ])
+      ),
+  }));
+
+  readonly topSpoolsCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-materials-top-spools.csv',
+    columns: ['Spool', 'Used (g)', 'Remaining (g)', 'Consumed (%)', 'Cost'],
+    rows: (this.data()?.topSpools ?? []).map((spool) => [
+      spool.label,
+      spool.usedMg / 1000,
+      spool.remainingMg === null ? null : spool.remainingMg / 1000,
+      spool.percentConsumed,
+      spool.costConsumed,
+    ]),
+  }));
 
   readonly runningLow = computed(() =>
     (this.data()?.runway ?? [])

@@ -19,6 +19,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
+import { CsvExport } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import {
   ScatterChartComponent,
@@ -133,6 +134,42 @@ export class AccuracyTabComponent implements OnDestroy {
         };
       });
   });
+
+  readonly scatterCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-accuracy-time-scatter.csv',
+    columns: ['Estimated (s)', 'Actual (s)', 'Prints'],
+    rows: (this.data()?.timeScatter ?? []).map((bin) => [
+      bin.estimated,
+      bin.actual,
+      bin.count,
+    ]),
+  }));
+
+  readonly biasTrendCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-accuracy-bias-trend.csv',
+    columns: ['Period', 'Median actual / estimated', 'Sample size'],
+    rows: [...(this.data()?.biasTrend ?? [])]
+      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+      .map((bucket) => [
+        bucket.localStart,
+        bucket.medianRatio,
+        bucket.sampleSize,
+      ]),
+  }));
+
+  readonly groupsCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-accuracy-by-group.csv',
+    columns: ['Scope', 'Group', 'Median actual / estimated', 'Sample size'],
+    rows: [
+      ...(this.data()?.byPrinter ?? []),
+      ...(this.data()?.byMaterial ?? []),
+    ].map((group) => [
+      group.scope,
+      group.label,
+      group.medianRatio,
+      group.sampleSize,
+    ]),
+  }));
 
   /**
    * The sentence is composed here, from the server's structured facts. Plain language belongs

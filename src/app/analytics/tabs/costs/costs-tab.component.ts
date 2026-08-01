@@ -15,6 +15,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
+import { CsvExport } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
@@ -137,6 +138,59 @@ export class CostsTabComponent {
       values: { value: group.amount },
     }))
   );
+
+  readonly spendCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-costs-spend-over-time.csv',
+    columns: ['Period', 'Filament', 'Electricity', 'Maintenance'],
+    rows: [...(this.data()?.spendOverTime ?? [])]
+      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+      .map((bucket) => [
+        bucket.localStart,
+        bucket.filament,
+        bucket.electricity,
+        bucket.maintenance,
+      ]),
+  }));
+
+  readonly distributionCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-costs-per-print.csv',
+    columns: ['Cost band', 'Prints'],
+    rows: (this.data()?.costPerPrint ?? []).map((bucket) => [
+      bucket.label,
+      bucket.count,
+    ]),
+  }));
+
+  readonly byMaterialCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-costs-by-material-type.csv',
+    columns: ['Material type', 'Spend', 'Prints'],
+    rows: (this.data()?.byMaterialType ?? []).map((group) => [
+      group.label,
+      group.amount,
+      group.printCount,
+    ]),
+  }));
+
+  readonly extremesCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-costs-extremes.csv',
+    columns: ['Group', 'Print id', 'Title', 'Date', 'Cost'],
+    rows: [
+      ...(this.data()?.mostExpensive ?? []).map((print) => [
+        'Most expensive',
+        print.printId,
+        print.title,
+        print.date,
+        print.amount,
+      ]),
+      ...(this.data()?.leastExpensive ?? []).map((print) => [
+        'Least expensive',
+        print.printId,
+        print.title,
+        print.date,
+        print.amount,
+      ]),
+    ],
+  }));
 
   readonly setupActions = computed<SetupAction[]>(() =>
     (this.data()?.coverage.exclusions ?? [])

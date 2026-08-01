@@ -14,8 +14,16 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Coverage } from 'src/app/analytics/models/analytics.models';
+import {
+  CsvExport,
+  downloadCsv,
+  downloadPng,
+  svgToPngBlob,
+  toCsv,
+} from './chart-export';
 import { formatCoverageNote } from './coverage-note';
 
 export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
@@ -27,7 +35,13 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
  */
 @Component({
   selector: 'app-chart-frame',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    MatTooltipModule,
+  ],
   templateUrl: './chart-frame.component.html',
   styleUrls: ['./chart-frame.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,6 +53,13 @@ export class ChartFrameComponent implements OnDestroy {
   readonly errorMessage = input('Could not load this chart.');
   readonly coverage = input<Coverage | null>(null);
   readonly ariaSummary = input('');
+
+  /**
+   * The rows behind this chart, for CSV download. Null hides the CSV item — a menu entry that
+   * downloads an empty file is worse than no entry. Generated client-side: the data is already
+   * here, typed, and bounded by the same row caps the endpoints enforce.
+   */
+  readonly csv = input<CsvExport | null>(null);
 
   /**
    * How the body gets its height.
@@ -85,6 +106,28 @@ export class ChartFrameComponent implements OnDestroy {
    * tells the user nothing.
    */
   readonly coverageNote = computed(() => formatCoverageNote(this.coverage()));
+
+  exportCsv(): void {
+    const csv = this.csv();
+    if (!csv) return;
+    downloadCsv(csv.filename, toCsv(csv.columns, csv.rows));
+  }
+
+  /**
+   * The chart only — the hidden accessible data table sits outside #chartBody, so it is not
+   * part of the image by construction rather than by filtering.
+   */
+  async exportPng(): Promise<void> {
+    const svg = this.body()?.nativeElement.querySelector('svg');
+    if (!svg) return;
+    downloadPng(
+      `${this.title()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')}.png`,
+      await svgToPngBlob(svg)
+    );
+  }
 
   ngOnDestroy(): void {
     this.observer?.disconnect();

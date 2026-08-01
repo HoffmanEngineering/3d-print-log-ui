@@ -51,6 +51,7 @@
       class="costs-tab__chart costs-tab__chart--wide"
       #spendFrame
       title="Spend over time"
+      [csv]="spendCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Spend per period, split into filament, electricity and maintenance"
@@ -84,6 +85,7 @@
       class="costs-tab__chart"
       #distributionFrame
       title="Cost per print"
+      [csv]="distributionCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="How many prints fall into each cost band"
@@ -115,6 +117,7 @@
       class="costs-tab__chart"
       #materialFrame
       title="Spend by material type"
+      [csv]="byMaterialCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Filament spend for each material type"
@@ -166,6 +169,7 @@
     <app-chart-frame
       class="costs-tab__chart costs-tab__chart--wide"
       title="Most and least expensive prints"
+      [csv]="extremesCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="The five priciest and five cheapest prints that could be costed"

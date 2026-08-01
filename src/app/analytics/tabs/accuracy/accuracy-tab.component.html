@@ -30,6 +30,7 @@
       class="accuracy-tab__chart accuracy-tab__chart--wide"
       #scatterFrame
       title="Actual vs estimated print time"
+      [csv]="scatterCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Each mark compares a group of prints' estimated and actual durations against a y equals x reference line"
@@ -77,6 +78,7 @@
       class="accuracy-tab__chart"
       #trendFrame
       title="Estimate bias over time"
+      [csv]="biasTrendCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="The median actual-to-estimated ratio for each period"
@@ -107,6 +109,7 @@
     <app-chart-frame
       class="accuracy-tab__chart"
       title="By printer and material"
+      [csv]="groupsCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Median actual-to-estimated ratio for each printer and each material type"

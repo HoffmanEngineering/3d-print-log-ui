@@ -43,6 +43,7 @@
       class="overview-tab__chart"
       #printsFrame
       title="Prints over time"
+      [csv]="seriesCsv()"
       [state]="state()"
       [coverage]="data()?.tiles?.printCount?.coverage ?? null"
       [ariaSummary]="seriesAriaSummary()"
@@ -78,6 +79,7 @@
       class="overview-tab__chart overview-tab__chart--outcomes"
       #statusFrame
       title="Outcomes"
+      [csv]="statusCsv()"
       [state]="state()"
       [coverage]="data()?.tiles?.successRatePercent?.coverage ?? null"
       ariaSummary="Breakdown of prints by status"

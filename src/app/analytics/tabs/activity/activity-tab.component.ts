@@ -17,6 +17,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
+import { CsvExport } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import { MatrixHeatmapComponent } from 'src/app/shared/charts/matrix-heatmap.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
@@ -150,6 +151,47 @@ export class ActivityTabComponent {
 
     return parts.join(' · ');
   });
+
+  readonly seriesCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-activity-series.csv',
+    columns: ['Period', 'Prints', 'Print time (s)', 'Filament (g)', 'Cost'],
+    rows: [...(this.data()?.series ?? [])]
+      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+      .map((bucket) => [
+        bucket.localStart,
+        bucket.count,
+        bucket.durationSeconds,
+        bucket.materialMg / 1000,
+        bucket.cost,
+      ]),
+  }));
+
+  readonly calendarCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-activity-calendar.csv',
+    columns: ['Date', 'Prints'],
+    rows: [...(this.data()?.calendar ?? [])]
+      .sort((left, right) => left.date.localeCompare(right.date))
+      .map((day) => [day.date, day.count]),
+  }));
+
+  readonly histogramCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-activity-durations.csv',
+    columns: ['Duration', 'Prints'],
+    rows: (this.data()?.durationHistogram ?? []).map((bucket) => [
+      bucket.label,
+      bucket.count,
+    ]),
+  }));
+
+  readonly matrixCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-activity-start-times.csv',
+    columns: ['Weekday (0=Sunday)', 'Hour', 'Prints'],
+    rows: (this.data()?.startTimeMatrix ?? []).map((cell) => [
+      cell.weekday,
+      cell.hour,
+      cell.count,
+    ]),
+  }));
 
   readonly seriesAriaSummary = computed(() => {
     const response = this.data();

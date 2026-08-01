@@ -1,0 +1,205 @@
+<div class="costs-tab">
+  <p class="costs-tab__basis">
+    Costs are estimates valued at <strong>today's prices</strong>. Changing a
+    spool's price, your electricity rate, or a printer's wattage changes what
+    past prints appear to have cost.
+  </p>
+
+  @if (setupActions().length > 0) {
+    <section class="costs-tab__setup" aria-labelledby="costs-setup-heading">
+      <h3 id="costs-setup-heading">Finish setting up costs</h3>
+      <ul>
+        @for (action of setupActions(); track action.reason) {
+          <li>
+            {{ action.message }}
+            <a [routerLink]="action.link">{{ action.linkText }}</a>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <div class="costs-tab__tiles">
+    <app-stat-tile
+      label="Total spend"
+      format="money"
+      [metric]="data()?.totalSpend ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Filament"
+      format="money"
+      [metric]="data()?.filamentSpend ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Electricity"
+      format="money"
+      [metric]="data()?.electricitySpend ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Maintenance"
+      format="money"
+      [metric]="data()?.maintenanceSpend ?? null"
+      [loading]="state() === 'loading'"
+    />
+  </div>
+
+  <div class="costs-tab__charts">
+    <app-chart-frame
+      class="costs-tab__chart costs-tab__chart--wide"
+      #spendFrame
+      title="Spend over time"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Spend per period, split into filament, electricity and maintenance"
+      emptyMessage="Nothing in this range could be priced yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="spendData()"
+        [series]="componentSeries"
+        [width]="spendFrame.width()"
+        [height]="spendFrame.height()"
+      />
+      <table chartDataTable>
+        <caption>
+          Spend per period by component
+        </caption>
+        <tbody>
+          @for (row of spendData(); track row.fullLabel) {
+            <tr>
+              <th scope="row">{{ row.fullLabel }}</th>
+              @for (series of componentSeries; track series.key) {
+                <td>{{ series.label }}: {{ row.values[series.key] ?? 0 }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="costs-tab__chart"
+      #distributionFrame
+      title="Cost per print"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="How many prints fall into each cost band"
+      emptyMessage="Nothing in this range could be priced yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="distributionData()"
+        [series]="singleSeries"
+        [width]="distributionFrame.width()"
+        [height]="distributionFrame.height()"
+      />
+      <table chartDataTable>
+        <caption>
+          Prints by cost band
+        </caption>
+        <tbody>
+          @for (bucket of data()?.costPerPrint ?? []; track bucket.label) {
+            <tr>
+              <th scope="row">{{ bucket.label }}</th>
+              <td>{{ bucket.count }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="costs-tab__chart"
+      #materialFrame
+      title="Spend by material type"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Filament spend for each material type"
+      emptyMessage="No priced spool usage in this range yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="byMaterialData()"
+        [series]="singleSeries"
+        [width]="materialFrame.width()"
+        [height]="materialFrame.height()"
+        orientation="horizontal"
+      />
+      <table chartDataTable>
+        <caption>
+          Filament spend by material type
+        </caption>
+        <tbody>
+          @for (group of data()?.byMaterialType ?? []; track group.key) {
+            <tr>
+              <th scope="row">{{ group.label }}</th>
+              <td>{{ group.amount | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="costs-tab__chart"
+      title="Cost of failure"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Money spent on failed and cancelled prints"
+      emptyMessage="No failed or cancelled prints in this range."
+      (retry)="onRetry()"
+    >
+      <app-stat-tile
+        label="Failed and cancelled"
+        format="money"
+        [metric]="data()?.costOfFailure ?? null"
+        [loading]="state() === 'loading'"
+      />
+      @if (failureShareText(); as share) {
+        <p class="costs-tab__share">{{ share }}</p>
+      }
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="costs-tab__chart costs-tab__chart--wide"
+      title="Most and least expensive prints"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="The five priciest and five cheapest prints that could be costed"
+      emptyMessage="Nothing in this range could be priced yet."
+      (retry)="onRetry()"
+    >
+      <div class="costs-tab__extremes">
+        <section>
+          <h4>Most expensive</h4>
+          <ul>
+            @for (print of data()?.mostExpensive ?? []; track print.printId) {
+              <li>
+                <a [routerLink]="['/prints', print.printId]">{{
+                  print.title
+                }}</a>
+                <span>{{ print.amount | number: '1.2-2' }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+        <section>
+          <h4>Least expensive</h4>
+          <ul>
+            @for (print of data()?.leastExpensive ?? []; track print.printId) {
+              <li>
+                <a [routerLink]="['/prints', print.printId]">{{
+                  print.title
+                }}</a>
+                <span>{{ print.amount | number: '1.2-2' }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    </app-chart-frame>
+  </div>
+</div>

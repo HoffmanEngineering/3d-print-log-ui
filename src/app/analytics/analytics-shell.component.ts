@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AnalyticsFilterBarComponent } from './filters/analytics-filter-bar.component';
 import { AnalyticsFilterStore } from './filters/analytics-filter.store';
 import { ActivityTabComponent } from './tabs/activity/activity-tab.component';
+import { CostsTabComponent } from './tabs/costs/costs-tab.component';
 import { OverviewTabComponent } from './tabs/overview/overview-tab.component';
 import { MaterialsTabComponent } from './tabs/materials/materials-tab.component';
 import { PrintersTabComponent } from './tabs/printers/printers-tab.component';
@@ -27,6 +28,7 @@ import { PrintersTabComponent } from './tabs/printers/printers-tab.component';
   imports: [
     ActivityTabComponent,
     AnalyticsFilterBarComponent,
+    CostsTabComponent,
     MaterialsTabComponent,
     MatTabsModule,
     OverviewTabComponent,
@@ -47,7 +49,13 @@ export class AnalyticsShellComponent implements OnInit {
    * Tab order is the URL contract. Slugs rather than the raw index so the link stays
    * meaningful and survives a tab being inserted before another one.
    */
-  private static readonly TABS = ['overview', 'activity', 'printers'] as const;
+  private static readonly TABS = [
+    'overview',
+    'activity',
+    'printers',
+    'materials',
+    'costs',
+  ] as const;
 
   readonly selectedIndex = signal(0);
 

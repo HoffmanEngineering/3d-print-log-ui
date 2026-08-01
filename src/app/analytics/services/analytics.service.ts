@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import {
   ActivityResponse,
   AnalyticsFilterValue,
+  CostsResponse,
   MaterialsResponse,
   OverviewResponse,
   PrintersResponse,
@@ -35,6 +36,12 @@ export class AnalyticsService {
 
   getMaterials(filter: AnalyticsFilterValue): Observable<MaterialsResponse> {
     return this.http.get<MaterialsResponse>(`${this.baseUrl}/materials`, {
+      params: this.toHttpParams(filter),
+    });
+  }
+
+  getCosts(filter: AnalyticsFilterValue): Observable<CostsResponse> {
+    return this.http.get<CostsResponse>(`${this.baseUrl}/costs`, {
       params: this.toHttpParams(filter),
     });
   }

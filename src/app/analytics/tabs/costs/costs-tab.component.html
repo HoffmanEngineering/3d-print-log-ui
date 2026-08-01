@@ -79,11 +79,18 @@
           Spend per period by component
         </caption>
         <tbody>
-          @for (row of spendData(); track row.fullLabel) {
+          @for (row of spendRows(); track row.fullLabel) {
             <tr>
               <th scope="row">{{ row.fullLabel }}</th>
-              @for (series of componentSeries; track series.key) {
-                <td>{{ series.label }}: {{ row.values[series.key] ?? 0 }}</td>
+              @for (component of row.components; track component.label) {
+                <td>
+                  {{ component.label }}:
+                  @if (component.value === null) {
+                    not recorded
+                  } @else {
+                    {{ component.value | number: '1.2-2' }}
+                  }
+                </td>
               }
             </tr>
           }

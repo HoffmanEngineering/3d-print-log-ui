@@ -159,6 +159,24 @@ describe('CostsTabComponent', () => {
     expect(component.setupActions()).toEqual([]);
   }));
 
+  it('keeps an unpriced component distinguishable from a genuine zero', fakeAsync(() => {
+    setup();
+
+    // The chart has to coerce null to 0 — a stacked segment of unknown height is not drawable —
+    // but the accessible table and the CSV must not claim maintenance cost nothing in a period
+    // where it simply could not be priced.
+    const july2 = component
+      .spendRows()
+      .find((row) => row.components.some((c) => c.value === null));
+    expect(july2).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('not recorded');
+
+    const maintenanceCell = component
+      .spendCsv()
+      .rows.find((row) => row[0] === '2026-07-02');
+    expect(maintenanceCell?.[3]).toBeNull();
+  }));
+
   it('renders the failure share only when it is defined', fakeAsync(() => {
     analytics.getCosts.and.returnValue(
       of(response({ costOfFailureSharePercent: null }))

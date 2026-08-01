@@ -126,6 +126,37 @@ export class CostsTabComponent {
       });
   });
 
+  /**
+   * The same buckets as spendData, but with the nulls INTACT.
+   *
+   * The chart itself has to coerce: `BarDatum.values` is `Record<string, number>`, and a stacked
+   * segment of unknown height is not a thing a bar chart can draw — a missing segment and a
+   * zero-height one are the same picture. The accessible table is where the distinction is
+   * legible, so it reads from here and says "not recorded" rather than printing a confident 0.
+   */
+  readonly spendRows = computed(() => {
+    const response = this.data();
+    if (!response) return [];
+
+    return [...response.spendOverTime]
+      .sort(
+        (left, right) =>
+          left.localStart.localeCompare(right.localStart) ||
+          left.index - right.index
+      )
+      .map((bucket) => {
+        const date = parseLocalDate(bucket.localStart);
+        return {
+          fullLabel: formatTickDate(date, response.granularity, false),
+          components: [
+            { label: 'Filament', value: bucket.filament },
+            { label: 'Electricity', value: bucket.electricity },
+            { label: 'Maintenance', value: bucket.maintenance },
+          ],
+        };
+      });
+  });
+
   readonly distributionData = computed<BarDatum[]>(() =>
     (this.data()?.costPerPrint ?? []).map((bucket) => ({
       label: bucket.label,

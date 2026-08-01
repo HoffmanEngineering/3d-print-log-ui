@@ -1,9 +1,20 @@
+// The grid item is the HOST, not the card inside it. Left unstyled the host defaults to
+// inline, so a grid row's stretch never reached the card and a tile carrying a comparison
+// delta stood taller than its neighbours. Stretching the host and then the card makes every
+// tile in a row the same height whether or not it has a delta to show.
+:host {
+  display: block;
+  block-size: 100%;
+}
+
 .stat-tile {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
   padding: 0.75rem 1rem;
   position: relative;
+  block-size: 100%;
+  box-sizing: border-box;
 
   &__label {
     font-size: 0.75rem;
@@ -25,6 +36,9 @@
     align-items: center;
     gap: 0.125rem;
     font-size: 0.75rem;
+    // Pinned to the bottom of the stretched card, so deltas line up with each other across
+    // a row instead of floating at whatever height each value happened to end at.
+    margin-block-start: auto;
 
     &--up {
       color: var(--chart-series-3);

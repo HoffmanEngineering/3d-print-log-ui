@@ -166,6 +166,7 @@
     <app-chart-frame
       class="costs-tab__chart"
       title="Cost of failure"
+      fit="natural"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Money spent on failed and cancelled prints"
@@ -187,6 +188,7 @@
       class="costs-tab__chart costs-tab__chart--wide"
       title="Most and least expensive prints"
       [csv]="extremesCsv()"
+      fit="natural"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="The five priciest and five cheapest prints that could be costed"
@@ -194,32 +196,50 @@
       (retry)="onRetry()"
     >
       <div class="costs-tab__extremes">
-        <section>
-          <h4>Most expensive</h4>
-          <ul>
-            @for (print of data()?.mostExpensive ?? []; track print.printId) {
-              <li>
-                <a [routerLink]="['/prints', print.printId]">{{
-                  print.title
-                }}</a>
-                <span>{{ print.amount | number: '1.2-2' }}</span>
-              </li>
+        @for (group of extremeGroups(); track group.heading) {
+          <section class="costs-tab__extremes-group">
+            <h4 class="costs-tab__extremes-heading">
+              <mat-icon inline aria-hidden="true">{{ group.icon }}</mat-icon>
+              {{ group.heading }}
+            </h4>
+
+            @if (group.prints.length === 0) {
+              <p class="costs-tab__extremes-empty">
+                Nothing in this range could be priced.
+              </p>
+            } @else {
+              <ol class="costs-tab__extremes-list">
+                @for (print of group.prints; track print.printId) {
+                  <li class="costs-tab__extremes-row">
+                    <span class="costs-tab__extremes-rank" aria-hidden="true">{{
+                      $index + 1
+                    }}</span>
+                    <span class="costs-tab__extremes-print">
+                      <a
+                        class="costs-tab__extremes-link"
+                        [routerLink]="['/prints', print.printId]"
+                        [title]="print.title || 'Untitled print'"
+                        >{{ print.title || 'Untitled print' }}</a
+                      >
+                      @if (print.date) {
+                        <span class="costs-tab__extremes-date">{{
+                          print.date | date: 'mediumDate'
+                        }}</span>
+                      }
+                    </span>
+                    <span class="costs-tab__extremes-amount">{{
+                      print.amount
+                        | currency
+                          : data()?.currency ?? undefined
+                          : 'symbol'
+                          : '1.2-2'
+                    }}</span>
+                  </li>
+                }
+              </ol>
             }
-          </ul>
-        </section>
-        <section>
-          <h4>Least expensive</h4>
-          <ul>
-            @for (print of data()?.leastExpensive ?? []; track print.printId) {
-              <li>
-                <a [routerLink]="['/prints', print.printId]">{{
-                  print.title
-                }}</a>
-                <span>{{ print.amount | number: '1.2-2' }}</span>
-              </li>
-            }
-          </ul>
-        </section>
+          </section>
+        }
       </div>
     </app-chart-frame>
   </div>

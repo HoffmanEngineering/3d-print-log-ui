@@ -20,12 +20,16 @@ import {
 import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import {
+  formatDurationShort,
+  formatMoney,
+} from 'src/app/shared/charts/format-metric';
+import {
   DonutChartComponent,
   DonutSlice,
 } from 'src/app/shared/charts/donut-chart.component';
 import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
-import { OverviewResponse } from '../../models/analytics.models';
+import { HighlightRef, OverviewResponse } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
 import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
@@ -159,8 +163,33 @@ export class OverviewTabComponent {
       { caption: 'Longest print', ref: h.longestPrint },
       // Populated from the same costing pass the cost tile uses, so the two can never disagree.
       { caption: 'Priciest print', ref: h.priciestPrint },
-    ].filter((item) => item.ref !== null);
+    ]
+      .filter((item) => item.ref !== null)
+      .map((item) => ({ ...item, display: this.formatHighlight(item.ref) }));
   });
+
+  /**
+   * The API sends a raw number plus a unit token ("cost", "seconds", "prints"). Printing the
+   * pair verbatim gave "0.84 cost" and "48600 seconds" — the same figures the tiles above
+   * already render as "$0.84" and "13h 30m". The unit decides the format so the two agree.
+   */
+  private formatHighlight(ref: HighlightRef | null): string {
+    if (!ref || ref.value === null) return '—';
+
+    switch (ref.unit) {
+      case 'cost':
+        return formatMoney(
+          ref.value,
+          this.data()?.tiles.totalCost.currency ?? null
+        );
+      case 'seconds':
+        return formatDurationShort(ref.value);
+      case 'prints':
+        return `${new Intl.NumberFormat().format(ref.value)} ${ref.value === 1 ? 'print' : 'prints'}`;
+      default:
+        return `${ref.value}${ref.unit ? ` ${ref.unit}` : ''}`;
+    }
+  }
 
   /** The six tiles, flattened for the tab-level CSV. */
   readonly tileRows = computed<(string | number | null)[][]>(() => {

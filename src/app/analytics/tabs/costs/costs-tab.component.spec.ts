@@ -186,6 +186,38 @@ describe('CostsTabComponent', () => {
     expect(component.failureShareText()).toBeNull();
   }));
 
+  it('renders the extremes as currency, ranked, and linked to the print', fakeAsync(() => {
+    setup();
+
+    const rows = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '.costs-tab__extremes-row'
+    );
+    expect(rows.length).toBe(2);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    // A bare "20.00" is not a cost, and the tiles above are already currency-formatted.
+    expect(text).toContain('$20.00');
+    expect(text).toContain('$1.00');
+
+    expect(rows[0].querySelector('a')?.getAttribute('href')).toBe('/prints/1');
+  }));
+
+  it('names an untitled print rather than rendering an empty link', fakeAsync(() => {
+    analytics.getCosts.and.returnValue(
+      of(
+        response({
+          mostExpensive: [{ printId: 9, title: null, date: null, amount: 3 }],
+        })
+      )
+    );
+    setup();
+
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      '.costs-tab__extremes-link'
+    );
+    expect(link?.textContent?.trim()).toBe('Untitled print');
+  }));
+
   it('fails the whole tab on an error', fakeAsync(() => {
     analytics.getCosts.and.returnValue(throwError(() => new Error('boom')));
     setup();

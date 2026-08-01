@@ -65,25 +65,88 @@
 
 .costs-tab__extremes {
   display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  // Two side-by-side lists squeeze a title and a price into ~160px on a phone. One column
+  // until the panel is genuinely wide enough for both.
+  grid-template-columns: minmax(0, 1fr);
 
-  h4 {
-    margin: 0 0 0.25rem;
-    font-size: 0.95rem;
+  @container (min-width: 600px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
   }
+}
 
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
+.costs-tab__extremes-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--chart-empty-text);
+}
 
-  li {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
+.costs-tab__extremes-empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--chart-empty-text);
+}
+
+.costs-tab__extremes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.costs-tab__extremes-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  // A ≥44px row is the touch target for the link inside it, and the rhythm is what makes
+  // this read as a ranked list rather than wrapped paragraph text.
+  min-block-size: 44px;
+  padding-block: 0.25rem;
+
+  & + & {
+    border-block-start: 1px solid var(--chart-grid);
   }
+}
+
+.costs-tab__extremes-rank {
+  flex: 0 0 auto;
+  inline-size: 1.5rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--chart-empty-text);
+}
+
+.costs-tab__extremes-print {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  flex: 1 1 auto;
+}
+
+.costs-tab__extremes-link {
+  // Long titles truncate rather than pushing the price off the row; the full text stays
+  // available on hover and to assistive tech.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.costs-tab__extremes-date {
+  font-size: 0.75rem;
+  color: var(--chart-empty-text);
+}
+
+.costs-tab__extremes-amount {
+  flex: 0 0 auto;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .costs-tab__actions {

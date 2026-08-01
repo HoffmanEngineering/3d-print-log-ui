@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +6,7 @@ import {
   inject,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import {
   BarChartComponent,
@@ -68,8 +69,11 @@ const SETUP_ACTIONS: Record<string, Omit<SetupAction, 'reason'>> = {
   selector: 'app-costs-tab',
   imports: [
     MatButtonModule,
+    MatIconModule,
     BarChartComponent,
     ChartFrameComponent,
+    CurrencyPipe,
+    DatePipe,
     DecimalPipe,
     RouterLink,
     StatTileComponent,
@@ -225,6 +229,23 @@ export class CostsTabComponent {
       ]),
     ],
   }));
+
+  /**
+   * The two lists as data, so the template renders one shape twice rather than two
+   * near-identical blocks that drift apart the next time either is touched.
+   */
+  readonly extremeGroups = computed(() => [
+    {
+      heading: 'Most expensive',
+      icon: 'trending_up',
+      prints: this.data()?.mostExpensive ?? [],
+    },
+    {
+      heading: 'Least expensive',
+      icon: 'trending_down',
+      prints: this.data()?.leastExpensive ?? [],
+    },
+  ]);
 
   readonly setupActions = computed<SetupAction[]>(() =>
     (this.data()?.coverage.exclusions ?? [])

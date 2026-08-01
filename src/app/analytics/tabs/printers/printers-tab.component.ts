@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import {
   BarChartComponent,
@@ -17,12 +18,13 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
-import { CsvExport } from 'src/app/shared/charts/chart-export';
+import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
 import { PrintersResponse } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
+import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 import { PrinterComparisonComponent } from './printer-comparison.component';
 
@@ -32,6 +34,7 @@ const CARD_LAYOUT_BELOW = 700;
 @Component({
   selector: 'app-printers-tab',
   imports: [
+    MatButtonModule,
     BarChartComponent,
     ChartFrameComponent,
     PrinterComparisonComponent,
@@ -208,6 +211,22 @@ export class PrintersTabComponent implements OnDestroy {
       ? null
       : priced.reduce((sum, p) => sum + (p.maintenanceCost ?? 0), 0);
   });
+
+  /**
+   * Every figure on the tab in one file, which is what "export my printers for last quarter"
+   * actually means. Sections reuse the per-chart exports, so the two files cannot disagree.
+   */
+  readonly tabCsv = computed<CsvSection[]>(() => [
+    sectionOf('Printer comparison', this.comparisonCsv()),
+    sectionOf('Success rate by printer', this.successCsv()),
+    sectionOf('Print time per period by printer', this.timeSeriesCsv()),
+    sectionOf('Maintenance events', this.maintenanceCsv()),
+  ]);
+
+  onExportTab(): void {
+    const file = buildTabCsv('analytics-printers.csv', this.tabCsv());
+    downloadCsv(file.filename, file.content);
+  }
 
   onRetry(): void {
     this.tab.retry();

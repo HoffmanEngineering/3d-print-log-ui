@@ -1,4 +1,14 @@
 <div class="costs-tab">
+  <div class="costs-tab__actions">
+    <button
+      type="button"
+      mat-stroked-button
+      data-testid="tab-export"
+      (click)="onExportTab()"
+    >
+      Export this tab (CSV)
+    </button>
+  </div>
   <p class="costs-tab__basis">
     Costs are estimates valued at <strong>today's prices</strong>. Changing a
     spool's price, your electricity rate, or a printer's wattage changes what

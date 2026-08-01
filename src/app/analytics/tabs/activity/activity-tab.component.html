@@ -1,4 +1,14 @@
 <div class="activity-tab">
+  <div class="activity-tab__actions">
+    <button
+      type="button"
+      mat-stroked-button
+      data-testid="tab-export"
+      (click)="onExportTab()"
+    >
+      Export this tab (CSV)
+    </button>
+  </div>
   <div class="activity-tab__charts">
     <app-chart-frame
       class="activity-tab__chart"

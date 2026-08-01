@@ -37,3 +37,8 @@
   font-size: 0.875rem;
   color: var(--chart-axis-text);
 }
+
+.activity-tab__actions {
+  display: flex;
+  justify-content: flex-end;
+}

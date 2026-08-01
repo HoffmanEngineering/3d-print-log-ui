@@ -5,6 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import { PrintStatus } from 'src/app/core/services/print.service';
 import {
@@ -16,7 +17,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
-import { CsvExport } from 'src/app/shared/charts/chart-export';
+import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import {
   DonutChartComponent,
@@ -26,6 +27,7 @@ import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
 import { OverviewResponse } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
+import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 
 /**
@@ -79,6 +81,7 @@ const STATUS_SERIES: readonly {
 @Component({
   selector: 'app-overview-tab',
   imports: [
+    MatButtonModule,
     BarChartComponent,
     ChartFrameComponent,
     DonutChartComponent,
@@ -154,7 +157,36 @@ export class OverviewTabComponent {
       { caption: 'Most used printer', ref: h.mostUsedPrinter },
       { caption: 'Most used material', ref: h.mostUsedMaterial },
       { caption: 'Longest print', ref: h.longestPrint },
+      // Populated from the same costing pass the cost tile uses, so the two can never disagree.
+      { caption: 'Priciest print', ref: h.priciestPrint },
     ].filter((item) => item.ref !== null);
+  });
+
+  /** The six tiles, flattened for the tab-level CSV. */
+  readonly tileRows = computed<(string | number | null)[][]>(() => {
+    const tiles = this.data()?.tiles;
+    if (!tiles) return [];
+
+    return [
+      ['Prints', tiles.printCount.value, tiles.printCount.previous],
+      [
+        'Success rate (%)',
+        tiles.successRatePercent.value,
+        tiles.successRatePercent.previous,
+      ],
+      ['Filament (g)', tiles.filamentGrams.value, tiles.filamentGrams.previous],
+      [
+        'Print time (s)',
+        tiles.printTimeSeconds.value,
+        tiles.printTimeSeconds.previous,
+      ],
+      ['Total cost', tiles.totalCost.value, tiles.totalCost.previous],
+      [
+        'Average print time (s)',
+        tiles.avgPrintTimeSeconds.value,
+        tiles.avgPrintTimeSeconds.previous,
+      ],
+    ];
   });
 
   readonly seriesCsv = computed<CsvExport>(() => ({
@@ -186,6 +218,35 @@ export class OverviewTabComponent {
     const total = response.tiles.printCount.value ?? 0;
     return `${total} prints across ${response.series.length} ${response.granularity.toLowerCase()} buckets`;
   });
+
+  /**
+   * Every figure on the tab in one file, which is what "export my overview for last quarter"
+   * actually means. Sections reuse the per-chart exports, so the two files cannot disagree.
+   */
+  readonly tabCsv = computed<CsvSection[]>(() => [
+    {
+      title: 'Tiles',
+      columns: ['Metric', 'Value', 'Previous'],
+      rows: this.tileRows(),
+    },
+    sectionOf('Prints per period by status', this.seriesCsv()),
+    sectionOf('Status breakdown', this.statusCsv()),
+    {
+      title: 'Highlights',
+      columns: ['Highlight', 'Label', 'Value', 'Unit'],
+      rows: this.highlights().map((item) => [
+        item.caption,
+        item.ref?.label ?? null,
+        item.ref?.value ?? null,
+        item.ref?.unit ?? null,
+      ]),
+    },
+  ]);
+
+  onExportTab(): void {
+    const file = buildTabCsv('analytics-overview.csv', this.tabCsv());
+    downloadCsv(file.filename, file.content);
+  }
 
   onRetry(): void {
     this.tab.retry();

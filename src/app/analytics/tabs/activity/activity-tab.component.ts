@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import {
   BarChartComponent,
@@ -17,12 +18,13 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
-import { CsvExport } from 'src/app/shared/charts/chart-export';
+import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import { MatrixHeatmapComponent } from 'src/app/shared/charts/matrix-heatmap.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
 import { ActivityResponse } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
+import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 
 export type ActivityMetric = 'count' | 'time' | 'filament' | 'cost';
@@ -33,6 +35,7 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => `${hour}`);
 @Component({
   selector: 'app-activity-tab',
   imports: [
+    MatButtonModule,
     BarChartComponent,
     CalendarHeatmapComponent,
     ChartFrameComponent,
@@ -152,6 +155,28 @@ export class ActivityTabComponent {
     return parts.join(' · ');
   });
 
+  /** The streak figures as rows, for the tab-level CSV. */
+  readonly streakRows = computed<(string | number | null)[][]>(() => {
+    const streaks = this.data()?.streaks;
+    if (!streaks) return [];
+
+    return [
+      ['Current streak (days)', streaks.currentDays],
+      ['Longest streak (days)', streaks.longestDays],
+      ['Longest streak start', streaks.longestStart],
+      ['Longest streak end', streaks.longestEnd],
+      ['Busiest date', streaks.busiestDate],
+      ['Busiest date prints', streaks.busiestDateCount],
+      [
+        'Busiest weekday',
+        streaks.busiestWeekday === null
+          ? null
+          : WEEKDAYS[streaks.busiestWeekday],
+      ],
+      ['Busiest weekday prints', streaks.busiestWeekdayCount],
+    ];
+  });
+
   readonly seriesCsv = computed<CsvExport>(() => ({
     filename: 'analytics-activity-series.csv',
     columns: ['Period', 'Prints', 'Print time (s)', 'Filament (g)', 'Cost'],
@@ -201,6 +226,27 @@ export class ActivityTabComponent {
 
   setMetric(metric: ActivityMetric): void {
     this.metric.set(metric);
+  }
+
+  /**
+   * Every figure on the tab in one file, which is what "export my activity for last quarter"
+   * actually means. Sections reuse the per-chart exports, so the two files cannot disagree.
+   */
+  readonly tabCsv = computed<CsvSection[]>(() => [
+    sectionOf('Series', this.seriesCsv()),
+    sectionOf('Calendar days', this.calendarCsv()),
+    sectionOf('Duration histogram', this.histogramCsv()),
+    sectionOf('Weekday by hour matrix', this.matrixCsv()),
+    {
+      title: 'Streaks',
+      columns: ['Measure', 'Value'],
+      rows: this.streakRows(),
+    },
+  ]);
+
+  onExportTab(): void {
+    const file = buildTabCsv('analytics-activity.csv', this.tabCsv());
+    downloadCsv(file.filename, file.content);
   }
 
   onRetry(): void {

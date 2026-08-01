@@ -9,6 +9,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import {
   BarChartComponent,
@@ -19,7 +20,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
-import { CsvExport } from 'src/app/shared/charts/chart-export';
+import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import {
   ScatterChartComponent,
@@ -32,6 +33,7 @@ import {
   AccuracyResponse,
 } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
+import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 
 /** Below this the scatter's hit areas overlap and it stops being readable (spec §11). */
@@ -40,6 +42,7 @@ const SCATTER_MIN_WIDTH = 600;
 @Component({
   selector: 'app-accuracy-tab',
   imports: [
+    MatButtonModule,
     BarChartComponent,
     ChartFrameComponent,
     ScatterChartComponent,
@@ -203,6 +206,32 @@ export class AccuracyTabComponent implements OnDestroy {
     );
     if (matches.length !== 1) return;
     this.onPrinterSelect(matches[0].key);
+  }
+
+  /**
+   * Every figure on the tab in one file, which is what "export my accuracy for last quarter"
+   * actually means. Sections reuse the per-chart exports, so the two files cannot disagree.
+   */
+  readonly tabCsv = computed<CsvSection[]>(() => [
+    {
+      title: 'Medians',
+      columns: ['Metric', 'Value'],
+      rows: [
+        ['Time accuracy', this.data()?.timeAccuracyMedian.value ?? null],
+        [
+          'Material accuracy',
+          this.data()?.materialAccuracyMedian.value ?? null,
+        ],
+      ],
+    },
+    sectionOf('By group', this.groupsCsv()),
+    sectionOf('Bias trend', this.biasTrendCsv()),
+    sectionOf('Scatter bins', this.scatterCsv()),
+  ]);
+
+  onExportTab(): void {
+    const file = buildTabCsv('analytics-accuracy.csv', this.tabCsv());
+    downloadCsv(file.filename, file.content);
   }
 
   onRetry(): void {

@@ -76,3 +76,8 @@
     color: var(--chart-empty-text);
   }
 }
+
+.overview-tab__actions {
+  display: flex;
+  justify-content: flex-end;
+}

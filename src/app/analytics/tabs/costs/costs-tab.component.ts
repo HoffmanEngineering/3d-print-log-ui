@@ -5,6 +5,7 @@ import {
   computed,
   inject,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import {
   BarChartComponent,
@@ -15,12 +16,13 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
-import { CsvExport } from 'src/app/shared/charts/chart-export';
+import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
 import { CostsResponse } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
+import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 
 export interface SetupAction {
@@ -65,6 +67,7 @@ const SETUP_ACTIONS: Record<string, Omit<SetupAction, 'reason'>> = {
 @Component({
   selector: 'app-costs-tab',
   imports: [
+    MatButtonModule,
     BarChartComponent,
     ChartFrameComponent,
     DecimalPipe,
@@ -207,6 +210,42 @@ export class CostsTabComponent {
       ? null
       : `${share.toFixed(1)}% of spend went on failed or cancelled prints`;
   });
+
+  /**
+   * Every figure on the tab in one file, which is what "export my costs for last quarter"
+   * actually means. Sections reuse the per-chart exports, so the two files cannot disagree.
+   */
+  readonly tabCsv = computed<CsvSection[]>(() => [
+    {
+      title: 'Tiles',
+      columns: ['Metric', 'Value'],
+      rows: [
+        ['Total spend', this.data()?.totalSpend.value ?? null],
+        ['Filament', this.data()?.filamentSpend.value ?? null],
+        ['Electricity', this.data()?.electricitySpend.value ?? null],
+        ['Maintenance', this.data()?.maintenanceSpend.value ?? null],
+        ['Cost of failure', this.data()?.costOfFailure.value ?? null],
+      ],
+    },
+    sectionOf('Spend per period by component', this.spendCsv()),
+    sectionOf('Cost bands', this.distributionCsv()),
+    sectionOf('By material type', this.byMaterialCsv()),
+    {
+      title: 'By brand',
+      columns: ['Brand', 'Spend', 'Prints'],
+      rows: (this.data()?.byBrand ?? []).map((group) => [
+        group.label,
+        group.amount,
+        group.printCount,
+      ]),
+    },
+    sectionOf('Most and least expensive', this.extremesCsv()),
+  ]);
+
+  onExportTab(): void {
+    const file = buildTabCsv('analytics-costs.csv', this.tabCsv());
+    downloadCsv(file.filename, file.content);
+  }
 
   onRetry(): void {
     this.tab.retry();

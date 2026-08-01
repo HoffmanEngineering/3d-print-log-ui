@@ -1,4 +1,14 @@
 <div class="materials-tab">
+  <div class="materials-tab__actions">
+    <button
+      type="button"
+      mat-stroked-button
+      data-testid="tab-export"
+      (click)="onExportTab()"
+    >
+      Export this tab (CSV)
+    </button>
+  </div>
   <div class="materials-tab__tiles">
     <app-stat-tile
       label="Wasted filament"

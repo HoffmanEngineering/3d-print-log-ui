@@ -8,6 +8,10 @@
 .activity-tab__metric {
   // Sits in the panel header now, so it must not stretch the row.
   flex: 0 0 auto;
+  // Four toggles are wider than a 320px phone. The header wraps them onto their own line;
+  // this keeps the widest case scrolling inside the card rather than out of it.
+  max-inline-size: 100%;
+  overflow-x: auto;
 }
 
 .activity-tab__charts {
@@ -36,4 +40,9 @@
   margin: 0 0 0.5rem;
   font-size: 0.875rem;
   color: var(--chart-axis-text);
+}
+
+.activity-tab__actions {
+  display: flex;
+  justify-content: flex-end;
 }

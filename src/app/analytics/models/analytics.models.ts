@@ -258,3 +258,93 @@ export interface MaterialsResponse {
   wasteCost: MoneyMetric;
   coverage: Coverage;
 }
+
+export interface CostSeriesBucket {
+  index: number;
+  localStart: string;
+  filament: number | null;
+  electricity: number | null;
+  maintenance: number | null;
+}
+
+export interface CostGroup {
+  key: string;
+  label: string;
+  amount: number;
+  printCount: number;
+}
+
+export interface PrintCostRef {
+  printId: number;
+  title: string | null;
+  date: string | null;
+  amount: number;
+}
+
+export interface CostsResponse {
+  from: string | null;
+  to: string | null;
+  timeZone: string;
+  granularity: Exclude<AnalyticsGranularity, 'Auto'>;
+  currency: string | null;
+  totalSpend: MoneyMetric;
+  filamentSpend: MoneyMetric;
+  electricitySpend: MoneyMetric;
+  maintenanceSpend: MoneyMetric;
+  spendOverTime: CostSeriesBucket[];
+  costPerPrint: HistogramBucket[];
+  byMaterialType: CostGroup[];
+  byBrand: CostGroup[];
+  costOfFailure: MoneyMetric;
+  /** Null when total spend is 0 — a share of nothing is undefined, not 0%. */
+  costOfFailureSharePercent: number | null;
+  mostExpensive: PrintCostRef[];
+  leastExpensive: PrintCostRef[];
+  coverage: Coverage;
+}
+
+export interface ScatterBin {
+  estimated: number;
+  actual: number;
+  count: number;
+}
+
+export interface AccuracyGroup {
+  scope: string;
+  key: string;
+  label: string;
+  medianRatio: number | null;
+  sampleSize: number;
+  suppressedForSmallSample: boolean;
+}
+
+export interface AccuracyTrendBucket {
+  index: number;
+  localStart: string;
+  medianRatio: number | null;
+  sampleSize: number;
+}
+
+export interface AccuracyCallout {
+  scope: string;
+  key: string;
+  label: string;
+  dimension: string;
+  medianRatio: number;
+  sampleSize: number;
+}
+
+export interface AccuracyResponse {
+  from: string | null;
+  to: string | null;
+  timeZone: string;
+  granularity: Exclude<AnalyticsGranularity, 'Auto'>;
+  timeAccuracyMedian: Metric;
+  materialAccuracyMedian: Metric;
+  timeScatter: ScatterBin[];
+  byPrinter: AccuracyGroup[];
+  byMaterial: AccuracyGroup[];
+  biasTrend: AccuracyTrendBucket[];
+  callouts: AccuracyCallout[];
+  coverage: Coverage;
+}

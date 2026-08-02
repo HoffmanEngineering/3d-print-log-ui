@@ -9,6 +9,10 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem 0;
+    // Projected actions (the activity tab's metric switcher) are a fixed-width control that
+    // cannot shrink. On one line the title ran straight underneath it; wrapping drops the
+    // actions to their own row on a phone and costs nothing once there is room for both.
+    flex-wrap: wrap;
   }
 
   &__title {

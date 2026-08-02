@@ -32,5 +32,17 @@
         <app-materials-tab />
       }
     </mat-tab>
+
+    <mat-tab label="Costs">
+      @if (selectedIndex() === 4) {
+        <app-costs-tab />
+      }
+    </mat-tab>
+
+    <mat-tab label="Accuracy">
+      @if (selectedIndex() === 5) {
+        <app-accuracy-tab />
+      }
+    </mat-tab>
   </mat-tab-group>
 </section>

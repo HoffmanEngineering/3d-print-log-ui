@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import {
   BarChartComponent,
@@ -17,11 +18,13 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
+import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
 import { PrintersResponse } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
+import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 import { PrinterComparisonComponent } from './printer-comparison.component';
 
@@ -31,6 +34,7 @@ const CARD_LAYOUT_BELOW = 700;
 @Component({
   selector: 'app-printers-tab',
   imports: [
+    MatButtonModule,
     BarChartComponent,
     ChartFrameComponent,
     PrinterComparisonComponent,
@@ -138,6 +142,67 @@ export class PrintersTabComponent implements OnDestroy {
    * while the per-printer column beside it kept counting — two numbers on one screen that
    * disagree, with nothing on screen to explain why.
    */
+  readonly comparisonCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-printers-comparison.csv',
+    columns: [
+      'Printer',
+      'Prints',
+      'Success rate (%)',
+      'Print time (s)',
+      'Filament (g)',
+      'Avg duration (s)',
+      'Cost',
+      'Maintenance cost',
+      'Utilization (%)',
+      'Cost per print hour',
+    ],
+    rows: (this.data()?.printers ?? []).map((row) => [
+      row.name,
+      row.printCount,
+      row.successRatePercent,
+      row.printTimeSeconds,
+      row.materialMg / 1000,
+      row.avgDurationSeconds,
+      row.cost,
+      row.maintenanceCost,
+      row.utilizationPercent,
+      row.costPerPrintHour,
+    ]),
+  }));
+
+  readonly successCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-printers-success-rate.csv',
+    columns: ['Printer', 'Success rate (%)'],
+    rows: (this.data()?.printers ?? []).map((row) => [
+      row.name,
+      row.successRatePercent,
+    ]),
+  }));
+
+  readonly timeSeriesCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-printers-print-time.csv',
+    columns: ['Period', 'Printer id', 'Print time (s)'],
+    rows: [...(this.data()?.timeSeries ?? [])]
+      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+      .flatMap((bucket) =>
+        Object.entries(bucket.printSecondsByPrinterId).map(
+          ([printerId, seconds]) => [bucket.localStart, printerId, seconds]
+        )
+      ),
+  }));
+
+  readonly maintenanceCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-printers-maintenance.csv',
+    columns: ['Date', 'Printer id', 'Category', 'Description', 'Cost'],
+    rows: (this.data()?.maintenance ?? []).map((event) => [
+      event.date,
+      event.printerId,
+      event.category,
+      event.description,
+      event.cost,
+    ]),
+  }));
+
   readonly maintenanceTotal = computed(() => {
     const priced = (this.data()?.printers ?? []).filter(
       (printer) => printer.maintenanceCost !== null
@@ -146,6 +211,22 @@ export class PrintersTabComponent implements OnDestroy {
       ? null
       : priced.reduce((sum, p) => sum + (p.maintenanceCost ?? 0), 0);
   });
+
+  /**
+   * Every figure on the tab in one file, which is what "export my printers for last quarter"
+   * actually means. Sections reuse the per-chart exports, so the two files cannot disagree.
+   */
+  readonly tabCsv = computed<CsvSection[]>(() => [
+    sectionOf('Printer comparison', this.comparisonCsv()),
+    sectionOf('Success rate by printer', this.successCsv()),
+    sectionOf('Print time per period by printer', this.timeSeriesCsv()),
+    sectionOf('Maintenance events', this.maintenanceCsv()),
+  ]);
+
+  onExportTab(): void {
+    const file = buildTabCsv('analytics-printers.csv', this.tabCsv());
+    downloadCsv(file.filename, file.content);
+  }
 
   onRetry(): void {
     this.tab.retry();

@@ -209,6 +209,35 @@ describe('OverviewTabComponent', () => {
     expect(params['userId']).toBeUndefined();
   }));
 
+  it('renders each highlight in the unit its tile uses, not the raw API token', fakeAsync(() => {
+    const subject = new Subject<OverviewResponse>();
+    analytics.getOverview.and.returnValue(subject);
+    const result = response(4);
+    result.highlights = {
+      mostUsedPrinter: { id: '1', label: 'Ender', value: 4, unit: 'prints' },
+      mostUsedMaterial: null,
+      longestPrint: { id: '2', label: 'Vase', value: 9000, unit: 'seconds' },
+      priciestPrint: { id: '3', label: 'Big', value: 0.84, unit: 'cost' },
+    };
+
+    fixture.detectChanges();
+    tick(300);
+    subject.next(result);
+    fixture.detectChanges();
+
+    const displays = fixture.componentInstance
+      .highlights()
+      .map((item) => item.display);
+
+    // The currency comes from the cost tile's own currency, so the highlight and the tile
+    // can never disagree about what "0.84" is denominated in.
+    expect(displays).toContain('$0.84');
+    expect(displays).toContain('2h 30m');
+    expect(displays).toContain('4 prints');
+    expect(fixture.nativeElement.textContent).not.toContain('0.84 cost');
+    expect(fixture.nativeElement.textContent).not.toContain('9000 seconds');
+  }));
+
   it('reports an empty state rather than an error when there are no prints', fakeAsync(() => {
     const subject = new Subject<OverviewResponse>();
     analytics.getOverview.and.returnValue(subject);

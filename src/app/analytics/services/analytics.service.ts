@@ -3,8 +3,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import {
+  AccuracyResponse,
   ActivityResponse,
   AnalyticsFilterValue,
+  CostsResponse,
   MaterialsResponse,
   OverviewResponse,
   PrintersResponse,
@@ -35,6 +37,18 @@ export class AnalyticsService {
 
   getMaterials(filter: AnalyticsFilterValue): Observable<MaterialsResponse> {
     return this.http.get<MaterialsResponse>(`${this.baseUrl}/materials`, {
+      params: this.toHttpParams(filter),
+    });
+  }
+
+  getCosts(filter: AnalyticsFilterValue): Observable<CostsResponse> {
+    return this.http.get<CostsResponse>(`${this.baseUrl}/costs`, {
+      params: this.toHttpParams(filter),
+    });
+  }
+
+  getAccuracy(filter: AnalyticsFilterValue): Observable<AccuracyResponse> {
+    return this.http.get<AccuracyResponse>(`${this.baseUrl}/accuracy`, {
       params: this.toHttpParams(filter),
     });
   }

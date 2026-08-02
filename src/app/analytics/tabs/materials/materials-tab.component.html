@@ -1,4 +1,14 @@
 <div class="materials-tab">
+  <div class="materials-tab__actions">
+    <button
+      type="button"
+      mat-stroked-button
+      data-testid="tab-export"
+      (click)="onExportTab()"
+    >
+      Export this tab (CSV)
+    </button>
+  </div>
   <div class="materials-tab__tiles">
     <app-stat-tile
       label="Wasted filament"
@@ -19,6 +29,7 @@
       class="materials-tab__chart"
       #typeFrame
       title="Filament by material type"
+      [csv]="byTypeCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Grams of filament used per material type"
@@ -54,6 +65,7 @@
       class="materials-tab__chart"
       #brandFrame
       title="Filament by brand"
+      [csv]="byBrandCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Grams of filament used per brand"
@@ -89,6 +101,7 @@
       class="materials-tab__chart"
       #colorFrame
       title="Filament by colour"
+      [csv]="byColorCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Grams of filament used per colour"
@@ -124,6 +137,7 @@
       class="materials-tab__chart"
       #consumptionFrame
       title="Consumption over time"
+      [csv]="consumptionCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
       ariaSummary="Grams of filament used per period, stacked by material type"
@@ -157,85 +171,94 @@
   <app-chart-frame
     class="materials-tab__chart materials-tab__chart--wide"
     title="Top spools"
+    [csv]="topSpoolsCsv()"
+    fit="natural"
     [state]="state()"
     [coverage]="data()?.coverage ?? null"
     ariaSummary="Most-used spools with remaining stock"
     emptyMessage="No spool-tracked filament in this range yet."
     (retry)="onRetry()"
   >
-    <table class="materials-tab__spools">
-      <caption>
-        Most-used spools
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col">Spool</th>
-          <th scope="col">Used</th>
-          <th scope="col">Remaining</th>
-          <th scope="col">Consumed</th>
-          <th scope="col">Cost consumed</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (spool of data()?.topSpools ?? []; track spool.filamentId) {
+    <!-- Five columns do not fit a phone. The overflow belongs to this box, so the tab (and
+         with it the page) never grows a horizontal scrollbar of its own. -->
+    <div class="materials-tab__table-scroll">
+      <table class="materials-tab__spools">
+        <caption>
+          Most-used spools
+        </caption>
+        <thead>
           <tr>
-            <th scope="row">
-              <!--
+            <th scope="col">Spool</th>
+            <th scope="col">Used</th>
+            <th scope="col">Remaining</th>
+            <th scope="col">Consumed</th>
+            <th scope="col">Cost consumed</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (spool of data()?.topSpools ?? []; track spool.filamentId) {
+            <tr>
+              <th scope="row">
+                <!--
                 The LINK is the interactive element, not the row. A `(click)` on a <tr> is
                 invisible to the keyboard and to assistive technology, and spec §9's
                 click-through plus §11's touch/a11y rules both require a real control. A button
                 also gets the ≥44px target for free via padding.
               -->
-              <button
-                type="button"
-                class="materials-tab__spool-link"
-                (click)="onSpoolSelect(spool.filamentId)"
-              >
-                <span
-                  class="materials-tab__swatch"
-                  [style]="
-                    spool.swatch.colors
-                      | filamentColorSwatchStyle
-                        : spool.swatch.colorPattern
-                        : spool.swatch.finishType
-                        : spool.swatch.effects
-                  "
-                  aria-hidden="true"
-                ></span>
-                {{ spool.label }}
-              </button>
-            </th>
-            <td>{{ grams(spool.usedMg) | number: '1.0-0' }} g</td>
-            <td>
-              {{
-                spool.remainingMg === null
-                  ? '—'
-                  : (grams(spool.remainingMg) | number: '1.0-0') + ' g'
-              }}
-            </td>
-            <td>
-              {{
-                spool.percentConsumed === null
-                  ? '—'
-                  : (spool.percentConsumed | number: '1.0-0') + '%'
-              }}
-            </td>
-            <td>
-              <!-- Formatted as money, not a bare decimal: "1.25" with no unit is not a cost,
-                   and the waste tile beside it is already currency-formatted. -->
-              @if (spool.costConsumed === null) {
-                —
-              } @else {
+                <button
+                  type="button"
+                  class="materials-tab__spool-link"
+                  (click)="onSpoolSelect(spool.filamentId)"
+                >
+                  <span
+                    class="materials-tab__swatch"
+                    [style]="
+                      spool.swatch.colors
+                        | filamentColorSwatchStyle
+                          : spool.swatch.colorPattern
+                          : spool.swatch.finishType
+                          : spool.swatch.effects
+                    "
+                    aria-hidden="true"
+                  ></span>
+                  {{ spool.label }}
+                </button>
+              </th>
+              <td>{{ grams(spool.usedMg) | number: '1.0-0' }} g</td>
+              <td>
                 {{
-                  spool.costConsumed
-                    | currency: (data()?.currency ?? undefined) : 'symbol' : '1.2-2'
+                  spool.remainingMg === null
+                    ? '—'
+                    : (grams(spool.remainingMg) | number: '1.0-0') + ' g'
                 }}
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+              </td>
+              <td>
+                {{
+                  spool.percentConsumed === null
+                    ? '—'
+                    : (spool.percentConsumed | number: '1.0-0') + '%'
+                }}
+              </td>
+              <td>
+                <!-- Formatted as money, not a bare decimal: "1.25" with no unit is not a cost,
+                   and the waste tile beside it is already currency-formatted. -->
+                @if (spool.costConsumed === null) {
+                  —
+                } @else {
+                  {{
+                    spool.costConsumed
+                      | currency
+                        : data()?.currency ?? undefined
+                        : 'symbol'
+                        : '1.2-2'
+                  }}
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </app-chart-frame>
 
   @if (runningLow().length > 0) {
@@ -255,8 +278,8 @@
               "
               aria-hidden="true"
             ></span>
-            {{ row.label }} — {{ row.remainingGrams | number: '1.0-0' }} g left, about
-            {{ row.runwayDays | number: '1.0-0' }} days at
+            {{ row.label }} — {{ row.remainingGrams | number: '1.0-0' }} g left,
+            about {{ row.runwayDays | number: '1.0-0' }} days at
             {{ row.burnRateGramsPerDay | number: '1.0-1' }} g/day
           </li>
         }

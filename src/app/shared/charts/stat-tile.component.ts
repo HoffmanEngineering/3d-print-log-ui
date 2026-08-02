@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Metric, MoneyMetric } from 'src/app/analytics/models/analytics.models';
 import { formatCoverageNote } from './coverage-note';
+import { formatDurationShort, formatMoney } from './format-metric';
 
 export type StatFormat = 'number' | 'percent' | 'grams' | 'duration' | 'money';
 
@@ -60,38 +61,11 @@ export class StatTileComponent {
           ? `${(value / 1000).toFixed(1)} kg`
           : `${Math.round(value)} g`;
       case 'duration':
-        return this.formatDuration(value);
-      case 'money': {
-        const currency = (this.metric() as MoneyMetric)?.currency ?? 'USD';
-        try {
-          return new Intl.NumberFormat(undefined, {
-            style: 'currency',
-            currency,
-          }).format(value);
-        } catch {
-          return value.toFixed(2);
-        }
-      }
+        return formatDurationShort(value);
+      case 'money':
+        return formatMoney(value, (this.metric() as MoneyMetric)?.currency);
       default:
         return new Intl.NumberFormat().format(Math.round(value));
     }
-  }
-
-  /** Two most significant units only: "3d 4h" beats "3d 4h 12m 6s" on a tile. */
-  private formatDuration(totalSeconds: number): string {
-    const seconds = Math.max(0, Math.round(totalSeconds));
-    if (seconds === 0) return '0m';
-
-    const days = Math.floor(seconds / 86_400);
-    const hours = Math.floor((seconds % 86_400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-
-    const parts = [
-      days ? `${days}d` : null,
-      hours ? `${hours}h` : null,
-      minutes ? `${minutes}m` : null,
-    ].filter(Boolean) as string[];
-
-    return parts.slice(0, 2).join(' ') || '0m';
   }
 }

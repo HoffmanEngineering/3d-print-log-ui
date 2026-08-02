@@ -101,8 +101,14 @@ describe('ChartFrameComponent', () => {
       '[role="group"]'
     );
     expect(region?.getAttribute('aria-label')).toContain('42 prints');
+    // Scoped to the plot area, not the whole card: the concern is the CHART's marks being
+    // hidden inside a presentational subtree. mat-icon unconditionally sets role="img", so a
+    // decorative header icon (the export menu trigger) would otherwise fail an assertion it
+    // has nothing to do with.
     expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[role="img"]')
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '.chart-frame__body [role="img"]'
+      )
     ).toBeFalsy();
   });
 });

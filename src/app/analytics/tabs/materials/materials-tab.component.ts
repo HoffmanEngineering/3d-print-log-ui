@@ -6,6 +6,7 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import {
   BarChartComponent,
@@ -16,6 +17,7 @@ import {
   formatTickDate,
   parseLocalDate,
 } from 'src/app/shared/charts/chart-axis';
+import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import {
   FilamentSvgDefsComponent,
@@ -29,6 +31,7 @@ import {
   MaterialsResponse,
 } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
+import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 
 /** Below this many days of stock left, a spool is worth flagging before a long print. */
@@ -37,6 +40,7 @@ const RUNNING_LOW_DAYS = 30;
 @Component({
   selector: 'app-materials-tab',
   imports: [
+    MatButtonModule,
     BarChartComponent,
     ChartFrameComponent,
     CurrencyPipe,
@@ -124,6 +128,59 @@ export class MaterialsTabComponent {
       });
   });
 
+  private groupCsv(
+    name: string,
+    groups: { label: string; printCount: number; materialMg: number }[]
+  ): CsvExport {
+    return {
+      filename: `analytics-materials-by-${name}.csv`,
+      columns: ['Group', 'Prints', 'Filament (g)'],
+      rows: groups.map((group) => [
+        group.label,
+        group.printCount,
+        group.materialMg / 1000,
+      ]),
+    };
+  }
+
+  readonly byTypeCsv = computed<CsvExport>(() =>
+    this.groupCsv('type', this.data()?.byType ?? [])
+  );
+
+  readonly byBrandCsv = computed<CsvExport>(() =>
+    this.groupCsv('brand', this.data()?.byBrand ?? [])
+  );
+
+  readonly byColorCsv = computed<CsvExport>(() =>
+    this.groupCsv('colour', this.data()?.byColor ?? [])
+  );
+
+  readonly consumptionCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-materials-consumption.csv',
+    columns: ['Period', 'Material type', 'Filament (g)'],
+    rows: [...(this.data()?.consumptionOverTime ?? [])]
+      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+      .flatMap((bucket) =>
+        Object.entries(bucket.materialMgByType).map(([type, mg]) => [
+          bucket.localStart,
+          type,
+          mg / 1000,
+        ])
+      ),
+  }));
+
+  readonly topSpoolsCsv = computed<CsvExport>(() => ({
+    filename: 'analytics-materials-top-spools.csv',
+    columns: ['Spool', 'Used (g)', 'Remaining (g)', 'Consumed (%)', 'Cost'],
+    rows: (this.data()?.topSpools ?? []).map((spool) => [
+      spool.label,
+      spool.usedMg / 1000,
+      spool.remainingMg === null ? null : spool.remainingMg / 1000,
+      spool.percentConsumed,
+      spool.costConsumed,
+    ]),
+  }));
+
   readonly runningLow = computed(() =>
     (this.data()?.runway ?? [])
       .filter(
@@ -131,6 +188,41 @@ export class MaterialsTabComponent {
       )
       .sort((left, right) => (left.runwayDays ?? 0) - (right.runwayDays ?? 0))
   );
+
+  /**
+   * Every figure on the tab in one file, which is what "export my materials for last quarter"
+   * actually means. Sections reuse the per-chart exports, so the two files cannot disagree.
+   */
+  readonly tabCsv = computed<CsvSection[]>(() => [
+    sectionOf('By type', this.byTypeCsv()),
+    sectionOf('By brand', this.byBrandCsv()),
+    sectionOf('By colour', this.byColorCsv()),
+    sectionOf('Consumption per period', this.consumptionCsv()),
+    sectionOf('Top spools', this.topSpoolsCsv()),
+    {
+      title: 'Runway',
+      columns: ['Spool', 'Remaining (g)', 'Burn rate (g/day)', 'Runway (days)'],
+      rows: (this.data()?.runway ?? []).map((row) => [
+        row.label,
+        row.remainingGrams,
+        row.burnRateGramsPerDay,
+        row.runwayDays,
+      ]),
+    },
+    {
+      title: 'Waste',
+      columns: ['Metric', 'Value'],
+      rows: [
+        ['Waste (g)', this.data()?.wasteGrams.value ?? null],
+        ['Waste cost', this.data()?.wasteCost.value ?? null],
+      ],
+    },
+  ]);
+
+  onExportTab(): void {
+    const file = buildTabCsv('analytics-materials.csv', this.tabCsv());
+    downloadCsv(file.filename, file.content);
+  }
 
   onRetry(): void {
     this.tab.retry();

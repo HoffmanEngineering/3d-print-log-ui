@@ -21,6 +21,28 @@
       </button>
     }
     <ng-content select="[chartActions]"></ng-content>
+
+    <!-- Export is free: there is no Pro gate on analytics. -->
+    <button
+      type="button"
+      mat-icon-button
+      class="chart-frame__export"
+      data-testid="chart-export"
+      aria-label="Export this chart"
+      [matMenuTriggerFor]="exportMenu"
+    >
+      <mat-icon>download</mat-icon>
+    </button>
+    <mat-menu #exportMenu="matMenu">
+      @if (csv()) {
+        <button type="button" mat-menu-item (click)="exportCsv()">
+          Download CSV
+        </button>
+      }
+      <button type="button" mat-menu-item (click)="exportPng()">
+        Download PNG
+      </button>
+    </mat-menu>
   </div>
 
   <!--

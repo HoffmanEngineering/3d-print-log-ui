@@ -1,4 +1,14 @@
 <div class="overview-tab">
+  <div class="overview-tab__actions">
+    <button
+      type="button"
+      mat-stroked-button
+      data-testid="tab-export"
+      (click)="onExportTab()"
+    >
+      Export this tab (CSV)
+    </button>
+  </div>
   <div class="overview-tab__tiles">
     <app-stat-tile
       label="Prints"
@@ -43,6 +53,7 @@
       class="overview-tab__chart"
       #printsFrame
       title="Prints over time"
+      [csv]="seriesCsv()"
       [state]="state()"
       [coverage]="data()?.tiles?.printCount?.coverage ?? null"
       [ariaSummary]="seriesAriaSummary()"
@@ -78,6 +89,7 @@
       class="overview-tab__chart overview-tab__chart--outcomes"
       #statusFrame
       title="Outcomes"
+      [csv]="statusCsv()"
       [state]="state()"
       [coverage]="data()?.tiles?.successRatePercent?.coverage ?? null"
       ariaSummary="Breakdown of prints by status"
@@ -119,9 +131,7 @@
           <span class="overview-tab__highlight-label">{{
             item.ref?.label
           }}</span>
-          <span class="overview-tab__highlight-value"
-            >{{ item.ref?.value }} {{ item.ref?.unit }}</span
-          >
+          <span class="overview-tab__highlight-value">{{ item.display }}</span>
         </li>
       }
     </ul>

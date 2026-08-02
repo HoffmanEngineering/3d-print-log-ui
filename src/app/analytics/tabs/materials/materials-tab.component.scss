@@ -38,14 +38,47 @@
   vertical-align: middle;
 }
 
+.materials-tab__table-scroll {
+  overflow-x: auto;
+  max-inline-size: 100%;
+}
+
 .materials-tab__spools {
   inline-size: 100%;
+  // Below this the five columns wrap into unreadable slivers; the wrapper scrolls instead.
+  min-inline-size: 28rem;
   border-collapse: collapse;
 
   th,
   td {
     padding: 0.25rem 0.5rem;
     text-align: start;
+  }
+
+  thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+    color: var(--chart-empty-text);
+    border-block-end: 1px solid var(--chart-grid);
+    white-space: nowrap;
+  }
+
+  // Every column after the spool name holds a figure, and the cells below are end-aligned.
+  thead th + th {
+    text-align: end;
+  }
+
+  tbody tr + tr {
+    border-block-start: 1px solid var(--chart-grid);
+  }
+
+  // Figures read as a column when they share an alignment; the spool name stays start-aligned.
+  td {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 }
 
@@ -82,4 +115,9 @@
     margin: 0;
     padding-inline-start: 1rem;
   }
+}
+
+.materials-tab__actions {
+  display: flex;
+  justify-content: flex-end;
 }

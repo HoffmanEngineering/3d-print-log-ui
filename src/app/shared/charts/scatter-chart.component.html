@@ -1,0 +1,54 @@
+@if (marks().length > 0) {
+  <svg
+    class="scatter-chart"
+    [attr.width]="width()"
+    [attr.height]="height()"
+    [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
+    role="img"
+  >
+    @if (reference(); as line) {
+      <line
+        class="scatter-chart__reference"
+        [attr.x1]="line.x1"
+        [attr.y1]="line.y1"
+        [attr.x2]="line.x2"
+        [attr.y2]="line.y2"
+      />
+    }
+
+    @for (tick of axisTicks().x; track tick.text) {
+      <text class="scatter-chart__tick" [attr.x]="tick.x" [attr.y]="tick.y" text-anchor="middle">
+        {{ tick.text }}
+      </text>
+    }
+    @for (tick of axisTicks().y; track tick.text) {
+      <text class="scatter-chart__tick" [attr.x]="tick.x" [attr.y]="tick.y" text-anchor="end">
+        {{ tick.text }}
+      </text>
+    }
+
+    @for (mark of marks(); track mark.cx + '-' + mark.cy) {
+      <g>
+        <circle
+          class="scatter-chart__mark chart-fill-1"
+          [attr.cx]="mark.cx"
+          [attr.cy]="mark.cy"
+          [attr.r]="mark.r"
+        />
+        <circle
+          class="scatter-chart__hit"
+          [attr.cx]="mark.cx"
+          [attr.cy]="mark.cy"
+          [attr.r]="hitRadius"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="mark.label"
+          (click)="onSelect(mark)"
+          (keydown.enter)="onSelect(mark)"
+        >
+          <title>{{ mark.label }}</title>
+        </circle>
+      </g>
+    }
+  </svg>
+}

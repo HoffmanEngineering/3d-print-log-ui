@@ -63,7 +63,7 @@ export async function svgToPngBlob(
   background?: string
 ): Promise<Blob> {
   // Resolved from the live page, not hardcoded white: on the dark theme the marks rasterise
-  // in their dark-theme colours, and a white canvas behind them would be unreadable. Opaque
+  // in their dark-theme colors, and a white canvas behind them would be unreadable. Opaque
   // either way — a transparent PNG pasted into a document is unreadable too.
   const surface = background ?? resolveSurfaceColor(svg);
   const rect = svg.getBoundingClientRect();

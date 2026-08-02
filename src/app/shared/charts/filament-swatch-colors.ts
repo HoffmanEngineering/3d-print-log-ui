@@ -33,9 +33,9 @@ const FALLBACK = '#000000';
 const HEX = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 /**
- * Returns the token with a leading hash, or null if it is not a hex colour.
+ * Returns the token with a leading hash, or null if it is not a hex color.
  *
- * Colours are user-controlled persisted data and end up inside SVG attributes, so they are
+ * Colors are user-controlled persisted data and end up inside SVG attributes, so they are
  * validated against a strict pattern before use — "#ff0000;fill:url(#evil)" must never reach a
  * fill. Case is preserved because the pipe's pinned specs compare exact strings.
  */

@@ -115,7 +115,7 @@ describe('CostsTabComponent', () => {
     );
   }));
 
-  it('keeps the three cost components on fixed colours across the tab', fakeAsync(() => {
+  it('keeps the three cost components on fixed colors across the tab', fakeAsync(() => {
     setup();
 
     expect(component.componentSeries.map((s) => s.key)).toEqual([

@@ -95,7 +95,7 @@ export class CostsTabComponent {
   readonly data = this.tab.data;
   readonly state = this.tab.state;
 
-  /** Fixed indices so a component keeps its colour in every chart on the tab. */
+  /** Fixed indices so a component keeps its color in every chart on the tab. */
   readonly componentSeries: readonly BarSeries[] = [
     { key: 'filament', label: 'Filament', seriesIndex: 1 },
     { key: 'electricity', label: 'Electricity', seriesIndex: 2 },

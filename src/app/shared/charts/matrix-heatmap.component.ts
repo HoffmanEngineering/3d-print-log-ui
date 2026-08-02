@@ -24,7 +24,7 @@ const COLUMN_LABEL_HEIGHT = 14;
 
 /**
  * A fixed row × column matrix that fills its container. Unlike the calendar heatmap this never
- * scrolls and both axes are labelled, so the two are separate components rather than one with a
+ * scrolls and both axes are labeled, so the two are separate components rather than one with a
  * mode flag controlling layout, labels, sizing and overflow.
  *
  * Levels are scaled against the busiest cell, which is the honest scale here: the question the

@@ -16,7 +16,7 @@ describe('normalizeHex', () => {
     expect(normalizeHex('f00')).toBe('#f00');
   });
 
-  it('rejects anything that is not a hex colour', () => {
+  it('rejects anything that is not a hex color', () => {
     // These are the values that must never reach an SVG attribute.
     expect(normalizeHex('red')).toBeNull();
     expect(normalizeHex('url(#x)')).toBeNull();
@@ -27,7 +27,7 @@ describe('normalizeHex', () => {
 });
 
 describe('buildSwatchDescriptor', () => {
-  it('describes a solid colour as one stop with no offset', () => {
+  it('describes a solid color as one stop with no offset', () => {
     const descriptor = buildSwatchDescriptor(
       ['ff0000'],
       ColorPatternType.Solid
@@ -63,7 +63,7 @@ describe('buildSwatchDescriptor', () => {
     ]);
   });
 
-  it('falls back to black for an empty colour list, as the pipe always has', () => {
+  it('falls back to black for an empty color list, as the pipe always has', () => {
     const descriptor = buildSwatchDescriptor([], ColorPatternType.Solid);
 
     expect(descriptor.stops).toEqual([
@@ -71,7 +71,7 @@ describe('buildSwatchDescriptor', () => {
     ]);
   });
 
-  it('falls back to black for a colour token that is not valid hex', () => {
+  it('falls back to black for a color token that is not valid hex', () => {
     const descriptor = buildSwatchDescriptor(
       ['url(#evil)'],
       ColorPatternType.Solid

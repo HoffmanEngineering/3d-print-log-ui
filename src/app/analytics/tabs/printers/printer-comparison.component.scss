@@ -29,7 +29,7 @@
   // where the cell padding puts it.
   //
   // justify-content, not just text-align: the button lays its label out with flex and
-  // centres it, so text-align alone left every header floating mid-column above
+  // centers it, so text-align alone left every header floating mid-column above
   // right-aligned figures — which is the misalignment that shows up on screen.
   thead button {
     padding: 0;

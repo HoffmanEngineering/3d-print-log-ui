@@ -7,7 +7,7 @@
   min-inline-size: 0;
   scroll-snap-type: x proximity;
 
-  // Centred when the grid is narrower than the panel — a short date range is only a few
+  // Centered when the grid is narrower than the panel — a short date range is only a few
   // week-columns wide, and left-aligning it in a wide card reads as a rendering fault
   // rather than as "you filtered to a short range". `safe` keeps the start edge reachable
   // when it DOES overflow, which plain centring would clip.

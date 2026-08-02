@@ -100,11 +100,11 @@
     <app-chart-frame
       class="materials-tab__chart"
       #colorFrame
-      title="Filament by colour"
+      title="Filament by color"
       [csv]="byColorCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
-      ariaSummary="Grams of filament used per colour"
+      ariaSummary="Grams of filament used per color"
       emptyMessage="No spool-tracked filament in this range yet."
       (retry)="onRetry()"
     >
@@ -120,7 +120,7 @@
 
       <table chartDataTable>
         <caption>
-          Filament by colour
+          Filament by color
         </caption>
         <tbody>
           @for (group of data()?.byColor ?? []; track group.key) {

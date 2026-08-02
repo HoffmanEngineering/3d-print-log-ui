@@ -152,7 +152,7 @@ export class MaterialsTabComponent {
   );
 
   readonly byColorCsv = computed<CsvExport>(() =>
-    this.groupCsv('colour', this.data()?.byColor ?? [])
+    this.groupCsv('color', this.data()?.byColor ?? [])
   );
 
   readonly consumptionCsv = computed<CsvExport>(() => ({
@@ -196,7 +196,7 @@ export class MaterialsTabComponent {
   readonly tabCsv = computed<CsvSection[]>(() => [
     sectionOf('By type', this.byTypeCsv()),
     sectionOf('By brand', this.byBrandCsv()),
-    sectionOf('By colour', this.byColorCsv()),
+    sectionOf('By color', this.byColorCsv()),
     sectionOf('Consumption per period', this.consumptionCsv()),
     sectionOf('Top spools', this.topSpoolsCsv()),
     {
@@ -232,7 +232,7 @@ export class MaterialsTabComponent {
    * Click-through is a cross-cutting promise (spec §9), so it applies here too. The print list
    * filters by filament id, which is what a spool row and a running-low row both carry.
    *
-   * The by-type / by-brand / by-colour groups are NOT clickable: their keys are attribute
+   * The by-type / by-brand / by-color groups are NOT clickable: their keys are attribute
    * strings, and the print list has no attribute filter — a link that silently dropped its
    * filter would be worse than no link. Never sends userId (that means "public prints only").
    */

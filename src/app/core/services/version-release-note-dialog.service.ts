@@ -28,6 +28,34 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.45.0': {
+      title: '1.45.0 - The New Analytics Page',
+      body: `<p>
+<strong>The new Analytics page</strong> is here! Six tabs (Overview, Activity, Printers, Materials, Costs and Accuracy) share one filter bar, so you can pick a date range and narrow to particular printers, materials, projects or statuses, and every chart follows along. Compare any period to the one before it, and bookmark or share a view straight from the address bar.
+</p>
+<p>
+See a calendar of your printing days and streaks, compare your machines side by side, watch filament use by type, brand and color (in the real spool colors), break your spending into filament, electricity and maintenance, and find out whether your slicer estimates run long or short. Every chart exports as a CSV or a PNG. Take a look at <a href="/analytics">Analytics</a>, or read <a href="/docs/analytics">the Analytics documentation</a>.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.44.0': {
       title: '1.44.0 - Connect an AI Assistant (MCP)',
       body: `<p>

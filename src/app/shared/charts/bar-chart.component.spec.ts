@@ -75,7 +75,7 @@ describe('BarChartComponent', () => {
     expect(new Set(xPositions).size).toBe(2);
   });
 
-  it('colours segments with theme classes, never literal fills', () => {
+  it('colors segments with theme classes, never literal fills', () => {
     const el = render(900);
     const segment = el.querySelector('rect.bar-chart__segment')!;
 

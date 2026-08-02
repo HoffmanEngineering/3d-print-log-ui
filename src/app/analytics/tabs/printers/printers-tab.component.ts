@@ -81,7 +81,7 @@ export class PrintersTabComponent implements OnDestroy {
   }
 
   /**
-   * One series per printer, colours cycling through the six theme tokens. The key is the
+   * One series per printer, colors cycling through the six theme tokens. The key is the
    * printer id as a string, matching PrinterSeriesBucket.printSecondsByPrinterId, so the
    * stacked chart and the table are looking at the same identity.
    */

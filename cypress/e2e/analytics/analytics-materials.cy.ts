@@ -24,7 +24,7 @@ describe('Analytics — Materials tab', () => {
     });
   });
 
-  it('never emits a swatch gradient whose stop-color is not a hex colour', () => {
+  it('never emits a swatch gradient whose stop-color is not a hex color', () => {
     cy.viewport(1440, 900);
     cy.visit('/analytics');
     cy.contains('.mat-mdc-tab', 'Materials').click();
@@ -42,7 +42,7 @@ describe('Analytics — Materials tab', () => {
     });
   });
 
-  it('labels every swatch-filled bar with its material name, not colour alone', () => {
+  it('labels every swatch-filled bar with its material name, not color alone', () => {
     cy.viewport(1440, 900);
     cy.visit('/analytics');
     cy.contains('.mat-mdc-tab', 'Materials').click();

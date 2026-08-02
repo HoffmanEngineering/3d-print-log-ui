@@ -19,7 +19,7 @@ describe('FilamentSvgDefsComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('returns a literal colour for a solid swatch rather than an unnecessary gradient', () => {
+  it('returns a literal color for a solid swatch rather than an unnecessary gradient', () => {
     fixture.componentRef.setInput('swatches', [
       { id: 'a', colors: ['ff0000'], colorPattern: ColorPatternType.Solid },
     ]);
@@ -31,7 +31,7 @@ describe('FilamentSvgDefsComponent', () => {
     ).toBe(0);
   });
 
-  it('emits a gradient and returns a url() fill for a multi-colour swatch', () => {
+  it('emits a gradient and returns a url() fill for a multi-color swatch', () => {
     fixture.componentRef.setInput('swatches', [
       {
         id: 'a',
@@ -73,7 +73,7 @@ describe('FilamentSvgDefsComponent', () => {
     );
   });
 
-  it('never emits a colour that failed hex validation', () => {
+  it('never emits a color that failed hex validation', () => {
     fixture.componentRef.setInput('swatches', [
       {
         id: 'a',

@@ -22,7 +22,7 @@ export interface BarDatum {
   fullLabel: string;
   values: Record<string, number>;
   /**
-   * Optional per-datum fill — a hex colour or a `url(#…)` reference from
+   * Optional per-datum fill — a hex color or a `url(#…)` reference from
    * filament-svg-defs. When absent the mark takes its series' theme class, which is the
    * default and the right choice for anything that must stay readable at a glance.
    */

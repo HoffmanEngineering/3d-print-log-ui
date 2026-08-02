@@ -15,7 +15,7 @@ describe('parseLocalDate', () => {
     expect(parsed.getDate()).toBe(1);
   });
 
-  it('renders a date-only bucket start with the same day the server labelled it', () => {
+  it('renders a date-only bucket start with the same day the server labeled it', () => {
     expect(formatTickDate(parseLocalDate('2026-07-01'), 'Day', true)).toBe(
       '7/1'
     );

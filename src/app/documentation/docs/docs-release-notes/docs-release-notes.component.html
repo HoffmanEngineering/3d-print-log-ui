@@ -2,6 +2,224 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.45.0">1.45.0 - The New Analytics Page</h3>
+  <p>
+    Analytics has been rebuilt from the ground up. Instead of a single page of totals, there are now
+    six tabs (Overview, Activity, Printers, Materials, Costs and Accuracy) that all share one filter
+    bar, so you can pick a date range, narrow to particular printers, materials, projects or
+    statuses, and every chart on every tab follows along. Turn on compare to previous period to see
+    how each figure moved against the period immediately before it, and because your filters and tab
+    live in the page address, you can bookmark a view or send someone the link.
+  </p>
+  <p>
+    The new tabs answer questions the old page could not. Activity shows a calendar of your printing
+    days, your current and longest streaks, and which days and hours you actually start prints.
+    Printers compares your machines side by side on prints, success rate, hours, filament and
+    maintenance spend. Materials breaks filament use down by type, brand and color (with the real
+    spool colors in the charts), shows which spools you are burning through, and estimates how long
+    each one will last. Costs splits your spending into filament, electricity and maintenance and
+    shows what a typical print costs and how much went on prints that did not work out. Accuracy
+    compares your slicer's estimates against what really happened, so you can see whether a printer
+    or a material consistently runs long or short.
+  </p>
+  <p>
+    Every chart can be exported as a CSV or a PNG image, and each tab can export all of its data at
+    once. Numbers are honest about where they came from: a recorded value is always preferred over a
+    slicer estimate, the charts tell you when estimates were involved, and a missing duration or
+    amount is treated as not recorded rather than as a zero. See
+    <a routerLink="/docs/analytics">the Analytics documentation</a> for how success rate, waste and
+    costs are worked out.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Redesigned Analytics page</strong> - Six tabs (Overview, Activity, Printers, Materials,
+      Costs and Accuracy) replace the old single-page layout, with all figures aggregated on the
+      server so large print histories stay fast.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/76"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #76</a
+      >,
+      <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-api/pull/29"
+        rel="noreferrer noopener"
+        target="_blank"
+        >API PR #29</a
+      >)
+    </li>
+    <li>
+      <strong>Shared filter bar</strong> - Date presets or a custom range, plus printer, material,
+      project and status filters, a compare to previous period toggle, and a bottom sheet version on
+      phones. Your selection and current tab are stored in the page address so views can be
+      bookmarked and shared.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/76"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #76</a
+      >)
+    </li>
+    <li>
+      <strong>Activity tab</strong> - A calendar heatmap of active days, current and longest streaks,
+      a print duration histogram, and a weekday-by-hour matrix of when you start prints, with a
+      metric toggle to switch what the calendar is measuring.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/77"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #77</a
+      >,
+      <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-api/pull/30"
+        rel="noreferrer noopener"
+        target="_blank"
+        >API PR #30</a
+      >)
+    </li>
+    <li>
+      <strong>Printers tab</strong> - A sortable comparison table (cards on small screens) covering
+      prints, success rate, hours run, filament used, utilization and maintenance spend per machine.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/77"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #77</a
+      >,
+      <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-api/pull/30"
+        rel="noreferrer noopener"
+        target="_blank"
+        >API PR #30</a
+      >)
+    </li>
+    <li>
+      <strong>Click through to your prints</strong> - Selecting a point on a time chart or calendar
+      opens the print list filtered to exactly that date range.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/77"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #77</a
+      >)
+    </li>
+    <li>
+      <strong>Materials tab</strong> - Filament use by type, brand and color, your top spools by
+      consumption, and a runway estimate for how long each spool will last. Bars are filled with the
+      spool's actual color, including gradients for multi-color filaments.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/78"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #78</a
+      >,
+      <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-api/pull/31"
+        rel="noreferrer noopener"
+        target="_blank"
+        >API PR #31</a
+      >)
+    </li>
+    <li>
+      <strong>Costs tab</strong> - Spending split into filament, electricity and maintenance, the
+      distribution of what a print costs, how much went to waste, and prompts telling you what to
+      fill in (spool prices, electricity rate, printer wattage) if a figure is missing.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #79</a
+      >,
+      <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-api/pull/32"
+        rel="noreferrer noopener"
+        target="_blank"
+        >API PR #32</a
+      >)
+    </li>
+    <li>
+      <strong>Accuracy tab</strong> - Estimated versus actual print time and filament on a scatter
+      chart with a reference line, median differences per printer and material, and plain-language
+      callouts describing where your estimates run long or short.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #79</a
+      >,
+      <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-api/pull/32"
+        rel="noreferrer noopener"
+        target="_blank"
+        >API PR #32</a
+      >)
+    </li>
+    <li>
+      <strong>Chart and tab export</strong> - Export any chart as a CSV or a theme-matched PNG image,
+      or export everything on the current tab as a CSV in one go.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #79</a
+      >)
+    </li>
+    <li>
+      <strong>Clearer notes on where numbers come from</strong> - Charts now say in plain language
+      when estimates were used, when prints were left out for a missing duration, and when a range
+      was shortened to fit your data.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/77"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #77</a
+      >)
+    </li>
+    <li>
+      <strong>Unpriced costs are no longer shown as zero</strong> - A cost component that could not
+      be priced (a spool with no purchase price, for example) is now distinguishable from a genuine
+      zero, and amounts in another currency are called out instead of being silently added up.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #79</a
+      >)
+    </li>
+    <li>
+      <strong>Volume-based filament costing fixed</strong> - Prints that record filament by volume
+      are now costed from that volume instead of a converted weight.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/76"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #76</a
+      >)
+    </li>
+    <li>
+      <strong>Updated Analytics documentation</strong> - The
+      <a routerLink="/docs/analytics">Analytics page</a> now explains each tab, how success rate and
+      waste are decided, how costs are valued, and what to fill in so the Costs tab works.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #79</a
+      >)
+    </li>
+    <li>
+      <strong>Release notes popup renders correctly again</strong> - The popup you are reading this
+      in appeared unstyled (plain text and a bare button) when it opened straight after signing in.
+    </li>
+    <li>
+      <strong>More readable popup text</strong> - Text in confirmation and release note popups is
+      now full-strength instead of the faded grey it used before.
+    </li>
+  </ul>
+
+  <hr />
+
   <h3 id="v1.44.0">1.44.0 - Connect an AI Assistant (MCP)</h3>
   <p>
     3D Print Log now connects to AI assistants like Claude and ChatGPT. Once connected, you can ask

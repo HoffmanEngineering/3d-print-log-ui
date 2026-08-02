@@ -156,7 +156,7 @@ describe('ViewPrintDetailComponent', () => {
       fixture.detectChanges();
     });
 
-    it('should initialise selectedImageIndex to the default image index', () => {
+    it('should initialize selectedImageIndex to the default image index', () => {
       expect(component.selectedImageIndex).toBe(0);
     });
 

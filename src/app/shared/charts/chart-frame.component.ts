@@ -30,7 +30,7 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
 
 /**
  * Every chart's outer shell: heading, loading/empty/error states, coverage badge, and the
- * measured size children render into. Cross-cutting behaviour lives here once so the
+ * measured size children render into. Cross-cutting behavior lives here once so the
  * individual chart types stay small.
  */
 @Component({

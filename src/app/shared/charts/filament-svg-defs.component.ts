@@ -15,7 +15,7 @@ import {
 } from './filament-swatch-colors';
 
 export interface FilamentSwatchInput {
-  /** Stable identity for the swatch — a filament id, a material type, a colour name. */
+  /** Stable identity for the swatch — a filament id, a material type, a color name. */
   id: string;
   colors: string[];
   colorPattern: ColorPatternType;
@@ -41,8 +41,8 @@ let instanceCounter = 0;
  * `fill` values that reference them.
  *
  * Everything here is Angular template markup with bound attributes — never string
- * concatenation. Colours, patterns, effects and names are user-controlled persisted data;
- * building SVG by string interpolation is how that data becomes an injection vector. Colours
+ * concatenation. Colors, patterns, effects and names are user-controlled persisted data;
+ * building SVG by string interpolation is how that data becomes an injection vector. Colors
  * are hex-validated upstream by normalizeHex, and anything that failed is already #000000.
  */
 @Component({

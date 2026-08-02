@@ -35,8 +35,8 @@ import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 
 /**
- * Status ordering and colour assignment are fixed here so the donut, the stacked bars, and
- * the legend always agree — a status must not change colour between two charts on one screen.
+ * Status ordering and color assignment are fixed here so the donut, the stacked bars, and
+ * the legend always agree — a status must not change color between two charts on one screen.
  */
 const STATUS_SERIES: readonly {
   key: string;

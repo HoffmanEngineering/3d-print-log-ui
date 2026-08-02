@@ -86,7 +86,7 @@ export function convertFilamentValue(
   const radiusCm = diameterMm ? diameterMm / 2 / 10 : 0;
   const crossSectionCm2 = diameterMm ? Math.PI * radiusCm * radiusCm : 0;
 
-  // Normalise to volume in cm³ (= ml)
+  // Normalize to volume in cm³ (= ml)
   let volumeCm3: number;
   if (fromUnit === PrintFilamentSourceMeasurement.Weight) {
     volumeCm3 = value / 1000 / density!; // mg → g → cm³

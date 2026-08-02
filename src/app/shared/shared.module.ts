@@ -43,7 +43,6 @@ import { MaterialNamePipe } from './pipes/material-name.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
-import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-modal.component';
 import { NotificationBellComponent } from './notification-bell/notification-bell.component';
 import { AdComponent } from './ad/ad.component';
@@ -70,7 +69,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     StatPanelComponent,
     CommentComponent,
     HumanizePipe,
-    SimpleDialogComponent,
     ParserUnavailableDialogComponent,
     MaterialNamePipe,
     FilamentListComponent,

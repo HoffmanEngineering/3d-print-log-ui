@@ -1,0 +1,112 @@
+{
+  "from": "2026-01-01T00:00:00+00:00",
+  "to": "2026-07-01T00:00:00+00:00",
+  "timeZone": "America/New_York",
+  "granularity": "Month",
+  "timeAccuracyMedian": {
+    "value": 1.12,
+    "previous": 1.2,
+    "coverage": {
+      "population": "prints",
+      "counted": 42,
+      "total": 48,
+      "undatedCount": 0,
+      "exclusions": [{ "reason": "EstimateMissing", "count": 6 }]
+    }
+  },
+  "materialAccuracyMedian": {
+    "value": 1.04,
+    "previous": 1.06,
+    "coverage": {
+      "population": "prints",
+      "counted": 40,
+      "total": 48,
+      "undatedCount": 0,
+      "exclusions": [{ "reason": "EstimateMissing", "count": 8 }]
+    }
+  },
+  "timeScatter": [
+    { "estimated": 1800, "actual": 2100, "count": 4 },
+    { "estimated": 3600, "actual": 3900, "count": 7 },
+    { "estimated": 7200, "actual": 8400, "count": 11 },
+    { "estimated": 14400, "actual": 15100, "count": 6 },
+    { "estimated": 28800, "actual": 34200, "count": 3 }
+  ],
+  "byPrinter": [
+    {
+      "scope": "printer",
+      "key": "1",
+      "label": "Test Printer",
+      "medianRatio": 1.12,
+      "sampleSize": 24,
+      "suppressedForSmallSample": false
+    },
+    {
+      "scope": "printer",
+      "key": "2",
+      "label": "Second Printer",
+      "medianRatio": 0.94,
+      "sampleSize": 14,
+      "suppressedForSmallSample": false
+    },
+    {
+      "scope": "printer",
+      "key": "3",
+      "label": "Barely Used Printer",
+      "medianRatio": null,
+      "sampleSize": 2,
+      "suppressedForSmallSample": true
+    }
+  ],
+  "byMaterial": [
+    {
+      "scope": "material",
+      "key": "PLA",
+      "label": "PLA",
+      "medianRatio": 1.08,
+      "sampleSize": 30,
+      "suppressedForSmallSample": false
+    },
+    {
+      "scope": "material",
+      "key": "PETG",
+      "label": "PETG",
+      "medianRatio": 1.21,
+      "sampleSize": 10,
+      "suppressedForSmallSample": false
+    }
+  ],
+  "biasTrend": [
+    { "index": 0, "localStart": "2026-01-01", "medianRatio": 1.22, "sampleSize": 6 },
+    { "index": 1, "localStart": "2026-02-01", "medianRatio": 1.18, "sampleSize": 8 },
+    { "index": 2, "localStart": "2026-03-01", "medianRatio": 1.14, "sampleSize": 9 },
+    { "index": 3, "localStart": "2026-04-01", "medianRatio": 1.09, "sampleSize": 7 },
+    { "index": 4, "localStart": "2026-05-01", "medianRatio": 1.11, "sampleSize": 7 },
+    { "index": 5, "localStart": "2026-06-01", "medianRatio": null, "sampleSize": 0 }
+  ],
+  "callouts": [
+    {
+      "scope": "printer",
+      "key": "1",
+      "label": "Test Printer",
+      "dimension": "time",
+      "medianRatio": 1.12,
+      "sampleSize": 24
+    },
+    {
+      "scope": "material",
+      "key": "PETG",
+      "label": "PETG",
+      "dimension": "material",
+      "medianRatio": 1.21,
+      "sampleSize": 10
+    }
+  ],
+  "coverage": {
+    "population": "prints",
+    "counted": 42,
+    "total": 48,
+    "undatedCount": 0,
+    "exclusions": [{ "reason": "EstimateMissing", "count": 6 }]
+  }
+}

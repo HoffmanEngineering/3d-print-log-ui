@@ -1,6 +1,6 @@
 <div class="docs-markdown">
   <h1>Privacy Policy for 3D Print Log</h1>
-  <p>Last Updated: Feb 5, 2024</p>
+  <p>Last Updated: Jul 30, 2026</p>
 
   <p>
     At 3D Print Log, accessible from https://www.3dprintlog.com, one of our main
@@ -12,6 +12,117 @@
   <p>
     If you have additional questions or require more information about our
     Privacy Policy, do not hesitate to contact us.
+  </p>
+
+  <h2>The Data You Store in 3D Print Log</h2>
+
+  <p>
+    When you create an account, you give us the data you choose to record: your
+    prints, printers, materials and projects, along with any notes, comments and
+    images you attach to them, and your profile and account preferences.
+  </p>
+
+  <p>
+    We use this data to provide the service to you: to show you your own
+    records, calculate your statistics, and power features such as inventory
+    tracking. Your prints and projects are private by default; only records you
+    explicitly mark as public or unlisted are visible to anyone else.
+  </p>
+
+  <p>
+    We rely on a small number of service providers to run 3D Print Log. Sign-in
+    is handled by Auth0, so we never store your password. The application, its
+    database and your uploaded images are hosted on Microsoft Azure. These
+    providers process your data on our behalf in order to operate the service.
+  </p>
+
+  <h2>Connecting an AI Assistant (MCP)</h2>
+
+  <p>
+    3D Print Log can be connected to an AI assistant, such as Claude or ChatGPT,
+    using the Model Context Protocol (MCP). This is entirely optional and off
+    until you set it up. See
+    <a routerLink="/docs/mcp">Connect an AI Assistant (MCP)</a> for what the
+    feature does and how to enable it. Because connecting an assistant sends
+    your print data to another company, please read this section before you do.
+  </p>
+
+  <p>
+    <strong>You authorize the connection yourself.</strong> Connecting an
+    assistant requires you to sign in to 3D Print Log and approve the request.
+    You grant either read access to your print data, or read and write access.
+    We do not enable this for you and we do not share your data with any AI
+    provider unless you have connected one.
+  </p>
+
+  <p>
+    <strong>What is sent.</strong> Once connected, the assistant can request
+    your structured print data: your prints, printers, materials, projects and
+    the statistics derived from them, including notes. Photos, images and
+    comments are not available to it. Data is sent only in response to a request
+    the assistant makes while connected, which is normally the result of
+    something you asked it.
+  </p>
+
+  <p>
+    <strong>Only your own records.</strong> An assistant connected to your
+    account can only ever read or change records you created. It cannot reach
+    another user's data, including prints that user has made public.
+  </p>
+
+  <p>
+    <strong>What it can change.</strong> If you granted write access, the
+    assistant can create and edit prints, printers, materials and projects on
+    your behalf. It cannot delete anything: there is no way for a connected
+    assistant to delete a print, project or spool.
+  </p>
+
+  <p>
+    <strong
+      >Once your data reaches the AI provider, that provider's privacy policy
+      governs it.</strong
+    >
+    3D Print Log has no access to or control over how Anthropic, OpenAI or any
+    other AI provider stores, retains, or uses the data their assistant
+    receives, or whether it is used to train their models. This is the most
+    important thing to understand before connecting one. Please consult the
+    privacy policy and data-retention settings of the assistant you intend to
+    use.
+  </p>
+
+  <p>
+    <strong>You can disconnect at any time.</strong> Your
+    <a routerLink="/settings">Settings</a> page lists every connected assistant
+    under <strong>Connected AI Agents</strong>, and disconnecting takes effect
+    immediately. Revoking access stops any further data being sent, but it
+    cannot recall data an assistant already received.
+  </p>
+
+  <p>
+    <strong>What we record about MCP requests.</strong> To operate the service,
+    diagnose faults and enforce rate limits, we record limited technical
+    telemetry for each request an assistant makes: which tool was called,
+    whether it succeeded or failed, how long it took, and an irreversible hash
+    that distinguishes one account from another without identifying it. We do
+    not record the contents of the request or the print data returned.
+  </p>
+
+  <h2>Data Retention and Deletion</h2>
+
+  <p>
+    We keep the data you record for as long as your account is open, so that
+    your print history remains available to you.
+  </p>
+
+  <p>
+    You can delete your account at any time from the
+    <strong>Danger Zone</strong> section of your
+    <a routerLink="/settings">Settings</a> page. Deactivated accounts have all
+    of their data deleted 24 hours after deactivation, including recorded
+    prints, printers, filaments, comments, images and your profile. Deletion is
+    irreversible: once it occurs there is no way to recover your data. You are
+    welcome to create a new account later, but no previously deleted data can be
+    restored to it.
   </p>
 
   <h2>Log Files</h2>
@@ -54,23 +165,18 @@
   <p>
     Google is one of a third-party vendor on our site. It also uses cookies,
     known as DART cookies, to serve ads to our site visitors based upon their
-    visit to www.website.com and other sites on the internet. However, visitors
-    may choose to decline the use of DART cookies by visiting the Google ad and
-    content network Privacy Policy at the following URL –
+    visit to www.3dprintlog.com and other sites on the internet. However,
+    visitors may choose to decline the use of DART cookies by visiting the
+    Google ad and content network Privacy Policy at the following URL –
     <a href="https://policies.google.com/technologies/ads"
       >https://policies.google.com/technologies/ads</a
     >
   </p>
 
-  <h2>Privacy Policies</h2>
-
-  <P
-    >You may consult this list to find the Privacy Policy for each of the
-    advertising partners of 3D Print Log.</P
-  >
+  <h2>Third Party Privacy Policies</h2>
 
   <p>
-    Third-party ad servers or ad networks uses technologies like cookies,
+    Third-party ad servers or ad networks use technologies like cookies,
     JavaScript, or Web Beacons that are used in their respective advertisements
     and links that appear on 3D Print Log, which are sent directly to users'
     browser. They automatically receive your IP address when this occurs. These
@@ -83,8 +189,6 @@
     Note that 3D Print Log has no access to or control over these cookies that
     are used by third-party advertisers.
   </p>
-
-  <h2>Third Party Privacy Policies</h2>
 
   <p>
     3D Print Log's Privacy Policy does not apply to other advertisers or
@@ -123,6 +227,20 @@
     visitors to our website with regards to the information that they shared
     and/or collect in 3D Print Log. This policy is not applicable to any
     information collected offline or via channels other than this website.
+  </p>
+
+  <h2>Contact Us</h2>
+
+  <p>
+    If you have a question about this Privacy Policy, about the data we hold for
+    you, or about a request to delete it, email us at
+    <a href="mailto:hello@3dprintlog.com">hello&#64;3dprintlog.com</a>.
+  </p>
+
+  <p>
+    If you already have an account, you can also reach us through the
+    <a routerLink="/feedback">feedback form</a> while signed in, and we will
+    respond to the email address on your account.
   </p>
 
   <h2>Consent</h2>

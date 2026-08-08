@@ -17,6 +17,7 @@ import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
+import { PrintStatusBadgeComponent } from 'src/app/shared/print-status-badge/print-status-badge.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 import {
   FilamentPreferredDisplayResult,
@@ -28,7 +29,12 @@ import {
   templateUrl: './print-card.component.html',
   styleUrls: ['./print-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, SharedModule, ProjectChipComponent],
+  imports: [
+    RouterLink,
+    SharedModule,
+    ProjectChipComponent,
+    PrintStatusBadgeComponent,
+  ],
 })
 export class PrintCardComponent {
   private readonly dialog = inject(MatDialog);
@@ -72,26 +78,6 @@ export class PrintCardComponent {
       return `${printer.name} - (${(printer.make + ' ' + printer.model).trim()})`;
     }
     return `${(printer.make + ' ' + printer.model).trim()}`;
-  }
-
-  protected getStatus(print: PrintSummary): string {
-    if (print.status === PrintStatus.Cancelled) return 'Cancelled';
-    if (print.status === PrintStatus.Failed) return 'Failed';
-    if (print.status === PrintStatus.Pending) return 'Pending';
-    if (print.status === PrintStatus.Printing) return 'Printing';
-    if (print.status === PrintStatus.Success) return 'Success';
-    if (print.status === PrintStatus.PartialSuccess) return 'Partial Success';
-    return 'Unknown';
-  }
-
-  protected getStatusIcon(print: PrintSummary): string {
-    if (print.status === PrintStatus.Cancelled) return 'remove_circle_outline';
-    if (print.status === PrintStatus.Failed) return 'error_outline';
-    if (print.status === PrintStatus.Pending) return 'pending_actions';
-    if (print.status === PrintStatus.Printing) return 'play_circle_outline';
-    if (print.status === PrintStatus.Success) return 'check_circle_outline';
-    if (print.status === PrintStatus.PartialSuccess) return 'rule';
-    return 'help_outline';
   }
 
   protected getPrintEndDate(print: PrintSummary): Date | null {

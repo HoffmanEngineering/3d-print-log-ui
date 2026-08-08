@@ -36,7 +36,6 @@ import { PrintCardComponent } from './print-card/print-card.component';
     EditPrintDetailComponent,
     ViewPrintDetailComponent,
     PrintShareDialogComponent,
-    PrintCommentsComponent,
     PrintTableLayoutComponent,
   ],
   imports: [
@@ -52,6 +51,7 @@ import { PrintCardComponent } from './print-card/print-card.component';
     MatButtonToggleModule,
     PrintGroupedViewComponent,
     PrintCardComponent,
+    PrintCommentsComponent,
   ],
   providers: [
     PrintDetailResolverService,

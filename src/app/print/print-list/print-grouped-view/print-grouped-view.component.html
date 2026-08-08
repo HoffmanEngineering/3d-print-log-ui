@@ -786,6 +786,8 @@
             [defaultFilamentPrice]="defaultFilamentPriceSetting()?.value"
             [currencySymbol]="preferredCurrencySymbolSetting()?.value ?? '$'"
             [preferredUnit]="preferredUnit()"
+            [linkFilaments]="true"
+            [showPrices]="true"
           />
         } @else if (row.kind === 'expanded-print') {
           <app-filament-usage-summary
@@ -793,6 +795,8 @@
             [defaultFilamentPrice]="defaultFilamentPriceSetting()?.value"
             [currencySymbol]="preferredCurrencySymbolSetting()?.value ?? '$'"
             [preferredUnit]="preferredUnit()"
+            [linkFilaments]="true"
+            [showPrices]="true"
           />
         } @else if (row.kind === 'print') {
           <app-filament-usage-summary
@@ -800,6 +804,8 @@
             [defaultFilamentPrice]="defaultFilamentPriceSetting()?.value"
             [currencySymbol]="preferredCurrencySymbolSetting()?.value ?? '$'"
             [preferredUnit]="preferredUnit()"
+            [linkFilaments]="true"
+            [showPrices]="true"
           />
         }
       </td>

@@ -4,15 +4,10 @@
   gap: 10px;
   padding: 5px 10px;
   align-items: center;
-}
 
-.filament-color-cell {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 40px;
-  height: 20px;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.08),
-    0 1px 4px rgba(0, 0, 0, 0.18);
+  // Prices are owner-only, so the fourth track must collapse when they are
+  // hidden — otherwise every row renders a phantom empty column.
+  &.no-prices {
+    grid-template-columns: max-content max-content max-content;
+  }
 }

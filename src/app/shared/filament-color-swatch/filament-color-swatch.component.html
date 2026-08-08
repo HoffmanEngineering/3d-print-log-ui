@@ -1,0 +1,15 @@
+<span
+  class="swatch"
+  [style]="
+    filament().colors
+      | filamentColorSwatchStyle
+        : filament().colorPattern
+        : filament().finishType
+        : filament().effects
+  "
+  [attr.aria-hidden]="decorative() ? 'true' : null"
+>
+  @if (!decorative()) {
+    <span class="cdk-visually-hidden">{{ accessibleName() }}</span>
+  }
+</span>

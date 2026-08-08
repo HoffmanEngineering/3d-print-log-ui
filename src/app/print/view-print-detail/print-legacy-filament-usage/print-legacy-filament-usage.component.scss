@@ -1,0 +1,14 @@
+.legacy-usage {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+
+  dt {
+    opacity: 0.7;
+  }
+
+  dd {
+    margin: 0;
+  }
+}

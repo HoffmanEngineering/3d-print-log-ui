@@ -38,13 +38,9 @@ import {
   getEstimatedPreferredDisplay,
 } from 'src/app/shared/utils/filament-display.utils';
 
-export interface PrintImageValue {
-  id?: number;
-  url?: string;
-  file?: File;
-  isDefault: boolean;
-  displayOrder: number;
-}
+import { PrintImageValue } from './print-image-value.model';
+
+export { PrintImageValue } from './print-image-value.model';
 
 @Component({
   selector: 'app-view-print-detail',

@@ -65,7 +65,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     SidebarComponent,
     DurationPipe,
     PrintSummaryCardComponent,
-    PrintImageComponent,
     StatPanelComponent,
     CommentComponent,
     HumanizePipe,
@@ -125,6 +124,7 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     FilamentColorSwatchStylePipe,
     LocaleDatePipe,
     AdComponent,
+    PrintImageComponent,
   ],
   exports: [
     CommonModule,

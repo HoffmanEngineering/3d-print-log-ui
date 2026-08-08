@@ -1,0 +1,30 @@
+@if (hasImages()) {
+  <app-image-carousel
+    [imageCount]="images().length"
+    [selectedIndex]="selectedIndex()"
+    (indexChange)="onIndexChange($event)"
+  >
+    @if (selectedImage(); as image) {
+      <div class="main-image">
+        <app-print-image
+          [printId]="printId()"
+          [imageId]="image.id"
+          [imageData]="image.url"
+          [alt]="selectedAlt()"
+          [showDeleteOnHover]="false"
+        ></app-print-image>
+      </div>
+    }
+  </app-image-carousel>
+  @if (showThumbnails()) {
+    <app-image-thumbnail-strip
+      [images]="images()"
+      [selectedId]="selectedImage()?.id"
+      (imageSelected)="onImageSelected($event)"
+    />
+  }
+} @else {
+  <div class="no-image">
+    <span>No images for this print</span>
+  </div>
+}

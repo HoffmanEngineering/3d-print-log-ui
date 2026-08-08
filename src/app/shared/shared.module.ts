@@ -63,7 +63,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
 @NgModule({
   declarations: [
     SidebarComponent,
-    DurationPipe,
     PrintSummaryCardComponent,
     StatPanelComponent,
     CommentComponent,
@@ -125,6 +124,7 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     LocaleDatePipe,
     AdComponent,
     PrintImageComponent,
+    DurationPipe,
   ],
   exports: [
     CommonModule,

@@ -73,8 +73,9 @@ describe('ViewPrintDetailComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [ViewPrintDetailComponent, DurationPipe],
+      declarations: [ViewPrintDetailComponent],
       imports: [
+        DurationPipe,
         RouterTestingModule,
         FilamentColorSwatchStylePipe,
         LocaleDatePipe,

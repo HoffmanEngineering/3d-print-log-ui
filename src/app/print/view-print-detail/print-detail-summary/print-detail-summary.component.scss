@@ -1,0 +1,97 @@
+:host {
+  display: block;
+}
+
+.print-title {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.byline {
+  margin: 0 0 12px;
+  opacity: 0.75;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid;
+  border-radius: 16px;
+  text-decoration: none;
+}
+
+.panel {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.panel-heading {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.glance {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin: 0;
+
+  dt {
+    opacity: 0.7;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.partial-note {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  opacity: 0.7;
+
+  dd {
+    margin: 0;
+  }
+}
+
+.rail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  a,
+  button {
+    min-height: 44px;
+  }
+}

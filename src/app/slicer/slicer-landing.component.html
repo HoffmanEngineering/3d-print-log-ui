@@ -23,7 +23,9 @@
       <h2>OrcaSlicer forks</h2>
       <ul>
         @for (fork of config.relatedForks; track fork.route) {
-          <li><a [routerLink]="fork.route">{{ fork.name }}</a></li>
+          <li>
+            <a [routerLink]="fork.route">{{ fork.name }}</a>
+          </li>
         }
       </ul>
     </section>

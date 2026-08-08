@@ -39,7 +39,9 @@
       <dt>Printer</dt>
       <dd>
         @if (isOwner()) {
-          <a data-cy-printer-link [routerLink]="['/printers', print().printerId]"
+          <a
+            data-cy-printer-link
+            [routerLink]="['/printers', print().printerId]"
             >{{ p.make }} {{ p.model }}</a
           >
         } @else {
@@ -64,8 +66,8 @@
           @if (materialCostIsPartial()) {
             <span class="partial-total">at least</span>
           }
-          {{ cost.formattedPrice
-          }}@if (cost.usesDefaultPrice) {
+          {{ cost.formattedPrice }}
+          @if (cost.usesDefaultPrice) {
             <span aria-describedby="legend-default-price">*</span>
           }
           @if (materialCostIsPartial()) {
@@ -82,8 +84,8 @@
       @if (cost.valid) {
         <dt>Electricity</dt>
         <dd>
-          {{ cost.formattedCost
-          }}@if (cost.usesDefaultWattage) {
+          {{ cost.formattedCost }}
+          @if (cost.usesDefaultWattage) {
             <span aria-describedby="legend-default-wattage">*</span>
           }
         </dd>
@@ -145,11 +147,21 @@
 
 <div class="rail-actions">
   @if (isOwner()) {
-    <a mat-raised-button color="accent" [routerLink]="['edit']" data-cy-edit-btn>
+    <a
+      mat-raised-button
+      color="accent"
+      [routerLink]="['edit']"
+      data-cy-edit-btn
+    >
       Edit
     </a>
   }
-  <button mat-stroked-button type="button" (click)="onClose()" data-cy-close-btn>
+  <button
+    mat-stroked-button
+    type="button"
+    (click)="onClose()"
+    data-cy-close-btn
+  >
     Back
   </button>
 </div>

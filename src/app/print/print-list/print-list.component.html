@@ -28,7 +28,11 @@
           <button mat-menu-item color="accent" (click)="gcodeInput.click()">
             Add Print From Gcode
           </button>
-          <button mat-menu-item data-cy="add-project-menu-item" (click)="navigateToNewProject()">
+          <button
+            mat-menu-item
+            data-cy="add-project-menu-item"
+            (click)="navigateToNewProject()"
+          >
             Add a Project
           </button>
         </mat-menu>
@@ -133,7 +137,10 @@
               >
                 <span
                   class="filament-color-dot"
-                  [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern"
+                  [style]="
+                    filament.colors
+                      | filamentColorSwatchStyle: filament.colorPattern
+                  "
                 ></span>
                 <span class="filament-chip-label">{{
                   getFilamentLabel(filament)
@@ -270,7 +277,9 @@
         >
           Start Date
         </th>
-        <td mat-cell *matCellDef="let print">{{ print.startDate | localeDate }}</td>
+        <td mat-cell *matCellDef="let print">
+          {{ print.startDate | localeDate }}
+        </td>
       </ng-container>
       <ng-container matColumnDef="start-time">
         <th

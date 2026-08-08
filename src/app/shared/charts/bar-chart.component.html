@@ -30,7 +30,7 @@
     }
     <!-- Axis text is decorative: the same values are announced on each segment's label and in
        the frame's data table, so repeating them here would just be noise. -->
-  @for (label of axisLabels(); track label.key) {
+    @for (label of axisLabels(); track label.key) {
       <text
         class="bar-chart__axis-label"
         aria-hidden="true"
@@ -42,7 +42,7 @@
       </text>
     }
 
-  @for (bucket of bucketHitboxes(); track bucket.datum.fullLabel) {
+    @for (bucket of bucketHitboxes(); track bucket.datum.fullLabel) {
       <rect
         class="bar-chart__bucket-hitbox"
         aria-hidden="true"
@@ -65,7 +65,7 @@
       />
     }
 
-  @for (segment of segments(); track segment.tooltip) {
+    @for (segment of segments(); track segment.tooltip) {
       <rect
         [class]="
           segment.fill

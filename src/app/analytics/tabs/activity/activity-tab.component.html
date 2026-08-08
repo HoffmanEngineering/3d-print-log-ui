@@ -49,7 +49,10 @@
       />
       <table chartDataTable>
         <caption>
-          {{ seriesLabels[metric()] }} per period
+          {{
+            seriesLabels[metric()]
+          }}
+          per period
         </caption>
         <tbody>
           @for (row of seriesData(); track row.fullLabel) {

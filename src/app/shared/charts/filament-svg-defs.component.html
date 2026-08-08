@@ -5,9 +5,18 @@
 <svg:defs>
   @for (def of defs(); track def.id) {
     @if (def.gradientId) {
-      <svg:linearGradient [attr.id]="def.gradientId" x1="0" y1="0" x2="1" y2="0">
+      <svg:linearGradient
+        [attr.id]="def.gradientId"
+        x1="0"
+        y1="0"
+        x2="1"
+        y2="0"
+      >
         @for (stop of def.stops; track $index) {
-          <svg:stop [attr.offset]="stop.offset" [attr.stop-color]="stop.color" />
+          <svg:stop
+            [attr.offset]="stop.offset"
+            [attr.stop-color]="stop.color"
+          />
         }
         @if (def.descriptor.shimmer) {
           <!-- Silk reads as a highlight band rather than a separate overlay element. -->

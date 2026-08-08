@@ -1,55 +1,95 @@
-mat-card-content {
+:host {
+  display: block;
   width: 100%;
-  box-sizing: border-box;
 }
 
-.main-image {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  aspect-ratio: 1 / 1;
-}
-
-.grid-container {
+.page {
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  grid-gap: 0.3em 0.6em;
-  grid-auto-flow: dense;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  justify-content: center;
+
+  &:focus {
+    outline: none;
+  }
 }
-h3 {
-  width: auto;
-  padding: 0;
+
+.ad-sidebar {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .page {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  .ad-sidebar {
+    display: block;
+  }
+}
+
+.content {
+  container-type: inline-size;
+  container-name: print-content;
+  min-width: 0;
+  max-width: 1100px;
+}
+
+.hero-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+// Keyed off the content column's width, not the viewport: the ad sidebar
+// steals 300px, so a viewport-based breakpoint would crush this layout.
+@container print-content (min-width: 860px) {
+  .hero-band {
+    grid-template-columns: 1.15fr minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .hero-band > app-print-detail-summary {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+.band {
+  margin-bottom: 16px;
+
+  h2 {
+    font-size: 1rem;
+    margin: 0 0 8px;
+  }
+}
+
+.band-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@container print-content (min-width: 860px) {
+  .band-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.notes-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   margin: 0;
-  font-size: 0.8rem;
 }
 
-p,
-ul,
-.filamentUsage {
-  grid-column: 2;
-  width: auto;
-  margin: 0;
+.not-found {
+  padding: 48px 16px;
+  text-align: center;
 }
 
-hr {
-  grid-column: 1/-1;
-  width: auto;
-  margin: 0;
-}
-
-.filament-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.filament-color-swatch {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  min-width: 14px;
-  border-radius: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
+@media (prefers-reduced-motion: reduce) {
+  .hero-band > app-print-detail-summary {
+    position: static;
+  }
 }

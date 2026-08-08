@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 import {
   UserService,
   UserSummaryDto,
@@ -16,8 +16,8 @@ import {
 import { CuraParserService } from '../services/integration/cura-parser.service';
 
 export interface PrintDetailWithUser {
-  print: PrintDetail;
-  user: UserSummaryDto;
+  print: PrintDetail | null;
+  user: UserSummaryDto | null;
 }
 
 @Injectable()
@@ -44,6 +44,9 @@ export class PrintDetailResolverService {
             return of(newDetails);
           }
           return this.userService.getUserSummary(print.createdByUserId).pipe(
+            // A deleted, deactivated, or private uploader must not cancel
+            // navigation for an otherwise-public print (#66).
+            catchError(() => of(null as UserSummaryDto | null)),
             map((user) => {
               const newDetails: PrintDetailWithUser = {
                 print,

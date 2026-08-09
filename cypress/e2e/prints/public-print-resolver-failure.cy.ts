@@ -1,6 +1,12 @@
 // #66 failure mode: a rejected resolver cancels navigation and bounces the
-// visitor to /. The print detail route resolves a user summary and four user
-// settings alongside the print itself; none of them may reject.
+// visitor to /.
+//
+// /prints/:id no longer has any resolver — the component fetches the print, the
+// uploader summary, and the user settings itself — so the bounce is gone by
+// construction. These tests are kept, and still matter, because the same
+// side-channel failures now have a NEW way to break the page: an unhandled
+// error leaves it stranded on its loading skeleton. Every case below asserts
+// the page reaches a real rendered state.
 //
 // The cy.wait('@alias') calls are load-bearing: without them a mistyped glob
 // silently turns either test into a no-op.

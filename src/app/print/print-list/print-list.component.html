@@ -183,27 +183,48 @@
   @if (viewMode === 'list') {
     <!-- Mobile Card View -->
     <div class="mobile-card-view" fxHide.gt-sm>
-      @for (print of prints; track print.id) {
-        <app-print-card
-          [print]="print"
-          (deleted)="deletePrint($event)"
-          (statusChanged)="changeStatus($event.id, $event.status)"
-          [preferredUnit]="preferredFilamentUnit()"
-        />
-      }
-      @if (totalCount === 0) {
-        <div class="no-prints">
-          No prints found. Add a new print or try a different search.
-        </div>
+      @if (isLoading) {
+        <!--
+          A search or a page change refetches without a route change, so the old
+          results used to sit there unchanged until the response landed. The
+          skeleton says the list is being rebuilt.
+        -->
+        <app-print-list-skeleton [count]="skeletonRowCount()" />
+      } @else {
+        @for (print of prints; track print.id) {
+          <app-print-card
+            [print]="print"
+            (deleted)="deletePrint($event)"
+            (statusChanged)="changeStatus($event.id, $event.status)"
+            [preferredUnit]="preferredFilamentUnit()"
+          />
+        }
+        @if (totalCount === 0) {
+          <div class="no-prints">
+            No prints found. Add a new print or try a different search.
+          </div>
+        }
       }
     </div>
 
     <!-- Desktop Table View -->
+    <!--
+      While loading, the data rows are hidden with a class and the skeleton is
+      rendered below rather than the whole table being torn down: the header row
+      carries the mat-sort state, and destroying it would drop the sort arrow
+      every time a filter changed.
+
+      aria-live is silenced while loading: the rows are being removed from this
+      live region at the same moment the skeleton's own role="status" announces
+      "Loading prints", and two regions talking over each other is worse than
+      one.
+    -->
     <table
+      [class.loading]="isLoading"
       fxFlex="grow"
       fxHide.lt-md
       aria-label="Print List"
-      aria-live="polite"
+      [attr.aria-live]="isLoading ? 'off' : 'polite'"
       mat-table
       [dataSource]="prints"
       matSort
@@ -592,7 +613,15 @@
         [attr.cy-print-row]="row.id"
       ></tr>
     </table>
-    @if (totalCount === 0) {
+    @if (isLoading) {
+      <app-print-list-skeleton
+        fxHide.lt-md
+        variant="row"
+        [count]="skeletonRowCount()"
+        [columns]="displayedColumns.length"
+      />
+    }
+    @if (!isLoading && totalCount === 0) {
       <div class="no-prints">
         No prints found. Add a new print or try a different search.
       </div>

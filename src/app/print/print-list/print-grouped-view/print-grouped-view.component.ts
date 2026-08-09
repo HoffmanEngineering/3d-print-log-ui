@@ -43,6 +43,7 @@ import { ProjectImageComponent } from 'src/app/shared/project-image/project-imag
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 import { ColumnDefinition } from '../print-list.component';
+import { PrintListSkeletonComponent } from '../print-list-skeleton/print-list-skeleton.component';
 import { PrintTableLayoutComponent } from '../print-table-layout/print-table-layout.component';
 
 export type GroupedRow =
@@ -61,6 +62,7 @@ export type GroupedRow =
     ProjectChipComponent,
     RouterLink,
     ProjectImageComponent,
+    PrintListSkeletonComponent,
   ],
 })
 export class PrintGroupedViewComponent implements OnInit {
@@ -98,6 +100,11 @@ export class PrintGroupedViewComponent implements OnInit {
   loading = signal(true);
   pageNumber = signal(1);
   pageSize = +(localStorage.getItem('print_list_page_size') ?? 10);
+
+  /** Placeholder count while loading — see PrintListComponent.skeletonRowCount. */
+  skeletonRowCount(): number {
+    return Math.min(this.pageSize || 10, 10);
+  }
 
   expandedProjectPrints = signal<Map<string, PrintSummary[]>>(new Map());
 

@@ -1,7 +1,14 @@
 @if (loading()) {
-  <div class="loading-container">
-    <mat-spinner diameter="40" />
-  </div>
+  <!--
+    A centered spinner says "something is happening" but not "a list of prints
+    is coming", and it collapses the page height so everything below jumps once
+    the rows land. The skeleton holds the shape instead.
+  -->
+  <app-print-list-skeleton
+    class="grouped-skeleton"
+    [count]="skeletonRowCount()"
+    label="Loading projects and prints"
+  />
 } @else if (!feed()?.items?.length) {
   <p class="empty-state">
     No prints found. Try adjusting your search or filters.

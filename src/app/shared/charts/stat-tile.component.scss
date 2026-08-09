@@ -1,3 +1,5 @@
+@use '../skeleton/skeleton-mixins' as skeleton;
+
 // The grid item is the HOST, not the card inside it. Left unstyled the host defaults to
 // inline, so a grid row's stretch never reached the card and a tile carrying a comparison
 // delta stood taller than its neighbours. Stretching the host and then the card makes every
@@ -58,7 +60,6 @@
   &__skeleton {
     block-size: 1.8rem;
     inline-size: 60%;
-    border-radius: 4px;
-    background: var(--chart-grid);
+    @include skeleton.skeleton-surface;
   }
 }

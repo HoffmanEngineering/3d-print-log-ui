@@ -304,4 +304,65 @@ describe('PrintListComponent', () => {
     component.navigateToNewProject();
     expect(navigateSpy).toHaveBeenCalledWith(['/projects', 'new']);
   });
+
+  // Searching and paging refetch without a route change, so the list used to sit
+  // there showing the previous results with no sign that anything was happening.
+  describe('loading placeholders', () => {
+    it('shows the skeleton and hides the stale rows while refetching', () => {
+      fixture.detectChanges();
+      component.isLoading = true;
+      // Plain-field mutations do not mark the view dirty in the zoneless test
+      // harness, so the embedded @if block would not be refreshed.
+      fixture.changeDetectorRef.markForCheck();
+      fixture.detectChanges();
+
+      expect(
+        fixture.debugElement.queryAll(By.css('app-print-list-skeleton')).length
+      ).toBe(2);
+      expect(
+        fixture.debugElement.query(By.css('table')).nativeElement.classList
+      ).toContain('loading');
+    });
+
+    it('shows no skeleton once the results have landed', () => {
+      fixture.detectChanges();
+      component.isLoading = false;
+      fixture.detectChanges();
+
+      expect(
+        fixture.debugElement.query(By.css('app-print-list-skeleton'))
+      ).toBeNull();
+    });
+
+    // "No prints found" next to a screen of shimmering placeholders is a lie.
+    it('suppresses the empty-state message while loading', () => {
+      fixture.detectChanges();
+      component.isLoading = true;
+      // Plain-field mutations do not mark the view dirty in the zoneless test
+      // harness, so the embedded @if block would not be refreshed.
+      fixture.changeDetectorRef.markForCheck();
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.css('.no-prints'))).toBeNull();
+    });
+
+    // Two live regions announcing at once — the table losing its rows and the
+    // skeleton saying "Loading prints" — is worse than one.
+    it('silences the table live region while the skeleton announces', () => {
+      fixture.detectChanges();
+      const table = fixture.debugElement.query(By.css('table')).nativeElement;
+      expect(table.getAttribute('aria-live')).toBe('polite');
+
+      component.isLoading = true;
+      fixture.changeDetectorRef.markForCheck();
+      fixture.detectChanges();
+
+      expect(table.getAttribute('aria-live')).toBe('off');
+    });
+
+    it('caps the placeholder count so a 100-per-page view is not a wall of grey', () => {
+      component.pageSize = 100;
+      expect(component.skeletonRowCount()).toBe(10);
+    });
+  });
 });

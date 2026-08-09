@@ -1,0 +1,25 @@
+// The one definition of what a loading placeholder looks like. Include this
+// rather than re-writing the gradient; the tokens and the `app-skeleton-shimmer`
+// keyframes live in the global `skeleton-theme.scss`.
+//
+// Use the mixin when an element that already exists should *become* a
+// placeholder (a chart's plot box, a stat tile's value line). Use the
+// `<app-skeleton>` component when the placeholder is markup you are adding.
+@mixin skeleton-surface($radius: 4px) {
+  border-radius: $radius;
+  background: linear-gradient(
+    90deg,
+    var(--app-skeleton-base) 25%,
+    var(--app-skeleton-sheen) 50%,
+    var(--app-skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: app-skeleton-shimmer 1.2s infinite linear;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    // Without the sweep the tri-stop gradient reads as a stripe, so fall back
+    // to the flat base color.
+    background: var(--app-skeleton-base);
+  }
+}

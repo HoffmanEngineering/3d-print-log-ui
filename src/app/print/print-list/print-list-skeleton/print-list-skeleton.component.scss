@@ -1,0 +1,59 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.skeleton-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.skeleton-card-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.skeleton-table {
+  display: flex;
+  flex-direction: column;
+  // Matches the mat-table row rhythm closely enough that the real rows do not
+  // visibly jump when they replace this.
+  gap: 0;
+}
+
+.skeleton-row {
+  display: grid;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+:host-context(html.dark-theme) {
+  .skeleton-card {
+    background: #424242;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .skeleton-row {
+    border-bottom-color: rgba(255, 255, 255, 0.18);
+  }
+}

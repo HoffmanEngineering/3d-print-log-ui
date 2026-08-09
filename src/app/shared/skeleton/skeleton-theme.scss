@@ -1,0 +1,29 @@
+// Global half of the skeleton primitive: the color tokens and the shimmer
+// keyframes. Component styles pull in the matching `skeleton-mixins` partial
+// and reference the animation by name.
+//
+// Colors are tokens swapped by the `dark-theme` class on <html>, never by an
+// `@if (isDark())` in a template — ThemeService sets that class before first
+// paint, so a class-based swap is correct on a prerendered page while a
+// signal-driven one pops in after hydration.
+:root {
+  --app-skeleton-base: rgba(0, 0, 0, 0.1);
+  --app-skeleton-sheen: rgba(0, 0, 0, 0.04);
+}
+
+html.dark-theme {
+  --app-skeleton-base: rgba(255, 255, 255, 0.13);
+  --app-skeleton-sheen: rgba(255, 255, 255, 0.05);
+}
+
+// Declared once, globally. Angular's emulated encapsulation does not scope
+// @keyframes, so defining this inside the mixin would emit a duplicate rule for
+// every component that includes it.
+@keyframes app-skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}

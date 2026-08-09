@@ -227,6 +227,15 @@ export class PrintListComponent implements OnInit, OnDestroy {
     return count;
   });
 
+  /**
+   * How many placeholder rows/cards to draw while a refetch is in flight.
+   * Matching the current page size keeps the list roughly the height it will be,
+   * capped so a 100-per-page view does not paint a screen and a half of grey.
+   */
+  public skeletonRowCount(): number {
+    return Math.min(this.pageSize || 10, 10);
+  }
+
   public toggleFilterPanel(): void {
     this.isFilterPanelOpen = !this.isFilterPanelOpen;
   }

@@ -167,6 +167,12 @@ table {
   margin-left: 20px;
 }
 
+// Loading: keep the header row — and with it the mat-sort arrow — and hide only
+// the stale data rows. The skeleton renders directly beneath the table.
+table.loading tr[mat-row] {
+  display: none;
+}
+
 .mat-column-more {
   flex: 0 0 1% !important;
   width: 1% !important;

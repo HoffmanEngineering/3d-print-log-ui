@@ -31,6 +31,13 @@ export class PrintEmptyStateComponent {
   /** Current free-text search term, if any. */
   readonly searchText = input('');
 
+  /**
+   * Whether the user owns at least one printer. `null` means the lookup has
+   * not resolved yet, in which case the first-run branch renders nothing
+   * rather than briefly advising the wrong first step.
+   */
+  readonly hasPrinters = input<boolean | null>(null);
+
   /** Whether the host already provides a polite live region. */
   readonly announce = input(true);
 
@@ -74,6 +81,10 @@ export class PrintEmptyStateComponent {
 
   onAddPrint(): void {
     this.loggingService.logEvent('PrintEmptyState_AddPrint');
+  }
+
+  onAddPrinter(): void {
+    this.loggingService.logEvent('PrintEmptyState_AddPrinter');
   }
 
   onImportGcode(): void {

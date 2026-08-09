@@ -40,8 +40,9 @@ describe('PrintEmptyStateComponent', () => {
     component = fixture.componentInstance;
   });
 
-  describe('when nothing is filtered', () => {
+  describe('when nothing is filtered and the user has printers', () => {
     beforeEach(() => {
+      fixture.componentRef.setInput('hasPrinters', true);
       fixture.detectChanges();
     });
 
@@ -93,6 +94,74 @@ describe('PrintEmptyStateComponent', () => {
     });
   });
 
+  describe('when the user has no printers', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('hasPrinters', false);
+      fixture.detectChanges();
+    });
+
+    it('should tell the user to add a printer first and explain why', () => {
+      expect(heading()).toEqual('Add a printer to get started');
+      expect(message()).toContain(
+        "You'll need a printer before you can log a print"
+      );
+    });
+
+    it('should offer add printer as the only action', () => {
+      expect(
+        fixture.debugElement.query(
+          By.css('[data-cy="empty-state-add-printer"]')
+        )
+      ).toBeTruthy();
+      expect(
+        fixture.debugElement.query(By.css('[data-cy="empty-state-add-print"]'))
+      ).toBeFalsy();
+    });
+
+    it('should not offer g-code import, which needs a printer to save', () => {
+      expect(
+        fixture.debugElement.query(
+          By.css('[data-cy="empty-state-import-gcode"]')
+        )
+      ).toBeFalsy();
+    });
+
+    it('should log when the add printer action is used', () => {
+      (
+        fixture.debugElement.query(
+          By.css('[data-cy="empty-state-add-printer"]')
+        ).nativeElement as HTMLButtonElement
+      ).click();
+
+      expect(mockLogger.logEvent).toHaveBeenCalledWith(
+        'PrintEmptyState_AddPrinter'
+      );
+    });
+
+    it('should still show the filtered state when filters are also active', () => {
+      fixture.componentRef.setInput('activeFilterCount', 1);
+      fixture.detectChanges();
+
+      expect(heading()).toEqual('No prints match your filters');
+    });
+  });
+
+  describe('when the printer lookup has not resolved', () => {
+    it('should render nothing rather than guess the first step', () => {
+      fixture.detectChanges();
+
+      expect(component.hasPrinters()).toBeNull();
+      expect(fixture.debugElement.query(By.css('app-empty-state'))).toBeNull();
+    });
+
+    it('should still render the filtered state, which needs no printer info', () => {
+      fixture.componentRef.setInput('searchText', 'benchy');
+      fixture.detectChanges();
+
+      expect(heading()).toEqual('No prints match your filters');
+    });
+  });
+
   describe('when filters are active', () => {
     it('should mention a single filter in the singular', () => {
       fixture.componentRef.setInput('activeFilterCount', 1);
@@ -122,6 +191,7 @@ describe('PrintEmptyStateComponent', () => {
     });
 
     it('should treat whitespace-only search text as no search', () => {
+      fixture.componentRef.setInput('hasPrinters', true);
       fixture.componentRef.setInput('searchText', '   ');
       fixture.detectChanges();
 

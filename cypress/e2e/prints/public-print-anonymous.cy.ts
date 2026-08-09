@@ -58,10 +58,11 @@ describe('Anonymous public print view', () => {
         .should('have.attr', 'href', print.url)
         .and('have.attr', 'rel', 'noopener noreferrer');
 
-      // NOTE: no project-link assertion. GET /api/Prints/{id} returns
-      // projectId but not projectName, and the chip renders off the name — so
-      // it cannot appear on this page today regardless of the viewer. Tracked
-      // as an API-side follow-up; asserting it here would just fail.
+      // NOTE: still no project-link assertion. The rail now links off
+      // projectId and resolves the name separately, so the link CAN appear —
+      // but the seeded fixture has no project, which would make any assertion
+      // here vacuous either way. Covered deterministically in
+      // print-detail-summary.component.spec.ts instead.
 
       // 6) The file attachment section fetches on init even for anonymous
       //    visitors. Assert the request outcome rather than the host element's

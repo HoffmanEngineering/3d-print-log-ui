@@ -1,10 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import currency from 'currency.js';
 import { PrintDetailSummaryComponent } from './print-detail-summary.component';
-import { PrintService, PrintStatus } from 'src/app/core/services/print.service';
+import {
+  EMPTY_GUID,
+  PrintService,
+  PrintStatus,
+} from 'src/app/core/services/print.service';
 
 describe('PrintDetailSummaryComponent', () => {
   let fixture: ComponentFixture<PrintDetailSummaryComponent>;
@@ -146,6 +153,58 @@ describe('PrintDetailSummaryComponent', () => {
     const el = renderAs(false);
     expect(el.querySelector('[data-cy-project-link]')).toBeTruthy();
     expect(el.textContent).toContain('Dragon Project');
+    // No name lookup when the payload already carried one.
+    TestBed.inject(HttpTestingController).expectNone((r) =>
+      r.url.includes('/api/Projects/')
+    );
+  });
+
+  // GET /api/Prints/{id} returns projectId but no projectName, which is the
+  // case that left the rail with nothing to render.
+  it('resolves the project name when the print payload omits it', () => {
+    fixture.componentRef.setInput('print', {
+      ...print,
+      projectName: undefined,
+    });
+    const el = renderAs(false);
+    TestBed.inject(HttpTestingController)
+      .expectOne((r) => r.url.endsWith('/api/Projects/p1'))
+      .flush({ id: 'p1', name: 'Fetched Project' });
+    fixture.detectChanges();
+
+    expect(el.querySelector('[data-cy-project-link]')).toBeTruthy();
+    expect(el.textContent).toContain('Fetched Project');
+  });
+
+  // Public route: an anonymous visitor, a private project, or a deleted one
+  // must degrade to a nameless link rather than take the page down.
+  it('still links the project when the name cannot be resolved', () => {
+    fixture.componentRef.setInput('print', {
+      ...print,
+      projectName: undefined,
+    });
+    const el = renderAs(false);
+    TestBed.inject(HttpTestingController)
+      .expectOne((r) => r.url.endsWith('/api/Projects/p1'))
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+    fixture.detectChanges();
+
+    expect(el.querySelector('[data-cy-project-link]')).toBeTruthy();
+    expect(el.textContent).toContain('View project');
+  });
+
+  it('renders no project row when the id is the empty guid', () => {
+    fixture.componentRef.setInput('print', {
+      ...print,
+      projectId: EMPTY_GUID,
+      projectName: undefined,
+    });
+    const el = renderAs(false);
+
+    expect(el.querySelector('[data-cy-project-link]')).toBeNull();
+    TestBed.inject(HttpTestingController).expectNone((r) =>
+      r.url.includes('/api/Projects/')
+    );
   });
 
   it('shows the file name to everyone', () => {

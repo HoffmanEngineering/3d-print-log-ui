@@ -6,15 +6,19 @@ import {
   input,
   output,
 } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { catchError, map, of, switchMap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
+  EMPTY_GUID,
   PrintDetail,
   PrintFilamentSourceMeasurement,
   PrintService,
 } from 'src/app/core/services/print.service';
+import { ProjectService } from 'src/app/core/services/project.service';
 import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
@@ -50,6 +54,7 @@ import { environment } from 'src/environments/environment';
 })
 export class PrintDetailSummaryComponent {
   private readonly printService = inject(PrintService);
+  private readonly projectService = inject(ProjectService);
 
   print = input.required<PrintDetail>();
   user = input<UserSummaryDto | null>(null);
@@ -79,6 +84,46 @@ export class PrintDetailSummaryComponent {
     const user = this.user();
     return user?.displayName?.trim() ? user : null;
   });
+
+  /**
+   * `EMPTY_GUID` is the API's "no project" value, not a project to link to.
+   */
+  protected readonly projectId = computed(() => {
+    const id = this.print()?.projectId?.trim();
+    return id && id !== EMPTY_GUID ? id : null;
+  });
+
+  /**
+   * GET /api/Prints/{id} returns `projectId` but no `projectName`, so the rail
+   * knew a print belonged to a project and still had nothing to render. Fetch
+   * the name when the print did not carry one.
+   *
+   * This is a public route, so the request must never propagate a failure: an
+   * anonymous visitor, a private project, or a deleted one all collapse to
+   * `null` and the row falls back to a generic label rather than breaking the
+   * page. Remove this once the API includes the name on the print payload.
+   */
+  private readonly fetchedProjectName = toSignal(
+    toObservable(
+      computed(() =>
+        this.print()?.projectName?.trim() ? null : this.projectId()
+      )
+    ).pipe(
+      switchMap((id) =>
+        id
+          ? this.projectService.getProjectById(id).pipe(
+              map((project) => project?.name?.trim() || null),
+              catchError(() => of(null))
+            )
+          : of(null)
+      )
+    ),
+    { initialValue: null }
+  );
+
+  protected readonly projectName = computed(
+    () => this.print()?.projectName?.trim() || this.fetchedProjectName()
+  );
 
   protected readonly sourceUrl = computed(() =>
     safeExternalUrl(this.print()?.url)

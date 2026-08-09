@@ -89,10 +89,17 @@
 // and undo the layout it is meant to refine.
 .content.narrow > .hero-band,
 .content.narrow > .band,
-.content.narrow > .band-split {
+.content.narrow > .band-split,
+.content.narrow > app-ad {
   max-width: 720px;
   margin-inline: auto;
   width: 100%;
+}
+
+// The host is inline by default, which left the ad's own centring wrapper
+// unable to fill the column.
+app-ad {
+  display: block;
 }
 
 .content.narrow > .band-split {

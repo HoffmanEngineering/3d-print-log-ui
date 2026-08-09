@@ -41,6 +41,13 @@
         />
       </div>
 
+      <!--
+        In-content ad, all viewports. It sits after the hero band rather than
+        before it so the print itself is what a visitor lands on. AdComponent
+        renders nothing for Pro subscribers.
+      -->
+      <app-ad></app-ad>
+
       @if (p.notes) {
         <section class="band" aria-labelledby="notes-heading">
           <h2 id="notes-heading">Notes</h2>

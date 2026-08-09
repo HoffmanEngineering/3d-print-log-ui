@@ -18,23 +18,26 @@
 
 <div class="chip-row">
   <app-print-status-badge [status]="print().status" />
-  @if (print().projectName) {
-    @if (print().projectId) {
-      <a
-        class="chip"
-        data-cy-project-link
-        [routerLink]="['/projects', print().projectId]"
-        >{{ print().projectName }}</a
-      >
-    } @else {
-      <span class="chip">{{ print().projectName }}</span>
-    }
-  }
 </div>
 
 <section class="panel" aria-labelledby="at-a-glance-heading">
   <h2 id="at-a-glance-heading" class="panel-heading">At a glance</h2>
   <dl class="glance">
+    @if (projectId(); as id) {
+      <dt>Project</dt>
+      <dd>
+        <!--
+          Linked off the id, not the name: the print payload carries the id but
+          not always the name, and a print that belongs to a project should
+          always offer the way back to it. The generic label is the fallback
+          for when the name could not be resolved.
+        -->
+        <a data-cy-project-link [routerLink]="['/projects', id]">{{
+          projectName() ?? 'View project'
+        }}</a>
+      </dd>
+    }
+
     @if (printer(); as p) {
       <dt>Printer</dt>
       <dd>

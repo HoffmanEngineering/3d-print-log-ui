@@ -47,7 +47,9 @@
                     : (hours(row.avgDurationSeconds) | number: '1.0-1') + ' h'
                 }}
               </td>
-              <td>{{ row.cost === null ? '—' : (row.cost | number: '1.2-2') }}</td>
+              <td>
+                {{ row.cost === null ? '—' : (row.cost | number: '1.2-2') }}
+              </td>
               <td>
                 {{
                   row.maintenanceCost === null
@@ -92,7 +94,9 @@
             <dt>Filament</dt>
             <dd>{{ grams(row.materialMg) | number: '1.0-0' }} g</dd>
             <dt>Cost</dt>
-            <dd>{{ row.cost === null ? '—' : (row.cost | number: '1.2-2') }}</dd>
+            <dd>
+              {{ row.cost === null ? '—' : (row.cost | number: '1.2-2') }}
+            </dd>
             <dt>Utilization</dt>
             <dd>
               {{

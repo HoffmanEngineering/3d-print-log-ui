@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import currency from 'currency.js';
 import { FilamentUsageSummaryComponent } from './filament-usage-summary.component';
 import {
@@ -26,7 +27,12 @@ describe('FilamentUsageSummaryComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [FilamentUsageSummaryComponent, NoopAnimationsModule],
-      providers: [{ provide: PrintService, useValue: mockPrintService }],
+      providers: [
+        { provide: PrintService, useValue: mockPrintService },
+        // routerLink only activates on the linkFilaments path, so the router
+        // was never needed until this component could render an anchor.
+        provideRouter([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FilamentUsageSummaryComponent);
@@ -35,6 +41,53 @@ describe('FilamentUsageSummaryComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  describe('fail-closed link and price gating', () => {
+    // `source` is required: getFilamentPreferredDisplay resolves the recorded
+    // value via actualValue(fu, fu.source), so an undefined source renders an
+    // empty usage cell and the assertions below would pass vacuously.
+    const usageWithFilament = {
+      filament: {
+        id: 'f1',
+        displayName: 'Test Filament',
+        colorName: 'Fire Red',
+        colors: ['c62828'],
+        colorPattern: 1,
+        finishType: 1,
+        effects: [],
+      },
+      amountMg: 1000,
+      source: PrintFilamentSourceMeasurement.Weight,
+      estimatedSource: PrintFilamentSourceMeasurement.Weight,
+    } as any;
+
+    it('renders filament names as plain text by default', () => {
+      fixture.componentRef.setInput('filamentUsage', [usageWithFilament]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('a')).toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('Test Filament');
+    });
+
+    it('links filament names when linkFilaments is true', () => {
+      fixture.componentRef.setInput('filamentUsage', [usageWithFilament]);
+      fixture.componentRef.setInput('linkFilaments', true);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('a')).toBeTruthy();
+    });
+
+    it('omits the price column by default', () => {
+      fixture.componentRef.setInput('filamentUsage', [usageWithFilament]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.price-cell')).toBeNull();
+    });
+
+    it('renders the price column when showPrices is true', () => {
+      fixture.componentRef.setInput('filamentUsage', [usageWithFilament]);
+      fixture.componentRef.setInput('showPrices', true);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.price-cell')).toBeTruthy();
+    });
   });
 
   describe('FilamentUsageSummaryComponent — preferred unit', () => {

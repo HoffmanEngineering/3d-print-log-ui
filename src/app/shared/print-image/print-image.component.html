@@ -17,7 +17,17 @@
       <mat-icon>delete</mat-icon>Remove
     </button>
   }
-  @if (imageData) {
-    <img [src]="imageData" class="fade-in" alt="Image of 3D Print" />
+  @if (imageData && !imageFailed) {
+    <img
+      [src]="imageData"
+      class="fade-in"
+      [alt]="alt || 'Image of 3D print'"
+      (error)="onImageError()"
+    />
+  } @else if (imageFailed) {
+    <div class="image-failed">
+      <mat-icon aria-hidden="true">broken_image</mat-icon>
+      <span>Image unavailable</span>
+    </div>
   }
 </div>

@@ -58,18 +58,32 @@
                     @if (fu.filament !== null) {
                       <div
                         class="material-color"
-                        [style]="fu.filament.colors | filamentColorSwatchStyle : fu.filament.colorPattern : fu.filament.finishType : fu.filament.effects"
+                        [style]="
+                          fu.filament.colors
+                            | filamentColorSwatchStyle
+                              : fu.filament.colorPattern
+                              : fu.filament.finishType
+                              : fu.filament.effects
+                        "
                         [title]="fu.filament.colorName || 'No color name'"
                       ></div>
                       <span class="material-name">
                         {{ fu.filament?.displayName }}
                         @if (getPreferredDisplay(fu); as display) {
                           <span
-                            [matTooltip]="display.isFallback
-                              ? display.fallbackTooltip
-                              : (display.isEstimated ? '* indicates Estimated Material Usage' : null)"
+                            [matTooltip]="
+                              display.isFallback
+                                ? display.fallbackTooltip
+                                : display.isEstimated
+                                  ? '* indicates Estimated Material Usage'
+                                  : null
+                            "
                           >
-                            ({{ display.displayString }}@if (display.isEstimated) { * })
+                            ({{ display.displayString }}
+                            @if (display.isEstimated) {
+                              *
+                            }
+                            )
                           </span>
                         }
                       </span>
@@ -82,9 +96,8 @@
             </div>
           }
 
-          <div [class]="'meta-item status-badge status-' + print().status">
-            <mat-icon class="meta-icon">{{ getStatusIcon(print()) }}</mat-icon>
-            <span>{{ getStatus(print()) }}</span>
+          <div class="meta-item">
+            <app-print-status-badge [status]="print().status" />
           </div>
         </div>
       </div>

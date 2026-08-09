@@ -21,7 +21,7 @@
   <app-chart-frame
     class="printers-tab__chart printers-tab__chart--wide"
     title="Printer comparison"
-      [csv]="comparisonCsv()"
+    [csv]="comparisonCsv()"
     fit="natural"
     [state]="state()"
     [coverage]="data()?.coverage ?? null"
@@ -109,7 +109,7 @@
   <app-chart-frame
     class="printers-tab__chart printers-tab__chart--wide"
     title="Maintenance"
-      [csv]="maintenanceCsv()"
+    [csv]="maintenanceCsv()"
     fit="natural"
     [state]="state()"
     [coverage]="data()?.coverage ?? null"
@@ -129,8 +129,10 @@
     } @else {
       <table class="printers-tab__maintenance">
         <caption>
-          Completed maintenance @if (maintenanceTotal() !== null) { — total
-          {{ maintenanceTotal() }} {{ data()?.currency }} }
+          Completed maintenance
+          @if (maintenanceTotal() !== null) {
+            — total {{ maintenanceTotal() }} {{ data()?.currency }}
+          }
         </caption>
         <tbody>
           @for (event of data()?.maintenance ?? []; track event.id) {

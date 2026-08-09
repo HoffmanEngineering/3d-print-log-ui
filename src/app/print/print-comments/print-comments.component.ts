@@ -11,12 +11,13 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Comment } from 'src/app/core/services/comment.service';
 import { PrintService } from 'src/app/core/services/print.service';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 @Component({
   selector: 'app-print-comments',
   templateUrl: './print-comments.component.html',
   styleUrls: ['./print-comments.component.scss'],
-  standalone: false,
+  imports: [SharedModule],
 })
 export class PrintCommentsComponent implements OnInit {
   @Input() printId: number;

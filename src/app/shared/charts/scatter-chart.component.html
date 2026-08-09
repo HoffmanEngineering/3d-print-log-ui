@@ -17,12 +17,22 @@
     }
 
     @for (tick of axisTicks().x; track tick.text) {
-      <text class="scatter-chart__tick" [attr.x]="tick.x" [attr.y]="tick.y" text-anchor="middle">
+      <text
+        class="scatter-chart__tick"
+        [attr.x]="tick.x"
+        [attr.y]="tick.y"
+        text-anchor="middle"
+      >
         {{ tick.text }}
       </text>
     }
     @for (tick of axisTicks().y; track tick.text) {
-      <text class="scatter-chart__tick" [attr.x]="tick.x" [attr.y]="tick.y" text-anchor="end">
+      <text
+        class="scatter-chart__tick"
+        [attr.x]="tick.x"
+        [attr.y]="tick.y"
+        text-anchor="end"
+      >
         {{ tick.text }}
       </text>
     }

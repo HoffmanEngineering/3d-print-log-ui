@@ -4,39 +4,44 @@
 
   <h3 id="v1.45.0">1.45.0 - The New Analytics Page</h3>
   <p>
-    Analytics has been rebuilt from the ground up. Instead of a single page of totals, there are now
-    six tabs (Overview, Activity, Printers, Materials, Costs and Accuracy) that all share one filter
-    bar, so you can pick a date range, narrow to particular printers, materials, projects or
-    statuses, and every chart on every tab follows along. Turn on compare to previous period to see
-    how each figure moved against the period immediately before it, and because your filters and tab
-    live in the page address, you can bookmark a view or send someone the link.
+    Analytics has been rebuilt from the ground up. Instead of a single page of
+    totals, there are now six tabs (Overview, Activity, Printers, Materials,
+    Costs and Accuracy) that all share one filter bar, so you can pick a date
+    range, narrow to particular printers, materials, projects or statuses, and
+    every chart on every tab follows along. Turn on compare to previous period
+    to see how each figure moved against the period immediately before it, and
+    because your filters and tab live in the page address, you can bookmark a
+    view or send someone the link.
   </p>
   <p>
-    The new tabs answer questions the old page could not. Activity shows a calendar of your printing
-    days, your current and longest streaks, and which days and hours you actually start prints.
-    Printers compares your machines side by side on prints, success rate, hours, filament and
-    maintenance spend. Materials breaks filament use down by type, brand and color (with the real
-    spool colors in the charts), shows which spools you are burning through, and estimates how long
-    each one will last. Costs splits your spending into filament, electricity and maintenance and
-    shows what a typical print costs and how much went on prints that did not work out. Accuracy
-    compares your slicer's estimates against what really happened, so you can see whether a printer
-    or a material consistently runs long or short.
+    The new tabs answer questions the old page could not. Activity shows a
+    calendar of your printing days, your current and longest streaks, and which
+    days and hours you actually start prints. Printers compares your machines
+    side by side on prints, success rate, hours, filament and maintenance spend.
+    Materials breaks filament use down by type, brand and color (with the real
+    spool colors in the charts), shows which spools you are burning through, and
+    estimates how long each one will last. Costs splits your spending into
+    filament, electricity and maintenance and shows what a typical print costs
+    and how much went on prints that did not work out. Accuracy compares your
+    slicer's estimates against what really happened, so you can see whether a
+    printer or a material consistently runs long or short.
   </p>
   <p>
-    Every chart can be exported as a CSV or a PNG image, and each tab can export all of its data at
-    once. Numbers are honest about where they came from: a recorded value is always preferred over a
-    slicer estimate, the charts tell you when estimates were involved, and a missing duration or
-    amount is treated as not recorded rather than as a zero. See
-    <a routerLink="/docs/analytics">the Analytics documentation</a> for how success rate, waste and
-    costs are worked out.
+    Every chart can be exported as a CSV or a PNG image, and each tab can export
+    all of its data at once. Numbers are honest about where they came from: a
+    recorded value is always preferred over a slicer estimate, the charts tell
+    you when estimates were involved, and a missing duration or amount is
+    treated as not recorded rather than as a zero. See
+    <a routerLink="/docs/analytics">the Analytics documentation</a> for how
+    success rate, waste and costs are worked out.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Redesigned Analytics page</strong> - Six tabs (Overview, Activity, Printers, Materials,
-      Costs and Accuracy) replace the old single-page layout, with all figures aggregated on the
-      server so large print histories stay fast.
-      (<a
+      <strong>Redesigned Analytics page</strong> - Six tabs (Overview, Activity,
+      Printers, Materials, Costs and Accuracy) replace the old single-page
+      layout, with all figures aggregated on the server so large print histories
+      stay fast. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/76"
         rel="noreferrer noopener"
         target="_blank"
@@ -50,11 +55,11 @@
       >)
     </li>
     <li>
-      <strong>Shared filter bar</strong> - Date presets or a custom range, plus printer, material,
-      project and status filters, a compare to previous period toggle, and a bottom sheet version on
-      phones. Your selection and current tab are stored in the page address so views can be
-      bookmarked and shared.
-      (<a
+      <strong>Shared filter bar</strong> - Date presets or a custom range, plus
+      printer, material, project and status filters, a compare to previous
+      period toggle, and a bottom sheet version on phones. Your selection and
+      current tab are stored in the page address so views can be bookmarked and
+      shared. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/76"
         rel="noreferrer noopener"
         target="_blank"
@@ -62,10 +67,10 @@
       >)
     </li>
     <li>
-      <strong>Activity tab</strong> - A calendar heatmap of active days, current and longest streaks,
-      a print duration histogram, and a weekday-by-hour matrix of when you start prints, with a
-      metric toggle to switch what the calendar is measuring.
-      (<a
+      <strong>Activity tab</strong> - A calendar heatmap of active days, current
+      and longest streaks, a print duration histogram, and a weekday-by-hour
+      matrix of when you start prints, with a metric toggle to switch what the
+      calendar is measuring. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/77"
         rel="noreferrer noopener"
         target="_blank"
@@ -79,9 +84,9 @@
       >)
     </li>
     <li>
-      <strong>Printers tab</strong> - A sortable comparison table (cards on small screens) covering
-      prints, success rate, hours run, filament used, utilization and maintenance spend per machine.
-      (<a
+      <strong>Printers tab</strong> - A sortable comparison table (cards on
+      small screens) covering prints, success rate, hours run, filament used,
+      utilization and maintenance spend per machine. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/77"
         rel="noreferrer noopener"
         target="_blank"
@@ -95,9 +100,9 @@
       >)
     </li>
     <li>
-      <strong>Click through to your prints</strong> - Selecting a point on a time chart or calendar
-      opens the print list filtered to exactly that date range.
-      (<a
+      <strong>Click through to your prints</strong> - Selecting a point on a
+      time chart or calendar opens the print list filtered to exactly that date
+      range. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/77"
         rel="noreferrer noopener"
         target="_blank"
@@ -105,10 +110,10 @@
       >)
     </li>
     <li>
-      <strong>Materials tab</strong> - Filament use by type, brand and color, your top spools by
-      consumption, and a runway estimate for how long each spool will last. Bars are filled with the
-      spool's actual color, including gradients for multi-color filaments.
-      (<a
+      <strong>Materials tab</strong> - Filament use by type, brand and color,
+      your top spools by consumption, and a runway estimate for how long each
+      spool will last. Bars are filled with the spool's actual color, including
+      gradients for multi-color filaments. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/78"
         rel="noreferrer noopener"
         target="_blank"
@@ -122,10 +127,10 @@
       >)
     </li>
     <li>
-      <strong>Costs tab</strong> - Spending split into filament, electricity and maintenance, the
-      distribution of what a print costs, how much went to waste, and prompts telling you what to
-      fill in (spool prices, electricity rate, printer wattage) if a figure is missing.
-      (<a
+      <strong>Costs tab</strong> - Spending split into filament, electricity and
+      maintenance, the distribution of what a print costs, how much went to
+      waste, and prompts telling you what to fill in (spool prices, electricity
+      rate, printer wattage) if a figure is missing. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
         rel="noreferrer noopener"
         target="_blank"
@@ -139,10 +144,10 @@
       >)
     </li>
     <li>
-      <strong>Accuracy tab</strong> - Estimated versus actual print time and filament on a scatter
-      chart with a reference line, median differences per printer and material, and plain-language
-      callouts describing where your estimates run long or short.
-      (<a
+      <strong>Accuracy tab</strong> - Estimated versus actual print time and
+      filament on a scatter chart with a reference line, median differences per
+      printer and material, and plain-language callouts describing where your
+      estimates run long or short. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
         rel="noreferrer noopener"
         target="_blank"
@@ -156,9 +161,9 @@
       >)
     </li>
     <li>
-      <strong>Chart and tab export</strong> - Export any chart as a CSV or a theme-matched PNG image,
-      or export everything on the current tab as a CSV in one go.
-      (<a
+      <strong>Chart and tab export</strong> - Export any chart as a CSV or a
+      theme-matched PNG image, or export everything on the current tab as a CSV
+      in one go. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
         rel="noreferrer noopener"
         target="_blank"
@@ -166,10 +171,9 @@
       >)
     </li>
     <li>
-      <strong>Clearer notes on where numbers come from</strong> - Charts now say in plain language
-      when estimates were used, when prints were left out for a missing duration, and when a range
-      was shortened to fit your data.
-      (<a
+      <strong>Clearer notes on where numbers come from</strong> - Charts now say
+      in plain language when estimates were used, when prints were left out for
+      a missing duration, and when a range was shortened to fit your data. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/77"
         rel="noreferrer noopener"
         target="_blank"
@@ -177,10 +181,10 @@
       >)
     </li>
     <li>
-      <strong>Unpriced costs are no longer shown as zero</strong> - A cost component that could not
-      be priced (a spool with no purchase price, for example) is now distinguishable from a genuine
-      zero, and amounts in another currency are called out instead of being silently added up.
-      (<a
+      <strong>Unpriced costs are no longer shown as zero</strong> - A cost
+      component that could not be priced (a spool with no purchase price, for
+      example) is now distinguishable from a genuine zero, and amounts in
+      another currency are called out instead of being silently added up. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
         rel="noreferrer noopener"
         target="_blank"
@@ -188,9 +192,9 @@
       >)
     </li>
     <li>
-      <strong>Volume-based filament costing fixed</strong> - Prints that record filament by volume
-      are now costed from that volume instead of a converted weight.
-      (<a
+      <strong>Volume-based filament costing fixed</strong> - Prints that record
+      filament by volume are now costed from that volume instead of a converted
+      weight. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/76"
         rel="noreferrer noopener"
         target="_blank"
@@ -199,9 +203,9 @@
     </li>
     <li>
       <strong>Updated Analytics documentation</strong> - The
-      <a routerLink="/docs/analytics">Analytics page</a> now explains each tab, how success rate and
-      waste are decided, how costs are valued, and what to fill in so the Costs tab works.
-      (<a
+      <a routerLink="/docs/analytics">Analytics page</a> now explains each tab,
+      how success rate and waste are decided, how costs are valued, and what to
+      fill in so the Costs tab works. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/79"
         rel="noreferrer noopener"
         target="_blank"
@@ -209,12 +213,14 @@
       >)
     </li>
     <li>
-      <strong>Release notes popup renders correctly again</strong> - The popup you are reading this
-      in appeared unstyled (plain text and a bare button) when it opened straight after signing in.
+      <strong>Release notes popup renders correctly again</strong> - The popup
+      you are reading this in appeared unstyled (plain text and a bare button)
+      when it opened straight after signing in.
     </li>
     <li>
-      <strong>More readable popup text</strong> - Text in confirmation and release note popups is
-      now full-strength instead of the faded grey it used before.
+      <strong>More readable popup text</strong> - Text in confirmation and
+      release note popups is now full-strength instead of the faded grey it used
+      before.
     </li>
   </ul>
 
@@ -222,25 +228,27 @@
 
   <h3 id="v1.44.0">1.44.0 - Connect an AI Assistant (MCP)</h3>
   <p>
-    3D Print Log now connects to AI assistants like Claude and ChatGPT. Once connected, you can ask
-    about your prints, printers, and material inventory in your own words ("how much blue PLA do I
-    have left?" or "do I have enough for a 300 g model?"), and with your permission the assistant can
-    log and update prints, organize projects, add printers, and keep your spool inventory current.
-    The assistant can never delete anything, only ever sees data you created, and never touches the
-    printer itself. See <a routerLink="/docs/mcp">Connect an AI Assistant</a> for setup
+    3D Print Log now connects to AI assistants like Claude and ChatGPT. Once
+    connected, you can ask about your prints, printers, and material inventory
+    in your own words ("how much blue PLA do I have left?" or "do I have enough
+    for a 300 g model?"), and with your permission the assistant can log and
+    update prints, organize projects, add printers, and keep your spool
+    inventory current. The assistant can never delete anything, only ever sees
+    data you created, and never touches the printer itself. See
+    <a routerLink="/docs/mcp">Connect an AI Assistant</a> for setup
     instructions, and manage or disconnect assistants at any time from your
     <a routerLink="/settings">Settings</a> page.
   </p>
   <p>
-    This release also includes a handful of fixes for filament values, image uploads, and public
-    print pages.
+    This release also includes a handful of fixes for filament values, image
+    uploads, and public print pages.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Connect an AI Assistant</strong> - Link Claude, Claude Code, or ChatGPT to your account
-      so it can read your prints, printers, and materials, and log or update them on your behalf.
-      (<a
+      <strong>Connect an AI Assistant</strong> - Link Claude, Claude Code, or
+      ChatGPT to your account so it can read your prints, printers, and
+      materials, and log or update them on your behalf. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/73"
         rel="noreferrer noopener"
         target="_blank"
@@ -248,9 +256,8 @@
       >)
     </li>
     <li>
-      <strong>Connected AI Agents settings</strong> - Review which assistants have access and
-      disconnect them at any time from the Settings page.
-      (<a
+      <strong>Connected AI Agents settings</strong> - Review which assistants
+      have access and disconnect them at any time from the Settings page. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/73"
         rel="noreferrer noopener"
         target="_blank"
@@ -258,9 +265,9 @@
       >)
     </li>
     <li>
-      <strong>Empty filament values no longer save as zero</strong> - Leaving nominal weight, length,
-      volume, or an adjustment weight blank now keeps the field empty instead of recording a zero.
-      (<a
+      <strong>Empty filament values no longer save as zero</strong> - Leaving
+      nominal weight, length, volume, or an adjustment weight blank now keeps
+      the field empty instead of recording a zero. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/72"
         rel="noreferrer noopener"
         target="_blank"
@@ -268,10 +275,9 @@
       >)
     </li>
     <li>
-      <strong>Image upload limit fixed</strong> - The per-print image limit is now enforced correctly
-      while uploads are still in progress, and uploads wait until existing files have finished
-      loading.
-      (<a
+      <strong>Image upload limit fixed</strong> - The per-print image limit is
+      now enforced correctly while uploads are still in progress, and uploads
+      wait until existing files have finished loading. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/70"
         rel="noreferrer noopener"
         target="_blank"
@@ -279,9 +285,9 @@
       >)
     </li>
     <li>
-      <strong>Private print details kept out of error reports</strong> - Fixed an issue where the
-      full contents of a print could be included in an internal error report if saving failed.
-      (<a
+      <strong>Private print details kept out of error reports</strong> - Fixed
+      an issue where the full contents of a print could be included in an
+      internal error report if saving failed. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/71"
         rel="noreferrer noopener"
         target="_blank"
@@ -289,9 +295,9 @@
       >)
     </li>
     <li>
-      <strong>Public prints for logged-out visitors</strong> - Fixed an issue where a public print
-      page could bounce anonymous visitors back to the home page instead of showing the print.
-      (<a
+      <strong>Public prints for logged-out visitors</strong> - Fixed an issue
+      where a public print page could bounce anonymous visitors back to the home
+      page instead of showing the print. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/68"
         rel="noreferrer noopener"
         target="_blank"
@@ -299,9 +305,8 @@
       >)
     </li>
     <li>
-      <strong>Faster perceived load</strong> - Pages now show a lightweight loading shell while the
-      app starts up.
-      (<a
+      <strong>Faster perceived load</strong> - Pages now show a lightweight
+      loading shell while the app starts up. (<a
         href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/67"
         rel="noreferrer noopener"
         target="_blank"
@@ -313,337 +318,464 @@
 
   <h3 id="v1.43.11">1.43.11 - QR Label Printing Fix</h3>
   <p>
-    Fixed a bug where the Print QR Labels dialog would get stuck on "Generating QR codes" and never
-    finish. QR label generation now works again, and if anything does go wrong the dialog shows a
-    clear message with a retry option instead of spinning forever.
+    Fixed a bug where the Print QR Labels dialog would get stuck on "Generating
+    QR codes" and never finish. QR label generation now works again, and if
+    anything does go wrong the dialog shows a clear message with a retry option
+    instead of spinning forever.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>QR label generation fixed</strong> - Resolved an issue introduced in 1.43.9 where the
-      QR code library failed to load in production, leaving the Print Labels dialog stuck on the
-      loading spinner.
+      <strong>QR label generation fixed</strong> - Resolved an issue introduced
+      in 1.43.9 where the QR code library failed to load in production, leaving
+      the Print Labels dialog stuck on the loading spinner.
     </li>
   </ul>
   <hr />
 
   <h3 id="v1.43.10">1.43.10 - Faster Page Loads</h3>
   <p>
-    More behind-the-scenes work to speed up the app. The initial download was slimmed down further by
-    loading large shared interface code only when a page actually needs it, so the app becomes usable
-    sooner. There are no visible changes (everything works exactly as before, just faster).
+    More behind-the-scenes work to speed up the app. The initial download was
+    slimmed down further by loading large shared interface code only when a page
+    actually needs it, so the app becomes usable sooner. There are no visible
+    changes (everything works exactly as before, just faster).
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Smaller initial download</strong> - Heavy shared interface libraries now load on demand
-      with the pages that use them instead of up front, reducing the amount of code the browser
-      processes before the app is ready.
+      <strong>Smaller initial download</strong> - Heavy shared interface
+      libraries now load on demand with the pages that use them instead of up
+      front, reducing the amount of code the browser processes before the app is
+      ready.
     </li>
   </ul>
   <hr />
 
   <h3 id="v1.43.9">1.43.9 - Faster Initial Load</h3>
   <p>
-    The app now starts up faster. Several heavy behind-the-scenes libraries (analytics and QR code
-    tools) no longer load up front. They now load only when they are actually needed, which reduces
-    the amount of code the browser has to download and process before the page becomes usable.
+    The app now starts up faster. Several heavy behind-the-scenes libraries
+    (analytics and QR code tools) no longer load up front. They now load only
+    when they are actually needed, which reduces the amount of code the browser
+    has to download and process before the page becomes usable.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Deferred analytics loading</strong> - The usage analytics library now loads after the
-      page has finished painting instead of blocking the initial load.
+      <strong>Deferred analytics loading</strong> - The usage analytics library
+      now loads after the page has finished painting instead of blocking the
+      initial load.
     </li>
     <li>
-      <strong>On-demand QR code tools</strong> - The QR code scanner and generator libraries now load
-      only when you open the scanner or create a label, keeping them out of the initial download.
+      <strong>On-demand QR code tools</strong> - The QR code scanner and
+      generator libraries now load only when you open the scanner or create a
+      label, keeping them out of the initial download.
     </li>
   </ul>
   <hr />
 
   <h3 id="v1.43.8">1.43.8 - Faster, More Accessible Homepage</h3>
   <p>
-    The homepage now loads faster and feels more responsive. Advertising scripts wait until you start
-    interacting with the page instead of loading up front, the example images were converted to a
-    lighter format, and retired tracking code was removed. Together these reduce the time before the
-    page becomes usable.
+    The homepage now loads faster and feels more responsive. Advertising scripts
+    wait until you start interacting with the page instead of loading up front,
+    the example images were converted to a lighter format, and retired tracking
+    code was removed. Together these reduce the time before the page becomes
+    usable.
   </p>
   <p>
-    The pink accent color used for buttons and highlights was deepened so text and controls meet
-    accessibility contrast guidelines, making them easier to read for everyone.
+    The pink accent color used for buttons and highlights was deepened so text
+    and controls meet accessibility contrast guidelines, making them easier to
+    read for everyone.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Deferred ad loading</strong> - Advertising scripts now load on your first interaction
-      with the page, which restores the browser's back/forward cache and reduces the time the page is
-      blocked while starting up.
+      <strong>Deferred ad loading</strong> - Advertising scripts now load on
+      your first interaction with the page, which restores the browser's
+      back/forward cache and reduces the time the page is blocked while starting
+      up.
     </li>
     <li>
-      <strong>Lighter homepage images</strong> - The example screenshots on the homepage are now
-      served in the WebP format for smaller, faster downloads.
+      <strong>Lighter homepage images</strong> - The example screenshots on the
+      homepage are now served in the WebP format for smaller, faster downloads.
     </li>
     <li>
-      <strong>Improved color contrast</strong> - The accent color was adjusted to meet WCAG 4.5:1
-      contrast guidelines for better readability and accessibility.
+      <strong>Improved color contrast</strong> - The accent color was adjusted
+      to meet WCAG 4.5:1 contrast guidelines for better readability and
+      accessibility.
     </li>
     <li>
-      <strong>Analytics cleanup</strong> - Removed retired Universal Analytics tags and fixed
-      per-page analytics tracking so visit data is recorded correctly.
+      <strong>Analytics cleanup</strong> - Removed retired Universal Analytics
+      tags and fixed per-page analytics tracking so visit data is recorded
+      correctly.
     </li>
     <li>
-      <strong>Better AI and search discoverability</strong> - Added an llms.txt file so AI assistants
-      can understand how the site is organized.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/55" rel="noreferrer noopener" target="_blank">PR #55</a>)
+      <strong>Better AI and search discoverability</strong> - Added an llms.txt
+      file so AI assistants can understand how the site is organized. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/55"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #55</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.43.7">1.43.7 - Better Search Engine Understanding</h3>
   <p>
-    The homepage, slicer guides, and every documentation page now describe themselves to search
-    engines using structured data. This helps search engines (and AI assistants) understand what 3D
-    Print Log is and what each page covers, so the right pages surface when people look for a 3D print
+    The homepage, slicer guides, and every documentation page now describe
+    themselves to search engines using structured data. This helps search
+    engines (and AI assistants) understand what 3D Print Log is and what each
+    page covers, so the right pages surface when people look for a 3D print
     tracker or for help with a specific feature.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Structured data for prerendered pages</strong> - Added Schema.org structured data
-      (app, organization, documentation articles with breadcrumbs, and slicer how-to guides) to every
-      prerendered page for better search visibility.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/53" rel="noreferrer noopener" target="_blank">PR #53</a>)
+      <strong>Structured data for prerendered pages</strong> - Added Schema.org
+      structured data (app, organization, documentation articles with
+      breadcrumbs, and slicer how-to guides) to every prerendered page for
+      better search visibility. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/53"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #53</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.43.6">1.43.6 - Documentation Pages Load Faster</h3>
   <p>
-    Every help and documentation page now loads as a fully rendered static page. This makes the docs
-    open faster and easier for search engines to find, so answers turn up more readily when you search
-    for how a feature works.
+    Every help and documentation page now loads as a fully rendered static page.
+    This makes the docs open faster and easier for search engines to find, so
+    answers turn up more readily when you search for how a feature works.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Prerendered documentation</strong> - All public documentation pages are now prerendered
-      with their own titles, descriptions, and social sharing details for quicker loads and better
-      search visibility.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/51" rel="noreferrer noopener" target="_blank">PR #51</a>)
+      <strong>Prerendered documentation</strong> - All public documentation
+      pages are now prerendered with their own titles, descriptions, and social
+      sharing details for quicker loads and better search visibility. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/51"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #51</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.43.5">1.43.5 - Dark Mode Flash Fix</h3>
   <p>
-    This patch fully removes the brief light-mode flash when opening 3D Print Log with dark mode
-    enabled. The previous release reduced it; pages now render in dark from the very first frame with
-    no flicker.
+    This patch fully removes the brief light-mode flash when opening 3D Print
+    Log with dark mode enabled. The previous release reduced it; pages now
+    render in dark from the very first frame with no flicker.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>No dark mode flash</strong> - Your saved theme is now applied before the first frame
-      renders, so dark mode pages no longer flash light on load.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/49" rel="noreferrer noopener" target="_blank">PR #49</a>)
+      <strong>No dark mode flash</strong> - Your saved theme is now applied
+      before the first frame renders, so dark mode pages no longer flash light
+      on load. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/49"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #49</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.43.4">1.43.4 - Dark Mode Flash Fix</h3>
   <p>
-    This patch fixes a brief flash of light mode when opening 3D Print Log with dark mode enabled. Your
-    saved theme is now applied before the page first renders, so dark mode users go straight to dark
-    with no flicker.
+    This patch fixes a brief flash of light mode when opening 3D Print Log with
+    dark mode enabled. Your saved theme is now applied before the page first
+    renders, so dark mode users go straight to dark with no flicker.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>No more dark mode flash</strong> - Pages now apply your saved theme before they first
-      paint, removing the momentary light-mode flash on load (most noticeable on the slicer landing
-      pages).
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/47" rel="noreferrer noopener" target="_blank">PR #47</a>)
+      <strong>No more dark mode flash</strong> - Pages now apply your saved
+      theme before they first paint, removing the momentary light-mode flash on
+      load (most noticeable on the slicer landing pages). (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/47"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #47</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.43.3">1.43.3 - SEO &amp; Sitemap Improvements</h3>
   <p>
-    This release focuses on search-engine visibility. 3D Print Log now publishes dedicated landing
-    pages for popular slicers (Cura, PrusaSlicer, Bambu Studio, OrcaSlicer, and more) that are
-    pre-rendered so search engines can read them directly.
+    This release focuses on search-engine visibility. 3D Print Log now publishes
+    dedicated landing pages for popular slicers (Cura, PrusaSlicer, Bambu
+    Studio, OrcaSlicer, and more) that are pre-rendered so search engines can
+    read them directly.
   </p>
   <p>
-    It also rebuilds how the sitemap is generated, so every public print and profile page is included
-    and kept up to date daily. There are no changes to the app you use day to day.
+    It also rebuilds how the sitemap is generated, so every public print and
+    profile page is included and kept up to date daily. There are no changes to
+    the app you use day to day.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Slicer landing pages</strong> - New pre-rendered pages for major slicers, with links
-      between them, improving how 3D Print Log appears in search results.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/45" rel="noreferrer noopener" target="_blank">PR #45</a>)
+      <strong>Slicer landing pages</strong> - New pre-rendered pages for major
+      slicers, with links between them, improving how 3D Print Log appears in
+      search results. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/45"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #45</a
+      >)
     </li>
     <li>
-      <strong>Rebuilt sitemap</strong> - The sitemap is now generated at deploy time and refreshed
-      daily, covering all public print and profile pages.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/45" rel="noreferrer noopener" target="_blank">PR #45</a>)
+      <strong>Rebuilt sitemap</strong> - The sitemap is now generated at deploy
+      time and refreshed daily, covering all public print and profile pages. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/45"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #45</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.43.2">1.43.2 - Dark Mode Menu &amp; Print View Fixes</h3>
   <p>
-    This patch fixes a few dark mode display issues. The navigation menu options (Printers and About),
-    the notification bell icon, and the headings on the home and documentation pages were showing in a
-    hard-to-read dark color on the dark toolbar, and now stay white and legible.
+    This patch fixes a few dark mode display issues. The navigation menu options
+    (Printers and About), the notification bell icon, and the headings on the
+    home and documentation pages were showing in a hard-to-read dark color on
+    the dark toolbar, and now stay white and legible.
   </p>
   <p>
-    It also fixes a broken image icon that could appear on the print view when a print was uploaded by
-    someone without a profile picture (a default avatar is now shown instead).
+    It also fixes a broken image icon that could appear on the print view when a
+    print was uploaded by someone without a profile picture (a default avatar is
+    now shown instead).
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Readable dark mode menu bar</strong> - The menu buttons (Printers, About), the
-      notification bell, and the home and documentation page headings now stay white on the dark
-      toolbar instead of turning a dark, hard-to-read color.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/43" rel="noreferrer noopener" target="_blank">PR #43</a>)
+      <strong>Readable dark mode menu bar</strong> - The menu buttons (Printers,
+      About), the notification bell, and the home and documentation page
+      headings now stay white on the dark toolbar instead of turning a dark,
+      hard-to-read color. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/43"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #43</a
+      >)
     </li>
     <li>
-      <strong>Default avatar on the print view</strong> - Prints uploaded by users without a profile
-      picture no longer show a broken image icon; a default avatar is shown instead.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/43" rel="noreferrer noopener" target="_blank">PR #43</a>)
+      <strong>Default avatar on the print view</strong> - Prints uploaded by
+      users without a profile picture no longer show a broken image icon; a
+      default avatar is shown instead. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/43"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #43</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.43.1">1.43.1 - Dark Mode Readability Fixes</h3>
   <p>
-    This patch improves readability in dark mode. Several spots that showed hard-to-read dark text
-    on the dark background (such as the material list cards on mobile and the spool weight calculator
-    dialog) now use theme-aware colors, and focused input fields use a lighter, more legible blue.
+    This patch improves readability in dark mode. Several spots that showed
+    hard-to-read dark text on the dark background (such as the material list
+    cards on mobile and the spool weight calculator dialog) now use theme-aware
+    colors, and focused input fields use a lighter, more legible blue.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Readable text on dark surfaces</strong> - Text that was hardcoded to a dark color
-      (including the material card brand and remaining weight, and the spool weight calculator) now
-      follows the active theme, so it stays legible in dark mode.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/41" rel="noreferrer noopener" target="_blank">PR #41</a>)
+      <strong>Readable text on dark surfaces</strong> - Text that was hardcoded
+      to a dark color (including the material card brand and remaining weight,
+      and the spool weight calculator) now follows the active theme, so it stays
+      legible in dark mode. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/41"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #41</a
+      >)
     </li>
     <li>
-      <strong>Lighter focused inputs</strong> - Focused form fields (and other primary accents like
-      buttons and tabs) now use a lighter blue in dark mode, so the focused label and underline are
-      easier to read against the dark background.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/41" rel="noreferrer noopener" target="_blank">PR #41</a>)
+      <strong>Lighter focused inputs</strong> - Focused form fields (and other
+      primary accents like buttons and tabs) now use a lighter blue in dark
+      mode, so the focused label and underline are easier to read against the
+      dark background. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/41"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #41</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.43.0">1.43.0 - Spool Weight Calculator</h3>
   <p>
-    This release adds a <strong>Spool Weight Adjustment Calculator</strong> to the material detail
-    page. Instead of working out a filament adjustment by hand, weigh the whole spool, enter the
-    measured total, and 3D Print Log calculates the exact adjustment needed to match what you
-    actually have left (then adds it to your adjustments, ready to review before you save).
+    This release adds a <strong>Spool Weight Adjustment Calculator</strong> to
+    the material detail page. Instead of working out a filament adjustment by
+    hand, weigh the whole spool, enter the measured total, and 3D Print Log
+    calculates the exact adjustment needed to match what you actually have left
+    (then adds it to your adjustments, ready to review before you save).
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
       <strong>Spool Weight Adjustment Calculator</strong> - On the
-      <a routerLink="/materials">Materials</a> detail page, use "Adjust from measured weight" to
-      reconcile your tracked remaining filament with a scale reading. It combines the spool weight
-      and the currently tracked remaining amount into a clear before (tracked) and after (measured)
-      comparison, and adds the resulting adjustment for you.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/39" rel="noreferrer noopener" target="_blank">PR #39</a>)
+      <a routerLink="/materials">Materials</a> detail page, use "Adjust from
+      measured weight" to reconcile your tracked remaining filament with a scale
+      reading. It combines the spool weight and the currently tracked remaining
+      amount into a clear before (tracked) and after (measured) comparison, and
+      adds the resulting adjustment for you. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/39"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #39</a
+      >)
     </li>
     <li>
-      <strong>Works with any tracked unit</strong> - The calculator supports materials tracked by
-      weight, length, or volume, converting your measured weight into the correct adjustment
-      automatically.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/39" rel="noreferrer noopener" target="_blank">PR #39</a>)
+      <strong>Works with any tracked unit</strong> - The calculator supports
+      materials tracked by weight, length, or volume, converting your measured
+      weight into the correct adjustment automatically. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/39"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #39</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.42.0">1.42.0 - Preferred Filament Units</h3>
   <p>
-    This release introduces a <strong>Preferred Filament Display Unit</strong> setting, letting you
-    choose how filament usage appears throughout 3D Print Log (as originally recorded, in grams,
-    or in meters). Your preference is applied consistently across the print list, print detail,
-    filament usage summaries, and the edit print form.
+    This release introduces a
+    <strong>Preferred Filament Display Unit</strong> setting, letting you choose
+    how filament usage appears throughout 3D Print Log (as originally recorded,
+    in grams, or in meters). Your preference is applied consistently across the
+    print list, print detail, filament usage summaries, and the edit print form.
   </p>
   <p>
-    Dates and times throughout the app now use your browser's locale for proper regional formatting
-    (e.g., MM/DD/YYYY vs. DD/MM/YYYY). Date and time pickers are also localized, so entering dates
-    feels natural no matter where you are.
+    Dates and times throughout the app now use your browser's locale for proper
+    regional formatting (e.g., MM/DD/YYYY vs. DD/MM/YYYY). Date and time pickers
+    are also localized, so entering dates feels natural no matter where you are.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
       <strong>Preferred Filament Display Unit</strong> - A new setting on the
-      <a routerLink="/settings">Settings</a> page lets you choose how filament usage displays
-      throughout the app: as recorded, in grams, or in meters. The preference is applied across the
-      print list, print detail, filament usage summaries, and the edit print form.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/36" rel="noreferrer noopener" target="_blank">PR #36</a>)
+      <a routerLink="/settings">Settings</a> page lets you choose how filament
+      usage displays throughout the app: as recorded, in grams, or in meters.
+      The preference is applied across the print list, print detail, filament
+      usage summaries, and the edit print form. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/36"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #36</a
+      >)
     </li>
     <li>
-      <strong>Locale-Aware Date Formatting</strong> - Dates and times are now formatted using your
-      browser's locale via the native <code>Intl.DateTimeFormat</code> API, ensuring proper
-      regional display regardless of your location.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/34" rel="noreferrer noopener" target="_blank">PR #34</a>)
+      <strong>Locale-Aware Date Formatting</strong> - Dates and times are now
+      formatted using your browser's locale via the native
+      <code>Intl.DateTimeFormat</code> API, ensuring proper regional display
+      regardless of your location. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/34"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #34</a
+      >)
     </li>
     <li>
-      <strong>Removed moment.js</strong> - The app no longer depends on moment.js, reducing bundle
-      size and replacing it with modern native Date APIs throughout.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/34" rel="noreferrer noopener" target="_blank">PR #34</a>)
+      <strong>Removed moment.js</strong> - The app no longer depends on
+      moment.js, reducing bundle size and replacing it with modern native Date
+      APIs throughout. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/34"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #34</a
+      >)
     </li>
     <li>
-      <strong>Bug Fix: Settings Currency Label</strong> - The electricity rate input label in
-      Settings now correctly reflects the currently selected currency symbol.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/37" rel="noreferrer noopener" target="_blank">PR #37</a>)
+      <strong>Bug Fix: Settings Currency Label</strong> - The electricity rate
+      input label in Settings now correctly reflects the currently selected
+      currency symbol. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/37"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #37</a
+      >)
     </li>
   </ul>
 
   <h3 id="v1.41.0">1.41.0 - Multi-Color Materials</h3>
   <p>
-    This release brings <strong>Multi-Color Material Support</strong> to 3D Print Log! Materials
-    now support color patterns (solid, multi, gradient, and rainbow), finish types (standard, silk,
-    and matte), and special effects (sparkle, glow-in-the-dark, translucent, carbon fiber, wood
-    fill, metal fill, fluorescent, and glass fiber). Filament swatches throughout the app in the
-    materials list, print list, print detail, and printer pages now render as rich gradient
-    previews that reflect your filament's actual appearance.
+    This release brings <strong>Multi-Color Material Support</strong> to 3D
+    Print Log! Materials now support color patterns (solid, multi, gradient, and
+    rainbow), finish types (standard, silk, and matte), and special effects
+    (sparkle, glow-in-the-dark, translucent, carbon fiber, wood fill, metal
+    fill, fluorescent, and glass fiber). Filament swatches throughout the app in
+    the materials list, print list, print detail, and printer pages now render
+    as rich gradient previews that reflect your filament's actual appearance.
   </p>
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Multi-Color Material Support</strong> - Materials now support color patterns (solid,
-      multi, gradient, rainbow), finish types (standard, silk, matte), and special effects
-      (sparkle, glow-in-the-dark, translucent, carbon fiber, wood fill, metal fill, fluorescent,
-      glass fiber). Set these on the <a routerLink="/materials">Materials</a> page when adding or
-      editing a filament.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/32" rel="noreferrer noopener" target="_blank">PR #32</a>)
+      <strong>Multi-Color Material Support</strong> - Materials now support
+      color patterns (solid, multi, gradient, rainbow), finish types (standard,
+      silk, matte), and special effects (sparkle, glow-in-the-dark, translucent,
+      carbon fiber, wood fill, metal fill, fluorescent, glass fiber). Set these
+      on the <a routerLink="/materials">Materials</a> page when adding or
+      editing a filament. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/32"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #32</a
+      >)
     </li>
     <li>
-      <strong>Gradient Swatches</strong> - Color swatches throughout the app (materials list,
-      print list, printer list, print detail) now render as gradient previews for multi-color
-      filaments, giving you an accurate visual representation of your filament.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/32" rel="noreferrer noopener" target="_blank">PR #32</a>)
+      <strong>Gradient Swatches</strong> - Color swatches throughout the app
+      (materials list, print list, printer list, print detail) now render as
+      gradient previews for multi-color filaments, giving you an accurate visual
+      representation of your filament. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/32"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #32</a
+      >)
     </li>
     <li>
-      <strong>Color and Appearance Filters</strong> - The materials page now supports filtering
-      by color pattern, finish type, and effects to help you find the right filament quickly.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/32" rel="noreferrer noopener" target="_blank">PR #32</a>)
+      <strong>Color and Appearance Filters</strong> - The materials page now
+      supports filtering by color pattern, finish type, and effects to help you
+      find the right filament quickly. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/32"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #32</a
+      >)
     </li>
     <li>
-      <strong>Material Icon Updates</strong> - The filament spool and resin bottle icons now
-      render multi-color patterns and effect overlays to visually represent your filament's
-      appearance.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/32" rel="noreferrer noopener" target="_blank">PR #32</a>)
+      <strong>Material Icon Updates</strong> - The filament spool and resin
+      bottle icons now render multi-color patterns and effect overlays to
+      visually represent your filament's appearance. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/32"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #32</a
+      >)
     </li>
     <li>
-      <strong>Bug Fix: Project Selector</strong> - Fixed a bug where editing a print with an
-      existing project assigned would not correctly display the selected project in the project
-      selector.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/31" rel="noreferrer noopener" target="_blank">PR #31</a>)
+      <strong>Bug Fix: Project Selector</strong> - Fixed a bug where editing a
+      print with an existing project assigned would not correctly display the
+      selected project in the project selector. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/31"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #31</a
+      >)
     </li>
     <li>
-      <strong>Angular 21 Upgrade</strong> - Upgraded to Angular 21, which includes various
-      performance improvements and security enhancements.
-      (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/29" rel="noreferrer noopener" target="_blank">PR #29</a>)
+      <strong>Angular 21 Upgrade</strong> - Upgraded to Angular 21, which
+      includes various performance improvements and security enhancements. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/29"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #29</a
+      >)
     </li>
   </ul>
 
@@ -676,8 +808,8 @@
     </li>
     <li>
       <strong>How to Contribute</strong> - Open an issue to discuss a feature or
-      bug, then submit a pull request. All skill levels are welcome — from
-      typo fixes to full features.
+      bug, then submit a pull request. All skill levels are welcome — from typo
+      fixes to full features.
     </li>
   </ul>
 
@@ -691,13 +823,13 @@
   <h4>Full List of Changes:</h4>
   <ul>
     <li>
-      <strong>Printer Wattage</strong> - Set the wattage for each printer on
-      the printer detail page to enable electricity cost calculations.
+      <strong>Printer Wattage</strong> - Set the wattage for each printer on the
+      printer detail page to enable electricity cost calculations.
     </li>
     <li>
       <strong>Electricity Rate Setting</strong> - Configure your electricity
-      rate (cost per kWh) in
-      <a routerLink="/settings">Settings</a> to apply to all cost calculations.
+      rate (cost per kWh) in <a routerLink="/settings">Settings</a> to apply to
+      all cost calculations.
     </li>
     <li>
       <strong>Electricity Cost in Print List</strong> - A new electricity cost

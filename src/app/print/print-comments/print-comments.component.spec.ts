@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrService } from 'ngx-toastr';
 
 import { of } from 'rxjs';
@@ -27,7 +28,7 @@ describe('PrintCommentsComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [PrintCommentsComponent],
+      imports: [PrintCommentsComponent, NoopAnimationsModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: PrintService, useValue: mockPrintService },

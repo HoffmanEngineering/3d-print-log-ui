@@ -447,7 +447,10 @@
       <hr />
       <div fxFlex="grow" fxFlexFill>
         <h2>Electricity Cost</h2>
-        <p>Track the electricity cost of each print based on your kWh rate and printer wattage.</p>
+        <p>
+          Track the electricity cost of each print based on your kWh rate and
+          printer wattage.
+        </p>
       </div>
       <div
         fxFlex="grow"
@@ -468,8 +471,9 @@
             matTooltip="Your electricity rate from your bill, in currency per kWh."
             matTooltipPosition="right"
           >
-            Electricity Rate ({{ currencies[preferredCurrency]?.symbol ?? '$' }}/kWh)
-            <mat-icon inline>info</mat-icon>:</label
+            Electricity Rate ({{
+              currencies[preferredCurrency]?.symbol ?? '$'
+            }}/kWh) <mat-icon inline>info</mat-icon>:</label
           >
           <input
             id="default-electricity-kwh-rate"
@@ -495,7 +499,9 @@
                 mat-raised-button
                 type="submit"
                 color="primary"
-                (click)="saveDefaultElectricityKwhRate(defaultElectricityKwhRate)"
+                (click)="
+                  saveDefaultElectricityKwhRate(defaultElectricityKwhRate)
+                "
               >
                 Save Electricity Rate
               </button>
@@ -503,7 +509,10 @@
                 mat-raised-button
                 type="button"
                 class="close"
-                (click)="defaultElectricityKwhRate = defaultElectricityKwhRateSettingOnLoad?.value ?? null"
+                (click)="
+                  defaultElectricityKwhRate =
+                    defaultElectricityKwhRateSettingOnLoad?.value ?? null
+                "
                 color="warn"
               >
                 Cancel
@@ -558,7 +567,9 @@
                 mat-raised-button
                 type="submit"
                 color="primary"
-                (click)="saveDefaultElectricityWattage(defaultElectricityWattageW)"
+                (click)="
+                  saveDefaultElectricityWattage(defaultElectricityWattageW)
+                "
               >
                 Save Default Wattage
               </button>
@@ -566,7 +577,10 @@
                 mat-raised-button
                 type="button"
                 class="close"
-                (click)="defaultElectricityWattageW = defaultElectricityWattageSettingOnLoad?.value ?? null"
+                (click)="
+                  defaultElectricityWattageW =
+                    defaultElectricityWattageSettingOnLoad?.value ?? null
+                "
                 color="warn"
               >
                 Cancel
@@ -591,9 +605,7 @@
             @if (subscriptionService.currentPeriodEnd()) {
               <p>
                 <strong>Renews:</strong>
-                {{
-                  subscriptionService.currentPeriodEnd() | localeDate
-                }}
+                {{ subscriptionService.currentPeriodEnd() | localeDate }}
               </p>
             }
             @if (subscriptionService.cancelAtPeriodEnd()) {

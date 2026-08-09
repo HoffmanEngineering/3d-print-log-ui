@@ -3,28 +3,36 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnChanges,
   OnInit,
   Output,
+  SimpleChanges,
   inject,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { PrintService } from '../../core/services/print.service';
 
 @Component({
   selector: 'app-print-image',
   templateUrl: './print-image.component.html',
   styleUrls: ['./print-image.component.scss'],
-  standalone: false,
+  imports: [MatButtonModule, MatIconModule],
 })
-export class PrintImageComponent implements OnInit {
+export class PrintImageComponent implements OnInit, OnChanges {
   @Input() printId: number;
   @Input() imageId: number;
   @Input() imageData: string = null;
   @Input() showDeleteOnHover = false;
+  /** Meaningful alternative text; falls back to a generic description. */
+  @Input() alt: string;
 
   @Output() imageDataChange = new EventEmitter<string>();
   @Output() delete = new EventEmitter();
 
   public imageHovered = false;
+
+  protected imageFailed = false;
 
   private readonly printService = inject(PrintService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -39,6 +47,18 @@ export class PrintImageComponent implements OnInit {
           this.cdr.markForCheck();
         });
     }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Without this a single failure would persist across carousel navigation,
+    // showing "Image unavailable" for every subsequent image.
+    if (changes['imageId'] || changes['imageData']) {
+      this.imageFailed = false;
+    }
+  }
+
+  protected onImageError(): void {
+    this.imageFailed = true;
   }
 
   handleDeleteClick(event: Event) {

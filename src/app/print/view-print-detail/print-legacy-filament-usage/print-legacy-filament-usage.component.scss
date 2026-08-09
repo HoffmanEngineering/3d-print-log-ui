@@ -1,6 +1,6 @@
 .legacy-usage {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 4px 12px;
   margin: 0;
 
@@ -10,5 +10,7 @@
 
   dd {
     margin: 0;
+    // Legacy filament type is free text typed by the user.
+    overflow-wrap: anywhere;
   }
 }

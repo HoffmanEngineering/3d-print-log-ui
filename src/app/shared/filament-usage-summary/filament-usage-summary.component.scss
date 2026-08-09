@@ -1,6 +1,13 @@
+// The name track is `minmax(0, max-content)` rather than plain `max-content`:
+// a grid track's automatic minimum is its content, so a long material name
+// forced the grid wider than its container instead of wrapping. Giving that one
+// track a zero minimum keeps the content-hugging layout when there is room and
+// makes it the track that gives way when there is not.
 .filament-grid {
   display: grid;
-  grid-template-columns: max-content max-content max-content max-content;
+  grid-template-columns:
+    max-content minmax(0, max-content)
+    max-content max-content;
   gap: 10px;
   padding: 5px 10px;
   align-items: center;
@@ -8,6 +15,13 @@
   // Prices are owner-only, so the fourth track must collapse when they are
   // hidden — otherwise every row renders a phantom empty column.
   &.no-prices {
-    grid-template-columns: max-content max-content max-content;
+    grid-template-columns: max-content minmax(0, max-content) max-content;
   }
+}
+
+// Material names are user-supplied and often a single unbroken token
+// ("PolyLite-PLA-Galaxy-Purple-1.75mm"), which has no wrap opportunity.
+.name-cell {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

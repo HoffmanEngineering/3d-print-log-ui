@@ -295,6 +295,46 @@ describe('PrintListComponent', () => {
     expect(routerSpy).toHaveBeenCalledWith(['printers', 'new']);
   });
 
+  describe('bulk selection', () => {
+    const selectablePrint = { id: 7, title: 'Benchy' } as PrintSummary;
+
+    it('should always render the select column first, ahead of the configured columns', () => {
+      fixture.detectChanges();
+      component.displayedColumns = ['title', 'status', 'more'];
+
+      expect(component.tableColumns).toEqual([
+        'select',
+        'title',
+        'status',
+        'more',
+      ]);
+    });
+
+    it('should drop the selection when the result set changes', () => {
+      fixture.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+      component.bulkActions.toggleSelection(selectablePrint);
+
+      component.updateFilter();
+
+      expect(component.bulkActions.hasSelection()).toBeFalse();
+    });
+
+    it('should keep the selection when refreshing after a bulk action', () => {
+      fixture.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+      component.bulkActions.toggleSelection(selectablePrint);
+
+      component.onBulkActionCompleted();
+
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
+    });
+  });
+
   it('should navigate to /projects/new when navigateToNewProject is called', () => {
     fixture.detectChanges();
     const router = TestBed.inject(Router);

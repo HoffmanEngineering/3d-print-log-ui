@@ -1,0 +1,88 @@
+@if (bulkActions.hasSelection() || bulkActions.isRunning()) {
+  <div
+    class="bulk-action-bar"
+    role="region"
+    aria-label="Bulk actions for selected prints"
+    data-cy-bulk-action-bar
+  >
+    <div class="bulk-action-bar__row">
+      <!-- "on this page" is on screen, not just in the checkbox label: the
+           selection is page-scoped and a filtered list can run to many pages. -->
+      <span class="bulk-action-bar__count" data-cy-bulk-selection-count>
+        {{ bulkActions.selectedCount() }} selected on this page
+      </span>
+
+      <button
+        mat-raised-button
+        type="button"
+        [matMenuTriggerFor]="bulkStatusMenu"
+        [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
+        data-cy-bulk-set-status
+      >
+        <mat-icon>flag</mat-icon>
+        Set status
+      </button>
+      <mat-menu #bulkStatusMenu="matMenu">
+        @for (option of statusOptions; track option.status) {
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="Set status of selected prints to {{
+              option.label
+            }}"
+            attr.data-cy-bulk-status="{{ option.label }}"
+            (click)="setStatus(option)"
+          >
+            <mat-icon>{{ option.icon }}</mat-icon
+            >{{ option.label }}
+          </button>
+        }
+      </mat-menu>
+
+      <button
+        mat-raised-button
+        type="button"
+        color="warn"
+        [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
+        (click)="deleteSelected()"
+        data-cy-bulk-delete
+      >
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+
+      <button
+        mat-button
+        type="button"
+        [disabled]="bulkActions.isRunning()"
+        (click)="clearSelection()"
+        data-cy-bulk-clear
+      >
+        <mat-icon>close</mat-icon>
+        Clear selection
+      </button>
+    </div>
+
+    @if (bulkActions.isRunning()) {
+      <div class="bulk-action-bar__progress">
+        <mat-progress-bar
+          mode="determinate"
+          [value]="bulkActions.progressPercent()"
+          aria-label="Bulk action progress"
+        ></mat-progress-bar>
+      </div>
+    }
+
+    <p
+      class="bulk-action-bar__status"
+      aria-live="polite"
+      data-cy-bulk-status-text
+    >
+      @if (bulkActions.isRunning()) {
+        {{ bulkActions.progressLabel() }}
+      } @else {
+        {{ resultMessage() }}
+      }
+    </p>
+  </div>
+}

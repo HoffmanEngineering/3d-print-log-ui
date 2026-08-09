@@ -44,6 +44,7 @@ import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dia
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
+import { PrintBulkActionsService } from '../services/print-bulk-actions.service';
 
 export interface ColumnDefinition {
   key: string;
@@ -56,6 +57,7 @@ export interface ColumnDefinition {
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
   standalone: false,
+  providers: [PrintBulkActionsService],
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
@@ -173,6 +175,21 @@ export class PrintListComponent implements OnInit, OnDestroy {
   ];
 
   public searchText = '';
+
+  /**
+   * Multi-select state and the sequential batch runner live in their own service so
+   * this already-large component does not grow another responsibility.
+   */
+  public readonly bulkActions = inject(PrintBulkActionsService);
+
+  /**
+   * The columns the desktop table actually renders. `select` is always first and is
+   * never persisted, so it cannot be removed by the table layout dialog. The whole
+   * table is `fxHide.lt-md`, so the checkbox column is desktop-only for free.
+   */
+  public get tableColumns(): string[] {
+    return ['select', ...this.displayedColumns];
+  }
 
   private readonly VIEW_MODE_KEY = 'print_list_view_mode';
 
@@ -475,7 +492,19 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.updateFilter();
   }
 
-  public updateFilter() {
+  /**
+   * Reloads the current page of prints.
+   *
+   * Any user-driven change to the result set (page, search, filter, sort) drops the
+   * selection: select-all is page-scoped, and acting on prints that are no longer on
+   * screen is a footgun. Refreshes that follow a bulk action pass
+   * `preserveSelection` so the prints that failed stay selected for a retry.
+   */
+  public updateFilter(options?: { preserveSelection?: boolean }) {
+    if (!options?.preserveSelection) {
+      this.bulkActions.clearSelection();
+    }
+
     this.isLoading = true;
 
     localStorage.setItem('print_list_page_size', this.pageSize.toString(10));
@@ -946,6 +975,15 @@ export class PrintListComponent implements OnInit, OnDestroy {
     );
     this.currentPage = 1;
     this.updateFilter();
+  }
+
+  /**
+   * Reloads the page in place after a bulk action so the table reflects the new
+   * statuses (or the removed rows) without navigating away. The selection is kept
+   * because the service has already narrowed it to the prints that failed.
+   */
+  public onBulkActionCompleted(): void {
+    this.updateFilter({ preserveSelection: true });
   }
 
   public navigateToNewProject(): void {

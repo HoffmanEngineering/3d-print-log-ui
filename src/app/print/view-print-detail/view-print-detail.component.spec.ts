@@ -5,7 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import currency from 'currency.js';
 import { ToastrService } from 'ngx-toastr';
 import { AdsenseModule } from 'ng2-adsense';
@@ -19,6 +19,8 @@ import { UserSettingService } from 'src/app/core/services/user-setting.service';
 describe('ViewPrintDetailComponent', () => {
   let fixture: ComponentFixture<ViewPrintDetailComponent>;
   let component: ViewPrintDetailComponent;
+  let metaService: jasmine.SpyObj<MetaTagService>;
+  let printServiceSpy: jasmine.SpyObj<PrintService>;
 
   const OWNER_ID = 7;
 
@@ -42,12 +44,23 @@ describe('ViewPrintDetailComponent', () => {
    * @param viewerId  null = anonymous; OWNER_ID = owner; anything else = a
    *                  signed-in stranger, which must see exactly what anonymous sees.
    */
+  const routeDataFor = (print: any) => ({
+    print: { print, user: print ? { id: OWNER_ID } : null },
+    preferredCurrencySymbolSetting: { value: '$' },
+    defaultFilamentPriceSetting: null,
+    defaultElectricityKwhRateSetting: { value: 0.12 },
+    defaultElectricityWattageSetting: { value: 150 },
+  });
+
   const setup = async (
     viewerId: number | null,
     print: any = basePrint,
     // arrivedInApp must be applied BEFORE createComponent: the component reads
     // getCurrentNavigation() once, in its constructor.
-    arrivedInApp = false
+    arrivedInApp = false,
+    // Pass a subject to drive more than one resolved-data emission, which is
+    // what the router does when it reuses this component for another print.
+    routeData$: Observable<any> = of(routeDataFor(print))
   ): Promise<void> => {
     TestBed.resetTestingModule();
 
@@ -75,7 +88,8 @@ describe('ViewPrintDetailComponent', () => {
       valid: false,
       message: 'No rate configured',
     });
-    const metaService = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
+    printServiceSpy = printService;
+    metaService = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
       'setTitle',
       'setSocialMediaTags',
     ]);
@@ -121,15 +135,7 @@ describe('ViewPrintDetailComponent', () => {
         },
         {
           provide: ActivatedRoute,
-          useValue: {
-            data: of({
-              print: { print, user: print ? { id: OWNER_ID } : null },
-              preferredCurrencySymbolSetting: { value: '$' },
-              defaultFilamentPriceSetting: null,
-              defaultElectricityKwhRateSetting: { value: 0.12 },
-              defaultElectricityWattageSetting: { value: 150 },
-            }),
-          },
+          useValue: { data: routeData$ },
         },
       ],
     }).compileComponents();
@@ -246,6 +252,60 @@ describe('ViewPrintDetailComponent', () => {
     // This is the branch the deep-link tests do NOT cover.
     expect(back).toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  // The router reuses this component when navigating from /prints/1 to
+  // /prints/2, so metadata computed once in the constructor described the
+  // previous print for the whole of the next one.
+  it('updates metadata on every resolved-data emission, not just the first', async () => {
+    const data$ = new BehaviorSubject<any>(routeDataFor(basePrint));
+    await setup(null, basePrint, false, data$);
+    expect(metaService.setTitle).toHaveBeenCalledWith(
+      'Test Print - 3D Print Log'
+    );
+
+    data$.next(routeDataFor({ ...basePrint, id: 2, title: 'Second Print' }));
+    fixture.detectChanges();
+
+    expect(metaService.setTitle).toHaveBeenCalledWith(
+      'Second Print - 3D Print Log'
+    );
+  });
+
+  // The hero shows the default image; a social preview showing a different one
+  // is a mismatch a reader sees before they ever open the page.
+  it('uses the default image for the social preview, not the first', async () => {
+    await setup(OWNER_ID, {
+      ...basePrint,
+      images: [
+        { id: 1, isDefault: false, displayOrder: 0 },
+        { id: 2, isDefault: true, displayOrder: 1 },
+      ],
+    });
+
+    const imageUrl = metaService.setSocialMediaTags.calls.mostRecent().args[3];
+    expect(imageUrl).toContain('/image/2');
+  });
+
+  // This component is OnPush and the POST response lands in its own tick with
+  // nothing marked dirty, so pushing onto the resolved array did not repaint.
+  it('renders a comment that arrives after the initial render', async () => {
+    const posted = new Subject<any>();
+    await setup(OWNER_ID);
+    printServiceSpy.addPrintComment.and.returnValue(posted.asObservable());
+
+    component.addComment('Nice print');
+    posted.next({
+      id: 99,
+      body: 'Nice print',
+      createdBy: { id: OWNER_ID, displayName: 'Owner', profilePicture: '' },
+      createdDate: new Date(),
+      updatedDate: new Date(),
+    });
+    fixture.detectChanges();
+
+    expect(component.comments().length).toBe(1);
+    expect(fixture.nativeElement.textContent).toContain('Nice print');
   });
 
   it('sorts images by displayOrder with a stable tiebreak on id', async () => {

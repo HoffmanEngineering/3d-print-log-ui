@@ -24,6 +24,16 @@ describe('Anonymous public print with a failing side-channel endpoint', () => {
   // SIGNED-IN visitor, whose request does go out and can genuinely 500; that is
   // covered by the logged-in test below and by the resolver unit tests.
 
+  // A missing print is the case the not-found view exists for, and it was the
+  // one case that could not reach it: getPrintDetail errored, the resolver
+  // rejected, and the router cancelled navigation.
+  it('shows the not-found view instead of bouncing home for a missing print', () => {
+    cy.visit('/prints/999999999?devUserId=anonymous');
+
+    cy.location('pathname').should('eq', '/prints/999999999');
+    cy.contains('h1', /print not found/i).should('be.visible');
+  });
+
   it('still renders when the user-summary endpoint returns 404', () => {
     cy.intercept('GET', '**/api/Users/*/summary', {
       statusCode: 404,

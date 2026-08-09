@@ -6,7 +6,9 @@ import {
   ElementRef,
   afterNextRender,
   computed,
+  effect,
   inject,
+  linkedSignal,
   signal,
   viewChild,
 } from '@angular/core';
@@ -16,6 +18,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { environment } from 'src/environments/environment';
+import { Comment } from 'src/app/core/services/comment.service';
 import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
@@ -119,6 +122,27 @@ export class ViewPrintDetailComponent {
     );
   });
 
+  /**
+   * The image the social preview should use, which is the one the hero shows —
+   * the default image, not merely the first by displayOrder. Keeping these two
+   * in agreement is the whole point of preferring isDefault.
+   */
+  private readonly socialImage = computed<PrintImageValue | null>(() => {
+    const images = this.printImages();
+    return images.find((image) => image.isDefault) ?? images[0] ?? null;
+  });
+
+  /**
+   * Comments live in a writable signal rather than being pushed onto the array
+   * inside resolved route data. This component is OnPush, and the POST response
+   * arrives in its own tick with nothing marked dirty, so a mutation there
+   * would not repaint. linkedSignal also resets the list when the router reuses
+   * this component for a different print.
+   */
+  readonly comments = linkedSignal<Comment[]>(
+    () => this.print()?.comments ?? []
+  );
+
   readonly preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.AsRecorded
   );
@@ -157,8 +181,11 @@ export class ViewPrintDetailComponent {
         // Public route: a settings failure must not break rendering.
       });
 
-    // Meta tags depend on resolved data; run once it is available.
-    queueMicrotask(() => this.setMetaTags());
+    // Re-runs on every resolved-data change, not just the first. The router
+    // reuses this component when navigating between two print ids, so a
+    // constructor-only call left the title, canonical URL, description, and
+    // preview image describing the previous print.
+    effect(() => this.setMetaTags());
 
     // Move focus to the page container once content is rendered, so keyboard
     // users are not stranded on <body> after a route change.
@@ -183,8 +210,7 @@ export class ViewPrintDetailComponent {
     const description = date
       ? `${print.title} printed by ${displayName} on ${date}`
       : `${print.title} printed by ${displayName}`;
-    const firstImage = this.printImages()[0];
-    const imageUrl = firstImage?.url ?? '';
+    const imageUrl = this.socialImage()?.url ?? '';
 
     this.metaService.setSocialMediaTags(url, title, description, imageUrl);
   }
@@ -208,6 +234,8 @@ export class ViewPrintDetailComponent {
     }
     this.printService
       .addPrintComment(print.id, newComment)
-      .subscribe((comment) => print.comments.push(comment));
+      .subscribe((comment) =>
+        this.comments.update((list) => [...list, comment])
+      );
   }
 }

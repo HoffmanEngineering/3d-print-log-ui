@@ -68,7 +68,7 @@
             [printId]="p.id"
             [printOwnerUserId]="p.createdByUserId"
             [allowComments]="p.allowComments"
-            [comments]="p.comments"
+            [comments]="comments()"
             (addNewComment)="addComment($event)"
           ></app-print-comments>
         </section>

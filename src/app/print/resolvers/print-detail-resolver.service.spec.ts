@@ -6,11 +6,13 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { UserService } from 'src/app/core/services/user.service';
 import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
 import { CuraParserService } from '../services/integration/cura-parser.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
 
 describe('PrintDetailResolverService', () => {
   let service: PrintDetailResolverService;
   let printService: jasmine.SpyObj<PrintService>;
   let userService: jasmine.SpyObj<UserService>;
+  let loggingService: jasmine.SpyObj<LoggingService>;
 
   const routeFor = (id: string) =>
     ({
@@ -30,10 +32,14 @@ describe('PrintDetailResolverService', () => {
       ['hasNewPrint', 'getNewPrint', 'clear']
     );
     store.hasNewPrint.and.returnValue(false);
+    loggingService = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logException',
+    ]);
 
     TestBed.configureTestingModule({
       providers: [
         PrintDetailResolverService,
+        { provide: LoggingService, useValue: loggingService },
         { provide: PrintService, useValue: printService },
         { provide: UserService, useValue: userService },
         { provide: NewPrintStoreService, useValue: store },
@@ -62,5 +68,37 @@ describe('PrintDetailResolverService', () => {
 
     expect((value as any).print.id).toBe(1);
     expect((value as any).user).toBeNull();
+  });
+
+  // Without this the resolver rejects, the router cancels navigation, and the
+  // visitor lands on / — so the "Print not found" view was unreachable for the
+  // one case it exists to handle (#66).
+  it('resolves with a null print when the print request 404s', async () => {
+    printService.getPrintDetail.and.returnValue(
+      throwError(() => ({ status: 404 }))
+    );
+
+    const value = await lastValueFrom(
+      service.resolve(routeFor('1'), {} as RouterStateSnapshot) as any
+    );
+
+    expect((value as any).print).toBeNull();
+    expect((value as any).user).toBeNull();
+    expect(loggingService.logException).not.toHaveBeenCalled();
+  });
+
+  it('resolves and logs when the print request fails unexpectedly', async () => {
+    printService.getPrintDetail.and.returnValue(
+      throwError(() => ({ status: 500 }))
+    );
+
+    const value = await lastValueFrom(
+      service.resolve(routeFor('1'), {} as RouterStateSnapshot) as any
+    );
+
+    // The page still activates — a 500 must not bounce a visitor home either —
+    // but the cause is reported rather than swallowed.
+    expect((value as any).print).toBeNull();
+    expect(loggingService.logException).toHaveBeenCalled();
   });
 });

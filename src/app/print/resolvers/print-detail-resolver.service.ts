@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, map, mergeMap } from 'rxjs/operators';
@@ -22,6 +23,8 @@ export interface PrintDetailWithUser {
 
 @Injectable()
 export class PrintDetailResolverService {
+  private readonly loggingService = inject(LoggingService);
+
   constructor(
     private printService: PrintService,
     private userService: UserService,
@@ -55,6 +58,21 @@ export class PrintDetailResolverService {
               return newDetails;
             })
           );
+        }),
+        // getPrintDetail errors on any non-2xx, and a rejected resolver cancels
+        // navigation and bounces the visitor to / (#66) — which is exactly what
+        // a 404 did before this catch: the "Print not found" view was
+        // unreachable for the case it exists to handle. Degrade to a null print
+        // so the route still activates and the page can explain itself.
+        catchError((error) => {
+          const status = error?.status;
+          if (status !== 403 && status !== 404) {
+            // A 500 or a network failure is not "this print does not exist".
+            // The page has one empty state, so it still renders, but the cause
+            // must not be silently discarded.
+            this.loggingService.logException(error);
+          }
+          return of({ print: null, user: null } as PrintDetailWithUser);
         })
       );
     }

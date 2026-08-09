@@ -6,13 +6,25 @@
   </div>
 } @else if (print(); as p) {
   <div class="page" tabindex="-1" #pageRoot>
-    <div class="content">
-      <div class="hero-band">
-        <app-print-detail-hero
-          [printId]="p.id"
-          [images]="printImages()"
-          [title]="p.title"
-        />
+    <!--
+      No images means no hero column, and a single column of label/value pairs
+      stretched across 1100px reads badly — the whole stack narrows to one
+      measure so the card, files, and comments stay visually aligned.
+    -->
+    <div class="content" [class.narrow]="printImages().length === 0">
+      <!--
+        The hero column is dropped entirely when a print has no images rather
+        than reserving a tall empty panel next to the rail. Most public prints
+        have no images; an "No images for this print" box that size is noise.
+      -->
+      <div class="hero-band" [class.no-hero]="printImages().length === 0">
+        @if (printImages().length) {
+          <app-print-detail-hero
+            [printId]="p.id"
+            [images]="printImages()"
+            [title]="p.title"
+          />
+        }
 
         <app-print-detail-summary
           [print]="p"

@@ -1,6 +1,6 @@
 <h1 class="print-title">{{ print().title }}</h1>
 
-@if (user(); as u) {
+@if (namedUser(); as u) {
   <p class="byline">
     Printed by
     @if (isUserProfileFeatureEnabled) {
@@ -134,16 +134,28 @@
   </section>
 }
 
-<dl class="legend">
-  <dt id="legend-estimated">*</dt>
-  <dd>Estimated material usage rather than a recorded measurement.</dd>
-  <dt id="legend-fallback">*</dt>
-  <dd>Converted from a different unit than the one recorded.</dd>
-  <dt id="legend-default-price">*</dt>
-  <dd>Calculated using your default material price.</dd>
-  <dt id="legend-default-wattage">*</dt>
-  <dd>Calculated using your default printer wattage.</dd>
-</dl>
+@if (legend(); as l) {
+  @if (l.any) {
+    <dl class="legend">
+      @if (l.estimated) {
+        <dt id="legend-estimated">*</dt>
+        <dd>Estimated material usage rather than a recorded measurement.</dd>
+      }
+      @if (l.fallback) {
+        <dt id="legend-fallback">*</dt>
+        <dd>Converted from a different unit than the one recorded.</dd>
+      }
+      @if (l.defaultPrice) {
+        <dt id="legend-default-price">*</dt>
+        <dd>Calculated using your default material price.</dd>
+      }
+      @if (l.defaultWattage) {
+        <dt id="legend-default-wattage">*</dt>
+        <dd>Calculated using your default printer wattage.</dd>
+      }
+    </dl>
+  }
+}
 
 <div class="rail-actions">
   @if (isOwner()) {

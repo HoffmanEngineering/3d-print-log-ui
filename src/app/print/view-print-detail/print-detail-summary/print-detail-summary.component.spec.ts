@@ -126,6 +126,22 @@ describe('PrintDetailSummaryComponent', () => {
     expect(renderAs(false).textContent).toContain('X1C');
   });
 
+  // The user-summary endpoint returns displayName: null for a user who has not
+  // set one. Linking that produced an empty <a> — an axe "link-name" violation
+  // and an unlabeled tab stop on every public print by such a user.
+  it('renders no user link when the display name is blank', () => {
+    fixture.componentRef.setInput('user', { id: 4, displayName: null });
+    const el = renderAs(false);
+    expect(el.querySelector('.byline a')).toBeNull();
+    expect(el.querySelector('.byline')?.textContent).toContain('Printed on');
+  });
+
+  it('links the user when a display name exists', () => {
+    fixture.componentRef.setInput('user', { id: 4, displayName: 'Ada' });
+    const el = renderAs(false);
+    expect(el.querySelector('.byline')?.textContent).toContain('Ada');
+  });
+
   it('links the project for everyone', () => {
     const el = renderAs(false);
     expect(el.querySelector('[data-cy-project-link]')).toBeTruthy();

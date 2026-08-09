@@ -23,7 +23,9 @@
           <div>
             <mat-card-content>
               @if (currentUserProfilePicture !== '') {
-                <img mat-card-avatar [src]="currentUserProfilePicture" />
+                <!-- Decorative: it depicts the signed-in user, who is already
+                     identified by the surrounding form. -->
+                <img mat-card-avatar alt="" [src]="currentUserProfilePicture" />
               }
               <mat-form-field style="width: 100%">
                 <mat-label>Add Comment:</mat-label>

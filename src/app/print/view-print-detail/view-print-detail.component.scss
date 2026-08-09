@@ -3,11 +3,22 @@
   width: 100%;
 }
 
+// One surface treatment for every block on the page. Material M2 exposes no
+// theme tokens to CSS, so the values are explicit and the dark theme overrides
+// them by class — the same approach the status badge uses.
+@mixin surface {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 24px;
-  justify-content: center;
+  padding: 24px 16px 48px;
 
   &:focus {
     outline: none;
@@ -32,14 +43,22 @@
   container-type: inline-size;
   container-name: print-content;
   min-width: 0;
+  width: 100%;
   max-width: 1100px;
+  // Centred in the viewport on wide screens, and still centred in its grid
+  // column once the ad sidebar takes 300px off the right.
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .hero-band {
+  @include surface;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 24px;
-  margin-bottom: 16px;
+  padding: 24px;
 }
 
 // Keyed off the content column's width, not the viewport: the ad sidebar
@@ -54,13 +73,41 @@
     position: sticky;
     top: 16px;
   }
+
+  .hero-band.no-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  // Nothing to stick to when the rail is the only column.
+  .hero-band.no-hero > app-print-detail-summary {
+    position: static;
+  }
+}
+
+// The narrowing lives on the children, not on .content itself: .content is the
+// query container, so shrinking it would flip the container queries above off
+// and undo the layout it is meant to refine.
+.content.narrow > .hero-band,
+.content.narrow > .band,
+.content.narrow > .band-split {
+  max-width: 720px;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.content.narrow > .band-split {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .band {
-  margin-bottom: 16px;
+  @include surface;
+  padding: 20px 24px;
 
   h2 {
-    font-size: 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.7;
     margin: 0 0 8px;
   }
 }
@@ -68,7 +115,8 @@
 .band-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: 20px;
+  align-items: start;
 }
 
 @container print-content (min-width: 860px) {
@@ -86,6 +134,16 @@
 .not-found {
   padding: 48px 16px;
   text-align: center;
+}
+
+:host-context(html.dark-theme) {
+  .hero-band,
+  .band {
+    background: #424242;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 1px 3px rgba(0, 0, 0, 0.3);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

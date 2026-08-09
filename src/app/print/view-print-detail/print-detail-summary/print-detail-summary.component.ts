@@ -20,6 +20,7 @@ import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { FilamentUsageSummaryComponent } from 'src/app/shared/filament-usage-summary/filament-usage-summary.component';
 import { PrintStatusBadgeComponent } from 'src/app/shared/print-status-badge/print-status-badge.component';
+import { getFilamentPreferredDisplay } from 'src/app/shared/utils/filament-display.utils';
 import {
   externalUrlLabel,
   safeExternalUrl,
@@ -67,6 +68,17 @@ export class PrintDetailSummaryComponent {
     environment.features.userProfile;
 
   protected readonly printer = computed(() => this.print()?.printer ?? null);
+
+  /**
+   * GET /api/Users/{id}/summary returns `displayName: null` for a user who has
+   * not set one, which rendered an empty <a> — an axe "link-name" failure and
+   * an unlabeled tab stop. Treat a blank name as no attributable user: the
+   * byline falls back to the date-only form rather than linking nothing.
+   */
+  protected readonly namedUser = computed(() => {
+    const user = this.user();
+    return user?.displayName?.trim() ? user : null;
+  });
 
   protected readonly sourceUrl = computed(() =>
     safeExternalUrl(this.print()?.url)
@@ -136,6 +148,45 @@ export class PrintDetailSummaryComponent {
       defaultWattageW: this.defaultWattage(),
       currencySymbol: this.currencySymbol(),
     });
+  });
+
+  /**
+   * Which legend entries to render. Rendering all four unconditionally put
+   * four asterisk footnotes under every print, including ones where none of
+   * them applied.
+   *
+   * The estimated/fallback flags are recomputed here from the same pure helper
+   * the filament table uses, rather than reached for through a viewChild: the
+   * legend belongs to this page, so the page decides what it says.
+   */
+  protected readonly legend = computed(() => {
+    const rows = this.print()?.filamentUsage ?? [];
+    const unit = this.preferredUnit();
+    let estimated = false;
+    let fallback = false;
+    for (const fu of rows) {
+      const display = getFilamentPreferredDisplay(fu, unit);
+      estimated ||= display?.isEstimated === true;
+      fallback ||= display?.isFallback === true;
+    }
+
+    const costResult = this.materialCostResult();
+    const defaultPrice =
+      (costResult?.total?.valid === true &&
+        costResult.total.usesDefaultPrice === true) ||
+      (costResult?.prices ?? []).some((p) => p.valid && p.usesDefaultPrice);
+
+    const electricity = this.electricityCost();
+    const defaultWattage =
+      electricity?.valid === true && electricity.usesDefaultWattage === true;
+
+    return {
+      estimated,
+      fallback,
+      defaultPrice,
+      defaultWattage,
+      any: estimated || fallback || defaultPrice || defaultWattage,
+    };
   });
 
   protected onClose(): void {

@@ -170,6 +170,41 @@
       data-cy-printer-row
     ></tr>
   </table>
+  @if (!isLoading && totalCount === 0) {
+    @if (hasActiveSearch) {
+      <app-empty-state
+        icon="filter_alt_off"
+        heading="No printers match your search"
+        [message]="emptyStateFilteredMessage"
+      >
+        <button
+          mat-raised-button
+          color="accent"
+          type="button"
+          data-cy="empty-state-clear-search"
+          (click)="clearSearch()"
+        >
+          <mat-icon>filter_alt_off</mat-icon>Clear search
+        </button>
+      </app-empty-state>
+    } @else {
+      <app-empty-state
+        icon="print"
+        heading="Add your first printer"
+        message="Register the machines you print on so every print records which printer ran it, and so you can track maintenance and running costs."
+      >
+        <button
+          mat-raised-button
+          color="accent"
+          type="button"
+          routerLink="new"
+          data-cy="empty-state-add-printer"
+        >
+          <mat-icon>add</mat-icon>Add printer
+        </button>
+      </app-empty-state>
+    }
+  }
   <mat-paginator
     [length]="totalCount"
     [pageSize]="pageSize"

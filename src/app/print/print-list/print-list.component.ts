@@ -264,11 +264,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private readonly gcodeParserService: GcodeFileParserService,
     private readonly newPrintStoreService: NewPrintStoreService
   ) {
-    this.debouncedUpdateFilter = debounce(() => {
-      this.isLoading = true;
+    // Mark the list as loading on the keystroke itself, not when the debounce
+    // finally fires, so the empty state cannot flash stale copy for 400ms.
+    const debouncedFilterUpdate = debounce(() => {
       this.currentPage = 1;
       this.updateFilter();
     }, 400);
+
+    this.debouncedUpdateFilter = () => {
+      this.isLoading = true;
+      debouncedFilterUpdate();
+    };
 
     this.subscriptions.add(
       router.events

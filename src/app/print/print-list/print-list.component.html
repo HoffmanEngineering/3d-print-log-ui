@@ -176,7 +176,15 @@
       [defaultElectricityKwhRateSetting]="defaultElectricityKwhRateSetting"
       [defaultElectricityWattageSetting]="defaultElectricityWattageSetting"
       [preferredUnit]="preferredFilamentUnit()"
-    />
+    >
+      <app-print-empty-state
+        printEmptyState
+        [activeFilterCount]="activeFilterCount()"
+        [searchText]="searchText"
+        (clearFilters)="resetFilters()"
+        (importGcode)="gcodeInput.click()"
+      />
+    </app-print-grouped-view>
   }
 
   <!-- List view: mobile cards + desktop table + paginator -->
@@ -190,11 +198,6 @@
           (statusChanged)="changeStatus($event.id, $event.status)"
           [preferredUnit]="preferredFilamentUnit()"
         />
-      }
-      @if (totalCount === 0) {
-        <div class="no-prints">
-          No prints found. Add a new print or try a different search.
-        </div>
       }
     </div>
 
@@ -592,10 +595,14 @@
         [attr.cy-print-row]="row.id"
       ></tr>
     </table>
-    @if (totalCount === 0) {
-      <div class="no-prints">
-        No prints found. Add a new print or try a different search.
-      </div>
+    <!-- Shared by both the mobile card view and the desktop table above. -->
+    @if (!isLoading && totalCount === 0) {
+      <app-print-empty-state
+        [activeFilterCount]="activeFilterCount()"
+        [searchText]="searchText"
+        (clearFilters)="resetFilters()"
+        (importGcode)="gcodeInput.click()"
+      />
     }
     <mat-paginator
       [pageIndex]="currentPage - 1"

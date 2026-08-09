@@ -95,11 +95,17 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     private readonly dialog: MatDialog,
     private readonly toastrService: ToastrService
   ) {
-    this.debouncedUpdateFilter = debounce(() => {
-      this.isLoading = true;
+    // Mark the list as loading on the keystroke itself, not when the debounce
+    // finally fires, so the empty state cannot flash stale copy for 400ms.
+    const debouncedFilterUpdate = debounce(() => {
       this.currentPage = 1;
       this.updateFilter();
     }, 400);
+
+    this.debouncedUpdateFilter = () => {
+      this.isLoading = true;
+      debouncedFilterUpdate();
+    };
 
     this.subscriptions.add(
       router.events
@@ -498,6 +504,22 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     else this.filterByEffects.push(effect);
     this.currentPage = 1;
     this.updateFilter();
+  }
+
+  /** Explains which filters and search term are hiding every material. */
+  public get emptyStateFilteredMessage(): string {
+    const parts: string[] = [];
+    const count = this.activeFilterCount;
+
+    if (count > 0) {
+      parts.push(`${count} active filter${count === 1 ? '' : 's'}`);
+    }
+
+    if (this.searchText.trim().length > 0) {
+      parts.push(`a search for "${this.searchText.trim()}"`);
+    }
+
+    return `Nothing matched ${parts.join(' and ')}. Clear them to see your whole material list.`;
   }
 
   public resetFilters(): void {

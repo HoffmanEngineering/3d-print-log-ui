@@ -28,6 +28,34 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.46.0': {
+      title: '1.46.0 - The New Print Page & Bulk Editing',
+      body: `<p>
+<strong>The new print page</strong> is here! Your photos are front and center now, with all the details right next to them: printer, status, times and costs at a glance, every filament you used (shown in its actual color), and a link to the project it belongs to.
+</p>
+<p>
+<strong>Bulk editing</strong> has landed on the print list too. Tick off the prints you want, then mark them all done or delete them in one go. Finished a whole plate overnight? That used to be about eighteen clicks, now it is two. Go check out <a href="/prints">your prints</a>, or read <a href="/docs/prints">the Prints documentation</a>.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.45.0': {
       title: '1.45.0 - The New Analytics Page',
       body: `<p>

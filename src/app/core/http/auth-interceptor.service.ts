@@ -9,7 +9,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AuthService } from '../services/auth.service';
-import { isDevAnonymous } from '../utils/dev-anonymous';
+import { isDevAnonymous, resolveDevUserId } from '../utils/dev-user';
 
 @Injectable({
   providedIn: 'root',
@@ -42,8 +42,7 @@ export class AuthInterceptorService implements HttpInterceptor {
         return throwError(() => ({ error: 'missing_refresh_token' }));
       }
 
-      const params = new URLSearchParams(search);
-      const userId = params.get('devUserId') ?? '1';
+      const userId = resolveDevUserId(search);
       const devReq = req.clone({
         headers: req.headers
           .delete('allow-anonymous-request')

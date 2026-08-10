@@ -28,6 +28,7 @@ import { ProjectChipComponent } from '../shared/project-chip/project-chip.compon
 import { ProjectSelectorComponent } from '../shared/project-selector/project-selector.component';
 import { PrintGroupedViewComponent } from './print-list/print-grouped-view/print-grouped-view.component';
 import { PrintCardComponent } from './print-card/print-card.component';
+import { PrintEmptyStateComponent } from './print-list/print-empty-state/print-empty-state.component';
 
 @NgModule({
   declarations: [
@@ -50,6 +51,7 @@ import { PrintCardComponent } from './print-card/print-card.component';
     PrintGroupedViewComponent,
     PrintCardComponent,
     PrintCommentsComponent,
+    PrintEmptyStateComponent,
   ],
   providers: [
     PrintDetailResolverService,

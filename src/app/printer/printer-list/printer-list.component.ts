@@ -44,6 +44,11 @@ export class PrinterListComponent implements OnInit {
 
   public debouncedUpdateFilter;
 
+  public isLoading = false;
+
+  /** Guards against an older search response overwriting a newer one. */
+  private latestRequestId = 0;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private printerService: PrinterService,
@@ -51,7 +56,14 @@ export class PrinterListComponent implements OnInit {
     private readonly toastrService: ToastrService,
     public dialog: MatDialog
   ) {
-    this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
+    // Mark the list as loading on the keystroke itself, not when the debounce
+    // finally fires, so the empty state cannot flash stale copy for 400ms.
+    const debouncedFilterUpdate = debounce(() => this.updateFilter(), 400);
+
+    this.debouncedUpdateFilter = () => {
+      this.isLoading = true;
+      debouncedFilterUpdate();
+    };
   }
 
   ngOnInit() {
@@ -69,6 +81,9 @@ export class PrinterListComponent implements OnInit {
 
     localStorage.setItem('printer_list_page_size', newPageSize.toString(10));
 
+    this.isLoading = true;
+    const requestId = ++this.latestRequestId;
+
     this.printerService
       .getCurrentUserPrinterSummaries(
         newPageNumber,
@@ -77,12 +92,19 @@ export class PrinterListComponent implements OnInit {
         this.includeInactive
       )
       .subscribe((response) => {
+        if (requestId !== this.latestRequestId) {
+          return;
+        }
+
         this.handlePagedList(response);
       });
   }
 
   public async updateFilter() {
     localStorage.setItem('printer_list_page_size', this.pageSize.toString(10));
+
+    this.isLoading = true;
+    const requestId = ++this.latestRequestId;
 
     const response = await lastValueFrom(
       this.printerService.getCurrentUserPrinterSummaries(
@@ -93,7 +115,27 @@ export class PrinterListComponent implements OnInit {
       )
     );
 
+    // A newer search started while this one was in flight; its result wins.
+    if (requestId !== this.latestRequestId) {
+      return;
+    }
+
     this.handlePagedList(response);
+  }
+
+  /** True when a search term is hiding printers the user does have. */
+  public get hasActiveSearch(): boolean {
+    return this.searchText.trim().length > 0;
+  }
+
+  public get emptyStateFilteredMessage(): string {
+    return `Nothing matched a search for "${this.searchText.trim()}". Clear it to see all of your printers.`;
+  }
+
+  public clearSearch() {
+    this.searchText = '';
+    this.currentPage = 1;
+    return this.updateFilter();
   }
 
   public unloadAllFilament(printer: PrinterSummarySimple) {
@@ -108,6 +150,7 @@ export class PrinterListComponent implements OnInit {
   }
 
   private handlePagedList(response: PagedList<PrinterSummarySimple>) {
+    this.isLoading = false;
     this.printers = response.items;
 
     this.currentPage = response.paging.currentPage;

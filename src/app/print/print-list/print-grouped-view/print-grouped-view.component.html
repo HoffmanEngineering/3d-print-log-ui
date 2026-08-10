@@ -3,9 +3,7 @@
     <mat-spinner diameter="40" />
   </div>
 } @else if (!feed()?.items?.length) {
-  <p class="empty-state">
-    No prints found. Try adjusting your search or filters.
-  </p>
+  <ng-content select="[printEmptyState]" />
 } @else {
   <!-- Mobile Card View -->
   <div class="grouped-mobile-card-view" fxHide.gt-sm>
@@ -503,11 +501,6 @@
           by current filters
         </p>
       }
-    }
-    @if (!feed()?.items?.length) {
-      <p class="empty-state">
-        No prints found. Try adjusting your search or filters.
-      </p>
     }
   </div>
 

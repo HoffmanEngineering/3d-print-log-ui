@@ -1,0 +1,67 @@
+@if (isFiltered()) {
+  <app-empty-state
+    icon="filter_alt_off"
+    heading="No prints match your filters"
+    [message]="filteredMessage()"
+    [announce]="announce()"
+  >
+    <button
+      mat-raised-button
+      color="accent"
+      type="button"
+      data-cy="empty-state-clear-filters"
+      (click)="onClearFilters()"
+    >
+      <mat-icon>filter_alt_off</mat-icon>Clear filters
+    </button>
+  </app-empty-state>
+} @else if (hasPrinters() === false) {
+  <!--
+    A print cannot be saved without a printer (printerId is a required control
+    on the print form), so send the user to add a printer first. Import G-code
+    is deliberately omitted here: it lands on that same unsubmittable form.
+  -->
+  <app-empty-state
+    icon="precision_manufacturing"
+    heading="Add a printer to get started"
+    message="You'll need a printer before you can log a print, since every print records the machine that ran it. Add yours and we will bring you straight back here."
+    [announce]="announce()"
+  >
+    <button
+      mat-raised-button
+      color="accent"
+      type="button"
+      routerLink="/printers/new"
+      data-cy="empty-state-add-printer"
+      (click)="onAddPrinter()"
+    >
+      <mat-icon>add</mat-icon>Add printer
+    </button>
+  </app-empty-state>
+} @else if (hasPrinters()) {
+  <app-empty-state
+    icon="print_disabled"
+    heading="Log your first print"
+    message="Keep a record of every print you run: printer, material, time and cost. Add one by hand, or import a G-code file from your slicer and we will fill in most of the details for you."
+    [announce]="announce()"
+  >
+    <button
+      mat-raised-button
+      color="accent"
+      type="button"
+      routerLink="/prints/new/edit"
+      data-cy="empty-state-add-print"
+      (click)="onAddPrint()"
+    >
+      <mat-icon>add</mat-icon>Add print
+    </button>
+    <button
+      mat-stroked-button
+      type="button"
+      data-cy="empty-state-import-gcode"
+      (click)="onImportGcode()"
+    >
+      <mat-icon>upload_file</mat-icon>Import G-code
+    </button>
+  </app-empty-state>
+}

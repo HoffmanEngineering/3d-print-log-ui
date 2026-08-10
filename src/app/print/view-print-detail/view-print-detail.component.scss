@@ -143,6 +143,53 @@ app-ad {
   text-align: center;
 }
 
+// Loading shell. Deliberately reuses .hero-band / .band so the placeholder sits
+// on exactly the same surface, padding, and two-column container query as the
+// loaded page — the content it stands in for lands in place instead of jumping.
+.skeleton-image {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+}
+
+.skeleton-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 4px 8px;
+}
+
+.skeleton-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.skeleton-spec-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.skeleton-band {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+:host-context(html.dark-theme) .skeleton-panel {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
 :host-context(html.dark-theme) {
   .hero-band,
   .band {

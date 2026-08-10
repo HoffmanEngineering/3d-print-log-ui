@@ -79,4 +79,56 @@ describe('Anonymous public print view', () => {
       });
     });
   });
+
+  // The route used to be resolver-gated, so navigation was held until the print
+  // arrived. It now activates immediately and the component fetches. That moves
+  // the #66 risk rather than removing it: a logged-out visitor must still land
+  // on the print, and must not see "Print not found" while the fetch is in
+  // flight. The delay makes the loading window observable instead of racing it.
+  it('paints a skeleton while loading and then the print, without bouncing home', () => {
+    cy.seedPublicPrintFixture().then((print: any) => {
+      cy.clearLocalStorage();
+
+      cy.intercept('GET', `**/api/Prints/${print.id}`, (req) => {
+        req.on('response', (res) => res.setDelay(1500));
+      }).as('printDetail');
+
+      cy.visit(`/prints/${print.id}?devUserId=anonymous`);
+
+      // The shell is on screen before the response lands — that is the whole
+      // point of dropping the resolver.
+      cy.get('[data-testid="print-detail-skeleton"]').should('be.visible');
+      cy.contains('h1', /print not found/i).should('not.exist');
+      cy.location('pathname').should('eq', `/prints/${print.id}`);
+
+      // Accessibility of the LOADING state, which no other test covers.
+      cy.checkA11yWithReport(undefined, {
+        includedImpacts: ['critical', 'serious'],
+      });
+
+      cy.wait('@printDetail');
+
+      cy.get('[data-testid="print-detail-skeleton"]').should('not.exist');
+      cy.contains('h1', print.title).should('be.visible');
+      cy.location('pathname').should('eq', `/prints/${print.id}`);
+    });
+  });
+
+  // With no resolver left, a failing fetch can no longer cancel navigation —
+  // but it must not strand the page on its skeleton either.
+  it('shows the not-found view rather than an endless skeleton when the print 500s', () => {
+    cy.clearLocalStorage();
+
+    cy.intercept('GET', '**/api/Prints/424242', {
+      statusCode: 500,
+      body: {},
+    }).as('printDetail');
+
+    cy.visit('/prints/424242?devUserId=anonymous');
+
+    cy.wait('@printDetail');
+    cy.location('pathname').should('eq', '/prints/424242');
+    cy.contains('h1', /print not found/i).should('be.visible');
+    cy.get('[data-testid="print-detail-skeleton"]').should('not.exist');
+  });
 });

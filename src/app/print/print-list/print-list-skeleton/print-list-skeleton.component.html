@@ -1,0 +1,36 @@
+@if (variant() === 'row') {
+  <div
+    class="skeleton-table"
+    data-testid="print-list-skeleton"
+    role="status"
+    aria-busy="true"
+  >
+    <span class="visually-hidden">{{ label() }}</span>
+    @for (row of items(); track row) {
+      <div class="skeleton-row" [style.grid-template-columns]="gridTemplate()">
+        @for (cell of cells(); track cell) {
+          <app-skeleton height="1rem" />
+        }
+      </div>
+    }
+  </div>
+} @else {
+  <div
+    class="skeleton-cards"
+    data-testid="print-list-skeleton"
+    role="status"
+    aria-busy="true"
+  >
+    <span class="visually-hidden">{{ label() }}</span>
+    @for (card of items(); track card) {
+      <div class="skeleton-card">
+        <app-skeleton width="72px" height="72px" radius="8px" />
+        <div class="skeleton-card-lines">
+          <app-skeleton width="70%" height="1.1rem" />
+          <app-skeleton width="45%" height="0.85rem" />
+          <app-skeleton width="55%" height="0.85rem" />
+        </div>
+      </div>
+    }
+  </div>
+}

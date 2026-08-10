@@ -4,84 +4,142 @@
     <p>This print may have been deleted or is not public.</p>
     <a routerLink="/">Go to the home page</a>
   </div>
-} @else if (print(); as p) {
+} @else {
   <div class="page" tabindex="-1" #pageRoot>
     <!--
       No images means no hero column, and a single column of label/value pairs
       stretched across 1100px reads badly — the whole stack narrows to one
       measure so the card, files, and comments stay visually aligned.
+
+      While loading, the layout stays wide: the skeleton shows an image slot
+      because most shared prints have one, and narrowing here would mean the
+      page reflowed sideways for every print that does.
     -->
-    <div class="content" [class.narrow]="printImages().length === 0">
-      <!--
-        The hero column is dropped entirely when a print has no images rather
-        than reserving a tall empty panel next to the rail. Most public prints
-        have no images; an "No images for this print" box that size is noise.
-      -->
-      <div class="hero-band" [class.no-hero]="printImages().length === 0">
-        @if (printImages().length) {
-          <app-print-detail-hero
-            [printId]="p.id"
-            [images]="printImages()"
-            [title]="p.title"
+    <div
+      class="content"
+      [class.narrow]="!loading() && printImages().length === 0"
+    >
+      @if (loading()) {
+        <!--
+          The skeleton mirrors the loaded layout — hero image, title, byline,
+          chips, spec rail — so the real content lands in the boxes it is
+          already standing in rather than shifting the page.
+
+          One announcement for the whole region: the blocks themselves are
+          aria-hidden, and this container carries the busy state and the status
+          text a screen reader needs.
+        -->
+        <!--
+          `app-skeleton-immediate` opts out of the CSS reveal delay: this block
+          is only rendered at all once withDeferredSkeleton has already waited
+          out that same threshold, and delaying twice would eat half its dwell.
+        -->
+        <div
+          class="hero-band app-skeleton-immediate"
+          data-testid="print-detail-skeleton"
+          role="status"
+          aria-busy="true"
+        >
+          <span class="visually-hidden">Loading print</span>
+
+          <div class="skeleton-image">
+            <app-skeleton width="100%" height="100%" radius="10px" />
+          </div>
+
+          <div class="skeleton-rail">
+            <app-skeleton width="75%" height="2.1rem" />
+            <app-skeleton width="45%" height="0.9rem" />
+
+            <div class="skeleton-chips">
+              <app-skeleton width="5.5rem" height="1.75rem" radius="999px" />
+              <app-skeleton width="7rem" height="1.75rem" radius="999px" />
+            </div>
+
+            <div class="skeleton-panel">
+              @for (row of skeletonRailRows; track row) {
+                <div class="skeleton-spec-row">
+                  <app-skeleton width="6rem" height="0.9rem" />
+                  <app-skeleton width="100%" height="0.9rem" />
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="band skeleton-band">
+          <app-skeleton width="30%" height="0.75rem" />
+          <app-skeleton width="100%" height="3.5rem" />
+        </div>
+      } @else if (print(); as p) {
+        <!--
+          The hero column is dropped entirely when a print has no images rather
+          than reserving a tall empty panel next to the rail. Most public prints
+          have no images; an "No images for this print" box that size is noise.
+        -->
+        <div class="hero-band" [class.no-hero]="printImages().length === 0">
+          @if (printImages().length) {
+            <app-print-detail-hero
+              [printId]="p.id"
+              [images]="printImages()"
+              [title]="p.title"
+            />
+          }
+
+          <app-print-detail-summary
+            [print]="p"
+            [user]="user()"
+            [isOwner]="isOwner()"
+            [currencySymbol]="currencySymbol()"
+            [defaultFilamentPrice]="defaultFilamentPrice()"
+            [kwhRate]="kwhRate()"
+            [defaultWattage]="defaultWattage()"
+            [preferredUnit]="preferredFilamentUnit()"
+            (closed)="handleClose()"
           />
+        </div>
+
+        <!--
+          In-content ad, all viewports. It sits after the hero band rather than
+          before it so the print itself is what a visitor lands on. AdComponent
+          renders nothing for Pro subscribers.
+        -->
+        <app-ad></app-ad>
+
+        @if (p.notes) {
+          <section class="band" aria-labelledby="notes-heading">
+            <h2 id="notes-heading">Notes</h2>
+            <p class="notes-body">{{ p.notes }}</p>
+          </section>
         }
 
-        <app-print-detail-summary
-          [print]="p"
-          [user]="user()"
-          [isOwner]="isOwner()"
-          [currencySymbol]="
-            routeDataValue('preferredCurrencySymbolSetting') ?? '$'
-          "
-          [defaultFilamentPrice]="routeDataValue('defaultFilamentPriceSetting')"
-          [kwhRate]="routeDataValue('defaultElectricityKwhRateSetting')"
-          [defaultWattage]="routeDataValue('defaultElectricityWattageSetting')"
-          [preferredUnit]="preferredFilamentUnit()"
-          (closed)="handleClose()"
-        />
-      </div>
+        <div class="band-split">
+          <!--
+            These two sections carry aria-label rather than a band-level <h2>:
+            both children render their own heading ("File Attachments",
+            "Comments:"), and adding one here would duplicate it visibly.
+          -->
+          <section class="band" aria-label="Files">
+            <app-file-attachment-section
+              [printId]="p.id"
+              [editable]="false"
+              [isOwner]="isOwner()"
+              [allowFileDownloads]="p.allowFileDownloads ?? false"
+            ></app-file-attachment-section>
+          </section>
 
-      <!--
-        In-content ad, all viewports. It sits after the hero band rather than
-        before it so the print itself is what a visitor lands on. AdComponent
-        renders nothing for Pro subscribers.
-      -->
-      <app-ad></app-ad>
+          <section class="band" aria-label="Comments">
+            <app-print-comments
+              [printId]="p.id"
+              [printOwnerUserId]="p.createdByUserId"
+              [allowComments]="p.allowComments"
+              [comments]="comments()"
+              (addNewComment)="addComment($event)"
+            ></app-print-comments>
+          </section>
+        </div>
 
-      @if (p.notes) {
-        <section class="band" aria-labelledby="notes-heading">
-          <h2 id="notes-heading">Notes</h2>
-          <p class="notes-body">{{ p.notes }}</p>
-        </section>
+        <app-ad></app-ad>
       }
-
-      <div class="band-split">
-        <!--
-          These two sections carry aria-label rather than a band-level <h2>:
-          both children render their own heading ("File Attachments",
-          "Comments:"), and adding one here would duplicate it visibly.
-        -->
-        <section class="band" aria-label="Files">
-          <app-file-attachment-section
-            [printId]="p.id"
-            [editable]="false"
-            [isOwner]="isOwner()"
-            [allowFileDownloads]="p.allowFileDownloads ?? false"
-          ></app-file-attachment-section>
-        </section>
-
-        <section class="band" aria-label="Comments">
-          <app-print-comments
-            [printId]="p.id"
-            [printOwnerUserId]="p.createdByUserId"
-            [allowComments]="p.allowComments"
-            [comments]="comments()"
-            (addNewComment)="addComment($event)"
-          ></app-print-comments>
-        </section>
-      </div>
-
-      <app-ad></app-ad>
     </div>
 
     <aside class="ad-sidebar">

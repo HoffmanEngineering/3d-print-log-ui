@@ -96,18 +96,14 @@ export const printRoutes: Routes = [
         redirectTo: 'new/edit',
       },
       {
+        // Deliberately resolves NOTHING. A resolver keeps the previous page on
+        // screen until it settles, so this public, frequently deep-linked route
+        // looked like a dead click on a slow connection. ViewPrintDetailComponent
+        // loads the print and its settings itself and paints a skeleton in the
+        // meantime. It also means there is no longer anything on this route that
+        // can reject and bounce a logged-out visitor to / (#66).
         path: ':id',
         component: ViewPrintDetailComponent,
-        resolve: {
-          print: PrintDetailResolverService,
-          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
-          defaultFilamentPriceSetting:
-            DefaultFilamentPriceSettingResolverService,
-          defaultElectricityKwhRateSetting:
-            DefaultElectricityKwhRateSettingResolverService,
-          defaultElectricityWattageSetting:
-            DefaultElectricityWattageSettingResolverService,
-        },
       },
     ],
   },

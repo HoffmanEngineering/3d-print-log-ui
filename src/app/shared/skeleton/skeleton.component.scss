@@ -1,0 +1,9 @@
+@use './skeleton-mixins' as skeleton;
+
+:host {
+  display: block;
+  // The host must not collapse when a parent's flex sizing would otherwise
+  // shrink it to nothing.
+  flex: none;
+  @include skeleton.skeleton-surface;
+}

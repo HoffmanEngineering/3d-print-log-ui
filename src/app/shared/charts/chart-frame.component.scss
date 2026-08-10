@@ -1,3 +1,5 @@
+@use '../skeleton/skeleton-mixins' as skeleton;
+
 .chart-frame {
   display: flex;
   flex-direction: column;
@@ -93,15 +95,7 @@
   }
 
   &__skeleton {
-    border-radius: 4px;
-    background: linear-gradient(
-      90deg,
-      var(--chart-grid) 25%,
-      transparent 50%,
-      var(--chart-grid) 75%
-    );
-    background-size: 200% 100%;
-    animation: chart-shimmer 1.2s infinite linear;
+    @include skeleton.skeleton-surface;
   }
 
   &__message {
@@ -141,20 +135,5 @@
 @container (min-width: 900px) {
   :host(.overview-tab__chart--outcomes) .chart-frame__body {
     aspect-ratio: 16 / 9;
-  }
-}
-
-@keyframes chart-shimmer {
-  from {
-    background-position: 200% 0;
-  }
-  to {
-    background-position: -200% 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chart-frame__skeleton {
-    animation: none;
   }
 }

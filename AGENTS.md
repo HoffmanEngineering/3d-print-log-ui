@@ -105,6 +105,16 @@ Follow the patterns in `.github/copilot-instructions.md`:
 - Put host bindings in the `host` object of decorators, not `@HostBinding`/`@HostListener`
 - Use `NgOptimizedImage` for static images
 
+### Loading States (skeletons, spinners, progress bars)
+
+**Never render a busy affordance unconditionally.** Most responses land in tens of milliseconds, and a placeholder that appears and vanishes inside two frames reads as a rendering glitch, not as feedback. Every busy affordance goes through `src/app/shared/skeleton/deferred-skeleton.ts`, which enforces two thresholds — show nothing for the first 200ms, and once shown stay up for 400ms so the flash cannot just move to the boundary.
+
+- **Observable state** (`toSignal` + `switchMap`): use `withDeferredSkeleton(LOADING_STATE)` in place of `startWith(LOADING_STATE)`. Keep it _inside_ the `switchMap` so each re-subscription gets fresh timers. Pattern: `view-print-detail.component.ts`.
+- **Imperative flags** (`isLoading = true` in a `subscribe`): use `DeferredSkeletonController` — `start()` / `stop()`, read its `visible` signal, and `destroy()` on teardown. Pattern: `print-list.component.ts`.
+- **Skeletons are for a FIRST paint only.** A refetch (filter, sort, page change) already has rows on screen; replacing them with grey boxes throws away the reader's place and scroll position. Split the state into `showSkeleton()` (first paint) vs `showRefreshing()` (keep the rows, dim to 0.55, `aria-busy`, `mat-progress-bar` with a negative margin so it adds no height). Gate on a `hasLoadedOnce` set **on success only**, so a failed first load still skeletons on retry.
+- **A deferred placeholder needs a third state.** "No data, not loading" during the pre-skeleton window is _not_ "not found" / "empty" — gating an empty state on `!loading` will flash it on every visit. Use an explicit `idle` phase (see `PrintDetailPhase`).
+- Skeletons not gated in TypeScript get the same 200ms delay for free from the `skeleton-surface` mixin's CSS reveal. If you DO gate in TypeScript, add `app-skeleton-immediate` to the container or the two delays stack.
+
 ## Testing
 
 - Unit tests use Jasmine + Karma with Chrome

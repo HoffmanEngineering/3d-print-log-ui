@@ -203,23 +203,69 @@
   <!-- List view: mobile cards + desktop table + paginator -->
   @if (viewMode === 'list') {
     <!-- Mobile Card View -->
-    <div class="mobile-card-view" fxHide.gt-sm>
-      @for (print of prints; track print.id) {
-        <app-print-card
-          [print]="print"
-          (deleted)="deletePrint($event)"
-          (statusChanged)="changeStatus($event.id, $event.status)"
-          [preferredUnit]="preferredFilamentUnit()"
+    <!--
+      Two distinct busy states, not one.
+
+      First paint has no cards to preserve, so placeholders are the honest
+      answer. A refetch — search, filter, page — already has cards on screen, and
+      swapping them for grey boxes throws away the reader's place to say
+      something a progress bar says without destroying anything. So the cards
+      stay, dimmed and aria-busy, and the bar carries the message.
+    -->
+    <div
+      class="mobile-card-view"
+      fxHide.gt-sm
+      [class.refreshing]="showRefreshing()"
+      [attr.aria-busy]="showRefreshing() ? 'true' : null"
+    >
+      @if (showRefreshing()) {
+        <mat-progress-bar mode="indeterminate" class="refresh-bar" />
+      }
+      @if (showSkeleton()) {
+        <app-print-list-skeleton
+          class="app-skeleton-immediate"
+          [count]="skeletonRowCount()"
         />
+      } @else {
+        @for (print of prints; track print.id) {
+          <app-print-card
+            [print]="print"
+            (deleted)="deletePrint($event)"
+            (statusChanged)="changeStatus($event.id, $event.status)"
+            [preferredUnit]="preferredFilamentUnit()"
+          />
+        }
       }
     </div>
 
     <!-- Desktop Table View -->
+    <!--
+      On a FIRST load the data rows are hidden with a class and the skeleton is
+      rendered below rather than the whole table being torn down: the header row
+      carries the mat-sort state, and destroying it would drop the sort arrow
+      every time a filter changed.
+
+      On a REFETCH the rows stay exactly where they are — see the mobile card
+      view above for why — and only dim, with the progress bar beneath the header
+      carrying the busy message.
+
+      aria-live is silenced only in the first case, where rows are leaving this
+      live region at the same moment the skeleton's own role="status" announces
+      "Loading prints"; two regions talking over each other is worse than one.
+      A refetch keeps its rows, so aria-busy is the right signal there and the
+      live region can stay on to announce the new rows when they land.
+    -->
+    @if (showRefreshing()) {
+      <mat-progress-bar mode="indeterminate" class="refresh-bar" fxHide.lt-md />
+    }
     <table
+      [class.loading]="showSkeleton()"
+      [class.refreshing]="showRefreshing()"
       fxFlex="grow"
       fxHide.lt-md
       aria-label="Print List"
-      aria-live="polite"
+      [attr.aria-busy]="showRefreshing() ? 'true' : null"
+      [attr.aria-live]="showSkeleton() ? 'off' : 'polite'"
       mat-table
       [dataSource]="prints"
       matSort
@@ -640,8 +686,25 @@
         [attr.cy-print-row]="row.id"
       ></tr>
     </table>
-    <!-- Shared by both the mobile card view and the desktop table above. -->
-    @if (!isLoading && totalCount === 0) {
+    @if (showSkeleton()) {
+      <!-- tableColumns, not displayedColumns: the bulk-select column counts
+           towards the width the placeholder rows have to span. -->
+      <app-print-list-skeleton
+        class="app-skeleton-immediate"
+        fxHide.lt-md
+        variant="row"
+        [count]="skeletonRowCount()"
+        [columns]="tableColumns.length"
+      />
+    }
+    <!-- Shared by both the mobile card view and the desktop table above.
+         Two gates, because they cover different windows. isLoading (the raw
+         in-flight flag) covers the request itself, including the blank
+         pre-skeleton window. isBusy() covers the tail AFTER the response lands,
+         where the minimum dwell keeps a skeleton or progress bar on screen for
+         up to another 400ms — rendering "no prints found" beside a running
+         indicator would contradict it. -->
+    @if (!isLoading && !isBusy() && totalCount === 0) {
       <app-print-empty-state
         [activeFilterCount]="activeFilterCount()"
         [searchText]="searchText"

@@ -151,7 +151,7 @@ describe('Print List Filters', () => {
       .find('.mat-column-title')
       .first()
       .click();
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy-edit-btn]').click();
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
     cy.get('#add-new-filament-usage-btn').click();
     cy.get('[data-cy="select-filament-btn"]').click();

@@ -580,7 +580,7 @@ describe('Cross-screen swatch rendering', () => {
       .find('.mat-column-title')
       .first()
       .click();
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy-edit-btn]').click();
 
     cy.intercept('GET', '/api/Filaments*').as('getFilaments');
     cy.get('#add-new-filament-usage-btn').click();
@@ -635,7 +635,7 @@ describe('Cross-screen swatch rendering', () => {
       .find('.mat-column-title')
       .first()
       .click();
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy-edit-btn]').click();
 
     cy.intercept('GET', '/api/Filaments*').as('getFilaments');
     cy.get('#add-new-filament-usage-btn').click();

@@ -1,0 +1,160 @@
+.chart-frame {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  container-type: inline-size;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 0;
+    // Projected actions (the activity tab's metric switcher) are a fixed-width control that
+    // cannot shrink. On one line the title ran straight underneath it; wrapping drops the
+    // actions to their own row on a phone and costs nothing once there is room for both.
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  &__badge {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: var(--chart-empty-text);
+    display: inline-flex;
+  }
+
+  &__body {
+    position: relative;
+    flex: 1 1 auto;
+    min-block-size: 0;
+    padding: 0.5rem 1rem 1rem;
+    box-sizing: border-box;
+    // Phone-first: taller aspect so labels fit; widens with the container.
+    aspect-ratio: 4 / 3;
+
+    @container (min-width: 600px) {
+      aspect-ratio: 3 / 2;
+      // A ratio alone runs away as the panel widens: at 680px, 3/2 is already 450px tall,
+      // and at 1400px 16/9 is 790px — one chart fills the screen and everything else is
+      // below the fold. The cap wins over the ratio and keeps a panel readable at any
+      // width. Deliberately from 600px, not 900px: the container here is the CARD, and a
+      // two-column desktop grid gives each card roughly 680px, so a 900px floor never
+      // matched the panels that actually needed capping.
+      max-block-size: 20rem;
+    }
+    @container (min-width: 900px) {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  // Height comes from the content, for widgets whose size is intrinsic rather than
+  // proportional (the calendar heatmap, the comparison table, the maintenance list).
+  &--natural &__body {
+    aspect-ratio: auto;
+    max-block-size: none;
+    // Only while loading/empty, where the overlaid skeleton and message have nothing to
+    // give the box a height of its own.
+    min-block-size: 5rem;
+  }
+
+  // In natural mode the plot is in normal flow, so the content it wraps sets the height.
+  &--natural &__plot {
+    position: static;
+    inset: auto;
+  }
+
+  // The measured box. Fills the body exactly, and holds nothing but the plot, so its
+  // reported size is identical in every state.
+  &__plot {
+    position: absolute;
+    inset: 0.5rem 1rem 1rem;
+  }
+
+  // The skeleton and the empty/error message overlay the same box rather than sharing
+  // flow with it, so they cannot influence what the ResizeObserver reports.
+  &__skeleton,
+  &__message {
+    position: absolute;
+    inset: 0.5rem 1rem 1rem;
+  }
+
+  &__content {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  &__skeleton {
+    border-radius: 4px;
+    background: linear-gradient(
+      90deg,
+      var(--chart-grid) 25%,
+      transparent 50%,
+      var(--chart-grid) 75%
+    );
+    background-size: 200% 100%;
+    animation: chart-shimmer 1.2s infinite linear;
+  }
+
+  &__message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0;
+    text-align: center;
+    color: var(--chart-empty-text);
+  }
+
+  // Present to assistive tech, invisible on screen.
+  &__a11y-table {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+:host(.overview-tab__chart--outcomes) .chart-frame__body {
+  min-block-size: 34rem;
+  aspect-ratio: auto;
+}
+
+@container (min-width: 480px) {
+  :host(.overview-tab__chart--outcomes) .chart-frame__body {
+    min-block-size: 0;
+    aspect-ratio: 3 / 2;
+  }
+}
+
+@container (min-width: 900px) {
+  :host(.overview-tab__chart--outcomes) .chart-frame__body {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@keyframes chart-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-frame__skeleton {
+    animation: none;
+  }
+}

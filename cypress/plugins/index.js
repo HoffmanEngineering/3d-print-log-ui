@@ -18,4 +18,17 @@
 module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
-}
+
+  // Lets specs print to the terminal. Used by cy.checkA11yWithReport so axe
+  // violations are readable in a headless run instead of just "2 violations".
+  on('task', {
+    log(message) {
+      console.log(message);
+      return null;
+    },
+    table(rows) {
+      console.table(rows);
+      return null;
+    },
+  });
+};

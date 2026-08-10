@@ -1,0 +1,139 @@
+<div class="overview-tab">
+  <div class="overview-tab__actions">
+    <button
+      type="button"
+      mat-stroked-button
+      data-testid="tab-export"
+      (click)="onExportTab()"
+    >
+      Export this tab (CSV)
+    </button>
+  </div>
+  <div class="overview-tab__tiles">
+    <app-stat-tile
+      label="Prints"
+      format="number"
+      [metric]="data()?.tiles?.printCount ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Success rate"
+      format="percent"
+      [metric]="data()?.tiles?.successRatePercent ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Filament used"
+      format="grams"
+      [metric]="data()?.tiles?.filamentGrams ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Print time"
+      format="duration"
+      [metric]="data()?.tiles?.printTimeSeconds ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Estimated cost"
+      format="money"
+      [metric]="data()?.tiles?.totalCost ?? null"
+      [loading]="state() === 'loading'"
+    />
+    <app-stat-tile
+      label="Average print"
+      format="duration"
+      [metric]="data()?.tiles?.avgPrintTimeSeconds ?? null"
+      [loading]="state() === 'loading'"
+    />
+  </div>
+
+  <div class="overview-tab__charts">
+    <app-chart-frame
+      class="overview-tab__chart"
+      #printsFrame
+      title="Prints over time"
+      [csv]="seriesCsv()"
+      [state]="state()"
+      [coverage]="data()?.tiles?.printCount?.coverage ?? null"
+      [ariaSummary]="seriesAriaSummary()"
+      emptyMessage="No prints in this date range yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="barData()"
+        [series]="statusSeries"
+        [width]="printsFrame.width()"
+        [height]="printsFrame.height()"
+        (barSelect)="onBarSelect($event)"
+      />
+
+      <table chartDataTable>
+        <caption>
+          Prints per period by status
+        </caption>
+        <tbody>
+          @for (row of barData(); track row.fullLabel) {
+            <tr>
+              <th scope="row">{{ row.fullLabel }}</th>
+              @for (series of statusSeries; track series.key) {
+                <td>{{ series.label }}: {{ row.values[series.key] ?? 0 }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="overview-tab__chart overview-tab__chart--outcomes"
+      #statusFrame
+      title="Outcomes"
+      [csv]="statusCsv()"
+      [state]="state()"
+      [coverage]="data()?.tiles?.successRatePercent?.coverage ?? null"
+      ariaSummary="Breakdown of prints by status"
+      emptyMessage="No prints in this date range yet."
+      (retry)="onRetry()"
+    >
+      <app-donut-chart
+        [slices]="donutSlices()"
+        [width]="statusFrame.width()"
+        [height]="statusFrame.height()"
+        centerLabel="prints"
+        [centerValue]="(data()?.tiles?.printCount?.value ?? 0).toString()"
+        (sliceSelect)="onSliceSelect($event)"
+      />
+
+      <table chartDataTable>
+        <caption>
+          Prints by status
+        </caption>
+        <tbody>
+          @for (slice of donutSlices(); track slice.key) {
+            <tr>
+              <th scope="row">{{ slice.label }}</th>
+              <td>{{ slice.value }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+  </div>
+
+  @if (highlights().length > 0) {
+    <ul class="overview-tab__highlights">
+      @for (item of highlights(); track item.caption) {
+        <li class="overview-tab__highlight">
+          <span class="overview-tab__highlight-caption">{{
+            item.caption
+          }}</span>
+          <span class="overview-tab__highlight-label">{{
+            item.ref?.label
+          }}</span>
+          <span class="overview-tab__highlight-value">{{ item.display }}</span>
+        </li>
+      }
+    </ul>
+  }
+</div>

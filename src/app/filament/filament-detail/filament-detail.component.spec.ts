@@ -310,3 +310,221 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
     expect(calcComponent.filamentAdjustments.length).toBe(before);
   });
 });
+
+describe('FilamentDetailComponent - value serialization', () => {
+  let serComponent: FilamentDetailComponent;
+  let serFixture: ComponentFixture<FilamentDetailComponent>;
+  let mockFilamentSvc: jasmine.SpyObj<FilamentService>;
+
+  const baseFilament = {
+    id: 'filament-1',
+    displayName: 'Test',
+    materialType: 'PLA',
+    materialDensityGramPerCubicCm: 1.24,
+    spoolWeightMg: 150000,
+    initialTotalWeightMg: 1150000,
+    initialNominalWeightMg: 1000000,
+    filamentAdjustments: [],
+    colors: [],
+  };
+
+  async function setupSerialization(
+    filamentOverrides: Record<string, unknown>
+  ) {
+    mockFilamentSvc = jasmine.createSpyObj<FilamentService>('FilamentService', {
+      getFilamentBrands: of({ brands: [] }),
+      getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
+      getFilamentStorageLocations: of({ storageLocations: [] }),
+      addFilament: of({} as never),
+      updateFilament: of({} as never),
+    });
+    const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
+      'success',
+    ]);
+    const mockUserSettings = jasmine.createSpyObj<UserSettingService>(
+      'UserSettingService',
+      ['updateUserSetting']
+    );
+    const mockLog = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logException',
+      'logEvent',
+    ]);
+
+    await TestBed.configureTestingModule({
+      declarations: [FilamentDetailComponent],
+      imports: [
+        RouterTestingModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatInputModule,
+        MatSelectModule,
+        MatDatepickerModule,
+        MatCheckboxModule,
+        MatNativeDateModule,
+        MatAutocompleteModule,
+        MatButtonToggleModule,
+        MatChipsModule,
+        MatButtonModule,
+        MatTooltipModule,
+      ],
+      providers: [
+        { provide: FilamentService, useValue: mockFilamentSvc },
+        { provide: ToastrService, useValue: mockToastr },
+        { provide: UserSettingService, useValue: mockUserSettings },
+        { provide: LoggingService, useValue: mockLog },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({
+              filament: { ...baseFilament, ...filamentOverrides },
+              materials: [],
+              materialCategories: [],
+            }),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    serFixture = TestBed.createComponent(FilamentDetailComponent);
+    serComponent = serFixture.componentInstance;
+    serFixture.detectChanges();
+  }
+
+  // Returns the FilamentDetail passed to updateFilament on the most recent save.
+  function savedFilament(): any {
+    const spy = mockFilamentSvc.updateFilament as jasmine.Spy;
+    return spy.calls.mostRecent().args[0];
+  }
+
+  it('drops a new untouched adjustment row', async () => {
+    await setupSerialization({});
+    serComponent.addAdjustment();
+
+    serComponent.onSubmit();
+
+    expect(mockFilamentSvc.updateFilament).toHaveBeenCalled();
+    expect(savedFilament().filamentAdjustments.length).toBe(0);
+  });
+
+  it('keeps a notes-only adjustment row with null measurements', async () => {
+    await setupSerialization({});
+    serComponent.addAdjustment();
+    const row = serComponent.filamentAdjustments.at(0);
+    row.get('amountG')!.setValue(null);
+    row.get('notes')!.setValue('inspected, no change');
+
+    serComponent.onSubmit();
+
+    const adj = savedFilament().filamentAdjustments;
+    expect(adj.length).toBe(1);
+    expect(adj[0].amountMg).toBeNull();
+    expect(adj[0].lengthInM).toBeNull();
+    expect(adj[0].volumeMl).toBeNull();
+    expect(adj[0].notes).toBe('inspected, no change');
+  });
+
+  it('preserves an explicit zero amount entered by the user', async () => {
+    await setupSerialization({});
+    serComponent.addAdjustment();
+    serComponent.filamentAdjustments.at(0).get('amountG')!.setValue('0');
+
+    serComponent.onSubmit();
+
+    const adj = savedFilament().filamentAdjustments;
+    expect(adj.length).toBe(1);
+    expect(adj[0].amountMg).toBe(0);
+  });
+
+  it('drops whitespace-only length values instead of saving zero', async () => {
+    await setupSerialization({});
+    serComponent.addAdjustment();
+    const row = serComponent.filamentAdjustments.at(0);
+    row.get('amountG')!.setValue(null);
+    row.get('lengthInM')!.setValue('   ');
+
+    serComponent.onSubmit();
+
+    expect(savedFilament().filamentAdjustments.length).toBe(0);
+  });
+
+  it('drops a non-numeric length value instead of saving a phantom row', async () => {
+    await setupSerialization({});
+    serComponent.addAdjustment();
+    const row = serComponent.filamentAdjustments.at(0);
+    row.get('amountG')!.setValue(null);
+    row.get('lengthInM')!.setValue('abc');
+
+    serComponent.onSubmit();
+
+    expect(savedFilament().filamentAdjustments.length).toBe(0);
+  });
+
+  it('serializes a non-finite volume value as null', async () => {
+    await setupSerialization({});
+    serComponent.addAdjustment();
+    const row = serComponent.filamentAdjustments.at(0);
+    row.get('amountG')!.setValue(null);
+    row.get('volumeMl')!.setValue('Infinity');
+    row.get('notes')!.setValue('keep me');
+
+    serComponent.onSubmit();
+
+    const adj = savedFilament().filamentAdjustments;
+    expect(adj.length).toBe(1);
+    expect(adj[0].volumeMl).toBeNull();
+  });
+
+  it('serializes empty nominal weight/length/volume as null', async () => {
+    await setupSerialization({
+      initialNominalWeightMg: 0, // loads initialNominalWeightG as null (>0 guard)
+      initialNominalLengthM: null,
+      initialNominalVolumeMl: null,
+    });
+
+    serComponent.onSubmit();
+
+    const saved = savedFilament();
+    expect(saved.initialNominalWeightMg).toBeNull();
+    expect(saved.initialNominalLengthM).toBeNull();
+    expect(saved.initialNominalVolumeMl).toBeNull();
+  });
+
+  it('serializes populated nominal fields to rounded values', async () => {
+    await setupSerialization({});
+    serComponent.filamentForm.get('initialNominalWeightG')!.setValue(1);
+    serComponent.filamentForm.get('initialNominalLengthM')!.setValue(330);
+    serComponent.filamentForm.get('initialNominalVolumeMl')!.setValue(800);
+
+    serComponent.onSubmit();
+
+    const saved = savedFilament();
+    expect(saved.initialNominalWeightMg).toBe(1000);
+    expect(saved.initialNominalLengthM).toBe(330);
+    expect(saved.initialNominalVolumeMl).toBe(800);
+  });
+
+  it('preserves a null adjustment weight across load and re-save', async () => {
+    await setupSerialization({
+      filamentAdjustments: [
+        {
+          id: 'adj-1',
+          filamentId: 'filament-1',
+          source: FilamentAdjustmentSourceMeasurement.Length,
+          amountMg: null,
+          lengthInM: 100,
+          volumeMl: null,
+          notes: '',
+        },
+      ],
+    });
+
+    // Submit without editing the loaded adjustment.
+    serComponent.onSubmit();
+
+    const adj = savedFilament().filamentAdjustments;
+    expect(adj.length).toBe(1);
+    expect(adj[0].amountMg).toBeNull(); // was silently becoming 0 on load
+    expect(adj[0].lengthInM).toBe(100);
+  });
+});

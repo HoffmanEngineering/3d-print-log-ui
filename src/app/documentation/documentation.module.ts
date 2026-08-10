@@ -17,6 +17,7 @@ import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-releas
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocumentationComponent } from './documentation.component';
 import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-app.component';
+import { DocsMcpComponent } from './docs/docs-mcp/docs-mcp.component';
 import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.component';
 import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
 import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
@@ -39,6 +40,7 @@ import { DocsProjectsComponent } from './docs/docs-projects/docs-projects.compon
     DocsOctoprintWebhookComponent,
     DocsMoonrakerComponent,
     DocsAndroidAppComponent,
+    DocsMcpComponent,
     DocsTermsComponent,
     DocsPrivacyPolicyComponent,
     DocsSlic3rUploaderComponent,

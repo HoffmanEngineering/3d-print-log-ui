@@ -16,6 +16,7 @@
 // Import commands.js using ES2015 syntax:
 import './commands';
 import '@testing-library/cypress/add-commands';
+import 'cypress-axe';
 
 // Suppress uncaught exceptions from third-party scripts (e.g. AdSense)
 // so they don't fail tests when the session is created on a cold run.

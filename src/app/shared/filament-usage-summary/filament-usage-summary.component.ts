@@ -14,7 +14,7 @@ import {
   PrintFilamentSummaryDto,
   PrintService,
 } from 'src/app/core/services/print.service';
-import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
+import { FilamentColorSwatchComponent } from 'src/app/shared/filament-color-swatch/filament-color-swatch.component';
 import {
   FilamentPreferredDisplayResult,
   getFilamentPreferredDisplay,
@@ -29,7 +29,7 @@ import {
     CommonModule,
     RouterLink,
     MatTooltipModule,
-    FilamentColorSwatchStylePipe,
+    FilamentColorSwatchComponent,
   ],
 })
 export class FilamentUsageSummaryComponent {
@@ -41,6 +41,28 @@ export class FilamentUsageSummaryComponent {
   preferredUnit = input<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.Weight
   );
+
+  /** Fail-closed: callers must opt in, so a missed call site cannot leak links. */
+  linkFilaments = input(false);
+  showPrices = input(false);
+
+  /**
+   * Ids of the visible legend entries that explain this row's `*`. Only the
+   * meanings that actually apply are referenced, so one marker never announces
+   * every legend entry. The ids are owned by the consuming page's legend.
+   */
+  protected markerDescribedBy(
+    display: FilamentPreferredDisplayResult
+  ): string | null {
+    const ids: string[] = [];
+    if (display.isEstimated) {
+      ids.push('legend-estimated');
+    }
+    if (display.isFallback) {
+      ids.push('legend-fallback');
+    }
+    return ids.length ? ids.join(' ') : null;
+  }
 
   getActualPrice(fu: PrintFilamentSummaryDto): string {
     return this.formatFilamentPrice(

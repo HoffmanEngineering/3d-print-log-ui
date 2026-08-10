@@ -101,6 +101,8 @@ export const printRoutes: Routes = [
         resolve: {
           print: PrintDetailResolverService,
           preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          defaultFilamentPriceSetting:
+            DefaultFilamentPriceSettingResolverService,
           defaultElectricityKwhRateSetting:
             DefaultElectricityKwhRateSettingResolverService,
           defaultElectricityWattageSetting:

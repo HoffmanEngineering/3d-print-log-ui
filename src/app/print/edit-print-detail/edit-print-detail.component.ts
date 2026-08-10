@@ -1631,7 +1631,22 @@ export class EditPrintDetailComponent
     newPrint: Omit<PrintDetail, 'comments'>
   ): void {
     this.saving = false;
-    this.loggingService.logTrace(`PrintErr: ${JSON.stringify(newPrint)}`);
+    // Log only an allowlisted, non-sensitive diagnostic summary. Never serialize
+    // the full print object: fields like notes, title, url and fileName can contain
+    // private user content and would otherwise leak into telemetry (#leak).
+    this.loggingService.logTrace('PrintErr: print save failed', {
+      operation: newPrint.id === null ? 'create' : 'update',
+      printId: newPrint.id,
+      printerId: newPrint.printerId,
+      status: newPrint.status,
+      viewStatus: newPrint.viewStatus,
+      filamentType: newPrint.filamentType,
+      filamentUsageCount: newPrint.filamentUsage?.length ?? 0,
+      imageCount: newPrint.images?.length ?? 0,
+      hasNotes: !!newPrint.notes,
+      hasUrl: !!newPrint.url,
+      hasFileName: !!newPrint.fileName,
+    });
     this.loggingService.logException(err);
   }
 

@@ -1,0 +1,55 @@
+<h2>Connected AI Agents</h2>
+<p>
+  AI assistants (such as Claude or ChatGPT) that you have connected to your 3D
+  Print Log data. Connected agents have read-only access to your prints,
+  printers, and materials.
+</p>
+
+@if (status() === 'loading') {
+  <mat-spinner diameter="28" aria-label="Loading connected agents" />
+} @else if (status() === 'error') {
+  <p>We couldn't load your connected AI agents.</p>
+  <button mat-stroked-button (click)="load()">Retry</button>
+} @else {
+  @if (agents().length === 0) {
+    <p>No AI agents connected.</p>
+  } @else {
+    <ul class="agent-list">
+      @for (agent of agents(); track agent.grantId) {
+        <li>
+          <mat-icon inline>smart_toy</mat-icon>
+          <span>{{ agent.clientId }}</span>
+        </li>
+      }
+    </ul>
+
+    @if (!confirming()) {
+      <button mat-raised-button color="warn" (click)="startConfirm()">
+        Disconnect all AI agents
+      </button>
+    } @else {
+      <p>
+        Disconnect all connected AI agents? They will immediately lose access to
+        your 3D Print Log data.
+      </p>
+      <div class="confirm-actions">
+        <button
+          mat-raised-button
+          color="warn"
+          [disabled]="submitting()"
+          (click)="disconnectAll()"
+        >
+          Yes, disconnect all
+        </button>
+        <button mat-stroked-button [disabled]="submitting()" (click)="cancel()">
+          Cancel
+        </button>
+      </div>
+      @if (revokeFailed()) {
+        <p class="error-text">
+          Something went wrong disconnecting your agents. Please try again.
+        </p>
+      }
+    }
+  }
+}

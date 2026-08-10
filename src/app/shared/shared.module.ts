@@ -1,4 +1,4 @@
-import { ClipboardModule } from '@angular/cdk/clipboard';
+﻿import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@ngbracket/ngx-layout';
@@ -34,8 +34,6 @@ import { RouterModule } from '@angular/router';
 import { CommentComponent } from './comments/comment/comment.component';
 import { FilamentListComponent } from './filament-list/filament-list.component';
 import { FilamentSearchModalComponent } from './filament-search-modal/filament-search-modal.component';
-import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
-import { GraphPanelComponent } from './panels/graph-panel/graph-panel.component';
 import { StatPanelComponent } from './panels/stat-panel/stat-panel.component';
 import { ParserUnavailableDialogComponent } from './parser-unavailable-dialog/parser-unavailable-dialog.component';
 import { DurationPipe } from './pipes/duration.pipe';
@@ -45,7 +43,6 @@ import { MaterialNamePipe } from './pipes/material-name.pipe';
 import { PrintImageComponent } from './print-image/print-image.component';
 import { PrintSummaryCardComponent } from './print-summary-card/print-summary-card.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
-import { SimpleDialogComponent } from './simple-dialog/simple-dialog.component';
 import { GcodeViewerModalComponent } from './gcode-viewer-modal/gcode-viewer-modal.component';
 import { NotificationBellComponent } from './notification-bell/notification-bell.component';
 import { AdComponent } from './ad/ad.component';
@@ -66,15 +63,10 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
 @NgModule({
   declarations: [
     SidebarComponent,
-    DurationPipe,
     PrintSummaryCardComponent,
-    PrintImageComponent,
     StatPanelComponent,
-    GraphPanelComponent,
-    DonutChartComponent,
     CommentComponent,
     HumanizePipe,
-    SimpleDialogComponent,
     ParserUnavailableDialogComponent,
     MaterialNamePipe,
     FilamentListComponent,
@@ -131,6 +123,8 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     FilamentColorSwatchStylePipe,
     LocaleDatePipe,
     AdComponent,
+    PrintImageComponent,
+    DurationPipe,
   ],
   exports: [
     CommonModule,
@@ -169,8 +163,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     PrintSummaryCardComponent,
     PrintImageComponent,
     StatPanelComponent,
-    GraphPanelComponent,
-    DonutChartComponent,
     CommentComponent,
     HumanizePipe,
     LocaleDatePipe,

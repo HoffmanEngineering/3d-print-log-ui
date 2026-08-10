@@ -29,7 +29,8 @@ describe('AuthInterceptorService', () => {
   afterEach(() => {
     (environment as any).devAuthBypass = false;
     (environment as any).printLogApiUrl = originalApiUrl;
-    sessionStorage.removeItem('devAnonymous');
+
+    sessionStorage.removeItem('devUserId');
   });
 
   it('should be created', () => {

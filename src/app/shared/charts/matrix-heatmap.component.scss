@@ -1,0 +1,18 @@
+.matrix-heatmap {
+  display: block;
+  max-inline-size: 100%;
+}
+
+.matrix-heatmap__label {
+  font-size: 10px;
+  fill: var(--chart-axis-text);
+}
+
+.matrix-heatmap__cell {
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--chart-axis-text);
+    outline-offset: 1px;
+  }
+}

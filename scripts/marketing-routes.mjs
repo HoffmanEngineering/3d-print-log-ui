@@ -27,6 +27,7 @@ export const DOC_ROUTES = [
   'docs/printers',
   'docs/analytics',
   'docs/android-app',
+  'docs/mcp',
   'docs/cura-plugin',
   'docs/octoprint-webhook',
   'docs/klipper',

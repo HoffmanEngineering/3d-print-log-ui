@@ -1,0 +1,16 @@
+@if (hasLegacyData()) {
+  <dl class="legacy-usage">
+    @if (print().filamentType) {
+      <dt>Filament</dt>
+      <dd>{{ print().filamentType }}</dd>
+    }
+    @if (estimatedGrams(); as grams) {
+      <dt>Estimated</dt>
+      <dd>{{ grams }} g</dd>
+    }
+    @if (actualGrams(); as grams) {
+      <dt>Actual</dt>
+      <dd>{{ grams }} g</dd>
+    }
+  </dl>
+}

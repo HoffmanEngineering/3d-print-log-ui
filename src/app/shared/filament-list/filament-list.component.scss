@@ -58,7 +58,7 @@ table {
   flex-shrink: 0;
   white-space: nowrap;
 
-  // Ensure the matBadge number is vertically centred within the bubble.
+  // Ensure the matBadge number is vertically centered within the bubble.
   ::ng-deep .mat-badge-content {
     display: flex;
     align-items: center;
@@ -66,7 +66,7 @@ table {
   }
 
   // Material uses visibility:hidden for mat-badge-hidden, which hides the number
-  // but leaves the coloured circle painted. Use display:none instead.
+  // but leaves the colored circle painted. Use display:none instead.
   &.mat-badge-hidden ::ng-deep .mat-badge-content {
     display: none;
   }

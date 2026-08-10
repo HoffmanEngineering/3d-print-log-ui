@@ -1,6 +1,6 @@
 {
   "name": "print-log-ui",
-  "version": "1.43.11",
+  "version": "1.45.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
@@ -80,8 +80,10 @@
     "@types/qrcode": "^1.5.5",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
+    "axe-core": "^4.13.0",
     "baseline-browser-mapping": "^2.10.29",
     "cypress": "^13.17.0",
+    "cypress-axe": "^1.7.0",
     "eslint": "^9.39.4",
     "husky": "^7.0.4",
     "jasmine-core": "~5.1.2",

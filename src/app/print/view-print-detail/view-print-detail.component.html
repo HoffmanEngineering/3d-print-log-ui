@@ -1,262 +1,91 @@
-<div
-  fxLayout="row"
-  fxLayoutAlign="center start"
-  fxLayoutGap="24px"
-  style="width: 100%"
->
-  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
-    <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="10px">
-      <mat-card-header fxFlex="grow">
-        <img
-          mat-card-avatar
-          [src]="this.user.profilePicture || '/assets/user.svg'"
-          alt="Uploader's profile picture"
-        />
-        <mat-card-title>
-          {{ print.title }}
-        </mat-card-title>
-        @if (isUserProfileFeatureEnabled) {
-          <mat-card-subtitle>
-            Printed by
-            <a [routerLink]="['/users', user.id]">{{ user.displayName }}</a> on
-            {{ print.startDate | localeDate: 'long' }}
-          </mat-card-subtitle>
-        }
-        @if (!isUserProfileFeatureEnabled) {
-          <mat-card-subtitle>
-            Printed by
-            {{ user.displayName }} on
-            {{ print.startDate | localeDate: 'long' }}
-          </mat-card-subtitle>
-        }
-      </mat-card-header>
-      <mat-card-content
-        fxLayout="column"
-        fxLayoutAlign="start center"
-        fxLayoutGap="10px"
-      >
-        <app-image-carousel
-          [imageCount]="printImages.length"
-          [selectedIndex]="selectedImageIndex"
-          (indexChange)="onCarouselIndexChange($event)"
-        >
-          @if (selectedImage) {
-            <div class="main-image">
-              <app-print-image
-                fxFlex
-                [printId]="print.id"
-                [imageId]="selectedImage.id"
-                [imageData]="selectedImage.url"
-                [showDeleteOnHover]="false"
-                (imageDataChange)="selectedImage.url = $event"
-              ></app-print-image>
-            </div>
-          }
-        </app-image-carousel>
-        <app-image-thumbnail-strip
-          [images]="printImages"
-          [selectedId]="selectedImage?.id"
-          (imageSelected)="onImageSelected($event)"
-        />
-        <div></div>
-      </mat-card-content>
-      <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column wrap"
-        fxLayoutAlign="space-evenly center"
-      >
-        <section class="mat-typography grid-container">
-          <h3>Print Status:</h3>
-          <p>
-            {{ getStatus(print.status) | titlecase }}
-          </p>
-          <h3>Printer:</h3>
-          <p>{{ print.printer.make }} {{ print.printer.model }}</p>
-          <h3>Thing URL:</h3>
-          <p>{{ print.url }}</p>
-          <h3>Estimated Print Time:</h3>
-          <p>{{ print.estimatedPrintTimeInSeconds | duration }}</p>
-          <h3>Actual Print Time:</h3>
-          <p>{{ print.printTimeInSeconds | duration }}</p>
-          <h3>Filament Usage:</h3>
-          <div class="grid-container">
-            @for (
-              printFilament of print.filamentUsage;
-              track printFilament;
-              let last = $last
-            ) {
-              @if (printFilament.filament === null) {
-                <h3>Filament:</h3>
-                <p>{{ printFilament.notes }}</p>
-                @if (getPreferredEstimatedDisplay(printFilament); as estimated) {
-                  <h3>Estimated:</h3>
-                  <p
-                    [matTooltip]="
-                      estimated.isFallback ? estimated.fallbackTooltip : null
-                    "
-                  >
-                    {{ estimated.displayString }}@if (estimated.isFallback) { * }
-                  </p>
-                }
-                @if (getPreferredActualDisplay(printFilament); as actual) {
-                  <h3>Actual:</h3>
-                  <p
-                    [matTooltip]="
-                      actual.isFallback ? actual.fallbackTooltip : null
-                    "
-                  >
-                    {{ actual.displayString }}@if (actual.isFallback) { * }
-                  </p>
-                }
-              }
-              @if (printFilament.filament !== null) {
-                <h3>Filament:</h3>
-                <p class="filament-name-cell">
-                  <span
-                    class="filament-color-swatch"
-                    [style]="printFilament.filament.colors | filamentColorSwatchStyle : printFilament.filament.colorPattern : printFilament.filament.finishType : printFilament.filament.effects"
-                  ></span>
-                  {{ printFilament.filament.displayName }}
-                </p>
-                @if (getPreferredEstimatedDisplay(printFilament); as estimated) {
-                  <h3>Estimated:</h3>
-                  <p
-                    [matTooltip]="
-                      estimated.isFallback ? estimated.fallbackTooltip : null
-                    "
-                  >
-                    {{ estimated.displayString }}@if (estimated.isFallback) { * }
-                  </p>
-                }
-                @if (getPreferredActualDisplay(printFilament); as actual) {
-                  <h3>Actual:</h3>
-                  <p
-                    [matTooltip]="
-                      actual.isFallback ? actual.fallbackTooltip : null
-                    "
-                  >
-                    {{ actual.displayString }}@if (actual.isFallback) { * }
-                  </p>
-                }
-              }
-              @if (!last) {
-                <hr />
-              }
-            }
-            <!-- Legacy weight-only fields: displayed in grams regardless of preferred unit (no length/volume data available) -->
-            @if (
-              (print.filamentUsageMg !== null && print.filamentUsageMg > 0) ||
-              (print.estimatedFilamentUsageMg !== null &&
-                print.estimatedFilamentUsageMg > 0) ||
-              (print.filamentType && print.filamentType !== '')
-            ) {
-              @if (print.filamentUsage.length > 0) {
-                <hr />
-              }
-              <h3>Filament:</h3>
-              <p>{{ print.filamentType }}</p>
-              @if (print.estimatedFilamentUsageMg > 0) {
-                <h3>Estimated:</h3>
-                <p>{{ print.estimatedFilamentUsageMg / 1000 }} (g)</p>
-              }
-              @if (print.filamentUsageMg > 0) {
-                <h3>Actual:</h3>
-                <p>{{ print.filamentUsageMg / 1000 }} (g)</p>
-              }
-            }
-          </div>
-          @if (getElectricityCost(); as electricityCost) {
-            @if (electricityCost.valid) {
-              <h3 style="margin-top: 8px">Electricity Cost:</h3>
-              <p
-                style="margin-top: 8px"
-                [matTooltip]="
-                  electricityCost.usesDefaultWattage
-                    ? 'Using default wattage of ' +
-                      electricityCost.wattageW +
-                      'W — set a printer-specific wattage for more accuracy'
-                    : null
-                "
-              >
-                {{ electricityCost.formattedCost
-                }}{{ electricityCost.usesDefaultWattage ? '*' : '' }}
-              </p>
-            } @else if ($any(electricityCost).message) {
-              <h3 style="margin-top: 8px">Electricity Cost:</h3>
-              <p style="margin-top: 8px">
-                <mat-icon
-                  inline
-                  style="
-                    font-size: 16px;
-                    width: 16px;
-                    height: 16px;
-                    vertical-align: text-bottom;
-                  "
-                  >warning</mat-icon
-                >
-                {{ $any(electricityCost).message }}
-              </p>
-            }
-          }
-          <h3>Notes:</h3>
-          <p style="white-space: pre-wrap">{{ print.notes }}</p>
-          <h3>File Name:</h3>
-          <p style="white-space: pre-wrap">{{ print.fileName }}</p>
-        </section>
-      </mat-card-content>
-      <mat-card-actions
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
-      >
-        <div fxFlex fxFlexFill fxLayoutGap="10px">
-          @if (currentUser && currentUser.id === user.id) {
-            <button
-              fxFlex="grow"
-              mat-raised-button
-              type="button"
-              color="accent"
-              [routerLink]="['edit']"
-              data-cy-edit-btn
-            >
-              Edit
-            </button>
-          }
-          <button
-            fxFlex="grow"
-            mat-raised-button
-            type="button"
-            (click)="handleClose()"
-            color="warn"
-            data-cy-close-btn
-          >
-            Close
-          </button>
-        </div>
-      </mat-card-actions>
-      <!-- File Attachments -->
-      <mat-card-content style="width: 100%">
-        <app-file-attachment-section
-          [printId]="print.id"
-          [editable]="false"
-          [isOwner]="currentUser?.id === user?.id"
-          [allowFileDownloads]="print.allowFileDownloads ?? false"
-        ></app-file-attachment-section>
-      </mat-card-content>
-      <mat-card-content style="width: 100%">
-        <app-print-comments
-          [printId]="print.id"
-          [printOwnerUserId]="print.createdByUserId"
-          [allowComments]="print.allowComments"
-          [comments]="print.comments"
-          (addNewComment)="addComment($event)"
-        ></app-print-comments>
-      </mat-card-content>
-    </div>
-    <app-ad></app-ad>
-  </mat-card>
-  <div fxHide fxShow.gt-md fxFlex="300px" class="ad-sidebar">
-    <app-sidebar-ad></app-sidebar-ad>
+@if (notFound()) {
+  <div class="not-found">
+    <h1>Print not found</h1>
+    <p>This print may have been deleted or is not public.</p>
+    <a routerLink="/">Go to the home page</a>
   </div>
-</div>
+} @else if (print(); as p) {
+  <div class="page" tabindex="-1" #pageRoot>
+    <!--
+      No images means no hero column, and a single column of label/value pairs
+      stretched across 1100px reads badly — the whole stack narrows to one
+      measure so the card, files, and comments stay visually aligned.
+    -->
+    <div class="content" [class.narrow]="printImages().length === 0">
+      <!--
+        The hero column is dropped entirely when a print has no images rather
+        than reserving a tall empty panel next to the rail. Most public prints
+        have no images; an "No images for this print" box that size is noise.
+      -->
+      <div class="hero-band" [class.no-hero]="printImages().length === 0">
+        @if (printImages().length) {
+          <app-print-detail-hero
+            [printId]="p.id"
+            [images]="printImages()"
+            [title]="p.title"
+          />
+        }
+
+        <app-print-detail-summary
+          [print]="p"
+          [user]="user()"
+          [isOwner]="isOwner()"
+          [currencySymbol]="
+            routeDataValue('preferredCurrencySymbolSetting') ?? '$'
+          "
+          [defaultFilamentPrice]="routeDataValue('defaultFilamentPriceSetting')"
+          [kwhRate]="routeDataValue('defaultElectricityKwhRateSetting')"
+          [defaultWattage]="routeDataValue('defaultElectricityWattageSetting')"
+          [preferredUnit]="preferredFilamentUnit()"
+          (closed)="handleClose()"
+        />
+      </div>
+
+      <!--
+        In-content ad, all viewports. It sits after the hero band rather than
+        before it so the print itself is what a visitor lands on. AdComponent
+        renders nothing for Pro subscribers.
+      -->
+      <app-ad></app-ad>
+
+      @if (p.notes) {
+        <section class="band" aria-labelledby="notes-heading">
+          <h2 id="notes-heading">Notes</h2>
+          <p class="notes-body">{{ p.notes }}</p>
+        </section>
+      }
+
+      <div class="band-split">
+        <!--
+          These two sections carry aria-label rather than a band-level <h2>:
+          both children render their own heading ("File Attachments",
+          "Comments:"), and adding one here would duplicate it visibly.
+        -->
+        <section class="band" aria-label="Files">
+          <app-file-attachment-section
+            [printId]="p.id"
+            [editable]="false"
+            [isOwner]="isOwner()"
+            [allowFileDownloads]="p.allowFileDownloads ?? false"
+          ></app-file-attachment-section>
+        </section>
+
+        <section class="band" aria-label="Comments">
+          <app-print-comments
+            [printId]="p.id"
+            [printOwnerUserId]="p.createdByUserId"
+            [allowComments]="p.allowComments"
+            [comments]="comments()"
+            (addNewComment)="addComment($event)"
+          ></app-print-comments>
+        </section>
+      </div>
+
+      <app-ad></app-ad>
+    </div>
+
+    <aside class="ad-sidebar">
+      <app-sidebar-ad></app-sidebar-ad>
+    </aside>
+  </div>
+}

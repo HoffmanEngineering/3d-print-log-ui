@@ -1,0 +1,55 @@
+<svg
+  class="line-area-chart"
+  [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
+  preserveAspectRatio="none"
+>
+  <!-- Decorative: the same values are on each point's label and in the frame's data table. -->
+  @for (tick of axisTicks(); track tick.text + tick.x) {
+    <text
+      class="line-area-chart__axis-label"
+      aria-hidden="true"
+      [attr.x]="tick.x"
+      [attr.y]="tick.y"
+      text-anchor="middle"
+    >
+      {{ tick.text }}
+    </text>
+  }
+
+  @if (areaPath(); as path) {
+    <path class="line-area-chart__area chart-fill-1" [attr.d]="path" />
+  }
+
+  @if (linePath(); as path) {
+    <path
+      class="line-area-chart__line chart-stroke-1"
+      [attr.d]="path"
+      fill="none"
+    />
+  }
+
+  @for (point of plotted(); track point.date) {
+    <!-- Invisible hit target first: a 4px dot is far below the 44px touch minimum. -->
+    <circle
+      class="line-area-chart__hit"
+      [attr.cx]="point.cx"
+      [attr.cy]="point.cy"
+      r="14"
+      tabindex="0"
+      role="button"
+      [attr.aria-label]="point.tooltip"
+      (click)="onSelect(point)"
+      (keydown.enter)="onSelect(point)"
+    >
+      <title>{{ point.tooltip }}</title>
+    </circle>
+    <!-- Purely visual; the hit circle above carries the label and the interaction. -->
+    <circle
+      class="line-area-chart__dot chart-fill-1"
+      [attr.cx]="point.cx"
+      [attr.cy]="point.cy"
+      r="4"
+      aria-hidden="true"
+    />
+  }
+</svg>

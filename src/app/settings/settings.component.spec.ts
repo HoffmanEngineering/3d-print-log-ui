@@ -16,6 +16,8 @@ import { MetaTagService } from '../core/services/meta-tag.service';
 import { ToastrService } from 'ngx-toastr';
 import { SubscriptionService } from '../core/services/subscription.service';
 import { LoggingService } from '../core/services/logging.service';
+import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
+import { ConnectedAgentsService } from '../core/services/connected-agents.service';
 
 xdescribe('SettingsComponent (original)', () => {
   let component: SettingsComponent;
@@ -114,8 +116,20 @@ describe('SettingsComponent', () => {
 
     TestBed.configureTestingModule({
       declarations: [SettingsComponent],
-      imports: [SharedModule, NoopAnimationsModule, RouterTestingModule],
+      imports: [
+        SharedModule,
+        NoopAnimationsModule,
+        RouterTestingModule,
+        ConnectedAgentsComponent,
+      ],
       providers: [
+        {
+          provide: ConnectedAgentsService,
+          useValue: {
+            getConnectedAgents: () => of([]),
+            revoke: () => of(undefined),
+          },
+        },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: AuthService, useValue: mockAuthService },
         { provide: UserService, useValue: mockUserService },

@@ -1,0 +1,70 @@
+<div class="donut-chart">
+  <svg
+    class="donut-chart__svg"
+    [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
+    aria-hidden="true"
+  >
+    <g [attr.transform]="'translate(' + center().x + ',' + center().y + ')'">
+      @for (slice of rendered(); track slice.key) {
+        <!--
+          The ring is a pointer affordance only, and the whole svg is aria-hidden. Every slice
+          has an exact counterpart in the legend below, which is a real <button> — giving the
+          slices tabindex/role too would put each action in the tab order twice and read it
+          out twice, and a focusable node inside an aria-hidden subtree is a focus trap for
+          screen-reader users (focusable but unannounced).
+        -->
+        <path
+          [class]="'donut-chart__slice chart-fill-' + slice.seriesIndex"
+          [attr.d]="slice.path"
+          (click)="onSelect(slice.key)"
+        >
+          <title>{{ slice.tooltip }}</title>
+        </path>
+      }
+    </g>
+
+    @if (centerValue()) {
+      <text
+        class="donut-chart__center-value"
+        [attr.x]="center().x"
+        [attr.y]="centerTypography().valueY"
+        [attr.font-size]="centerTypography().valueSize"
+        text-anchor="middle"
+        dominant-baseline="middle"
+      >
+        {{ centerValue() }}
+      </text>
+      <text
+        class="donut-chart__center-label"
+        [attr.x]="center().x"
+        [attr.y]="centerTypography().labelY"
+        [attr.font-size]="centerTypography().labelSize"
+        text-anchor="middle"
+        dominant-baseline="middle"
+      >
+        {{ centerLabel() }}
+      </text>
+    }
+  </svg>
+
+  <ul class="donut-chart__legend">
+    @for (slice of slices(); track slice.key) {
+      <li class="donut-chart__legend-item" data-testid="donut-legend-item">
+        <button
+          type="button"
+          class="donut-chart__legend-button"
+          (click)="onSelect(slice.key)"
+        >
+          <span
+            [class]="'donut-chart__swatch chart-bg-' + slice.seriesIndex"
+          ></span>
+          <span class="donut-chart__legend-label">{{ slice.label }}</span>
+          <span class="donut-chart__legend-value">{{ slice.value }}</span>
+          <span class="donut-chart__legend-percent"
+            >{{ percent(slice) | number: '1.0-1' }}%</span
+          >
+        </button>
+      </li>
+    }
+  </ul>
+</div>

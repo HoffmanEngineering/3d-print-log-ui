@@ -60,12 +60,24 @@ export class FileAttachmentSectionComponent implements OnInit {
 
   readonly files = signal<TrackedFileItem[]>([]);
 
+  // True once the initial getFiles() load has resolved (or failed). Uploads are
+  // blocked until then so admissions are measured against the real baseline.
+  readonly loaded = signal(false);
+
+  // Shown in the header ("N / max"): only fully-uploaded files.
   readonly uploadedFileCount = computed(
     () => this.files().filter((f) => f.status === 'uploaded').length
   );
 
+  // Slot enforcement: any tracked file that is not in a terminal error state
+  // occupies a slot, so an in-progress upload reserves capacity and closes the
+  // batch-selection race. Errored uploads free their slot for a retry.
+  readonly activeFileCount = computed(
+    () => this.files().filter((f) => f.status !== 'error').length
+  );
+
   readonly canAddMore = computed(
-    () => this.uploadedFileCount() < this.maxFiles()
+    () => this.loaded() && this.activeFileCount() < this.maxFiles()
   );
 
   readonly formattedQuotaUsage = computed(() => {
@@ -98,13 +110,27 @@ export class FileAttachmentSectionComponent implements OnInit {
     this.printFileService
       .getFiles(this.printId())
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((files) => {
-        this.files.set(
-          files.map((f) => ({
-            ...f,
-            status: 'uploaded' as const,
-          }))
-        );
+      .subscribe({
+        next: (files) => {
+          this.files.set(
+            files.map((f) => ({
+              ...f,
+              status: 'uploaded' as const,
+            }))
+          );
+          this.loaded.set(true);
+        },
+        error: (err) => {
+          // Fail closed: without a known server baseline we cannot safely
+          // enforce the per-print limit, so leave `loaded` false (uploads
+          // stay blocked) and surface the failure instead of silently
+          // showing an empty list.
+          this.toastr.error(
+            'Could not load attachments. Refresh to try again.',
+            'Load Failed'
+          );
+          this.loggingService.logException(err);
+        },
       });
   }
 

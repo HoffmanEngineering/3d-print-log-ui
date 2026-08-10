@@ -11,7 +11,7 @@ import { SubscriptionService } from 'src/app/core/services/subscription.service'
 import { PrintFileService } from 'src/app/core/services/print-file.service';
 import { ToastrService } from 'ngx-toastr';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { FileAttachmentItem } from '../file-attachment-list/file-attachment-list.component';
 
@@ -247,5 +247,238 @@ describe('FileAttachmentSectionComponent (free user)', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Pro');
+  });
+});
+
+describe('FileAttachmentSectionComponent (upload limits)', () => {
+  let component: FileAttachmentSectionComponent;
+  let fixture: ComponentFixture<FileAttachmentSectionComponent>;
+
+  const maxFilesPerPrint = signal(2);
+
+  const mockSubscriptionService = jasmine.createSpyObj(
+    'SubscriptionService',
+    ['incrementUsedStorage', 'decrementUsedStorage'],
+    {
+      isPro: signal(true),
+      maxFilesPerPrint,
+      maxFileStorageBytes: signal(53687091200),
+      usedFileStorageBytes: signal(0),
+    }
+  );
+
+  const mockPrintFileService = jasmine.createSpyObj('PrintFileService', [
+    'getFiles',
+    'getUploadUrl',
+    'uploadToSasUrl',
+    'confirmUpload',
+    'deleteFile',
+    'getDownloadUrl',
+    'validateFile',
+  ]);
+
+  const mockToastrService = jasmine.createSpyObj<ToastrService>(
+    'ToastrService',
+    ['success', 'error', 'warning', 'info']
+  );
+
+  const validFile = (name: string) =>
+    new File(['x'], name, { type: 'application/octet-stream' });
+
+  const uploaded = (id: number, name: string): FileAttachmentItem => ({
+    id,
+    originalFileName: name,
+    sizeBytes: 10,
+    contentType: 'application/octet-stream',
+    status: 'uploaded',
+  });
+
+  beforeEach(async () => {
+    maxFilesPerPrint.set(2);
+    mockPrintFileService.getFiles.calls.reset();
+    mockPrintFileService.getUploadUrl.calls.reset();
+    mockToastrService.warning.calls.reset();
+    mockToastrService.error.calls.reset();
+    mockPrintFileService.getFiles.and.returnValue(of([]));
+    mockPrintFileService.validateFile.and.returnValue({ valid: true });
+    // Never completes: uploads stay in 'uploading' state so they hold a slot.
+    mockPrintFileService.getUploadUrl.and.returnValue(new Subject());
+
+    await TestBed.configureTestingModule({
+      imports: [
+        FileAttachmentSectionComponent,
+        NoopAnimationsModule,
+        RouterTestingModule,
+      ],
+      providers: [
+        { provide: SubscriptionService, useValue: mockSubscriptionService },
+        { provide: PrintFileService, useValue: mockPrintFileService },
+        { provide: ToastrService, useValue: mockToastrService },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', [
+            'logEvent',
+            'logException',
+          ]),
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(FileAttachmentSectionComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('printId', 1);
+    fixture.componentRef.setInput('editable', true);
+    fixture.detectChanges();
+  });
+
+  it('caps a single batch selection at maxFiles and warns once', () => {
+    component.onFilesSelected([
+      validFile('a.gcode'),
+      validFile('b.gcode'),
+      validFile('c.gcode'),
+      validFile('d.gcode'),
+    ]);
+
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(2);
+    expect(mockToastrService.warning).toHaveBeenCalledTimes(1);
+  });
+
+  it('caps two separate selections in aggregate', () => {
+    component.onFilesSelected([validFile('a.gcode')]);
+    component.onFilesSelected([validFile('b.gcode'), validFile('c.gcode')]);
+
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(2);
+  });
+
+  it('accounts for pre-existing uploaded files at the boundary', () => {
+    component.files.set([uploaded(1, 'existing.gcode')]);
+
+    component.onFilesSelected([validFile('a.gcode'), validFile('b.gcode')]);
+
+    // maxFiles=2, one slot already used -> only one new upload starts.
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('frees a slot only when an upload errors, not while it is in progress', () => {
+    const u1 = new Subject();
+    const u2 = new Subject();
+    const u3 = new Subject();
+    const u4 = new Subject();
+    mockPrintFileService.getUploadUrl.and.returnValues(u1, u2, u3, u4);
+
+    // Fill both slots with in-progress uploads.
+    component.onFilesSelected([validFile('a.gcode'), validFile('b.gcode')]);
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(2);
+
+    // A third is rejected while both slots are occupied by 'uploading' items.
+    // (Red under the old completed-only count, which would admit it.)
+    component.onFilesSelected([validFile('c.gcode')]);
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(2);
+
+    // First upload fails -> its slot frees.
+    u1.error(new Error('boom'));
+    expect(component.files().filter((f) => f.status === 'error').length).toBe(
+      1
+    );
+
+    // Now a new selection is admitted into the freed slot.
+    component.onFilesSelected([validFile('d.gcode')]);
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(3);
+  });
+
+  it('counts pending-status files toward the slot count', () => {
+    component.files.set([
+      {
+        originalFileName: 'p1.gcode',
+        sizeBytes: 1,
+        contentType: 'application/octet-stream',
+        status: 'pending',
+      },
+      {
+        originalFileName: 'p2.gcode',
+        sizeBytes: 1,
+        contentType: 'application/octet-stream',
+        status: 'pending',
+      },
+    ]);
+
+    expect(component.activeFileCount()).toBe(2);
+    expect(component.canAddMore()).toBe(false);
+  });
+
+  it('keeps uploadedFileCount to completed uploads only', () => {
+    component.files.set([
+      uploaded(1, 'done.gcode'),
+      {
+        originalFileName: 'wip.gcode',
+        sizeBytes: 1,
+        contentType: 'application/octet-stream',
+        status: 'uploading',
+        trackingId: 't',
+      },
+    ]);
+
+    expect(component.uploadedFileCount()).toBe(1);
+    expect(component.activeFileCount()).toBe(2);
+  });
+
+  it('rejects an invalid file without consuming a slot', () => {
+    mockPrintFileService.validateFile.and.returnValue({
+      valid: false,
+      error: 'nope',
+    });
+
+    component.onFilesSelected([validFile('bad.xyz')]);
+
+    expect(mockPrintFileService.getUploadUrl).not.toHaveBeenCalled();
+    expect(component.activeFileCount()).toBe(0);
+  });
+
+  it('does not admit uploads until the initial load resolves', () => {
+    const getFiles$ = new Subject<FileAttachmentItem[]>();
+    mockPrintFileService.getFiles.and.returnValue(getFiles$);
+
+    // Re-create so ngOnInit subscribes to the pending getFiles$.
+    fixture.destroy();
+    fixture = TestBed.createComponent(FileAttachmentSectionComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('printId', 1);
+    fixture.componentRef.setInput('editable', true);
+    fixture.detectChanges();
+
+    // Load still pending -> a selection starts NO upload.
+    component.onFilesSelected([validFile('early.gcode')]);
+    expect(mockPrintFileService.getUploadUrl).not.toHaveBeenCalled();
+
+    // Load resolves with one server file (half of maxFiles=2).
+    getFiles$.next([uploaded(7, 'saved.gcode')]);
+    getFiles$.complete();
+
+    // Now uploads are allowed and capped against the real baseline.
+    component.onFilesSelected([validFile('a.gcode'), validFile('b.gcode')]);
+    expect(component.activeFileCount()).toBeLessThanOrEqual(
+      component.maxFiles()
+    );
+    expect(mockPrintFileService.getUploadUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps uploads blocked and surfaces an error if the initial load fails', () => {
+    const getFiles$ = new Subject<FileAttachmentItem[]>();
+    mockPrintFileService.getFiles.and.returnValue(getFiles$);
+
+    fixture.destroy();
+    fixture = TestBed.createComponent(FileAttachmentSectionComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('printId', 1);
+    fixture.componentRef.setInput('editable', true);
+    fixture.detectChanges();
+
+    getFiles$.error(new Error('load failed'));
+
+    // Fail closed: no known baseline -> uploads stay blocked, error surfaced.
+    component.onFilesSelected([validFile('a.gcode')]);
+    expect(mockPrintFileService.getUploadUrl).not.toHaveBeenCalled();
+    expect(component.canAddMore()).toBe(false);
+    expect(mockToastrService.error).toHaveBeenCalled();
   });
 });

@@ -1,0 +1,46 @@
+<!-- Every element carries the svg: namespace prefix. The component's host is a <g> inside a
+     chart's <svg>, but Angular type-checks the template in the HTML context, and its element
+     schema rejects the SVG-only tags below (NG8001). This is an AOT-only failure: JIT unit
+     tests pass without the prefix and the PRODUCTION build does not. -->
+<svg:defs>
+  @for (def of defs(); track def.id) {
+    @if (def.gradientId) {
+      <svg:linearGradient
+        [attr.id]="def.gradientId"
+        x1="0"
+        y1="0"
+        x2="1"
+        y2="0"
+      >
+        @for (stop of def.stops; track $index) {
+          <svg:stop
+            [attr.offset]="stop.offset"
+            [attr.stop-color]="stop.color"
+          />
+        }
+        @if (def.descriptor.shimmer) {
+          <!-- Silk reads as a highlight band rather than a separate overlay element. -->
+          <svg:stop offset="48%" stop-color="#ffffff" stop-opacity="0.3" />
+          <svg:stop offset="52%" stop-color="#ffffff" stop-opacity="0" />
+        }
+      </svg:linearGradient>
+    }
+
+    @if (def.filterId) {
+      <svg:filter [attr.id]="def.filterId">
+        @if (def.descriptor.desaturate) {
+          <svg:feColorMatrix type="saturate" values="0.6" />
+        }
+        @if (def.descriptor.glow) {
+          <svg:feDropShadow
+            dx="0"
+            dy="0"
+            stdDeviation="2"
+            flood-color="rgb(120,255,120)"
+            flood-opacity="0.5"
+          />
+        }
+      </svg:filter>
+    }
+  }
+</svg:defs>

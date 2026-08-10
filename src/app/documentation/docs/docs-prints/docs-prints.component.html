@@ -112,6 +112,47 @@
   </ul>
 
   <hr />
+  <h3 id="bulk-actions">Bulk Actions</h3>
+  <p>
+    When you come back to a plate of prints that all finished the same way, you
+    do not have to update them one at a time. Each row in the Print List table
+    has a checkbox on the left, and the header checkbox selects every print on
+    the current page.
+  </p>
+  <p>
+    As soon as one print is selected, a chip showing how many prints are
+    selected appears next to the view toggle, along with these actions:
+  </p>
+  <ul>
+    <li>
+      <strong>Set status</strong> - Applies the status you pick to every
+      selected print.
+    </li>
+    <li>
+      <mat-icon inline="true">delete</mat-icon> <strong>Delete</strong> - Asks
+      you to confirm, then permanently deletes every selected print.
+    </li>
+    <li>
+      <mat-icon inline="true">close</mat-icon>
+      <strong>Clear</strong> - Deselects everything.
+    </li>
+  </ul>
+  <p>
+    Prints are updated one at a time, and a progress bar shows how far along the
+    batch is. If one print cannot be updated, the rest of the batch still runs.
+    You will see how many succeeded and how many failed, and the prints that
+    failed stay selected so you can try them again.
+  </p>
+  <p>
+    The header checkbox only covers the page in front of you, but your selection
+    is not thrown away when you move around: change the page, the search text, a
+    filter, or the sort order and the prints you picked stay selected, so you
+    can gather prints from several pages before acting on them. The chip always
+    shows the running total. Use <strong>Clear</strong> when you want to start
+    over.
+  </p>
+
+  <hr />
   <h3 id="electricity-cost">Electricity Cost</h3>
   <p>
     3D Print Log can track the electricity cost of each print. To enable this

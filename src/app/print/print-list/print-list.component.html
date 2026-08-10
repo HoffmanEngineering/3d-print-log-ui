@@ -156,11 +156,23 @@
     </div>
   </div>
 
-  <!-- View toggle -->
-  <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
-    <mat-button-toggle value="list">All Prints</mat-button-toggle>
-    <mat-button-toggle value="grouped">Grouped by Project</mat-button-toggle>
-  </mat-button-toggle-group>
+  <!-- Toolbar: view toggle plus the contextual bulk-action controls. The row is
+       always rendered, so a selection reveals its controls in place instead of
+       inserting a band above the table. -->
+  <div class="list-toolbar">
+    <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
+      <mat-button-toggle value="list">All Prints</mat-button-toggle>
+      <mat-button-toggle value="grouped">Grouped by Project</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    @if (viewMode === 'list') {
+      <!-- Desktop only, matching the table's breakpoint -->
+      <app-print-bulk-action-bar
+        fxHide.lt-md
+        (batchCompleted)="onBulkActionCompleted()"
+      />
+    }
+  </div>
 
   <!-- Grouped view -->
   @if (viewMode === 'grouped') {
@@ -214,6 +226,37 @@
       (matSortChange)="sortData($event)"
       [matSortDisableClear]="true"
     >
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef class="select-cell">
+          <mat-checkbox
+            [checked]="bulkActions.isAllOnPageSelected(prints)"
+            [indeterminate]="bulkActions.isIndeterminate(prints)"
+            [disabled]="bulkActions.isRunning()"
+            (change)="bulkActions.toggleSelectAllOnPage(prints)"
+            aria-label="Select all prints on this page"
+            matTooltip="Select all prints on this page"
+            data-cy-select-all-prints
+          ></mat-checkbox>
+        </th>
+        <!-- Only stop the click from reaching the row's routerLink. Cancelling it
+             would also run the checkbox's canceled-activation steps, which restore
+             `input.checked` after change detection has already written the new
+             value - the checkbox would stay visually unchecked. -->
+        <td
+          mat-cell
+          *matCellDef="let print"
+          class="select-cell"
+          (click)="$event.stopPropagation()"
+        >
+          <mat-checkbox
+            [checked]="bulkActions.isSelected(print.id)"
+            [disabled]="bulkActions.isRunning()"
+            (change)="bulkActions.toggleSelection(print)"
+            [aria-label]="'Select print ' + print.title"
+            attr.data-cy-select-print="{{ print.id }}"
+          ></mat-checkbox>
+        </td>
+      </ng-container>
       <ng-container matColumnDef="image">
         <th mat-header-cell *matHeaderCellDef>Image</th>
         <td mat-cell *matCellDef="let print">
@@ -587,12 +630,13 @@
           </mat-menu>
         </td>
       </ng-container>
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
       <tr
         scope="row"
         mat-row
-        *matRowDef="let row; columns: displayedColumns"
+        *matRowDef="let row; columns: tableColumns"
         [routerLink]="row.id"
+        [class.selected]="bulkActions.isSelected(row.id)"
         [attr.cy-print-row]="row.id"
       ></tr>
     </table>

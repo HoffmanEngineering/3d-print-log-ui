@@ -28,6 +28,7 @@ import { ProjectChipComponent } from '../shared/project-chip/project-chip.compon
 import { ProjectSelectorComponent } from '../shared/project-selector/project-selector.component';
 import { PrintGroupedViewComponent } from './print-list/print-grouped-view/print-grouped-view.component';
 import { PrintCardComponent } from './print-card/print-card.component';
+import { PrintBulkActionBarComponent } from './print-list/print-bulk-action-bar/print-bulk-action-bar.component';
 import { PrintEmptyStateComponent } from './print-list/print-empty-state/print-empty-state.component';
 
 @NgModule({
@@ -51,6 +52,7 @@ import { PrintEmptyStateComponent } from './print-list/print-empty-state/print-e
     PrintGroupedViewComponent,
     PrintCardComponent,
     PrintCommentsComponent,
+    PrintBulkActionBarComponent,
     PrintEmptyStateComponent,
   ],
   providers: [

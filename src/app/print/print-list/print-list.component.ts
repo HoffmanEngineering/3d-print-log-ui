@@ -44,6 +44,7 @@ import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dia
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
+import { PrintBulkActionsService } from '../services/print-bulk-actions.service';
 
 export interface ColumnDefinition {
   key: string;
@@ -56,6 +57,7 @@ export interface ColumnDefinition {
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
   standalone: false,
+  providers: [PrintBulkActionsService],
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
@@ -173,6 +175,21 @@ export class PrintListComponent implements OnInit, OnDestroy {
   ];
 
   public searchText = '';
+
+  /**
+   * Multi-select state and the sequential batch runner live in their own service so
+   * this already-large component does not grow another responsibility.
+   */
+  public readonly bulkActions = inject(PrintBulkActionsService);
+
+  /**
+   * The columns the desktop table actually renders. `select` is always first and is
+   * never persisted, so it cannot be removed by the table layout dialog. The whole
+   * table is `fxHide.lt-md`, so the checkbox column is desktop-only for free.
+   */
+  public get tableColumns(): string[] {
+    return ['select', ...this.displayedColumns];
+  }
 
   private readonly VIEW_MODE_KEY = 'print_list_view_mode';
 
@@ -565,6 +582,14 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.updateFilter();
   }
 
+  /**
+   * Reloads the current page of prints.
+   *
+   * The selection deliberately survives every result-set change (page, search,
+   * filter, sort), matching the material list: the service holds the full
+   * `PrintSummary` for each selected print, so a batch can act on prints that
+   * have since scrolled off the current page.
+   */
   public updateFilter() {
     this.isLoading = true;
 
@@ -662,6 +687,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {
         this.printService.deletePrint(print.id).subscribe((_) => {
+          // The selection outlives the reload now, so a deleted print has to be
+          // taken out of it explicitly or a later batch would act on a dead id.
+          this.bulkActions.deselect(print.id);
           this.updateFilter().then(() => {
             this.toastrService.success(
               'Print removed successfully.',
@@ -1035,6 +1063,15 @@ export class PrintListComponent implements OnInit, OnDestroy {
       fs.filter((f) => f.id !== filament.id)
     );
     this.currentPage = 1;
+    this.updateFilter();
+  }
+
+  /**
+   * Reloads the page in place after a bulk action so the table reflects the new
+   * statuses (or the removed rows) without navigating away. The service has
+   * already narrowed the selection to the prints that failed.
+   */
+  public onBulkActionCompleted(): void {
     this.updateFilter();
   }
 

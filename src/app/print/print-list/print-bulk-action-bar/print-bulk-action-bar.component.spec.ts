@@ -90,9 +90,43 @@ describe('PrintBulkActionBarComponent', () => {
       '[data-cy-bulk-action-bar]'
     );
     expect(bar).not.toBeNull();
+    // The chip stays short on screen; the cross-page scope is spelled out for
+    // screen readers instead of widening the toolbar.
+    const chip = bar.querySelector('[data-cy-bulk-selection-count]');
+    expect(chip.querySelector('[aria-hidden="true"]').textContent).toContain(
+      '2 selected'
+    );
     expect(
-      bar.querySelector('[data-cy-bulk-selection-count]').textContent
-    ).toContain('2 selected on this page');
+      chip.querySelector('.visually-hidden').textContent.replace(/\s+/g, ' ')
+    ).toContain('2 prints selected across all pages');
+  });
+
+  it('carries the count into every action label', () => {
+    bulkActions.toggleSelectAllOnPage([printOne, printTwo]);
+    fixture.detectChanges();
+
+    const bar = fixture.nativeElement.querySelector(
+      '[data-cy-bulk-action-bar]'
+    );
+    // A bare "Delete" next to the table reads as a global action; the count is
+    // what ties the button to the selection.
+    expect(bar.querySelector('[data-cy-bulk-delete]').textContent).toContain(
+      'Delete (2)'
+    );
+    expect(
+      bar.querySelector('[data-cy-bulk-set-status]').textContent
+    ).toContain('Set status (2)');
+    expect(
+      bar.querySelector('[data-cy-bulk-delete]').getAttribute('aria-label')
+    ).toBe('Delete 2 selected prints');
+  });
+
+  it('keeps the strip in the layout while nothing is selected', () => {
+    fixture.detectChanges();
+
+    // The placeholder is what stops the table from moving when a selection
+    // appears, so it has to survive an empty selection.
+    expect(fixture.nativeElement.querySelector('.bulk-bar')).not.toBeNull();
   });
 
   describe('set status', () => {

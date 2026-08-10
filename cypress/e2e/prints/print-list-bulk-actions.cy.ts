@@ -66,6 +66,11 @@ describe('Print List Bulk Actions', () => {
       .invoke('attr', 'cy-print-row')
       .then((printId) => {
         cy.get(`[data-cy-select-print="${printId}"]`).click();
+        // The tick is driven by the native input's :checked state, so a handler
+        // that cancels the click leaves the box blank while the count says 1.
+        cy.get(
+          `[data-cy-select-print="${printId}"] input[type="checkbox"]`
+        ).should('be.checked');
       });
 
     cy.get('[data-cy-bulk-selection-count]').should(
@@ -75,6 +80,31 @@ describe('Print List Bulk Actions', () => {
 
     cy.get('[data-cy-bulk-clear]').click();
     cy.get('[data-cy-bulk-action-bar]').should('not.exist');
+  });
+
+  it('keeps the selection when the result set changes', () => {
+    const ts = new Date().getTime();
+    const prefix = `Bulk Persist ${ts}`;
+
+    cy.createPrint(`${prefix} A`);
+    cy.createPrint(`${prefix} B`);
+
+    showOnly(prefix, 2);
+
+    cy.get('[data-cy-select-all-prints]').click();
+    cy.get('[data-cy-bulk-selection-count]').should(
+      'contain.text',
+      '2 selected'
+    );
+
+    // Narrowing the search re-runs the same code path as paging, sorting and
+    // filtering. Both prints stay selected even though one is now off screen.
+    cy.findByRole('textbox', { name: /search/i }).type(' A');
+    cy.get('[cy-print-row]').should('have.length', 1);
+    cy.get('[data-cy-bulk-selection-count]').should(
+      'contain.text',
+      '2 selected'
+    );
   });
 
   it('is operable from the keyboard', () => {

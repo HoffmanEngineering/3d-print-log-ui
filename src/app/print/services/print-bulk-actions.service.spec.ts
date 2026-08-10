@@ -98,6 +98,28 @@ describe('PrintBulkActionsService', () => {
       expect(service.isSelected(printThree.id)).toBeTrue();
     });
 
+    it('reports a page with none of its own rows selected as neither checked nor indeterminate', () => {
+      // The header checkbox controls this page only, so it has to describe this
+      // page only: an indeterminate box over rows that are all unselected reads
+      // as "click to clear" while it would actually select more.
+      service.toggleSelection(printThree);
+
+      expect(service.isIndeterminate([printOne, printTwo])).toBeFalse();
+      expect(service.isAllOnPageSelected([printOne, printTwo])).toBeFalse();
+      expect(service.selectedCount()).toBe(1);
+    });
+
+    it('drops a single print from the selection and ignores unknown ids', () => {
+      service.toggleSelectAllOnPage([printOne, printTwo]);
+
+      service.deselect(printOne.id);
+      expect(service.isSelected(printOne.id)).toBeFalse();
+      expect(service.selectedCount()).toBe(1);
+
+      service.deselect(printThree.id);
+      expect(service.selectedCount()).toBe(1);
+    });
+
     it('clears the selection', () => {
       service.toggleSelectAllOnPage([printOne, printTwo]);
       service.clearSelection();

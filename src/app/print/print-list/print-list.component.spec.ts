@@ -1,6 +1,11 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
@@ -89,6 +94,7 @@ describe('PrintListComponent', () => {
         DurationPipe,
         LocaleDatePipe,
         RouterTestingModule,
+        MatCheckboxModule,
         MatDialogModule,
         MatMenuModule,
         MatTableModule,
@@ -296,7 +302,18 @@ describe('PrintListComponent', () => {
   });
 
   describe('bulk selection', () => {
-    const selectablePrint = { id: 7, title: 'Benchy' } as PrintSummary;
+    const selectablePrint = {
+      id: 7,
+      title: 'Benchy',
+      status: PrintStatus.Success,
+      startDate: new Date('2021-05-27'),
+      printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+      filamentUsage: [],
+      commentCount: 0,
+      sumActualFilamentWeightMg: 0,
+      sumEstimatedFilamentWeightMg: 0,
+      totalFilamentWeightMg: 0,
+    } as unknown as PrintSummary;
 
     it('should always render the select column first, ahead of the configured columns', () => {
       fixture.detectChanges();
@@ -310,16 +327,18 @@ describe('PrintListComponent', () => {
       ]);
     });
 
-    it('should drop the selection when the result set changes', () => {
+    it('should keep the selection when the result set changes', () => {
       fixture.detectChanges();
       spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
         Promise.resolve(true)
       );
       component.bulkActions.toggleSelection(selectablePrint);
 
+      // Paging, searching, filtering and sorting all funnel through here. The
+      // selection outlives them, so a batch can span more than one page.
       component.updateFilter();
 
-      expect(component.bulkActions.hasSelection()).toBeFalse();
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
     });
 
     it('should keep the selection when refreshing after a bulk action', () => {
@@ -332,6 +351,89 @@ describe('PrintListComponent', () => {
       component.onBulkActionCompleted();
 
       expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
+    });
+
+    it('should drop a print from the selection when it is deleted on its own', () => {
+      fixture.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+      spyOn(TestBed.inject(MatDialog), 'open').and.returnValue({
+        componentInstance: {},
+        afterClosed: () => of(true),
+      } as MatDialogRef<unknown>);
+      const printService = TestBed.inject(
+        PrintService
+      ) as jasmine.SpyObj<PrintService>;
+      printService.deletePrint.and.returnValue(of({} as PrintSummary));
+      component.bulkActions.toggleSelection(selectablePrint);
+
+      component.deletePrint(selectablePrint);
+
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeFalse();
+    });
+
+    describe('row checkbox click handling', () => {
+      /**
+       * Renders a one-row table through the resolver so the row checkbox can be
+       * clicked for real.
+       */
+      const renderSingleRow = (): HTMLInputElement => {
+        TestBed.inject(ActivatedRoute).data = of({
+          printList: {
+            items: [selectablePrint],
+            paging: {
+              currentPage: 1,
+              pageSize: 10,
+              totalCount: 1,
+              totalPages: 1,
+            },
+          } as PagedList<PrintSummary>,
+          printers: [],
+          filaments: [],
+        });
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector(
+          `[data-cy-select-print="${selectablePrint.id}"] input[type="checkbox"]`
+        ) as HTMLInputElement | null;
+        expect(input).withContext('row checkbox input').not.toBeNull();
+        return input as HTMLInputElement;
+      };
+
+      it('should not cancel the checkbox activation, which would revert the tick', () => {
+        const input = renderSingleRow();
+        const cell = input.closest('td') as HTMLElement;
+        let defaultPreventedAtCell: boolean | null = null;
+        // Registered after the template listener on the same element, so it runs
+        // second and sees whatever the template handler did to the event.
+        cell.addEventListener('click', (event) => {
+          defaultPreventedAtCell = event.defaultPrevented;
+        });
+
+        input.click();
+
+        expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
+        expect(defaultPreventedAtCell)
+          .withContext(
+            'preventDefault runs the canceled-activation steps, which restore ' +
+              'input.checked to false after Angular has already written true'
+          )
+          .toBeFalse();
+      });
+
+      it('should not let a checkbox click reach the row, which would navigate', () => {
+        const input = renderSingleRow();
+        const table = fixture.nativeElement.querySelector(
+          'table'
+        ) as HTMLElement;
+        let reachedTable = false;
+        table.addEventListener('click', () => (reachedTable = true));
+
+        input.click();
+
+        expect(reachedTable).toBeFalse();
+      });
     });
   });
 

@@ -120,7 +120,8 @@
     the current page.
   </p>
   <p>
-    As soon as one print is selected, an action bar appears above the table:
+    As soon as one print is selected, a chip showing how many prints are
+    selected appears next to the view toggle, along with these actions:
   </p>
   <ul>
     <li>
@@ -133,7 +134,7 @@
     </li>
     <li>
       <mat-icon inline="true">close</mat-icon>
-      <strong>Clear selection</strong> - Deselects everything.
+      <strong>Clear</strong> - Deselects everything.
     </li>
   </ul>
   <p>
@@ -143,8 +144,12 @@
     failed stay selected so you can try them again.
   </p>
   <p>
-    Selecting prints applies to the page you are looking at. Changing the page,
-    the search text, a filter, or the sort order clears the selection.
+    The header checkbox only covers the page in front of you, but your selection
+    is not thrown away when you move around: change the page, the search text, a
+    filter, or the sort order and the prints you picked stay selected, so you
+    can gather prints from several pages before acting on them. The chip always
+    shows the running total. Use <strong>Clear</strong> when you want to start
+    over.
   </p>
 
   <hr />

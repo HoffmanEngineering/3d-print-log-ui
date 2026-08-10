@@ -495,16 +495,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
   /**
    * Reloads the current page of prints.
    *
-   * Any user-driven change to the result set (page, search, filter, sort) drops the
-   * selection: select-all is page-scoped, and acting on prints that are no longer on
-   * screen is a footgun. Refreshes that follow a bulk action pass
-   * `preserveSelection` so the prints that failed stay selected for a retry.
+   * The selection deliberately survives every result-set change (page, search,
+   * filter, sort), matching the material list: the service holds the full
+   * `PrintSummary` for each selected print, so a batch can act on prints that
+   * have since scrolled off the current page.
    */
-  public updateFilter(options?: { preserveSelection?: boolean }) {
-    if (!options?.preserveSelection) {
-      this.bulkActions.clearSelection();
-    }
-
+  public updateFilter() {
     this.isLoading = true;
 
     localStorage.setItem('print_list_page_size', this.pageSize.toString(10));
@@ -601,6 +597,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {
         this.printService.deletePrint(print.id).subscribe((_) => {
+          // The selection outlives the reload now, so a deleted print has to be
+          // taken out of it explicitly or a later batch would act on a dead id.
+          this.bulkActions.deselect(print.id);
           this.updateFilter().then(() => {
             this.toastrService.success(
               'Print removed successfully.',
@@ -979,11 +978,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   /**
    * Reloads the page in place after a bulk action so the table reflects the new
-   * statuses (or the removed rows) without navigating away. The selection is kept
-   * because the service has already narrowed it to the prints that failed.
+   * statuses (or the removed rows) without navigating away. The service has
+   * already narrowed the selection to the prints that failed.
    */
   public onBulkActionCompleted(): void {
-    this.updateFilter({ preserveSelection: true });
+    this.updateFilter();
   }
 
   public navigateToNewProject(): void {

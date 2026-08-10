@@ -33,9 +33,9 @@ export type BulkActionKind = 'status' | 'delete';
  * Selection semantics:
  * - Selection is keyed by print id and only ever contains prints the user has seen.
  * - Select-all is scoped to the prints currently on screen (the current page).
- * - Changing the page, the search text, a filter, or the sort clears the selection.
- *   The action bar can only act on prints it still holds, and silently carrying a
- *   selection across a result set the user can no longer see is a footgun.
+ * - The selection survives paging, searching, filtering and sorting, matching the
+ *   material list. Each entry holds the whole `PrintSummary`, so a batch can act on
+ *   prints that are no longer on screen; only the user clears the selection.
  * - After a batch, prints that failed stay selected so a retry is one click away.
  *
  * Provided by `PrintListComponent` (not root) so the selection dies with the list.
@@ -137,6 +137,24 @@ export class PrintBulkActionsService {
           next.delete(print.id);
         }
       }
+      return next;
+    });
+  }
+
+  /**
+   * Drops one print from the selection. Used when a print leaves the list on its
+   * own - a single delete, say - so the selection cannot hold prints that no
+   * longer exist. A no-op when the print was not selected.
+   */
+  public deselect(printId: number): void {
+    if (!this.selection().has(printId)) {
+      return;
+    }
+
+    this.selectionEpoch++;
+    this.selection.update((current) => {
+      const next = new Map(current);
+      next.delete(printId);
       return next;
     });
   }

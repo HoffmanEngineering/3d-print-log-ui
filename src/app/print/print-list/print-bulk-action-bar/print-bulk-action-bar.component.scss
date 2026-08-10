@@ -1,32 +1,64 @@
-.bulk-action-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 8px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
-  background-color: var(--mat-sys-surface-container, rgba(0, 0, 0, 0.04));
+:host {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.bulk-action-bar__row {
+// Fixed height whether or not anything is selected: the strip shares a row with
+// the view toggle, so the table below it never moves.
+.bulk-bar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  // Sits directly beside the view toggle, the way the material list keeps its
+  // selection chip next to the list's own buttons.
+  justify-content: flex-start;
+  min-height: 40px;
+}
+
+.bulk-bar__content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
   gap: 8px;
 }
 
-.bulk-action-bar__count {
-  font-weight: 600;
-  margin-right: 8px;
+// Same pill as the material list's selection count.
+.bulk-bar__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background-color: rgba(0, 0, 0, 0.04);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--app-text-strong);
 }
 
-.bulk-action-bar__progress {
-  width: 100%;
+.bulk-bar__clear {
+  min-width: unset;
+  padding: 0 8px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 2px;
+  }
 }
 
-.bulk-action-bar__status {
-  margin: 0;
-  min-height: 1.25em;
-  font-size: 0.875rem;
+// Overlays the bottom edge of the strip rather than taking a row of its own.
+.bulk-bar__progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+}
+
+:host-context(html.dark-theme) {
+  .bulk-bar__chip {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
 }

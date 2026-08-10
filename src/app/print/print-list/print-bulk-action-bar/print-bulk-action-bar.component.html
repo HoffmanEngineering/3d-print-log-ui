@@ -1,34 +1,60 @@
-@if (bulkActions.hasSelection() || bulkActions.isRunning()) {
-  <div
-    class="bulk-action-bar"
-    role="region"
-    aria-label="Bulk actions for selected prints"
-    data-cy-bulk-action-bar
-  >
-    <div class="bulk-action-bar__row">
-      <!-- "on this page" is on screen, not just in the checkbox label: the
-           selection is page-scoped and a filtered list can run to many pages. -->
-      <span class="bulk-action-bar__count" data-cy-bulk-selection-count>
-        {{ bulkActions.selectedCount() }} selected on this page
+<!-- The outer strip is always in the DOM and keeps a constant height, so selecting
+     a print reveals the controls in place instead of pushing the table down. -->
+<div class="bulk-bar">
+  @if (bulkActions.hasSelection() || bulkActions.isRunning()) {
+    <div
+      class="bulk-bar__content"
+      role="region"
+      aria-label="Bulk actions for selected prints"
+      data-cy-bulk-action-bar
+    >
+      <!-- The chip only has room for the count; that the selection spans pages is
+           spelled out for screen readers and in the tooltip. -->
+      <span
+        class="bulk-bar__chip"
+        matTooltip="Selected prints stay selected as you page and filter"
+        data-cy-bulk-selection-count
+      >
+        @if (bulkActions.isRunning()) {
+          <span>{{ bulkActions.progressLabel() }}</span>
+        } @else {
+          <span class="visually-hidden"
+            >{{ bulkActions.selectedCount() }} prints selected across all
+            pages</span
+          >
+          <span aria-hidden="true"
+            >{{ bulkActions.selectedCount() }} selected</span
+          >
+        }
       </span>
 
+      <!-- The count is repeated in every label: a bare "Delete" sitting in the
+           toolbar reads as a global action, and the chip alone is easy to skip
+           past on the way to the button. -->
       <button
-        mat-raised-button
+        mat-stroked-button
         type="button"
         [matMenuTriggerFor]="bulkStatusMenu"
         [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
+        attr.aria-label="Set status of {{
+          bulkActions.selectedCount()
+        }} selected {{
+          bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+        }}"
         data-cy-bulk-set-status
       >
         <mat-icon>flag</mat-icon>
-        Set status
+        Set status ({{ bulkActions.selectedCount() }})
       </button>
       <mat-menu #bulkStatusMenu="matMenu">
         @for (option of statusOptions; track option.status) {
           <button
             type="button"
             mat-menu-item
-            attr.aria-label="Set status of selected prints to {{
-              option.label
+            attr.aria-label="{{ option.label }} - set the status of {{
+              bulkActions.selectedCount()
+            }} selected {{
+              bulkActions.selectedCount() === 1 ? 'print' : 'prints'
             }}"
             attr.data-cy-bulk-status="{{ option.label }}"
             (click)="setStatus(option)"
@@ -40,49 +66,52 @@
       </mat-menu>
 
       <button
-        mat-raised-button
+        mat-stroked-button
         type="button"
         color="warn"
         [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
         (click)="deleteSelected()"
+        attr.aria-label="Delete {{ bulkActions.selectedCount() }} selected {{
+          bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+        }}"
         data-cy-bulk-delete
       >
         <mat-icon>delete</mat-icon>
-        Delete
+        Delete ({{ bulkActions.selectedCount() }})
       </button>
 
       <button
         mat-button
         type="button"
+        class="bulk-bar__clear"
         [disabled]="bulkActions.isRunning()"
         (click)="clearSelection()"
+        aria-label="Clear the selection"
         data-cy-bulk-clear
       >
         <mat-icon>close</mat-icon>
-        Clear selection
+        Clear
       </button>
-    </div>
 
-    @if (bulkActions.isRunning()) {
-      <div class="bulk-action-bar__progress">
+      @if (bulkActions.isRunning()) {
+        <!-- Overlaid on the bottom edge so progress never adds a row. -->
         <mat-progress-bar
+          class="bulk-bar__progress"
           mode="determinate"
           [value]="bulkActions.progressPercent()"
           aria-label="Bulk action progress"
         ></mat-progress-bar>
-      </div>
-    }
-
-    <p
-      class="bulk-action-bar__status"
-      aria-live="polite"
-      data-cy-bulk-status-text
-    >
-      @if (bulkActions.isRunning()) {
-        {{ bulkActions.progressLabel() }}
-      } @else {
-        {{ resultMessage() }}
       }
-    </p>
-  </div>
-}
+
+      <!-- The outcome is announced and shown as a toast; keeping it out of the
+           layout is what stops the strip from growing a second line. -->
+      <p class="visually-hidden" aria-live="polite" data-cy-bulk-status-text>
+        @if (bulkActions.isRunning()) {
+          {{ bulkActions.progressLabel() }}
+        } @else {
+          {{ resultMessage() }}
+        }
+      </p>
+    </div>
+  }
+</div>

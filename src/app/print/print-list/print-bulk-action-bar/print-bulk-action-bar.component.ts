@@ -10,6 +10,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -27,9 +28,12 @@ interface StatusOption {
 }
 
 /**
- * Contextual bar shown above the print table while one or more prints are selected.
- * Offers a bulk status change and a bulk delete, both of which run as sequential
- * batches against the single-item API endpoints.
+ * Contextual controls shown in the print list toolbar while one or more prints are
+ * selected. Offers a bulk status change and a bulk delete, both of which run as
+ * sequential batches against the single-item API endpoints.
+ *
+ * The host keeps a constant height and the progress bar is overlaid rather than
+ * stacked, so nothing here moves the table when a selection appears or clears.
  */
 @Component({
   selector: 'app-print-bulk-action-bar',
@@ -41,6 +45,7 @@ interface StatusOption {
     MatIconModule,
     MatMenuModule,
     MatProgressBarModule,
+    MatTooltipModule,
   ],
 })
 export class PrintBulkActionBarComponent {

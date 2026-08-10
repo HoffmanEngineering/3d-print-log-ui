@@ -36,7 +36,7 @@ Most feature work spans both this repo and the API — see [3d-print-log-api](ht
 
 ## Dev Auth Bypass
 
-By default (`npm start`), Auth0 is bypassed entirely — no account needed. You are automatically signed in as dev user 1. To test as a different user, add `?devUserId=2` to the URL. Open two tabs with different `devUserId` values to test cross-account features.
+By default (`npm start`), Auth0 is bypassed entirely — no account needed. You are automatically signed in as dev user 1. To test as a different user, add `?devUserId=2` to the URL. The id is remembered in `sessionStorage` for that tab, so it survives in-app navigation once the query param drops off. Visit with a different `?devUserId=` value to switch users, or `?devUserId=` (empty) to go back to user 1. Because the override is per-tab, you can open two tabs with different `devUserId` values to test cross-account features.
 
 To test with real Auth0 authentication:
 

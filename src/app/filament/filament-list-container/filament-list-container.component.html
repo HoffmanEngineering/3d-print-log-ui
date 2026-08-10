@@ -643,10 +643,40 @@
       </div>
     }
   </div>
-  @if (totalCount === 0) {
-    <div class="no-filament">
-      No Materials found. Add a new Material or try a different search.
-    </div>
+  @if (!isLoading && totalCount === 0) {
+    @if (activeFilterCount > 0 || searchText.trim().length > 0) {
+      <app-empty-state
+        icon="filter_alt_off"
+        heading="No materials match your filters"
+        [message]="emptyStateFilteredMessage"
+      >
+        <button
+          mat-raised-button
+          color="accent"
+          type="button"
+          data-cy="empty-state-clear-filters"
+          (click)="resetFilters()"
+        >
+          <mat-icon>filter_alt_off</mat-icon>Clear filters
+        </button>
+      </app-empty-state>
+    } @else {
+      <app-empty-state
+        icon="category"
+        heading="Add your first material"
+        message="Track the spools and resins you print with so every print records what it used and what it cost. Search the shared catalog to fill in the specs automatically."
+      >
+        <button
+          mat-raised-button
+          color="accent"
+          type="button"
+          routerLink="new"
+          data-cy="empty-state-add-material"
+        >
+          <mat-icon>add</mat-icon>Add material
+        </button>
+      </app-empty-state>
+    }
   }
   <mat-paginator
     [length]="totalCount"

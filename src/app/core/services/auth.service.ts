@@ -19,7 +19,7 @@ import { NotificationService } from './notification.service';
 import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
 import { UserSettingService } from './user-setting.service';
-import { isDevAnonymous } from '../utils/dev-anonymous';
+import { isDevAnonymous } from '../utils/dev-user';
 const cordovaCallbackUri =
   'com.hoffmanengineering.printlog://cordova/com.hoffmanengineering.printlog/callback';
 

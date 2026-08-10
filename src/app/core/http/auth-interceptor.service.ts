@@ -9,7 +9,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AuthService } from '../services/auth.service';
-import { isDevAnonymous } from '../utils/dev-anonymous';
+import { isDevAnonymous, resolveDevUserId } from '../utils/dev-user';
 
 @Injectable({
   providedIn: 'root',
@@ -25,6 +25,15 @@ export class AuthInterceptorService implements HttpInterceptor {
     req: HttpRequest<any>,
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
+    if (!this.isTrustedApiUrl(req.url)) {
+      // Untrusted origin: never attach interceptor credentials. Strip the
+      // internal allow-anonymous-request sentinel so it cannot leak cross-origin.
+      const passthroughReq = req.headers.has('allow-anonymous-request')
+        ? req.clone({ headers: req.headers.delete('allow-anonymous-request') })
+        : req;
+      return next.handle(passthroughReq);
+    }
+
     if (environment.devAuthBypass) {
       const search = this.getLocationSearch();
 
@@ -42,8 +51,7 @@ export class AuthInterceptorService implements HttpInterceptor {
         return throwError(() => ({ error: 'missing_refresh_token' }));
       }
 
-      const params = new URLSearchParams(search);
-      const userId = params.get('devUserId') ?? '1';
+      const userId = resolveDevUserId(search);
       const devReq = req.clone({
         headers: req.headers
           .delete('allow-anonymous-request')
@@ -73,5 +81,26 @@ export class AuthInterceptorService implements HttpInterceptor {
         return throwError(err);
       })
     );
+  }
+
+  /**
+   * True only when `url` targets the configured Print Log API origin.
+   * SSR-safe: resolves relative URLs against a fixed non-API base instead of
+   * `window.location`, so relative/same-app requests are untrusted by
+   * construction and the check never touches a browser global. Fails closed.
+   */
+  private isTrustedApiUrl(url: string): boolean {
+    let apiOrigin: string;
+    try {
+      apiOrigin = new URL(environment.printLogApiUrl).origin;
+    } catch {
+      return false;
+    }
+
+    try {
+      return new URL(url, 'http://origin-gate.invalid').origin === apiOrigin;
+    } catch {
+      return false;
+    }
   }
 }

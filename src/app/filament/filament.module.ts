@@ -10,10 +10,16 @@ import { CopyFilamentDetailResolverService } from './resolvers/copy-filament-det
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { MaterialResolverService } from './resolvers/material-resolver.service';
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 
 @NgModule({
   declarations: [FilamentDetailComponent, FilamentListContainerComponent],
-  imports: [SharedModule, FilamentRoutingModule, AdsenseModule],
+  imports: [
+    SharedModule,
+    FilamentRoutingModule,
+    AdsenseModule,
+    EmptyStateComponent,
+  ],
   providers: [
     FilamentListResolverService,
     FilamentDetailResolverService,

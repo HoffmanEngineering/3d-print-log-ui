@@ -430,3 +430,28 @@
     }
   }
 }
+
+// Refetch treatment: the rows stay put and only dim, with the progress bar
+// carrying the busy message. See PrintListComponent's styles for why replacing
+// populated rows with placeholders is the wrong trade.
+.grouped-mobile-card-view.refreshing .print-card,
+table.refreshing tr[mat-row] {
+  opacity: 0.55;
+  transition: opacity 150ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grouped-mobile-card-view.refreshing .print-card,
+  table.refreshing tr[mat-row] {
+    transition: none;
+  }
+}
+
+// Consumes no vertical space: this treatment exists to hold the rows still, so
+// the bar appearing must not nudge them down by its own height.
+.refresh-bar {
+  position: relative;
+  z-index: 1;
+  block-size: 3px;
+  margin-block-end: -3px;
+}

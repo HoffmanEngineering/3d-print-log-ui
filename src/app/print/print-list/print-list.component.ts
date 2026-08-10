@@ -20,6 +20,7 @@ import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import {
   UserSetting,
   UserSettingService,
@@ -210,7 +211,44 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   mobileQuery: MediaQueryList;
 
+  /**
+   * Raw "a request is in flight". Drives cancellation and the empty-state
+   * suppression; it deliberately does NOT drive what the user sees, because it
+   * flips true for requests too short to be worth reporting.
+   */
   public isLoading = false;
+
+  /**
+   * Whether this list has ever painted rows.
+   *
+   * Splits the busy affordance in two. A first load has nothing on screen to
+   * preserve, so a skeleton is the honest answer. A refetch — a filter, a sort,
+   * a page change — already has rows, and replacing them with grey boxes throws
+   * away the user's visual anchor and scroll position to say something a
+   * progress bar says without destroying anything. Skeletons are a first-paint
+   * affordance, not a loading affordance.
+   *
+   * On this route a resolver supplies the first page, so in practice almost
+   * every load here is a refetch.
+   */
+  private readonly hasLoadedOnce = signal(false);
+
+  /**
+   * Deferred so a fast filter change does not flash. Note this gates the
+   * progress bar as well as the skeleton: a progress bar that appears and
+   * vanishes in 20ms is exactly as much of a glitch as a skeleton that does.
+   */
+  private readonly loadingIndicator = new DeferredSkeletonController();
+
+  /** First load with nothing to preserve: draw placeholder rows. */
+  readonly showSkeleton = computed(
+    () => this.loadingIndicator.visible() && !this.hasLoadedOnce()
+  );
+
+  /** Refetch over existing rows: keep them, dim them, run a progress bar. */
+  readonly showRefreshing = computed(
+    () => this.loadingIndicator.visible() && this.hasLoadedOnce()
+  );
 
   public isFilterPanelOpen =
     typeof window !== 'undefined' && window.innerWidth >= 600;
@@ -275,6 +313,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   ) {
     this.debouncedUpdateFilter = debounce(() => {
       this.isLoading = true;
+      this.loadingIndicator.start();
       this.currentPage = 1;
       this.updateFilter();
     }, 400);
@@ -304,6 +343,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.printerRedirectSubscription?.unsubscribe?.();
 
     this.subscriptions?.unsubscribe?.();
+
+    this.loadingIndicator.destroy();
   }
 
   ngOnInit() {
@@ -453,6 +494,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   private handlePagedList(response: PagedList<PrintSummary>) {
     this.prints = response.items;
+    // Reached from the resolver on first activation and from every refetch, so
+    // this is the one place that knows rows have actually been painted.
+    this.hasLoadedOnce.set(true);
 
     this.currentPage = response.paging.currentPage;
     this.pageSize = response.paging.pageSize;
@@ -486,6 +530,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public updateFilter() {
     this.isLoading = true;
+    this.loadingIndicator.start();
 
     localStorage.setItem('print_list_page_size', this.pageSize.toString(10));
 
@@ -523,9 +568,14 @@ export class PrintListComponent implements OnInit, OnDestroy {
             (prints) => {
               this.handlePagedList(prints);
               this.isLoading = false;
+              this.loadingIndicator.stop();
             },
             () => {
+              // A failed first load leaves the list empty, so the NEXT attempt
+              // is still a first paint — hasLoadedOnce is only set on success,
+              // in handlePagedList.
               this.isLoading = false;
+              this.loadingIndicator.stop();
             }
           );
       });

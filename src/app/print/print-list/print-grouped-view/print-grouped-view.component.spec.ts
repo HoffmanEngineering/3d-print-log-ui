@@ -1,13 +1,14 @@
 import {
   ComponentFixture,
   TestBed,
+  discardPeriodicTasks,
   fakeAsync,
   tick,
 } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { PrintGroupedViewComponent } from './print-grouped-view.component';
 import {
@@ -25,6 +26,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ComponentRef } from '@angular/core';
+import { DEFERRED_SKELETON_DELAY_MS } from 'src/app/shared/skeleton/deferred-skeleton';
 
 function makePagedList<T>(items: T[]): PagedList<T> {
   return {
@@ -158,6 +160,83 @@ describe('PrintGroupedViewComponent', () => {
       SortDirection.Desc
     );
   }));
+
+  // Unlike the flat list, this view has no resolver: it genuinely fetches its
+  // first page in ngOnInit, so both branches of the busy affordance are
+  // reachable here.
+  describe('deferred busy affordance', () => {
+    const pendingFeed = (): Subject<PagedList<GroupedFeedItemDto>> => {
+      const pending = new Subject<PagedList<GroupedFeedItemDto>>();
+      mockProjectService.getGroupedFeed.and.returnValue(
+        pending.asObservable() as any
+      );
+      return pending;
+    };
+
+    const skeleton = () =>
+      fixture.nativeElement.querySelector('app-print-list-skeleton');
+    const progressBar = () =>
+      fixture.nativeElement.querySelector('mat-progress-bar');
+
+    it('paints no skeleton when the first feed lands inside the delay', fakeAsync(() => {
+      fixture.detectChanges();
+      tick(DEFERRED_SKELETON_DELAY_MS + 50);
+      fixture.detectChanges();
+
+      expect(component.showSkeleton()).toBeFalse();
+      expect(skeleton()).toBeNull();
+    }));
+
+    // The blank pre-skeleton window must not be mistaken for an empty result.
+    it('shows neither skeleton nor empty state before the delay elapses', fakeAsync(() => {
+      pendingFeed();
+      fixture.detectChanges();
+      tick(DEFERRED_SKELETON_DELAY_MS - 50);
+      fixture.detectChanges();
+
+      expect(skeleton()).toBeNull();
+      expect(fixture.nativeElement.querySelector('.empty-state')).toBeNull();
+
+      discardPeriodicTasks();
+    }));
+
+    it('shows the skeleton for a slow first load', fakeAsync(() => {
+      const pending = pendingFeed();
+      fixture.detectChanges();
+      tick(DEFERRED_SKELETON_DELAY_MS + 50);
+      fixture.detectChanges();
+
+      expect(component.showSkeleton()).toBeTrue();
+      expect(skeleton()).toBeTruthy();
+      expect(progressBar()).toBeNull();
+
+      pending.complete();
+      discardPeriodicTasks();
+    }));
+
+    // Once rows exist they stay: a refetch gets the progress bar, never a
+    // placeholder that would throw away the reader's place.
+    it('keeps the rows and shows a progress bar on a slow refetch', fakeAsync(() => {
+      fixture.detectChanges();
+      tick(500);
+      fixture.detectChanges();
+      expect(component.flatRows().length).toBe(2);
+
+      const pending = pendingFeed();
+      component.loadFeed();
+      tick(DEFERRED_SKELETON_DELAY_MS + 50);
+      fixture.detectChanges();
+
+      expect(component.showRefreshing()).toBeTrue();
+      expect(component.showSkeleton()).toBeFalse();
+      expect(skeleton()).toBeNull();
+      expect(progressBar()).toBeTruthy();
+      expect(component.flatRows().length).toBe(2);
+
+      pending.complete();
+      discardPeriodicTasks();
+    }));
+  });
 
   it('flatRows contains project and print rows from feed', fakeAsync(() => {
     fixture.detectChanges();

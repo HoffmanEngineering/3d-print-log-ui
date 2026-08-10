@@ -167,10 +167,38 @@ table {
   margin-left: 20px;
 }
 
-// Loading: keep the header row — and with it the mat-sort arrow — and hide only
-// the stale data rows. The skeleton renders directly beneath the table.
+// First load: keep the header row — and with it the mat-sort arrow — and hide
+// only the (empty) data rows. The skeleton renders directly beneath the table.
 table.loading tr[mat-row] {
   display: none;
+}
+
+// Refetch: the rows stay. Dimming is the whole affordance, so it has to be
+// visible without being alarming — enough to read as "this is being replaced",
+// not so much that the text becomes unreadable, because the user is often
+// mid-sentence when the debounced search fires. Rows stay clickable: they point
+// at real prints, and blocking them would make a fast refetch feel broken.
+.mobile-card-view.refreshing app-print-card,
+table.refreshing tr[mat-row] {
+  opacity: 0.55;
+  transition: opacity 150ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-card-view.refreshing app-print-card,
+  table.refreshing tr[mat-row] {
+    transition: none;
+  }
+}
+
+// Sits between the header and the rows it describes. The negative margin means
+// it consumes no vertical space: this whole treatment exists to hold the rows
+// still, so the bar appearing must not nudge them down by its own height.
+.refresh-bar {
+  position: relative;
+  z-index: 1;
+  block-size: 3px;
+  margin-block-end: -3px;
 }
 
 .mat-column-more {

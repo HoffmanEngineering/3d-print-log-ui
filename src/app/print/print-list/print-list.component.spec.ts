@@ -7,7 +7,7 @@ import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   PrintService,
@@ -20,11 +20,13 @@ import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
+import { DEFERRED_SKELETON_DELAY_MS } from 'src/app/shared/skeleton/deferred-skeleton';
 import { PrintListComponent } from './print-list.component';
 
 describe('PrintListComponent', () => {
   let component: PrintListComponent;
   let fixture: ComponentFixture<PrintListComponent>;
+  let mockPrintService: jasmine.SpyObj<PrintService>;
 
   beforeEach(waitForAsync(() => {
     const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
@@ -67,10 +69,10 @@ describe('PrintListComponent', () => {
       ['success', 'error', 'info', 'remove']
     );
 
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      ['deletePrint', 'getPrintSummaries']
-    );
+    mockPrintService = jasmine.createSpyObj<PrintService>('PrintService', [
+      'deletePrint',
+      'getPrintSummaries',
+    ]);
     mockPrintService.getPrintSummaries.and.returnValue(
       of(mockPrintPagedResult)
     );
@@ -308,20 +310,101 @@ describe('PrintListComponent', () => {
   // Searching and paging refetch without a route change, so the list used to sit
   // there showing the previous results with no sign that anything was happening.
   describe('loading placeholders', () => {
-    it('shows the skeleton and hides the stale rows while refetching', () => {
-      fixture.detectChanges();
-      component.isLoading = true;
-      // Plain-field mutations do not mark the view dirty in the zoneless test
-      // harness, so the embedded @if block would not be refreshed.
+    const rowFor = (id: number): PrintSummary =>
+      ({
+        id,
+        title: `Print ${id}`,
+        status: PrintStatus.Success,
+        startDate: new Date('2026-03-14T00:00:00Z'),
+        printer: { id: 1, name: '', make: 'Prusa', model: 'MK3S' },
+        filamentSummary: [],
+        commentCount: 0,
+      }) as unknown as PrintSummary;
+
+    const rowsOnScreen = (): void => {
+      component.prints = [rowFor(1), rowFor(2)];
+      component.totalCount = 2;
       fixture.changeDetectorRef.markForCheck();
       fixture.detectChanges();
+    };
 
+    /** A refetch that has gone out but not come back. */
+    const pendingRefetch = (): Subject<PagedList<PrintSummary>> => {
+      const pending = new Subject<PagedList<PrintSummary>>();
+      mockPrintService.getPrintSummaries.and.returnValue(
+        pending.asObservable() as any
+      );
+      component.updateFilter();
+      return pending;
+    };
+
+    // Real time rather than tick(): updateFilter awaits router.navigate, which
+    // does not settle inside fakeAsync here.
+    const waitPastSkeletonDelay = async (): Promise<void> => {
+      await new Promise((resolve) =>
+        setTimeout(resolve, DEFERRED_SKELETON_DELAY_MS + 30)
+      );
+      fixture.changeDetectorRef.markForCheck();
+      fixture.detectChanges();
+    };
+
+    const table = (): HTMLElement =>
+      fixture.debugElement.query(By.css('table')).nativeElement;
+
+    // The flash this mechanism exists to remove. Most refetches on a warm
+    // connection settle well inside the delay, and a busy affordance that
+    // appears and vanishes in 20ms reads as a glitch.
+    it('shows no busy affordance at all when a refetch lands inside the delay', async () => {
+      fixture.detectChanges();
+      rowsOnScreen();
+
+      component.updateFilter();
+      await waitPastSkeletonDelay();
+
+      expect(component.showRefreshing()).toBeFalse();
+      expect(component.showSkeleton()).toBeFalse();
+      expect(fixture.debugElement.query(By.css('mat-progress-bar'))).toBeNull();
+    });
+
+    // The behavioral change: a refetch has rows worth keeping. Replacing them
+    // with placeholders throws away the reader's place and scroll position to
+    // say something the progress bar says without destroying anything.
+    it('keeps the rows and runs a progress bar while a slow refetch is in flight', async () => {
+      fixture.detectChanges();
+      rowsOnScreen();
+
+      const pending = pendingRefetch();
+      await waitPastSkeletonDelay();
+
+      expect(component.showRefreshing()).toBeTrue();
       expect(
         fixture.debugElement.queryAll(By.css('app-print-list-skeleton')).length
-      ).toBe(2);
+      ).toBe(0);
+      expect(fixture.debugElement.queryAll(By.css('tr[mat-row]')).length).toBe(
+        2
+      );
+      expect(table().classList).not.toContain('loading');
+      expect(table().classList).toContain('refreshing');
       expect(
-        fixture.debugElement.query(By.css('table')).nativeElement.classList
-      ).toContain('loading');
+        fixture.debugElement.query(By.css('mat-progress-bar'))
+      ).toBeTruthy();
+
+      pending.complete();
+    });
+
+    // A screen reader needs to know the region is being updated, but the rows
+    // are staying put, so this is aria-busy's job rather than a placeholder's
+    // role="status".
+    it('marks the refreshing table busy for assistive technology', async () => {
+      fixture.detectChanges();
+      rowsOnScreen();
+      expect(table().getAttribute('aria-busy')).toBeNull();
+
+      const pending = pendingRefetch();
+      await waitPastSkeletonDelay();
+
+      expect(table().getAttribute('aria-busy')).toBe('true');
+      pending.complete();
     });
 
     it('shows no skeleton once the results have landed', () => {
@@ -346,18 +429,21 @@ describe('PrintListComponent', () => {
       expect(fixture.debugElement.query(By.css('.no-prints'))).toBeNull();
     });
 
-    // Two live regions announcing at once — the table losing its rows and the
-    // skeleton saying "Loading prints" — is worse than one.
-    it('silences the table live region while the skeleton announces', () => {
+    // The live region is silenced only for a first-paint skeleton, where the
+    // table is losing its rows while the skeleton's own role="status" announces
+    // "Loading prints" — two regions talking at once is worse than one. A
+    // refetch keeps its rows and uses aria-busy, so the live region stays on to
+    // announce the new rows when they land.
+    it('leaves the table live region on through a refetch', async () => {
       fixture.detectChanges();
-      const table = fixture.debugElement.query(By.css('table')).nativeElement;
-      expect(table.getAttribute('aria-live')).toBe('polite');
+      rowsOnScreen();
+      expect(table().getAttribute('aria-live')).toBe('polite');
 
-      component.isLoading = true;
-      fixture.changeDetectorRef.markForCheck();
-      fixture.detectChanges();
+      const pending = pendingRefetch();
+      await waitPastSkeletonDelay();
 
-      expect(table.getAttribute('aria-live')).toBe('off');
+      expect(table().getAttribute('aria-live')).toBe('polite');
+      pending.complete();
     });
 
     it('caps the placeholder count so a 100-per-page view is not a wall of grey', () => {

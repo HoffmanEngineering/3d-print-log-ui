@@ -1,21 +1,44 @@
-@if (loading()) {
+@if (showRefreshing()) {
+  <!--
+    A refetch keeps the rows it already has. Replacing them with placeholders
+    would throw away the reader's place to say something this bar says without
+    destroying anything. Skeletons are for a first paint only — the branch below.
+  -->
+  <mat-progress-bar mode="indeterminate" class="refresh-bar" />
+}
+@if (showSkeleton()) {
   <!--
     A centered spinner says "something is happening" but not "a list of prints
     is coming", and it collapses the page height so everything below jumps once
     the rows land. The skeleton holds the shape instead.
+
+    `app-skeleton-immediate` opts out of the CSS reveal delay: showSkeleton()
+    only becomes true after DeferredSkeletonController has waited out that same
+    threshold, and delaying twice would eat half the placeholder's dwell.
   -->
   <app-print-list-skeleton
-    class="grouped-skeleton"
+    class="grouped-skeleton app-skeleton-immediate"
     [count]="skeletonRowCount()"
     label="Loading projects and prints"
   />
+} @else if (loading() && !feed()) {
+  <!--
+    The deliberately blank window: a first fetch is running but has not been
+    running long enough to be worth explaining. Rendering the empty state here
+    would flash "No prints found" on every visit.
+  -->
 } @else if (!feed()?.items?.length) {
   <p class="empty-state">
     No prints found. Try adjusting your search or filters.
   </p>
 } @else {
   <!-- Mobile Card View -->
-  <div class="grouped-mobile-card-view" fxHide.gt-sm>
+  <div
+    class="grouped-mobile-card-view"
+    fxHide.gt-sm
+    [class.refreshing]="showRefreshing()"
+    [attr.aria-busy]="showRefreshing() ? 'true' : null"
+  >
     @for (row of flatRows(); track trackByRow($index, row)) {
       @if (row.kind === 'project') {
         <!-- Project card -->
@@ -522,6 +545,8 @@
     aria-label="Prints grouped by project"
     aria-live="polite"
     fxHide.lt-md
+    [class.refreshing]="showRefreshing()"
+    [attr.aria-busy]="showRefreshing() ? 'true' : null"
     mat-table
     [dataSource]="flatRows()"
     [trackBy]="trackByRow"

@@ -14,10 +14,20 @@
     var(--app-skeleton-base) 75%
   );
   background-size: 200% 100%;
-  animation: app-skeleton-shimmer 1.2s infinite linear;
+  // Two animations: the sweep, and the deferred reveal that keeps a fast
+  // response from flashing grey boxes. See `--app-skeleton-reveal-delay` in
+  // skeleton-theme.scss, including how to opt out.
+  animation:
+    app-skeleton-shimmer 1.2s infinite linear,
+    app-skeleton-reveal var(--app-skeleton-reveal-duration, 150ms) linear
+      var(--app-skeleton-reveal-delay, 200ms) both;
 
   @media (prefers-reduced-motion: reduce) {
-    animation: none;
+    // The reveal survives: it is a fade, not travel, and dropping it would put
+    // the flash straight back for exactly the users least able to tolerate it.
+    // Only the sweep goes.
+    animation: app-skeleton-reveal var(--app-skeleton-reveal-duration, 150ms)
+      linear var(--app-skeleton-reveal-delay, 200ms) both;
     // Without the sweep the tri-stop gradient reads as a stripe, so fall back
     // to the flat base color.
     background: var(--app-skeleton-base);

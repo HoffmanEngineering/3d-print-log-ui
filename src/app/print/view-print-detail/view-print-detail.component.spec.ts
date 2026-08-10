@@ -28,6 +28,10 @@ import {
   PrintDetailLoaderService,
   PrintDetailWithUser,
 } from '../services/print-detail-loader.service';
+import {
+  DEFERRED_SKELETON_DELAY_MS,
+  DEFERRED_SKELETON_MIN_VISIBLE_MS,
+} from 'src/app/shared/skeleton/deferred-skeleton';
 
 describe('ViewPrintDetailComponent', () => {
   let fixture: ComponentFixture<ViewPrintDetailComponent>;
@@ -57,6 +61,26 @@ describe('ViewPrintDetailComponent', () => {
 
   const paramMapFor = (id: string | number): ParamMap =>
     convertToParamMap({ id: `${id}` });
+
+  /**
+   * The skeleton is deferred, so "still loading" is no longer observable the
+   * instant the component is created — that is the whole point of the change.
+   * These waits are real time rather than `tick()` because `setup` awaits
+   * `compileComponents`, which cannot run inside `fakeAsync`.
+   */
+  const waitPastSkeletonDelay = async (): Promise<void> => {
+    await new Promise((resolve) =>
+      setTimeout(resolve, DEFERRED_SKELETON_DELAY_MS + 30)
+    );
+    fixture.detectChanges();
+  };
+
+  const waitPastSkeletonDwell = async (): Promise<void> => {
+    await new Promise((resolve) =>
+      setTimeout(resolve, DEFERRED_SKELETON_MIN_VISIBLE_MS + 30)
+    );
+    fixture.detectChanges();
+  };
 
   interface SetupOptions {
     /** null = anonymous; OWNER_ID = owner; anything else = a signed-in stranger. */
@@ -240,6 +264,7 @@ describe('ViewPrintDetailComponent', () => {
     // screen.
     it('renders the skeleton, not the not-found view, while the print loads', async () => {
       await setup({ viewerId: null, load: () => new Subject<any>() });
+      await waitPastSkeletonDelay();
 
       expect(component.loading()).toBe(true);
       expect(
@@ -251,8 +276,74 @@ describe('ViewPrintDetailComponent', () => {
       expect(fixture.nativeElement.querySelector('.not-found')).toBeNull();
     });
 
+    // The flash this whole mechanism exists to remove. On a warm connection the
+    // loader settles in tens of milliseconds, and a skeleton that appears and
+    // vanishes inside two frames reads as a rendering glitch.
+    it('never paints a skeleton when the print arrives inside the delay', async () => {
+      await setup({ viewerId: null });
+
+      expect(component.loading()).toBe(false);
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="print-detail-skeleton"]'
+        )
+      ).toBeNull();
+
+      // And it must not appear retroactively once the threshold passes.
+      await waitPastSkeletonDelay();
+      expect(component.loading()).toBe(false);
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="print-detail-skeleton"]'
+        )
+      ).toBeNull();
+    });
+
+    // The blank pre-skeleton window must not be mistaken for "no such print".
+    it('shows neither skeleton nor not-found in the window before the delay', async () => {
+      await setup({ viewerId: null, load: () => new Subject<any>() });
+
+      expect(component.loading()).toBe(false);
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="print-detail-skeleton"]'
+        )
+      ).toBeNull();
+      expect(fixture.nativeElement.querySelector('.not-found')).toBeNull();
+    });
+
+    // Without a minimum dwell the flash simply moves: a response landing a few
+    // milliseconds past the delay would show the skeleton for those few
+    // milliseconds, which is worse than either extreme.
+    it('holds the skeleton for its minimum dwell once it has appeared', async () => {
+      const arrived = new Subject<PrintDetailWithUser>();
+      await setup({ viewerId: null, load: () => arrived.asObservable() });
+      await waitPastSkeletonDelay();
+      expect(component.loading()).toBe(true);
+
+      arrived.next({ print: basePrint, user: null });
+      fixture.detectChanges();
+
+      expect(component.loading()).toBe(true);
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="print-detail-skeleton"]'
+        )
+      ).toBeTruthy();
+
+      await waitPastSkeletonDwell();
+      expect(component.loading()).toBe(false);
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="print-detail-skeleton"]'
+        )
+      ).toBeNull();
+      expect(component.print()).toEqual(basePrint);
+    });
+
     it('announces the pending state once for the whole region', async () => {
       await setup({ viewerId: null, load: () => new Subject<any>() });
+      await waitPastSkeletonDelay();
 
       const region = fixture.nativeElement.querySelector(
         '[data-testid="print-detail-skeleton"]'
@@ -283,8 +374,11 @@ describe('ViewPrintDetailComponent', () => {
     });
 
     // The router reuses this component between two print ids. Showing the
-    // previous print while the next one loads is worse than a skeleton.
-    it('returns to the skeleton when the route moves to another print', async () => {
+    // previous print while the next one loads is worse than a skeleton — but
+    // only once the second fetch is slow enough to be worth a skeleton. Below
+    // that threshold the outgoing print stays put and is simply replaced, which
+    // is what makes a fast id-to-id move look instantaneous instead of blinking.
+    it('returns to the skeleton when a slow route change moves to another print', async () => {
       const params$ = new BehaviorSubject<ParamMap>(paramMapFor(1));
       const second = new Subject<PrintDetailWithUser>();
       await setup({
@@ -299,6 +393,12 @@ describe('ViewPrintDetailComponent', () => {
 
       params$.next(paramMapFor(2));
       fixture.detectChanges();
+
+      // Still the outgoing print, deliberately, for the length of the delay.
+      expect(component.loading()).toBe(false);
+      expect(component.print()).toEqual(basePrint);
+
+      await waitPastSkeletonDelay();
 
       expect(component.loading()).toBe(true);
       expect(component.print()).toBeNull();

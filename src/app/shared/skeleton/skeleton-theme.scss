@@ -9,6 +9,25 @@
 :root {
   --app-skeleton-base: rgba(0, 0, 0, 0.1);
   --app-skeleton-sheen: rgba(0, 0, 0, 0.04);
+
+  // How long a placeholder stays invisible before it fades in. Keep in step
+  // with DEFERRED_SKELETON_DELAY_MS in `deferred-skeleton.ts` — this is the
+  // same threshold expressed for the skeletons whose mounting is NOT gated in
+  // TypeScript, so that a fast response never paints grey boxes.
+  --app-skeleton-reveal-delay: 200ms;
+  --app-skeleton-reveal-duration: 150ms;
+}
+
+/*
+ * Opt out of the CSS delay.
+ *
+ * Put this on any ancestor of a skeleton whose mounting is already gated by
+ * `withDeferredSkeleton` or `DeferredSkeletonController`. Those already wait
+ * 200ms before rendering anything, and stacking the CSS delay on top would hold
+ * the placeholder back for 400ms and eat half of its minimum dwell.
+ */
+.app-skeleton-immediate {
+  --app-skeleton-reveal-delay: 0ms;
 }
 
 html.dark-theme {
@@ -25,5 +44,18 @@ html.dark-theme {
   }
   to {
     background-position: -200% 0;
+  }
+}
+
+// Ramps a placeholder in after the delay instead of cutting to it. A response
+// that lands a few frames past the threshold then shows a faint ghost rather
+// than a hard grey flash, so the delay degrades gracefully at its own boundary.
+// Runs with `both` fill so the backwards phase holds opacity 0 during the delay.
+@keyframes app-skeleton-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

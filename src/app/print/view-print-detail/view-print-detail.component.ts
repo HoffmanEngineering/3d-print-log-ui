@@ -16,12 +16,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import {
-  distinctUntilChanged,
-  map,
-  startWith,
-  switchMap,
-} from 'rxjs/operators';
+import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import { UserSummaryDto } from 'src/app/core/services/user.service';
@@ -38,6 +33,7 @@ import {
 } from 'src/app/core/services/user-setting.service';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { FileAttachmentSectionComponent } from 'src/app/shared/file-attachment-section/file-attachment-section.component';
+import { withDeferredSkeleton } from 'src/app/shared/skeleton/deferred-skeleton';
 import { SkeletonComponent } from 'src/app/shared/skeleton/skeleton.component';
 import { PrintCommentsComponent } from '../print-comments/print-comments.component';
 import { PrintDetailLoaderService } from '../services/print-detail-loader.service';
@@ -47,16 +43,32 @@ import { PrintImageValue } from './print-image-value.model';
 
 export { PrintImageValue } from './print-image-value.model';
 
+/**
+ * `idle` is not a synonym for `loading`. It is the deliberately blank window
+ * before the skeleton is allowed to appear: the request is in flight, but it has
+ * not been in flight long enough to be worth explaining. It has to be its own
+ * phase because "no print, not loading" would otherwise be indistinguishable
+ * from "this print does not exist", and the page would flash `Print not found`
+ * on every navigation.
+ */
+type PrintDetailPhase = 'idle' | 'loading' | 'ready';
+
 interface PrintDetailState {
   print: PrintDetail | null;
   user: UserSummaryDto | null;
-  loading: boolean;
+  phase: PrintDetailPhase;
 }
 
-const INITIAL_STATE: PrintDetailState = {
+const IDLE_STATE: PrintDetailState = {
   print: null,
   user: null,
-  loading: true,
+  phase: 'idle',
+};
+
+const LOADING_STATE: PrintDetailState = {
+  print: null,
+  user: null,
+  phase: 'loading',
 };
 
 @Component({
@@ -99,9 +111,17 @@ export class ViewPrintDetailComponent {
    * errors (see PrintDetailLoaderService), because an error here would leave the
    * page stuck on the skeleton forever.
    *
-   * `startWith` is inside the `switchMap` on purpose: the router reuses this
-   * component between two print ids, and each new id must go back to the loading
-   * state rather than showing the previous print's content.
+   * `withDeferredSkeleton` is inside the `switchMap` on purpose, for the same
+   * reason the unconditional `startWith` it replaces was: the router reuses this
+   * component between two print ids, and each new id needs its own timers rather
+   * than inheriting the previous request's elapsed time.
+   *
+   * It replaces `startWith(LOADING_STATE)` because emitting the loading state
+   * unconditionally is what made the skeleton flash. On a warm connection this
+   * page resolves in tens of milliseconds, and grey boxes for two frames read as
+   * a rendering glitch rather than as feedback. Now the loading state is emitted
+   * only if the request is still outstanding at 200ms, and once emitted it is
+   * held for its minimum dwell so it cannot flicker at the threshold either.
    */
   private readonly state = toSignal(
     this.activatedRoute.paramMap.pipe(
@@ -109,15 +129,19 @@ export class ViewPrintDetailComponent {
       distinctUntilChanged(),
       switchMap((printId): Observable<PrintDetailState> => {
         if (!Number.isInteger(printId)) {
-          return of({ print: null, user: null, loading: false });
+          return of({ print: null, user: null, phase: 'ready' as const });
         }
         return this.printDetailLoader.load(printId).pipe(
-          map(({ print, user }) => ({ print, user, loading: false })),
-          startWith(INITIAL_STATE)
+          map(({ print, user }) => ({
+            print,
+            user,
+            phase: 'ready' as const,
+          })),
+          withDeferredSkeleton(LOADING_STATE)
         );
       })
     ),
-    { initialValue: INITIAL_STATE }
+    { initialValue: IDLE_STATE }
   );
 
   private readonly currentUser = toSignal(this.authService.userProfile$, {
@@ -129,10 +153,16 @@ export class ViewPrintDetailComponent {
   readonly print = computed<PrintDetail | null>(() => this.state().print);
   readonly user = computed<UserSummaryDto | null>(() => this.state().user);
 
-  /** True while the print request is in flight — the skeleton is on screen. */
-  readonly loading = computed(() => this.state().loading);
+  /** True while the skeleton is on screen — NOT simply "a request is running". */
+  readonly loading = computed(() => this.state().phase === 'loading');
 
-  readonly notFound = computed(() => !this.loading() && !this.print());
+  /**
+   * Gated on `ready` rather than on `!loading`, because `idle` also has no
+   * print: during the pre-skeleton window the answer is "not yet", not "no".
+   */
+  readonly notFound = computed(
+    () => this.state().phase === 'ready' && !this.print()
+  );
 
   /*
    * Keyed off createdByUserId, which is on the print payload — not off the

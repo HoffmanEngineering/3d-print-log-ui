@@ -29,8 +29,13 @@
           aria-hidden, and this container carries the busy state and the status
           text a screen reader needs.
         -->
+        <!--
+          `app-skeleton-immediate` opts out of the CSS reveal delay: this block
+          is only rendered at all once withDeferredSkeleton has already waited
+          out that same threshold, and delaying twice would eat half its dwell.
+        -->
         <div
-          class="hero-band"
+          class="hero-band app-skeleton-immediate"
           data-testid="print-detail-skeleton"
           role="status"
           aria-busy="true"

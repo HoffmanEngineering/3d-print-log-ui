@@ -45,6 +45,7 @@ import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dia
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
+import { PrintBulkActionsService } from '../services/print-bulk-actions.service';
 
 export interface ColumnDefinition {
   key: string;
@@ -57,6 +58,7 @@ export interface ColumnDefinition {
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
   standalone: false,
+  providers: [PrintBulkActionsService],
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];
@@ -175,6 +177,21 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public searchText = '';
 
+  /**
+   * Multi-select state and the sequential batch runner live in their own service so
+   * this already-large component does not grow another responsibility.
+   */
+  public readonly bulkActions = inject(PrintBulkActionsService);
+
+  /**
+   * The columns the desktop table actually renders. `select` is always first and is
+   * never persisted, so it cannot be removed by the table layout dialog. The whole
+   * table is `fxHide.lt-md`, so the checkbox column is desktop-only for free.
+   */
+  public get tableColumns(): string[] {
+    return ['select', ...this.displayedColumns];
+  }
+
   private readonly VIEW_MODE_KEY = 'print_list_view_mode';
 
   private _viewMode: 'list' | 'grouped' =
@@ -207,7 +224,19 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public sortDirection = SortDirection.Desc;
 
   public printerRedirectToast: ActiveToast<any> | null = null;
-  public printerRedirectSubscription: Subscription;
+  public printerRedirectSubscription: Subscription | null = null;
+
+  /**
+   * Whether the user owns at least one printer. `null` until the lookup that
+   * already drives the "No Active Printers" prompt resolves.
+   */
+  public readonly hasPrinters = signal<boolean | null>(null);
+
+  /**
+   * The toast decision depends on the print count, so it must wait for the
+   * first list load rather than assume the printer lookup resolves second.
+   */
+  private printListLoaded = false;
 
   mobileQuery: MediaQueryList;
 
@@ -311,12 +340,22 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private readonly gcodeParserService: GcodeFileParserService,
     private readonly newPrintStoreService: NewPrintStoreService
   ) {
-    this.debouncedUpdateFilter = debounce(() => {
-      this.isLoading = true;
-      this.loadingIndicator.start();
+    // Mark the list as loading on the keystroke itself, not when the debounce
+    // finally fires, so the empty state cannot flash stale copy for 400ms.
+    //
+    // The DEFERRED indicator deliberately does not start here. It starts with
+    // the request itself in updateFilter(), so the 400ms debounce window does
+    // not count against its 200ms delay — otherwise the progress bar would
+    // appear while the user was still typing, before a request even exists.
+    const debouncedFilterUpdate = debounce(() => {
       this.currentPage = 1;
       this.updateFilter();
     }, 400);
+
+    this.debouncedUpdateFilter = () => {
+      this.isLoading = true;
+      debouncedFilterUpdate();
+    };
 
     this.subscriptions.add(
       router.events
@@ -407,26 +446,21 @@ export class PrintListComponent implements OnInit, OnDestroy {
     /**
      * Show the Add Printer prompt if needed.
      */
-    this.printerRedirectPromptService
-      .shouldShowAddPrinterPrompt()
-      .subscribe((shouldShowPrompt) => {
-        if (shouldShowPrompt) {
-          this.printerRedirectToast = this.toastrService.info(
-            'Click here to add a new 3D Printer before logging prints.',
-            'No Active Printers',
-            {
-              disableTimeOut: true,
-            }
-          );
-
-          this.printerRedirectSubscription =
-            this.printerRedirectToast.onTap.subscribe(() => {
-              this.loggingService.logEvent('NoActivePrinterPromptClicked');
-              this.router.navigate(['printers', 'new']);
-              this.printerRedirectSubscription?.unsubscribe?.();
-            });
-        }
-      });
+    this.subscriptions.add(
+      this.printerRedirectPromptService.shouldShowAddPrinterPrompt().subscribe({
+        next: (shouldShowPrompt) => {
+          this.hasPrinters.set(!shouldShowPrompt);
+          this.syncAddPrinterPrompt();
+        },
+        error: (error) => {
+          // A failed lookup must not leave the first-run user staring at a
+          // blank page, so assume they have printers and offer Add print.
+          this.loggingService.logException(error);
+          this.hasPrinters.set(true);
+          this.syncAddPrinterPrompt();
+        },
+      })
+    );
 
     this.mobileQuery = this.media.matchMedia('(max-width: 800px)');
 
@@ -501,6 +535,83 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.currentPage = response.paging.currentPage;
     this.pageSize = response.paging.pageSize;
     this.totalCount = response.paging.totalCount;
+
+    this.printListLoaded = true;
+    this.syncAddPrinterPrompt();
+  }
+
+  /**
+   * True when the empty state itself is telling the user to add a printer.
+   * Only in that case is the toast redundant.
+   */
+  private emptyStateShowsPrinterGuidance(): boolean {
+    return (
+      this.hasPrinters() === false &&
+      this.totalCount === 0 &&
+      this.activeFilterCount() === 0 &&
+      // Trimmed to agree with PrintEmptyStateComponent.hasSearch(), otherwise
+      // whitespace-only search text shows the empty state and the toast.
+      !this.searchText?.trim()
+    );
+  }
+
+  /**
+   * Shows the "No Active Printers" toast unless the empty state is already
+   * giving the same instruction. A user who has prints but no active printer
+   * renders no empty state at all, so the toast must stay.
+   */
+  private syncAddPrinterPrompt(): void {
+    // Wait until both the print count and the printer count are known, so the
+    // toast cannot open and immediately flash away on the slower answer.
+    if (!this.printListLoaded) {
+      return;
+    }
+
+    if (this.hasPrinters() !== false) {
+      this.dismissAddPrinterToast();
+      return;
+    }
+
+    if (this.emptyStateShowsPrinterGuidance()) {
+      this.dismissAddPrinterToast();
+      return;
+    }
+
+    this.showAddPrinterToast();
+  }
+
+  private showAddPrinterToast(): void {
+    if (this.printerRedirectToast) {
+      return;
+    }
+
+    this.printerRedirectToast = this.toastrService.info(
+      'Click here to add a new 3D Printer before logging prints.',
+      'No Active Printers',
+      {
+        disableTimeOut: true,
+      }
+    );
+
+    this.printerRedirectSubscription =
+      this.printerRedirectToast.onTap.subscribe(() => {
+        this.loggingService.logEvent('NoActivePrinterPromptClicked');
+        this.router.navigate(['printers', 'new']);
+        this.printerRedirectSubscription?.unsubscribe?.();
+        this.printerRedirectSubscription = null;
+      });
+  }
+
+  private dismissAddPrinterToast(): void {
+    if (!this.printerRedirectToast) {
+      return;
+    }
+
+    this.toastrService.remove(this.printerRedirectToast.toastId);
+    this.printerRedirectToast = null;
+
+    this.printerRedirectSubscription?.unsubscribe?.();
+    this.printerRedirectSubscription = null;
   }
 
   public sortData(sort: Sort) {
@@ -528,6 +639,14 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.updateFilter();
   }
 
+  /**
+   * Reloads the current page of prints.
+   *
+   * The selection deliberately survives every result-set change (page, search,
+   * filter, sort), matching the material list: the service holds the full
+   * `PrintSummary` for each selected print, so a batch can act on prints that
+   * have since scrolled off the current page.
+   */
   public updateFilter() {
     this.isLoading = true;
     this.loadingIndicator.start();
@@ -631,6 +750,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {
         this.printService.deletePrint(print.id).subscribe((_) => {
+          // The selection outlives the reload now, so a deleted print has to be
+          // taken out of it explicitly or a later batch would act on a dead id.
+          this.bulkActions.deselect(print.id);
           this.updateFilter().then(() => {
             this.toastrService.success(
               'Print removed successfully.',
@@ -1004,6 +1126,15 @@ export class PrintListComponent implements OnInit, OnDestroy {
       fs.filter((f) => f.id !== filament.id)
     );
     this.currentPage = 1;
+    this.updateFilter();
+  }
+
+  /**
+   * Reloads the page in place after a bulk action so the table reflects the new
+   * statuses (or the removed rows) without navigating away. The service has
+   * already narrowed the selection to the prints that failed.
+   */
+  public onBulkActionCompleted(): void {
     this.updateFilter();
   }
 

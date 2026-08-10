@@ -1,13 +1,18 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   PrintService,
@@ -22,6 +27,7 @@ import { PrinterRedirectPromptService } from '../services/printer-redirect-promp
 
 import { DEFERRED_SKELETON_DELAY_MS } from 'src/app/shared/skeleton/deferred-skeleton';
 import { PrintListComponent } from './print-list.component';
+import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.component';
 
 describe('PrintListComponent', () => {
   let component: PrintListComponent;
@@ -91,9 +97,11 @@ describe('PrintListComponent', () => {
         DurationPipe,
         LocaleDatePipe,
         RouterTestingModule,
+        MatCheckboxModule,
         MatDialogModule,
         MatMenuModule,
         MatTableModule,
+        PrintEmptyStateComponent,
       ],
       providers: [
         { provide: LoggingService, useValue: mockLogger },
@@ -121,33 +129,94 @@ describe('PrintListComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should display "No prints found. Add a new print or try a different search." when there are no prints in the list', () => {
-    // Arrange
-    const mockActivatedRoute = TestBed.inject(ActivatedRoute);
-    const mockPrintPagedResult: PagedList<PrintSummary> = {
-      items: [],
-      paging: {
-        currentPage: 1,
-        pageSize: 10,
-        totalCount: 0,
-        totalPages: 1,
-      },
-    };
-
-    (mockActivatedRoute.data = of({
-      printList: mockPrintPagedResult,
-      printers: [],
-      filaments: [],
-    })),
-      // Act
-      fixture.detectChanges();
+  it('should show the first-run empty state when there are no prints and no filters', () => {
+    // Act
+    fixture.detectChanges();
 
     // Assert
-    const message = fixture.debugElement.query(By.css('.no-prints'))
-      .nativeElement as HTMLDivElement;
-    expect(message.innerText).toEqual(
-      'No prints found. Add a new print or try a different search.'
+    const emptyState = fixture.debugElement.query(
+      By.directive(PrintEmptyStateComponent)
     );
+    expect(emptyState).toBeTruthy();
+
+    const heading = emptyState.query(By.css('.empty-state__heading'))
+      .nativeElement as HTMLElement;
+    expect(heading.textContent.trim()).toEqual('Log your first print');
+
+    expect(
+      emptyState.query(By.css('[data-cy="empty-state-add-print"]'))
+    ).toBeTruthy();
+    expect(
+      emptyState.query(By.css('[data-cy="empty-state-import-gcode"]'))
+    ).toBeTruthy();
+    expect(
+      emptyState.query(By.css('[data-cy="empty-state-clear-filters"]'))
+    ).toBeFalsy();
+  });
+
+  it('should show the filtered empty state and mention the active filter count', () => {
+    // Arrange - ngOnInit resets the status filter, so apply filters after it runs
+    fixture.detectChanges();
+    component.filterByStatus.set(PrintStatus.Success);
+    component.filterByPrinterIds.set([7]);
+    component.searchText = 'benchy';
+
+    // Act
+    fixture.detectChanges();
+
+    // Assert
+    const emptyState = fixture.debugElement.query(
+      By.directive(PrintEmptyStateComponent)
+    );
+    const heading = emptyState.query(By.css('.empty-state__heading'))
+      .nativeElement as HTMLElement;
+    const message = emptyState.query(By.css('.empty-state__message'))
+      .nativeElement as HTMLElement;
+
+    expect(heading.textContent.trim()).toEqual('No prints match your filters');
+    expect(message.textContent).toContain('2 active filters');
+    expect(message.textContent).toContain('a search for "benchy"');
+    expect(
+      emptyState.query(By.css('[data-cy="empty-state-add-print"]'))
+    ).toBeFalsy();
+  });
+
+  it('should clear every filter when the empty state clear filters button is used', () => {
+    // Arrange - ngOnInit resets the status filter, so apply filters after it runs
+    fixture.detectChanges();
+    component.filterByStatus.set(PrintStatus.Success);
+    component.searchText = 'benchy';
+    fixture.detectChanges();
+
+    const clearButton = fixture.debugElement.query(
+      By.css('[data-cy="empty-state-clear-filters"]')
+    ).nativeElement as HTMLButtonElement;
+
+    // Act
+    clearButton.click();
+    fixture.detectChanges();
+
+    // Assert
+    expect(component.searchText).toEqual('');
+    expect(component.activeFilterCount()).toEqual(0);
+  });
+
+  it('should open the hidden g-code picker from the empty state import button', () => {
+    // Arrange
+    fixture.detectChanges();
+
+    const fileInput = fixture.debugElement.query(By.css('input[type="file"]'))
+      .nativeElement as HTMLInputElement;
+    const clickSpy = spyOn(fileInput, 'click');
+
+    // Act
+    const importButton = fixture.debugElement.query(
+      By.css('[data-cy="empty-state-import-gcode"]')
+    ).nativeElement as HTMLButtonElement;
+    importButton.click();
+
+    // Assert
+    expect(clickSpy).toHaveBeenCalled();
   });
 
   it('should display a page worth of prints when passed in from the route resolver', () => {
@@ -224,8 +293,8 @@ describe('PrintListComponent', () => {
     expect(table.length).toEqual(mockPrintPagedResult.items.length);
   });
 
-  it('should display a "No Active Printers" toast if the printerRedirectPromptService should show prompt', () => {
-    // Arrange
+  /** Puts the component in the "user owns no printers" state. */
+  const withNoPrinters = () => {
     const mockPrinterRedirectPromptService = TestBed.inject(
       PrinterRedirectPromptService
     ) as jasmine.SpyObj<PrinterRedirectPromptService>;
@@ -248,6 +317,27 @@ describe('PrintListComponent', () => {
       portal: {} as any,
     });
 
+    return mockToastrService;
+  };
+
+  /** Overrides the resolver payload so the list reports existing prints. */
+  const withExistingPrints = (totalCount: number) => {
+    const mockActivatedRoute = TestBed.inject(ActivatedRoute);
+    mockActivatedRoute.data = of({
+      printList: {
+        items: [],
+        paging: { currentPage: 1, pageSize: 10, totalCount, totalPages: 1 },
+      },
+      printers: [],
+      filaments: [],
+    });
+  };
+
+  it('should display a "No Active Printers" toast when the user has prints but no printer', () => {
+    // Arrange - no empty state renders here, so the toast is the only guidance
+    const mockToastrService = withNoPrinters();
+    withExistingPrints(3);
+
     // Act
     fixture.detectChanges();
 
@@ -257,6 +347,94 @@ describe('PrintListComponent', () => {
       'No Active Printers',
       jasmine.any(Object)
     );
+    expect(component.printerRedirectToast).not.toBeNull();
+  });
+
+  it('should suppress the toast when the empty state already says to add a printer', () => {
+    // Arrange - zero prints and zero printers
+    const mockToastrService = withNoPrinters();
+
+    // Act
+    fixture.detectChanges();
+
+    // Assert
+    expect(component.printerRedirectToast).toBeNull();
+    expect(mockToastrService.remove).not.toHaveBeenCalledWith(
+      jasmine.anything()
+    );
+
+    const emptyState = fixture.debugElement.query(
+      By.directive(PrintEmptyStateComponent)
+    );
+    const heading = emptyState.query(By.css('.empty-state__heading'))
+      .nativeElement as HTMLElement;
+    expect(heading.textContent.trim()).toEqual('Add a printer to get started');
+  });
+
+  it('should keep the toast when a filter empties the list for a user with no printer', async () => {
+    // Arrange - the empty state shows filter guidance, not printer guidance
+    withNoPrinters();
+    fixture.detectChanges();
+    expect(component.printerRedirectToast).toBeNull();
+
+    // Act - assert on component state only; re-running change detection here
+    // would trip NG0100 because searchText is bound with two-way ngModel.
+    component.searchText = 'benchy';
+    await component.updateFilter();
+
+    // Assert
+    expect(component.printerRedirectToast).not.toBeNull();
+  });
+
+  it('should fall back to the add print state when the printer lookup fails', () => {
+    // Arrange
+    const mockPrinterRedirectPromptService = TestBed.inject(
+      PrinterRedirectPromptService
+    ) as jasmine.SpyObj<PrinterRedirectPromptService>;
+    mockPrinterRedirectPromptService.shouldShowAddPrinterPrompt.and.returnValue(
+      throwError(() => new Error('printer lookup failed'))
+    );
+
+    // Act
+    fixture.detectChanges();
+
+    // Assert - a failed lookup must not leave the page blank
+    expect(component.hasPrinters()).toBeTrue();
+    expect(
+      fixture.debugElement.query(By.css('[data-cy="empty-state-add-print"]'))
+    ).toBeTruthy();
+  });
+
+  it('should suppress the toast when the search text is only whitespace', async () => {
+    // Arrange - the empty state still shows printer guidance for blank search
+    withNoPrinters();
+    fixture.detectChanges();
+
+    // Act
+    component.searchText = '   ';
+    await component.updateFilter();
+
+    // Assert
+    expect(component.printerRedirectToast).toBeNull();
+  });
+
+  it('should show the add printer empty state instead of the add print CTA', () => {
+    // Arrange
+    withNoPrinters();
+
+    // Act
+    fixture.detectChanges();
+
+    // Assert
+    expect(
+      fixture.debugElement.query(By.css('[data-cy="empty-state-add-printer"]'))
+    ).toBeTruthy();
+    expect(
+      fixture.debugElement.query(By.css('[data-cy="empty-state-add-print"]'))
+    ).toBeFalsy();
+    expect(
+      fixture.debugElement.query(By.css('[data-cy="empty-state-import-gcode"]'))
+    ).toBeFalsy();
   });
 
   it('should keep the filter panel open when resetFilters is called', () => {
@@ -290,11 +468,150 @@ describe('PrintListComponent', () => {
       onTap: of(true),
     } as any);
 
+    // The toast only renders when no empty state gives the same guidance.
+    withExistingPrints(3);
+
     // Act
     fixture.detectChanges();
 
     // Assert
     expect(routerSpy).toHaveBeenCalledWith(['printers', 'new']);
+  });
+
+  describe('bulk selection', () => {
+    const selectablePrint = {
+      id: 7,
+      title: 'Benchy',
+      status: PrintStatus.Success,
+      startDate: new Date('2021-05-27'),
+      printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+      filamentUsage: [],
+      commentCount: 0,
+      sumActualFilamentWeightMg: 0,
+      sumEstimatedFilamentWeightMg: 0,
+      totalFilamentWeightMg: 0,
+    } as unknown as PrintSummary;
+
+    it('should always render the select column first, ahead of the configured columns', () => {
+      fixture.detectChanges();
+      component.displayedColumns = ['title', 'status', 'more'];
+
+      expect(component.tableColumns).toEqual([
+        'select',
+        'title',
+        'status',
+        'more',
+      ]);
+    });
+
+    it('should keep the selection when the result set changes', () => {
+      fixture.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+      component.bulkActions.toggleSelection(selectablePrint);
+
+      // Paging, searching, filtering and sorting all funnel through here. The
+      // selection outlives them, so a batch can span more than one page.
+      component.updateFilter();
+
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
+    });
+
+    it('should keep the selection when refreshing after a bulk action', () => {
+      fixture.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+      component.bulkActions.toggleSelection(selectablePrint);
+
+      component.onBulkActionCompleted();
+
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
+    });
+
+    it('should drop a print from the selection when it is deleted on its own', () => {
+      fixture.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+      spyOn(TestBed.inject(MatDialog), 'open').and.returnValue({
+        componentInstance: {},
+        afterClosed: () => of(true),
+      } as MatDialogRef<unknown>);
+      const printService = TestBed.inject(
+        PrintService
+      ) as jasmine.SpyObj<PrintService>;
+      printService.deletePrint.and.returnValue(of({} as PrintSummary));
+      component.bulkActions.toggleSelection(selectablePrint);
+
+      component.deletePrint(selectablePrint);
+
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeFalse();
+    });
+
+    describe('row checkbox click handling', () => {
+      /**
+       * Renders a one-row table through the resolver so the row checkbox can be
+       * clicked for real.
+       */
+      const renderSingleRow = (): HTMLInputElement => {
+        TestBed.inject(ActivatedRoute).data = of({
+          printList: {
+            items: [selectablePrint],
+            paging: {
+              currentPage: 1,
+              pageSize: 10,
+              totalCount: 1,
+              totalPages: 1,
+            },
+          } as PagedList<PrintSummary>,
+          printers: [],
+          filaments: [],
+        });
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector(
+          `[data-cy-select-print="${selectablePrint.id}"] input[type="checkbox"]`
+        ) as HTMLInputElement | null;
+        expect(input).withContext('row checkbox input').not.toBeNull();
+        return input as HTMLInputElement;
+      };
+
+      it('should not cancel the checkbox activation, which would revert the tick', () => {
+        const input = renderSingleRow();
+        const cell = input.closest('td') as HTMLElement;
+        let defaultPreventedAtCell: boolean | null = null;
+        // Registered after the template listener on the same element, so it runs
+        // second and sees whatever the template handler did to the event.
+        cell.addEventListener('click', (event) => {
+          defaultPreventedAtCell = event.defaultPrevented;
+        });
+
+        input.click();
+
+        expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
+        expect(defaultPreventedAtCell)
+          .withContext(
+            'preventDefault runs the canceled-activation steps, which restore ' +
+              'input.checked to false after Angular has already written true'
+          )
+          .toBeFalse();
+      });
+
+      it('should not let a checkbox click reach the row, which would navigate', () => {
+        const input = renderSingleRow();
+        const table = fixture.nativeElement.querySelector(
+          'table'
+        ) as HTMLElement;
+        let reachedTable = false;
+        table.addEventListener('click', () => (reachedTable = true));
+
+        input.click();
+
+        expect(reachedTable).toBeFalse();
+      });
+    });
   });
 
   it('should navigate to /projects/new when navigateToNewProject is called', () => {
@@ -417,8 +734,10 @@ describe('PrintListComponent', () => {
       ).toBeNull();
     });
 
-    // "No prints found" next to a screen of shimmering placeholders is a lie.
-    it('suppresses the empty-state message while loading', () => {
+    // An empty state next to a screen of shimmering placeholders is a lie.
+    // Gated on the raw isLoading rather than the deferred flag, so it stays
+    // suppressed through the pre-skeleton window too.
+    it('suppresses the empty state while loading', () => {
       fixture.detectChanges();
       component.isLoading = true;
       // Plain-field mutations do not mark the view dirty in the zoneless test
@@ -426,7 +745,9 @@ describe('PrintListComponent', () => {
       fixture.changeDetectorRef.markForCheck();
       fixture.detectChanges();
 
-      expect(fixture.debugElement.query(By.css('.no-prints'))).toBeNull();
+      expect(
+        fixture.debugElement.query(By.css('app-print-empty-state'))
+      ).toBeNull();
     });
 
     // The live region is silenced only for a first-paint skeleton, where the

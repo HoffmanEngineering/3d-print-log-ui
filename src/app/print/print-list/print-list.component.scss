@@ -8,6 +8,13 @@ table {
     cursor: pointer;
     background-color: rgba(0, 0, 0, 0.05);
   }
+  [mat-row].selected {
+    background-color: var(--mat-sys-secondary-container, rgba(0, 0, 0, 0.08));
+  }
+  .select-cell {
+    width: 48px;
+    padding-right: 0;
+  }
 }
 
 .header {
@@ -68,6 +75,20 @@ table {
   padding-bottom: 8px;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   padding-top: 8px;
+}
+
+// Single row holding the view toggle and the bulk-action controls. `nowrap` keeps
+// the controls on this line at the table's breakpoint so nothing below shifts.
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 8px 8px 0;
+}
+
+.view-toggle {
+  flex-shrink: 0;
 }
 
 .filter-field {
@@ -159,12 +180,6 @@ table {
   margin-bottom: 3px;
   margin-right: 10px;
   overflow: hidden;
-}
-
-.no-prints {
-  font-size: 16px;
-  line-height: 28px;
-  margin-left: 20px;
 }
 
 // First load: keep the header row — and with it the mat-sort arrow — and hide

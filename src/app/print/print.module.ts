@@ -29,6 +29,8 @@ import { ProjectSelectorComponent } from '../shared/project-selector/project-sel
 import { PrintGroupedViewComponent } from './print-list/print-grouped-view/print-grouped-view.component';
 import { PrintCardComponent } from './print-card/print-card.component';
 import { PrintListSkeletonComponent } from './print-list/print-list-skeleton/print-list-skeleton.component';
+import { PrintBulkActionBarComponent } from './print-list/print-bulk-action-bar/print-bulk-action-bar.component';
+import { PrintEmptyStateComponent } from './print-list/print-empty-state/print-empty-state.component';
 
 @NgModule({
   declarations: [
@@ -52,6 +54,8 @@ import { PrintListSkeletonComponent } from './print-list/print-list-skeleton/pri
     PrintCardComponent,
     PrintCommentsComponent,
     PrintListSkeletonComponent,
+    PrintBulkActionBarComponent,
+    PrintEmptyStateComponent,
   ],
   providers: [
     PrintDetailResolverService,

@@ -67,7 +67,7 @@ describe('AuthService', () => {
     });
 
     it('sets loggedIn=false and emits no profile when the dev anonymous flag is set', () => {
-      sessionStorage.setItem('devAnonymous', 'true');
+      sessionStorage.setItem('devUserId', 'anonymous');
       const service = TestBed.inject(AuthService);
 
       let latestProfile: unknown = 'unset';
@@ -78,7 +78,7 @@ describe('AuthService', () => {
       expect(service.loggedIn).toBeFalse();
       expect(latestProfile).toBeNull(); // BehaviorSubject initial null, never overwritten
 
-      sessionStorage.removeItem('devAnonymous');
+      sessionStorage.removeItem('devUserId');
     });
   });
 });

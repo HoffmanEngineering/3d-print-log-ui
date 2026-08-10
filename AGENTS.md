@@ -73,7 +73,7 @@ These commands are optimized for minimal token usage while preserving actionable
 Routes without `AuthGuard` (e.g. `/prints/:id`, public profiles/materials) must render for logged-out visitors. A **rejected resolver cancels navigation and bounces to `/`** (#66) — and this only shows up logged-out, so it's easy to miss.
 
 - On a public route, resolvers/services must degrade to a default/`null` for anonymous users, never throw. Fix in the **service** (also protects `ngOnInit` callers), and keep settings consumers null-tolerant (`?.value`, `?? default`). Auth-required endpoints reject with `missing_refresh_token` unless the request sets `allow-anonymous-request` **and** the API marks them `[AllowAnonymous]`.
-- Test logged-out without Auth0: append `?devUserId=anonymous` (dev only; `isDevAnonymous` util). Regression pattern: `cypress/e2e/prints/public-print-anonymous.cy.ts` (a public-route E2E with no `cy.login()`).
+- Test logged-out without Auth0: append `?devUserId=anonymous` (dev only; `isDevAnonymous`/`resolveDevUserId` in `core/utils/dev-user.ts`, persisted per-tab in sessionStorage). Regression pattern: `cypress/e2e/prints/public-print-anonymous.cy.ts` (a public-route E2E with no `cy.login()`).
 
 ### Environment Configuration
 

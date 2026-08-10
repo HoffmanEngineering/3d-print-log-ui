@@ -28,9 +28,7 @@
     would flash "No prints found" on every visit.
   -->
 } @else if (!feed()?.items?.length) {
-  <p class="empty-state">
-    No prints found. Try adjusting your search or filters.
-  </p>
+  <ng-content select="[printEmptyState]" />
 } @else {
   <!-- Mobile Card View -->
   <div
@@ -533,11 +531,6 @@
           by current filters
         </p>
       }
-    }
-    @if (!feed()?.items?.length) {
-      <p class="empty-state">
-        No prints found. Try adjusting your search or filters.
-      </p>
     }
   </div>
 

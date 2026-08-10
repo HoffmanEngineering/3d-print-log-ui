@@ -15,25 +15,34 @@
   min-height: 40px;
 }
 
+// `nowrap` is what keeps the strip one row tall; the cost is that a narrow
+// desktop has nowhere to put the overflow. The chip absorbs it by truncating so
+// the actions themselves are never squashed or pushed off the edge.
 .bulk-bar__content {
   position: relative;
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: 8px;
+  max-width: 100%;
+
+  > button {
+    flex: 0 0 auto;
+  }
 }
 
 // Same pill as the material list's selection count.
 .bulk-bar__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: block;
+  min-width: 0;
   padding: 4px 12px;
   border-radius: 16px;
   background-color: rgba(0, 0, 0, 0.04);
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--app-text-strong);
 }
 

@@ -115,6 +115,12 @@ export class PrintGroupedViewComponent implements OnInit {
    */
   private readonly loadingIndicator = new DeferredSkeletonController();
 
+  /**
+   * True while any busy affordance is on screen. Outlives `loading` by up to
+   * the minimum dwell — see PrintListComponent.isBusy.
+   */
+  readonly isBusy = this.loadingIndicator.visible;
+
   /** First load with nothing to preserve: draw placeholder rows. */
   readonly showSkeleton = computed(
     () => this.loadingIndicator.visible() && !this.hasLoadedOnce()

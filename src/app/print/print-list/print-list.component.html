@@ -698,9 +698,13 @@
       />
     }
     <!-- Shared by both the mobile card view and the desktop table above.
-         isLoading (the raw in-flight flag, not the deferred one) keeps this
-         suppressed for the whole request, including the pre-skeleton window. -->
-    @if (!isLoading && totalCount === 0) {
+         Two gates, because they cover different windows. isLoading (the raw
+         in-flight flag) covers the request itself, including the blank
+         pre-skeleton window. isBusy() covers the tail AFTER the response lands,
+         where the minimum dwell keeps a skeleton or progress bar on screen for
+         up to another 400ms — rendering "no prints found" beside a running
+         indicator would contradict it. -->
+    @if (!isLoading && !isBusy() && totalCount === 0) {
       <app-print-empty-state
         [activeFilterCount]="activeFilterCount()"
         [searchText]="searchText"

@@ -25,7 +25,10 @@ import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 
-import { DEFERRED_SKELETON_DELAY_MS } from 'src/app/shared/skeleton/deferred-skeleton';
+import {
+  DEFERRED_SKELETON_DELAY_MS,
+  DEFERRED_SKELETON_MIN_VISIBLE_MS,
+} from 'src/app/shared/skeleton/deferred-skeleton';
 import { PrintListComponent } from './print-list.component';
 import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.component';
 
@@ -665,6 +668,14 @@ describe('PrintListComponent', () => {
       fixture.detectChanges();
     };
 
+    const waitPastSkeletonDwell = async (): Promise<void> => {
+      await new Promise((resolve) =>
+        setTimeout(resolve, DEFERRED_SKELETON_MIN_VISIBLE_MS + 30)
+      );
+      fixture.changeDetectorRef.markForCheck();
+      fixture.detectChanges();
+    };
+
     const table = (): HTMLElement =>
       fixture.debugElement.query(By.css('table')).nativeElement;
 
@@ -748,6 +759,45 @@ describe('PrintListComponent', () => {
       expect(
         fixture.debugElement.query(By.css('app-print-empty-state'))
       ).toBeNull();
+    });
+
+    // The minimum dwell keeps an indicator on screen for up to 400ms AFTER the
+    // response lands, so isLoading going false is not enough to let the empty
+    // state in — "no prints found" beside a running progress bar contradicts it.
+    it('holds the empty state back while the indicator serves out its dwell', async () => {
+      fixture.detectChanges();
+      rowsOnScreen();
+
+      const pending = pendingRefetch();
+      await waitPastSkeletonDelay();
+      expect(component.showRefreshing()).toBeTrue();
+
+      // The refetch comes back with nothing.
+      pending.next({
+        items: [],
+        paging: {
+          currentPage: 1,
+          pageSize: 10,
+          totalCount: 0,
+          totalPages: 1,
+        },
+      });
+      fixture.changeDetectorRef.markForCheck();
+      fixture.detectChanges();
+
+      expect(component.isLoading).toBeFalse();
+      expect(component.isBusy()).toBeTrue();
+      expect(
+        fixture.debugElement.query(By.css('app-print-empty-state'))
+      ).toBeNull();
+
+      await waitPastSkeletonDwell();
+
+      expect(component.isBusy()).toBeFalse();
+      expect(
+        fixture.debugElement.query(By.css('app-print-empty-state'))
+      ).toBeTruthy();
+      expect(fixture.debugElement.query(By.css('mat-progress-bar'))).toBeNull();
     });
 
     // The live region is silenced only for a first-paint skeleton, where the

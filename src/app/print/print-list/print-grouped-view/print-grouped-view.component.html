@@ -28,7 +28,14 @@
     would flash "No prints found" on every visit.
   -->
 } @else if (!feed()?.items?.length) {
-  <ng-content select="[printEmptyState]" />
+  <!--
+    Held back while the progress bar above is still serving out its minimum
+    dwell. An empty state beside a running indicator contradicts it, and the
+    bar outlives loading() by up to 400ms after a refetch returns nothing.
+  -->
+  @if (!isBusy()) {
+    <ng-content select="[printEmptyState]" />
+  }
 } @else {
   <!-- Mobile Card View -->
   <div

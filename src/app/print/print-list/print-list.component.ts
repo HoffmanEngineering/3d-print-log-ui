@@ -269,6 +269,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
    */
   private readonly loadingIndicator = new DeferredSkeletonController();
 
+  /**
+   * True while ANY busy affordance is on screen — skeleton or progress bar.
+   *
+   * Deliberately outlives `isLoading`: the minimum dwell keeps an indicator up
+   * for up to 400ms after the response lands. Anything that must not contradict
+   * a visible indicator — the empty state above all, since "No prints found"
+   * beside a running progress bar is a lie — has to gate on this, not on
+   * `isLoading` alone.
+   */
+  readonly isBusy = this.loadingIndicator.visible;
+
   /** First load with nothing to preserve: draw placeholder rows. */
   readonly showSkeleton = computed(
     () => this.loadingIndicator.visible() && !this.hasLoadedOnce()

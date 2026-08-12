@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve --ssl --host 0.0.0.0 ",
     "start:auth0": "ng serve --ssl --host 0.0.0.0 --configuration=auth0-dev",
+    "start:e2e": "ng serve --configuration=e2e --host 0.0.0.0",
     "build:dev": "ng build --verbose",
     "build": "ng build --configuration production --verbose && node scripts/generate-shells.mjs",
     "test": "ng test",

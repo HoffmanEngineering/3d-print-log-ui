@@ -11,7 +11,9 @@
 // The cy.wait('@alias') calls are load-bearing: without them a mistyped glob
 // silently turns either test into a no-op.
 
-const API = 'https://localhost:5001';
+import { apiUrl } from '../../support/api-url';
+
+const API = apiUrl();
 const ANON_HEADERS = { 'allow-anonymous-request': 'true' };
 
 describe('Anonymous public print with a failing side-channel endpoint', () => {

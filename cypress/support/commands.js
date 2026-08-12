@@ -1,3 +1,5 @@
+import { apiUrl } from './api-url';
+
 Cypress.Commands.add('login', () => {
   cy.session('dev-bypass', () => {
     cy.visit('/');
@@ -54,7 +56,7 @@ Cypress.Commands.add('checkA11yWithReport', (context, options) => {
 // development (`X-Dev-User-Id`, defaulting to user 1). It only works against a
 // dev/e2e API.
 Cypress.Commands.add('seedPublicPrintFixture', () => {
-  const api = 'https://localhost:5001';
+  const api = apiUrl();
   const devHeaders = { 'X-Dev-User-Id': '1' };
   const stamp = Date.now();
 

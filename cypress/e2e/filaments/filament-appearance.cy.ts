@@ -170,14 +170,13 @@ describe('Color Pattern — swatch rendering', () => {
     cy.wait('@getFilaments');
     cy.get('#filament-list-search-input').clear().type(name);
     cy.wait('@getFilaments');
-    cy.get('[data-cy-filament-row]')
-      .first()
+    cy.contains('[data-cy-filament-row]', name)
       .find('.filament-color-cell')
-      .invoke('attr', 'style')
-      .then((style) => {
+      .should(($el) => {
+        const style = $el.attr('style') ?? '';
         expect(style).to.include('linear-gradient(90deg');
         // Chrome normalizes hex to rgb; hard stops means each color appears twice → 6 rgb() entries for 3 colors
-        const rgbMatches = style!.match(/rgb\(/g) ?? [];
+        const rgbMatches = style.match(/rgb\(/g) ?? [];
         expect(rgbMatches.length).to.be.at.least(6);
       });
   });
@@ -203,14 +202,13 @@ describe('Color Pattern — swatch rendering', () => {
     cy.wait('@getFilaments');
     cy.get('#filament-list-search-input').clear().type(name);
     cy.wait('@getFilaments');
-    cy.get('[data-cy-filament-row]')
-      .first()
+    cy.contains('[data-cy-filament-row]', name)
       .find('.filament-color-cell')
-      .invoke('attr', 'style')
-      .then((style) => {
+      .should(($el) => {
+        const style = $el.attr('style') ?? '';
         expect(style).to.include('linear-gradient(90deg');
         // Chrome normalizes hex to rgb; Classic preset has 6 colors → at least 6 rgb() entries
-        const rgbMatches = style!.match(/rgb\(/g) ?? [];
+        const rgbMatches = style.match(/rgb\(/g) ?? [];
         expect(rgbMatches.length).to.be.at.least(6);
       });
   });
@@ -238,11 +236,10 @@ describe('Finish Type — swatch rendering', () => {
     cy.wait('@getFilaments');
     cy.get('#filament-list-search-input').clear().type(name);
     cy.wait('@getFilaments');
-    cy.get('[data-cy-filament-row]')
-      .first()
+    cy.contains('[data-cy-filament-row]', name)
       .find('.filament-color-cell')
-      .invoke('attr', 'style')
-      .then((style) => {
+      .should(($el) => {
+        const style = $el.attr('style') ?? '';
         expect(style).to.include('background');
         expect(style).not.to.include('filter');
         expect(style).not.to.include('linear-gradient(110deg');
@@ -267,11 +264,10 @@ describe('Finish Type — swatch rendering', () => {
     cy.wait('@getFilaments');
     cy.get('#filament-list-search-input').clear().type(name);
     cy.wait('@getFilaments');
-    cy.get('[data-cy-filament-row]')
-      .first()
+    cy.contains('[data-cy-filament-row]', name)
       .find('.filament-color-cell')
-      .invoke('attr', 'style')
-      .then((style) => {
+      .should(($el) => {
+        const style = $el.attr('style') ?? '';
         expect(style).to.include('background-image');
         expect(style).to.include('linear-gradient(110deg');
         expect(style).to.include('background-size: 200%');
@@ -329,11 +325,10 @@ describe('Effects — swatch rendering', () => {
     cy.wait('@getFilaments');
     cy.get('#filament-list-search-input').clear().type(name);
     cy.wait('@getFilaments');
-    cy.get('[data-cy-filament-row]')
-      .first()
+    cy.contains('[data-cy-filament-row]', name)
       .find('.filament-color-cell')
-      .invoke('attr', 'style')
-      .then((style) => {
+      .should(($el) => {
+        const style = $el.attr('style') ?? '';
         expect(style).to.include('box-shadow');
         expect(style).to.match(/rgba\(120,\s*255,\s*120/);
       });
@@ -597,8 +592,10 @@ describe('Cross-screen swatch rendering', () => {
 
     cy.visit('/prints');
     cy.findByRole('button', { name: /reset filters/i }).click();
+    // The print row renders its material swatch through app-filament-color-swatch
+    // (class "swatch"), not the .filament-color-cell the filament list uses.
     cy.contains('[cy-print-row]', printTitle)
-      .find('.filament-color-cell')
+      .find('app-filament-color-swatch .swatch')
       .invoke('attr', 'style')
       .should('include', 'linear-gradient');
   });

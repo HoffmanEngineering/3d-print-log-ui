@@ -129,3 +129,19 @@ cy.get('#add-new-filament-usage-btn').click();
 cy.get('[data-cy="select-filament-btn"]').click();
 cy.wait('@getFilamentsModal');
 ```
+
+## Running in CI
+
+`.github/workflows/e2e.yml` runs the suite nightly, on `workflow_dispatch`, and
+on PRs labeled `run-e2e`. CI differs from local in two ways that matter when
+writing specs:
+
+- **Both servers are plain HTTP** — the UI on `http://localhost:4200` (the
+  Angular `e2e` configuration) and the API on `http://localhost:5000`. Never
+  hardcode an API URL in a spec; import `apiUrl()` from
+  `cypress/support/api-url.js`, which reads `CYPRESS_apiUrl` and falls back to
+  the local HTTPS default.
+- **The database is seeded, not your dev data.** It is dropped and re-seeded on
+  every API boot by `E2EDataSeeder` in the API repo. A spec that depends on data
+  no one seeded will pass locally and fail in CI. Either create what you need in
+  the spec, or add it to the seeder.

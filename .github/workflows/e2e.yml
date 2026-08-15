@@ -1,0 +1,198 @@
+name: E2E
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      api_ref:
+        description: 'Ref of 3d-print-log-api to test against'
+        required: false
+        default: 'main'
+  pull_request:
+    branches: [main]
+    types: [labeled, synchronize]
+
+concurrency:
+  # The event name is part of the group so a manual dispatch on main cannot
+  # cancel an in-flight nightly run, or vice versa. Without it both share the
+  # group `e2e-refs/heads/main`.
+  group: e2e-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SA_PASSWORD: 'E2ePassw0rd!Local'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Two conditions, both needed:
+    #  - the PR must currently carry `run-e2e`, so a `synchronize` push to a
+    #    labeled PR re-runs the suite;
+    #  - if this run was triggered BY a label, it must have been that label.
+    #    Without the second clause, adding any unrelated label to an already
+    #    labeled PR fires a full e2e run.
+    if: >
+      github.event_name != 'pull_request' ||
+      (contains(github.event.pull_request.labels.*.name, 'run-e2e') &&
+       (github.event.action != 'labeled' || github.event.label.name == 'run-e2e'))
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: 'E2ePassw0rd!Local'
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+
+    steps:
+      - name: Check out the UI
+        uses: actions/checkout@v4
+
+      - name: Check out the API
+        uses: actions/checkout@v4
+        with:
+          repository: HoffmanEngineering/3d-print-log-api
+          ref: ${{ inputs.api_ref || 'main' }}
+          path: api
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install UI dependencies
+        run: npm ci
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Start Azurite
+        run: |
+          npm install -g azurite
+          mkdir -p "$RUNNER_TEMP/azurite"
+          nohup azurite --silent --location "$RUNNER_TEMP/azurite" \
+            > azurite.log 2>&1 &
+          npx wait-on tcp:127.0.0.1:10000 -t 60000
+
+      - name: Wait for SQL Server
+        run: |
+          set -euo pipefail
+          container='${{ job.services.mssql.id }}'
+
+          sqlcmd_path=''
+          for candidate in /opt/mssql-tools18/bin/sqlcmd /opt/mssql-tools/bin/sqlcmd; do
+            if docker exec "$container" test -x "$candidate"; then
+              sqlcmd_path="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$sqlcmd_path" ]; then
+            echo "::error::No sqlcmd found in the SQL Server image. Checked /opt/mssql-tools18/bin and /opt/mssql-tools/bin."
+            exit 1
+          fi
+
+          echo "Probing with $sqlcmd_path"
+          for attempt in $(seq 1 30); do
+            if docker exec "$container" "$sqlcmd_path" \
+                 -S localhost -U sa -P "$SA_PASSWORD" -C -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "SQL Server answered a query on attempt $attempt."
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "::error::SQL Server did not answer a query within 60s."
+          docker logs "$container" | tail -50
+          exit 1
+
+      - name: Start the API
+        env:
+          ASPNETCORE_ENVIRONMENT: E2ETesting
+          ASPNETCORE_URLS: http://localhost:5000
+          ConnectionString__PrintLogDb: 'Server=localhost,1433;Database=PrintLogDb_E2E;User Id=sa;Password=E2ePassw0rd!Local;TrustServerCertificate=True'
+          AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true'
+          Feed__AllowedUserIds__0: '1'
+        run: |
+          nohup dotnet run \
+            --project api/PrintLogApi/PrintLogApi.csproj \
+            --no-launch-profile \
+            > api.log 2>&1 &
+          echo "$!" > api.pid
+          # `&` returning does not mean the process lives; a bad connection
+          # string can exit it within a second. Confirm it is still running
+          # before the readiness step starts a three-minute wait on a corpse.
+          sleep 5
+          if ! kill -0 "$(cat api.pid)" 2>/dev/null; then
+            echo "::error::The API process exited immediately after launch."
+            cat api.log
+            exit 1
+          fi
+          echo "API process is alive."
+
+      - name: Wait for the API
+        run: |
+          set -uo pipefail
+          if ! npx wait-on tcp:localhost:5000 -t 180000; then
+            echo "::error::The API never listened on port 5000."
+            tail -100 api.log
+            exit 1
+          fi
+
+          # An open socket is necessary but not sufficient. Assert the API
+          # answers a real request AND that the seed ran, so a boot that
+          # silently landed in the wrong environment fails here — where api.log
+          # is at hand — rather than as a wall of confusing Cypress failures.
+          if ! curl -fsS -H 'X-Dev-User-Id: 1' \
+               "http://localhost:5000/api/Filaments?PageNumber=1&PageSize=10" \
+               -o filaments.json; then
+            echo "::error::The API listened but did not serve /api/Filaments."
+            tail -100 api.log
+            exit 1
+          fi
+
+          if ! grep -q 'Seed ' filaments.json; then
+            echo "::error::The API is up but the E2E seed data is missing. The most likely cause is the API booting outside the E2ETesting environment (check --no-launch-profile)."
+            tail -100 api.log
+            exit 1
+          fi
+          echo "API is serving seeded data."
+
+      - name: Run Cypress
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          start: npm run start:e2e
+          wait-on: 'http://localhost:4200'
+          wait-on-timeout: 180
+          config: video=true
+        env:
+          CYPRESS_BASE_URL: http://localhost:4200
+          CYPRESS_apiUrl: http://localhost:5000
+
+      - name: Upload Cypress artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          if-no-files-found: ignore
+          path: |
+            cypress/screenshots
+            cypress/videos
+
+      - name: Upload server logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs
+          if-no-files-found: ignore
+          path: |
+            api.log
+            azurite.log

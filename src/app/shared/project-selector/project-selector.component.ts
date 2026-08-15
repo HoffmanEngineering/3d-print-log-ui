@@ -80,6 +80,11 @@ export class ProjectSelectorComponent implements OnInit {
           .getProjectById(this.initialProjectId()!)
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((project) => {
+            // The print detail payload carries projectId but not projectName, so the name
+            // arrives on this round trip — potentially after the user has started typing.
+            // Prefilling on top of their keystrokes splices the old name into the new one,
+            // which then gets created as a project under that mangled name.
+            if (this.searchControl.dirty) return;
             this.applyInitialProject(project.id, project.name, project.status);
           });
       }

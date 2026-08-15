@@ -14,6 +14,7 @@ import {
 } from 'src/app/core/services/project.service';
 import { ReactiveFormsModule } from '@angular/forms';
 import { of } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('ProjectSelectorComponent', () => {
@@ -164,6 +165,31 @@ describe('ProjectSelectorComponent', () => {
       expect(selected.projectName).toBe('Voron Build');
     }
     expect(fixture.componentInstance.searchControl.value).toBe('Voron Build');
+  }));
+
+  it('should not overwrite text the user typed while the project name was still loading', fakeAsync(() => {
+    // The print detail payload carries projectId but not projectName, so the name arrives
+    // on a round trip that can land after the user has started typing. Prefilling then
+    // splices the old name into the new one (#projects e2e).
+    mockProjectService.getProjectById.and.returnValue(
+      of({
+        id: 'abc',
+        name: 'Voron Build',
+        status: ProjectStatus.InProgress,
+      } as ProjectDetailDto).pipe(delay(100))
+    );
+
+    fixture.componentRef.setInput('initialProjectId', 'abc');
+    fixture.detectChanges();
+
+    // The user types before the name resolves.
+    fixture.componentInstance.searchControl.markAsDirty();
+    fixture.componentInstance.searchControl.setValue('Benchy Batch');
+
+    tick(250);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.searchControl.value).toBe('Benchy Batch');
   }));
 
   it('should clear selectedProject and emit null when clear button clicked after initial project', fakeAsync(() => {

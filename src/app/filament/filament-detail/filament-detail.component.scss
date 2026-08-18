@@ -45,35 +45,18 @@ mat-card-title {
   }
 }
 
-// The page is a single DOM order (form, then rail cards) reordered by grid
-// areas, so the mobile reading order puts the remaining figure first without
-// duplicating any markup.
+// One column on narrow viewports, laid out in DOM order: stats, form, prints, ad.
+// No named areas here on purpose — declaring the four rows explicitly would keep
+// their 24px gaps even in add and copy mode, where the stats and prints elements
+// do not exist and the ad is hidden, leaving stray space around the form.
 .detail-layout {
   display: grid;
   gap: 24px;
   justify-content: center;
   grid-template-columns: minmax(0, 560px);
-  grid-template-areas:
-    'stats'
-    'form'
-    'prints'
-    'ad';
-}
-
-.form-card {
-  grid-area: form;
-}
-
-.rail-stats {
-  grid-area: stats;
-}
-
-.rail-prints {
-  grid-area: prints;
 }
 
 .rail-ad {
-  grid-area: ad;
   // Matches the `fxHide fxShow.gt-md` this element replaces: ngx-layout's
   // `gt-md` is `min-width: 1280px`, the same threshold used below.
   display: none;
@@ -81,7 +64,9 @@ mat-card-title {
 
 @media (min-width: 1280px) {
   // With the rail: stats, prints and the ad share one 340px column, so the page
-  // absorbs the old ad sidebar rather than becoming three columns.
+  // absorbs the ad sidebar that already lived there rather than becoming three
+  // columns. Named areas exist only at this width, and every child is assigned
+  // one here so no item is auto-placed into an implicit track.
   .detail-layout.has-rail {
     grid-template-columns: minmax(0, 560px) 340px;
     grid-template-areas:
@@ -89,21 +74,42 @@ mat-card-title {
       'form prints'
       'form ad';
     align-items: start;
+
+    .form-card {
+      grid-area: form;
+    }
+
+    .rail-stats {
+      grid-area: stats;
+      // Keeps the number on screen while the user scrolls the long form down to
+      // the Weights section, which is exactly when it matters.
+      position: sticky;
+      top: 16px;
+    }
+
+    .rail-prints {
+      grid-area: prints;
+    }
+
+    .rail-ad {
+      grid-area: ad;
+    }
   }
 
-  // Add and copy modes have no rail content, but the ad keeps the side
-  // placement it has today rather than dropping below the form.
+  // Add and copy modes have no rail content, but the ad keeps the side placement
+  // it has today rather than dropping below the form.
   .detail-layout:not(.has-rail) {
     grid-template-columns: minmax(0, 560px) 300px;
     grid-template-areas: 'form ad';
     align-items: start;
-  }
 
-  .detail-layout.has-rail .rail-stats {
-    // Keeps the number on screen while the user scrolls the long form down to
-    // the Weights section, which is exactly when it matters.
-    position: sticky;
-    top: 16px;
+    .form-card {
+      grid-area: form;
+    }
+
+    .rail-ad {
+      grid-area: ad;
+    }
   }
 
   .rail-ad {

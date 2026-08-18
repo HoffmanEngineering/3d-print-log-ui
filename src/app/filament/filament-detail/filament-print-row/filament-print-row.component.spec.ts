@@ -107,6 +107,48 @@ describe('FilamentPrintRowComponent', () => {
     expect(el.querySelector('.estimated-marker')).toBeFalsy();
   });
 
+  it('sums rows recorded in different units', () => {
+    // 12 g of actual weight plus a 10 m estimated length row. Totalling each
+    // column separately and then formatting with the FIRST row's source unit
+    // would report 12 g and silently drop the 10 m entirely.
+    const lengthRow = {
+      id: 'usage-length',
+      filament: {
+        id: FILAMENT_ID,
+        materialDensityGramPerCubicCm: 1.24,
+        diameterMm: 1.75,
+      },
+      estimatedLengthInM: 10,
+      estimatedSource: PrintFilamentSourceMeasurement.Length,
+      source: PrintFilamentSourceMeasurement.Length,
+    } as never;
+
+    const el = render(printWith([usage(12_000), lengthRow]));
+
+    // 10 m of 1.75mm PLA is ~29.8 g, so the total is ~41.8 g, not 12 g.
+    expect(el.textContent).not.toContain('12.0g');
+    expect(el.textContent).toContain('41.8g');
+  });
+
+  it('sums rows that are all recorded as lengths', () => {
+    const lengthRow = (m: number) =>
+      ({
+        id: 'usage-' + m,
+        filament: {
+          id: FILAMENT_ID,
+          materialDensityGramPerCubicCm: 1.24,
+          diameterMm: 1.75,
+        },
+        lengthInM: m,
+        source: PrintFilamentSourceMeasurement.Length,
+      }) as never;
+
+    const el = render(printWith([lengthRow(4), lengthRow(6)]));
+
+    // Preferred unit is Weight, so a combined 10 m converts to ~29.8 g.
+    expect(el.textContent).toContain('29.8g');
+  });
+
   it('renders a placeholder when the print has no image', () => {
     const el = render(printWith([usage(12_000)], { defaultPrintImageId: 0 }));
     expect(el.querySelector('.thumb-placeholder')).toBeTruthy();

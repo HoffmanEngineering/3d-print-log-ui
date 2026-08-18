@@ -1,4 +1,26 @@
 <div class="detail-layout" [class.has-rail]="showUsagePanels()">
+  <!-- The stats card sits before the form in the DOM because that is the order it
+       is read in on a narrow viewport. Grid areas move it to the right-hand rail on
+       wide viewports, but grid reordering does not move keyboard or screen-reader
+       order, so the DOM has to carry the meaningful sequence itself. -->
+  @if (showUsagePanels()) {
+    <div class="rail-stats">
+      <app-filament-remaining-card
+        [remainingMg]="remainingProjection().remainingMg"
+        [projectedMg]="remainingProjection().projectedMg"
+        [isSuppressed]="remainingProjection().isSuppressed"
+        [nominalMg]="loadedFilament?.initialNominalWeightMg ?? null"
+        [lengthRemainingM]="loadedFilament?.filamentLengthRemainingInM ?? null"
+        [volumeRemainingMl]="
+          loadedFilament?.filamentVolumeRemainingInMl ?? null
+        "
+        [totalUsedMg]="loadedFilament?.totalUsedMg ?? null"
+        [printCount]="loadedFilament?.printCount ?? null"
+        (focusNominalWeight)="focusNominalWeight()"
+      ></app-filament-remaining-card>
+    </div>
+  }
+
   <mat-card appearance="outlined" class="form-card">
     <form
       [formGroup]="filamentForm"
@@ -1043,22 +1065,6 @@
   </mat-card>
 
   @if (showUsagePanels()) {
-    <div class="rail-stats">
-      <app-filament-remaining-card
-        [remainingMg]="remainingProjection().remainingMg"
-        [projectedMg]="remainingProjection().projectedMg"
-        [isSuppressed]="remainingProjection().isSuppressed"
-        [nominalMg]="loadedFilament?.initialNominalWeightMg ?? null"
-        [lengthRemainingM]="loadedFilament?.filamentLengthRemainingInM ?? null"
-        [volumeRemainingMl]="
-          loadedFilament?.filamentVolumeRemainingInMl ?? null
-        "
-        [totalUsedMg]="loadedFilament?.totalUsedMg ?? null"
-        [printCount]="loadedFilament?.printCount ?? null"
-        (focusNominalWeight)="focusNominalWeight()"
-      ></app-filament-remaining-card>
-    </div>
-
     <div class="rail-prints">
       <app-filament-prints-panel
         [filamentId]="loadedFilament.id"

@@ -13,7 +13,7 @@ import { FilamentDetailResolverService } from './resolvers/filament-detail-resol
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { MaterialResolverService } from './resolvers/material-resolver.service';
 import { MaterialCategoryResolverService } from '../core/resolvers/material-category-resolver.service';
-import { PreferredFilamentDisplayUnitSettingResolverService } from '../core/resolvers/preferred-filament-display-unit-setting-resolver.service';
+import { FilamentDisplayUnitResolverService } from './resolvers/filament-display-unit-resolver.service';
 import { FilamentStorageLocationResolverService } from './resolvers/filament-storage-location-resolver.service';
 
 export const filamentRoutes: Routes = [
@@ -44,7 +44,7 @@ export const filamentRoutes: Routes = [
             DefaultFilamentPriceSettingResolverService,
           materialCategories: MaterialCategoryResolverService,
           preferredFilamentDisplayUnitSetting:
-            PreferredFilamentDisplayUnitSettingResolverService,
+            FilamentDisplayUnitResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -62,7 +62,7 @@ export const filamentRoutes: Routes = [
             DefaultFilamentPriceSettingResolverService,
           materialCategories: MaterialCategoryResolverService,
           preferredFilamentDisplayUnitSetting:
-            PreferredFilamentDisplayUnitSettingResolverService,
+            FilamentDisplayUnitResolverService,
         },
         canDeactivate: [PendingChangesGuard],
       },

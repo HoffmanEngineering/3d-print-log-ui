@@ -13,7 +13,7 @@ import {
   ProjectViewStatus,
 } from 'src/app/core/services/project.service';
 import { ReactiveFormsModule } from '@angular/forms';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -207,5 +207,34 @@ describe('ProjectSelectorComponent', () => {
 
     expect(fixture.componentInstance.selectedProject()).toBeNull();
     expect(emitted[0]).toBeNull();
+  }));
+
+  it('reports a failed lookup and clears the message once a retry succeeds', fakeAsync(() => {
+    // Without a handler the failure would leave an empty autocomplete with no
+    // explanation, and the stream would be dead for the rest of the dialog's life.
+    mockProjectService.getProjectSummaries.and.returnValue(
+      throwError(() => new Error('boom'))
+    );
+    fixture.detectChanges();
+    tick(250);
+
+    expect(fixture.componentInstance.loadFailed()).toBeTrue();
+
+    mockProjectService.getProjectSummaries.and.returnValue(
+      of({
+        paging: { currentPage: 1, totalPages: 1, pageSize: 25, totalCount: 1 },
+        items: [{ id: 'p1', name: 'Recovered', status: 1 }],
+      } as any)
+    );
+    const callsBefore = mockProjectService.getProjectSummaries.calls.count();
+
+    fixture.componentInstance.retry();
+    tick(250);
+
+    expect(mockProjectService.getProjectSummaries.calls.count()).toBe(
+      callsBefore + 1
+    );
+    expect(fixture.componentInstance.loadFailed()).toBeFalse();
+    expect(fixture.componentInstance.filteredProjects().length).toBe(1);
   }));
 });

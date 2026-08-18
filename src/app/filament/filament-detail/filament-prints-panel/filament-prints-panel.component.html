@@ -17,7 +17,9 @@
       }
       @case ('error') {
         <p class="error-text">Couldn't load prints.</p>
-        <button mat-stroked-button type="button" (click)="retry()">Retry</button>
+        <button mat-stroked-button type="button" (click)="retry()">
+          Retry
+        </button>
       }
       @case ('ready') {
         @if (prints().length === 0) {
@@ -31,7 +33,11 @@
             ></app-filament-print-row>
           }
           @if (hasMore()) {
-            <a class="view-all" [routerLink]="['/prints']" [queryParams]="viewAllParams()">
+            <a
+              class="view-all"
+              [routerLink]="['/prints']"
+              [queryParams]="viewAllParams()"
+            >
               View all {{ totalCount() }} prints
             </a>
           }

@@ -27,7 +27,12 @@
            usage resolves each row before summing, so the synthetic row it formats
            no longer knows that one of its contributions was an estimate. -->
       @if (isEstimated()) {
-        <span class="estimated-marker" matTooltip="Estimated usage" aria-label="Estimated">*</span>
+        <span
+          class="estimated-marker"
+          matTooltip="Estimated usage"
+          aria-label="Estimated"
+          >*</span
+        >
       }
     </span>
   }

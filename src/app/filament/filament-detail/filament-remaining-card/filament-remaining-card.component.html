@@ -16,14 +16,16 @@
           {{ -(displayMg() ?? 0) / 1000 | number: '1.0-0' }} g over-used
         </p>
         <p class="hint">
-          More filament has been logged than this spool held. Check the prints below or add an
-          adjustment.
+          More filament has been logged than this spool held. Check the prints
+          below or add an adjustment.
         </p>
       } @else {
         <p class="headline">
           {{ (displayMg() ?? 0) / 1000 | number: '1.0-0' }} g
           @if (nominalMg()) {
-            <span class="of-total">of {{ (nominalMg() ?? 0) / 1000 | number: '1.0-0' }} g left</span>
+            <span class="of-total"
+              >of {{ (nominalMg() ?? 0) / 1000 | number: '1.0-0' }} g left</span
+            >
           }
         </p>
       }
@@ -65,8 +67,14 @@
       </dl>
     } @else {
       <p class="headline muted">Not tracked</p>
-      <p class="hint">Set an initial nominal weight to track how much is left.</p>
-      <button mat-stroked-button type="button" (click)="focusNominalWeight.emit()">
+      <p class="hint">
+        Set an initial nominal weight to track how much is left.
+      </p>
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="focusNominalWeight.emit()"
+      >
         Set nominal weight
       </button>
     }

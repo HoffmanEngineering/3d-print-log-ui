@@ -1050,7 +1050,9 @@
         [isSuppressed]="remainingProjection().isSuppressed"
         [nominalMg]="loadedFilament?.initialNominalWeightMg ?? null"
         [lengthRemainingM]="loadedFilament?.filamentLengthRemainingInM ?? null"
-        [volumeRemainingMl]="loadedFilament?.filamentVolumeRemainingInMl ?? null"
+        [volumeRemainingMl]="
+          loadedFilament?.filamentVolumeRemainingInMl ?? null
+        "
         [totalUsedMg]="loadedFilament?.totalUsedMg ?? null"
         [printCount]="loadedFilament?.printCount ?? null"
         (focusNominalWeight)="focusNominalWeight()"

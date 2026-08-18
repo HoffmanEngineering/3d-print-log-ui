@@ -1,0 +1,37 @@
+.prints-panel {
+  width: 100%;
+}
+
+.panel-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.count {
+  font-size: 0.875rem;
+  opacity: 0.75;
+}
+
+.skeleton-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty-text,
+.error-text {
+  margin: 8px 0;
+  font-size: 0.875rem;
+  opacity: 0.75;
+}
+
+.view-all {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.875rem;
+}

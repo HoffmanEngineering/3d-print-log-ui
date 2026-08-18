@@ -39,8 +39,8 @@ describe('PrintBulkActionBarComponent', () => {
 
   beforeEach(async () => {
     printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'updatePrintStatus',
-      'deletePrint',
+      'bulkUpdatePrints',
+      'bulkDeletePrints',
     ]);
     toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
       'success',
@@ -131,22 +131,25 @@ describe('PrintBulkActionBarComponent', () => {
 
   describe('set status', () => {
     it('updates every selected print and reports success', async () => {
-      printService.updatePrintStatus.and.returnValue(of({}));
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [printOne.id, printTwo.id], failed: [] })
+      );
       bulkActions.toggleSelectAllOnPage([printOne, printTwo]);
 
       await component.setStatus(successStatusOption());
 
-      expect(printService.updatePrintStatus).toHaveBeenCalledTimes(2);
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledTimes(1);
       expect(toastr.success).toHaveBeenCalled();
       expect(toastr.error).not.toHaveBeenCalled();
       expect(component.resultMessage()).toBe('2 prints updated.');
     });
 
     it('reports a partial failure and says the failures stay selected', async () => {
-      printService.updatePrintStatus.and.callFake((id: number) =>
-        id === printTwo.id
-          ? throwError(() => new Error('boom'))
-          : (of({}) as any)
+      printService.bulkUpdatePrints.and.returnValue(
+        of({
+          succeeded: [printOne.id],
+          failed: [{ id: printTwo.id, reason: 'Forbidden' }],
+        })
       );
       bulkActions.toggleSelectAllOnPage([printOne, printTwo]);
 
@@ -160,7 +163,9 @@ describe('PrintBulkActionBarComponent', () => {
     });
 
     it('emits batchCompleted so the list can refresh', async () => {
-      printService.updatePrintStatus.and.returnValue(of({}));
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [printOne.id], failed: [] })
+      );
       bulkActions.toggleSelection(printOne);
 
       let emitted: BulkActionResult | null = null;
@@ -172,13 +177,16 @@ describe('PrintBulkActionBarComponent', () => {
         succeededIds: [printOne.id],
         failedIds: [],
         failuresRetained: false,
+        errorMessage: null,
       });
     });
   });
 
   describe('delete', () => {
     it('confirms with a dialog naming the count before deleting', async () => {
-      printService.deletePrint.and.returnValue(of({}));
+      printService.bulkDeletePrints.and.returnValue(
+        of({ succeeded: [printOne.id, printTwo.id], failed: [] })
+      );
       bulkActions.toggleSelectAllOnPage([printOne, printTwo]);
 
       await component.deleteSelected();
@@ -187,11 +195,16 @@ describe('PrintBulkActionBarComponent', () => {
       expect(dialogRef.componentInstance['title']).toBe('Delete?');
       expect(dialogRef.componentInstance['body']).toContain('2 prints');
       expect(dialogRef.componentInstance['yesText']).toBe('Delete');
-      expect(printService.deletePrint).toHaveBeenCalledTimes(2);
+      expect(printService.bulkDeletePrints).toHaveBeenCalledWith([
+        printOne.id,
+        printTwo.id,
+      ]);
     });
 
     it('uses the singular noun for a single print', async () => {
-      printService.deletePrint.and.returnValue(of({}));
+      printService.bulkDeletePrints.and.returnValue(
+        of({ succeeded: [printOne.id], failed: [] })
+      );
       bulkActions.toggleSelection(printOne);
 
       await component.deleteSelected();
@@ -205,7 +218,7 @@ describe('PrintBulkActionBarComponent', () => {
 
       await component.deleteSelected();
 
-      expect(printService.deletePrint).not.toHaveBeenCalled();
+      expect(printService.bulkDeletePrints).not.toHaveBeenCalled();
       expect(bulkActions.selectedCount()).toBe(2);
     });
   });

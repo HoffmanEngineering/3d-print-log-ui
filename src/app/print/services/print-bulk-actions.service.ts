@@ -1,10 +1,13 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
+  BulkPrintResult,
   PrintService,
   PrintStatus,
   PrintSummary,
+  PrintViewStatus,
 } from 'src/app/core/services/print.service';
 
 /**
@@ -19,12 +22,46 @@ export interface BulkActionResult {
    * choice wins, and the caller must not claim the failures are still selected.
    */
   failuresRetained: boolean;
+  /**
+   * Set when the request itself was rejected (a 400), so the caller can show the API's
+   * reason rather than a generic count. Null when the batch ran normally.
+   */
+  errorMessage: string | null;
 }
 
 /**
  * The kind of batch currently running, used for the progress copy and the analytics event name.
  */
-export type BulkActionKind = 'status' | 'delete';
+export type BulkActionKind =
+  | 'status'
+  | 'delete'
+  | 'project'
+  // Removal is its own kind, not a 'project' with an empty value: it needs its own
+  // progress copy and its own analytics event.
+  | 'removeProject'
+  | 'visibility'
+  | 'printer'
+  | 'permissions';
+
+const PROGRESS_VERBS: Record<BulkActionKind, string> = {
+  status: 'Updating status',
+  delete: 'Deleting',
+  project: 'Assigning to project',
+  removeProject: 'Removing from project',
+  visibility: 'Updating visibility',
+  printer: 'Reassigning printer',
+  permissions: 'Updating permissions',
+};
+
+const COMPLETED_EVENTS: Record<BulkActionKind, string> = {
+  status: 'SetStatusCompleted',
+  delete: 'DeleteCompleted',
+  project: 'SetProjectCompleted',
+  removeProject: 'RemoveProjectCompleted',
+  visibility: 'SetVisibilityCompleted',
+  printer: 'SetPrinterCompleted',
+  permissions: 'SetPermissionsCompleted',
+};
 
 /**
  * Owns multi-select state for the print list and runs bulk actions against the
@@ -87,7 +124,8 @@ export class PrintBulkActionsService {
     if (!this.running()) {
       return '';
     }
-    const verb = this.kind() === 'delete' ? 'Deleting' : 'Updating status';
+    const kind = this.kind();
+    const verb = kind ? PROGRESS_VERBS[kind] : 'Working';
     return `${verb}: ${this.processed()} of ${this.total()}`;
   });
 
@@ -165,71 +203,154 @@ export class PrintBulkActionsService {
   }
 
   /**
-   * Applies `newStatus` to every selected print, one request at a time.
-   * Individual failures never abort the batch.
+   * Ids per request. Well under the API's 200 cap, and small enough that the determinate
+   * progress bar still moves several times on a large selection.
    */
+  private static readonly CHUNK_SIZE = 25;
+
+  /** Applies `newStatus` to every selected print. */
   public setStatusForSelected(
     newStatus: PrintStatus
   ): Promise<BulkActionResult> {
-    return this.runBatch('status', (print) =>
-      this.printService.updatePrintStatus(print.id, newStatus)
+    return this.runBulk('status', (printIds) =>
+      this.printService.bulkUpdatePrints({ printIds, status: newStatus })
+    );
+  }
+
+  /** Assigns every selected print to an existing project, moving any that were in another. */
+  public setProjectForSelected(projectId: string): Promise<BulkActionResult> {
+    return this.runBulk('project', (printIds) =>
+      this.printService.bulkUpdatePrints({ printIds, projectId })
+    );
+  }
+
+  /** Takes every selected print out of whatever project it was in. */
+  public removeProjectFromSelected(): Promise<BulkActionResult> {
+    return this.runBulk('removeProject', (printIds) =>
+      this.printService.bulkUpdatePrints({ printIds, clear: ['projectId'] })
+    );
+  }
+
+  /** Sets who can see every selected print. */
+  public setViewStatusForSelected(
+    viewStatus: PrintViewStatus
+  ): Promise<BulkActionResult> {
+    return this.runBulk('visibility', (printIds) =>
+      this.printService.bulkUpdatePrints({ printIds, viewStatus })
+    );
+  }
+
+  /** Moves every selected print onto another of the user's printers. */
+  public setPrinterForSelected(printerId: number): Promise<BulkActionResult> {
+    return this.runBulk('printer', (printIds) =>
+      this.printService.bulkUpdatePrints({ printIds, printerId })
+    );
+  }
+
+  /** Sets only the permissions named in `patch`; the others are left alone. */
+  public setPermissionsForSelected(patch: {
+    allowComments?: boolean;
+    allowFileDownloads?: boolean;
+  }): Promise<BulkActionResult> {
+    return this.runBulk('permissions', (printIds) =>
+      this.printService.bulkUpdatePrints({ printIds, ...patch })
     );
   }
 
   /**
-   * Deletes every selected print, one request at a time. The caller is
-   * responsible for confirming first.
+   * Deletes every selected print. The caller is responsible for confirming first.
    */
   public deleteSelected(): Promise<BulkActionResult> {
-    return this.runBatch('delete', (print) =>
-      this.printService.deletePrint(print.id)
+    return this.runBulk('delete', (printIds) =>
+      this.printService.bulkDeletePrints(printIds)
     );
   }
 
-  private async runBatch(
+  /**
+   * Runs one bulk action over the selection, 25 ids per request.
+   *
+   * Chunking is what keeps the progress bar determinate: `processed` advances by a whole
+   * chunk as each response lands. A chunk that errors marks its whole chunk failed and the
+   * run continues - the API writes a request all-or-nothing, so that report is accurate
+   * rather than merely pessimistic. A 400 means the request shape itself was rejected, so
+   * every remaining chunk would fail the same way and the run stops sending.
+   */
+  private async runBulk(
     kind: BulkActionKind,
-    operation: (print: PrintSummary) => Observable<unknown>
+    operation: (printIds: number[]) => Observable<BulkPrintResult>
   ): Promise<BulkActionResult> {
     const prints = this.selectedPrints();
     const result: BulkActionResult = {
       succeededIds: [],
       failedIds: [],
       failuresRetained: false,
+      errorMessage: null,
     };
 
     if (prints.length === 0 || this.running()) {
       return result;
     }
 
-    // The batch works from this snapshot, so the restore below must come from it
-    // too - reading the live selection back would lose the failures if the user
-    // changed the result set (which clears the selection) mid-batch.
+    // The batch works from this snapshot, so the restore below must come from it too -
+    // reading the live selection back would lose the failures if the user changed the
+    // result set (which clears the selection) mid-batch.
     const startEpoch = this.selectionEpoch;
+    const allIds = prints.map((print) => print.id);
+
+    const chunks: number[][] = [];
+    for (
+      let i = 0;
+      i < allIds.length;
+      i += PrintBulkActionsService.CHUNK_SIZE
+    ) {
+      chunks.push(allIds.slice(i, i + PrintBulkActionsService.CHUNK_SIZE));
+    }
 
     this.kind.set(kind);
-    this.total.set(prints.length);
+    this.total.set(allIds.length);
     this.processed.set(0);
     this.running.set(true);
 
     try {
-      for (const print of prints) {
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
         try {
-          await firstValueFrom(operation(print));
-          result.succeededIds.push(print.id);
+          const response = await firstValueFrom(operation(chunk));
+          result.succeededIds.push(...response.succeeded);
+          result.failedIds.push(
+            ...response.failed.map((failure) => failure.id)
+          );
         } catch (error) {
-          result.failedIds.push(print.id);
+          result.failedIds.push(...chunk);
           this.loggingService.logException(error);
+
+          if (error instanceof HttpErrorResponse && error.status === 400) {
+            // The request shape was rejected; the remaining chunks are identical apart
+            // from their ids, so sending them would only repeat the same rejection.
+            result.errorMessage =
+              error.error?.detail ??
+              error.error?.title ??
+              'The request was rejected.';
+            const unsent = chunks.slice(i + 1).flat();
+            result.failedIds.push(...unsent);
+            this.processed.set(allIds.length);
+            break;
+          }
         } finally {
-          this.processed.update((count) => count + 1);
+          // The 400 branch above already jumped the counter to the end, so this must not
+          // push it past the total.
+          this.processed.update((count) =>
+            Math.min(count + chunk.length, allIds.length)
+          );
         }
       }
     } finally {
       this.running.set(false);
     }
 
-    // Keep only the failures selected so the user can retry them directly. If the
-    // user touched the selection while the batch ran, their choice wins and we
-    // leave it alone - the result then says the failures were not retained.
+    // Keep only the failures selected so the user can retry them directly. If the user
+    // touched the selection while the batch ran, their choice wins and we leave it alone -
+    // the result then says the failures were not retained.
     if (this.selectionEpoch === startEpoch) {
       const failedIds = new Set(result.failedIds);
       const retained = new Map<number, PrintSummary>();
@@ -243,11 +364,9 @@ export class PrintBulkActionsService {
     }
 
     this.loggingService.logEvent(
-      kind === 'delete'
-        ? 'PrintBulkActionBar_DeleteCompleted'
-        : 'PrintBulkActionBar_SetStatusCompleted',
+      `PrintBulkActionBar_${COMPLETED_EVENTS[kind]}`,
       {
-        attempted: prints.length,
+        attempted: allIds.length,
         succeeded: result.succeededIds.length,
         failed: result.failedIds.length,
       }

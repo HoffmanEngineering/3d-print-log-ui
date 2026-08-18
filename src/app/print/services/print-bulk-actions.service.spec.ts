@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -5,6 +6,7 @@ import {
   PrintService,
   PrintStatus,
   PrintSummary,
+  PrintViewStatus,
 } from 'src/app/core/services/print.service';
 import { PrintBulkActionsService } from './print-bulk-actions.service';
 
@@ -23,8 +25,8 @@ describe('PrintBulkActionsService', () => {
 
   beforeEach(() => {
     printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'updatePrintStatus',
-      'deletePrint',
+      'bulkUpdatePrints',
+      'bulkDeletePrints',
     ]);
     logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logEvent',
@@ -127,25 +129,72 @@ describe('PrintBulkActionsService', () => {
     });
   });
 
+  function makePrints(count: number): PrintSummary[] {
+    return Array.from({ length: count }, (_, i) => makePrint(i + 1));
+  }
+
   describe('setStatusForSelected', () => {
-    it('calls the single-item endpoint once per selected print', async () => {
-      printService.updatePrintStatus.and.returnValue(of({}));
-      service.toggleSelectAllOnPage([printOne, printTwo]);
+    it('sends one request per 25-id chunk', async () => {
+      const prints = makePrints(60);
+      printService.bulkUpdatePrints.and.callFake((request) =>
+        of({ succeeded: request.printIds, failed: [] })
+      );
+      service.toggleSelectAllOnPage(prints);
 
       const result = await service.setStatusForSelected(PrintStatus.Success);
 
-      expect(printService.updatePrintStatus).toHaveBeenCalledTimes(2);
-      expect(printService.updatePrintStatus).toHaveBeenCalledWith(
-        printOne.id,
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledTimes(3);
+      const sizes = printService.bulkUpdatePrints.calls
+        .allArgs()
+        .map(([request]) => request.printIds.length);
+      expect(sizes).toEqual([25, 25, 10]);
+      expect(printService.bulkUpdatePrints.calls.first().args[0].status).toBe(
         PrintStatus.Success
       );
-      expect(result.succeededIds).toEqual([printOne.id, printTwo.id]);
+      expect(result.succeededIds.length).toBe(60);
       expect(result.failedIds).toEqual([]);
-      expect(result.failuresRetained).toBeFalse();
+    });
+
+    // The off-by-one that matters: 25 must be one request, not two.
+    [
+      { count: 24, expected: [24] },
+      { count: 25, expected: [25] },
+      { count: 26, expected: [25, 1] },
+    ].forEach(({ count, expected }) => {
+      it(`splits ${count} ids into chunks of ${expected.join(' + ')}`, async () => {
+        printService.bulkUpdatePrints.and.callFake((request) =>
+          of({ succeeded: request.printIds, failed: [] })
+        );
+        service.toggleSelectAllOnPage(makePrints(count));
+
+        await service.setStatusForSelected(PrintStatus.Success);
+
+        const sizes = printService.bulkUpdatePrints.calls
+          .allArgs()
+          .map(([request]) => request.printIds.length);
+        expect(sizes).toEqual(expected);
+      });
+    });
+
+    it('sends a single request when the selection fits one chunk', async () => {
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1, 2], failed: [] })
+      );
+      service.toggleSelectAllOnPage([printOne, printTwo]);
+
+      await service.setStatusForSelected(PrintStatus.Success);
+
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledTimes(1);
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledWith({
+        printIds: [1, 2],
+        status: PrintStatus.Success,
+      });
     });
 
     it('clears the selection when everything succeeds', async () => {
-      printService.updatePrintStatus.and.returnValue(of({}));
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1, 2], failed: [] })
+      );
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
       await service.setStatusForSelected(PrintStatus.Success);
@@ -153,62 +202,100 @@ describe('PrintBulkActionsService', () => {
       expect(service.hasSelection()).toBeFalse();
     });
 
-    it('continues the batch after a failure and keeps only the failures selected', async () => {
-      printService.updatePrintStatus.and.callFake((id: number) =>
-        id === printTwo.id
-          ? throwError(() => new Error('boom'))
-          : (of({}) as any)
+    it('reports per-id failures from the response and keeps them selected', async () => {
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1], failed: [{ id: 2, reason: 'Forbidden' }] })
       );
-      service.toggleSelectAllOnPage([printOne, printTwo, printThree]);
+      service.toggleSelectAllOnPage([printOne, printTwo]);
 
-      const result = await service.setStatusForSelected(PrintStatus.Failed);
+      const result = await service.setStatusForSelected(PrintStatus.Success);
 
-      // The failure in the middle did not abort the batch.
-      expect(printService.updatePrintStatus).toHaveBeenCalledTimes(3);
-      expect(result.succeededIds).toEqual([printOne.id, printThree.id]);
-      expect(result.failedIds).toEqual([printTwo.id]);
+      expect(result.succeededIds).toEqual([1]);
+      expect(result.failedIds).toEqual([2]);
       expect(result.failuresRetained).toBeTrue();
+      expect(service.isSelected(2)).toBeTrue();
+      expect(service.isSelected(1)).toBeFalse();
+    });
 
-      expect(service.selectedCount()).toBe(1);
-      expect(service.isSelected(printTwo.id)).toBeTrue();
+    it('fails only the chunk that errored and keeps going', async () => {
+      const prints = makePrints(30);
+      let call = 0;
+      printService.bulkUpdatePrints.and.callFake((request) => {
+        call++;
+        return call === 1
+          ? throwError(() => new HttpErrorResponse({ status: 500 }))
+          : of({ succeeded: request.printIds, failed: [] });
+      });
+      service.toggleSelectAllOnPage(prints);
+
+      const result = await service.setStatusForSelected(PrintStatus.Success);
+
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledTimes(2);
+      expect(result.failedIds.length).toBe(25);
+      expect(result.succeededIds.length).toBe(5);
+    });
+
+    it('stops sending after a 400 and keeps completed chunks intact', async () => {
+      const prints = makePrints(75);
+      let call = 0;
+      printService.bulkUpdatePrints.and.callFake((request) => {
+        call++;
+        return call === 2
+          ? throwError(
+              () =>
+                new HttpErrorResponse({
+                  status: 400,
+                  error: { detail: 'Project not found.' },
+                })
+            )
+          : of({ succeeded: request.printIds, failed: [] });
+      });
+      service.toggleSelectAllOnPage(prints);
+
+      const result = await service.setStatusForSelected(PrintStatus.Success);
+
+      // Chunk one committed; chunk two failed; chunk three was never sent.
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledTimes(2);
+      expect(result.succeededIds.length).toBe(25);
+      expect(result.failedIds.length).toBe(50);
+      expect(result.errorMessage).toBe('Project not found.');
     });
 
     it('leaves the selection alone when the user clears it mid-batch, and says so', async () => {
-      printService.updatePrintStatus.and.callFake((id: number) => {
+      printService.bulkUpdatePrints.and.callFake((request) => {
         // The user changes the result set (which clears the selection) while
         // the batch is still running.
         service.clearSelection();
-        return id === printOne.id
-          ? throwError(() => new Error('boom'))
-          : (of({}) as any);
+        return of({
+          succeeded: [],
+          failed: request.printIds.map((id) => ({ id, reason: 'Forbidden' })),
+        });
       });
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
       const result = await service.setStatusForSelected(PrintStatus.Success);
 
       // The batch still finished from its own snapshot...
-      expect(result.failedIds).toEqual([printOne.id]);
+      expect(result.failedIds).toEqual([printOne.id, printTwo.id]);
       // ...but the user's clear wins, and the caller is told not to promise a retry.
       expect(result.failuresRetained).toBeFalse();
       expect(service.hasSelection()).toBeFalse();
     });
 
-    it('never swallows an error - each failure is logged', async () => {
-      printService.updatePrintStatus.and.returnValue(
-        throwError(() => new Error('boom'))
+    it('never swallows an error - each failed request is logged', async () => {
+      printService.bulkUpdatePrints.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
       await service.setStatusForSelected(PrintStatus.Failed);
 
-      expect(logger.logException).toHaveBeenCalledTimes(2);
+      expect(logger.logException).toHaveBeenCalledTimes(1);
     });
 
     it('logs the outcome with counts', async () => {
-      printService.updatePrintStatus.and.callFake((id: number) =>
-        id === printOne.id
-          ? throwError(() => new Error('boom'))
-          : (of({}) as any)
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1], failed: [{ id: 2, reason: 'NotFound' }] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
@@ -221,7 +308,9 @@ describe('PrintBulkActionsService', () => {
     });
 
     it('reports determinate progress and stops running when finished', async () => {
-      printService.updatePrintStatus.and.returnValue(of({}));
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1, 2], failed: [] })
+      );
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
       const pending = service.setStatusForSelected(PrintStatus.Success);
@@ -238,31 +327,114 @@ describe('PrintBulkActionsService', () => {
     it('does nothing when nothing is selected', async () => {
       const result = await service.setStatusForSelected(PrintStatus.Success);
 
-      expect(printService.updatePrintStatus).not.toHaveBeenCalled();
+      expect(printService.bulkUpdatePrints).not.toHaveBeenCalled();
       expect(result).toEqual({
         succeededIds: [],
         failedIds: [],
         failuresRetained: false,
+        errorMessage: null,
+      });
+    });
+  });
+
+  describe('setProjectForSelected', () => {
+    it('sends the project id', async () => {
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1], failed: [] })
+      );
+      service.toggleSelection(printOne);
+
+      await service.setProjectForSelected('a-project-id');
+
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledWith({
+        printIds: [1],
+        projectId: 'a-project-id',
+      });
+    });
+  });
+
+  describe('removeProjectFromSelected', () => {
+    it('sends the clear list', async () => {
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1], failed: [] })
+      );
+      service.toggleSelection(printOne);
+
+      await service.removeProjectFromSelected();
+
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledWith({
+        printIds: [1],
+        clear: ['projectId'],
+      });
+    });
+
+    it('logs its own event, not the assignment one', async () => {
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1], failed: [] })
+      );
+      service.toggleSelection(printOne);
+
+      await service.removeProjectFromSelected();
+
+      expect(logger.logEvent).toHaveBeenCalledWith(
+        'PrintBulkActionBar_RemoveProjectCompleted',
+        jasmine.anything()
+      );
+    });
+  });
+
+  describe('the remaining field actions', () => {
+    beforeEach(() => {
+      printService.bulkUpdatePrints.and.returnValue(
+        of({ succeeded: [1], failed: [] })
+      );
+      service.toggleSelection(printOne);
+    });
+
+    it('sets visibility', async () => {
+      await service.setViewStatusForSelected(PrintViewStatus.Public);
+
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledWith({
+        printIds: [1],
+        viewStatus: PrintViewStatus.Public,
+      });
+    });
+
+    it('reassigns the printer', async () => {
+      await service.setPrinterForSelected(7);
+
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledWith({
+        printIds: [1],
+        printerId: 7,
+      });
+    });
+
+    it('sets only the permission that was passed', async () => {
+      await service.setPermissionsForSelected({ allowFileDownloads: false });
+
+      expect(printService.bulkUpdatePrints).toHaveBeenCalledWith({
+        printIds: [1],
+        allowFileDownloads: false,
       });
     });
   });
 
   describe('deleteSelected', () => {
-    it('deletes each selected print sequentially', async () => {
-      printService.deletePrint.and.returnValue(of({}));
+    it('posts the ids to the bulk delete endpoint', async () => {
+      printService.bulkDeletePrints.and.returnValue(
+        of({ succeeded: [1, 2], failed: [] })
+      );
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
       const result = await service.deleteSelected();
 
-      expect(printService.deletePrint).toHaveBeenCalledTimes(2);
-      expect(result.succeededIds).toEqual([printOne.id, printTwo.id]);
+      expect(printService.bulkDeletePrints).toHaveBeenCalledWith([1, 2]);
+      expect(result.succeededIds).toEqual([1, 2]);
     });
 
-    it('keeps failed deletions selected and logs the outcome', async () => {
-      printService.deletePrint.and.callFake((id: number) =>
-        id === printOne.id
-          ? throwError(() => new Error('boom'))
-          : (of({}) as any)
+    it('keeps refused deletions selected and logs the outcome', async () => {
+      printService.bulkDeletePrints.and.returnValue(
+        of({ succeeded: [2], failed: [{ id: 1, reason: 'Forbidden' }] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
 

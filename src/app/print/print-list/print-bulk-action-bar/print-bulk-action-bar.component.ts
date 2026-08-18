@@ -163,7 +163,11 @@ export class PrintBulkActionBarComponent {
       const retryHint = result.failuresRetained
         ? ' The prints that failed are still selected.'
         : '';
-      const message = `${succeeded} ${pastTenseVerb}, ${failed} failed.${retryHint}`;
+      // A 400 means the API refused the request itself and said why - its reason is
+      // more useful than a count of prints that never got sent.
+      const message = result.errorMessage
+        ? `${result.errorMessage}${retryHint}`
+        : `${succeeded} ${pastTenseVerb}, ${failed} failed.${retryHint}`;
       this.resultMessage.set(message);
       this.toastrService.error(
         message,

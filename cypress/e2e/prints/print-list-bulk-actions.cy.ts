@@ -27,7 +27,7 @@ describe('Print List Bulk Actions', () => {
     // The bar is contextual — nothing selected, nothing shown.
     cy.get('[data-cy-bulk-action-bar]').should('not.exist');
 
-    cy.intercept('PUT', '/api/Prints/*/status/*').as('updateStatus');
+    cy.intercept('POST', '/api/Prints/bulk-update').as('bulkUpdate');
 
     cy.get('[data-cy-select-all-prints]').click();
     cy.get('[data-cy-bulk-selection-count]').should(
@@ -35,12 +35,12 @@ describe('Print List Bulk Actions', () => {
       '2 selected'
     );
 
+    cy.get('[data-cy-bulk-actions]').click();
     cy.get('[data-cy-bulk-set-status]').click();
     cy.get('[data-cy-bulk-status="Success"]').click();
 
-    // One request per print — there is no batch endpoint.
-    cy.wait('@updateStatus');
-    cy.wait('@updateStatus');
+    // One request for the whole selection - it fits inside a single 25-id chunk.
+    cy.wait('@bulkUpdate');
 
     // Everything succeeded, so the selection is emptied and the bar disappears.
     cy.get('[data-cy-bulk-action-bar]').should('not.exist');
@@ -136,6 +136,7 @@ describe('Print List Bulk Actions', () => {
     showOnly(prefix, 2);
 
     cy.get('[data-cy-select-all-prints]').click();
+    cy.get('[data-cy-bulk-actions]').click();
     cy.get('[data-cy-bulk-delete]').click();
 
     // Cancelling leaves everything alone.
@@ -150,15 +151,135 @@ describe('Print List Bulk Actions', () => {
       '2 selected'
     );
 
-    cy.intercept('DELETE', '/api/Prints/*').as('deletePrint');
+    cy.intercept('POST', '/api/Prints/bulk-delete').as('bulkDelete');
 
+    cy.get('[data-cy-bulk-actions]').click();
     cy.get('[data-cy-bulk-delete]').click();
     cy.contains('.mat-mdc-dialog-container button', 'Delete').click();
 
-    cy.wait('@deletePrint');
-    cy.wait('@deletePrint');
+    cy.wait('@bulkDelete');
 
     cy.get('[data-cy-bulk-action-bar]').should('not.exist');
     cy.get('[cy-print-row]').should('have.length', 0);
+  });
+
+  it('adds several prints to a new project', () => {
+    const ts = new Date().getTime();
+    const prefix = `Bulk Project ${ts}`;
+
+    cy.createPrint(`${prefix} A`);
+    cy.createPrint(`${prefix} B`);
+
+    showOnly(prefix, 2);
+
+    cy.intercept('POST', '/api/Projects').as('createProject');
+    cy.intercept('POST', '/api/Prints/bulk-update').as('bulkUpdate');
+
+    cy.get('[data-cy-select-all-prints]').click();
+    cy.get('[data-cy-bulk-actions]').click();
+    cy.get('[data-cy-bulk-add-to-project]').click();
+
+    cy.get('[data-cy="project-selector-input"]').type(`Project ${ts}`);
+    cy.get('[data-cy="project-new-option"]').click();
+    cy.get('[data-cy-bulk-project-confirm]').click();
+
+    // One project is created for the whole batch, not one per print.
+    cy.wait('@createProject');
+    cy.get('@createProject.all').should('have.length', 1);
+    cy.wait('@bulkUpdate');
+
+    cy.contains('2 prints updated').should('exist');
+  });
+
+  it('adds several prints to an existing project', () => {
+    const ts = new Date().getTime();
+    const prefix = `Bulk Existing Project ${ts}`;
+    const projectName = `Existing Project ${ts}`;
+
+    // Create the project up front, so this test exercises the pick-an-existing-one
+    // branch rather than the create-a-new-one branch above.
+    cy.createProject(projectName);
+    cy.createPrint(`${prefix} A`);
+    cy.createPrint(`${prefix} B`);
+
+    showOnly(prefix, 2);
+
+    cy.intercept('POST', '/api/Projects').as('createProject');
+    cy.intercept('POST', '/api/Prints/bulk-update').as('bulkUpdate');
+
+    cy.get('[data-cy-select-all-prints]').click();
+    cy.get('[data-cy-bulk-actions]').click();
+    cy.get('[data-cy-bulk-add-to-project]').click();
+
+    cy.get('[data-cy="project-selector-input"]').type(projectName);
+    cy.contains('mat-option', projectName).click();
+    cy.get('[data-cy-bulk-project-confirm]').click();
+
+    cy.wait('@bulkUpdate');
+    // Picking an existing project must not create anything.
+    cy.get('@createProject.all').should('have.length', 0);
+    cy.contains('2 prints updated').should('exist');
+  });
+
+  it('reassigns several prints to a different printer', () => {
+    const ts = new Date().getTime();
+    const prefix = `Bulk Printer ${ts}`;
+
+    cy.createPrint(`${prefix} A`);
+    cy.createPrint(`${prefix} B`);
+
+    showOnly(prefix, 2);
+
+    cy.intercept('POST', '/api/Prints/bulk-update').as('bulkUpdate');
+
+    cy.get('[data-cy-select-all-prints]').click();
+    cy.get('[data-cy-bulk-actions]').click();
+    cy.contains('.mat-mdc-menu-item', 'Printer').click();
+    cy.get('[data-cy-bulk-printer]').first().click();
+
+    cy.wait('@bulkUpdate')
+      .its('request.body.printerId')
+      .should('be.a', 'number');
+    cy.contains('2 prints updated').should('exist');
+  });
+
+  it('sets the visibility of several prints in one action', () => {
+    const ts = new Date().getTime();
+    const prefix = `Bulk Visibility ${ts}`;
+
+    cy.createPrint(`${prefix} A`);
+    cy.createPrint(`${prefix} B`);
+
+    showOnly(prefix, 2);
+
+    cy.intercept('POST', '/api/Prints/bulk-update').as('bulkUpdate');
+
+    cy.get('[data-cy-select-all-prints]').click();
+    cy.get('[data-cy-bulk-actions]').click();
+    cy.contains('.mat-mdc-menu-item', 'Visibility').click();
+    cy.get('[data-cy-bulk-visibility="Public"]').click();
+
+    cy.wait('@bulkUpdate');
+    cy.contains('2 prints updated').should('exist');
+  });
+
+  it('removes several prints from their project', () => {
+    const ts = new Date().getTime();
+    const prefix = `Bulk Unfile ${ts}`;
+
+    cy.createPrint(`${prefix} A`);
+
+    showOnly(prefix, 1);
+
+    cy.intercept('POST', '/api/Prints/bulk-update').as('bulkUpdate');
+
+    cy.get('[data-cy-select-all-prints]').click();
+    cy.get('[data-cy-bulk-actions]').click();
+    cy.get('[data-cy-bulk-add-to-project]').click();
+    cy.get('[data-cy-bulk-project-remove]').click();
+
+    cy.wait('@bulkUpdate')
+      .its('request.body.clear')
+      .should('deep.equal', ['projectId']);
   });
 });

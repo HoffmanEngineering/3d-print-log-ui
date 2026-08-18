@@ -133,6 +133,21 @@ Cypress.Commands.add('seedPublicPrintFixture', () => {
   });
 });
 
+// Seeds a project directly through the API so a test can exercise the
+// pick-an-existing-project branch without driving the create flow first.
+// `status: 1` is ProjectStatus.InProgress and `viewStatus: 3` is
+// ProjectViewStatus.Private - the API takes enums as their numeric value.
+Cypress.Commands.add('createProject', (name) => {
+  return cy
+    .request({
+      method: 'POST',
+      url: `${apiUrl()}/api/Projects`,
+      headers: { 'X-Dev-User-Id': '1' },
+      body: { name, status: 1, viewStatus: 3 },
+    })
+    .then((response) => response.body);
+});
+
 Cypress.Commands.add('openFilterPanel', () => {
   cy.get('#filter-panel').then(($panel) => {
     if (!$panel.hasClass('filter-panel--open')) {

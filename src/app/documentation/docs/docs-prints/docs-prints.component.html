@@ -121,27 +121,51 @@
   </p>
   <p>
     As soon as one print is selected, a chip showing how many prints are
-    selected appears next to the view toggle, along with these actions:
+    selected appears next to the view toggle, along with an
+    <mat-icon inline="true">checklist</mat-icon> <strong>Actions</strong> button
+    and a <mat-icon inline="true">close</mat-icon> <strong>Clear</strong> button.
+    The Actions button carries the count, so you can always see how many prints
+    you are about to change, and the menu repeats it at the top. Clear deselects
+    everything.
   </p>
+  <p>The Actions menu offers:</p>
   <ul>
     <li>
       <strong>Set status</strong> - Applies the status you pick to every
       selected print.
     </li>
     <li>
-      <mat-icon inline="true">delete</mat-icon> <strong>Delete</strong> - Asks
-      you to confirm, then permanently deletes every selected print.
+      <strong>Add to project</strong> - Files every selected print under one
+      project. Pick a project you already have, or type a new name and it will
+      be created for you. Prints already in another project will be moved.
     </li>
     <li>
-      <mat-icon inline="true">close</mat-icon>
-      <strong>Clear</strong> - Deselects everything.
+      <strong>Visibility</strong> - Sets every selected print to Public,
+      Unlisted, or Private.
+    </li>
+    <li>
+      <strong>Printer</strong> - Moves every selected print onto a different
+      printer, for when a batch was logged against the wrong machine.
+    </li>
+    <li>
+      <strong>Permissions</strong> - Allows or disallows comments and file
+      downloads across the selection.
+    </li>
+    <li>
+      <strong>Delete</strong> - Asks you to confirm, then permanently deletes
+      every selected print.
     </li>
   </ul>
   <p>
-    Prints are updated one at a time, and a progress bar shows how far along the
-    batch is. If one print cannot be updated, the rest of the batch still runs.
-    You will see how many succeeded and how many failed, and the prints that
-    failed stay selected so you can try them again.
+    To take prints back out of a project, open <strong>Add to project</strong>
+    and choose <strong>Remove from project</strong>. The prints keep everything
+    else about them; they simply stop belonging to a project.
+  </p>
+  <p>
+    A progress bar shows how far along the batch is. If one print cannot be
+    updated, the rest of the batch still runs. You will see how many succeeded
+    and how many failed, and the prints that failed stay selected so you can try
+    them again.
   </p>
   <p>
     The header checkbox only covers the page in front of you, but your selection

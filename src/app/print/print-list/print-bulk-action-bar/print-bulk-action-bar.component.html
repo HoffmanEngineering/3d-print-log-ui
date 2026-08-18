@@ -28,24 +28,105 @@
         }
       </span>
 
-      <!-- The count is repeated in every label: a bare "Delete" sitting in the
-           toolbar reads as a global action, and the chip alone is easy to skip
-           past on the way to the button. -->
+      <!-- One trigger rather than a row of them. Every action the bar offers now
+           lives behind it, which is what keeps the strip one row tall and keeps
+           Clear on screen no matter how many actions get added later. The count
+           rides on the trigger AND on the menu header, so "this affects N prints"
+           is visible both before the menu opens and while the choice is made. -->
       <button
         mat-stroked-button
         type="button"
-        [matMenuTriggerFor]="bulkStatusMenu"
+        [matMenuTriggerFor]="bulkActionsMenu"
         [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
-        attr.aria-label="Set status of {{
-          bulkActions.selectedCount()
-        }} selected {{
+        attr.aria-label="Actions for {{ bulkActions.selectedCount() }} selected {{
           bulkActions.selectedCount() === 1 ? 'print' : 'prints'
         }}"
-        data-cy-bulk-set-status
+        data-cy-bulk-actions
       >
-        <mat-icon>flag</mat-icon>
-        Set status ({{ bulkActions.selectedCount() }})
+        <mat-icon>checklist</mat-icon>
+        Actions ({{ bulkActions.selectedCount() }})
       </button>
+      <mat-menu #bulkActionsMenu="matMenu">
+        <div class="bulk-menu__header" aria-hidden="true">
+          {{ bulkActions.selectedCount() }} selected
+        </div>
+        <button
+          type="button"
+          mat-menu-item
+          [matMenuTriggerFor]="bulkStatusMenu"
+          attr.aria-label="Set status of {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+          data-cy-bulk-set-status
+        >
+          <mat-icon>flag</mat-icon>Set status
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          (click)="addToProject()"
+          attr.aria-label="Add {{ bulkActions.selectedCount() }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }} to a project"
+          data-cy-bulk-add-to-project
+        >
+          <mat-icon>folder</mat-icon>Add to project
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          [matMenuTriggerFor]="bulkVisibilityMenu"
+          attr.aria-label="Set visibility of {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+        >
+          <mat-icon>visibility</mat-icon>Visibility
+        </button>
+        @if (printers().length > 0) {
+          <button
+            type="button"
+            mat-menu-item
+            [matMenuTriggerFor]="bulkPrinterMenu"
+            attr.aria-label="Reassign {{
+              bulkActions.selectedCount()
+            }} selected {{
+              bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+            }} to another printer"
+          >
+            <mat-icon>print</mat-icon>Printer
+          </button>
+        }
+        <button
+          type="button"
+          mat-menu-item
+          [matMenuTriggerFor]="bulkPermissionsMenu"
+          attr.aria-label="Set permissions on {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+        >
+          <mat-icon>tune</mat-icon>Permissions
+        </button>
+        <mat-divider />
+        <button
+          type="button"
+          mat-menu-item
+          class="bulk-menu__danger"
+          (click)="deleteSelected()"
+          attr.aria-label="Delete {{ bulkActions.selectedCount() }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+          data-cy-bulk-delete
+        >
+          <mat-icon>delete</mat-icon>Delete
+        </button>
+      </mat-menu>
+
       <mat-menu #bulkStatusMenu="matMenu">
         @for (option of statusOptions; track option.status) {
           <button
@@ -59,53 +140,9 @@
             attr.data-cy-bulk-status="{{ option.label }}"
             (click)="setStatus(option)"
           >
-            <mat-icon>{{ option.icon }}</mat-icon
-            >{{ option.label }}
+            <mat-icon>{{ option.icon }}</mat-icon>{{ option.label }}
           </button>
         }
-      </mat-menu>
-
-      <button
-        mat-stroked-button
-        type="button"
-        [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
-        (click)="addToProject()"
-        attr.aria-label="Add {{ bulkActions.selectedCount() }} selected {{
-          bulkActions.selectedCount() === 1 ? 'print' : 'prints'
-        }} to a project"
-        data-cy-bulk-add-to-project
-      >
-        <mat-icon>folder</mat-icon>
-        Add to project ({{ bulkActions.selectedCount() }})
-      </button>
-
-      <button
-        mat-stroked-button
-        type="button"
-        [matMenuTriggerFor]="bulkMoreMenu"
-        [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
-        attr.aria-label="More actions for {{
-          bulkActions.selectedCount()
-        }} selected {{
-          bulkActions.selectedCount() === 1 ? 'print' : 'prints'
-        }}"
-        data-cy-bulk-more
-      >
-        <mat-icon>more_horiz</mat-icon>
-        More ({{ bulkActions.selectedCount() }})
-      </button>
-      <mat-menu #bulkMoreMenu="matMenu">
-        <button mat-menu-item [matMenuTriggerFor]="bulkVisibilityMenu">
-          <mat-icon>visibility</mat-icon>Visibility
-        </button>
-        @if (printers().length > 0) {
-          <button mat-menu-item [matMenuTriggerFor]="bulkPrinterMenu">
-            <mat-icon>print</mat-icon>Printer
-          </button>
-        }
-        <button mat-menu-item [matMenuTriggerFor]="bulkPermissionsMenu">
-          <mat-icon>tune</mat-icon>Permissions
-        </button>
       </mat-menu>
 
       <mat-menu #bulkVisibilityMenu="matMenu">
@@ -178,21 +215,6 @@
           <mat-icon>file_download_off</mat-icon>Don't allow file downloads
         </button>
       </mat-menu>
-
-      <button
-        mat-stroked-button
-        type="button"
-        color="warn"
-        [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
-        (click)="deleteSelected()"
-        attr.aria-label="Delete {{ bulkActions.selectedCount() }} selected {{
-          bulkActions.selectedCount() === 1 ? 'print' : 'prints'
-        }}"
-        data-cy-bulk-delete
-      >
-        <mat-icon>delete</mat-icon>
-        Delete ({{ bulkActions.selectedCount() }})
-      </button>
 
       <button
         mat-button

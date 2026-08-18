@@ -103,24 +103,34 @@ describe('PrintBulkActionBarComponent', () => {
     ).toContain('2 prints selected across all pages');
   });
 
-  it('carries the count into every action label', () => {
+  it('carries the count into the actions trigger and the open menu', () => {
     bulkActions.toggleSelectAllOnPage([printOne, printTwo]);
     fixture.detectChanges();
 
-    const bar = fixture.nativeElement.querySelector(
-      '[data-cy-bulk-action-bar]'
-    );
     // A bare "Delete" next to the table reads as a global action; the count is
-    // what ties the button to the selection.
-    expect(bar.querySelector('[data-cy-bulk-delete]').textContent).toContain(
-      'Delete (2)'
+    // what ties the actions to the selection. It has to be readable before the
+    // menu opens and again while the choice is being made, because the open
+    // menu covers the trigger that carried it.
+    const trigger = fixture.nativeElement.querySelector(
+      '[data-cy-bulk-actions]'
+    );
+    expect(trigger.textContent).toContain('Actions (2)');
+
+    trigger.click();
+    fixture.detectChanges();
+
+    const menu = document.querySelector('.mat-mdc-menu-panel')!;
+    expect(menu.querySelector('.bulk-menu__header')!.textContent).toContain(
+      '2 selected'
     );
     expect(
-      bar.querySelector('[data-cy-bulk-set-status]').textContent
-    ).toContain('Set status (2)');
-    expect(
-      bar.querySelector('[data-cy-bulk-delete]').getAttribute('aria-label')
+      menu.querySelector('[data-cy-bulk-delete]')!.getAttribute('aria-label')
     ).toBe('Delete 2 selected prints');
+    expect(
+      menu
+        .querySelector('[data-cy-bulk-set-status]')!
+        .getAttribute('aria-label')
+    ).toBe('Set status of 2 selected prints');
   });
 
   it('keeps the strip in the layout while nothing is selected', () => {

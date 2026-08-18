@@ -5,6 +5,8 @@ import {
   HostListener,
   OnDestroy,
   OnInit,
+  computed,
+  signal,
 } from '@angular/core';
 import {
   UntypedFormArray,
@@ -50,8 +52,63 @@ import {
   SpoolWeightCalculatorDialogResult,
 } from '../spool-weight-calculator-dialog/spool-weight-calculator-dialog.component';
 import { resolveSpoolWeightMg } from '../spool-weight-calculator-dialog/spool-weight-adjustment.util';
+import { PrintFilamentSourceMeasurement } from 'src/app/core/services/print.service';
+import {
+  AdjustmentRow,
+  ProjectionResult,
+  projectRemainingMg,
+} from './remaining-projection';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
+
+function gramsToMg(grams: number | null | undefined): number | null {
+  return grams == null ? null : grams * 1000;
+}
+
+/**
+ * Adjustment rows out of the form. Weight rows are converted from the form's
+ * grams to milligrams; length and volume rows are passed through in their own
+ * units, because `projectRemainingMg` converts them itself from the CURRENT
+ * density and diameter rather than trusting the stale derived milligrams.
+ */
+function toFormAdjustmentRows(
+  value: Record<string, unknown> | null
+): AdjustmentRow[] {
+  const rows = (value?.['filamentAdjustments'] ?? []) as {
+    source?: number;
+    amountG?: number | null;
+    lengthInM?: number | null;
+    volumeMl?: number | null;
+  }[];
+
+  return rows.map((row) => ({
+    source:
+      row.source == null
+        ? PrintFilamentSourceMeasurement.Weight
+        : (row.source as PrintFilamentSourceMeasurement),
+    amountMg: row.amountG == null ? null : row.amountG * 1000,
+    lengthInM: row.lengthInM ?? null,
+    volumeMl: row.volumeMl ?? null,
+  }));
+}
+
+/**
+ * The same rows as last saved. Already in milligrams; no gram conversion.
+ *
+ * `FilamentAdjustmentSourceMeasurement` and `PrintFilamentSourceMeasurement`
+ * both number Weight 1, Length 2, Volume 3, which is what makes this cast safe.
+ * They are separate enums: if a future member diverges, map explicitly.
+ */
+function toServerAdjustmentRows(
+  filament: FilamentDetail | null | undefined
+): AdjustmentRow[] {
+  return (filament?.filamentAdjustments ?? []).map((adjustment) => ({
+    source: adjustment.source as unknown as PrintFilamentSourceMeasurement,
+    amountMg: adjustment.amountMg ?? null,
+    lengthInM: adjustment.lengthInM ?? null,
+    volumeMl: adjustment.volumeMl ?? null,
+  }));
+}
 
 @Component({
   selector: 'app-filament-detail',
@@ -144,6 +201,76 @@ export class FilamentDetailComponent
   normalizedColors: string[] = [];
   private colorsSubscription: Subscription;
 
+  /**
+   * Mirrors the form value so computed signals can react to edits. Reading a
+   * form's value never marks it dirty, so `PendingChangesGuard` is unaffected.
+   */
+  private readonly formValue = signal<Record<string, unknown> | null>(null);
+  private formValueSubscription: Subscription;
+
+  /** False in add mode (no filament) and copy mode (a clone is not the source spool). */
+  protected readonly showUsagePanels = signal(false);
+
+  /** The user's preferred filament unit, resolved on the route. */
+  protected preferredFilamentUnit = PrintFilamentSourceMeasurement.Weight;
+
+  /**
+   * Public rather than protected: the spec asserts on it directly, and
+   * `protected` would not compile from the test file.
+   */
+  public readonly remainingProjection = computed<ProjectionResult>(() => {
+    const form = this.formValue();
+    const filament = this.loadedFilament;
+
+    return projectRemainingMg({
+      serverRemainingMg: filament?.filamentRemaining ?? null,
+      serverNominalMg: filament?.initialNominalWeightMg ?? null,
+      formNominalMg: gramsToMg(
+        form?.['initialNominalWeightG'] as number | null
+      ),
+      serverAdjustments: toServerAdjustmentRows(filament),
+      formAdjustments: toFormAdjustmentRows(form),
+      serverNominalM: filament?.initialNominalLengthM ?? null,
+      formNominalM: (form?.['initialNominalLengthM'] as number | null) ?? null,
+      serverNominalMl: filament?.initialNominalVolumeMl ?? null,
+      formNominalMl:
+        (form?.['initialNominalVolumeMl'] as number | null) ?? null,
+      source:
+        (form?.['source'] as PrintFilamentSourceMeasurement) ??
+        PrintFilamentSourceMeasurement.Weight,
+      filament: {
+        materialDensityGramPerCubicCm: form?.[
+          'materialDensityGramPerCubicCm'
+        ] as number,
+        diameterMm: form?.['diameterMm'] as number,
+      },
+      serverFilament: {
+        materialDensityGramPerCubicCm: filament?.materialDensityGramPerCubicCm,
+        diameterMm: filament?.diameterMm ?? undefined,
+      },
+    });
+  });
+
+  /**
+   * Scrolls to and focuses the nominal field the spool actually shows. A
+   * length- or volume-sourced spool never renders `initialNominalWeightG`, so
+   * targeting it unconditionally would make the button do nothing there.
+   */
+  protected focusNominalWeight(): void {
+    const controlName =
+      {
+        [FilamentSourceMeasurement.Length]: 'initialNominalLengthM',
+        [FilamentSourceMeasurement.Volume]: 'initialNominalVolumeMl',
+      }[this.filamentForm.get('source')?.value as FilamentSourceMeasurement] ??
+      'initialNominalWeightG';
+
+    const input = this.el.nativeElement.querySelector(
+      `[formcontrolname="${controlName}"]`
+    ) as HTMLInputElement | null;
+    input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    input?.focus();
+  }
+
   ngOnInit() {
     this.titleService.setTitle('Filament Details - 3D Print Log');
 
@@ -162,6 +289,31 @@ export class FilamentDetailComponent
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
+
+      // `AsRecorded` is 0, so `|| Weight` would silently coerce a valid
+      // preference into the wrong unit. Test for null, not for falsiness.
+      const unitSetting = (
+        data.preferredFilamentDisplayUnitSetting as UserSetting | null
+      )?.value;
+      const parsedUnit = unitSetting == null ? NaN : Number(unitSetting);
+      this.preferredFilamentUnit = Number.isFinite(parsedUnit)
+        ? (parsedUnit as PrintFilamentSourceMeasurement)
+        : PrintFilamentSourceMeasurement.Weight;
+
+      // Copy mode nulls the id (CopyFilamentDetailResolverService), and add
+      // mode has no filament at all, so the id alone rules out both: a clone's
+      // remaining and prints belong to the source spool, not to the copy. This
+      // is the same saved check canShowSpoolCalculator already uses.
+      const filamentId = this.loadedFilament?.id;
+      this.showUsagePanels.set(!!filamentId && filamentId !== EMPTY_GUID);
+
+      this.formValue.set(this.filamentForm.getRawValue());
+      this.formValueSubscription?.unsubscribe();
+      this.formValueSubscription = this.filamentForm.valueChanges.subscribe(
+        () => {
+          this.formValue.set(this.filamentForm.getRawValue());
+        }
+      );
 
       this.normalizedColors = this.computeNormalizedColors();
       this.colorsSubscription = this.colorsFormArray.valueChanges.subscribe(
@@ -321,6 +473,7 @@ export class FilamentDetailComponent
   ngOnDestroy(): void {
     this.materialCategorySubscription?.unsubscribe();
     this.colorsSubscription?.unsubscribe();
+    this.formValueSubscription?.unsubscribe();
   }
 
   private computeNormalizedColors(): string[] {

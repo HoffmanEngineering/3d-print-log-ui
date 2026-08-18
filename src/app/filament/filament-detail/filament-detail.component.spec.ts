@@ -23,7 +23,12 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
 
+import { PrintService } from 'src/app/core/services/print.service';
+import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
+
 import { FilamentDetailComponent } from './filament-detail.component';
+import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
+import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
 
 describe('FilamentDetailComponent', () => {
   let component: FilamentDetailComponent;
@@ -97,6 +102,15 @@ describe('FilamentDetailComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('renders neither usage card in add mode', () => {
+    expect(
+      fixture.nativeElement.querySelector('app-filament-remaining-card')
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('app-filament-prints-panel')
+    ).toBeNull();
   });
 
   describe('color pattern form', () => {
@@ -526,5 +540,162 @@ describe('FilamentDetailComponent - value serialization', () => {
     expect(adj.length).toBe(1);
     expect(adj[0].amountMg).toBeNull(); // was silently becoming 0 on load
     expect(adj[0].lengthInM).toBe(100);
+  });
+});
+
+describe('FilamentDetailComponent - usage panels', () => {
+  let usageComponent: FilamentDetailComponent;
+  let usageFixture: ComponentFixture<FilamentDetailComponent>;
+
+  const savedFilament = {
+    id: 'filament-1',
+    displayName: 'Test',
+    materialType: 'PLA',
+    materialDensityGramPerCubicCm: 1.24,
+    diameterMm: 1.75,
+    source: FilamentSourceMeasurement.Weight,
+    initialNominalWeightMg: 1000000,
+    filamentRemaining: 412000,
+    filamentLengthRemainingInM: 138.2,
+    filamentVolumeRemainingInMl: 345.1,
+    printCount: 23,
+    totalUsedMg: 588000,
+    filamentAdjustments: [],
+    colors: [],
+  };
+
+  async function setup(filamentOverrides: Record<string, unknown> = {}) {
+    const mockFilamentService = jasmine.createSpyObj<FilamentService>(
+      'FilamentService',
+      {
+        getFilamentBrands: of({ brands: [] }),
+        getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
+        getFilamentStorageLocations: of({ storageLocations: [] }),
+      }
+    );
+    const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
+      'success',
+    ]);
+    const mockUserSettings = jasmine.createSpyObj<UserSettingService>(
+      'UserSettingService',
+      ['updateUserSetting']
+    );
+    const mockLog = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logException',
+      'logEvent',
+    ]);
+    const mockPrintService = jasmine.createSpyObj<PrintService>(
+      'PrintService',
+      ['getPrintSummaries', 'getPrintImage']
+    );
+    mockPrintService.getPrintSummaries.and.returnValue(
+      of({ items: [], paging: { totalCount: 0 } } as never)
+    );
+    mockPrintService.getPrintImage.and.returnValue(of(''));
+
+    await TestBed.configureTestingModule({
+      declarations: [FilamentDetailComponent],
+      imports: [
+        RouterTestingModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatInputModule,
+        MatSelectModule,
+        MatDatepickerModule,
+        MatCheckboxModule,
+        MatNativeDateModule,
+        MatAutocompleteModule,
+        MatButtonToggleModule,
+        MatChipsModule,
+        MatButtonModule,
+        MatTooltipModule,
+        FilamentRemainingCardComponent,
+        FilamentPrintsPanelComponent,
+      ],
+      providers: [
+        { provide: FilamentService, useValue: mockFilamentService },
+        { provide: ToastrService, useValue: mockToastr },
+        { provide: UserSettingService, useValue: mockUserSettings },
+        { provide: LoggingService, useValue: mockLog },
+        { provide: PrintService, useValue: mockPrintService },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({
+              filament: { ...savedFilament, ...filamentOverrides },
+              materials: [],
+              materialCategories: [],
+            }),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    usageFixture = TestBed.createComponent(FilamentDetailComponent);
+    usageComponent = usageFixture.componentInstance;
+    usageFixture.detectChanges();
+  }
+
+  it('renders both usage cards for a saved filament', async () => {
+    await setup();
+    expect(
+      usageFixture.nativeElement.querySelector('app-filament-remaining-card')
+    ).toBeTruthy();
+    expect(
+      usageFixture.nativeElement.querySelector('app-filament-prints-panel')
+    ).toBeTruthy();
+  });
+
+  it('renders neither card in copy mode', async () => {
+    // CopyFilamentDetailResolverService nulls the id: the clone's remaining and
+    // prints belong to the source spool, not to the copy.
+    await setup({ id: null });
+    expect(
+      usageFixture.nativeElement.querySelector('app-filament-remaining-card')
+    ).toBeNull();
+    expect(
+      usageFixture.nativeElement.querySelector('app-filament-prints-panel')
+    ).toBeNull();
+  });
+
+  it('does not mark the form dirty when the cards render', async () => {
+    await setup();
+    // A false dirty state would trip PendingChangesGuard and block navigation.
+    expect(usageComponent.filamentForm.dirty).toBeFalse();
+  });
+
+  it('projects the server value while the form is untouched', async () => {
+    await setup();
+    expect(usageComponent.remainingProjection().projectedMg).toBe(
+      usageComponent.remainingProjection().remainingMg
+    );
+    expect(usageComponent.remainingProjection().projectedMg).toBe(412000);
+  });
+
+  it('projects a pending adjustment', async () => {
+    await setup();
+    const before = usageComponent.remainingProjection().projectedMg!;
+
+    usageComponent.addAdjustment();
+    usageComponent.filamentAdjustments.at(0).get('amountG')!.setValue(-32);
+    usageFixture.detectChanges();
+
+    expect(usageComponent.remainingProjection().projectedMg).toBeCloseTo(
+      before - 32000,
+      0
+    );
+  });
+
+  it('projects an edited nominal weight', async () => {
+    await setup();
+
+    usageComponent.filamentForm.get('initialNominalWeightG')!.setValue(1200);
+    usageFixture.detectChanges();
+
+    expect(usageComponent.remainingProjection().projectedMg).toBeCloseTo(
+      612000,
+      0
+    );
   });
 });

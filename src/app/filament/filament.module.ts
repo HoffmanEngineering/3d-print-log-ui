@@ -11,6 +11,8 @@ import { FilamentDetailResolverService } from './resolvers/filament-detail-resol
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { MaterialResolverService } from './resolvers/material-resolver.service';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
+import { FilamentPrintsPanelComponent } from './filament-detail/filament-prints-panel/filament-prints-panel.component';
+import { FilamentRemainingCardComponent } from './filament-detail/filament-remaining-card/filament-remaining-card.component';
 
 @NgModule({
   declarations: [FilamentDetailComponent, FilamentListContainerComponent],
@@ -19,6 +21,8 @@ import { EmptyStateComponent } from '../shared/empty-state/empty-state.component
     FilamentRoutingModule,
     AdsenseModule,
     EmptyStateComponent,
+    FilamentRemainingCardComponent,
+    FilamentPrintsPanelComponent,
   ],
   providers: [
     FilamentListResolverService,

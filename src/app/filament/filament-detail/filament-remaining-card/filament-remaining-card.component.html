@@ -1,0 +1,74 @@
+<mat-card appearance="outlined" class="remaining-card">
+  <mat-card-content>
+    <h3 class="card-title">Remaining</h3>
+
+    @if (isTracked()) {
+      <mat-progress-bar
+        mode="determinate"
+        [value]="percentRemaining()"
+        [color]="isOverUsed() ? 'warn' : 'primary'"
+        aria-label="Filament remaining"
+      ></mat-progress-bar>
+
+      @if (isOverUsed()) {
+        <p class="headline over-used">
+          <mat-icon aria-hidden="true">warning</mat-icon>
+          {{ -(displayMg() ?? 0) / 1000 | number: '1.0-0' }} g over-used
+        </p>
+        <p class="hint">
+          More filament has been logged than this spool held. Check the prints below or add an
+          adjustment.
+        </p>
+      } @else {
+        <p class="headline">
+          {{ (displayMg() ?? 0) / 1000 | number: '1.0-0' }} g
+          @if (nominalMg()) {
+            <span class="of-total">of {{ (nominalMg() ?? 0) / 1000 | number: '1.0-0' }} g left</span>
+          }
+        </p>
+      }
+
+      @if (hasPendingChange()) {
+        <p class="projection">
+          {{ (remainingMg() ?? 0) / 1000 | number: '1.0-0' }} g &rarr;
+          {{ (projectedMg() ?? 0) / 1000 | number: '1.0-0' }} g after saving
+        </p>
+      } @else if (isSuppressed()) {
+        <p class="projection muted">This updates after saving.</p>
+      }
+
+      <dl class="secondary">
+        @if (lengthRemainingM()) {
+          <div>
+            <dt>Length</dt>
+            <dd>{{ lengthRemainingM() | number: '1.0-1' }} m</dd>
+          </div>
+        }
+        @if (volumeRemainingMl()) {
+          <div>
+            <dt>Volume</dt>
+            <dd>{{ volumeRemainingMl() | number: '1.0-1' }} ml</dd>
+          </div>
+        }
+        @if (totalUsedMg()) {
+          <div>
+            <dt>Used</dt>
+            <dd>{{ (totalUsedMg() ?? 0) / 1000 | number: '1.0-0' }} g</dd>
+          </div>
+        }
+        @if (printCount()) {
+          <div>
+            <dt>Prints</dt>
+            <dd>{{ printCount() }}</dd>
+          </div>
+        }
+      </dl>
+    } @else {
+      <p class="headline muted">Not tracked</p>
+      <p class="hint">Set an initial nominal weight to track how much is left.</p>
+      <button mat-stroked-button type="button" (click)="focusNominalWeight.emit()">
+        Set nominal weight
+      </button>
+    }
+  </mat-card-content>
+</mat-card>

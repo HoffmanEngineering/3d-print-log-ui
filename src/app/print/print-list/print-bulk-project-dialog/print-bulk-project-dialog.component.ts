@@ -86,8 +86,14 @@ export class PrintBulkProjectDialogComponent {
       });
     } catch {
       // Stay open so the name is not lost and the user can retry or pick an existing one.
+      //
+      // The copy deliberately does not promise nothing was created. A request that
+      // times out or loses its response may well have committed, and telling the
+      // user "nothing was changed" is what sends them straight into creating a
+      // second project under the same name. Point them at the list instead.
       this.errorMessage.set(
-        `The project "${selection.newProjectName}" could not be created. Nothing was changed.`
+        `"${selection.newProjectName}" could not be created, and no prints were changed. ` +
+          'Search the list before trying again - if the project is there, pick it.'
       );
     } finally {
       this.isSaving.set(false);

@@ -186,6 +186,9 @@
           type="button"
           mat-menu-item
           (click)="setPermission({ allowComments: true })"
+          attr.aria-label="Allow comments on {{ bulkActions.selectedCount() }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
           data-cy-bulk-permission="allow-comments"
         >
           <mat-icon>chat</mat-icon>Allow comments
@@ -194,6 +197,9 @@
           type="button"
           mat-menu-item
           (click)="setPermission({ allowComments: false })"
+          attr.aria-label="Do not allow comments on {{ bulkActions.selectedCount() }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
           data-cy-bulk-permission="disallow-comments"
         >
           <mat-icon>chat_bubble_outline</mat-icon>Don't allow comments
@@ -202,6 +208,9 @@
           type="button"
           mat-menu-item
           (click)="setPermission({ allowFileDownloads: true })"
+          attr.aria-label="Allow file downloads on {{ bulkActions.selectedCount() }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
           data-cy-bulk-permission="allow-downloads"
         >
           <mat-icon>download</mat-icon>Allow file downloads
@@ -210,6 +219,9 @@
           type="button"
           mat-menu-item
           (click)="setPermission({ allowFileDownloads: false })"
+          attr.aria-label="Do not allow file downloads on {{ bulkActions.selectedCount() }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
           data-cy-bulk-permission="disallow-downloads"
         >
           <mat-icon>file_download_off</mat-icon>Don't allow file downloads

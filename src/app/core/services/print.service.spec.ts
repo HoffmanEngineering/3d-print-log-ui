@@ -7,7 +7,12 @@ import {
   provideHttpClient,
   withInterceptorsFromDi,
 } from '@angular/common/http';
-import { BulkPrintResult, PrintService, PrintStatus } from './print.service';
+import {
+  BulkPrintResult,
+  PrintService,
+  PrintStatus,
+  PrintViewStatus,
+} from './print.service';
 import { environment } from 'src/environments/environment';
 
 describe('PrintService', () => {
@@ -212,6 +217,20 @@ describe('PrintService', () => {
 
       req.flush(result);
       expect(actual).toEqual(result);
+    });
+
+    it('sends viewStatus as a number too', () => {
+      // status was already covered; viewStatus is a separate enum and would
+      // serialize just as wrongly on its own if a converter were added.
+      service
+        .bulkUpdatePrints({ printIds: [1], viewStatus: PrintViewStatus.Public })
+        .subscribe();
+
+      const req = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/Prints/bulk-update`
+      );
+      expect(req.request.body).toEqual({ printIds: [1], viewStatus: 1 });
+      req.flush({ succeeded: [1], failed: [] });
     });
 
     it('posts a bulk delete', () => {

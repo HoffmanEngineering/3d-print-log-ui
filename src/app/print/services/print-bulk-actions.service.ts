@@ -274,6 +274,12 @@ export class PrintBulkActionsService {
    * run continues - the API writes a request all-or-nothing, so that report is accurate
    * rather than merely pessimistic. A 400 means the request shape itself was rejected, so
    * every remaining chunk would fail the same way and the run stops sending.
+   *
+   * The loop is deliberately NOT cancelled when the list component is destroyed.
+   * The service is scoped to that component, so navigating away mid-batch would
+   * abandon the run - leaving, say, 25 of 60 prints updated with nobody told
+   * which. Finishing the work the user asked for is the safer half of that
+   * trade; the signal writes that outlive the component are inert.
    */
   private async runBulk(
     kind: BulkActionKind,
@@ -320,6 +326,16 @@ export class PrintBulkActionsService {
           result.failedIds.push(
             ...response.failed.map((failure) => failure.id)
           );
+
+          // The API reports every id it was sent. If one comes back in neither
+          // list - a version skew, a truncated body - treat it as failed rather
+          // than dropping it: an unreported id would otherwise be deselected as
+          // though it had succeeded, and the user would never learn it did not.
+          const reported = new Set([
+            ...response.succeeded,
+            ...response.failed.map((failure) => failure.id),
+          ]);
+          result.failedIds.push(...chunk.filter((id) => !reported.has(id)));
         } catch (error) {
           result.failedIds.push(...chunk);
           this.loggingService.logException(error);

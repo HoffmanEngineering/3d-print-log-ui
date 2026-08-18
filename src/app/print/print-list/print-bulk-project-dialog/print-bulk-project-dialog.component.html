@@ -17,6 +17,7 @@
   <button
     mat-button
     type="button"
+    [disabled]="isSaving()"
     (click)="removeFromProject()"
     attr.aria-label="Remove {{ data.count }} selected {{
       data.count === 1 ? 'print' : 'prints'
@@ -25,7 +26,11 @@
   >
     Remove from project
   </button>
-  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <!-- Disabled while the create is in flight: closing now would leave a project
+       created and nothing assigned to it. -->
+  <button mat-button type="button" [disabled]="isSaving()" (click)="cancel()">
+    Cancel
+  </button>
   <button
     mat-flat-button
     type="button"

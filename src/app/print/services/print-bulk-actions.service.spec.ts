@@ -169,10 +169,15 @@ describe('PrintBulkActionsService', () => {
 
         await service.setStatusForSelected(PrintStatus.Success);
 
-        const sizes = printService.bulkUpdatePrints.calls
+        const batches = printService.bulkUpdatePrints.calls
           .allArgs()
-          .map(([request]) => request.printIds.length);
-        expect(sizes).toEqual(expected);
+          .map(([request]) => request.printIds);
+        expect(batches.map((ids) => ids.length)).toEqual(expected);
+
+        // Sizes alone would pass with the ids shuffled, duplicated across
+        // chunks, or dropped. Every id must appear exactly once, in order.
+        const allIds = ([] as number[]).concat(...batches);
+        expect(allIds).toEqual(Array.from({ length: count }, (_, i) => i + 1));
       });
     });
 
@@ -335,6 +340,41 @@ describe('PrintBulkActionsService', () => {
         errorMessage: null,
       });
     });
+  });
+
+  it('sends the same project id in every chunk', async () => {
+    // The dialog creates the project once and hands over an id, so a 60-print
+    // assignment must reuse that one id rather than creating anything per chunk.
+    printService.bulkUpdatePrints.and.callFake((request) =>
+      of({ succeeded: request.printIds, failed: [] })
+    );
+    service.toggleSelectAllOnPage(makePrints(60));
+
+    await service.setProjectForSelected('one-project-id');
+
+    const projectIds = printService.bulkUpdatePrints.calls
+      .allArgs()
+      .map(([request]) => request.projectId);
+    expect(projectIds).toEqual([
+      'one-project-id',
+      'one-project-id',
+      'one-project-id',
+    ]);
+  });
+
+  it('treats an id the response never mentions as failed', async () => {
+    // A truncated or version-skewed body must not quietly deselect a print
+    // that may not have been changed at all.
+    printService.bulkUpdatePrints.and.returnValue(
+      of({ succeeded: [1], failed: [] })
+    );
+    service.toggleSelectAllOnPage([printOne, printTwo]);
+
+    const result = await service.setStatusForSelected(PrintStatus.Success);
+
+    expect(result.succeededIds).toEqual([1]);
+    expect(result.failedIds).toEqual([2]);
+    expect(service.isSelected(2)).toBeTrue();
   });
 
   describe('setProjectForSelected', () => {

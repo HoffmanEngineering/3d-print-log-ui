@@ -219,6 +219,10 @@ describe('ProjectSelectorComponent', () => {
     tick(250);
 
     expect(fixture.componentInstance.loadFailed()).toBeTrue();
+    // A failed lookup returns an empty list, which must not be read as
+    // "that name is free" - offering to create is how duplicates happen.
+    expect(fixture.componentInstance.showNewOption()).toBeFalse();
+    fixture.detectChanges();
 
     mockProjectService.getProjectSummaries.and.returnValue(
       of({
@@ -228,7 +232,15 @@ describe('ProjectSelectorComponent', () => {
     );
     const callsBefore = mockProjectService.getProjectSummaries.calls.count();
 
-    fixture.componentInstance.retry();
+    // Clicked through the DOM on purpose. Calling retry() directly would pass
+    // even with the button nested somewhere it cannot be reached.
+    const retryButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-cy="project-lookup-retry"]'
+    );
+    expect(retryButton)
+      .withContext('the retry control must be in the DOM')
+      .toBeTruthy();
+    retryButton.click();
     tick(250);
 
     expect(mockProjectService.getProjectSummaries.calls.count()).toBe(

@@ -92,13 +92,22 @@ export class ProjectSelectorComponent implements OnInit {
         this.projectService
           .getProjectById(this.initialProjectId()!)
           .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe((project) => {
-            // The print detail payload carries projectId but not projectName, so the name
-            // arrives on this round trip — potentially after the user has started typing.
-            // Prefilling on top of their keystrokes splices the old name into the new one,
-            // which then gets created as a project under that mangled name.
-            if (this.searchControl.dirty) return;
-            this.applyInitialProject(project.id, project.name, project.status);
+          .subscribe({
+            next: (project) => {
+              // The print detail payload carries projectId but not projectName, so the name
+              // arrives on this round trip — potentially after the user has started typing.
+              // Prefilling on top of their keystrokes splices the old name into the new one,
+              // which then gets created as a project under that mangled name.
+              if (this.searchControl.dirty) return;
+              this.applyInitialProject(
+                project.id,
+                project.name,
+                project.status
+              );
+            },
+            // Without this the failure is an unhandled error and the field silently
+            // shows no project at all, which reads as "this print has none".
+            error: () => this.loadFailed.set(true),
           });
       }
     }
@@ -149,8 +158,14 @@ export class ProjectSelectorComponent implements OnInit {
       .subscribe((result) => {
         this.filteredProjects.set(result.items);
         const q = (this.searchControl.value ?? '').trim().toLowerCase();
+        // "No project matched, so offer to create one" is only true if the lookup
+        // actually answered. After a failure the list is empty because the request
+        // failed, and offering to create is how you end up with a duplicate of a
+        // project that already exists.
         this.showNewOption.set(
-          q.length > 0 && !result.items.some((p) => p.name.toLowerCase() === q)
+          !this.loadFailed() &&
+            q.length > 0 &&
+            !result.items.some((p) => p.name.toLowerCase() === q)
         );
       });
   }

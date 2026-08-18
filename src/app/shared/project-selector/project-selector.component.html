@@ -43,3 +43,20 @@
     }
   </mat-autocomplete>
 </mat-form-field>
+
+<!-- Outside the autocomplete panel on purpose. A <button> nested in a disabled
+     <mat-option> is not reachable by keyboard: the option is an ARIA option, not
+     a focus container, and a disabled one is skipped entirely. -->
+@if (loadFailed()) {
+  <p class="project-selector-error" data-cy="project-lookup-failed">
+    <span role="alert">Projects could not be loaded.</span>
+    <button
+      mat-button
+      type="button"
+      (click)="retry()"
+      data-cy="project-lookup-retry"
+    >
+      Try again
+    </button>
+  </p>
+}

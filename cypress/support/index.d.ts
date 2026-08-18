@@ -4,6 +4,7 @@ declare namespace Cypress {
     createPrint(title: string, options?: { printer?: string }): Chainable<void>;
     openFilterPanel(): Chainable<void>;
     seedPublicPrintFixture(): Chainable<any>;
+    createProject(name: string): Chainable<any>;
     checkA11yWithReport(
       context?: any,
       options?: import('axe-core').RunOptions & {

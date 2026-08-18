@@ -16,12 +16,17 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 
+import { Subject, merge, of } from 'rxjs';
 import {
+  catchError,
   debounceTime,
   distinctUntilChanged,
+  map,
   startWith,
   switchMap,
+  tap,
 } from 'rxjs/operators';
+import { PagedList } from 'src/app/core/types/paging';
 import {
   ProjectService,
   ProjectSummaryDto,
@@ -67,6 +72,14 @@ export class ProjectSelectorComponent implements OnInit {
   selectedProject = signal<ProjectSelection | null>(null);
   showNewOption = signal(false);
   isDefaultView = signal(true);
+  /** True when the last lookup failed, so the empty list has an explanation. */
+  loadFailed = signal(false);
+
+  /**
+   * Re-runs the current search on demand. `valueChanges` cannot do this: the retry re-uses
+   * the same term, and `distinctUntilChanged` would swallow it.
+   */
+  private readonly retry$ = new Subject<void>();
 
   ngOnInit(): void {
     if (this.initialProjectId()) {
@@ -79,41 +92,80 @@ export class ProjectSelectorComponent implements OnInit {
         this.projectService
           .getProjectById(this.initialProjectId()!)
           .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe((project) => {
-            // The print detail payload carries projectId but not projectName, so the name
-            // arrives on this round trip — potentially after the user has started typing.
-            // Prefilling on top of their keystrokes splices the old name into the new one,
-            // which then gets created as a project under that mangled name.
-            if (this.searchControl.dirty) return;
-            this.applyInitialProject(project.id, project.name, project.status);
+          .subscribe({
+            next: (project) => {
+              // The print detail payload carries projectId but not projectName, so the name
+              // arrives on this round trip — potentially after the user has started typing.
+              // Prefilling on top of their keystrokes splices the old name into the new one,
+              // which then gets created as a project under that mangled name.
+              if (this.searchControl.dirty) return;
+              this.applyInitialProject(
+                project.id,
+                project.name,
+                project.status
+              );
+            },
+            // Without this the failure is an unhandled error and the field silently
+            // shows no project at all, which reads as "this print has none".
+            error: () => this.loadFailed.set(true),
           });
       }
     }
 
-    this.searchControl.valueChanges
-      .pipe(
+    merge(
+      this.searchControl.valueChanges.pipe(
         startWith(this.searchControl.value ?? ''),
         debounceTime(250),
-        distinctUntilChanged(),
+        distinctUntilChanged()
+      ),
+      this.retry$.pipe(map(() => this.searchControl.value ?? ''))
+    )
+      .pipe(
+        // Clear the previous failure as each new lookup starts, or one bad response
+        // leaves the message up for the rest of the dialog's life.
+        tap(() => this.loadFailed.set(false)),
         switchMap((value) => {
           const q = (value ?? '').trim();
-          if (q.length === 0) {
-            this.isDefaultView.set(true);
-            return this.projectService.getProjectSummaries(1, 25, {
-              status: ProjectStatus.InProgress,
-              sortBy: 'updatedDate',
-            });
-          }
-          this.isDefaultView.set(false);
-          return this.projectService.getProjectSummaries(1, 25, { search: q });
+          const lookup =
+            q.length === 0
+              ? (this.isDefaultView.set(true),
+                this.projectService.getProjectSummaries(1, 25, {
+                  status: ProjectStatus.InProgress,
+                  sortBy: 'updatedDate',
+                }))
+              : (this.isDefaultView.set(false),
+                this.projectService.getProjectSummaries(1, 25, { search: q }));
+
+          // catchError sits on the INNER observable. On the outer pipe it would
+          // terminate the stream and the input would stop searching altogether.
+          return lookup.pipe(
+            catchError(() => {
+              this.loadFailed.set(true);
+              return of({
+                paging: {
+                  currentPage: 1,
+                  totalPages: 0,
+                  pageSize: 25,
+                  totalCount: 0,
+                },
+                items: [],
+              } as PagedList<ProjectSummaryDto>);
+            })
+          );
         }),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((result) => {
         this.filteredProjects.set(result.items);
         const q = (this.searchControl.value ?? '').trim().toLowerCase();
+        // "No project matched, so offer to create one" is only true if the lookup
+        // actually answered. After a failure the list is empty because the request
+        // failed, and offering to create is how you end up with a duplicate of a
+        // project that already exists.
         this.showNewOption.set(
-          q.length > 0 && !result.items.some((p) => p.name.toLowerCase() === q)
+          !this.loadFailed() &&
+            q.length > 0 &&
+            !result.items.some((p) => p.name.toLowerCase() === q)
         );
       });
   }
@@ -152,6 +204,11 @@ export class ProjectSelectorComponent implements OnInit {
     };
     this.selectedProject.set(selection);
     this.projectSelected.emit(selection);
+  }
+
+  /** Re-runs the lookup that failed, using whatever is currently typed. */
+  retry(): void {
+    this.retry$.next();
   }
 
   clearProject(): void {

@@ -13,7 +13,7 @@ import {
   ProjectViewStatus,
 } from 'src/app/core/services/project.service';
 import { ReactiveFormsModule } from '@angular/forms';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -207,5 +207,46 @@ describe('ProjectSelectorComponent', () => {
 
     expect(fixture.componentInstance.selectedProject()).toBeNull();
     expect(emitted[0]).toBeNull();
+  }));
+
+  it('reports a failed lookup and clears the message once a retry succeeds', fakeAsync(() => {
+    // Without a handler the failure would leave an empty autocomplete with no
+    // explanation, and the stream would be dead for the rest of the dialog's life.
+    mockProjectService.getProjectSummaries.and.returnValue(
+      throwError(() => new Error('boom'))
+    );
+    fixture.detectChanges();
+    tick(250);
+
+    expect(fixture.componentInstance.loadFailed()).toBeTrue();
+    // A failed lookup returns an empty list, which must not be read as
+    // "that name is free" - offering to create is how duplicates happen.
+    expect(fixture.componentInstance.showNewOption()).toBeFalse();
+    fixture.detectChanges();
+
+    mockProjectService.getProjectSummaries.and.returnValue(
+      of({
+        paging: { currentPage: 1, totalPages: 1, pageSize: 25, totalCount: 1 },
+        items: [{ id: 'p1', name: 'Recovered', status: 1 }],
+      } as any)
+    );
+    const callsBefore = mockProjectService.getProjectSummaries.calls.count();
+
+    // Clicked through the DOM on purpose. Calling retry() directly would pass
+    // even with the button nested somewhere it cannot be reached.
+    const retryButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-cy="project-lookup-retry"]'
+    );
+    expect(retryButton)
+      .withContext('the retry control must be in the DOM')
+      .toBeTruthy();
+    retryButton.click();
+    tick(250);
+
+    expect(mockProjectService.getProjectSummaries.calls.count()).toBe(
+      callsBefore + 1
+    );
+    expect(fixture.componentInstance.loadFailed()).toBeFalse();
+    expect(fixture.componentInstance.filteredProjects().length).toBe(1);
   }));
 });

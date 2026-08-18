@@ -36,6 +36,33 @@ export enum PrintViewStatus {
   Private = 3,
 }
 
+/**
+ * One set of field values to apply to many prints. Every field is optional; omitted
+ * fields are left untouched. Enums serialize as their numeric value, matching the API,
+ * which registers no string enum converter.
+ */
+export interface BulkUpdatePrintsRequest {
+  printIds: number[];
+  status?: PrintStatus;
+  projectId?: string;
+  viewStatus?: PrintViewStatus;
+  printerId?: number;
+  allowComments?: boolean;
+  allowFileDownloads?: boolean;
+  /** Fields to reset to null. Only `projectId` is clearable. */
+  clear?: 'projectId'[];
+}
+
+/**
+ * The per-id outcome of a bulk operation. The request is a 200 even when some ids could
+ * not be acted on, so this body is what says which. `reason` is either "NotFound" or
+ * "Forbidden".
+ */
+export interface BulkPrintResult {
+  succeeded: number[];
+  failed: { id: number; reason: string }[];
+}
+
 export enum PrintFilamentSourceMeasurement {
   AsRecorded = 0,
   Weight = 1,
@@ -459,6 +486,26 @@ export class PrintService {
   public updatePrintStatus(id: number, newStatus: PrintStatus) {
     const url = `${this.baseApi}/api/Prints/${id}/status/${newStatus}`;
     return this.http.put<any>(url, {});
+  }
+
+  /**
+   * Applies one set of field values to many prints in a single request. Individual ids
+   * that could not be acted on come back in `failed`; the request itself is still a 200.
+   */
+  public bulkUpdatePrints(
+    request: BulkUpdatePrintsRequest
+  ): Observable<BulkPrintResult> {
+    const url = `${this.baseApi}/api/Prints/bulk-update`;
+    return this.http.post<BulkPrintResult>(url, request);
+  }
+
+  /**
+   * Deletes many prints in a single request. An id that no longer exists comes back in
+   * `succeeded` - the goal state is that the print is gone.
+   */
+  public bulkDeletePrints(printIds: number[]): Observable<BulkPrintResult> {
+    const url = `${this.baseApi}/api/Prints/bulk-delete`;
+    return this.http.post<BulkPrintResult>(url, { printIds });
   }
 
   deletePrint(id: number): Observable<any> {

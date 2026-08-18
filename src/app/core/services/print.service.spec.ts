@@ -7,7 +7,8 @@ import {
   provideHttpClient,
   withInterceptorsFromDi,
 } from '@angular/common/http';
-import { PrintService } from './print.service';
+import { BulkPrintResult, PrintService, PrintStatus } from './print.service';
+import { environment } from 'src/environments/environment';
 
 describe('PrintService', () => {
   let service: PrintService;
@@ -173,6 +174,63 @@ describe('PrintService', () => {
         expect(result.usesDefaultWattage).toBeTrue();
         expect(result.wattageW).toBe(150);
       }
+    });
+  });
+
+  // Scoped so httpMock.verify() applies only to the requests these specs make.
+  describe('bulk endpoints', () => {
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => httpMock.verify());
+
+    it('posts a bulk update with numeric enum values', () => {
+      const result: BulkPrintResult = { succeeded: [1, 2], failed: [] };
+      let actual: BulkPrintResult | undefined;
+
+      service
+        .bulkUpdatePrints({
+          printIds: [1, 2],
+          status: PrintStatus.Success,
+          projectId: 'a-project-id',
+        })
+        .subscribe((r) => (actual = r));
+
+      const req = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/Prints/bulk-update`
+      );
+      expect(req.request.method).toBe('POST');
+      // The API registers no string enum converter - enums must go over the wire as numbers.
+      expect(req.request.body).toEqual({
+        printIds: [1, 2],
+        status: 3,
+        projectId: 'a-project-id',
+      });
+
+      req.flush(result);
+      expect(actual).toEqual(result);
+    });
+
+    it('posts a bulk delete', () => {
+      const result: BulkPrintResult = {
+        succeeded: [1],
+        failed: [{ id: 2, reason: 'Forbidden' }],
+      };
+      let actual: BulkPrintResult | undefined;
+
+      service.bulkDeletePrints([1, 2]).subscribe((r) => (actual = r));
+
+      const req = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/Prints/bulk-delete`
+      );
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ printIds: [1, 2] });
+
+      req.flush(result);
+      expect(actual).toEqual(result);
     });
   });
 });

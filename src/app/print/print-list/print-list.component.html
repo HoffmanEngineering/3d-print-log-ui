@@ -169,6 +169,7 @@
       <!-- Desktop only, matching the table's breakpoint -->
       <app-print-bulk-action-bar
         fxHide.lt-md
+        [printers]="printers"
         (batchCompleted)="onBulkActionCompleted()"
       />
     }

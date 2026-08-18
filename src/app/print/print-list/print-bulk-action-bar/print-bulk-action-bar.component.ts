@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  input,
   output,
   signal,
 } from '@angular/core';
@@ -14,12 +15,20 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { PrintStatus } from 'src/app/core/services/print.service';
+import {
+  PrintStatus,
+  PrintViewStatus,
+} from 'src/app/core/services/print.service';
+import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   BulkActionResult,
   PrintBulkActionsService,
 } from '../../services/print-bulk-actions.service';
+import {
+  PrintBulkProjectDialogComponent,
+  PrintBulkProjectDialogResult,
+} from '../print-bulk-project-dialog/print-bulk-project-dialog.component';
 
 interface StatusOption {
   status: PrintStatus;
@@ -27,10 +36,17 @@ interface StatusOption {
   icon: string;
 }
 
+interface VisibilityOption {
+  viewStatus: PrintViewStatus;
+  label: string;
+  icon: string;
+}
+
 /**
  * Contextual controls shown in the print list toolbar while one or more prints are
- * selected. Offers a bulk status change and a bulk delete, both of which run as
- * sequential batches against the single-item API endpoints.
+ * selected. Offers a bulk status change, an add-to-project, a delete, and an overflow
+ * menu for visibility, printer and permissions - all of which run as chunked requests
+ * against the bulk API endpoints.
  *
  * The host keeps a constant height and the progress bar is overlaid rather than
  * stacked, so nothing here moves the table when a selection appears or clears.
@@ -54,8 +70,17 @@ export class PrintBulkActionBarComponent {
   private readonly toastrService = inject(ToastrService);
   private readonly loggingService = inject(LoggingService);
 
+  /** The user's printers, passed down from the list's resolver data - no extra request. */
+  public readonly printers = input<PrinterSummary[]>([]);
+
   /** Emitted after a batch finishes so the list can reload its current page. */
   public readonly batchCompleted = output<BulkActionResult>();
+
+  public readonly visibilityOptions: VisibilityOption[] = [
+    { viewStatus: PrintViewStatus.Public, label: 'Public', icon: 'public' },
+    { viewStatus: PrintViewStatus.Unlisted, label: 'Unlisted', icon: 'link' },
+    { viewStatus: PrintViewStatus.Private, label: 'Private', icon: 'lock' },
+  ];
 
   /** The result sentence, mirrored into the live region for screen readers. */
   public readonly resultMessage = signal('');
@@ -103,6 +128,116 @@ export class PrintBulkActionBarComponent {
 
     const result = await this.bulkActions.setStatusForSelected(option.status);
     this.reportOutcome(result, `set to ${option.label}`, 'updated');
+  }
+
+  /**
+   * Opens the project picker and files the selection under whatever it returns. The dialog
+   * resolves a typed-in name to a created project before it closes, so this only ever
+   * deals in ids - a chunked batch cannot create one project per chunk.
+   */
+  public async addToProject(): Promise<void> {
+    const attempted = this.bulkActions.selectedCount();
+    if (attempted === 0 || this.bulkActions.isRunning()) {
+      return;
+    }
+
+    this.loggingService.logEvent('PrintBulkActionBar_SetProjectStarted', {
+      count: attempted,
+    });
+
+    const dialogRef = this.dialog.open(PrintBulkProjectDialogComponent, {
+      width: '420px',
+      data: { count: attempted },
+    });
+
+    const choice: PrintBulkProjectDialogResult | undefined =
+      await firstValueFrom(dialogRef.afterClosed());
+
+    if (!choice) {
+      return;
+    }
+
+    this.resultMessage.set('');
+
+    if ('remove' in choice) {
+      this.loggingService.logEvent('PrintBulkActionBar_RemoveProjectStarted', {
+        count: attempted,
+      });
+      const removed = await this.bulkActions.removeProjectFromSelected();
+      this.reportOutcome(removed, 'removed from their project', 'updated');
+      return;
+    }
+
+    const result = await this.bulkActions.setProjectForSelected(
+      choice.projectId
+    );
+
+    // A project created for this batch outlives a failed assignment on purpose - deleting
+    // it would be destructive on a guess, since part of the batch may already be filed.
+    // Naming it is what stops the retry from creating a second one under the same name.
+    if (choice.created && result.succeededIds.length === 0) {
+      this.resultMessage.set(
+        `The project "${choice.projectName}" was created, but no prints could be added to it. ` +
+          'Pick it from the list to try again.'
+      );
+      this.toastrService.error(
+        this.resultMessage(),
+        'Could not add to the project'
+      );
+      this.batchCompleted.emit(result);
+      return;
+    }
+
+    this.reportOutcome(result, 'added to the project', 'updated');
+  }
+
+  /** Sets who can see every selected print. */
+  public async setVisibility(option: VisibilityOption): Promise<void> {
+    const attempted = this.bulkActions.selectedCount();
+    if (attempted === 0 || this.bulkActions.isRunning()) {
+      return;
+    }
+    this.loggingService.logEvent('PrintBulkActionBar_SetVisibilityStarted', {
+      count: attempted,
+      visibility: option.label,
+    });
+    this.resultMessage.set('');
+    const result = await this.bulkActions.setViewStatusForSelected(
+      option.viewStatus
+    );
+    this.reportOutcome(result, `set to ${option.label}`, 'updated');
+  }
+
+  /** Moves every selected print onto another of the user's printers. */
+  public async setPrinter(printer: PrinterSummary): Promise<void> {
+    const attempted = this.bulkActions.selectedCount();
+    if (attempted === 0 || this.bulkActions.isRunning()) {
+      return;
+    }
+    this.loggingService.logEvent('PrintBulkActionBar_SetPrinterStarted', {
+      count: attempted,
+    });
+    this.resultMessage.set('');
+    const result = await this.bulkActions.setPrinterForSelected(printer.id);
+    this.reportOutcome(result, `moved to ${printer.name}`, 'updated');
+  }
+
+  /** Sets only the permissions named in `patch`; the others are left alone. */
+  public async setPermission(patch: {
+    allowComments?: boolean;
+    allowFileDownloads?: boolean;
+  }): Promise<void> {
+    const attempted = this.bulkActions.selectedCount();
+    if (attempted === 0 || this.bulkActions.isRunning()) {
+      return;
+    }
+    this.loggingService.logEvent('PrintBulkActionBar_SetPermissionsStarted', {
+      count: attempted,
+      fields: Object.keys(patch).join(','),
+    });
+    this.resultMessage.set('');
+    const result = await this.bulkActions.setPermissionsForSelected(patch);
+    this.reportOutcome(result, 'updated', 'updated');
   }
 
   public async deleteSelected(): Promise<void> {

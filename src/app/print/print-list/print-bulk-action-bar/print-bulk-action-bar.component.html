@@ -68,6 +68,120 @@
       <button
         mat-stroked-button
         type="button"
+        [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
+        (click)="addToProject()"
+        attr.aria-label="Add {{ bulkActions.selectedCount() }} selected {{
+          bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+        }} to a project"
+        data-cy-bulk-add-to-project
+      >
+        <mat-icon>folder</mat-icon>
+        Add to project ({{ bulkActions.selectedCount() }})
+      </button>
+
+      <button
+        mat-stroked-button
+        type="button"
+        [matMenuTriggerFor]="bulkMoreMenu"
+        [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
+        attr.aria-label="More actions for {{
+          bulkActions.selectedCount()
+        }} selected {{
+          bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+        }}"
+        data-cy-bulk-more
+      >
+        <mat-icon>more_horiz</mat-icon>
+        More ({{ bulkActions.selectedCount() }})
+      </button>
+      <mat-menu #bulkMoreMenu="matMenu">
+        <button mat-menu-item [matMenuTriggerFor]="bulkVisibilityMenu">
+          <mat-icon>visibility</mat-icon>Visibility
+        </button>
+        @if (printers().length > 0) {
+          <button mat-menu-item [matMenuTriggerFor]="bulkPrinterMenu">
+            <mat-icon>print</mat-icon>Printer
+          </button>
+        }
+        <button mat-menu-item [matMenuTriggerFor]="bulkPermissionsMenu">
+          <mat-icon>tune</mat-icon>Permissions
+        </button>
+      </mat-menu>
+
+      <mat-menu #bulkVisibilityMenu="matMenu">
+        @for (option of visibilityOptions; track option.viewStatus) {
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="{{ option.label }} - set the visibility of {{
+              bulkActions.selectedCount()
+            }} selected {{
+              bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+            }}"
+            attr.data-cy-bulk-visibility="{{ option.label }}"
+            (click)="setVisibility(option)"
+          >
+            <mat-icon>{{ option.icon }}</mat-icon>{{ option.label }}
+          </button>
+        }
+      </mat-menu>
+
+      <mat-menu #bulkPrinterMenu="matMenu">
+        @for (printer of printers(); track printer.id) {
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="{{ printer.name }} - reassign {{
+              bulkActions.selectedCount()
+            }} selected {{
+              bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+            }} to this printer"
+            attr.data-cy-bulk-printer="{{ printer.name }}"
+            (click)="setPrinter(printer)"
+          >
+            <mat-icon>print</mat-icon>{{ printer.name }}
+          </button>
+        }
+      </mat-menu>
+
+      <mat-menu #bulkPermissionsMenu="matMenu">
+        <button
+          type="button"
+          mat-menu-item
+          (click)="setPermission({ allowComments: true })"
+          data-cy-bulk-permission="allow-comments"
+        >
+          <mat-icon>chat</mat-icon>Allow comments
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          (click)="setPermission({ allowComments: false })"
+          data-cy-bulk-permission="disallow-comments"
+        >
+          <mat-icon>chat_bubble_outline</mat-icon>Don't allow comments
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          (click)="setPermission({ allowFileDownloads: true })"
+          data-cy-bulk-permission="allow-downloads"
+        >
+          <mat-icon>download</mat-icon>Allow file downloads
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          (click)="setPermission({ allowFileDownloads: false })"
+          data-cy-bulk-permission="disallow-downloads"
+        >
+          <mat-icon>file_download_off</mat-icon>Don't allow file downloads
+        </button>
+      </mat-menu>
+
+      <button
+        mat-stroked-button
+        type="button"
         color="warn"
         [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
         (click)="deleteSelected()"

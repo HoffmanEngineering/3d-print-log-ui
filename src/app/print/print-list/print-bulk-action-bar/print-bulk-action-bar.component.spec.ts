@@ -8,7 +8,9 @@ import {
   PrintService,
   PrintStatus,
   PrintSummary,
+  PrintViewStatus,
 } from 'src/app/core/services/print.service';
+import { PrinterSummary } from 'src/app/core/services/printer.service';
 import {
   BulkActionResult,
   PrintBulkActionsService,
@@ -229,5 +231,114 @@ describe('PrintBulkActionBarComponent', () => {
     component.clearSelection();
 
     expect(bulkActions.hasSelection()).toBeFalse();
+  });
+
+  describe('the new field actions', () => {
+    /**
+     * Selects a print and stubs the batch method under test. The TestBed provides the
+     * REAL PrintBulkActionsService, so its methods are ordinary functions, not spies -
+     * and every action returns immediately when nothing is selected, so a test that
+     * forgets the selection asserts nothing.
+     */
+    function selectAndStub(method: keyof PrintBulkActionsService): jasmine.Spy {
+      bulkActions.toggleSelection(printOne);
+      fixture.detectChanges();
+      return spyOn(bulkActions, method as never).and.resolveTo({
+        succeededIds: [printOne.id],
+        failedIds: [],
+        failuresRetained: false,
+        errorMessage: null,
+      } as never);
+    }
+
+    it('opens the project dialog and assigns the chosen project', async () => {
+      const setProject = selectAndStub('setProjectForSelected');
+      dialogRef.afterClosed.and.returnValue(
+        of({ projectId: 'chosen-id', projectName: 'Benchies', created: false })
+      );
+
+      await component.addToProject();
+
+      expect(setProject).toHaveBeenCalledWith('chosen-id');
+    });
+
+    it('removes the project when the dialog asks for it', async () => {
+      const removeProject = selectAndStub('removeProjectFromSelected');
+      dialogRef.afterClosed.and.returnValue(of({ remove: true }));
+
+      await component.addToProject();
+
+      expect(removeProject).toHaveBeenCalled();
+    });
+
+    it('does nothing when the project dialog is cancelled', async () => {
+      const setProject = selectAndStub('setProjectForSelected');
+      dialogRef.afterClosed.and.returnValue(of(undefined));
+
+      await component.addToProject();
+
+      expect(setProject).not.toHaveBeenCalled();
+    });
+
+    it('names the newly created project when the assignment fails', async () => {
+      bulkActions.toggleSelection(printOne);
+      fixture.detectChanges();
+      spyOn(bulkActions, 'setProjectForSelected').and.resolveTo({
+        succeededIds: [],
+        failedIds: [printOne.id],
+        failuresRetained: true,
+        errorMessage: null,
+      });
+      dialogRef.afterClosed.and.returnValue(
+        of({ projectId: 'created-id', projectName: 'New Batch', created: true })
+      );
+
+      await component.addToProject();
+
+      // The project survives a failed assignment, so the message has to name it -
+      // otherwise the retry creates a second project with the same name.
+      expect(component.resultMessage()).toContain('New Batch');
+    });
+
+    it('sets visibility from the overflow menu', async () => {
+      const setViewStatus = selectAndStub('setViewStatusForSelected');
+
+      await component.setVisibility(component.visibilityOptions[0]);
+
+      expect(setViewStatus).toHaveBeenCalledWith(PrintViewStatus.Public);
+    });
+
+    it('reassigns the printer from the overflow menu', async () => {
+      const setPrinter = selectAndStub('setPrinterForSelected');
+
+      await component.setPrinter({ id: 7, name: 'Ender 3' } as PrinterSummary);
+
+      expect(setPrinter).toHaveBeenCalledWith(7);
+    });
+
+    it('sets permissions from the overflow menu', async () => {
+      const setPermissions = selectAndStub('setPermissionsForSelected');
+
+      await component.setPermission({ allowComments: true });
+
+      expect(setPermissions).toHaveBeenCalledWith({ allowComments: true });
+    });
+
+    it('does nothing when nothing is selected', async () => {
+      const setProject = spyOn(
+        bulkActions,
+        'setProjectForSelected'
+      ).and.resolveTo({
+        succeededIds: [],
+        failedIds: [],
+        failuresRetained: false,
+        errorMessage: null,
+      });
+
+      await component.addToProject();
+
+      expect(dialog.open).not.toHaveBeenCalled();
+      expect(setProject).not.toHaveBeenCalled();
+    });
   });
 });

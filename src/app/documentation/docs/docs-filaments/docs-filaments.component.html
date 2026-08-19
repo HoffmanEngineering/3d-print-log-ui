@@ -75,6 +75,12 @@
     it'll use the <strong>Estimated Material Used</strong>.
   </p>
   <p>
+    Usage recorded as a length or a volume counts exactly the same. 3D Print Log
+    converts it to a weight using the material's density and diameter, so it
+    does not matter which measurement you enter on a print &mdash; the roll
+    counts down by the same amount either way.
+  </p>
+  <p>
     <strong>Material Adjustments</strong> are entered when Adding/Editing a
     material, and represent non-print usage of material. Useful for documenting
     the wasted materials when changing colors, or adjusting a material's weight
@@ -92,6 +98,12 @@
     <strong>Volume</strong> in milliliters, along with how much material has
     been <strong>Used</strong> in total and how many <strong>Prints</strong> it
     went into.
+  </p>
+  <p>
+    Length and Volume are the remaining weight converted using the material's
+    density and diameter, so all three readings always describe the same roll.
+    Materials measured in a container rather than on a spool &mdash; resins and
+    powders &mdash; have no diameter, so they show a Volume but no Length.
   </p>
   <p>
     If the card says <strong>Not tracked</strong>, the material has no Initial

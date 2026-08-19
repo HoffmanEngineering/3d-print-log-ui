@@ -73,7 +73,7 @@ describe('Material detail — remaining and prints', () => {
     );
   });
 
-  it('keeps the stats card pinned while scrolling the form', () => {
+  it('keeps the stats card and prints panel pinned while scrolling the form', () => {
     cy.viewport(1440, 900);
 
     createTrackedFilament('Sticky E2E - ' + new Date().getTime()).then((id) => {
@@ -85,7 +85,9 @@ describe('Material detail — remaining and prints', () => {
       // `should('be.visible')` alone would pass for a card that simply scrolled
       // along with the page, which is the failure sticky has: it no-ops silently
       // when an ancestor clips or scrolls unexpectedly.
-      const STICKY_TOP = 16;
+      // The offset clears the 64px fixed navbar — pinning any higher tucks the
+      // top of the card underneath it.
+      const STICKY_TOP = 80;
 
       cy.contains('h2', 'Purchase Details').scrollIntoView();
       cy.get('app-filament-remaining-card').should(($after) => {
@@ -101,6 +103,19 @@ describe('Material detail — remaining and prints', () => {
           STICKY_TOP,
           2
         );
+      });
+
+      // The prints panel travels with the card: it rides directly below it and
+      // stays fully inside the viewport instead of stranding itself mid-page or
+      // sliding under the pinned card.
+      cy.get('app-filament-prints-panel').should(($panel) => {
+        const panel = $panel[0].getBoundingClientRect();
+        const card = Cypress.$(
+          'app-filament-remaining-card'
+        )[0].getBoundingClientRect();
+
+        expect(panel.top).to.be.at.least(card.bottom - 1);
+        expect(panel.bottom).to.be.at.most(900);
       });
     });
   });

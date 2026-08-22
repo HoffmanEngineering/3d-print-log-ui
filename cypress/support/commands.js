@@ -231,3 +231,33 @@ Cypress.Commands.add('restoreUserSettings', (snapshot) => {
       });
     });
 });
+
+// The dev user's own profile (display name, bio, visibility) is shared state in
+// the same way the settings rows are, and `public-profile.cy.ts` has to change
+// it to have anything non-trivial to assert on: the seeded user has a null
+// display name and no bio, so "the profile rendered" would otherwise be a claim
+// about two empty strings.
+//
+// Reads the public detail endpoint and writes through `me`, which is the only
+// endpoint that accepts an update - so this only ever edits the dev user's own
+// profile. Passing a previously captured snapshot restores it exactly.
+Cypress.Commands.add('patchUserProfile', (patch) => {
+  const devHeaders = { 'X-Dev-User-Id': '1' };
+
+  return cy
+    .request({
+      method: 'GET',
+      url: `${apiUrl()}/api/Users/1`,
+      headers: devHeaders,
+    })
+    .then(({ body: current }) =>
+      cy
+        .request({
+          method: 'PUT',
+          url: `${apiUrl()}/api/Users/me`,
+          headers: devHeaders,
+          body: { ...current, ...patch },
+        })
+        .then((response) => response.body)
+    );
+});

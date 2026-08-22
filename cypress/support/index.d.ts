@@ -7,6 +7,7 @@ declare namespace Cypress {
     createProject(name: string): Chainable<any>;
     snapshotUserSettings(): Chainable<any[]>;
     restoreUserSettings(snapshot: any[]): Chainable<void>;
+    patchUserProfile(patch: Record<string, unknown>): Chainable<any>;
     checkA11yWithReport(
       context?: any,
       options?: import('axe-core').RunOptions & {

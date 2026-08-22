@@ -156,3 +156,62 @@ Cypress.Commands.add('openFilterPanel', () => {
   });
   cy.get('#filter-panel').should('have.class', 'filter-panel--open');
 });
+
+// User settings are stored per user on the API, and every spec in this suite
+// runs against the same dev user. A spec that changes a setting therefore
+// changes it for every spec that follows, so `settings.cy.ts` snapshots the
+// whole set up front and puts it back afterwards.
+//
+// There is deliberately no DELETE on `api/Users/me/user-settings` (see
+// UserSettingsController), so a setting the spec *creates* cannot be removed.
+// `restoreUserSettings` instead writes back the value the app itself falls back
+// to when the row is absent, which is behaviorally equivalent for other specs.
+const USER_SETTING_FALLBACKS = {
+  5: 'USD', // Currency_Name
+  6: '$', // Currency_Symbol
+  7: '1.75', // Filaments_DefaultDiameterMm
+  8: '20.00', // Filaments_DefaultPrice
+  12: '0', // Electricity_KwhRate - 0 adds no electricity cost, same as absent
+  13: '0', // Electricity_DefaultWattageW
+};
+
+Cypress.Commands.add('snapshotUserSettings', () =>
+  cy
+    .request({
+      method: 'GET',
+      url: `${apiUrl()}/api/Users/me/user-settings`,
+      headers: { 'X-Dev-User-Id': '1' },
+    })
+    .then((response) => response.body)
+);
+
+Cypress.Commands.add('restoreUserSettings', (snapshot) => {
+  const originalById = new Map(snapshot.map((s) => [s.id, s.value]));
+
+  return cy
+    .request({
+      method: 'GET',
+      url: `${apiUrl()}/api/Users/me/user-settings`,
+      headers: { 'X-Dev-User-Id': '1' },
+    })
+    .then((response) => {
+      response.body.forEach((setting) => {
+        const original = originalById.has(setting.id)
+          ? originalById.get(setting.id)
+          : USER_SETTING_FALLBACKS[setting.userSettingTypeId];
+
+        // A setting the spec neither changed nor created, and that has no
+        // documented fallback, is left exactly as it is.
+        if (original === undefined || original === setting.value) {
+          return;
+        }
+
+        cy.request({
+          method: 'PUT',
+          url: `${apiUrl()}/api/Users/me/user-settings`,
+          headers: { 'X-Dev-User-Id': '1' },
+          body: { id: setting.id, value: original },
+        });
+      });
+    });
+});

@@ -374,4 +374,13 @@ export class ViewPrintDetailComponent {
         this.comments.update((list) => [...list, comment])
       );
   }
+
+  /**
+   * Counterpart to `addComment`. The child has already deleted the comment on
+   * the server by the time this runs; the list lives here, so the repaint has
+   * to happen here too.
+   */
+  removeComment(deleted: Comment): void {
+    this.comments.update((list) => list.filter((c) => c.id !== deleted.id));
+  }
 }

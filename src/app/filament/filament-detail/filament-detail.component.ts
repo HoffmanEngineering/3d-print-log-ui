@@ -1020,7 +1020,7 @@ export class FilamentDetailComponent
     if (this.defaultFilamentPriceSetting) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultFilamentDiameterMmSetting.id,
+          this.defaultFilamentPriceSetting.id,
           newPrice.toString()
         )
         .subscribe((setting) => {

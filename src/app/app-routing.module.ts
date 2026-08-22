@@ -1,9 +1,10 @@
 import { NgModule } from '@angular/core';
-import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { AuthGuard } from './core/guards/auth.guard';
 import { HomepageRedirectGuard } from './core/guards/homepage-redirect.guard';
 import { PendingChangesGuard } from './core/guards/pending-changes.guard';
+import { SelectivePreloadStrategy } from './core/routing/selective-preload.strategy';
 import { HomeComponent } from './home/home.component';
 import { SlicerLandingComponent } from './slicer/slicer-landing.component';
 
@@ -27,6 +28,7 @@ export const appRoutes: Routes = [
     path: 'prints',
     loadChildren: () =>
       import('./print/print.module').then((m) => m.PrintModule),
+    data: { preload: true },
   },
   {
     path: 'projects',
@@ -37,6 +39,7 @@ export const appRoutes: Routes = [
     path: 'printers',
     loadChildren: () =>
       import('./printer/printer.module').then((m) => m.PrinterModule),
+    data: { preload: true },
   },
   {
     path: 'printer-maintenance',
@@ -94,6 +97,7 @@ export const appRoutes: Routes = [
     path: 'materials',
     loadChildren: () =>
       import('./filament/filament.module').then((m) => m.FilamentModule),
+    data: { preload: true },
   },
   {
     path: 'api-keys',
@@ -196,6 +200,7 @@ export const appRoutes: Routes = [
   imports: [
     RouterModule.forRoot(appRoutes, {
       scrollPositionRestoration: 'enabled',
+      preloadingStrategy: SelectivePreloadStrategy,
     }),
   ],
   exports: [RouterModule],

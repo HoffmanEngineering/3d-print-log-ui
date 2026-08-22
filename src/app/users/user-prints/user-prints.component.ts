@@ -18,6 +18,7 @@ import {
   PrintSummary,
   PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
+import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
 
 @Component({
   selector: 'app-user-prints',
@@ -43,7 +44,7 @@ export class UserPrintsComponent implements OnChanges, OnInit {
 
   public printStatusTypes = PrintStatus;
 
-  public printSummarySortColumns = PrintSummarySortColumn;
+  public printSummarySortColumns = toSortHeaderIds(PrintSummarySortColumn);
 
   public debouncedUpdateFilter;
 

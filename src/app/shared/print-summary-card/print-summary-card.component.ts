@@ -1,5 +1,15 @@
 import { Component, Input } from '@angular/core';
-import { PrintSummary } from 'src/app/core/services/print.service';
+
+/**
+ * The card only renders these four fields, so it accepts anything that carries
+ * them. That covers both `PrintSummary` and the narrower `PrintFeedSummary`.
+ */
+export interface PrintSummaryCardPrint {
+  id: number;
+  title: string;
+  startDate?: Date;
+  defaultPrintImageId: number;
+}
 
 @Component({
   selector: 'app-print-summary-card',
@@ -11,7 +21,7 @@ export class PrintSummaryCardComponent {
   @Input() userProfilePictureUrl: string = null;
   @Input() userName: string = null;
   @Input() userId: number = null;
-  @Input() print: PrintSummary;
+  @Input() print: PrintSummaryCardPrint;
 
   constructor() {}
 }

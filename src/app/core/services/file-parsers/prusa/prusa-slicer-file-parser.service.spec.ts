@@ -34,4 +34,64 @@ describe('PrusaSlicerFileParserService', () => {
 
     expect(actual.estimatedPrintTimeInSeconds).toBeUndefined();
   });
+  describe('estimateFilamentUsageInMg', () => {
+    it('should convert the reported gram total to milligrams when the slicer provides one', () => {
+      const testGcode = `; total filament used [g] = 12.5`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(12500);
+    });
+
+    it('should compute the weight from length and diameter when no gram total is reported', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = PLA
+; filament_diameter = 1.75
+; filament used [mm] = 1000`;
+
+      const actual = service.estimateFilamentUsageInMg(testGcode);
+
+      expect(actual).toBeGreaterThan(0);
+    });
+
+    it('should return undefined for a material it has no density for', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = TPU
+; filament_diameter = 1.75
+; filament used [mm] = 1000`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
+    });
+
+    // Characterizes existing behavior that is WRONG: a Nylon density is declared
+    // in MaterialDensities but the material chain never branches on it, so a
+    // valid Nylon file loses its estimate. Tracked in #100.
+    it('should currently return undefined for Nylon despite having its density', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = Nylon
+; filament_diameter = 1.75
+; filament used [mm] = 1000`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
+    });
+
+    // The next two characterize existing behavior that is WRONG, so that the
+    // full surface of the bug is pinned before it is fixed. A missing numeric
+    // setting parses as 0 rather than NaN, so the isNaN guards never fire and
+    // the weight comes out as 0mg instead of "unknown".
+    // Tracked in #99 — flip both to toBeUndefined() when that lands.
+    it('should currently report 0 when the diameter is missing', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = PLA
+; filament used [mm] = 1000`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(0);
+    });
+
+    it('should currently report 0 when the filament length is missing', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = PLA
+; filament_diameter = 1.75`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(0);
+    });
+  });
 });

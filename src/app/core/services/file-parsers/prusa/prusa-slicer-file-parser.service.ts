@@ -40,7 +40,7 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
 
     return print;
   }
-  estimateFilamentUsageInMg(gcode: string): number {
+  estimateFilamentUsageInMg(gcode: string): number | undefined {
     // Check to see if the user setup their filament densities, thus we can directly return filament usage.
     const filamentUsedInGrams = this.parseSettingAsNumber(
       gcode,
@@ -87,6 +87,11 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
         filamentDiameter
       );
     }
+
+    // Only PLA, ABS and PETG are handled above, so anything else is unknown
+    // rather than zero. Note MaterialDensities also declares Nylon, which this
+    // chain never reaches -- see #100.
+    return undefined;
   }
 
   private calculateWeightInMg(

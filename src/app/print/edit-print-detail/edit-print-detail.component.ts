@@ -1985,11 +1985,11 @@ export class EditPrintDetailComponent
     this.printForm.get('startTime').setValue(now.toTimeString().slice(0, 8));
   }
 
-  public getEstimatedCompletedDate() {
+  public getEstimatedCompletedDate(): void {
     const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
-      return '';
+      return;
     }
 
     const estimatedPrintTimeInSeconds = this.parseAsSeconds(
@@ -2010,11 +2010,11 @@ export class EditPrintDetailComponent
     );
   }
 
-  getActualCompletedDate() {
+  getActualCompletedDate(): void {
     const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
-      return '';
+      return;
     }
 
     const printTimeInSeconds = this.parseAsSeconds(
@@ -2043,11 +2043,11 @@ export class EditPrintDetailComponent
     }
   }
 
-  public updateActualCompletedDate(newDate: Date) {
+  public updateActualCompletedDate(newDate: Date): void {
     const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
-      return '';
+      return;
     }
 
     const difference = Math.round(

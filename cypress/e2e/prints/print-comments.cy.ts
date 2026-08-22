@@ -90,34 +90,38 @@ describe('Print comments', () => {
       cy.contains('.comment', body).should('not.exist');
     });
 
-    it('hides the comment section entirely when the print disallows comments', () => {
+    describe('with comments disabled', () => {
+      const setAllowComments = (allowComments: boolean) =>
+        cy
+          .request({
+            method: 'GET',
+            url: `${apiUrl()}/api/Prints/${printId}`,
+            headers: { 'X-Dev-User-Id': '1' },
+          })
+          .then(({ body: print }) =>
+            cy.request({
+              method: 'PUT',
+              url: `${apiUrl()}/api/Prints/${printId}`,
+              headers: { 'X-Dev-User-Id': '1' },
+              body: { ...print, allowComments },
+            })
+          );
+
       // Flipped through the API rather than the edit form: this test is about
       // how the detail page reads the flag, not about the form that sets it.
-      cy.request({
-        method: 'GET',
-        url: `${apiUrl()}/api/Prints/${printId}`,
-        headers: { 'X-Dev-User-Id': '1' },
-      }).then(({ body: print }) => {
-        cy.request({
-          method: 'PUT',
-          url: `${apiUrl()}/api/Prints/${printId}`,
-          headers: { 'X-Dev-User-Id': '1' },
-          body: { ...print, allowComments: false },
-        });
+      // The re-enable lives in afterEach rather than at the end of the test
+      // body so that a failed assertion cannot leave the fixture print with
+      // comments off for the anonymous test below.
+      beforeEach(() => setAllowComments(false));
+      afterEach(() => setAllowComments(true));
 
+      it('hides the comment section entirely', () => {
         cy.visit(`/prints/${printId}`);
+
         cy.contains(/comments are disabled for this print/i).should(
           'be.visible'
         );
         cy.get('#add-comment-textarea').should('not.exist');
-
-        // Put it back so the anonymous test below still has a comment section.
-        cy.request({
-          method: 'PUT',
-          url: `${apiUrl()}/api/Prints/${printId}`,
-          headers: { 'X-Dev-User-Id': '1' },
-          body: { ...print, allowComments: true },
-        });
       });
     });
   });

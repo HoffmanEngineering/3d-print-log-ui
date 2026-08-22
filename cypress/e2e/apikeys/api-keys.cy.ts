@@ -1,10 +1,11 @@
 /**
  * API keys are the one credential this app hands the user, and `/api-keys` had
- * no e2e coverage. The property that matters is show-once: the secret is
- * returned by the create call and never again, so a regression that either
- * hides it at creation (leaving the user with an unusable key) or keeps showing
- * it after a reload (implying the server stores it) is a real defect that a
- * component unit test with a mocked service cannot see.
+ * no e2e coverage. The property that matters is show-once: the secret comes
+ * back from the create call and never again. A regression that hides it at
+ * creation leaves the user with an unusable key; one that keeps serving it
+ * afterwards means the server is storing a credential it promises not to. The
+ * second half is checked against the list response as well as the rendered
+ * mask, so a secret leaking back under any field still fails the test.
  */
 describe('API Keys', () => {
   beforeEach(() => {
@@ -28,8 +29,10 @@ describe('API Keys', () => {
     cy.get('.new-key textarea').type(description);
     cy.findByRole('button', { name: /^submit$/i }).click();
 
+    let secret = '';
+
     cy.wait('@createKey').then(({ response }) => {
-      const secret = response.body.publicKey;
+      secret = response.body.publicKey;
       expect(secret, 'the create response carries the secret').to.be.a('string')
         .and.not.be.empty;
 
@@ -40,7 +43,13 @@ describe('API Keys', () => {
 
     cy.contains(/make sure you copy this key now/i).should('be.visible');
 
+    // Asserted on the payload, not just on the asterisks: a mask is a UI
+    // decision, and this is about what the server hands back.
+    cy.intercept('GET', '**/api/UserApiKeys').as('listKeys');
     cy.reload();
+    cy.wait('@listKeys').then(({ response }) => {
+      cy.wrap(JSON.stringify(response.body)).should('not.contain', secret);
+    });
 
     describedRow(description).within(() => {
       // Masked, and masked with literal asterisks rather than a truncated key.

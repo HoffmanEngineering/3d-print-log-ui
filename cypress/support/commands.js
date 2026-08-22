@@ -162,17 +162,33 @@ Cypress.Commands.add('openFilterPanel', () => {
 // changes it for every spec that follows, so `settings.cy.ts` snapshots the
 // whole set up front and puts it back afterwards.
 //
-// There is deliberately no DELETE on `api/Users/me/user-settings` (see
-// UserSettingsController), so a setting the spec *creates* cannot be removed.
-// `restoreUserSettings` instead writes back the value the app itself falls back
-// to when the row is absent, which is behaviorally equivalent for other specs.
+// There is no DELETE on `api/Users/me/user-settings` (see
+// UserSettingsController), so a row the spec *creates* cannot be removed - only
+// overwritten. These are the closest restorable stand-ins for "absent", and the
+// difference is spelled out per setting because it is not uniform: the app does
+// NOT treat every empty-ish value the way it treats a missing row.
+//
+//   '' really is "unset" for the electricity rate, because the cost helper
+//   guards with `if (!kwhRate)` (print.service.ts). That guard runs before the
+//   wattage is consulted, which is what makes the wattage row harmless too.
+//   Note that '0' would NOT work here - it is truthy, so it reads as a
+//   configured rate of zero and renders a $0.00 cost where the app previously
+//   said "(Electricity rate not set)".
+//
+//   'USD' / '$' are exactly what settings.component.ts and the currency pipes
+//   fall back to when the rows are missing, so those two are truly equivalent.
+//
+//   The default filament diameter is the one genuine residue: absent leaves the
+//   new-material field blank, and there is no value that reproduces that ('' is
+//   coerced to 0 by `+setting.value`). 1.75 is chosen as the standard filament
+//   diameter and the value the field is most likely to already hold.
 const USER_SETTING_FALLBACKS = {
   5: 'USD', // Currency_Name
   6: '$', // Currency_Symbol
-  7: '1.75', // Filaments_DefaultDiameterMm
-  8: '20.00', // Filaments_DefaultPrice
-  12: '0', // Electricity_KwhRate - 0 adds no electricity cost, same as absent
-  13: '0', // Electricity_DefaultWattageW
+  7: '1.75', // Filaments_DefaultDiameterMm - see caveat above
+  8: '', // Filaments_DefaultPrice - only drives a placeholder
+  12: '', // Electricity_KwhRate - '' reads as unset, '0' does not
+  13: '', // Electricity_DefaultWattageW - moot while the rate reads as unset
 };
 
 Cypress.Commands.add('snapshotUserSettings', () =>

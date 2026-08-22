@@ -6,13 +6,18 @@
  * does not reach the page that consumes it, is invisible to a unit test of the
  * settings component alone.
  *
- * Every test here restores what it changed - see `cy.restoreUserSettings`.
+ * Every test here puts back what it changed - see `cy.restoreUserSettings`,
+ * which documents the one case it cannot fully undo (a settings row that did
+ * not exist before the spec ran cannot be deleted, only overwritten).
  */
 describe('Settings', () => {
-  let settingsSnapshot: any[];
+  let settingsSnapshot: any[] = [];
 
   beforeEach(() => {
     cy.login();
+    // Reset first: if the snapshot request fails, the cleanup below must not
+    // silently "restore" the previous test's snapshot over this test's writes.
+    settingsSnapshot = [];
     cy.snapshotUserSettings().then((settings) => {
       settingsSnapshot = settings;
     });
@@ -20,6 +25,11 @@ describe('Settings', () => {
 
   afterEach(() => {
     cy.restoreUserSettings(settingsSnapshot);
+
+    // The theme lives in localStorage, which `cy.session` caches across specs,
+    // so it is reset here rather than at the end of the theme test - a mid-test
+    // failure would otherwise leave every later spec running in dark mode.
+    cy.window().then((win) => win.localStorage.setItem('theme-mode', 'system'));
   });
 
   /**

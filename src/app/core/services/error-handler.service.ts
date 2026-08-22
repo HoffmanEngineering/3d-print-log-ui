@@ -8,7 +8,7 @@ export class ErrorHandlerService extends ErrorHandler {
     super();
   }
 
-  handleError(error: Error) {
+  override handleError(error: Error) {
     if (environment.production) {
       this.loggingService.logException(error); // Manually log exception
     } else {

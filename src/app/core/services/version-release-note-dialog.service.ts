@@ -1876,6 +1876,9 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
         lastDisplayedVersionKey
       );
     }
+
+    // Neither a release note nor a redirect, so there is nothing to show.
+    return null;
   }
 
   private isReleaseNote(obj: any): obj is ReleaseNote {

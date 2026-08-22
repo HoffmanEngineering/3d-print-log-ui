@@ -75,7 +75,7 @@ interface ChartTooltip {
 })
 export class BarChartComponent {
   readonly data = input<BarDatum[]>([]);
-  readonly series = input<BarSeries[]>([]);
+  readonly series = input<readonly BarSeries[]>([]);
   readonly width = input(0);
   readonly height = input(0);
   readonly orientation = input<'auto' | 'vertical' | 'horizontal'>('auto');

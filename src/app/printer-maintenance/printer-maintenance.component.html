@@ -73,7 +73,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Done</th>
       <td mat-cell *matCellDef="let entry">
         <mat-checkbox
-          [(checked)]="entry.done"
+          [checked]="entry.done"
           (change)="toggleDone(entry, $event.checked)"
           [disabled]="this.editId !== null && this.editId !== entry.id"
         ></mat-checkbox>

@@ -40,7 +40,7 @@ export class OrcaFileParserService implements GcodeNewPrintParser {
 
     return print;
   }
-  estimateFilamentUsageInMg(gcode: string): number {
+  estimateFilamentUsageInMg(gcode: string): number | undefined {
     // Check to see if the user setup their filament densities, thus we can directly return filament usage.
     const filamentUsedInGrams = this.parseSettingAsNumber(
       gcode,
@@ -87,6 +87,9 @@ export class OrcaFileParserService implements GcodeNewPrintParser {
         filamentDiameter
       );
     }
+
+    // No density on file for this material, so usage is unknown rather than zero.
+    return undefined;
   }
 
   private calculateWeightInMg(

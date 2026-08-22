@@ -183,7 +183,7 @@
       [dataSource]="filaments"
       class="filament-table"
       matSort
-      [matSortActive]="sortColumn"
+      [matSortActive]="sortColumnId"
       [matSortDirection]="sortDirection === 1 ? 'asc' : 'desc'"
       (matSortChange)="sortData($event)"
       [matSortDisableClear]="true"

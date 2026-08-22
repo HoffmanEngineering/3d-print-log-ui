@@ -34,4 +34,42 @@ describe('PrusaSlicerFileParserService', () => {
 
     expect(actual.estimatedPrintTimeInSeconds).toBeUndefined();
   });
+  describe('estimateFilamentUsageInMg', () => {
+    it('should convert the reported gram total to milligrams when the slicer provides one', () => {
+      const testGcode = `; total filament used [g] = 12.5`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(12500);
+    });
+
+    it('should compute the weight from length and diameter when no gram total is reported', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = PLA
+; filament_diameter = 1.75
+; filament used [mm] = 1000`;
+
+      const actual = service.estimateFilamentUsageInMg(testGcode);
+
+      expect(actual).toBeGreaterThan(0);
+    });
+
+    it('should return undefined for a material it has no density for', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = TPU
+; filament_diameter = 1.75
+; filament used [mm] = 1000`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
+    });
+
+    // Characterizes existing behavior, which is wrong: a missing diameter parses
+    // as 0 rather than NaN, so the isNaN guard never fires and the weight comes
+    // out as 0mg instead of "unknown". Tracked separately from the strictness work.
+    it('should currently report 0 when the diameter is missing', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = PLA
+; filament used [mm] = 1000`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(0);
+    });
+  });
 });

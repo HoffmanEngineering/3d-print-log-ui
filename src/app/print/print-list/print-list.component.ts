@@ -46,6 +46,7 @@ import { PrinterRedirectPromptService } from '../services/printer-redirect-promp
 import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import { PrintBulkActionsService } from '../services/print-bulk-actions.service';
+import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
 
 export interface ColumnDefinition {
   key: string;
@@ -216,7 +217,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public printStatusTypes = PrintStatus;
 
-  public printSummarySortColumns = PrintSummarySortColumn;
+  public printSummarySortColumns = toSortHeaderIds(PrintSummarySortColumn);
 
   public debouncedUpdateFilter;
 

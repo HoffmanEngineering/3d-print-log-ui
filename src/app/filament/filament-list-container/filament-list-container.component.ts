@@ -24,6 +24,7 @@ import {
   QrLabelDialogComponent,
   QrLabelDialogData,
 } from 'src/app/shared/qr-label-dialog/qr-label-dialog.component';
+import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
 
 @Component({
   selector: 'app-filament-list-container',
@@ -61,8 +62,15 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   readonly FilamentFinishType = FilamentFinishType;
   readonly FilamentEffect = FilamentEffect;
 
-  public filamentSortColumns = FilamentSortColumns;
+  public filamentSortColumns = toSortHeaderIds(FilamentSortColumns);
   public sortColumn = FilamentSortColumns.FilamentRemaining;
+  /**
+   * `matSortActive` compares against the header's string id, so the numeric
+   * enum has to be stringified or the initial sort arrow never renders.
+   */
+  public get sortColumnId(): string {
+    return String(this.sortColumn);
+  }
   public sortDirection = SortDirection.Desc;
 
   public includeInactive = false;

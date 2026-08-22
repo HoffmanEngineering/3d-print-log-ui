@@ -88,7 +88,9 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
       );
     }
 
-    // No density on file for this material, so usage is unknown rather than zero.
+    // Only PLA, ABS and PETG are handled above, so anything else is unknown
+    // rather than zero. Note MaterialDensities also declares Nylon, which this
+    // chain never reaches -- see #100.
     return undefined;
   }
 

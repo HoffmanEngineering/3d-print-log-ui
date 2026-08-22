@@ -1,0 +1,39 @@
+<a class="print-row" [routerLink]="['/prints', print().id]">
+  <span class="thumb">
+    @if (hasImage()) {
+      <app-print-image
+        [printId]="print().id"
+        [imageId]="print().defaultPrintImageId"
+        [alt]="print().title"
+      ></app-print-image>
+    } @else {
+      <span class="thumb-placeholder" aria-hidden="true">
+        <mat-icon>photo_camera</mat-icon>
+      </span>
+    }
+  </span>
+
+  <span class="details">
+    <span class="title">{{ print().title }}</span>
+    @if (print().startDate) {
+      <span class="date">{{ print().startDate | date: 'mediumDate' }}</span>
+    }
+  </span>
+
+  @if (usageDisplay(); as display) {
+    <span class="usage">
+      {{ display.displayString }}
+      <!-- Read from isEstimated(), not display.isEstimated: a merged multi-row
+           usage resolves each row before summing, so the synthetic row it formats
+           no longer knows that one of its contributions was an estimate. -->
+      @if (isEstimated()) {
+        <span
+          class="estimated-marker"
+          matTooltip="Estimated usage"
+          aria-label="Estimated"
+          >*</span
+        >
+      }
+    </span>
+  }
+</a>

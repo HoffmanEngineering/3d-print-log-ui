@@ -1,0 +1,48 @@
+<mat-card appearance="outlined" class="prints-panel">
+  <mat-card-content>
+    <h3 class="panel-title">
+      Prints using this material
+      @if (phase() === 'ready' && totalCount() > 0) {
+        <span class="count">{{ totalCount() }}</span>
+      }
+    </h3>
+
+    @switch (phase()) {
+      @case ('loading') {
+        <div class="skeleton-rows app-skeleton-immediate">
+          @for (row of [1, 2, 3]; track row) {
+            <app-skeleton height="56px"></app-skeleton>
+          }
+        </div>
+      }
+      @case ('error') {
+        <p class="error-text">Couldn't load prints.</p>
+        <button mat-stroked-button type="button" (click)="retry()">
+          Retry
+        </button>
+      }
+      @case ('ready') {
+        @if (prints().length === 0) {
+          <p class="empty-text">No prints have used this material yet.</p>
+        } @else {
+          @for (print of prints(); track print.id) {
+            <app-filament-print-row
+              [print]="print"
+              [filamentId]="filamentId()"
+              [preferredUnit]="preferredUnit()"
+            ></app-filament-print-row>
+          }
+          @if (hasMore()) {
+            <a
+              class="view-all"
+              [routerLink]="['/prints']"
+              [queryParams]="viewAllParams()"
+            >
+              View all {{ totalCount() }} prints
+            </a>
+          }
+        }
+      }
+    }
+  </mat-card-content>
+</mat-card>

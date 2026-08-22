@@ -44,3 +44,106 @@ mat-card-title {
     pointer-events: none;
   }
 }
+
+// One column on narrow viewports, laid out in the order the page has always used:
+// stats, form, prints, ad. The rail wrappers collapse with `display: contents` so
+// their children are grid items here, and `order` on the form puts it back between
+// the remaining card and the prints panel. No named areas at this width on purpose
+// — declaring rows explicitly would keep their 24px gaps in add and copy mode,
+// where the stats and prints elements do not exist and the ad is hidden, leaving
+// stray space around the form.
+.detail-layout {
+  display: grid;
+  gap: 24px;
+  justify-content: center;
+  grid-template-columns: minmax(0, 560px);
+}
+
+.detail-rail,
+.rail-sticky {
+  display: contents;
+}
+
+.rail-prints,
+.rail-ad {
+  order: 1;
+}
+
+.rail-ad {
+  // Matches the `fxHide fxShow.gt-md` this element replaces: ngx-layout's
+  // `gt-md` is `min-width: 1280px`, the same threshold used below.
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  // With the rail: the remaining card, the prints panel and the ad share one
+  // 340px column, so the page absorbs the ad sidebar that already lived there
+  // rather than becoming three columns. The rail is a single grid area — giving
+  // each card its own row made the tall form stretch the rows apart and stranded
+  // the prints panel in the vertical middle of the page.
+  .detail-layout.has-rail {
+    grid-template-columns: minmax(0, 560px) 340px;
+    grid-template-areas: 'form rail';
+
+    .form-card {
+      grid-area: form;
+    }
+
+    .detail-rail {
+      grid-area: rail;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      // Stretch to the form's height. A sticky child can only travel inside its
+      // containing block, so a content-height rail would unstick almost at once.
+      align-self: stretch;
+    }
+
+    .rail-sticky {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: sticky;
+      // Clears the 64px fixed navbar, matching `.ad-sidebar` in styles.scss.
+      // Keeps the remaining number and the recent prints on screen while the
+      // user scrolls the long form down to the Weights section, which is
+      // exactly when they matter.
+      top: 80px;
+      // Backstop for short viewports: the group scrolls within itself rather
+      // than pushing its lower half off screen.
+      max-height: calc(100vh - 96px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .rail-prints,
+    .rail-ad {
+      order: 0;
+    }
+  }
+
+  // Add and copy modes have no rail content, so the rail carries only the ad and
+  // keeps the side placement it has today rather than dropping below the form.
+  .detail-layout:not(.has-rail) {
+    grid-template-columns: minmax(0, 560px) 300px;
+    grid-template-areas: 'form rail';
+    align-items: start;
+
+    .form-card {
+      grid-area: form;
+    }
+
+    .detail-rail {
+      grid-area: rail;
+      display: block;
+    }
+
+    .rail-ad {
+      order: 0;
+    }
+  }
+
+  .rail-ad {
+    display: block;
+  }
+}

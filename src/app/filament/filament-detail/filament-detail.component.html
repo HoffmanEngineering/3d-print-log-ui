@@ -1,5 +1,46 @@
-<div fxLayout="row" fxLayoutAlign="center start" fxLayoutGap="24px">
-  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
+<div class="detail-layout" [class.has-rail]="showUsagePanels()">
+  <!-- The rail is one element so that it occupies a single grid area on wide
+       viewports. Splitting it across per-card areas let the tall form stretch the
+       rail rows apart, and it capped each sticky card's travel at its own row.
+       The rail sits before the form in the DOM so the read-only summary is read
+       first; on narrow viewports `order` restores the visual sequence the page
+       has always had (remaining, form, prints, ad). -->
+  <div class="detail-rail">
+    <div class="rail-sticky">
+      @if (showUsagePanels()) {
+        <div class="rail-stats">
+          <app-filament-remaining-card
+            [remainingMg]="remainingProjection().remainingMg"
+            [projectedMg]="remainingProjection().projectedMg"
+            [isSuppressed]="remainingProjection().isSuppressed"
+            [nominalMg]="loadedFilament?.initialNominalWeightMg ?? null"
+            [lengthRemainingM]="
+              loadedFilament?.filamentLengthRemainingInM ?? null
+            "
+            [volumeRemainingMl]="
+              loadedFilament?.filamentVolumeRemainingInMl ?? null
+            "
+            [totalUsedMg]="loadedFilament?.totalUsedMg ?? null"
+            [printCount]="loadedFilament?.printCount ?? null"
+            (focusNominalWeight)="focusNominalWeight()"
+          ></app-filament-remaining-card>
+        </div>
+
+        <div class="rail-prints">
+          <app-filament-prints-panel
+            [filamentId]="loadedFilament.id"
+            [preferredUnit]="preferredFilamentUnit"
+          ></app-filament-prints-panel>
+        </div>
+      }
+    </div>
+
+    <div class="rail-ad">
+      <app-sidebar-ad></app-sidebar-ad>
+    </div>
+  </div>
+
+  <mat-card appearance="outlined" class="form-card">
     <form
       [formGroup]="filamentForm"
       (ngSubmit)="onSubmit()"
@@ -1041,7 +1082,4 @@
     </form>
     <app-ad></app-ad>
   </mat-card>
-  <div fxHide fxShow.gt-md fxFlex="300px" class="ad-sidebar">
-    <app-sidebar-ad></app-sidebar-ad>
-  </div>
 </div>

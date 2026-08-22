@@ -86,6 +86,27 @@ export interface FilamentDetail {
    * server ignores it on write, so writers may omit it.
    */
   filamentRemaining?: number | null;
+
+  /**
+   * Server-computed remaining length in meters. Null when the spool is untracked,
+   * matching `filamentRemaining`. Read-only: ignored on write.
+   */
+  filamentLengthRemainingInM?: number | null;
+
+  /**
+   * Server-computed remaining volume in milliliters. Null when the spool is
+   * untracked, matching `filamentRemaining`. Read-only: ignored on write.
+   */
+  filamentVolumeRemainingInMl?: number | null;
+
+  /** Distinct prints that used this filament. Read-only: ignored on write. */
+  printCount?: number;
+
+  /**
+   * Total milligrams consumed by prints, actual where recorded and estimated
+   * otherwise. Read-only: ignored on write.
+   */
+  totalUsedMg?: number;
 }
 
 export interface FilamentSummary {

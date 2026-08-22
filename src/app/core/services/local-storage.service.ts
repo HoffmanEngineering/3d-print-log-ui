@@ -13,10 +13,10 @@ export class LocalStorageService implements Storage {
   clear(): void {
     localStorage.clear();
   }
-  getItem(key: string): string {
+  getItem(key: string): string | null {
     return localStorage.getItem(key);
   }
-  key(index: number): string {
+  key(index: number): string | null {
     return localStorage.key(index);
   }
   removeItem(key: string): void {

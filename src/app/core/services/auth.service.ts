@@ -88,10 +88,12 @@ export class AuthService {
   );
 
   // Create subject and public observable of user profile data
-  private userProfileSubject$ = new BehaviorSubject<UserProfileInfo>(null);
+  private userProfileSubject$ = new BehaviorSubject<UserProfileInfo | null>(
+    null
+  );
   userProfile$ = this.userProfileSubject$.asObservable();
   // Create a local property for login status
-  loggedIn: boolean = null;
+  loggedIn: boolean | null = null;
 
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly userSettingService = inject(UserSettingService);
@@ -150,22 +152,34 @@ export class AuthService {
   }
 
   updateCurrentUserCoverPicture(newUrl: string) {
-    this.userProfileSubject$.next({
-      ...this.userProfileSubject$.value,
-      coverPicture: newUrl,
-    });
+    const profile = this.userProfileSubject$.value;
+    if (!profile) {
+      return;
+    }
+
+    this.userProfileSubject$.next({ ...profile, coverPicture: newUrl });
   }
 
   updateCurrentUserDeactivationDate(deactivationDate: Date | null) {
+    const profile = this.userProfileSubject$.value;
+    if (!profile) {
+      return;
+    }
+
     this.userProfileSubject$.next({
-      ...this.userProfileSubject$.value,
+      ...profile,
       deactivationDateTime: deactivationDate,
     });
   }
 
   updateCurrentUserProfilePicture(newUrl: string) {
+    const profile = this.userProfileSubject$.value;
+    if (!profile) {
+      return;
+    }
+
     this.userProfileSubject$.next({
-      ...this.userProfileSubject$.value,
+      ...profile,
       profilePicture: newUrl,
     });
   }

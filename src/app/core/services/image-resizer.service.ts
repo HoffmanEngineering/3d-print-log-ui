@@ -68,7 +68,7 @@ export class ImageResizerService {
 
       canvas.width = width;
       canvas.height = height;
-      canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+      canvas.getContext('2d')?.drawImage(image, 0, 0, width, height);
       const dataUrl = canvas.toDataURL(
         'image/jpeg',
         settings.imageQuality || this.DEFAULT_IMAGE_QUALITY

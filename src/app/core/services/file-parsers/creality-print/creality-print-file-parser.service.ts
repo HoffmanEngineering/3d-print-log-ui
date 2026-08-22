@@ -90,7 +90,7 @@ export class CrealityPrintFileParserService implements GcodeNewPrintParser {
       gcode,
       ';Filament used:'
     );
-    if (filamentUsedInGrams > 0) {
+    if (filamentUsedInGrams !== undefined && filamentUsedInGrams > 0) {
       return filamentUsedInGrams * 1000;
     }
 

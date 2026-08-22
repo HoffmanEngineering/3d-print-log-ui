@@ -71,7 +71,8 @@ export enum PrintFilamentSourceMeasurement {
 }
 
 export interface PrintImage {
-  id: number;
+  /** Null for an image extracted from gcode that the API has not saved yet. */
+  id: number | null;
   isDefault: boolean;
   displayOrder: number;
 
@@ -83,9 +84,9 @@ export interface PrintImage {
 
 export interface PrintFilamentSummaryDto {
   /**
-   * GUID
+   * GUID. Null for a row parsed from gcode that the API has not saved yet.
    */
-  id: string;
+  id: string | null;
   filament: FilamentSummary;
 
   amountMg?: number;
@@ -104,9 +105,9 @@ export interface PrintFilamentSummaryDto {
 
 export interface PutPrintFilamentSummaryDto {
   /**
-   * GUID
+   * GUID. Null for a row that has not been saved yet.
    */
-  id: string;
+  id: string | null;
   filamentId?: string;
 
   amountMg?: number;
@@ -176,38 +177,50 @@ export interface PrintDetailDTO {
   projectName?: string;
 }
 
+/**
+ * The payload this client sends on update. The nullable fields mirror
+ * `PrintDetail`, which can still be holding an unsaved scaffold -- the API's own
+ * validation is the authority on what it accepts, so this describes what we can
+ * actually send rather than over-claiming.
+ */
 export interface PutPrintDetailDTO {
-  id: number;
+  id: number | null;
   title: string;
-  printerId: number;
-  startDate?: Date;
-  estimatedPrintTimeInSeconds?: number;
-  estimatedFilamentUsageMg?: number;
-  printTimeInSeconds?: number;
+  printerId: number | null;
+  startDate?: Date | null;
+  estimatedPrintTimeInSeconds?: number | null;
+  estimatedFilamentUsageMg?: number | null;
+  printTimeInSeconds?: number | null;
   filamentUsage: PutPrintFilamentSummaryDto[];
-  filamentUsageMg?: number;
+  filamentUsageMg?: number | null;
   filamentType: string;
   notes: string;
   url: string;
   fileName: string;
   status: PrintStatus;
-  viewStatus: PrintViewStatus;
-  allowComments: boolean;
+  viewStatus: PrintViewStatus | null;
+  allowComments: boolean | null;
   allowFileDownloads?: boolean;
   projectId?: string;
   newProjectName?: string;
 }
 
+/**
+ * A print being viewed or edited. Unlike `PrintDetailDTO`, which always
+ * describes a print the API has already saved, this also models an unsaved one:
+ * the slicer parsers and the new-print flow build a `PrintDetail` before an id,
+ * printer or creator exists, so those fields are genuinely nullable here.
+ */
 export interface PrintDetail {
-  id: number;
+  id: number | null;
   title: string;
-  printerId: number;
+  printerId: number | null;
   printer?: PrinterSummary;
-  startDate?: Date;
-  estimatedPrintTimeInSeconds?: number;
-  estimatedFilamentUsageMg?: number;
-  printTimeInSeconds?: number;
-  filamentUsageMg?: number;
+  startDate?: Date | null;
+  estimatedPrintTimeInSeconds?: number | null;
+  estimatedFilamentUsageMg?: number | null;
+  printTimeInSeconds?: number | null;
+  filamentUsageMg?: number | null;
   filamentType: string;
   filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
@@ -215,12 +228,12 @@ export interface PrintDetail {
   fileName: string;
   status: PrintStatus;
 
-  viewStatus: PrintViewStatus;
-  allowComments: boolean;
+  viewStatus: PrintViewStatus | null;
+  allowComments: boolean | null;
   allowFileDownloads?: boolean;
 
   images?: PrintImage[];
-  createdByUserId: number;
+  createdByUserId: number | null;
   comments: Comment[];
   projectId?: string;
   projectName?: string;
@@ -230,14 +243,15 @@ export interface PrintDetail {
 /**
  * DTO to create a new print
  */
+/** The payload this client sends on create. See `PutPrintDetailDTO`. */
 export interface AddPrintDTO {
   title: string;
-  printerId: number;
-  startDate?: Date;
-  estimatedPrintTimeInSeconds?: number;
-  estimatedFilamentUsageMg?: number;
-  printTimeInSeconds?: number;
-  filamentUsageMg?: number;
+  printerId: number | null;
+  startDate?: Date | null;
+  estimatedPrintTimeInSeconds?: number | null;
+  estimatedFilamentUsageMg?: number | null;
+  printTimeInSeconds?: number | null;
+  filamentUsageMg?: number | null;
   filamentType: string;
   filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
@@ -245,8 +259,8 @@ export interface AddPrintDTO {
   fileName: string;
   status: PrintStatus;
 
-  viewStatus: PrintViewStatus;
-  allowComments: boolean;
+  viewStatus: PrintViewStatus | null;
+  allowComments: boolean | null;
   projectId?: string;
   newProjectName?: string;
 }
@@ -664,10 +678,10 @@ export class PrintService {
       // Pinned by print-cost-fixtures.spec.ts against the shared corpus.
       const hasActual =
         fu.source == PrintFilamentSourceMeasurement.Length
-          ? fu.lengthInM > 0
+          ? (fu.lengthInM ?? 0) > 0
           : fu.source == PrintFilamentSourceMeasurement.Volume
-            ? fu.volumeMl > 0
-            : fu.amountMg > 0;
+            ? (fu.volumeMl ?? 0) > 0
+            : (fu.amountMg ?? 0) > 0;
 
       if (hasActual) {
         const price = this.calculatePrintCost({
@@ -675,7 +689,7 @@ export class PrintService {
           filament: fu.filament,
           source: fu.source,
           lengthM: fu.lengthInM,
-          weightG: fu.amountMg > 0 ? fu.amountMg / 1000 : undefined,
+          weightG: fu.amountMg ? fu.amountMg / 1000 : undefined,
           volumeMl: fu.volumeMl,
           defaultFilamentPrice,
         });
@@ -687,8 +701,9 @@ export class PrintService {
           filament: fu.filament,
           source: fu.estimatedSource,
           lengthM: fu.estimatedLengthInM,
-          weightG:
-            fu.estimatedAmountMg > 0 ? fu.estimatedAmountMg / 1000 : undefined,
+          weightG: fu.estimatedAmountMg
+            ? fu.estimatedAmountMg / 1000
+            : undefined,
           volumeMl: fu.estimatedVolumeMl,
           defaultFilamentPrice,
         });
@@ -698,7 +713,7 @@ export class PrintService {
     }
 
     // Once all prices are calculated, sum them up.
-    let totalPrice: currency = undefined;
+    let totalPrice: currency | undefined = undefined;
 
     for (const price of prices) {
       if (price.valid && !isNaN(price.price.value)) {
@@ -712,16 +727,20 @@ export class PrintService {
 
     function getDecimalSeparator() {
       const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'decimal').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(numberWithDecimalSeparator)
+          .find((part) => part.type === 'decimal')?.value ?? '.'
+      );
     }
 
     function getGroupSeparator() {
       const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'group').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(numberWithDecimalSeparator)
+          .find((part) => part.type === 'group')?.value ?? ','
+      );
     }
 
     const currencyFormat = {
@@ -730,7 +749,7 @@ export class PrintService {
       separator: getGroupSeparator(),
     };
 
-    let total: FilamentPrice = undefined;
+    let total: FilamentPrice | undefined = undefined;
     if (totalPrice) {
       total = {
         formattedPrice: totalPrice.format(currencyFormat),
@@ -792,15 +811,19 @@ export class PrintService {
     const cost = currency(kwhUsed * Number(kwhRate));
 
     function getDecimalSeparator() {
-      return Intl.NumberFormat()
-        .formatToParts(100000.1)
-        .find((part) => part.type === 'decimal').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(100000.1)
+          .find((part) => part.type === 'decimal')?.value ?? '.'
+      );
     }
 
     function getGroupSeparator() {
-      return Intl.NumberFormat()
-        .formatToParts(100000.1)
-        .find((part) => part.type === 'group').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(100000.1)
+          .find((part) => part.type === 'group')?.value ?? ','
+      );
     }
 
     const currencyFormat = {
@@ -866,16 +889,20 @@ export class PrintService {
 
     function getDecimalSeparator() {
       const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'decimal').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(numberWithDecimalSeparator)
+          .find((part) => part.type === 'decimal')?.value ?? '.'
+      );
     }
 
     function getGroupSeparator() {
       const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'group').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(numberWithDecimalSeparator)
+          .find((part) => part.type === 'group')?.value ?? ','
+      );
     }
 
     const currencyFormat = {
@@ -908,6 +935,10 @@ export class PrintService {
       const densityGramPerCubicM =
         filament.materialDensityGramPerCubicCm * 1000000;
 
+      if (lengthM === undefined) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
       const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
 
       if (isNaN(currency(pricePerGram * gramsUsed).value)) {
@@ -924,6 +955,10 @@ export class PrintService {
         usesDefaultPrice: isUsingDefaultFilamentPrice,
       };
     } else if (source === PrintFilamentSourceMeasurement.Volume) {
+      if (volumeMl === undefined) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
       const amountMg =
         +volumeMl * filament.materialDensityGramPerCubicCm * 1000;
       const amountG = amountMg / 1000;

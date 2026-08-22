@@ -46,7 +46,7 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
       gcode,
       '; total filament used \\[g\\]'
     );
-    if (filamentUsedInGrams > 0) {
+    if (filamentUsedInGrams !== undefined && filamentUsedInGrams > 0) {
       return filamentUsedInGrams * 1000;
     }
 
@@ -289,6 +289,9 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
       return null;
     }
     const durationAsMs = parse(input);
+    if (durationAsMs == null) {
+      return null;
+    }
     const durationAsSeconds = durationAsMs / 1000;
     return Math.floor(durationAsSeconds);
   }

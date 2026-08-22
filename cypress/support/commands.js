@@ -261,3 +261,22 @@ Cypress.Commands.add('patchUserProfile', (patch) => {
         .then((response) => response.body)
     );
 });
+
+// Posts a comment on a print as a DIFFERENT dev user, which is what makes the
+// API generate a real notification for the print's owner (see
+// PrintService.AddComment -> NotificationService.CreateCommentNotifications).
+//
+// There is no endpoint that creates a notification directly, so this is the
+// only way to exercise the notification list against genuine data rather than
+// a stubbed response. The dev bypass accepts any user id and the API creates
+// the user on first use, so user 2 needs no seeding.
+Cypress.Commands.add('commentOnPrintAsOtherUser', (printId, body) =>
+  cy
+    .request({
+      method: 'POST',
+      url: `${apiUrl()}/api/Prints/${printId}/comment`,
+      headers: { 'X-Dev-User-Id': '2' },
+      body: { body },
+    })
+    .then((response) => response.body)
+);

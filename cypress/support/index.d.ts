@@ -8,6 +8,7 @@ declare namespace Cypress {
     snapshotUserSettings(): Chainable<any[]>;
     restoreUserSettings(snapshot: any[]): Chainable<void>;
     patchUserProfile(patch: Record<string, unknown>): Chainable<any>;
+    commentOnPrintAsOtherUser(printId: number, body: string): Chainable<any>;
     checkA11yWithReport(
       context?: any,
       options?: import('axe-core').RunOptions & {

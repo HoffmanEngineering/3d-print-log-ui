@@ -6,5 +6,14 @@
     { "route": "/printers", "rewrite": "/shells/list-skeleton.html" },
     { "route": "/shells/*", "headers": { "cache-control": "no-cache" } }
   ],
-  "navigationFallback": { "rewrite": "/shells/app-shell.html" }
+  "navigationFallback": { "rewrite": "/shells/app-shell.html" },
+  "globalHeaders": {
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "same-origin",
+    "X-Frame-Options": "DENY",
+    "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+    "Permissions-Policy": "accelerometer=(), autoplay=(self \"https://www.youtube.com\" \"https://www.youtube-nocookie.com\"), camera=(self), display-capture=(), encrypted-media=(self \"https://www.youtube.com\" \"https://www.youtube-nocookie.com\"), fullscreen=(self \"https://www.youtube.com\" \"https://www.youtube-nocookie.com\"), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
+    "Content-Security-Policy-Report-Only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.google.com https://www.googleadservices.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://partner.googleadservices.com https://googleads.g.doubleclick.net https://adservice.google.com https://www.googletagmanager.com https://www.google-analytics.com https://www.youtube.com https://www.youtube-nocookie.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self' https://api.3dprintlog.com https://www.google.com https://www.googletagmanager.com https://www.googleadservices.com https://analytics.google.com https://*.3dprintlog.com https://*.auth0.com https://*.blob.core.windows.net https://dc.services.visualstudio.com https://*.in.applicationinsights.azure.com https://*.google-analytics.com https://*.analytics.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google; frame-src 'self' https://www.googletagmanager.com https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.adtrafficquality.google https://*.auth0.com; worker-src 'self' blob:; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+  }
 }

@@ -88,8 +88,23 @@ Marketing/SEO routes are prerendered to static HTML at build time via `@angular/
 - **SSR-safety (important):** prerendering executes components in Node, so any browser global (`window`, `document`, `localStorage`, `navigator`) touched during construction/init crashes the build. Guard it with `isPlatformBrowser(inject(PLATFORM_ID))`.
 - **Marketing routes** are defined once in `scripts/marketing-routes.mjs`. To add a prerendered page, add it there AND in `app.routes.server.ts`.
 - **Verification:** `scripts/verify-prerender.mjs` runs in CI and gates prerendered output (unique titles/descriptions, OG/Twitter, canonicals, internal link graph, crawl files).
-- **Sitemap** is generated at deploy time by `scripts/generate-sitemap.mjs` (fetches public print/user IDs, writes a `<sitemapindex>` plus chunked child sitemaps into `dist/`). It is not committed; there is no static `src/sitemap.xml`. Unit tests: `npm run test:sitemap`.
+- **Sitemap** is generated at deploy time by `scripts/generate-sitemap.mjs` (fetches public print/user IDs, writes a `<sitemapindex>` plus chunked child sitemaps into `dist/`). It is not committed; there is no static `src/sitemap.xml`. Unit tests: `npm run test:scripts`.
 - **Deploy** ships the prebuilt `dist` with `skip_app_build: true` (no Oryx rebuild) so the generated sitemap reaches production; `refresh-sitemap.yml` redeploys the latest release tag daily.
+
+### Security Headers & CSP
+
+Response headers are served by Azure Static Web Apps from `src/staticwebapp.config.json` (`globalHeaders`), which ships as a build asset — SWA reads it literally, so it stays hand-edited JSON.
+
+- **SWA injects its own defaults**, whether or not we declare any: HSTS (with `preload`), `Referrer-Policy: same-origin`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection`, and `X-DNS-Prefetch-Control`. `globalHeaders` **overrides them by name**, so redeclaring one with a laxer value is a silent downgrade. `SWA_DEFAULT_HEADERS` in `scripts/security-headers-lib.mjs` records the platform baseline and a test asserts we never fall below it. Verify with `curl -sI https://www.3dprintlog.com/` before changing a value.
+
+- **Validation:** `scripts/security-headers.test.mjs` parses the checked-in config and asserts the headers and CSP directives the app depends on. It runs in CI and at deploy via `npm run test:scripts`. `REQUIRED_CSP_SOURCES` maps each directive to the sources a real feature needs, and a test proves that removing any one of them fails — so adding a third-party origin means updating the CSP _and_ that map.
+- **The CSP is report-only.** It ships as `Content-Security-Policy-Report-Only` so a missed origin degrades to a console warning rather than a broken page.
+- **Two things must be solved before enforcing it**, and neither is done:
+  1. There is no `report-uri`/`report-to`, so violations surface only in each visitor's own console. Collecting them needs an endpoint on the API side.
+  2. **AdSense cannot be made to work by host allowlist.** Google states its ad-serving domains change and officially supports only a nonce-based strict CSP (`'nonce-…'` + `'strict-dynamic'` + `'unsafe-eval'`). The current allowlist is best-effort for the report-only stage; enforcing it as written will eventually blank ad slots.
+- **Never add a nonce or hash to `script-src` while `'unsafe-inline'` is present.** CSP Level 3 makes browsers ignore `'unsafe-inline'` as soon as either appears, which would silently kill the gtag init, the pre-paint theme script, and the font `onload` handlers. `validateSecurityHeaders` fails on that combination.
+- **Adding an external origin** (a new analytics vendor, embed, or API host): add it to the narrowest directive that covers it, not to `default-src`. `frame-ancestors`, `form-action`, and `base-uri` do _not_ fall back to `default-src`, which is why they are spelled out.
+- The production Auth0 tenant lives in the `ENVIRONMENT_PROD_TS` secret and is not knowable from the repo, so `connect-src`/`frame-src` match it with `https://*.auth0.com`.
 
 ## Angular Conventions
 

@@ -75,6 +75,15 @@ Routes without `AuthGuard` (e.g. `/prints/:id`, public profiles/materials) must 
 - On a public route, resolvers/services must degrade to a default/`null` for anonymous users, never throw. Fix in the **service** (also protects `ngOnInit` callers), and keep settings consumers null-tolerant (`?.value`, `?? default`). Auth-required endpoints reject with `missing_refresh_token` unless the request sets `allow-anonymous-request` **and** the API marks them `[AllowAnonymous]`.
 - Test logged-out without Auth0: append `?devUserId=anonymous` (dev only; `isDevAnonymous`/`resolveDevUserId` in `core/utils/dev-user.ts`, persisted per-tab in sessionStorage). Regression pattern: `cypress/e2e/prints/public-print-anonymous.cy.ts` (a public-route E2E with no `cy.login()`).
 
+### Route Preloading
+
+Lazy chunks are preloaded **opt-in**, via `SelectivePreloadStrategy` (`core/routing/selective-preload.strategy.ts`) wired into `RouterModule.forRoot`.
+
+- A route preloads only when it carries `data: { preload: true }`. Today that is `prints`, `materials`, and `printers` — the sections a signed-in user reaches first. `preload-route-matrix.spec.ts` pins that list, so widening it is a deliberate, reviewed change.
+- Preloading is skipped entirely when `navigator.connection` reports `saveData` or an effective type of `slow-2g`/`2g`/`3g`, and during prerender (fetching a chunk in Node buys nothing).
+- Do **not** reach for `PreloadAllModules`. It pulls every feature chunk right after first paint, including the documentation site and the d3-backed analytics bundle.
+- `navigator.connection` is read through the `NETWORK_INFORMATION` injection token, which is the one guarded home for that global — see the SSR-safety note above.
+
 ### Environment Configuration
 
 - `src/environments/environment.ts` - Development (localhost:5001 API)

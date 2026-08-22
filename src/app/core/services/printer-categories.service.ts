@@ -26,7 +26,7 @@ export interface PrinterCategory {
 })
 export class PrinterCategoryService {
   private readonly baseApi = environment.printLogApiUrl;
-  private cachedPrinterCategories: PrinterCategory[] = null;
+  private cachedPrinterCategories: PrinterCategory[] | null = null;
 
   constructor(private readonly http: HttpClient) {}
 

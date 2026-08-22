@@ -21,7 +21,7 @@ export interface Material {
 })
 export class MaterialService {
   private readonly baseApi = environment.printLogApiUrl;
-  private cachedMaterials: Material[] = null;
+  private cachedMaterials: Material[] | null = null;
 
   constructor(private readonly http: HttpClient) {}
 

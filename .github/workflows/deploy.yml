@@ -37,6 +37,9 @@ jobs:
       - name: Script unit tests (sitemap, security headers)
         run: npm run test:scripts
 
+      - name: Strict null checks (gated directories)
+        run: npm run typecheck:strict
+
       - name: Generate sitemap
         run: node scripts/generate-sitemap.mjs
         env:

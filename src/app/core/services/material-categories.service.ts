@@ -24,7 +24,7 @@ export interface MaterialCategory {
 })
 export class MaterialCategoryService {
   private readonly baseApi = environment.printLogApiUrl;
-  private cachedMaterialCategories: MaterialCategory[] = null;
+  private cachedMaterialCategories: MaterialCategory[] | null = null;
 
   constructor(private readonly http: HttpClient) {}
 

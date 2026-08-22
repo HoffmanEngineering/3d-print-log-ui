@@ -25,7 +25,7 @@ export interface Currency {
   minorPlural: string;
   ISOdigits: number;
   decimals: number;
-  numToBasic: number;
+  numToBasic: number | null;
 }
 
 @Injectable({

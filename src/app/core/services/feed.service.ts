@@ -56,7 +56,7 @@ export class FeedService {
       })
       .pipe(
         map((results) => {
-          const mappedResult = [];
+          const mappedResult: PrintFeedSummary[] = [];
           for (const print of results) {
             mappedResult.push({
               ...print,

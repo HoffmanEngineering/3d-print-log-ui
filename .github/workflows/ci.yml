@@ -31,6 +31,9 @@ jobs:
       - name: Script unit tests (sitemap, security headers)
         run: npm run test:scripts
 
+      - name: Strict null checks (gated directories)
+        run: npm run typecheck:strict
+
       - name: Build (dev/base config)
         run: npm run build:dev
 

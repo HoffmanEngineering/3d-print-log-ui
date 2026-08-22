@@ -1833,19 +1833,24 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
 
   private async displayReleaseNotes(
     newVersion: string,
-    lastDisplayedVersion: string
+    // Null on a first visit, when nothing has been shown yet.
+    lastDisplayedVersion: string | null
   ) {
-    let release = this.releaseNotes[newVersion];
+    const entry = this.releaseNotes[newVersion];
+
+    if (!entry) {
+      return;
+    }
+
+    // Account for redirected release notes
+    const release = this.isRedirect(entry)
+      ? this.getRedirectedReleaseNotes(entry, lastDisplayedVersion)
+      : entry;
+
+    this.setLastLoggedInVersion(newVersion);
 
     if (release) {
-      // Account for redirected release notes
-      if (this.isRedirect(release)) {
-        release = this.getRedirectedReleaseNotes(release, lastDisplayedVersion);
-      }
-      this.setLastLoggedInVersion(newVersion);
-      if (release) {
-        await this.showReleaseNote(release);
-      }
+      await this.showReleaseNote(release);
     }
   }
 
@@ -1854,7 +1859,7 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
    */
   getRedirectedReleaseNotes(
     release: RedirectRelease | ReleaseNote,
-    lastDisplayedVersionKey: string
+    lastDisplayedVersionKey: string | null
   ): ReleaseNote | null {
     if (this.isReleaseNote(release)) {
       return release;

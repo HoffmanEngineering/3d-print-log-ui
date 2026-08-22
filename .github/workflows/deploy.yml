@@ -34,8 +34,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Sitemap unit tests
-        run: npm run test:sitemap
+      - name: Script unit tests (sitemap, security headers)
+        run: npm run test:scripts
 
       - name: Generate sitemap
         run: node scripts/generate-sitemap.mjs

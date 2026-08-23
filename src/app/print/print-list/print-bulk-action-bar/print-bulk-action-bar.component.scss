@@ -85,8 +85,56 @@
   bottom: -4px;
 }
 
+// Mobile: the same component, pinned to the bottom of the viewport.
+//
+// A selection here is built by long-pressing cards, which means scrolling between
+// picks - so the actions cannot live in a toolbar that scrolls off the top. The
+// breakpoint matches the one that swaps the table for the card list.
+//
+// The host is what gets fixed, not the inner strip: the strip is only in the DOM
+// while something is selected, so fixing the host keeps the bar out of the layout
+// entirely when it is empty.
+@media screen and (max-width: 959px) {
+  :host {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    // Above the page, below the CDK overlay container - the bar's own menus have to
+    // open over it.
+    z-index: 3;
+    flex: none;
+  }
+
+  .bulk-bar {
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    // env() is 0 everywhere except iOS with a home indicator, where it lifts the row
+    // clear of the swipe area.
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    background-color: var(--app-bulk-bar-bg, #fff);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.18);
+  }
+
+  .bulk-bar__content {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  // The progress bar rides the top edge here: below the bar is the screen edge.
+  .bulk-bar__progress {
+    top: 0;
+    bottom: auto;
+  }
+}
+
 :host-context(html.dark-theme) {
   .bulk-bar__chip {
     background-color: rgba(255, 255, 255, 0.08);
   }
+
+  // Matches the elevated surfaces the rest of the dark theme uses, so the bar reads
+  // as sitting above the page rather than as a hole in it.
+  --app-bulk-bar-bg: #1e1e1e;
 }

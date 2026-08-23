@@ -18,6 +18,20 @@
     </button>
   }
   <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+    <!-- Above the matches, not below them. Typing a name that existing projects
+         merely CONTAIN - "Test Project" while "Test Project 2" exists - buried this
+         under up to 25 results, so the option the user was reaching for was the one
+         off the bottom of the panel. Nothing got selected and the confirm button sat
+         disabled with nothing to explain why. -->
+    @if (showNewOption()) {
+      <mat-option
+        [value]="searchControl.value"
+        data-cy="project-new-option"
+        (click)="selectNewProject(searchControl.value!)"
+      >
+        <mat-icon>add</mat-icon> Create project: "{{ searchControl.value }}"
+      </mat-option>
+    }
     @for (project of filteredProjects(); track project.id) {
       <mat-option
         [value]="project.name"
@@ -30,15 +44,6 @@
         @if (!isDefaultView() && project.status !== ProjectStatus.InProgress) {
           <span class="status-label">{{ getStatusLabel(project.status) }}</span>
         }
-      </mat-option>
-    }
-    @if (showNewOption()) {
-      <mat-option
-        [value]="searchControl.value"
-        data-cy="project-new-option"
-        (click)="selectNewProject(searchControl.value!)"
-      >
-        <mat-icon>add</mat-icon> Create project: "{{ searchControl.value }}"
       </mat-option>
     }
   </mat-autocomplete>

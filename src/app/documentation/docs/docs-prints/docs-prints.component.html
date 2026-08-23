@@ -120,16 +120,35 @@
     the current page.
   </p>
   <p>
+    On a phone or tablet the list shows cards instead of a table, so there are
+    no checkboxes. <strong>Press and hold any card</strong> for half a second to
+    select it. From then on a single tap adds or removes a card, and the card
+    you are holding shows a
+    <mat-icon inline="true">check_circle</mat-icon> badge on its thumbnail. Tap
+    the last selected card again to leave selection mode - the cards go back to
+    opening the print when tapped.
+  </p>
+  <p>
     As soon as one print is selected, a chip showing how many prints are
     selected appears next to the view toggle, along with an
     <mat-icon inline="true">checklist</mat-icon> <strong>Actions</strong> button
-    and a <mat-icon inline="true">close</mat-icon> <strong>Clear</strong> button.
-    The Actions button carries the count, so you can always see how many prints
-    you are about to change, and the menu repeats it at the top. Clear deselects
-    everything.
+    and a <mat-icon inline="true">close</mat-icon>
+    <strong>Clear</strong> button. The Actions button carries the count, so you
+    can always see how many prints you are about to change, and the menu repeats
+    it at the top. Clear deselects everything.
+  </p>
+  <p>
+    On a phone the same chip and buttons sit in a bar pinned to the bottom of
+    the screen, so they stay within reach while you scroll the list picking
+    prints.
   </p>
   <p>The Actions menu offers:</p>
   <ul>
+    <li>
+      <strong>Select all on this page</strong> - Adds every print currently
+      listed to the selection, keeping anything you already picked on another
+      page. Handy on a phone, where there is no header checkbox to do it.
+    </li>
     <li>
       <strong>Set status</strong> - Applies the status you pick to every
       selected print.
@@ -157,9 +176,10 @@
     </li>
   </ul>
   <p>
-    To take prints back out of a project, open <strong>Add to project</strong>
-    and choose <strong>Remove from project</strong>. The prints keep everything
-    else about them; they simply stop belonging to a project.
+    To take prints back out of a project, open
+    <strong>Add to project</strong> and choose
+    <strong>Remove from project</strong>. The prints keep everything else about
+    them; they simply stop belonging to a project.
   </p>
   <p>
     A progress bar shows how far along the batch is. If one print cannot be

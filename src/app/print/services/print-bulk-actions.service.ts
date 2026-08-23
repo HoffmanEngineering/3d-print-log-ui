@@ -180,6 +180,27 @@ export class PrintBulkActionsService {
   }
 
   /**
+   * Adds every print on the current page to the selection, keeping anything already
+   * selected on other pages. Unlike `toggleSelectAllOnPage` this never deselects: it
+   * backs the card view's "Select all on this page" menu item, where the way out is
+   * Clear rather than a second press of the same control.
+   */
+  public selectAllOnPage(pagePrints: readonly PrintSummary[]): void {
+    if (pagePrints.length === 0) {
+      return;
+    }
+
+    this.selectionEpoch++;
+    this.selection.update((current) => {
+      const next = new Map(current);
+      for (const print of pagePrints) {
+        next.set(print.id, print);
+      }
+      return next;
+    });
+  }
+
+  /**
    * Drops one print from the selection. Used when a print leaves the list on its
    * own - a single delete, say - so the selection cannot hold prints that no
    * longer exist. A no-op when the print was not selected.

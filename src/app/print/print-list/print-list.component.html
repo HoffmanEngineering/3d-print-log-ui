@@ -166,10 +166,13 @@
     </mat-button-toggle-group>
 
     @if (viewMode === 'list') {
-      <!-- Desktop only, matching the table's breakpoint -->
+      <!-- One instance for both views. On desktop it sits in this toolbar row; below
+           the table's breakpoint its own stylesheet pins it to the bottom of the
+           viewport, where a selection made by long-pressing a card can still reach it
+           after scrolling. -->
       <app-print-bulk-action-bar
-        fxHide.lt-md
         [printers]="printers"
+        [pagePrints]="prints"
         (batchCompleted)="onBulkActionCompleted()"
       />
     }
@@ -216,6 +219,7 @@
     <div
       class="mobile-card-view"
       fxHide.gt-sm
+      [class.mobile-card-view--selecting]="bulkActions.hasSelection()"
       [class.refreshing]="showRefreshing()"
       [attr.aria-busy]="showRefreshing() ? 'true' : null"
     >
@@ -229,8 +233,15 @@
         />
       } @else {
         @for (print of prints; track print.id) {
+          <!-- hasSelection() doubles as "selection mode": a long press selects the
+               first card and turns the mode on, taps toggle from then on, and
+               clearing the last one turns it back off. No second flag to keep in
+               sync, and no way for the two to disagree. -->
           <app-print-card
             [print]="print"
+            [selectionMode]="bulkActions.hasSelection()"
+            [selected]="bulkActions.isSelected(print.id)"
+            (selectionToggled)="bulkActions.toggleSelection($event)"
             (deleted)="deletePrint($event)"
             (statusChanged)="changeStatus($event.id, $event.status)"
             [preferredUnit]="preferredFilamentUnit()"

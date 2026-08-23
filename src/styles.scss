@@ -21,11 +21,25 @@ body {
 
 :root {
   --brand-toolbar-bg: #3f51b5; // indigo-500
+
+  // Bulk selection, shared by the print table's rows and the print cards so the two
+  // views read identically. Deliberately a hue rather than a darker grey: the table
+  // also zebra-stripes, and one grey on another grey is not a selection anyone can
+  // pick out at a glance.
+  --app-selected-bg: rgba(63, 81, 181, 0.14);
+  --app-selected-bg-hover: rgba(63, 81, 181, 0.2);
+  --app-selected-edge: #3f51b5;
 }
 
 html.dark-theme {
   --brand-toolbar-bg: #283593; // indigo-800: same hue, toned down for dark mode
   background-color: #121212;
+
+  // Indigo 500 is too dark to register as a highlight on #121212; the dark theme's
+  // own primary (indigo A100) is what the rest of the app uses on this surface.
+  --app-selected-bg: rgba(140, 158, 255, 0.2);
+  --app-selected-bg-hover: rgba(140, 158, 255, 0.28);
+  --app-selected-edge: #8c9eff;
 }
 
 // The dark theme class lives on <html> (set before first paint), so the opaque

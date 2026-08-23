@@ -24,9 +24,6 @@ table {
 table {
   --app-row-stripe: rgba(0, 0, 0, 0.02);
   --app-row-hover: rgba(0, 0, 0, 0.05);
-  --app-row-selected: rgba(63, 81, 181, 0.14);
-  --app-row-selected-hover: rgba(63, 81, 181, 0.2);
-  --app-row-selected-edge: #3f51b5;
 
   [mat-row]:nth-child(even) {
     background-color: var(--app-row-stripe);
@@ -36,15 +33,17 @@ table {
     background-color: var(--app-row-hover);
   }
 
+  // --app-selected-* are global (styles.scss) so the mobile cards can highlight a
+  // selection with exactly the same treatment.
   [mat-row].selected {
-    background-color: var(--app-row-selected);
+    background-color: var(--app-selected-bg);
     // An inset shadow rather than a border: a border on a table row would shift
     // the cells across by its width and make the selected row jump sideways.
-    box-shadow: inset 3px 0 0 0 var(--app-row-selected-edge);
+    box-shadow: inset 3px 0 0 0 var(--app-selected-edge);
   }
 
   [mat-row].selected:hover {
-    background-color: var(--app-row-selected-hover);
+    background-color: var(--app-selected-bg-hover);
   }
 }
 
@@ -272,6 +271,12 @@ table.refreshing tr[mat-row] {
   gap: 16px;
   padding: 8px;
   width: 100%;
+
+  // The bulk bar is fixed to the bottom of the viewport at this width, so without
+  // this the last card sits underneath it and cannot be scrolled into view.
+  &--selecting {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 // Improve table spacing on desktop
@@ -289,15 +294,11 @@ table.refreshing tr[mat-row] {
 }
 
 :host-context(html.dark-theme) {
-  // The light-theme tints are black-on-white washes and all but vanish on #121212,
-  // and indigo 500 is too dark to read as a highlight there - the dark theme's own
-  // primary (indigo A100) is what the rest of the app uses on this surface.
+  // The light-theme tints are black-on-white washes and all but vanish on #121212.
+  // The selection colours are handled globally, alongside their light counterparts.
   table {
     --app-row-stripe: rgba(255, 255, 255, 0.04);
     --app-row-hover: rgba(255, 255, 255, 0.08);
-    --app-row-selected: rgba(140, 158, 255, 0.2);
-    --app-row-selected-hover: rgba(140, 158, 255, 0.28);
-    --app-row-selected-edge: #8c9eff;
   }
 
   .filter-panel-inner {

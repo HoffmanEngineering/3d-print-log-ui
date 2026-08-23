@@ -28,6 +28,37 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.47.0': {
+      title: '1.47.0 - Material Remaining & More Bulk Actions',
+      body: `<p>
+<strong>Remaining material</strong> is here! Open a saved material to see what is left on the spool and the recent prints that used it. Take a look at <a href="/filament">your materials</a>.
+</p>
+<p>
+<strong>More bulk actions</strong> have landed on the print list. Select some prints to add them to a project, or change their visibility, printer or permissions in one go. On a phone, long-press a card to start selecting. Try it on <a href="/prints">your prints</a>.
+</p>
+<p>
+Both features were asked for by users. Have an idea of your own? <a href="/feedback">Send in feedback</a> and help shape what comes next.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.46.0': {
       title: '1.46.0 - The New Print Page & Bulk Editing',
       body: `<p>

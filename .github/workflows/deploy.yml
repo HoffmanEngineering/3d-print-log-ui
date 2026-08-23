@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
 
+# Default every job to read-only. Only publish-release widens this, so the
+# third-party deploy action never sees a token that can write to the repo.
+permissions:
+  contents: read
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -12,6 +17,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Fails fast, before the ~10 minute build, when a tag was pushed without a
+      # matching section in the release notes component.
+      - name: Verify release notes exist for this tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: node scripts/extract-release-notes.mjs "$TAG" > /dev/null
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -61,3 +73,30 @@ jobs:
           output_location: ''
           skip_app_build: true
           skip_api_build: true
+
+  # Separate job so `contents: write` is scoped to publishing alone. Runs only
+  # after a successful deploy, so the Releases feed never announces a version
+  # that is not actually live.
+  publish-release:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          node scripts/extract-release-notes.mjs "$TAG" > release-body.md
+          gh release create "$TAG" \
+            --title "$(node scripts/extract-release-notes.mjs "$TAG" --title)" \
+            --notes-file release-body.md

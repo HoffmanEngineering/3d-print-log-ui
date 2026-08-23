@@ -188,7 +188,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
   /**
    * The columns the desktop table actually renders. `select` is always first and is
    * never persisted, so it cannot be removed by the table layout dialog. The whole
-   * table is `fxHide.lt-md`, so the checkbox column is desktop-only for free.
+   * table only renders above the handset breakpoint, so the checkbox column is
+   * desktop-only for free.
    */
   public get tableColumns(): string[] {
     return ['select', ...this.displayedColumns];
@@ -241,6 +242,31 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private printListLoaded = false;
 
   mobileQuery: MediaQueryList;
+
+  /**
+   * The desktop table and the mobile card list are two renderings of the same
+   * rows, and only one of them is ever wanted.
+   *
+   * This is a template `@if` rather than `fxHide`, because ngx-layout writes
+   * `display: none` from `ngAfterViewInit` — after the browser has already
+   * painted. On a cold load nothing is on screen yet so that is invisible, but
+   * switching back from Grouped by Project rebuilds this whole subtree, and the
+   * cards were flashing up at desktop width before the hide caught up.
+   * Rendering one branch also halves the work: the hidden half was being built
+   * and laid out for nothing, which is most of a ~700ms blocking task at 100
+   * rows.
+   *
+   * 959.98px is the width `fxHide.gt-sm` / `fxHide.lt-md` switched at, kept
+   * exactly so the layout still changes where it always did.
+   */
+  private static readonly HANDSET_QUERY = '(max-width: 959.98px)';
+
+  private handsetQuery: MediaQueryList;
+
+  public readonly isHandset = signal(false);
+
+  private readonly onHandsetChange = (event: MediaQueryListEvent) =>
+    this.isHandset.set(event.matches);
 
   /**
    * Raw "a request is in flight". Drives cancellation and the empty-state
@@ -353,6 +379,20 @@ export class PrintListComponent implements OnInit, OnDestroy {
     private readonly gcodeParserService: GcodeFileParserService,
     private readonly newPrintStoreService: NewPrintStoreService
   ) {
+    // Read synchronously, in the constructor: the first render has to pick the
+    // right branch on its own, since correcting it afterwards is the flash this
+    // replaces.
+    this.handsetQuery = this.media.matchMedia(PrintListComponent.HANDSET_QUERY);
+    this.isHandset.set(this.handsetQuery.matches);
+
+    // addEventListener is missing from the no-op MediaQueryList the CDK returns
+    // off the browser (prerender), so fall back rather than crash the build.
+    if (this.handsetQuery.addEventListener) {
+      this.handsetQuery.addEventListener('change', this.onHandsetChange);
+    } else {
+      this.handsetQuery.addListener?.(this.onHandsetChange);
+    }
+
     // Mark the list as loading on the keystroke itself, not when the debounce
     // finally fires, so the empty state cannot flash stale copy for 400ms.
     //
@@ -388,6 +428,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.handsetQuery?.removeEventListener) {
+      this.handsetQuery.removeEventListener('change', this.onHandsetChange);
+    } else {
+      this.handsetQuery?.removeListener?.(this.onHandsetChange);
+    }
+
     if (this.printerRedirectToast) {
       this.toastrService.remove(this.printerRedirectToast.toastId);
     }

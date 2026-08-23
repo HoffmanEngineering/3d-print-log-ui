@@ -1,3 +1,4 @@
+import { MediaMatcher } from '@angular/cdk/layout';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -37,7 +38,53 @@ describe('PrintListComponent', () => {
   let fixture: ComponentFixture<PrintListComponent>;
   let mockPrintService: jasmine.SpyObj<PrintService>;
 
+  /**
+   * The list renders either the table or the card view, never both, so the
+   * width has to be stated rather than inherited from whatever size the Karma
+   * iframe happens to be. Only the handset query is faked; the other media
+   * queries the component asks about still go to the real browser.
+   */
+  const HANDSET_QUERY = '(max-width: 959.98px)';
+  let isHandsetViewport: boolean;
+  let handsetListeners: Array<(event: MediaQueryListEvent) => void>;
+
+  /** Simulates a resize across the breakpoint after the component is built. */
+  const setHandsetViewport = (matches: boolean) => {
+    isHandsetViewport = matches;
+    handsetListeners.forEach((listener) =>
+      listener({ matches } as MediaQueryListEvent)
+    );
+  };
+
   beforeEach(waitForAsync(() => {
+    isHandsetViewport = false;
+    handsetListeners = [];
+
+    const mockMediaMatcher: MediaMatcher = {
+      matchMedia: (query: string) => {
+        if (query !== HANDSET_QUERY) {
+          return window.matchMedia(query);
+        }
+
+        return {
+          media: query,
+          get matches() {
+            return isHandsetViewport;
+          },
+          addEventListener: (
+            _: string,
+            listener: (event: MediaQueryListEvent) => void
+          ) => handsetListeners.push(listener),
+          removeEventListener: (
+            _: string,
+            listener: (event: MediaQueryListEvent) => void
+          ) => {
+            handsetListeners = handsetListeners.filter((l) => l !== listener);
+          },
+        } as unknown as MediaQueryList;
+      },
+    } as MediaMatcher;
+
     const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logException',
       'logEvent',
@@ -108,6 +155,7 @@ describe('PrintListComponent', () => {
       ],
       providers: [
         { provide: LoggingService, useValue: mockLogger },
+        { provide: MediaMatcher, useValue: mockMediaMatcher },
         {
           provide: PrinterRedirectPromptService,
           useValue: mockPrinterRedirectPromptService,
@@ -130,6 +178,60 @@ describe('PrintListComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
+  });
+
+  /**
+   * The table and the card list are two renderings of the same rows, and only
+   * the one that fits gets built. Hiding the other with CSS after the fact used
+   * to flash it on screen whenever this subtree was rebuilt - switching back
+   * from Grouped by Project - and paid to lay out a tree nobody sees.
+   */
+  describe('table and card view', () => {
+    const table = () => fixture.debugElement.query(By.css('table'));
+    const cardView = () =>
+      fixture.debugElement.query(By.css('.mobile-card-view'));
+
+    it('renders only the table above the handset breakpoint', () => {
+      fixture.detectChanges();
+
+      expect(table()).toBeTruthy();
+      expect(cardView()).toBeFalsy();
+    });
+
+    it('renders only the card view below the handset breakpoint', () => {
+      isHandsetViewport = true;
+      fixture = TestBed.createComponent(PrintListComponent);
+      component = fixture.componentInstance;
+
+      fixture.detectChanges();
+
+      expect(cardView()).toBeTruthy();
+      expect(table()).toBeFalsy();
+    });
+
+    it('swaps the two when the viewport crosses the breakpoint', () => {
+      fixture.detectChanges();
+
+      setHandsetViewport(true);
+      fixture.detectChanges();
+
+      expect(cardView()).toBeTruthy();
+      expect(table()).toBeFalsy();
+
+      setHandsetViewport(false);
+      fixture.detectChanges();
+
+      expect(table()).toBeTruthy();
+      expect(cardView()).toBeFalsy();
+    });
+
+    it('stops listening for width changes once destroyed', () => {
+      fixture.detectChanges();
+
+      fixture.destroy();
+
+      expect(handsetListeners.length).toBe(0);
+    });
   });
 
   it('should show the first-run empty state when there are no prints and no filters', () => {

@@ -216,42 +216,42 @@
       something a progress bar says without destroying anything. So the cards
       stay, dimmed and aria-busy, and the bar carries the message.
     -->
-    <div
-      class="mobile-card-view"
-      fxHide.gt-sm
-      [class.mobile-card-view--selecting]="bulkActions.hasSelection()"
-      [class.refreshing]="showRefreshing()"
-      [attr.aria-busy]="showRefreshing() ? 'true' : null"
-    >
-      @if (showRefreshing()) {
-        <mat-progress-bar mode="indeterminate" class="refresh-bar" />
-      }
-      @if (showSkeleton()) {
-        <app-print-list-skeleton
-          class="app-skeleton-immediate"
-          [count]="skeletonRowCount()"
-        />
-      } @else {
-        @for (print of prints; track print.id) {
-          <!-- hasSelection() doubles as "selection mode": a long press selects the
+    @if (isHandset()) {
+      <div
+        class="mobile-card-view"
+        [class.mobile-card-view--selecting]="bulkActions.hasSelection()"
+        [class.refreshing]="showRefreshing()"
+        [attr.aria-busy]="showRefreshing() ? 'true' : null"
+      >
+        @if (showRefreshing()) {
+          <mat-progress-bar mode="indeterminate" class="refresh-bar" />
+        }
+        @if (showSkeleton()) {
+          <app-print-list-skeleton
+            class="app-skeleton-immediate"
+            [count]="skeletonRowCount()"
+          />
+        } @else {
+          @for (print of prints; track print.id) {
+            <!-- hasSelection() doubles as "selection mode": a long press selects the
                first card and turns the mode on, taps toggle from then on, and
                clearing the last one turns it back off. No second flag to keep in
                sync, and no way for the two to disagree. -->
-          <app-print-card
-            [print]="print"
-            [selectionMode]="bulkActions.hasSelection()"
-            [selected]="bulkActions.isSelected(print.id)"
-            (selectionToggled)="bulkActions.toggleSelection($event)"
-            (deleted)="deletePrint($event)"
-            (statusChanged)="changeStatus($event.id, $event.status)"
-            [preferredUnit]="preferredFilamentUnit()"
-          />
+            <app-print-card
+              [print]="print"
+              [selectionMode]="bulkActions.hasSelection()"
+              [selected]="bulkActions.isSelected(print.id)"
+              (selectionToggled)="bulkActions.toggleSelection($event)"
+              (deleted)="deletePrint($event)"
+              (statusChanged)="changeStatus($event.id, $event.status)"
+              [preferredUnit]="preferredFilamentUnit()"
+            />
+          }
         }
-      }
-    </div>
-
-    <!-- Desktop Table View -->
-    <!--
+      </div>
+    } @else {
+      <!-- Desktop Table View -->
+      <!--
       On a FIRST load the data rows are hidden with a class and the skeleton is
       rendered below rather than the whole table being torn down: the header row
       carries the mat-sort state, and destroying it would drop the sort arrow
@@ -267,447 +267,451 @@
       A refetch keeps its rows, so aria-busy is the right signal there and the
       live region can stay on to announce the new rows when they land.
     -->
-    @if (showRefreshing()) {
-      <mat-progress-bar mode="indeterminate" class="refresh-bar" fxHide.lt-md />
-    }
-    <table
-      [class.loading]="showSkeleton()"
-      [class.refreshing]="showRefreshing()"
-      fxFlex="grow"
-      fxHide.lt-md
-      aria-label="Print List"
-      [attr.aria-busy]="showRefreshing() ? 'true' : null"
-      [attr.aria-live]="showSkeleton() ? 'off' : 'polite'"
-      mat-table
-      [dataSource]="prints"
-      matSort
-      (matSortChange)="sortData($event)"
-      [matSortDisableClear]="true"
-    >
-      <ng-container matColumnDef="select">
-        <th mat-header-cell *matHeaderCellDef class="select-cell">
-          <mat-checkbox
-            [checked]="bulkActions.isAllOnPageSelected(prints)"
-            [indeterminate]="bulkActions.isIndeterminate(prints)"
-            [disabled]="bulkActions.isRunning()"
-            (change)="bulkActions.toggleSelectAllOnPage(prints)"
-            aria-label="Select all prints on this page"
-            matTooltip="Select all prints on this page"
-            data-cy-select-all-prints
-          ></mat-checkbox>
-        </th>
-        <!-- Only stop the click from reaching the row's routerLink. Cancelling it
+      @if (showRefreshing()) {
+        <mat-progress-bar mode="indeterminate" class="refresh-bar" />
+      }
+      <table
+        [class.loading]="showSkeleton()"
+        [class.refreshing]="showRefreshing()"
+        fxFlex="grow"
+        aria-label="Print List"
+        [attr.aria-busy]="showRefreshing() ? 'true' : null"
+        [attr.aria-live]="showSkeleton() ? 'off' : 'polite'"
+        mat-table
+        [dataSource]="prints"
+        matSort
+        (matSortChange)="sortData($event)"
+        [matSortDisableClear]="true"
+      >
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-cell">
+            <mat-checkbox
+              [checked]="bulkActions.isAllOnPageSelected(prints)"
+              [indeterminate]="bulkActions.isIndeterminate(prints)"
+              [disabled]="bulkActions.isRunning()"
+              (change)="bulkActions.toggleSelectAllOnPage(prints)"
+              aria-label="Select all prints on this page"
+              matTooltip="Select all prints on this page"
+              data-cy-select-all-prints
+            ></mat-checkbox>
+          </th>
+          <!-- Only stop the click from reaching the row's routerLink. Cancelling it
              would also run the checkbox's canceled-activation steps, which restore
              `input.checked` after change detection has already written the new
              value - the checkbox would stay visually unchecked. -->
-        <td
-          mat-cell
-          *matCellDef="let print"
-          class="select-cell"
-          (click)="$event.stopPropagation()"
-        >
-          <mat-checkbox
-            [checked]="bulkActions.isSelected(print.id)"
-            [disabled]="bulkActions.isRunning()"
-            (change)="bulkActions.toggleSelection(print)"
-            [aria-label]="'Select print ' + print.title"
-            attr.data-cy-select-print="{{ print.id }}"
-          ></mat-checkbox>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="image">
-        <th mat-header-cell *matHeaderCellDef>Image</th>
-        <td mat-cell *matCellDef="let print">
-          <div class="print-image">
-            <app-print-image
-              [printId]="print.id"
-              [imageId]="print.defaultPrintImageId"
-            ></app-print-image>
-          </div>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="image-medium">
-        <th mat-header-cell *matHeaderCellDef>Image</th>
-        <td mat-cell *matCellDef="let print">
-          <div class="print-image-medium">
-            <app-print-image
-              [printId]="print.id"
-              [imageId]="print.defaultPrintImageId"
-            ></app-print-image>
-          </div>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="image-large">
-        <th mat-header-cell *matHeaderCellDef>Image</th>
-        <td mat-cell *matCellDef="let print">
-          <div class="print-image-large">
-            <app-print-image
-              [printId]="print.id"
-              [imageId]="print.defaultPrintImageId"
-            ></app-print-image>
-          </div>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="title">
-        <th
-          scope="col"
-          mat-header-cell
-          *matHeaderCellDef
-          [mat-sort-header]="printSummarySortColumns.Title"
-        >
-          Title
-        </th>
-        <td mat-cell *matCellDef="let print">
-          {{ print.title }}
-          @if (print.projectName) {
-            <app-project-chip
-              [projectName]="print.projectName"
-              [projectStatus]="print.projectStatus!"
-              [projectId]="print.projectId"
-            />
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="printer">
-        <th mat-header-cell *matHeaderCellDef>Printer</th>
-        <td mat-cell *matCellDef="let print">
-          {{ getPrinterLabel(print.printer) }}
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="start-date">
-        <th
-          mat-header-cell
-          *matHeaderCellDef
-          [mat-sort-header]="printSummarySortColumns.StartDate"
-        >
-          Start Date
-        </th>
-        <td mat-cell *matCellDef="let print">
-          {{ print.startDate | localeDate }}
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="start-time">
-        <th
-          mat-header-cell
-          *matHeaderCellDef
-          [mat-sort-header]="printSummarySortColumns.StartDate"
-        >
-          Start Time
-        </th>
-        <td mat-cell *matCellDef="let print">
-          {{ print.startDate | localeDate: 'time' }}
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="start-date-time">
-        <th
-          mat-header-cell
-          *matHeaderCellDef
-          [mat-sort-header]="printSummarySortColumns.StartDate"
-        >
-          Start Date/Time
-        </th>
-        <td mat-cell *matCellDef="let print">
-          {{ print.startDate | localeDate: 'datetime' }}
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="end-date">
-        <th mat-header-cell *matHeaderCellDef>End Date</th>
-        <td mat-cell *matCellDef="let print">
-          <div
-            matTooltip="* indicates Estimated End Time"
-            [matTooltipDisabled]="
-              print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
-            "
+          <td
+            mat-cell
+            *matCellDef="let print"
+            class="select-cell"
+            (click)="$event.stopPropagation()"
           >
-            {{ getPrintEndDate(print) | localeDate }}
-            @if (
-              (print.printTimeInSeconds === null ||
-                print.printTimeInSeconds === undefined ||
-                print.printTimeInSeconds === 0) &&
-              print.estimatedPrintTimeInSeconds !== null &&
-              print.estimatedPrintTimeInSeconds > 0
-            ) {
-              *
-            }
-          </div>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="end-time">
-        <th mat-header-cell *matHeaderCellDef>End Time</th>
-        <td mat-cell *matCellDef="let print">
-          <div
-            matTooltip="* indicates Estimated End Time"
-            [matTooltipDisabled]="
-              print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
-            "
+            <mat-checkbox
+              [checked]="bulkActions.isSelected(print.id)"
+              [disabled]="bulkActions.isRunning()"
+              (change)="bulkActions.toggleSelection(print)"
+              [aria-label]="'Select print ' + print.title"
+              attr.data-cy-select-print="{{ print.id }}"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="image">
+          <th mat-header-cell *matHeaderCellDef>Image</th>
+          <td mat-cell *matCellDef="let print">
+            <div class="print-image">
+              <app-print-image
+                [printId]="print.id"
+                [imageId]="print.defaultPrintImageId"
+              ></app-print-image>
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="image-medium">
+          <th mat-header-cell *matHeaderCellDef>Image</th>
+          <td mat-cell *matCellDef="let print">
+            <div class="print-image-medium">
+              <app-print-image
+                [printId]="print.id"
+                [imageId]="print.defaultPrintImageId"
+              ></app-print-image>
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="image-large">
+          <th mat-header-cell *matHeaderCellDef>Image</th>
+          <td mat-cell *matCellDef="let print">
+            <div class="print-image-large">
+              <app-print-image
+                [printId]="print.id"
+                [imageId]="print.defaultPrintImageId"
+              ></app-print-image>
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="title">
+          <th
+            scope="col"
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="printSummarySortColumns.Title"
           >
-            {{ getPrintEndDate(print) | localeDate: 'time' }}
-            @if (
-              (print.printTimeInSeconds === null ||
-                print.printTimeInSeconds === undefined ||
-                print.printTimeInSeconds === 0) &&
-              print.estimatedPrintTimeInSeconds !== null &&
-              print.estimatedPrintTimeInSeconds > 0
-            ) {
-              *
+            Title
+          </th>
+          <td mat-cell *matCellDef="let print">
+            {{ print.title }}
+            @if (print.projectName) {
+              <app-project-chip
+                [projectName]="print.projectName"
+                [projectStatus]="print.projectStatus!"
+                [projectId]="print.projectId"
+              />
             }
-          </div>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="end-date-time">
-        <th mat-header-cell *matHeaderCellDef>End Date/Time</th>
-        <td mat-cell *matCellDef="let print">
-          <div
-            matTooltip="* indicates Estimated End Time"
-            [matTooltipDisabled]="
-              print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
-            "
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="printer">
+          <th mat-header-cell *matHeaderCellDef>Printer</th>
+          <td mat-cell *matCellDef="let print">
+            {{ getPrinterLabel(print.printer) }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="start-date">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="printSummarySortColumns.StartDate"
           >
-            {{ getPrintEndDate(print) | localeDate: 'datetime' }}
-            @if (
-              (print.printTimeInSeconds === null ||
-                print.printTimeInSeconds === undefined ||
-                print.printTimeInSeconds === 0) &&
-              print.estimatedPrintTimeInSeconds !== null &&
-              print.estimatedPrintTimeInSeconds > 0
-            ) {
-              *
-            }
-          </div>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="printTime">
-        <th mat-header-cell *matHeaderCellDef>Print Time</th>
-        <td mat-cell *matCellDef="let print">
-          @if (
-            print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
-          ) {
-            {{ print.printTimeInSeconds | duration }}
-          } @else {
-            <div matTooltip="* indicates Estimated Print Time">
-              {{ print.estimatedPrintTimeInSeconds | duration }}
+            Start Date
+          </th>
+          <td mat-cell *matCellDef="let print">
+            {{ print.startDate | localeDate }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="start-time">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="printSummarySortColumns.StartDate"
+          >
+            Start Time
+          </th>
+          <td mat-cell *matCellDef="let print">
+            {{ print.startDate | localeDate: 'time' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="start-date-time">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="printSummarySortColumns.StartDate"
+          >
+            Start Date/Time
+          </th>
+          <td mat-cell *matCellDef="let print">
+            {{ print.startDate | localeDate: 'datetime' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="end-date">
+          <th mat-header-cell *matHeaderCellDef>End Date</th>
+          <td mat-cell *matCellDef="let print">
+            <div
+              matTooltip="* indicates Estimated End Time"
+              [matTooltipDisabled]="
+                print.printTimeInSeconds !== null &&
+                print.printTimeInSeconds > 0
+              "
+            >
+              {{ getPrintEndDate(print) | localeDate }}
               @if (
+                (print.printTimeInSeconds === null ||
+                  print.printTimeInSeconds === undefined ||
+                  print.printTimeInSeconds === 0) &&
                 print.estimatedPrintTimeInSeconds !== null &&
                 print.estimatedPrintTimeInSeconds > 0
               ) {
                 *
               }
             </div>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="filamentSummary">
-        <th mat-header-cell *matHeaderCellDef>Materials</th>
-        <td mat-cell *matCellDef="let print">
-          <app-filament-usage-summary
-            [filamentUsage]="print.filamentUsage"
-            [defaultFilamentPrice]="defaultFilamentPriceSetting?.value"
-            [currencySymbol]="preferredCurrencySymbolSetting?.value ?? '$'"
-            [linkFilaments]="true"
-            [showPrices]="true"
-          />
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="totalFilamentUsage">
-        <th
-          mat-header-cell
-          *matHeaderCellDef
-          [mat-sort-header]="printSummarySortColumns.FilamentUsage"
-        >
-          Total Material (g)
-        </th>
-        <td mat-cell *matCellDef="let print">
-          {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="totalCost">
-        <th mat-header-cell *matHeaderCellDef>Total Cost</th>
-        <td
-          mat-cell
-          *matCellDef="let print"
-          [matTooltip]="getTotalCombinedCostTooltip(print)"
-          [matTooltipDisabled]="!getTotalCombinedCostTooltip(print)"
-          matTooltipClass="multiline-tooltip"
-        >
-          {{ getTotalCombinedCost(print) }}
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="electricityCost">
-        <th mat-header-cell *matHeaderCellDef>Electricity Cost</th>
-        <td mat-cell *matCellDef="let print">
-          {{ getElectricityCost(print) }}
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Status</th>
-        <td mat-cell *matCellDef="let print">{{ getStatus(print) }}</td>
-      </ng-container>
-      <ng-container matColumnDef="commentCount">
-        <th mat-header-cell *matHeaderCellDef>Comments</th>
-        <td mat-cell *matCellDef="let print">{{ print.commentCount }}</td>
-      </ng-container>
-      <ng-container matColumnDef="more">
-        <th
-          mat-header-cell
-          *matHeaderCellDef
-          (click)="$event.preventDefault(); $event.stopPropagation()"
-        >
-          <button
-            mat-button
-            class="transparent"
-            attr.aria-label="Open table settings"
-            [matMenuTriggerFor]="tableSettingsMenu"
-            data-cy-table-settings
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="end-time">
+          <th mat-header-cell *matHeaderCellDef>End Time</th>
+          <td mat-cell *matCellDef="let print">
+            <div
+              matTooltip="* indicates Estimated End Time"
+              [matTooltipDisabled]="
+                print.printTimeInSeconds !== null &&
+                print.printTimeInSeconds > 0
+              "
+            >
+              {{ getPrintEndDate(print) | localeDate: 'time' }}
+              @if (
+                (print.printTimeInSeconds === null ||
+                  print.printTimeInSeconds === undefined ||
+                  print.printTimeInSeconds === 0) &&
+                print.estimatedPrintTimeInSeconds !== null &&
+                print.estimatedPrintTimeInSeconds > 0
+              ) {
+                *
+              }
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="end-date-time">
+          <th mat-header-cell *matHeaderCellDef>End Date/Time</th>
+          <td mat-cell *matCellDef="let print">
+            <div
+              matTooltip="* indicates Estimated End Time"
+              [matTooltipDisabled]="
+                print.printTimeInSeconds !== null &&
+                print.printTimeInSeconds > 0
+              "
+            >
+              {{ getPrintEndDate(print) | localeDate: 'datetime' }}
+              @if (
+                (print.printTimeInSeconds === null ||
+                  print.printTimeInSeconds === undefined ||
+                  print.printTimeInSeconds === 0) &&
+                print.estimatedPrintTimeInSeconds !== null &&
+                print.estimatedPrintTimeInSeconds > 0
+              ) {
+                *
+              }
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="printTime">
+          <th mat-header-cell *matHeaderCellDef>Print Time</th>
+          <td mat-cell *matCellDef="let print">
+            @if (
+              print.printTimeInSeconds !== null && print.printTimeInSeconds > 0
+            ) {
+              {{ print.printTimeInSeconds | duration }}
+            } @else {
+              <div matTooltip="* indicates Estimated Print Time">
+                {{ print.estimatedPrintTimeInSeconds | duration }}
+                @if (
+                  print.estimatedPrintTimeInSeconds !== null &&
+                  print.estimatedPrintTimeInSeconds > 0
+                ) {
+                  *
+                }
+              </div>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="filamentSummary">
+          <th mat-header-cell *matHeaderCellDef>Materials</th>
+          <td mat-cell *matCellDef="let print">
+            <app-filament-usage-summary
+              [filamentUsage]="print.filamentUsage"
+              [defaultFilamentPrice]="defaultFilamentPriceSetting?.value"
+              [currencySymbol]="preferredCurrencySymbolSetting?.value ?? '$'"
+              [linkFilaments]="true"
+              [showPrices]="true"
+            />
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="totalFilamentUsage">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="printSummarySortColumns.FilamentUsage"
           >
-            <mat-icon>settings</mat-icon>
-          </button>
-          <mat-menu #tableSettingsMenu="matMenu">
-            <button
-              type="button"
-              mat-menu-item
-              attr.aria-label="Change the layout of the print table."
-              (click)="openPrintTableLayout()"
-            >
-              <mat-icon>table_rows</mat-icon>Change table layout
-            </button>
-          </mat-menu>
-        </th>
-        <td
-          mat-cell
-          *matCellDef="let print"
-          (click)="$event.preventDefault(); $event.stopPropagation()"
-        >
-          <button
-            mat-button
-            class="transparent"
-            attr.aria-label="More options for {{ print.title }}"
-            [matMenuTriggerFor]="aboutMenu"
-            data-cy-more-button
+            Total Material (g)
+          </th>
+          <td mat-cell *matCellDef="let print">
+            {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="totalCost">
+          <th mat-header-cell *matHeaderCellDef>Total Cost</th>
+          <td
+            mat-cell
+            *matCellDef="let print"
+            [matTooltip]="getTotalCombinedCostTooltip(print)"
+            [matTooltipDisabled]="!getTotalCombinedCostTooltip(print)"
+            matTooltipClass="multiline-tooltip"
           >
-            <mat-icon>more_horiz</mat-icon>
-          </button>
-          <mat-menu #aboutMenu="matMenu">
-            <!-- <button mat-menu-item>Fee</button> -->
-            <a
-              class="menu-link"
-              mat-menu-item
-              attr.aria-label="Edit {{ print.title }}"
-              [routerLink]="[print.id, 'edit']"
-              data-cy-edit-menu-option
-              ><mat-icon>edit</mat-icon>Edit</a
-            >
-            <a
-              class="menu-link"
-              mat-menu-item
-              attr.aria-label="View {{ print.title }}"
-              [routerLink]="[print.id]"
-              ><mat-icon>launch</mat-icon>View</a
-            >
+            {{ getTotalCombinedCost(print) }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="electricityCost">
+          <th mat-header-cell *matHeaderCellDef>Electricity Cost</th>
+          <td mat-cell *matCellDef="let print">
+            {{ getElectricityCost(print) }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let print">{{ getStatus(print) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="commentCount">
+          <th mat-header-cell *matHeaderCellDef>Comments</th>
+          <td mat-cell *matCellDef="let print">{{ print.commentCount }}</td>
+        </ng-container>
+        <ng-container matColumnDef="more">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            (click)="$event.preventDefault(); $event.stopPropagation()"
+          >
             <button
-              type="button"
-              mat-menu-item
-              attr.aria-label="Share {{ print.title }}"
-              (click)="share(print)"
+              mat-button
+              class="transparent"
+              attr.aria-label="Open table settings"
+              [matMenuTriggerFor]="tableSettingsMenu"
+              data-cy-table-settings
             >
-              <mat-icon>share</mat-icon>Share
+              <mat-icon>settings</mat-icon>
             </button>
-            <a
-              class="menu-link"
-              mat-menu-item
-              attr.aria-label="Duplicate {{ print.title }}"
-              [routerLink]="['copy', print.id]"
-              ><mat-icon>file_copy</mat-icon>Duplicate</a
-            >
+            <mat-menu #tableSettingsMenu="matMenu">
+              <button
+                type="button"
+                mat-menu-item
+                attr.aria-label="Change the layout of the print table."
+                (click)="openPrintTableLayout()"
+              >
+                <mat-icon>table_rows</mat-icon>Change table layout
+              </button>
+            </mat-menu>
+          </th>
+          <td
+            mat-cell
+            *matCellDef="let print"
+            (click)="$event.preventDefault(); $event.stopPropagation()"
+          >
             <button
-              type="button"
-              mat-menu-item
-              attr.aria-label="Delete {{ print.title }}"
-              (click)="deletePrint(print)"
+              mat-button
+              class="transparent"
+              attr.aria-label="More options for {{ print.title }}"
+              [matMenuTriggerFor]="aboutMenu"
+              data-cy-more-button
             >
-              <mat-icon>delete</mat-icon>Delete
+              <mat-icon>more_horiz</mat-icon>
             </button>
-            <hr />
-            <button
-              mat-menu-item
-              attr.aria-label="Change print status for {{ print.title }}"
-              [matMenuTriggerFor]="printStatusMenu"
-              data-cy-print-status
-            >
-              Change Print Status
-            </button>
-          </mat-menu>
-          <mat-menu #printStatusMenu="matMenu">
-            <button
-              type="button"
-              mat-menu-item
-              aria-label="Change status to Pending"
-              (click)="changeStatus(print.id, printStatusTypes.Pending)"
-            >
-              <mat-icon>pending_actions</mat-icon>Pending
-            </button>
-            <button
-              type="button"
-              mat-menu-item
-              aria-label="Change status to Printing"
-              (click)="changeStatus(print.id, printStatusTypes.Printing)"
-            >
-              <mat-icon>play_circle_outline</mat-icon>Printing
-            </button>
-            <button
-              type="button"
-              mat-menu-item
-              aria-label="Change status to Success"
-              (click)="changeStatus(print.id, printStatusTypes.Success)"
-            >
-              <mat-icon>done</mat-icon>Success
-            </button>
-            <button
-              type="button"
-              mat-menu-item
-              aria-label="Change status to Success"
-              (click)="changeStatus(print.id, printStatusTypes.PartialSuccess)"
-            >
-              <mat-icon>rule</mat-icon>Partial Success
-            </button>
-            <button
-              type="button"
-              mat-menu-item
-              aria-label="Change status to Failed"
-              (click)="changeStatus(print.id, printStatusTypes.Failed)"
-            >
-              <mat-icon>phonelink_off</mat-icon>Failed
-            </button>
-            <button
-              type="button"
-              mat-menu-item
-              aria-label="Change status to Cancelled"
-              (click)="changeStatus(print.id, printStatusTypes.Cancelled)"
-            >
-              <mat-icon>remove_circle_outline</mat-icon>Cancelled
-            </button>
-          </mat-menu>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
-      <tr
-        scope="row"
-        mat-row
-        *matRowDef="let row; columns: tableColumns"
-        [routerLink]="row.id"
-        [class.selected]="bulkActions.isSelected(row.id)"
-        [attr.cy-print-row]="row.id"
-      ></tr>
-    </table>
-    @if (showSkeleton()) {
-      <!-- tableColumns, not displayedColumns: the bulk-select column counts
+            <mat-menu #aboutMenu="matMenu">
+              <!-- <button mat-menu-item>Fee</button> -->
+              <a
+                class="menu-link"
+                mat-menu-item
+                attr.aria-label="Edit {{ print.title }}"
+                [routerLink]="[print.id, 'edit']"
+                data-cy-edit-menu-option
+                ><mat-icon>edit</mat-icon>Edit</a
+              >
+              <a
+                class="menu-link"
+                mat-menu-item
+                attr.aria-label="View {{ print.title }}"
+                [routerLink]="[print.id]"
+                ><mat-icon>launch</mat-icon>View</a
+              >
+              <button
+                type="button"
+                mat-menu-item
+                attr.aria-label="Share {{ print.title }}"
+                (click)="share(print)"
+              >
+                <mat-icon>share</mat-icon>Share
+              </button>
+              <a
+                class="menu-link"
+                mat-menu-item
+                attr.aria-label="Duplicate {{ print.title }}"
+                [routerLink]="['copy', print.id]"
+                ><mat-icon>file_copy</mat-icon>Duplicate</a
+              >
+              <button
+                type="button"
+                mat-menu-item
+                attr.aria-label="Delete {{ print.title }}"
+                (click)="deletePrint(print)"
+              >
+                <mat-icon>delete</mat-icon>Delete
+              </button>
+              <hr />
+              <button
+                mat-menu-item
+                attr.aria-label="Change print status for {{ print.title }}"
+                [matMenuTriggerFor]="printStatusMenu"
+                data-cy-print-status
+              >
+                Change Print Status
+              </button>
+            </mat-menu>
+            <mat-menu #printStatusMenu="matMenu">
+              <button
+                type="button"
+                mat-menu-item
+                aria-label="Change status to Pending"
+                (click)="changeStatus(print.id, printStatusTypes.Pending)"
+              >
+                <mat-icon>pending_actions</mat-icon>Pending
+              </button>
+              <button
+                type="button"
+                mat-menu-item
+                aria-label="Change status to Printing"
+                (click)="changeStatus(print.id, printStatusTypes.Printing)"
+              >
+                <mat-icon>play_circle_outline</mat-icon>Printing
+              </button>
+              <button
+                type="button"
+                mat-menu-item
+                aria-label="Change status to Success"
+                (click)="changeStatus(print.id, printStatusTypes.Success)"
+              >
+                <mat-icon>done</mat-icon>Success
+              </button>
+              <button
+                type="button"
+                mat-menu-item
+                aria-label="Change status to Success"
+                (click)="
+                  changeStatus(print.id, printStatusTypes.PartialSuccess)
+                "
+              >
+                <mat-icon>rule</mat-icon>Partial Success
+              </button>
+              <button
+                type="button"
+                mat-menu-item
+                aria-label="Change status to Failed"
+                (click)="changeStatus(print.id, printStatusTypes.Failed)"
+              >
+                <mat-icon>phonelink_off</mat-icon>Failed
+              </button>
+              <button
+                type="button"
+                mat-menu-item
+                aria-label="Change status to Cancelled"
+                (click)="changeStatus(print.id, printStatusTypes.Cancelled)"
+              >
+                <mat-icon>remove_circle_outline</mat-icon>Cancelled
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
+        <tr
+          scope="row"
+          mat-row
+          *matRowDef="let row; columns: tableColumns"
+          [routerLink]="row.id"
+          [class.selected]="bulkActions.isSelected(row.id)"
+          [attr.cy-print-row]="row.id"
+        ></tr>
+      </table>
+      @if (showSkeleton()) {
+        <!-- tableColumns, not displayedColumns: the bulk-select column counts
            towards the width the placeholder rows have to span. -->
-      <app-print-list-skeleton
-        class="app-skeleton-immediate"
-        fxHide.lt-md
-        variant="row"
-        [count]="skeletonRowCount()"
-        [columns]="tableColumns.length"
-      />
+        <app-print-list-skeleton
+          class="app-skeleton-immediate"
+          variant="row"
+          [count]="skeletonRowCount()"
+          [columns]="tableColumns.length"
+        />
+      }
     }
     <!-- Shared by both the mobile card view and the desktop table above.
          Two gates, because they cover different windows. isLoading (the raw

@@ -280,3 +280,70 @@ Cypress.Commands.add('commentOnPrintAsOtherUser', (printId, body) =>
     })
     .then((response) => response.body)
 );
+
+// Creates a print through the API instead of driving the new-print form.
+//
+// `cy.createPrint` exists to exercise that form, and four specs still use it
+// for that. The list specs do not: they need N prints to exist so they can
+// filter, select, and bulk-edit them, and paying a page load plus a form fill
+// per print made those the two slowest specs in the suite.
+//
+// The payload mirrors what the form posts for a new print, so a seeded print is
+// indistinguishable from a typed one in the list. `status` matters most:
+// `PrintStatus.Pending` (1) is what the form defaults to, and the status filter
+// and bulk-status tests both assert against prints that are NOT yet Success -
+// seeding them as Success would make those assertions pass vacuously.
+//
+// `viewStatus` and `allowComments` are the form's own fallbacks for a user with
+// no saved defaults (Private, comments on). The one deliberate divergence: the
+// form would honor a `Prints_DefaultPrintViewStatus` setting if the user had
+// one, and this always seeds Private. That keeps seeded rows out of the public
+// feed, and no caller so far cares - but a spec that asserts on a seeded
+// print's visibility should set it explicitly rather than assume.
+Cypress.Commands.add('seedPrint', (title, options = {}) => {
+  const devHeaders = { 'X-Dev-User-Id': '1' };
+
+  const findPrinter = () =>
+    cy
+      .request({
+        method: 'GET',
+        url: `${apiUrl()}/api/printers/summary?PageNumber=1&PageSize=100`,
+        headers: devHeaders,
+      })
+      .then(({ body }) => {
+        const printer = options.printer
+          ? body.items.find((p) => p.name === options.printer)
+          : body.items[0];
+
+        expect(
+          printer,
+          options.printer
+            ? `a printer named "${options.printer}" exists`
+            : 'a printer exists to attach the seeded print to'
+        ).to.exist;
+
+        return printer;
+      });
+
+  return findPrinter().then((printer) =>
+    cy
+      .request({
+        method: 'POST',
+        url: `${apiUrl()}/api/Prints/`,
+        headers: devHeaders,
+        body: {
+          title,
+          status: 1, // PrintStatus.Pending - the form's default. See above.
+          viewStatus: 3, // PrintViewStatus.Private, so seeded rows stay out of the public feed.
+          printerId: printer.id,
+          startDate: new Date().toISOString(),
+          notes: '',
+          url: '',
+          fileName: '',
+          allowComments: true,
+          filamentUsage: [],
+        },
+      })
+      .then((response) => response.body)
+  );
+});

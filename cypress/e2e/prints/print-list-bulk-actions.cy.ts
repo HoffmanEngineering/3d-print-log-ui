@@ -8,6 +8,12 @@ describe('Print List Bulk Actions', () => {
   /**
    * Narrows the list to just the prints created by this test, so "select all on
    * this page" is a known, small set.
+   *
+   * The prints themselves are seeded through the API (`cy.seedPrint`) rather
+   * than typed into the new-print form. This spec needs eighteen of them and
+   * none of its assertions are about the form, so paying a page load and a form
+   * fill for each one bought nothing - it just made this the slowest spec in the
+   * suite. `cy.createPrint` still exists for the specs that do test that form.
    */
   const showOnly = (prefix: string, expectedRows: number) => {
     cy.visit('/prints');
@@ -21,8 +27,8 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Status ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
-    cy.createPrint(`${prefix} B`);
+    cy.seedPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} B`);
 
     showOnly(prefix, 2);
 
@@ -58,8 +64,8 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Clear ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
-    cy.createPrint(`${prefix} B`);
+    cy.seedPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} B`);
 
     showOnly(prefix, 2);
 
@@ -88,8 +94,8 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Persist ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
-    cy.createPrint(`${prefix} B`);
+    cy.seedPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} B`);
 
     showOnly(prefix, 2);
 
@@ -113,7 +119,7 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Keyboard ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} A`);
 
     showOnly(prefix, 1);
 
@@ -139,8 +145,8 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Delete ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
-    cy.createPrint(`${prefix} B`);
+    cy.seedPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} B`);
 
     showOnly(prefix, 2);
 
@@ -176,8 +182,8 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Project ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
-    cy.createPrint(`${prefix} B`);
+    cy.seedPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} B`);
 
     showOnly(prefix, 2);
 
@@ -214,8 +220,8 @@ describe('Print List Bulk Actions', () => {
     // Create the project up front, so this test exercises the pick-an-existing-one
     // branch rather than the create-a-new-one branch above.
     cy.createProject(projectName).as('seededProject');
-    cy.createPrint(`${prefix} A`);
-    cy.createPrint(`${prefix} B`);
+    cy.seedPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} B`);
 
     showOnly(prefix, 2);
 
@@ -244,8 +250,8 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Printer ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
-    cy.createPrint(`${prefix} B`);
+    cy.seedPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} B`);
 
     showOnly(prefix, 2);
 
@@ -281,8 +287,8 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Visibility ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
-    cy.createPrint(`${prefix} B`);
+    cy.seedPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} B`);
 
     showOnly(prefix, 2);
 
@@ -303,7 +309,7 @@ describe('Print List Bulk Actions', () => {
     const ts = new Date().getTime();
     const prefix = `Bulk Unfile ${ts}`;
 
-    cy.createPrint(`${prefix} A`);
+    cy.seedPrint(`${prefix} A`);
 
     showOnly(prefix, 1);
 

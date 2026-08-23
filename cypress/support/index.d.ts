@@ -2,6 +2,7 @@ declare namespace Cypress {
   interface Chainable {
     login(): Chainable<void>;
     createPrint(title: string, options?: { printer?: string }): Chainable<void>;
+    seedPrint(title: string, options?: { printer?: string }): Chainable<any>;
     openFilterPanel(): Chainable<void>;
     seedPublicPrintFixture(): Chainable<any>;
     createProject(name: string): Chainable<any>;

@@ -8,6 +8,7 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,6 +20,7 @@ import {
   PrintService,
   PrintStatus,
   PrintSummary,
+  PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { PagedList } from 'src/app/core/types/paging';
@@ -150,6 +152,7 @@ describe('PrintListComponent', () => {
         MatCheckboxModule,
         MatDialogModule,
         MatMenuModule,
+        MatSortModule,
         MatTableModule,
         PrintEmptyStateComponent,
       ],
@@ -171,6 +174,10 @@ describe('PrintListComponent', () => {
   }));
 
   beforeEach(() => {
+    // The saved table layout outlives a spec otherwise, so a test that picks
+    // its own columns would decide what every later test renders.
+    localStorage.removeItem('print_table_displayed_columns');
+
     fixture = TestBed.createComponent(PrintListComponent);
     component = fixture.componentInstance;
   });
@@ -231,6 +238,62 @@ describe('PrintListComponent', () => {
       fixture.destroy();
 
       expect(handsetListeners.length).toBe(0);
+    });
+  });
+
+  /**
+   * Start Date, Start Time and Start Date/Time all sort by the same column, and
+   * MatSort throws when two headers register the same id. That throw lands while
+   * the header row is initializing and takes the pass that fills the data cells
+   * with it, so the table renders a page of blank rows.
+   */
+  it('renders row data when two displayed columns sort by the same column', () => {
+    const print = {
+      id: 7,
+      title: 'Benchy',
+      status: PrintStatus.Success,
+      startDate: new Date('2021-05-27'),
+      printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+      filamentUsage: [],
+      commentCount: 0,
+      sumActualFilamentWeightMg: 0,
+      sumEstimatedFilamentWeightMg: 0,
+      totalFilamentWeightMg: 0,
+    } as unknown as PrintSummary;
+
+    TestBed.inject(ActivatedRoute).data = of({
+      printList: {
+        items: [print],
+        paging: { currentPage: 1, pageSize: 10, totalCount: 1, totalPages: 1 },
+      } as PagedList<PrintSummary>,
+      printers: [],
+      filaments: [],
+    });
+    // Through storage, because ngOnInit reads the saved layout back over
+    // anything set on the instance.
+    localStorage.setItem(
+      'print_table_displayed_columns',
+      JSON.stringify(['title', 'start-date', 'start-date-time', 'more'])
+    );
+
+    fixture.detectChanges();
+
+    const row = fixture.debugElement.query(By.css('tr[mat-row]'))
+      .nativeElement as HTMLElement;
+    expect(row.textContent).toContain('Benchy');
+  });
+
+  it('sorts by start date whichever of its three columns is clicked', () => {
+    fixture.detectChanges();
+
+    Object.values(component.startDateSortHeaderIds).forEach((headerId) => {
+      component.sortColumn = PrintSummarySortColumn.Title;
+
+      component.sortData({ active: headerId, direction: 'asc' });
+
+      expect(component.sortColumn as PrintSummarySortColumn)
+        .withContext(headerId)
+        .toBe(PrintSummarySortColumn.StartDate);
     });
   });
 

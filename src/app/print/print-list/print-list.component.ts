@@ -221,6 +221,24 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public printSummarySortColumns = toSortHeaderIds(PrintSummarySortColumn);
 
+  /**
+   * Start Date, Start Time and Start Date/Time are three renderings of one sort
+   * column, and the user can display any combination of them.
+   *
+   * MatSort keys its registry by header id and throws
+   * "Cannot have two MatSortables with the same id" the moment a second header
+   * claims one. That throw lands while the header row is initializing and takes
+   * the rest of the render pass with it, so the table paints a page of rows
+   * whose data cells are all empty until a later pass fills them in - seconds
+   * later on a large page. So each header gets an id of its own, and
+   * `sortData` maps it back onto the sort column the API understands.
+   */
+  public readonly startDateSortHeaderIds: Record<string, string> = {
+    'start-date': `${this.printSummarySortColumns.StartDate}:start-date`,
+    'start-time': `${this.printSummarySortColumns.StartDate}:start-time`,
+    'start-date-time': `${this.printSummarySortColumns.StartDate}:start-date-time`,
+  };
+
   public debouncedUpdateFilter;
 
   public sortColumn = PrintSummarySortColumn.StartDate;
@@ -674,7 +692,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public sortData(sort: Sort) {
-    this.sortColumn = +sort.active;
+    // Header ids are the sort column, except where several columns share one and
+    // carry a ":suffix" to stay unique - see startDateSortHeaderIds.
+    this.sortColumn = +sort.active.split(':')[0];
 
     this.sortDirection =
       sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc;

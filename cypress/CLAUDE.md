@@ -115,7 +115,8 @@ When multiple names share the same timestamp (e.g. a filament + print created in
 
 ## Custom Commands
 
-- **`cy.createPrint(title, options?)`** — creates a new print via `/prints/new/edit`, waits for the POST to complete, and leaves you on `/prints`. Pass `{ printer: 'Name' }` to select a specific printer; defaults to the first available option.
+- **`cy.seedPrint(title, options?)`** — creates a print through the API. Does **not** navigate. Use this whenever the spec just needs prints to exist; it is roughly 3.5s per print cheaper than driving the form, which is why the two list specs moved to it. Seeds `status: Pending` and `viewStatus: Private`, matching the new-print form's defaults for a user with no saved preferences — the status matters, because the status-filter and bulk-status tests assert against prints that are _not_ yet Success. Pass `{ printer: 'Name' }` to attach a specific printer; defaults to the first.
+- **`cy.createPrint(title, options?)`** — creates a new print via `/prints/new/edit`, waits for the POST to complete, and leaves you on `/prints`. Pass `{ printer: 'Name' }` to select a specific printer; defaults to the first available option. **Prefer `cy.seedPrint` unless the test is about the form itself** — this drives a page load and a form fill per print.
 - **`cy.openFilterPanel()`** — ensures the filter panel is open. Idempotent — safe to call even if the panel is already open.
 
 ### Intercept ordering

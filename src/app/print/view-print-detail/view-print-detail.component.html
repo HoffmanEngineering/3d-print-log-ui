@@ -134,6 +134,7 @@
               [allowComments]="p.allowComments"
               [comments]="comments()"
               (addNewComment)="addComment($event)"
+              (commentDeleted)="removeComment($event)"
             ></app-print-comments>
           </section>
         </div>

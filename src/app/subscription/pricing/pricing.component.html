@@ -44,8 +44,8 @@
                 mat-raised-button
                 color="primary"
                 (click)="checkout('pro_monthly')"
-                [disabled]="checkoutLoadingPlan !== null"
-                [class.spinner]="checkoutLoadingPlan === 'pro_monthly'"
+                [disabled]="checkoutLoadingPlan() !== null"
+                [class.spinner]="checkoutLoadingPlan() === 'pro_monthly'"
               >
                 Subscribe Monthly
               </button>
@@ -78,8 +78,8 @@
                 mat-raised-button
                 color="accent"
                 (click)="checkout('pro_annual')"
-                [disabled]="checkoutLoadingPlan !== null"
-                [class.spinner]="checkoutLoadingPlan === 'pro_annual'"
+                [disabled]="checkoutLoadingPlan() !== null"
+                [class.spinner]="checkoutLoadingPlan() === 'pro_annual'"
               >
                 Subscribe Annually
               </button>

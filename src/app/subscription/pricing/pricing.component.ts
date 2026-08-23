@@ -3,6 +3,7 @@ import {
   Component,
   inject,
   OnInit,
+  signal,
 } from '@angular/core';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { LoggingService } from '../../core/services/logging.service';
@@ -21,15 +22,22 @@ export class PricingComponent implements OnInit {
   readonly isPro = this.subscriptionService.isPro;
   readonly plan = this.subscriptionService.plan;
 
-  checkoutLoadingPlan: string | null = null;
+  /**
+   * A signal rather than a plain field because this component is OnPush and the
+   * only writer that has to repaint - the checkout error handler - runs in an
+   * HTTP callback with no template event behind it. As a plain field the
+   * failure path set the value and nothing re-rendered, so a failed checkout
+   * left both Subscribe buttons disabled and spinning until the user reloaded.
+   */
+  readonly checkoutLoadingPlan = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loggingService.logEvent('Pricing_PageViewed');
   }
 
   checkout(planId: string): void {
-    if (this.checkoutLoadingPlan !== null) return;
-    this.checkoutLoadingPlan = planId;
+    if (this.checkoutLoadingPlan() !== null) return;
+    this.checkoutLoadingPlan.set(planId);
 
     this.loggingService.logEvent('Pricing_CheckoutClicked', { planId });
 
@@ -38,7 +46,7 @@ export class PricingComponent implements OnInit {
         window.location.href = result.url;
       },
       error: () => {
-        this.checkoutLoadingPlan = null;
+        this.checkoutLoadingPlan.set(null);
       },
     });
   }

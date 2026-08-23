@@ -1,11 +1,11 @@
 <mat-form-field class="project-selector-field">
-  <mat-label>Project (optional)</mat-label>
+  <mat-label>{{ label() }}</mat-label>
   <input
     matInput
     [formControl]="searchControl"
     [matAutocomplete]="auto"
     data-cy="project-selector-input"
-    placeholder="Showing active projects — type to search or create a project"
+    placeholder="Search or create a project"
   />
   @if (selectedProject()) {
     <button
@@ -42,6 +42,11 @@
       </mat-option>
     }
   </mat-autocomplete>
+  <!-- The "create" affordance is invisible until something is typed, and the
+       placeholder is gone by then, so it is spelled out here instead. The
+       subscript row is reserved by mat-form-field either way, so this costs no
+       height. -->
+  <mat-hint>Type to search, or enter a new name to create a project</mat-hint>
 </mat-form-field>
 
 <!-- Outside the autocomplete panel on purpose. A <button> nested in a disabled

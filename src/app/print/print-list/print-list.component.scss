@@ -4,16 +4,47 @@ table {
   td {
     padding-right: 5px;
   }
-  [mat-row]:hover {
+  [mat-row] {
     cursor: pointer;
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-  [mat-row].selected {
-    background-color: var(--mat-sys-secondary-container, rgba(0, 0, 0, 0.08));
   }
   .select-cell {
     width: 48px;
     padding-right: 0;
+  }
+}
+
+// Zebra striping, hover and selection all tint the same rows, so they are set
+// together - in ascending order of how much they need to win, since they all
+// carry the same specificity and the later rule takes the row.
+//
+// Selection is not a slightly darker grey: against a zebra stripe that is also a
+// slightly darker grey, "which rows did I pick" becomes a guessing game. It gets a
+// hue of its own plus a solid bar down the leading edge, which survives on the
+// stripe, under the hover tint, and for anyone who cannot separate the two greys.
+table {
+  --app-row-stripe: rgba(0, 0, 0, 0.02);
+  --app-row-hover: rgba(0, 0, 0, 0.05);
+  --app-row-selected: rgba(63, 81, 181, 0.14);
+  --app-row-selected-hover: rgba(63, 81, 181, 0.2);
+  --app-row-selected-edge: #3f51b5;
+
+  [mat-row]:nth-child(even) {
+    background-color: var(--app-row-stripe);
+  }
+
+  [mat-row]:hover {
+    background-color: var(--app-row-hover);
+  }
+
+  [mat-row].selected {
+    background-color: var(--app-row-selected);
+    // An inset shadow rather than a border: a border on a table row would shift
+    // the cells across by its width and make the selected row jump sideways.
+    box-shadow: inset 3px 0 0 0 var(--app-row-selected-edge);
+  }
+
+  [mat-row].selected:hover {
+    background-color: var(--app-row-selected-hover);
   }
 }
 
@@ -257,14 +288,18 @@ table.refreshing tr[mat-row] {
   }
 }
 
-// Add zebra striping for better readability
-table {
-  [mat-row]:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0.02);
-  }
-}
-
 :host-context(html.dark-theme) {
+  // The light-theme tints are black-on-white washes and all but vanish on #121212,
+  // and indigo 500 is too dark to read as a highlight there - the dark theme's own
+  // primary (indigo A100) is what the rest of the app uses on this surface.
+  table {
+    --app-row-stripe: rgba(255, 255, 255, 0.04);
+    --app-row-hover: rgba(255, 255, 255, 0.08);
+    --app-row-selected: rgba(140, 158, 255, 0.2);
+    --app-row-selected-hover: rgba(140, 158, 255, 0.28);
+    --app-row-selected-edge: #8c9eff;
+  }
+
   .filter-panel-inner {
     border-top-color: rgba(255, 255, 255, 0.08);
   }

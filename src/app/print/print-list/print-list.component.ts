@@ -47,6 +47,7 @@ import { PrintTableLayoutComponent } from './print-table-layout/print-table-layo
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import { PrintBulkActionsService } from '../services/print-bulk-actions.service';
 import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
+import { CLOSE_MENU_ON_SCROLL_PROVIDER } from 'src/app/shared/menu/close-on-scroll-menu.provider';
 
 export interface ColumnDefinition {
   key: string;
@@ -59,7 +60,7 @@ export interface ColumnDefinition {
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
   standalone: false,
-  providers: [PrintBulkActionsService],
+  providers: [PrintBulkActionsService, CLOSE_MENU_ON_SCROLL_PROVIDER],
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   public prints: PrintSummary[] = [];

@@ -21,6 +21,7 @@ import {
   PrintViewStatus,
 } from 'src/app/core/services/print.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import { CLOSE_MENU_ON_SCROLL_PROVIDER } from 'src/app/shared/menu/close-on-scroll-menu.provider';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   BulkActionResult,
@@ -65,6 +66,8 @@ interface VisibilityOption {
     MatProgressBarModule,
     MatTooltipModule,
   ],
+  // Without this, scrolling with the Actions menu open drags it up over the navbar.
+  providers: [CLOSE_MENU_ON_SCROLL_PROVIDER],
 })
 export class PrintBulkActionBarComponent {
   public readonly bulkActions = inject(PrintBulkActionsService);

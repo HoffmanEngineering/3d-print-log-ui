@@ -106,6 +106,14 @@
                   "with": "src/environments/environment.e2e.ts"
                 }
               ]
+            },
+            "lan": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.lan.ts"
+                }
+              ]
             }
           }
         },
@@ -126,6 +134,10 @@
             },
             "e2e": {
               "buildTarget": "print-log-ui:build:e2e",
+              "ssl": false
+            },
+            "lan": {
+              "buildTarget": "print-log-ui:build:lan",
               "ssl": false
             }
           }

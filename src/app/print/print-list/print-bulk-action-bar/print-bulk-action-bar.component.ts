@@ -18,9 +18,11 @@ import { firstValueFrom } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   PrintStatus,
+  PrintSummary,
   PrintViewStatus,
 } from 'src/app/core/services/print.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
+import { BLOCK_SCROLL_WHILE_MENU_OPEN } from 'src/app/shared/menu/menu-scroll.provider';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   BulkActionResult,
@@ -65,6 +67,8 @@ interface VisibilityOption {
     MatProgressBarModule,
     MatTooltipModule,
   ],
+  // Without this, scrolling with the Actions menu open drags it up over the navbar.
+  providers: [BLOCK_SCROLL_WHILE_MENU_OPEN],
 })
 export class PrintBulkActionBarComponent {
   public readonly bulkActions = inject(PrintBulkActionsService);
@@ -74,6 +78,13 @@ export class PrintBulkActionBarComponent {
 
   /** The user's printers, passed down from the list's resolver data - no extra request. */
   public readonly printers = input<PrinterSummary[]>([]);
+
+  /**
+   * The prints on the page as currently filtered, for "Select all on this page".
+   * The table has a header checkbox for this; the card view has no header to put one
+   * in, and picking 25 cards one long press at a time is not a real option.
+   */
+  public readonly pagePrints = input<readonly PrintSummary[]>([]);
 
   /** Emitted after a batch finishes so the list can reload its current page. */
   public readonly batchCompleted = output<BulkActionResult>();
@@ -107,6 +118,19 @@ export class PrintBulkActionBarComponent {
       icon: 'remove_circle_outline',
     },
   ];
+
+  /**
+   * Adds every print on the page to the selection. Deliberately one-way: the menu item
+   * is only reachable while a selection exists, and Clear - which is always on screen -
+   * is the way back out. A toggle here would read as "undo my select all" when what it
+   * actually does is drop the cards the user had already picked by hand.
+   */
+  public selectAllOnPage(): void {
+    this.bulkActions.selectAllOnPage(this.pagePrints());
+    this.loggingService.logEvent('PrintBulkActionBar_SelectAllOnPage', {
+      count: this.bulkActions.selectedCount(),
+    });
+  }
 
   public clearSelection(): void {
     this.loggingService.logEvent('PrintBulkActionBar_SelectionCleared', {

@@ -2,6 +2,7 @@ import {
   ComponentFixture,
   TestBed,
   fakeAsync,
+  flush,
   tick,
 } from '@angular/core/testing';
 import { ProjectSelectorComponent } from './project-selector.component';
@@ -248,5 +249,45 @@ describe('ProjectSelectorComponent', () => {
     );
     expect(fixture.componentInstance.loadFailed()).toBeFalse();
     expect(fixture.componentInstance.filteredProjects().length).toBe(1);
+  }));
+
+  // Regression: typing a name that existing projects merely CONTAIN pushed the create
+  // option below the fold of the panel, so it was never clicked, nothing was selected,
+  // and the bulk dialog's confirm button stayed disabled with nothing explaining why.
+  it('offers to create the typed name above the projects that contain it', fakeAsync(() => {
+    mockProjectService.getProjectSummaries.and.returnValue(
+      of({
+        paging: { currentPage: 1, totalPages: 1, pageSize: 25, totalCount: 2 },
+        items: [
+          { id: 'p1', name: 'Test Project 2', status: 1 },
+          { id: 'p2', name: 'Test Project 3', status: 1 },
+        ],
+      } as any)
+    );
+    fixture.detectChanges();
+
+    fixture.componentInstance.searchControl.setValue('Test Project');
+    tick(250);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.showNewOption()).toBeTrue();
+
+    // The panel only renders once it is open.
+    const input: HTMLInputElement = fixture.nativeElement.querySelector(
+      '[data-cy="project-selector-input"]'
+    );
+    input.dispatchEvent(new Event('focusin'));
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    const options = Array.from(
+      document.querySelectorAll('mat-option')
+    ) as HTMLElement[];
+    expect(options.length).toBe(3);
+    expect(options[0].textContent).toContain('Create project');
+    expect(options[1].textContent).toContain('Test Project 2');
+
+    flush();
   }));
 });

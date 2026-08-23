@@ -351,4 +351,27 @@ describe('PrintBulkActionBarComponent', () => {
       expect(setProject).not.toHaveBeenCalled();
     });
   });
+
+  describe('select all on this page', () => {
+    it('adds the whole page to the selection', () => {
+      fixture.componentRef.setInput('pagePrints', [printOne, printTwo]);
+      bulkActions.toggleSelection(printOne);
+      fixture.detectChanges();
+
+      component.selectAllOnPage();
+
+      expect(bulkActions.selectedCount()).toBe(2);
+    });
+
+    // No page, nothing to select - and an empty menu item is worse than no item.
+    it('is not offered when the page is empty', () => {
+      bulkActions.toggleSelection(printOne);
+      fixture.detectChanges();
+
+      const menu = fixture.nativeElement.querySelector(
+        '[data-cy-bulk-select-all-page]'
+      );
+      expect(menu).toBeNull();
+    });
+  });
 });

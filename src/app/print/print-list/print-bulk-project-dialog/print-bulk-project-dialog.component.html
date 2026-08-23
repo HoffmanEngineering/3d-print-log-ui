@@ -6,7 +6,10 @@
     under the project you pick. Prints already in another project will be moved.
   </p>
 
-  <app-project-selector (projectSelected)="onSelection($event)" />
+  <app-project-selector
+    label="Project"
+    (projectSelected)="onSelection($event)"
+  />
 
   @if (errorMessage()) {
     <p class="dialog__error" role="alert">{{ errorMessage() }}</p>

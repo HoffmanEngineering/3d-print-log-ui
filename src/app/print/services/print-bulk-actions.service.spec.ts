@@ -488,4 +488,47 @@ describe('PrintBulkActionsService', () => {
       );
     });
   });
+
+  describe('selectAllOnPage', () => {
+    it('selects every print on the page', () => {
+      service.selectAllOnPage([printOne, printTwo, printThree]);
+
+      expect(service.selectedCount()).toBe(3);
+    });
+
+    // The card view builds a selection across pages by long-pressing; a select-all on
+    // page two must not throw away what was picked on page one.
+    it('keeps prints selected on other pages', () => {
+      service.toggleSelection(printThree);
+
+      service.selectAllOnPage([printOne, printTwo]);
+
+      expect(service.selectedCount()).toBe(3);
+      expect(service.isSelected(printThree.id)).toBeTrue();
+    });
+
+    it('is idempotent', () => {
+      service.selectAllOnPage([printOne, printTwo]);
+      service.selectAllOnPage([printOne, printTwo]);
+
+      expect(service.selectedCount()).toBe(2);
+    });
+
+    // Unlike toggleSelectAllOnPage - the way out of this one is Clear.
+    it('never deselects', () => {
+      service.selectAllOnPage([printOne, printTwo]);
+      service.selectAllOnPage([printOne, printTwo]);
+
+      expect(service.isSelected(printOne.id)).toBeTrue();
+      expect(service.isSelected(printTwo.id)).toBeTrue();
+    });
+
+    it('leaves the selection alone for an empty page', () => {
+      service.toggleSelection(printOne);
+
+      service.selectAllOnPage([]);
+
+      expect(service.selectedCount()).toBe(1);
+    });
+  });
 });

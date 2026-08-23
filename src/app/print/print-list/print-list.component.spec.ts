@@ -1,3 +1,4 @@
+import { MediaMatcher } from '@angular/cdk/layout';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -7,6 +8,7 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -18,6 +20,7 @@ import {
   PrintService,
   PrintStatus,
   PrintSummary,
+  PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { PagedList } from 'src/app/core/types/paging';
@@ -37,7 +40,53 @@ describe('PrintListComponent', () => {
   let fixture: ComponentFixture<PrintListComponent>;
   let mockPrintService: jasmine.SpyObj<PrintService>;
 
+  /**
+   * The list renders either the table or the card view, never both, so the
+   * width has to be stated rather than inherited from whatever size the Karma
+   * iframe happens to be. Only the handset query is faked; the other media
+   * queries the component asks about still go to the real browser.
+   */
+  const HANDSET_QUERY = '(max-width: 959.98px)';
+  let isHandsetViewport: boolean;
+  let handsetListeners: Array<(event: MediaQueryListEvent) => void>;
+
+  /** Simulates a resize across the breakpoint after the component is built. */
+  const setHandsetViewport = (matches: boolean) => {
+    isHandsetViewport = matches;
+    handsetListeners.forEach((listener) =>
+      listener({ matches } as MediaQueryListEvent)
+    );
+  };
+
   beforeEach(waitForAsync(() => {
+    isHandsetViewport = false;
+    handsetListeners = [];
+
+    const mockMediaMatcher: MediaMatcher = {
+      matchMedia: (query: string) => {
+        if (query !== HANDSET_QUERY) {
+          return window.matchMedia(query);
+        }
+
+        return {
+          media: query,
+          get matches() {
+            return isHandsetViewport;
+          },
+          addEventListener: (
+            _: string,
+            listener: (event: MediaQueryListEvent) => void
+          ) => handsetListeners.push(listener),
+          removeEventListener: (
+            _: string,
+            listener: (event: MediaQueryListEvent) => void
+          ) => {
+            handsetListeners = handsetListeners.filter((l) => l !== listener);
+          },
+        } as unknown as MediaQueryList;
+      },
+    } as MediaMatcher;
+
     const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logException',
       'logEvent',
@@ -103,11 +152,13 @@ describe('PrintListComponent', () => {
         MatCheckboxModule,
         MatDialogModule,
         MatMenuModule,
+        MatSortModule,
         MatTableModule,
         PrintEmptyStateComponent,
       ],
       providers: [
         { provide: LoggingService, useValue: mockLogger },
+        { provide: MediaMatcher, useValue: mockMediaMatcher },
         {
           provide: PrinterRedirectPromptService,
           useValue: mockPrinterRedirectPromptService,
@@ -123,6 +174,10 @@ describe('PrintListComponent', () => {
   }));
 
   beforeEach(() => {
+    // The saved table layout outlives a spec otherwise, so a test that picks
+    // its own columns would decide what every later test renders.
+    localStorage.removeItem('print_table_displayed_columns');
+
     fixture = TestBed.createComponent(PrintListComponent);
     component = fixture.componentInstance;
   });
@@ -130,6 +185,116 @@ describe('PrintListComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
+  });
+
+  /**
+   * The table and the card list are two renderings of the same rows, and only
+   * the one that fits gets built. Hiding the other with CSS after the fact used
+   * to flash it on screen whenever this subtree was rebuilt - switching back
+   * from Grouped by Project - and paid to lay out a tree nobody sees.
+   */
+  describe('table and card view', () => {
+    const table = () => fixture.debugElement.query(By.css('table'));
+    const cardView = () =>
+      fixture.debugElement.query(By.css('.mobile-card-view'));
+
+    it('renders only the table above the handset breakpoint', () => {
+      fixture.detectChanges();
+
+      expect(table()).toBeTruthy();
+      expect(cardView()).toBeFalsy();
+    });
+
+    it('renders only the card view below the handset breakpoint', () => {
+      isHandsetViewport = true;
+      fixture = TestBed.createComponent(PrintListComponent);
+      component = fixture.componentInstance;
+
+      fixture.detectChanges();
+
+      expect(cardView()).toBeTruthy();
+      expect(table()).toBeFalsy();
+    });
+
+    it('swaps the two when the viewport crosses the breakpoint', () => {
+      fixture.detectChanges();
+
+      setHandsetViewport(true);
+      fixture.detectChanges();
+
+      expect(cardView()).toBeTruthy();
+      expect(table()).toBeFalsy();
+
+      setHandsetViewport(false);
+      fixture.detectChanges();
+
+      expect(table()).toBeTruthy();
+      expect(cardView()).toBeFalsy();
+    });
+
+    it('stops listening for width changes once destroyed', () => {
+      fixture.detectChanges();
+
+      fixture.destroy();
+
+      expect(handsetListeners.length).toBe(0);
+    });
+  });
+
+  /**
+   * Start Date, Start Time and Start Date/Time all sort by the same column, and
+   * MatSort throws when two headers register the same id. That throw lands while
+   * the header row is initializing and takes the pass that fills the data cells
+   * with it, so the table renders a page of blank rows.
+   */
+  it('renders row data when two displayed columns sort by the same column', () => {
+    const print = {
+      id: 7,
+      title: 'Benchy',
+      status: PrintStatus.Success,
+      startDate: new Date('2021-05-27'),
+      printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+      filamentUsage: [],
+      commentCount: 0,
+      sumActualFilamentWeightMg: 0,
+      sumEstimatedFilamentWeightMg: 0,
+      totalFilamentWeightMg: 0,
+    } as unknown as PrintSummary;
+
+    TestBed.inject(ActivatedRoute).data = of({
+      printList: {
+        items: [print],
+        paging: { currentPage: 1, pageSize: 10, totalCount: 1, totalPages: 1 },
+      } as PagedList<PrintSummary>,
+      printers: [],
+      filaments: [],
+    });
+    // Through storage, because ngOnInit reads the saved layout back over
+    // anything set on the instance.
+    localStorage.setItem(
+      'print_table_displayed_columns',
+      JSON.stringify(['title', 'start-date', 'start-date-time', 'more'])
+    );
+
+    fixture.detectChanges();
+
+    const row = fixture.debugElement.query(By.css('tr[mat-row]'))
+      .nativeElement as HTMLElement;
+    expect(row.textContent).toContain('Benchy');
+  });
+
+  it('sorts by start date whichever of its three columns is clicked', () => {
+    fixture.detectChanges();
+
+    Object.values(component.startDateSortHeaderIds).forEach((headerId) => {
+      component.sortColumn = PrintSummarySortColumn.Title;
+
+      component.sortData({ active: headerId, direction: 'asc' });
+
+      expect(component.sortColumn as PrintSummarySortColumn)
+        .withContext(headerId)
+        .toBe(PrintSummarySortColumn.StartDate);
+    });
   });
 
   it('should show the first-run empty state when there are no prints and no filters', () => {

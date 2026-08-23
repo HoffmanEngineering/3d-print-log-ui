@@ -11,6 +11,22 @@
   &:active {
     transform: translateY(0);
   }
+
+  // Same tint and leading edge as a selected table row (--app-selected-* are global
+  // for exactly that reason), so the two views do not disagree about what "selected"
+  // looks like. The edge is an inset shadow rather than a border because a border
+  // would resize the card and make the whole list reflow as each one is picked.
+  &--selected {
+    background-color: var(--app-selected-bg);
+    box-shadow: inset 4px 0 0 0 var(--app-selected-edge);
+
+    &:hover {
+      background-color: var(--app-selected-bg-hover);
+      box-shadow:
+        inset 4px 0 0 0 var(--app-selected-edge),
+        0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
 }
 
 .card-layout {
@@ -22,6 +38,7 @@
 }
 
 .card-image {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -32,6 +49,27 @@
   overflow: hidden;
   border-radius: 4px;
   background-color: #f5f5f5;
+}
+
+// Over the thumbnail rather than in a column of its own: a column would only exist
+// in selection mode, so every card's text would shift sideways the moment the first
+// long press landed.
+.card-select-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: flex;
+  border-radius: 50%;
+  // The icon sits on top of a photo, so it carries its own backing rather than
+  // relying on whatever happens to be behind it.
+  background-color: rgba(255, 255, 255, 0.92);
+  color: var(--app-selected-edge);
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
 }
 
 .card-content {
@@ -129,6 +167,10 @@
 :host-context(html.dark-theme) {
   .card-image {
     background-color: #2a2a2a;
+  }
+
+  .card-select-badge {
+    background-color: rgba(18, 18, 18, 0.92);
   }
 
   .meta-item {

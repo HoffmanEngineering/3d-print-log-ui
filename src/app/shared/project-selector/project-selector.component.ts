@@ -59,6 +59,12 @@ export type ProjectSelection =
 export class ProjectSelectorComponent implements OnInit {
   initialProjectId = input<string | null>(null);
   initialProjectName = input<string | null>(null);
+  /**
+   * Field label. "(optional)" is right on the print form, where the project is one
+   * field among many and leaving it blank is a real choice; in a dialog whose only
+   * job is picking a project it reads as though the whole dialog can be skipped.
+   */
+  label = input<string>('Project (optional)');
 
   projectSelected = output<ProjectSelection | null>();
 

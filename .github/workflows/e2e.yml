@@ -54,17 +54,17 @@ jobs:
 
     steps:
       - name: Check out the UI
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check out the API
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: HoffmanEngineering/3d-print-log-api
           ref: ${{ inputs.api_ref || 'main' }}
           path: api
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'npm'
@@ -73,7 +73,7 @@ jobs:
         run: npm ci
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.x'
 
@@ -170,7 +170,7 @@ jobs:
           echo "API is serving seeded data."
 
       - name: Run Cypress
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@v7
         with:
           install: false
           start: npm run start:e2e
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload Cypress artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cypress-artifacts
           if-no-files-found: ignore
@@ -193,7 +193,7 @@ jobs:
 
       - name: Upload server logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: server-logs
           if-no-files-found: ignore

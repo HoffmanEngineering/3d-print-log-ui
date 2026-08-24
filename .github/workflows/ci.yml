@@ -6,6 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+# Read-only: CI only builds and tests, it never writes to the repository.
+permissions:
+  contents: read
+
+# A second push to the same PR makes the earlier run redundant. This suite runs
+# lint, unit tests, script tests, strict typecheck and two builds, so cancelling
+# saves a meaningful amount of Actions time.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest

@@ -56,7 +56,7 @@ export class OrcaFileParserService implements GcodeNewPrintParser {
       gcode,
       '; filament_diameter'
     ).split(',')?.[0];
-    if (isNaN(filamentDiameter)) {
+    if (!Number.isFinite(filamentDiameter) || filamentDiameter <= 0) {
       return undefined;
     }
     const filamentUsageLengthInMM = +this.parseSettingAsString(
@@ -64,7 +64,10 @@ export class OrcaFileParserService implements GcodeNewPrintParser {
       '; filament used \\[mm\\]'
     );
 
-    if (isNaN(filamentUsageLengthInMM)) {
+    if (
+      !Number.isFinite(filamentUsageLengthInMM) ||
+      filamentUsageLengthInMM <= 0
+    ) {
       return undefined;
     }
 

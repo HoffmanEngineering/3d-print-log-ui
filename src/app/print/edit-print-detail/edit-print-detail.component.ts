@@ -850,12 +850,13 @@ export class EditPrintDetailComponent
 
     // Convert the old filamentType/FilamentUsage properties into the new Filament Usage format.
     // Skip when modern filament usage records already exist to avoid duplicate entries.
+    const estimatedFilamentUsageMg = print?.estimatedFilamentUsageMg ?? null;
     if (
       print &&
       printFilamentUsageArray.length === 0 &&
       (!(print.filamentType === null || print.filamentType === '') ||
         print.filamentUsageMg > 0 ||
-        print.estimatedFilamentUsageMg > 0)
+        (estimatedFilamentUsageMg ?? 0) > 0)
     ) {
       const newFormGroup = this.GetNewFilamentUsageForm(
         EMPTY_GUID,
@@ -863,7 +864,9 @@ export class EditPrintDetailComponent
         null,
         null,
         PrintFilamentSourceMeasurement.Weight,
-        print.estimatedFilamentUsageMg / 1000,
+        estimatedFilamentUsageMg !== null
+          ? estimatedFilamentUsageMg / 1000
+          : null,
         null,
         null,
         PrintFilamentSourceMeasurement.Weight,
@@ -905,7 +908,9 @@ export class EditPrintDetailComponent
         print ? this.parseIntoString(print.estimatedPrintTimeInSeconds) : null,
       ],
       estimatedFilamentUsageG: [
-        print ? print.estimatedFilamentUsageMg / 1000 : null,
+        print?.estimatedFilamentUsageMg != null
+          ? print.estimatedFilamentUsageMg / 1000
+          : null,
         [Validators.min(0)],
       ],
       printTimeInSeconds: [

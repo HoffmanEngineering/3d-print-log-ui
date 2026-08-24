@@ -73,25 +73,34 @@ describe('PrusaSlicerFileParserService', () => {
       expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
     });
 
-    // The next two characterize existing behavior that is WRONG, so that the
-    // full surface of the bug is pinned before it is fixed. A missing numeric
-    // setting parses as 0 rather than NaN, so the isNaN guards never fire and
-    // the weight comes out as 0mg instead of "unknown".
-    // Tracked in #99 — flip both to toBeUndefined() when that lands.
-    it('should currently report 0 when the diameter is missing', () => {
+    it('should return undefined when the diameter is missing', () => {
       const testGcode = `; total filament used [g] = 0.0
 ; filament_type = PLA
 ; filament used [mm] = 1000`;
 
-      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(0);
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
     });
 
-    it('should currently report 0 when the filament length is missing', () => {
+    it('should return undefined when the filament length is missing', () => {
       const testGcode = `; total filament used [g] = 0.0
 ; filament_type = PLA
 ; filament_diameter = 1.75`;
 
-      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(0);
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
+    });
+
+    it('should return undefined when the diameter or filament length is zero', () => {
+      const zeroDiameter = `; total filament used [g] = 0.0
+; filament_type = PLA
+; filament_diameter = 0
+; filament used [mm] = 1000`;
+      const zeroLength = `; total filament used [g] = 0.0
+; filament_type = PLA
+; filament_diameter = 1.75
+; filament used [mm] = 0`;
+
+      expect(service.estimateFilamentUsageInMg(zeroDiameter)).toBeUndefined();
+      expect(service.estimateFilamentUsageInMg(zeroLength)).toBeUndefined();
     });
   });
 });

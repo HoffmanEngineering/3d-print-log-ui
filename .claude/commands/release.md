@@ -46,6 +46,32 @@ Update the `version` field to the new version.
 
 #### 4.2 Update Release Notes HTML
 
+> **This file is the single source of truth for the GitHub Release body.**
+>
+> `.github/workflows/deploy.yml` runs `scripts/extract-release-notes.mjs` against the pushed tag and
+> publishes the result as that version's GitHub Release. Nothing is written by hand on github.com,
+> and `generate_release_notes` is deliberately NOT used — the prose written here is better than a
+> dump of PR titles, which is the whole reason for the extraction.
+>
+> Three consequences that change how you edit this file:
+>
+> - **A tag with no matching section fails the deploy.** That check is the first step of the build
+>   job, so it fails in seconds rather than after the build and test run — but it does mean the
+>   section must exist _before_ the tag is pushed. (`v1.32.1` predates this and is the one known gap.)
+> - **The `id` is a contract, not decoration.** `<h3 id="vX.Y.Z">` must match the tag exactly.
+>   Two-part ids like `v1.6` are normalized to `1.6.0`, but new releases should always be three-part.
+> - **The section is converted to Markdown, so only certain HTML shapes survive.** The converter
+>   handles `<p>`, `<h4>`, `<ul>`/`<li>` (including nesting), `<strong>`, `<em>`, `<code>`, `<a href>`
+>   and both `routerLink` spellings. Anything else — a `<span>`, a `<table>` — would leak into the
+>   release body as raw tags. A test in `scripts/release-notes-lib.test.mjs` runs the whole file and
+>   fails if any section produces unrendered tags, so this is caught by `npm run test:scripts`
+>   rather than discovered on the Releases page.
+>
+> Related: `routerLink` values are rewritten to absolute `https://www.3dprintlog.com` URLs, because a
+> relative link is dead once the body is rendered on github.com. `&lt;` and `&gt;` are deliberately
+> left escaped — GitHub renders raw HTML inside Markdown, so decoding them would make a deliberately
+> shown tag vanish.
+
 Add a new section at the TOP of the release notes list in `src/app/documentation/docs/docs-release-notes/docs-release-notes.component.html`.
 
 Format for new release notes:
@@ -126,6 +152,19 @@ Add a new release note entry at the beginning of the `releaseNotes` object:
 },
 ```
 
+#### 4.4 Preview the GitHub Release body
+
+Before tagging, render what the GitHub Release will actually say:
+
+```bash
+node scripts/extract-release-notes.mjs vX.Y.Z
+node scripts/extract-release-notes.mjs vX.Y.Z --title
+```
+
+This is the exact command the deploy workflow runs, so it catches a missing section, a mistyped
+`id`, or an HTML shape the converter does not handle — locally, in under a second, instead of on a
+tag push. Check the output for stray `<` or `>` tags and confirm every PR link resolved.
+
 ### 5. User Review
 
 After making the changes, ask the user to review the release notes. Show them what was generated and ask if they want to make any modifications.
@@ -157,6 +196,10 @@ Remind the user:
    git tag vX.X.X
    git push origin vX.X.X
    ```
+3. Pushing the tag now does three things, in order: it builds and tests, then **waits for your
+   approval** on the `production` environment, then deploys and **publishes the GitHub Release**
+   automatically from the notes written in step 4.2. There is no separate step to write a release
+   on github.com, and the Release will not appear until the deploy is approved and succeeds.
 
 ## Guidelines for Writing Release Notes
 

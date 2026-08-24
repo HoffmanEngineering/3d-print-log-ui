@@ -100,7 +100,7 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
       gcode,
       '; filament_diameter'
     ).split(',')?.[0];
-    if (isNaN(filamentDiameter)) {
+    if (isNaN(filamentDiameter) || filamentDiameter <= 0) {
       return undefined;
     }
     const filamentUsageLengthInMM = +this.parseSettingAsString(

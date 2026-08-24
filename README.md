@@ -46,7 +46,15 @@ The `sitemap.xml` is generated at deploy time from the public API (`scripts/gene
 ## Related Repos
 
 - [3d-print-log-api](https://github.com/HoffmanEngineering/3d-print-log-api) — the backend API
+- [3d-print-log-app](https://github.com/HoffmanEngineering/3d-print-log-app) — Cordova Android app shell
 - [3d-print-log-cura-plugin](https://github.com/HoffmanEngineering/3d-print-log-cura-plugin) — Cura integration
+- [Slic3rPostProcessingUploader](https://github.com/HoffmanEngineering/Slic3rPostProcessingUploader) — PrusaSlicer, OrcaSlicer, Bambu Studio and Slic3r integration
+
+## Questions & Discussions
+
+[**Discussions**](https://github.com/HoffmanEngineering/3d-print-log-ui/discussions) is the front door for the whole project, not just this repository. Ask in [Q&A](https://github.com/HoffmanEngineering/3d-print-log-ui/discussions/categories/q-a) if you have a usage question about the web app, the API, or either slicer plugin — one board means you do not have to guess which repository a question belongs to, and answers stay searchable for whoever asks next.
+
+Bug reports and feature requests still belong in [issues](https://github.com/HoffmanEngineering/3d-print-log-ui/issues), on whichever repository they affect.
 
 ## Support Development
 

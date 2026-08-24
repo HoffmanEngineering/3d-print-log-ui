@@ -37,3 +37,31 @@ xdescribe('AnycubicFileParserService', () => {
     expect(actual.estimatedPrintTimeInSeconds).toBeUndefined();
   });
 });
+
+describe('AnycubicFileParserService filament estimates', () => {
+  let service: AnycubicFileParserService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(AnycubicFileParserService);
+  });
+
+  it('should return undefined when diameter or length is missing or zero', () => {
+    const invalidInputs = [
+      `; filament_type = PLA
+; filament used [mm] = 1000`,
+      `; filament_type = PLA
+; filament_diameter = 1.75`,
+      `; filament_type = PLA
+; filament_diameter = 0
+; filament used [mm] = 1000`,
+      `; filament_type = PLA
+; filament_diameter = 1.75
+; filament used [mm] = 0`,
+    ];
+
+    invalidInputs.forEach((gcode) => {
+      expect(service.estimateFilamentUsageInMg(gcode)).toBeUndefined();
+    });
+  });
+});

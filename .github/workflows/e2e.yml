@@ -23,6 +23,10 @@ concurrency:
 env:
   SA_PASSWORD: 'E2ePassw0rd!Local'
 
+# Read-only: the suite drives a browser, it never writes to the repository.
+permissions:
+  contents: read
+
 jobs:
   e2e:
     runs-on: ubuntu-latest

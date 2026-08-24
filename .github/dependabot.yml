@@ -1,0 +1,71 @@
+version: 2
+
+# Nothing watched package versions before this file existed, which is how 21 open
+# alerts (17 high) accumulated unnoticed. The API repo has had a nuget config for
+# a while; this is the npm/actions equivalent.
+#
+# Grouping is the point. Angular 21 pulls ~22 first-party packages plus a build
+# toolchain, so an ungrouped weekly run opens dozens of PRs and gets ignored --
+# which is the same failure mode as having no config at all.
+#
+# NOT covered here, and easy to assume otherwise:
+#   - Transitive-only advisories. Dependabot bumps what package.json declares; a
+#     vulnerable transitive dep is only fixed when its parent releases.
+#   - The Node version used by CI and the deploy workflow, which is pinned in the
+#     workflow files, not in package.json.
+
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+    groups:
+      # Angular packages are versioned in lockstep and must move together -- a
+      # partial bump produces a combination that was never tested upstream, and
+      # @angular/core against a mismatched compiler-cli fails at build time.
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+          - '@angular-eslint/*'
+          - '@ngtools/*'
+          - 'ng-packagr'
+          - 'typescript'
+          - 'zone.js'
+
+      # Test tooling only affects CI, so a single combined PR is easy to judge:
+      # either the suite still passes or it does not.
+      test-tooling:
+        patterns:
+          - 'karma*'
+          - 'jasmine*'
+          - '@types/jasmine'
+          - 'cypress'
+          - 'cypress-*'
+
+      lint-and-format:
+        patterns:
+          - 'eslint*'
+          - '@typescript-eslint/*'
+          - 'prettier*'
+          - 'husky'
+          - 'lint-staged'
+
+      # Everything else, split by risk: patch/minor together, majors on their own
+      # so a breaking change is never bundled with routine upgrades.
+      runtime-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - '*'

@@ -55,6 +55,16 @@
   }
 }
 
+// Links live in a single wrapping row: everything fits one line on a wide
+// screen, and the tail wraps onto a second line once the toolbar gets narrow.
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
 a:not([mat-menu-item]) {
   text-decoration: none;
   color: white;
@@ -99,6 +109,22 @@ mat-toolbar {
 @media (max-width: 450px) {
   .link {
     height: 28px;
+    // Tighter than Material's default so the whole set still fits two rows.
+    padding: 0 6px;
+    min-width: 0;
+  }
+
+  // Let the row grow with the wrapped links instead of clipping them.
+  mat-toolbar-row {
+    height: auto;
+    min-height: 56px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .pro-badge {
+    font-size: 13px;
+    padding: 0 4px;
   }
 }
 

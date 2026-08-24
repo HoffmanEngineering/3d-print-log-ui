@@ -1,12 +1,4 @@
-import { MediaMatcher } from '@angular/cdk/layout';
-import {
-  ChangeDetectorRef,
-  Component,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -44,18 +36,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   public isUserProfileFeatureEnabled = environment.features.userProfile;
 
-  mobileQuery: MediaQueryList;
-  private mobileQueryListener: () => void;
-
   private readonly subscriptionService = inject(SubscriptionService);
   readonly isPro = this.subscriptionService.isPro;
 
-  constructor(
-    public auth: AuthService,
-    private media: MediaMatcher,
-    private changeDetectorRef: ChangeDetectorRef,
-    private ngZone: NgZone
-  ) {}
+  constructor(public auth: AuthService) {}
 
   ngOnInit() {
     this.userProfileSubscription = this.auth.userProfile$.subscribe((user) => {
@@ -67,23 +51,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.userId = null;
       }
     });
-
-    this.setupMobileListener();
-  }
-  setupMobileListener() {
-    this.mobileQuery = this.media.matchMedia('(max-width: 450px)');
-
-    this.mobileQueryListener = () => {
-      this.ngZone.run(() => {
-        this.changeDetectorRef.detectChanges();
-      });
-    };
-    this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
   ngOnDestroy(): void {
-    this.mobileQuery.removeListener(this.mobileQueryListener);
-
     if (this.userProfileSubscription) {
       this.userProfileSubscription.unsubscribe();
     }

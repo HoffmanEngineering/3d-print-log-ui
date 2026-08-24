@@ -8,180 +8,105 @@
         />
         <span class="visually-hidden">Navigate to home page.</span>
       </a>
-      <!-- <object
-      viewBox="0 0 100 100"
-      type="image/svg+xml"
-      data="/assets/small_logo.svg"
-      >
-      3D Print Log Logo
-    </object> -->
     </div>
     <div fxFlex fxFlexFill>
-      <div fxLayout="column" fxLayoutAlign="center start" style="height: 100%">
-        <div fxFlex fxLayout="row" fxLayoutAlign="center center">
-          @if (!auth.loggedIn) {
-            <a class="link" mat-button routerLink="/" routerLinkActive="active"
-              >Home</a
-            >
-          }
+      <!-- One copy of the links, wrapped onto a second line by CSS on narrow
+      screens. Rendering a separate mobile copy behind a matchMedia check used to
+      duplicate "About": matchMedia is always false while prerendering, so the
+      static HTML shipped the wide-screen links and the client then added the
+      narrow-screen copy on top of them. -->
+      <div class="nav-links">
+        @if (!auth.loggedIn) {
+          <a class="link" mat-button routerLink="/" routerLinkActive="active"
+            >Home</a
+          >
+        }
+        @if (auth.loggedIn) {
+          <a
+            mat-button
+            class="link"
+            routerLink="/prints"
+            routerLinkActive="active"
+            >Prints</a
+          >
+          <button mat-button class="link" [matMenuTriggerFor]="printerMenu">
+            Printers
+          </button>
+          <a
+            mat-button
+            class="link"
+            routerLink="/materials"
+            routerLinkActive="active"
+            >Materials</a
+          >
+          <a
+            mat-button
+            class="link"
+            routerLink="/analytics"
+            routerLinkActive="active"
+            >Analytics</a
+          >
+        }
+        <mat-menu #printerMenu="matMenu">
+          <a
+            class="menu-link"
+            mat-menu-item
+            routerLink="/printers"
+            routerLinkActive="active"
+            >Printers</a
+          >
+          <a
+            class="menu-link"
+            mat-menu-item
+            routerLink="/printer-maintenance"
+            routerLinkActive="active"
+            >Printer Maintenance</a
+          >
+        </mat-menu>
+        <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
+          About
+        </button>
+        <mat-menu #aboutMenu="matMenu">
+          <a
+            class="menu-link"
+            mat-menu-item
+            routerLink="/docs"
+            routerLinkActive="active"
+            >Documentation</a
+          >
           @if (auth.loggedIn) {
-            <a
-              mat-button
-              class="link"
-              routerLink="/prints"
-              routerLinkActive="active"
-              >Prints</a
-            >
-          }
-          @if (auth.loggedIn) {
-            <button mat-button class="link" [matMenuTriggerFor]="printerMenu">
-              Printers
-            </button>
-          }
-          <mat-menu #printerMenu="matMenu">
-            <!-- <button mat-menu-item>Fee</button> -->
             <a
               class="menu-link"
               mat-menu-item
-              routerLink="/printers"
+              routerLink="/feedback"
               routerLinkActive="active"
-              >Printers</a
-            >
-            <a
-              class="menu-link"
-              mat-menu-item
-              routerLink="/printer-maintenance"
-              routerLinkActive="active"
-              >Printer Maintenance</a
-            >
-          </mat-menu>
-          @if (auth.loggedIn) {
-            <a
-              mat-button
-              class="link"
-              routerLink="/materials"
-              routerLinkActive="active"
-              >Materials</a
+              >Send Feedback</a
             >
           }
-          @if (!this.mobileQuery.matches) {
-            @if (auth.loggedIn) {
-              <a
-                mat-button
-                class="link"
-                routerLink="/analytics"
-                routerLinkActive="active"
-                >Analytics</a
-              >
-            }
-            <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
-              About
-            </button>
-            <mat-menu #aboutMenu="matMenu">
-              <!-- <button mat-menu-item>Fee</button> -->
-              <a
-                class="menu-link"
-                mat-menu-item
-                routerLink="/docs"
-                routerLinkActive="active"
-                >Documentation</a
-              >
-              @if (auth.loggedIn) {
-                <a
-                  class="menu-link"
-                  mat-menu-item
-                  routerLink="/feedback"
-                  routerLinkActive="active"
-                  >Send Feedback</a
-                >
-              }
-              <a
-                class="menu-link"
-                mat-menu-item
-                routerLink="/docs/release-notes"
-                routerLinkActive="active"
-                >Version v{{ versionNumber }}</a
-              >
-            </mat-menu>
-            @if (auth.loggedIn && !isPro()) {
-              <a
-                mat-button
-                class="link upgrade-link"
-                routerLink="/subscription"
-                routerLinkActive="active"
-                matTooltip="Unlock Pro features"
-              >
-                <mat-icon>star</mat-icon>
-                Upgrade to Pro
-              </a>
-            }
-            @if (auth.loggedIn && isPro()) {
-              <span class="pro-badge" matTooltip="You're on the Pro plan">
-                <mat-icon>star</mat-icon> Pro
-              </span>
-            }
-          }
-        </div>
-        @if (this.mobileQuery.matches) {
-          <div fxFlex fxLayout="row" fxLayoutAlign="center center">
-            <ng-container>
-              @if (auth.loggedIn) {
-                <a
-                  mat-button
-                  class="link"
-                  routerLink="/analytics"
-                  routerLinkActive="active"
-                  >Analytics</a
-                >
-              }
-              <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
-                About
-              </button>
-              <mat-menu #aboutMenu="matMenu">
-                <!-- <button mat-menu-item>Fee</button> -->
-                <a
-                  class="menu-link"
-                  mat-menu-item
-                  routerLink="/docs"
-                  routerLinkActive="active"
-                  >Documentation</a
-                >
-                @if (auth.loggedIn) {
-                  <a
-                    class="menu-link"
-                    mat-menu-item
-                    routerLink="/feedback"
-                    routerLinkActive="active"
-                    >Send Feedback</a
-                  >
-                }
-                <a
-                  class="menu-link"
-                  mat-menu-item
-                  routerLink="/docs/release-notes"
-                  routerLinkActive="active"
-                  >Version v{{ versionNumber }}</a
-                >
-              </mat-menu>
-              @if (auth.loggedIn && !isPro()) {
-                <a
-                  mat-button
-                  class="link upgrade-link"
-                  routerLink="/subscription"
-                  routerLinkActive="active"
-                  matTooltip="Unlock Pro features"
-                >
-                  <mat-icon>star</mat-icon>
-                  Upgrade to Pro
-                </a>
-              }
-              @if (auth.loggedIn && isPro()) {
-                <span class="pro-badge" matTooltip="You're on the Pro plan">
-                  <mat-icon>star</mat-icon> Pro
-                </span>
-              }
-            </ng-container>
-          </div>
+          <a
+            class="menu-link"
+            mat-menu-item
+            routerLink="/docs/release-notes"
+            routerLinkActive="active"
+            >Version v{{ versionNumber }}</a
+          >
+        </mat-menu>
+        @if (auth.loggedIn && !isPro()) {
+          <a
+            mat-button
+            class="link upgrade-link"
+            routerLink="/subscription"
+            routerLinkActive="active"
+            matTooltip="Unlock Pro features"
+          >
+            <mat-icon>star</mat-icon>
+            Upgrade to Pro
+          </a>
+        }
+        @if (auth.loggedIn && isPro()) {
+          <span class="pro-badge" matTooltip="You're on the Pro plan">
+            <mat-icon>star</mat-icon> Pro
+          </span>
         }
       </div>
     </div>
@@ -254,4 +179,3 @@
     </div>
   </mat-toolbar-row>
 </mat-toolbar>
-<ng-template #links> </ng-template>

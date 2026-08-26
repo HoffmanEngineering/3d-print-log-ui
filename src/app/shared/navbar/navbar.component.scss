@@ -55,14 +55,56 @@
   }
 }
 
-// Links live in a single wrapping row: everything fits one line on a wide
-// screen, and the tail wraps onto a second line once the toolbar gets narrow.
+// The toolbar height is load-bearing: app.component.scss, styles.scss and the
+// analytics filter bar all offset content by a hard-coded 64px / 56px. So the
+// link row must never wrap or grow the row. It stays a single nowrap line, and
+// in the narrow band between the mobile breakpoint and a comfortable desktop
+// width it scrolls sideways rather than pushing the bell and avatar off-screen.
+.nav-row {
+  gap: 4px;
+}
+
 .nav-links {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   height: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .link {
+    flex: 0 0 auto;
+  }
+}
+
+// Pushes the notification bell and avatar to the trailing edge now that the
+// links are left-justified.
+.nav-spacer {
+  flex: 1 1 auto;
+}
+
+.nav-account {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+// Hidden above the mobile breakpoint; the wide-screen link row serves instead.
+.nav-menu-trigger {
+  display: none;
+  flex: 0 0 auto;
+  color: white;
+}
+
+.menu-pro-badge {
+  padding: 8px 16px;
 }
 
 a:not([mat-menu-item]) {
@@ -100,31 +142,49 @@ mat-toolbar {
   background-color: var(--brand-toolbar-bg);
 }
 
+// Pin the row to the heights the rest of the app offsets content by. Material
+// already defaults to these, but spelling them out stops a tall child (the 50px
+// avatar, a wrapped label) from stretching the row.
+mat-toolbar,
+mat-toolbar-row {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+}
+
 @media (max-width: 959px) {
   mat-toolbar {
     border-radius: 0px;
   }
 }
 
-@media (max-width: 450px) {
-  .link {
-    height: 28px;
-    // Tighter than Material's default so the whole set still fits two rows.
-    padding: 0 6px;
-    min-width: 0;
-  }
-
-  // Let the row grow with the wrapped links instead of clipping them.
+@media (max-width: 599px) {
+  mat-toolbar,
   mat-toolbar-row {
-    height: auto;
+    height: 56px;
     min-height: 56px;
-    padding-top: 4px;
-    padding-bottom: 4px;
+    max-height: 56px;
   }
 
-  .pro-badge {
-    font-size: 13px;
-    padding: 0 4px;
+  // Swap the inline link row for the single menu trigger.
+  .nav-links {
+    display: none;
+  }
+
+  .nav-menu-trigger {
+    display: inline-flex;
+  }
+
+  // 50px of chrome on each side is a lot of a 56px row; trim to 40px so the
+  // brand and avatar sit comfortably inside it.
+  .brand-img {
+    height: 40px;
+    width: 40px;
+  }
+
+  .profile-picture {
+    width: 40px;
+    height: 40px;
   }
 }
 

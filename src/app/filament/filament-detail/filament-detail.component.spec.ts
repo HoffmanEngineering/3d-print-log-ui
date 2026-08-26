@@ -8,7 +8,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
@@ -18,6 +18,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
   ColorPatternType,
   FilamentAdjustmentSourceMeasurement,
+  FilamentDetail,
   FilamentService,
 } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -27,6 +28,7 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
 
 import { FilamentDetailComponent } from './filament-detail.component';
+import { FilamentImagesPanelComponent } from './filament-images-panel/filament-images-panel.component';
 import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
 import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
 
@@ -41,12 +43,14 @@ describe('FilamentDetailComponent', () => {
         getFilamentBrands: of({ brands: [] }),
         getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
         getFilamentStorageLocations: of({ storageLocations: [] }),
+        addFilament: of({} as FilamentDetail),
+        updateFilament: of({} as FilamentDetail),
       }
     );
 
     const mockToastrservice = jasmine.createSpyObj<ToastrService>(
       'ToastrService',
-      ['success']
+      ['success', 'warning']
     );
 
     const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
@@ -102,6 +106,98 @@ describe('FilamentDetailComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('staged image save flow', () => {
+    let imagesPanelStub: jasmine.SpyObj<FilamentImagesPanelComponent>;
+    let filamentService: jasmine.SpyObj<FilamentService>;
+    let toastr: jasmine.SpyObj<ToastrService>;
+    let router: Router;
+
+    const setUpNewFilamentForm = () => {
+      component.filamentForm.get('id')!.setValue(null);
+      component.filamentForm.get('displayName')!.setValue('Blue PLA');
+      component.filamentForm.get('materialType')!.setValue('PLA');
+      component.filamentForm
+        .get('materialDensityGramPerCubicCm')!
+        .setValue(1.24);
+    };
+
+    beforeEach(() => {
+      imagesPanelStub = jasmine.createSpyObj<FilamentImagesPanelComponent>(
+        'FilamentImagesPanelComponent',
+        ['uploadStagedImages', 'retryFailedUploads'],
+        { hasStagedImages: jasmine.createSpy().and.returnValue(false) as never }
+      );
+      // The real panel is a view child of a 1000-line template; swapping the
+      // query out is far cheaper than driving the DOM to stage a file.
+      (component as unknown as { imagesPanel: () => unknown }).imagesPanel =
+        () => imagesPanelStub;
+
+      filamentService = TestBed.inject(
+        FilamentService
+      ) as jasmine.SpyObj<FilamentService>;
+      filamentService.addFilament.and.returnValue(
+        of({ id: 'new-filament-id' } as FilamentDetail)
+      );
+
+      toastr = TestBed.inject(ToastrService) as jasmine.SpyObj<ToastrService>;
+
+      router = TestBed.inject(Router);
+      spyOn(router, 'navigateByUrl').and.resolveTo(true);
+      spyOn(router, 'navigate').and.resolveTo(true);
+    });
+
+    const stagedImages = (staged: boolean) =>
+      (
+        imagesPanelStub.hasStagedImages as unknown as jasmine.Spy
+      ).and.returnValue(staged);
+
+    it('blocks navigation when images are staged but unsaved', () => {
+      component.filamentForm.markAsPristine();
+      stagedImages(true);
+
+      expect(component.canDeactivate()).toBeFalse();
+    });
+
+    it('allows navigation when the form is clean and nothing is staged', () => {
+      component.filamentForm.markAsPristine();
+      stagedImages(false);
+
+      expect(component.canDeactivate()).toBeTrue();
+    });
+
+    it('uploads staged images after creating a new filament, then navigates', async () => {
+      setUpNewFilamentForm();
+      stagedImages(true);
+      imagesPanelStub.uploadStagedImages.and.returnValue(of({ failed: [] }));
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      expect(imagesPanelStub.uploadStagedImages).toHaveBeenCalledWith(
+        'new-filament-id'
+      );
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/filament');
+    });
+
+    it('writes the new id into the form so a retry does not create a second material', async () => {
+      setUpNewFilamentForm();
+      stagedImages(true);
+      imagesPanelStub.uploadStagedImages.and.returnValue(
+        of({ failed: [new File(['x'], 'spool.png')] })
+      );
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      // Without this the form ID stays null and the next submit POSTs another
+      // material.
+      expect(component.filamentForm.get('id')!.value).toBe('new-filament-id');
+      expect(component.saving).toBeFalse();
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+      expect(toastr.warning).toHaveBeenCalled();
+    });
   });
 
   it('renders neither usage card in add mode', () => {
@@ -171,6 +267,8 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
         getFilamentBrands: of({ brands: [] }),
         getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
         getFilamentStorageLocations: of({ storageLocations: [] }),
+        addFilament: of({} as FilamentDetail),
+        updateFilament: of({} as FilamentDetail),
       }
     );
     const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
@@ -571,6 +669,8 @@ describe('FilamentDetailComponent - usage panels', () => {
         getFilamentBrands: of({ brands: [] }),
         getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
         getFilamentStorageLocations: of({ storageLocations: [] }),
+        addFilament: of({} as FilamentDetail),
+        updateFilament: of({} as FilamentDetail),
       }
     );
     const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [

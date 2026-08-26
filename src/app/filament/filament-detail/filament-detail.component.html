@@ -62,6 +62,15 @@
         fxLayoutAlign="space-evenly center"
       >
         <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">Photos</h2>
+        </div>
+        <app-filament-images-panel
+          fxFlex="grow"
+          fxFlexFill
+          [filamentId]="loadedFilament?.id ?? null"
+          [images]="loadedFilament?.images ?? []"
+        />
+        <div fxFlex="grow" fxFlexFill>
           <h2 style="text-align: start">General</h2>
         </div>
         <mat-form-field fxFlex="grow" fxFlexFill>

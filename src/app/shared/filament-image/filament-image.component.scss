@@ -1,0 +1,53 @@
+// Without this the host is an inline, auto-height element, so the height: 100%
+// below resolves against nothing and the image falls back to its natural size —
+// which is how a large upload used to overflow the panel.
+:host {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+}
+
+.filament-image {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filament-image img {
+  height: 100%;
+  width: 100%;
+  // Belt and braces: contain letterboxes to the box above, and the max-* pair
+  // keeps an oversized image inside its parent even where the host is unsized.
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.image-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  height: 100%;
+  width: 100%;
+  opacity: 0.6;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  opacity: 0;
+  transition: opacity 150ms ease-in-out;
+}
+
+.filament-image:hover .delete-btn,
+.delete-btn:focus-visible {
+  opacity: 1;
+}

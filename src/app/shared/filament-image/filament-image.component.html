@@ -1,0 +1,22 @@
+<div class="filament-image">
+  @if (failed()) {
+    <div class="image-fallback">
+      <mat-icon aria-hidden="true">broken_image</mat-icon>
+      <span>Image unavailable</span>
+    </div>
+  } @else {
+    <img [src]="src()" [alt]="alt()" loading="lazy" (error)="onError()" />
+  }
+
+  @if (showDeleteOnHover()) {
+    <button
+      mat-icon-button
+      class="delete-btn"
+      type="button"
+      aria-label="Delete image"
+      (click)="onDeleteClick($event)"
+    >
+      <mat-icon>delete</mat-icon>
+    </button>
+  }
+</div>

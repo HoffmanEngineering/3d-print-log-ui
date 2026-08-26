@@ -81,7 +81,9 @@ jobs:
         run: |
           npm install -g azurite
           mkdir -p "$RUNNER_TEMP/azurite"
-          nohup azurite --silent --location "$RUNNER_TEMP/azurite" \
+          # --skipApiVersionCheck: the Azure.Storage.Blobs SDK sends a newer x-ms-version
+          # than Azurite knows, and Azurite rejects it with a 400 rather than degrading.
+          nohup azurite --silent --skipApiVersionCheck --location "$RUNNER_TEMP/azurite" \
             > azurite.log 2>&1 &
           npx wait-on tcp:127.0.0.1:10000 -t 60000
 

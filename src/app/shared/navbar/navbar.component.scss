@@ -3,6 +3,13 @@
   height: 50px;
   width: 50px;
   border-radius: 50%;
+  // Must not shrink. The ring is a box-shadow on this box while the image
+  // inside is height: auto, so any narrowing pulls the ring into an oval that
+  // no longer traces the logo. fxFlex="50px" used to pin this via min/max-width;
+  // as a plain flex child it would inherit flex-shrink: 1 and squash in the
+  // band between the mobile breakpoint and a comfortable desktop width.
+  flex: 0 0 50px;
+  box-sizing: border-box;
 
   box-shadow: 0 0 0 1px #292f77;
 
@@ -17,7 +24,7 @@
 
   img {
     width: 100%;
-    height: auto;
+    height: 100%;
   }
 
   img:hover {
@@ -90,6 +97,10 @@
   flex: 1 1 auto;
 }
 
+app-notification-bell {
+  flex: 0 0 auto;
+}
+
 .nav-account {
   display: flex;
   align-items: center;
@@ -101,10 +112,6 @@
   display: none;
   flex: 0 0 auto;
   color: white;
-}
-
-.menu-pro-badge {
-  padding: 8px 16px;
 }
 
 a:not([mat-menu-item]) {
@@ -180,12 +187,34 @@ mat-toolbar-row {
   .brand-img {
     height: 40px;
     width: 40px;
+    flex-basis: 40px;
   }
 
   .profile-picture {
     width: 40px;
     height: 40px;
   }
+
+  // The CTA stays in the toolbar at every width, but a 56px row has no space
+  // for its label - the star plus the tooltip/aria-label carry it instead.
+  .upgrade-label {
+    display: none;
+  }
+
+  .upgrade-link,
+  .pro-badge {
+    min-width: 0;
+    padding: 0 8px;
+
+    mat-icon {
+      margin-right: 0;
+    }
+  }
+}
+
+.upgrade-link,
+.pro-badge {
+  flex: 0 0 auto;
 }
 
 .upgrade-link {

@@ -60,26 +60,34 @@
       <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
         About
       </button>
-      @if (auth.loggedIn && !isPro()) {
-        <a
-          mat-button
-          class="link upgrade-link"
-          routerLink="/subscription"
-          routerLinkActive="active"
-          matTooltip="Unlock Pro features"
-        >
-          <mat-icon>star</mat-icon>
-          Upgrade to Pro
-        </a>
-      }
-      @if (auth.loggedIn && isPro()) {
-        <span class="pro-badge" matTooltip="You're on the Pro plan">
-          <mat-icon>star</mat-icon> Pro
-        </span>
-      }
     </div>
 
     <span class="nav-spacer"></span>
+
+    <!-- Deliberately outside .nav-links, so it survives the narrow-screen
+    collapse instead of being buried in the menu. The gold reads at ~8:1 on the
+    indigo toolbar but only ~1.5:1 on the menu's light surface, and it is the
+    one item worth keeping one tap away. Below the breakpoint the label is
+    dropped and the star carries it. -->
+    @if (auth.loggedIn && !isPro()) {
+      <a
+        mat-button
+        class="link upgrade-link"
+        routerLink="/subscription"
+        routerLinkActive="active"
+        matTooltip="Unlock Pro features"
+        aria-label="Upgrade to Pro"
+      >
+        <mat-icon>star</mat-icon>
+        <span class="upgrade-label">Upgrade to Pro</span>
+      </a>
+    }
+    @if (auth.loggedIn && isPro()) {
+      <span class="pro-badge" matTooltip="You're on the Pro plan">
+        <mat-icon>star</mat-icon>
+        <span class="upgrade-label">Pro</span>
+      </span>
+    }
 
     @if (auth.loggedIn) {
       <app-notification-bell></app-notification-bell>
@@ -152,22 +160,6 @@ single instance of each submenu is enough. -->
     >
   }
   <button mat-menu-item [matMenuTriggerFor]="aboutMenu">About</button>
-  @if (auth.loggedIn && !isPro()) {
-    <a
-      class="menu-link upgrade-link"
-      mat-menu-item
-      routerLink="/subscription"
-      routerLinkActive="active"
-    >
-      <mat-icon>star</mat-icon>
-      Upgrade to Pro
-    </a>
-  }
-  @if (auth.loggedIn && isPro()) {
-    <span class="pro-badge menu-pro-badge">
-      <mat-icon>star</mat-icon> Pro
-    </span>
-  }
 </mat-menu>
 
 <mat-menu #printerMenu="matMenu">

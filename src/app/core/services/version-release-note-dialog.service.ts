@@ -28,6 +28,34 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.48.0': {
+      title: '1.48.0 - Spool Photos',
+      body: `<p>
+<strong>Spool photos</strong> are here! Add pictures of the actual spool to any material, reorder them, and star one as the default. That photo then shows as a thumbnail beside the material everywhere it is listed, so you can spot the right roll without reading every name. Try it on <a href="/filament">your materials</a>.
+</p>
+<p>
+This release also stops sliced files with missing or invalid filament measurements from recording a 0mg estimate, and tidies up the navigation bar on phones.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.47.0': {
       title: '1.47.0 - Material Remaining & More Bulk Actions',
       body: `<p>

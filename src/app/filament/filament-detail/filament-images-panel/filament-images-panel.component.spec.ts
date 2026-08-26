@@ -37,8 +37,13 @@ describe('FilamentImagesPanelComponent', () => {
   const inner = () =>
     component as unknown as {
       items: () => FilamentImageValue[];
+      actionError: () => string | null;
+      rejectedCount: () => number;
+      uploading: () => boolean;
       onFilesSelected: (event: Event) => void;
       onImageDeleted: (image: FilamentImageValue) => void;
+      onDefaultChanged: (image: FilamentImageValue) => void;
+      onRetryClick: () => void;
       onImagesReordered: (change: {
         previousIndex: number;
         currentIndex: number;
@@ -93,15 +98,13 @@ describe('FilamentImagesPanelComponent', () => {
     expect(component.hasStagedImages()).toBeTrue();
 
     component.uploadStagedImages(FILAMENT_ID).subscribe();
-    httpMock
-      .expectOne(`${api}/api/Filaments/${FILAMENT_ID}/images`)
-      .flush({
-        id: 7,
-        url: 'u',
-        thumbnailUrl: 't',
-        isDefault: true,
-        displayOrder: 0,
-      });
+    httpMock.expectOne(`${api}/api/Filaments/${FILAMENT_ID}/images`).flush({
+      id: 7,
+      url: 'u',
+      thumbnailUrl: 't',
+      isDefault: true,
+      displayOrder: 0,
+    });
 
     expect(component.hasStagedImages()).toBeFalse();
     expect(inner().items()[0].id).toBe(7);
@@ -238,6 +241,191 @@ describe('FilamentImagesPanelComponent', () => {
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual([2, 1]);
     req.flush({});
+  });
+
+  it('still adopts the uploaded image when route data refreshes mid-upload', () => {
+    // Creating a material navigates to its new ID, so the resolver can push new
+    // `images` while the very first POST is still in flight. That rebuilds every
+    // item object, which is why staged items are matched by key, not by `===`.
+    pickFiles(aFile('a.png'), aFile('b.png'));
+    component.uploadStagedImages(FILAMENT_ID).subscribe();
+
+    const url = `${api}/api/Filaments/${FILAMENT_ID}/images`;
+    httpMock.match(url)[0].flush({
+      id: 1,
+      url: 'u1',
+      thumbnailUrl: 't1',
+      isDefault: true,
+      displayOrder: 0,
+    });
+
+    // The resolver lands, carrying the image the first POST just created.
+    fixture.componentRef.setInput('filamentId', FILAMENT_ID);
+    fixture.componentRef.setInput('images', [storedImage(1)]);
+    fixture.detectChanges();
+
+    httpMock.match(url)[0].flush({
+      id: 2,
+      url: 'u2',
+      thumbnailUrl: 't2',
+      isDefault: false,
+      displayOrder: 1,
+    });
+
+    expect(component.hasStagedImages()).toBeFalse();
+    expect(
+      inner()
+        .items()
+        .map((i) => i.id)
+    ).toEqual([1, 2]);
+  });
+
+  it('sends the default a user picked while the image was still staged', () => {
+    pickFiles(aFile('a.png'), aFile('b.png'));
+    const second = inner().items()[1];
+    inner().onDefaultChanged(second);
+    expect(inner().items()[1].isDefault).toBeTrue();
+
+    component.uploadStagedImages(FILAMENT_ID).subscribe();
+    const url = `${api}/api/Filaments/${FILAMENT_ID}/images`;
+    // The API defaults to the first image it stores, which is not the pick.
+    httpMock.match(url)[0].flush({
+      id: 1,
+      url: 'u1',
+      thumbnailUrl: 't1',
+      isDefault: true,
+      displayOrder: 0,
+    });
+    httpMock.match(url)[0].flush({
+      id: 2,
+      url: 'u2',
+      thumbnailUrl: 't2',
+      isDefault: false,
+      displayOrder: 1,
+    });
+
+    httpMock
+      .expectOne(`${api}/api/Filaments/${FILAMENT_ID}/images/2/set-as-default`)
+      .flush({});
+
+    expect(
+      inner()
+        .items()
+        .map((i) => i.isDefault)
+    ).toEqual([false, true]);
+  });
+
+  it('does not re-send a default the API already assigned', () => {
+    pickFiles(aFile('a.png'));
+    component.uploadStagedImages(FILAMENT_ID).subscribe();
+    httpMock.expectOne(`${api}/api/Filaments/${FILAMENT_ID}/images`).flush({
+      id: 1,
+      url: 'u1',
+      thumbnailUrl: 't1',
+      isDefault: true,
+      displayOrder: 0,
+    });
+
+    httpMock.expectNone(
+      `${api}/api/Filaments/${FILAMENT_ID}/images/1/set-as-default`
+    );
+  });
+
+  it('ignores a second retry click while the first is still uploading', () => {
+    pickFiles(aFile('bad.png'));
+    component.uploadStagedImages(FILAMENT_ID).subscribe();
+    const url = `${api}/api/Filaments/${FILAMENT_ID}/images`;
+    httpMock
+      .match(url)[0]
+      .flush('nope', { status: 500, statusText: 'Server Error' });
+
+    fixture.componentRef.setInput('filamentId', FILAMENT_ID);
+    fixture.detectChanges();
+
+    inner().onRetryClick();
+    // A double-click can land before the disabled attribute is painted; without
+    // the guard this POSTs the same file twice and stores a duplicate.
+    inner().onRetryClick();
+
+    const retries = httpMock.match(url);
+    expect(retries.length).toBe(1);
+    retries[0].flush({
+      id: 9,
+      url: 'u',
+      thumbnailUrl: 't',
+      isDefault: true,
+      displayOrder: 0,
+    });
+    expect(inner().uploading()).toBeFalse();
+  });
+
+  it('rolls back and reports the order when the reorder request fails', () => {
+    fixture.componentRef.setInput('filamentId', FILAMENT_ID);
+    fixture.componentRef.setInput('images', [
+      storedImage(1),
+      storedImage(2, 1),
+    ]);
+    fixture.detectChanges();
+
+    inner().onImagesReordered({ previousIndex: 1, currentIndex: 0 });
+    expect(
+      inner()
+        .items()
+        .map((i) => i.id)
+    ).toEqual([2, 1]);
+
+    httpMock
+      .expectOne(`${api}/api/Filaments/${FILAMENT_ID}/images/reorder`)
+      .flush('nope', { status: 500, statusText: 'Server Error' });
+
+    expect(
+      inner()
+        .items()
+        .map((i) => i.id)
+    ).toEqual([1, 2]);
+    expect(inner().actionError()).toContain('order');
+  });
+
+  it('reports a failed delete and keeps the image in the list', () => {
+    fixture.componentRef.setInput('filamentId', FILAMENT_ID);
+    fixture.componentRef.setInput('images', [storedImage(1)]);
+    fixture.detectChanges();
+
+    inner().onImageDeleted(inner().items()[0]);
+    httpMock
+      .expectOne(`${api}/api/Filaments/${FILAMENT_ID}/images/1`)
+      .flush('nope', { status: 500, statusText: 'Server Error' });
+
+    expect(inner().items().length).toBe(1);
+    expect(inner().actionError()).toBeTruthy();
+  });
+
+  it('stages no more than maxImages and reports what it dropped', () => {
+    fixture.componentRef.setInput('maxImages', 2);
+    fixture.detectChanges();
+
+    pickFiles(aFile('a.png'), aFile('b.png'), aFile('c.png'));
+
+    expect(inner().items().length).toBe(2);
+    expect(inner().rejectedCount()).toBe(1);
+    httpMock.expectNone(() => true);
+  });
+
+  it('abandons an in-flight delete when the panel is destroyed', () => {
+    fixture.componentRef.setInput('filamentId', FILAMENT_ID);
+    fixture.componentRef.setInput('images', [storedImage(1)]);
+    fixture.detectChanges();
+
+    inner().onImageDeleted(inner().items()[0]);
+    const request = httpMock.expectOne(
+      `${api}/api/Filaments/${FILAMENT_ID}/images/1`
+    );
+
+    fixture.destroy();
+
+    // Without `takeUntilDestroyed` the request keeps the torn-down panel alive
+    // and later writes to its signals.
+    expect(request.cancelled).toBeTrue();
   });
 
   it('revokes every outstanding object URL on destroy', () => {

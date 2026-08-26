@@ -199,6 +199,11 @@ export class DeferredSkeletonController {
     this.pending = 0;
     this.clearShowTimer();
     this.clearHideTimer();
+    // Also makes a late `stop()` inert. A `finalize` that fires as the owning
+    // component tears down would otherwise schedule the min-dwell hide timer
+    // and set this signal after destruction — the leak this method exists to
+    // prevent.
+    this._visible.set(false);
   }
 
   private clearShowTimer(): void {

@@ -9,6 +9,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -26,6 +27,12 @@ import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-ske
 export interface FilamentImageValue {
   /** Absent while the image is staged and not yet uploaded. */
   id?: number;
+  /**
+   * Client-side identity for a staged item. Every mutation here crosses an
+   * async boundary, and `syncStoredImages` copies each item, so `===` cannot be
+   * used to find the object a request started from.
+   */
+  stagedKey?: number;
   /** SAS URL once stored, or an object URL while staged. */
   url?: string;
   thumbnailUrl?: string;
@@ -34,6 +41,8 @@ export interface FilamentImageValue {
   isDefault: boolean;
   displayOrder: number;
 }
+
+let nextStagedKey = 1;
 
 @Component({
   selector: 'app-filament-images-panel',
@@ -66,6 +75,12 @@ export class FilamentImagesPanelComponent {
   protected readonly selectedIndex = signal(0);
   protected readonly isDragOver = signal(false);
   protected readonly failedFiles = signal<File[]>([]);
+  /** Files dropped on the floor because they would exceed `maxImages`. */
+  protected readonly rejectedCount = signal(0);
+  /** A failed delete / reorder / set-default, surfaced next to the images. */
+  protected readonly actionError = signal<string | null>(null);
+  /** True for the whole upload, unlike `busy`, which is deferred by 200ms. */
+  protected readonly uploading = signal(false);
 
   /** True while any picked file has not yet been stored by the API. */
   readonly hasStagedImages = computed(() => this.items().some((i) => !!i.file));
@@ -122,9 +137,15 @@ export class FilamentImagesPanelComponent {
   }
 
   protected onRetryClick(): void {
+    // The button is disabled while uploading, but a double-click can land two
+    // events before the disabled attribute is painted, and each subscription
+    // would POST the same file again.
+    if (this.uploading()) return;
     const filamentId = this.filamentId() ?? this.lastUploadFilamentId;
     if (!filamentId) return;
-    this.retryFailedUploads(filamentId).subscribe();
+    this.retryFailedUploads(filamentId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
   }
 
   protected onFilesSelected(event: Event): void {
@@ -155,7 +176,7 @@ export class FilamentImagesPanelComponent {
   }
 
   protected onThumbnailSelected(image: FilamentImageValue): void {
-    const index = this.items().indexOf(image);
+    const index = this.items().findIndex((item) => this.isSame(item, image));
     if (index >= 0) this.selectedIndex.set(index);
   }
 
@@ -170,37 +191,51 @@ export class FilamentImagesPanelComponent {
     const filamentId = this.filamentId() ?? this.lastUploadFilamentId;
     if (!filamentId || image.id === undefined) return;
 
+    this.actionError.set(null);
     this.skeleton.start();
     this.filamentService
       .deleteFilamentImage(filamentId, image.id)
-      .pipe(finalize(() => this.skeleton.stop()))
-      .subscribe(() => this.removeItem(image));
+      .pipe(
+        finalize(() => this.skeleton.stop()),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: () => this.removeItem(image),
+        error: () =>
+          this.actionError.set(
+            'That photo could not be deleted. Please try again.'
+          ),
+      });
   }
 
   protected onDefaultChanged(image: FilamentImageValue): void {
-    const applyLocally = () =>
-      this.items.update((items) =>
-        items.map((item) => ({ ...item, isDefault: item === image }))
-      );
-
     const filamentId = this.filamentId() ?? this.lastUploadFilamentId;
     if (image.id === undefined || !filamentId) {
-      // Staged images have no server-side identity yet; the choice is applied
-      // when they upload.
-      applyLocally();
+      // Staged images have no server-side identity yet; `uploadItems` replays
+      // the choice once the upload assigns an ID.
+      this.markDefaultLocally(image);
       return;
     }
 
+    this.actionError.set(null);
     this.filamentService
       .setFilamentImageAsDefault(filamentId, image.id)
-      .subscribe(() => applyLocally());
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.markDefaultLocally(image),
+        error: () =>
+          this.actionError.set(
+            'That photo could not be set as the default. Please try again.'
+          ),
+      });
   }
 
   protected onImagesReordered(change: {
     previousIndex: number;
     currentIndex: number;
   }): void {
-    const reordered = [...this.items()];
+    const previous = this.items();
+    const reordered = [...previous];
     const [moved] = reordered.splice(change.previousIndex, 1);
     if (!moved) return;
     reordered.splice(change.currentIndex, 0, moved);
@@ -208,10 +243,11 @@ export class FilamentImagesPanelComponent {
       reordered.map((item, index) => ({ ...item, displayOrder: index }))
     );
 
-    this.flushReorder();
+    this.flushReorder(previous);
   }
 
-  private flushReorder(): void {
+  /** `rollbackTo` is the order to restore if the API rejects the new one. */
+  private flushReorder(rollbackTo?: FilamentImageValue[]): void {
     const items = this.items();
     const filamentId = this.filamentId() ?? this.lastUploadFilamentId;
 
@@ -222,13 +258,24 @@ export class FilamentImagesPanelComponent {
       return;
     }
 
-    this.pendingReorder = false;
+    this.actionError.set(null);
     this.filamentService
       .reorderFilamentImages(
         filamentId,
         items.map((item) => item.id as number)
       )
-      .subscribe();
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        // Only a confirmed write clears the pending flag, or a failed reorder
+        // would never be retried when the staged items finish uploading.
+        next: () => (this.pendingReorder = false),
+        error: () => {
+          if (rollbackTo) this.items.set(rollbackTo);
+          this.actionError.set(
+            'That new photo order could not be saved. Please try again.'
+          );
+        },
+      });
   }
 
   private uploadItems(
@@ -243,12 +290,25 @@ export class FilamentImagesPanelComponent {
     }
 
     const failed: File[] = [];
+    // The user may have starred a staged photo. That choice cannot be sent
+    // until the upload assigns it an ID, so remember which one it was.
+    const desiredDefaultKey = this.items().find(
+      (item) => item.isDefault && !!item.file
+    )?.stagedKey;
+    const assignedIds = new Map<number, number>();
+
+    this.uploading.set(true);
     this.skeleton.start();
 
     return concat(
       ...targets.map((item) =>
         this.filamentService.uploadFilamentImage(filamentId, item.file!).pipe(
-          tap((uploaded) => this.replaceStaged(item, uploaded)),
+          tap((uploaded) => {
+            if (item.stagedKey !== undefined) {
+              assignedIds.set(item.stagedKey, uploaded.id);
+            }
+            this.replaceStaged(item, uploaded);
+          }),
           catchError(() => {
             failed.push(item.file!);
             return of(null);
@@ -260,12 +320,40 @@ export class FilamentImagesPanelComponent {
       map(() => ({ failed })),
       tap(() => {
         this.failedFiles.set(failed);
-        if (failed.length === 0 && this.pendingReorder) {
-          this.flushReorder();
-        }
+        const defaultId =
+          desiredDefaultKey === undefined
+            ? undefined
+            : assignedIds.get(desiredDefaultKey);
+        if (defaultId !== undefined) this.persistDefault(filamentId, defaultId);
+        if (failed.length === 0 && this.pendingReorder) this.flushReorder();
       }),
-      finalize(() => this.skeleton.stop())
+      finalize(() => {
+        this.uploading.set(false);
+        this.skeleton.stop();
+      })
     );
+  }
+
+  /** Sends a default the user picked before the image had a server-side ID. */
+  private persistDefault(filamentId: string, imageId: number): void {
+    const stored = this.items().find((item) => item.id === imageId);
+    // The API picks the first image as the default on its own; if that is
+    // already this one, there is nothing to send.
+    if (!stored || stored.isDefault) return;
+
+    this.filamentService
+      .setFilamentImageAsDefault(filamentId, imageId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () =>
+          this.items.update((items) =>
+            items.map((item) => ({ ...item, isDefault: item.id === imageId }))
+          ),
+        error: () =>
+          this.actionError.set(
+            'That photo could not be set as the default. Please try again.'
+          ),
+      });
   }
 
   private replaceStaged(
@@ -275,7 +363,7 @@ export class FilamentImagesPanelComponent {
     this.releaseObjectUrl(staged.url);
     this.items.update((items) =>
       items.map((item) =>
-        item === staged
+        this.isSame(item, staged)
           ? {
               id: uploaded.id,
               url: uploaded.url ?? undefined,
@@ -293,10 +381,19 @@ export class FilamentImagesPanelComponent {
     if (images.length === 0) return;
 
     this.items.update((items) => {
-      const added = images.map((file, offset) => {
+      // The strip's add button already hides at the cap, but the empty-state
+      // button, a multi-select, and drag/drop all reach here directly. Staging
+      // past the cap only buys a wall of API rejections.
+      const room = Math.max(0, this.maxImages() - items.length);
+      const accepted = images.slice(0, room);
+      this.rejectedCount.set(images.length - accepted.length);
+      if (accepted.length === 0) return items;
+
+      const added = accepted.map((file, offset) => {
         const url = URL.createObjectURL(file);
         this.objectUrls.add(url);
         return {
+          stagedKey: nextStagedKey++,
           url,
           file,
           isDefault: items.length === 0 && offset === 0,
@@ -307,15 +404,32 @@ export class FilamentImagesPanelComponent {
     });
   }
 
+  private markDefaultLocally(image: FilamentImageValue): void {
+    this.items.update((items) =>
+      items.map((item) => ({ ...item, isDefault: this.isSame(item, image) }))
+    );
+  }
+
   private removeItem(image: FilamentImageValue): void {
+    // Room has been freed, so the over-cap notice no longer describes anything.
+    this.rejectedCount.set(0);
     this.items.update((items) =>
       items
-        .filter((item) => item !== image)
+        .filter((item) => !this.isSame(item, image))
         .map((item, index) => ({ ...item, displayOrder: index }))
     );
     this.selectedIndex.update((index) =>
       Math.max(0, Math.min(index, this.items().length - 1))
     );
+  }
+
+  /**
+   * Identity that survives the object copies `syncStoredImages` and every
+   * `items.update` make: the stored ID once there is one, the staged key before.
+   */
+  private isSame(a: FilamentImageValue, b: FilamentImageValue): boolean {
+    if (a.id !== undefined || b.id !== undefined) return a.id === b.id;
+    return a.stagedKey !== undefined && a.stagedKey === b.stagedKey;
   }
 
   private releaseObjectUrl(url: string | undefined): void {

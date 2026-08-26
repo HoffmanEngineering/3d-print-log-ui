@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -197,6 +197,50 @@ describe('FilamentDetailComponent', () => {
       expect(component.saving).toBeFalse();
       expect(router.navigateByUrl).not.toHaveBeenCalled();
       expect(toastr.warning).toHaveBeenCalled();
+    });
+
+    // The URL used to be rewritten the instant the create returned, while the
+    // photos were still uploading. That navigation ran PendingChangesGuard,
+    // which asks the panel whether anything is staged - and mid-upload the
+    // answer is yes, so saving a new material prompted "You have unsaved
+    // changes" about the very photos it was uploading.
+    it('does not navigate while the staged photos are still uploading', () => {
+      setUpNewFilamentForm();
+      stagedImages(true);
+      // Never emits: the upload is still in flight for the whole test.
+      imagesPanelStub.uploadStagedImages.and.returnValue(new Subject());
+
+      component.onSubmit();
+
+      expect(router.navigate).not.toHaveBeenCalled();
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('leaves the guard alone for its own post-save URL rewrite', async () => {
+      setUpNewFilamentForm();
+      stagedImages(true);
+      imagesPanelStub.uploadStagedImages.and.returnValue(
+        of({ failed: [new File(['x'], 'spool.png')] })
+      );
+
+      let guardAnswer: boolean | null = null;
+      (router.navigate as jasmine.Spy).and.callFake(() => {
+        // The guard runs during the navigation, with photos still staged for
+        // the retry. It must not prompt for a navigation the page started.
+        guardAnswer = component.canDeactivate() as boolean;
+        return Promise.resolve(true);
+      });
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      expect(router.navigate).toHaveBeenCalledWith(
+        ['/filament', 'new-filament-id'],
+        { replaceUrl: true }
+      );
+      expect(guardAnswer).toBeTrue();
+      // Restored afterwards, or the rest of the page's life skips the check.
+      expect(component.canDeactivate()).toBeFalse();
     });
   });
 

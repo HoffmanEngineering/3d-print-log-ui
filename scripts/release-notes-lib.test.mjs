@@ -260,6 +260,11 @@ test('every git tag except the known-missing v1.32.1 resolves to a section', (t)
     return;
   }
 
+  // Which tags are present depends on the checkout: a full clone has all of
+  // them, while a tag-triggered build has only the tag it was pushed for. So
+  // assert that nothing beyond the known gap is unresolved, rather than that
+  // the gap itself is always present to be found.
+
   const missing = tags.filter((tag) => {
     try {
       extractReleaseNotes(REAL_HTML, tag);
@@ -269,5 +274,8 @@ test('every git tag except the known-missing v1.32.1 resolves to a section', (t)
     }
   });
 
-  assert.deepEqual(missing, ['v1.32.1']);
+  assert.deepEqual(
+    missing.filter((tag) => tag !== 'v1.32.1'),
+    [],
+  );
 });

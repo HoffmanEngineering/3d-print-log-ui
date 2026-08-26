@@ -239,6 +239,22 @@
           }
         </td>
       </ng-container>
+      <ng-container matColumnDef="image">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let filament">
+          <!-- The empty case keeps the same box so row height never depends on
+               whether a spool happens to have a photo. -->
+          <div class="filament-thumbnail">
+            @if (filament.defaultImageThumbnailUrl) {
+              <img
+                [src]="filament.defaultImageThumbnailUrl"
+                alt=""
+                loading="lazy"
+              />
+            }
+          </div>
+        </td>
+      </ng-container>
       <ng-container matColumnDef="colorHex">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let filament">
@@ -412,6 +428,15 @@
           "
           data-cy-filament-card
         >
+          <div class="filament-thumbnail card-thumbnail">
+            @if (filament.defaultImageThumbnailUrl) {
+              <img
+                [src]="filament.defaultImageThumbnailUrl"
+                alt=""
+                loading="lazy"
+              />
+            }
+          </div>
           <div
             class="card-swatch"
             [style]="

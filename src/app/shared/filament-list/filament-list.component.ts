@@ -41,6 +41,7 @@ export class FilamentListComponent implements OnInit {
 
   public displayedColumns: string[] = [
     'isFavorite',
+    'image',
     'colorHex',
     'displayName',
     'brand',

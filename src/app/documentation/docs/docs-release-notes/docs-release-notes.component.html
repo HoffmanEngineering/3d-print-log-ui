@@ -2,6 +2,106 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.48.0">1.48.0 - Spool Photos</h3>
+  <p>
+    Materials can now have photos. The new Photos panel lets you add pictures
+    of the actual spool, reorder them, and star one as the default. That default
+    photo then shows as a thumbnail beside the material everywhere it is listed,
+    in the table and in the mobile cards, so you can spot the right roll in a
+    long list without reading every name.
+  </p>
+  <p>
+    The rest of the release is fixes. Slicer files that are missing or have
+    invalid filament measurements no longer record a confident estimate of 0mg;
+    the amount is simply left empty for you to fill in. The navigation bar has
+    been tidied up on phones: the links sit to the left, the toolbar keeps a
+    fixed height instead of growing, the brand no longer shrinks, the Pro button
+    stays in the toolbar, and "About" no longer appears twice.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Spool photos</strong> - A Photos panel on the material detail page
+      lets you add, reorder, delete, and set a default picture of the spool.
+      (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/126"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #126</a
+      >)
+    </li>
+    <li>
+      <strong>Photo thumbnails in the material list</strong> - The default photo
+      shows beside each material in both the table and the mobile cards. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/126"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #126</a
+      >)
+    </li>
+    <li>
+      <strong>No more 0mg filament estimates</strong> - When a sliced file is
+      missing filament diameter or length, or reports an invalid value, the
+      usage estimate is left empty instead of recorded as zero. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/122"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #122</a
+      >)
+    </li>
+    <li>
+      <strong>Mobile navigation bar layout</strong> - Links are left-justified,
+      the toolbar has a fixed height, the brand no longer shrinks, and the Pro
+      button stays in the toolbar. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/129"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #129</a
+      >)
+    </li>
+    <li>
+      <strong>Duplicate "About" link</strong> - "About" no longer renders twice
+      in the mobile menu. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/123"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #123</a
+      >)
+    </li>
+    <li>
+      <strong>Release notes on GitHub</strong> - Each release published on
+      GitHub is now generated from this page, so the notes there match the ones
+      here. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/106"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #106</a
+      >,
+      <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/118"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #118</a
+      >)
+    </li>
+    <li>
+      <strong>Project housekeeping</strong> - Dependency updates are now
+      automated, build workflow permissions were tightened, and the README
+      points at GitHub Discussions for questions and ideas. (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/107"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #107</a
+      >,
+      <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/119"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #119</a
+      >)
+    </li>
+  </ul>
+
   <h3 id="v1.47.0">1.47.0 - Material Remaining &amp; More Bulk Actions</h3>
   <p>
     Saved materials now tell you what is left on the spool. Opening a material

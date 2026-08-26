@@ -7,6 +7,7 @@ import {
   OnInit,
   computed,
   signal,
+  viewChild,
 } from '@angular/core';
 import {
   UntypedFormArray,
@@ -40,6 +41,7 @@ import {
   FilamentSummary,
 } from '../../core/services/filament.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
+import { FilamentImagesPanelComponent } from './filament-images-panel/filament-images-panel.component';
 import { MatDialog } from '@angular/material/dialog';
 import { MatChipListboxChange } from '@angular/material/chips';
 import {
@@ -121,6 +123,8 @@ export class FilamentDetailComponent
 {
   public filamentForm: UntypedFormGroup;
   public loadedFilament: FilamentDetail | null = null;
+
+  protected readonly imagesPanel = viewChild(FilamentImagesPanelComponent);
   public saving = false;
 
   public materials: Material[] = [];
@@ -186,7 +190,9 @@ export class FilamentDetailComponent
 
   @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
-    return !this.filamentForm.dirty;
+    // The form is blind to staged photos, so without the panel a user who has
+    // only picked images would navigate away and silently lose them.
+    return !this.filamentForm.dirty && !this.imagesPanel()?.hasStagedImages();
   }
 
   get filamentAdjustments() {
@@ -830,6 +836,7 @@ export class FilamentDetailComponent
     const newFilament: FilamentDetail = this.getFilamentFromForm();
 
     let saveFilament: Observable<FilamentDetail>;
+    const wasNew = newFilament.id === null;
 
     if (newFilament.id === null) {
       saveFilament = this.filamentService.addFilament(newFilament);
@@ -841,14 +848,51 @@ export class FilamentDetailComponent
       (filament) => {
         this.filamentForm.markAsPristine();
 
-        this.router.navigateByUrl('/filament').then(() => {
-          this.toastr.success('Save successful!');
+        // The record is no longer new. Write the ID back BEFORE any upload, so a
+        // retry is an update and never a second POST, and replace the URL so a
+        // reload lands on the saved material.
+        if (wasNew && filament.id) {
+          this.filamentForm.get('id')?.setValue(filament.id);
+          this.router.navigate(['/filament', filament.id], {
+            replaceUrl: true,
+          });
+        }
+
+        const panel = this.imagesPanel();
+        if (!panel?.hasStagedImages() || !filament.id) {
+          this.finishSave();
+          return;
+        }
+
+        panel.uploadStagedImages(filament.id).subscribe(({ failed }) => {
+          // Clear `saving` either way, or the retry button stays disabled
+          // forever.
+          this.saving = false;
+
+          if (failed.length === 0) {
+            this.finishSave();
+            return;
+          }
+
+          // Stay put: the material is saved, and the user needs a surface on
+          // which to retry the photos. Navigating away would discard that
+          // chance.
+          this.toastr.warning(
+            `Material saved, but ${failed.length} image(s) failed to upload. You can retry them below.`
+          );
         });
       },
       (err) => {
         this.saving = false;
       }
     );
+  }
+
+  private finishSave(): void {
+    this.saving = false;
+    this.router.navigateByUrl('/filament').then(() => {
+      this.toastr.success('Save successful!');
+    });
   }
 
   handleClose() {

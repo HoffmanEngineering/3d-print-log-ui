@@ -42,6 +42,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public displayedColumns: string[] = [
     'select',
     'isFavorite',
+    'image',
     'colorHex',
     'displayName',
     'brand',

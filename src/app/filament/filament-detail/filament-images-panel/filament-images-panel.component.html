@@ -1,0 +1,80 @@
+<div class="filament-images-panel">
+  <input
+    #imgFileInput
+    type="file"
+    class="file-input"
+    accept="image/jpeg,image/png,image/webp"
+    multiple
+    (change)="onFilesSelected($event)"
+  />
+
+  <div
+    class="image-drop-zone"
+    [class.drag-over]="isDragOver()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onFileDrop($event)"
+  >
+    @if (isDragOver()) {
+      <div class="drop-overlay">
+        <mat-icon>cloud_upload</mat-icon>
+        <span>Drop photos here</span>
+      </div>
+    }
+
+    @if (items().length === 0) {
+      <button type="button" mat-stroked-button (click)="imgFileInput.click()">
+        <mat-icon>add_a_photo</mat-icon>
+        Add Spool Photo
+      </button>
+    } @else {
+      <app-image-carousel
+        [imageCount]="items().length"
+        [selectedIndex]="selectedIndex()"
+        label="Spool photos"
+        (indexChange)="onCarouselIndexChange($event)"
+      >
+        @if (selected(); as image) {
+          <div class="main-image">
+            <app-filament-image
+              [src]="image.url ?? ''"
+              alt="Spool photo"
+              (delete)="onImageDeleted(image)"
+            />
+          </div>
+        }
+      </app-image-carousel>
+    }
+  </div>
+
+  <app-image-thumbnail-strip
+    [images]="items()"
+    [directUrls]="true"
+    [editable]="true"
+    [maxImages]="maxImages()"
+    [selectedId]="selected()?.id"
+    [selectedUrl]="selected()?.url"
+    (imageSelected)="onThumbnailSelected($event)"
+    (imageDeleted)="onImageDeleted($event)"
+    (defaultChanged)="onDefaultChanged($event)"
+    (imagesReordered)="onImagesReordered($event)"
+    (addClicked)="imgFileInput.click()"
+  />
+
+  @if (busy()) {
+    <mat-progress-bar class="upload-progress" mode="indeterminate" />
+  }
+
+  @if (failedFiles().length > 0) {
+    <div class="upload-failures" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>
+        {{ failedFiles().length }} photo(s) failed to upload. The material itself
+        is saved.
+      </span>
+      <button type="button" mat-stroked-button (click)="onRetryClick()">
+        Retry
+      </button>
+    </div>
+  }
+</div>

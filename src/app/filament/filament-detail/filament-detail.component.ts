@@ -126,6 +126,8 @@ export class FilamentDetailComponent
 
   protected readonly imagesPanel = viewChild(FilamentImagesPanelComponent);
   public saving = false;
+  /** See `canDeactivate`: suppresses the guard for app-initiated navigation. */
+  private isSelfNavigating = false;
 
   public materials: Material[] = [];
   public filteredMaterials: Observable<Material[]> = null;
@@ -190,9 +192,29 @@ export class FilamentDetailComponent
 
   @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
+    // A navigation this component started itself is never the user abandoning
+    // work, so it must not be second-guessed. Without this, rewriting the URL
+    // after a create prompts "You have unsaved changes" about the very photos
+    // the save is in the middle of uploading.
+    if (this.isSelfNavigating) return true;
+
     // The form is blind to staged photos, so without the panel a user who has
     // only picked images would navigate away and silently lose them.
     return !this.filamentForm.dirty && !this.imagesPanel()?.hasStagedImages();
+  }
+
+  /**
+   * Points the URL at the saved material without prompting. Used only after a
+   * create whose photos failed, where the page stays put for the retry - the
+   * success path leaves for the list instead.
+   */
+  private replaceUrlWithSaved(filamentId: string): void {
+    this.isSelfNavigating = true;
+    this.router
+      .navigate(['/filament', filamentId], { replaceUrl: true })
+      // Restore the guard however the navigation ends, or the rest of this
+      // component's life would silently skip the unsaved-changes check.
+      .finally(() => (this.isSelfNavigating = false));
   }
 
   get filamentAdjustments() {
@@ -849,13 +871,9 @@ export class FilamentDetailComponent
         this.filamentForm.markAsPristine();
 
         // The record is no longer new. Write the ID back BEFORE any upload, so a
-        // retry is an update and never a second POST, and replace the URL so a
-        // reload lands on the saved material.
+        // retry is an update and never a second POST.
         if (wasNew && filament.id) {
           this.filamentForm.get('id')?.setValue(filament.id);
-          this.router.navigate(['/filament', filament.id], {
-            replaceUrl: true,
-          });
         }
 
         const panel = this.imagesPanel();
@@ -864,7 +882,9 @@ export class FilamentDetailComponent
           return;
         }
 
-        panel.uploadStagedImages(filament.id).subscribe(({ failed }) => {
+        const filamentId = filament.id;
+
+        panel.uploadStagedImages(filamentId).subscribe(({ failed }) => {
           // Clear `saving` either way, or the retry button stays disabled
           // forever.
           this.saving = false;
@@ -876,7 +896,10 @@ export class FilamentDetailComponent
 
           // Stay put: the material is saved, and the user needs a surface on
           // which to retry the photos. Navigating away would discard that
-          // chance.
+          // chance. Only now is the URL rewritten, so a reload lands on the
+          // saved material rather than back on `new`.
+          if (wasNew) this.replaceUrlWithSaved(filamentId);
+
           this.toastr.warning(
             `Material saved, but ${failed.length} image(s) failed to upload. You can retry them below.`
           );

@@ -55,4 +55,27 @@ describe('NavbarComponent', () => {
 
     expect(aboutButtons.length).toBe(1);
   });
+
+  // The narrow-screen link set lives inside <mat-menu>, whose content Material
+  // only stamps out when the menu opens. So the collapsed copy costs nothing in
+  // the prerendered HTML and cannot re-introduce the duplicate-links bug above.
+  it('renders the collapsed-nav trigger without stamping its menu content', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelectorAll('.nav-menu-trigger').length).toBe(1);
+    expect(host.textContent).not.toContain('Documentation');
+  });
+
+  // app.component.scss, styles.scss and the analytics filter bar all offset
+  // content by a hard-coded toolbar height, so the row must never wrap or grow.
+  it('keeps the link row on a single line', () => {
+    const navLinks = (fixture.nativeElement as HTMLElement).querySelector(
+      '.nav-links'
+    ) as HTMLElement;
+
+    const styles = getComputedStyle(navLinks);
+
+    expect(styles.flexWrap).toBe('nowrap');
+    expect(styles.justifyContent).toBe('flex-start');
+  });
 });

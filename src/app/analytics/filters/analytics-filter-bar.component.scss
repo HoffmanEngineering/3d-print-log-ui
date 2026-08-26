@@ -55,7 +55,10 @@
   }
 }
 
-@media (max-width: 600px) {
+// 599px, not 600px: the navbar drops to 56px at max-width 599px, so at exactly
+// 600px this bar would offset by 56px while the navbar was still 64px tall and
+// tuck 8px of itself underneath it.
+@media (max-width: 599px) {
   .analytics-filter-bar {
     inset-block-start: 56px;
   }

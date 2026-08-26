@@ -1,6 +1,21 @@
 <mat-toolbar color="primary">
-  <mat-toolbar-row fxLayout="row" fxLayoutAlign="space-between center">
-    <div fxFlex="50px" class="brand-img">
+  <mat-toolbar-row class="nav-row">
+    <!-- Narrow screens collapse the whole link set into this one trigger. The
+    collapsed copy lives inside <mat-menu>, whose content is an ng-template that
+    Material only stamps out on open - so it never reaches the prerendered HTML
+    and cannot duplicate the links the way the old matchMedia split did. Which
+    of the two is reachable is decided purely in CSS, so prerender and client
+    agree. -->
+    <button
+      class="nav-menu-trigger link"
+      mat-icon-button
+      [matMenuTriggerFor]="mobileMenu"
+      aria-label="Open navigation menu"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <div class="brand-img">
       <a [routerLink]="['/']" style="height: 100%; width: 100%">
         <img
           src="/assets/3d_brand_logo_b833b3f20dd.svg"
@@ -9,113 +24,76 @@
         <span class="visually-hidden">Navigate to home page.</span>
       </a>
     </div>
-    <div fxFlex fxFlexFill>
-      <!-- One copy of the links, wrapped onto a second line by CSS on narrow
-      screens. Rendering a separate mobile copy behind a matchMedia check used to
-      duplicate "About": matchMedia is always false while prerendering, so the
-      static HTML shipped the wide-screen links and the client then added the
-      narrow-screen copy on top of them. -->
-      <div class="nav-links">
-        @if (!auth.loggedIn) {
-          <a class="link" mat-button routerLink="/" routerLinkActive="active"
-            >Home</a
-          >
-        }
-        @if (auth.loggedIn) {
-          <a
-            mat-button
-            class="link"
-            routerLink="/prints"
-            routerLinkActive="active"
-            >Prints</a
-          >
-          <button mat-button class="link" [matMenuTriggerFor]="printerMenu">
-            Printers
-          </button>
-          <a
-            mat-button
-            class="link"
-            routerLink="/materials"
-            routerLinkActive="active"
-            >Materials</a
-          >
-          <a
-            mat-button
-            class="link"
-            routerLink="/analytics"
-            routerLinkActive="active"
-            >Analytics</a
-          >
-        }
-        <mat-menu #printerMenu="matMenu">
-          <a
-            class="menu-link"
-            mat-menu-item
-            routerLink="/printers"
-            routerLinkActive="active"
-            >Printers</a
-          >
-          <a
-            class="menu-link"
-            mat-menu-item
-            routerLink="/printer-maintenance"
-            routerLinkActive="active"
-            >Printer Maintenance</a
-          >
-        </mat-menu>
-        <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
-          About
+
+    <div class="nav-links">
+      @if (!auth.loggedIn) {
+        <a class="link" mat-button routerLink="/" routerLinkActive="active"
+          >Home</a
+        >
+      }
+      @if (auth.loggedIn) {
+        <a
+          mat-button
+          class="link"
+          routerLink="/prints"
+          routerLinkActive="active"
+          >Prints</a
+        >
+        <button mat-button class="link" [matMenuTriggerFor]="printerMenu">
+          Printers
         </button>
-        <mat-menu #aboutMenu="matMenu">
-          <a
-            class="menu-link"
-            mat-menu-item
-            routerLink="/docs"
-            routerLinkActive="active"
-            >Documentation</a
-          >
-          @if (auth.loggedIn) {
-            <a
-              class="menu-link"
-              mat-menu-item
-              routerLink="/feedback"
-              routerLinkActive="active"
-              >Send Feedback</a
-            >
-          }
-          <a
-            class="menu-link"
-            mat-menu-item
-            routerLink="/docs/release-notes"
-            routerLinkActive="active"
-            >Version v{{ versionNumber }}</a
-          >
-        </mat-menu>
-        @if (auth.loggedIn && !isPro()) {
-          <a
-            mat-button
-            class="link upgrade-link"
-            routerLink="/subscription"
-            routerLinkActive="active"
-            matTooltip="Unlock Pro features"
-          >
-            <mat-icon>star</mat-icon>
-            Upgrade to Pro
-          </a>
-        }
-        @if (auth.loggedIn && isPro()) {
-          <span class="pro-badge" matTooltip="You're on the Pro plan">
-            <mat-icon>star</mat-icon> Pro
-          </span>
-        }
-      </div>
+        <a
+          mat-button
+          class="link"
+          routerLink="/materials"
+          routerLinkActive="active"
+          >Materials</a
+        >
+        <a
+          mat-button
+          class="link"
+          routerLink="/analytics"
+          routerLinkActive="active"
+          >Analytics</a
+        >
+      }
+      <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
+        About
+      </button>
     </div>
-    @if (auth.loggedIn) {
-      <div fxFlex="50px" fxLayoutAlign="center center">
-        <app-notification-bell></app-notification-bell>
-      </div>
+
+    <span class="nav-spacer"></span>
+
+    <!-- Deliberately outside .nav-links, so it survives the narrow-screen
+    collapse instead of being buried in the menu. The gold reads at ~8:1 on the
+    indigo toolbar but only ~1.5:1 on the menu's light surface, and it is the
+    one item worth keeping one tap away. Below the breakpoint the label is
+    dropped and the star carries it. -->
+    @if (auth.loggedIn && !isPro()) {
+      <a
+        mat-button
+        class="link upgrade-link"
+        routerLink="/subscription"
+        routerLinkActive="active"
+        matTooltip="Unlock Pro features"
+        aria-label="Upgrade to Pro"
+      >
+        <mat-icon>star</mat-icon>
+        <span class="upgrade-label">Upgrade to Pro</span>
+      </a>
     }
-    <div [fxFlex]="auth.loggedIn ? '50px' : '200px'">
+    @if (auth.loggedIn && isPro()) {
+      <span class="pro-badge" matTooltip="You're on the Pro plan">
+        <mat-icon>star</mat-icon>
+        <span class="upgrade-label">Pro</span>
+      </span>
+    }
+
+    @if (auth.loggedIn) {
+      <app-notification-bell></app-notification-bell>
+    }
+
+    <div class="nav-account">
       @if (auth.loggedIn) {
         <button class="transparent" [matMenuTriggerFor]="profileMenu">
           @if (profilePictureUrl) {
@@ -134,38 +112,6 @@
           }
         </button>
       }
-      <mat-menu #profileMenu="matMenu">
-        @if (auth.loggedIn && isUserProfileFeatureEnabled) {
-          <a
-            class="menu-link"
-            mat-menu-item
-            [routerLink]="['users', userId]"
-            routerLinkActive="active"
-            >My Profile</a
-          >
-        }
-        @if (auth.loggedIn) {
-          <a
-            class="menu-link"
-            mat-menu-item
-            [routerLink]="['/settings']"
-            routerLinkActive="active"
-            >Settings</a
-          >
-        }
-        @if (auth.loggedIn) {
-          <a
-            class="menu-link"
-            mat-menu-item
-            [routerLink]="['/api-keys']"
-            routerLinkActive="active"
-            >Personal Api Keys</a
-          >
-        }
-        @if (auth.loggedIn) {
-          <button mat-menu-item (click)="auth.logout()">Log Out</button>
-        }
-      </mat-menu>
       @if (!auth.loggedIn) {
         <button
           id="loginButton"
@@ -179,3 +125,111 @@
     </div>
   </mat-toolbar-row>
 </mat-toolbar>
+
+<!-- The narrow-screen copy of the link row. printerMenu and aboutMenu are shared
+with the wide-screen buttons above; only one trigger set is ever visible, so a
+single instance of each submenu is enough. -->
+<mat-menu #mobileMenu="matMenu">
+  @if (!auth.loggedIn) {
+    <a class="menu-link" mat-menu-item routerLink="/" routerLinkActive="active"
+      >Home</a
+    >
+  }
+  @if (auth.loggedIn) {
+    <a
+      class="menu-link"
+      mat-menu-item
+      routerLink="/prints"
+      routerLinkActive="active"
+      >Prints</a
+    >
+    <button mat-menu-item [matMenuTriggerFor]="printerMenu">Printers</button>
+    <a
+      class="menu-link"
+      mat-menu-item
+      routerLink="/materials"
+      routerLinkActive="active"
+      >Materials</a
+    >
+    <a
+      class="menu-link"
+      mat-menu-item
+      routerLink="/analytics"
+      routerLinkActive="active"
+      >Analytics</a
+    >
+  }
+  <button mat-menu-item [matMenuTriggerFor]="aboutMenu">About</button>
+</mat-menu>
+
+<mat-menu #printerMenu="matMenu">
+  <a
+    class="menu-link"
+    mat-menu-item
+    routerLink="/printers"
+    routerLinkActive="active"
+    >Printers</a
+  >
+  <a
+    class="menu-link"
+    mat-menu-item
+    routerLink="/printer-maintenance"
+    routerLinkActive="active"
+    >Printer Maintenance</a
+  >
+</mat-menu>
+
+<mat-menu #aboutMenu="matMenu">
+  <a
+    class="menu-link"
+    mat-menu-item
+    routerLink="/docs"
+    routerLinkActive="active"
+    >Documentation</a
+  >
+  @if (auth.loggedIn) {
+    <a
+      class="menu-link"
+      mat-menu-item
+      routerLink="/feedback"
+      routerLinkActive="active"
+      >Send Feedback</a
+    >
+  }
+  <a
+    class="menu-link"
+    mat-menu-item
+    routerLink="/docs/release-notes"
+    routerLinkActive="active"
+    >Version v{{ versionNumber }}</a
+  >
+</mat-menu>
+
+<mat-menu #profileMenu="matMenu">
+  @if (auth.loggedIn && isUserProfileFeatureEnabled) {
+    <a
+      class="menu-link"
+      mat-menu-item
+      [routerLink]="['users', userId]"
+      routerLinkActive="active"
+      >My Profile</a
+    >
+  }
+  @if (auth.loggedIn) {
+    <a
+      class="menu-link"
+      mat-menu-item
+      [routerLink]="['/settings']"
+      routerLinkActive="active"
+      >Settings</a
+    >
+    <a
+      class="menu-link"
+      mat-menu-item
+      [routerLink]="['/api-keys']"
+      routerLinkActive="active"
+      >Personal Api Keys</a
+    >
+    <button mat-menu-item (click)="auth.logout()">Log Out</button>
+  }
+</mat-menu>

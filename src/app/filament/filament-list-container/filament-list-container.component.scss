@@ -151,6 +151,15 @@ table {
   padding-right: 0 !important;
 }
 
+// The thumbnail is a fixed 40px box, so this column has nothing to do with the
+// slack `table-layout: auto` hands out - without a width it just grows and
+// leaves the image adrift in a widening cell. 40px of image plus the 5px of
+// right padding every cell in this table carries.
+.mat-column-image {
+  flex: 0 0 45px !important;
+  width: 45px !important;
+}
+
 .mat-column-colorHex {
   flex: 0 0 70px !important;
   width: 70px !important;

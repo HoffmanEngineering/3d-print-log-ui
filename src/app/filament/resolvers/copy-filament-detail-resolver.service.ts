@@ -24,6 +24,9 @@ export class CopyFilamentDetailResolverService {
           id: null,
           isActive: true,
           filamentAdjustments: [], // Remove any existing adjustments.
+          // A material photo is of one physical spool. Unlike a print's slicer
+          // render, it is not valid for the copy.
+          images: [],
         };
 
         return cleanedFilament;

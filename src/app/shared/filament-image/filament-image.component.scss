@@ -1,3 +1,12 @@
+// Without this the host is an inline, auto-height element, so the height: 100%
+// below resolves against nothing and the image falls back to its natural size —
+// which is how a large upload used to overflow the panel.
+:host {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+}
+
 .filament-image {
   position: relative;
   height: 100%;
@@ -10,6 +19,10 @@
 .filament-image img {
   height: 100%;
   width: 100%;
+  // Belt and braces: contain letterboxes to the box above, and the max-* pair
+  // keeps an oversized image inside its parent even where the host is unsized.
+  max-height: 100%;
+  max-width: 100%;
   object-fit: contain;
 }
 

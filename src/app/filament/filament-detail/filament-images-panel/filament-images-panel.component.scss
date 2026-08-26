@@ -14,10 +14,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
-  border: 1px dashed rgba(128, 128, 128, 0.5);
   border-radius: 4px;
   padding: 0.5rem;
+  // Transparent rather than absent, so gaining the border on drag-over does not
+  // shift the contents by a pixel.
+  border: 1px dashed transparent;
+}
+
+// The dashed frame is the affordance for an EMPTY drop target. Once a photo is
+// showing, the photo is the content and the frame just boxes it in for no reason.
+.image-drop-zone.is-empty {
+  min-height: 200px;
+  border-color: rgba(128, 128, 128, 0.5);
 }
 
 .image-drop-zone.drag-over {
@@ -36,9 +44,15 @@
   pointer-events: none;
 }
 
+// Matches the prints/projects hero box (see edit-print-detail.component.scss):
+// a square that scales with the column and stops at 400px, with the image
+// letterboxed inside it rather than setting its own size.
 .main-image {
-  height: 200px;
+  position: relative;
   width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;

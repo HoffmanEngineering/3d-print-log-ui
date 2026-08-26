@@ -10,6 +10,7 @@
 
   <div
     class="image-drop-zone"
+    [class.is-empty]="items().length === 0"
     [class.drag-over]="isDragOver()"
     (dragover)="onDragOver($event)"
     (dragleave)="onDragLeave($event)"
@@ -25,20 +26,20 @@
     @if (items().length === 0) {
       <button type="button" mat-stroked-button (click)="imgFileInput.click()">
         <mat-icon>add_a_photo</mat-icon>
-        Add Spool Photo
+        Add Photo
       </button>
     } @else {
       <app-image-carousel
         [imageCount]="items().length"
         [selectedIndex]="selectedIndex()"
-        label="Spool photos"
+        label="Photos"
         (indexChange)="onCarouselIndexChange($event)"
       >
         @if (selected(); as image) {
           <div class="main-image">
             <app-filament-image
               [src]="image.url ?? ''"
-              alt="Spool photo"
+              alt="Material photo"
               (delete)="onImageDeleted(image)"
             />
           </div>

@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import {
   ImageThumbnailStripComponent,
   ThumbnailImage,
@@ -10,6 +13,7 @@ import {
 describe('ImageThumbnailStripComponent', () => {
   let component: ImageThumbnailStripComponent;
   let fixture: ComponentFixture<ImageThumbnailStripComponent>;
+  let httpMock: HttpTestingController;
 
   const mockImages: ThumbnailImage[] = [
     {
@@ -32,10 +36,81 @@ describe('ImageThumbnailStripComponent', () => {
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
+    httpMock = TestBed.inject(HttpTestingController);
+
     fixture = TestBed.createComponent(ImageThumbnailStripComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('images', mockImages);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    // The default rendering path pipes every url through AuthImagePipe, which
+    // fetches it over HttpClient. Drain those so verify() only reports leaks the
+    // tests actually care about.
+    httpMock.match(() => true);
+    httpMock.verify();
+  });
+
+  describe('direct urls', () => {
+    it('renders a direct img src and issues no HTTP request when directUrls is set', () => {
+      // The shared beforeEach already rendered the default (piped) fixture, so
+      // clear its fetches before asserting on what the direct path issues.
+      httpMock.match(() => true);
+
+      fixture.componentRef.setInput('editable', true);
+      fixture.componentRef.setInput('directUrls', true);
+      fixture.componentRef.setInput('images', [
+        {
+          id: 1,
+          url: 'https://blob.example.com/a.jpg?sig=x',
+          isDefault: true,
+          displayOrder: 0,
+        },
+      ]);
+      fixture.detectChanges();
+
+      const img: HTMLImageElement =
+        fixture.nativeElement.querySelector('.thumbnail img');
+      expect(img.src).toContain('sig=x');
+      // AuthImagePipe would fetch the blob and defeat the browser cache the SAS
+      // URL exists to enable.
+      httpMock.expectNone(() => true);
+    });
+
+    it('prefers thumbnailUrl over url when present', () => {
+      fixture.componentRef.setInput('editable', true);
+      fixture.componentRef.setInput('directUrls', true);
+      fixture.componentRef.setInput('images', [
+        {
+          id: 1,
+          url: 'full.jpg',
+          thumbnailUrl: 'thumb.webp',
+          isDefault: true,
+          displayOrder: 0,
+        },
+      ]);
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('.thumbnail img').src
+      ).toContain('thumb.webp');
+    });
+
+    it('still uses AuthImagePipe by default, leaving prints and projects unchanged', () => {
+      fixture.componentRef.setInput('editable', true);
+      fixture.componentRef.setInput('images', [
+        {
+          id: 1,
+          url: '/api/Prints/1/image/1',
+          isDefault: true,
+          displayOrder: 0,
+        },
+      ]);
+      fixture.detectChanges();
+
+      httpMock.expectOne('/api/Prints/1/image/1').flush(new Blob());
+    });
   });
 
   it('should create', () => {

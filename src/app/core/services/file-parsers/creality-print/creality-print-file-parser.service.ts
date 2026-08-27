@@ -9,23 +9,7 @@ import {
   PrintStatus,
 } from '../../print.service';
 import { FilamentSummary } from '../../filament.service';
-
-//
-export interface MaterialDensityGramsPerCubicCm {
-  PLA: number;
-  ABS: number;
-  PETG: number;
-  Nylon: number;
-}
-
-export class MaterialDensities {
-  static materials: MaterialDensityGramsPerCubicCm = {
-    PLA: 1.24,
-    ABS: 1.04,
-    PETG: 1.23,
-    Nylon: 1.06,
-  };
-}
+import { calculateFilamentWeightInMg } from '../filament-usage.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -115,46 +99,11 @@ export class CrealityPrintFileParserService implements GcodeNewPrintParser {
       return undefined;
     }
 
-    if (filamentType.includes('PLA')) {
-      return this.calculateWeightInMg(
-        MaterialDensities.materials.PLA,
-        filamentUsageLengthInMM,
-        filamentDiameter
-      );
-    } else if (filamentType.includes('ABS')) {
-      return this.calculateWeightInMg(
-        MaterialDensities.materials.ABS,
-        filamentUsageLengthInMM,
-        filamentDiameter
-      );
-    } else if (filamentType.includes('PETG')) {
-      return this.calculateWeightInMg(
-        MaterialDensities.materials.PETG,
-        filamentUsageLengthInMM,
-        filamentDiameter
-      );
-    }
-
-    // Only PLA, ABS and PETG are handled above, so anything else is unknown
-    // rather than zero. Note MaterialDensities also declares Nylon, which this
-    // chain never reaches -- see #100.
-    return undefined;
-  }
-
-  private calculateWeightInMg(
-    materialDensityGramsPerCubicCm: number,
-    lengthInMm: number,
-    diameterInMm: number
-  ) {
-    const radiusInMm = diameterInMm / 2;
-    const filamentAreaInMm2 = Math.PI * radiusInMm * radiusInMm;
-
-    const volume = filamentAreaInMm2 * lengthInMm;
-
-    const densityInCubicMm = materialDensityGramsPerCubicCm / 1000;
-
-    const weightInGrams = volume * densityInCubicMm;
-    return Math.floor(weightInGrams * 1000);
+    return calculateFilamentWeightInMg(
+      filamentType,
+      filamentUsageLengthInMM,
+      filamentDiameter
+    );
   }
 
   parseSettingsIntoNotes(gcode: string): string {

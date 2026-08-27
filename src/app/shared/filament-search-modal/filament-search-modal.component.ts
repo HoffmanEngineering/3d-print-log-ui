@@ -7,6 +7,7 @@ import {
 } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { QrScanResult } from 'src/app/core/services/qr-scanner.service';
+import { filamentDetailToSummary } from 'src/app/core/utils/filament-summary';
 
 export interface DialogData {
   otherFilamentOption: any;
@@ -113,35 +114,9 @@ export class FilamentSearchModalComponent {
           filamentId: filament.id,
         });
 
-        // Map FilamentDetail to FilamentSummary format
-        const summary: FilamentSummary = {
-          id: filament.id,
-          displayName: filament.displayName,
-          brand: filament.brand,
-          materialCategoryNickname: filament.materialCategoryNickname,
-          materialType: filament.materialType,
-          materialDensityGramPerCubicCm: filament.materialDensityGramPerCubicCm,
-          colorName: filament.colorName,
-          colorHex: filament.colorHex,
-          colorPattern: filament.colorPattern,
-          colors: filament.colors,
-          finishType: filament.finishType,
-          effects: filament.effects,
-          recommendedTemp: filament.recommendedTemp,
-          isActive: filament.isActive,
-          notes: filament.notes,
-          isFavorite: filament.isFavorite,
-          createdDate: '',
-          filamentRemaining: null,
-          filamentLengthRemainingInM: null,
-          filamentVolumeRemainingInMl: null,
-          purchasePriceValue: filament.purchasePriceValue,
-          initialNominalWeightMg: filament.initialNominalWeightMg,
-          diameterMm: filament.diameterMm ?? 1.75,
-          loadedInPrinter: null,
-          storageLocation: filament.storageLocation,
-          materialCategory: null as any,
-        };
+        // Map FilamentDetail to the FilamentSummary shape the picker expects,
+        // including the server-computed remaining values.
+        const summary = filamentDetailToSummary(filament);
 
         if (this.data.multiSelect) {
           // In multi-select mode: add to selection and switch back to list

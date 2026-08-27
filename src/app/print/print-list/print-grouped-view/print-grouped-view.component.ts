@@ -688,7 +688,7 @@ export class PrintGroupedViewComponent implements OnInit {
       key: 'start-date',
       displayName: 'Start Date',
       description:
-        'Most recent print date for project rows; individual start date for print rows.',
+        'Manually set start date, or the earliest print date, for project rows; individual start date for print rows.',
     },
     {
       key: 'start-time',

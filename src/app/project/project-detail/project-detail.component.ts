@@ -41,6 +41,7 @@ import {
 } from 'src/app/core/services/print.service';
 import { PrintCardComponent } from 'src/app/print/print-card/print-card.component';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { formatCivilDate } from 'src/app/core/utils/civil-date';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -158,6 +159,12 @@ export class ProjectDetailComponent implements OnInit {
       totalEstimatedPrintTimeInSeconds: 0,
       totalFilamentWeightMg: 0,
       images: [],
+      // A project being created has no prints yet, so its start date resolves to today —
+      // matching what the API will return the moment it is saved.
+      startDate: formatCivilDate(new Date())!,
+      finishDate: null,
+      startDateOverride: null,
+      finishDateOverride: null,
     };
   }
 
@@ -319,6 +326,8 @@ export class ProjectDetailComponent implements OnInit {
       url: formValue.url || undefined,
       status: ProjectStatus.InProgress,
       viewStatus: formValue.viewStatus,
+      startDateOverride: formValue.startDateOverride,
+      finishDateOverride: formValue.finishDateOverride,
     };
 
     const stagedImages = [...this.images()].sort(
@@ -391,6 +400,8 @@ export class ProjectDetailComponent implements OnInit {
       description: formValue.description || undefined,
       url: formValue.url || undefined,
       status: p.status,
+      startDateOverride: formValue.startDateOverride,
+      finishDateOverride: formValue.finishDateOverride,
       viewStatus: formValue.viewStatus,
     };
 
@@ -575,6 +586,11 @@ export class ProjectDetailComponent implements OnInit {
       url: p.url,
       status,
       viewStatus: p.viewStatus,
+      // Carried from the current project, not omitted: this endpoint is a full replace, so
+      // leaving these out would silently clear a pinned date every time the status dropdown
+      // is used.
+      startDateOverride: p.startDateOverride,
+      finishDateOverride: p.finishDateOverride,
     };
     this.projectService
       .updateProject(p.id, dto)

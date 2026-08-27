@@ -49,6 +49,11 @@ export interface ProjectEditFormValue {
   description: string;
   url: string;
   viewStatus: ProjectViewStatus;
+
+  /** Manual start date as `YYYY-MM-DD`, or null to derive it from the project's prints. */
+  startDateOverride: string | null;
+  /** Manual finish date as `YYYY-MM-DD`, or null to derive it from the project's prints. */
+  finishDateOverride: string | null;
 }
 
 export interface ProjectSummaryDto {
@@ -63,6 +68,21 @@ export interface ProjectSummaryDto {
   totalEstimatedPrintTimeInSeconds: number;
   totalFilamentWeightMg: number;
   defaultImageId: number;
+
+  /**
+   * Resolved civil date as `YYYY-MM-DD`: the manual override when one is set, otherwise
+   * derived from the project's prints, otherwise the project's creation date.
+   *
+   * Kept as a string, never parsed into a Date for storage — a civil date parsed into an
+   * instant reacquires the timezone shift that carrying it as `DateOnly` exists to prevent.
+   */
+  startDate: string;
+  /** Resolved civil date, or null when the project has no print with a start date. */
+  finishDate: string | null;
+  /** The raw manual override, or null when the date is automatic. */
+  startDateOverride: string | null;
+  /** The raw manual override, or null when the date is automatic. */
+  finishDateOverride: string | null;
 }
 
 export interface ProjectDetailDto {
@@ -80,6 +100,21 @@ export interface ProjectDetailDto {
   totalEstimatedPrintTimeInSeconds: number;
   totalFilamentWeightMg: number;
   images: ProjectImageDto[];
+
+  /**
+   * Resolved civil date as `YYYY-MM-DD`: the manual override when one is set, otherwise
+   * derived from the project's prints, otherwise the project's creation date.
+   *
+   * Kept as a string, never parsed into a Date for storage — a civil date parsed into an
+   * instant reacquires the timezone shift that carrying it as `DateOnly` exists to prevent.
+   */
+  startDate: string;
+  /** Resolved civil date, or null when the project has no print with a start date. */
+  finishDate: string | null;
+  /** The raw manual override, or null when the date is automatic. */
+  startDateOverride: string | null;
+  /** The raw manual override, or null when the date is automatic. */
+  finishDateOverride: string | null;
 }
 
 export interface AddProjectDto {
@@ -89,6 +124,11 @@ export interface AddProjectDto {
   url?: string;
   status: ProjectStatus;
   viewStatus: ProjectViewStatus;
+
+  /** Manual start date as `YYYY-MM-DD`, or null to derive it from the project's prints. */
+  startDateOverride: string | null;
+  /** Manual finish date as `YYYY-MM-DD`, or null to derive it from the project's prints. */
+  finishDateOverride: string | null;
 }
 
 export interface PutProjectDto {
@@ -99,6 +139,11 @@ export interface PutProjectDto {
   url?: string;
   status: ProjectStatus;
   viewStatus: ProjectViewStatus;
+
+  /** Manual start date as `YYYY-MM-DD`, or null to derive it from the project's prints. */
+  startDateOverride: string | null;
+  /** Manual finish date as `YYYY-MM-DD`, or null to derive it from the project's prints. */
+  finishDateOverride: string | null;
 }
 
 export interface GroupedFeedItemDto {

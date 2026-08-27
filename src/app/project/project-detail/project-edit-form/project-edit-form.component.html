@@ -88,6 +88,73 @@
   </mat-form-field>
 
   <mat-form-field>
+    <mat-label>Start Date</mat-label>
+    <input
+      matInput
+      [matDatepicker]="startPicker"
+      formControlName="startDateOverride"
+    />
+    @if (form.controls.startDateOverride.value) {
+      <button
+        matSuffix
+        mat-icon-button
+        type="button"
+        data-cy="clear-start-date"
+        aria-label="Clear the manual start date and track this project's prints again"
+        (click)="clearStartDate()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+    <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+    <mat-datepicker #startPicker></mat-datepicker>
+    <mat-hint>
+      @if (form.controls.startDateOverride.value) {
+        Manually set
+      } @else {
+        Automatic: {{ project().startDate | civilDate }} — from this project's
+        prints
+      }
+    </mat-hint>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Finish Date</mat-label>
+    <input
+      matInput
+      [matDatepicker]="finishPicker"
+      formControlName="finishDateOverride"
+    />
+    @if (form.controls.finishDateOverride.value) {
+      <button
+        matSuffix
+        mat-icon-button
+        type="button"
+        data-cy="clear-finish-date"
+        aria-label="Clear the manual finish date and track this project's prints again"
+        (click)="clearFinishDate()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+    <mat-datepicker-toggle
+      matSuffix
+      [for]="finishPicker"
+    ></mat-datepicker-toggle>
+    <mat-datepicker #finishPicker></mat-datepicker>
+    <mat-hint>
+      @if (form.controls.finishDateOverride.value) {
+        Manually set
+      } @else if (project().finishDate) {
+        Automatic: {{ project().finishDate | civilDate }} — from this project's
+        prints
+      } @else {
+        Automatic — set once this project has prints
+      }
+    </mat-hint>
+  </mat-form-field>
+
+  <mat-form-field>
     <mat-label>Visibility</mat-label>
     <mat-select formControlName="viewStatus">
       <mat-option [value]="ProjectViewStatus.Public">Public</mat-option>

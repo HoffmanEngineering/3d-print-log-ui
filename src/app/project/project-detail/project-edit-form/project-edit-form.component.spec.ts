@@ -22,6 +22,10 @@ const mockProject: ProjectDetailDto = {
   totalEstimatedPrintTimeInSeconds: 0,
   totalFilamentWeightMg: 0,
   images: [],
+  startDate: '2026-03-02',
+  finishDate: '2026-03-06',
+  startDateOverride: null,
+  finishDateOverride: null,
 };
 
 describe('ProjectEditFormComponent', () => {

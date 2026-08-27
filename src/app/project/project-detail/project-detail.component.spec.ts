@@ -33,6 +33,10 @@ const mockProject: ProjectDetailDto = {
   totalEstimatedPrintTimeInSeconds: 8000,
   totalFilamentWeightMg: 250000,
   images: [],
+  startDate: '2026-03-02',
+  finishDate: '2026-03-06',
+  startDateOverride: null,
+  finishDateOverride: null,
 };
 
 describe('ProjectDetailComponent', () => {
@@ -175,6 +179,8 @@ describe('ProjectDetailComponent', () => {
       description: '',
       url: '',
       viewStatus: ProjectViewStatus.Public,
+      startDateOverride: null,
+      finishDateOverride: null,
     });
 
     await fixture.whenStable();
@@ -370,6 +376,8 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       description: '',
       url: '',
       viewStatus: ProjectViewStatus.Private,
+      startDateOverride: null,
+      finishDateOverride: null,
     });
 
     await fixture.whenStable();
@@ -393,6 +401,8 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       description: '',
       url: '',
       viewStatus: ProjectViewStatus.Private,
+      startDateOverride: null,
+      finishDateOverride: null,
     });
 
     await fixture.whenStable();

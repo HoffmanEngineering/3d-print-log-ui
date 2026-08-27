@@ -8,6 +8,7 @@ import {
   ProjectStatus,
   ProjectViewStatus,
   AddProjectDto,
+  PutProjectDto,
 } from './project.service';
 import { environment } from 'src/environments/environment.unittest';
 
@@ -31,6 +32,8 @@ describe('ProjectService', () => {
       name: 'Voron Build',
       status: ProjectStatus.InProgress,
       viewStatus: ProjectViewStatus.Private,
+      startDateOverride: null,
+      finishDateOverride: null,
     };
     service.createProject(dto).subscribe((result) => {
       expect(result.name).toBe('Voron Build');
@@ -90,6 +93,71 @@ describe('ProjectService', () => {
           `${environment.printLogApiUrl}/api/Projects/abc-123/images/7`
         )
         .flush(new Blob(), { status: 404, statusText: 'Not Found' });
+    });
+  });
+
+  describe('date overrides', () => {
+    const basePutDto: PutProjectDto = {
+      id: 'abc',
+      name: 'Voron Build',
+      status: ProjectStatus.InProgress,
+      viewStatus: ProjectViewStatus.Private,
+      startDateOverride: null,
+      finishDateOverride: null,
+    };
+
+    it('sends date overrides in the update payload', () => {
+      const dto: PutProjectDto = {
+        ...basePutDto,
+        startDateOverride: '2026-02-01',
+        finishDateOverride: null,
+      };
+
+      service.updateProject('abc', dto).subscribe();
+
+      const req = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/Projects/abc`
+      );
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body.startDateOverride).toBe('2026-02-01');
+      expect(req.request.body.finishDateOverride).toBeNull();
+      req.flush({});
+    });
+
+    it('sends an explicit null rather than omitting the key when clearing', () => {
+      service.updateProject('abc', { ...basePutDto }).subscribe();
+
+      const req = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/Projects/abc`
+      );
+      // PUT is a full replace: a payload that omits the key cannot clear an override, it
+      // just leaves whatever the server already had.
+      expect('startDateOverride' in req.request.body).toBeTrue();
+      expect(req.request.body.startDateOverride).toBeNull();
+      expect('finishDateOverride' in req.request.body).toBeTrue();
+      expect(req.request.body.finishDateOverride).toBeNull();
+      req.flush({});
+    });
+
+    it('sends overrides as YYYY-MM-DD strings, never as instants', () => {
+      const dto: PutProjectDto = {
+        ...basePutDto,
+        startDateOverride: '2026-02-01',
+        finishDateOverride: '2026-03-01',
+      };
+
+      service.updateProject('abc', dto).subscribe();
+
+      const req = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/Projects/abc`
+      );
+      // An ISO instant here would reintroduce the per-viewer day shift that carrying these
+      // as civil dates exists to prevent.
+      expect(req.request.body.startDateOverride).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(req.request.body.finishDateOverride).toMatch(
+        /^\d{4}-\d{2}-\d{2}$/
+      );
+      req.flush({});
     });
   });
 });

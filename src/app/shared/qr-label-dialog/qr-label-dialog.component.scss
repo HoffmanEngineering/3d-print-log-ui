@@ -196,3 +196,30 @@
 .filament-temp {
   color: rgba(0, 0, 0, 0.6);
 }
+
+.advanced-panel {
+  margin-bottom: 8px;
+}
+
+.advanced-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 8px 0 0 8px;
+
+  mat-form-field {
+    width: auto;
+  }
+}
+
+.page-info {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  #fit-summary {
+    font-weight: 600;
+    color: var(--app-text-primary);
+  }
+}

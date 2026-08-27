@@ -164,6 +164,18 @@
                   >{{ p.totalFilamentWeightMg / 1000 | number: '1.0-1' }}g</span
                 >
               </div>
+              <div class="stat">
+                <span class="label">Started</span>
+                <span class="value" data-cy="project-start-date">{{
+                  p.startDate | civilDate
+                }}</span>
+              </div>
+              <div class="stat">
+                <span class="label">Finished</span>
+                <span class="value" data-cy="project-finish-date">{{
+                  p.finishDate | civilDate
+                }}</span>
+              </div>
             </div>
           }
         </mat-card-content>

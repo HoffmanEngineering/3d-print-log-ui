@@ -42,6 +42,7 @@ import {
 import { PrintCardComponent } from 'src/app/print/print-card/print-card.component';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { formatCivilDate } from 'src/app/core/utils/civil-date';
+import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -67,6 +68,7 @@ import { environment } from 'src/environments/environment';
     ImageCarouselComponent,
     ImageThumbnailStripComponent,
     PrintCardComponent,
+    CivilDatePipe,
   ],
 })
 export class ProjectDetailComponent implements OnInit {

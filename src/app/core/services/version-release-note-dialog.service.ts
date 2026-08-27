@@ -28,6 +28,9 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.48.1': {
+      redirect: '1.48.0',
+    },
     '1.48.0': {
       title: '1.48.0 - Spool Photos',
       body: `<p>

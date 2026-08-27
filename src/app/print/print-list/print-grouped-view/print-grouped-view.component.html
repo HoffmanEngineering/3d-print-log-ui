@@ -712,7 +712,7 @@
       <th mat-header-cell *matHeaderCellDef>Start Date</th>
       <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
-          {{ row.item.sortDate | localeDate }}
+          {{ row.item.projectStartDate | civilDate }}
         } @else if (row.kind === 'expanded-print') {
           {{ row.print.startDate | localeDate }}
         } @else {

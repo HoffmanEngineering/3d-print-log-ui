@@ -41,7 +41,7 @@ import {
 } from 'src/app/core/services/print.service';
 import { PrintCardComponent } from 'src/app/print/print-card/print-card.component';
 import { AuthService } from 'src/app/core/services/auth.service';
-import { formatCivilDate } from 'src/app/core/utils/civil-date';
+import { todayUtcCivilDate } from 'src/app/core/utils/civil-date';
 import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -161,9 +161,10 @@ export class ProjectDetailComponent implements OnInit {
       totalEstimatedPrintTimeInSeconds: 0,
       totalFilamentWeightMg: 0,
       images: [],
-      // A project being created has no prints yet, so its start date resolves to today —
-      // matching what the API will return the moment it is saved.
-      startDate: formatCivilDate(new Date())!,
+      // A project being created has no prints yet, so its start date resolves to today.
+      // UTC, not local: the API derives it from the row's UTC CreatedDate, so a local
+      // reading would preview a different day than the POST response around UTC midnight.
+      startDate: todayUtcCivilDate(),
       finishDate: null,
       startDateOverride: null,
       finishDateOverride: null,

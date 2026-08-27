@@ -1,4 +1,8 @@
-import { formatCivilDate, parseCivilDate } from './civil-date';
+import {
+  formatCivilDate,
+  parseCivilDate,
+  todayUtcCivilDate,
+} from './civil-date';
 
 describe('civil-date utils', () => {
   it('parses YYYY-MM-DD to a local-midnight Date', () => {
@@ -51,5 +55,53 @@ describe('civil-date utils', () => {
       // exactly why this bug survives review on a machine in a negative offset.
       expect(naive).not.toBe(correct);
     }
+  });
+
+  describe('year and calendar-validity handling', () => {
+    it('does not remap years 1-99 into the 1900s', () => {
+      // The multi-argument Date constructor treats 0-99 as 1900-1999, so a naive
+      // implementation turns 0001-01-01 into 1901 and persists the wrong year.
+      const d = parseCivilDate('0001-01-01')!;
+      expect(d).not.toBeNull();
+      expect(d.getFullYear()).toBe(1);
+    });
+
+    it('round-trips a year below 100 with four-digit padding', () => {
+      expect(formatCivilDate(parseCivilDate('0099-12-31'))).toBe('0099-12-31');
+    });
+
+    it('rejects a day that does not exist rather than rolling it forward', () => {
+      // new Date(2026, 1, 30) silently becomes March 2.
+      expect(parseCivilDate('2026-02-30')).toBeNull();
+      expect(parseCivilDate('2026-13-01')).toBeNull();
+      expect(parseCivilDate('2026-04-31')).toBeNull();
+    });
+
+    it('accepts a real leap day and rejects a fake one', () => {
+      expect(parseCivilDate('2024-02-29')).not.toBeNull();
+      expect(parseCivilDate('2026-02-29')).toBeNull();
+    });
+
+    it('rejects loosely formatted input', () => {
+      expect(parseCivilDate('2026-2-1')).toBeNull();
+      expect(parseCivilDate('02/01/2026')).toBeNull();
+    });
+
+    it('returns null for an invalid Date object', () => {
+      expect(formatCivilDate(new Date('nonsense'))).toBeNull();
+    });
+  });
+
+  describe('todayUtcCivilDate', () => {
+    it('uses UTC components, matching how the API resolves a print-less project', () => {
+      const now = new Date();
+      const expected = [
+        `${now.getUTCFullYear()}`.padStart(4, '0'),
+        `${now.getUTCMonth() + 1}`.padStart(2, '0'),
+        `${now.getUTCDate()}`.padStart(2, '0'),
+      ].join('-');
+
+      expect(todayUtcCivilDate()).toBe(expected);
+    });
   });
 });

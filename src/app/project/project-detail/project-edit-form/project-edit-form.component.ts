@@ -15,7 +15,7 @@ import {
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { DateAdapter, MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -27,6 +27,7 @@ import {
 } from 'src/app/core/services/project.service';
 import { formatCivilDate, parseCivilDate } from 'src/app/core/utils/civil-date';
 import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
+import { CivilDateAdapter } from 'src/app/shared/date/civil-date-adapter';
 
 @Component({
   selector: 'app-project-edit-form',
@@ -44,6 +45,10 @@ import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
     MatSelectModule,
     CivilDatePipe,
   ],
+  // Scoped to this form: the stock NativeDateAdapter parses a TYPED `2026-02-01` through
+  // Date.parse, which reads it as UTC midnight and therefore as the previous local day west
+  // of UTC — so the form would save a different date than the one entered.
+  providers: [{ provide: DateAdapter, useClass: CivilDateAdapter }],
 })
 export class ProjectEditFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);

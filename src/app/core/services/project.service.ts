@@ -148,7 +148,15 @@ export interface PutProjectDto {
 
 export interface GroupedFeedItemDto {
   type: 'project' | 'print';
+  /**
+   * Ordering key only. Do NOT render this: a pinned civil date sorts at UTC midnight, so
+   * showing it in the viewer's timezone displays the previous day west of UTC. Use
+   * `projectStartDate` for display on project rows.
+   */
   sortDate: Date;
+
+  /** The project's resolved start date as `YYYY-MM-DD`. Project rows only. */
+  projectStartDate: string | null;
   // project fields
   projectId?: string;
   projectName?: string;

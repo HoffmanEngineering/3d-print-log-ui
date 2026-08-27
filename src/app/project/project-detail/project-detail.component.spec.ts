@@ -505,8 +505,32 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
         name: 'My New Project',
         status: ProjectStatus.InProgress,
         viewStatus: ProjectViewStatus.Private,
+        startDateOverride: null,
+        finishDateOverride: null,
       })
     );
+  });
+
+  it('forwards non-null date overrides from the create form', async () => {
+    // Asserting only the null case would stay green even if both create-payload
+    // assignments were deleted, since an absent key reads as undefined either way.
+    mockProjectService.reorderImages.and.returnValue(of(void 0));
+
+    component.onSave({
+      name: 'Pinned Project',
+      reference: '',
+      description: '',
+      url: '',
+      viewStatus: ProjectViewStatus.Private,
+      startDateOverride: '2026-02-01',
+      finishDateOverride: '2026-03-01',
+    });
+
+    await fixture.whenStable();
+
+    const dto = mockProjectService.createProject.calls.mostRecent().args[0];
+    expect(dto.startDateOverride).toBe('2026-02-01');
+    expect(dto.finishDateOverride).toBe('2026-03-01');
   });
 
   it('should exit edit mode, set the created project, and update the URL after successful creation', async () => {

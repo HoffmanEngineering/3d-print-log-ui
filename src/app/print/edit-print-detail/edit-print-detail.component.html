@@ -92,7 +92,7 @@
           (imageDeleted)="onImageDeleted($event)"
           (defaultChanged)="onDefaultChanged($event)"
           (imagesReordered)="onImagesReordered($event)"
-          (addClicked)="imgFileInput.click()"
+          (addClicked)="(isCordova ? cameraInput : imgFileInput).click()"
         />
       </div>
       <mat-card-content

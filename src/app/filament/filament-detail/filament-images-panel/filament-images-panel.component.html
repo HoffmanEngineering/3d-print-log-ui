@@ -7,6 +7,16 @@
     multiple
     (change)="onFilesSelected($event)"
   />
+  <!-- Inside the Cordova app the OS only offers the gallery unless the input
+       asks to capture, so the camera gets its own input. -->
+  <input
+    #cameraInput
+    type="file"
+    class="file-input"
+    accept="image/jpeg,image/png,image/webp"
+    capture="environment"
+    (change)="onFilesSelected($event)"
+  />
 
   <div
     class="image-drop-zone"
@@ -24,7 +34,11 @@
     }
 
     @if (items().length === 0) {
-      <button type="button" mat-stroked-button (click)="imgFileInput.click()">
+      <button
+        type="button"
+        mat-stroked-button
+        (click)="(isCordova ? cameraInput : imgFileInput).click()"
+      >
         <mat-icon>add_a_photo</mat-icon>
         Add Photo
       </button>
@@ -59,7 +73,7 @@
     (imageDeleted)="onImageDeleted($event)"
     (defaultChanged)="onDefaultChanged($event)"
     (imagesReordered)="onImagesReordered($event)"
-    (addClicked)="imgFileInput.click()"
+    (addClicked)="(isCordova ? cameraInput : imgFileInput).click()"
   />
 
   @if (busy()) {

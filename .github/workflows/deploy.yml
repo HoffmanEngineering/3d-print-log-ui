@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Fails in seconds, before the build and before an approval is requested,
       # when a tag was pushed without a matching release-notes section.
@@ -36,7 +36,7 @@ jobs:
         run: node scripts/extract-release-notes.mjs "$TAG" > /dev/null
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'npm'
@@ -76,7 +76,7 @@ jobs:
       # The deploy job gets the exact bytes that were verified here, rather than
       # rebuilding and hoping for the same output.
       - name: Upload built site
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: site
           path: dist/print-log-ui/browser
@@ -92,7 +92,7 @@ jobs:
 
     steps:
       - name: Download built site
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: site
           path: site
@@ -118,10 +118,10 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
 

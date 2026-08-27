@@ -1,13 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  PLATFORM_ID,
   computed,
+  effect,
   inject,
   OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
-import { CommonModule, DOCUMENT } from '@angular/common';
+import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
@@ -25,13 +27,18 @@ import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { QrCodeService } from 'src/app/core/services/qr-code.service';
 import { MatInputModule } from '@angular/material/input';
+import { ToastrService } from 'ngx-toastr';
+import {
+  LABEL_DIMENSIONS,
+  LabelSize,
+  PAPER_DIMENSIONS,
+  PaperSize,
+  fitGrid,
+} from './qr-label-layout';
 
 export interface QrLabelDialogData {
   filaments: FilamentSummary[];
 }
-
-export type LabelSize = 'small' | 'medium' | 'large';
-export type PaperSize = 'A4' | 'Letter' | 'A5';
 
 interface LabelData {
   filament: FilamentSummary;
@@ -40,22 +47,23 @@ interface LabelData {
   url: string;
 }
 
-interface PaperDimensions {
-  width: number;
-  height: number;
+/**
+ * The layout choices remembered between visits. Printing labels is repetitive -
+ * the same paper, the same label stock - so re-picking every control on every
+ * open is pure friction.
+ */
+interface StoredLayout {
+  paperSize: PaperSize;
+  labelSize: LabelSize;
+  copies: number;
+  columnOverride: number | null;
+  rowOverride: number | null;
 }
 
-const PAPER_DIMENSIONS: Record<PaperSize, PaperDimensions> = {
-  A4: { width: 210, height: 297 },
-  Letter: { width: 216, height: 279 },
-  A5: { width: 148, height: 210 },
-};
+const LAYOUT_STORAGE_KEY = 'qr_label_layout';
 
-const LABEL_DIMENSIONS: Record<LabelSize, { width: number; height: number }> = {
-  small: { width: 50, height: 25 },
-  medium: { width: 70, height: 30 },
-  large: { width: 90, height: 35 },
-};
+const MIN_COPIES = 1;
+const MAX_COPIES = 10;
 
 @Component({
   selector: 'app-qr-label-dialog',
@@ -81,12 +89,12 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   private readonly loggingService = inject(LoggingService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly document = inject(DOCUMENT);
+  private readonly toastr = inject(ToastrService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  readonly columns = signal(2);
-  readonly rows = signal(5);
-  readonly copies = signal(1);
+  readonly copies = signal(MIN_COPIES);
   readonly safeCopies = computed(() =>
-    Math.max(1, Math.min(10, this.copies()))
+    Math.max(MIN_COPIES, Math.min(MAX_COPIES, this.copies()))
   );
   readonly labelSize = signal<LabelSize>('medium');
   readonly paperSize = signal<PaperSize>('A4');
@@ -94,8 +102,15 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly labels = signal<LabelData[]>([]);
 
-  readonly columnOptions = [1, 2, 3, 4];
-  readonly rowOptions = [3, 4, 5, 6, 7, 8, 9, 10];
+  /**
+   * Manual grid choices. Null means "however many fit", which is what almost
+   * everyone wants; the selects behind Advanced layout set these for the rare
+   * sheet of pre-cut labels that does not match the auto-fit.
+   */
+  readonly columnOverride = signal<number | null>(null);
+  readonly rowOverride = signal<number | null>(null);
+  readonly showAdvanced = signal(false);
+
   readonly labelSizeOptions: { value: LabelSize; label: string }[] = [
     { value: 'small', label: 'Small (50x25mm)' },
     { value: 'medium', label: 'Medium (70x30mm)' },
@@ -106,6 +121,27 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
     { value: 'Letter', label: 'Letter (216x279mm)' },
     { value: 'A5', label: 'A5 (148x210mm)' },
   ];
+
+  /** The most labels of the chosen size that fit the chosen sheet. */
+  readonly autoFitGrid = computed(() =>
+    fitGrid(this.paperDimensions(), this.labelDimensions())
+  );
+
+  // An override is capped by what fits, so shrinking the paper (or growing the
+  // label) can never leave a stale choice that overflows the page.
+  readonly columns = computed(() =>
+    Math.min(this.columnOverride() ?? Infinity, this.autoFitGrid().columns)
+  );
+  readonly rows = computed(() =>
+    Math.min(this.rowOverride() ?? Infinity, this.autoFitGrid().rows)
+  );
+
+  readonly columnOptions = computed(() => range(this.autoFitGrid().columns));
+  readonly rowOptions = computed(() => range(this.autoFitGrid().rows));
+
+  readonly isAutoFit = computed(
+    () => this.columnOverride() === null && this.rowOverride() === null
+  );
 
   readonly itemsPerPage = computed(() => this.columns() * this.rows());
 
@@ -138,6 +174,14 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
   readonly gridStyle = computed(() => ({
     'grid-template-columns': `repeat(${this.columns()}, 1fr)`,
   }));
+
+  constructor() {
+    this.restoreLayout();
+
+    // Remembered as they change rather than on print, so a layout picked and
+    // then abandoned is still there next time.
+    effect(() => this.persistLayout());
+  }
 
   ngOnInit(): void {
     this.loggingService.logEvent('QrLabelDialog_Opened', {
@@ -204,23 +248,29 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
       labelSize: this.labelSize(),
     });
 
-    // Open a new window for printing
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Please allow popups to print labels');
+      this.loggingService.logEvent('QrLabelDialog_PrintPopupBlocked');
+      this.toastr.warning(
+        'Your browser blocked the print window. Allow popups for this site, then print again.',
+        'Popup blocked'
+      );
       return;
     }
 
-    const content = this.generatePrintHtml();
-    printWindow.document.write(content);
+    printWindow.document.write(this.generatePrintHtml());
     printWindow.document.close();
 
-    // Wait for content to load, then print
-    printWindow.onload = () => {
-      printWindow.focus();
-      printWindow.print();
-      printWindow.close();
-    };
+    // Print as soon as the document is written instead of waiting on `onload`.
+    // Everything the sheet needs is inline - the QR codes are SVG markup and the
+    // styles are a <style> block - so there is nothing left to load, and a load
+    // event that has already gone by would never reach a handler attached here.
+    printWindow.focus();
+    // Closing straight after `print()` races browsers that do not block on the
+    // print dialog, which cancels the job. A window left open is recoverable;
+    // a cancelled print is not.
+    printWindow.addEventListener('afterprint', () => printWindow.close());
+    printWindow.print();
   }
 
   private generatePrintHtml(): string {
@@ -465,7 +515,110 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
     this.copies.set(this.safeCopies());
   }
 
+  toggleAdvanced(): void {
+    this.showAdvanced.update((shown) => !shown);
+  }
+
+  resetToAutoFit(): void {
+    this.columnOverride.set(null);
+    this.rowOverride.set(null);
+  }
+
+  private restoreLayout(): void {
+    const stored = this.readStoredLayout();
+    if (!stored) {
+      return;
+    }
+
+    this.paperSize.set(stored.paperSize);
+    this.labelSize.set(stored.labelSize);
+    this.copies.set(stored.copies);
+    this.columnOverride.set(stored.columnOverride);
+    this.rowOverride.set(stored.rowOverride);
+  }
+
+  /**
+   * Reads the remembered layout, ignoring anything that is not a value this
+   * dialog currently offers. Storage is shared with older and newer builds of
+   * the app and is editable by hand, so a stored paper size that no longer
+   * exists has to fall back to the defaults rather than render an empty select.
+   */
+  private readStoredLayout(): StoredLayout | null {
+    if (!this.isBrowser) {
+      return null;
+    }
+
+    try {
+      const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<StoredLayout>;
+      const paperSize = parsed.paperSize;
+      const labelSize = parsed.labelSize;
+
+      if (
+        !paperSize ||
+        !(paperSize in PAPER_DIMENSIONS) ||
+        !labelSize ||
+        !(labelSize in LABEL_DIMENSIONS)
+      ) {
+        return null;
+      }
+
+      return {
+        paperSize,
+        labelSize,
+        copies: clampCopiesValue(parsed.copies),
+        columnOverride: readOverride(parsed.columnOverride),
+        rowOverride: readOverride(parsed.rowOverride),
+      };
+    } catch {
+      // Corrupt, or storage is unavailable (private mode): defaults are fine.
+      return null;
+    }
+  }
+
+  private persistLayout(): void {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    const layout: StoredLayout = {
+      paperSize: this.paperSize(),
+      labelSize: this.labelSize(),
+      copies: this.safeCopies(),
+      columnOverride: this.columnOverride(),
+      rowOverride: this.rowOverride(),
+    };
+
+    try {
+      localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+    } catch {
+      // Storage full or blocked - failing to remember a layout is not an error
+      // worth showing anyone.
+    }
+  }
+
   close(): void {
     this.dialogRef.close();
   }
+}
+
+function range(count: number): number[] {
+  return Array.from({ length: count }, (_, index) => index + 1);
+}
+
+function clampCopiesValue(value: unknown): number {
+  const copies = Math.floor(Number(value));
+  if (!Number.isFinite(copies)) {
+    return MIN_COPIES;
+  }
+  return Math.max(MIN_COPIES, Math.min(MAX_COPIES, copies));
+}
+
+function readOverride(value: unknown): number | null {
+  const override = Math.floor(Number(value));
+  return Number.isFinite(override) && override >= 1 ? override : null;
 }

@@ -13,6 +13,7 @@ import {
 } from './qr-label-dialog.component';
 import { QrCodeService } from 'src/app/core/services/qr-code.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { ToastrService } from 'ngx-toastr';
 import {
   ColorPatternType,
   FilamentEffect,
@@ -26,6 +27,7 @@ describe('QrLabelDialogComponent', () => {
   let mockDialogRef: jasmine.SpyObj<MatDialogRef<QrLabelDialogComponent>>;
   let mockQrCodeService: jasmine.SpyObj<QrCodeService>;
   let mockLoggingService: jasmine.SpyObj<LoggingService>;
+  let mockToastr: jasmine.SpyObj<ToastrService>;
 
   const mockFilament: FilamentSummary = {
     id: 'test-id-123',
@@ -66,7 +68,12 @@ describe('QrLabelDialogComponent', () => {
       'generateSvg',
       'generateFilamentUrl',
     ]);
-    mockLoggingService = jasmine.createSpyObj('LoggingService', ['logEvent']);
+    mockLoggingService = jasmine.createSpyObj('LoggingService', [
+      'logEvent',
+      'logException',
+    ]);
+    mockToastr = jasmine.createSpyObj('ToastrService', ['warning']);
+    localStorage.removeItem('qr_label_layout');
 
     mockQrCodeService.generateFilamentUrl.and.callFake(
       (id: string) => `https://example.com/materials/${id}`
@@ -82,6 +89,7 @@ describe('QrLabelDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: mockDialogData },
         { provide: QrCodeService, useValue: mockQrCodeService },
         { provide: LoggingService, useValue: mockLoggingService },
+        { provide: ToastrService, useValue: mockToastr },
       ],
     }).compileComponents();
 
@@ -89,15 +97,21 @@ describe('QrLabelDialogComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    localStorage.removeItem('qr_label_layout');
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should initialize with default settings', () => {
-    expect(component.columns()).toBe(2);
-    expect(component.rows()).toBe(5);
+  it('should initialize with a grid that fills the default sheet', () => {
     expect(component.labelSize()).toBe('medium');
     expect(component.paperSize()).toBe('A4');
+    // Medium labels on A4: 2 across, 8 down.
+    expect(component.columns()).toBe(2);
+    expect(component.rows()).toBe(8);
+    expect(component.isAutoFit()).toBe(true);
     expect(component.loading()).toBe(true);
   });
 
@@ -119,7 +133,8 @@ describe('QrLabelDialogComponent', () => {
     expect(mockDialogRef.close).toHaveBeenCalled();
   });
 
-  it('should open print window when print is called', async () => {
+  function stubPrintWindow() {
+    const listeners: Record<string, () => void> = {};
     const mockPrintWindow = {
       document: {
         write: jasmine.createSpy('write'),
@@ -128,10 +143,19 @@ describe('QrLabelDialogComponent', () => {
       focus: jasmine.createSpy('focus'),
       print: jasmine.createSpy('print'),
       close: jasmine.createSpy('close'),
-      onload: null as (() => void) | null,
+      addEventListener: (event: string, handler: () => void) => {
+        listeners[event] = handler;
+      },
+      fire: (event: string) => listeners[event]?.(),
+      hasListener: (event: string) => Boolean(listeners[event]),
     };
 
     spyOn(window, 'open').and.returnValue(mockPrintWindow as unknown as Window);
+    return mockPrintWindow;
+  }
+
+  it('prints as soon as the document is written, without waiting on load', async () => {
+    const mockPrintWindow = stubPrintWindow();
 
     fixture.detectChanges();
     await fixture.whenStable();
@@ -141,24 +165,147 @@ describe('QrLabelDialogComponent', () => {
     expect(window.open).toHaveBeenCalledWith('', '_blank');
     expect(mockPrintWindow.document.write).toHaveBeenCalled();
     expect(mockPrintWindow.document.close).toHaveBeenCalled();
+    expect(mockPrintWindow.focus).toHaveBeenCalled();
+    expect(mockPrintWindow.print).toHaveBeenCalled();
+  });
 
-    // Simulate onload callback
-    if (mockPrintWindow.onload) {
-      mockPrintWindow.onload();
-      expect(mockPrintWindow.focus).toHaveBeenCalled();
-      expect(mockPrintWindow.print).toHaveBeenCalled();
-      expect(mockPrintWindow.close).toHaveBeenCalled();
-    }
+  it('leaves the print window open until the print finishes', async () => {
+    const mockPrintWindow = stubPrintWindow();
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    component.print();
+
+    // Closing during printing cancels the job in browsers where print() does
+    // not block, so the window survives until afterprint.
+    expect(mockPrintWindow.close).not.toHaveBeenCalled();
+    expect(mockPrintWindow.hasListener('afterprint')).toBe(true);
+
+    mockPrintWindow.fire('afterprint');
+    expect(mockPrintWindow.close).toHaveBeenCalled();
+  });
+
+  it('warns instead of alerting when the print window is blocked', async () => {
+    spyOn(window, 'open').and.returnValue(null);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    component.print();
+
+    expect(mockToastr.warning).toHaveBeenCalled();
+    expect(mockLoggingService.logEvent).toHaveBeenCalledWith(
+      'QrLabelDialog_PrintPopupBlocked'
+    );
   });
 
   it('should compute items per page based on columns and rows', () => {
-    component.columns.set(2);
-    component.rows.set(5);
+    component.columnOverride.set(2);
+    component.rowOverride.set(5);
     expect(component.itemsPerPage()).toBe(10);
 
-    component.columns.set(3);
-    component.rows.set(4);
+    component.labelSize.set('small');
+    component.columnOverride.set(3);
+    component.rowOverride.set(4);
     expect(component.itemsPerPage()).toBe(12);
+  });
+
+  describe('grid fitting', () => {
+    it('re-fits the grid when the paper or label size changes', () => {
+      component.labelSize.set('large');
+      expect(component.columns()).toBe(2);
+      expect(component.rows()).toBe(7);
+
+      component.paperSize.set('A5');
+      expect(component.columns()).toBe(1);
+      expect(component.rows()).toBe(5);
+    });
+
+    it('only offers column and row counts that fit the sheet', () => {
+      component.paperSize.set('A5');
+      component.labelSize.set('large');
+
+      expect(component.columnOptions()).toEqual([1]);
+      expect(component.rowOptions()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('caps an override that no longer fits instead of overflowing the page', () => {
+      component.labelSize.set('small');
+      component.columnOverride.set(3);
+      expect(component.columns()).toBe(3);
+
+      // Large labels only fit two across, so the stored 3 has to give way.
+      component.labelSize.set('large');
+      expect(component.columns()).toBe(2);
+    });
+
+    it('returns to auto-fit when the override is cleared', () => {
+      component.columnOverride.set(1);
+      component.rowOverride.set(2);
+      expect(component.isAutoFit()).toBe(false);
+
+      component.resetToAutoFit();
+
+      expect(component.isAutoFit()).toBe(true);
+      expect(component.columns()).toBe(2);
+      expect(component.rows()).toBe(8);
+    });
+  });
+
+  describe('remembered layout', () => {
+    function createDialog() {
+      const created = TestBed.createComponent(QrLabelDialogComponent);
+      created.detectChanges();
+      return created.componentInstance;
+    }
+
+    it('restores the layout chosen last time', () => {
+      fixture.detectChanges();
+      component.paperSize.set('Letter');
+      component.labelSize.set('small');
+      component.copies.set(3);
+      component.columnOverride.set(2);
+      fixture.detectChanges();
+
+      const reopened = createDialog();
+
+      expect(reopened.paperSize()).toBe('Letter');
+      expect(reopened.labelSize()).toBe('small');
+      expect(reopened.copies()).toBe(3);
+      expect(reopened.columnOverride()).toBe(2);
+    });
+
+    it('falls back to the defaults when the stored layout is unreadable', () => {
+      localStorage.setItem('qr_label_layout', 'not json');
+
+      const reopened = createDialog();
+
+      expect(reopened.paperSize()).toBe('A4');
+      expect(reopened.labelSize()).toBe('medium');
+    });
+
+    it('ignores a stored paper size the dialog no longer offers', () => {
+      localStorage.setItem(
+        'qr_label_layout',
+        JSON.stringify({ paperSize: 'Legal', labelSize: 'medium', copies: 1 })
+      );
+
+      const reopened = createDialog();
+
+      expect(reopened.paperSize()).toBe('A4');
+    });
+
+    it('clamps a stored copy count that is out of range', () => {
+      localStorage.setItem(
+        'qr_label_layout',
+        JSON.stringify({ paperSize: 'A4', labelSize: 'medium', copies: 999 })
+      );
+
+      const reopened = createDialog();
+
+      expect(reopened.copies()).toBe(10);
+    });
   });
 
   it('should compute pages array based on labels and items per page', fakeAsync(() => {
@@ -166,8 +313,8 @@ describe('QrLabelDialogComponent', () => {
     flushMicrotasks();
     fixture.detectChanges();
 
-    component.columns.set(2);
-    component.rows.set(5);
+    component.columnOverride.set(2);
+    component.rowOverride.set(5);
 
     // With 1 label and 10 items per page, should have 1 page
     expect(component.pages().length).toBe(1);
@@ -175,7 +322,8 @@ describe('QrLabelDialogComponent', () => {
   }));
 
   it('should compute grid style based on columns', () => {
-    component.columns.set(3);
+    component.labelSize.set('small');
+    component.columnOverride.set(3);
     expect(component.gridStyle()).toEqual({
       'grid-template-columns': 'repeat(3, 1fr)',
     });
@@ -258,6 +406,7 @@ describe('QrLabelDialogComponent', () => {
           },
           { provide: QrCodeService, useValue: mockQrCodeService },
           { provide: LoggingService, useValue: mockLoggingService },
+          { provide: ToastrService, useValue: mockToastr },
         ],
       }).compileComponents();
 
@@ -279,10 +428,9 @@ describe('QrLabelDialogComponent', () => {
       flushMicrotasks();
       fixture.detectChanges();
 
-      // Default: 2 columns x 5 rows = 10 items per page
-      // 15 labels = 2 pages (10 + 5)
-      component.columns.set(2);
-      component.rows.set(5);
+      // 2 columns x 5 rows = 10 items per page; 15 labels = 2 pages (10 + 5)
+      component.columnOverride.set(2);
+      component.rowOverride.set(5);
 
       expect(component.pages().length).toBe(2);
       expect(component.pages()[0].length).toBe(10);

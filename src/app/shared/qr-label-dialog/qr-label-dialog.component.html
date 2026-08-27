@@ -30,24 +30,6 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Columns</mat-label>
-        <mat-select [ngModel]="columns()" (ngModelChange)="columns.set($event)">
-          @for (col of columnOptions; track col) {
-            <mat-option [value]="col">{{ col }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Rows</mat-label>
-        <mat-select [ngModel]="rows()" (ngModelChange)="rows.set($event)">
-          @for (row of rowOptions; track row) {
-            <mat-option [value]="row">{{ row }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
         <mat-label>Label Size</mat-label>
         <mat-select
           [ngModel]="labelSize()"
@@ -74,8 +56,68 @@
       </mat-form-field>
     </div>
 
+    <div class="advanced-panel no-print">
+      <button
+        id="toggle-advanced-layout"
+        mat-button
+        type="button"
+        (click)="toggleAdvanced()"
+        [attr.aria-expanded]="showAdvanced()"
+        aria-controls="advanced-layout"
+      >
+        <mat-icon>{{
+          showAdvanced() ? 'expand_less' : 'expand_more'
+        }}</mat-icon>
+        Advanced layout
+      </button>
+
+      @if (showAdvanced()) {
+        <div id="advanced-layout" class="advanced-controls">
+          <mat-form-field appearance="outline">
+            <mat-label>Columns</mat-label>
+            <mat-select
+              [ngModel]="columns()"
+              (ngModelChange)="columnOverride.set($event)"
+            >
+              @for (col of columnOptions(); track col) {
+                <mat-option [value]="col">{{ col }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Rows</mat-label>
+            <mat-select
+              [ngModel]="rows()"
+              (ngModelChange)="rowOverride.set($event)"
+            >
+              @for (row of rowOptions(); track row) {
+                <mat-option [value]="row">{{ row }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <button
+            id="reset-to-auto-fit"
+            mat-stroked-button
+            type="button"
+            (click)="resetToAutoFit()"
+            [disabled]="isAutoFit()"
+          >
+            Reset to auto-fit
+          </button>
+        </div>
+      }
+    </div>
+
     <div class="page-info no-print">
-      {{ displayLabels().length }} labels across {{ pages().length }} page(s)
+      <span id="fit-summary">
+        Fits {{ columns() }} x {{ rows() }} per sheet - {{ itemsPerPage() }}
+        labels/page
+      </span>
+      <span>
+        {{ displayLabels().length }} labels across {{ pages().length }} page(s)
+      </span>
     </div>
 
     <div class="print-container">

@@ -19,6 +19,7 @@ import {
   FilamentImage,
   FilamentService,
 } from 'src/app/core/services/filament.service';
+import { isCordova } from 'src/app/core/utils/platform';
 import { FilamentImageComponent } from 'src/app/shared/filament-image/filament-image.component';
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
@@ -60,6 +61,8 @@ let nextStagedKey = 1;
 })
 export class FilamentImagesPanelComponent {
   private readonly filamentService = inject(FilamentService);
+  /** Picks which hidden file input the add affordances open. */
+  protected readonly isCordova = isCordova;
   private readonly destroyRef = inject(DestroyRef);
 
   filamentId = input<string | null>(null);

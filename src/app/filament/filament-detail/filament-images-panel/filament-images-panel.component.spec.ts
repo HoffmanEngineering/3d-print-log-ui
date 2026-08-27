@@ -4,9 +4,11 @@ import {
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { FilamentService } from 'src/app/core/services/filament.service';
+import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import { environment } from 'src/environments/environment';
 import {
@@ -83,6 +85,63 @@ describe('FilamentImagesPanelComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('add affordances', () => {
+    const fileInputs = () =>
+      fixture.debugElement
+        .queryAll(By.css('input[type="file"]'))
+        .map((el) => el.nativeElement as HTMLInputElement);
+
+    const clickAddPhoto = () => {
+      const button = fixture.debugElement.query(By.css('button'))
+        .nativeElement as HTMLButtonElement;
+      button.click();
+    };
+
+    const clickStripAdd = () => {
+      fixture.debugElement
+        .query(By.directive(ImageThumbnailStripComponent))
+        .componentInstance.addClicked.emit();
+    };
+
+    const setCordova = (value: boolean) => {
+      (component as unknown as { isCordova: boolean }).isCordova = value;
+      fixture.detectChanges();
+    };
+
+    it('offers a camera-capture input alongside the gallery input', () => {
+      const [gallery, camera] = fileInputs();
+
+      expect(gallery.hasAttribute('capture')).toBeFalse();
+      expect(camera.getAttribute('capture')).toBe('environment');
+    });
+
+    it('opens the gallery input from both add affordances in the browser', () => {
+      setCordova(false);
+      const [gallery, camera] = fileInputs();
+      spyOn(gallery, 'click');
+      spyOn(camera, 'click');
+
+      clickAddPhoto();
+      clickStripAdd();
+
+      expect(gallery.click).toHaveBeenCalledTimes(2);
+      expect(camera.click).not.toHaveBeenCalled();
+    });
+
+    it('opens the capture input from both add affordances inside the app', () => {
+      setCordova(true);
+      const [gallery, camera] = fileInputs();
+      spyOn(gallery, 'click');
+      spyOn(camera, 'click');
+
+      clickAddPhoto();
+      clickStripAdd();
+
+      expect(camera.click).toHaveBeenCalledTimes(2);
+      expect(gallery.click).not.toHaveBeenCalled();
+    });
   });
 
   it('stages picked files and issues no HTTP request when there is no filamentId', () => {

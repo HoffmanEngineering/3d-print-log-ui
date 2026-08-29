@@ -37,24 +37,13 @@
     "loaded_filament",
     "color-appearance"
   ],
-  "docs/printers": [
-    "loaded_filament",
-    "delete_printer",
-    "printer-wattage"
-  ],
+  "docs/printers": ["loaded_filament", "delete_printer", "printer-wattage"],
   "docs/analytics": [],
   "docs/android-app": [],
   "docs/mcp": [],
-  "docs/cura-plugin": [
-    "usage",
-    "customize-settings"
-  ],
-  "docs/octoprint-webhook": [
-    "Setup"
-  ],
-  "docs/klipper": [
-    "Setup"
-  ],
+  "docs/cura-plugin": ["usage", "customize-settings"],
+  "docs/octoprint-webhook": ["Setup"],
+  "docs/klipper": ["Setup"],
   "docs/slic3r-uploader": [],
   "docs/release-notes": [
     "v1.48.1",

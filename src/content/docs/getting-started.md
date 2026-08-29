@@ -47,7 +47,6 @@ component:
         Access from any device
       </p>
     </div>
-
   </div>
 
 <hr class="section-divider" />
@@ -94,7 +93,6 @@ component:
         </p>
       </div>
     </div>
-
   </div>
 
 <hr class="section-divider" />
@@ -145,7 +143,6 @@ component:
         </div>
       </div>
     </div>
-
   </div>
 
 <hr class="section-divider" />
@@ -193,7 +190,6 @@ component:
         <span>Responsive design for mobile & desktop</span>
       </div>
     </div>
-
   </div>
 
 <!-- Final CTA Section -->
@@ -218,5 +214,4 @@ component:
     <p class="final-cta-subtext">
       It's free forever. Start tracking in the next 2 minutes.
     </p>
-
   </div>

@@ -81,7 +81,7 @@ more information.
 
 Open any saved material and you'll see a **Remaining** card beside the form. A
 bar shows how full the roll is at a glance, with the reading beneath it &mdash;
-for example _412 g of 1,000 g left_. Under that, where 3D Print Log has enough
+for example *412 g of 1,000 g left*. Under that, where 3D Print Log has enough
 information to work them out, you'll also see the remaining **Length** in meters
 and **Volume** in milliliters, along with how much material has been **Used** in
 total and how many **Prints** it went into.
@@ -105,7 +105,7 @@ what you actually have.
 
 While you're editing, the card previews your unsaved changes. Add an adjustment
 or change the nominal weight and it shows both figures &mdash; the current
-amount and what it will become _after saving_. Nothing is committed until you
+amount and what it will become *after saving*. Nothing is committed until you
 save. When a change is too complex to preview reliably, such as editing the
 material's density or diameter, the card simply says the figure updates after
 saving rather than showing you a number it cannot stand behind.

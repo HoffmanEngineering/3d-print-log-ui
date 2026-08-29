@@ -325,7 +325,6 @@ help!](/feedback)
           src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
         /> -->
     </div>
-
   </div>
 
 ---

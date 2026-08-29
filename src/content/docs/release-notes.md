@@ -1,7 +1,7 @@
 ---
 slug: release-notes
 title: Release Notes | 3D Print Log Docs
-description: "What's new in 3D Print Log — the latest features, improvements, and fixes shipped to the app, listed by release."
+description: 'What''s new in 3D Print Log — the latest features, improvements, and fixes shipped to the app, listed by release.'
 navLabel: Release Notes
 group: about
 order: 10
@@ -498,9 +498,8 @@ available when adding a new printer.
 The **3D Print Log Android App** is back on the Google Play Store under a new
 listing! If you had the previous version installed, please uninstall it and <a
 href="https://play.google.com/store/apps/details?id=com.hoffmanengineering.printlog"
-
-> install the new app</a >. The new app includes a better sign-in experience and
-> improved camera permission handling for the Material QR Code scanning features.
+>install the new app</a >. The new app includes a better sign-in experience and
+improved camera permission handling for the Material QR Code scanning features.
 
 #### Full List of Changes:
 
@@ -517,7 +516,7 @@ quickly print QR labels for everything in a given storage location.
 
 #### Full List of Changes:
 
-- **Filter by Storage Location** - A new single-select dropdown in the Materials filter panel lets you filter your filament list by storage location. Choose a named location, select _Unassigned_ to see filaments with no storage location set, or leave it at _No Filter_ to see everything.
+- **Filter by Storage Location** - A new single-select dropdown in the Materials filter panel lets you filter your filament list by storage location. Choose a named location, select *Unassigned* to see filaments with no storage location set, or leave it at *No Filter* to see everything.
 
 ### 1.35.0 - 3D Print Log Pro {#v1.35.0}
 
@@ -534,7 +533,7 @@ any ads.
 
 - **Ad-Free Experience** - Pro subscribers enjoy 3D Print Log with no ads.
 - **Additional Cloud Storage** - Pro subscribers get increased photo storage per print, plus the ability to attach files (G-code, project files, etc.) to prints.
-- **File Attachments** - Upload files to any print via a drag-and-drop drop zone. A file list is shown on the print detail page, and an _Allow File Downloads_ toggle controls whether viewers can download your attached files.
+- **File Attachments** - Upload files to any print via a drag-and-drop drop zone. A file list is shown on the print detail page, and an *Allow File Downloads* toggle controls whether viewers can download your attached files.
 - **3D Print Log Pro Subscription** - New pricing page, Stripe checkout integration, and a subscription management section in Settings. All payments are securely handled through Stripe, a leading payments platform trusted by millions. 3D Print Log will never have access to your sensitive payment information.
 - **Pro Badge &amp; Navigation** - A Pro badge and upgrade link appear in the navigation bar for free users.
 - **Thumbnail Strip Improvements** - The image thumbnail strip now auto-scrolls to keep the selected image visible, with a polished overflow and scrollbar treatment.
@@ -823,10 +822,9 @@ information directly within the Notes section went sent to 3D Print Log.
 
 You can install v2.0.5 of the plugin via the <a
 href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
-
-> Ultimaker Cura Marketplace</a > . Alternatively, you can download the <a
-> href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
-> Latest Release from Github</a > and drag/drop into Cura to install.
+>Ultimaker Cura Marketplace</a > . Alternatively, you can download the <a
+href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+>Latest Release from Github</a > and drag/drop into Cura to install.
 
 #### Full List of Changes:
 
@@ -1576,5 +1574,4 @@ href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLog
         </p>
       </div>
     </div>
-
   </div>

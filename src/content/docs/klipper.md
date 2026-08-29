@@ -176,7 +176,6 @@ body:
         src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
       /> -->
     </div>
-
   </div>
 
 #### Step 6: Happy Printing!
@@ -202,7 +201,6 @@ body:
           src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
         /> -->
     </div>
-
   </div>
 
 ---

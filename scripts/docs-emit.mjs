@@ -43,8 +43,13 @@ export function emitPageComponentTs(page) {
 }
 
 /** Wraps a generated template with its banner. */
+// Every page the Markdown pipeline replaced opened with this wrapper, and the
+// stylesheets still hang off it: styles.scss sets the docs body font size and
+// min-height on `.docs-markdown`, and docs-getting-started.component.scss sets
+// its max-width, centering and padding. It is structural, not content, so the
+// generator emits it rather than asking each .md file to repeat it.
 export function emitPageTemplate(template) {
-  return `${HTML_BANNER}\n${template}\n`;
+  return `${HTML_BANNER}\n<div class="docs-markdown">\n${template}\n</div>\n`;
 }
 
 export function emitRoutesTs(manifest) {

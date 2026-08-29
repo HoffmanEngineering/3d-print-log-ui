@@ -20,21 +20,20 @@ usage from Cura.
 
 You can install this plugin via the <a
 href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
-
-> Ultimaker Cura Marketplace</a >. Alternatively, you can download the <a
-> href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
-> Latest Release from Github</a > and drag/drop into Cura to install.
+>Ultimaker Cura Marketplace</a >. Alternatively, you can download the <a
+href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
+>Latest Release from Github</a > and drag/drop into Cura to install.
 
 <img
-class="fade-in"
-[ngStyle.lt-md]="{
-display: 'block',
-'max-width': '90%',
-'margin-left': 'auto',
-'margin-right': 'auto',
-}"
-src="./assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
-/>
+    class="fade-in"
+    [ngStyle.lt-md]="{
+      display: 'block',
+      'max-width': '90%',
+      'margin-left': 'auto',
+      'margin-right': 'auto',
+    }"
+    src="./assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
+  />
 
 ### Usage {#usage}
 

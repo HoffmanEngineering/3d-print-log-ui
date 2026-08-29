@@ -33,7 +33,7 @@ columns are:
 - **Printer** - The Name (Make - Model) of the 3D printer used.
 - **Start Date** - The start date of the print.
 - **Status** - The current status of the print.
-- **Print Time** - The print time recorded for the print. An \* indicates that the Estimated Print Time is shown, when no Actual Print Time is recorded.
+- **Print Time** - The print time recorded for the print. An * indicates that the Estimated Print Time is shown, when no Actual Print Time is recorded.
 - **Comments** - The number of comments on that print.
 - **More** - Displays a menu with actions for that print.
   - <mat-icon inline="true">edit</mat-icon> **Edit** - Start editing the print.
@@ -139,7 +139,7 @@ you may want. Both the Title and Notes fields are searched in the Print List, so
 use keywords in the notes to help make searching easier.
 
 The Estimated and Actual **Print Time** fields accept human-readable input, such
-a _6h 12m 25s_, or _6 hours 12 minutes 25 seconds_.
+a *6h 12m 25s*, or *6 hours 12 minutes 25 seconds*.
 
 Prints can have one of 5 status: **Pending, Printing, Successful, Partial
 Success, Failed, or Cancelled**. The **Status** selection will default to

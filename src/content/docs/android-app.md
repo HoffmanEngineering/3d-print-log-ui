@@ -16,9 +16,8 @@ related: [getting-started]
 
 The 3D Print Log Android App is back on the Google Play Store! <a
 href="https://play.google.com/store/apps/details?id=com.hoffmanengineering.printlog"
-
-> Download the 3D Print Log App</a > and start logging your prints and filament
-> usage from your mobile device.
+>Download the 3D Print Log App</a > and start logging your prints and filament
+usage from your mobile device.
 
 **If you had the previous version of the app installed**, please uninstall it
 and install the new app from the link above. The new app features a better

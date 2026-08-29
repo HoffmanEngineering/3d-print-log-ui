@@ -66,7 +66,7 @@ Every figure prefers what you actually recorded. If a print has a recorded print
 time or filament amount, that is what gets used; if it does not, the slicer's
 estimate is used instead, and the chart tells you that estimates were involved.
 
-A **0** in a duration or an amount means _not recorded_, not "zero". 3D Print
+A **0** in a duration or an amount means *not recorded*, not "zero". 3D Print
 Log leaves those prints out of the figures that need a real measurement rather
 than pretending they took no time and used no plastic.
 

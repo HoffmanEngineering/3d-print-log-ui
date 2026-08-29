@@ -86,8 +86,7 @@ www.website.com and other sites on the internet. However, visitors may choose to
 decline the use of DART cookies by visiting the Google ad and content network
 Privacy Policy at the following URL – <a
 href="https://policies.google.com/technologies/ads"
-
-> https://policies.google.com/technologies/ads</a >
+>https://policies.google.com/technologies/ads</a >
 
 ## Privacy Policies
 

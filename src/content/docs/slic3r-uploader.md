@@ -31,9 +31,8 @@ adjustments needed before saving the print.
 
 Download the <a
 href="https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/releases"
-
-> latest release of the Slic3rPostProcessingUploader for your operating system</a
-> , and save the file to a location on your computer.
+>latest release of the Slic3rPostProcessingUploader for your operating system</a
+>, and save the file to a location on your computer.
 
 In the Slicer's 'Post-Processing Scripts' section, add the path to this file.
 Full/Absolute paths are recommended:
@@ -56,8 +55,7 @@ C:\\uploader\\Slic3rPostProcessingUploader.exe [options]
 
 See all supported options on <a
 href="https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/tree/main?tab=readme-ov-file#options"
-
-> the README</a >
+>the README</a >
 
 ---
 
@@ -68,9 +66,8 @@ not work as expected.
 
 Please report any bugs or issues either by creating an issue on <a
 href="https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/issues"
-
-> the project's github page</a >, or by submitting a bug report through the
-> [Feedback](/feedback) page.
+>the project's github page</a >, or by submitting a bug report through the
+[Feedback](/feedback) page.
 
 If you need further help, please contact us through the [Feedback](/feedback)
 and we'll be happy to help.

@@ -6,6 +6,7 @@ import {
   emitDeclarationsTs,
   emitFiguresTs,
   emitPageComponentTs,
+  emitPageTemplate,
   emitRoutesTs,
   emitSearchIndexJson,
   emitServerRoutesTs,
@@ -245,4 +246,21 @@ test('the declarations barrel omits a dormant page', () => {
   );
 
   assert.doesNotMatch(ts, /DocsTermsComponent/);
+});
+
+// The pre-Markdown components each opened with `<div class="docs-markdown">`.
+// styles.scss hangs the docs body font size and min-height off that class, and
+// docs-getting-started.component.scss hangs its max-width and centering off it,
+// so a page emitted without the wrapper silently loses its layout.
+test('emitPageTemplate wraps the page in the docs-markdown container', () => {
+  const html = emitPageTemplate('<h2>Prints</h2>');
+
+  assert.ok(html.endsWith('<div class="docs-markdown">\n<h2>Prints</h2>\n</div>\n'));
+});
+
+test('emitPageTemplate keeps the generated banner outside the wrapper', () => {
+  const html = emitPageTemplate('<p>Body</p>');
+
+  assert.equal(html.indexOf('<!-- DO NOT EDIT'), 0);
+  assert.ok(html.indexOf('docs-markdown') > html.indexOf('DO NOT EDIT'));
 });

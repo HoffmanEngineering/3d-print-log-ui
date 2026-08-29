@@ -1,0 +1,15 @@
+// Documentation page views, most and least read.
+// Bottom rows are candidates for merging or deletion; top rows are where
+// visual and structural investment pays back most.
+customEvents
+| where name == "Docs_PageView"
+| where timestamp > ago(30d)
+| extend slug = tostring(customDimensions.slug),
+         referrerKind = tostring(customDimensions.referrerKind)
+| summarize views = count(),
+            readers = dcount(user_Id),
+            fromSearch = countif(referrerKind == "search"),
+            fromApp = countif(referrerKind == "internal")
+        by slug
+| extend searchShare = round(100.0 * fromSearch / views, 1)
+| order by views desc

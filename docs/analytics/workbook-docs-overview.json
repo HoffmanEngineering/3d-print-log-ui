@@ -1,0 +1,127 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Documentation Overview\n\nMonthly review. Work top to bottom: zero-result searches first, then negative feedback, then completion, then traffic.\n\nSee `docs/analytics/README.md` in the UI repo for what to do with each result."
+      },
+      "name": "intro"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// THE actionable query. Every row is something a reader expected to find and\n// could not \u2014 each is a documentation task, and some are feature requests.\n// Returns no rows until docs search ships (phase 2b).\ncustomEvents\n| where name == \"Docs_Search\"\n| where timestamp > ago(30d)\n| extend query = tolower(trim(\" \", tostring(customDimensions.query))),\n         resultCount = toint(customDimensions.resultCount)\n| where isnotempty(query)\n| where resultCount == 0\n| summarize searches = count(),\n            people = dcount(user_Id),\n            lastSeen = max(timestamp)\n        by query\n| order by searches desc, people desc\n",
+        "size": 0,
+        "title": "Zero-result searches - read this one first",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "zero-result-searches"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Pages readers explicitly marked unhelpful, worst ratio first.\n// minVotes keeps a single grumpy vote from topping the list; lower it if the\n// docs are quiet, raise it once volume grows.\nlet minVotes = 5;\ncustomEvents\n| where name == \"Docs_Feedback\"\n| where timestamp > ago(90d)\n| extend slug = tostring(customDimensions.slug),\n         helpful = tobool(customDimensions.helpful)\n| summarize votes = count(),\n            unhelpful = countif(helpful == false)\n        by slug\n| where votes >= minVotes\n| extend unhelpfulPct = round(100.0 * unhelpful / votes, 1)\n| order by unhelpfulPct desc, votes desc\n",
+        "size": 0,
+        "title": "Pages marked unhelpful",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "negative-feedback"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// The free text behind the votes. Read this alongside negative-feedback.kql \u2014\n// the ratio says which page is failing, these say why.\ncustomEvents\n| where name == \"Docs_Feedback\"\n| where timestamp > ago(90d)\n| extend slug = tostring(customDimensions.slug),\n         helpful = tobool(customDimensions.helpful),\n         comment = tostring(customDimensions.comment)\n| where isnotempty(comment)\n| project timestamp, slug, helpful, comment\n| order by timestamp desc\n",
+        "size": 0,
+        "title": "Feedback comments",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "feedback-comments"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// How far readers actually get. A low completion rate on a long page usually\n// means it should be split rather than rewritten.\nlet views =\n    customEvents\n    | where name == \"Docs_PageView\" and timestamp > ago(30d)\n    | extend slug = tostring(customDimensions.slug)\n    | summarize views = count() by slug;\nlet depth =\n    customEvents\n    | where name == \"Docs_ScrollDepth\" and timestamp > ago(30d)\n    | extend slug = tostring(customDimensions.slug),\n             bucket = toint(customDimensions.bucket)\n    | summarize reached50 = countif(bucket == 50),\n                reached100 = countif(bucket == 100)\n            by slug;\nviews\n| join kind=leftouter depth on slug\n| extend halfPct = round(100.0 * coalesce(reached50, 0) / views, 1),\n         completedPct = round(100.0 * coalesce(reached100, 0) / views, 1)\n| project slug, views, halfPct, completedPct\n| order by views desc\n",
+        "size": 0,
+        "title": "Scroll completion by page",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "scroll-completion"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Documentation page views, most and least read.\n// Bottom rows are candidates for merging or deletion; top rows are where\n// visual and structural investment pays back most.\ncustomEvents\n| where name == \"Docs_PageView\"\n| where timestamp > ago(30d)\n| extend slug = tostring(customDimensions.slug),\n         referrerKind = tostring(customDimensions.referrerKind)\n| summarize views = count(),\n            readers = dcount(user_Id),\n            fromSearch = countif(referrerKind == \"search\"),\n            fromApp = countif(referrerKind == \"internal\")\n        by slug\n| extend searchShare = round(100.0 * fromSearch / views, 1)\n| order by views desc\n",
+        "size": 0,
+        "title": "Page views",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "page-views"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Which app screens send people to the documentation \u2014 the closest direct\n// measure of where the product itself is confusing.\n// Returns no rows until in-app help ships (phase 4).\ncustomEvents\n| where name == \"Docs_HelpLinkClick\"\n| where timestamp > ago(30d)\n| extend source = tostring(customDimensions.source),\n         slug = tostring(customDimensions.slug)\n| summarize clicks = count(), people = dcount(user_Id) by source, slug\n| order by clicks desc\n",
+        "size": 0,
+        "title": "In-app help link clicks by source",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "help-link-clicks"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Whether search is working when it does return results: how often a result is\n// actually clicked, and how far down. Returns no rows until phase 2b.\nlet searches =\n    customEvents\n    | where name == \"Docs_Search\" and timestamp > ago(30d)\n    | extend query = tolower(trim(\" \", tostring(customDimensions.query)))\n    | where isnotempty(query)\n    | summarize searches = count() by query;\nlet clicks =\n    customEvents\n    | where name == \"Docs_SearchResultClick\" and timestamp > ago(30d)\n    | extend query = tolower(trim(\" \", tostring(customDimensions.query))),\n             rank = toint(customDimensions.rank)\n    | summarize clicks = count(), avgRank = round(avg(rank), 1) by query;\nsearches\n| join kind=leftouter clicks on query\n| extend clickThroughPct = round(100.0 * coalesce(clicks, 0) / searches, 1)\n| project query, searches, clicks = coalesce(clicks, 0), clickThroughPct, avgRank\n| order by searches desc\n",
+        "size": 0,
+        "title": "Search quality",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "search-quality"
+    }
+  ],
+  "isLocked": false,
+  "fallbackResourceIds": [],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

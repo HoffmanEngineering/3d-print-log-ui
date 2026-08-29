@@ -58,8 +58,13 @@ Thumbs.db
 # Ignores for Cypress
 cypress.env.json
 
-# Internal planning and design docs — keep local, not for the public repo
-/docs/
+# Internal planning and design docs — keep local, not for the public repo.
+# Ignore the contents rather than the directory itself, so specific subtrees can
+# be re-included below (git cannot re-include a file under an excluded directory).
+/docs/*
+# Analytics queries are operational, not planning docs — these ship with the repo
+# so the monthly telemetry review is reproducible by anyone with portal access.
+!/docs/analytics/
 
 # Git worktrees
 .worktrees/

@@ -1,0 +1,19 @@
+// Whether search is working when it does return results: how often a result is
+// actually clicked, and how far down. Returns no rows until phase 2b.
+let searches =
+    customEvents
+    | where name == "Docs_Search" and timestamp > ago(30d)
+    | extend query = tolower(trim(" ", tostring(customDimensions.query)))
+    | where isnotempty(query)
+    | summarize searches = count() by query;
+let clicks =
+    customEvents
+    | where name == "Docs_SearchResultClick" and timestamp > ago(30d)
+    | extend query = tolower(trim(" ", tostring(customDimensions.query))),
+             rank = toint(customDimensions.rank)
+    | summarize clicks = count(), avgRank = round(avg(rank), 1) by query;
+searches
+| join kind=leftouter clicks on query
+| extend clickThroughPct = round(100.0 * coalesce(clicks, 0) / searches, 1)
+| project query, searches, clicks = coalesce(clicks, 0), clickThroughPct, avgRank
+| order by searches desc

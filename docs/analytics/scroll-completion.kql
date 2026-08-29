@@ -1,0 +1,21 @@
+// How far readers actually get. A low completion rate on a long page usually
+// means it should be split rather than rewritten.
+let views =
+    customEvents
+    | where name == "Docs_PageView" and timestamp > ago(30d)
+    | extend slug = tostring(customDimensions.slug)
+    | summarize views = count() by slug;
+let depth =
+    customEvents
+    | where name == "Docs_ScrollDepth" and timestamp > ago(30d)
+    | extend slug = tostring(customDimensions.slug),
+             bucket = toint(customDimensions.bucket)
+    | summarize reached50 = countif(bucket == 50),
+                reached100 = countif(bucket == 100)
+            by slug;
+views
+| join kind=leftouter depth on slug
+| extend halfPct = round(100.0 * coalesce(reached50, 0) / views, 1),
+         completedPct = round(100.0 * coalesce(reached100, 0) / views, 1)
+| project slug, views, halfPct, completedPct
+| order by views desc

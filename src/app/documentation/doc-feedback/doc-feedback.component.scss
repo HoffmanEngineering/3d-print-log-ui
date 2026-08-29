@@ -1,0 +1,32 @@
+.doc-feedback {
+  display: block;
+  margin: 3rem 0 1rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--mat-sys-outline-variant, rgba(128, 128, 128, 0.35));
+  border-radius: 8px;
+}
+
+.doc-feedback__prompt {
+  display: block;
+  margin: 0 0 0.75rem;
+  font-weight: 500;
+}
+
+.doc-feedback__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.doc-feedback__input {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--mat-sys-outline-variant, rgba(128, 128, 128, 0.35));
+  border-radius: 4px;
+  resize: vertical;
+}

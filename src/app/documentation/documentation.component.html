@@ -19,6 +19,7 @@
     <mat-sidenav-content>
       <div class="content">
         <router-outlet></router-outlet>
+        <app-doc-feedback [pageKey]="currentSlug()"></app-doc-feedback>
         <app-ad></app-ad>
       </div>
     </mat-sidenav-content>

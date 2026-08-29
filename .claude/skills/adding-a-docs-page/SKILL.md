@@ -8,11 +8,11 @@ description: Use when adding a new page under /docs to the 3D Print Log UI (a ne
 ## Overview
 
 Writing the component is trivial; the trap is **wiring**. A new doc page must be registered
-in **six** places, and its route count is asserted in **three** test locations — and only one
+in **seven** places, and its route count is asserted in **two** test locations — and only one
 of those runs under `npm run test:brief`. Miss one and it either 404s, fails prerender, or
 (most sneakily) passes locally and fails CI.
 
-## The six registration points
+## The seven registration points
 
 For a page at `/docs/<name>` (component `Docs<Name>Component`):
 
@@ -31,30 +31,38 @@ For a page at `/docs/<name>` (component `Docs<Name>Component`):
 (Metadata/canonical/OG/Twitter/JSON-LD come automatically from `doc-seo.config.ts` via the
 parent `DocumentationComponent` — you do not set them in the component.)
 
-## The three route-count assertions (bump ALL of them)
+## The two route-count assertions (bump BOTH of them)
 
-Adding a route changes a hard-coded count in three test runners:
+Adding a route changes a hard-coded count in two places:
 
 | File                                           | Assertion                            | Runs in `test:brief`?                   |
 | ---------------------------------------------- | ------------------------------------ | --------------------------------------- |
 | `src/app/documentation/doc-seo.config.spec.ts` | `expect(paths.length).toBe(N)`       | ✅ yes                                  |
-| `scripts/generate-sitemap.test.mjs`            | `assert.equal(DOC_ROUTES.length, N)` | ❌ **CI only** (`npm run test:sitemap`) |
-| `scripts/verify-prerender.mjs`                 | route-count summary                  | ❌ **CI only** (after prod build)       |
+| `scripts/generate-sitemap.test.mjs`            | `assert.equal(DOC_ROUTES.length, N)` | ❌ **CI only** (`npm run test:scripts`) |
 
-Bump the count and add an inclusion assertion (`…includes('docs/<name>')`) in the first two.
+Bump the count and add an inclusion assertion (`…includes('docs/<name>')`) in both.
+
+`scripts/verify-prerender.mjs` does **not** hard-code a count — it derives everything from
+`DOC_ROUTES.length`, so there is nothing to bump there. It still gates the run on uniqueness,
+OG/Twitter, canonicals, JSON-LD, and the link graph.
 
 ## Verify locally BEFORE pushing (don't trust `test:brief` alone)
 
 ```bash
-npm run test:sitemap        # the assertion that will bite you in CI
+npm run test:scripts        # the assertion that will bite you in CI
 npm run build               # production prerender
 node scripts/verify-prerender.mjs
 ```
 
+CI runs all of these (`.github/workflows/ci.yml`), including the production prerender build —
+it copies `environment.prod.example.ts` first, so a PR does get prod-build coverage. What CI
+**cannot** catch is drift between the code and the real `ENVIRONMENT_PROD_TS` secret, which
+only surfaces at deploy.
+
 ## Common mistakes
 
 - Ran only `test:brief`, saw green, pushed → CI fails on `generate-sitemap.test.mjs`. Always run
-  `test:sitemap` too.
+  `test:scripts` too.
 - Duplicated a title/description → `verify-prerender` uniqueness check fails.
 - Set meta tags inside the component → they belong in `doc-seo.config.ts`.
 - Forgot the server-route entry → page renders in dev but isn't prerendered.

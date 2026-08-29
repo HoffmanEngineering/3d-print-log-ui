@@ -26,6 +26,7 @@ describe('PushPermissionPromptService', () => {
   }
 
   beforeEach(() => {
+    localStorage.clear();
     bridge = jasmine.createSpyObj<NativeBridgeService>(
       'NativeBridgeService',
       ['isAvailable', 'requestPushPermission'],
@@ -101,5 +102,68 @@ describe('PushPermissionPromptService', () => {
     await service.promptInContext('reason');
 
     expect(bridge.requestPushPermission).toHaveBeenCalled();
+  });
+
+  /**
+   * Without this, adding a trigger that fires often — every in-progress print the user opens
+   * — turns a single "Not now" into an explainer on every visit. The suppression is of OUR
+   * dialog only; the OS prompt is still only reached via an explicit "Enable notifications".
+   */
+  it('does not show the explainer again soon after the user declined it', async () => {
+    userAnswers(false);
+    await service.promptInContext('reason');
+    dialog.open.calls.reset();
+
+    await service.promptInContext('reason');
+
+    expect(dialog.open).not.toHaveBeenCalled();
+  });
+
+  it('suppresses across triggers, not just the one that was declined', async () => {
+    userAnswers(false);
+    await service.promptInContext('You just created an API key.');
+    dialog.open.calls.reset();
+
+    await service.promptInContext('This print is still running.');
+
+    expect(dialog.open).not.toHaveBeenCalled();
+  });
+
+  it('asks again once the cooldown has passed', async () => {
+    userAnswers(false);
+    await service.promptInContext('reason');
+
+    const thirtyOneDaysAgo = Date.now() - 31 * 24 * 60 * 60 * 1000;
+    localStorage.setItem(
+      'printlog.pushPromptDeclinedAt',
+      String(thirtyOneDaysAgo)
+    );
+    dialog.open.calls.reset();
+    userAnswers(true);
+
+    await service.promptInContext('reason');
+
+    expect(dialog.open).toHaveBeenCalled();
+  });
+
+  it('does not suppress after the user accepted the explainer', async () => {
+    userAnswers(true);
+    await service.promptInContext('reason');
+    dialog.open.calls.reset();
+
+    await service.promptInContext('reason');
+
+    expect(dialog.open).toHaveBeenCalled();
+  });
+
+  /** Private browsing and blocked site data both make localStorage throw on access. */
+  it('still prompts when storage is unavailable', async () => {
+    spyOn(localStorage, 'getItem').and.throwError('denied');
+    spyOn(localStorage, 'setItem').and.throwError('denied');
+    userAnswers(true);
+
+    await service.promptInContext('reason');
+
+    expect(dialog.open).toHaveBeenCalled();
   });
 });

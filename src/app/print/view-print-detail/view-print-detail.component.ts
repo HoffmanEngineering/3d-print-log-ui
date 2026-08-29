@@ -26,7 +26,9 @@ import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
   PrintService,
+  PrintStatus,
 } from '../../core/services/print.service';
+import { PushPermissionPromptService } from 'src/app/core/services/push-permission-prompt.service';
 import {
   UserSettingService,
   UserSettingType,
@@ -96,6 +98,7 @@ export class ViewPrintDetailComponent {
   private readonly document = inject(DOCUMENT);
   private readonly location = inject(Location);
   private readonly userSettingService = inject(UserSettingService);
+  private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /**
@@ -267,6 +270,9 @@ export class ViewPrintDetailComponent {
    * at construction time it refers to the navigation before this one, which
    * makes `.previousNavigation` off by one.
    */
+  /** One offer per view; see offerNotificationsForRunningPrint. */
+  private offeredNotifications = false;
+
   private readonly arrivedFromInAppNavigation =
     this.router.getCurrentNavigation()?.previousNavigation != null;
 
@@ -283,6 +289,37 @@ export class ViewPrintDetailComponent {
     // users are not stranded on <body> after a route change. The container is
     // the skeleton shell too, so this no longer waits on the fetch.
     afterNextRender(() => this.pageRoot()?.nativeElement?.focus());
+
+    effect(() => this.offerNotificationsForRunningPrint());
+  }
+
+  /**
+   * Offers notifications while the user's own print is still running.
+   *
+   * This is the moment the feature explains itself: something is underway that they would
+   * rather be told about than keep checking. Creating an API key used to be the only
+   * in-context trigger, which no established user ever hits again — their keys predate push
+   * — leaving Settings as the sole route to enabling it.
+   *
+   * Owner-only: a visitor cannot be notified about someone else's print. The service itself
+   * is a no-op on the web, when permission is already granted, and while a recent "Not now"
+   * still stands, so no platform branching is needed here.
+   */
+  private offerNotificationsForRunningPrint(): void {
+    if (this.offeredNotifications || !this.isOwner()) {
+      return;
+    }
+
+    if (this.print()?.status !== PrintStatus.Printing) {
+      return;
+    }
+
+    // Latched before the call, not after: the effect re-runs on any signal it reads, and
+    // awaiting first would let a second run start while the dialog is still opening.
+    this.offeredNotifications = true;
+    void this.pushPermissionPrompt.promptInContext(
+      'This print is still running.'
+    );
   }
 
   private loadSettings(): void {

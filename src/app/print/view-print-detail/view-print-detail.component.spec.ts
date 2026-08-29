@@ -28,6 +28,7 @@ import {
   PrintDetailLoaderService,
   PrintDetailWithUser,
 } from '../services/print-detail-loader.service';
+import { PushPermissionPromptService } from 'src/app/core/services/push-permission-prompt.service';
 import {
   DEFERRED_SKELETON_DELAY_MS,
   DEFERRED_SKELETON_MIN_VISIBLE_MS,
@@ -42,6 +43,8 @@ describe('ViewPrintDetailComponent', () => {
   let userSettingServiceSpy: jasmine.SpyObj<UserSettingService>;
 
   const OWNER_ID = 7;
+
+  let pushPromptSpy: jasmine.SpyObj<PushPermissionPromptService>;
 
   const basePrint = {
     id: 1,
@@ -152,6 +155,12 @@ describe('ViewPrintDetailComponent', () => {
     );
     loaderSpy.load.and.callFake(load);
 
+    pushPromptSpy = jasmine.createSpyObj<PushPermissionPromptService>(
+      'PushPermissionPromptService',
+      ['promptInContext']
+    );
+    pushPromptSpy.promptInContext.and.resolveTo('default');
+
     await TestBed.configureTestingModule({
       // No NO_ERRORS_SCHEMA: every child here is a real standalone component
       // pulled in through ViewPrintDetailComponent's own imports, so the schema
@@ -168,6 +177,7 @@ describe('ViewPrintDetailComponent', () => {
         provideHttpClientTesting(),
         { provide: PrintService, useValue: printService },
         { provide: PrintDetailLoaderService, useValue: loaderSpy },
+        { provide: PushPermissionPromptService, useValue: pushPromptSpy },
         // The real PrintCommentsComponent renders here (no NO_ERRORS_SCHEMA)
         // and injects ToastrService, which needs its own ToastConfig token.
         {
@@ -628,6 +638,53 @@ describe('ViewPrintDetailComponent', () => {
 
       expect(fixture.nativeElement.querySelector('.hero-band')).toBeTruthy();
       expect(component.currencySymbol()).toBe('$');
+    });
+  });
+
+  /**
+   * The only in-context trigger before this was creating an API key, which no existing user
+   * hits again — their keys predate push entirely, so Settings was their only route to
+   * enabling notifications. A running print is the moment the value needs no explaining,
+   * and every active user reaches it.
+   */
+  describe('notification prompt', () => {
+    const runningPrint = { ...basePrint, status: PrintStatus.Printing };
+
+    it('prompts the owner while their print is still running', async () => {
+      await setup({ viewerId: OWNER_ID, print: runningPrint });
+
+      expect(pushPromptSpy.promptInContext).toHaveBeenCalled();
+    });
+
+    it('does not prompt once the print has finished', async () => {
+      await setup({ viewerId: OWNER_ID, print: basePrint });
+
+      expect(pushPromptSpy.promptInContext).not.toHaveBeenCalled();
+    });
+
+    /** A stranger cannot be notified about someone else's print, so asking is nonsense. */
+    it('does not prompt a signed-in stranger', async () => {
+      await setup({ viewerId: 999, print: runningPrint });
+
+      expect(pushPromptSpy.promptInContext).not.toHaveBeenCalled();
+    });
+
+    it('does not prompt an anonymous visitor', async () => {
+      await setup({ viewerId: null, print: runningPrint });
+
+      expect(pushPromptSpy.promptInContext).not.toHaveBeenCalled();
+    });
+
+    /**
+     * The effect re-runs on signal changes and the router reuses this component between
+     * print ids, so without a latch a single visit could ask more than once.
+     */
+    it('prompts only once for a given view', async () => {
+      await setup({ viewerId: OWNER_ID, print: runningPrint });
+      fixture.detectChanges();
+      fixture.detectChanges();
+
+      expect(pushPromptSpy.promptInContext).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -17,6 +17,16 @@ export class PushPermissionPromptService {
   private readonly bridge = inject(NativeBridgeService);
   private readonly dialog = inject(MatDialog);
 
+  /** Per-device, matching the scope of the permission it is about. */
+  private static readonly DECLINED_AT_KEY = 'printlog.pushPromptDeclinedAt';
+
+  /**
+   * How long "Not now" is honoured. Long enough that the ask does not become nagging,
+   * short enough that someone who declined reflexively gets another chance without having
+   * to find this in Settings.
+   */
+  private static readonly COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+
   /**
    * Shows the explainer and, if the user agrees, requests the permission.
    *
@@ -36,6 +46,14 @@ export class PushPermissionPromptService {
       return current;
     }
 
+    // Suppresses OUR explainer only, never the OS prompt, which is still reached solely via
+    // an explicit "Enable notifications". Checked across all triggers rather than per
+    // trigger: someone who just declined on one screen should not be asked again from
+    // another a few minutes later.
+    if (this.declinedRecently()) {
+      return current;
+    }
+
     const dialogRef = this.dialog.open(SimpleDialogComponent, { data: {} });
     dialogRef.componentInstance.title = 'Get notified about your prints?';
     dialogRef.componentInstance.body = `<p>${reason}</p>
@@ -48,9 +66,46 @@ export class PushPermissionPromptService {
     if (!accepted) {
       // "Not now" must not reach the OS prompt: spending the single system dialog on a user
       // who just declined the explainer is how the permission gets permanently denied.
+      this.rememberDecline();
       return current;
     }
 
     return this.bridge.requestPushPermission();
+  }
+
+  private declinedRecently(): boolean {
+    const declinedAt = Number(
+      this.read(PushPermissionPromptService.DECLINED_AT_KEY)
+    );
+    if (!Number.isFinite(declinedAt) || declinedAt <= 0) {
+      return false;
+    }
+
+    return Date.now() - declinedAt < PushPermissionPromptService.COOLDOWN_MS;
+  }
+
+  private rememberDecline(): void {
+    this.write(PushPermissionPromptService.DECLINED_AT_KEY, String(Date.now()));
+  }
+
+  /*
+   * Both accessors throw outright in private browsing and when site data is blocked, so
+   * neither is allowed to break the prompt. Failing to read means we ask — the worse
+   * outcome is a user who can never be asked at all.
+   */
+  private read(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private write(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // Nothing to do: the prompt simply is not suppressed on this device.
+    }
   }
 }

@@ -1,6 +1,53 @@
+import { apiUrl } from '../../support/api-url';
+
+// Every project this spec creates is named `<prefix> - <timestamp>`. The
+// after() hook below deletes them again, because the grouped feed orders a
+// project by the start date of its prints and falls back to the created date
+// only when a project has none - so a pile of leftover print-less projects
+// from earlier runs pushes the projects under test off page 1. Cleaning up
+// keeps the dev database from drifting into that state, and purges whatever
+// earlier runs already left behind.
+const PROJECT_NAME_PREFIXES = [
+  'New Test Project',
+  'Edit Test Project',
+  'Updated Test Project',
+  'Assign Test Project',
+  'Selector Test Project',
+  'Edit Display Test Project',
+  'Remove Test Project',
+  'Grouped Test Project',
+];
+
+const DEV_HEADERS = { 'X-Dev-User-Id': '1' };
+
 describe('Projects', () => {
   beforeEach(() => {
     cy.login();
+  });
+
+  // Prints are kept (`deletePrints=false`): the specs above assign the seeded
+  // dev prints to their projects, and deleting those would strip the database
+  // the rest of the suite runs against.
+  after(() => {
+    cy.request({
+      method: 'GET',
+      url: `${apiUrl()}/api/Projects?pageNumber=1&pageSize=100`,
+      headers: DEV_HEADERS,
+    }).then(({ body }) => {
+      body.items
+        .filter((project: { name: string }) =>
+          PROJECT_NAME_PREFIXES.some((prefix) =>
+            project.name.startsWith(`${prefix} - `)
+          )
+        )
+        .forEach((project: { id: string }) => {
+          cy.request({
+            method: 'DELETE',
+            url: `${apiUrl()}/api/Projects/${project.id}?deletePrints=false`,
+            headers: DEV_HEADERS,
+          });
+        });
+    });
   });
 
   it('should navigate to new project form from the dropdown', () => {
@@ -177,24 +224,25 @@ describe('Projects', () => {
   });
 
   it('should display the project in Grouped View', () => {
-    const projectName = 'Grouped Test Project - ' + new Date().getTime();
+    const ts = new Date().getTime();
+    const projectName = 'Grouped Test Project - ' + ts;
 
-    cy.visit('/prints');
-    cy.get('[cy-print-row]')
-      .first()
-      .invoke('attr', 'cy-print-row')
-      .then((printId) => {
-        cy.visit(`/prints/${printId}`);
-      });
-    cy.get('[data-cy-edit-btn]').click();
-    cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
-    cy.get('[data-cy="project-new-option"]').click();
-    cy.get('#edit-print-submit-btn').click();
+    // Seed a print dated now rather than reusing the oldest seeded print. The
+    // grouped feed sorts a project by its prints' start dates, so a project
+    // whose only print is days old sorts below every print-less project and
+    // can drop off page 1 - which is what this assertion reads.
+    cy.seedPrint('Grouped View Print - ' + ts).then((print) => {
+      cy.visit(`/prints/${print.id}`);
+      cy.get('[data-cy-edit-btn]').click();
+      cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
+      cy.get('[data-cy="project-new-option"]').click();
+      cy.get('#edit-print-submit-btn').click();
 
-    cy.get('mat-button-toggle[value="grouped"]').click();
+      cy.get('mat-button-toggle[value="grouped"]').click();
 
-    cy.get('[data-cy="grouped-project-name"]', { timeout: 10000 })
-      .filter(':visible')
-      .should('contain.text', projectName);
+      cy.get('[data-cy="grouped-project-name"]', { timeout: 10000 })
+        .filter(':visible')
+        .should('contain.text', projectName);
+    });
   });
 });

@@ -15,6 +15,8 @@ import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.compon
 import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
+import { DocFeedbackComponent } from './doc-feedback/doc-feedback.component';
+import { DocsTelemetryService } from './docs-telemetry.service';
 import { DocumentationComponent } from './documentation.component';
 import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-app.component';
 import { DocsMcpComponent } from './docs/docs-mcp/docs-mcp.component';
@@ -53,6 +55,8 @@ import { DocsProjectsComponent } from './docs/docs-projects/docs-projects.compon
     DocumentationRoutingModule,
     AdsenseModule,
     YouTubePlayerModule,
+    DocFeedbackComponent,
   ],
+  providers: [DocsTelemetryService],
 })
 export class DocumentationModule {}

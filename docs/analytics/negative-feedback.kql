@@ -1,0 +1,15 @@
+// Pages readers explicitly marked unhelpful, worst ratio first.
+// minVotes keeps a single grumpy vote from topping the list; lower it if the
+// docs are quiet, raise it once volume grows.
+let minVotes = 5;
+customEvents
+| where name == "Docs_Feedback"
+| where timestamp > ago(90d)
+| extend slug = tostring(customDimensions.slug),
+         helpful = tobool(customDimensions.helpful)
+| summarize votes = count(),
+            unhelpful = countif(helpful == false)
+        by slug
+| where votes >= minVotes
+| extend unhelpfulPct = round(100.0 * unhelpful / votes, 1)
+| order by unhelpfulPct desc, votes desc

@@ -57,4 +57,23 @@ export class NativeBridgeService {
       return null;
     }
   }
+
+  /**
+   * @returns true if native will call the listener. False on the web, and on an app shell
+   *          predating the callback, so the caller can tell "wired up" from "silently never
+   *          fires" — the exact failure the `resume` listener this replaces had.
+   */
+  onPendingTap(listener: () => void): boolean {
+    const bridge = this.bridge;
+    if (!bridge?.onPendingTap) {
+      return false;
+    }
+
+    try {
+      bridge.onPendingTap(listener);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

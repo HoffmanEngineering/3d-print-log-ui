@@ -10,6 +10,7 @@ import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
+import { NativeBridgeService } from './core/services/native-bridge.service';
 import { PushRegistrationService } from './core/services/push-registration.service';
 import { ThemeService } from './core/services/theme.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
@@ -22,6 +23,9 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
 })
 export class AppComponent implements OnInit {
   title = 'print-log-ui';
+
+  /** Whether native accepted our pending-tap listener, so we stop retrying. */
+  private tapListenerInstalled = false;
 
   readonly loadingBarColor = computed(() =>
     this.themeService.isDark() ? '#283593' : '#3f51b5'
@@ -39,6 +43,7 @@ export class AppComponent implements OnInit {
     private themeService: ThemeService,
     private adsenseLoader: AdsenseLoaderService,
     private pushRegistration: PushRegistrationService,
+    private nativeBridge: NativeBridgeService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -50,6 +55,7 @@ export class AppComponent implements OnInit {
       if (user) {
         this.releaseNotesService.checkLastLoggedInVersion();
         this.registerForPush();
+        this.watchForWarmStartTaps();
       }
     });
 
@@ -78,12 +84,21 @@ export class AppComponent implements OnInit {
 
   /**
    * A tap while the app is already running resumes it rather than starting it, so the
-   * pending tap has to be drained on resume as well as at registration time.
+   * pending tap has to be drained then as well as at registration time.
+   *
+   * Native signals us; we do not listen for Cordova's `resume`. The WebView navigates to
+   * this origin and cordova.js is gone from that point, so a `resume` listener here would
+   * never fire — it silently swallowed every warm-start tap.
    */
   private watchForWarmStartTaps() {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId) || this.tapListenerInstalled)
+      return;
 
-    document.addEventListener('resume', () => {
+    // Retried rather than attempted once: the app shell injects window.PrintLogNative on
+    // page load, which can land after Angular has bootstrapped. A single attempt in ngOnInit
+    // would then install nothing at all, and every later tap would be signalled into an
+    // empty listener list — silently, which is the failure mode this replaced.
+    this.tapListenerInstalled = this.nativeBridge.onPendingTap(() => {
       void this.pushRegistration.handlePendingTap();
     });
   }

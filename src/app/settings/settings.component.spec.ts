@@ -139,9 +139,16 @@ describe('SettingsComponent', () => {
     mockPushPermissionPrompt =
       jasmine.createSpyObj<PushPermissionPromptService>(
         'PushPermissionPromptService',
-        ['promptInContext']
+        ['promptInContext', 'promptOnUserRequest']
       );
-    mockPushPermissionPrompt.promptInContext.and.resolveTo('granted');
+    mockPushPermissionPrompt.promptInContext.and.resolveTo({
+      permission: 'granted',
+      outcome: 'shown',
+    });
+    mockPushPermissionPrompt.promptOnUserRequest.and.resolveTo({
+      permission: 'granted',
+      outcome: 'shown',
+    });
 
     TestBed.configureTestingModule({
       declarations: [SettingsComponent],
@@ -352,7 +359,7 @@ describe('SettingsComponent', () => {
       await component.onEnableNotificationsClicked();
       await fixture.whenStable();
 
-      expect(mockPushPermissionPrompt.promptInContext).toHaveBeenCalled();
+      expect(mockPushPermissionPrompt.promptOnUserRequest).toHaveBeenCalled();
       // Asserted on the field, not the DOM: re-running change detection after this
       // async state change trips NG0100 in the harness. That the field drives the
       // warning's visibility is covered by the granted/denied/default render tests above.

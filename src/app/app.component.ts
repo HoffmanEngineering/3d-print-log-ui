@@ -10,6 +10,7 @@ import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
+import { PushRegistrationService } from './core/services/push-registration.service';
 import { ThemeService } from './core/services/theme.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
 
@@ -37,6 +38,7 @@ export class AppComponent implements OnInit {
     private releaseNotesService: VersionReleaseNoteDialogService,
     private themeService: ThemeService,
     private adsenseLoader: AdsenseLoaderService,
+    private pushRegistration: PushRegistrationService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -47,10 +49,43 @@ export class AppComponent implements OnInit {
     this.auth.userProfile$.subscribe((user) => {
       if (user) {
         this.releaseNotesService.checkLastLoggedInVersion();
+        this.registerForPush();
       }
     });
 
+    // Ordered teardown: the native side needs a still-valid bearer to delete its
+    // registration, so AuthService awaits this before starting Auth0 logout.
+    this.auth.pushTeardown = (token) => this.pushRegistration.onLogout(token);
+
+    this.watchForWarmStartTaps();
+
     this.deferAdsenseLoad();
+  }
+
+  /**
+   * Driven by an authenticated profile rather than by bridge availability alone: at cold
+   * start the bridge is ready long before Auth0 has rehydrated, and a registration POST
+   * without a bearer 401s with nothing to retry it.
+   */
+  private registerForPush() {
+    this.auth.getTokenSilently$().subscribe({
+      next: (token) => void this.pushRegistration.onAuthenticated(token),
+      // No token means no registration this launch; the next authenticated emission
+      // retries. Never surface this to the user — push is optional.
+      error: () => undefined,
+    });
+  }
+
+  /**
+   * A tap while the app is already running resumes it rather than starting it, so the
+   * pending tap has to be drained on resume as well as at registration time.
+   */
+  private watchForWarmStartTaps() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    document.addEventListener('resume', () => {
+      void this.pushRegistration.handlePendingTap();
+    });
   }
 
   /**

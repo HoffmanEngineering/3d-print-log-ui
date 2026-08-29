@@ -38,7 +38,7 @@ export class PushPermissionPromptService {
   private static readonly DECLINED_AT_KEY = 'printlog.pushPromptDeclinedAt';
 
   /**
-   * How long "Not now" is honoured for offers the user did not ask for. Long enough that the
+   * How long "Not now" is honored for offers the user did not ask for. Long enough that the
    * ask does not become nagging, short enough that someone who declined reflexively gets
    * another chance without having to find this in Settings.
    */
@@ -60,7 +60,7 @@ export class PushPermissionPromptService {
 
   /**
    * Offers notifications at a moment that makes them meaningful. The user did not ask for
-   * this, so a recent "Not now" is honoured.
+   * this, so a recent "Not now" is honored.
    *
    * A no-op outside the app shell and when the permission is already granted, so callers can
    * invoke it from a shared flow without branching on platform.
@@ -68,7 +68,7 @@ export class PushPermissionPromptService {
    * @param reason one sentence on what just happened that makes notifications useful.
    */
   promptInContext(reason: string): Promise<PushPromptResult> {
-    return this.run(reason, { honourCooldown: true });
+    return this.run(reason, { honorCooldown: true });
   }
 
   /**
@@ -79,12 +79,12 @@ export class PushPermissionPromptService {
    * mind with no route to enabling notifications inside the app at all.
    */
   promptOnUserRequest(reason: string): Promise<PushPromptResult> {
-    return this.run(reason, { honourCooldown: false });
+    return this.run(reason, { honorCooldown: false });
   }
 
   private run(
     reason: string,
-    options: { honourCooldown: boolean }
+    options: { honorCooldown: boolean }
   ): Promise<PushPromptResult> {
     if (this.inFlight) {
       return this.inFlight;
@@ -99,7 +99,7 @@ export class PushPermissionPromptService {
 
   private async ask(
     reason: string,
-    options: { honourCooldown: boolean }
+    options: { honorCooldown: boolean }
   ): Promise<PushPromptResult> {
     if (!this.bridge.isAvailable()) {
       return { permission: 'default', outcome: 'unavailable' };
@@ -114,7 +114,7 @@ export class PushPermissionPromptService {
     // an explicit "Enable notifications". Checked across all triggers rather than per
     // trigger: someone who just declined on one screen should not be asked again from
     // another a few minutes later.
-    if (options.honourCooldown && this.declinedRecently()) {
+    if (options.honorCooldown && this.declinedRecently()) {
       return { permission: current, outcome: 'suppressed' };
     }
 

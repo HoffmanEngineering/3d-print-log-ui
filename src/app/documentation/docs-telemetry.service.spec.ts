@@ -135,6 +135,24 @@ describe('DocsTelemetryService', () => {
       expect(propsOf(0)['referrerKind']).toBe('external');
     });
 
+    it('describes later navigations as internal, not as the landing referrer', () => {
+      const service = configure('https://www.google.com/search?q=filament');
+
+      service.trackPageView('/docs/prints');
+      service.trackPageView('/docs/materials');
+
+      expect(propsOf(0)['referrerKind']).toBe('search');
+      expect(propsOf(1)['referrerKind']).toBe('internal');
+    });
+
+    it('does not treat a lookalike host as a search engine', () => {
+      const service = configure('https://notbing.com/page');
+
+      service.trackPageView('/docs/prints');
+
+      expect(propsOf(0)['referrerKind']).toBe('external');
+    });
+
     it('does not throw on a malformed referrer', () => {
       const service = configure('not a url');
 
@@ -156,7 +174,7 @@ describe('DocsTelemetryService', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
 
-      service.trackScrollDepth(30);
+      service.trackScrollDepth(30, 'prints');
 
       expect(depthCalls()).toEqual([
         jasmine.objectContaining({ slug: 'prints', bucket: 25 }),
@@ -167,9 +185,9 @@ describe('DocsTelemetryService', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
 
-      service.trackScrollDepth(30);
-      service.trackScrollDepth(40);
-      service.trackScrollDepth(26);
+      service.trackScrollDepth(30, 'prints');
+      service.trackScrollDepth(40, 'prints');
+      service.trackScrollDepth(26, 'prints');
 
       expect(depthCalls().length).toBe(1);
     });
@@ -178,7 +196,7 @@ describe('DocsTelemetryService', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
 
-      service.trackScrollDepth(100);
+      service.trackScrollDepth(100, 'prints');
 
       expect(depthCalls().map((p) => p['bucket'])).toEqual([25, 50, 75, 100]);
     });
@@ -187,7 +205,7 @@ describe('DocsTelemetryService', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
 
-      service.trackScrollDepth(24);
+      service.trackScrollDepth(24, 'prints');
 
       expect(depthCalls()).toEqual([]);
     });
@@ -195,20 +213,30 @@ describe('DocsTelemetryService', () => {
     it('reports buckets again for the next page', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
-      service.trackScrollDepth(100);
+      service.trackScrollDepth(100, 'prints');
 
       service.trackPageView('/docs/materials');
-      service.trackScrollDepth(30);
+      service.trackScrollDepth(30, 'materials');
 
       expect(depthCalls().slice(4)).toEqual([
         jasmine.objectContaining({ slug: 'materials', bucket: 25 }),
       ]);
     });
 
+    it('drops a sample belonging to a page the reader has already left', () => {
+      const service = configure();
+      service.trackPageView('/docs/prints');
+
+      service.trackPageView('/docs/materials');
+      service.trackScrollDepth(80, 'prints');
+
+      expect(depthCalls()).toEqual([]);
+    });
+
     it('ignores scroll reported before any page view', () => {
       const service = configure();
 
-      expect(() => service.trackScrollDepth(50)).not.toThrow();
+      expect(() => service.trackScrollDepth(50, 'prints')).not.toThrow();
       expect(depthCalls()).toEqual([]);
     });
   });
@@ -218,7 +246,7 @@ describe('DocsTelemetryService', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
 
-      service.trackFeedback(true);
+      service.trackFeedback(true, undefined, 'prints');
 
       expect(logging.logEvent).toHaveBeenCalledWith(
         'Docs_Feedback',
@@ -226,11 +254,24 @@ describe('DocsTelemetryService', () => {
       );
     });
 
+    it('attributes feedback to the page it was cast on, not the current one', () => {
+      const service = configure();
+      service.trackPageView('/docs/prints');
+      service.trackPageView('/docs/materials');
+
+      service.trackFeedback(false, 'unclear', 'prints');
+
+      expect(logging.logEvent).toHaveBeenCalledWith(
+        'Docs_Feedback',
+        jasmine.objectContaining({ slug: 'prints' })
+      );
+    });
+
     it('includes trimmed free text when supplied', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
 
-      service.trackFeedback(false, '  the QR part is unclear  ');
+      service.trackFeedback(false, '  the QR part is unclear  ', 'prints');
 
       expect(logging.logEvent).toHaveBeenCalledWith(
         'Docs_Feedback',
@@ -242,7 +283,7 @@ describe('DocsTelemetryService', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
 
-      service.trackFeedback(false, '   ');
+      service.trackFeedback(false, '   ', 'prints');
 
       const props = logging.logEvent.calls.mostRecent().args[1] as Record<
         string,
@@ -255,7 +296,7 @@ describe('DocsTelemetryService', () => {
       const service = configure();
       service.trackPageView('/docs/prints');
 
-      service.trackFeedback(false, 'x'.repeat(2000));
+      service.trackFeedback(false, 'x'.repeat(2000), 'prints');
 
       const props = logging.logEvent.calls.mostRecent().args[1] as Record<
         string,

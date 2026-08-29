@@ -51,7 +51,11 @@ describe('DocFeedbackComponent', () => {
   it('reports a positive vote as soon as it is given', () => {
     click('doc-feedback-yes');
 
-    expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(true, undefined);
+    expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
+      true,
+      undefined,
+      'prints'
+    );
   });
 
   it('does not ask a positive voter for a comment', () => {
@@ -74,7 +78,8 @@ describe('DocFeedbackComponent', () => {
 
     expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
       false,
-      'the QR label section is unclear'
+      'the QR label section is unclear',
+      'prints'
     );
   });
 
@@ -82,7 +87,11 @@ describe('DocFeedbackComponent', () => {
     click('doc-feedback-no');
     click('doc-feedback-skip');
 
-    expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(false, undefined);
+    expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
+      false,
+      undefined,
+      'prints'
+    );
   });
 
   it('flushes an unsent negative vote when the reader navigates away', () => {
@@ -93,7 +102,8 @@ describe('DocFeedbackComponent', () => {
 
     expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
       false,
-      'half-written thought'
+      'half-written thought',
+      'prints'
     );
   });
 
@@ -137,9 +147,12 @@ describe('DocFeedbackComponent', () => {
 
       navigateTo('materials');
 
+      // The vote belongs to the page it was cast on, even though the reader has
+      // already moved to the next one by the time it is flushed.
       expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
         false,
-        'could not find the answer'
+        'could not find the answer',
+        'prints'
       );
     });
 

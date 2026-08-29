@@ -43,6 +43,12 @@ export class DocFeedbackComponent implements OnDestroy {
   /** True once a negative vote is awaiting its explanation. */
   private pendingNegative = false;
 
+  /**
+   * The page the pending vote was cast on. Captured at vote time because the
+   * flush can happen after the reader has already navigated away.
+   */
+  private pendingSlug = '';
+
   constructor() {
     effect(() => {
       this.pageKey();
@@ -55,12 +61,13 @@ export class DocFeedbackComponent implements OnDestroy {
   }
 
   voteHelpful(): void {
-    this.telemetry.trackFeedback(true, undefined);
+    this.telemetry.trackFeedback(true, undefined, this.pageKey());
     this.phase.set('done');
   }
 
   voteUnhelpful(): void {
     this.pendingNegative = true;
+    this.pendingSlug = this.pageKey();
     this.phase.set('explaining');
   }
 
@@ -90,6 +97,10 @@ export class DocFeedbackComponent implements OnDestroy {
     }
     this.pendingNegative = false;
     const text = this.comment().trim();
-    this.telemetry.trackFeedback(false, text.length > 0 ? text : undefined);
+    this.telemetry.trackFeedback(
+      false,
+      text.length > 0 ? text : undefined,
+      this.pendingSlug
+    );
   }
 }

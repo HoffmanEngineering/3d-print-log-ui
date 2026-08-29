@@ -14,6 +14,9 @@ let clicks =
     | summarize clicks = count(), avgRank = round(avg(rank), 1) by query;
 searches
 | join kind=leftouter clicks on query
-| extend clickThroughPct = round(100.0 * coalesce(clicks, 0) / searches, 1)
-| project query, searches, clicks = coalesce(clicks, 0), clickThroughPct, avgRank
+// Clicks per search, NOT a click-through percentage: Docs_SearchResultClick
+// carries no search-attempt id, and one search can produce several clicks, so
+// this ratio can legitimately exceed 1. Treat >1 as "explored several results".
+| extend clicksPerSearch = round(1.0 * coalesce(clicks, 0) / searches, 2)
+| project query, searches, clicks = coalesce(clicks, 0), clicksPerSearch, avgRank
 | order by searches desc

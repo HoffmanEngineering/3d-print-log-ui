@@ -38,7 +38,13 @@ Emitted by `src/app/documentation/docs-telemetry.service.ts` via `LoggingService
 | `Docs_HelpLinkClick`                  | `source`, `slug`                        | Phase 4    |
 | `Docs_TocClick` / `Docs_RelatedClick` | `slug`, `target`                        | Phase 2a   |
 
-`referrerKind` is one of `direct`, `internal`, `search`, `external`.
+`referrerKind` is one of `direct`, `internal`, `search`, `external`. It describes how the
+**first** docs page of a visit was reached — `document.referrer` is frozen at landing for the
+life of a single-page app, so every later in-session navigation is reported as `internal`
+rather than repeating whatever brought the reader in originally.
+
+`Docs_ScrollDepth` is sampled on arrival as well as on scroll, so a page that fits entirely on
+screen reports 100% rather than appearing unread.
 
 Queries for events that have not shipped yet return no rows rather than failing. They are
 committed now so the names stay fixed and the queries never need rewriting.

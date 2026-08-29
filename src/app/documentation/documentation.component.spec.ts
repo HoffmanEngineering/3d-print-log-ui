@@ -215,11 +215,25 @@ describe('DocumentationComponent telemetry', () => {
 
     scrolled.next(scrollableAt(1600, 800, 4000));
 
-    expect(telemetry.trackScrollDepth).toHaveBeenCalledOnceWith(50);
+    expect(telemetry.trackScrollDepth).toHaveBeenCalledWith(50, 'prints');
+  });
+
+  it('samples depth on arrival, not only on scroll', async () => {
+    // A page that fits on screen can never fire a scroll event. Without an
+    // arrival sample it would be reported as unread rather than fully read.
+    // The percentage itself is scrollPercentOf's contract, tested separately.
+    await setup('/docs/prints');
+
+    expect(telemetry.trackScrollDepth).toHaveBeenCalledOnceWith(
+      jasmine.any(Number),
+      'prints'
+    );
   });
 
   it('stops reporting scroll depth once destroyed', async () => {
     await setup('/docs/prints');
+    // Ignore the arrival sample; this is about scroll events after teardown.
+    telemetry.trackScrollDepth.calls.reset();
     fixture.destroy();
 
     scrolled.next(scrollableAt(1600, 800, 4000));

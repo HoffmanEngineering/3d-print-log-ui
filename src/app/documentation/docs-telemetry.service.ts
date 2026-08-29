@@ -8,17 +8,23 @@ export type ReferrerKind = 'direct' | 'internal' | 'search' | 'external';
 /** Hostnames (or suffixes) that count as our own site. */
 const INTERNAL_HOSTS = ['3dprintlog.com', 'localhost'];
 
-/** Search engines worth distinguishing from generic external traffic. */
-const SEARCH_HOSTS = [
-  'google.',
-  'bing.com',
-  'duckduckgo.com',
-  'search.yahoo.',
-  'ecosia.org',
-  'search.brave.com',
-  'startpage.com',
-  'baidu.com',
-  'yandex.',
+/**
+ * Search engines worth distinguishing from generic external traffic.
+ *
+ * Matched on label boundaries, not as substrings: `notbing.com` contains
+ * "bing.com" but is not Bing. Trailing-dot entries cover the country variants
+ * (google.co.uk, yandex.ru) without enumerating every TLD.
+ */
+const SEARCH_HOST_PATTERNS = [
+  /(^|\.)google\./,
+  /(^|\.)bing\.com$/,
+  /(^|\.)duckduckgo\.com$/,
+  /(^|\.)search\.yahoo\./,
+  /(^|\.)ecosia\.org$/,
+  /(^|\.)brave\.com$/,
+  /(^|\.)startpage\.com$/,
+  /(^|\.)baidu\.com$/,
+  /(^|\.)yandex\./,
 ];
 
 /** The slug reported for `/docs`, which redirects to getting-started. */
@@ -59,13 +65,24 @@ export class DocsTelemetryService {
   /** Depth buckets already reported for `currentSlug`. */
   private reportedBuckets = new Set<number>();
 
+  /** False until the first page view; `document.referrer` only describes that one. */
+  private hasReportedFirstView = false;
+
   trackPageView(url: string): void {
     this.currentSlug = slugFromDocsUrl(url);
     this.reportedBuckets.clear();
 
+    // document.referrer is frozen at the landing page for the life of the SPA,
+    // so reusing it would label every later in-app navigation with however the
+    // reader originally arrived.
+    const referrerKind: ReferrerKind = this.hasReportedFirstView
+      ? 'internal'
+      : this.referrerKind();
+    this.hasReportedFirstView = true;
+
     this.logging.logEvent('Docs_PageView', {
       slug: this.currentSlug,
-      referrerKind: this.referrerKind(),
+      referrerKind,
     });
   }
 
@@ -73,9 +90,13 @@ export class DocsTelemetryService {
    * Reports how far down the page the reader has reached. Each bucket fires at
    * most once per page view; a single large jump reports every bucket it passed
    * so a fast scroll is not indistinguishable from a short page.
+   *
+   * `slug` is the page the sample was taken on. Scroll sampling is audited, so
+   * a sample can be delivered after the reader has already navigated; one that
+   * belongs to a page we have left is dropped rather than misattributed.
    */
-  trackScrollDepth(percent: number): void {
-    if (this.currentSlug === null) {
+  trackScrollDepth(percent: number, slug: string): void {
+    if (this.currentSlug === null || slug !== this.currentSlug) {
       return;
     }
 
@@ -90,10 +111,19 @@ export class DocsTelemetryService {
     }
   }
 
-  trackFeedback(helpful: boolean, comment?: string): void {
+  /**
+   * `slug` is the page the vote was cast on. A negative vote is held while the
+   * reader explains it and may be flushed after navigation, so resolving the
+   * page at send time would file the complaint against the wrong document.
+   */
+  trackFeedback(
+    helpful: boolean,
+    comment: string | undefined,
+    slug: string
+  ): void {
     const trimmed = comment?.trim();
     this.logging.logEvent('Docs_Feedback', {
-      slug: this.currentSlug ?? 'unknown',
+      slug: slug || (this.currentSlug ?? 'unknown'),
       helpful,
       ...(trimmed ? { comment: trimmed.slice(0, MAX_COMMENT_LENGTH) } : {}),
     });
@@ -116,7 +146,7 @@ export class DocsTelemetryService {
     if (INTERNAL_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) {
       return 'internal';
     }
-    if (SEARCH_HOSTS.some((h) => host.includes(h))) {
+    if (SEARCH_HOST_PATTERNS.some((pattern) => pattern.test(host))) {
       return 'search';
     }
     return 'external';

@@ -135,6 +135,7 @@ export class DocumentationComponent
     if (/^\/?docs(\/|$|[?#])/.test(url)) {
       this.currentSlug.set(slugFromDocsUrl(url));
       this.telemetry.trackPageView(url);
+      this.sampleScrollDepth();
     }
   }
 
@@ -147,14 +148,34 @@ export class DocumentationComponent
     this.scrollDispatcher
       .scrolled(SCROLL_AUDIT_MS)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((scrollable: CdkScrollable | void) => {
-        const element = scrollable
-          ? scrollable.getElementRef().nativeElement
-          : this.document.documentElement;
-        if (element) {
-          this.telemetry.trackScrollDepth(scrollPercentOf(element));
-        }
-      });
+      .subscribe((scrollable: CdkScrollable | void) =>
+        this.sampleScrollDepth(scrollable || undefined)
+      );
+  }
+
+  /**
+   * Takes one depth reading. Also called on arrival: a page that fits on screen
+   * can never fire a scroll event, and without this would be reported as 0%
+   * read rather than fully read.
+   */
+  private sampleScrollDepth(scrollable?: CdkScrollable): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    const element = scrollable
+      ? scrollable.getElementRef().nativeElement
+      : (this.scrollContainer() ?? this.document.documentElement);
+    if (element) {
+      this.telemetry.trackScrollDepth(
+        scrollPercentOf(element),
+        this.currentSlug()
+      );
+    }
+  }
+
+  /** The element that actually scrolls: sidenav content on desktop, document on mobile. */
+  private scrollContainer(): HTMLElement | null {
+    return this.document.querySelector?.('mat-sidenav-content') ?? null;
   }
 
   private applySeoForUrl(url: string): void {

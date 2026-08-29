@@ -29,6 +29,10 @@ export enum UserSettingType {
   Electricity_KwhRate = 12,
   Electricity_DefaultWattageW = 13,
   Prints_PreferredFilamentDisplayUnit = 14,
+  /** Send a push notification when a print completes. */
+  Push_PrintCompleted = 15,
+  /** Send a push notification when a print fails. */
+  Push_PrintFailed = 16,
 }
 
 export interface UserSetting {
@@ -143,6 +147,27 @@ export class UserSettingService {
         this.settingsMap.set(updatedSetting.userSettingTypeId, updatedSetting);
       })
     );
+  }
+
+  /**
+   * Writes a setting without the caller having to know whether a row exists.
+   *
+   * The API's CreateUserSetting rejects a second row for the same type, and the database now
+   * enforces that too, so choosing PUT vs POST is not a caller's concern — getting it wrong
+   * is a 500, not a silent duplicate.
+   */
+  public async addOrUpdateSetting(
+    settingTypeId: UserSettingType,
+    newValue: string
+  ): Promise<void> {
+    const existing = await this.getCurrentUsersSettingByType(settingTypeId);
+
+    if (existing) {
+      await lastValueFrom(this.updateUserSetting(existing.id, newValue));
+      return;
+    }
+
+    await lastValueFrom(this.addUserSetting(settingTypeId, newValue));
   }
 
   addUserSetting(settingTypeId: UserSettingType, newValue: string) {

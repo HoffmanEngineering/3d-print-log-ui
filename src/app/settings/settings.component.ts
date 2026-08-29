@@ -26,6 +26,12 @@ import {
 import { SubscriptionService } from '../core/services/subscription.service';
 import { ThemeService, ThemeMode } from '../core/services/theme.service';
 import { LoggingService } from '../core/services/logging.service';
+import { NativeBridgeService } from '../core/services/native-bridge.service';
+import {
+  PushNotificationType,
+  PushPreferencesService,
+} from '../core/services/push-preferences.service';
+import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
 
 @Component({
   selector: 'app-settings',
@@ -94,6 +100,24 @@ export class SettingsComponent implements OnInit {
 
   public currencies: Currencies = null;
 
+  /**
+   * Whether the push section renders at all. Hidden in a normal browser: dead toggles that
+   * cannot affect anything are worse than no toggles.
+   */
+  public pushAvailable = false;
+  public printCompletedPush = true;
+  public printFailedPush = true;
+
+  /**
+   * The toggles write a preference, but a preference cannot make Android display anything.
+   * When the OS permission is missing the toggles are honest but inert, so the section says
+   * so and offers the request — this is the second chance for someone who declined earlier.
+   */
+  public pushPermissionGranted = true;
+
+  /** Exposed so the template can name the setting types it writes. */
+  public readonly userSettingTypes = UserSettingType;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private userService: UserService,
@@ -107,6 +131,40 @@ export class SettingsComponent implements OnInit {
   readonly subscriptionService = inject(SubscriptionService);
   readonly themeService = inject(ThemeService);
   private readonly loggingService = inject(LoggingService);
+  private readonly pushPreferences = inject(PushPreferencesService);
+  private readonly nativeBridge = inject(NativeBridgeService);
+  private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
+
+  private async loadPushPreferences(): Promise<void> {
+    this.pushAvailable = this.nativeBridge.isAvailable();
+    if (!this.pushAvailable) {
+      return;
+    }
+
+    this.printCompletedPush = await this.pushPreferences.isEnabled(
+      UserSettingType.Push_PrintCompleted
+    );
+    this.printFailedPush = await this.pushPreferences.isEnabled(
+      UserSettingType.Push_PrintFailed
+    );
+    this.pushPermissionGranted = this.nativeBridge.permission === 'granted';
+  }
+
+  async onEnableNotificationsClicked(): Promise<void> {
+    const permission = await this.pushPermissionPrompt.promptInContext(
+      'Notifications are turned off for 3D Print Log on this device.'
+    );
+    this.pushPermissionGranted = permission === 'granted';
+  }
+
+  // One handler per toggle, with the type passed explicitly: a shared handler would have to
+  // guess which toggle changed and could write the wrong setting.
+  async onPushPreferenceChanged(
+    type: PushNotificationType,
+    enabled: boolean
+  ): Promise<void> {
+    await this.pushPreferences.setEnabled(type, enabled);
+  }
 
   setThemeMode(mode: ThemeMode): void {
     this.themeService.setMode(mode);
@@ -115,6 +173,8 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit(): void {
     this.metaService.setTitle('Settings - 3D Print Log');
+
+    void this.loadPushPreferences();
 
     this.activatedRoute.data.subscribe((data) => {
       this.currencies = data.currencies;

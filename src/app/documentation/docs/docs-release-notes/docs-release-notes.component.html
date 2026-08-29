@@ -2,6 +2,65 @@
   <h2>Release Notes</h2>
   <hr />
 
+  <h3 id="v1.49.1">1.49.1 - Push Notification Fixes</h3>
+  <p>
+    Follow-up fixes to the push notifications that shipped in 1.49.0. Tapping a
+    notification now opens the print it is about, instead of just opening the app
+    to whatever page you were last on. Turning notifications on from
+    <a routerLink="/settings">Settings</a> works on the first tap (it previously
+    took two, even though the first one had already been granted). Notification
+    timestamps are also correct now: the notification tray no longer shows a print
+    as finishing years ago, and times in the app are no longer shifted by your time
+    zone.
+  </p>
+  <h4>Full List of Changes:</h4>
+  <ul>
+    <li>
+      <strong>Tapping a notification opens the print</strong> - a tapped print
+      notification now navigates to that print, whether the app was closed or
+      already open, and still does so when the device is offline (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/154"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #154</a
+      >, <a
+        href="https://github.com/HoffmanEngineering/3d-print-log-app/pull/14"
+        rel="noreferrer noopener"
+        target="_blank"
+        >Android app PR #14</a
+      >)
+    </li>
+    <li>
+      <strong>Enabling notifications works on the first tap</strong> - Settings no
+      longer reports notifications as off after you have just allowed them (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-app/pull/14"
+        rel="noreferrer noopener"
+        target="_blank"
+        >Android app PR #14</a
+      >)
+    </li>
+    <li>
+      <strong>Notifications are offered while a print is running</strong> - opening
+      one of your own in-progress prints now offers to enable notifications, rather
+      than leaving Settings as the only way to find the option (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/154"
+        rel="noreferrer noopener"
+        target="_blank"
+        >PR #154</a
+      >)
+    </li>
+    <li>
+      <strong>Notification timestamps are correct</strong> - the notification tray
+      no longer shows a just-finished print as years old, and notification times in
+      the app are no longer offset by your time zone (<a
+        href="https://github.com/HoffmanEngineering/3d-print-log-api/pull/108"
+        rel="noreferrer noopener"
+        target="_blank"
+        >API PR #108</a
+      >)
+    </li>
+  </ul>
+
   <h3 id="v1.49.0">1.49.0 - Push Notifications</h3>
   <p>
     <strong>Push notifications</strong> have arrived. If you send print events to

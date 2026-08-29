@@ -18,6 +18,9 @@ import { SubscriptionService } from '../core/services/subscription.service';
 import { LoggingService } from '../core/services/logging.service';
 import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
 import { ConnectedAgentsService } from '../core/services/connected-agents.service';
+import { NativeBridgeService } from '../core/services/native-bridge.service';
+import { PushPreferencesService } from '../core/services/push-preferences.service';
+import { UserSettingType } from '../core/services/user-setting.service';
 
 xdescribe('SettingsComponent (original)', () => {
   let component: SettingsComponent;
@@ -43,6 +46,8 @@ xdescribe('SettingsComponent (original)', () => {
 describe('SettingsComponent', () => {
   let component: SettingsComponent;
   let fixture: ComponentFixture<SettingsComponent>;
+  let mockNativeBridge: jasmine.SpyObj<NativeBridgeService>;
+  let mockPushPreferences: jasmine.SpyObj<PushPreferencesService>;
 
   const mockUserDetails = {
     id: '1',
@@ -113,6 +118,20 @@ describe('SettingsComponent', () => {
       'LoggingService',
       ['logEvent', 'logException']
     );
+    mockNativeBridge = jasmine.createSpyObj<NativeBridgeService>(
+      'NativeBridgeService',
+      ['isAvailable']
+    );
+    // Default to a plain browser: the overwhelming majority of these specs are not about
+    // push, and the section must stay absent for them.
+    mockNativeBridge.isAvailable.and.returnValue(false);
+
+    mockPushPreferences = jasmine.createSpyObj<PushPreferencesService>(
+      'PushPreferencesService',
+      ['isEnabled', 'setEnabled']
+    );
+    mockPushPreferences.isEnabled.and.resolveTo(true);
+    mockPushPreferences.setEnabled.and.resolveTo(undefined);
 
     TestBed.configureTestingModule({
       declarations: [SettingsComponent],
@@ -140,6 +159,8 @@ describe('SettingsComponent', () => {
         { provide: SubscriptionService, useValue: mockSubscriptionService },
         { provide: ThemeService, useValue: mockThemeService },
         { provide: LoggingService, useValue: mockLoggingService },
+        { provide: NativeBridgeService, useValue: mockNativeBridge },
+        { provide: PushPreferencesService, useValue: mockPushPreferences },
       ],
     }).compileComponents();
   }));
@@ -185,6 +206,73 @@ describe('SettingsComponent', () => {
       lightToggle.click();
       fixture.detectChanges();
       expect(themeService.setMode).toHaveBeenCalledWith('light');
+    });
+  });
+
+  describe('push notification preferences', () => {
+    function pushSection(): HTMLElement | null {
+      return fixture.nativeElement.querySelector(
+        '[data-testid="push-notifications-section"]'
+      );
+    }
+
+    it('hides the section entirely in a normal browser', () => {
+      mockNativeBridge.isAvailable.and.returnValue(false);
+
+      fixture.detectChanges();
+
+      expect(pushSection()).toBeNull();
+      expect(mockPushPreferences.isEnabled).not.toHaveBeenCalled();
+    });
+
+    it('renders both toggles inside the app shell', async () => {
+      mockNativeBridge.isAvailable.and.returnValue(true);
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(pushSection()).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="push-print-completed"]'
+        )
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="push-print-failed"]')
+      ).not.toBeNull();
+    });
+
+    it('reflects a stored opt-out on the matching toggle', async () => {
+      mockNativeBridge.isAvailable.and.returnValue(true);
+      mockPushPreferences.isEnabled.and.callFake((type) =>
+        Promise.resolve(type !== UserSettingType.Push_PrintFailed)
+      );
+
+      fixture.detectChanges();
+      // loadPushPreferences awaits the two lookups in sequence, so one microtask flush is
+      // not enough to see the second one land.
+      await fixture.whenStable();
+      await fixture.whenStable();
+
+      expect(component.printCompletedPush).toBeTrue();
+      expect(component.printFailedPush).toBeFalse();
+    });
+
+    it('writes the print-failed setting when that toggle changes', async () => {
+      mockNativeBridge.isAvailable.and.returnValue(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      await component.onPushPreferenceChanged(
+        UserSettingType.Push_PrintFailed,
+        false
+      );
+
+      expect(mockPushPreferences.setEnabled).toHaveBeenCalledWith(
+        UserSettingType.Push_PrintFailed,
+        false
+      );
     });
   });
 });

@@ -24,6 +24,9 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
 export class AppComponent implements OnInit {
   title = 'print-log-ui';
 
+  /** Whether native accepted our pending-tap listener, so we stop retrying. */
+  private tapListenerInstalled = false;
+
   readonly loadingBarColor = computed(() =>
     this.themeService.isDark() ? '#283593' : '#3f51b5'
   );
@@ -52,6 +55,7 @@ export class AppComponent implements OnInit {
       if (user) {
         this.releaseNotesService.checkLastLoggedInVersion();
         this.registerForPush();
+        this.watchForWarmStartTaps();
       }
     });
 
@@ -87,9 +91,14 @@ export class AppComponent implements OnInit {
    * never fire — it silently swallowed every warm-start tap.
    */
   private watchForWarmStartTaps() {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId) || this.tapListenerInstalled)
+      return;
 
-    this.nativeBridge.onPendingTap(() => {
+    // Retried rather than attempted once: the app shell injects window.PrintLogNative on
+    // page load, which can land after Angular has bootstrapped. A single attempt in ngOnInit
+    // would then install nothing at all, and every later tap would be signalled into an
+    // empty listener list — silently, which is the failure mode this replaced.
+    this.tapListenerInstalled = this.nativeBridge.onPendingTap(() => {
       void this.pushRegistration.handlePendingTap();
     });
   }

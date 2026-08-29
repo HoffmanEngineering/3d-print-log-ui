@@ -67,6 +67,7 @@ describe('AppComponent (ThemeService)', () => {
       'NativeBridgeService',
       ['onPendingTap']
     );
+    mockNativeBridge.onPendingTap.and.returnValue(true);
     mockPushRegistration.onAuthenticated.and.resolveTo(undefined);
     mockPushRegistration.onLogout.and.resolveTo(undefined);
     mockPushRegistration.handlePendingTap.and.resolveTo(undefined);
@@ -171,6 +172,31 @@ describe('AppComponent (ThemeService)', () => {
       listener();
 
       expect(mockPushRegistration.handlePendingTap).toHaveBeenCalled();
+    });
+
+    /**
+     * The app shell injects window.PrintLogNative on page load, which can land after Angular
+     * has bootstrapped. A one-shot attempt in ngOnInit therefore silently installs nothing,
+     * and every later warm-start tap is signalled into an empty listener list.
+     */
+    it('retries installing the tap listener when the bridge was not ready', () => {
+      mockNativeBridge.onPendingTap.and.returnValue(false);
+      mockAuthService.userProfile$ = of({ id: 1 } as never);
+
+      const fixture = TestBed.createComponent(AppComponent);
+      fixture.detectChanges();
+
+      expect(mockNativeBridge.onPendingTap).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not reinstall the tap listener once one is installed', () => {
+      mockNativeBridge.onPendingTap.and.returnValue(true);
+      mockAuthService.userProfile$ = of({ id: 1 } as never);
+
+      const fixture = TestBed.createComponent(AppComponent);
+      fixture.detectChanges();
+
+      expect(mockNativeBridge.onPendingTap).toHaveBeenCalledTimes(1);
     });
 
     it('does not listen for the Cordova resume event', () => {

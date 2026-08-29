@@ -57,7 +57,17 @@ export class PushRegistrationService {
       return;
     }
 
-    await firstValueFrom(this.notifications.markAsRead(tap.notificationId));
+    // Marking read must not gate navigation. Native claims the tap destructively
+    // (getAndSet(null)), so anything that throws after that point loses it permanently —
+    // and an offline device or a 5xx would strand the user on whatever page they were on,
+    // which is the failure this whole path exists to prevent. A stale unread badge is the
+    // cheaper wrong outcome.
+    try {
+      await firstValueFrom(this.notifications.markAsRead(tap.notificationId));
+    } catch {
+      // Deliberately swallowed; see above.
+    }
+
     await this.router.navigate(['/prints', tap.printId]);
   }
 }

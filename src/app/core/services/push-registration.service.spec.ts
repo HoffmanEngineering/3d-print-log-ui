@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { PushRegistrationService } from './push-registration.service';
 import { NativeBridgeService } from './native-bridge.service';
 import { NotificationService } from './notification.service';
@@ -97,5 +97,24 @@ describe('PushRegistrationService', () => {
 
     expect(bridge.unregisterForPush).toHaveBeenCalledWith('bearer-abc');
     expect(bridge.registerForPush).toHaveBeenCalledTimes(2);
+  });
+
+  /**
+   * The tap is claimed destructively — native clears it with getAndSet(null) — so a failure
+   * anywhere after that point loses it for good. Marking read is housekeeping; routing the
+   * user to the print they tapped is the whole feature, and must not depend on the API leg.
+   */
+  it('still navigates when marking the notification read fails', async () => {
+    bridge.consumePendingTap.and.resolveTo({
+      notificationId: 'abc',
+      printId: 42,
+    });
+    notifications.markAsRead.and.returnValue(
+      throwError(() => new Error('offline'))
+    );
+
+    await service.handlePendingTap();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/prints', 42]);
   });
 });

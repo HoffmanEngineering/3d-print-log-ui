@@ -8,11 +8,8 @@
 // Exits non-zero when the version has no section, so a deploy fails loudly
 // rather than publishing an empty release.
 
-import { readFileSync } from 'node:fs';
+import { readReleaseNotesHtml } from './release-notes-lib.mjs';
 import { extractReleaseNotes } from './release-notes-lib.mjs';
-
-const NOTES_PATH =
-  'src/app/documentation/docs/docs-release-notes/docs-release-notes.component.html';
 
 const args = process.argv.slice(2);
 const wantTitle = args.includes('--title');
@@ -26,10 +23,7 @@ if (!version) {
 }
 
 try {
-  const release = extractReleaseNotes(
-    readFileSync(NOTES_PATH, 'utf8'),
-    version
-  );
+  const release = extractReleaseNotes(readReleaseNotesHtml(), version);
   process.stdout.write(
     wantTitle ? `${release.title}\n` : `${release.markdown}\n`
   );

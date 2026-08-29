@@ -1,0 +1,224 @@
+// Reading doc sources, planning the generated tree, and syncing it to disk.
+//
+// Planning is pure: `planOutputs` returns a path -> contents map, so the whole
+// generated tree is comparable byte for byte (that is what `--check` uses, and
+// what makes generation idempotent by construction).
+//
+// Ordering matters on write. `tsconfig.app.json` seeds the compile graph from
+// main.ts, so the route barrels are transitive compile inputs. They are written
+// LAST, after the page components they import, so a watching Angular build never
+// sees a barrel pointing at a file that does not exist yet.
+
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { parseFrontmatter } from './docs-frontmatter.mjs';
+import {
+  emitDeclarationsTs,
+  emitFiguresTs,
+  emitManifestTs,
+  emitPageComponentTs,
+  emitPageTemplate,
+  emitRoutesTs,
+  emitSearchIndexJson,
+  emitServerRoutesTs,
+} from './docs-emit.mjs';
+import { buildManifest } from './docs-manifest-lib.mjs';
+import { renderMarkdown } from './docs-markdown.mjs';
+
+/** Barrels are written last; see the note at the top of this file. */
+const BARRELS = [
+  'docs-declarations.ts',
+  'docs-manifest.ts',
+  'docs.routes.ts',
+  'docs.server-routes.ts',
+];
+
+/**
+ * @param {string} contentDir directory of `<slug>.md` files
+ * @returns {object[]} frontmatter records with `body`, sorted by slug
+ */
+export function readDocSources(contentDir) {
+  const names = fs
+    .readdirSync(contentDir)
+    .filter((name) => name.endsWith('.md'))
+    .sort();
+
+  return names.map((name) => {
+    const raw = fs.readFileSync(path.join(contentDir, name), 'utf8');
+    let parsed;
+    try {
+      parsed = parseFrontmatter(raw);
+    } catch (error) {
+      throw new Error(`${name}: ${error.message}`);
+    }
+
+    const expected = name.replace(/\.md$/, '');
+    if (parsed.data.slug !== expected) {
+      throw new Error(
+        `${name} declares slug "${parsed.data.slug}" but must match its filename ("${expected}").`
+      );
+    }
+
+    // A page styles itself by dropping `<slug>.scss` beside its Markdown; the
+    // generator copies it next to the generated component. No frontmatter field
+    // for it, so the file's presence is the only thing that can drift.
+    const stylesheet = path.join(contentDir, `${expected}.scss`);
+    const styles = fs.existsSync(stylesheet)
+      ? fs.readFileSync(stylesheet, 'utf8')
+      : null;
+
+    return {
+      ...parsed.data,
+      body: parsed.body,
+      sourceFile: name,
+      styles,
+      hasStyles: styles !== null && !parsed.data.component,
+    };
+  });
+}
+
+/**
+ * @param {object[]} sources from readDocSources
+ * @returns {{ files: Map<string, string>, manifest: object, templates: Record<string, string> }}
+ */
+export function planOutputs(sources) {
+  const manifest = buildManifest(
+    sources.map(({ body, sourceFile, styles, ...frontmatter }) => frontmatter)
+  );
+  const stylesBySlug = new Map(sources.map((s) => [s.slug, s.styles]));
+
+  /** @type {Record<string, string>} */
+  const templates = {};
+  for (const source of sources) {
+    try {
+      templates[source.slug] = renderMarkdown(source.body);
+    } catch (error) {
+      throw new Error(`${source.sourceFile}: ${error.message}`);
+    }
+  }
+
+  /** @type {Map<string, string>} */
+  const files = new Map();
+
+  for (const page of manifest.pages) {
+    files.set(
+      `pages/docs-${page.slug}.component.html`,
+      emitPageTemplate(templates[page.slug] ?? '')
+    );
+    const component = emitPageComponentTs(page);
+    if (component) {
+      files.set(`pages/docs-${page.slug}.component.ts`, component);
+    }
+    if (page.hasStyles) {
+      files.set(
+        `pages/docs-${page.slug}.component.scss`,
+        stylesBySlug.get(page.slug)
+      );
+    }
+  }
+
+  files.set('docs-manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
+  files.set('docs-search-index.json', emitSearchIndexJson(manifest, templates));
+  files.set('docs-figures.ts', emitFiguresTs(manifest, templates));
+  files.set('docs-declarations.ts', emitDeclarationsTs(manifest));
+  files.set('docs-manifest.ts', emitManifestTs());
+  files.set('docs.routes.ts', emitRoutesTs(manifest));
+  files.set('docs.server-routes.ts', emitServerRoutesTs(manifest));
+
+  return { files, manifest, templates };
+}
+
+/**
+ * Brings `outDir` in line with `files`.
+ *
+ * @param {string} outDir
+ * @param {Map<string, string>} files relative POSIX path -> contents
+ * @param {{ check?: boolean }} [options] when checking, nothing is written and
+ *   every difference is reported instead
+ * @returns {{ written: string[], removed: string[], drift: string[] }}
+ */
+export function syncOutputs(outDir, files, options = {}) {
+  const check = options.check === true;
+  const written = [];
+  const removed = [];
+  const drift = [];
+
+  const existing = new Set(listFiles(outDir));
+
+  for (const relative of orderedPaths(files)) {
+    const contents = files.get(relative);
+    const target = path.join(outDir, ...relative.split('/'));
+    const current = existing.has(relative)
+      ? fs.readFileSync(target, 'utf8')
+      : null;
+
+    if (current === contents) continue;
+
+    if (check) {
+      drift.push(relative);
+      continue;
+    }
+
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    writeAtomic(target, contents);
+    written.push(relative);
+  }
+
+  for (const relative of [...existing].sort()) {
+    if (files.has(relative)) continue;
+    if (check) {
+      drift.push(relative);
+      continue;
+    }
+    fs.rmSync(path.join(outDir, ...relative.split('/')), { force: true });
+    removed.push(relative);
+  }
+
+  if (!check) pruneEmptyDirectories(outDir);
+
+  return { written, removed, drift: drift.sort() };
+}
+
+/** Page files first, then the barrels that import them. */
+function orderedPaths(files) {
+  const all = [...files.keys()].sort();
+  return [
+    ...all.filter((name) => !BARRELS.includes(name)),
+    ...BARRELS.filter((name) => files.has(name)),
+  ];
+}
+
+/**
+ * Writes through a temporary file in the same directory so a reader — an Angular
+ * watch build, a concurrent `--check` — never observes a half-written file.
+ */
+function writeAtomic(target, contents) {
+  const temp = `${target}.${process.pid}.tmp`;
+  fs.writeFileSync(temp, contents);
+  fs.renameSync(temp, target);
+}
+
+function listFiles(dir, prefix = '') {
+  if (!fs.existsSync(dir)) return [];
+  const out = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      out.push(...listFiles(path.join(dir, entry.name), relative));
+    } else if (!entry.name.endsWith('.tmp')) {
+      out.push(relative);
+    }
+  }
+  return out.sort();
+}
+
+function pruneEmptyDirectories(dir) {
+  if (!fs.existsSync(dir)) return;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const child = path.join(dir, entry.name);
+    pruneEmptyDirectories(child);
+    if (fs.readdirSync(child).length === 0) fs.rmdirSync(child);
+  }
+}

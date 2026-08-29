@@ -98,7 +98,18 @@ function parseBlock(lines, indent) {
     if (meaningful.length === 0) {
       out[key] = null;
     } else if (meaningful[0].trimStart().startsWith('- ')) {
-      out[key] = meaningful.map((l) => parseScalar(l.trimStart().slice(2).trim()));
+      // Every line must carry its own dash. Deciding from the first line and
+      // then slicing two characters off the rest turned a forgotten dash into a
+      // truncated value: `typo` became `po`, and generated a /docs/po redirect.
+      out[key] = meaningful.map((l) => {
+        const item = l.trimStart();
+        if (!item.startsWith('- ')) {
+          throw new Error(
+            `Frontmatter sequence item must start with "- ": "${l.trim()}"`
+          );
+        }
+        return parseScalar(item.slice(2).trim());
+      });
     } else {
       const childIndent =
         meaningful[0].length - meaningful[0].trimStart().length;
@@ -134,21 +145,55 @@ function parseScalarOrFlow(text) {
     }
     const inner = text.slice(1, -1).trim();
     if (inner === '') return [];
-    return inner.split(',').map((part) => parseScalar(part.trim()));
+    return splitFlow(inner).map((part) => parseScalar(part.trim()));
   }
   return parseScalar(text);
+}
+
+// A comma inside a quoted scalar is data, not a separator.
+function splitFlow(inner) {
+  const parts = [];
+  let current = '';
+  let quote = null;
+
+  for (const ch of inner) {
+    if (quote) {
+      current += ch;
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"') {
+      quote = ch;
+      current += ch;
+      continue;
+    }
+    if (ch === ',') {
+      parts.push(current);
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  parts.push(current);
+  return parts;
 }
 
 function parseScalar(text) {
   // A quoted scalar may still carry a trailing comment. Find the closing quote
   // first, then ignore everything after it -- checking `endsWith` instead left
   // `title: "My title" # note` quoted, and the quotes reached the page <title>.
-  const quoted = /^(['"])((?:[^\\]|\\.)*?)\1\s*(?:#.*)?$/.exec(text);
-  if (quoted) {
-    const quote = quoted[1];
-    const inner = quoted[2];
-    // YAML escapes a literal quote inside a single-quoted scalar by doubling it.
-    return quote === "'" ? inner.replace(/''/g, "'") : inner;
+  //
+  // The two quote styles escape differently, and conflating them corrupts real
+  // values: inside single quotes a backslash is literal and a quote is escaped
+  // by doubling it; inside double quotes a backslash escapes the next character.
+  const single = /^'((?:[^']|'')*)'\s*(?:#.*)?$/.exec(text);
+  if (single) {
+    return single[1].replace(/''/g, "'");
+  }
+
+  const double = /^"((?:[^"\\]|\\.)*)"\s*(?:#.*)?$/.exec(text);
+  if (double) {
+    return double[1].replace(/\\(.)/g, '$1');
   }
 
   // An unquoted scalar ends at a ` #` comment. Quote the value to keep a `#`.

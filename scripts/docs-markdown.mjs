@@ -36,11 +36,19 @@ export function renderMarkdown(markdown) {
  */
 export function extractAnchors(template) {
   const ids = [];
-  for (const match of template.matchAll(/\sid="([^"]+)"/g)) {
-    if (!ids.includes(match[1])) ids.push(match[1]);
+  for (const match of template.matchAll(ID_PATTERN)) {
+    const id = match[1] ?? match[2];
+    if (!ids.includes(id)) ids.push(id);
   }
   return ids;
 }
+
+/**
+ * An `id` attribute in either quote style. Raw HTML blocks pass through
+ * verbatim, so a single-quoted id reaches the template unchanged — and an
+ * anchor the extractor cannot see is one the contract cannot protect.
+ */
+export const ID_PATTERN = /\sid="([^"]+)"|\sid='([^']+)'/g;
 
 /**
  * Renders a run of lines that all sit at `indent` columns or deeper.
@@ -313,13 +321,14 @@ function renderInline(text) {
     return `${SPAN_MARK}${spans.length - 1}${SPAN_MARK}`;
   });
 
-  // Alt text is attribute content, not inline text: an unescaped quote closes
-  // the attribute early and turns the rest of the caption into markup.
-  out = out.replace(
-    /!\[([^\]]*)\]\(([^)\s]+)\)/g,
-    (_, alt, src) =>
-      `<img src="${src}" alt="${alt.replace(/"/g, '&quot;')}" />`
-  );
+  // Alt text is attribute content, not inline text. It is parked in a span
+  // placeholder like a code span, because the emphasis and code-span passes that
+  // run after this one would otherwise rewrite the inside of the attribute and
+  // leave `alt="an <em>important</em> image"` as the accessible name.
+  out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_, alt, src) => {
+    spans.push(`<img src="${src}" alt="${altText(alt, spans)}" />`);
+    return `${SPAN_MARK}${spans.length - 1}${SPAN_MARK}`;
+  });
 
   out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, href) =>
     renderLink(label, href)
@@ -335,6 +344,25 @@ function renderInline(text) {
   out = out.replace(/&(?!#?[A-Za-z0-9]+;)/g, '&amp;');
 
   return out.replace(SPAN_PATTERN, (_, index) => spans[Number(index)]);
+}
+
+/**
+ * The accessible name for an image: plain text, no markup.
+ *
+ * Code spans were already parked before this runs, so a placeholder here points
+ * at a `<code>` span — resolve it back to its text rather than letting the tag
+ * into the attribute. Emphasis markers are dropped for the same reason.
+ */
+function altText(alt, spans) {
+  return alt
+    .replace(SPAN_PATTERN, (_, index) =>
+      String(spans[Number(index)]).replace(/<[^>]*>/g, '')
+    )
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/&(?!#?[A-Za-z0-9]+;)/g, '&amp;')
+    .replace(/"/g, '&quot;');
 }
 
 function renderLink(label, href) {

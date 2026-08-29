@@ -139,3 +139,35 @@ test('accepts a sequence field in block form', () => {
 
   assert.deepEqual(data.aliases, ['old', 'legacy']);
 });
+
+// The block-sequence branch decided from the first line alone, then sliced two
+// characters off every line that followed -- so a missing dash silently became
+// a truncated value ("typo" -> "po") and generated a /docs/po redirect.
+test('rejects a block sequence line missing its dash', () => {
+  assert.throws(
+    () => parseFrontmatter('---\naliases:\n  - legacy\n  typo\n---\nBody\n'),
+    /must start with "- "/
+  );
+});
+
+// A flow sequence was split on every comma, including one inside a quoted
+// scalar.
+test('splits a flow sequence only outside quotes', () => {
+  const { data } = parseFrontmatter('---\nrelated: ["Smith, Jr.", other]\n---\nBody\n');
+
+  assert.deepEqual(data.related, ['Smith, Jr.', 'other']);
+});
+
+// YAML escape rules differ by quote style: a backslash is literal inside single
+// quotes and an escape inside double quotes.
+test('decodes a double-quoted escape', () => {
+  const { data } = parseFrontmatter('---\ntitle: "Say \\"hello\\""\n---\nBody\n');
+
+  assert.equal(data.title, 'Say "hello"');
+});
+
+test('keeps a backslash literal inside a single-quoted scalar', () => {
+  const { data } = parseFrontmatter("---\ntitle: 'C:\docs'\n---\nBody\n");
+
+  assert.equal(data.title, 'C:\docs');
+});

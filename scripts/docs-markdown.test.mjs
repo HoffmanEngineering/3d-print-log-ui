@@ -207,3 +207,33 @@ test('escapes a double quote in image alt text', () => {
 
   assert.match(html, /alt="a &quot;quoted&quot; caption"/);
 });
+
+// Raw HTML passes through verbatim, so an id may arrive single-quoted. Anchors
+// are contractual, and one the extractor cannot see is one the gate cannot
+// protect -- a link to it is reported missing instead.
+test('extracts a single-quoted id', () => {
+  assert.deepEqual(extractAnchors("<div id='setup'></div>"), ['setup']);
+});
+
+test('extracts ids of both quote styles in document order', () => {
+  assert.deepEqual(
+    extractAnchors(`<h2 id="one"></h2><div id='two'></div>`),
+    ['one', 'two']
+  );
+});
+
+// The <img> was built before emphasis and code spans were restored, so those
+// passes rewrote the inside of the alt attribute and the accessible name became
+// literal markup.
+test('keeps inline formatting out of image alt text', () => {
+  const html = renderMarkdown('![an *important* image](pic.png)');
+
+  assert.match(html, /alt="an important image"/);
+  assert.doesNotMatch(html, /alt="[^"]*<em>/);
+});
+
+test('keeps a code span out of image alt text', () => {
+  const html = renderMarkdown('![a `code` caption](p.png)');
+
+  assert.match(html, /alt="a code caption"/);
+});

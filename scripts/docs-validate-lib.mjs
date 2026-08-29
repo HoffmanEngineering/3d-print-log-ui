@@ -10,8 +10,8 @@
 // marketing SEO text lives in Angular sources this script cannot read, and the
 // prerendered HTML is the only place both pools exist together.
 
-import { DOC_MODES } from './docs-manifest-lib.mjs';
-import { extractAnchors, renderMarkdown } from './docs-markdown.mjs';
+import { DEFAULT_DOC_SLUG, DOC_MODES } from './docs-manifest-lib.mjs';
+import { extractAnchors, ID_PATTERN, renderMarkdown } from './docs-markdown.mjs';
 
 const REQUIRED_FIELDS = {
   slug: 'string',
@@ -59,6 +59,8 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
     for (const alias of s.aliases) aliasOwners.set(alias, s.slug);
   }
 
+  /** Pages present as sources but whose Markdown did not render. */
+  const unrendered = new Set();
   const titles = new Map();
   const descriptions = new Map();
   /** @type {Map<string, string[]>} */
@@ -109,7 +111,12 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
     try {
       template = renderMarkdown(s.body ?? '');
     } catch (error) {
+      // The render error is the only real problem here. Every downstream check
+      // reads anchorsBySlug, and an absent key means "no such page" — so
+      // without this the author also gets told their anchors vanished and that
+      // the page they are editing does not exist.
       add(file, error.message);
+      unrendered.add(s.slug);
       continue;
     }
 
@@ -119,11 +126,12 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
     // extractAnchors dedupes, which is right for the contract check below and
     // wrong here: two elements sharing an id make the deep link ambiguous.
     const seen = new Set();
-    for (const match of template.matchAll(/\sid="([^"]+)"/g)) {
-      if (seen.has(match[1])) {
-        add(file, `id "${match[1]}" is declared more than once.`);
+    for (const match of template.matchAll(ID_PATTERN)) {
+      const id = match[1] ?? match[2];
+      if (seen.has(id)) {
+        add(file, `id "${id}" is declared more than once.`);
       }
-      seen.add(match[1]);
+      seen.add(id);
     }
 
     for (const element of elementsOf(template)) {
@@ -178,6 +186,8 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
       }
     }
 
+    if (unrendered.has(s.slug)) continue;
+
     for (const anchor of anchorBaseline[`docs/${s.slug}`] ?? []) {
       if (!anchorsBySlug.get(s.slug)?.includes(anchor)) {
         add(
@@ -188,11 +198,22 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
     }
   }
 
+  // The default child route is a generator constant, so nothing otherwise ties
+  // it to a page that exists. Deleting or retiring the landing page leaves
+  // /docs redirecting to a route no projection emits.
+  if (!routed.some((s) => s.slug === DEFAULT_DOC_SLUG)) {
+    add(
+      'src/content/docs',
+      `the default doc page "${DEFAULT_DOC_SLUG}" is missing or dormant; /docs would redirect to a route that does not exist.`
+    );
+  }
+
   // Deleting a source used to take its published anchors with it silently: the
   // check above only ever runs for pages that still exist.
   for (const [route, anchors] of Object.entries(anchorBaseline)) {
     const slug = route.replace(/^docs\//, '');
-    if (anchorsBySlug.has(slug) || !anchors.length) continue;
+    const exists = sources.some((s) => s.slug === slug);
+    if (exists || !anchors.length) continue;
     add(
       'docs-anchors.json',
       `${route} has published anchors (${anchors
@@ -232,13 +253,24 @@ function linksOf(template) {
   }
 
   // `[routerLink]="['/docs', 'prints']"` joins its segments into one path.
+  //
+  // Only an array of plain string literals can be resolved statically. A
+  // matrix-parameter object (`{ tab: 'details' }`) or a segment that is a class
+  // member is skipped rather than guessed at: harvesting every quoted substring
+  // turned the object's value into a path segment and reported a dead link to a
+  // page nobody had linked to.
   for (const match of template.matchAll(
     /\s\[routerLink\]=("\[[^\]]*\]"|'\[[^\]]*\]')/g
   )) {
-    const segments = [
-      ...match[1].slice(2, -2).matchAll(/'([^']*)'|"([^"]*)"/g),
-    ].map((s) => s[1] ?? s[2]);
-    if (!segments.length) continue;
+    const inner = match[1].slice(2, -2).trim();
+    if (inner === '') continue;
+
+    const parts = inner.split(',').map((part) => part.trim());
+    const segments = parts.map((part) =>
+      /^'[^']*'$/.test(part) || /^"[^"]*"$/.test(part) ? part.slice(1, -1) : null
+    );
+    if (segments.some((segment) => segment === null)) continue;
+
     hrefs.push(segments.join('/').replace(/\/{2,}/g, '/'));
   }
 

@@ -55,6 +55,14 @@ export function buildManifest(pages) {
 
   for (const page of enriched) {
     for (const alias of page.aliases) {
+      // An alias is used verbatim as a route path. An empty one produces
+      // `{ path: '', redirectTo: … }`, which toChildRoutes emits ahead of the
+      // default route and so shadows it.
+      if (typeof alias !== 'string' || alias === '') {
+        throw new Error(
+          `Doc "${page.slug}" declares an alias that must be a non-empty string, got ${JSON.stringify(alias)}.`
+        );
+      }
       if (slugs.has(alias)) {
         throw new Error(
           `Doc "${page.slug}" declares alias "${alias}", which is already a page slug.`

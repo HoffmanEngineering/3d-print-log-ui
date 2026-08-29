@@ -215,3 +215,23 @@ test('derives a component class name and selector from the slug', () => {
   assert.equal(m.pages[0].className, 'DocsOctoprintWebhookComponent');
   assert.equal(m.pages[0].selector, 'app-docs-octoprint-webhook');
 });
+
+// --- findings from the second adversarial review ----------------------------
+
+// An alias becomes a route path verbatim. An empty one produces
+// `{ path: '', redirectTo: <page> }`, which is emitted BEFORE the default route
+// and therefore shadows it -- /docs would land on the wrong page.
+test('rejects an empty alias', () => {
+  assert.throws(
+    () => manifest([page({ aliases: [''] })]),
+    /must be a non-empty string/
+  );
+});
+
+test('rejects a non-string alias', () => {
+  assert.throws(
+    () => manifest([page({ aliases: [42] })]),
+    /must be a non-empty string/
+  );
+});
+

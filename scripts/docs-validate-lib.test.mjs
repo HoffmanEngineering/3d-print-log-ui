@@ -20,8 +20,32 @@ const source = (over = {}) => ({
   ...over,
 });
 
-const run = (sources, anchors = {}) =>
+/** Raw call: the corpus is exactly what the test passes. */
+const validate = (sources, anchors = {}) =>
   validateDocs({ sources, anchorBaseline: anchors }).map((p) => p.message);
+
+/**
+ * The landing page every valid corpus must contain, since /docs redirects to it.
+ * Injected so a test about one page does not have to restate that invariant.
+ */
+const landingPage = () =>
+  source({
+    slug: 'getting-started',
+    sourceFile: 'getting-started.md',
+    navLabel: 'Getting Started',
+    group: 'start',
+    title: 'Getting Started | 3D Print Log Docs',
+    description: `${DESCRIPTION} Getting started edition.`,
+    body: '## Getting Started\n',
+  });
+
+const run = (sources, anchors = {}) =>
+  validate(
+    sources.some((s) => s.slug === 'getting-started')
+      ? sources
+      : [...sources, landingPage()],
+    anchors
+  );
 
 const messages = (over, anchors) => run([source(over)], anchors);
 
@@ -344,5 +368,94 @@ test('reports a duplicate id within a page', () => {
   assert.deepEqual(
     messages({ body: '## Prints\n\n### One {#dup}\n\n### Two {#dup}\n' }),
     ['prints.md: id "dup" is declared more than once.']
+  );
+});
+
+// The default child route is a generator constant, so nothing tied it to a page
+// that exists: deleting or retiring the landing page left /docs redirecting to
+// a route no projection emits.
+test('reports a missing default doc page', () => {
+  const problems = validate([
+    source({ slug: 'about', sourceFile: 'about.md', navLabel: 'About', group: 'about' }),
+  ]);
+
+  assert.ok(
+    problems.some((p) => /default doc page "getting-started"/.test(p)),
+    `expected a default-page problem, got ${JSON.stringify(problems)}`
+  );
+});
+
+test('reports a dormant default doc page', () => {
+  const problems = validate([
+    source({
+      slug: 'getting-started',
+      sourceFile: 'getting-started.md',
+      navLabel: 'Start',
+      group: 'start',
+      dormant: true,
+    }),
+  ]);
+
+  assert.ok(
+    problems.some((p) => /default doc page "getting-started"/.test(p)),
+    `expected a default-page problem, got ${JSON.stringify(problems)}`
+  );
+});
+
+// A page whose Markdown fails to render used to be indistinguishable from a
+// deleted one: the render error short-circuits before anchorsBySlug gets a key,
+// so both anchor checks fired and claimed the page did not exist.
+test('does not invent anchor problems for a page that failed to render', () => {
+  const problems = run(
+    [source({ body: '## Prints\n\n```angular-html\nunterminated\n' })],
+    { 'docs/prints': ['list'] }
+  );
+
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /^prints\.md: Unterminated code fence/);
+});
+
+// A matrix-parameter navigation is a valid Angular link. Harvesting every
+// quoted substring in the array turned `{ tab: 'details' }` into a path
+// segment and reported a page that was never linked.
+test('ignores a routerLink array carrying a matrix-parameter object', () => {
+  assert.deepEqual(
+    messages({
+      body: `## P\n\n<a [routerLink]="['/docs', 'prints', { tab: 'details' }]">x</a>\n`,
+    }),
+    []
+  );
+});
+
+// A segment that is a class member cannot be resolved statically. Guessing at
+// the path would either invent a link or hide a real one; skipping is honest.
+test('ignores a routerLink array with a non-literal segment', () => {
+  assert.deepEqual(
+    messages({
+      constants: { target: 'missing' },
+      body: `## P\n\n<a [routerLink]="['/docs', target]">x</a>\n`,
+    }),
+    []
+  );
+});
+
+test('still resolves a routerLink array of plain string segments', () => {
+  assert.deepEqual(
+    messages({ body: `## P\n\n<a [routerLink]="['/docs', 'nope']">x</a>\n` }),
+    ['prints.md: link to /docs/nope, but there is no doc page "nope".']
+  );
+});
+
+test('reports a duplicate id declared with single quotes', () => {
+  assert.deepEqual(
+    messages({ body: "## P\n\n<div id='same'></div>\n\n<span id='same'></span>\n" }),
+    ['prints.md: id "same" is declared more than once.']
+  );
+});
+
+test('accepts a fragment link to a single-quoted id', () => {
+  assert.deepEqual(
+    messages({ body: "## P\n\n<div id='setup'></div>\n\nSee [Setup](#setup).\n" }),
+    []
   );
 });

@@ -28,6 +28,37 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.49.0': {
+      title: '1.49.0 - Push Notifications',
+      body: `<p>
+<strong>Push notifications</strong> are here! If you send print events to 3D Print Log from OctoPrint or Klipper, your phone can now tell you the moment a print finishes or fails. Pick what you want to hear about in <a href="/settings">Settings</a>. The updated Android app that receives them is rolling out to users soon.
+</p>
+<p>
+What else should we notify you about? A spool running low, a printer due for maintenance, something we have not thought of? <a href="/feedback">Send in your feedback</a> and help shape what comes next.
+</p>
+<p>
+Printing QR labels is also much easier: the sheet now lays itself out to fit your paper and label size, and remembers your choices for next time.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.48.1': {
       redirect: '1.48.0',
     },

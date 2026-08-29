@@ -10,6 +10,7 @@ import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
+import { NativeBridgeService } from './core/services/native-bridge.service';
 import { PushRegistrationService } from './core/services/push-registration.service';
 import { ThemeService } from './core/services/theme.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
@@ -39,6 +40,7 @@ export class AppComponent implements OnInit {
     private themeService: ThemeService,
     private adsenseLoader: AdsenseLoaderService,
     private pushRegistration: PushRegistrationService,
+    private nativeBridge: NativeBridgeService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -78,12 +80,16 @@ export class AppComponent implements OnInit {
 
   /**
    * A tap while the app is already running resumes it rather than starting it, so the
-   * pending tap has to be drained on resume as well as at registration time.
+   * pending tap has to be drained then as well as at registration time.
+   *
+   * Native signals us; we do not listen for Cordova's `resume`. The WebView navigates to
+   * this origin and cordova.js is gone from that point, so a `resume` listener here would
+   * never fire — it silently swallowed every warm-start tap.
    */
   private watchForWarmStartTaps() {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    document.addEventListener('resume', () => {
+    this.nativeBridge.onPendingTap(() => {
       void this.pushRegistration.handlePendingTap();
     });
   }

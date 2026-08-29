@@ -8,6 +8,7 @@ import { LoggingService } from './core/services/logging.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
 import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { PushRegistrationService } from './core/services/push-registration.service';
+import { NativeBridgeService } from './core/services/native-bridge.service';
 import { of } from 'rxjs';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 
@@ -48,6 +49,7 @@ describe('AppComponent (ThemeService)', () => {
   let mockReleaseNotesService: jasmine.SpyObj<VersionReleaseNoteDialogService>;
   let mockThemeService: jasmine.SpyObj<ThemeService>;
   let mockPushRegistration: jasmine.SpyObj<PushRegistrationService>;
+  let mockNativeBridge: jasmine.SpyObj<NativeBridgeService>;
 
   beforeEach(waitForAsync(() => {
     mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', [
@@ -60,6 +62,10 @@ describe('AppComponent (ThemeService)', () => {
     mockPushRegistration = jasmine.createSpyObj<PushRegistrationService>(
       'PushRegistrationService',
       ['onAuthenticated', 'onLogout', 'handlePendingTap']
+    );
+    mockNativeBridge = jasmine.createSpyObj<NativeBridgeService>(
+      'NativeBridgeService',
+      ['onPendingTap']
     );
     mockPushRegistration.onAuthenticated.and.resolveTo(undefined);
     mockPushRegistration.onLogout.and.resolveTo(undefined);
@@ -103,6 +109,7 @@ describe('AppComponent (ThemeService)', () => {
         { provide: ThemeService, useValue: mockThemeService },
         { provide: AdsenseLoaderService, useValue: mockAdsenseLoader },
         { provide: PushRegistrationService, useValue: mockPushRegistration },
+        { provide: NativeBridgeService, useValue: mockNativeBridge },
       ],
     }).compileComponents();
   }));
@@ -142,13 +149,37 @@ describe('AppComponent (ThemeService)', () => {
       expect(mockPushRegistration.onLogout).toHaveBeenCalledWith('bearer-abc');
     });
 
-    it('drains a pending tap when the app resumes', () => {
+    /**
+     * Native signals the tap; we do NOT listen for Cordova's `resume`. cordova.js is absent
+     * on this origin, so a `resume` listener never fires in the real app — an earlier
+     * version of this test dispatched a synthetic `resume` event and passed while the
+     * feature was broken in production.
+     */
+    it('registers a pending-tap listener with the native bridge', () => {
+      const fixture = TestBed.createComponent(AppComponent);
+      fixture.detectChanges();
+
+      expect(mockNativeBridge.onPendingTap).toHaveBeenCalled();
+    });
+
+    it('drains the pending tap when native signals one arrived', () => {
+      const fixture = TestBed.createComponent(AppComponent);
+      fixture.detectChanges();
+
+      const listener = mockNativeBridge.onPendingTap.calls.mostRecent()
+        .args[0] as () => void;
+      listener();
+
+      expect(mockPushRegistration.handlePendingTap).toHaveBeenCalled();
+    });
+
+    it('does not listen for the Cordova resume event', () => {
       const fixture = TestBed.createComponent(AppComponent);
       fixture.detectChanges();
 
       document.dispatchEvent(new Event('resume'));
 
-      expect(mockPushRegistration.handlePendingTap).toHaveBeenCalled();
+      expect(mockPushRegistration.handlePendingTap).not.toHaveBeenCalled();
     });
   });
 });

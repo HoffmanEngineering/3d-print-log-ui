@@ -21,6 +21,15 @@ export interface PrintLogNativeBridge {
   registerForPush(bearerToken: string): Promise<{ ok: boolean }>;
   unregisterForPush(bearerToken: string): Promise<{ ok: boolean }>;
   consumePendingTap(): Promise<PendingTap | null>;
+
+  /**
+   * Register interest in taps that arrive after this page has loaded. Native calls the
+   * listener; the listener drains the tap with consumePendingTap. Cordova's `resume` event
+   * cannot be used for this — cordova.js is not present on this origin.
+   *
+   * Optional because an older app shell may not expose it yet.
+   */
+  onPendingTap?(listener: () => void): void;
 }
 
 declare global {

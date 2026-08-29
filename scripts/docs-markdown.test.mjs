@@ -199,3 +199,11 @@ test('a raw HTML block survives a blank line inside it', () => {
     '<div>\n  <p>One</p>\n\n  <p>Two</p>\n</div>'
   );
 });
+
+// Alt text lands inside an attribute, so a quote in it used to close the
+// attribute early and let whatever followed become markup of its own.
+test('escapes a double quote in image alt text', () => {
+  const html = renderMarkdown('![a "quoted" caption](/x.png)');
+
+  assert.match(html, /alt="a &quot;quoted&quot; caption"/);
+});

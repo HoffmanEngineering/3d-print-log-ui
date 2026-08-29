@@ -261,15 +261,88 @@ test('does not read the contents of a string literal as class members', () => {
 });
 
 test('does not read a routerLink array literal as class members', () => {
+  // Targets this fixture's own page: the array literal must not be read as a
+  // class member, and the route behind it is now link-checked as well.
   assert.deepEqual(
     messages({
       body: [
         '```angular-html',
-        `<a [routerLink]="['/docs/release-notes']">Notes</a>`,
+        `<a [routerLink]="['/docs/prints']">Prints</a>`,
         '```',
         '',
       ].join('\n'),
     }),
     []
+  );
+});
+
+// --- findings from the adversarial review -----------------------------------
+
+// A raw HTML block passes through untouched, and property-bound routerLink is an
+// established pattern in the sources (getting-started.md uses it three times).
+// Scanning only for unbound, double-quoted attributes let a dead route ship --
+// which is exactly how two links to /docs/integrations, a route that has never
+// existed, survived in the MCP page.
+test('reports a dead route behind a property-bound routerLink', () => {
+  assert.deepEqual(
+    messages({
+      body: '## Prints\n\n<a [routerLink]="[\'/docs/missing\']">gone</a>\n',
+    }),
+    ['prints.md: link to /docs/missing, but there is no doc page "missing".']
+  );
+});
+
+test('reports a dead route behind a single-quoted attribute', () => {
+  assert.deepEqual(
+    messages({ body: "## Prints\n\n<a routerLink='/docs/missing'>gone</a>\n" }),
+    ['prints.md: link to /docs/missing, but there is no doc page "missing".']
+  );
+});
+
+test('accepts a property-bound routerLink to a page that exists', () => {
+  assert.deepEqual(
+    messages({ body: '## Prints\n\n<a [routerLink]="[\'/docs/prints\']">ok</a>\n' }),
+    []
+  );
+});
+
+// A dormant page is excluded from route generation, so a link to it resolves
+// against nothing at runtime even though the source file is still present.
+test('reports a link to a dormant page', () => {
+  const problems = run([
+    source({ body: '## Prints\n\n[gone](/docs/retired)\n' }),
+    source({
+      slug: 'retired',
+      sourceFile: 'retired.md',
+      title: 'Retired | 3D Print Log Docs',
+      description: `${DESCRIPTION} Retired.`,
+      navLabel: 'Retired',
+      dormant: true,
+    }),
+  ]);
+
+  assert.deepEqual(problems, [
+    'prints.md: link to /docs/retired, but there is no doc page "retired".',
+  ]);
+});
+
+// The baseline is keyed by route, and the check used to run inside the loop over
+// current sources -- so deleting a page took its published anchors with it and
+// nothing noticed.
+test('reports published anchors orphaned by a deleted page', () => {
+  assert.deepEqual(
+    run([source()], { 'docs/removed': ['setup', 'install'] }),
+    [
+      'docs-anchors.json: docs/removed has published anchors ("setup", "install") but no doc page exists.',
+    ]
+  );
+});
+
+// extractAnchors deduplicates, which is right for the contract check and wrong
+// here: two elements sharing an id make the deep link ambiguous.
+test('reports a duplicate id within a page', () => {
+  assert.deepEqual(
+    messages({ body: '## Prints\n\n### One {#dup}\n\n### Two {#dup}\n' }),
+    ['prints.md: id "dup" is declared more than once.']
   );
 });

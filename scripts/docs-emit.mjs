@@ -146,7 +146,6 @@ export function emitManifestTs() {
     '  readonly related: readonly string[];',
     '  readonly aliases: readonly string[];',
     '  readonly dormant: boolean;',
-    '  readonly structuredData: boolean;',
     '  readonly className: string;',
     '  readonly selector: string;',
     '}',

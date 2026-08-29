@@ -313,9 +313,12 @@ function renderInline(text) {
     return `${SPAN_MARK}${spans.length - 1}${SPAN_MARK}`;
   });
 
+  // Alt text is attribute content, not inline text: an unescaped quote closes
+  // the attribute early and turns the rest of the caption into markup.
   out = out.replace(
     /!\[([^\]]*)\]\(([^)\s]+)\)/g,
-    (_, alt, src) => `<img src="${src}" alt="${alt}" />`
+    (_, alt, src) =>
+      `<img src="${src}" alt="${alt.replace(/"/g, '&quot;')}" />`
   );
 
   out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, href) =>

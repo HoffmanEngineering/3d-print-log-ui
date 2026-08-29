@@ -160,11 +160,19 @@ test('the article set is every page verify-prerender expects TechArticle on', ()
   assert.deepEqual(toArticleRoutes(m), toDocRoutes(m));
 });
 
-test('a page may opt out of structured data without leaving the sitemap', () => {
-  const m = manifest([page({ structuredData: false })]);
+test('the article set tracks the sitemap when a page is added', () => {
+  // There is no structured-data opt-out: the docs shell emits TechArticle and
+  // BreadcrumbList for every route that resolves SEO tags, so a flag that
+  // removed a page from this projection alone would just disagree with the
+  // page the browser actually renders.
+  const m = manifest([
+    page(),
+    page({ slug: 'about', navLabel: 'About', group: 'about' }),
+    page({ slug: 'retired', navLabel: 'Retired', group: 'about', dormant: true }),
+  ]);
 
-  assert.deepEqual(toArticleRoutes(m), []);
-  assert.deepEqual(toDocRoutes(m), ['docs/prints']);
+  assert.deepEqual(toArticleRoutes(m), toDocRoutes(m));
+  assert.deepEqual(toArticleRoutes(m), ['docs/prints', 'docs/about']);
 });
 
 test('SEO is keyed by route path and carries title and description', () => {

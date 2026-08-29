@@ -101,3 +101,41 @@ test('tolerates CRLF line endings', () => {
   assert.equal(data.slug, 'prints');
   assert.equal(body, '# Prints\n');
 });
+
+// --- findings from the adversarial review -----------------------------------
+
+// The quote branch ran before comment stripping, so a trailing comment left the
+// quotes in the value and shipped them into the page <title>.
+test('strips a trailing comment from a quoted scalar', () => {
+  const { data } = parseFrontmatter('---\ntitle: "My title" # note\n---\nBody\n');
+
+  assert.equal(data.title, 'My title');
+});
+
+test('keeps a # that is inside a quoted scalar', () => {
+  const { data } = parseFrontmatter('---\ntitle: "Colors # and more"\n---\nBody\n');
+
+  assert.equal(data.title, 'Colors # and more');
+});
+
+// `aliases: old` used to parse as the string "old", which every downstream
+// `for...of` then walked character by character, generating /docs/o, /docs/l
+// and /docs/d as redirect routes.
+test('rejects a sequence field written as a bare scalar', () => {
+  assert.throws(
+    () => parseFrontmatter('---\naliases: old\n---\nBody\n'),
+    /aliases must be a sequence/
+  );
+});
+
+test('accepts a sequence field in flow form', () => {
+  const { data } = parseFrontmatter('---\naliases: [old, legacy]\n---\nBody\n');
+
+  assert.deepEqual(data.aliases, ['old', 'legacy']);
+});
+
+test('accepts a sequence field in block form', () => {
+  const { data } = parseFrontmatter('---\naliases:\n  - old\n  - legacy\n---\nBody\n');
+
+  assert.deepEqual(data.aliases, ['old', 'legacy']);
+});

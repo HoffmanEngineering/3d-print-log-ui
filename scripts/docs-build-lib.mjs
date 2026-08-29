@@ -8,6 +8,16 @@
 // main.ts, so the route barrels are transitive compile inputs. They are written
 // LAST, after the page components they import, so a watching Angular build never
 // sees a barrel pointing at a file that does not exist yet.
+//
+// Writes are atomic per file, not across the tree, and that is deliberate. A
+// watching Angular build can still rebuild against a mixed generation — a new
+// manifest beside an old route barrel — while a rename or deletion is in flight,
+// and a `--check` run racing a write can report that transient as drift. Both
+// are dev-only and self-correct on the next rebuild; every non-watch entry point
+// (`npm start`, `build`, `test`, CI) generates to completion before anything
+// reads the tree. Making the swap atomic across files would mean staging the
+// whole generated directory and renaming it in one step, which buys nothing for
+// the paths that actually gate a release.
 
 import fs from 'node:fs';
 import path from 'node:path';

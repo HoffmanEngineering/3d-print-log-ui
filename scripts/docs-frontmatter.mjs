@@ -2,9 +2,9 @@
 //
 // Deliberately a small, strict subset of YAML rather than a dependency: the docs
 // generator runs as plain Node ESM in CI, at deploy, and inside `node --test`, and
-// the frontmatter shape is fixed by scripts/docs-schema.mjs. Anything outside the
-// subset is an error, so an unsupported construct fails loudly at generation time
-// instead of being read as something the author did not mean.
+// the frontmatter shape is fixed by REQUIRED_FIELDS in scripts/docs-validate-lib.mjs.
+// Anything outside the subset is an error, so an unsupported construct fails loudly
+// at generation time instead of being read as something the author did not mean.
 //
 // Supported: `key: scalar`, `key: [a, b]`, block sequences of scalars, and one
 // level of nested mapping (used by `constants:`).
@@ -73,6 +73,7 @@ function parseBlock(lines, indent) {
     const inline = rest.trim();
     if (inline !== '') {
       out[key] = parseScalarOrFlow(inline);
+      assertSequence(key, out[key]);
       i += 1;
       continue;
     }
@@ -103,6 +104,8 @@ function parseBlock(lines, indent) {
         meaningful[0].length - meaningful[0].trimStart().length;
       out[key] = parseBlock(meaningful, childIndent);
     }
+
+    assertSequence(key, out[key]);
   }
 
   return out;
@@ -110,6 +113,18 @@ function parseBlock(lines, indent) {
 
 function isBlank(line) {
   return line === undefined || line.trim() === '';
+}
+
+// Fields the generator iterates. A bare scalar here is the worst kind of typo:
+// `aliases: old` parses fine, and every downstream `for...of` then walks the
+// string character by character, minting /docs/o, /docs/l and /docs/d.
+const SEQUENCE_KEYS = new Set(['aliases', 'related']);
+
+function assertSequence(key, value) {
+  if (!SEQUENCE_KEYS.has(key) || value === null || Array.isArray(value)) return;
+  throw new Error(
+    `Frontmatter field ${key} must be a sequence: write "${key}: [${value}]" or a block list.`
+  );
 }
 
 function parseScalarOrFlow(text) {
@@ -125,12 +140,13 @@ function parseScalarOrFlow(text) {
 }
 
 function parseScalar(text) {
-  if (
-    (text.startsWith("'") && text.endsWith("'") && text.length >= 2) ||
-    (text.startsWith('"') && text.endsWith('"') && text.length >= 2)
-  ) {
-    const quote = text[0];
-    const inner = text.slice(1, -1);
+  // A quoted scalar may still carry a trailing comment. Find the closing quote
+  // first, then ignore everything after it -- checking `endsWith` instead left
+  // `title: "My title" # note` quoted, and the quotes reached the page <title>.
+  const quoted = /^(['"])((?:[^\\]|\\.)*?)\1\s*(?:#.*)?$/.exec(text);
+  if (quoted) {
+    const quote = quoted[1];
+    const inner = quoted[2];
     // YAML escapes a literal quote inside a single-quoted scalar by doubling it.
     return quote === "'" ? inner.replace(/''/g, "'") : inner;
   }

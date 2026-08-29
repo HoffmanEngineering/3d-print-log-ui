@@ -48,10 +48,15 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
   const problems = [];
   const add = (file, message) => problems.push({ file, message: `${file}: ${message}` });
 
-  const bySlug = new Map(sources.map((s) => [s.slug, s]));
+  // Link targets resolve against ROUTED pages only. A dormant page keeps its
+  // source file but is filtered out of every route projection, so a link to it
+  // resolves against nothing at runtime.
+  const routed = sources.filter((s) => !s.dormant);
+  const bySlug = new Map(routed.map((s) => [s.slug, s]));
   const aliasOwners = new Map();
-  for (const s of sources) {
-    for (const alias of s.aliases ?? []) aliasOwners.set(alias, s.slug);
+  for (const s of routed) {
+    if (!Array.isArray(s.aliases)) continue;
+    for (const alias of s.aliases) aliasOwners.set(alias, s.slug);
   }
 
   const titles = new Map();
@@ -108,7 +113,18 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
       continue;
     }
 
-    anchorsBySlug.set(s.slug, extractAnchors(template));
+    const ids = extractAnchors(template);
+    anchorsBySlug.set(s.slug, ids);
+
+    // extractAnchors dedupes, which is right for the contract check below and
+    // wrong here: two elements sharing an id make the deep link ambiguous.
+    const seen = new Set();
+    for (const match of template.matchAll(/\sid="([^"]+)"/g)) {
+      if (seen.has(match[1])) {
+        add(file, `id "${match[1]}" is declared more than once.`);
+      }
+      seen.add(match[1]);
+    }
 
     for (const element of elementsOf(template)) {
       if (!ELEMENT_ALLOWLIST.has(element)) {
@@ -172,6 +188,19 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
     }
   }
 
+  // Deleting a source used to take its published anchors with it silently: the
+  // check above only ever runs for pages that still exist.
+  for (const [route, anchors] of Object.entries(anchorBaseline)) {
+    const slug = route.replace(/^docs\//, '');
+    if (anchorsBySlug.has(slug) || !anchors.length) continue;
+    add(
+      'docs-anchors.json',
+      `${route} has published anchors (${anchors
+        .map((a) => `"${a}"`)
+        .join(', ')}) but no doc page exists.`
+    );
+  }
+
   return problems;
 }
 
@@ -183,11 +212,36 @@ function elementsOf(template) {
   return names;
 }
 
+/**
+ * Every route this template sends a reader to.
+ *
+ * A raw HTML block passes through the renderer untouched, so the sources contain
+ * link spellings the Markdown link syntax never produces: single quotes, and the
+ * property-bound `[routerLink]="['/printers']"` form that getting-started.md uses.
+ * Matching only unbound double-quoted attributes is how two links to
+ * /docs/integrations — a route that has never existed — survived in the MCP page.
+ */
 function linksOf(template) {
   const hrefs = [];
-  for (const match of template.matchAll(/\s(?:href|routerLink)="([^"]+)"/g)) {
-    hrefs.push(match[1]);
+
+  for (const match of template.matchAll(
+    /\s(?:href|routerLink)=("[^"]*"|'[^']*')/g
+  )) {
+    const value = match[1].slice(1, -1);
+    if (value) hrefs.push(value);
   }
+
+  // `[routerLink]="['/docs', 'prints']"` joins its segments into one path.
+  for (const match of template.matchAll(
+    /\s\[routerLink\]=("\[[^\]]*\]"|'\[[^\]]*\]')/g
+  )) {
+    const segments = [
+      ...match[1].slice(2, -2).matchAll(/'([^']*)'|"([^"]*)"/g),
+    ].map((s) => s[1] ?? s[2]);
+    if (!segments.length) continue;
+    hrefs.push(segments.join('/').replace(/\/{2,}/g, '/'));
+  }
+
   return hrefs;
 }
 

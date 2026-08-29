@@ -50,7 +50,6 @@ export function buildManifest(pages) {
       aliases: page.aliases ?? [],
       related: page.related ?? [],
       dormant: page.dormant === true,
-      structuredData: page.structuredData !== false,
     };
   });
 
@@ -118,10 +117,17 @@ export function toDocRoutes(manifest) {
   return live(manifest).map((page) => page.path);
 }
 
+/**
+ * The pages verify-prerender.mjs expects TechArticle + BreadcrumbList on.
+ *
+ * DocumentationComponent emits both for any route that resolves SEO tags, which
+ * is every routed page — so this set is the published set, by construction and
+ * not by coincidence. It stays a named projection because verify-prerender asks
+ * a different question of it than the sitemap does; if a page ever needs to opt
+ * out, the shell has to stop emitting the JSON-LD in the same change.
+ */
 export function toArticleRoutes(manifest) {
-  return live(manifest)
-    .filter((page) => page.structuredData)
-    .map((page) => page.path);
+  return toDocRoutes(manifest);
 }
 
 export function toSeo(manifest) {

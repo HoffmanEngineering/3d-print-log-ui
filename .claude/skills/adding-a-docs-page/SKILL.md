@@ -137,9 +137,20 @@ npm run build && node scripts/verify-prerender.mjs
 `scripts/validate-docs.mjs` replaces the old manual checklist. It fails on: missing or
 mistyped frontmatter, a slug that does not match its filename, a duplicate slug or alias, a
 description outside 50–170 characters, a duplicate title or description within docs, a broken
-internal doc link or dangling `#anchor`, a previously published anchor that disappeared
-(baseline: `src/content/docs-anchors.json`), a disallowed element, a template referencing a
-class member that is not declared, and any drift from `node scripts/build-docs.mjs --check`.
+internal doc link or dangling `#anchor` (including the `[routerLink]="['/docs/x']"` form that
+raw HTML blocks use), a link to a dormant page, a duplicate `id` within a page, a previously
+published anchor that disappeared — including one orphaned by deleting its whole page
+(baseline: `src/content/docs-anchors.json`), a disallowed element, and a template referencing
+a class member that is not declared.
+
+Drift between the sources and the generated output is a separate gate:
+`node scripts/build-docs.mjs --check` exits non-zero on it. `npm run test:scripts` regenerates
+before validating, so it never observes drift — run `--check` yourself if you want to confirm
+the tree is clean.
+
+The element allowlist is a content-shape gate, not a security boundary: it constrains which
+elements may appear, not which attributes or bindings. Doc sources are trusted repo content
+and are reviewed as code.
 
 `scripts/verify-prerender.mjs` still owns **global** title/description uniqueness, because
 marketing SEO metadata lives in Angular sources a Node prebuild script cannot read.

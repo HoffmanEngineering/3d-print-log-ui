@@ -270,8 +270,12 @@ export class ViewPrintDetailComponent {
    * at construction time it refers to the navigation before this one, which
    * makes `.previousNavigation` off by one.
    */
-  /** One offer per view; see offerNotificationsForRunningPrint. */
-  private offeredNotifications = false;
+  /**
+   * Prints an offer has already been made for. A set rather than a single id because the
+   * router reuses this component: navigating away and back would otherwise re-offer, and a
+   * bare boolean would suppress every later print in the session.
+   */
+  private readonly offeredForPrintIds = new Set<number>();
 
   private readonly arrivedFromInAppNavigation =
     this.router.getCurrentNavigation()?.previousNavigation != null;
@@ -306,20 +310,37 @@ export class ViewPrintDetailComponent {
    * still stands, so no platform branching is needed here.
    */
   private offerNotificationsForRunningPrint(): void {
-    if (this.offeredNotifications || !this.isOwner()) {
+    // Every signal this effect depends on is read BEFORE any early return. Bailing out
+    // first would leave the effect with no tracked dependencies at all, and Angular would
+    // never run it again — so a later print, or ownership resolving, would go unnoticed.
+    const print = this.print();
+    const isOwner = this.isOwner();
+
+    if (!print || !isOwner || print.status !== PrintStatus.Printing) {
       return;
     }
 
-    if (this.print()?.status !== PrintStatus.Printing) {
+    // Keyed by print id rather than a bare flag: the router reuses this component between
+    // /prints/:id routes, so a boolean would silently suppress the offer for every later
+    // print in the session.
+    if (this.offeredForPrintIds.has(print.id)) {
       return;
     }
 
-    // Latched before the call, not after: the effect re-runs on any signal it reads, and
-    // awaiting first would let a second run start while the dialog is still opening.
-    this.offeredNotifications = true;
-    void this.pushPermissionPrompt.promptInContext(
-      'This print is still running.'
-    );
+    // Recorded before awaiting, so a re-run cannot open a second dialog while this one is
+    // still opening. Taken back if nothing was actually offered.
+    this.offeredForPrintIds.add(print.id);
+
+    void this.pushPermissionPrompt
+      .promptInContext('This print is still running.')
+      .then((result) => {
+        // The native bridge is injected on page load and can arrive after Angular has
+        // bootstrapped, so "unavailable" means not yet, not no. Keeping the id would
+        // silently cost this print its offer for the rest of the session.
+        if (result.outcome === 'unavailable') {
+          this.offeredForPrintIds.delete(print.id);
+        }
+      });
   }
 
   private loadSettings(): void {

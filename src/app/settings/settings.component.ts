@@ -151,10 +151,13 @@ export class SettingsComponent implements OnInit {
   }
 
   async onEnableNotificationsClicked(): Promise<void> {
-    const permission = await this.pushPermissionPrompt.promptInContext(
+    // promptOnUserRequest, not promptInContext: the in-context cooldown must not apply to a
+    // button the user deliberately pressed. This is the documented second chance, and
+    // suppressing it would strand anyone who tapped "Not now" and changed their mind.
+    const result = await this.pushPermissionPrompt.promptOnUserRequest(
       'Notifications are turned off for 3D Print Log on this device.'
     );
-    this.pushPermissionGranted = permission === 'granted';
+    this.pushPermissionGranted = result.permission === 'granted';
   }
 
   // One handler per toggle, with the type passed explicitly: a shared handler would have to

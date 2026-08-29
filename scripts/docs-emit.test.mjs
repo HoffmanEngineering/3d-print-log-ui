@@ -101,9 +101,7 @@ test('no component is emitted for a page that supplies its own', () => {
 });
 
 test('docs.routes.ts imports each component and lists the routes in order', () => {
-  const ts = emitRoutesTs(
-    buildManifest([page({ aliases: ['old-prints'] })])
-  );
+  const ts = emitRoutesTs(buildManifest([page({ aliases: ['old-prints'] })]));
 
   assert.match(
     ts,
@@ -255,7 +253,9 @@ test('the declarations barrel omits a dormant page', () => {
 test('emitPageTemplate wraps the page in the docs-markdown container', () => {
   const html = emitPageTemplate('<h2>Prints</h2>');
 
-  assert.ok(html.endsWith('<div class="docs-markdown">\n<h2>Prints</h2>\n</div>\n'));
+  assert.ok(
+    html.endsWith('<div class="docs-markdown">\n<h2>Prints</h2>\n</div>\n')
+  );
 });
 
 test('emitPageTemplate keeps the generated banner outside the wrapper', () => {
@@ -263,4 +263,37 @@ test('emitPageTemplate keeps the generated banner outside the wrapper', () => {
 
   assert.equal(html.indexOf('<!-- DO NOT EDIT'), 0);
   assert.ok(html.indexOf('docs-markdown') > html.indexOf('DO NOT EDIT'));
+});
+
+// `literal` emits an interpolated constant as a backtick template so `${...}`
+// survives. A backslash left unescaped in that branch is read as a JS escape,
+// and a trailing one consumes the closing backtick.
+test('a backslash in an interpolated constant cannot escape the closing backtick', () => {
+  const ts = emitPageComponentTs(
+    buildManifest([
+      page({
+        constants: {
+          root: 'C:\\logs',
+          command: 'copy C:\\out\\ ${this.root}',
+        },
+      }),
+    ]).pages[0]
+  );
+
+  assert.ok(
+    ts.includes('public readonly command = `copy C:\\\\out\\\\ ${this.root}`;'),
+    ts
+  );
+});
+
+// Unescaping `&amp;` before the other references turns an authored `&amp;lt;`
+// into `&lt;` and then into `<`, inventing markup the source escaped on purpose.
+test('search text does not double-unescape an escaped character reference', () => {
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints: '<p>Write &amp;lt;tag&amp;gt; to show a tag.</p>',
+    })
+  );
+
+  assert.equal(index[0].text, 'Write &lt;tag&gt; to show a tag.');
 });

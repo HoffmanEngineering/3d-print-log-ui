@@ -114,7 +114,8 @@ export function emitDeclarationsTs(manifest) {
 
 export function emitServerRoutesTs(manifest) {
   const entries = toServerRoutes(manifest).map(
-    (route) => `  { path: '${route.path}', renderMode: RenderMode.${route.renderMode} },`
+    (route) =>
+      `  { path: '${route.path}', renderMode: RenderMode.${route.renderMode} },`
   );
 
   return [
@@ -228,19 +229,24 @@ function figuresOf(template) {
 }
 
 function plainText(template) {
-  return template
-    .replace(/<pre[\s\S]*?<\/pre>/g, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&mdash;/g, '—')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    // Stripping an inline tag such as <strong> leaves a gap before the
-    // punctuation that followed it, which would break phrase matching.
-    .replace(/\s+([.,;:!?)\]])/g, '$1')
-    .trim();
+  return (
+    template
+      .replace(/<pre[\s\S]*?<\/pre>/g, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&mdash;/g, '—')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&nbsp;/g, ' ')
+      // `&amp;` is unescaped last. Doing it first would turn an authored
+      // `&amp;lt;` into `&lt;` and then into `<`, inventing markup the source
+      // deliberately escaped.
+      .replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ')
+      // Stripping an inline tag such as <strong> leaves a gap before the
+      // punctuation that followed it, which would break phrase matching.
+      .replace(/\s+([.,;:!?)\]])/g, '$1')
+      .trim()
+  );
 }
 
 /**
@@ -249,9 +255,13 @@ function plainText(template) {
  * of two others — so it is emitted with backticks rather than escaped.
  */
 function literal(value) {
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'number' || typeof value === 'boolean')
+    return String(value);
   const text = String(value);
-  if (text.includes('${')) return `\`${text.replace(/`/g, '\\`')}\``;
+  // Backslashes are escaped before backticks: an unescaped trailing `\` would
+  // otherwise consume the closing backtick and break out of the literal.
+  if (text.includes('${'))
+    return `\`${text.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\``;
   return `'${escapeSingle(text)}'`;
 }
 

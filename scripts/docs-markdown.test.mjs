@@ -35,7 +35,10 @@ test('joins the lines of one paragraph with a space', () => {
 });
 
 test('renders a thematic break as a void hr', () => {
-  assert.equal(render('Text.', '', '---', '', 'More.'), '<p>Text.</p>\n<hr />\n<p>More.</p>');
+  assert.equal(
+    render('Text.', '', '---', '', 'More.'),
+    '<p>Text.</p>\n<hr />\n<p>More.</p>'
+  );
 });
 
 test('renders emphasis, strong emphasis and code spans', () => {
@@ -71,10 +74,7 @@ test('renders an absolute link as an external href', () => {
 });
 
 test('renders a fragment link as a plain href', () => {
-  assert.equal(
-    render('[Setup](#Setup)'),
-    '<p><a href="#Setup">Setup</a></p>'
-  );
+  assert.equal(render('[Setup](#Setup)'), '<p><a href="#Setup">Setup</a></p>');
 });
 
 test('renders an image with its alt text', () => {
@@ -114,7 +114,11 @@ test('renders a fenced code block as escaped pre/code', () => {
 
 test('passes an angular-html fence through untouched so directives keep working', () => {
   assert.equal(
-    render('```angular-html', '<button mat-raised-button color="primary">Go</button>', '```'),
+    render(
+      '```angular-html',
+      '<button mat-raised-button color="primary">Go</button>',
+      '```'
+    ),
     '<button mat-raised-button color="primary">Go</button>'
   );
 });
@@ -188,7 +192,12 @@ test('passes a raw element whose attributes start on the next line', () => {
 
 test('a self-closing child does not end its parent raw HTML block', () => {
   assert.equal(
-    render('<div class="hero">', '  <img src="/a.png" />', '  <h1>Hi</h1>', '</div>'),
+    render(
+      '<div class="hero">',
+      '  <img src="/a.png" />',
+      '  <h1>Hi</h1>',
+      '</div>'
+    ),
     '<div class="hero">\n  <img src="/a.png" />\n  <h1>Hi</h1>\n</div>'
   );
 });
@@ -216,10 +225,10 @@ test('extracts a single-quoted id', () => {
 });
 
 test('extracts ids of both quote styles in document order', () => {
-  assert.deepEqual(
-    extractAnchors(`<h2 id="one"></h2><div id='two'></div>`),
-    ['one', 'two']
-  );
+  assert.deepEqual(extractAnchors(`<h2 id="one"></h2><div id='two'></div>`), [
+    'one',
+    'two',
+  ]);
 });
 
 // The <img> was built before emphasis and code spans were restored, so those
@@ -236,4 +245,14 @@ test('keeps a code span out of image alt text', () => {
   const html = renderMarkdown('![a `code` caption](p.png)');
 
   assert.match(html, /alt="a code caption"/);
+});
+
+// The span a placeholder resolves to is a `<code>` wrapper around already
+// escaped text, so the angle brackets an author typed stay escaped and only the
+// wrapper is stripped.
+test('angle brackets inside a code span stay escaped in image alt text', () => {
+  const html = renderMarkdown('![a `<b>` caption](p.png)');
+
+  assert.match(html, /alt="a &lt;b&gt; caption"/);
+  assert.doesNotMatch(html, /alt="[^"]*<code>/);
 });

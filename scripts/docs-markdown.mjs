@@ -17,8 +17,20 @@ const SPAN_MARK = String.fromCharCode(0);
 const SPAN_PATTERN = new RegExp(SPAN_MARK + '([0-9]+)' + SPAN_MARK, 'g');
 
 const VOID_ELEMENTS = new Set([
-  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
-  'param', 'source', 'track', 'wbr',
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
 ]);
 
 /**
@@ -232,7 +244,9 @@ function takeList(lines, start, indent) {
 function isRawHtmlStart(text) {
   // The tag name may be the whole line: prettier wraps a long element so its
   // first attribute lands on the next line.
-  return /^<([A-Za-z][A-Za-z0-9-]*)(\s|\/|>|$)/.test(text) && text.startsWith('<');
+  return (
+    /^<([A-Za-z][A-Za-z0-9-]*)(\s|\/|>|$)/.test(text) && text.startsWith('<')
+  );
 }
 
 /** Consumes an HTML comment block, which passes through untouched. */
@@ -270,7 +284,9 @@ function takeRawHtml(lines, start, indent) {
     } while (i < lines.length && !block[block.length - 1].includes('>'));
 
     if (!block[block.length - 1].includes('>')) {
-      throw new Error(`Unterminated raw HTML block: <${tag}> start tag is never closed.`);
+      throw new Error(
+        `Unterminated raw HTML block: <${tag}> start tag is never closed.`
+      );
     }
     return { block: block.join('\n'), next: i };
   }
@@ -347,6 +363,24 @@ function renderInline(text) {
 }
 
 /**
+ * Removes every tag, not just the ones a single pass can see: one pass over
+ * `<<a>b>` leaves `<b>` behind, so the strip repeats until the text stops
+ * changing.
+ *
+ * Today's parked spans wrap already escaped text, so nothing can reassemble a
+ * tag here. The loop is what keeps that true if a span ever parks raw markup.
+ */
+function stripTags(text) {
+  let out = text;
+  let previous;
+  do {
+    previous = out;
+    out = out.replace(/<[^>]*>/g, '');
+  } while (out !== previous);
+  return out;
+}
+
+/**
  * The accessible name for an image: plain text, no markup.
  *
  * Code spans were already parked before this runs, so a placeholder here points
@@ -356,7 +390,7 @@ function renderInline(text) {
 function altText(alt, spans) {
   return alt
     .replace(SPAN_PATTERN, (_, index) =>
-      String(spans[Number(index)]).replace(/<[^>]*>/g, '')
+      stripTags(String(spans[Number(index)]))
     )
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')

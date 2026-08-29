@@ -31,6 +31,7 @@ import {
   PushNotificationType,
   PushPreferencesService,
 } from '../core/services/push-preferences.service';
+import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
 
 @Component({
   selector: 'app-settings',
@@ -107,6 +108,13 @@ export class SettingsComponent implements OnInit {
   public printCompletedPush = true;
   public printFailedPush = true;
 
+  /**
+   * The toggles write a preference, but a preference cannot make Android display anything.
+   * When the OS permission is missing the toggles are honest but inert, so the section says
+   * so and offers the request — this is the second chance for someone who declined earlier.
+   */
+  public pushPermissionGranted = true;
+
   /** Exposed so the template can name the setting types it writes. */
   public readonly userSettingTypes = UserSettingType;
 
@@ -125,6 +133,7 @@ export class SettingsComponent implements OnInit {
   private readonly loggingService = inject(LoggingService);
   private readonly pushPreferences = inject(PushPreferencesService);
   private readonly nativeBridge = inject(NativeBridgeService);
+  private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
 
   private async loadPushPreferences(): Promise<void> {
     this.pushAvailable = this.nativeBridge.isAvailable();
@@ -138,6 +147,14 @@ export class SettingsComponent implements OnInit {
     this.printFailedPush = await this.pushPreferences.isEnabled(
       UserSettingType.Push_PrintFailed
     );
+    this.pushPermissionGranted = this.nativeBridge.permission === 'granted';
+  }
+
+  async onEnableNotificationsClicked(): Promise<void> {
+    const permission = await this.pushPermissionPrompt.promptInContext(
+      'Notifications are turned off for 3D Print Log on this device.'
+    );
+    this.pushPermissionGranted = permission === 'granted';
   }
 
   // One handler per toggle, with the type passed explicitly: a shared handler would have to

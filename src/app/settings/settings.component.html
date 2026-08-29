@@ -595,6 +595,23 @@
           <h2>Push notifications</h2>
           <p>Choose what your phone notifies you about.</p>
 
+          @if (!pushPermissionGranted) {
+            <p data-testid="push-permission-warning">
+              Notifications are turned off for 3D Print Log on this device, so these
+              settings have no effect yet.
+            </p>
+            <p>
+              <button
+                mat-flat-button
+                color="primary"
+                data-testid="push-enable-permission"
+                (click)="onEnableNotificationsClicked()"
+              >
+                Enable notifications
+              </button>
+            </p>
+          }
+
           <div>
             <mat-slide-toggle
               data-testid="push-print-completed"

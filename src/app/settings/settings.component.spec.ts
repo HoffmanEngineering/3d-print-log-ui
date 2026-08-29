@@ -20,6 +20,7 @@ import { ConnectedAgentsComponent } from './connected-agents/connected-agents.co
 import { ConnectedAgentsService } from '../core/services/connected-agents.service';
 import { NativeBridgeService } from '../core/services/native-bridge.service';
 import { PushPreferencesService } from '../core/services/push-preferences.service';
+import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
 import { UserSettingType } from '../core/services/user-setting.service';
 
 xdescribe('SettingsComponent (original)', () => {
@@ -48,6 +49,7 @@ describe('SettingsComponent', () => {
   let fixture: ComponentFixture<SettingsComponent>;
   let mockNativeBridge: jasmine.SpyObj<NativeBridgeService>;
   let mockPushPreferences: jasmine.SpyObj<PushPreferencesService>;
+  let mockPushPermissionPrompt: jasmine.SpyObj<PushPermissionPromptService>;
 
   const mockUserDetails = {
     id: '1',
@@ -120,7 +122,8 @@ describe('SettingsComponent', () => {
     );
     mockNativeBridge = jasmine.createSpyObj<NativeBridgeService>(
       'NativeBridgeService',
-      ['isAvailable']
+      ['isAvailable'],
+      { permission: 'granted' }
     );
     // Default to a plain browser: the overwhelming majority of these specs are not about
     // push, and the section must stay absent for them.
@@ -132,6 +135,13 @@ describe('SettingsComponent', () => {
     );
     mockPushPreferences.isEnabled.and.resolveTo(true);
     mockPushPreferences.setEnabled.and.resolveTo(undefined);
+
+    mockPushPermissionPrompt =
+      jasmine.createSpyObj<PushPermissionPromptService>(
+        'PushPermissionPromptService',
+        ['promptInContext']
+      );
+    mockPushPermissionPrompt.promptInContext.and.resolveTo('granted');
 
     TestBed.configureTestingModule({
       declarations: [SettingsComponent],
@@ -161,6 +171,10 @@ describe('SettingsComponent', () => {
         { provide: LoggingService, useValue: mockLoggingService },
         { provide: NativeBridgeService, useValue: mockNativeBridge },
         { provide: PushPreferencesService, useValue: mockPushPreferences },
+        {
+          provide: PushPermissionPromptService,
+          useValue: mockPushPermissionPrompt,
+        },
       ],
     }).compileComponents();
   }));
@@ -273,6 +287,76 @@ describe('SettingsComponent', () => {
         UserSettingType.Push_PrintFailed,
         false
       );
+    });
+  });
+
+  describe('push notification permission', () => {
+    function setPermission(permission: string) {
+      Object.defineProperty(mockNativeBridge, 'permission', {
+        value: permission,
+        configurable: true,
+      });
+    }
+
+    async function renderInAppShell() {
+      mockNativeBridge.isAvailable.and.returnValue(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    function warning(): HTMLElement | null {
+      return fixture.nativeElement.querySelector(
+        '[data-testid="push-permission-warning"]'
+      );
+    }
+
+    function enableButton(): HTMLElement | null {
+      return fixture.nativeElement.querySelector(
+        '[data-testid="push-enable-permission"]'
+      );
+    }
+
+    it('says nothing extra when permission is granted', async () => {
+      setPermission('granted');
+
+      await renderInAppShell();
+
+      expect(warning()).toBeNull();
+      expect(enableButton()).toBeNull();
+    });
+
+    it('warns and offers the prompt when permission was denied', async () => {
+      setPermission('denied');
+
+      await renderInAppShell();
+
+      expect(warning()).not.toBeNull();
+      expect(enableButton()).not.toBeNull();
+    });
+
+    it('warns and offers the prompt when permission has never been asked for', async () => {
+      setPermission('default');
+
+      await renderInAppShell();
+
+      expect(warning()).not.toBeNull();
+      expect(enableButton()).not.toBeNull();
+    });
+
+    it('hides the warning once the prompt grants permission', async () => {
+      setPermission('denied');
+      await renderInAppShell();
+
+      await component.onEnableNotificationsClicked();
+      await fixture.whenStable();
+
+      expect(mockPushPermissionPrompt.promptInContext).toHaveBeenCalled();
+      // Asserted on the field, not the DOM: re-running change detection after this
+      // async state change trips NG0100 in the harness. That the field drives the
+      // warning's visibility is covered by the granted/denied/default render tests above.
+      expect(component.pushPermissionGranted).toBeTrue();
     });
   });
 });

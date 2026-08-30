@@ -243,6 +243,22 @@ img {
   display: block;
 }
 
+// Light/dark feature image swap. The theme class is applied before first paint
+// by the inline script in index.html, so the correct variant shows immediately
+// (no hydration pop-in). Both variants stay in the DOM; the hidden below-fold
+// one is not fetched thanks to loading="lazy" + display:none.
+.home-feature-img--dark {
+  display: none;
+}
+:host-context(html.dark-theme) {
+  .home-feature-img--light {
+    display: none;
+  }
+  .home-feature-img--dark {
+    display: block;
+  }
+}
+
 .example-grid {
   width: 100%;
   max-width: 1400px;

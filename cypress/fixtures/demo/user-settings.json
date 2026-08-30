@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "userSettingTypeId": 6,
+    "value": "$",
+    "createdDate": "2020-01-01T00:00:00+00:00",
+    "updatedDate": "2020-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 2,
+    "userId": 1,
+    "userSettingTypeId": 8,
+    "value": "24.99",
+    "createdDate": "2020-01-01T00:00:00+00:00",
+    "updatedDate": "2020-01-01T00:00:00+00:00"
+  },
+  {
+    "id": 3,
+    "userId": 1,
+    "userSettingTypeId": 14,
+    "value": "0",
+    "createdDate": "2020-01-01T00:00:00+00:00",
+    "updatedDate": "2020-01-01T00:00:00+00:00"
+  }
+]

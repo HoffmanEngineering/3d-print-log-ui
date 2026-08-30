@@ -1,0 +1,140 @@
+{
+  "from": "2026-05-01T00:00:00-04:00",
+  "to": "2026-08-31T23:59:59-04:00",
+  "timeZone": "America/New_York",
+  "granularity": "Month",
+  "tiles": {
+    "printCount": {
+      "value": 62,
+      "previous": 48,
+      "coverage": {
+        "population": "prints",
+        "counted": 62,
+        "total": 62,
+        "undatedCount": 0,
+        "exclusions": []
+      }
+    },
+    "successRatePercent": {
+      "value": 80.6,
+      "previous": 77.1,
+      "coverage": {
+        "population": "prints",
+        "counted": 62,
+        "total": 62,
+        "undatedCount": 0,
+        "exclusions": []
+      }
+    },
+    "filamentGrams": {
+      "value": 3240.5,
+      "previous": 2610.2,
+      "coverage": {
+        "population": "prints",
+        "counted": 59,
+        "total": 62,
+        "undatedCount": 0,
+        "exclusions": [{ "reason": "MaterialEstimated", "count": 3 }]
+      }
+    },
+    "printTimeSeconds": {
+      "value": 918000,
+      "previous": 731400,
+      "coverage": {
+        "population": "prints",
+        "counted": 60,
+        "total": 62,
+        "undatedCount": 0,
+        "exclusions": [{ "reason": "DurationMissing", "count": 2 }]
+      }
+    },
+    "totalCost": {
+      "value": 96.85,
+      "previous": 78.2,
+      "currency": "USD",
+      "coverage": {
+        "population": "prints",
+        "counted": 58,
+        "total": 62,
+        "undatedCount": 0,
+        "exclusions": [{ "reason": "PriceMissing", "count": 4 }]
+      }
+    },
+    "avgPrintTimeSeconds": {
+      "value": 15300,
+      "previous": 15025,
+      "coverage": {
+        "population": "prints",
+        "counted": 60,
+        "total": 62,
+        "undatedCount": 0,
+        "exclusions": [{ "reason": "DurationMissing", "count": 2 }]
+      }
+    }
+  },
+  "statusBreakdown": [
+    { "status": "Success", "count": 50 },
+    { "status": "PartialSuccess", "count": 5 },
+    { "status": "Failed", "count": 5 },
+    { "status": "Cancelled", "count": 1 },
+    { "status": "Printing", "count": 1 }
+  ],
+  "series": [
+    {
+      "index": 0,
+      "localStart": "2026-05-01T00:00:00-04:00",
+      "countsByStatus": {
+        "Success": 12,
+        "PartialSuccess": 1,
+        "Failed": 1,
+        "Cancelled": 1
+      }
+    },
+    {
+      "index": 1,
+      "localStart": "2026-06-01T00:00:00-04:00",
+      "countsByStatus": { "Success": 13, "PartialSuccess": 2, "Failed": 1 }
+    },
+    {
+      "index": 2,
+      "localStart": "2026-07-01T00:00:00-04:00",
+      "countsByStatus": { "Success": 12, "PartialSuccess": 1, "Failed": 2 }
+    },
+    {
+      "index": 3,
+      "localStart": "2026-08-01T00:00:00-04:00",
+      "countsByStatus": {
+        "Success": 13,
+        "PartialSuccess": 1,
+        "Failed": 1,
+        "Printing": 1
+      }
+    }
+  ],
+  "highlights": {
+    "mostUsedPrinter": {
+      "id": "101",
+      "label": "Living Room",
+      "value": 24,
+      "unit": "prints"
+    },
+    "mostUsedMaterial": {
+      "id": "a1000000-0000-0000-0000-000000000001",
+      "label": "Galaxy Black",
+      "value": 19,
+      "unit": "prints"
+    },
+    "longestPrint": {
+      "id": "1002",
+      "label": "Decorative Gourd Vase",
+      "value": 56843,
+      "unit": "seconds"
+    },
+    "priciestPrint": {
+      "id": "1042",
+      "label": "Iron Man Helmet",
+      "value": 18.9,
+      "unit": "cost"
+    }
+  }
+}

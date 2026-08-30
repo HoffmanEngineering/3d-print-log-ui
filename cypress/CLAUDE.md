@@ -131,6 +131,97 @@ cy.get('[data-cy="select-filament-btn"]').click();
 cy.wait('@getFilamentsModal');
 ```
 
+## Refreshing home-page screenshots
+
+The three home feature images (`Homepage_PrinterList`, `Homepage_Filament`,
+`Homepage_Analytics`, each light + dark) are generated, not hand-captured.
+
+**Nothing runs this for you.** No workflow invokes it, and the images are
+committed WebP under `src/assets/`, so they stay as they are until someone
+re-runs the capture and commits the result. Refresh it when you change the
+print list, the materials list, or the analytics overview tab — the images go
+stale silently, since nothing compares them against the current UI.
+
+**To refresh after a UI change:**
+
+    npm run capture:home:all
+
+This boots the dev server, runs `cypress/e2e/home/capture-home-screenshots.cy.ts`
+under `cypress.config.capture.ts` (Chrome at 2× device-scale-factor) to produce
+6 PNGs from the fixtures in `cypress/fixtures/demo/`, then runs
+`scripts/process-home-screenshots.mjs` to write hashed WebP into `src/assets/`
+and rewrite the `ngSrc` refs in `home.component.html`. Review the diff (the 6
+images plus the template) and commit.
+
+If a dev server is already running on 4200, just run the two steps directly:
+`npm run capture:home` then `npm run capture:home:process`.
+
+- Runs in **Chrome** (`--browser chrome`); Electron ignores
+  `--force-device-scale-factor`, so the DPR hook only takes effect in Chrome.
+- The capture spec is **excluded from the normal E2E config** — it is a
+  generator, not a test. Left in the default glob it ran in `npx cypress run`
+  and the nightly job at device-scale-factor 1 (that flag lives only in
+  `cypress.config.capture.ts`) and overwrote the same PNG filenames the
+  processing step reads, at half resolution. The processing step also refuses
+  any capture narrower than `MIN_2X_WIDTH`, so a 1× shot fails loudly instead of
+  being published as a blurry asset.
+- Demo data is fixture-driven (`cypress/fixtures/demo/manifest.ts`); the capture
+  **fails** if any `/api/**` request escapes the fixtures, and `afterEach` prints
+  the offending URLs. When you add a page call, add its stub to `FIXTURE_ROUTES`.
+- **A `FIXTURE_ROUTES` glob is matched with minimatch, which is a _path_
+  matcher.** `*` never crosses a `/`, so a query value containing an unencoded
+  slash silently stops matching — Angular's `HttpParams` leaves `/` alone, which
+  is how `timeZone=America/New_York` broke the analytics stub. Use a `RegExp` for
+  those; `url` accepts either. The symptom is not a stub error, it is the page
+  rendering its own error state while the ready predicate times out.
+- **Element captures taller than the viewport are stitched, and the seam tears
+  whatever crosses it.** The spec grows the viewport to fit the boundary and then
+  asserts it fit, because `cy.viewport()` is _clamped_ to the browser window and
+  reports nothing when it clamps. That is what `WINDOW_SIZE` in
+  `cypress.config.capture.ts` is for: at DPR 2 every CSS pixel costs two device
+  pixels, and the default 1280×720 headless window left only 360 CSS px of
+  height. Raise it before adding a taller target.
+- Demo print photos and their provenance live in `cypress/fixtures/demo/images/`
+  (fetched by `scripts/fetch-demo-images.mjs`).
+- The demo prints carry `filamentUsage`, because material tracking is what the
+  home copy beside that image is selling. The rows embed whole `FilamentSummary`
+  objects copied from `filaments.json`, so the swatches match the materials
+  capture exactly. **`filamentUsage` is the driver**; the per-print
+  `sumActualFilamentWeightMg` / `sumEstimatedFilamentWeightMg` /
+  `totalFilamentWeightMg` are the deprecated mirror of it and are derived from
+  the rows, never the reverse.
+- Each row records the unit it was measured in. `Prints_PreferredFilamentDisplayUnit`
+  is `0` (as-recorded) in `user-settings.json`, so a row renders off its own
+  `source`: filament in grams, resin in millilitres. Set a real unit there
+  instead and the resin row gets converted to grams via density, which is not
+  what the materials it represents are sold or measured in. Resin also carries
+  no `lengthInM` — no diameter, so no strand length.
+- **A list fixture must be ordered the way that list's resolver asks the API to
+  order it**, because a stub returns whatever the file says and the page does not
+  re-sort. `prints-summary.json` is `StartDate` descending and `filaments.json`
+  is `filamentRemaining` descending — see `print-list-resolver.service.ts` and
+  `filament-list-resolver.service.ts`. Both were unsorted and so stubbed a
+  response neither endpoint would ever return.
+- **Print timestamps are midday UTC, not midnight.** `localeDate` renders in the
+  capture machine's timezone, so a `T00:00:00+00:00` date shows the day before
+  anywhere west of Greenwich — the image would differ by machine. Midday holds
+  the same calendar date from UTC-11 to UTC+12.
+- The spec hides the nav bar, ad slots, the filter panel and the analytics tab's
+  export button, neutralizes AdSense, and waits for async print thumbnails and
+  the d3 status-donut animation to settle before shooting.
+- `READY` predicates must assert on **content**, not on containers. A stat tile
+  renders an em dash and a chart frame keeps its size when the request failed, so
+  counting elements passes on a page that loaded nothing.
+- The prints capture is taken inside the print list's handset breakpoint
+  (`max-width: 959.98px`), where the mat-table is not rendered at all and
+  `app-print-card` is. Analytics is captured at 720px, wide enough for its tiles
+  to go three across, which keeps the image near the other two slots' aspect.
+- The post-process caps intrinsic width at 1400px so images stay crisp on HiDPI
+  without tripping NgOptimizedImage "oversized" warnings.
+- Theme swap is class-based (`html.dark-theme`) so the correct variant shows at
+  first paint — do not switch to a hydration-gated `@if`.
+- Out of scope: the 4th "Cura marketplace" integration image is not regenerated.
+
 ## Running in CI
 
 `.github/workflows/e2e.yml` runs the suite nightly, on `workflow_dispatch`, and

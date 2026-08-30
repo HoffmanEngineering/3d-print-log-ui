@@ -57,6 +57,9 @@ Thumbs.db
 
 # Ignores for Cypress
 cypress.env.json
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
 
 # Internal planning and design docs — keep local, not for the public repo.
 # Ignore the contents rather than the directory itself, so specific subtrees can

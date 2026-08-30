@@ -101,11 +101,20 @@
                                   : null
                             "
                           >
-                            ({{ display.displayString }}
-                            @if (display.isEstimated) {
-                              *
-                            }
-                            )
+                            <!--
+                              One interpolation, not a literal "(" plus an @if
+                              plus a literal ")". Angular collapses the
+                              whitespace around those into single spaces, so the
+                              split form renders "(62.0g )" — visible on every
+                              card, and on the home-page screenshot generated
+                              from this view.
+                            -->
+                            {{
+                              '(' +
+                                display.displayString +
+                                (display.isEstimated ? ' *' : '') +
+                                ')'
+                            }}
                           </span>
                         }
                       </span>

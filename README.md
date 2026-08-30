@@ -43,6 +43,16 @@ The production environment runs on Azure (Static Web Apps for the frontend). It 
 
 The `sitemap.xml` is generated at deploy time from the public API (`scripts/generate-sitemap.mjs`) and shipped with the prebuilt output; a scheduled workflow refreshes it daily from the latest release tag.
 
+## Generated Assets
+
+The home page's feature screenshots are produced by driving the real app against fixture data in Cypress, not captured by hand. **No workflow runs this** — the images are committed WebP under `src/assets/`, so they stay as they are until someone re-runs the capture and commits the result:
+
+```bash
+npm run capture:home:all
+```
+
+Re-run it after changing the print list, the materials list, or the analytics overview tab; nothing compares the committed images against the current UI, so they go stale silently. See [cypress/CLAUDE.md](cypress/CLAUDE.md) for how it works.
+
 ## Related Repos
 
 - [3d-print-log-api](https://github.com/HoffmanEngineering/3d-print-log-api) — the backend API

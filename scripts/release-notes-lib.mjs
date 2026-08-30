@@ -1,12 +1,31 @@
-// Pure, side-effect-free helpers for turning the in-app release-notes component
-// into GitHub Release bodies. Safe to import in unit tests.
+// Pure, side-effect-free helpers for turning the in-app release notes into GitHub
+// Release bodies. Safe to import in unit tests.
 //
-// The component at
-//   src/app/documentation/docs/docs-release-notes/docs-release-notes.component.html
-// is the single source of truth for release prose -- it is hand-written by the
-// /release skill. This module reads it; nothing here should ever write it.
+// `src/content/docs/release-notes.md` is the single source of truth for release
+// prose -- it is hand-written by the /release skill. This module reads it;
+// nothing here should ever write it.
+//
+// It renders that Markdown here rather than reading the generated template,
+// because the deploy workflow verifies a tag's release notes BEFORE `npm ci` and
+// before any generation has run.
+
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
+import { parseFrontmatter } from './docs-frontmatter.mjs';
+import { renderMarkdown } from './docs-markdown.mjs';
+import { CONTENT_DIR } from './docs-paths.mjs';
 
 export const SITE_ORIGIN = 'https://www.3dprintlog.com';
+
+/** The release-notes page as the HTML the parsers below expect. */
+export function readReleaseNotesHtml() {
+  const source = readFileSync(
+    path.join(CONTENT_DIR, 'release-notes.md'),
+    'utf8'
+  );
+  return renderMarkdown(parseFrontmatter(source).body);
+}
 
 // `lt` and `gt` are deliberately absent. GitHub renders raw HTML inside
 // Markdown, so prose that escaped a tag on purpose ("supports &lt;button&gt;")

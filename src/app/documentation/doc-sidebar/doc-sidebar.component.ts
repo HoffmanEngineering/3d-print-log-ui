@@ -1,6 +1,13 @@
 import { Component } from '@angular/core';
 import { INavData } from 'src/app/shared/sidebar/types';
+import { DOC_PAGES } from '../generated/docs-manifest';
 
+/**
+ * The docs sidebar, derived from the docs manifest: each page's `navLabel`,
+ * `group` and `order` frontmatter place it, and a divider is inserted wherever
+ * the group changes. Adding a page to the sidebar is no longer a separate
+ * registration step.
+ */
 @Component({
   selector: 'app-doc-sidebar',
   templateUrl: './doc-sidebar.component.html',
@@ -8,29 +15,21 @@ import { INavData } from 'src/app/shared/sidebar/types';
   standalone: false,
 })
 export class DocSidebarComponent {
-  public navItems: INavData[] = [
-    { name: 'Getting Started', url: '/docs/getting-started' },
-    { name: 'Pro Subscription', url: '/docs/pro-subscription' },
-    { divider: true },
-    { name: 'Prints', url: '/docs/prints' },
-    { name: 'Projects', url: '/docs/projects' },
-    { name: 'Materials', url: '/docs/materials' },
-    { name: 'Printers', url: '/docs/printers' },
-    { name: 'Analytics', url: '/docs/analytics' },
-    { divider: true },
-    { name: 'Android App', url: '/docs/android-app' },
-    { name: 'Connect an AI Assistant', url: '/docs/mcp' },
-    { name: 'Cura Plugin', url: '/docs/cura-plugin' },
-    { name: 'Octoprint Webhook', url: '/docs/octoprint-webhook' },
-    { name: 'Klipper/Moonraker', url: '/docs/klipper' },
-    {
-      name: 'OrcaSlicer/PrusaSlicer/Bambu',
-      url: '/docs/slic3r-uploader',
-    },
-    { divider: true },
-    { name: 'Release Notes', url: '/docs/release-notes' },
-    { name: 'About', url: '/docs/about' },
-    { name: 'Privacy Policy', url: '/docs/privacy-policy' },
-    // { name: 'Terms of Service', url: '/docs/terms-of-service' },
-  ];
+  public navItems: INavData[] = buildNavItems();
+}
+
+function buildNavItems(): INavData[] {
+  const items: INavData[] = [];
+  let previousGroup: string | null = null;
+
+  for (const page of DOC_PAGES) {
+    if (page.dormant) continue;
+    if (previousGroup !== null && page.group !== previousGroup) {
+      items.push({ divider: true });
+    }
+    items.push({ name: page.navLabel, url: `/${page.path}` });
+    previousGroup = page.group;
+  }
+
+  return items;
 }

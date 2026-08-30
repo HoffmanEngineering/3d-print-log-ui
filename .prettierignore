@@ -11,3 +11,11 @@ dist
 src/assets/*
 src/app/core/services/file-parsers/cura/cura-test-file-multiple-extruders.ts
 .npmrc
+
+# Docs source Markdown is compiled to Angular templates by scripts/build-docs.mjs.
+# Prettier's Markdown printer rewrites it in two ways the compiler cannot survive:
+# it re-wraps long lines, so a raw HTML tag spanning a line break continues on a
+# line starting with `>` and is read as a blockquote; and it escapes literal
+# punctuation (`An * indicates` becomes `An \* indicates`), which reaches the page
+# verbatim. Formatting here is content.
+src/content/docs/

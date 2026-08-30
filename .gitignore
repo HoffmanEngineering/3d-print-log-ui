@@ -86,3 +86,11 @@ src/environments/environment.auth0-dev.ts
 # Cypress artifacts from failed runs
 cypress/screenshots/
 cypress/videos/
+
+# Generated /docs Angular sources and data artifacts — run `npm run docs:generate`.
+# Authored content lives in src/content/docs/*.md.
+/src/app/documentation/generated/
+
+# Dev-server logs from `npm start > ng-serve.log`.
+/ng-serve.log
+/ng-serve.err.log

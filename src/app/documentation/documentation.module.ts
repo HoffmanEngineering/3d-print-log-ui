@@ -5,49 +5,26 @@ import { YouTubePlayerModule } from '@angular/youtube-player';
 import { AdsenseModule } from 'ng2-adsense';
 import { SharedModule } from '../shared/shared.module';
 import { DocSidebarComponent } from './doc-sidebar/doc-sidebar.component';
-import { DocsAboutComponent } from './docs/docs-about/docs-about.component';
-import { DocsAnalyticsComponent } from './docs/docs-analytics/docs-analytics.component';
-import { DocsCuraPluginComponent } from './docs/docs-cura-plugin/docs-cura-plugin.component';
-import { DocsFilamentsComponent } from './docs/docs-filaments/docs-filaments.component';
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
-import { DocsOctoprintWebhookComponent } from './docs/docs-octoprint-webhook/docs-octoprint-webhook.component';
-import { DocsPrintersComponent } from './docs/docs-printers/docs-printers.component';
-import { DocsPrintsComponent } from './docs/docs-prints/docs-prints.component';
-import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocFeedbackComponent } from './doc-feedback/doc-feedback.component';
 import { DocsTelemetryService } from './docs-telemetry.service';
 import { DocumentationComponent } from './documentation.component';
-import { DocsAndroidAppComponent } from './docs/docs-android-app/docs-android-app.component';
-import { DocsMcpComponent } from './docs/docs-mcp/docs-mcp.component';
-import { DocsMoonrakerComponent } from './docs/docs-moonraker/docs-moonraker.component';
-import { DocsTermsComponent } from './docs/docs-terms/docs-terms.component';
-import { DocsPrivacyPolicyComponent } from './docs/docs-privacy-policy/docs-privacy-policy.component';
-import { DocsSlic3rUploaderComponent } from './docs/docs-slic3r-uploader/docs-slic3r-uploader.component';
-import { DocsProSubscriptionComponent } from './docs/docs-pro-subscription/docs-pro-subscription.component';
-import { DocsProjectsComponent } from './docs/docs-projects/docs-projects.component';
+import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
 
 @NgModule({
   declarations: [
     DocumentationComponent,
     DocSidebarComponent,
+    // Pages compiled from src/content/docs/*.md. They are declared here rather
+    // than made standalone so they keep this module's template scope —
+    // RouterLink, MatIcon and <youtube-player> are all used by doc templates,
+    // and strictTemplates makes a missing directive a build error.
+    ...DOCS_PAGE_COMPONENTS,
+    // Pages that keep a hand-written component (the `component:` escape hatch).
+    // docs-getting-started injects AuthService and Router for auth-aware content
+    // on a public route.
     DocsGettingStartedComponent,
-    DocsPrintersComponent,
-    DocsAnalyticsComponent,
-    DocsPrintsComponent,
-    DocsAboutComponent,
-    DocsCuraPluginComponent,
-    DocsReleaseNotesComponent,
-    DocsFilamentsComponent,
-    DocsOctoprintWebhookComponent,
-    DocsMoonrakerComponent,
-    DocsAndroidAppComponent,
-    DocsMcpComponent,
-    DocsTermsComponent,
-    DocsPrivacyPolicyComponent,
-    DocsSlic3rUploaderComponent,
-    DocsProSubscriptionComponent,
-    DocsProjectsComponent,
   ],
   imports: [
     CommonModule,

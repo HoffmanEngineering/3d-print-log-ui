@@ -70,8 +70,10 @@ test('pageUrls prefixes each route with the origin', () => {
   ]);
 });
 
-test('DOC_ROUTES lists the 16 concrete doc pages under docs/', () => {
-  assert.equal(DOC_ROUTES.length, 16);
+test('DOC_ROUTES lists the concrete doc pages under docs/', () => {
+  // No hard-coded count: DOC_ROUTES is derived from the docs manifest, so it
+  // cannot drift from the pages that exist.
+  assert.ok(DOC_ROUTES.length > 0);
   assert.ok(DOC_ROUTES.every((r) => r.startsWith('docs/')));
   assert.ok(DOC_ROUTES.includes('docs/getting-started'));
   assert.ok(DOC_ROUTES.includes('docs/mcp'));

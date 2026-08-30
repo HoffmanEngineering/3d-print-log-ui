@@ -1,16 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 import {
   parseSections,
   htmlToMarkdown,
   extractReleaseNotes,
+  readReleaseNotesHtml,
 } from './release-notes-lib.mjs';
 
-const NOTES_PATH =
-  'src/app/documentation/docs/docs-release-notes/docs-release-notes.component.html';
 
 // Mirrors the real component: a wrapper, an <h2> that is NOT a release, then
 // two releases. The second carries every inline shape the real file uses --
@@ -222,7 +220,7 @@ test('extractReleaseNotes throws for a version with no section', () => {
 
 // -- Against the real component, which is the corpus this ships against. --
 
-const REAL_HTML = readFileSync(NOTES_PATH, 'utf8');
+const REAL_HTML = readReleaseNotesHtml();
 
 test('every release section in the real file yields non-empty markdown', () => {
   const sections = parseSections(REAL_HTML);

@@ -594,3 +594,67 @@ test('two releases declaring the same anchor are caught as a duplicate id', () =
     problems.some((p) => /id "v1\.49\.1" is declared more than once/.test(p))
   );
 });
+
+test('accepts a link to a derived heading anchor the generator will emit', () => {
+  // The generated page gives every h2-h4 an id. Validating the bare Markdown
+  // render instead rejected exactly the anchors the deployed page declares.
+  assert.deepEqual(
+    messages({ body: '## Prints\n\n### Print List\n\nSee [the list](#print-list).\n' }),
+    []
+  );
+});
+
+test('accepts a cross-page link to another page derived anchor', () => {
+  const problems = run([
+    source({ body: 'See [Usage](/docs/materials#material-usage).\n' }),
+    source({
+      slug: 'materials',
+      navLabel: 'Materials',
+      title: 'Materials | 3D Print Log Docs',
+      description: `${DESCRIPTION} Materials edition.`,
+      sourceFile: 'materials.md',
+      body: '## Materials\n\n### Material Usage\n',
+    }),
+  ]);
+
+  assert.deepEqual(problems, []);
+});
+
+test('still reports a fragment link matching no heading on the page', () => {
+  // Derived ids widen what may be linked to; they must not turn the check off.
+  assert.deepEqual(
+    messages({ body: '## Prints\n\n### Print List\n\nSee [gone](#print-lst).\n' }),
+    ['prints.md: link to #print-lst, but no element on the page declares that id.']
+  );
+});
+
+test('reports a doc-figure with no alt', () => {
+  assert.deepEqual(
+    messages({
+      body: '## Prints\n\n<doc-figure src="./a.png" width="8" height="6"></doc-figure>\n',
+    }),
+    [
+      'prints.md: <doc-figure> is missing alt; describe what the screenshot shows.',
+    ]
+  );
+});
+
+test('reports a doc-figure whose alt is empty', () => {
+  // `alt` being a required input only makes the binding required. An empty one
+  // compiles and marks the screenshot decorative, which it never is.
+  assert.deepEqual(
+    messages({
+      body: '## Prints\n\n<doc-figure src="./a.png" alt="" width="8" height="6"></doc-figure>\n',
+    }),
+    ['prints.md: <doc-figure> has an empty alt; describe what the screenshot shows.']
+  );
+});
+
+test('accepts a doc-figure that describes its image', () => {
+  assert.deepEqual(
+    messages({
+      body: '## Prints\n\n<doc-figure src="./a.png" alt="The print list" width="8" height="6"></doc-figure>\n',
+    }),
+    []
+  );
+});

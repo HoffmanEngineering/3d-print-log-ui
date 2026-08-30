@@ -2,6 +2,10 @@
   display: block;
 }
 
+:host(.doc-toc--empty) {
+  display: none;
+}
+
 /**
  * Below the rail breakpoint the contents sit above the article, so they are a
  * boxed index card rather than a sticky rail — pinned, they would cover the

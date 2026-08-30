@@ -61,11 +61,19 @@ describe('DocStepsComponent', () => {
     expect(steps[1].querySelector('.doc-step__heading')).toBeNull();
   });
 
-  it('leaves the step heading out of the document outline', () => {
-    // The table of contents is built from h2-h4. A step is not a section of
-    // the page, so numbering it as one would flood the rail.
-    const steps = fixture.nativeElement.querySelector('doc-steps');
+  it('keeps the step title a real heading, so it is reachable by heading nav', () => {
+    // These were '#### Step N' in the Markdown. Rendering them as paragraphs
+    // would drop six setup sections out of a screen reader's heading list.
+    const heading = fixture.nativeElement.querySelector('.doc-step__heading');
 
-    expect(steps.querySelectorAll('h1, h2, h3, h4, h5, h6').length).toBe(0);
+    expect(heading.tagName).toBe('H4');
+  });
+
+  it('gives the step heading no id, so it stays out of the table of contents', () => {
+    // The outline is generated from the page template; a step is part of a
+    // procedure, not a section of the page.
+    const heading = fixture.nativeElement.querySelector('.doc-step__heading');
+
+    expect(heading.getAttribute('id')).toBeNull();
   });
 });

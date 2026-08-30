@@ -54,6 +54,21 @@ describe('DocVideoComponent', () => {
     ).toBe('Setting up the OctoPrint webhook');
   });
 
+  it('names the iframe the YouTube API builds, not just the placeholder', () => {
+    // The placeholder is replaced by an API-built iframe on first play, and
+    // that iframe carries YouTube's own generic title.
+    const component = fixture.debugElement.query(
+      (node) => node.name === 'doc-video'
+    ).componentInstance as DocVideoComponent;
+    const iframe = document.createElement('iframe');
+
+    component.labelFrame({
+      target: { getIframe: () => iframe },
+    } as unknown as YT.PlayerEvent);
+
+    expect(iframe.title).toBe('Setting up the OctoPrint webhook');
+  });
+
   it('sizes the player from a 16:9 box rather than fixed pixels', () => {
     // youtube-player defaults to 640x390, which overflows the measure.
     expect(

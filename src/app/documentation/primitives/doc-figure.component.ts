@@ -10,14 +10,19 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  *   caption="Prints, as the mobile app shows them"
  *   width="1080"
  *   height="1920"
- * />
+ * ></doc-figure>
  * ```
+ *
+ * The closing tag matters: a multi-line self-closing tag is not a shape the
+ * Markdown renderer's raw HTML block reader accepts.
  *
  * `alt`, `width` and `height` are required, and that is the point of having a
  * component at all rather than an `<img>` and a `<figcaption>`: a bare `<img>`
  * let a doc ship without alt text, and without intrinsic dimensions every
- * screenshot on the page reflowed the prose under it as it loaded. Both are now
- * template-compile errors instead of things a reviewer has to catch.
+ * screenshot on the page reflowed the prose under it as it loaded. A missing
+ * one is now a template-compile error rather than something a reviewer has to
+ * catch — and because a required input only requires the BINDING, validate-docs
+ * additionally rejects an `alt` that is present but empty.
  *
  * `caption` is optional. A screenshot that only repeats the sentence above it
  * is better left uncaptioned than captioned twice.

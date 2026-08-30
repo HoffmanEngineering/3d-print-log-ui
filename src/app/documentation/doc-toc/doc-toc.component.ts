@@ -29,6 +29,13 @@ const MINIMUM_ENTRIES = 3;
   styleUrls: ['./doc-toc.component.scss'],
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    // The shell places this component unconditionally, so a page with no
+    // outline (release notes, or one under the threshold) would otherwise keep
+    // a grid row and its 32px gap above the article for an element that draws
+    // nothing.
+    '[class.doc-toc--empty]': '!headings().length',
+  },
 })
 export class DocTocComponent {
   /** The docs path of the page on screen, e.g. `docs/printers`. */

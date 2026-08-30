@@ -3,6 +3,7 @@
     <youtube-player
       [videoId]="videoId()"
       [placeholderButtonLabel]="'Play video: ' + title()"
+      (ready)="labelFrame($event)"
     />
   </div>
   <figcaption>{{ title() }}</figcaption>

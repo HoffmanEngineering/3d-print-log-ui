@@ -44,9 +44,12 @@
   line-height: 1;
 }
 
+// An h4 for heading navigation, but sized as a step title rather than as a
+// section heading: it sits beside its number, not above a block of prose.
 .doc-step__heading {
   margin: 4px 0 8px;
   font-size: 18px;
+  line-height: 26px;
   font-weight: 600;
   color: var(--docs-text);
 }

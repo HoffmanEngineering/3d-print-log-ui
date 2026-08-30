@@ -48,6 +48,13 @@ const DEPTH_BUCKETS = [25, 50, 75, 100] as const;
 const MAX_COMMENT_LENGTH = 1000;
 
 /**
+ * Cap on a reported search query. Real queries are a few words; anything longer
+ * is a paste, and `zero-result-searches.kql` groups on this value so an
+ * unbounded one would also make its own row forever.
+ */
+const MAX_QUERY_LENGTH = 200;
+
+/**
  * Emits the Phase 0 documentation telemetry events.
  *
  * Everything goes through `LoggingService`, which already no-ops without a
@@ -126,6 +133,40 @@ export class DocsTelemetryService {
       slug: slug || (this.currentSlug ?? 'unknown'),
       helpful,
       ...(trimmed ? { comment: trimmed.slice(0, MAX_COMMENT_LENGTH) } : {}),
+    });
+  }
+
+  /**
+   * A settled search. Emitted for zero-result queries too — `zero-result-searches.kql`
+   * is the most actionable query in the whole analytics set, and it is fed
+   * entirely by the searches that found nothing.
+   *
+   * The query is truncated like feedback is: an accidental paste must not
+   * become the telemetry payload.
+   */
+  trackSearch(query: string, resultCount: number): void {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    this.logging.logEvent('Docs_Search', {
+      query: trimmed.slice(0, MAX_QUERY_LENGTH),
+      resultCount,
+    });
+  }
+
+  /**
+   * A result the reader actually opened.
+   *
+   * `rank` is 0-based, matching the position in the rendered list.
+   * `search-quality.kql` averages it to see how far down the useful answer sits.
+   */
+  trackSearchResultClick(query: string, slug: string, rank: number): void {
+    this.logging.logEvent('Docs_SearchResultClick', {
+      query: query.trim().slice(0, MAX_QUERY_LENGTH),
+      slug: slugFromDocsUrl(slug),
+      rank,
     });
   }
 

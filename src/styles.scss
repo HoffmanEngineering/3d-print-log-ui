@@ -66,6 +66,17 @@ app-navbar {
   min-height: 70vh;
 }
 
+/**
+ * Anchored headings have to clear the two fixed bars above them: the app navbar
+ * and the Documentation toolbar. Without this, every deep link — a search
+ * result, a cross-page `#anchor`, a bookmark — scrolls the heading to y=0,
+ * which is behind that chrome, so the reader lands on the paragraph after the
+ * thing they asked for.
+ */
+.docs-markdown :is(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: 8rem;
+}
+
 .docs-markdown ol,
 .docs-markdown p,
 .docs-markdown ul {

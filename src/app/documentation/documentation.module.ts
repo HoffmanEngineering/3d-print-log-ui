@@ -9,6 +9,8 @@ import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-ge
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocFeedbackComponent } from './doc-feedback/doc-feedback.component';
+import { DocsSearchOpener } from './docs-search/docs-search.opener';
+import { DocsSearchService } from './docs-search/docs-search.service';
 import { DocsTelemetryService } from './docs-telemetry.service';
 import { DocumentationComponent } from './documentation.component';
 import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
@@ -37,6 +39,8 @@ import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
     YouTubePlayerModule,
     DocFeedbackComponent,
   ],
-  providers: [DocsTelemetryService],
+  // Provided here, not in root: search is only reachable from /docs, so both
+  // classes stay in the lazy docs chunk rather than the main bundle.
+  providers: [DocsTelemetryService, DocsSearchService, DocsSearchOpener],
 })
 export class DocumentationModule {}

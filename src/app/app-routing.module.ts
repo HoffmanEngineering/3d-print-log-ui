@@ -200,6 +200,13 @@ export const appRoutes: Routes = [
   imports: [
     RouterModule.forRoot(appRoutes, {
       scrollPositionRestoration: 'enabled',
+      // Without this, scrollPositionRestoration scrolls a fragment navigation
+      // back to the top: the router does not look at the `#anchor` at all, so
+      // every deep link into a docs page landed at the top of it. The two
+      // settings are designed to work together — with anchorScrolling on, a
+      // navigation carrying a fragment scrolls to that element instead of
+      // being restored.
+      anchorScrolling: 'enabled',
       preloadingStrategy: SelectivePreloadStrategy,
     }),
   ],

@@ -42,3 +42,8 @@ h1.example-app-name {
     background-color: #1e1e1e;
   }
 }
+
+// Pushes the search button to the trailing edge of the toolbar.
+.toolbar-spacer {
+  flex: 1 1 auto;
+}

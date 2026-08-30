@@ -178,25 +178,91 @@ export function emitManifestTs() {
 }
 
 /**
+ * The search index: one entry per heading SECTION, not per page.
+ *
+ * Page-level entries would be useless on exactly the pages a reader most needs
+ * help with. `docs/release-notes` alone is 78 KB of prose under 155 headings —
+ * a hit on it says "the answer is somewhere in the changelog". A section entry
+ * instead names the heading it matched and deep-links to that heading's anchor.
+ *
+ * Sections are cut at h1-h3. h4 and below stay inside their parent: "Full List
+ * of Changes:" appears under every one of the 99 releases and would fragment
+ * each of them into a section whose title says nothing.
+ *
  * @param {object} manifest
  * @param {Record<string, string>} templates rendered template per slug
  */
 export function emitSearchIndexJson(manifest, templates) {
-  const entries = manifest.pages
-    .filter((page) => !page.dormant)
-    .map((page) => {
-      const template = templates[page.slug] ?? '';
-      return {
-        path: page.path,
-        title: page.title,
-        navLabel: page.navLabel,
-        group: page.group,
-        headings: headingsOf(template),
-        text: plainText(template),
-      };
-    });
+  const entries = [];
+
+  for (const page of manifest.pages.filter((p) => !p.dormant)) {
+    for (const section of sectionsOf(templates[page.slug] ?? '', page)) {
+      entries.push(section);
+    }
+  }
 
   return `${JSON.stringify(entries, null, 2)}\n`;
+}
+
+/** Sections are cut at these levels; deeper headings stay with their parent. */
+const SECTION_HEADING = /<h([1-3])([^>]*)>([\s\S]*?)<\/h\1\s*>/g;
+
+/**
+ * Splits one rendered page into searchable sections.
+ *
+ * @param {string} template
+ * @param {{ path: string, navLabel: string, group: string }} page
+ * @returns {object[]}
+ */
+export function sectionsOf(template, page) {
+  const source = stripComments(template);
+
+  const headings = [];
+  for (const match of source.matchAll(SECTION_HEADING)) {
+    const id = /\sid="([^"]+)"/.exec(match[2]);
+    headings.push({
+      title: plainText(match[3]),
+      anchor: id ? id[1] : null,
+      at: match.index,
+      after: match.index + match[0].length,
+    });
+  }
+
+  const sections = [];
+
+  // Anything before the first heading belongs to the page itself. It is titled
+  // with the nav label rather than left blank, so a hit there still names
+  // something the reader recognises from the sidebar.
+  const lead = plainText(
+    source.slice(0, headings.length ? headings[0].at : source.length)
+  );
+  if (lead) {
+    sections.push({ title: page.navLabel, anchor: null, text: lead });
+  }
+
+  headings.forEach((heading, i) => {
+    const body = source.slice(
+      heading.after,
+      i + 1 < headings.length ? headings[i + 1].at : source.length
+    );
+    sections.push({
+      title: heading.title,
+      anchor: heading.anchor,
+      text: plainText(body),
+    });
+  });
+
+  return sections.map((section, ordinal) => ({
+    // Ordinal, not the anchor: a section is indexed whether or not its heading
+    // declares one, and MiniSearch needs an id for every document.
+    id: `${page.path}::${ordinal}`,
+    path: page.path,
+    url: section.anchor ? `/${page.path}#${section.anchor}` : `/${page.path}`,
+    title: section.title,
+    page: page.navLabel,
+    group: page.group,
+    text: section.text,
+  }));
 }
 
 export function emitFiguresTs(manifest, templates) {

@@ -305,4 +305,94 @@ describe('DocsTelemetryService', () => {
       expect((props['comment'] as string).length).toBe(1000);
     });
   });
+
+  describe('trackSearch', () => {
+    it('reports the query and how many results it found', () => {
+      const service = configure();
+
+      service.trackSearch('spool photos', 4);
+
+      expect(logging.logEvent).toHaveBeenCalledWith('Docs_Search', {
+        query: 'spool photos',
+        resultCount: 4,
+      });
+    });
+
+    it('reports a search that found nothing', () => {
+      // This is the row zero-result-searches.kql exists to surface: something a
+      // real person expected to find and could not.
+      const service = configure();
+
+      service.trackSearch('kryptonite', 0);
+
+      expect(logging.logEvent).toHaveBeenCalledWith('Docs_Search', {
+        query: 'kryptonite',
+        resultCount: 0,
+      });
+    });
+
+    it('trims the query, so the same search groups as one row', () => {
+      const service = configure();
+
+      service.trackSearch('  spool  ', 1);
+
+      expect(propsOf(0)['query']).toBe('spool');
+    });
+
+    it('reports nothing for an empty query', () => {
+      const service = configure();
+
+      service.trackSearch('   ', 0);
+
+      expect(logging.logEvent).not.toHaveBeenCalled();
+    });
+
+    it('caps a pasted query', () => {
+      const service = configure();
+
+      service.trackSearch('x'.repeat(5000), 0);
+
+      expect((propsOf(0)['query'] as string).length).toBe(200);
+    });
+  });
+
+  describe('trackSearchResultClick', () => {
+    it('reports the query, the page opened, and its rank', () => {
+      const service = configure();
+
+      service.trackSearchResultClick('spool photos', 'docs/release-notes', 2);
+
+      expect(logging.logEvent).toHaveBeenCalledWith('Docs_SearchResultClick', {
+        query: 'spool photos',
+        slug: 'release-notes',
+        rank: 2,
+      });
+    });
+
+    it('reports the top result as rank 0', () => {
+      const service = configure();
+
+      service.trackSearchResultClick('materials', 'docs/materials', 0);
+
+      expect(propsOf(0)['rank']).toBe(0);
+    });
+
+    it('reduces the path to the slug the other docs events use', () => {
+      // Every other Docs_* event keys on the slug; a full path here would not
+      // join against them.
+      const service = configure();
+
+      service.trackSearchResultClick('a', 'docs/materials', 0);
+
+      expect(propsOf(0)['slug']).toBe('materials');
+    });
+
+    it('caps a pasted query', () => {
+      const service = configure();
+
+      service.trackSearchResultClick('x'.repeat(5000), 'docs/materials', 0);
+
+      expect((propsOf(0)['query'] as string).length).toBe(200);
+    });
+  });
 });

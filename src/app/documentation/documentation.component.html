@@ -4,6 +4,18 @@
       <mat-icon>menu</mat-icon>
     </button>
     <h1 class="example-app-name">Documentation</h1>
+
+    <span class="toolbar-spacer"></span>
+
+    <button
+      mat-icon-button
+      class="docs-search-button"
+      (click)="openSearch()"
+      aria-label="Search documentation"
+      [matTooltip]="searchTooltip"
+    >
+      <mat-icon>search</mat-icon>
+    </button>
   </mat-toolbar>
 
   <mat-sidenav-container class="example-sidenav-container">
@@ -13,7 +25,10 @@
       [fixedInViewport]="mobileQuery.matches"
       fixedTopGap="56"
     >
-      <app-doc-sidebar (click)="handleSidebarClick()"></app-doc-sidebar>
+      <app-doc-sidebar
+        (click)="handleSidebarClick()"
+        (openSearch)="openSearch()"
+      ></app-doc-sidebar>
     </mat-sidenav>
 
     <mat-sidenav-content>

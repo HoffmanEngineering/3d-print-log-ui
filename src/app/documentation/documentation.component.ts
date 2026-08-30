@@ -25,6 +25,12 @@ import {
   buildDocBreadcrumb,
 } from '../core/structured-data/doc-schema';
 import { getDocSeoTags } from './doc-seo.config';
+import { DocsSearchOpener } from './docs-search/docs-search.opener';
+import {
+  isApplePlatform,
+  isSearchShortcut,
+  shortcutLabel,
+} from './docs-search/keyboard-shortcut';
 import {
   DocsTelemetryService,
   scrollPercentOf,
@@ -41,6 +47,11 @@ let apiLoaded = false;
   templateUrl: './documentation.component.html',
   styleUrls: ['./documentation.component.scss'],
   standalone: false,
+  host: {
+    // Bound on the document, not the host element: the shortcut has to work
+    // wherever focus happens to be inside the docs shell.
+    '(document:keydown)': 'onDocumentKeydown($event)',
+  },
 })
 export class DocumentationComponent
   implements OnInit, OnDestroy, AfterViewInit
@@ -59,6 +70,16 @@ export class DocumentationComponent
   private readonly telemetry = inject(DocsTelemetryService);
   private readonly scrollDispatcher = inject(ScrollDispatcher);
   private readonly document = inject(DOCUMENT);
+  private readonly searchOpener = inject(DocsSearchOpener);
+
+  /**
+   * Shown on the toolbar button. The modifier differs by platform, and the
+   * check is guarded: this initializer also runs in Node during prerendering,
+   * where there is no navigator to ask.
+   */
+  readonly searchTooltip = `Search documentation (${shortcutLabel(
+    isPlatformBrowser(this.platformId) && isApplePlatform(navigator.platform)
+  )})`;
 
   @ViewChild('snav', { static: true }) snav;
 
@@ -192,6 +213,19 @@ export class DocumentationComponent
       this.title.setTitle('Documentation - 3D Print Log');
       this.structuredData.setJsonLd([]);
     }
+  }
+
+  openSearch(query?: string): void {
+    this.searchOpener.open(query);
+  }
+
+  /** Ctrl+K / Cmd+K opens search, the shortcut every docs site uses. */
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (!isSearchShortcut(event)) {
+      return;
+    }
+    event.preventDefault();
+    this.openSearch();
   }
 
   handleSidebarClick() {

@@ -1,0 +1,117 @@
+.docs-search {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.docs-search__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.3);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 1.05rem;
+
+  &:focus {
+    outline: none;
+  }
+
+  // The type="search" clear affordance is a different size in every browser and
+  // sits on top of the rounded corner in WebKit.
+  &::-webkit-search-cancel-button {
+    appearance: none;
+  }
+}
+
+.docs-search__status {
+  margin: 0;
+  padding: 0.4rem 1rem 0;
+  font-size: 0.78rem;
+  opacity: 0.65;
+  // Reserves the line so results do not jump by one row when the count appears.
+  min-height: 1.4em;
+}
+
+.docs-search__results {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  overflow-y: auto;
+  // The dialog is capped in height; this is the part that scrolls.
+  max-height: min(60vh, 28rem);
+}
+
+.docs-search__result {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 0.75rem;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+
+  // Selection is conveyed to assistive tech by aria-activedescendant, so this
+  // is the visible half of the same state and must not rely on :focus.
+  &--active {
+    background: rgba(127, 127, 127, 0.16);
+  }
+}
+
+.docs-search__result-title {
+  font-weight: 600;
+}
+
+.docs-search__result-page {
+  justify-self: end;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.docs-search__result-excerpt {
+  grid-column: 1 / -1;
+  font-size: 0.82rem;
+  opacity: 0.75;
+  // Two lines of context, then ellipsis: enough to judge a hit, not enough for
+  // one long section to push the rest of the results off screen.
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.docs-search__empty {
+  margin: 0;
+  padding: 0.5rem 1rem 1rem;
+  font-size: 0.9rem;
+}
+
+.docs-search__link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.docs-search__hints {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid rgba(127, 127, 127, 0.3);
+  font-size: 0.72rem;
+  opacity: 0.6;
+
+  kbd {
+    display: inline-block;
+    min-width: 1.1em;
+    margin: 0 0.15rem;
+    padding: 0.05rem 0.3rem;
+    border: 1px solid rgba(127, 127, 127, 0.4);
+    border-radius: 3px;
+    font-family: inherit;
+    text-align: center;
+  }
+}

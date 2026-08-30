@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { Event as RouterEvent, NavigationEnd, Router } from '@angular/router';
 
 import { DocumentationComponent } from './documentation.component';
+import { DocsSearchOpener } from './docs-search/docs-search.opener';
 import { DocsTelemetryService } from './docs-telemetry.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
@@ -18,6 +19,10 @@ const mobileMediaMatcher = {
     removeListener: () => {},
   }),
 };
+
+/** The shell injects the opener to run the Ctrl+K shortcut and toolbar button. */
+const searchOpener = () =>
+  jasmine.createSpyObj<DocsSearchOpener>('DocsSearchOpener', ['open']);
 
 xdescribe('DocumentationComponent', () => {
   let component: DocumentationComponent;
@@ -61,6 +66,7 @@ describe('DocumentationComponent SEO lifecycle', () => {
       declarations: [DocumentationComponent],
       providers: [
         { provide: Router, useValue: { url: '/docs/prints', events } },
+        { provide: DocsSearchOpener, useValue: searchOpener() },
         { provide: StructuredDataService, useValue: structuredData },
         { provide: MetaTagService, useValue: meta },
         { provide: MediaMatcher, useValue: mobileMediaMatcher },
@@ -140,6 +146,7 @@ describe('DocumentationComponent telemetry', () => {
       declarations: [DocumentationComponent],
       providers: [
         { provide: Router, useValue: { url: initialUrl, events } },
+        { provide: DocsSearchOpener, useValue: searchOpener() },
         {
           provide: StructuredDataService,
           useValue: jasmine.createSpyObj<StructuredDataService>(

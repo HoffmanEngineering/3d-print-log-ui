@@ -15,7 +15,11 @@ import {
   DOC_MODES,
   RELEASE_NOTES_SLUG,
 } from './docs-manifest-lib.mjs';
-import { extractAnchors, ID_PATTERN, renderMarkdown } from './docs-markdown.mjs';
+import {
+  extractAnchors,
+  ID_PATTERN,
+  renderMarkdown,
+} from './docs-markdown.mjs';
 import { anchorFor, isVersion } from './release-notes-lib.mjs';
 import { renderRelease } from './release-notes-emit.mjs';
 
@@ -39,11 +43,51 @@ const DESCRIPTION_MAX = 170;
  * template scope has to change too.
  */
 const ELEMENT_ALLOWLIST = new Set([
-  'a', 'article', 'aside', 'b', 'blockquote', 'br', 'button', 'code', 'dd', 'dl',
-  'dt', 'div', 'em', 'figcaption', 'figure', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'hr', 'i', 'img', 'li', 'mat-icon', 'ol', 'p', 'pre', 'section', 'small',
-  'span', 'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead',
-  'time', 'tr', 'ul', 'youtube-player',
+  'a',
+  'article',
+  'aside',
+  'b',
+  'blockquote',
+  'br',
+  'button',
+  'code',
+  'dd',
+  'dl',
+  'dt',
+  'div',
+  'em',
+  'figcaption',
+  'figure',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'hr',
+  'i',
+  'img',
+  'li',
+  'mat-icon',
+  'ol',
+  'p',
+  'pre',
+  'section',
+  'small',
+  'span',
+  'strong',
+  'sub',
+  'sup',
+  'table',
+  'tbody',
+  'td',
+  'tfoot',
+  'th',
+  'thead',
+  'time',
+  'tr',
+  'ul',
+  'youtube-player',
 ]);
 
 /**
@@ -52,7 +96,8 @@ const ELEMENT_ALLOWLIST = new Set([
  */
 export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
   const problems = [];
-  const add = (file, message) => problems.push({ file, message: `${file}: ${message}` });
+  const add = (file, message) =>
+    problems.push({ file, message: `${file}: ${message}` });
 
   validateReleases(releases, add);
 
@@ -60,7 +105,7 @@ export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
   // releases that render into its template. Every rule below — the anchor
   // contract above all — is about what the reader can reach, and the component
   // expands the archive to reach an archived anchor. Checking only the page
-  // template would quietly stop guarding 89 of the 97 published ids.
+  // template would quietly stop guarding the great majority of published ids.
   const renderedReleases =
     releases.length > 0 ? releases.map(renderRelease).join('\n') : '';
 
@@ -105,7 +150,10 @@ export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
       add(file, `mode "${s.mode}" is not one of ${DOC_MODES.join(', ')}.`);
     }
 
-    if (typeof s.updated === 'string' && !/^\d{4}-\d{2}-\d{2}$/.test(s.updated)) {
+    if (
+      typeof s.updated === 'string' &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(s.updated)
+    ) {
       add(file, `updated "${s.updated}" must be an ISO date (YYYY-MM-DD).`);
     }
 
@@ -189,7 +237,10 @@ export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
 
       if (target === '') {
         if (fragment && !anchorsBySlug.get(s.slug)?.includes(fragment)) {
-          add(file, `link to #${fragment}, but no element on the page declares that id.`);
+          add(
+            file,
+            `link to #${fragment}, but no element on the page declares that id.`
+          );
         }
         continue;
       }
@@ -249,6 +300,9 @@ export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
   return problems;
 }
 
+/** An HTML character reference: `&amp;`, `&#64;`, `&mdash;`. */
+const CHARACTER_REFERENCE = /&#?[a-zA-Z0-9]+;/;
+
 /**
  * Rules for src/content/release-notes/*.md.
  *
@@ -260,6 +314,8 @@ export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
  */
 function validateReleases(releases, add) {
   const seen = new Map();
+  // Non-global: `.test` and `.exec` are both called on it below, and a global
+  // regex would carry lastIndex between them.
 
   for (const release of releases) {
     const file = `release-notes/${release.sourceFile ?? `${release.version}.md`}`;
@@ -272,11 +328,21 @@ function validateReleases(releases, add) {
     }
 
     const previous = seen.get(release.version);
-    if (previous) add(file, `version "${release.version}" is already declared by ${previous}.`);
+    if (previous)
+      add(
+        file,
+        `version "${release.version}" is already declared by ${previous}.`
+      );
     else seen.set(release.version, file);
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(release.date)) {
-      add(file, `date "${release.date}" must be an ISO date (YYYY-MM-DD).`);
+    if (
+      typeof release.date !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(release.date)
+    ) {
+      add(
+        file,
+        `date "${release.date}" must be a quoted ISO date (YYYY-MM-DD).`
+      );
     }
 
     // An empty title is legal, not an oversight: 1.29.0 shipped with a bare
@@ -284,6 +350,15 @@ function validateReleases(releases, add) {
     // that the field is a string, so a forgotten quote cannot reach the heading.
     if (typeof release.title !== 'string') {
       add(file, 'frontmatter field "title" must be a string.');
+    } else if (CHARACTER_REFERENCE.test(release.title)) {
+      // A title is data, not markup: it is rendered through {{ }} in the
+      // archive and used verbatim as the GitHub Release title, and in both
+      // places an entity shows up as its literal source text. Only the
+      // generated <h3> is HTML, and that path escapes for itself.
+      add(
+        file,
+        `title contains the character reference "${CHARACTER_REFERENCE.exec(release.title)[0]}"; write the character itself.`
+      );
     }
 
     if (!Array.isArray(release.highlights)) {
@@ -334,7 +409,9 @@ function linksOf(template) {
 
     const parts = inner.split(',').map((part) => part.trim());
     const segments = parts.map((part) =>
-      /^'[^']*'$/.test(part) || /^"[^"]*"$/.test(part) ? part.slice(1, -1) : null
+      /^'[^']*'$/.test(part) || /^"[^"]*"$/.test(part)
+        ? part.slice(1, -1)
+        : null
     );
     if (segments.some((segment) => segment === null)) continue;
 
@@ -389,6 +466,18 @@ function membersOf(template) {
 }
 
 const RESERVED = new Set([
-  'true', 'false', 'null', 'undefined', 'as', 'let', 'of', 'track', 'async',
-  'this', 'item', 'index', 'case', 'default',
+  'true',
+  'false',
+  'null',
+  'undefined',
+  'as',
+  'let',
+  'of',
+  'track',
+  'async',
+  'this',
+  'item',
+  'index',
+  'case',
+  'default',
 ]);

@@ -93,9 +93,15 @@ for (const r of [...routes, ...DOC_ROUTES]) {
     errors.push(`${file}: missing/wrong twitter:card`);
   // Pre-paint theme script: without it the prerendered (light) HTML flashes before
   // ThemeService applies the saved dark theme on boot.
-  if (!(html.includes("localStorage.getItem('theme-mode')") &&
-        html.includes("classList.add('dark-theme')")))
-    errors.push(`${file}: missing pre-paint theme script (dark-mode flash guard)`);
+  if (
+    !(
+      html.includes("localStorage.getItem('theme-mode')") &&
+      html.includes("classList.add('dark-theme')")
+    )
+  )
+    errors.push(
+      `${file}: missing pre-paint theme script (dark-mode flash guard)`
+    );
   // Structured data (JSON-LD): every prerendered page carries a valid @graph with
   // the @type(s) expected for its route class.
   const types = jsonLdTypes(html);

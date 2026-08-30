@@ -27,8 +27,8 @@
 //
 // Everything emitted here must also survive Angular's HTML sanitizer, which is
 // what [innerHTML] runs it through. That is why nothing carries a `style`
-// attribute: the four historical figures are styled from release-notes.scss
-// instead. No sanitizer bypass is used, and none should be added -- the point of
+// attribute: the four historical figures are styled from the component's
+// stylesheet instead. No sanitizer bypass is used, and none should be added -- the point of
 // the sanitizer here is that a mistake in this file cannot become an injection.
 
 import { renderMarkdown } from './docs-markdown.mjs';
@@ -43,15 +43,22 @@ export const RECENT_RELEASE_COUNT = 10;
  * newest first. This is what Phase 4's what's-new surface reads, and what the
  * anchor contract is checked against.
  *
+ * `archived` records which side of the split a release landed on. The component
+ * needs that to answer "is this deep link already on the page?", and reading it
+ * from here rather than probing the DOM keeps the answer available before the
+ * template has rendered.
+ *
  * @param {object[]} sources from readReleaseSources
+ * @param {number} [recent]
  */
-export function toReleaseManifest(sources) {
-  return sources.map((source) => ({
+export function toReleaseManifest(sources, recent = RECENT_RELEASE_COUNT) {
+  return sources.map((source, index) => ({
     version: source.version,
     date: source.date,
     title: source.title,
     anchor: anchorFor(source.version),
     highlights: source.highlights ?? [],
+    archived: index >= recent,
   }));
 }
 
@@ -59,7 +66,7 @@ export function toReleaseManifest(sources) {
  * One release as an Angular template fragment.
  *
  * The `<h3>` id comes from `anchorFor(version)`, never from the heading text.
- * That is the anchor contract: 97 published ids have to keep resolving, and
+ * That is the anchor contract: every published id has to keep resolving, and
  * dotted ids like `v1.38.0` are exactly what a heading slugger would mangle.
  */
 export function renderRelease(source) {
@@ -68,7 +75,11 @@ export function renderRelease(source) {
 
   return [
     `<section class="release-note">`,
-    `<h3 id="${anchor}">${heading}</h3>`,
+    // The heading is plain text in the frontmatter, and this is the one place it
+    // becomes HTML. Storing an entity instead would read correctly here and
+    // wrongly everywhere else the title is data rather than markup: the archive
+    // renders it through {{ }}, and the GitHub Release title is a bare string.
+    `<h3 id="${anchor}">${escapeText(heading)}</h3>`,
     ...(source.date
       ? [
           `<p class="release-note__date"><time datetime="${source.date}">${formatDate(source.date)}</time></p>`,
@@ -88,8 +99,18 @@ export function formatDate(iso) {
 }
 
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 /**
@@ -197,7 +218,10 @@ export function toInjectableHtml(template) {
     /\s\[routerLink\]="\[([^\]]*)\]"/g,
     (_, inner) => ` href="${routeFromArray(inner)}"`
   );
-  html = html.replace(/\srouterLink="([^"]*)"/g, (_, route) => ` href="${route}"`);
+  html = html.replace(
+    /\srouterLink="([^"]*)"/g,
+    (_, route) => ` href="${route}"`
+  );
 
   // MatIcon renders a ligature span; injected markup has to be that span already.
   html = html.replace(
@@ -221,6 +245,14 @@ function routeFromArray(inner) {
     .filter(Boolean)
     .join('/')
     .replace(/\/{2,}/g, '/');
+}
+
+/** Plain text on its way into markup. */
+function escapeText(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function escapeSingle(text) {

@@ -1,6 +1,7 @@
 import { NO_ERRORS_SCHEMA, Type } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { AuthService } from 'src/app/core/services/auth.service';
 import { DOC_PAGES } from '../generated/docs-manifest';
@@ -37,7 +38,7 @@ describe('/docs pages', () => {
         // rest of the pages inject nothing at all.
         { provide: AuthService, useValue: { login: () => undefined } },
         { provide: Router, useValue: { url: '/docs/getting-started' } },
-        { provide: ActivatedRoute, useValue: { snapshot: { fragment: null } } },
+        { provide: ActivatedRoute, useValue: { fragment: of(null) } },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

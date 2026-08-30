@@ -38,8 +38,55 @@ test('toReleaseManifest carries version, date, title and anchor', () => {
       title: 'A Release',
       anchor: 'v1.49.1',
       highlights: [],
+      archived: false,
     },
   ]);
+});
+
+test('toReleaseManifest marks the releases the page does not render', () => {
+  // The component reads this to answer "is this deep link already on the page?"
+  // before anything has rendered, which a DOM query could not do.
+  const rows = toReleaseManifest(many(12));
+
+  assert.deepEqual(
+    rows.filter((row) => !row.archived).map((row) => row.version),
+    [
+      '1.12.0',
+      '1.11.0',
+      '1.10.0',
+      '1.9.0',
+      '1.8.0',
+      '1.7.0',
+      '1.6.0',
+      '1.5.0',
+      '1.4.0',
+      '1.3.0',
+    ]
+  );
+  assert.deepEqual(
+    rows.filter((row) => row.archived).map((row) => row.version),
+    ['1.2.0', '1.1.0']
+  );
+});
+
+test('renderRelease escapes a title that contains an ampersand', () => {
+  // Titles are plain text everywhere else -- the archive prints them through
+  // {{ }} and the GitHub Release title is a bare string -- so this is the only
+  // place one becomes markup.
+  assert.match(
+    renderRelease(release('1.47.0', { title: 'Remaining & More' })),
+    /<h3 id="v1\.47\.0">1\.47\.0 - Remaining &amp; More<\/h3>/
+  );
+});
+
+test('emitArchiveTs keeps a title plain so interpolation renders it', () => {
+  const source = emitArchiveTs([
+    ...many(RECENT_RELEASE_COUNT),
+    release('1.0.0', { title: 'Remaining & More' }),
+  ]);
+
+  assert.match(source, /heading: '1\.0\.0 - Remaining & More'/);
+  assert.ok(!source.includes('&amp;'));
 });
 
 test('toReleaseManifest keeps declared highlights', () => {
@@ -107,7 +154,10 @@ test('emitArchiveTs holds exactly the releases the page does not render', () => 
 
   const versions = [...source.matchAll(/version: '([^']+)'/g)].map((m) => m[1]);
   assert.equal(versions.length, 5);
-  assert.ok(!versions.includes('1.15.0'), 'newest release must stay in the page');
+  assert.ok(
+    !versions.includes('1.15.0'),
+    'newest release must stay in the page'
+  );
   assert.ok(versions.includes('1.1.0'), 'oldest release must be archived');
 });
 
@@ -118,12 +168,16 @@ test('emitArchiveTs emits an empty archive when everything fits in the page', ()
 });
 
 test('emitArchiveTs escapes quotes and newlines into a single-line literal', () => {
-  const source = emitArchiveTs(
-    [...many(RECENT_RELEASE_COUNT), release('1.0.0', { title: "It's here" })]
-  );
+  const source = emitArchiveTs([
+    ...many(RECENT_RELEASE_COUNT),
+    release('1.0.0', { title: "It's here" }),
+  ]);
 
   assert.match(source, /title: 'It\\'s here'/);
-  assert.ok(!/html: '[^']*\n/.test(source), 'a raw newline would break the literal');
+  assert.ok(
+    !/html: '[^']*\n/.test(source),
+    'a raw newline would break the literal'
+  );
 });
 
 // -- injected markup ---------------------------------------------------------
@@ -187,10 +241,20 @@ test('renderArchiveHost binds the archived id rather than hard-coding one', () =
 
 const REAL = readReleaseSources(RELEASE_NOTES_DIR);
 
-test('every published anchor appears exactly once across page and archive', () => {
-  const page = [...renderRecentReleases(REAL).matchAll(/<h3 id="([^"]+)"/g)].map(
-    (m) => m[1]
+test('the real corpus has no entity-encoded title', () => {
+  // An `&amp;` here reaches the reader literally in the archive and in the
+  // GitHub Release title.
+  const encoded = REAL.filter((r) => /&#?[a-zA-Z0-9]+;/.test(r.title)).map(
+    (r) => r.version
   );
+
+  assert.deepEqual(encoded, []);
+});
+
+test('every published anchor appears exactly once across page and archive', () => {
+  const page = [
+    ...renderRecentReleases(REAL).matchAll(/<h3 id="([^"]+)"/g),
+  ].map((m) => m[1]);
   const archived = [...emitArchiveTs(REAL).matchAll(/anchor: '([^']+)'/g)].map(
     (m) => m[1]
   );
@@ -203,7 +267,13 @@ test('every published anchor appears exactly once across page and archive', () =
 test('no archived release carries markup that is inert once injected', () => {
   const source = emitArchiveTs(REAL);
 
-  assert.ok(!/<mat-icon/i.test(source), 'mat-icon cannot render from innerHTML');
-  assert.ok(!/routerLink=/.test(source), 'routerLink cannot navigate from innerHTML');
+  assert.ok(
+    !/<mat-icon/i.test(source),
+    'mat-icon cannot render from innerHTML'
+  );
+  assert.ok(
+    !/routerLink=/.test(source),
+    'routerLink cannot navigate from innerHTML'
+  );
   assert.ok(!/style=/.test(source), 'the sanitizer strips style attributes');
 });

@@ -17,8 +17,7 @@ const SPAN_MARK = String.fromCharCode(0);
 const SPAN_PATTERN = new RegExp(SPAN_MARK + '([0-9]+)' + SPAN_MARK, 'g');
 
 /** The CommonMark escapable set: ASCII punctuation, and nothing else. */
-const ESCAPED_PUNCTUATION =
-  /\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g;
+const ESCAPED_PUNCTUATION = /\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g;
 
 const VOID_ELEMENTS = new Set([
   'area',

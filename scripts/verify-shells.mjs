@@ -52,7 +52,9 @@ function main() {
   }
 
   // Config rewrite targets must exist as output files.
-  const config = JSON.parse(readFileSync('src/staticwebapp.config.json', 'utf8'));
+  const config = JSON.parse(
+    readFileSync('src/staticwebapp.config.json', 'utf8')
+  );
   const targets = [
     ...(config.routes || []).map((r) => r.rewrite).filter(Boolean),
     config.navigationFallback?.rewrite,

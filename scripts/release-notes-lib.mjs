@@ -89,10 +89,14 @@ export function readReleaseSources(dir = RELEASE_NOTES_DIR) {
       );
     }
 
+    // `date`, `title` and `highlights` are passed through with the types the
+    // frontmatter parser gave them. Coercing here (`String(...)`) would make the
+    // validator's type checks unreachable: `title: 141` would arrive as the
+    // string "141" and sail through the rule written to catch it.
     return {
       version: expected,
-      date: parsed.data.date === undefined ? '' : String(parsed.data.date),
-      title: parsed.data.title === undefined ? '' : String(parsed.data.title),
+      date: parsed.data.date ?? '',
+      title: parsed.data.title ?? '',
       highlights: parsed.data.highlights ?? [],
       anchor: anchorFor(expected),
       body: parsed.body,

@@ -93,7 +93,11 @@ test('reports a description longer than 170 characters', () => {
 test('reports a title reused by another doc page', () => {
   const problems = run([
     source(),
-    source({ slug: 'materials', navLabel: 'Materials', sourceFile: 'materials.md' }),
+    source({
+      slug: 'materials',
+      navLabel: 'Materials',
+      sourceFile: 'materials.md',
+    }),
   ]);
 
   assert.ok(
@@ -113,14 +117,16 @@ test('reports a description reused by another doc page', () => {
     }),
   ]);
 
-  assert.ok(problems.some((p) => p.includes('description')), problems.join('\n'));
+  assert.ok(
+    problems.some((p) => p.includes('description')),
+    problems.join('\n')
+  );
 });
 
 test('reports a link to a doc page that does not exist', () => {
-  assert.deepEqual(
-    messages({ body: 'See [Nope](/docs/nope).\n' }),
-    ['prints.md: link to /docs/nope, but there is no doc page "nope".']
-  );
+  assert.deepEqual(messages({ body: 'See [Nope](/docs/nope).\n' }), [
+    'prints.md: link to /docs/nope, but there is no doc page "nope".',
+  ]);
 });
 
 test('accepts a link to an alias of a real page', () => {
@@ -146,10 +152,9 @@ test('accepts a link into the app that is not a doc page', () => {
 });
 
 test('reports a fragment link to an anchor the page does not define', () => {
-  assert.deepEqual(
-    messages({ body: '## Prints\n\nSee [Setup](#setup).\n' }),
-    ['prints.md: link to #setup, but no element on the page declares that id.']
-  );
+  assert.deepEqual(messages({ body: '## Prints\n\nSee [Setup](#setup).\n' }), [
+    'prints.md: link to #setup, but no element on the page declares that id.',
+  ]);
 });
 
 test('accepts a fragment link to an anchor the page declares', () => {
@@ -205,10 +210,9 @@ test('allows a page to add an anchor that was never published', () => {
 });
 
 test('reports an element outside the allowlist', () => {
-  assert.deepEqual(
-    messages({ body: '<script>alert(1)</script>\n' }),
-    ['prints.md: element <script> is not in the docs element allowlist.']
-  );
+  assert.deepEqual(messages({ body: '<script>alert(1)</script>\n' }), [
+    'prints.md: element <script> is not in the docs element allowlist.',
+  ]);
 });
 
 test('accepts the Angular elements the docs actually use', () => {
@@ -228,12 +232,9 @@ test('accepts the Angular elements the docs actually use', () => {
 });
 
 test('reports an interpolated member the page never declares', () => {
-  assert.deepEqual(
-    messages({ body: 'Endpoint {{ mcpEndpoint }}.\n' }),
-    [
-      'prints.md: template references "mcpEndpoint", which is not declared in constants: or by a component:.',
-    ]
-  );
+  assert.deepEqual(messages({ body: 'Endpoint {{ mcpEndpoint }}.\n' }), [
+    'prints.md: template references "mcpEndpoint", which is not declared in constants: or by a component:.',
+  ]);
 });
 
 test('accepts an interpolated member declared in constants', () => {
@@ -257,10 +258,7 @@ test('does not police members on a page that keeps a hand-written component', ()
 });
 
 test('reports every problem it finds rather than stopping at the first', () => {
-  assert.equal(
-    messages({ description: 'short', mode: 'novel' }).length,
-    2
-  );
+  assert.equal(messages({ description: 'short', mode: 'novel' }).length, 2);
 });
 
 test('does not read an object-literal key as a class member', () => {
@@ -327,7 +325,9 @@ test('reports a dead route behind a single-quoted attribute', () => {
 
 test('accepts a property-bound routerLink to a page that exists', () => {
   assert.deepEqual(
-    messages({ body: '## Prints\n\n<a [routerLink]="[\'/docs/prints\']">ok</a>\n' }),
+    messages({
+      body: '## Prints\n\n<a [routerLink]="[\'/docs/prints\']">ok</a>\n',
+    }),
     []
   );
 });
@@ -356,12 +356,9 @@ test('reports a link to a dormant page', () => {
 // current sources -- so deleting a page took its published anchors with it and
 // nothing noticed.
 test('reports published anchors orphaned by a deleted page', () => {
-  assert.deepEqual(
-    run([source()], { 'docs/removed': ['setup', 'install'] }),
-    [
-      'docs-anchors.json: docs/removed has published anchors ("setup", "install") but no doc page exists.',
-    ]
-  );
+  assert.deepEqual(run([source()], { 'docs/removed': ['setup', 'install'] }), [
+    'docs-anchors.json: docs/removed has published anchors ("setup", "install") but no doc page exists.',
+  ]);
 });
 
 // extractAnchors deduplicates, which is right for the contract check and wrong
@@ -378,7 +375,12 @@ test('reports a duplicate id within a page', () => {
 // a route no projection emits.
 test('reports a missing default doc page', () => {
   const problems = validate([
-    source({ slug: 'about', sourceFile: 'about.md', navLabel: 'About', group: 'about' }),
+    source({
+      slug: 'about',
+      sourceFile: 'about.md',
+      navLabel: 'About',
+      group: 'about',
+    }),
   ]);
 
   assert.ok(
@@ -450,14 +452,18 @@ test('still resolves a routerLink array of plain string segments', () => {
 
 test('reports a duplicate id declared with single quotes', () => {
   assert.deepEqual(
-    messages({ body: "## P\n\n<div id='same'></div>\n\n<span id='same'></span>\n" }),
+    messages({
+      body: "## P\n\n<div id='same'></div>\n\n<span id='same'></span>\n",
+    }),
     ['prints.md: id "same" is declared more than once.']
   );
 });
 
 test('accepts a fragment link to a single-quoted id', () => {
   assert.deepEqual(
-    messages({ body: "## P\n\n<div id='setup'></div>\n\nSee [Setup](#setup).\n" }),
+    messages({
+      body: "## P\n\n<div id='setup'></div>\n\nSee [Setup](#setup).\n",
+    }),
     []
   );
 });
@@ -510,11 +516,10 @@ test('a deleted release breaks the published anchor contract', () => {
 });
 
 test('two releases claiming one version are rejected', () => {
-  const problems = validate(
-    [landingPage(), releaseNotesPage()],
-    {},
-    [release(), release({ sourceFile: 'duplicate.md' })]
-  );
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release(),
+    release({ sourceFile: 'duplicate.md' }),
+  ]);
 
   assert.ok(problems.some((p) => /already declared by/.test(p)));
 });
@@ -532,7 +537,16 @@ test('a release without an ISO date is rejected', () => {
     release({ date: 'August 2026' }),
   ]);
 
-  assert.ok(problems.some((p) => /must be an ISO date/.test(p)));
+  assert.ok(problems.some((p) => /must be a quoted ISO date/.test(p)));
+});
+
+test('a release title carrying an HTML entity is rejected', () => {
+  // It would render literally in the archive and in the GitHub Release title.
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release({ title: 'SEO &amp; Sitemap' }),
+  ]);
+
+  assert.ok(problems.some((p) => /write the character itself/.test(p)));
 });
 
 test('a release title that is not a string is rejected', () => {
@@ -576,5 +590,7 @@ test('two releases declaring the same anchor are caught as a duplicate id', () =
     release({ sourceFile: 'copy.md' }),
   ]);
 
-  assert.ok(problems.some((p) => /id "v1\.49\.1" is declared more than once/.test(p)));
+  assert.ok(
+    problems.some((p) => /id "v1\.49\.1" is declared more than once/.test(p))
+  );
 });

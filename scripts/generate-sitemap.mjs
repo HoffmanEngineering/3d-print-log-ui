@@ -56,7 +56,10 @@ async function main() {
   const userUrls = contentUrls(ORIGIN, 'users', userIds);
 
   const files = [];
-  writeFileSync(join(OUT_DIR, 'sitemap-pages.xml'), buildUrlset(staticPageUrls));
+  writeFileSync(
+    join(OUT_DIR, 'sitemap-pages.xml'),
+    buildUrlset(staticPageUrls)
+  );
   files.push('sitemap-pages.xml');
   writeChunks('sitemap-prints', printUrls, files);
   writeChunks('sitemap-users', userUrls, files);

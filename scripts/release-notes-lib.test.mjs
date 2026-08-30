@@ -44,7 +44,9 @@ test('normalizeVersion pads a two-part version to three parts', () => {
 });
 
 test('compareVersionsDesc sorts newest first, numerically per segment', () => {
-  const sorted = ['1.9.0', '1.43.9', '1.43.10', '1.6'].sort(compareVersionsDesc);
+  const sorted = ['1.9.0', '1.43.9', '1.43.10', '1.6'].sort(
+    compareVersionsDesc
+  );
 
   // 1.43.10 above 1.43.9 is the case a string sort gets wrong.
   assert.deepEqual(sorted, ['1.43.10', '1.43.9', '1.9.0', '1.6']);
@@ -113,6 +115,27 @@ test('readReleaseSources reads a highlights sequence', () => {
   assert.deepEqual(release.highlights, ['labels', 'analytics']);
 });
 
+test('readReleaseSources preserves frontmatter types rather than coercing them', () => {
+  // Coercing here (`String(...)`) would make the validator's type rules dead
+  // code: `title: 141` would arrive as "141" and pass the check written to
+  // catch it.
+  const [release] = withReleases(
+    {
+      '1.9.0.md': `---
+version: 1.9.0
+date: 2026-01-02
+title: 141
+---
+
+Body.
+`,
+    },
+    (dir) => readReleaseSources(dir)
+  );
+
+  assert.equal(typeof release.title, 'number');
+});
+
 test('readReleaseSources returns nothing when the directory is absent', () => {
   assert.deepEqual(readReleaseSources('does-not-exist'), []);
 });
@@ -171,11 +194,17 @@ test('htmlToMarkdown indents a nested list under its parent item', () => {
 });
 
 test('htmlToMarkdown renders <h4> as a markdown heading', () => {
-  assert.equal(htmlToMarkdown(html('#### Full List of Changes:')), '### Full List of Changes:');
+  assert.equal(
+    htmlToMarkdown(html('#### Full List of Changes:')),
+    '### Full List of Changes:'
+  );
 });
 
 test('htmlToMarkdown decodes named entities', () => {
-  assert.equal(htmlToMarkdown('<p>Remaining &amp; More</p>'), 'Remaining & More');
+  assert.equal(
+    htmlToMarkdown('<p>Remaining &amp; More</p>'),
+    'Remaining & More'
+  );
 });
 
 test('htmlToMarkdown decodes decimal and hex numeric entities', () => {
@@ -191,7 +220,9 @@ test('htmlToMarkdown keeps &lt; and &gt; escaped so literal markup survives', ()
 
 test('htmlToMarkdown renders every sibling list nested under one item', () => {
   assert.equal(
-    htmlToMarkdown('<ul><li>Parent<ul><li>A</li></ul><ul><li>B</li></ul></li></ul>'),
+    htmlToMarkdown(
+      '<ul><li>Parent<ul><li>A</li></ul><ul><li>B</li></ul></li></ul>'
+    ),
     '- Parent\n  - A\n  - B'
   );
 });
@@ -204,7 +235,10 @@ test('htmlToMarkdown throws on an unclosed list rather than dropping content', (
 });
 
 test('htmlToMarkdown renders <em> as italic', () => {
-  assert.equal(htmlToMarkdown(html('The print page has been _rebuilt_.')), 'The print page has been _rebuilt_.');
+  assert.equal(
+    htmlToMarkdown(html('The print page has been _rebuilt_.')),
+    'The print page has been _rebuilt_.'
+  );
 });
 
 test('htmlToMarkdown drops the section wrapper a rendered release carries', () => {
@@ -231,7 +265,10 @@ test('extractReleaseNotes returns the heading and markdown body for a version', 
   assert.equal(release.version, '1.46.0');
   assert.equal(release.title, '1.46.0 - The New Print Page');
   assert.match(release.markdown, /^The print page has been _rebuilt_\./);
-  assert.match(release.markdown, /^- \*\*Rebuilt print page\*\* - Now an image hero\./m);
+  assert.match(
+    release.markdown,
+    /^- \*\*Rebuilt print page\*\* - Now an image hero\./m
+  );
 });
 
 test('extractReleaseNotes accepts a leading v on the version', () => {
@@ -244,8 +281,9 @@ test('extractReleaseNotes accepts a leading v on the version', () => {
 });
 
 test('extractReleaseNotes matches a v1.6 tag against the 1.6 file', () => {
-  const version = withReleases({ '1.6.md': RELEASE('1.6', 'X', 'Body.') }, (dir) =>
-    extractReleaseNotes('v1.6.0', dir).version
+  const version = withReleases(
+    { '1.6.md': RELEASE('1.6', 'X', 'Body.') },
+    (dir) => extractReleaseNotes('v1.6.0', dir).version
   );
 
   assert.equal(version, '1.6');
@@ -271,7 +309,8 @@ test('the real corpus holds every published release', () => {
 
 test('every real release yields non-empty markdown', () => {
   const empty = REAL.filter(
-    (release) => htmlToMarkdown(renderMarkdown(release.body)).trim().length === 0
+    (release) =>
+      htmlToMarkdown(renderMarkdown(release.body)).trim().length === 0
   ).map((release) => release.version);
 
   assert.deepEqual(empty, []);

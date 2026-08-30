@@ -19,7 +19,11 @@ import fs from 'node:fs';
 import process from 'node:process';
 
 import { planOutputs, readDocSources, syncOutputs } from './docs-build-lib.mjs';
-import { CONTENT_DIR, GENERATED_DIR, RELEASE_NOTES_DIR } from './docs-paths.mjs';
+import {
+  CONTENT_DIR,
+  GENERATED_DIR,
+  RELEASE_NOTES_DIR,
+} from './docs-paths.mjs';
 import { readReleaseSources } from './release-notes-lib.mjs';
 
 const argv = process.argv.slice(2);

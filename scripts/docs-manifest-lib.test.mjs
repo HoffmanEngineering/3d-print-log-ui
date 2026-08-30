@@ -30,7 +30,12 @@ const manifest = (pages) => buildManifest(pages);
 test('orders pages by group order, then page order', () => {
   const m = manifest([
     page({ slug: 'about', group: 'about', order: 10, navLabel: 'About' }),
-    page({ slug: 'materials', group: 'features', order: 20, navLabel: 'Materials' }),
+    page({
+      slug: 'materials',
+      group: 'features',
+      order: 20,
+      navLabel: 'Materials',
+    }),
     page({ slug: 'prints', group: 'features', order: 10 }),
   ]);
 
@@ -93,7 +98,11 @@ test('rejects the same alias claimed by two pages', () => {
 test('child routes carry the component, an alias redirect, and the default route last', () => {
   const routes = toChildRoutes(
     manifest([
-      page({ slug: 'materials', navLabel: 'Materials', aliases: ['filaments'] }),
+      page({
+        slug: 'materials',
+        navLabel: 'Materials',
+        aliases: ['filaments'],
+      }),
     ])
   );
 
@@ -123,9 +132,7 @@ test('child routes name a hand-written component when the page opts out', () => 
 });
 
 test('server routes prerender every canonical page and no alias', () => {
-  const routes = toServerRoutes(
-    manifest([page({ aliases: ['old-prints'] })])
-  );
+  const routes = toServerRoutes(manifest([page({ aliases: ['old-prints'] })]));
 
   assert.deepEqual(routes, [{ path: 'docs/prints', renderMode: 'Prerender' }]);
 });
@@ -139,14 +146,19 @@ test('DOC_ROUTES holds canonical paths only, excluding aliases', () => {
 test('DOC_ROUTES excludes a dormant page that is not routed', () => {
   assert.deepEqual(
     toDocRoutes(
-      manifest([page(), page({ slug: 'terms', navLabel: 'Terms', dormant: true })])
+      manifest([
+        page(),
+        page({ slug: 'terms', navLabel: 'Terms', dormant: true }),
+      ])
     ),
     ['docs/prints']
   );
 });
 
 test('a dormant page gets no child route and no server route', () => {
-  const m = manifest([page({ slug: 'terms', navLabel: 'Terms', dormant: true })]);
+  const m = manifest([
+    page({ slug: 'terms', navLabel: 'Terms', dormant: true }),
+  ]);
 
   assert.deepEqual(toServerRoutes(m), []);
   assert.deepEqual(toChildRoutes(m), [
@@ -156,7 +168,10 @@ test('a dormant page gets no child route and no server route', () => {
 
 test('the article set is every page verify-prerender expects TechArticle on', () => {
   // verify-prerender.mjs derives this from DOC_ROUTES, so the two must agree.
-  const m = manifest([page(), page({ slug: 'about', navLabel: 'About', group: 'about' })]);
+  const m = manifest([
+    page(),
+    page({ slug: 'about', navLabel: 'About', group: 'about' }),
+  ]);
   assert.deepEqual(toArticleRoutes(m), toDocRoutes(m));
 });
 
@@ -168,7 +183,12 @@ test('the article set tracks the sitemap when a page is added', () => {
   const m = manifest([
     page(),
     page({ slug: 'about', navLabel: 'About', group: 'about' }),
-    page({ slug: 'retired', navLabel: 'Retired', group: 'about', dormant: true }),
+    page({
+      slug: 'retired',
+      navLabel: 'Retired',
+      group: 'about',
+      dormant: true,
+    }),
   ]);
 
   assert.deepEqual(toArticleRoutes(m), toDocRoutes(m));
@@ -187,9 +207,24 @@ test('SEO is keyed by route path and carries title and description', () => {
 test('the sidebar lists pages in order with a divider between groups', () => {
   const nav = toSidebar(
     manifest([
-      page({ slug: 'getting-started', navLabel: 'Getting Started', group: 'start', order: 10 }),
-      page({ slug: 'prints', navLabel: 'Prints', group: 'features', order: 10 }),
-      page({ slug: 'materials', navLabel: 'Materials', group: 'features', order: 20 }),
+      page({
+        slug: 'getting-started',
+        navLabel: 'Getting Started',
+        group: 'start',
+        order: 10,
+      }),
+      page({
+        slug: 'prints',
+        navLabel: 'Prints',
+        group: 'features',
+        order: 10,
+      }),
+      page({
+        slug: 'materials',
+        navLabel: 'Materials',
+        group: 'features',
+        order: 20,
+      }),
     ])
   );
 
@@ -203,14 +238,19 @@ test('the sidebar lists pages in order with a divider between groups', () => {
 
 test('the sidebar omits a dormant page', () => {
   const nav = toSidebar(
-    manifest([page(), page({ slug: 'terms', navLabel: 'Terms', dormant: true })])
+    manifest([
+      page(),
+      page({ slug: 'terms', navLabel: 'Terms', dormant: true }),
+    ])
   );
 
   assert.deepEqual(nav, [{ name: 'Prints', url: '/docs/prints' }]);
 });
 
 test('derives a component class name and selector from the slug', () => {
-  const m = manifest([page({ slug: 'octoprint-webhook', navLabel: 'OctoPrint' })]);
+  const m = manifest([
+    page({ slug: 'octoprint-webhook', navLabel: 'OctoPrint' }),
+  ]);
 
   assert.equal(m.pages[0].className, 'DocsOctoprintWebhookComponent');
   assert.equal(m.pages[0].selector, 'app-docs-octoprint-webhook');

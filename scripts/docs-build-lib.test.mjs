@@ -67,7 +67,9 @@ test('reads sources in a stable order regardless of directory listing', () => {
 });
 
 test('plans a component, a template, and the shared projections', () => {
-  const { files } = planOutputs(readDocSources(withSources({ 'prints.md': SOURCE })));
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE }))
+  );
   const names = [...files.keys()].sort();
 
   assert.deepEqual(names, [
@@ -89,9 +91,16 @@ test('plans a component, a template, and the shared projections', () => {
 test('plans no component file for a page that supplies its own', () => {
   const source = SOURCE.replace(
     'mode: how-to',
-    ['mode: how-to', 'component:', '  className: DocsPrintsComponent', '  path: ../docs/x'].join('\n')
+    [
+      'mode: how-to',
+      'component:',
+      '  className: DocsPrintsComponent',
+      '  path: ../docs/x',
+    ].join('\n')
   );
-  const { files } = planOutputs(readDocSources(withSources({ 'prints.md': source })));
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': source }))
+  );
 
   assert.ok(!files.has('pages/docs-prints.component.ts'));
   assert.ok(files.has('pages/docs-prints.component.html'));
@@ -127,16 +136,34 @@ test('syncOutputs writes the planned files', () => {
 
 test('syncOutputs rewrites only the files whose contents changed', () => {
   const out = tempDir();
-  syncOutputs(out, new Map([['a.ts', 'x\n'], ['b.ts', 'y\n']]));
+  syncOutputs(
+    out,
+    new Map([
+      ['a.ts', 'x\n'],
+      ['b.ts', 'y\n'],
+    ])
+  );
 
-  const result = syncOutputs(out, new Map([['a.ts', 'x\n'], ['b.ts', 'CHANGED\n']]));
+  const result = syncOutputs(
+    out,
+    new Map([
+      ['a.ts', 'x\n'],
+      ['b.ts', 'CHANGED\n'],
+    ])
+  );
 
   assert.deepEqual(result.written, ['b.ts']);
 });
 
 test('syncOutputs deletes a generated file whose source is gone', () => {
   const out = tempDir();
-  syncOutputs(out, new Map([['a.ts', 'x\n'], ['stale.ts', 'y\n']]));
+  syncOutputs(
+    out,
+    new Map([
+      ['a.ts', 'x\n'],
+      ['stale.ts', 'y\n'],
+    ])
+  );
 
   const result = syncOutputs(out, new Map([['a.ts', 'x\n']]));
 
@@ -146,7 +173,13 @@ test('syncOutputs deletes a generated file whose source is gone', () => {
 
 test('syncOutputs removes a directory left empty by cleaning', () => {
   const out = tempDir();
-  syncOutputs(out, new Map([['pages/gone.ts', 'y\n'], ['a.ts', 'x\n']]));
+  syncOutputs(
+    out,
+    new Map([
+      ['pages/gone.ts', 'y\n'],
+      ['a.ts', 'x\n'],
+    ])
+  );
 
   syncOutputs(out, new Map([['a.ts', 'x\n']]));
 
@@ -157,7 +190,9 @@ test('check mode reports drift without touching the filesystem', () => {
   const out = tempDir();
   syncOutputs(out, new Map([['a.ts', 'x\n']]));
 
-  const result = syncOutputs(out, new Map([['a.ts', 'CHANGED\n']]), { check: true });
+  const result = syncOutputs(out, new Map([['a.ts', 'CHANGED\n']]), {
+    check: true,
+  });
 
   assert.deepEqual(result.drift, ['a.ts']);
   assert.equal(fs.readFileSync(path.join(out, 'a.ts'), 'utf8'), 'x\n');
@@ -172,7 +207,13 @@ test('check mode reports a missing output as drift', () => {
 
 test('check mode reports a stale output as drift', () => {
   const out = tempDir();
-  syncOutputs(out, new Map([['a.ts', 'x\n'], ['stale.ts', 'y\n']]));
+  syncOutputs(
+    out,
+    new Map([
+      ['a.ts', 'x\n'],
+      ['stale.ts', 'y\n'],
+    ])
+  );
 
   const result = syncOutputs(out, new Map([['a.ts', 'x\n']]), { check: true });
 
@@ -182,7 +223,10 @@ test('check mode reports a stale output as drift', () => {
 
 test('check mode reports no drift when the tree already matches', () => {
   const out = tempDir();
-  const files = new Map([['a.ts', 'x\n'], ['pages/b.ts', 'y\n']]);
+  const files = new Map([
+    ['a.ts', 'x\n'],
+    ['pages/b.ts', 'y\n'],
+  ]);
   syncOutputs(out, files);
 
   assert.deepEqual(syncOutputs(out, files, { check: true }).drift, []);
@@ -193,19 +237,27 @@ test('the route barrels are written after the files they import', () => {
   // before its page component would point the builder at a file that is not
   // there yet.
   const out = tempDir();
-  const { files } = planOutputs(readDocSources(withSources({ 'prints.md': SOURCE })));
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE }))
+  );
 
   const order = syncOutputs(out, files).written;
 
   assert.ok(
-    order.indexOf('pages/docs-prints.component.ts') < order.indexOf('docs.routes.ts'),
+    order.indexOf('pages/docs-prints.component.ts') <
+      order.indexOf('docs.routes.ts'),
     `barrel written too early: ${order.join(', ')}`
   );
-  assert.ok(order.indexOf('docs-manifest.json') < order.indexOf('docs-manifest.ts'));
+  assert.ok(
+    order.indexOf('docs-manifest.json') < order.indexOf('docs-manifest.ts')
+  );
 });
 
 test('a stylesheet beside the Markdown is copied next to the generated component', () => {
-  const dir = withSources({ 'prints.md': SOURCE, 'prints.scss': ':host { color: red; }\n' });
+  const dir = withSources({
+    'prints.md': SOURCE,
+    'prints.scss': ':host { color: red; }\n',
+  });
   const { files } = planOutputs(readDocSources(dir));
 
   assert.equal(
@@ -215,14 +267,21 @@ test('a stylesheet beside the Markdown is copied next to the generated component
 });
 
 test('a page with no stylesheet produces no stylesheet output', () => {
-  const { files } = planOutputs(readDocSources(withSources({ 'prints.md': SOURCE })));
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE }))
+  );
   assert.ok(!files.has('pages/docs-prints.component.scss'));
 });
 
 test('a hand-written component keeps its own stylesheet rather than a copy', () => {
   const source = SOURCE.replace(
     'mode: how-to',
-    ['mode: how-to', 'component:', '  className: DocsPrintsComponent', '  path: ../docs/x'].join('\n')
+    [
+      'mode: how-to',
+      'component:',
+      '  className: DocsPrintsComponent',
+      '  path: ../docs/x',
+    ].join('\n')
   );
   const { files } = planOutputs(
     readDocSources(withSources({ 'prints.md': source, 'prints.scss': 'x\n' }))
@@ -318,5 +377,7 @@ test('leaves a page that is not the release index alone', () => {
     releases(12)
   );
 
-  assert.ok(!files.get('pages/docs-prints.component.html').includes('id="v1.12.0"'));
+  assert.ok(
+    !files.get('pages/docs-prints.component.html').includes('id="v1.12.0"')
+  );
 });

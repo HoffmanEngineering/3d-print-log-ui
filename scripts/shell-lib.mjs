@@ -14,7 +14,10 @@ export function replaceAppRoot(html, bodyHtml) {
 export function stripSsrArtifacts(html) {
   let out = html;
   // Transfer-state hydration payload.
-  out = out.replace(/<script\b[^>]*\bid=["']ng-state["'][\s\S]*?<\/script>/gi, '');
+  out = out.replace(
+    /<script\b[^>]*\bid=["']ng-state["'][\s\S]*?<\/script>/gi,
+    ''
+  );
   // Hydration marker comment.
   out = out.replace(/<!--nghm-->/g, '');
   // Event-replay bootstrap: inline (no src) script carrying an Angular hydration
@@ -26,7 +29,10 @@ export function stripSsrArtifacts(html) {
     ''
   );
   // SSR-injected component critical CSS.
-  out = out.replace(/<style\b[^>]*\bng-app-id=["']ng["'][\s\S]*?<\/style>/gi, '');
+  out = out.replace(
+    /<style\b[^>]*\bng-app-id=["']ng["'][\s\S]*?<\/style>/gi,
+    ''
+  );
   // Flex-layout SSR styles.
   out = out.replace(
     /<style\b[^>]*\bclass=["']flex-layout-ssr["'][\s\S]*?<\/style>/gi,
@@ -91,7 +97,11 @@ export function localAssetRefs(html) {
   let m;
   while ((m = re.exec(html)) !== null) {
     const url = m[1];
-    if (url.startsWith('data:') || url.startsWith('#') || url.startsWith('mailto:'))
+    if (
+      url.startsWith('data:') ||
+      url.startsWith('#') ||
+      url.startsWith('mailto:')
+    )
       continue;
     if (/^[a-z]+:\/\//i.test(url) || url.startsWith('//')) continue; // external/absolute
     refs.push(url);

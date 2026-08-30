@@ -59,7 +59,13 @@ test('reads a nested mapping into an object', () => {
 
 test('keeps a quoted scalar verbatim, including its colon', () => {
   const { data } = parseFrontmatter(
-    ['---', "title: 'Prints: a guide'", 'description: "a #1 pick"', '---', ''].join('\n')
+    [
+      '---',
+      "title: 'Prints: a guide'",
+      'description: "a #1 pick"',
+      '---',
+      '',
+    ].join('\n')
   );
 
   assert.equal(data.title, 'Prints: a guide');
@@ -107,13 +113,17 @@ test('tolerates CRLF line endings', () => {
 // The quote branch ran before comment stripping, so a trailing comment left the
 // quotes in the value and shipped them into the page <title>.
 test('strips a trailing comment from a quoted scalar', () => {
-  const { data } = parseFrontmatter('---\ntitle: "My title" # note\n---\nBody\n');
+  const { data } = parseFrontmatter(
+    '---\ntitle: "My title" # note\n---\nBody\n'
+  );
 
   assert.equal(data.title, 'My title');
 });
 
 test('keeps a # that is inside a quoted scalar', () => {
-  const { data } = parseFrontmatter('---\ntitle: "Colors # and more"\n---\nBody\n');
+  const { data } = parseFrontmatter(
+    '---\ntitle: "Colors # and more"\n---\nBody\n'
+  );
 
   assert.equal(data.title, 'Colors # and more');
 });
@@ -135,7 +145,9 @@ test('accepts a sequence field in flow form', () => {
 });
 
 test('accepts a sequence field in block form', () => {
-  const { data } = parseFrontmatter('---\naliases:\n  - old\n  - legacy\n---\nBody\n');
+  const { data } = parseFrontmatter(
+    '---\naliases:\n  - old\n  - legacy\n---\nBody\n'
+  );
 
   assert.deepEqual(data.aliases, ['old', 'legacy']);
 });
@@ -153,7 +165,9 @@ test('rejects a block sequence line missing its dash', () => {
 // A flow sequence was split on every comma, including one inside a quoted
 // scalar.
 test('splits a flow sequence only outside quotes', () => {
-  const { data } = parseFrontmatter('---\nrelated: ["Smith, Jr.", other]\n---\nBody\n');
+  const { data } = parseFrontmatter(
+    '---\nrelated: ["Smith, Jr.", other]\n---\nBody\n'
+  );
 
   assert.deepEqual(data.related, ['Smith, Jr.', 'other']);
 });
@@ -161,13 +175,15 @@ test('splits a flow sequence only outside quotes', () => {
 // YAML escape rules differ by quote style: a backslash is literal inside single
 // quotes and an escape inside double quotes.
 test('decodes a double-quoted escape', () => {
-  const { data } = parseFrontmatter('---\ntitle: "Say \\"hello\\""\n---\nBody\n');
+  const { data } = parseFrontmatter(
+    '---\ntitle: "Say \\"hello\\""\n---\nBody\n'
+  );
 
   assert.equal(data.title, 'Say "hello"');
 });
 
 test('keeps a backslash literal inside a single-quoted scalar', () => {
-  const { data } = parseFrontmatter("---\ntitle: 'C:\docs'\n---\nBody\n");
+  const { data } = parseFrontmatter("---\ntitle: 'C:docs'\n---\nBody\n");
 
-  assert.equal(data.title, 'C:\docs');
+  assert.equal(data.title, 'C:docs');
 });

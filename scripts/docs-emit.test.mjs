@@ -178,6 +178,56 @@ test('the search index records a heading anchor when the page declares one', () 
   assert.deepEqual(index[0].headings, ['Usage#usage']);
 });
 
+test('commented-out markup reaches none of the projections', () => {
+  // `<[^>]+>` stops at the first `>`, so a comment wrapping a tag used to lose
+  // the tag and keep the prose and the trailing `-->` as searchable text.
+  const template = [
+    '<h2>Setup</h2>',
+    '<!--',
+    '<h3 id="retired">Retired step</h3>',
+    '<img src="/assets/img/docs/old.png" alt="Old screen" />',
+    'Install the deprecated plugin.',
+    '-->',
+    '<p>Install the plugin.</p>',
+  ].join('\n');
+
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), { prints: template })
+  );
+
+  assert.equal(index[0].text, 'Setup Install the plugin.');
+  assert.deepEqual(index[0].headings, ['Setup']);
+  assert.doesNotMatch(
+    emitFiguresTs(buildManifest([page()]), { prints: template }),
+    /old\.png/
+  );
+});
+
+test('the search index decodes the character references the renderer emits', () => {
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints:
+        '<p>What it can&rsquo;t do &mdash; say &ldquo;log it&rdquo; to hi&#64;example.com.</p>',
+    })
+  );
+
+  assert.equal(
+    index[0].text,
+    'What it can’t do — say “log it” to hi@example.com.'
+  );
+});
+
+test('search text does not double-unescape an escaped numeric reference', () => {
+  // `&amp;#64;` is an authored literal `&#64;`, not an `@`.
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints: '<p>Write &amp;#64; to show the escape.</p>',
+    })
+  );
+
+  assert.equal(index[0].text, 'Write &#64; to show the escape.');
+});
+
 test('the figures manifest lists the images each page references', () => {
   const ts = emitFiguresTs(buildManifest([page()]), {
     prints: '<p><img src="/assets/img/docs/prints.png" alt="Print list" /></p>',

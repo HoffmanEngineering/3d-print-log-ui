@@ -206,9 +206,19 @@ export function emitFiguresTs(manifest, templates) {
   ].join('\n');
 }
 
+/**
+ * Commented-out markup is not on the page, so no projection may read it. It has
+ * to go before any of the regexes below run: `<[^>]+>` stops at the first `>`,
+ * so a comment wrapping a tag (`<!-- <img src="…"> …`) loses only the tag and
+ * leaves the prose and the trailing `-->` behind as searchable text.
+ */
+function stripComments(template) {
+  return template.replace(/<!--[\s\S]*?-->/g, ' ');
+}
+
 function headingsOf(template) {
   const headings = [];
-  for (const match of template.matchAll(
+  for (const match of stripComments(template).matchAll(
     /<h[1-6]([^>]*)>([\s\S]*?)<\/h[1-6]>/g
   )) {
     const id = /\sid="([^"]+)"/.exec(match[1]);
@@ -220,7 +230,7 @@ function headingsOf(template) {
 
 function figuresOf(template) {
   const figures = [];
-  for (const match of template.matchAll(/<img\b([^>]*)>/g)) {
+  for (const match of stripComments(template).matchAll(/<img\b([^>]*)>/g)) {
     const src = /\ssrc="([^"]*)"/.exec(match[1]);
     const alt = /\salt="([^"]*)"/.exec(match[1]);
     if (src) figures.push({ src: src[1], alt: alt ? alt[1] : '' });
@@ -228,15 +238,41 @@ function figuresOf(template) {
   return figures;
 }
 
+/**
+ * Character references the renderer emits, and their plain-text form. The
+ * typographer produces the curly quotes and dashes; `&#64;`, `&#123;` and
+ * `&#125;` are Angular escapes for `@`, `{` and `}`. Anything left encoded here
+ * reaches the reader as literal `&rsquo;` in a search result.
+ */
+const CHARACTER_REFERENCES = {
+  '&mdash;': '—',
+  '&ndash;': '–',
+  '&hellip;': '…',
+  '&lsquo;': '‘',
+  '&rsquo;': '’',
+  '&ldquo;': '“',
+  '&rdquo;': '”',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&lt;': '<',
+  '&gt;': '>',
+  '&nbsp;': ' ',
+};
+
 function plainText(template) {
+  let text = stripComments(template)
+    .replace(/<pre[\s\S]*?<\/pre>/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    // Numeric references decode before the named ones so that `&amp;` stays
+    // last: `&amp;#64;` is an authored literal and must not become `@`.
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)));
+
+  for (const [reference, character] of Object.entries(CHARACTER_REFERENCES)) {
+    text = text.split(reference).join(character);
+  }
+
   return (
-    template
-      .replace(/<pre[\s\S]*?<\/pre>/g, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&mdash;/g, '—')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&nbsp;/g, ' ')
+    text
       // `&amp;` is unescaped last. Doing it first would turn an authored
       // `&amp;lt;` into `&lt;` and then into `<`, inventing markup the source
       // deliberately escaped.

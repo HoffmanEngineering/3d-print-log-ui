@@ -234,4 +234,3 @@ test('rejects a non-string alias', () => {
     /must be a non-empty string/
   );
 });
-

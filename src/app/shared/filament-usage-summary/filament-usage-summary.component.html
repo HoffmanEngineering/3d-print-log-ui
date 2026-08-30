@@ -1,22 +1,26 @@
-<div class="filament-grid">
+<div class="filament-grid" [class.no-prices]="!showPrices()">
   @for (fu of filamentUsage(); track fu) {
     <div>
       @if (fu.filament !== null) {
-        <div
-          class="filament-color-cell"
-          [style]="fu.filament.colors | filamentColorSwatchStyle : fu.filament.colorPattern : fu.filament.finishType : fu.filament.effects"
-        ></div>
+        <app-filament-color-swatch
+          [filament]="fu.filament"
+          [decorative]="true"
+        />
       }
     </div>
-    <div>
+    <div class="name-cell">
       @if (fu.filament !== null) {
-        <a
-          [routerLink]="['/filament', fu.filament.id]"
-          (click)="$event.preventDefault(); $event.stopPropagation()"
-          >{{ fu.filament?.displayName }}</a
-        >
-        @if (fu.filament?.colorName) {
-          ({{ fu.filament?.colorName }})
+        @if (linkFilaments()) {
+          <a
+            [routerLink]="['/filament', fu.filament.id]"
+            (click)="$event.stopPropagation()"
+            >{{ fu.filament.displayName }}</a
+          >
+        } @else {
+          <span>{{ fu.filament.displayName }}</span>
+        }
+        @if (fu.filament.colorName) {
+          ({{ fu.filament.colorName }})
         }
       } @else {
         {{ fu.notes }}
@@ -25,20 +29,37 @@
     <div>
       @if (getPreferredDisplay(fu); as display) {
         <div
-          [matTooltip]="display.isFallback
-            ? display.fallbackTooltip
-            : (display.isEstimated ? '* indicates Estimated Material Usage' : null)"
+          [matTooltip]="
+            display.isFallback
+              ? display.fallbackTooltip
+              : display.isEstimated
+                ? '* indicates Estimated Material Usage'
+                : null
+          "
         >
-          {{ display.displayString }}@if (display.isEstimated) { * }
+          {{ display.displayString }}
+          @if (display.isEstimated || display.isFallback) {
+            <!--
+              The marker must resolve to visible text, not a tooltip alone.
+              Each marker references only the meanings that apply to its own
+              row, so a row never announces all four legend entries.
+            -->
+            <span [attr.aria-describedby]="markerDescribedBy(display)">*</span>
+          }
         </div>
       }
     </div>
-    <div matTooltip="* indicates default material price used">
-      @if (fu.amountMg !== null && fu.amountMg > 0) {
-        {{ getActualPrice(fu) }}
-      } @else {
-        <div>{{ getEstimatedPrice(fu) }}</div>
-      }
-    </div>
+    @if (showPrices()) {
+      <div
+        class="price-cell"
+        matTooltip="* indicates default material price used"
+      >
+        @if (fu.amountMg !== null && fu.amountMg > 0) {
+          {{ getActualPrice(fu) }}
+        } @else {
+          <div>{{ getEstimatedPrice(fu) }}</div>
+        }
+      </div>
+    }
   }
 </div>

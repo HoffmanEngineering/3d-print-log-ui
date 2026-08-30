@@ -1,239 +1,444 @@
-import { Location } from '@angular/common';
+import { Location, isPlatformBrowser } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
-  Inject,
-  OnDestroy,
-  OnInit,
   DOCUMENT,
+  ElementRef,
+  PLATFORM_ID,
+  afterNextRender,
+  computed,
+  effect,
   inject,
+  linkedSignal,
   signal,
+  viewChild,
 } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import {
-  AuthService,
-  UserProfileInfo,
-} from 'src/app/core/services/auth.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
-import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { environment } from 'src/environments/environment';
+import { Comment } from 'src/app/core/services/comment.service';
 import {
-  ElectricityCost,
   PrintDetail,
   PrintFilamentSourceMeasurement,
-  PrintFilamentSummaryDto,
   PrintService,
   PrintStatus,
 } from '../../core/services/print.service';
+import { PushPermissionPromptService } from 'src/app/core/services/push-permission-prompt.service';
 import {
-  UserSetting,
   UserSettingService,
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
-import {
-  FilamentPreferredDisplayResult,
-  getActualPreferredDisplay,
-  getEstimatedPreferredDisplay,
-} from 'src/app/shared/utils/filament-display.utils';
+import { SharedModule } from 'src/app/shared/shared.module';
+import { FileAttachmentSectionComponent } from 'src/app/shared/file-attachment-section/file-attachment-section.component';
+import { withDeferredSkeleton } from 'src/app/shared/skeleton/deferred-skeleton';
+import { SkeletonComponent } from 'src/app/shared/skeleton/skeleton.component';
+import { PrintCommentsComponent } from '../print-comments/print-comments.component';
+import { PrintDetailLoaderService } from '../services/print-detail-loader.service';
+import { PrintDetailHeroComponent } from './print-detail-hero/print-detail-hero.component';
+import { PrintDetailSummaryComponent } from './print-detail-summary/print-detail-summary.component';
+import { PrintImageValue } from './print-image-value.model';
 
-export interface PrintImageValue {
-  id?: number;
-  url?: string;
-  file?: File;
-  isDefault: boolean;
-  displayOrder: number;
+export { PrintImageValue } from './print-image-value.model';
+
+/**
+ * `idle` is not a synonym for `loading`. It is the deliberately blank window
+ * before the skeleton is allowed to appear: the request is in flight, but it has
+ * not been in flight long enough to be worth explaining. It has to be its own
+ * phase because "no print, not loading" would otherwise be indistinguishable
+ * from "this print does not exist", and the page would flash `Print not found`
+ * on every navigation.
+ */
+type PrintDetailPhase = 'idle' | 'loading' | 'ready';
+
+interface PrintDetailState {
+  print: PrintDetail | null;
+  user: UserSummaryDto | null;
+  phase: PrintDetailPhase;
 }
+
+const IDLE_STATE: PrintDetailState = {
+  print: null,
+  user: null,
+  phase: 'idle',
+};
+
+const LOADING_STATE: PrintDetailState = {
+  print: null,
+  user: null,
+  phase: 'loading',
+};
 
 @Component({
   selector: 'app-view-print-detail',
   templateUrl: './view-print-detail.component.html',
   styleUrls: ['./view-print-detail.component.scss'],
-  standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    RouterLink,
+    SharedModule,
+    FileAttachmentSectionComponent,
+    PrintCommentsComponent,
+    PrintDetailHeroComponent,
+    PrintDetailSummaryComponent,
+    SkeletonComponent,
+  ],
 })
-export class ViewPrintDetailComponent implements OnInit, OnDestroy {
-  public printers: PrinterSummary[] = [];
+export class ViewPrintDetailComponent {
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly printService = inject(PrintService);
+  private readonly printDetailLoader = inject(PrintDetailLoaderService);
+  private readonly authService = inject(AuthService);
+  private readonly metaService = inject(MetaTagService);
+  private readonly document = inject(DOCUMENT);
+  private readonly location = inject(Location);
+  private readonly userSettingService = inject(UserSettingService);
+  private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  public printForm: UntypedFormGroup;
+  /**
+   * The print is fetched HERE rather than by a route resolver.
+   *
+   * A resolver holds the previous page fully on screen until it settles, so on a
+   * slow connection clicking a print row reads as a dead click. Fetching in the
+   * component lets the route activate immediately and paint a skeleton.
+   *
+   * The route therefore resolves nothing at all, which also removes the #66
+   * bounce-to-`/` failure mode from this page by construction: with no resolver
+   * there is nothing left that can cancel the navigation. The loader still never
+   * errors (see PrintDetailLoaderService), because an error here would leave the
+   * page stuck on the skeleton forever.
+   *
+   * `withDeferredSkeleton` is inside the `switchMap` on purpose, for the same
+   * reason the unconditional `startWith` it replaces was: the router reuses this
+   * component between two print ids, and each new id needs its own timers rather
+   * than inheriting the previous request's elapsed time.
+   *
+   * It replaces `startWith(LOADING_STATE)` because emitting the loading state
+   * unconditionally is what made the skeleton flash. On a warm connection this
+   * page resolves in tens of milliseconds, and grey boxes for two frames read as
+   * a rendering glitch rather than as feedback. Now the loading state is emitted
+   * only if the request is still outstanding at 200ms, and once emitted it is
+   * held for its minimum dwell so it cannot flicker at the threshold either.
+   */
+  private readonly state = toSignal(
+    this.activatedRoute.paramMap.pipe(
+      map((params) => Number(params.get('id'))),
+      distinctUntilChanged(),
+      switchMap((printId): Observable<PrintDetailState> => {
+        if (!Number.isInteger(printId)) {
+          return of({ print: null, user: null, phase: 'ready' as const });
+        }
+        return this.printDetailLoader.load(printId).pipe(
+          map(({ print, user }) => ({
+            print,
+            user,
+            phase: 'ready' as const,
+          })),
+          withDeferredSkeleton(LOADING_STATE)
+        );
+      })
+    ),
+    { initialValue: IDLE_STATE }
+  );
 
-  public print: PrintDetail;
-  public user: UserSummaryDto;
+  private readonly currentUser = toSignal(this.authService.userProfile$, {
+    initialValue: null,
+  });
 
-  public printImages: PrintImageValue[] = [];
-  public selectedImage: PrintImageValue = null;
-  public selectedImageIndex = 0;
+  private readonly pageRoot = viewChild<ElementRef<HTMLElement>>('pageRoot');
 
-  public printStatusTypes = PrintStatus;
+  readonly print = computed<PrintDetail | null>(() => this.state().print);
+  readonly user = computed<UserSummaryDto | null>(() => this.state().user);
 
-  public isUserProfileFeatureEnabled = environment.features.userProfile;
-  userProfileSubscription: Subscription;
-  currentUser: UserProfileInfo;
+  /** True while the skeleton is on screen — NOT simply "a request is running". */
+  readonly loading = computed(() => this.state().phase === 'loading');
 
-  public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
+  /**
+   * Gated on `ready` rather than on `!loading`, because `idle` also has no
+   * print: during the pre-skeleton window the answer is "not yet", not "no".
+   */
+  readonly notFound = computed(
+    () => this.state().phase === 'ready' && !this.print()
+  );
 
-  public preferredCurrencySymbolSetting: UserSetting | null = null;
-  public defaultElectricityKwhRateSetting: UserSetting | null = null;
-  public defaultElectricityWattageSetting: UserSetting | null = null;
+  /*
+   * Keyed off createdByUserId, which is on the print payload — not off the
+   * separately-loaded user, which is null when getUserSummary fails.
+   * Not "is logged in": a signed-in stranger sees what an anonymous visitor sees.
+   *
+   * Ownership reveals ADDITIVELY. userProfile$ is a BehaviorSubject seeded with
+   * null that emits synchronously, so there is no reliable "auth has settled"
+   * moment to gate on — any such gate would open instantly and gate nothing.
+   * isOwner therefore starts false and can only flip to true.
+   *
+   * That direction is the safe one: owner-only content is never shown and then
+   * retracted, so nothing private leaks. Owner-only regions must reserve no
+   * layout space while absent, so the reveal adds content rather than shifting
+   * what is already on screen.
+   */
+  readonly isOwner = computed(() => {
+    const id = this.currentUser()?.id;
+    const ownerId = this.print()?.createdByUserId;
+    return id != null && ownerId != null && id === ownerId;
+  });
 
-  public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
+  readonly printImages = computed<PrintImageValue[]>(() => {
+    const print = this.print();
+    if (!print?.images?.length) {
+      return [];
+    }
+    return (
+      print.images
+        .map((image) => ({
+          id: image.id,
+          url: `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`,
+          file: null as File | null,
+          isDefault: image.isDefault,
+          displayOrder: image.displayOrder,
+        }))
+        // Tiebreak on id so duplicate displayOrder values sort deterministically.
+        .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id)
+    );
+  });
+
+  /**
+   * The image the social preview should use, which is the one the hero shows —
+   * the default image, not merely the first by displayOrder. Keeping these two
+   * in agreement is the whole point of preferring isDefault.
+   */
+  private readonly socialImage = computed<PrintImageValue | null>(() => {
+    const images = this.printImages();
+    return images.find((image) => image.isDefault) ?? images[0] ?? null;
+  });
+
+  /**
+   * Comments live in a writable signal rather than being mutated on the fetched
+   * print. This component is OnPush, and the POST response arrives in its own
+   * tick with nothing marked dirty, so a mutation there would not repaint.
+   * linkedSignal also resets the list when the router reuses this component for
+   * a different print.
+   */
+  readonly comments = linkedSignal<Comment[]>(
+    () => this.print()?.comments ?? []
+  );
+
+  /**
+   * Placeholder rows for the spec rail. Five is roughly what the loaded rail
+   * shows above the fold, so the shell is the right height and the real content
+   * does not shove the page around when it arrives.
+   */
+  protected readonly skeletonRailRows = [0, 1, 2, 3, 4];
+
+  readonly preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.AsRecorded
   );
-  private readonly userSettingService = inject(UserSettingService);
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private router: Router,
-    private printService: PrintService,
-    private authService: AuthService,
-    private readonly metaService: MetaTagService,
-    @Inject(DOCUMENT) private readonly document: Document,
-    private location: Location
-  ) {}
-  ngOnDestroy(): void {
-    if (this.userProfileSubscription) {
-      this.userProfileSubscription.unsubscribe();
-    }
+  /*
+   * These four used to be route resolvers. They are loaded here for the same
+   * reason as the print: a resolver blocks the route activation the skeleton is
+   * meant to replace. UserSettingService caches the whole settings payload
+   * behind a single in-flight request, so asking for five settings is still one
+   * HTTP call.
+   *
+   * Every one of them stays null-tolerant. For a logged-out visitor the auth
+   * interceptor rejects before any request is dispatched, so `null` is the
+   * normal anonymous outcome, not an error path.
+   */
+  readonly currencySymbol = signal<string>('$');
+  readonly defaultFilamentPrice = signal<string | null>(null);
+  readonly kwhRate = signal<string | null>(null);
+  readonly defaultWattage = signal<string | null>(null);
+
+  /**
+   * Location.back() sends a visitor who arrived via a shared link off-site
+   * entirely, which is the primary way this page is reached.
+   *
+   * Uses the router's own history rather than document.referrer, which reflects
+   * the document load and not SPA navigations.
+   *
+   * Read at construction, which runs during route activation — i.e. while the
+   * navigation TO this page is still in flight. getCurrentNavigation() is that
+   * in-flight navigation, and its previousNavigation is the one the user came
+   * from, or null on a deep link. Do NOT use router.lastSuccessfulNavigation:
+   * it is a Signal<Navigation | null> in Angular 21 (so it must be called), and
+   * at construction time it refers to the navigation before this one, which
+   * makes `.previousNavigation` off by one.
+   */
+  /**
+   * Prints an offer has already been made for. A set rather than a single id because the
+   * router reuses this component: navigating away and back would otherwise re-offer, and a
+   * bare boolean would suppress every later print in the session.
+   */
+  private readonly offeredForPrintIds = new Set<number>();
+
+  private readonly arrivedFromInAppNavigation =
+    this.router.getCurrentNavigation()?.previousNavigation != null;
+
+  constructor() {
+    this.loadSettings();
+
+    // Re-runs on every print change, not just the first. The router reuses this
+    // component when navigating between two print ids, so a constructor-only
+    // call left the title, canonical URL, description, and preview image
+    // describing the previous print.
+    effect(() => this.setMetaTags());
+
+    // Move focus to the page container once content is rendered, so keyboard
+    // users are not stranded on <body> after a route change. The container is
+    // the skeleton shell too, so this no longer waits on the fetch.
+    afterNextRender(() => this.pageRoot()?.nativeElement?.focus());
+
+    effect(() => this.offerNotificationsForRunningPrint());
   }
 
-  ngOnInit() {
-    this.userProfileSubscription = this.authService.userProfile$.subscribe(
-      (currentUser) => {
-        this.currentUser = currentUser;
-      }
-    );
+  /**
+   * Offers notifications while the user's own print is still running.
+   *
+   * This is the moment the feature explains itself: something is underway that they would
+   * rather be told about than keep checking. Creating an API key used to be the only
+   * in-context trigger, which no established user ever hits again — their keys predate push
+   * — leaving Settings as the sole route to enabling it.
+   *
+   * Owner-only: a visitor cannot be notified about someone else's print. The service itself
+   * is a no-op on the web, when permission is already granted, and while a recent "Not now"
+   * still stands, so no platform branching is needed here.
+   */
+  private offerNotificationsForRunningPrint(): void {
+    // Every signal this effect depends on is read BEFORE any early return. Bailing out
+    // first would leave the effect with no tracked dependencies at all, and Angular would
+    // never run it again — so a later print, or ownership resolving, would go unnoticed.
+    const print = this.print();
+    const isOwner = this.isOwner();
 
-    this.activatedRoute.data.subscribe((data) => {
-      this.printers = data.printers;
+    if (!print || !isOwner || print.status !== PrintStatus.Printing) {
+      return;
+    }
 
-      this.print = data.print.print;
-      this.user = data.print.user;
+    // Keyed by print id rather than a bare flag: the router reuses this component between
+    // /prints/:id routes, so a boolean would silently suppress the offer for every later
+    // print in the session.
+    if (this.offeredForPrintIds.has(print.id)) {
+      return;
+    }
 
-      this.preferredCurrencySymbolSetting = data.preferredCurrencySymbolSetting;
-      this.defaultElectricityKwhRateSetting =
-        data.defaultElectricityKwhRateSetting;
-      this.defaultElectricityWattageSetting =
-        data.defaultElectricityWattageSetting;
+    // Recorded before awaiting, so a re-run cannot open a second dialog while this one is
+    // still opening. Taken back if nothing was actually offered.
+    this.offeredForPrintIds.add(print.id);
 
-      if (this.print.images?.length > 0) {
-        this.printImages = this.print.images
-          .map((image) => ({
-            id: image.id,
-            url: `${environment.printLogApiUrl}/api/Prints/${this.print.id}/image/${image.id}`,
-            file: null,
-            isDefault: image.isDefault,
-            displayOrder: image.displayOrder,
-          }))
-          .sort((a, b) => a.displayOrder - b.displayOrder);
+    void this.pushPermissionPrompt
+      .promptInContext('This print is still running.')
+      .then((result) => {
+        // The native bridge is injected on page load and can arrive after Angular has
+        // bootstrapped, so "unavailable" means not yet, not no. Keeping the id would
+        // silently cost this print its offer for the rest of the session.
+        if (result.outcome === 'unavailable') {
+          this.offeredForPrintIds.delete(print.id);
+        }
+      });
+  }
 
-        this.selectedImage =
-          this.printImages.find((i) => i.isDefault) || this.printImages[0];
-        this.selectedImageIndex = this.printImages.indexOf(this.selectedImage);
-      }
+  private loadSettings(): void {
+    const read = (type: UserSettingType) =>
+      this.userSettingService
+        .getCurrentUsersSettingByType(type)
+        .catch(() => null);
 
-      this.metaService.setTitle(`${this.print.title} - 3D Print Log`);
-
-      this.setMetaTags();
-    });
-
-    this.userSettingService
-      .getCurrentUsersSettingByType(
-        UserSettingType.Prints_PreferredFilamentDisplayUnit
-      )
-      .then((setting) => {
+    read(UserSettingType.Prints_PreferredFilamentDisplayUnit).then(
+      (setting) => {
         if (setting) {
           this.preferredFilamentUnit.set(
             +setting.value as PrintFilamentSourceMeasurement
           );
         }
-      });
+      }
+    );
+    read(UserSettingType.Currency_Symbol).then((setting) => {
+      if (setting?.value) {
+        this.currencySymbol.set(setting.value);
+      }
+    });
+    read(UserSettingType.Filaments_DefaultPrice).then((setting) =>
+      this.defaultFilamentPrice.set(setting?.value ?? null)
+    );
+    read(UserSettingType.Electricity_KwhRate).then((setting) =>
+      this.kwhRate.set(setting?.value ?? null)
+    );
+    read(UserSettingType.Electricity_DefaultWattageW).then((setting) =>
+      this.defaultWattage.set(setting?.value ?? null)
+    );
   }
 
-  setMetaTags() {
-    const url = `${this.document.location.origin}/prints/${this.print.id}`;
-    const title = `${this.print.title} | 3D Print Log`;
-    const description = `${this.print.title} printed by ${
-      this.user.displayName
-    } on ${new Intl.DateTimeFormat(navigator.language, { dateStyle: 'long' }).format(new Date(this.print.startDate))}`;
-    const imageUrl = this.selectedImage
-      ? `${environment.printLogApiUrl}/api/Prints/${this.print.id}/image/${this.selectedImage.id}`
-      : '';
+  private setMetaTags(): void {
+    const print = this.print();
+    if (!print) {
+      // The router reuses this component between print ids, so returning here
+      // unconditionally left the PREVIOUS print's title on a page now showing
+      // "Print not found". Only the title is reset: the social tags matter to
+      // crawlers, which read the initially-served document and never perform
+      // the in-app navigation that could make them stale.
+      if (this.notFound()) {
+        this.metaService.setTitle('Print not found - 3D Print Log');
+      }
+      return;
+    }
+    this.metaService.setTitle(`${print.title} - 3D Print Log`);
+
+    // location.origin and Intl's locale lookup are browser-only. This route is
+    // client-rendered today, but a component that reads them unguarded crashes
+    // the prerender the moment that changes, and that failure only surfaces in
+    // the production build.
+    if (!this.isBrowser) {
+      return;
+    }
+
+    const url = `${this.document.location.origin}/prints/${print.id}`;
+    const title = `${print.title} | 3D Print Log`;
+    const displayName = this.user()?.displayName ?? 'a 3D Print Log user';
+    const date = print.startDate
+      ? new Intl.DateTimeFormat(navigator.language, {
+          dateStyle: 'long',
+        }).format(new Date(print.startDate))
+      : null;
+    const description = date
+      ? `${print.title} printed by ${displayName} on ${date}`
+      : `${print.title} printed by ${displayName}`;
+    const imageUrl = this.socialImage()?.url ?? '';
 
     this.metaService.setSocialMediaTags(url, title, description, imageUrl);
   }
 
-  handleClose() {
-    this.location.back();
-  }
-
-  getPrinterLabel(printer: PrinterSummary) {
-    if (printer.name && printer.name !== '') {
-      return `${printer.name} - (${(
-        printer.make +
-        ' ' +
-        printer.model
-      ).trim()})`;
-    } else {
-      return `${(printer.make + ' ' + printer.model).trim()}`;
+  handleClose(): void {
+    if (this.arrivedFromInAppNavigation) {
+      this.location.back();
+      return;
     }
+    this.router.navigate([this.isOwner() ? '/prints' : '/']);
   }
 
-  public getStatus(status: PrintStatus) {
-    if (status === PrintStatus.Cancelled) {
-      return 'Cancelled';
-    } else if (status === PrintStatus.Failed) {
-      return 'Failed';
-    } else if (status === PrintStatus.Pending) {
-      return 'Pending';
-    } else if (status === PrintStatus.Printing) {
-      return 'Printing';
-    } else if (status === PrintStatus.Success) {
-      return 'Success';
-    } else if (status === PrintStatus.PartialSuccess) {
-      return 'Partial Success';
-    } else {
-      return 'Unknown';
+  addComment(newComment: string): void {
+    const print = this.print();
+    if (!print) {
+      return;
     }
-  }
-
-  addComment(newComment: string) {
     this.printService
-      .addPrintComment(this.print.id, newComment)
-      .subscribe((comment) => {
-        this.print.comments.push(comment);
-      });
+      .addPrintComment(print.id, newComment)
+      .subscribe((comment) =>
+        this.comments.update((list) => [...list, comment])
+      );
   }
 
-  onImageSelected(image: PrintImageValue): void {
-    this.selectedImage = image;
-    this.selectedImageIndex = this.printImages.indexOf(image);
-  }
-
-  onCarouselIndexChange(index: number): void {
-    this.selectedImageIndex = index;
-    this.selectedImage = this.printImages[index];
-  }
-
-  public getElectricityCost(): ElectricityCost {
-    return this.printService.calculateElectricityCost({
-      printTimeSeconds:
-        this.print.printTimeInSeconds ?? this.print.estimatedPrintTimeInSeconds,
-      kwhRate: this.defaultElectricityKwhRateSetting?.value,
-      printerWattageW: this.print.printer?.wattageW,
-      defaultWattageW: this.defaultElectricityWattageSetting?.value,
-      currencySymbol: this.preferredCurrencySymbolSetting?.value ?? '$',
-    });
-  }
-
-  getPreferredActualDisplay(
-    fu: PrintFilamentSummaryDto
-  ): FilamentPreferredDisplayResult | null {
-    return getActualPreferredDisplay(fu, this.preferredFilamentUnit());
-  }
-
-  getPreferredEstimatedDisplay(
-    fu: PrintFilamentSummaryDto
-  ): FilamentPreferredDisplayResult | null {
-    return getEstimatedPreferredDisplay(fu, this.preferredFilamentUnit());
+  /**
+   * Counterpart to `addComment`. The child has already deleted the comment on
+   * the server by the time this runs; the list lives here, so the repaint has
+   * to happen here too.
+   */
+  removeComment(deleted: Comment): void {
+    this.comments.update((list) => list.filter((c) => c.id !== deleted.id));
   }
 }

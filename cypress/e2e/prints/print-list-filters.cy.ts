@@ -39,7 +39,7 @@ describe('Print List Filters', () => {
   it('search text narrows results', () => {
     const printTitle = 'Search Test Print - ' + new Date().getTime();
 
-    cy.createPrint(printTitle);
+    cy.seedPrint(printTitle);
 
     cy.visit('/prints');
     cy.get('[cy-print-row]').should('have.length.greaterThan', 1);
@@ -55,7 +55,7 @@ describe('Print List Filters', () => {
   it('status filter narrows results and reset clears it', () => {
     const printTitle = 'Status Test Print - ' + new Date().getTime();
 
-    cy.createPrint(printTitle);
+    cy.seedPrint(printTitle);
 
     cy.visit('/prints');
     cy.openFilterPanel();
@@ -96,8 +96,8 @@ describe('Print List Filters', () => {
     const printTitleA = 'Printer A Print - ' + ts;
     const printTitleB = 'Printer B Print - ' + ts;
 
-    cy.createPrint(printTitleA, { printer: printerA });
-    cy.createPrint(printTitleB, { printer: printerB });
+    cy.seedPrint(printTitleA, { printer: printerA });
+    cy.seedPrint(printTitleB, { printer: printerB });
 
     cy.visit('/prints');
     cy.openFilterPanel();
@@ -145,13 +145,18 @@ describe('Print List Filters', () => {
       .type('800', { force: true });
     cy.get('#edit-filament-submit-btn').click();
 
-    cy.createPrint(printTitle);
+    cy.seedPrint(printTitle);
+
+    // Explicit, where it used to be a side effect of `cy.createPrint` ending on
+    // the list page. Seeding through the API does not navigate, and relying on
+    // a helper's parting location was the kind of coupling that breaks silently.
+    cy.visit('/prints');
 
     cy.contains('[cy-print-row]', printTitle)
       .find('.mat-column-title')
       .first()
       .click();
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy-edit-btn]').click();
     cy.intercept('GET', '/api/Filaments*').as('getFilamentsModal');
     cy.get('#add-new-filament-usage-btn').click();
     cy.get('[data-cy="select-filament-btn"]').click();

@@ -1,0 +1,79 @@
+.analytics-filter-bar {
+  container-type: inline-size;
+  position: sticky;
+  // The app navbar is fixed above the route outlet (64px desktop, 56px mobile).
+  // Keep this sticky surface below it rather than competing at the same stacking level.
+  inset-block-start: 64px;
+  z-index: 1;
+  // Opaque so charts scroll underneath rather than showing through.
+  background: var(--mat-sys-surface, #fff);
+  padding-block: 0.5rem;
+
+  &__row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__range,
+  &__custom {
+    min-inline-size: 11rem;
+    flex: 0 1 auto;
+  }
+
+  &__badge {
+    display: inline-block;
+    inline-size: 0;
+  }
+
+  &__secondary {
+    display: flex;
+    min-inline-size: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__compare {
+    margin-inline-start: auto;
+    flex: 0 0 auto;
+  }
+
+  &__chips {
+    margin-block-start: 0.25rem;
+  }
+
+  &__material-color {
+    display: inline-block;
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    margin-inline-end: 0.25rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 12%);
+    vertical-align: middle;
+  }
+}
+
+// 599px, not 600px: the navbar drops to 56px at max-width 599px, so at exactly
+// 600px this bar would offset by 56px while the navbar was still 64px tall and
+// tuck 8px of itself underneath it.
+@media (max-width: 599px) {
+  .analytics-filter-bar {
+    inset-block-start: 56px;
+  }
+}
+
+:host-context(html.dark-theme) .analytics-filter-bar {
+  background: var(--mat-sys-surface, #303030);
+}
+
+@container (max-width: 52rem) {
+  .analytics-filter-bar__row {
+    flex-wrap: wrap;
+  }
+
+  .analytics-filter-bar__secondary {
+    flex-basis: 100%;
+  }
+}

@@ -18,6 +18,9 @@ import { AuthImagePipe } from '../pipes/auth-image.pipe';
 export interface ThumbnailImage {
   id?: number;
   url?: string;
+  /** Small derivative. Preferred over `url` when present, so a 64px slot does not
+   *  download a full-size original. */
+  thumbnailUrl?: string;
   resolvedUrl?: SafeUrl;
   isDefault: boolean;
   displayOrder: number;
@@ -42,6 +45,11 @@ export class ImageThumbnailStripComponent {
   selectedUrl = input<string | undefined>();
   editable = input(false);
   maxImages = input(5);
+  /** When true, render `<img [src]>` directly instead of routing through
+   *  AuthImagePipe. Required for pre-signed URLs: the pipe's HttpClient fetch
+   *  bypasses the browser image cache the signature exists to enable.
+   *  Defaults false so prints and projects are unaffected. */
+  directUrls = input(false);
 
   imageSelected = output<ThumbnailImage>();
   imageDeleted = output<ThumbnailImage>();

@@ -262,7 +262,9 @@
             (blur)="wattageHasFocus = false"
           />
           @if (wattageHasFocus) {
-            <mat-hint>Leave blank to use your default wattage from Settings.</mat-hint>
+            <mat-hint
+              >Leave blank to use your default wattage from Settings.</mat-hint
+            >
           }
           @if (printerForm.controls['wattageW'].hasError('min')) {
             <mat-error>Wattage cannot be negative</mat-error>
@@ -317,7 +319,15 @@
                       <div fxFlex style="padding-bottom: 10px">
                         <div
                           class="filament-color-cell"
-                          [style]="printFilament.get('filament').value?.colors | filamentColorSwatchStyle : printFilament.get('filament').value?.colorPattern : printFilament.get('filament').value?.finishType : printFilament.get('filament').value?.effects"
+                          [style]="
+                            printFilament.get('filament').value?.colors
+                              | filamentColorSwatchStyle
+                                : printFilament.get('filament').value
+                                    ?.colorPattern
+                                : printFilament.get('filament').value
+                                    ?.finishType
+                                : printFilament.get('filament').value?.effects
+                          "
                         ></div>
                       </div>
                       <div fxFlex>

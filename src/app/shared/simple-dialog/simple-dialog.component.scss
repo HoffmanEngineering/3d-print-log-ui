@@ -1,0 +1,7 @@
+:host {
+  // Material's supporting-text token is rgba(0, 0, 0, 0.54), which is meant for text that
+  // merely supports a headline. Here the body IS the message (release notes, confirmations),
+  // so it takes the app's primary text emphasis instead. --app-text-primary already follows
+  // the active theme, so this stays correct in dark mode.
+  --mat-dialog-supporting-text-color: var(--app-text-primary);
+}

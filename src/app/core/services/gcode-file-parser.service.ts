@@ -35,7 +35,11 @@ export enum SupportedGcodeParserSlicers {
 @Injectable({
   providedIn: 'root',
 })
-export class GcodeFileParserService implements GcodeNewPrintParser {
+// Deliberately does NOT implement GcodeNewPrintParser. That interface describes
+// a single slicer's parser, which always yields a PrintDetail; this is the
+// dispatcher in front of them, and it returns null for an unsupported slicer or
+// a failed parse.
+export class GcodeFileParserService {
   constructor(
     private readonly loggingService: LoggingService,
     private readonly prusaSlicerParser: PrusaSlicerFileParserService,
@@ -51,7 +55,10 @@ export class GcodeFileParserService implements GcodeNewPrintParser {
     return Object.values(SupportedGcodeParserSlicers);
   }
 
-  public async parse(gcode: string, fileName?: string): Promise<PrintDetail> {
+  public async parse(
+    gcode: string,
+    fileName?: string
+  ): Promise<PrintDetail | null> {
     const slicer: string = this.detectSlicerFromGcode(gcode);
 
     this.loggingService.logEvent('GcodeAnalyzed', {

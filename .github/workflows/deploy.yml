@@ -5,16 +5,38 @@ on:
     tags:
       - 'v*'
 
+# Default every job to read-only. Only publish-release widens this, so the
+# third-party deploy action never sees a token that can write to the repo.
+permissions:
+  contents: read
+
 jobs:
-  build-and-deploy:
+  # Everything slow and everything that can fail lives here, deliberately with
+  # no `environment:` so it runs immediately on a tag push. The approval gate is
+  # on `deploy` alone, which means review happens with a green, fully built
+  # artifact in hand rather than blocking the build for hours.
+  #
+  # ENVIRONMENT_PROD_TS is a repository secret rather than a `production`
+  # environment secret for that reason -- an ungated job cannot read an
+  # environment secret. Its contents are client-side config (API URL, Auth0
+  # domain/client id, analytics ids, Stripe price ids) that ship inside the
+  # public JS bundle anyway. The Azure deploy credential is the real secret and
+  # stays scoped to the gated `deploy` job below.
+  build:
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      # Fails in seconds, before the build and before an approval is requested,
+      # when a tag was pushed without a matching release-notes section.
+      - name: Verify release notes exist for this tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: node scripts/extract-release-notes.mjs "$TAG" > /dev/null
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'npm'
@@ -34,8 +56,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Sitemap unit tests
-        run: npm run test:sitemap
+      - name: Script unit tests (sitemap, security headers)
+        run: npm run test:scripts
+
+      - name: Strict null checks (gated directories)
+        run: npm run typecheck:strict
 
       - name: Generate sitemap
         run: node scripts/generate-sitemap.mjs
@@ -45,13 +70,67 @@ jobs:
       - name: Verify prerendered output and sitemap index
         run: node scripts/verify-prerender.mjs
 
+      - name: Verify shells
+        run: node scripts/verify-shells.mjs
+
+      # The deploy job gets the exact bytes that were verified here, rather than
+      # rebuilding and hoping for the same output.
+      - name: Upload built site
+        uses: actions/upload-artifact@v7
+        with:
+          name: site
+          path: dist/print-log-ui/browser
+          retention-days: 7
+          if-no-files-found: error
+
+  # The only gated job. `environment: production` carries the required-reviewer
+  # rule, so approving this ships the already-built artifact and nothing else.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Download built site
+        uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: site
+
       - name: Deploy to Azure Static Web Apps (prebuilt)
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: dist/print-log-ui/browser
+          app_location: site
           output_location: ''
           skip_app_build: true
           skip_api_build: true
+
+  # Separate job so `contents: write` is scoped to publishing alone. Runs only
+  # after a successful deploy, so the Releases feed never announces a version
+  # that is not actually live.
+  publish-release:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          node scripts/extract-release-notes.mjs "$TAG" > release-body.md
+          gh release create "$TAG" \
+            --title "$(node scripts/extract-release-notes.mjs "$TAG" --title)" \
+            --notes-file release-body.md

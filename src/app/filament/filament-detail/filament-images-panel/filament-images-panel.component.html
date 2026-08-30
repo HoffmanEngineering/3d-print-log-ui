@@ -1,0 +1,117 @@
+<div class="filament-images-panel">
+  <input
+    #imgFileInput
+    type="file"
+    class="file-input"
+    accept="image/jpeg,image/png,image/webp"
+    multiple
+    (change)="onFilesSelected($event)"
+  />
+  <!-- Inside the Cordova app the OS only offers the gallery unless the input
+       asks to capture, so the camera gets its own input. -->
+  <input
+    #cameraInput
+    type="file"
+    class="file-input"
+    accept="image/jpeg,image/png,image/webp"
+    capture="environment"
+    (change)="onFilesSelected($event)"
+  />
+
+  <div
+    class="image-drop-zone"
+    [class.is-empty]="items().length === 0"
+    [class.drag-over]="isDragOver()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onFileDrop($event)"
+  >
+    @if (isDragOver()) {
+      <div class="drop-overlay">
+        <mat-icon>cloud_upload</mat-icon>
+        <span>Drop photos here</span>
+      </div>
+    }
+
+    @if (items().length === 0) {
+      <button
+        type="button"
+        mat-stroked-button
+        (click)="(isCordova ? cameraInput : imgFileInput).click()"
+      >
+        <mat-icon>add_a_photo</mat-icon>
+        Add Photo
+      </button>
+    } @else {
+      <app-image-carousel
+        [imageCount]="items().length"
+        [selectedIndex]="selectedIndex()"
+        label="Photos"
+        (indexChange)="onCarouselIndexChange($event)"
+      >
+        @if (selected(); as image) {
+          <div class="main-image">
+            <app-filament-image
+              [src]="image.url ?? ''"
+              alt="Material photo"
+              (delete)="onImageDeleted(image)"
+            />
+          </div>
+        }
+      </app-image-carousel>
+    }
+  </div>
+
+  <app-image-thumbnail-strip
+    [images]="items()"
+    [directUrls]="true"
+    [editable]="true"
+    [maxImages]="maxImages()"
+    [selectedId]="selected()?.id"
+    [selectedUrl]="selected()?.url"
+    (imageSelected)="onThumbnailSelected($event)"
+    (imageDeleted)="onImageDeleted($event)"
+    (defaultChanged)="onDefaultChanged($event)"
+    (imagesReordered)="onImagesReordered($event)"
+    (addClicked)="(isCordova ? cameraInput : imgFileInput).click()"
+  />
+
+  @if (busy()) {
+    <mat-progress-bar class="upload-progress" mode="indeterminate" />
+  }
+
+  @if (rejectedCount() > 0) {
+    <div class="upload-failures" role="alert">
+      <mat-icon aria-hidden="true">info_outline</mat-icon>
+      <span>
+        {{ rejectedCount() }} photo(s) were not added — this material can hold
+        at most {{ maxImages() }}.
+      </span>
+    </div>
+  }
+
+  @if (actionError(); as message) {
+    <div class="upload-failures" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>{{ message }}</span>
+    </div>
+  }
+
+  @if (failedFiles().length > 0) {
+    <div class="upload-failures" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>
+        {{ failedFiles().length }} photo(s) failed to upload. The material
+        itself is saved.
+      </span>
+      <button
+        type="button"
+        mat-stroked-button
+        [disabled]="uploading()"
+        (click)="onRetryClick()"
+      >
+        Retry
+      </button>
+    </div>
+  }
+</div>

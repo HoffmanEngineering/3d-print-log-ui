@@ -11,6 +11,22 @@
   &:active {
     transform: translateY(0);
   }
+
+  // Same tint and leading edge as a selected table row (--app-selected-* are global
+  // for exactly that reason), so the two views do not disagree about what "selected"
+  // looks like. The edge is an inset shadow rather than a border because a border
+  // would resize the card and make the whole list reflow as each one is picked.
+  &--selected {
+    background-color: var(--app-selected-bg);
+    box-shadow: inset 4px 0 0 0 var(--app-selected-edge);
+
+    &:hover {
+      background-color: var(--app-selected-bg-hover);
+      box-shadow:
+        inset 4px 0 0 0 var(--app-selected-edge),
+        0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
 }
 
 .card-layout {
@@ -22,6 +38,7 @@
 }
 
 .card-image {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -32,6 +49,27 @@
   overflow: hidden;
   border-radius: 4px;
   background-color: #f5f5f5;
+}
+
+// Over the thumbnail rather than in a column of its own: a column would only exist
+// in selection mode, so every card's text would shift sideways the moment the first
+// long press landed.
+.card-select-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: flex;
+  border-radius: 50%;
+  // The icon sits on top of a photo, so it carries its own backing rather than
+  // relying on whatever happens to be behind it.
+  background-color: rgba(255, 255, 255, 0.92);
+  color: var(--app-selected-edge);
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
 }
 
 .card-content {
@@ -121,56 +159,6 @@
   white-space: nowrap;
 }
 
-.status-badge {
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 12px;
-  width: fit-content;
-
-  &.status-1 {
-    background-color: #f5f5f5;
-    color: #616161;
-    .meta-icon {
-      color: #757575;
-    }
-  }
-  &.status-2 {
-    background-color: #e1f5fe;
-    color: #0277bd;
-    .meta-icon {
-      color: #0277bd;
-    }
-  }
-  &.status-3 {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    .meta-icon {
-      color: #2e7d32;
-    }
-  }
-  &.status-4 {
-    background-color: #f3e5f5;
-    color: #6a1b9a;
-    .meta-icon {
-      color: #6a1b9a;
-    }
-  }
-  &.status-5 {
-    background-color: #ffebee;
-    color: #c62828;
-    .meta-icon {
-      color: #c62828;
-    }
-  }
-  &.status-6 {
-    background-color: #fff9c4;
-    color: #f57f17;
-    .meta-icon {
-      color: #f57f17;
-    }
-  }
-}
-
 .card-actions {
   display: flex;
   align-items: flex-start;
@@ -179,6 +167,10 @@
 :host-context(html.dark-theme) {
   .card-image {
     background-color: #2a2a2a;
+  }
+
+  .card-select-badge {
+    background-color: rgba(18, 18, 18, 0.92);
   }
 
   .meta-item {
@@ -190,50 +182,5 @@
 
   .material-name {
     color: rgba(255, 255, 255, 0.6);
-  }
-
-  .status-badge {
-    &.status-1 {
-      background-color: rgba(97, 97, 97, 0.25);
-      color: #bdbdbd;
-      .meta-icon {
-        color: #9e9e9e;
-      }
-    }
-    &.status-2 {
-      background-color: rgba(2, 119, 189, 0.2);
-      color: #4fc3f7;
-      .meta-icon {
-        color: #4fc3f7;
-      }
-    }
-    &.status-3 {
-      background-color: rgba(46, 125, 50, 0.2);
-      color: #81c784;
-      .meta-icon {
-        color: #81c784;
-      }
-    }
-    &.status-4 {
-      background-color: rgba(106, 27, 154, 0.2);
-      color: #ce93d8;
-      .meta-icon {
-        color: #ce93d8;
-      }
-    }
-    &.status-5 {
-      background-color: rgba(198, 40, 40, 0.2);
-      color: #ef9a9a;
-      .meta-icon {
-        color: #ef9a9a;
-      }
-    }
-    &.status-6 {
-      background-color: rgba(245, 127, 23, 0.2);
-      color: #ffcc02;
-      .meta-icon {
-        color: #ffcc02;
-      }
-    }
   }
 }

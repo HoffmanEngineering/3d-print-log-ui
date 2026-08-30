@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import {
   UserSetting,
@@ -10,10 +10,16 @@ import {
   providedIn: 'root',
 })
 export class DefaultFilamentPriceSettingResolverService {
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-    return this.userSettingService.getCurrentUsersSettingByType(
-      UserSettingType.Filaments_DefaultPrice
-    );
+  private readonly userSettingService = inject(UserSettingService);
+
+  // Must never reject: this resolver runs on the public prints/:id route, and a
+  // rejected resolver cancels navigation and bounces the visitor to / (#66).
+  resolve(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Promise<UserSetting | null> {
+    return this.userSettingService
+      .getCurrentUsersSettingByType(UserSettingType.Filaments_DefaultPrice)
+      .catch(() => null);
   }
-  constructor(private readonly userSettingService: UserSettingService) {}
 }

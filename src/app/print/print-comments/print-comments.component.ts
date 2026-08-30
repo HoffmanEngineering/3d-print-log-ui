@@ -11,12 +11,13 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Comment } from 'src/app/core/services/comment.service';
 import { PrintService } from 'src/app/core/services/print.service';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 @Component({
   selector: 'app-print-comments',
   templateUrl: './print-comments.component.html',
   styleUrls: ['./print-comments.component.scss'],
-  standalone: false,
+  imports: [SharedModule],
 })
 export class PrintCommentsComponent implements OnInit {
   @Input() printId: number;
@@ -25,6 +26,14 @@ export class PrintCommentsComponent implements OnInit {
   @Input() allowComments: boolean;
 
   @Output() addNewComment = new EventEmitter<string>();
+
+  /**
+   * Deletion is reported upward for the same reason `addNewComment` is: the
+   * parent owns the comment list as a signal and is OnPush, so removing the row
+   * from this component's input array mutates the array without repainting
+   * anything.
+   */
+  @Output() commentDeleted = new EventEmitter<Comment>();
 
   @ViewChild('newCommentTextArea', { static: false })
   newCommentTextArea: ElementRef;
@@ -75,19 +84,12 @@ export class PrintCommentsComponent implements OnInit {
       () => {
         this.toastrService.success('Comment deleted successfully.');
 
-        this.removeComment(comment);
+        this.commentDeleted.emit(comment);
       },
       (err) => {
         const message = err?.error ?? err?.message ?? '';
         this.toastrService.error(message);
       }
     );
-  }
-
-  private removeComment(comment: Comment) {
-    const index = this.comments.indexOf(comment);
-    if (index > -1) {
-      this.comments.splice(index, 1);
-    }
   }
 }

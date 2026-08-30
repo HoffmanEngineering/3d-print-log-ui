@@ -92,7 +92,7 @@
           (imageDeleted)="onImageDeleted($event)"
           (defaultChanged)="onDefaultChanged($event)"
           (imagesReordered)="onImagesReordered($event)"
-          (addClicked)="imgFileInput.click()"
+          (addClicked)="(isCordova ? cameraInput : imgFileInput).click()"
         />
       </div>
       <mat-card-content
@@ -335,11 +335,23 @@
         </div>
         @if (getElectricityPreview(); as preview) {
           @if (preview.valid) {
-            <div fxFlex="grow" fxFlexFill style="font-size: 0.9em; color: #666; margin-bottom: 4px">
-              Electricity cost: {{ (isEstimatedElectricityPreview() ? '~' : '') + preview.formattedCost }}
+            <div
+              fxFlex="grow"
+              fxFlexFill
+              style="font-size: 0.9em; color: #666; margin-bottom: 4px"
+            >
+              Electricity cost:
+              {{
+                (isEstimatedElectricityPreview() ? '~' : '') +
+                  preview.formattedCost
+              }}
             </div>
           } @else if ($any(preview).message) {
-            <div fxFlex="grow" fxFlexFill style="font-size: 0.9em; color: #888; margin-bottom: 4px">
+            <div
+              fxFlex="grow"
+              fxFlexFill
+              style="font-size: 0.9em; color: #888; margin-bottom: 4px"
+            >
               <mat-icon
                 inline
                 style="
@@ -394,7 +406,13 @@
                         @if (printFilament.get('filament').value; as filament) {
                           <div
                             class="filament-color-cell"
-                            [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern : filament.finishType : filament.effects"
+                            [style]="
+                              filament.colors
+                                | filamentColorSwatchStyle
+                                  : filament.colorPattern
+                                  : filament.finishType
+                                  : filament.effects
+                            "
                           ></div>
                         } @else {
                           <div class="filament-color-cell"></div>
@@ -537,13 +555,25 @@
                                 >
                                   <span class="swap-menu-item">
                                     <mat-icon>swap_vert</mat-icon>
-                                    @if (otherFilament.get('filament').value; as filament) {
+                                    @if (
+                                      otherFilament.get('filament').value;
+                                      as filament
+                                    ) {
                                       <div
                                         class="swap-color-indicator"
-                                        [style]="filament.colors | filamentColorSwatchStyle : filament.colorPattern : filament.finishType : filament.effects"
+                                        [style]="
+                                          filament.colors
+                                            | filamentColorSwatchStyle
+                                              : filament.colorPattern
+                                              : filament.finishType
+                                              : filament.effects
+                                        "
                                       ></div>
                                     } @else {
-                                      <div class="swap-color-indicator" style="background: #ccc"></div>
+                                      <div
+                                        class="swap-color-indicator"
+                                        style="background: #ccc"
+                                      ></div>
                                     }
                                     <span>
                                       Swap with #{{ otherIndex + 1 }}:
@@ -722,7 +752,13 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
-                      @if (getPreferredUnitSecondaryDisplay($any(printFilament), true); as secondary) {
+                      @if (
+                        getPreferredUnitSecondaryDisplay(
+                          $any(printFilament),
+                          true
+                        );
+                        as secondary
+                      ) {
                         <span class="preferred-unit-hint">{{ secondary }}</span>
                       }
                       <div class="input-row">
@@ -868,7 +904,13 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
-                      @if (getPreferredUnitSecondaryDisplay($any(printFilament), false); as secondary) {
+                      @if (
+                        getPreferredUnitSecondaryDisplay(
+                          $any(printFilament),
+                          false
+                        );
+                        as secondary
+                      ) {
                         <span class="preferred-unit-hint">{{ secondary }}</span>
                       }
                       <mat-form-field>

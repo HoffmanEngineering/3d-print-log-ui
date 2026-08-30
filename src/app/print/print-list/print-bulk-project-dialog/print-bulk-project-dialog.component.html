@@ -1,0 +1,47 @@
+<h2 mat-dialog-title>Add to project</h2>
+
+<mat-dialog-content>
+  <p>
+    {{ data.count }} {{ data.count === 1 ? 'print' : 'prints' }} will be filed
+    under the project you pick. Prints already in another project will be moved.
+  </p>
+
+  <app-project-selector
+    label="Project"
+    (projectSelected)="onSelection($event)"
+  />
+
+  @if (errorMessage()) {
+    <p class="dialog__error" role="alert">{{ errorMessage() }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    type="button"
+    [disabled]="isSaving()"
+    (click)="removeFromProject()"
+    attr.aria-label="Remove {{ data.count }} selected {{
+      data.count === 1 ? 'print' : 'prints'
+    }} from their project"
+    data-cy-bulk-project-remove
+  >
+    Remove from project
+  </button>
+  <!-- Disabled while the create is in flight: closing now would leave a project
+       created and nothing assigned to it. -->
+  <button mat-button type="button" [disabled]="isSaving()" (click)="cancel()">
+    Cancel
+  </button>
+  <button
+    mat-flat-button
+    type="button"
+    color="primary"
+    [disabled]="!selection() || isSaving()"
+    (click)="confirm()"
+    data-cy-bulk-project-confirm
+  >
+    Add to project
+  </button>
+</mat-dialog-actions>

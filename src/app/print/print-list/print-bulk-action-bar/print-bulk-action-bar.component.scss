@@ -1,0 +1,140 @@
+:host {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// Fixed height whether or not anything is selected: the strip shares a row with
+// the view toggle, so the table below it never moves.
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  // Sits directly beside the view toggle, the way the material list keeps its
+  // selection chip next to the list's own buttons.
+  justify-content: flex-start;
+  min-height: 40px;
+}
+
+// `nowrap` is what keeps the strip one row tall; the cost is that a narrow
+// desktop has nowhere to put the overflow. The chip absorbs it by truncating so
+// the actions themselves are never squashed or pushed off the edge.
+.bulk-bar__content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  max-width: 100%;
+
+  > button {
+    flex: 0 0 auto;
+  }
+}
+
+// Same pill as the material list's selection count.
+.bulk-bar__chip {
+  display: block;
+  min-width: 0;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background-color: rgba(0, 0, 0, 0.04);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--app-text-strong);
+}
+
+// The count again, at the moment the action is chosen. The trigger already
+// carries it, but the menu covers the trigger once it opens.
+.bulk-menu__header {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+}
+
+.bulk-menu__danger {
+  color: var(--mat-sys-error, #b3261e);
+
+  mat-icon {
+    color: inherit;
+  }
+}
+
+.bulk-bar__clear {
+  min-width: unset;
+  padding: 0 8px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 2px;
+  }
+}
+
+// Overlays the bottom edge of the strip rather than taking a row of its own.
+.bulk-bar__progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+}
+
+// Mobile: the same component, pinned to the bottom of the viewport.
+//
+// A selection here is built by long-pressing cards, which means scrolling between
+// picks - so the actions cannot live in a toolbar that scrolls off the top. The
+// breakpoint matches the one that swaps the table for the card list.
+//
+// The host is what gets fixed, not the inner strip: the strip is only in the DOM
+// while something is selected, so fixing the host keeps the bar out of the layout
+// entirely when it is empty.
+@media screen and (max-width: 959px) {
+  :host {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    // Above the page, below the CDK overlay container - the bar's own menus have to
+    // open over it.
+    z-index: 3;
+    flex: none;
+  }
+
+  .bulk-bar {
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    // env() is 0 everywhere except iOS with a home indicator, where it lifts the row
+    // clear of the swipe area.
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    background-color: var(--app-bulk-bar-bg, #fff);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.18);
+  }
+
+  .bulk-bar__content {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  // The progress bar rides the top edge here: below the bar is the screen edge.
+  .bulk-bar__progress {
+    top: 0;
+    bottom: auto;
+  }
+}
+
+:host-context(html.dark-theme) {
+  .bulk-bar__chip {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  // Matches the elevated surfaces the rest of the dark theme uses, so the bar reads
+  // as sitting above the page rather than as a hole in it.
+  --app-bulk-bar-bg: #1e1e1e;
+}

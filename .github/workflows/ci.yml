@@ -6,15 +6,26 @@ on:
   pull_request:
     branches: [main]
 
+# Read-only: CI only builds and tests, it never writes to the repository.
+permissions:
+  contents: read
+
+# A second push to the same PR makes the earlier run redundant. This suite runs
+# lint, unit tests, script tests, strict typecheck and two builds, so cancelling
+# saves a meaningful amount of Actions time.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'npm'
@@ -28,8 +39,11 @@ jobs:
       - name: Test
         run: npm run test:ci
 
-      - name: Sitemap unit tests
-        run: npm run test:sitemap
+      - name: Script unit tests (sitemap, security headers)
+        run: npm run test:scripts
+
+      - name: Strict null checks (gated directories)
+        run: npm run typecheck:strict
 
       - name: Build (dev/base config)
         run: npm run build:dev
@@ -42,3 +56,6 @@ jobs:
 
       - name: Verify prerendered output
         run: node scripts/verify-prerender.mjs
+
+      - name: Verify shells
+        run: node scripts/verify-shells.mjs

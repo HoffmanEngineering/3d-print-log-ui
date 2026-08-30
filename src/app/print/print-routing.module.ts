@@ -21,13 +21,14 @@ import { PrintListResolverService } from './resolvers/print-list-resolver.servic
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 
-const routes: Routes = [
+export const printRoutes: Routes = [
   {
     path: '',
     children: [
       {
         path: '',
         component: PrintListComponent,
+        canActivate: [AuthGuard],
         resolve: {
           printList: PrintListResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
@@ -44,6 +45,7 @@ const routes: Routes = [
       {
         path: 'copy/:id',
         component: EditPrintDetailComponent,
+        canActivate: [AuthGuard],
         resolve: {
           print: CopyPrintDetailResolverService,
           printers: CurrentUserPrinterSummaryResolverService,
@@ -94,16 +96,14 @@ const routes: Routes = [
         redirectTo: 'new/edit',
       },
       {
+        // Deliberately resolves NOTHING. A resolver keeps the previous page on
+        // screen until it settles, so this public, frequently deep-linked route
+        // looked like a dead click on a slow connection. ViewPrintDetailComponent
+        // loads the print and its settings itself and paints a skeleton in the
+        // meantime. It also means there is no longer anything on this route that
+        // can reject and bounce a logged-out visitor to / (#66).
         path: ':id',
         component: ViewPrintDetailComponent,
-        resolve: {
-          print: PrintDetailResolverService,
-          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
-          defaultElectricityKwhRateSetting:
-            DefaultElectricityKwhRateSettingResolverService,
-          defaultElectricityWattageSetting:
-            DefaultElectricityWattageSettingResolverService,
-        },
       },
     ],
   },
@@ -111,6 +111,6 @@ const routes: Routes = [
 
 @NgModule({
   exports: [RouterModule],
-  imports: [RouterModule.forChild(routes)],
+  imports: [RouterModule.forChild(printRoutes)],
 })
 export class PrintRoutingModule {}

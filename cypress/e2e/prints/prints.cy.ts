@@ -75,7 +75,7 @@ describe('Prints List', () => {
 
     const newPrintTitle = 'Edit Test Print - ' + new Date().getTime();
 
-    cy.get('button[data-cy-edit-btn]').click();
+    cy.get('[data-cy-edit-btn]').click();
 
     cy.get('#edit-print-title').clear().type(newPrintTitle);
 

@@ -1,30 +1,26 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
-import {
-  UserService,
-  UserSummaryDto,
-} from 'src/app/core/services/user.service';
 import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
-import {
-  PrintDetail,
-  PrintDetailDTO,
-  PrintService,
-  PrintStatus,
-} from '../../core/services/print.service';
+import { PrintDetail } from '../../core/services/print.service';
 import { CuraParserService } from '../services/integration/cura-parser.service';
+import {
+  PrintDetailLoaderService,
+  PrintDetailWithUser,
+} from '../services/print-detail-loader.service';
 
-export interface PrintDetailWithUser {
-  print: PrintDetail;
-  user: UserSummaryDto;
-}
+export { PrintDetailWithUser } from '../services/print-detail-loader.service';
 
+/**
+ * Still used by `/prints/:id/edit`, which needs the print before the editor's
+ * form can be built. The public view route no longer resolves anything and
+ * fetches through `PrintDetailLoaderService` directly, so it can paint a
+ * skeleton immediately.
+ */
 @Injectable()
 export class PrintDetailResolverService {
+  private readonly loader = inject(PrintDetailLoaderService);
+
   constructor(
-    private printService: PrintService,
-    private userService: UserService,
     private curaParserService: CuraParserService,
     private readonly newPrintStoreService: NewPrintStoreService
   ) {}
@@ -33,27 +29,8 @@ export class PrintDetailResolverService {
     const printId = +route.paramMap.get('id');
 
     if (Number.isInteger(printId)) {
-      return this.printService.getPrintDetail(printId).pipe(
-        mergeMap((print) => {
-          if (print === null) {
-            const newDetails: PrintDetailWithUser = {
-              print,
-              user: null,
-            };
-
-            return of(newDetails);
-          }
-          return this.userService.getUserSummary(print.createdByUserId).pipe(
-            map((user) => {
-              const newDetails: PrintDetailWithUser = {
-                print,
-                user,
-              };
-              return newDetails;
-            })
-          );
-        })
-      );
+      // Never rejects — see PrintDetailLoaderService.
+      return this.loader.load(printId);
     }
 
     let defaultPrint: PrintDetail | null = null;

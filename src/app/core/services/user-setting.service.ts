@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { lastValueFrom, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 export enum UserSettingType {
@@ -29,6 +29,10 @@ export enum UserSettingType {
   Electricity_KwhRate = 12,
   Electricity_DefaultWattageW = 13,
   Prints_PreferredFilamentDisplayUnit = 14,
+  /** Send a push notification when a print completes. */
+  Push_PrintCompleted = 15,
+  /** Send a push notification when a print fails. */
+  Push_PrintFailed = 16,
 }
 
 export interface UserSetting {
@@ -102,8 +106,23 @@ export class UserSettingService {
         return result;
       }),
       tap((settings) => {
+        // Runs only on a successful response — caches real settings (incl. []).
         this.settingsMap = settings;
         this.loaded = true;
+      }),
+      catchError((err) => {
+        // For a logged-out visitor the auth interceptor rethrows Auth0's
+        // missing-refresh-token error before dispatching the request. Treat
+        // *only* that as "no settings" so a public view still renders.
+        // Deliberately NOT cached (this branch bypasses the tap above, so
+        // `loaded` stays false) so a later authenticated call refetches — this
+        // is what makes an in-process (Cordova) login recover.
+        if (err?.error === 'missing_refresh_token') {
+          return of(new Map<UserSettingType, UserSetting>());
+        }
+        // Surface everything else: server errors (HttpErrorResponse), response-
+        // mapping/programming errors, and unexpected auth failures.
+        return throwError(() => err);
       })
     );
   }
@@ -128,6 +147,27 @@ export class UserSettingService {
         this.settingsMap.set(updatedSetting.userSettingTypeId, updatedSetting);
       })
     );
+  }
+
+  /**
+   * Writes a setting without the caller having to know whether a row exists.
+   *
+   * The API's CreateUserSetting rejects a second row for the same type, and the database now
+   * enforces that too, so choosing PUT vs POST is not a caller's concern — getting it wrong
+   * is a 500, not a silent duplicate.
+   */
+  public async addOrUpdateSetting(
+    settingTypeId: UserSettingType,
+    newValue: string
+  ): Promise<void> {
+    const existing = await this.getCurrentUsersSettingByType(settingTypeId);
+
+    if (existing) {
+      await lastValueFrom(this.updateUserSetting(existing.id, newValue));
+      return;
+    }
+
+    await lastValueFrom(this.addUserSetting(settingTypeId, newValue));
   }
 
   addUserSetting(settingTypeId: UserSettingType, newValue: string) {

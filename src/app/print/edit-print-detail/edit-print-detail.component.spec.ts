@@ -313,7 +313,6 @@ describe('EditPrintDetailComponent', () => {
         printerId: null,
         startDate: new Date(),
         estimatedPrintTimeInSeconds: null,
-        estimatedFilamentUsageMg: null,
         printTimeInSeconds: null,
         filamentUsageMg: null,
         filamentType: '',
@@ -337,6 +336,7 @@ describe('EditPrintDetailComponent', () => {
       expect(imagesArray.length).toBe(1);
       expect(imagesArray.at(0).value.url).toBe(snapshotUrl);
       expect(imagesArray.at(0).value.url).not.toContain('null');
+      expect(form.get('estimatedFilamentUsageG')?.value).toBeNull();
     });
 
     it('should set isDragOver on drag events', () => {

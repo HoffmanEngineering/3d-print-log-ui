@@ -39,6 +39,14 @@ export enum FilamentEffect {
   GlassFiber = 8,
 }
 
+export interface FilamentImage {
+  id: number;
+  url: string | null;
+  thumbnailUrl: string | null;
+  isDefault: boolean;
+  displayOrder: number;
+}
+
 export interface FilamentDetail {
   id: string;
   displayName: string;
@@ -79,6 +87,7 @@ export interface FilamentDetail {
   notes: string;
   isFavorite: boolean;
   filamentAdjustments: FilamentAdjustment[];
+  images?: FilamentImage[];
 
   /**
    * Server-computed remaining filament weight in mg (nominal − print usage +
@@ -86,6 +95,27 @@ export interface FilamentDetail {
    * server ignores it on write, so writers may omit it.
    */
   filamentRemaining?: number | null;
+
+  /**
+   * Server-computed remaining length in meters. Null when the spool is untracked,
+   * matching `filamentRemaining`. Read-only: ignored on write.
+   */
+  filamentLengthRemainingInM?: number | null;
+
+  /**
+   * Server-computed remaining volume in milliliters. Null when the spool is
+   * untracked, matching `filamentRemaining`. Read-only: ignored on write.
+   */
+  filamentVolumeRemainingInMl?: number | null;
+
+  /** Distinct prints that used this filament. Read-only: ignored on write. */
+  printCount?: number;
+
+  /**
+   * Total milligrams consumed by prints, actual where recorded and estimated
+   * otherwise. Read-only: ignored on write.
+   */
+  totalUsedMg?: number;
 }
 
 export interface FilamentSummary {
@@ -115,6 +145,7 @@ export interface FilamentSummary {
   loadedInPrinter: PrinterSummary | null;
   storageLocation: string;
   materialCategory: MaterialCategory;
+  defaultImageThumbnailUrl?: string | null;
 }
 
 export interface FilamentStorageLocations {
@@ -278,6 +309,45 @@ export class FilamentService {
   deleteFilament(filamentId: string): Observable<any> {
     const url = `${this.baseApi}/api/Filaments/${filamentId}`;
     return this.http.delete<FilamentDetail>(url);
+  }
+
+  uploadFilamentImage(
+    filamentId: string,
+    file: File
+  ): Observable<FilamentImage> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<FilamentImage>(
+      `${this.baseApi}/api/Filaments/${filamentId}/images`,
+      formData
+    );
+  }
+
+  deleteFilamentImage(filamentId: string, imageId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseApi}/api/Filaments/${filamentId}/images/${imageId}`
+    );
+  }
+
+  /** The API requires the complete, duplicate-free set of image IDs. */
+  reorderFilamentImages(
+    filamentId: string,
+    orderedImageIds: number[]
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.baseApi}/api/Filaments/${filamentId}/images/reorder`,
+      orderedImageIds
+    );
+  }
+
+  setFilamentImageAsDefault(
+    filamentId: string,
+    imageId: number
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseApi}/api/Filaments/${filamentId}/images/${imageId}/set-as-default`,
+      {}
+    );
   }
 
   /**

@@ -1,0 +1,15 @@
+@if (links().length) {
+  <section class="doc-related" aria-labelledby="doc-related-label">
+    <h2 class="doc-related__label" id="doc-related-label">Related pages</h2>
+    <ul class="doc-related__list">
+      @for (link of links(); track link.path) {
+        <li>
+          <a [routerLink]="'/' + link.path">
+            <span class="doc-related__title">{{ link.navLabel }}</span>
+            <span class="doc-related__description">{{ link.description }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+}

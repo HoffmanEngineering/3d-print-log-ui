@@ -5,12 +5,15 @@ import {
 } from '../../fixtures/demo/manifest';
 
 // Disable animations/transitions, hide ad slots, and hide the app nav bar so
-// captures are deterministic and free of third-party ad / nav chrome.
+// captures are deterministic and free of third-party ad / nav chrome. The
+// analytics tab's lone "Export this tab (CSV)" button goes too: it would sit
+// alone above the tiles in a narrow crop and frame the chrome, not the data.
 const CAPTURE_CSS = `
   *,*::before,*::after{transition:none!important;animation:none!important}
   app-ad{display:none!important}
   app-navbar{display:none!important}
   #filter-panel{display:none!important}
+  .overview-tab__actions{display:none!important}
 `;
 
 // The status donut animates its arcs over ~750ms via d3 (JS-driven, unaffected
@@ -38,10 +41,19 @@ const READY: Record<string, () => void> = {
       .get('[data-cy="home-capture-materials"] [data-cy-filament-row]')
       .should('have.length.greaterThan', 0),
   Analytics: () => {
-    cy.get('[data-cy="home-capture-analytics"] .card').should(
-      'have.length.greaterThan',
-      0
-    );
+    // Six tiles swap their skeleton for a value, and both chart frames swap
+    // theirs for rendered content. Asserting the skeletons are gone matters as
+    // much as asserting the values arrived: a frame still in its loading state
+    // renders at the same size, so a too-early shot looks plausible.
+    cy.get(
+      '[data-cy="home-capture-analytics"] [data-testid="stat-value"]'
+    ).should('have.length', 6);
+    cy.get(
+      '[data-cy="home-capture-analytics"] [data-testid="chart-skeleton"]'
+    ).should('not.exist');
+    cy.get(
+      '[data-cy="home-capture-analytics"] [data-testid="chart-content"]'
+    ).should('have.length', 2);
     cy.get('[data-cy="home-capture-analytics"] svg').should('exist');
   },
 };

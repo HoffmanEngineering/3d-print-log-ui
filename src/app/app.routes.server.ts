@@ -1,6 +1,9 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
-export const serverRoutes: ServerRoute[] = [
+import { DOCS_SERVER_ROUTES } from './documentation/generated/docs.server-routes';
+
+/** Marketing pages, prerendered for SEO. Kept in sync with scripts/marketing-routes.mjs. */
+const marketingRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
   { path: 'cura', renderMode: RenderMode.Prerender },
   { path: 'prusaslicer', renderMode: RenderMode.Prerender },
@@ -12,20 +15,14 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'elegoo-slicer', renderMode: RenderMode.Prerender },
   { path: 'qidi-studio', renderMode: RenderMode.Prerender },
   { path: 'orca-flashforge', renderMode: RenderMode.Prerender },
-  { path: 'docs/getting-started', renderMode: RenderMode.Prerender },
-  { path: 'docs/pro-subscription', renderMode: RenderMode.Prerender },
-  { path: 'docs/prints', renderMode: RenderMode.Prerender },
-  { path: 'docs/projects', renderMode: RenderMode.Prerender },
-  { path: 'docs/materials', renderMode: RenderMode.Prerender },
-  { path: 'docs/printers', renderMode: RenderMode.Prerender },
-  { path: 'docs/analytics', renderMode: RenderMode.Prerender },
-  { path: 'docs/android-app', renderMode: RenderMode.Prerender },
-  { path: 'docs/cura-plugin', renderMode: RenderMode.Prerender },
-  { path: 'docs/octoprint-webhook', renderMode: RenderMode.Prerender },
-  { path: 'docs/klipper', renderMode: RenderMode.Prerender },
-  { path: 'docs/slic3r-uploader', renderMode: RenderMode.Prerender },
-  { path: 'docs/release-notes', renderMode: RenderMode.Prerender },
-  { path: 'docs/about', renderMode: RenderMode.Prerender },
-  { path: 'docs/privacy-policy', renderMode: RenderMode.Prerender },
+];
+
+/**
+ * The catch-all is appended structurally, after the generated doc routes, so a
+ * generated entry can never shadow it and it can never shadow a doc page.
+ */
+export const serverRoutes: ServerRoute[] = [
+  ...marketingRoutes,
+  ...DOCS_SERVER_ROUTES,
   { path: '**', renderMode: RenderMode.Client },
 ];

@@ -1,0 +1,10 @@
+<figure class="doc-video">
+  <div class="doc-video__frame">
+    <youtube-player
+      [videoId]="videoId()"
+      [placeholderButtonLabel]="'Play video: ' + title()"
+      (ready)="labelFrame($event)"
+    />
+  </div>
+  <figcaption>{{ title() }}</figcaption>
+</figure>

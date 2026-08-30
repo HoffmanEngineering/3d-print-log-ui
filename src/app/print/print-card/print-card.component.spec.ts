@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { RouterLink, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -85,6 +85,103 @@ describe('PrintCardComponent', () => {
     component.statusChanged.subscribe(spy);
     component.onStatusChange(PrintStatus.Failed);
     expect(spy).toHaveBeenCalledWith({ id: 42, status: PrintStatus.Failed });
+  });
+
+  describe('bulk selection', () => {
+    function card(): HTMLElement {
+      return fixture.debugElement.query(By.css('mat-card')).nativeElement;
+    }
+
+    function routerLink(): RouterLink {
+      return fixture.debugElement
+        .query(By.directive(RouterLink))
+        .injector.get(RouterLink);
+    }
+
+    // The project detail page renders this card too, and has no bulk actions.
+    it('is a plain link by default', () => {
+      expect(routerLink().urlTree).not.toBeNull();
+      expect(card().getAttribute('role')).toBeNull();
+      expect(
+        fixture.debugElement.query(By.css('.card-select-badge'))
+      ).toBeNull();
+    });
+
+    it('shows the badge in selection mode', () => {
+      fixture.componentRef.setInput('selectionMode', true);
+      fixture.detectChanges();
+
+      expect(
+        fixture.debugElement.query(By.css('.card-select-badge'))
+      ).not.toBeNull();
+    });
+
+    // Not merely suppressed on click: an href left in place is still openable in a new
+    // tab, and middle-clicking out of a selection is not what the gesture promised.
+    it('drops the link in selection mode', () => {
+      fixture.componentRef.setInput('selectionMode', true);
+      fixture.detectChanges();
+
+      expect(routerLink().urlTree).toBeNull();
+    });
+
+    it('exposes the selection to assistive tech in selection mode', () => {
+      fixture.componentRef.setInput('selectionMode', true);
+      fixture.componentRef.setInput('selected', true);
+      fixture.detectChanges();
+
+      expect(card().getAttribute('role')).toBe('checkbox');
+      expect(card().getAttribute('aria-checked')).toBe('true');
+    });
+
+    it('marks the card selected', () => {
+      fixture.componentRef.setInput('selected', true);
+      fixture.detectChanges();
+
+      expect(card().classList).toContain('print-card--selected');
+    });
+
+    it('asks to select on long press', () => {
+      const toggled: PrintSummary[] = [];
+      component.selectionToggled.subscribe((p) => toggled.push(p));
+
+      component.onLongPress();
+
+      expect(toggled).toEqual([mockPrint]);
+    });
+
+    // A press that runs slightly long on an already-selected card would otherwise
+    // silently undo the pick the user just made.
+    it('ignores a long press on an already-selected card', () => {
+      fixture.componentRef.setInput('selected', true);
+      fixture.detectChanges();
+      const toggled: PrintSummary[] = [];
+      component.selectionToggled.subscribe((p) => toggled.push(p));
+
+      component.onLongPress();
+
+      expect(toggled).toEqual([]);
+    });
+
+    it('toggles on tap while in selection mode', () => {
+      fixture.componentRef.setInput('selectionMode', true);
+      fixture.detectChanges();
+      const toggled: PrintSummary[] = [];
+      component.selectionToggled.subscribe((p) => toggled.push(p));
+
+      component.onCardClicked();
+
+      expect(toggled).toEqual([mockPrint]);
+    });
+
+    it('does not toggle on tap outside selection mode', () => {
+      const toggled: PrintSummary[] = [];
+      component.selectionToggled.subscribe((p) => toggled.push(p));
+
+      component.onCardClicked();
+
+      expect(toggled).toEqual([]);
+    });
   });
 });
 

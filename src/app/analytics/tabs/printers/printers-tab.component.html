@@ -1,0 +1,150 @@
+<div class="printers-tab">
+  <div class="printers-tab__actions">
+    <button
+      type="button"
+      mat-stroked-button
+      data-testid="tab-export"
+      (click)="onExportTab()"
+    >
+      Export this tab (CSV)
+    </button>
+  </div>
+  <div class="printers-tab__tiles">
+    <app-stat-tile
+      label="Fleet utilization"
+      format="percent"
+      [metric]="data()?.fleetUtilizationPercent ?? null"
+      [loading]="state() === 'loading'"
+    />
+  </div>
+
+  <app-chart-frame
+    class="printers-tab__chart printers-tab__chart--wide"
+    title="Printer comparison"
+    [csv]="comparisonCsv()"
+    fit="natural"
+    [state]="state()"
+    [coverage]="data()?.coverage ?? null"
+    ariaSummary="Per-printer prints, success rate, print time, filament, cost and utilization"
+    emptyMessage="None of your printers produced a print in this range."
+    (retry)="onRetry()"
+  >
+    <app-printer-comparison
+      [rows]="data()?.printers ?? []"
+      [currency]="data()?.currency ?? null"
+      [layout]="comparisonLayout()"
+      (printerSelect)="onPrinterSelect($event)"
+    />
+  </app-chart-frame>
+
+  <div class="printers-tab__charts">
+    <app-chart-frame
+      class="printers-tab__chart"
+      #successFrame
+      title="Success rate by printer"
+      [csv]="successCsv()"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Success rate for each printer"
+      emptyMessage="No resolved prints in this range yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="successRateData()"
+        [series]="singleSeries"
+        [width]="successFrame.width()"
+        [height]="successFrame.height()"
+        orientation="horizontal"
+      />
+      <table chartDataTable>
+        <caption>
+          Success rate by printer
+        </caption>
+        <tbody>
+          @for (row of successRateData(); track row.fullLabel) {
+            <tr>
+              <th scope="row">{{ row.fullLabel }}</th>
+              <td>{{ row.values['value'] }}%</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+
+    <app-chart-frame
+      class="printers-tab__chart"
+      #timeFrame
+      title="Print time by printer"
+      [csv]="timeSeriesCsv()"
+      [state]="state()"
+      [coverage]="data()?.coverage ?? null"
+      ariaSummary="Print hours per period, stacked by printer"
+      emptyMessage="No prints in this range yet."
+      (retry)="onRetry()"
+    >
+      <app-bar-chart
+        [data]="timeSeriesData()"
+        [series]="printerSeries()"
+        [width]="timeFrame.width()"
+        [height]="timeFrame.height()"
+      />
+      <table chartDataTable>
+        <caption>
+          Print hours per period by printer
+        </caption>
+        <tbody>
+          @for (row of timeSeriesData(); track row.fullLabel) {
+            <tr>
+              <th scope="row">{{ row.fullLabel }}</th>
+              @for (series of printerSeries(); track series.key) {
+                <td>{{ series.label }}: {{ row.values[series.key] ?? 0 }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-chart-frame>
+  </div>
+
+  <app-chart-frame
+    class="printers-tab__chart printers-tab__chart--wide"
+    title="Maintenance"
+    [csv]="maintenanceCsv()"
+    fit="natural"
+    [state]="state()"
+    [coverage]="data()?.coverage ?? null"
+    ariaSummary="Completed maintenance events and their cost"
+    emptyMessage="No completed maintenance in this range."
+    (retry)="onRetry()"
+  >
+    <!--
+      chart-frame's emptyMessage keys off the TAB's state, which is 'ready' whenever the
+      user owns a printer — so an empty maintenance log rendered as a bare table with no
+      rows and no explanation. This panel reports its own emptiness.
+    -->
+    @if ((data()?.maintenance ?? []).length === 0) {
+      <p class="printers-tab__maintenance-empty">
+        No completed maintenance in this range.
+      </p>
+    } @else {
+      <table class="printers-tab__maintenance">
+        <caption>
+          Completed maintenance
+          @if (maintenanceTotal() !== null) {
+            — total {{ maintenanceTotal() }} {{ data()?.currency }}
+          }
+        </caption>
+        <tbody>
+          @for (event of data()?.maintenance ?? []; track event.id) {
+            <tr>
+              <th scope="row">{{ event.date }}</th>
+              <td>{{ event.category }}</td>
+              <td>{{ event.description }}</td>
+              <td>{{ event.cost === null ? '—' : event.cost }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </app-chart-frame>
+</div>

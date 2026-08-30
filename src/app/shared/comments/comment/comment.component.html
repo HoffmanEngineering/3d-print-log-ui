@@ -1,7 +1,8 @@
 <mat-card appearance="outlined" class="mat-elevation-z1">
   <mat-card-header>
     @if (comment().createdBy.profilePicture) {
-      <img mat-card-avatar [src]="comment().createdBy.profilePicture" />
+      <!-- Decorative: the author's name is the adjacent link. -->
+      <img mat-card-avatar alt="" [src]="comment().createdBy.profilePicture" />
     }
     <mat-card-subtitle>
       <a [routerLink]="['/users', comment().createdBy.id]">{{

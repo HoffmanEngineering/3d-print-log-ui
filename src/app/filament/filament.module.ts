@@ -10,10 +10,22 @@ import { CopyFilamentDetailResolverService } from './resolvers/copy-filament-det
 import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
 import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
 import { MaterialResolverService } from './resolvers/material-resolver.service';
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
+import { FilamentPrintsPanelComponent } from './filament-detail/filament-prints-panel/filament-prints-panel.component';
+import { FilamentRemainingCardComponent } from './filament-detail/filament-remaining-card/filament-remaining-card.component';
+import { FilamentImagesPanelComponent } from './filament-detail/filament-images-panel/filament-images-panel.component';
 
 @NgModule({
   declarations: [FilamentDetailComponent, FilamentListContainerComponent],
-  imports: [SharedModule, FilamentRoutingModule, AdsenseModule],
+  imports: [
+    SharedModule,
+    FilamentRoutingModule,
+    AdsenseModule,
+    EmptyStateComponent,
+    FilamentRemainingCardComponent,
+    FilamentPrintsPanelComponent,
+    FilamentImagesPanelComponent,
+  ],
   providers: [
     FilamentListResolverService,
     FilamentDetailResolverService,

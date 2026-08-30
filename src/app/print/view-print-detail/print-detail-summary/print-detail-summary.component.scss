@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+// Hairlines and muted text are explicit rather than inherited currentColor:
+// `border: 1px solid` with no colour picked up the body text colour and made
+// every panel read as a hard black box.
+$hairline-light: rgba(0, 0, 0, 0.12);
+$hairline-dark: rgba(255, 255, 255, 0.18);
+$muted-light: rgba(0, 0, 0, 0.6);
+$muted-dark: rgba(255, 255, 255, 0.7);
+
+.print-title {
+  margin: 0 0 4px;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.byline {
+  margin: 0 0 16px;
+  font-size: 0.875rem;
+  color: $muted-light;
+  // Display names are user-supplied and may be one unbroken token.
+  overflow-wrap: anywhere;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.panel {
+  border: 1px solid $hairline-light;
+  border-radius: 10px;
+  padding: 14px 16px;
+
+  & + .panel {
+    margin-top: 16px;
+  }
+}
+
+.panel-heading {
+  margin: 0 0 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $muted-light;
+}
+
+.glance {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 20px;
+  margin: 0;
+  font-size: 0.9375rem;
+
+  dt {
+    color: $muted-light;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.partial-note {
+  display: block;
+  font-size: 0.75rem;
+  color: $muted-light;
+}
+
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 8px;
+  margin: 16px 0 0;
+  font-size: 0.75rem;
+  color: $muted-light;
+
+  dd {
+    margin: 0;
+  }
+}
+
+.rail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+
+  a,
+  button {
+    min-height: 44px;
+  }
+}
+
+:host-context(html.dark-theme) {
+  .byline,
+  .panel-heading,
+  .glance dt,
+  .partial-note,
+  .legend {
+    color: $muted-dark;
+  }
+
+  .panel {
+    border-color: $hairline-dark;
+  }
+}

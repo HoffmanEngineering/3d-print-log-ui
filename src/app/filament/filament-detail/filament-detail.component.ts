@@ -5,6 +5,9 @@ import {
   HostListener,
   OnDestroy,
   OnInit,
+  computed,
+  signal,
+  viewChild,
 } from '@angular/core';
 import {
   UntypedFormArray,
@@ -38,6 +41,7 @@ import {
   FilamentSummary,
 } from '../../core/services/filament.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
+import { FilamentImagesPanelComponent } from './filament-images-panel/filament-images-panel.component';
 import { MatDialog } from '@angular/material/dialog';
 import { MatChipListboxChange } from '@angular/material/chips';
 import {
@@ -50,8 +54,63 @@ import {
   SpoolWeightCalculatorDialogResult,
 } from '../spool-weight-calculator-dialog/spool-weight-calculator-dialog.component';
 import { resolveSpoolWeightMg } from '../spool-weight-calculator-dialog/spool-weight-adjustment.util';
+import { PrintFilamentSourceMeasurement } from 'src/app/core/services/print.service';
+import {
+  AdjustmentRow,
+  ProjectionResult,
+  projectRemainingMg,
+} from './remaining-projection';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
+
+function gramsToMg(grams: number | null | undefined): number | null {
+  return grams == null ? null : grams * 1000;
+}
+
+/**
+ * Adjustment rows out of the form. Weight rows are converted from the form's
+ * grams to milligrams; length and volume rows are passed through in their own
+ * units, because `projectRemainingMg` converts them itself from the CURRENT
+ * density and diameter rather than trusting the stale derived milligrams.
+ */
+function toFormAdjustmentRows(
+  value: Record<string, unknown> | null
+): AdjustmentRow[] {
+  const rows = (value?.['filamentAdjustments'] ?? []) as {
+    source?: number;
+    amountG?: number | null;
+    lengthInM?: number | null;
+    volumeMl?: number | null;
+  }[];
+
+  return rows.map((row) => ({
+    source:
+      row.source == null
+        ? PrintFilamentSourceMeasurement.Weight
+        : (row.source as PrintFilamentSourceMeasurement),
+    amountMg: row.amountG == null ? null : row.amountG * 1000,
+    lengthInM: row.lengthInM ?? null,
+    volumeMl: row.volumeMl ?? null,
+  }));
+}
+
+/**
+ * The same rows as last saved. Already in milligrams; no gram conversion.
+ *
+ * `FilamentAdjustmentSourceMeasurement` and `PrintFilamentSourceMeasurement`
+ * both number Weight 1, Length 2, Volume 3, which is what makes this cast safe.
+ * They are separate enums: if a future member diverges, map explicitly.
+ */
+function toServerAdjustmentRows(
+  filament: FilamentDetail | null | undefined
+): AdjustmentRow[] {
+  return (filament?.filamentAdjustments ?? []).map((adjustment) => ({
+    source: adjustment.source as unknown as PrintFilamentSourceMeasurement,
+    amountMg: adjustment.amountMg ?? null,
+    lengthInM: adjustment.lengthInM ?? null,
+    volumeMl: adjustment.volumeMl ?? null,
+  }));
+}
 
 @Component({
   selector: 'app-filament-detail',
@@ -64,7 +123,11 @@ export class FilamentDetailComponent
 {
   public filamentForm: UntypedFormGroup;
   public loadedFilament: FilamentDetail | null = null;
+
+  protected readonly imagesPanel = viewChild(FilamentImagesPanelComponent);
   public saving = false;
+  /** See `canDeactivate`: suppresses the guard for app-initiated navigation. */
+  private isSelfNavigating = false;
 
   public materials: Material[] = [];
   public filteredMaterials: Observable<Material[]> = null;
@@ -129,7 +192,29 @@ export class FilamentDetailComponent
 
   @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
-    return !this.filamentForm.dirty;
+    // A navigation this component started itself is never the user abandoning
+    // work, so it must not be second-guessed. Without this, rewriting the URL
+    // after a create prompts "You have unsaved changes" about the very photos
+    // the save is in the middle of uploading.
+    if (this.isSelfNavigating) return true;
+
+    // The form is blind to staged photos, so without the panel a user who has
+    // only picked images would navigate away and silently lose them.
+    return !this.filamentForm.dirty && !this.imagesPanel()?.hasStagedImages();
+  }
+
+  /**
+   * Points the URL at the saved material without prompting. Used only after a
+   * create whose photos failed, where the page stays put for the retry - the
+   * success path leaves for the list instead.
+   */
+  private replaceUrlWithSaved(filamentId: string): void {
+    this.isSelfNavigating = true;
+    this.router
+      .navigate(['/filament', filamentId], { replaceUrl: true })
+      // Restore the guard however the navigation ends, or the rest of this
+      // component's life would silently skip the unsaved-changes check.
+      .finally(() => (this.isSelfNavigating = false));
   }
 
   get filamentAdjustments() {
@@ -143,6 +228,76 @@ export class FilamentDetailComponent
   // Colors with '#' stripped — kept in sync via valueChanges so OnPush children react
   normalizedColors: string[] = [];
   private colorsSubscription: Subscription;
+
+  /**
+   * Mirrors the form value so computed signals can react to edits. Reading a
+   * form's value never marks it dirty, so `PendingChangesGuard` is unaffected.
+   */
+  private readonly formValue = signal<Record<string, unknown> | null>(null);
+  private formValueSubscription: Subscription;
+
+  /** False in add mode (no filament) and copy mode (a clone is not the source spool). */
+  protected readonly showUsagePanels = signal(false);
+
+  /** The user's preferred filament unit, resolved on the route. */
+  protected preferredFilamentUnit = PrintFilamentSourceMeasurement.Weight;
+
+  /**
+   * Public rather than protected: the spec asserts on it directly, and
+   * `protected` would not compile from the test file.
+   */
+  public readonly remainingProjection = computed<ProjectionResult>(() => {
+    const form = this.formValue();
+    const filament = this.loadedFilament;
+
+    return projectRemainingMg({
+      serverRemainingMg: filament?.filamentRemaining ?? null,
+      serverNominalMg: filament?.initialNominalWeightMg ?? null,
+      formNominalMg: gramsToMg(
+        form?.['initialNominalWeightG'] as number | null
+      ),
+      serverAdjustments: toServerAdjustmentRows(filament),
+      formAdjustments: toFormAdjustmentRows(form),
+      serverNominalM: filament?.initialNominalLengthM ?? null,
+      formNominalM: (form?.['initialNominalLengthM'] as number | null) ?? null,
+      serverNominalMl: filament?.initialNominalVolumeMl ?? null,
+      formNominalMl:
+        (form?.['initialNominalVolumeMl'] as number | null) ?? null,
+      source:
+        (form?.['source'] as PrintFilamentSourceMeasurement) ??
+        PrintFilamentSourceMeasurement.Weight,
+      filament: {
+        materialDensityGramPerCubicCm: form?.[
+          'materialDensityGramPerCubicCm'
+        ] as number,
+        diameterMm: form?.['diameterMm'] as number,
+      },
+      serverFilament: {
+        materialDensityGramPerCubicCm: filament?.materialDensityGramPerCubicCm,
+        diameterMm: filament?.diameterMm ?? undefined,
+      },
+    });
+  });
+
+  /**
+   * Scrolls to and focuses the nominal field the spool actually shows. A
+   * length- or volume-sourced spool never renders `initialNominalWeightG`, so
+   * targeting it unconditionally would make the button do nothing there.
+   */
+  protected focusNominalWeight(): void {
+    const controlName =
+      {
+        [FilamentSourceMeasurement.Length]: 'initialNominalLengthM',
+        [FilamentSourceMeasurement.Volume]: 'initialNominalVolumeMl',
+      }[this.filamentForm.get('source')?.value as FilamentSourceMeasurement] ??
+      'initialNominalWeightG';
+
+    const input = this.el.nativeElement.querySelector(
+      `[formcontrolname="${controlName}"]`
+    ) as HTMLInputElement | null;
+    input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    input?.focus();
+  }
 
   ngOnInit() {
     this.titleService.setTitle('Filament Details - 3D Print Log');
@@ -162,6 +317,31 @@ export class FilamentDetailComponent
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
+
+      // `AsRecorded` is 0, so `|| Weight` would silently coerce a valid
+      // preference into the wrong unit. Test for null, not for falsiness.
+      const unitSetting = (
+        data.preferredFilamentDisplayUnitSetting as UserSetting | null
+      )?.value;
+      const parsedUnit = unitSetting == null ? NaN : Number(unitSetting);
+      this.preferredFilamentUnit = Number.isFinite(parsedUnit)
+        ? (parsedUnit as PrintFilamentSourceMeasurement)
+        : PrintFilamentSourceMeasurement.Weight;
+
+      // Copy mode nulls the id (CopyFilamentDetailResolverService), and add
+      // mode has no filament at all, so the id alone rules out both: a clone's
+      // remaining and prints belong to the source spool, not to the copy. This
+      // is the same saved check canShowSpoolCalculator already uses.
+      const filamentId = this.loadedFilament?.id;
+      this.showUsagePanels.set(!!filamentId && filamentId !== EMPTY_GUID);
+
+      this.formValue.set(this.filamentForm.getRawValue());
+      this.formValueSubscription?.unsubscribe();
+      this.formValueSubscription = this.filamentForm.valueChanges.subscribe(
+        () => {
+          this.formValue.set(this.filamentForm.getRawValue());
+        }
+      );
 
       this.normalizedColors = this.computeNormalizedColors();
       this.colorsSubscription = this.colorsFormArray.valueChanges.subscribe(
@@ -321,6 +501,7 @@ export class FilamentDetailComponent
   ngOnDestroy(): void {
     this.materialCategorySubscription?.unsubscribe();
     this.colorsSubscription?.unsubscribe();
+    this.formValueSubscription?.unsubscribe();
   }
 
   private computeNormalizedColors(): string[] {
@@ -411,7 +592,7 @@ export class FilamentDetailComponent
           adjustment.id,
           adjustment.filamentId,
           adjustment.source,
-          adjustment.amountMg / 1000,
+          adjustment.amountMg != null ? adjustment.amountMg / 1000 : null,
           adjustment.lengthInM,
           adjustment.volumeMl,
           adjustment.notes
@@ -517,7 +698,7 @@ export class FilamentDetailComponent
         EMPTY_GUID,
         this.filamentForm.get('id')?.value ?? EMPTY_GUID,
         FilamentAdjustmentSourceMeasurement.Weight,
-        0,
+        null,
         null,
         null,
         ''
@@ -677,6 +858,7 @@ export class FilamentDetailComponent
     const newFilament: FilamentDetail = this.getFilamentFromForm();
 
     let saveFilament: Observable<FilamentDetail>;
+    const wasNew = newFilament.id === null;
 
     if (newFilament.id === null) {
       saveFilament = this.filamentService.addFilament(newFilament);
@@ -688,8 +870,39 @@ export class FilamentDetailComponent
       (filament) => {
         this.filamentForm.markAsPristine();
 
-        this.router.navigateByUrl('/filament').then(() => {
-          this.toastr.success('Save successful!');
+        // The record is no longer new. Write the ID back BEFORE any upload, so a
+        // retry is an update and never a second POST.
+        if (wasNew && filament.id) {
+          this.filamentForm.get('id')?.setValue(filament.id);
+        }
+
+        const panel = this.imagesPanel();
+        if (!panel?.hasStagedImages() || !filament.id) {
+          this.finishSave();
+          return;
+        }
+
+        const filamentId = filament.id;
+
+        panel.uploadStagedImages(filamentId).subscribe(({ failed }) => {
+          // Clear `saving` either way, or the retry button stays disabled
+          // forever.
+          this.saving = false;
+
+          if (failed.length === 0) {
+            this.finishSave();
+            return;
+          }
+
+          // Stay put: the material is saved, and the user needs a surface on
+          // which to retry the photos. Navigating away would discard that
+          // chance. Only now is the URL rewritten, so a reload lands on the
+          // saved material rather than back on `new`.
+          if (wasNew) this.replaceUrlWithSaved(filamentId);
+
+          this.toastr.warning(
+            `Material saved, but ${failed.length} image(s) failed to upload. You can retry them below.`
+          );
         });
       },
       (err) => {
@@ -698,18 +911,50 @@ export class FilamentDetailComponent
     );
   }
 
+  private finishSave(): void {
+    this.saving = false;
+    this.router.navigateByUrl('/filament').then(() => {
+      this.toastr.success('Save successful!');
+    });
+  }
+
   handleClose() {
     this.location.back();
+  }
+
+  private isBlank(value: unknown): boolean {
+    if (value === null || value === undefined) {
+      return true;
+    }
+    // Whitespace-only text is empty; without trimming, +'   ' coerces to 0
+    // and reintroduces the zero-vs-null bug on the unvalidated length/volume
+    // inputs.
+    if (typeof value === 'string') {
+      return value.trim() === '';
+    }
+    return false;
+  }
+
+  // null when blank, non-numeric, or non-finite; otherwise
+  // Math.round(value * multiplier). Number.isFinite rejects NaN AND Infinity,
+  // which would otherwise round to Infinity and serialize to null over the wire.
+  private toNullableRounded(value: unknown, multiplier = 1): number | null {
+    if (this.isBlank(value)) {
+      return null;
+    }
+    const n = +(value as number);
+    return Number.isFinite(n) ? Math.round(n * multiplier) : null;
   }
 
   private getFilamentFromForm(): FilamentDetail {
     const adjustments = this.filamentAdjustments.controls
       .filter((adjustment) => {
         return (
-          adjustment.get('amountG').value !== 0 ||
-          adjustment.get('lengthInM').value !== 0 ||
-          adjustment.get('volumeMl').value !== 0 ||
-          adjustment.get('notes').value !== ''
+          this.toNullableRounded(adjustment.get('amountG').value, 1000) !==
+            null ||
+          this.toNullableRounded(adjustment.get('lengthInM').value) !== null ||
+          this.toNullableRounded(adjustment.get('volumeMl').value) !== null ||
+          !this.isBlank(adjustment.get('notes').value)
         );
       })
       .map((adjustment) => {
@@ -717,18 +962,12 @@ export class FilamentDetailComponent
           id: adjustment.get('id')?.value ?? EMPTY_GUID,
           filamentId: adjustment.get('filamentId')?.value ?? EMPTY_GUID,
           source: adjustment.get('source').value,
-          amountMg:
-            +adjustment.get('amountG').value !== null
-              ? Math.round(+adjustment.get('amountG').value * 1000)
-              : null,
-          lengthInM:
-            +adjustment.get('lengthInM').value !== null
-              ? Math.round(+adjustment.get('lengthInM').value)
-              : null,
-          volumeMl:
-            +adjustment.get('volumeMl').value !== null
-              ? Math.round(+adjustment.get('volumeMl').value)
-              : null,
+          amountMg: this.toNullableRounded(
+            adjustment.get('amountG').value,
+            1000
+          ),
+          lengthInM: this.toNullableRounded(adjustment.get('lengthInM').value),
+          volumeMl: this.toNullableRounded(adjustment.get('volumeMl').value),
           notes: adjustment.get('notes').value,
         };
 
@@ -745,26 +984,19 @@ export class FilamentDetailComponent
       diameterMm: this.filamentForm.controls.diameterMm.value,
       displayName: this.filamentForm.controls.displayName.value,
       source: this.filamentForm.controls.source.value,
-      initialNominalWeightMg: !isNaN(
-        +this.filamentForm.controls.initialNominalWeightG.value
-      )
-        ? Math.round(
-            +this.filamentForm.controls.initialNominalWeightG.value * 1000
-          )
-        : null,
+      initialNominalWeightMg: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalWeightG.value,
+        1000
+      ),
       initialTotalWeightMg: Math.round(
         this.filamentForm.controls.initialTotalWeightG.value * 1000
       ),
-      initialNominalLengthM: !isNaN(
-        +this.filamentForm.controls.initialNominalLengthM.value
-      )
-        ? Math.round(+this.filamentForm.controls.initialNominalLengthM.value)
-        : null,
-      initialNominalVolumeMl: !isNaN(
-        +this.filamentForm.controls.initialNominalVolumeMl.value
-      )
-        ? Math.round(+this.filamentForm.controls.initialNominalVolumeMl.value)
-        : null,
+      initialNominalLengthM: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalLengthM.value
+      ),
+      initialNominalVolumeMl: this.toNullableRounded(
+        this.filamentForm.controls.initialNominalVolumeMl.value
+      ),
       materialDensityGramPerCubicCm:
         this.filamentForm.controls.materialDensityGramPerCubicCm.value,
       materialType: this.filamentForm.controls.materialType.value,
@@ -855,7 +1087,7 @@ export class FilamentDetailComponent
     if (this.defaultFilamentPriceSetting) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultFilamentDiameterMmSetting.id,
+          this.defaultFilamentPriceSetting.id,
           newPrice.toString()
         )
         .subscribe((setting) => {

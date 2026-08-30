@@ -1,0 +1,19 @@
+// Documentation page views, most and least read.
+// referrerKind describes how the FIRST docs page of a visit was reached; later
+// in-session navigations are reported as "internal" by design.
+// Bottom rows are candidates for merging or deletion; top rows are where
+// visual and structural investment pays back most.
+customEvents
+| where name == "Docs_PageView"
+| where timestamp > ago(30d)
+| extend slug = tostring(customDimensions.slug),
+         referrerKind = tostring(customDimensions.referrerKind)
+// "internal" covers any same-site referrer, which includes doc-to-doc reading —
+// it is not "arrived from the app", so the column is named for what it measures.
+| summarize views = count(),
+            readers = dcount(user_Id),
+            fromSearch = countif(referrerKind == "search"),
+            fromInternal = countif(referrerKind == "internal")
+        by slug
+| extend searchShare = round(100.0 * fromSearch / views, 1)
+| order by views desc

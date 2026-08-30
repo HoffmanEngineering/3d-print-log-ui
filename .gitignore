@@ -61,8 +61,13 @@ cypress/screenshots/
 cypress/videos/
 cypress/downloads/
 
-# Internal planning and design docs — keep local, not for the public repo
-/docs/
+# Internal planning and design docs — keep local, not for the public repo.
+# Ignore the contents rather than the directory itself, so specific subtrees can
+# be re-included below (git cannot re-include a file under an excluded directory).
+/docs/*
+# Analytics queries are operational, not planning docs — these ship with the repo
+# so the monthly telemetry review is reproducible by anyone with portal access.
+!/docs/analytics/
 
 # Git worktrees
 .worktrees/
@@ -80,3 +85,15 @@ src/environments/environment.staging.ts
 src/environments/environment.auth0-dev.ts
 
 .sitemap-smoke/
+
+# Cypress artifacts from failed runs
+cypress/screenshots/
+cypress/videos/
+
+# Generated /docs Angular sources and data artifacts — run `npm run docs:generate`.
+# Authored content lives in src/content/docs/*.md.
+/src/app/documentation/generated/
+
+# Dev-server logs from `npm start > ng-serve.log`.
+/ng-serve.log
+/ng-serve.err.log

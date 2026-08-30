@@ -4,16 +4,20 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import {
+  HTTP_INTERCEPTORS,
+  HttpClient,
   provideHttpClient,
   withInterceptorsFromDi,
 } from '@angular/common/http';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, throwError } from 'rxjs';
 import {
   UserSettingService,
   UserSettingType,
   UserSettingDto,
 } from './user-setting.service';
 import { environment } from 'src/environments/environment';
+import { AuthService } from './auth.service';
+import { AuthInterceptorService } from '../http/auth-interceptor.service';
 
 const apiUrl = `${environment.printLogApiUrl}/api/Users/me/user-settings`;
 
@@ -97,6 +101,44 @@ describe('UserSettingService', () => {
       // Second call — no HTTP request should be made
       await service.getCurrentUsersSettingByType(UserSettingType.Currency_Name);
       httpTesting.expectNone(apiUrl);
+    });
+
+    it('rejects (does not swallow) when the fetch fails with an HttpErrorResponse', async () => {
+      const promise = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      httpTesting
+        .expectOne(apiUrl)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
+
+      await expectAsync(promise).toBeRejected();
+    });
+
+    it('rejects (does not swallow) a response-mapping/programming error', async () => {
+      const promise = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      // A null body makes `for (const dto of dtos)` throw inside the map — this
+      // is not the anonymous auth error and must not be swallowed as empty.
+      httpTesting.expectOne(apiUrl).flush(null);
+
+      await expectAsync(promise).toBeRejected();
+    });
+
+    it('does not cache an HttpErrorResponse failure (next call refetches)', async () => {
+      const first = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      httpTesting
+        .expectOne(apiUrl)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
+      await expectAsync(first).toBeRejected();
+
+      const second = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      httpTesting.expectOne(apiUrl).flush([]); // a second request IS made
+      await second;
     });
 
     it('deduplicates concurrent cache-miss requests into a single HTTP call', async () => {
@@ -249,5 +291,141 @@ describe('UserSettingService', () => {
       expect(resultA!.value).toBe('EUR');
       expect(resultB!.value).toBe('$');
     });
+  });
+
+  describe('addOrUpdateSetting', () => {
+    /** Lets queued microtasks run so a pending HTTP request has actually been issued. */
+    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('PUTs when a row already exists', async () => {
+      const existing = makeDto({
+        id: 99,
+        userSettingTypeId: UserSettingType.Push_PrintFailed,
+        value: 'true',
+      });
+
+      // Prime the cache through the public path, so the test exercises the same
+      // existence check the caller relies on rather than a hand-set private field.
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Push_PrintFailed
+      );
+      httpTesting.expectOne(apiUrl).flush([existing]);
+      await primed;
+
+      const promise = service.addOrUpdateSetting(
+        UserSettingType.Push_PrintFailed,
+        'false'
+      );
+      // addOrUpdateSetting resolves the existence check before issuing the write, so the
+      // request does not exist yet on the same tick.
+      await tick();
+
+      const req = httpTesting.expectOne(apiUrl);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ id: 99, value: 'false' });
+      req.flush({ ...existing, value: 'false' });
+      await promise;
+    });
+
+    it('POSTs when no row exists', async () => {
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Push_PrintCompleted
+      );
+      httpTesting.expectOne(apiUrl).flush([]);
+      await primed;
+
+      const promise = service.addOrUpdateSetting(
+        UserSettingType.Push_PrintCompleted,
+        'false'
+      );
+      await tick();
+
+      const req = httpTesting.expectOne(apiUrl);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        userSettingTypeId: UserSettingType.Push_PrintCompleted,
+        value: 'false',
+      });
+      req.flush(
+        makeDto({
+          id: 1,
+          userSettingTypeId: UserSettingType.Push_PrintCompleted,
+          value: 'false',
+        })
+      );
+      await promise;
+    });
+  });
+});
+
+describe('UserSettingService — anonymous visitor (mocked HttpClient)', () => {
+  let service: UserSettingService;
+  let mockHttp: jasmine.SpyObj<HttpClient>;
+
+  beforeEach(() => {
+    mockHttp = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
+    mockHttp.get.and.returnValue(
+      throwError(() => ({ error: 'missing_refresh_token' }))
+    );
+
+    TestBed.configureTestingModule({
+      providers: [{ provide: HttpClient, useValue: mockHttp }],
+    });
+    service = TestBed.inject(UserSettingService);
+  });
+
+  it('resolves to null when the request fails before dispatch', async () => {
+    const result = await service.getCurrentUsersSettingByType(
+      UserSettingType.Currency_Symbol
+    );
+    expect(result).toBeNull();
+  });
+
+  it('does not cache the anonymous fallback (next call refetches)', async () => {
+    await service.getCurrentUsersSettingByType(UserSettingType.Currency_Symbol);
+    await service.getCurrentUsersSettingByType(UserSettingType.Currency_Symbol);
+    expect(mockHttp.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('UserSettingService — anonymous through the real interceptor', () => {
+  let service: UserSettingService;
+  let httpTesting: HttpTestingController;
+
+  beforeEach(() => {
+    (environment as any).devAuthBypass = false;
+    const mockAuth = jasmine.createSpyObj<AuthService>('AuthService', [
+      'getTokenSilently$',
+    ]);
+    mockAuth.getTokenSilently$.and.returnValue(
+      throwError(() => ({ error: 'missing_refresh_token' }))
+    );
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting(),
+        {
+          provide: HTTP_INTERCEPTORS,
+          useClass: AuthInterceptorService,
+          multi: true,
+        },
+        { provide: AuthService, useValue: mockAuth },
+      ],
+    });
+    service = TestBed.inject(UserSettingService);
+    httpTesting = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
+  });
+
+  it('returns null and never dispatches the settings request', async () => {
+    const result = await service.getCurrentUsersSettingByType(
+      UserSettingType.Currency_Symbol
+    );
+    expect(result).toBeNull();
+    httpTesting.expectNone(apiUrl);
   });
 });

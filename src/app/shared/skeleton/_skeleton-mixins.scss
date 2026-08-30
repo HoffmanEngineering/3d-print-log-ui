@@ -1,0 +1,35 @@
+// The one definition of what a loading placeholder looks like. Include this
+// rather than re-writing the gradient; the tokens and the `app-skeleton-shimmer`
+// keyframes live in the global `skeleton-theme.scss`.
+//
+// Use the mixin when an element that already exists should *become* a
+// placeholder (a chart's plot box, a stat tile's value line). Use the
+// `<app-skeleton>` component when the placeholder is markup you are adding.
+@mixin skeleton-surface($radius: 4px) {
+  border-radius: $radius;
+  background: linear-gradient(
+    90deg,
+    var(--app-skeleton-base) 25%,
+    var(--app-skeleton-sheen) 50%,
+    var(--app-skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  // Two animations: the sweep, and the deferred reveal that keeps a fast
+  // response from flashing grey boxes. See `--app-skeleton-reveal-delay` in
+  // skeleton-theme.scss, including how to opt out.
+  animation:
+    app-skeleton-shimmer 1.2s infinite linear,
+    app-skeleton-reveal var(--app-skeleton-reveal-duration, 150ms) linear
+      var(--app-skeleton-reveal-delay, 200ms) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    // The reveal survives: it is a fade, not travel, and dropping it would put
+    // the flash straight back for exactly the users least able to tolerate it.
+    // Only the sweep goes.
+    animation: app-skeleton-reveal var(--app-skeleton-reveal-duration, 150ms)
+      linear var(--app-skeleton-reveal-delay, 200ms) both;
+    // Without the sweep the tri-stop gradient reads as a stripe, so fall back
+    // to the flat base color.
+    background: var(--app-skeleton-base);
+  }
+}

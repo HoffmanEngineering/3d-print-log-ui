@@ -1,0 +1,197 @@
+// The docs reading surface.
+//
+// Global rather than component-scoped because the doc pages are generated
+// templates full of plain `<h3>`, `<p>` and `<table>` — there is nothing to
+// hang a class on, and adding one to every emitted element would put styling
+// decisions in the Markdown renderer.
+//
+// A page that is not prose can opt out: component styles win on specificity, so
+// `src/content/docs/<slug>.scss` overriding `.docs-markdown` beats everything
+// here. `docs-getting-started` already does exactly that to run full width.
+
+.docs-markdown {
+  min-height: 70vh;
+  // The measure. Somewhere near 70 characters a line is long enough to carry a
+  // clause and short enough that the eye finds the start of the next one.
+  max-width: var(--docs-measure);
+  margin-inline: auto;
+  color: var(--docs-text);
+}
+
+/**
+ * Anchored headings have to clear the two fixed bars above them: the app navbar
+ * and the Documentation toolbar. Without this, every deep link — a search
+ * result, a cross-page `#anchor`, a bookmark, a table of contents entry —
+ * scrolls the heading to y=0, which is behind that chrome, so the reader lands
+ * on the paragraph after the thing they asked for.
+ */
+.docs-markdown :is(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: 8rem;
+}
+
+/**
+ * The heading scale.
+ *
+ * Ratios, not a list of sizes someone has to keep consistent by hand: 1.25 per
+ * step down from the page title. The reference pages nest three levels deep, so
+ * the steps have to stay distinguishable that far — h4 is separated by weight
+ * and letter-spacing rather than by size alone, because a fourth 1.25 step
+ * would land it under the body text.
+ */
+.docs-markdown h1,
+.docs-markdown h2 {
+  margin: 0 0 16px;
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.docs-markdown h3 {
+  // The space above a section is much larger than the space below it, so the
+  // heading reads as belonging to what follows rather than floating between.
+  margin: 48px 0 12px;
+  font-size: 25px;
+  line-height: 32px;
+  font-weight: 500;
+}
+
+.docs-markdown h4 {
+  margin: 32px 0 8px;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
+}
+
+.docs-markdown h5,
+.docs-markdown h6 {
+  margin: 24px 0 8px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--docs-text-muted);
+}
+
+.docs-markdown ol,
+.docs-markdown p,
+.docs-markdown ul {
+  font-size: 16px;
+  line-height: 28px;
+}
+
+.docs-markdown p {
+  margin: 0 0 16px;
+}
+
+.docs-markdown ol,
+.docs-markdown ul {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.docs-markdown li {
+  margin-bottom: 8px;
+}
+
+.docs-markdown li > ol,
+.docs-markdown li > ul {
+  margin: 8px 0 0;
+}
+
+.docs-markdown a {
+  color: var(--docs-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/**
+ * A rule between sections, not a divider slammed against the heading below it.
+ * Most doc sources separate every section with `---`, so this sets the rhythm
+ * of the whole page.
+ */
+.docs-markdown hr {
+  margin: 40px 0;
+  border: 0;
+  border-top: 1px solid var(--docs-rule);
+}
+
+.docs-markdown blockquote {
+  margin: 24px 0;
+  padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--docs-rule);
+  color: var(--docs-text-muted);
+}
+
+.docs-markdown code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--docs-surface);
+  color: var(--docs-code-text);
+  font-family: 'Roboto Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.docs-markdown pre {
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--docs-surface);
+  // A shell command or a config block is authored with the line breaks that
+  // make it readable; wrapping it would move them.
+  overflow-x: auto;
+}
+
+.docs-markdown pre code {
+  padding: 0;
+  background: none;
+  color: var(--docs-text);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+/**
+ * Tables scroll inside their own box. The measure is narrower than a four-column
+ * settings table wants to be, and a table that widens the page puts a horizontal
+ * scrollbar under every paragraph on it.
+ */
+.docs-markdown table {
+  display: block;
+  width: 100%;
+  margin: 0 0 16px;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.docs-markdown th,
+.docs-markdown td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--docs-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.docs-markdown thead th {
+  background: var(--docs-surface);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.docs-markdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+.docs-markdown figure {
+  margin: 24px 0;
+}
+
+.docs-markdown figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--docs-text-muted);
+}

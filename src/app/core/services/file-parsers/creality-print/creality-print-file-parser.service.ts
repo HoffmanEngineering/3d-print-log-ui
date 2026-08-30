@@ -84,13 +84,13 @@ export class CrealityPrintFileParserService implements GcodeNewPrintParser {
     ];
   }
 
-  estimateFilamentUsageInMg(gcode: string): number {
+  estimateFilamentUsageInMg(gcode: string): number | undefined {
     // Check to see if the user setup their filament densities, thus we can directly return filament usage.
     const filamentUsedInGrams = this.parseSettingAsNumber(
       gcode,
       ';Filament used:'
     );
-    if (filamentUsedInGrams > 0) {
+    if (filamentUsedInGrams !== undefined && filamentUsedInGrams > 0) {
       return filamentUsedInGrams * 1000;
     }
 
@@ -100,7 +100,7 @@ export class CrealityPrintFileParserService implements GcodeNewPrintParser {
       gcode,
       '; filament_diameter'
     ).split(',')?.[0];
-    if (isNaN(filamentDiameter)) {
+    if (!Number.isFinite(filamentDiameter) || filamentDiameter <= 0) {
       return undefined;
     }
     const filamentUsageLengthInMM = +this.parseSettingAsString(
@@ -108,7 +108,10 @@ export class CrealityPrintFileParserService implements GcodeNewPrintParser {
       '; filament used \\[mm\\]'
     );
 
-    if (isNaN(filamentUsageLengthInMM)) {
+    if (
+      !Number.isFinite(filamentUsageLengthInMM) ||
+      filamentUsageLengthInMM <= 0
+    ) {
       return undefined;
     }
 
@@ -131,6 +134,11 @@ export class CrealityPrintFileParserService implements GcodeNewPrintParser {
         filamentDiameter
       );
     }
+
+    // Only PLA, ABS and PETG are handled above, so anything else is unknown
+    // rather than zero. Note MaterialDensities also declares Nylon, which this
+    // chain never reaches -- see #100.
+    return undefined;
   }
 
   private calculateWeightInMg(

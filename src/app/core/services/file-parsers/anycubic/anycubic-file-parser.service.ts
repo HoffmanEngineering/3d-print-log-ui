@@ -84,13 +84,13 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
     return filament;
   }
 
-  estimateFilamentUsageInMg(gcode: string): number {
+  estimateFilamentUsageInMg(gcode: string): number | undefined {
     // Check to see if the user setup their filament densities, thus we can directly return filament usage.
     const filamentUsedInGrams = this.parseSettingAsNumber(
       gcode,
       '; filament used \\[g\\]'
     );
-    if (filamentUsedInGrams > 0) {
+    if (filamentUsedInGrams !== undefined && filamentUsedInGrams > 0) {
       return filamentUsedInGrams * 1000;
     }
 
@@ -100,7 +100,7 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
       gcode,
       '; filament_diameter'
     ).split(',')?.[0];
-    if (isNaN(filamentDiameter)) {
+    if (!Number.isFinite(filamentDiameter) || filamentDiameter <= 0) {
       return undefined;
     }
     const filamentUsageLengthInMM = +this.parseSettingAsString(
@@ -108,7 +108,10 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
       '; filament used \\[mm\\]'
     );
 
-    if (isNaN(filamentUsageLengthInMM)) {
+    if (
+      !Number.isFinite(filamentUsageLengthInMM) ||
+      filamentUsageLengthInMM <= 0
+    ) {
       return undefined;
     }
 
@@ -131,6 +134,11 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
         filamentDiameter
       );
     }
+
+    // Only PLA, ABS and PETG are handled above, so anything else is unknown
+    // rather than zero. Note MaterialDensities also declares Nylon, which this
+    // chain never reaches -- see #100.
+    return undefined;
   }
 
   private calculateWeightInMg(
@@ -382,6 +390,9 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
       return null;
     }
     const durationAsMs = parse(input);
+    if (durationAsMs == null) {
+      return null;
+    }
     const durationAsSeconds = durationAsMs / 1000;
     return Math.floor(durationAsSeconds);
   }

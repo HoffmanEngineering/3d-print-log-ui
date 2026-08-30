@@ -1,0 +1,115 @@
+{
+  "$comment": "Golden corpus shared verbatim by PrintCostCalculatorTests (C#) and print-cost-fixtures.spec.ts (Jasmine). Keep both repos' copies byte-identical; drift is a failing test in both.",
+  "inputs": {
+    "userCurrency": "USD",
+    "defaultFilamentPrice": "20.00",
+    "kwhRate": "0.15",
+    "defaultWattageW": "120"
+  },
+  "filamentCases": [
+    {
+      "name": "weight-sourced actual",
+      "rows": [{
+        "purchasePriceValue": "25.00", "purchasePriceCurrency": "USD",
+        "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+        "sourceMeasurement": 1, "amountMg": 50000, "lengthInM": null, "volumeMl": null,
+        "estimatedSourceMeasurement": 1, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+      }],
+      "expectedAmount": 1.25, "expectedUsedDefaultPrice": false, "expectedExclusions": []
+    },
+    {
+      "name": "falls back to the estimate when no actual is recorded",
+      "rows": [{
+        "purchasePriceValue": "25.00", "purchasePriceCurrency": "USD",
+        "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+        "sourceMeasurement": 1, "amountMg": 0, "lengthInM": null, "volumeMl": null,
+        "estimatedSourceMeasurement": 1, "estimatedAmountMg": 40000, "estimatedLengthInM": null, "estimatedVolumeMl": null
+      }],
+      "expectedAmount": 1.00, "expectedUsedDefaultPrice": false, "expectedExclusions": ["MaterialEstimated"]
+    },
+    {
+      "name": "length-sourced row converts via density and diameter",
+      "rows": [{
+        "purchasePriceValue": "25.00", "purchasePriceCurrency": "USD",
+        "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+        "sourceMeasurement": 2, "amountMg": null, "lengthInM": 10.0, "volumeMl": null,
+        "estimatedSourceMeasurement": 2, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+      }],
+      "expectedAmount": 0.75, "expectedUsedDefaultPrice": false, "expectedExclusions": []
+    },
+    {
+      "name": "volume-sourced row converts via density",
+      "rows": [{
+        "purchasePriceValue": "25.00", "purchasePriceCurrency": "USD",
+        "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+        "sourceMeasurement": 3, "amountMg": null, "lengthInM": null, "volumeMl": 20.0,
+        "estimatedSourceMeasurement": 3, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+      }],
+      "expectedAmount": 0.62, "expectedUsedDefaultPrice": false, "expectedExclusions": []
+    },
+    {
+      "name": "no spool price falls back to the user default",
+      "rows": [{
+        "purchasePriceValue": null, "purchasePriceCurrency": "USD",
+        "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+        "sourceMeasurement": 1, "amountMg": 50000, "lengthInM": null, "volumeMl": null,
+        "estimatedSourceMeasurement": 1, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+      }],
+      "expectedAmount": 1.00, "expectedUsedDefaultPrice": true, "expectedExclusions": []
+    },
+    {
+      "name": "currency mismatch excludes the row",
+      "rows": [{
+        "purchasePriceValue": "25.00", "purchasePriceCurrency": "EUR",
+        "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+        "sourceMeasurement": 1, "amountMg": 50000, "lengthInM": null, "volumeMl": null,
+        "estimatedSourceMeasurement": 1, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+      }],
+      "expectedAmount": null, "expectedUsedDefaultPrice": false, "expectedExclusions": ["CurrencyMismatch"]
+    },
+    {
+      "name": "missing initial weight cannot yield a price per gram",
+      "rows": [{
+        "purchasePriceValue": "25.00", "purchasePriceCurrency": "USD",
+        "initialNominalWeightMg": null, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+        "sourceMeasurement": 1, "amountMg": 50000, "lengthInM": null, "volumeMl": null,
+        "estimatedSourceMeasurement": 1, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+      }],
+      "expectedAmount": null, "expectedUsedDefaultPrice": false, "expectedExclusions": ["PriceMissing"]
+    },
+    {
+      "name": "unparseable price is excluded, not treated as zero",
+      "rows": [{
+        "purchasePriceValue": "twenty five", "purchasePriceCurrency": "USD",
+        "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+        "sourceMeasurement": 1, "amountMg": 50000, "lengthInM": null, "volumeMl": null,
+        "estimatedSourceMeasurement": 1, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+      }],
+      "expectedAmount": null, "expectedUsedDefaultPrice": false, "expectedExclusions": ["PriceMissing"]
+    },
+    {
+      "name": "multi-material print sums its rows",
+      "rows": [
+        {
+          "purchasePriceValue": "25.00", "purchasePriceCurrency": "USD",
+          "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+          "sourceMeasurement": 1, "amountMg": 50000, "lengthInM": null, "volumeMl": null,
+          "estimatedSourceMeasurement": 1, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+        },
+        {
+          "purchasePriceValue": "30.00", "purchasePriceCurrency": "USD",
+          "initialNominalWeightMg": 1000000, "materialDensityGramPerCubicCm": 1.24, "diameterMm": 1.75,
+          "sourceMeasurement": 1, "amountMg": 10000, "lengthInM": null, "volumeMl": null,
+          "estimatedSourceMeasurement": 1, "estimatedAmountMg": null, "estimatedLengthInM": null, "estimatedVolumeMl": null
+        }
+      ],
+      "expectedAmount": 1.55, "expectedUsedDefaultPrice": false, "expectedExclusions": []
+    }
+  ],
+  "electricityCases": [
+    { "name": "two hours at 120 W and 0.15/kWh", "durationSeconds": 7200, "printerWattageW": 120, "expectedAmount": 0.04, "expectedExclusions": [] },
+    { "name": "printer wattage falls back to the user default", "durationSeconds": 7200, "printerWattageW": null, "expectedAmount": 0.04, "expectedExclusions": [] },
+    { "$comment": "Zero or negative duration means NOT RECORDED, not 'this print took no time', so the cost is unknown rather than 0.00. Reporting 0.00 would show a confident $0.00 of electricity on every print whose duration was never captured.",
+      "name": "unrecorded duration yields no electricity cost", "durationSeconds": 0, "printerWattageW": 120, "expectedAmount": null, "expectedExclusions": [] }
+  ]
+}

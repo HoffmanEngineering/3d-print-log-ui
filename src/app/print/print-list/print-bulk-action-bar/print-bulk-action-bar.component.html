@@ -1,0 +1,291 @@
+<!-- The outer strip is always in the DOM and keeps a constant height, so selecting
+     a print reveals the controls in place instead of pushing the table down. -->
+<div class="bulk-bar">
+  @if (bulkActions.hasSelection() || bulkActions.isRunning()) {
+    <div
+      class="bulk-bar__content"
+      role="region"
+      aria-label="Bulk actions for selected prints"
+      data-cy-bulk-action-bar
+    >
+      <!-- The chip only has room for the count; that the selection spans pages is
+           spelled out for screen readers and in the tooltip. -->
+      <span
+        class="bulk-bar__chip"
+        matTooltip="Selected prints stay selected as you page and filter"
+        data-cy-bulk-selection-count
+      >
+        @if (bulkActions.isRunning()) {
+          <span>{{ bulkActions.progressLabel() }}</span>
+        } @else {
+          <span class="visually-hidden"
+            >{{ bulkActions.selectedCount() }} prints selected across all
+            pages</span
+          >
+          <span aria-hidden="true"
+            >{{ bulkActions.selectedCount() }} selected</span
+          >
+        }
+      </span>
+
+      <!-- One trigger rather than a row of them. Every action the bar offers now
+           lives behind it, which is what keeps the strip one row tall and keeps
+           Clear on screen no matter how many actions get added later. The count
+           rides on the trigger AND on the menu header, so "this affects N prints"
+           is visible both before the menu opens and while the choice is made. -->
+      <button
+        mat-stroked-button
+        type="button"
+        [matMenuTriggerFor]="bulkActionsMenu"
+        [disabled]="bulkActions.isRunning() || !bulkActions.hasSelection()"
+        attr.aria-label="Actions for {{
+          bulkActions.selectedCount()
+        }} selected {{
+          bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+        }}"
+        data-cy-bulk-actions
+      >
+        <mat-icon>checklist</mat-icon>
+        Actions ({{ bulkActions.selectedCount() }})
+      </button>
+      <mat-menu #bulkActionsMenu="matMenu">
+        <div class="bulk-menu__header" aria-hidden="true">
+          {{ bulkActions.selectedCount() }} selected
+        </div>
+        @if (pagePrints().length > 0) {
+          <button
+            type="button"
+            mat-menu-item
+            (click)="selectAllOnPage()"
+            attr.aria-label="Select all {{ pagePrints().length }} {{
+              pagePrints().length === 1 ? 'print' : 'prints'
+            }} on this page"
+            data-cy-bulk-select-all-page
+          >
+            <mat-icon>select_all</mat-icon>Select all on this page
+          </button>
+          <mat-divider />
+        }
+        <button
+          type="button"
+          mat-menu-item
+          [matMenuTriggerFor]="bulkStatusMenu"
+          attr.aria-label="Set status of {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+          data-cy-bulk-set-status
+        >
+          <mat-icon>flag</mat-icon>Set status
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          (click)="addToProject()"
+          attr.aria-label="Add {{ bulkActions.selectedCount() }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }} to a project"
+          data-cy-bulk-add-to-project
+        >
+          <mat-icon>folder</mat-icon>Add to project
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          [matMenuTriggerFor]="bulkVisibilityMenu"
+          attr.aria-label="Set visibility of {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+        >
+          <mat-icon>visibility</mat-icon>Visibility
+        </button>
+        @if (printers().length > 0) {
+          <button
+            type="button"
+            mat-menu-item
+            [matMenuTriggerFor]="bulkPrinterMenu"
+            attr.aria-label="Reassign {{
+              bulkActions.selectedCount()
+            }} selected {{
+              bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+            }} to another printer"
+          >
+            <mat-icon>print</mat-icon>Printer
+          </button>
+        }
+        <button
+          type="button"
+          mat-menu-item
+          [matMenuTriggerFor]="bulkPermissionsMenu"
+          attr.aria-label="Set permissions on {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+        >
+          <mat-icon>tune</mat-icon>Permissions
+        </button>
+        <mat-divider />
+        <button
+          type="button"
+          mat-menu-item
+          class="bulk-menu__danger"
+          (click)="deleteSelected()"
+          attr.aria-label="Delete {{ bulkActions.selectedCount() }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+          data-cy-bulk-delete
+        >
+          <mat-icon>delete</mat-icon>Delete
+        </button>
+      </mat-menu>
+
+      <mat-menu #bulkStatusMenu="matMenu">
+        @for (option of statusOptions; track option.status) {
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="{{ option.label }} - set the status of {{
+              bulkActions.selectedCount()
+            }} selected {{
+              bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+            }}"
+            attr.data-cy-bulk-status="{{ option.label }}"
+            (click)="setStatus(option)"
+          >
+            <mat-icon>{{ option.icon }}</mat-icon
+            >{{ option.label }}
+          </button>
+        }
+      </mat-menu>
+
+      <mat-menu #bulkVisibilityMenu="matMenu">
+        @for (option of visibilityOptions; track option.viewStatus) {
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="{{ option.label }} - set the visibility of {{
+              bulkActions.selectedCount()
+            }} selected {{
+              bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+            }}"
+            attr.data-cy-bulk-visibility="{{ option.label }}"
+            (click)="setVisibility(option)"
+          >
+            <mat-icon>{{ option.icon }}</mat-icon
+            >{{ option.label }}
+          </button>
+        }
+      </mat-menu>
+
+      <mat-menu #bulkPrinterMenu="matMenu">
+        @for (printer of printers(); track printer.id) {
+          <button
+            type="button"
+            mat-menu-item
+            attr.aria-label="{{ printer.name }} - reassign {{
+              bulkActions.selectedCount()
+            }} selected {{
+              bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+            }} to this printer"
+            attr.data-cy-bulk-printer="{{ printer.name }}"
+            (click)="setPrinter(printer)"
+          >
+            <mat-icon>print</mat-icon>{{ printer.name }}
+          </button>
+        }
+      </mat-menu>
+
+      <mat-menu #bulkPermissionsMenu="matMenu">
+        <button
+          type="button"
+          mat-menu-item
+          (click)="setPermission({ allowComments: true })"
+          attr.aria-label="Allow comments on {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+          data-cy-bulk-permission="allow-comments"
+        >
+          <mat-icon>chat</mat-icon>Allow comments
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          (click)="setPermission({ allowComments: false })"
+          attr.aria-label="Do not allow comments on {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+          data-cy-bulk-permission="disallow-comments"
+        >
+          <mat-icon>chat_bubble_outline</mat-icon>Don't allow comments
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          (click)="setPermission({ allowFileDownloads: true })"
+          attr.aria-label="Allow file downloads on {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+          data-cy-bulk-permission="allow-downloads"
+        >
+          <mat-icon>download</mat-icon>Allow file downloads
+        </button>
+        <button
+          type="button"
+          mat-menu-item
+          (click)="setPermission({ allowFileDownloads: false })"
+          attr.aria-label="Do not allow file downloads on {{
+            bulkActions.selectedCount()
+          }} selected {{
+            bulkActions.selectedCount() === 1 ? 'print' : 'prints'
+          }}"
+          data-cy-bulk-permission="disallow-downloads"
+        >
+          <mat-icon>file_download_off</mat-icon>Don't allow file downloads
+        </button>
+      </mat-menu>
+
+      <button
+        mat-button
+        type="button"
+        class="bulk-bar__clear"
+        [disabled]="bulkActions.isRunning()"
+        (click)="clearSelection()"
+        aria-label="Clear the selection"
+        data-cy-bulk-clear
+      >
+        <mat-icon>close</mat-icon>
+        Clear
+      </button>
+
+      @if (bulkActions.isRunning()) {
+        <!-- Overlaid on the bottom edge so progress never adds a row. -->
+        <mat-progress-bar
+          class="bulk-bar__progress"
+          mode="determinate"
+          [value]="bulkActions.progressPercent()"
+          aria-label="Bulk action progress"
+        ></mat-progress-bar>
+      }
+
+      <!-- The outcome is announced and shown as a toast; keeping it out of the
+           layout is what stops the strip from growing a second line. -->
+      <p class="visually-hidden" aria-live="polite" data-cy-bulk-status-text>
+        @if (bulkActions.isRunning()) {
+          {{ bulkActions.progressLabel() }}
+        } @else {
+          {{ resultMessage() }}
+        }
+      </p>
+    </div>
+  }
+</div>

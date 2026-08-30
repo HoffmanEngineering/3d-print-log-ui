@@ -1,11 +1,11 @@
 <mat-form-field class="project-selector-field">
-  <mat-label>Project (optional)</mat-label>
+  <mat-label>{{ label() }}</mat-label>
   <input
     matInput
     [formControl]="searchControl"
     [matAutocomplete]="auto"
     data-cy="project-selector-input"
-    placeholder="Showing active projects — type to search or create a project"
+    placeholder="Search or create a project"
   />
   @if (selectedProject()) {
     <button
@@ -18,6 +18,20 @@
     </button>
   }
   <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+    <!-- Above the matches, not below them. Typing a name that existing projects
+         merely CONTAIN - "Test Project" while "Test Project 2" exists - buried this
+         under up to 25 results, so the option the user was reaching for was the one
+         off the bottom of the panel. Nothing got selected and the confirm button sat
+         disabled with nothing to explain why. -->
+    @if (showNewOption()) {
+      <mat-option
+        [value]="searchControl.value"
+        data-cy="project-new-option"
+        (click)="selectNewProject(searchControl.value!)"
+      >
+        <mat-icon>add</mat-icon> Create project: "{{ searchControl.value }}"
+      </mat-option>
+    }
     @for (project of filteredProjects(); track project.id) {
       <mat-option
         [value]="project.name"
@@ -32,14 +46,27 @@
         }
       </mat-option>
     }
-    @if (showNewOption()) {
-      <mat-option
-        [value]="searchControl.value"
-        data-cy="project-new-option"
-        (click)="selectNewProject(searchControl.value!)"
-      >
-        <mat-icon>add</mat-icon> Create project: "{{ searchControl.value }}"
-      </mat-option>
-    }
   </mat-autocomplete>
+  <!-- The "create" affordance is invisible until something is typed, and the
+       placeholder is gone by then, so it is spelled out here instead. The
+       subscript row is reserved by mat-form-field either way, so this costs no
+       height. -->
+  <mat-hint>Type to search, or enter a new name to create a project</mat-hint>
 </mat-form-field>
+
+<!-- Outside the autocomplete panel on purpose. A <button> nested in a disabled
+     <mat-option> is not reachable by keyboard: the option is an ARIA option, not
+     a focus container, and a disabled one is skipped entirely. -->
+@if (loadFailed()) {
+  <p class="project-selector-error" data-cy="project-lookup-failed">
+    <span role="alert">Projects could not be loaded.</span>
+    <button
+      mat-button
+      type="button"
+      (click)="retry()"
+      data-cy="project-lookup-retry"
+    >
+      Try again
+    </button>
+  </p>
+}

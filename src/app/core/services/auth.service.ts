@@ -7,6 +7,7 @@ import {
   BehaviorSubject,
   combineLatest,
   EMPTY,
+  firstValueFrom,
   from,
   Observable,
   of,
@@ -19,6 +20,7 @@ import { NotificationService } from './notification.service';
 import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
 import { UserSettingService } from './user-setting.service';
+import { isDevAnonymous } from '../utils/dev-user';
 const cordovaCallbackUri =
   'com.hoffmanengineering.printlog://cordova/com.hoffmanengineering.printlog/callback';
 
@@ -87,10 +89,12 @@ export class AuthService {
   );
 
   // Create subject and public observable of user profile data
-  private userProfileSubject$ = new BehaviorSubject<UserProfileInfo>(null);
+  private userProfileSubject$ = new BehaviorSubject<UserProfileInfo | null>(
+    null
+  );
   userProfile$ = this.userProfileSubject$.asObservable();
   // Create a local property for login status
-  loggedIn: boolean = null;
+  loggedIn: boolean | null = null;
 
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly userSettingService = inject(UserSettingService);
@@ -149,22 +153,34 @@ export class AuthService {
   }
 
   updateCurrentUserCoverPicture(newUrl: string) {
-    this.userProfileSubject$.next({
-      ...this.userProfileSubject$.value,
-      coverPicture: newUrl,
-    });
+    const profile = this.userProfileSubject$.value;
+    if (!profile) {
+      return;
+    }
+
+    this.userProfileSubject$.next({ ...profile, coverPicture: newUrl });
   }
 
   updateCurrentUserDeactivationDate(deactivationDate: Date | null) {
+    const profile = this.userProfileSubject$.value;
+    if (!profile) {
+      return;
+    }
+
     this.userProfileSubject$.next({
-      ...this.userProfileSubject$.value,
+      ...profile,
       deactivationDateTime: deactivationDate,
     });
   }
 
   updateCurrentUserProfilePicture(newUrl: string) {
+    const profile = this.userProfileSubject$.value;
+    if (!profile) {
+      return;
+    }
+
     this.userProfileSubject$.next({
-      ...this.userProfileSubject$.value,
+      ...profile,
       profilePicture: newUrl,
     });
   }
@@ -177,7 +193,8 @@ export class AuthService {
       catchError((err) => {
         if (err.error === 'missing_refresh_token') {
           if (this.loggedIn) {
-            this.logout();
+            // logout is async now (push teardown runs first); nothing here can await it.
+            void this.logout();
           }
         }
 
@@ -207,6 +224,11 @@ export class AuthService {
     }
 
     if (environment.devAuthBypass) {
+      if (isDevAnonymous(window.location.search)) {
+        // Dev-only: render the logged-out state for E2E / manual testing.
+        this.loggedIn = false;
+        return;
+      }
       this.loggedIn = true;
       this.userProfileSubject$.next(this.devMockProfile);
       return;
@@ -275,13 +297,23 @@ export class AuthService {
     });
   }
 
-  logout() {
+  /**
+   * Registered by PushRegistrationService. Awaited before Auth0 logout so the device's push
+   * registration is deleted while the bearer is still valid — once Auth0 tears the session
+   * down there is no credential left to authorize the DELETE with, and the phone would keep
+   * receiving the previous user's notifications.
+   */
+  public pushTeardown: ((bearerToken: string) => Promise<void>) | null = null;
+
+  async logout() {
     if (environment.devAuthBypass) {
       return;
     }
     // Stop notification polling
     this.notificationService.stopPolling();
     this.userSettingService.clearCache();
+
+    await this.runPushTeardown();
 
     // Ensure Auth0 client instance exists
     this.auth0Client$.subscribe((client: Auth0Client) => {
@@ -291,5 +323,23 @@ export class AuthService {
         logoutParams: { returnTo: `${window.location.origin}` },
       });
     });
+  }
+
+  /**
+   * Best-effort: a device that cannot be unregistered is a stale row the API prunes on the
+   * next UNREGISTERED response from FCM. Failing to log the user out over it would be far
+   * worse, so every failure here — including not being able to mint a token — is swallowed.
+   */
+  private async runPushTeardown(): Promise<void> {
+    if (!this.pushTeardown) {
+      return;
+    }
+
+    try {
+      const token = await firstValueFrom(this.getTokenSilently$());
+      await this.pushTeardown(token);
+    } catch {
+      // Intentionally ignored — see above.
+    }
   }
 }

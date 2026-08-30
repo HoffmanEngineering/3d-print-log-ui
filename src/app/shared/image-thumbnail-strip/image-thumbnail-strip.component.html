@@ -39,11 +39,19 @@
             "
             (click)="onThumbnailClick(image)"
           >
-            @if (image.resolvedUrl || image.url) {
-              <img
-                [src]="image.resolvedUrl ?? (image.url | authImage | async)"
-                alt=""
-              />
+            @if (image.resolvedUrl || image.url || image.thumbnailUrl) {
+              @if (directUrls()) {
+                <img
+                  [src]="image.thumbnailUrl ?? image.url ?? ''"
+                  alt=""
+                  loading="lazy"
+                />
+              } @else {
+                <img
+                  [src]="image.resolvedUrl ?? (image.url | authImage | async)"
+                  alt=""
+                />
+              }
             } @else {
               <div class="placeholder">
                 <mat-icon>image</mat-icon>

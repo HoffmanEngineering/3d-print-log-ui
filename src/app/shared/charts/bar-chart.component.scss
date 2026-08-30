@@ -1,0 +1,102 @@
+.bar-chart-shell {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.bar-chart {
+  inline-size: 100%;
+  block-size: 100%;
+  display: block;
+
+  &__axis-label {
+    font-size: 11px;
+    fill: var(--chart-axis-text);
+  }
+
+  &__value-label {
+    font-size: 11px;
+    fill: var(--chart-axis-text);
+  }
+
+  &__grid-line {
+    stroke: var(--chart-grid);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  &__bucket-hitbox {
+    fill: transparent;
+    pointer-events: all;
+  }
+
+  &__crosshair {
+    stroke: var(--chart-axis-text);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    pointer-events: none;
+    vector-effect: non-scaling-stroke;
+  }
+
+  &__segment {
+    cursor: pointer;
+    // Touch targets: a thin segment still needs a usable hit area.
+    stroke: transparent;
+    stroke-width: 8;
+    paint-order: stroke;
+
+    &:hover,
+    &:focus-visible {
+      opacity: 0.85;
+      outline: none;
+    }
+
+    &:focus-visible {
+      stroke: var(--chart-swatch-outline);
+      stroke-width: 2;
+    }
+  }
+
+  &__tooltip {
+    position: absolute;
+    z-index: 1;
+    display: grid;
+    gap: 0.25rem;
+    min-inline-size: 8rem;
+    max-inline-size: min(15rem, calc(100% - 1rem));
+    padding: 0.5rem 0.625rem;
+    border: 1px solid var(--chart-grid);
+    border-radius: 4px;
+    background: var(--chart-tooltip-bg);
+    color: var(--chart-tooltip-text);
+    box-shadow: 0 3px 12px rgb(0 0 0 / 18%);
+    font-size: 0.75rem;
+    pointer-events: none;
+    transform: translate(-50%, 0.25rem);
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    i {
+      inline-size: 0.625rem;
+      block-size: 0.625rem;
+      border-radius: 2px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bar-chart__segment {
+    transition: opacity 120ms ease-in-out;
+  }
+}
+
+.bar-chart__segment--swatch {
+  // Two black spools are otherwise indistinguishable, and dark colors vanish on the dark
+  // theme. Every swatch-filled mark gets a theme-contrast outline (spec §10).
+  stroke: var(--chart-swatch-outline);
+  stroke-width: 1;
+}

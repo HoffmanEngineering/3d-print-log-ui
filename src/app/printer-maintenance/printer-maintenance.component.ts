@@ -18,6 +18,7 @@ import { UserSetting } from '../core/services/user-setting.service';
 import { PagedList } from '../core/types/paging';
 import { SortDirection } from '../core/types/sort-request';
 import { SimpleDialogComponent } from '../shared/simple-dialog/simple-dialog.component';
+import { toSortHeaderIds } from '../core/utils/sort-header-ids';
 
 @Component({
   selector: 'app-printer-maintenance',
@@ -43,7 +44,9 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
   public filterByPrinterIds: number[] = [];
 
-  public printerMaintenanceSortColumn = PrinterMaintenanceSortColumn;
+  public printerMaintenanceSortColumn = toSortHeaderIds(
+    PrinterMaintenanceSortColumn
+  );
 
   public debouncedUpdateFilter;
 

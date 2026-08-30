@@ -15,9 +15,10 @@ export interface CaptureTarget {
   route: string; // '/prints'
   selector: string; // '[data-cy="home-capture-prints"]'
   outputBase: string; // 'Homepage_PrinterList'
-  // Capture viewport [width, height]. The list pages switch to their stacked
-  // card view below ~600px, giving a portrait crop that matches the home slot;
-  // analytics is captured wide because its card renders fixed-width anyway.
+  // Capture viewport [width, height]. Every target is captured narrow: the list
+  // pages switch to their stacked card view below ~600px and the analytics
+  // overview tab stacks its tiles and charts, giving the portrait crop the home
+  // feature slots are laid out for.
   viewport: [number, number];
 }
 
@@ -50,8 +51,8 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
   },
   {
     method: 'GET',
-    url: '**/api/Prints/stats*',
-    fixture: 'demo/prints-stats.json',
+    url: '**/api/analytics/overview*',
+    fixture: 'demo/analytics-overview.json',
   },
   {
     method: 'GET',
@@ -80,7 +81,7 @@ export const CAPTURE_TARGETS: CaptureTarget[] = [
     route: '/analytics',
     selector: '[data-cy="home-capture-analytics"]',
     outputBase: 'Homepage_Analytics',
-    viewport: [1440, 1200],
+    viewport: [560, 1500],
   },
 ];
 

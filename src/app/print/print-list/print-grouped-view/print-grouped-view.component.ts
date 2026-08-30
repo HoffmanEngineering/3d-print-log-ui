@@ -38,11 +38,13 @@ import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SharedModule } from 'src/app/shared/shared.module';
+import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { ProjectImageComponent } from 'src/app/shared/project-image/project-image.component';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 import { ColumnDefinition } from '../print-list.component';
+import { PrintListSkeletonComponent } from '../print-list-skeleton/print-list-skeleton.component';
 import { PrintTableLayoutComponent } from '../print-table-layout/print-table-layout.component';
 
 export type GroupedRow =
@@ -61,6 +63,7 @@ export type GroupedRow =
     ProjectChipComponent,
     RouterLink,
     ProjectImageComponent,
+    PrintListSkeletonComponent,
   ],
 })
 export class PrintGroupedViewComponent implements OnInit {
@@ -95,9 +98,46 @@ export class PrintGroupedViewComponent implements OnInit {
 
   // ---- Internal state ----
   feed = signal<PagedList<GroupedFeedItemDto> | null>(null);
+
+  /**
+   * Raw "a request is in flight". Not what the template renders — see
+   * `showSkeleton` / `showRefreshing`.
+   */
   loading = signal(true);
+
+  /** Whether rows have ever been painted. See PrintListComponent.hasLoadedOnce. */
+  private readonly hasLoadedOnce = signal(false);
+
+  /**
+   * Deferred so a fast filter change does not flash. Unlike the flat list, this
+   * view has no resolver and genuinely fetches its first page in ngOnInit, so
+   * both branches below are reachable here.
+   */
+  private readonly loadingIndicator = new DeferredSkeletonController();
+
+  /**
+   * True while any busy affordance is on screen. Outlives `loading` by up to
+   * the minimum dwell — see PrintListComponent.isBusy.
+   */
+  readonly isBusy = this.loadingIndicator.visible;
+
+  /** First load with nothing to preserve: draw placeholder rows. */
+  readonly showSkeleton = computed(
+    () => this.loadingIndicator.visible() && !this.hasLoadedOnce()
+  );
+
+  /** Refetch over existing rows: keep them, dim them, run a progress bar. */
+  readonly showRefreshing = computed(
+    () => this.loadingIndicator.visible() && this.hasLoadedOnce()
+  );
+
   pageNumber = signal(1);
   pageSize = +(localStorage.getItem('print_list_page_size') ?? 10);
+
+  /** Placeholder count while loading — see PrintListComponent.skeletonRowCount. */
+  skeletonRowCount(): number {
+    return Math.min(this.pageSize || 10, 10);
+  }
 
   expandedProjectPrints = signal<Map<string, PrintSummary[]>>(new Map());
 
@@ -107,6 +147,11 @@ export class PrintGroupedViewComponent implements OnInit {
   });
 
   private feedSubscription: Subscription | null = null;
+
+  // A pending reveal timer that sets a signal on a torn-down component is a leak.
+  private readonly _indicatorCleanup = this.destroyRef.onDestroy(() =>
+    this.loadingIndicator.destroy()
+  );
 
   // ---- Row-type predicates for matRowDef when ----
   isProjectRow = (_: number, row: GroupedRow) => row.kind === 'project';
@@ -162,6 +207,7 @@ export class PrintGroupedViewComponent implements OnInit {
   loadFeed(): void {
     this.feedSubscription?.unsubscribe();
     this.loading.set(true);
+    this.loadingIndicator.start();
     this.feedSubscription = this.projectService
       .getGroupedFeed(
         this.pageNumber(),
@@ -177,8 +223,15 @@ export class PrintGroupedViewComponent implements OnInit {
         next: (result) => {
           this.feed.set(result);
           this.loading.set(false);
+          // Only on success: a failed first load leaves nothing on screen, so
+          // the next attempt is still a first paint.
+          this.hasLoadedOnce.set(true);
+          this.loadingIndicator.stop();
         },
-        error: () => this.loading.set(false),
+        error: () => {
+          this.loading.set(false);
+          this.loadingIndicator.stop();
+        },
       });
   }
 

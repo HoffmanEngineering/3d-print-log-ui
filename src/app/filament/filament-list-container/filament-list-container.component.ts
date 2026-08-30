@@ -24,6 +24,7 @@ import {
   QrLabelDialogComponent,
   QrLabelDialogData,
 } from 'src/app/shared/qr-label-dialog/qr-label-dialog.component';
+import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
 
 @Component({
   selector: 'app-filament-list-container',
@@ -41,6 +42,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public displayedColumns: string[] = [
     'select',
     'isFavorite',
+    'image',
     'colorHex',
     'displayName',
     'brand',
@@ -61,8 +63,15 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   readonly FilamentFinishType = FilamentFinishType;
   readonly FilamentEffect = FilamentEffect;
 
-  public filamentSortColumns = FilamentSortColumns;
+  public filamentSortColumns = toSortHeaderIds(FilamentSortColumns);
   public sortColumn = FilamentSortColumns.FilamentRemaining;
+  /**
+   * `matSortActive` compares against the header's string id, so the numeric
+   * enum has to be stringified or the initial sort arrow never renders.
+   */
+  public get sortColumnId(): string {
+    return String(this.sortColumn);
+  }
   public sortDirection = SortDirection.Desc;
 
   public includeInactive = false;
@@ -95,11 +104,17 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     private readonly dialog: MatDialog,
     private readonly toastrService: ToastrService
   ) {
-    this.debouncedUpdateFilter = debounce(() => {
-      this.isLoading = true;
+    // Mark the list as loading on the keystroke itself, not when the debounce
+    // finally fires, so the empty state cannot flash stale copy for 400ms.
+    const debouncedFilterUpdate = debounce(() => {
       this.currentPage = 1;
       this.updateFilter();
     }, 400);
+
+    this.debouncedUpdateFilter = () => {
+      this.isLoading = true;
+      debouncedFilterUpdate();
+    };
 
     this.subscriptions.add(
       router.events
@@ -498,6 +513,22 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     else this.filterByEffects.push(effect);
     this.currentPage = 1;
     this.updateFilter();
+  }
+
+  /** Explains which filters and search term are hiding every material. */
+  public get emptyStateFilteredMessage(): string {
+    const parts: string[] = [];
+    const count = this.activeFilterCount;
+
+    if (count > 0) {
+      parts.push(`${count} active filter${count === 1 ? '' : 's'}`);
+    }
+
+    if (this.searchText.trim().length > 0) {
+      parts.push(`a search for "${this.searchText.trim()}"`);
+    }
+
+    return `Nothing matched ${parts.join(' and ')}. Clear them to see your whole material list.`;
   }
 
   public resetFilters(): void {

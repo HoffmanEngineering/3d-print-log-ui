@@ -1,13 +1,22 @@
 import { DOC_SEO, getDocSeoTags } from './doc-seo.config';
 import { ogImage } from '../slicer/slicer-configs';
+import { DOC_PAGES } from './generated/docs-manifest';
 
 describe('doc-seo.config', () => {
   const paths = Object.keys(DOC_SEO);
 
-  it('covers all 15 doc routes', () => {
-    expect(paths.length).toBe(15);
+  it('covers every routed doc page', () => {
+    // No hard-coded count: DOC_SEO is derived from the docs manifest, so it
+    // cannot drift from the pages that exist.
+    expect(paths.length).toBe(DOC_PAGES.filter((page) => !page.dormant).length);
     expect(paths).toContain('docs/getting-started');
+    expect(paths).toContain('docs/mcp');
     expect(paths).toContain('docs/privacy-policy');
+  });
+
+  it('excludes redirect-only and dormant routes', () => {
+    expect(paths).not.toContain('docs/filaments');
+    expect(paths).not.toContain('docs/terms-of-service');
   });
 
   it('has a globally unique title and description per page', () => {

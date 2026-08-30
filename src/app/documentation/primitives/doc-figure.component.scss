@@ -1,0 +1,25 @@
+:host {
+  display: block;
+  margin: 24px 0;
+}
+
+.doc-figure {
+  margin: 0;
+}
+
+img {
+  display: block;
+  // width/height are set as attributes to reserve the aspect ratio before the
+  // image loads; this lets the rendered size shrink below them on a phone.
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--docs-rule);
+  border-radius: 8px;
+}
+
+figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--docs-text-muted);
+}

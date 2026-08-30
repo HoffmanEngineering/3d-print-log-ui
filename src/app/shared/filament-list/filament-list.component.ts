@@ -17,6 +17,7 @@ import {
 } from 'src/app/core/services/material-categories.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
+import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
 
 @Component({
   selector: 'app-filament-list',
@@ -40,6 +41,7 @@ export class FilamentListComponent implements OnInit {
 
   public displayedColumns: string[] = [
     'isFavorite',
+    'image',
     'colorHex',
     'displayName',
     'brand',
@@ -53,8 +55,15 @@ export class FilamentListComponent implements OnInit {
 
   public debouncedUpdateFilter;
 
-  public filamentSortColumns = FilamentSortColumns;
+  public filamentSortColumns = toSortHeaderIds(FilamentSortColumns);
   public sortColumn = FilamentSortColumns.FilamentRemaining;
+  /**
+   * `matSortActive` compares against the header's string id, so the numeric
+   * enum has to be stringified or the initial sort arrow never renders.
+   */
+  public get sortColumnId(): string {
+    return String(this.sortColumn);
+  }
   public sortDirection = SortDirection.Desc;
 
   public includeInactive = false;

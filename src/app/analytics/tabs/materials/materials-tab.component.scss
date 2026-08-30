@@ -1,0 +1,123 @@
+.materials-tab {
+  display: grid;
+  gap: 0.5rem;
+  // Container queries, not media queries: the side nav collapsing changes available width
+  // without a viewport change.
+  container-type: inline-size;
+  min-inline-size: 0;
+}
+
+.materials-tab__tiles {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.materials-tab__charts {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  // Panels differ in natural height; stretching drags the short one to the tall one's size.
+  align-items: start;
+}
+
+@container (min-width: 900px) {
+  .materials-tab__charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.materials-tab__swatch {
+  display: inline-block;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  margin-inline-end: 0.35rem;
+  border-radius: 2px;
+  // Same reason as the SVG outline: dark colors vanish against the dark theme.
+  outline: 1px solid var(--chart-swatch-outline);
+  vertical-align: middle;
+}
+
+.materials-tab__table-scroll {
+  overflow-x: auto;
+  max-inline-size: 100%;
+}
+
+.materials-tab__spools {
+  inline-size: 100%;
+  // Below this the five columns wrap into unreadable slivers; the wrapper scrolls instead.
+  min-inline-size: 28rem;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.25rem 0.5rem;
+    text-align: start;
+  }
+
+  thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+    color: var(--chart-empty-text);
+    border-block-end: 1px solid var(--chart-grid);
+    white-space: nowrap;
+  }
+
+  // Every column after the spool name holds a figure, and the cells below are end-aligned.
+  thead th + th {
+    text-align: end;
+  }
+
+  tbody tr + tr {
+    border-block-start: 1px solid var(--chart-grid);
+  }
+
+  // Figures read as a column when they share an alignment; the spool name stays start-aligned.
+  td {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.materials-tab__spool-link {
+  // A real button, styled flat. Keyboard-operable and focus-visible for free, with padding
+  // carrying it to a ≥44px touch target.
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-block-size: 44px;
+  padding: 0.25rem 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--chart-axis-text);
+    outline-offset: 2px;
+  }
+}
+
+.materials-tab__low {
+  font-size: 0.875rem;
+
+  h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-inline-start: 1rem;
+  }
+}
+
+.materials-tab__actions {
+  display: flex;
+  justify-content: flex-end;
+}

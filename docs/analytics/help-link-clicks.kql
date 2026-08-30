@@ -1,0 +1,10 @@
+// Which app screens send people to the documentation — the closest direct
+// measure of where the product itself is confusing.
+// Returns no rows until in-app help ships (phase 4).
+customEvents
+| where name == "Docs_HelpLinkClick"
+| where timestamp > ago(30d)
+| extend source = tostring(customDimensions.source),
+         slug = tostring(customDimensions.slug)
+| summarize clicks = count(), people = dcount(user_Id) by source, slug
+| order by clicks desc

@@ -16,7 +16,9 @@ import {
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SharedModule } from 'src/app/shared/shared.module';
+import { LongPressDirective } from 'src/app/shared/long-press/long-press.directive';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
+import { PrintStatusBadgeComponent } from 'src/app/shared/print-status-badge/print-status-badge.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 import {
   FilamentPreferredDisplayResult,
@@ -28,7 +30,13 @@ import {
   templateUrl: './print-card.component.html',
   styleUrls: ['./print-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, SharedModule, ProjectChipComponent],
+  imports: [
+    RouterLink,
+    LongPressDirective,
+    SharedModule,
+    ProjectChipComponent,
+    PrintStatusBadgeComponent,
+  ],
 })
 export class PrintCardComponent {
   private readonly dialog = inject(MatDialog);
@@ -37,6 +45,23 @@ export class PrintCardComponent {
   readonly print = input.required<PrintSummary>();
   readonly deleted = output<PrintSummary>();
   readonly statusChanged = output<{ id: number; status: PrintStatus }>();
+
+  /**
+   * True while the list is in bulk-selection mode, which turns a tap into a toggle
+   * instead of a navigation and reveals the checkbox.
+   *
+   * Off by default: this card is also used by the project detail page, which has no
+   * bulk actions and must keep behaving as a plain link.
+   */
+  readonly selectionMode = input(false);
+  readonly selected = input(false);
+
+  /**
+   * Asks the list to add or remove this print from the selection. The card holds no
+   * selection state of its own - the list owns the bulk-actions service, the same way
+   * it already owns delete and status changes.
+   */
+  readonly selectionToggled = output<PrintSummary>();
   readonly printStatusTypes = PrintStatus;
   readonly preferredUnit = input<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.Weight
@@ -46,6 +71,30 @@ export class PrintCardComponent {
     fu: PrintFilamentSummaryDto
   ): FilamentPreferredDisplayResult | null {
     return getFilamentPreferredDisplay(fu, this.preferredUnit());
+  }
+
+  /**
+   * Starts a selection. A long press on an already-selected card is a no-op rather
+   * than a deselect: the gesture that turns selection ON should not also turn a card
+   * off, or a slightly-too-long tap silently undoes the previous one.
+   */
+  onLongPress(): void {
+    if (this.selected()) return;
+
+    this.loggingService.logEvent('PrintCard_LongPressSelected', {
+      printId: this.print().id,
+    });
+    this.selectionToggled.emit(this.print());
+  }
+
+  /**
+   * In selection mode the whole card is a toggle. The routerLink is dropped in the
+   * template for the same reason, so this is the only thing a tap does.
+   */
+  onCardClicked(): void {
+    if (!this.selectionMode()) return;
+
+    this.selectionToggled.emit(this.print());
   }
 
   onDeleteClicked(): void {
@@ -72,26 +121,6 @@ export class PrintCardComponent {
       return `${printer.name} - (${(printer.make + ' ' + printer.model).trim()})`;
     }
     return `${(printer.make + ' ' + printer.model).trim()}`;
-  }
-
-  protected getStatus(print: PrintSummary): string {
-    if (print.status === PrintStatus.Cancelled) return 'Cancelled';
-    if (print.status === PrintStatus.Failed) return 'Failed';
-    if (print.status === PrintStatus.Pending) return 'Pending';
-    if (print.status === PrintStatus.Printing) return 'Printing';
-    if (print.status === PrintStatus.Success) return 'Success';
-    if (print.status === PrintStatus.PartialSuccess) return 'Partial Success';
-    return 'Unknown';
-  }
-
-  protected getStatusIcon(print: PrintSummary): string {
-    if (print.status === PrintStatus.Cancelled) return 'remove_circle_outline';
-    if (print.status === PrintStatus.Failed) return 'error_outline';
-    if (print.status === PrintStatus.Pending) return 'pending_actions';
-    if (print.status === PrintStatus.Printing) return 'play_circle_outline';
-    if (print.status === PrintStatus.Success) return 'check_circle_outline';
-    if (print.status === PrintStatus.PartialSuccess) return 'rule';
-    return 'help_outline';
   }
 
   protected getPrintEndDate(print: PrintSummary): Date | null {

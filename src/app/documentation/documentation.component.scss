@@ -42,3 +42,82 @@ h1.example-app-name {
     background-color: #1e1e1e;
   }
 }
+
+// Pushes the search button to the trailing edge of the toolbar.
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+/**
+ * The article and its table of contents.
+ *
+ * One column until there is room for a rail. The TOC is FIRST in the DOM — a
+ * reader on a phone, and anyone tabbing through, wants the page's contents
+ * before its prose — and grid placement, not a second copy of the component,
+ * moves it to the trailing edge on a wide screen. A second copy would duplicate
+ * the nav's id and its landmark.
+ */
+.docs-layout {
+  display: grid;
+  // minmax(0, 1fr), not 1fr: a grid track defaults to min-content, so one long
+  // unbreakable table of contents entry would widen the whole page rather than
+  // wrap inside its own column.
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+/**
+ * 1200px, not a Material breakpoint: the rail only earns its space once the
+ * article still has the full measure beside it. Below that the TOC sits above
+ * the prose, capped so a 27-entry page does not push the article off screen.
+ */
+@media (min-width: 1200px) {
+  .docs-layout {
+    grid-template-columns: minmax(0, 1fr) 240px;
+  }
+
+  .docs-layout__main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .docs-layout__toc {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+/**
+ * The page furniture under the article shares the prose measure.
+ *
+ *  centres itself inside the column, so a full-width block
+ * beneath it starts at a different left edge and the page reads as two
+ * documents. A page that opts out of the measure (docs-getting-started runs
+ * full width) keeps its footer at the measure, which is the intent: these are
+ * navigation, not part of that page's layout.
+ */
+.docs-layout__main > app-doc-related,
+.docs-layout__main > app-doc-page-nav,
+.docs-layout__main > app-doc-feedback {
+  display: block;
+  max-width: var(--docs-measure);
+  margin-inline: auto;
+}
+
+/**
+ * The page furniture under the article shares the prose measure.
+ *
+ * `.docs-markdown` centers itself inside the column, so a full-width block
+ * beneath it starts at a different left edge and the page reads as two
+ * documents. A page that opts out of the measure (docs-getting-started runs
+ * full width) still gets its footer at the measure, which is the intent: these
+ * are navigation, not part of that page's layout.
+ */
+.docs-layout__main > app-doc-related,
+.docs-layout__main > app-doc-page-nav,
+.docs-layout__main > app-doc-feedback {
+  display: block;
+  max-width: var(--docs-measure);
+  margin-inline: auto;
+}

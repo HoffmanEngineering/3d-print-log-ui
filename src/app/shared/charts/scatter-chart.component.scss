@@ -1,0 +1,31 @@
+.scatter-chart {
+  display: block;
+  max-inline-size: 100%;
+}
+
+.scatter-chart__reference {
+  stroke: var(--chart-axis-text);
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.scatter-chart__tick {
+  font-size: 10px;
+  fill: var(--chart-axis-text);
+}
+
+.scatter-chart__mark {
+  fill-opacity: 0.7;
+  stroke: var(--chart-swatch-outline);
+  stroke-width: 0.5;
+}
+
+.scatter-chart__hit {
+  fill: transparent;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--chart-axis-text);
+  }
+}

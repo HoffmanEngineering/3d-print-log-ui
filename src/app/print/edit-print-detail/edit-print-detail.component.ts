@@ -850,12 +850,13 @@ export class EditPrintDetailComponent
 
     // Convert the old filamentType/FilamentUsage properties into the new Filament Usage format.
     // Skip when modern filament usage records already exist to avoid duplicate entries.
+    const estimatedFilamentUsageMg = print?.estimatedFilamentUsageMg ?? null;
     if (
       print &&
       printFilamentUsageArray.length === 0 &&
       (!(print.filamentType === null || print.filamentType === '') ||
         print.filamentUsageMg > 0 ||
-        print.estimatedFilamentUsageMg > 0)
+        (estimatedFilamentUsageMg ?? 0) > 0)
     ) {
       const newFormGroup = this.GetNewFilamentUsageForm(
         EMPTY_GUID,
@@ -863,7 +864,9 @@ export class EditPrintDetailComponent
         null,
         null,
         PrintFilamentSourceMeasurement.Weight,
-        print.estimatedFilamentUsageMg / 1000,
+        estimatedFilamentUsageMg !== null
+          ? estimatedFilamentUsageMg / 1000
+          : null,
         null,
         null,
         PrintFilamentSourceMeasurement.Weight,
@@ -905,7 +908,9 @@ export class EditPrintDetailComponent
         print ? this.parseIntoString(print.estimatedPrintTimeInSeconds) : null,
       ],
       estimatedFilamentUsageG: [
-        print ? print.estimatedFilamentUsageMg / 1000 : null,
+        print?.estimatedFilamentUsageMg != null
+          ? print.estimatedFilamentUsageMg / 1000
+          : null,
         [Validators.min(0)],
       ],
       printTimeInSeconds: [
@@ -1631,7 +1636,22 @@ export class EditPrintDetailComponent
     newPrint: Omit<PrintDetail, 'comments'>
   ): void {
     this.saving = false;
-    this.loggingService.logTrace(`PrintErr: ${JSON.stringify(newPrint)}`);
+    // Log only an allowlisted, non-sensitive diagnostic summary. Never serialize
+    // the full print object: fields like notes, title, url and fileName can contain
+    // private user content and would otherwise leak into telemetry (#leak).
+    this.loggingService.logTrace('PrintErr: print save failed', {
+      operation: newPrint.id === null ? 'create' : 'update',
+      printId: newPrint.id,
+      printerId: newPrint.printerId,
+      status: newPrint.status,
+      viewStatus: newPrint.viewStatus,
+      filamentType: newPrint.filamentType,
+      filamentUsageCount: newPrint.filamentUsage?.length ?? 0,
+      imageCount: newPrint.images?.length ?? 0,
+      hasNotes: !!newPrint.notes,
+      hasUrl: !!newPrint.url,
+      hasFileName: !!newPrint.fileName,
+    });
     this.loggingService.logException(err);
   }
 
@@ -1970,11 +1990,11 @@ export class EditPrintDetailComponent
     this.printForm.get('startTime').setValue(now.toTimeString().slice(0, 8));
   }
 
-  public getEstimatedCompletedDate() {
+  public getEstimatedCompletedDate(): void {
     const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
-      return '';
+      return;
     }
 
     const estimatedPrintTimeInSeconds = this.parseAsSeconds(
@@ -1995,11 +2015,11 @@ export class EditPrintDetailComponent
     );
   }
 
-  getActualCompletedDate() {
+  getActualCompletedDate(): void {
     const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
-      return '';
+      return;
     }
 
     const printTimeInSeconds = this.parseAsSeconds(
@@ -2028,11 +2048,11 @@ export class EditPrintDetailComponent
     }
   }
 
-  public updateActualCompletedDate(newDate: Date) {
+  public updateActualCompletedDate(newDate: Date): void {
     const startDate = this.getCombinedStartDateTime();
 
     if (!startDate) {
-      return '';
+      return;
     }
 
     const difference = Math.round(

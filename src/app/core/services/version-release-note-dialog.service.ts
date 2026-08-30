@@ -28,6 +28,186 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.49.1': {
+      redirect: '1.49.0',
+    },
+    '1.49.0': {
+      title: '1.49.0 - Push Notifications',
+      body: `<p>
+<strong>Push notifications</strong> are here! If you send print events to 3D Print Log from OctoPrint or Klipper, your phone can now tell you the moment a print finishes or fails. Pick what you want to hear about in <a href="/settings">Settings</a>. The updated Android app that receives them is rolling out to users soon.
+</p>
+<p>
+What else should we notify you about? A spool running low, a printer due for maintenance, something we have not thought of? <a href="/feedback">Send in your feedback</a> and help shape what comes next.
+</p>
+<p>
+Printing QR labels is also much easier: the sheet now lays itself out to fit your paper and label size, and remembers your choices for next time.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
+    '1.48.1': {
+      redirect: '1.48.0',
+    },
+    '1.48.0': {
+      title: '1.48.0 - Spool Photos',
+      body: `<p>
+<strong>Spool photos</strong> are here! Add pictures of the actual spool to any material, reorder them, and star one as the default. That photo then shows as a thumbnail beside the material everywhere it is listed, so you can spot the right roll without reading every name. Try it on <a href="/filament">your materials</a>.
+</p>
+<p>
+This release also stops sliced files with missing or invalid filament measurements from recording a 0mg estimate, and tidies up the navigation bar on phones.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
+    '1.47.0': {
+      title: '1.47.0 - Material Remaining & More Bulk Actions',
+      body: `<p>
+<strong>Remaining material</strong> is here! Open a saved material to see what is left on the spool and the recent prints that used it. Take a look at <a href="/filament">your materials</a>.
+</p>
+<p>
+<strong>More bulk actions</strong> have landed on the print list. Select some prints to add them to a project, or change their visibility, printer or permissions in one go. On a phone, long-press a card to start selecting. Try it on <a href="/prints">your prints</a>.
+</p>
+<p>
+Both features were asked for by users. Have an idea of your own? <a href="/feedback">Send in feedback</a> and help shape what comes next.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
+    '1.46.0': {
+      title: '1.46.0 - The New Print Page & Bulk Editing',
+      body: `<p>
+<strong>The new print page</strong> is here! Your photos are front and center now, with all the details right next to them: printer, status, times and costs at a glance, every filament you used (shown in its actual color), and a link to the project it belongs to.
+</p>
+<p>
+<strong>Bulk editing</strong> has landed on the print list too. Tick off the prints you want, then mark them all done or delete them in one go. Finished a whole plate overnight? That used to be about eighteen clicks, now it is two. Go check out <a href="/prints">your prints</a>, or read <a href="/docs/prints">the Prints documentation</a>.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
+    '1.45.0': {
+      title: '1.45.0 - The New Analytics Page',
+      body: `<p>
+<strong>The new Analytics page</strong> is here! Six tabs (Overview, Activity, Printers, Materials, Costs and Accuracy) share one filter bar, so you can pick a date range and narrow to particular printers, materials, projects or statuses, and every chart follows along. Compare any period to the one before it, and bookmark or share a view straight from the address bar.
+</p>
+<p>
+See a calendar of your printing days and streaks, compare your machines side by side, watch filament use by type, brand and color (in the real spool colors), break your spending into filament, electricity and maintenance, and find out whether your slicer estimates run long or short. Every chart exports as a CSV or a PNG. Take a look at <a href="/analytics">Analytics</a>, or read <a href="/docs/analytics">the Analytics documentation</a>.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
+    '1.44.0': {
+      title: '1.44.0 - Connect an AI Assistant (MCP)',
+      body: `<p>
+<strong>Connect an AI Assistant</strong> is here! 3D Print Log now works with Claude, ChatGPT, and other AI assistants, so you can just ask: "how much blue PLA do I have left?", "do I have enough for a 300 g model?", or "log that Benchy I finished on the Bambu." Your assistant reads your prints, printers, and inventory, and with your permission it can log and update prints, projects, printers, and materials (it can never delete anything, and it only ever sees your own data).
+</p>
+<p>
+Connecting uses the <strong>Model Context Protocol (MCP)</strong>, an open standard supported by Claude, Claude Code, and ChatGPT. Setup takes a minute and you can disconnect at any time from <a href="/settings">Settings</a>. See <a href="/docs/mcp">Connect an AI Assistant (MCP)</a> to get started.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.43.11': {
       redirect: '1.43.10',
     },
@@ -1749,19 +1929,24 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
 
   private async displayReleaseNotes(
     newVersion: string,
-    lastDisplayedVersion: string
+    // Null on a first visit, when nothing has been shown yet.
+    lastDisplayedVersion: string | null
   ) {
-    let release = this.releaseNotes[newVersion];
+    const entry = this.releaseNotes[newVersion];
+
+    if (!entry) {
+      return;
+    }
+
+    // Account for redirected release notes
+    const release = this.isRedirect(entry)
+      ? this.getRedirectedReleaseNotes(entry, lastDisplayedVersion)
+      : entry;
+
+    this.setLastLoggedInVersion(newVersion);
 
     if (release) {
-      // Account for redirected release notes
-      if (this.isRedirect(release)) {
-        release = this.getRedirectedReleaseNotes(release, lastDisplayedVersion);
-      }
-      this.setLastLoggedInVersion(newVersion);
-      if (release) {
-        await this.showReleaseNote(release);
-      }
+      await this.showReleaseNote(release);
     }
   }
 
@@ -1770,7 +1955,7 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
    */
   getRedirectedReleaseNotes(
     release: RedirectRelease | ReleaseNote,
-    lastDisplayedVersionKey: string
+    lastDisplayedVersionKey: string | null
   ): ReleaseNote | null {
     if (this.isReleaseNote(release)) {
       return release;
@@ -1792,6 +1977,9 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
         lastDisplayedVersionKey
       );
     }
+
+    // Neither a release note nor a redirect, so there is nothing to show.
+    return null;
   }
 
   private isReleaseNote(obj: any): obj is ReleaseNote {

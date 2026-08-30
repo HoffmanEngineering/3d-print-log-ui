@@ -1,0 +1,17 @@
+@if (headings().length) {
+  <nav class="doc-toc" aria-labelledby="doc-toc-label">
+    <p class="doc-toc__label" id="doc-toc-label">On this page</p>
+    <ul class="doc-toc__list">
+      @for (heading of headings(); track heading.id) {
+        <li
+          class="doc-toc__item"
+          [class.doc-toc__item--nested]="heading.depth > 1"
+        >
+          <a [routerLink]="route()" [fragment]="heading.id">{{
+            heading.text
+          }}</a>
+        </li>
+      }
+    </ul>
+  </nav>
+}

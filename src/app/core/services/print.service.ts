@@ -36,6 +36,33 @@ export enum PrintViewStatus {
   Private = 3,
 }
 
+/**
+ * One set of field values to apply to many prints. Every field is optional; omitted
+ * fields are left untouched. Enums serialize as their numeric value, matching the API,
+ * which registers no string enum converter.
+ */
+export interface BulkUpdatePrintsRequest {
+  printIds: number[];
+  status?: PrintStatus;
+  projectId?: string;
+  viewStatus?: PrintViewStatus;
+  printerId?: number;
+  allowComments?: boolean;
+  allowFileDownloads?: boolean;
+  /** Fields to reset to null. Only `projectId` is clearable. */
+  clear?: 'projectId'[];
+}
+
+/**
+ * The per-id outcome of a bulk operation. The request is a 200 even when some ids could
+ * not be acted on, so this body is what says which. `reason` is either "NotFound" or
+ * "Forbidden".
+ */
+export interface BulkPrintResult {
+  succeeded: number[];
+  failed: { id: number; reason: string }[];
+}
+
 export enum PrintFilamentSourceMeasurement {
   AsRecorded = 0,
   Weight = 1,
@@ -44,7 +71,8 @@ export enum PrintFilamentSourceMeasurement {
 }
 
 export interface PrintImage {
-  id: number;
+  /** Null for an image extracted from gcode that the API has not saved yet. */
+  id: number | null;
   isDefault: boolean;
   displayOrder: number;
 
@@ -56,9 +84,9 @@ export interface PrintImage {
 
 export interface PrintFilamentSummaryDto {
   /**
-   * GUID
+   * GUID. Null for a row parsed from gcode that the API has not saved yet.
    */
-  id: string;
+  id: string | null;
   filament: FilamentSummary;
 
   amountMg?: number;
@@ -77,9 +105,9 @@ export interface PrintFilamentSummaryDto {
 
 export interface PutPrintFilamentSummaryDto {
   /**
-   * GUID
+   * GUID. Null for a row that has not been saved yet.
    */
-  id: string;
+  id: string | null;
   filamentId?: string;
 
   amountMg?: number;
@@ -149,38 +177,50 @@ export interface PrintDetailDTO {
   projectName?: string;
 }
 
+/**
+ * The payload this client sends on update. The nullable fields mirror
+ * `PrintDetail`, which can still be holding an unsaved scaffold -- the API's own
+ * validation is the authority on what it accepts, so this describes what we can
+ * actually send rather than over-claiming.
+ */
 export interface PutPrintDetailDTO {
-  id: number;
+  id: number | null;
   title: string;
-  printerId: number;
-  startDate?: Date;
-  estimatedPrintTimeInSeconds?: number;
-  estimatedFilamentUsageMg?: number;
-  printTimeInSeconds?: number;
+  printerId: number | null;
+  startDate?: Date | null;
+  estimatedPrintTimeInSeconds?: number | null;
+  estimatedFilamentUsageMg?: number | null;
+  printTimeInSeconds?: number | null;
   filamentUsage: PutPrintFilamentSummaryDto[];
-  filamentUsageMg?: number;
+  filamentUsageMg?: number | null;
   filamentType: string;
   notes: string;
   url: string;
   fileName: string;
   status: PrintStatus;
-  viewStatus: PrintViewStatus;
-  allowComments: boolean;
+  viewStatus: PrintViewStatus | null;
+  allowComments: boolean | null;
   allowFileDownloads?: boolean;
   projectId?: string;
   newProjectName?: string;
 }
 
+/**
+ * A print being viewed or edited. Unlike `PrintDetailDTO`, which always
+ * describes a print the API has already saved, this also models an unsaved one:
+ * the slicer parsers and the new-print flow build a `PrintDetail` before an id,
+ * printer or creator exists, so those fields are genuinely nullable here.
+ */
 export interface PrintDetail {
-  id: number;
+  id: number | null;
   title: string;
-  printerId: number;
+  printerId: number | null;
   printer?: PrinterSummary;
-  startDate?: Date;
-  estimatedPrintTimeInSeconds?: number;
-  estimatedFilamentUsageMg?: number;
-  printTimeInSeconds?: number;
-  filamentUsageMg?: number;
+  startDate?: Date | null;
+  estimatedPrintTimeInSeconds?: number | null;
+  estimatedFilamentUsageMg?: number | null;
+  printTimeInSeconds?: number | null;
+  filamentUsageMg?: number | null;
   filamentType: string;
   filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
@@ -188,12 +228,12 @@ export interface PrintDetail {
   fileName: string;
   status: PrintStatus;
 
-  viewStatus: PrintViewStatus;
-  allowComments: boolean;
+  viewStatus: PrintViewStatus | null;
+  allowComments: boolean | null;
   allowFileDownloads?: boolean;
 
   images?: PrintImage[];
-  createdByUserId: number;
+  createdByUserId: number | null;
   comments: Comment[];
   projectId?: string;
   projectName?: string;
@@ -203,14 +243,15 @@ export interface PrintDetail {
 /**
  * DTO to create a new print
  */
+/** The payload this client sends on create. See `PutPrintDetailDTO`. */
 export interface AddPrintDTO {
   title: string;
-  printerId: number;
-  startDate?: Date;
-  estimatedPrintTimeInSeconds?: number;
-  estimatedFilamentUsageMg?: number;
-  printTimeInSeconds?: number;
-  filamentUsageMg?: number;
+  printerId: number | null;
+  startDate?: Date | null;
+  estimatedPrintTimeInSeconds?: number | null;
+  estimatedFilamentUsageMg?: number | null;
+  printTimeInSeconds?: number | null;
+  filamentUsageMg?: number | null;
   filamentType: string;
   filamentUsage: PrintFilamentSummaryDto[];
   notes: string;
@@ -218,8 +259,8 @@ export interface AddPrintDTO {
   fileName: string;
   status: PrintStatus;
 
-  viewStatus: PrintViewStatus;
-  allowComments: boolean;
+  viewStatus: PrintViewStatus | null;
+  allowComments: boolean | null;
   projectId?: string;
   newProjectName?: string;
 }
@@ -282,7 +323,13 @@ export class PrintService {
     sortDirection = SortDirection.Desc,
     sortColumn = PrintSummarySortColumn.StartDate,
     userId?: number,
-    filterByProjectId?: string
+    filterByProjectId?: string,
+    /**
+     * Half-open [fromDate, toDate), matching the API and the analytics contract. Passed as an
+     * object rather than two more positional arguments: this signature already has ten, and the
+     * pair is meaningless split apart.
+     */
+    dateRange?: { fromDate: string; toDate: string }
   ): Observable<PagedList<PrintSummary>> {
     const url = `${this.baseApi}/api/Prints/summary`;
     const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
@@ -319,6 +366,14 @@ export class PrintService {
 
     if (filterByProjectId) {
       params = params.set('filterByProjectId', filterByProjectId);
+    }
+
+    // Both ends or neither: the API rejects a half-supplied range with a 400, and sending one
+    // end alone would filter in a way the user never asked for.
+    if (dateRange?.fromDate && dateRange?.toDate) {
+      params = params
+        .set('fromDate', dateRange.fromDate)
+        .set('toDate', dateRange.toDate);
     }
 
     return this.http.get<PagedList<PrintSummary>>(url, { params, headers });
@@ -445,6 +500,26 @@ export class PrintService {
   public updatePrintStatus(id: number, newStatus: PrintStatus) {
     const url = `${this.baseApi}/api/Prints/${id}/status/${newStatus}`;
     return this.http.put<any>(url, {});
+  }
+
+  /**
+   * Applies one set of field values to many prints in a single request. Individual ids
+   * that could not be acted on come back in `failed`; the request itself is still a 200.
+   */
+  public bulkUpdatePrints(
+    request: BulkUpdatePrintsRequest
+  ): Observable<BulkPrintResult> {
+    const url = `${this.baseApi}/api/Prints/bulk-update`;
+    return this.http.post<BulkPrintResult>(url, request);
+  }
+
+  /**
+   * Deletes many prints in a single request. An id that no longer exists comes back in
+   * `succeeded` - the goal state is that the print is gone.
+   */
+  public bulkDeletePrints(printIds: number[]): Observable<BulkPrintResult> {
+    const url = `${this.baseApi}/api/Prints/bulk-delete`;
+    return this.http.post<BulkPrintResult>(url, { printIds });
   }
 
   deletePrint(id: number): Observable<any> {
@@ -596,19 +671,25 @@ export class PrintService {
         continue;
       }
 
-      // If actual has an amount, use it.
-      if (
-        (fu.source == PrintFilamentSourceMeasurement.Length &&
-          fu.lengthInM > 0) ||
-        (!(fu.source == PrintFilamentSourceMeasurement.Length) &&
-          fu.amountMg > 0)
-      ) {
+      // If actual has an amount, use it. The check must be made against the measurement the
+      // row is actually sourced from: a Volume-sourced row records volumeMl and leaves amountMg
+      // null, so testing amountMg alone sent it down the estimated path and — when there was no
+      // estimate — reported a confident $0.00 instead of its real cost.
+      // Pinned by print-cost-fixtures.spec.ts against the shared corpus.
+      const hasActual =
+        fu.source == PrintFilamentSourceMeasurement.Length
+          ? (fu.lengthInM ?? 0) > 0
+          : fu.source == PrintFilamentSourceMeasurement.Volume
+            ? (fu.volumeMl ?? 0) > 0
+            : (fu.amountMg ?? 0) > 0;
+
+      if (hasActual) {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,
           source: fu.source,
           lengthM: fu.lengthInM,
-          weightG: fu.amountMg > 0 ? fu.amountMg / 1000 : undefined,
+          weightG: fu.amountMg ? fu.amountMg / 1000 : undefined,
           volumeMl: fu.volumeMl,
           defaultFilamentPrice,
         });
@@ -620,8 +701,9 @@ export class PrintService {
           filament: fu.filament,
           source: fu.estimatedSource,
           lengthM: fu.estimatedLengthInM,
-          weightG:
-            fu.estimatedAmountMg > 0 ? fu.estimatedAmountMg / 1000 : undefined,
+          weightG: fu.estimatedAmountMg
+            ? fu.estimatedAmountMg / 1000
+            : undefined,
           volumeMl: fu.estimatedVolumeMl,
           defaultFilamentPrice,
         });
@@ -631,7 +713,7 @@ export class PrintService {
     }
 
     // Once all prices are calculated, sum them up.
-    let totalPrice: currency = undefined;
+    let totalPrice: currency | undefined = undefined;
 
     for (const price of prices) {
       if (price.valid && !isNaN(price.price.value)) {
@@ -645,16 +727,20 @@ export class PrintService {
 
     function getDecimalSeparator() {
       const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'decimal').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(numberWithDecimalSeparator)
+          .find((part) => part.type === 'decimal')?.value ?? '.'
+      );
     }
 
     function getGroupSeparator() {
       const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'group').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(numberWithDecimalSeparator)
+          .find((part) => part.type === 'group')?.value ?? ','
+      );
     }
 
     const currencyFormat = {
@@ -663,7 +749,7 @@ export class PrintService {
       separator: getGroupSeparator(),
     };
 
-    let total: FilamentPrice = undefined;
+    let total: FilamentPrice | undefined = undefined;
     if (totalPrice) {
       total = {
         formattedPrice: totalPrice.format(currencyFormat),
@@ -725,15 +811,19 @@ export class PrintService {
     const cost = currency(kwhUsed * Number(kwhRate));
 
     function getDecimalSeparator() {
-      return Intl.NumberFormat()
-        .formatToParts(100000.1)
-        .find((part) => part.type === 'decimal').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(100000.1)
+          .find((part) => part.type === 'decimal')?.value ?? '.'
+      );
     }
 
     function getGroupSeparator() {
-      return Intl.NumberFormat()
-        .formatToParts(100000.1)
-        .find((part) => part.type === 'group').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(100000.1)
+          .find((part) => part.type === 'group')?.value ?? ','
+      );
     }
 
     const currencyFormat = {
@@ -799,16 +889,20 @@ export class PrintService {
 
     function getDecimalSeparator() {
       const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'decimal').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(numberWithDecimalSeparator)
+          .find((part) => part.type === 'decimal')?.value ?? '.'
+      );
     }
 
     function getGroupSeparator() {
       const numberWithDecimalSeparator = 100000.1;
-      return Intl.NumberFormat()
-        .formatToParts(numberWithDecimalSeparator)
-        .find((part) => part.type === 'group').value;
+      return (
+        Intl.NumberFormat()
+          .formatToParts(numberWithDecimalSeparator)
+          .find((part) => part.type === 'group')?.value ?? ','
+      );
     }
 
     const currencyFormat = {
@@ -841,6 +935,10 @@ export class PrintService {
       const densityGramPerCubicM =
         filament.materialDensityGramPerCubicCm * 1000000;
 
+      if (lengthM === undefined) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
       const gramsUsed = areaSqM * +lengthM * densityGramPerCubicM;
 
       if (isNaN(currency(pricePerGram * gramsUsed).value)) {
@@ -857,6 +955,10 @@ export class PrintService {
         usesDefaultPrice: isUsingDefaultFilamentPrice,
       };
     } else if (source === PrintFilamentSourceMeasurement.Volume) {
+      if (volumeMl === undefined) {
+        return { message: '(Price not valid)', valid: false };
+      }
+
       const amountMg =
         +volumeMl * filament.materialDensityGramPerCubicCm * 1000;
       const amountG = amountMg / 1000;

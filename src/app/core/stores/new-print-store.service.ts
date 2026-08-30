@@ -16,7 +16,7 @@ export class NewPrintStoreService {
     return this.newPrint !== null;
   }
 
-  public getNewPrint(): PrintDetail {
+  public getNewPrint(): PrintDetail | null {
     return this.newPrint;
   }
 

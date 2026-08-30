@@ -4,9 +4,46 @@ table {
   td {
     padding-right: 5px;
   }
-  [mat-row]:hover {
+  [mat-row] {
     cursor: pointer;
-    background-color: rgba(0, 0, 0, 0.05);
+  }
+  .select-cell {
+    width: 48px;
+    padding-right: 0;
+  }
+}
+
+// Zebra striping, hover and selection all tint the same rows, so they are set
+// together - in ascending order of how much they need to win, since they all
+// carry the same specificity and the later rule takes the row.
+//
+// Selection is not a slightly darker grey: against a zebra stripe that is also a
+// slightly darker grey, "which rows did I pick" becomes a guessing game. It gets a
+// hue of its own plus a solid bar down the leading edge, which survives on the
+// stripe, under the hover tint, and for anyone who cannot separate the two greys.
+table {
+  --app-row-stripe: rgba(0, 0, 0, 0.02);
+  --app-row-hover: rgba(0, 0, 0, 0.05);
+
+  [mat-row]:nth-child(even) {
+    background-color: var(--app-row-stripe);
+  }
+
+  [mat-row]:hover {
+    background-color: var(--app-row-hover);
+  }
+
+  // --app-selected-* are global (styles.scss) so the mobile cards can highlight a
+  // selection with exactly the same treatment.
+  [mat-row].selected {
+    background-color: var(--app-selected-bg);
+    // An inset shadow rather than a border: a border on a table row would shift
+    // the cells across by its width and make the selected row jump sideways.
+    box-shadow: inset 3px 0 0 0 var(--app-selected-edge);
+  }
+
+  [mat-row].selected:hover {
+    background-color: var(--app-selected-bg-hover);
   }
 }
 
@@ -68,6 +105,20 @@ table {
   padding-bottom: 8px;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   padding-top: 8px;
+}
+
+// Single row holding the view toggle and the bulk-action controls. `nowrap` keeps
+// the controls on this line at the table's breakpoint so nothing below shifts.
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 8px 8px 0;
+}
+
+.view-toggle {
+  flex-shrink: 0;
 }
 
 .filter-field {
@@ -161,10 +212,38 @@ table {
   overflow: hidden;
 }
 
-.no-prints {
-  font-size: 16px;
-  line-height: 28px;
-  margin-left: 20px;
+// First load: keep the header row — and with it the mat-sort arrow — and hide
+// only the (empty) data rows. The skeleton renders directly beneath the table.
+table.loading tr[mat-row] {
+  display: none;
+}
+
+// Refetch: the rows stay. Dimming is the whole affordance, so it has to be
+// visible without being alarming — enough to read as "this is being replaced",
+// not so much that the text becomes unreadable, because the user is often
+// mid-sentence when the debounced search fires. Rows stay clickable: they point
+// at real prints, and blocking them would make a fast refetch feel broken.
+.mobile-card-view.refreshing app-print-card,
+table.refreshing tr[mat-row] {
+  opacity: 0.55;
+  transition: opacity 150ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-card-view.refreshing app-print-card,
+  table.refreshing tr[mat-row] {
+    transition: none;
+  }
+}
+
+// Sits between the header and the rows it describes. The negative margin means
+// it consumes no vertical space: this whole treatment exists to hold the rows
+// still, so the bar appearing must not nudge them down by its own height.
+.refresh-bar {
+  position: relative;
+  z-index: 1;
+  block-size: 3px;
+  margin-block-end: -3px;
 }
 
 .mat-column-more {
@@ -192,6 +271,12 @@ table {
   gap: 16px;
   padding: 8px;
   width: 100%;
+
+  // The bulk bar is fixed to the bottom of the viewport at this width, so without
+  // this the last card sits underneath it and cannot be scrolled into view.
+  &--selecting {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 // Improve table spacing on desktop
@@ -208,14 +293,14 @@ table {
   }
 }
 
-// Add zebra striping for better readability
-table {
-  [mat-row]:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0.02);
-  }
-}
-
 :host-context(html.dark-theme) {
+  // The light-theme tints are black-on-white washes and all but vanish on #121212.
+  // The selection colours are handled globally, alongside their light counterparts.
+  table {
+    --app-row-stripe: rgba(255, 255, 255, 0.04);
+    --app-row-hover: rgba(255, 255, 255, 0.08);
+  }
+
   .filter-panel-inner {
     border-top-color: rgba(255, 255, 255, 0.08);
   }

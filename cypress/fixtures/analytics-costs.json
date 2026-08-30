@@ -1,0 +1,106 @@
+{
+  "from": "2026-01-01T00:00:00+00:00",
+  "to": "2026-07-01T00:00:00+00:00",
+  "timeZone": "America/New_York",
+  "granularity": "Month",
+  "currency": "USD",
+  "totalSpend": {
+    "value": 184.32,
+    "previous": 151.4,
+    "currency": "USD",
+    "coverage": {
+      "population": "prints",
+      "counted": 44,
+      "total": 48,
+      "undatedCount": 0,
+      "exclusions": [{ "reason": "RateMissing", "count": 4 }]
+    }
+  },
+  "filamentSpend": {
+    "value": 142.1,
+    "previous": 118.9,
+    "currency": "USD",
+    "coverage": {
+      "population": "prints",
+      "counted": 44,
+      "total": 48,
+      "undatedCount": 0,
+      "exclusions": [{ "reason": "RateMissing", "count": 4 }]
+    }
+  },
+  "electricitySpend": {
+    "value": 22.22,
+    "previous": 18.5,
+    "currency": "USD",
+    "coverage": {
+      "population": "prints",
+      "counted": 44,
+      "total": 48,
+      "undatedCount": 0,
+      "exclusions": [{ "reason": "RateMissing", "count": 4 }]
+    }
+  },
+  "maintenanceSpend": {
+    "value": 20.0,
+    "previous": 14.0,
+    "currency": "USD",
+    "coverage": {
+      "population": "printers",
+      "counted": 2,
+      "total": 2,
+      "undatedCount": 0,
+      "exclusions": []
+    }
+  },
+  "spendOverTime": [
+    { "index": 0, "localStart": "2026-01-01", "filament": 21.4, "electricity": 3.6, "maintenance": 0 },
+    { "index": 1, "localStart": "2026-02-01", "filament": 28.9, "electricity": 4.4, "maintenance": 10 },
+    { "index": 2, "localStart": "2026-03-01", "filament": 31.2, "electricity": 4.9, "maintenance": 0 },
+    { "index": 3, "localStart": "2026-04-01", "filament": 25.7, "electricity": 3.9, "maintenance": 0 },
+    { "index": 4, "localStart": "2026-05-01", "filament": 19.8, "electricity": 3.1, "maintenance": 10 },
+    { "index": 5, "localStart": "2026-06-01", "filament": 15.1, "electricity": 2.32, "maintenance": null }
+  ],
+  "costPerPrint": [
+    { "label": "$0–2", "lowerSeconds": 0, "upperSeconds": 2, "count": 12 },
+    { "label": "$2–5", "lowerSeconds": 2, "upperSeconds": 5, "count": 18 },
+    { "label": "$5–10", "lowerSeconds": 5, "upperSeconds": 10, "count": 9 },
+    { "label": "$10+", "lowerSeconds": 10, "upperSeconds": null, "count": 5 }
+  ],
+  "byMaterialType": [
+    { "key": "PLA", "label": "PLA", "amount": 92.4, "printCount": 30 },
+    { "key": "PETG", "label": "PETG", "amount": 34.2, "printCount": 10 },
+    { "key": "ABS", "label": "ABS", "amount": 15.5, "printCount": 4 }
+  ],
+  "byBrand": [
+    { "key": "brand-a", "label": "Brand A", "amount": 88.1, "printCount": 26 },
+    { "key": "brand-b", "label": "Brand B", "amount": 54.0, "printCount": 18 }
+  ],
+  "costOfFailure": {
+    "value": 23.75,
+    "previous": 31.2,
+    "currency": "USD",
+    "coverage": {
+      "population": "prints",
+      "counted": 6,
+      "total": 48,
+      "undatedCount": 0,
+      "exclusions": []
+    }
+  },
+  "costOfFailureSharePercent": 12.9,
+  "mostExpensive": [
+    { "printId": 1, "title": "Large Enclosure Panel", "date": "2026-03-14", "amount": 18.42 },
+    { "printId": 2, "title": "Helmet Shell", "date": "2026-02-02", "amount": 14.1 }
+  ],
+  "leastExpensive": [
+    { "printId": 3, "title": "Cable Clip", "date": "2026-05-21", "amount": 0.18 },
+    { "printId": 4, "title": "Calibration Cube", "date": "2026-01-09", "amount": 0.32 }
+  ],
+  "coverage": {
+    "population": "prints",
+    "counted": 44,
+    "total": 48,
+    "undatedCount": 0,
+    "exclusions": [{ "reason": "RateMissing", "count": 4 }]
+  }
+}

@@ -115,7 +115,8 @@ When multiple names share the same timestamp (e.g. a filament + print created in
 
 ## Custom Commands
 
-- **`cy.createPrint(title, options?)`** — creates a new print via `/prints/new/edit`, waits for the POST to complete, and leaves you on `/prints`. Pass `{ printer: 'Name' }` to select a specific printer; defaults to the first available option.
+- **`cy.seedPrint(title, options?)`** — creates a print through the API. Does **not** navigate. Use this whenever the spec just needs prints to exist; it is roughly 3.5s per print cheaper than driving the form, which is why the two list specs moved to it. Seeds `status: Pending` and `viewStatus: Private`, matching the new-print form's defaults for a user with no saved preferences — the status matters, because the status-filter and bulk-status tests assert against prints that are _not_ yet Success. Pass `{ printer: 'Name' }` to attach a specific printer; defaults to the first.
+- **`cy.createPrint(title, options?)`** — creates a new print via `/prints/new/edit`, waits for the POST to complete, and leaves you on `/prints`. Pass `{ printer: 'Name' }` to select a specific printer; defaults to the first available option. **Prefer `cy.seedPrint` unless the test is about the form itself** — this drives a page load and a form fill per print.
 - **`cy.openFilterPanel()`** — ensures the filter panel is open. Idempotent — safe to call even if the panel is already open.
 
 ### Intercept ordering
@@ -164,3 +165,19 @@ If a dev server is already running on 4200, just run the two steps directly:
 - Theme swap is class-based (`html.dark-theme`) so the correct variant shows at
   first paint — do not switch to a hydration-gated `@if`.
 - Out of scope: the 4th "Cura marketplace" integration image is not regenerated.
+
+## Running in CI
+
+`.github/workflows/e2e.yml` runs the suite nightly, on `workflow_dispatch`, and
+on PRs labeled `run-e2e`. CI differs from local in two ways that matter when
+writing specs:
+
+- **Both servers are plain HTTP** — the UI on `http://localhost:4200` (the
+  Angular `e2e` configuration) and the API on `http://localhost:5000`. Never
+  hardcode an API URL in a spec; import `apiUrl()` from
+  `cypress/support/api-url.js`, which reads `CYPRESS_apiUrl` and falls back to
+  the local HTTPS default.
+- **The database is seeded, not your dev data.** It is dropped and re-seeded on
+  every API boot by `E2EDataSeeder` in the API repo. A spec that depends on data
+  no one seeded will pass locally and fail in CI. Either create what you need in
+  the spec, or add it to the seeder.

@@ -1,4 +1,16 @@
-<mat-card class="print-card" [routerLink]="['/prints', print().id]">
+<!-- In selection mode the routerLink is dropped rather than suppressed in the click
+     handler: leaving it in place would keep the href, and a long-press-then-open-in-
+     new-tab or a middle click would still navigate out of a selection. -->
+<mat-card
+  class="print-card"
+  [class.print-card--selected]="selected()"
+  [routerLink]="selectionMode() ? null : ['/prints', print().id]"
+  appLongPress
+  (longPress)="onLongPress()"
+  (click)="onCardClicked()"
+  [attr.role]="selectionMode() ? 'checkbox' : null"
+  [attr.aria-checked]="selectionMode() ? selected() : null"
+>
   <mat-card-content>
     <div class="card-layout">
       <!-- Image Section -->
@@ -7,6 +19,16 @@
           [printId]="print().id"
           [imageId]="print().defaultPrintImageId"
         />
+        @if (selectionMode()) {
+          <!-- Presentation only. The card itself carries the checkbox role and the
+               tap target, so a nested focusable control would just be a second stop
+               on the way past every card. -->
+          <span class="card-select-badge" aria-hidden="true">
+            <mat-icon>{{
+              selected() ? 'check_circle' : 'radio_button_unchecked'
+            }}</mat-icon>
+          </span>
+        }
       </div>
 
       <!-- Content Section -->
@@ -58,18 +80,32 @@
                     @if (fu.filament !== null) {
                       <div
                         class="material-color"
-                        [style]="fu.filament.colors | filamentColorSwatchStyle : fu.filament.colorPattern : fu.filament.finishType : fu.filament.effects"
+                        [style]="
+                          fu.filament.colors
+                            | filamentColorSwatchStyle
+                              : fu.filament.colorPattern
+                              : fu.filament.finishType
+                              : fu.filament.effects
+                        "
                         [title]="fu.filament.colorName || 'No color name'"
                       ></div>
                       <span class="material-name">
                         {{ fu.filament?.displayName }}
                         @if (getPreferredDisplay(fu); as display) {
                           <span
-                            [matTooltip]="display.isFallback
-                              ? display.fallbackTooltip
-                              : (display.isEstimated ? '* indicates Estimated Material Usage' : null)"
+                            [matTooltip]="
+                              display.isFallback
+                                ? display.fallbackTooltip
+                                : display.isEstimated
+                                  ? '* indicates Estimated Material Usage'
+                                  : null
+                            "
                           >
-                            ({{ display.displayString }}@if (display.isEstimated) { * })
+                            ({{ display.displayString }}
+                            @if (display.isEstimated) {
+                              *
+                            }
+                            )
                           </span>
                         }
                       </span>
@@ -82,9 +118,8 @@
             </div>
           }
 
-          <div [class]="'meta-item status-badge status-' + print().status">
-            <mat-icon class="meta-icon">{{ getStatusIcon(print()) }}</mat-icon>
-            <span>{{ getStatus(print()) }}</span>
+          <div class="meta-item">
+            <app-print-status-badge [status]="print().status" />
           </div>
         </div>
       </div>

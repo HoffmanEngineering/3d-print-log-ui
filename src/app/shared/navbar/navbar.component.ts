@@ -1,12 +1,4 @@
-import { MediaMatcher } from '@angular/cdk/layout';
-import {
-  ChangeDetectorRef,
-  Component,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -14,7 +6,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { environment } from 'src/environments/environment';
@@ -31,7 +22,6 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
     MatMenuModule,
     MatIconModule,
     MatTooltipModule,
-    FlexLayoutModule,
     NotificationBellComponent,
   ],
 })
@@ -44,18 +34,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   public isUserProfileFeatureEnabled = environment.features.userProfile;
 
-  mobileQuery: MediaQueryList;
-  private mobileQueryListener: () => void;
-
   private readonly subscriptionService = inject(SubscriptionService);
   readonly isPro = this.subscriptionService.isPro;
 
-  constructor(
-    public auth: AuthService,
-    private media: MediaMatcher,
-    private changeDetectorRef: ChangeDetectorRef,
-    private ngZone: NgZone
-  ) {}
+  constructor(public auth: AuthService) {}
 
   ngOnInit() {
     this.userProfileSubscription = this.auth.userProfile$.subscribe((user) => {
@@ -67,23 +49,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.userId = null;
       }
     });
-
-    this.setupMobileListener();
-  }
-  setupMobileListener() {
-    this.mobileQuery = this.media.matchMedia('(max-width: 450px)');
-
-    this.mobileQueryListener = () => {
-      this.ngZone.run(() => {
-        this.changeDetectorRef.detectChanges();
-      });
-    };
-    this.mobileQuery.addListener(this.mobileQueryListener);
   }
 
   ngOnDestroy(): void {
-    this.mobileQuery.removeListener(this.mobileQueryListener);
-
     if (this.userProfileSubscription) {
       this.userProfileSubscription.unsubscribe();
     }

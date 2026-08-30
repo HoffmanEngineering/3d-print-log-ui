@@ -6,8 +6,12 @@ import {
   FilamentEffect,
   FilamentFinishType,
   FilamentService,
+  FilamentSummary,
 } from 'src/app/core/services/filament.service';
 import { MaterialCategoryService } from 'src/app/core/services/material-categories.service';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { RouterTestingModule } from '@angular/router/testing';
+import { SharedModule } from '../shared.module';
 
 describe('FilamentListComponent', () => {
   let component: FilamentListComponent;
@@ -51,6 +55,16 @@ describe('FilamentListComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
+  });
+
+  it('keeps the color swatch column alongside the photo', () => {
+    // The photo identifies the spool; the swatch stays the fast color-scanning
+    // signal.
+    expect(component.displayedColumns).toContain('image');
+    expect(component.displayedColumns).toContain('colorHex');
+    expect(component.displayedColumns.indexOf('image')).toBe(
+      component.displayedColumns.indexOf('colorHex') - 1
+    );
   });
 
   describe('isFilterPanelOpen', () => {
@@ -244,5 +258,78 @@ describe('FilamentListComponent', () => {
           .args;
       expect(callArgs[12]).toEqual([FilamentEffect.GlowInDark]);
     });
+  });
+});
+
+describe('FilamentListComponent thumbnail column', () => {
+  let fixture: ComponentFixture<FilamentListComponent>;
+  let component: FilamentListComponent;
+
+  const aFilament = {
+    id: 'f1',
+    displayName: 'Blue PLA',
+    colors: ['0000ff'],
+    colorPattern: ColorPatternType.Solid,
+    materialType: 'PLA',
+    filamentRemaining: 500000,
+    isActive: true,
+    isFavorite: false,
+  } as unknown as FilamentSummary;
+
+  const setUp = async (defaultImageThumbnailUrl: string | null) => {
+    const filamentService = jasmine.createSpyObj<FilamentService>(
+      'FilamentService',
+      ['getCurrentUserFilamentSummaries', 'changeFavorite']
+    );
+    filamentService.getCurrentUserFilamentSummaries.and.returnValue(
+      of({
+        // ngOnInit refetches and overwrites `filaments`, so the row has to come
+        // back from the service rather than being assigned onto the component.
+        items: [{ ...aFilament, defaultImageThumbnailUrl }],
+        paging: { currentPage: 1, pageSize: 10, totalCount: 1 },
+      } as any)
+    );
+
+    const materialCategoryService =
+      jasmine.createSpyObj<MaterialCategoryService>('MaterialCategoryService', [
+        'getMaterialCategories',
+      ]);
+    materialCategoryService.getMaterialCategories.and.returnValue(of([]));
+
+    await TestBed.configureTestingModule({
+      imports: [SharedModule, NoopAnimationsModule, RouterTestingModule],
+      providers: [
+        { provide: FilamentService, useValue: filamentService },
+        {
+          provide: MaterialCategoryService,
+          useValue: materialCategoryService,
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(FilamentListComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
+
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('renders the default thumbnail when present', async () => {
+    await setUp('https://b/t.webp?sig=x');
+
+    const img: HTMLImageElement = fixture.nativeElement.querySelector(
+      'td .filament-thumbnail img'
+    );
+    expect(img.src).toContain('t.webp');
+    expect(img.getAttribute('loading')).toBe('lazy');
+  });
+
+  it('renders a same-size placeholder when there is no photo', async () => {
+    await setUp(null);
+
+    // Rows must not change height depending on whether a spool has a photo.
+    const cell = fixture.nativeElement.querySelector('td .filament-thumbnail');
+    expect(cell).toBeTruthy();
+    expect(cell.querySelector('img')).toBeNull();
   });
 });

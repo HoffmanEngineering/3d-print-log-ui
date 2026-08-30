@@ -1,13 +1,14 @@
 import { NgModule } from '@angular/core';
-import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { AuthGuard } from './core/guards/auth.guard';
 import { HomepageRedirectGuard } from './core/guards/homepage-redirect.guard';
 import { PendingChangesGuard } from './core/guards/pending-changes.guard';
+import { SelectivePreloadStrategy } from './core/routing/selective-preload.strategy';
 import { HomeComponent } from './home/home.component';
 import { SlicerLandingComponent } from './slicer/slicer-landing.component';
 
-const routes: Routes = [
+export const appRoutes: Routes = [
   {
     path: 'callback',
     loadComponent: () =>
@@ -27,6 +28,7 @@ const routes: Routes = [
     path: 'prints',
     loadChildren: () =>
       import('./print/print.module').then((m) => m.PrintModule),
+    data: { preload: true },
   },
   {
     path: 'projects',
@@ -37,6 +39,7 @@ const routes: Routes = [
     path: 'printers',
     loadChildren: () =>
       import('./printer/printer.module').then((m) => m.PrinterModule),
+    data: { preload: true },
   },
   {
     path: 'printer-maintenance',
@@ -44,6 +47,7 @@ const routes: Routes = [
       import('./printer-maintenance/printer-maintenance.module').then(
         (m) => m.PrinterMaintenanceModule
       ),
+    canActivate: [AuthGuard],
   },
   {
     path: 'home',
@@ -69,7 +73,8 @@ const routes: Routes = [
   {
     path: 'analytics',
     loadChildren: () =>
-      import('./analytics/analytics.module').then((m) => m.AnalyticsModule),
+      import('./analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES),
+    canActivate: [AuthGuard],
   },
   environment.features.userProfile
     ? {
@@ -82,6 +87,7 @@ const routes: Routes = [
     path: 'settings',
     loadChildren: () =>
       import('./settings/settings.module').then((m) => m.SettingsModule),
+    canActivate: [AuthGuard],
   },
   {
     path: 'filament',
@@ -91,11 +97,13 @@ const routes: Routes = [
     path: 'materials',
     loadChildren: () =>
       import('./filament/filament.module').then((m) => m.FilamentModule),
+    data: { preload: true },
   },
   {
     path: 'api-keys',
     loadChildren: () =>
       import('./apikeys/apikeys.module').then((m) => m.ApikeysModule),
+    canActivate: [AuthGuard],
   },
   {
     path: 'notifications',
@@ -178,6 +186,7 @@ const routes: Routes = [
   {
     path: 'feed',
     loadChildren: () => import('./feed/feed.module').then((m) => m.FeedModule),
+    canActivate: [AuthGuard],
   },
 
   {
@@ -189,8 +198,16 @@ const routes: Routes = [
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes, {
+    RouterModule.forRoot(appRoutes, {
       scrollPositionRestoration: 'enabled',
+      // Without this, scrollPositionRestoration scrolls a fragment navigation
+      // back to the top: the router does not look at the `#anchor` at all, so
+      // every deep link into a docs page landed at the top of it. The two
+      // settings are designed to work together — with anchorScrolling on, a
+      // navigation carrying a fragment scrolls to that element instead of
+      // being restored.
+      anchorScrolling: 'enabled',
+      preloadingStrategy: SelectivePreloadStrategy,
     }),
   ],
   exports: [RouterModule],

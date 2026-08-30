@@ -1,0 +1,129 @@
+{
+  "from": "2020-05-01T00:00:00-04:00",
+  "to": "2020-08-31T23:59:59-04:00",
+  "timeZone": "America/New_York",
+  "granularity": "Month",
+  "tiles": {
+    "printCount": {
+      "value": 18,
+      "previous": 12,
+      "coverage": {
+        "population": "prints",
+        "counted": 18,
+        "total": 18,
+        "undatedCount": 0,
+        "exclusions": []
+      }
+    },
+    "successRatePercent": {
+      "value": 72.2,
+      "previous": 66.7,
+      "coverage": {
+        "population": "prints",
+        "counted": 18,
+        "total": 18,
+        "undatedCount": 0,
+        "exclusions": []
+      }
+    },
+    "filamentGrams": {
+      "value": 832.75,
+      "previous": 611.4,
+      "coverage": {
+        "population": "prints",
+        "counted": 17,
+        "total": 18,
+        "undatedCount": 0,
+        "exclusions": [{ "reason": "MaterialEstimated", "count": 1 }]
+      }
+    },
+    "printTimeSeconds": {
+      "value": 247800,
+      "previous": 180300,
+      "coverage": {
+        "population": "prints",
+        "counted": 17,
+        "total": 18,
+        "undatedCount": 0,
+        "exclusions": [{ "reason": "DurationMissing", "count": 1 }]
+      }
+    },
+    "totalCost": {
+      "value": 58.3,
+      "previous": 44.15,
+      "currency": "USD",
+      "coverage": {
+        "population": "prints",
+        "counted": 17,
+        "total": 18,
+        "undatedCount": 0,
+        "exclusions": [{ "reason": "PriceMissing", "count": 1 }]
+      }
+    },
+    "avgPrintTimeSeconds": {
+      "value": 14576,
+      "previous": 15025,
+      "coverage": {
+        "population": "prints",
+        "counted": 17,
+        "total": 18,
+        "undatedCount": 0,
+        "exclusions": [{ "reason": "DurationMissing", "count": 1 }]
+      }
+    }
+  },
+  "statusBreakdown": [
+    { "status": "Success", "count": 13 },
+    { "status": "PartialSuccess", "count": 2 },
+    { "status": "Failed", "count": 2 },
+    { "status": "Cancelled", "count": 1 }
+  ],
+  "series": [
+    {
+      "index": 0,
+      "localStart": "2020-05-01T00:00:00-04:00",
+      "countsByStatus": { "Success": 4, "Failed": 1 }
+    },
+    {
+      "index": 1,
+      "localStart": "2020-06-01T00:00:00-04:00",
+      "countsByStatus": { "Success": 2, "PartialSuccess": 1, "Cancelled": 1 }
+    },
+    {
+      "index": 2,
+      "localStart": "2020-07-01T00:00:00-04:00",
+      "countsByStatus": { "Success": 3, "PartialSuccess": 1, "Failed": 1 }
+    },
+    {
+      "index": 3,
+      "localStart": "2020-08-01T00:00:00-04:00",
+      "countsByStatus": { "Success": 4 }
+    }
+  ],
+  "highlights": {
+    "mostUsedPrinter": {
+      "id": "101",
+      "label": "Living Room",
+      "value": 7,
+      "unit": "prints"
+    },
+    "mostUsedMaterial": {
+      "id": "2001",
+      "label": "Galaxy Black",
+      "value": 6,
+      "unit": "prints"
+    },
+    "longestPrint": {
+      "id": "1003",
+      "label": "Fantasy Football Trophy",
+      "value": 25600,
+      "unit": "seconds"
+    },
+    "priciestPrint": {
+      "id": "1004",
+      "label": "Oculus Headset Wall Mount",
+      "value": 9.42,
+      "unit": "cost"
+    }
+  }
+}

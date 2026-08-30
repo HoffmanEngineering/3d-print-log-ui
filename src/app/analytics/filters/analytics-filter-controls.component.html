@@ -1,0 +1,41 @@
+<mat-form-field appearance="outline" class="analytics-filter-controls__field">
+  <mat-label>Printers</mat-label>
+  <mat-select
+    multiple
+    data-testid="printer-select"
+    [value]="store.printerIds()"
+    (valueChange)="onPrinters($event)"
+  >
+    @for (option of printers(); track option.id) {
+      <mat-option [value]="option.id">{{ option.label }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+
+<mat-form-field appearance="outline" class="analytics-filter-controls__field">
+  <mat-label>Materials</mat-label>
+  <mat-select
+    multiple
+    data-testid="material-select"
+    [value]="store.filamentIds()"
+    (valueChange)="onMaterials($event)"
+  >
+    @for (option of materials(); track option.id) {
+      <mat-option [value]="option.id">{{ option.label }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+
+<mat-form-field appearance="outline" class="analytics-filter-controls__field">
+  <mat-label>Status</mat-label>
+  <mat-select
+    multiple
+    data-testid="status-select"
+    [value]="store.statuses()"
+    (valueChange)="onStatuses($event)"
+  >
+    @for (option of statusOptions; track option.id) {
+      <mat-option [value]="option.id">{{ option.label }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>

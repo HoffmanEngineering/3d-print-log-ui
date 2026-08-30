@@ -1,0 +1,48 @@
+<section class="analytics-shell">
+  <h1 class="analytics-shell__heading">Analytics</h1>
+
+  <app-analytics-filter-bar />
+
+  <mat-tab-group
+    [mat-stretch-tabs]="false"
+    [selectedIndex]="selectedIndex()"
+    (selectedIndexChange)="onTabChange($event)"
+  >
+    <mat-tab label="Overview">
+      <!-- Guarded so later phases' tabs only build on first activation. -->
+      @if (selectedIndex() === 0) {
+        <app-overview-tab />
+      }
+    </mat-tab>
+
+    <mat-tab label="Activity">
+      @if (selectedIndex() === 1) {
+        <app-activity-tab />
+      }
+    </mat-tab>
+
+    <mat-tab label="Printers">
+      @if (selectedIndex() === 2) {
+        <app-printers-tab />
+      }
+    </mat-tab>
+
+    <mat-tab label="Materials">
+      @if (selectedIndex() === 3) {
+        <app-materials-tab />
+      }
+    </mat-tab>
+
+    <mat-tab label="Costs">
+      @if (selectedIndex() === 4) {
+        <app-costs-tab />
+      }
+    </mat-tab>
+
+    <mat-tab label="Accuracy">
+      @if (selectedIndex() === 5) {
+        <app-accuracy-tab />
+      }
+    </mat-tab>
+  </mat-tab-group>
+</section>

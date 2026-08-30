@@ -1,0 +1,12 @@
+<!-- The kind in words. Colour and the icon are the only other things that
+     separate a tip from a warning, and neither reaches a screen reader. -->
+<span class="cdk-visually-hidden">{{ label() }}:</span>
+
+<mat-icon class="doc-callout__icon" aria-hidden="true">{{ icon() }}</mat-icon>
+
+<div class="doc-callout__body">
+  @if (heading()) {
+    <p class="doc-callout__heading">{{ heading() }}</p>
+  }
+  <ng-content />
+</div>

@@ -19,6 +19,7 @@ import {
   extractAnchors,
   ID_PATTERN,
   renderMarkdown,
+  withHeadingIds,
 } from './docs-markdown.mjs';
 import { anchorFor, isVersion } from './release-notes-lib.mjs';
 import { renderRelease } from './release-notes-emit.mjs';
@@ -52,6 +53,13 @@ const ELEMENT_ALLOWLIST = new Set([
   'button',
   'code',
   'dd',
+  // The doc primitives, declared by DocumentationModule. See
+  // src/app/documentation/primitives.
+  'doc-callout',
+  'doc-figure',
+  'doc-step',
+  'doc-steps',
+  'doc-video',
   'dl',
   'dt',
   'div',
@@ -109,9 +117,20 @@ export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
   const renderedReleases =
     releases.length > 0 ? releases.map(renderRelease).join('\n') : '';
 
-  /** The full page a reader can reach, release history included. */
+  /**
+   * The full page a reader can reach, release history included.
+   *
+   * `withHeadingIds` has to run here for the same reason it runs in
+   * planOutputs: it is part of what the page IS. Validating the bare
+   * renderMarkdown output would reject `[Jump](#materials-list)` as a link to
+   * an id nothing declares, while the deployed page declares it.
+   *
+   * This only widens what may be LINKED to. The published-anchor contract is
+   * checked against docs-anchors.json, which is hand-maintained and holds
+   * explicit ids only, so a derived id still never enters it.
+   */
   const templateFor = (source) => {
-    const rendered = renderMarkdown(source.body ?? '');
+    const rendered = withHeadingIds(renderMarkdown(source.body ?? ''));
     return source.slug === RELEASE_NOTES_SLUG && renderedReleases
       ? `${rendered}\n${renderedReleases}`
       : rendered;
@@ -210,6 +229,10 @@ export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
       if (!ELEMENT_ALLOWLIST.has(element)) {
         add(file, `element <${element}> is not in the docs element allowlist.`);
       }
+    }
+
+    for (const problem of figureAltProblems(template)) {
+      add(file, problem);
     }
 
     // A `component:` page owns its class, so its template may reference anything
@@ -365,6 +388,41 @@ function validateReleases(releases, add) {
       add(file, 'frontmatter field "highlights" must be a sequence.');
     }
   }
+}
+
+/** A `<doc-figure>` start tag, with its attributes. */
+const DOC_FIGURE = /<doc-figure\b([^>]*)>/g;
+
+/**
+ * `<doc-figure>` must describe its image in words.
+ *
+ * `alt` being a required input only makes the BINDING required — `alt=""`
+ * compiles, and marks the screenshot decorative. It never is: a doc figure is
+ * a picture of the product carrying information the prose does not repeat.
+ *
+ * Scoped to `doc-figure` rather than to every `<img>` on purpose. A bare `<img>`
+ * in a doc is sometimes genuinely ornamental, and the existing pages include
+ * one. The primitive is the thing that promises otherwise.
+ *
+ * @param {string} template
+ * @returns {string[]} one message per offending figure
+ */
+function figureAltProblems(template) {
+  const problems = [];
+
+  for (const [, attributes] of template.matchAll(DOC_FIGURE)) {
+    // Either the plain attribute or a binding: an author may write alt="..."
+    // or [alt]="expression", and only the literal form can be read here.
+    if (/\s\[?alt\]?\s*=\s*"[^"]*[^"\s][^"]*"/.test(attributes)) continue;
+
+    problems.push(
+      /\s\[?alt\]?\s*=/.test(attributes)
+        ? '<doc-figure> has an empty alt; describe what the screenshot shows.'
+        : '<doc-figure> is missing alt; describe what the screenshot shows.'
+    );
+  }
+
+  return problems;
 }
 
 function elementsOf(template) {

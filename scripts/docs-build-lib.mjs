@@ -27,6 +27,7 @@ import {
   emitDeclarationsTs,
   emitFiguresTs,
   emitManifestTs,
+  emitOutlineTs,
   emitPageComponentTs,
   emitPageTemplate,
   emitRoutesTs,
@@ -34,7 +35,7 @@ import {
   emitServerRoutesTs,
 } from './docs-emit.mjs';
 import { buildManifest, RELEASE_NOTES_SLUG } from './docs-manifest-lib.mjs';
-import { renderMarkdown } from './docs-markdown.mjs';
+import { renderMarkdown, withHeadingIds } from './docs-markdown.mjs';
 import {
   emitArchiveTs,
   renderArchiveHost,
@@ -111,7 +112,9 @@ export function planOutputs(sources, releases = []) {
   const templates = {};
   for (const source of sources) {
     try {
-      templates[source.slug] = renderMarkdown(source.body);
+      // Ids are minted on the rendered template, so raw HTML pages get them
+      // too — mcp and getting-started are <article> markup end to end.
+      templates[source.slug] = withHeadingIds(renderMarkdown(source.body));
     } catch (error) {
       throw new Error(`${source.sourceFile}: ${error.message}`);
     }
@@ -155,6 +158,7 @@ export function planOutputs(sources, releases = []) {
   files.set('docs-manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
   files.set('docs-search-index.json', emitSearchIndexJson(manifest, indexed));
   files.set('docs-figures.ts', emitFiguresTs(manifest, indexed));
+  files.set('docs-outline.ts', emitOutlineTs(manifest, templates));
   files.set('release-notes-archive.ts', emitArchiveTs(releases));
   files.set('docs-declarations.ts', emitDeclarationsTs(manifest));
   files.set('docs-manifest.ts', emitManifestTs());

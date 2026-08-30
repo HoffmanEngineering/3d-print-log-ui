@@ -1,0 +1,41 @@
+// Tokens shared by the docs typography (styles.scss) and the doc primitives.
+//
+// Custom properties rather than Sass variables on purpose: the primitives are
+// style-encapsulated components, so a Sass variable compiled into styles.scss
+// could not reach them, and the theme has to swap at runtime. The dark values
+// are a class swap on <html>, set before first paint — never an `isDark()`
+// signal, which pops in after hydration on the prerendered pages.
+
+:root {
+  // Body text at a comfortable reading size, and a measure that keeps a line
+  // in the 45-75 character band the eye tracks without losing its place.
+  --docs-measure: 70ch;
+  --docs-text: rgba(0, 0, 0, 0.87);
+  --docs-text-muted: rgba(0, 0, 0, 0.6);
+  --docs-rule: rgba(0, 0, 0, 0.12);
+  --docs-surface: #f5f6f8;
+  --docs-surface-strong: #eceef2;
+  --docs-code-text: #b02a5b;
+  --docs-link: #3f51b5;
+
+  --docs-callout-note: #3f51b5;
+  --docs-callout-tip: #2e7d32;
+  --docs-callout-warning: #b26a00;
+  --docs-callout-danger: #c62828;
+}
+
+html.dark-theme {
+  --docs-text: rgba(255, 255, 255, 0.87);
+  --docs-text-muted: rgba(255, 255, 255, 0.6);
+  --docs-rule: rgba(255, 255, 255, 0.14);
+  --docs-surface: #262626;
+  --docs-surface-strong: #303030;
+  --docs-code-text: #f48fb1;
+  --docs-link: #8c9eff;
+
+  // Lightened until each clears 4.5:1 on #1e1e1e, the docs content surface.
+  --docs-callout-note: #8c9eff;
+  --docs-callout-tip: #81c784;
+  --docs-callout-warning: #ffb74d;
+  --docs-callout-danger: #ef9a9a;
+}

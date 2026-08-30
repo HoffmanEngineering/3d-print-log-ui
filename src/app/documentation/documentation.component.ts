@@ -5,6 +5,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  computed,
   DestroyRef,
   inject,
   NgZone,
@@ -58,6 +59,14 @@ export class DocumentationComponent
 {
   /** Slug of the docs page on screen; drives the feedback widget's per-page reset. */
   readonly currentSlug = signal('');
+
+  /**
+   * The same page as a docs path (`docs/printers`), which is the key the
+   * generated outline and the manifest are both indexed by.
+   */
+  readonly currentPath = computed(() =>
+    this.currentSlug() ? `docs/${this.currentSlug()}` : ''
+  );
 
   mobileQuery: MediaQueryList;
   private mobileQueryListener: () => void;

@@ -1,0 +1,63 @@
+:host {
+  display: block;
+  counter-increment: doc-step;
+  position: relative;
+  padding: 0 0 24px 44px;
+}
+
+// The rail joining one step to the next. Drawn on the host rather than between
+// elements so the last step can simply switch it off.
+:host::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--docs-rule);
+}
+
+:host(:last-of-type) {
+  padding-bottom: 0;
+}
+
+:host(:last-of-type)::before {
+  display: none;
+}
+
+.doc-step__body::before {
+  content: counter(doc-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--docs-link);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  // The prose beside it starts at the cap height of its first line, so the
+  // bubble is nudged rather than aligned to the box.
+  line-height: 1;
+}
+
+// An h4 for heading navigation, but sized as a step title rather than as a
+// section heading: it sits beside its number, not above a block of prose.
+.doc-step__heading {
+  margin: 4px 0 8px;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--docs-text);
+}
+
+:host ::ng-deep .doc-step__body > :first-child {
+  margin-top: 0;
+}
+
+:host ::ng-deep .doc-step__body > :last-child {
+  margin-bottom: 0;
+}

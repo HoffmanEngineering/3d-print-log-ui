@@ -1,0 +1,34 @@
+:host {
+  display: block;
+  margin: 24px 0;
+}
+
+.doc-video {
+  margin: 0;
+}
+
+// youtube-player writes a fixed pixel width and height onto its iframe and its
+// placeholder (640x390 by default), which overflows the measure on a phone.
+// The 16:9 box owns the size instead, and everything inside it fills the box.
+.doc-video__frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--docs-surface-strong);
+}
+
+:host ::ng-deep .doc-video__frame youtube-player,
+:host ::ng-deep .doc-video__frame iframe,
+:host ::ng-deep .doc-video__frame > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--docs-text-muted);
+}

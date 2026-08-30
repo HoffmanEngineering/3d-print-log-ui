@@ -5,11 +5,13 @@ import { buildManifest } from './docs-manifest-lib.mjs';
 import {
   emitDeclarationsTs,
   emitFiguresTs,
+  emitOutlineTs,
   emitPageComponentTs,
   emitPageTemplate,
   emitRoutesTs,
   emitSearchIndexJson,
   emitServerRoutesTs,
+  outlineOf,
 } from './docs-emit.mjs';
 
 const page = (over = {}) => ({
@@ -517,4 +519,111 @@ test('search text does not double-unescape an escaped character reference', () =
   );
 
   assert.equal(index[0].text, 'Write &lt;tag&gt; to show a tag.');
+});
+
+test('the outline drops a lone leading heading as the page title', () => {
+  // "## Printers" repeats the nav label and the <h1> above the rail. Listing
+  // it as the first TOC entry is a link to what the reader is already at.
+  const outline = outlineOf(
+    [
+      '<h2 id="printers">Printers</h2>',
+      '<h3 id="printers-list">Printers List</h3>',
+      '<h3 id="add">Add a Printer</h3>',
+    ].join('\n')
+  );
+
+  assert.deepEqual(
+    outline.map((h) => h.id),
+    ['printers-list', 'add']
+  );
+});
+
+test('the outline keeps every heading when the shallowest level has peers', () => {
+  // The privacy policy is nine <h2> sections under an <h1> title. None of them
+  // is a title, and dropping the first would silently lose a section.
+  const outline = outlineOf(
+    [
+      '<h2 id="what-we-collect">What We Collect</h2>',
+      '<h2 id="how-we-use-it">How We Use It</h2>',
+      '<h2 id="contact">Contact</h2>',
+    ].join('\n')
+  );
+
+  assert.equal(outline.length, 3);
+});
+
+test('the outline normalizes depth relative to the shallowest section', () => {
+  // A page whose sections are h3 and one whose sections are h2 both start the
+  // rail at depth 1, so one indent step means the same thing on every page.
+  const nested = outlineOf(
+    [
+      '<h2 id="title">Prints</h2>',
+      '<h3 id="add">Add</h3>',
+      '<h4 id="usage">Material Usage</h4>',
+    ].join('\n')
+  );
+
+  assert.deepEqual(nested, [
+    { id: 'add', text: 'Add', depth: 1 },
+    { id: 'usage', text: 'Material Usage', depth: 2 },
+  ]);
+});
+
+test('the outline skips a heading with no id, which is not linkable', () => {
+  const outline = outlineOf(
+    ['<h2 id="t">T</h2>', '<h3>No Id</h3>', '<h3 id="yes">Yes</h3>'].join('\n')
+  );
+
+  assert.deepEqual(
+    outline.map((h) => h.id),
+    ['yes']
+  );
+});
+
+test('the outline takes a heading as the reader reads it, markup dropped', () => {
+  const outline = outlineOf(
+    ['<h2 id="t">T</h2>', '<h3 id="a">Add a <strong>Print</strong></h3>'].join(
+      '\n'
+    )
+  );
+
+  assert.equal(outline[0].text, 'Add a Print');
+});
+
+test('the outline ignores headings inside a comment', () => {
+  const outline = outlineOf(
+    [
+      '<h2 id="t">T</h2>',
+      '<!-- <h3 id="draft">Draft</h3> -->',
+      '<h3 id="live">Live</h3>',
+    ].join('\n')
+  );
+
+  assert.deepEqual(
+    outline.map((h) => h.id),
+    ['live']
+  );
+});
+
+test('the release notes page gets no outline', () => {
+  // It paints ten releases and lazily imports the other ninety-odd, so most of
+  // its headings are not in the DOM to scroll to.
+  const ts = emitOutlineTs(
+    buildManifest([page(), page({ slug: 'release-notes', order: 20 })]),
+    {
+      prints: '<h2 id="t">Prints</h2><h3 id="add">Add</h3>',
+      'release-notes': '<h3 id="v1.0.0">1.0.0</h3>',
+    }
+  );
+
+  assert.match(ts, /'docs\/prints'/);
+  assert.doesNotMatch(ts, /release-notes/);
+});
+
+test('the emitted outline escapes an apostrophe in a heading', () => {
+  const ts = emitOutlineTs(buildManifest([page()]), {
+    prints: "<h2 id=\"t\">Prints</h2><h3 id=\"g\">What You'll Get</h3>",
+  });
+
+  assert.match(ts, /text: 'What You\\'ll Get'/);
 });

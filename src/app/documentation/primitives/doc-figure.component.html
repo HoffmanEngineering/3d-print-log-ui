@@ -1,0 +1,13 @@
+<figure class="doc-figure">
+  <img
+    [src]="src()"
+    [alt]="alt()"
+    [attr.width]="width()"
+    [attr.height]="height()"
+    loading="lazy"
+    decoding="async"
+  />
+  @if (caption()) {
+    <figcaption>{{ caption() }}</figcaption>
+  }
+</figure>

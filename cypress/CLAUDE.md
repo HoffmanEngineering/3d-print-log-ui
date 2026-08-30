@@ -183,6 +183,12 @@ If a dev server is already running on 4200, just run the two steps directly:
   instead and the resin row gets converted to grams via density, which is not
   what the materials it represents are sold or measured in. Resin also carries
   no `lengthInM` — no diameter, so no strand length.
+- **A list fixture must be ordered the way that list's resolver asks the API to
+  order it**, because a stub returns whatever the file says and the page does not
+  re-sort. `prints-summary.json` is `StartDate` descending and `filaments.json`
+  is `filamentRemaining` descending — see `print-list-resolver.service.ts` and
+  `filament-list-resolver.service.ts`. Both were unsorted and so stubbed a
+  response neither endpoint would ever return.
 - **Print timestamps are midday UTC, not midnight.** `localeDate` renders in the
   capture machine's timezone, so a `T00:00:00+00:00` date shows the day before
   anywhere west of Greenwich — the image would differ by machine. Midday holds

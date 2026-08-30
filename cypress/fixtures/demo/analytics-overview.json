@@ -5,124 +5,135 @@
   "granularity": "Month",
   "tiles": {
     "printCount": {
-      "value": 18,
-      "previous": 12,
+      "value": 62,
+      "previous": 48,
       "coverage": {
         "population": "prints",
-        "counted": 18,
-        "total": 18,
+        "counted": 62,
+        "total": 62,
         "undatedCount": 0,
         "exclusions": []
       }
     },
     "successRatePercent": {
-      "value": 72.2,
-      "previous": 66.7,
+      "value": 80.6,
+      "previous": 77.1,
       "coverage": {
         "population": "prints",
-        "counted": 18,
-        "total": 18,
+        "counted": 62,
+        "total": 62,
         "undatedCount": 0,
         "exclusions": []
       }
     },
     "filamentGrams": {
-      "value": 832.75,
-      "previous": 611.4,
+      "value": 3240.5,
+      "previous": 2610.2,
       "coverage": {
         "population": "prints",
-        "counted": 17,
-        "total": 18,
+        "counted": 59,
+        "total": 62,
         "undatedCount": 0,
-        "exclusions": [{ "reason": "MaterialEstimated", "count": 1 }]
+        "exclusions": [{ "reason": "MaterialEstimated", "count": 3 }]
       }
     },
     "printTimeSeconds": {
-      "value": 247800,
-      "previous": 180300,
+      "value": 918000,
+      "previous": 731400,
       "coverage": {
         "population": "prints",
-        "counted": 17,
-        "total": 18,
+        "counted": 60,
+        "total": 62,
         "undatedCount": 0,
-        "exclusions": [{ "reason": "DurationMissing", "count": 1 }]
+        "exclusions": [{ "reason": "DurationMissing", "count": 2 }]
       }
     },
     "totalCost": {
-      "value": 58.3,
-      "previous": 44.15,
+      "value": 96.85,
+      "previous": 78.2,
       "currency": "USD",
       "coverage": {
         "population": "prints",
-        "counted": 17,
-        "total": 18,
+        "counted": 58,
+        "total": 62,
         "undatedCount": 0,
-        "exclusions": [{ "reason": "PriceMissing", "count": 1 }]
+        "exclusions": [{ "reason": "PriceMissing", "count": 4 }]
       }
     },
     "avgPrintTimeSeconds": {
-      "value": 14576,
+      "value": 15300,
       "previous": 15025,
       "coverage": {
         "population": "prints",
-        "counted": 17,
-        "total": 18,
+        "counted": 60,
+        "total": 62,
         "undatedCount": 0,
-        "exclusions": [{ "reason": "DurationMissing", "count": 1 }]
+        "exclusions": [{ "reason": "DurationMissing", "count": 2 }]
       }
     }
   },
   "statusBreakdown": [
-    { "status": "Success", "count": 13 },
-    { "status": "PartialSuccess", "count": 2 },
-    { "status": "Failed", "count": 2 },
-    { "status": "Cancelled", "count": 1 }
+    { "status": "Success", "count": 50 },
+    { "status": "PartialSuccess", "count": 5 },
+    { "status": "Failed", "count": 5 },
+    { "status": "Cancelled", "count": 1 },
+    { "status": "Printing", "count": 1 }
   ],
   "series": [
     {
       "index": 0,
       "localStart": "2026-05-01T00:00:00-04:00",
-      "countsByStatus": { "Success": 4, "Failed": 1 }
+      "countsByStatus": {
+        "Success": 12,
+        "PartialSuccess": 1,
+        "Failed": 1,
+        "Cancelled": 1
+      }
     },
     {
       "index": 1,
       "localStart": "2026-06-01T00:00:00-04:00",
-      "countsByStatus": { "Success": 2, "PartialSuccess": 1, "Cancelled": 1 }
+      "countsByStatus": { "Success": 13, "PartialSuccess": 2, "Failed": 1 }
     },
     {
       "index": 2,
       "localStart": "2026-07-01T00:00:00-04:00",
-      "countsByStatus": { "Success": 3, "PartialSuccess": 1, "Failed": 1 }
+      "countsByStatus": { "Success": 12, "PartialSuccess": 1, "Failed": 2 }
     },
     {
       "index": 3,
       "localStart": "2026-08-01T00:00:00-04:00",
-      "countsByStatus": { "Success": 4 }
+      "countsByStatus": {
+        "Success": 13,
+        "PartialSuccess": 1,
+        "Failed": 1,
+        "Printing": 1
+      }
     }
   ],
   "highlights": {
     "mostUsedPrinter": {
       "id": "101",
       "label": "Living Room",
-      "value": 7,
+      "value": 24,
       "unit": "prints"
     },
     "mostUsedMaterial": {
-      "id": "2001",
+      "id": "a1000000-0000-0000-0000-000000000001",
       "label": "Galaxy Black",
-      "value": 6,
+      "value": 19,
       "unit": "prints"
     },
     "longestPrint": {
-      "id": "1003",
-      "label": "Fantasy Football Trophy",
-      "value": 25600,
+      "id": "1002",
+      "label": "Decorative Gourd Vase",
+      "value": 56843,
       "unit": "seconds"
     },
     "priciestPrint": {
-      "id": "1004",
-      "label": "Oculus Headset Wall Mount",
-      "value": 9.42,
+      "id": "1002",
+      "label": "Decorative Gourd Vase",
+      "value": 15.47,
       "unit": "cost"
     }
   }

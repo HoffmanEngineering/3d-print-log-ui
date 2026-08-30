@@ -1,6 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, PLATFORM_ID, inject, output } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { INavData } from 'src/app/shared/sidebar/types';
 import { DOC_PAGES } from '../generated/docs-manifest';
+import {
+  isApplePlatform,
+  shortcutLabel,
+} from '../docs-search/keyboard-shortcut';
 
 /**
  * The docs sidebar, derived from the docs manifest: each page's `navLabel`,
@@ -16,6 +21,16 @@ import { DOC_PAGES } from '../generated/docs-manifest';
 })
 export class DocSidebarComponent {
   public navItems: INavData[] = buildNavItems();
+
+  /** Asks the shell to open the search palette; it owns the dialog ref. */
+  readonly openSearch = output<void>();
+
+  private readonly platformId = inject(PLATFORM_ID);
+
+  /** Guarded: this also runs in Node during prerendering. */
+  readonly shortcutHint = shortcutLabel(
+    isPlatformBrowser(this.platformId) && isApplePlatform(navigator.platform)
+  );
 }
 
 function buildNavItems(): INavData[] {

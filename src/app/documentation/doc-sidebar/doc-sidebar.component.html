@@ -1,3 +1,23 @@
 <div class="sidebar">
+  <!--
+    Styled as a search box but announced as a button, which is what it is: it
+    opens the palette rather than searching in place. A real <input> here would
+    move focus into a dialog the moment it was focused, which is hostile to
+    keyboard and screen-reader users and makes tabbing past it impossible.
+    Keeping one result list also means one keyboard model and one place the
+    telemetry is emitted from.
+  -->
+  <button
+    type="button"
+    class="sidebar-search"
+    data-cy="docs-sidebar-search"
+    (click)="openSearch.emit()"
+    aria-label="Search documentation"
+  >
+    <mat-icon aria-hidden="true">search</mat-icon>
+    <span class="sidebar-search__label">Search docs</span>
+    <kbd class="sidebar-search__key">{{ shortcutHint }}</kbd>
+  </button>
+
   <app-sidebar [navItems]="navItems"></app-sidebar>
 </div>

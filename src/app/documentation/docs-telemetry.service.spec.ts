@@ -3,6 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   DocsTelemetryService,
+  REDACTED_QUERY,
+  isReportableQuery,
   scrollPercentOf,
 } from './docs-telemetry.service';
 
@@ -304,5 +306,169 @@ describe('DocsTelemetryService', () => {
       >;
       expect((props['comment'] as string).length).toBe(1000);
     });
+  });
+
+  describe('trackSearch', () => {
+    it('reports the query and how many results it found', () => {
+      const service = configure();
+
+      service.trackSearch('spool photos', 4);
+
+      expect(logging.logEvent).toHaveBeenCalledWith('Docs_Search', {
+        query: 'spool photos',
+        resultCount: 4,
+      });
+    });
+
+    it('reports a search that found nothing', () => {
+      // This is the row zero-result-searches.kql exists to surface: something a
+      // real person expected to find and could not.
+      const service = configure();
+
+      service.trackSearch('kryptonite', 0);
+
+      expect(logging.logEvent).toHaveBeenCalledWith('Docs_Search', {
+        query: 'kryptonite',
+        resultCount: 0,
+      });
+    });
+
+    it('trims the query, so the same search groups as one row', () => {
+      const service = configure();
+
+      service.trackSearch('  spool  ', 1);
+
+      expect(propsOf(0)['query']).toBe('spool');
+    });
+
+    it('reports nothing for an empty query', () => {
+      const service = configure();
+
+      service.trackSearch('   ', 0);
+
+      expect(logging.logEvent).not.toHaveBeenCalled();
+    });
+
+    it('redacts a pasted query but still counts the search', () => {
+      const service = configure();
+
+      service.trackSearch('x'.repeat(5000), 0);
+
+      expect(propsOf(0)['query']).toBe(REDACTED_QUERY);
+      // The row still has to reach zero-result-searches.kql: a search that
+      // found nothing counts even when its text cannot be reported.
+      expect(propsOf(0)['resultCount']).toBe(0);
+    });
+
+    it('redacts something that looks like a credential', () => {
+      const service = configure();
+
+      service.trackSearch('uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j', 0);
+
+      expect(propsOf(0)['query']).toBe(REDACTED_QUERY);
+    });
+  });
+
+  describe('trackSearchResultClick', () => {
+    it('reports the query, the page opened, and its rank', () => {
+      const service = configure();
+
+      service.trackSearchResultClick('spool photos', 'docs/release-notes', 2);
+
+      expect(logging.logEvent).toHaveBeenCalledWith('Docs_SearchResultClick', {
+        query: 'spool photos',
+        slug: 'release-notes',
+        rank: 2,
+      });
+    });
+
+    it('reports the top result as rank 0', () => {
+      const service = configure();
+
+      service.trackSearchResultClick('materials', 'docs/materials', 0);
+
+      expect(propsOf(0)['rank']).toBe(0);
+    });
+
+    it('reduces the path to the slug the other docs events use', () => {
+      // Every other Docs_* event keys on the slug; a full path here would not
+      // join against them.
+      const service = configure();
+
+      service.trackSearchResultClick('a', 'docs/materials', 0);
+
+      expect(propsOf(0)['slug']).toBe('materials');
+    });
+
+    it('redacts a pasted query', () => {
+      const service = configure();
+
+      service.trackSearchResultClick('x'.repeat(5000), 'docs/materials', 0);
+
+      expect(propsOf(0)['query']).toBe(REDACTED_QUERY);
+    });
+  });
+});
+
+describe('isReportableQuery', () => {
+  // The docs cover auth setup and the MCP page ships a real client ID, so the
+  // palette is one keystroke away from a reader holding a credential. This
+  // allows ordinary words rather than blocking known secret shapes, so an
+  // unfamiliar format fails closed instead of passing through.
+  it('reports the queries worth reading', () => {
+    for (const query of [
+      'qr code',
+      'filament cost',
+      'klipper macro',
+      "printer's nozzle",
+      'multi-material',
+      'G-code',
+      'Fehlerbehebung',
+      // Command shapes: the reader who searches a flag is the reader the
+      // integration pages are written for, and an empty analytics row for
+      // them is the blind spot this list exists to avoid.
+      '--callback-port',
+      '--callback-port 8400',
+      'claude mcp add --transport http printlog',
+      'X-Api-Key',
+      'api/Moonraker/notifier',
+      'OctoPrint-Webhook',
+      '3d_print_log',
+      // Ordinary phrasing: a trailing mark is punctuation, not evidence.
+      "why won't my print stick?",
+      'C++',
+      'error: missing_refresh_token',
+      'how do I connect my klipper printer to the print log app',
+    ]) {
+      expect(isReportableQuery(query)).withContext(query).toBe(true);
+    }
+  });
+
+  it('withholds anything that does not read as typed words', () => {
+    for (const query of [
+      'uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0',
+      'csh.hoffman@gmail.com',
+      'https://api.3dprintlog.com/mcp',
+      'x'.repeat(5000),
+      '',
+      '   ',
+      // A flag carrying a real credential is still withheld: widening the
+      // character class for commands must not widen it for what follows one.
+      '--client-id uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j',
+      // Short enough to pass the length cap, still shaped like a key.
+      'aB3xK9mQ2pL7wR4t',
+      // An assignment is the only thing marking these as secret: sixteen
+      // lowercase characters clear both the length cap and the token test.
+      'password=hunter2',
+      'api_key=abcdef123456',
+      // A URL keeps its colon mid-word, so trimming trailing marks cannot
+      // rescue it.
+      'https://api.3dprintlog.com/mcp?token=abc',
+    ]) {
+      expect(isReportableQuery(query))
+        .withContext(JSON.stringify(query.slice(0, 40)))
+        .toBe(false);
+    }
   });
 });

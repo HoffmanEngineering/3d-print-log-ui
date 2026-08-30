@@ -1,0 +1,79 @@
+<div class="docs-search">
+  <input
+    #input
+    class="docs-search__input"
+    data-cy="docs-search-input"
+    type="search"
+    [formControl]="query"
+    (keydown)="onKeydown($event)"
+    placeholder="Search documentation"
+    aria-label="Search documentation"
+    role="combobox"
+    aria-expanded="true"
+    aria-controls="docs-search-results"
+    [attr.aria-activedescendant]="
+      results().length ? 'docs-search-result-' + active() : null
+    "
+    autocomplete="off"
+    autocorrect="off"
+    spellcheck="false"
+    cdkFocusInitial
+  />
+
+  <!--
+    aria-live so the result count is announced without focus ever leaving the
+    input — which is where the arrow keys need it to stay. Selection is conveyed
+    by aria-activedescendant instead, so the options are not themselves
+    focusable and must not be buttons.
+  -->
+  <p class="docs-search__status" aria-live="polite">
+    @if (loading()) {
+      Searching…
+    } @else if (failed()) {
+      Search is unavailable right now. Try again in a moment.
+    } @else if (searched()) {
+      {{ results().length }} {{ results().length === 1 ? 'result' : 'results' }}
+    }
+  </p>
+
+  <ul
+    #list
+    class="docs-search__results"
+    data-cy="docs-search-results"
+    id="docs-search-results"
+    role="listbox"
+    aria-label="Search results"
+  >
+    @for (result of results(); track result.id; let i = $index) {
+      <li
+        class="docs-search__result"
+        data-cy="docs-search-result"
+        [class.docs-search__result--active]="i === active()"
+        id="docs-search-result-{{ i }}"
+        role="option"
+        [attr.aria-selected]="i === active()"
+        (click)="open(result, i)"
+        (mouseenter)="active.set(i)"
+      >
+        <span class="docs-search__result-title">{{ result.title }}</span>
+        <span class="docs-search__result-page">{{ result.page }}</span>
+        @if (result.excerpt) {
+          <span class="docs-search__result-excerpt">{{ result.excerpt }}</span>
+        }
+      </li>
+    }
+  </ul>
+
+  @if (searched() && results().length === 0 && !loading() && !failed()) {
+    <p class="docs-search__empty" data-cy="docs-search-empty">
+      Nothing matched that. Try a different word, or
+      <button type="button" class="docs-search__link" (click)="openFeedback()">
+        tell us what you were looking for</button
+      >.
+    </p>
+  }
+
+  <p class="docs-search__hints">
+    <kbd>↑</kbd><kbd>↓</kbd> navigate <kbd>↵</kbd> open <kbd>esc</kbd> close
+  </p>
+</div>

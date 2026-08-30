@@ -178,25 +178,96 @@ export function emitManifestTs() {
 }
 
 /**
+ * The search index: one entry per heading SECTION, not per page.
+ *
+ * Page-level entries would be useless on exactly the pages a reader most needs
+ * help with. `docs/release-notes` alone is 78 KB of prose under 155 headings —
+ * a hit on it says "the answer is somewhere in the changelog". A section entry
+ * instead names the heading it matched and deep-links to that heading's anchor.
+ *
+ * Sections are cut at h1-h3. h4 and below stay inside their parent: "Full List
+ * of Changes:" appears under every one of the 99 releases and would fragment
+ * each of them into a section whose title says nothing.
+ *
  * @param {object} manifest
  * @param {Record<string, string>} templates rendered template per slug
  */
 export function emitSearchIndexJson(manifest, templates) {
-  const entries = manifest.pages
-    .filter((page) => !page.dormant)
-    .map((page) => {
-      const template = templates[page.slug] ?? '';
-      return {
-        path: page.path,
-        title: page.title,
-        navLabel: page.navLabel,
-        group: page.group,
-        headings: headingsOf(template),
-        text: plainText(template),
-      };
-    });
+  const entries = [];
+
+  for (const page of manifest.pages.filter((p) => !p.dormant)) {
+    for (const section of sectionsOf(templates[page.slug] ?? '', page)) {
+      entries.push(section);
+    }
+  }
 
   return `${JSON.stringify(entries, null, 2)}\n`;
+}
+
+/** Sections are cut at these levels; deeper headings stay with their parent. */
+const SECTION_HEADING = /<h([1-3])([^>]*)>([\s\S]*?)<\/h\1\s*>/g;
+
+/**
+ * Splits one rendered page into searchable sections.
+ *
+ * @param {string} template
+ * @param {{ path: string, navLabel: string, group: string,
+ *   constants?: Record<string, string> }} page
+ * @returns {object[]}
+ */
+export function sectionsOf(template, page) {
+  // Before `plainText`, which decodes `&#123;`/`&#125;` — the escapes an author
+  // writes to SHOW a brace. Resolving after that step would treat those as
+  // bindings and substitute into text that deliberately escaped itself.
+  const source = resolveBindings(stripComments(template), page.constants);
+
+  const headings = [];
+  for (const match of source.matchAll(SECTION_HEADING)) {
+    const id = /\sid="([^"]+)"/.exec(match[2]);
+    headings.push({
+      title: plainText(match[3]),
+      anchor: id ? id[1] : null,
+      at: match.index,
+      after: match.index + match[0].length,
+    });
+  }
+
+  const sections = [];
+
+  // Anything before the first heading belongs to the page itself. It is titled
+  // with the nav label rather than left blank, so a hit there still names
+  // something the reader recognises from the sidebar.
+  const lead = plainText(
+    source.slice(0, headings.length ? headings[0].at : source.length),
+    { keepCode: true }
+  );
+  if (lead) {
+    sections.push({ title: page.navLabel, anchor: null, text: lead });
+  }
+
+  headings.forEach((heading, i) => {
+    const body = source.slice(
+      heading.after,
+      i + 1 < headings.length ? headings[i + 1].at : source.length
+    );
+    sections.push({
+      title: heading.title,
+      anchor: heading.anchor,
+      text: plainText(body, { keepCode: true }),
+    });
+  });
+
+  return sections.map((section, ordinal) => ({
+    // Ordinal, not the anchor: a section is indexed whether or not its heading
+    // declares one, and MiniSearch needs an id for every document.
+    id: `${page.path}::${ordinal}`,
+    path: page.path,
+    url: section.anchor ? `/${page.path}#${section.anchor}` : `/${page.path}`,
+    title: section.title,
+    page: page.navLabel,
+    group: page.group,
+    text: section.text,
+  }));
 }
 
 export function emitFiguresTs(manifest, templates) {
@@ -234,6 +305,102 @@ export function emitFiguresTs(manifest, templates) {
  */
 function stripComments(template) {
   return template.replace(/<!--[\s\S]*?-->/g, ' ');
+}
+
+/**
+ * An interpolated string literal, e.g. `{{' ...text... '}}`.
+ *
+ * Authors wrap a sample in one when the sample itself contains braces — the
+ * Moonraker config on the Klipper page is Jinja, so `{% set %}` would otherwise
+ * be parsed as Angular syntax. The reader sees the literal, so the index takes
+ * the literal and drops the wrapper.
+ *
+ * The quote is matched by a negated class rather than a backreference so that
+ * the scan cannot run past the closing quote: an expression such as
+ * `{{ 'a' + 'b' }}` stops matching and is left alone rather than being
+ * half-evaluated into `a' + 'b`, and an unclosed `{{'` cannot rescan the rest
+ * of the document once per opening.
+ */
+const STRING_BINDING = /\{\{\s*(?:'([^']*)'|"([^"]*)")\s*\}\}/g;
+
+/** An Angular binding to a single frontmatter constant, e.g. `{{ mcpEndpoint }}`. */
+const CONSTANT_BINDING = /\{\{\s*([A-Za-z_$][\w$]*)\s*\}\}/g;
+
+/** A constant referring to a sibling, e.g. `${this.mcpEndpoint}`. */
+const CONSTANT_REFERENCE = /\$\{\s*this\.([A-Za-z_$][\w$]*)\s*\}/g;
+
+/**
+ * Substitutes what a template's interpolations render to.
+ *
+ * The reader sees the VALUE — `https://api.3dprintlog.com/mcp` — so that is
+ * what the index has to hold. Left alone, the binding was stored verbatim:
+ * the endpoint was unsearchable and any excerpt covering it showed a reader
+ * the literal `{{ mcpEndpoint }}`.
+ *
+ * A binding with no matching constant is left as authored rather than dropped,
+ * so a typo stays visible instead of silently emptying a section.
+ *
+ * @param {string} template
+ * @param {Record<string, string> | undefined} constants
+ */
+function resolveBindings(template, constants) {
+  const text = template.replace(
+    STRING_BINDING,
+    (_binding, single, double) =>
+      // A space, not nothing: the wrapper often sits tight against the prose
+      // before it, and dropping it outright would fuse two words together.
+      ` ${escapeSubstitution(single ?? double)} `
+  );
+
+  if (!constants) {
+    return text;
+  }
+
+  return text.replace(CONSTANT_BINDING, (binding, name) =>
+    name in constants
+      ? escapeSubstitution(constantValue(constants, name, new Set()))
+      : binding
+  );
+}
+
+/**
+ * Re-encodes a substituted value so the pipeline reads it as text.
+ *
+ * What a binding renders is TEXT — Angular escapes it, so a reader who sees
+ * `echo <your-api-key>` sees those angle brackets. Splicing the raw value back
+ * into the template would hand it to the heading scanner and the tag stripper
+ * instead: `<your-api-key>` vanished as though it were a tag, and a literal
+ * `<h2 id="x">` opened a section that does not exist on the page.
+ *
+ * Numeric references, not `&lt;`, because `plainText` decodes those itself and
+ * this has to survive whether or not a name is in its table.
+ */
+function escapeSubstitution(value) {
+  return String(value)
+    .replace(/&/g, '&#38;')
+    .replace(/</g, '&#60;')
+    .replace(/>/g, '&#62;');
+}
+
+/** One constant with its `${this.sibling}` references resolved. */
+function constantValue(constants, name, seen) {
+  if (seen.has(name)) {
+    // Constants are authored by hand, so a cycle is a mistake rather than an
+    // impossibility. Stop at the name instead of recursing forever.
+    return `\${this.${name}}`;
+  }
+  seen.add(name);
+
+  return String(constants[name]).replace(
+    CONSTANT_REFERENCE,
+    (reference, sibling) =>
+      sibling in constants
+        ? // A copy, not the same set: `seen` marks the chain currently being
+          // resolved, so sharing one across siblings would read the SECOND
+          // mention of a constant as a cycle and leave it unresolved.
+          constantValue(constants, sibling, new Set(seen))
+        : reference
+  );
 }
 
 function headingsOf(template) {
@@ -279,9 +446,22 @@ const CHARACTER_REFERENCES = {
   '&nbsp;': ' ',
 };
 
-function plainText(template) {
-  let text = stripComments(template)
-    .replace(/<pre[\s\S]*?<\/pre>/g, ' ')
+/**
+ * @param {string} template
+ * @param {{ keepCode?: boolean }} [options] `keepCode` indexes `<pre>` blocks
+ *   rather than dropping them. The commands and endpoints on the integration
+ *   pages are exactly what a reader searches for — `--callback-port` matched
+ *   nothing while these were stripped. Headings and descriptions leave it off:
+ *   a heading never contains a code block, and a meta description that opened
+ *   with a shell command would read as noise.
+ */
+function plainText(template, { keepCode = false } = {}) {
+  let text = stripComments(template);
+  if (!keepCode) {
+    text = text.replace(/<pre[\s\S]*?<\/pre>/g, ' ');
+  }
+
+  text = text
     .replace(/<[^>]+>/g, ' ')
     // Numeric references decode before the named ones so that `&amp;` stays
     // last: `&amp;#64;` is an authored literal and must not become `@`.

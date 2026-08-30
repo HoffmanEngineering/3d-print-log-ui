@@ -362,13 +362,17 @@ test('indexes the whole release history for search, not just the page', () => {
     readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
     releases(12)
   );
-  const [entry] = JSON.parse(files.get('docs-search-index.json')).filter(
+  const sections = JSON.parse(files.get('docs-search-index.json')).filter(
     (row) => row.path === 'docs/release-notes'
   );
 
-  // A reader searching for a two-year-old release should still find it; the
-  // component expands the archive to reach the anchor it lands on.
-  assert.match(entry.text, /What changed in 1\.2\.0\./);
+  // A reader searching for a two-year-old release should still find it, and land
+  // on that release rather than the top of the changelog; the component expands
+  // the archive to reach the anchor.
+  const archived = sections.find((row) => row.url.endsWith('#v1.2.0'));
+
+  assert.ok(archived, 'the archived release has no section of its own');
+  assert.match(archived.text, /What changed in 1\.2\.0\./);
 });
 
 test('leaves a page that is not the release index alone', () => {

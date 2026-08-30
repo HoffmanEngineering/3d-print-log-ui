@@ -149,7 +149,7 @@ test('docs.server-routes.ts exports prerender entries only, with no catch-all', 
   assert.doesNotMatch(ts, /docs\/old/);
 });
 
-test('the search index carries the plain text of each page, not its markup', () => {
+test('the search index carries the plain text of each section, not its markup', () => {
   const index = JSON.parse(
     emitSearchIndexJson(buildManifest([page()]), {
       prints: '<h2>Prints</h2>\n<p>Log a <strong>print</strong>.</p>',
@@ -158,24 +158,94 @@ test('the search index carries the plain text of each page, not its markup', () 
 
   assert.deepEqual(index, [
     {
+      id: 'docs/prints::0',
       path: 'docs/prints',
-      title: 'Tracking Prints | 3D Print Log Docs',
-      navLabel: 'Prints',
+      url: '/docs/prints',
+      title: 'Prints',
+      page: 'Prints',
       group: 'features',
-      headings: ['Prints'],
-      text: 'Prints Log a print.',
+      text: 'Log a print.',
     },
   ]);
 });
 
-test('the search index records a heading anchor when the page declares one', () => {
+test('the search index deep-links a section whose heading declares an anchor', () => {
   const index = JSON.parse(
     emitSearchIndexJson(buildManifest([page()]), {
-      prints: '<h3 id="usage">Usage</h3>',
+      prints: '<h3 id="usage">Usage</h3>\n<p>How to log one.</p>',
     })
   );
 
-  assert.deepEqual(index[0].headings, ['Usage#usage']);
+  assert.equal(index[0].url, '/docs/prints#usage');
+  assert.equal(index[0].title, 'Usage');
+});
+
+test('the search index cuts one entry per h1-h3 heading', () => {
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints: [
+        '<h2 id="a">First</h2>',
+        '<p>Alpha.</p>',
+        '<h3 id="b">Second</h3>',
+        '<p>Beta.</p>',
+      ].join('\n'),
+    })
+  );
+
+  assert.deepEqual(
+    index.map((s) => [s.title, s.text]),
+    [
+      ['First', 'Alpha.'],
+      ['Second', 'Beta.'],
+    ]
+  );
+});
+
+test('the search index keeps h4 and deeper inside their parent section', () => {
+  // "Full List of Changes:" sits under all 99 releases. Cutting on it would
+  // mint 99 sections whose titles say nothing about what they contain.
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints: [
+        '<h3 id="v1">1.0.0 - Spool Photos</h3>',
+        '<p>Summary.</p>',
+        '<h4>Full List of Changes:</h4>',
+        '<p>Detail.</p>',
+      ].join('\n'),
+    })
+  );
+
+  assert.equal(index.length, 1);
+  assert.equal(index[0].title, '1.0.0 - Spool Photos');
+  assert.match(index[0].text, /Detail\./);
+});
+
+test('the search index titles a pre-heading lead with the page nav label', () => {
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints: '<p>Intro prose.</p>\n<h2 id="a">First</h2>\n<p>Alpha.</p>',
+    })
+  );
+
+  assert.deepEqual(
+    index.map((s) => [s.title, s.text]),
+    [
+      ['Prints', 'Intro prose.'],
+      ['First', 'Alpha.'],
+    ]
+  );
+});
+
+test('the search index gives every section a unique id', () => {
+  // Two headings can share a title, and most declare no anchor at all, so the
+  // id cannot be derived from either.
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints: '<h2>Setup</h2>\n<p>One.</p>\n<h2>Setup</h2>\n<p>Two.</p>',
+    })
+  );
+
+  assert.equal(new Set(index.map((s) => s.id)).size, index.length);
 });
 
 test('commented-out markup reaches none of the projections', () => {
@@ -195,12 +265,113 @@ test('commented-out markup reaches none of the projections', () => {
     emitSearchIndexJson(buildManifest([page()]), { prints: template })
   );
 
-  assert.equal(index[0].text, 'Setup Install the plugin.');
-  assert.deepEqual(index[0].headings, ['Setup']);
+  assert.equal(index[0].title, 'Setup');
+  assert.equal(index[0].text, 'Install the plugin.');
+  assert.equal(
+    index.length,
+    1,
+    'the commented-out heading must not open a section'
+  );
   assert.doesNotMatch(
     emitFiguresTs(buildManifest([page()]), { prints: template }),
     /old\.png/
   );
+});
+
+test('the search index holds the code samples a reader searches for', () => {
+  // `--callback-port` matched nothing while <pre> was stripped, which is most
+  // of the point of searching an integration page.
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints:
+        '<p>Run this:</p><pre><code>claude mcp add --callback-port 8400</code></pre>',
+    })
+  );
+
+  assert.match(index[0].text, /claude mcp add --callback-port 8400/);
+});
+
+test('the search index substitutes the constants a template interpolates', () => {
+  // The reader sees the value, so the index has to hold the value: storing the
+  // binding left the endpoint unsearchable and showed `{{ mcpEndpoint }}` in
+  // any excerpt that covered it.
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([
+        page({
+          constants: { mcpEndpoint: 'https://api.3dprintlog.com/mcp' },
+        }),
+      ]),
+      { prints: '<p>Point it at {{ mcpEndpoint }} to connect.</p>' }
+    )
+  );
+
+  assert.equal(
+    index[0].text,
+    'Point it at https://api.3dprintlog.com/mcp to connect.'
+  );
+});
+
+test('a constant that references a sibling resolves through to the value', () => {
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([
+        page({
+          constants: {
+            endpoint: 'https://api.3dprintlog.com/mcp',
+            command: 'claude mcp add ${this.endpoint} --callback-port 8400',
+          },
+        }),
+      ]),
+      { prints: '<pre><code>{{ command }}</code></pre>' }
+    )
+  );
+
+  assert.equal(
+    index[0].text,
+    'claude mcp add https://api.3dprintlog.com/mcp --callback-port 8400'
+  );
+});
+
+test('an interpolated string literal is indexed as the literal it renders', () => {
+  // Authors wrap a sample in one when the sample itself contains braces; the
+  // Klipper page's Moonraker config is Jinja.
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints: `<pre><code>{{'
+[notifier 3d_print_log]
+events: *
+'}}</code></pre>`,
+    })
+  );
+
+  assert.match(index[0].text, /\[notifier 3d_print_log\] events: \*/);
+  assert.doesNotMatch(index[0].text, /[{}]{2}/);
+});
+
+test('a binding with no matching constant is left as authored', () => {
+  // Emptying it would hide the typo; leaving it keeps the mistake visible.
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([page({ constants: { endpoint: 'https://example.com' } })]),
+      { prints: '<p>Use {{ notAConstant }} here.</p>' }
+    )
+  );
+
+  assert.equal(index[0].text, 'Use {{ notAConstant }} here.');
+});
+
+test('an escaped brace is shown, not treated as a binding', () => {
+  // `&#123;` is what an author writes to SHOW a brace. Resolving bindings after
+  // the decode step would substitute into text that escaped itself on purpose.
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([page({ constants: { endpoint: 'https://example.com' } })]),
+      { prints: '<p>Write &#123;&#123; endpoint &#125;&#125; to bind it.</p>' }
+    )
+  );
+
+  assert.equal(index[0].text, 'Write {{ endpoint }} to bind it.');
 });
 
 test('the search index decodes the character references the renderer emits', () => {

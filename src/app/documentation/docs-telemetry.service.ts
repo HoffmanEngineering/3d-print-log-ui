@@ -60,9 +60,11 @@ export const REDACTED_QUERY = '[redacted]';
 /**
  * Longest reported query, in words. Real ones are two or three; a command
  * fragment such as `claude mcp add --transport http printlog` runs longer, and
- * those are worth seeing. Past this it is a paste of prose.
+ * so does a question typed out in full — "how do I connect my klipper printer
+ * to the print log app" is exactly the zero-result row worth reading. Past
+ * this it is a paste rather than a question.
  */
-const MAX_QUERY_WORDS = 10;
+const MAX_QUERY_WORDS = 16;
 
 /** Longest single word. "troubleshooting" is 15; an API key is not a word. */
 const MAX_QUERY_WORD_LENGTH = 24;
@@ -74,8 +76,13 @@ const MAX_QUERY_WORD_LENGTH = 24;
  * `:` and `@` are deliberately absent. They are what make a URL a URL and an
  * address an address, and excluding them is what keeps a pasted signed link or
  * email out of telemetry while the flags stay readable.
+ *
+ * So is `=`. `password=hunter2` is sixteen ordinary lowercase characters — it
+ * clears the length cap and it is not mixed-case enough to read as generated,
+ * so the assignment itself is the only thing marking it as a secret. Nothing
+ * a reader searches for needs one.
  */
-const REPORTABLE_WORD = /^[\p{L}\p{N}'\-_./=]+$/u;
+const REPORTABLE_WORD = /^[\p{L}\p{N}'\-_./+]+$/u;
 
 /** Shortest word that is long enough to be worth checking for key-ness. */
 const TOKEN_MIN_LENGTH = 16;
@@ -111,7 +118,7 @@ function looksLikeToken(word: string): boolean {
  * all pass it.
  */
 export function isReportableQuery(query: string): boolean {
-  const words = query.split(/\s+/).filter(Boolean);
+  const words = query.split(/\s+/).filter(Boolean).map(trimSentencePunctuation);
 
   return (
     words.length > 0 &&
@@ -123,6 +130,19 @@ export function isReportableQuery(query: string): boolean {
         !looksLikeToken(word)
     )
   );
+}
+
+/**
+ * Drops the punctuation that ends a word in a sentence, so ordinary phrasing
+ * is judged on the word itself.
+ *
+ * "why won't my print stick?" and "error: missing_refresh_token" are the shape
+ * of a real docs search, and both were being withheld over one trailing mark.
+ * Only trailing marks go: a `:` in the MIDDLE of a word is still what makes
+ * `https://…` a URL, and that has to stay disqualifying.
+ */
+function trimSentencePunctuation(word: string): string {
+  return word.replace(/[.,;:!?]+$/, '');
 }
 
 /** The query as reported: itself, or a marker that still counts as a search. */

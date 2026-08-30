@@ -314,8 +314,14 @@ function stripComments(template) {
  * Moonraker config on the Klipper page is Jinja, so `{% set %}` would otherwise
  * be parsed as Angular syntax. The reader sees the literal, so the index takes
  * the literal and drops the wrapper.
+ *
+ * The quote is matched by a negated class rather than a backreference so that
+ * the scan cannot run past the closing quote: an expression such as
+ * `{{ 'a' + 'b' }}` stops matching and is left alone rather than being
+ * half-evaluated into `a' + 'b`, and an unclosed `{{'` cannot rescan the rest
+ * of the document once per opening.
  */
-const STRING_BINDING = /\{\{\s*(['"])([\s\S]*?)\1\s*\}\}/g;
+const STRING_BINDING = /\{\{\s*(?:'([^']*)'|"([^"]*)")\s*\}\}/g;
 
 /** An Angular binding to a single frontmatter constant, e.g. `{{ mcpEndpoint }}`. */
 const CONSTANT_BINDING = /\{\{\s*([A-Za-z_$][\w$]*)\s*\}\}/g;
@@ -340,10 +346,10 @@ const CONSTANT_REFERENCE = /\$\{\s*this\.([A-Za-z_$][\w$]*)\s*\}/g;
 function resolveBindings(template, constants) {
   const text = template.replace(
     STRING_BINDING,
-    (_binding, _quote, literal) =>
+    (_binding, single, double) =>
       // A space, not nothing: the wrapper often sits tight against the prose
       // before it, and dropping it outright would fuse two words together.
-      ` ${literal} `
+      ` ${escapeSubstitution(single ?? double)} `
   );
 
   if (!constants) {
@@ -351,8 +357,29 @@ function resolveBindings(template, constants) {
   }
 
   return text.replace(CONSTANT_BINDING, (binding, name) =>
-    name in constants ? constantValue(constants, name, new Set()) : binding
+    name in constants
+      ? escapeSubstitution(constantValue(constants, name, new Set()))
+      : binding
   );
+}
+
+/**
+ * Re-encodes a substituted value so the pipeline reads it as text.
+ *
+ * What a binding renders is TEXT — Angular escapes it, so a reader who sees
+ * `echo <your-api-key>` sees those angle brackets. Splicing the raw value back
+ * into the template would hand it to the heading scanner and the tag stripper
+ * instead: `<your-api-key>` vanished as though it were a tag, and a literal
+ * `<h2 id="x">` opened a section that does not exist on the page.
+ *
+ * Numeric references, not `&lt;`, because `plainText` decodes those itself and
+ * this has to survive whether or not a name is in its table.
+ */
+function escapeSubstitution(value) {
+  return String(value)
+    .replace(/&/g, '&#38;')
+    .replace(/</g, '&#60;')
+    .replace(/>/g, '&#62;');
 }
 
 /** One constant with its `${this.sibling}` references resolved. */
@@ -367,7 +394,12 @@ function constantValue(constants, name, seen) {
   return String(constants[name]).replace(
     CONSTANT_REFERENCE,
     (reference, sibling) =>
-      sibling in constants ? constantValue(constants, sibling, seen) : reference
+      sibling in constants
+        ? // A copy, not the same set: `seen` marks the chain currently being
+          // resolved, so sharing one across siblings would read the SECOND
+          // mention of a constant as a cycle and leave it unresolved.
+          constantValue(constants, sibling, new Set(seen))
+        : reference
   );
 }
 

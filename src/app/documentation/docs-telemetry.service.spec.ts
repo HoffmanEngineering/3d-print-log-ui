@@ -434,6 +434,11 @@ describe('isReportableQuery', () => {
       'api/Moonraker/notifier',
       'OctoPrint-Webhook',
       '3d_print_log',
+      // Ordinary phrasing: a trailing mark is punctuation, not evidence.
+      "why won't my print stick?",
+      'C++',
+      'error: missing_refresh_token',
+      'how do I connect my klipper printer to the print log app',
     ]) {
       expect(isReportableQuery(query)).withContext(query).toBe(true);
     }
@@ -453,8 +458,13 @@ describe('isReportableQuery', () => {
       '--client-id uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j',
       // Short enough to pass the length cap, still shaped like a key.
       'aB3xK9mQ2pL7wR4t',
-      // Ten words is a command; more than that is prose.
-      'how do I connect my klipper printer to the print log app',
+      // An assignment is the only thing marking these as secret: sixteen
+      // lowercase characters clear both the length cap and the token test.
+      'password=hunter2',
+      'api_key=abcdef123456',
+      // A URL keeps its colon mid-word, so trimming trailing marks cannot
+      // rescue it.
+      'https://api.3dprintlog.com/mcp?token=abc',
     ]) {
       expect(isReportableQuery(query))
         .withContext(JSON.stringify(query.slice(0, 40)))

@@ -111,8 +111,12 @@ export class DocsSearchDialogComponent {
   }
 
   open(result: DocSearchResult, rank: number): void {
-    this.telemetry.trackSearchResultClick(this.lastQuery, result.path, rank);
-    this.closeThenNavigate(result.url);
+    // Only the activation that actually takes the dialog down is reported. A
+    // held Enter reaches this twice, and search-quality.kql averages the rank
+    // of a click — counting the same one twice quietly skews that average.
+    if (this.closeThenNavigate(result.url)) {
+      this.telemetry.trackSearchResultClick(this.lastQuery, result.path, rank);
+    }
   }
 
   /** Arrow keys move the highlight, Enter opens it. Escape is MatDialog's. */
@@ -168,13 +172,14 @@ export class DocsSearchDialogComponent {
    * silently undone — the reader lands at the top of the page they searched
    * for, which is the one thing section-level results exist to avoid.
    */
-  private closeThenNavigate(url: string): void {
+  /** @returns whether this call is the one that owns the close */
+  private closeThenNavigate(url: string): boolean {
     // `close()` only starts the animation, so a held Enter or a double click
     // gets here again while the first navigation is still waiting on it. Each
     // pass would subscribe again and every subscription would fire on the one
     // close, navigating two or three times.
     if (this.navigating) {
-      return;
+      return false;
     }
     this.navigating = true;
 
@@ -183,6 +188,7 @@ export class DocsSearchDialogComponent {
       .pipe(take(1))
       .subscribe(() => void this.router.navigateByUrl(url));
     this.dialogRef.close();
+    return true;
   }
 
   /**
@@ -212,8 +218,14 @@ export class DocsSearchDialogComponent {
     try {
       const results = await this.search.search(query);
 
-      // A slower earlier search must not overwrite a newer one's results.
-      if (generation !== this.generation) {
+      // BOTH guards are load-bearing. The generation stops an older invocation
+      // committing once a newer one exists — `mat -> material -> mat` would
+      // otherwise let the first `mat` re-report. The input comparison covers
+      // the window the generation cannot see: while the reader types the next
+      // query its run has not started yet, so nothing has advanced the
+      // generation, and an answer to the query they have already left would
+      // publish under the text now in the box.
+      if (generation !== this.generation || this.query.value.trim() !== query) {
         return;
       }
 
@@ -225,7 +237,7 @@ export class DocsSearchDialogComponent {
       this.telemetry.trackSearch(query, results.length);
     } catch (error) {
       this.logging.logException(error);
-      if (generation !== this.generation) {
+      if (generation !== this.generation || this.query.value.trim() !== query) {
         return;
       }
 

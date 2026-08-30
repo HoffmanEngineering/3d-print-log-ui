@@ -337,6 +337,45 @@ describe('DocsSearchDialogComponent', () => {
     expect(component.results()).toEqual([]);
   }));
 
+  it('withholds an answer to a query the reader has already moved on from', waitForAsync(async () => {
+    // The generation alone cannot see this: while the reader types the next
+    // query its run has not started, so nothing has advanced the generation and
+    // the older answer would publish under the text now in the box.
+    await setup();
+
+    let releaseFirst: (value: DocSearchResult[]) => void = () => undefined;
+    search.search.and.returnValues(
+      new Promise<DocSearchResult[]>((resolve) => {
+        releaseFirst = resolve;
+      }),
+      Promise.resolve([result({ id: 'second' })])
+    );
+
+    await type('mat');
+    // Typed, but its debounce has not fired: no second run yet.
+    component.query.setValue('material');
+
+    releaseFirst([result({ id: 'first' })]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.results()).toEqual([]);
+    expect(telemetry.trackSearch).not.toHaveBeenCalledWith('mat', 1);
+  }));
+
+  it('reports one click when the reader activates a result twice', waitForAsync(async () => {
+    // search-quality.kql averages the rank of a click, so counting a held
+    // Enter twice quietly skews it.
+    await setup();
+    search.search.and.resolveTo([result()]);
+    await type('material');
+
+    component.open(component.results()[0], 0);
+    component.open(component.results()[0], 0);
+
+    expect(telemetry.trackSearchResultClick).toHaveBeenCalledTimes(1);
+  }));
+
   it('navigates once when the reader activates a result twice', waitForAsync(async () => {
     // `close()` only starts the animation, so a held Enter gets a second pass in
     // before the first navigation runs.

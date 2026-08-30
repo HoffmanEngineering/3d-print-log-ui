@@ -1,11 +1,12 @@
 import { Clipboard } from '@angular/cdk/clipboard';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import {
   ApiKeyService,
   UserApiKeySummary,
 } from '../core/services/api-key.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
+import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
 
 export interface UserApiKeySummaryWithKey extends UserApiKeySummary {
   privateKey?: string;
@@ -31,6 +32,8 @@ export class ApikeysComponent implements OnInit {
   public addingKey = false;
 
   public newKeyDescription = '';
+
+  private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
 
   constructor(
     private readonly apiKeyService: ApiKeyService,
@@ -77,6 +80,13 @@ export class ApikeysComponent implements OnInit {
         };
         this.keys = [newSummary, ...this.keys];
         this.toastrService.success('Key created successfully.');
+
+        // The moment the app gains the ability to tell the user something time-sensitive:
+        // a key exists, so a printer can now report that a print finished or failed.
+        // A no-op outside the Cordova app and when permission is already granted.
+        void this.pushPermissionPrompt.promptInContext(
+          'You just created an API key, so your printer can report print progress.'
+        );
       },
       (_) => {
         this.toastrService.error(

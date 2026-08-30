@@ -26,7 +26,9 @@ import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
   PrintService,
+  PrintStatus,
 } from '../../core/services/print.service';
+import { PushPermissionPromptService } from 'src/app/core/services/push-permission-prompt.service';
 import {
   UserSettingService,
   UserSettingType,
@@ -96,6 +98,7 @@ export class ViewPrintDetailComponent {
   private readonly document = inject(DOCUMENT);
   private readonly location = inject(Location);
   private readonly userSettingService = inject(UserSettingService);
+  private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /**
@@ -267,6 +270,13 @@ export class ViewPrintDetailComponent {
    * at construction time it refers to the navigation before this one, which
    * makes `.previousNavigation` off by one.
    */
+  /**
+   * Prints an offer has already been made for. A set rather than a single id because the
+   * router reuses this component: navigating away and back would otherwise re-offer, and a
+   * bare boolean would suppress every later print in the session.
+   */
+  private readonly offeredForPrintIds = new Set<number>();
+
   private readonly arrivedFromInAppNavigation =
     this.router.getCurrentNavigation()?.previousNavigation != null;
 
@@ -283,6 +293,54 @@ export class ViewPrintDetailComponent {
     // users are not stranded on <body> after a route change. The container is
     // the skeleton shell too, so this no longer waits on the fetch.
     afterNextRender(() => this.pageRoot()?.nativeElement?.focus());
+
+    effect(() => this.offerNotificationsForRunningPrint());
+  }
+
+  /**
+   * Offers notifications while the user's own print is still running.
+   *
+   * This is the moment the feature explains itself: something is underway that they would
+   * rather be told about than keep checking. Creating an API key used to be the only
+   * in-context trigger, which no established user ever hits again — their keys predate push
+   * — leaving Settings as the sole route to enabling it.
+   *
+   * Owner-only: a visitor cannot be notified about someone else's print. The service itself
+   * is a no-op on the web, when permission is already granted, and while a recent "Not now"
+   * still stands, so no platform branching is needed here.
+   */
+  private offerNotificationsForRunningPrint(): void {
+    // Every signal this effect depends on is read BEFORE any early return. Bailing out
+    // first would leave the effect with no tracked dependencies at all, and Angular would
+    // never run it again — so a later print, or ownership resolving, would go unnoticed.
+    const print = this.print();
+    const isOwner = this.isOwner();
+
+    if (!print || !isOwner || print.status !== PrintStatus.Printing) {
+      return;
+    }
+
+    // Keyed by print id rather than a bare flag: the router reuses this component between
+    // /prints/:id routes, so a boolean would silently suppress the offer for every later
+    // print in the session.
+    if (this.offeredForPrintIds.has(print.id)) {
+      return;
+    }
+
+    // Recorded before awaiting, so a re-run cannot open a second dialog while this one is
+    // still opening. Taken back if nothing was actually offered.
+    this.offeredForPrintIds.add(print.id);
+
+    void this.pushPermissionPrompt
+      .promptInContext('This print is still running.')
+      .then((result) => {
+        // The native bridge is injected on page load and can arrive after Angular has
+        // bootstrapped, so "unavailable" means not yet, not no. Keeping the id would
+        // silently cost this print its offer for the rest of the session.
+        if (result.outcome === 'unavailable') {
+          this.offeredForPrintIds.delete(print.id);
+        }
+      });
   }
 
   private loadSettings(): void {

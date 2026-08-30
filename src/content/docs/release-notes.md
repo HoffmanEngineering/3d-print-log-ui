@@ -14,6 +14,58 @@ related: [about]
 
 ---
 
+### 1.49.1 - Push Notification Fixes {#v1.49.1}
+
+Follow-up fixes to the push notifications that shipped in 1.49.0. Tapping a
+notification now opens the print it is about, instead of just opening the app to
+whatever page you were last on. Turning notifications on from
+[Settings](/settings) works on the first tap (it previously took two, even though
+the first one had already been granted). Notification timestamps are also correct
+now: the notification tray no longer shows a print as finishing years ago, and
+times in the app are no longer shifted by your time zone.
+
+#### Full List of Changes:
+
+- **Tapping a notification opens the print** - a tapped print notification now navigates to that print, whether the app was closed or already open, and still does so when the device is offline (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/154" rel="noreferrer noopener" target="_blank" >PR #154</a >, <a href="https://github.com/HoffmanEngineering/3d-print-log-app/pull/14" rel="noreferrer noopener" target="_blank" >Android app PR #14</a >)
+- **Enabling notifications works on the first tap** - Settings no longer reports notifications as off after you have just allowed them (<a href="https://github.com/HoffmanEngineering/3d-print-log-app/pull/14" rel="noreferrer noopener" target="_blank" >Android app PR #14</a >)
+- **Notifications are offered while a print is running** - opening one of your own in-progress prints now offers to enable notifications, rather than leaving Settings as the only way to find the option (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/154" rel="noreferrer noopener" target="_blank" >PR #154</a >)
+- **Notification timestamps are correct** - the notification tray no longer shows a just-finished print as years old, and notification times in the app are no longer offset by your time zone (<a href="https://github.com/HoffmanEngineering/3d-print-log-api/pull/108" rel="noreferrer noopener" target="_blank" >API PR #108</a >)
+
+### 1.49.0 - Push Notifications {#v1.49.0}
+
+**Push notifications** have arrived. If you send print events to 3D Print Log
+from OctoPrint or Klipper, your phone can now tell you the moment a print
+finishes or fails, so you no longer have to keep opening the app to check on a
+long job. A new Push notifications section in [Settings](/settings) lets you turn
+each notification on or off, and the app asks for permission in context (when
+notifications would actually be useful) rather than on the very first launch. The
+updated Android app that receives these notifications is rolling out to users
+soon.
+
+Printing QR labels got a lot less fiddly. Paper size, label size, columns, and
+rows used to be four unrelated choices, and picking a combination that did not
+fit produced an overflowing preview and a wasted sheet. Columns and rows are now
+worked out from the paper and label size for you, the manual controls moved
+behind an Advanced layout toggle, and whatever layout you pick is remembered the
+next time you open the dialog.
+
+Documentation pages now end with a **Was this page helpful?** prompt. A thumbs
+down opens a box to say what you were actually looking for, which goes straight
+into deciding what gets written and rewritten next.
+
+#### Full List of Changes:
+
+- **Push notifications for finished and failed prints** - Print completed and print failed events from your OctoPrint or Klipper webhooks can now be delivered to your phone as push notifications. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/149" rel="noreferrer noopener" target="_blank" >PR #149</a >)
+- **Push notification settings** - A Push notifications section in Settings turns Print completed and Print failed on or off individually, and offers an Enable notifications button when the device permission has not been granted yet. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/149" rel="noreferrer noopener" target="_blank" >PR #149</a >)
+- **Permission asked in context** - The app explains why notifications are useful and asks for the device permission at a relevant moment instead of at launch, so a hasty "no" does not permanently switch them off. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/149" rel="noreferrer noopener" target="_blank" >PR #149</a >)
+- **QR label sheets fit automatically** - Columns and rows are derived from the paper and label size, so the preview and the printed sheet always match. Manual control is still available behind an Advanced layout toggle, clamped to what actually fits. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/135" rel="noreferrer noopener" target="_blank" >PR #135</a >)
+- **QR label layout is remembered** - Your paper size, label size, and layout choices carry over to the next time you open the label dialog. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/135" rel="noreferrer noopener" target="_blank" >PR #135</a >)
+- **More reliable label printing** - A blocked popup now shows a readable warning instead of a browser alert, and the print window stays open until printing finishes rather than closing early and cancelling the job in some browsers. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/135" rel="noreferrer noopener" target="_blank" >PR #135</a >)
+- **Page feedback on documentation** - Every docs page now ends with a "Was this page helpful?" prompt, with a box to explain what you were looking for when a page falls short. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/148" rel="noreferrer noopener" target="_blank" >PR #148</a >)
+- **Privacy policy updated** - The [privacy policy](/docs/privacy-policy) now describes the analytics that were already in use, and covers the free text you can send through the new page feedback prompt. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/148" rel="noreferrer noopener" target="_blank" >PR #148</a >)
+- **Fixed remaining amounts after a QR scan** - Picking a material by scanning its QR code showed 0g / 0m / 0ml remaining on the print, while picking the same spool from the list showed the real numbers. Both paths now report the same values. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/134" rel="noreferrer noopener" target="_blank" >PR #134</a >)
+- **Project housekeeping** - Website and build dependencies were updated, bringing security fixes and performance improvements. (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/108" rel="noreferrer noopener" target="_blank" >PR #108</a >, <a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/111" rel="noreferrer noopener" target="_blank" >PR #111</a >, <a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/112" rel="noreferrer noopener" target="_blank" >PR #112</a >, <a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/113" rel="noreferrer noopener" target="_blank" >PR #113</a >, <a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/114" rel="noreferrer noopener" target="_blank" >PR #114</a >, <a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/115" rel="noreferrer noopener" target="_blank" >PR #115</a >)
+
 ### 1.48.1 - Camera Photos on Mobile {#v1.48.1}
 
 A fix for the mobile app. Adding a photo to a material only ever opened the

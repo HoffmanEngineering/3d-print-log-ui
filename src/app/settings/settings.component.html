@@ -589,6 +589,61 @@
           </div>
         }
       </div>
+      @if (pushAvailable) {
+        <hr />
+        <div fxFlex="grow" fxFlexFill data-testid="push-notifications-section">
+          <h2>Push notifications</h2>
+          <p>Choose what your phone notifies you about.</p>
+
+          @if (!pushPermissionGranted) {
+            <p data-testid="push-permission-warning">
+              Notifications are turned off for 3D Print Log on this device, so these
+              settings have no effect yet.
+            </p>
+            <p>
+              <button
+                mat-flat-button
+                color="primary"
+                data-testid="push-enable-permission"
+                (click)="onEnableNotificationsClicked()"
+              >
+                Enable notifications
+              </button>
+            </p>
+          }
+
+          <div>
+            <mat-slide-toggle
+              data-testid="push-print-completed"
+              [(ngModel)]="printCompletedPush"
+              (change)="
+                onPushPreferenceChanged(
+                  userSettingTypes.Push_PrintCompleted,
+                  $event.checked
+                )
+              "
+            >
+              Print completed
+            </mat-slide-toggle>
+          </div>
+
+          <div>
+            <mat-slide-toggle
+              data-testid="push-print-failed"
+              [(ngModel)]="printFailedPush"
+              (change)="
+                onPushPreferenceChanged(
+                  userSettingTypes.Push_PrintFailed,
+                  $event.checked
+                )
+              "
+            >
+              Print failed
+            </mat-slide-toggle>
+          </div>
+        </div>
+      }
+
       <hr />
       <div fxFlex="grow" fxFlexFill>
         <h2>Subscription</h2>

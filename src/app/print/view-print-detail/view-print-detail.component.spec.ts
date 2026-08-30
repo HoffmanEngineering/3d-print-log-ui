@@ -29,6 +29,10 @@ import {
   PrintDetailWithUser,
 } from '../services/print-detail-loader.service';
 import {
+  PushPermissionPromptService,
+  PushPromptResult,
+} from 'src/app/core/services/push-permission-prompt.service';
+import {
   DEFERRED_SKELETON_DELAY_MS,
   DEFERRED_SKELETON_MIN_VISIBLE_MS,
 } from 'src/app/shared/skeleton/deferred-skeleton';
@@ -42,6 +46,9 @@ describe('ViewPrintDetailComponent', () => {
   let userSettingServiceSpy: jasmine.SpyObj<UserSettingService>;
 
   const OWNER_ID = 7;
+
+  let pushPromptSpy: jasmine.SpyObj<PushPermissionPromptService>;
+  let nextPromptResult: PushPromptResult;
 
   const basePrint = {
     id: 1,
@@ -152,6 +159,19 @@ describe('ViewPrintDetailComponent', () => {
     );
     loaderSpy.load.and.callFake(load);
 
+    pushPromptSpy = jasmine.createSpyObj<PushPermissionPromptService>(
+      'PushPermissionPromptService',
+      ['promptInContext']
+    );
+    // Only a default: a test that set its own outcome before calling setup keeps it.
+    nextPromptResult ??= { permission: 'default', outcome: 'shown' };
+    // callFake over resolveTo: setup() recreates this spy, so a test that configured a
+    // result beforehand would have it silently discarded. Reading a mutable value keeps the
+    // test's choice in force.
+    pushPromptSpy.promptInContext.and.callFake(() =>
+      Promise.resolve(nextPromptResult)
+    );
+
     await TestBed.configureTestingModule({
       // No NO_ERRORS_SCHEMA: every child here is a real standalone component
       // pulled in through ViewPrintDetailComponent's own imports, so the schema
@@ -168,6 +188,7 @@ describe('ViewPrintDetailComponent', () => {
         provideHttpClientTesting(),
         { provide: PrintService, useValue: printService },
         { provide: PrintDetailLoaderService, useValue: loaderSpy },
+        { provide: PushPermissionPromptService, useValue: pushPromptSpy },
         // The real PrintCommentsComponent renders here (no NO_ERRORS_SCHEMA)
         // and injects ToastrService, which needs its own ToastConfig token.
         {
@@ -628,6 +649,150 @@ describe('ViewPrintDetailComponent', () => {
 
       expect(fixture.nativeElement.querySelector('.hero-band')).toBeTruthy();
       expect(component.currencySymbol()).toBe('$');
+    });
+  });
+
+  /**
+   * The only in-context trigger before this was creating an API key, which no existing user
+   * hits again — their keys predate push entirely, so Settings was their only route to
+   * enabling notifications. A running print is the moment the value needs no explaining,
+   * and every active user reaches it.
+   */
+  describe('notification prompt', () => {
+    const runningPrint = { ...basePrint, status: PrintStatus.Printing };
+
+    beforeEach(() => {
+      nextPromptResult = { permission: 'default', outcome: 'shown' };
+    });
+
+    afterEach(() => {
+      nextPromptResult = undefined as unknown as PushPromptResult;
+    });
+
+    it('prompts the owner while their print is still running', async () => {
+      await setup({ viewerId: OWNER_ID, print: runningPrint });
+
+      expect(pushPromptSpy.promptInContext).toHaveBeenCalled();
+    });
+
+    it('does not prompt once the print has finished', async () => {
+      await setup({ viewerId: OWNER_ID, print: basePrint });
+
+      expect(pushPromptSpy.promptInContext).not.toHaveBeenCalled();
+    });
+
+    /** A stranger cannot be notified about someone else's print, so asking is nonsense. */
+    it('does not prompt a signed-in stranger', async () => {
+      await setup({ viewerId: 999, print: runningPrint });
+
+      expect(pushPromptSpy.promptInContext).not.toHaveBeenCalled();
+    });
+
+    it('does not prompt an anonymous visitor', async () => {
+      await setup({ viewerId: null, print: runningPrint });
+
+      expect(pushPromptSpy.promptInContext).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Drives two emissions through the SAME component instance, which is what the router
+     * actually does between /prints/:id routes. An earlier version of this test called
+     * detectChanges() twice instead — effects do not re-run for a bare change-detection
+     * pass, so it passed with the latch deleted entirely and constrained nothing.
+     */
+    it('does not prompt twice for the same print', async () => {
+      const paramMap$ = new BehaviorSubject(paramMapFor(1));
+      await setup({ viewerId: OWNER_ID, print: runningPrint, paramMap$ });
+
+      paramMap$.next(paramMapFor(1));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(pushPromptSpy.promptInContext).toHaveBeenCalledTimes(1);
+    });
+
+    it('prompts again for a different running print in the same component', async () => {
+      const paramMap$ = new BehaviorSubject(paramMapFor(1));
+      await setup({
+        viewerId: OWNER_ID,
+        paramMap$,
+        load: (printId: number) =>
+          of({
+            print: { ...runningPrint, id: printId },
+            user: { id: OWNER_ID } as any,
+          } as PrintDetailWithUser),
+      });
+
+      paramMap$.next(paramMapFor(2));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(pushPromptSpy.promptInContext).toHaveBeenCalledTimes(2);
+    });
+
+    /**
+     * The app shell injects its bridge on page load, which can land after Angular has
+     * bootstrapped, so "unavailable" means not yet rather than no. Coming back to the same
+     * print must therefore offer again — with the id recorded regardless, that print would
+     * be silently skipped for the rest of the session.
+     *
+     * Note this is retry-on-revisit, not spontaneous retry: bridge readiness is not a
+     * signal, so nothing re-runs the effect on its own.
+     */
+    it('offers again on returning to a print whose offer found no bridge', async () => {
+      nextPromptResult = { permission: 'default', outcome: 'unavailable' };
+
+      const loadedIds: number[] = [];
+      const paramMap$ = new BehaviorSubject(paramMapFor(1));
+      await setup({
+        viewerId: OWNER_ID,
+        paramMap$,
+        load: (printId: number) =>
+          of(loadedIds.push(printId)) &&
+          of({
+            print: { ...runningPrint, id: printId },
+            user: { id: OWNER_ID } as any,
+          } as PrintDetailWithUser),
+      });
+      await fixture.whenStable();
+
+      paramMap$.next(paramMapFor(2));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      await Promise.resolve();
+
+      paramMap$.next(paramMapFor(1));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      await Promise.resolve();
+
+      expect(loadedIds).toEqual([1, 2, 1]);
+      expect(pushPromptSpy.promptInContext).toHaveBeenCalledTimes(3);
+    });
+
+    it('does not offer again on returning to a print already offered for', async () => {
+      const paramMap$ = new BehaviorSubject(paramMapFor(1));
+      await setup({
+        viewerId: OWNER_ID,
+        paramMap$,
+        load: (printId: number) =>
+          of({
+            print: { ...runningPrint, id: printId },
+            user: { id: OWNER_ID } as any,
+          } as PrintDetailWithUser),
+      });
+      await fixture.whenStable();
+
+      paramMap$.next(paramMapFor(2));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      paramMap$.next(paramMapFor(1));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Two prints, two offers — returning to the first must not produce a third.
+      expect(pushPromptSpy.promptInContext).toHaveBeenCalledTimes(2);
     });
   });
 });

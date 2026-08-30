@@ -173,10 +173,20 @@ If a dev server is already running on 4200, just run the two steps directly:
 - The demo prints carry `filamentUsage`, because material tracking is what the
   home copy beside that image is selling. The rows embed whole `FilamentSummary`
   objects copied from `filaments.json`, so the swatches match the materials
-  capture exactly, and their `amountMg` **sums to each print's existing
-  `sumActualFilamentWeightMg` / `sumEstimatedFilamentWeightMg`** — keep that true
-  when editing, or the fixture contradicts itself. Resin carries no `lengthInM`:
-  it has no diameter and therefore no strand length.
+  capture exactly. **`filamentUsage` is the driver**; the per-print
+  `sumActualFilamentWeightMg` / `sumEstimatedFilamentWeightMg` /
+  `totalFilamentWeightMg` are the deprecated mirror of it and are derived from
+  the rows, never the reverse.
+- Each row records the unit it was measured in. `Prints_PreferredFilamentDisplayUnit`
+  is `0` (as-recorded) in `user-settings.json`, so a row renders off its own
+  `source`: filament in grams, resin in millilitres. Set a real unit there
+  instead and the resin row gets converted to grams via density, which is not
+  what the materials it represents are sold or measured in. Resin also carries
+  no `lengthInM` — no diameter, so no strand length.
+- **Print timestamps are midday UTC, not midnight.** `localeDate` renders in the
+  capture machine's timezone, so a `T00:00:00+00:00` date shows the day before
+  anywhere west of Greenwich — the image would differ by machine. Midday holds
+  the same calendar date from UTC-11 to UTC+12.
 - The spec hides the nav bar, ad slots, the filter panel and the analytics tab's
   export button, neutralizes AdSense, and waits for async print thumbnails and
   the d3 status-donut animation to settle before shooting.

@@ -44,6 +44,15 @@ const READY: Record<string, () => void> = {
         timeout: 10000,
       }).should('have.length', n);
     });
+    // Material chips are the point of this image — the home copy beside it is
+    // about tracking filament. The card renders them only when a print carries
+    // filamentUsage, so a fixture that lost it would still produce a perfectly
+    // plausible screenshot of the feature not being there. Six: one per print,
+    // and two on the multi-material wall mount.
+    cy.get('[data-cy="home-capture-prints"] .material-chip').should(
+      'have.length',
+      6
+    );
   },
   Filament: () =>
     cy

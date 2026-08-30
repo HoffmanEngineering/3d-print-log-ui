@@ -170,6 +170,13 @@ If a dev server is already running on 4200, just run the two steps directly:
   height. Raise it before adding a taller target.
 - Demo print photos and their provenance live in `cypress/fixtures/demo/images/`
   (fetched by `scripts/fetch-demo-images.mjs`).
+- The demo prints carry `filamentUsage`, because material tracking is what the
+  home copy beside that image is selling. The rows embed whole `FilamentSummary`
+  objects copied from `filaments.json`, so the swatches match the materials
+  capture exactly, and their `amountMg` **sums to each print's existing
+  `sumActualFilamentWeightMg` / `sumEstimatedFilamentWeightMg`** — keep that true
+  when editing, or the fixture contradicts itself. Resin carries no `lengthInM`:
+  it has no diameter and therefore no strand length.
 - The spec hides the nav bar, ad slots, the filter panel and the analytics tab's
   export button, neutralizes AdSense, and waits for async print thumbnails and
   the d3 status-donut animation to settle before shooting.

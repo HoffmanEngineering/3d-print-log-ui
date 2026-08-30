@@ -2,6 +2,7 @@
   <input
     #input
     class="docs-search__input"
+    data-cy="docs-search-input"
     type="search"
     [formControl]="query"
     (keydown)="onKeydown($event)"
@@ -38,6 +39,7 @@
   <ul
     #list
     class="docs-search__results"
+    data-cy="docs-search-results"
     id="docs-search-results"
     role="listbox"
     aria-label="Search results"
@@ -45,6 +47,7 @@
     @for (result of results(); track result.id; let i = $index) {
       <li
         class="docs-search__result"
+        data-cy="docs-search-result"
         [class.docs-search__result--active]="i === active()"
         id="docs-search-result-{{ i }}"
         role="option"
@@ -62,7 +65,7 @@
   </ul>
 
   @if (searched() && results().length === 0 && !loading() && !failed()) {
-    <p class="docs-search__empty">
+    <p class="docs-search__empty" data-cy="docs-search-empty">
       Nothing matched that. Try a different word, or
       <button type="button" class="docs-search__link" (click)="openFeedback()">
         tell us what you were looking for</button

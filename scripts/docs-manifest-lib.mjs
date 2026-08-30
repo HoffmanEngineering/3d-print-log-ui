@@ -19,14 +19,24 @@ export const DOC_GROUPS = ['start', 'features', 'integrations', 'about'];
 /** Where `/docs` lands. A generator constant: no document declares it. */
 export const DEFAULT_DOC_SLUG = 'getting-started';
 
+/**
+ * The page that renders src/content/release-notes/*.md beneath its own body.
+ *
+ * A generator constant for the same reason DEFAULT_DOC_SLUG is one: exactly one
+ * page has this behaviour, and keying off the slug keeps the release sources out
+ * of the per-page frontmatter contract that every other doc obeys.
+ */
+export const RELEASE_NOTES_SLUG = 'release-notes';
+
 /** Diataxis modes a page may declare. */
 export const DOC_MODES = ['tutorial', 'how-to', 'reference', 'explanation'];
 
 /**
  * @param {object[]} pages frontmatter records, one per source file
- * @returns {{ pages: object[] }}
+ * @param {object[]} [releases] release manifest rows, newest first
+ * @returns {{ pages: object[], releases: object[] }}
  */
-export function buildManifest(pages) {
+export function buildManifest(pages, releases = []) {
   const slugs = new Set();
   const aliases = new Map();
 
@@ -84,7 +94,7 @@ export function buildManifest(pages) {
       a.slug.localeCompare(b.slug)
   );
 
-  return { pages: enriched };
+  return { pages: enriched, releases };
 }
 
 /** Pages that are actually routed and published. */

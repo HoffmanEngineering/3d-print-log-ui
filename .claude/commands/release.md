@@ -44,50 +44,79 @@ Based on the current version (X.Y.Z):
 
 Update the `version` field to the new version.
 
-#### 4.2 Update Release Notes HTML
+#### 4.2 Write the Release Note
 
-> **This file is the single source of truth for the GitHub Release body.**
+Create **one new file**, `src/content/release-notes/X.Y.Z.md`. Nothing else needs editing: the docs
+generator picks it up, renders it into `/docs/release-notes`, and adds it to `docs-manifest.json`.
+There is no shared changelog to edit and no merge conflict to resolve.
+
+> **This file is also the single source of truth for the GitHub Release body.**
 >
 > `.github/workflows/deploy.yml` runs `scripts/extract-release-notes.mjs` against the pushed tag and
 > publishes the result as that version's GitHub Release. Nothing is written by hand on github.com,
 > and `generate_release_notes` is deliberately NOT used — the prose written here is better than a
 > dump of PR titles, which is the whole reason for the extraction.
 >
-> Three consequences that change how you edit this file:
+> Four consequences that change how you write this file:
 >
-> - **A tag with no matching section fails the deploy.** That check is the first step of the build
+> - **A tag with no matching file fails the deploy.** That check is the first step of the build
 >   job, so it fails in seconds rather than after the build and test run — but it does mean the
->   section must exist _before_ the tag is pushed. (`v1.32.1` predates this and is the one known gap.)
-> - **The `id` is a contract, not decoration.** `<h3 id="vX.Y.Z">` must match the tag exactly.
->   Two-part ids like `v1.6` are normalized to `1.6.0`, but new releases should always be three-part.
-> - **The section is converted to Markdown, so only certain HTML shapes survive.** The converter
->   handles `<p>`, `<h4>`, `<ul>`/`<li>` (including nesting), `<strong>`, `<em>`, `<code>`, `<a href>`
->   and both `routerLink` spellings. Anything else — a `<span>`, a `<table>` — would leak into the
->   release body as raw tags. A test in `scripts/release-notes-lib.test.mjs` runs the whole file and
->   fails if any section produces unrendered tags, so this is caught by `npm run test:scripts`
->   rather than discovered on the Releases page.
+>   file must exist _before_ the tag is pushed. (`v1.32.1` predates this and is the one known gap.)
+> - **The filename is a contract.** `1.49.1.md` must declare `version: 1.49.1`, and the page anchor
+>   is generated from that field as `#v1.49.1`. It is never derived from the heading text, because a
+>   slugger would mangle the dots. `validate-docs.mjs` fails if a previously published anchor stops
+>   being emitted. Two-part versions like `1.6` are normalized to `1.6.0` when a tag is matched, but
+>   new releases should always be three-part.
+> - **Do not write the heading yourself.** The generator emits
+>   `<h3 id="v1.49.1">1.49.1 - Push Notification Fixes</h3>` from `version` and `title`. A heading in
+>   the body would sit underneath it as a duplicate.
+> - **The body is converted to Markdown for GitHub, so only certain shapes survive.** The converter
+>   handles paragraphs, `####` headings, lists (including nesting), `**bold**`, `_italic_`, `` `code` ``
+>   and links. Anything else — a `<span>`, a table — would leak into the release body as raw tags. A
+>   test in `scripts/release-notes-lib.test.mjs` runs the whole corpus and fails if any release
+>   produces unrendered tags, so this is caught by `npm run test:scripts` rather than discovered on
+>   the Releases page.
 >
-> Related: `routerLink` values are rewritten to absolute `https://www.3dprintlog.com` URLs, because a
-> relative link is dead once the body is rendered on github.com. `&lt;` and `&gt;` are deliberately
-> left escaped — GitHub renders raw HTML inside Markdown, so decoding them would make a deliberately
-> shown tag vanish.
+> Related: site-relative links (`[Settings](/settings)`) become `routerLink`s on the page and are
+> rewritten to absolute `https://www.3dprintlog.com` URLs for GitHub, because a relative link is
+> dead once the body is rendered on github.com. `&lt;` and `&gt;` are deliberately left escaped —
+> GitHub renders raw HTML inside Markdown, so decoding them would make a deliberately shown tag
+> vanish.
 
-Add a new section at the TOP of the release notes list in `src/app/documentation/docs/docs-release-notes/docs-release-notes.component.html`.
+Format for a new release note:
 
-Format for new release notes:
+```markdown
+---
+version: X.Y.Z
+date: YYYY-MM-DD
+title: '[Short Title]'
+---
 
-```html
-<h3 id="vX.X.X">X.X.X - [Short Title]</h3>
-<p>[Summary paragraph for the first major feature. Use parentheses instead of em dashes.]</p>
-<p>[Second paragraph for additional major features, if any. Each distinct feature gets its own paragraph.]</p>
-<h4>Full List of Changes:</h4>
-<ul>
-  <li><strong>[Feature/Fix Name]</strong> - [Description] (<a href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/[N]" rel="noreferrer noopener" target="_blank">PR #[N]</a>)</li>
-  <!-- More list items as needed -->
-</ul>
+[Summary paragraph for the first major feature. Use parentheses instead of em dashes.]
+
+[Second paragraph for additional major features, if any. Each distinct feature gets its own paragraph.]
+
+#### Full List of Changes:
+
+- **[Feature/Fix Name]** - [Description] ([PR #N](https://github.com/HoffmanEngineering/3d-print-log-ui/pull/N))
 ```
 
-Place the new section after the `<hr />` and before the previous version's `<h3>`.
+Frontmatter fields:
+
+- `version` — must equal the filename. Drives the `#vX.Y.Z` anchor.
+- `date` — the release date, `YYYY-MM-DD`.
+- `title` — the short title, without the version number. May be empty for a release with no title.
+- `highlights` — optional list of tags (`highlights: [labels, analytics]`) for later what's-new
+  work. Leave it out when there is nothing meaningful to tag; do not invent tags.
+
+**Record the anchor.** Add `"vX.Y.Z"` to the top of the `docs/release-notes` list in
+`src/content/docs-anchors.json`. That file is the record of what the outside world may have
+bookmarked, and `validate-docs.mjs` fails if an anchor listed there stops being emitted.
+
+**Pagination:** `/docs/release-notes` renders only the ten most recent releases; everything older
+loads from a separate chunk behind a "Show N older releases" button. Adding a release therefore
+pushes one into the archive on its own. Nothing needs doing about that, and every published anchor
+keeps resolving either way.
 
 **Always link the PR on every bullet where one exists.** Use the PR numbers gathered in step 1.
 
@@ -179,7 +208,8 @@ After making the changes, ask the user to review the release notes. Show them wh
 2. Stage the changed files:
 
    - `package.json`
-   - `src/app/documentation/docs/docs-release-notes/docs-release-notes.component.html`
+   - `src/content/release-notes/X.Y.Z.md`
+   - `src/content/docs-anchors.json`
    - `src/app/core/services/version-release-note-dialog.service.ts`
 
 3. Commit with message: `feat: bump version to X.X.X`
@@ -211,14 +241,14 @@ Remind the user:
 - The full release notes HTML can be more detailed with bullet lists
 - **Never use em dashes (—)** in prose; use parentheses instead where a parenthetical is needed
 
-### HTML Release Notes (`docs-release-notes.component.html`)
+### Release Note File (`src/content/release-notes/X.Y.Z.md`)
 
-- Use separate `<p>` paragraphs for each distinct major feature — do not run multiple features together in one paragraph
+- Use separate paragraphs for each distinct major feature — do not run multiple features together in one paragraph
 - The summary paragraph(s) should read as a narrative description, not a changelog list
 - The bullet list is where full detail lives; the paragraph(s) above are the "why it matters" summary
 - **Every bullet links its PR** where one exists (see 4.2). Keep PR links out of the summary paragraphs and the dialog body; they belong on the bullets only
 - Reference a prior **version** (not a PR) when it explains user-visible history, e.g. "an issue introduced in 1.43.9" — that means something to a user in a way a PR number does not
-- **Do not run `prettier --write` on this file.** It has pre-existing formatting drift, so a blanket rewrite reformats ~500 unrelated lines and buries the release diff. `prettier --check` also reports it as non-compliant for the same reason; that failure is expected and is not caused by your section. Hand-format your new section to match the surrounding style and confirm with `git diff --stat` that only your lines changed
+- The file is yours alone, so `prettier --write` on it is safe and reformats nothing else. That is the point of one file per release: the diff for a release is a single added file
 
 ### Dialog Body (`version-release-note-dialog.service.ts`)
 

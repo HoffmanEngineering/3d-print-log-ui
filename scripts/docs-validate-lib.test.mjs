@@ -21,8 +21,10 @@ const source = (over = {}) => ({
 });
 
 /** Raw call: the corpus is exactly what the test passes. */
-const validate = (sources, anchors = {}) =>
-  validateDocs({ sources, anchorBaseline: anchors }).map((p) => p.message);
+const validate = (sources, anchors = {}, releases = []) =>
+  validateDocs({ sources, releases, anchorBaseline: anchors }).map(
+    (p) => p.message
+  );
 
 /**
  * The landing page every valid corpus must contain, since /docs redirects to it.
@@ -458,4 +460,121 @@ test('accepts a fragment link to a single-quoted id', () => {
     messages({ body: "## P\n\n<div id='setup'></div>\n\nSee [Setup](#setup).\n" }),
     []
   );
+});
+
+// -- release notes -----------------------------------------------------------
+
+const releaseNotesPage = () =>
+  source({
+    slug: 'release-notes',
+    sourceFile: 'release-notes.md',
+    navLabel: 'Release Notes',
+    group: 'about',
+    title: 'Release Notes | 3D Print Log Docs',
+    description: `${DESCRIPTION} Release notes edition.`,
+    body: '## Release Notes\n',
+  });
+
+const release = (over = {}) => ({
+  version: '1.49.1',
+  date: '2026-08-29',
+  title: 'Push Notification Fixes',
+  highlights: [],
+  body: 'Tapping a notification opens the print.',
+  sourceFile: '1.49.1.md',
+  ...over,
+});
+
+test('a release anchor satisfies the contract even though the page has no heading', () => {
+  // The heading lives in src/content/release-notes, not in the page body, so
+  // without the release corpus the contract check would report every published
+  // anchor as deleted.
+  const problems = validate(
+    [landingPage(), releaseNotesPage()],
+    { 'docs/release-notes': ['v1.49.1'] },
+    [release()]
+  );
+
+  assert.deepEqual(problems, []);
+});
+
+test('a deleted release breaks the published anchor contract', () => {
+  const problems = validate(
+    [landingPage(), releaseNotesPage()],
+    { 'docs/release-notes': ['v1.38.0'] },
+    [release()]
+  );
+
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /anchor "v1\.38\.0" was published previously/);
+});
+
+test('two releases claiming one version are rejected', () => {
+  const problems = validate(
+    [landingPage(), releaseNotesPage()],
+    {},
+    [release(), release({ sourceFile: 'duplicate.md' })]
+  );
+
+  assert.ok(problems.some((p) => /already declared by/.test(p)));
+});
+
+test('a release version the anchor generator cannot use is rejected', () => {
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release({ version: 'next', sourceFile: 'next.md' }),
+  ]);
+
+  assert.ok(problems.some((p) => /must be numeric/.test(p)));
+});
+
+test('a release without an ISO date is rejected', () => {
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release({ date: 'August 2026' }),
+  ]);
+
+  assert.ok(problems.some((p) => /must be an ISO date/.test(p)));
+});
+
+test('a release title that is not a string is rejected', () => {
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release({ title: 141 }),
+  ]);
+
+  assert.ok(problems.some((p) => /"title" must be a string/.test(p)));
+});
+
+test('an empty release title is allowed', () => {
+  // 1.29.0 shipped with a bare version heading; that is legal, not an oversight.
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release({ title: '' }),
+  ]);
+
+  assert.deepEqual(problems, []);
+});
+
+test('a highlights value that is not a sequence is rejected', () => {
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release({ highlights: 'labels' }),
+  ]);
+
+  assert.ok(problems.some((p) => /"highlights" must be a sequence/.test(p)));
+});
+
+test('a dead docs link inside a release is caught', () => {
+  // Release prose is checked like any other page content: it is on the page a
+  // reader reaches, even when it renders from the archive.
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release({ body: 'See [the guide](/docs/nowhere).' }),
+  ]);
+
+  assert.ok(problems.some((p) => /there is no doc page "nowhere"/.test(p)));
+});
+
+test('two releases declaring the same anchor are caught as a duplicate id', () => {
+  const problems = validate([landingPage(), releaseNotesPage()], {}, [
+    release(),
+    release({ sourceFile: 'copy.md' }),
+  ]);
+
+  assert.ok(problems.some((p) => /id "v1\.49\.1" is declared more than once/.test(p)));
 });

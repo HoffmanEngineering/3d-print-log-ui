@@ -80,6 +80,9 @@ test('plans a component, a template, and the shared projections', () => {
     'docs.server-routes.ts',
     'pages/docs-prints.component.html',
     'pages/docs-prints.component.ts',
+    // Emitted whether or not there are releases: the component imports it
+    // unconditionally, so an absent module would be a build error.
+    'release-notes-archive.ts',
   ]);
 });
 
@@ -226,4 +229,94 @@ test('a hand-written component keeps its own stylesheet rather than a copy', () 
   );
 
   assert.ok(!files.has('pages/docs-prints.component.scss'));
+});
+
+// -- release notes -----------------------------------------------------------
+
+const RELEASE_PAGE = SOURCE.replace('slug: prints', 'slug: release-notes')
+  .replace('navLabel: Prints', 'navLabel: Release Notes')
+  .replace('group: features', 'group: about')
+  .replace('## Prints', '## Release Notes');
+
+const release = (version) => ({
+  version,
+  date: '2026-08-29',
+  title: `Release ${version}`,
+  highlights: [],
+  body: `What changed in ${version}.`,
+  sourceFile: `${version}.md`,
+});
+
+/** Newest first, the order readReleaseSources hands them over in. */
+const releases = (count) =>
+  Array.from({ length: count }, (_, i) => release(`1.${count - i}.0`));
+
+test('appends the newest releases to the release-notes template', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const template = files.get('pages/docs-release-notes.component.html');
+
+  assert.match(template, /<h3 id="v1\.12\.0">/);
+  assert.match(template, /<h3 id="v1\.3\.0">/);
+});
+
+test('keeps releases older than the page cutoff out of the template', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const template = files.get('pages/docs-release-notes.component.html');
+
+  // The whole point of the split: two years of history must not ship to a
+  // reader who only wanted to see what changed last week.
+  assert.ok(!template.includes('id="v1.2.0"'));
+  assert.ok(!template.includes('What changed in 1.2.0.'));
+});
+
+test('moves the releases the template dropped into the archive module', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const archive = files.get('release-notes-archive.ts');
+
+  assert.match(archive, /anchor: 'v1\.2\.0'/);
+  assert.ok(!archive.includes("anchor: 'v1.12.0'"));
+});
+
+test('records every release in the manifest, archived or not', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const manifest = JSON.parse(files.get('docs-manifest.json'));
+
+  assert.equal(manifest.releases.length, 12);
+  assert.equal(manifest.releases[0].anchor, 'v1.12.0');
+  assert.equal(manifest.releases.at(-1).anchor, 'v1.1.0');
+});
+
+test('indexes the whole release history for search, not just the page', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const [entry] = JSON.parse(files.get('docs-search-index.json')).filter(
+    (row) => row.path === 'docs/release-notes'
+  );
+
+  // A reader searching for a two-year-old release should still find it; the
+  // component expands the archive to reach the anchor it lands on.
+  assert.match(entry.text, /What changed in 1\.2\.0\./);
+});
+
+test('leaves a page that is not the release index alone', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE })),
+    releases(12)
+  );
+
+  assert.ok(!files.get('pages/docs-prints.component.html').includes('id="v1.12.0"'));
 });

@@ -10,8 +10,14 @@
 // marketing SEO text lives in Angular sources this script cannot read, and the
 // prerendered HTML is the only place both pools exist together.
 
-import { DEFAULT_DOC_SLUG, DOC_MODES } from './docs-manifest-lib.mjs';
+import {
+  DEFAULT_DOC_SLUG,
+  DOC_MODES,
+  RELEASE_NOTES_SLUG,
+} from './docs-manifest-lib.mjs';
 import { extractAnchors, ID_PATTERN, renderMarkdown } from './docs-markdown.mjs';
+import { anchorFor, isVersion } from './release-notes-lib.mjs';
+import { renderRelease } from './release-notes-emit.mjs';
 
 const REQUIRED_FIELDS = {
   slug: 'string',
@@ -37,16 +43,34 @@ const ELEMENT_ALLOWLIST = new Set([
   'dt', 'div', 'em', 'figcaption', 'figure', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
   'hr', 'i', 'img', 'li', 'mat-icon', 'ol', 'p', 'pre', 'section', 'small',
   'span', 'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead',
-  'tr', 'ul', 'youtube-player',
+  'time', 'tr', 'ul', 'youtube-player',
 ]);
 
 /**
- * @param {{ sources: object[], anchorBaseline?: Record<string, string[]> }} input
+ * @param {{ sources: object[], releases?: object[], anchorBaseline?: Record<string, string[]> }} input
  * @returns {{ file: string, message: string }[]}
  */
-export function validateDocs({ sources, anchorBaseline = {} }) {
+export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
   const problems = [];
   const add = (file, message) => problems.push({ file, message: `${file}: ${message}` });
+
+  validateReleases(releases, add);
+
+  // The release-notes page is checked as the whole history, not as the ten
+  // releases that render into its template. Every rule below — the anchor
+  // contract above all — is about what the reader can reach, and the component
+  // expands the archive to reach an archived anchor. Checking only the page
+  // template would quietly stop guarding 89 of the 97 published ids.
+  const renderedReleases =
+    releases.length > 0 ? releases.map(renderRelease).join('\n') : '';
+
+  /** The full page a reader can reach, release history included. */
+  const templateFor = (source) => {
+    const rendered = renderMarkdown(source.body ?? '');
+    return source.slug === RELEASE_NOTES_SLUG && renderedReleases
+      ? `${rendered}\n${renderedReleases}`
+      : rendered;
+  };
 
   // Link targets resolve against ROUTED pages only. A dormant page keeps its
   // source file but is filtered out of every route projection, so a link to it
@@ -109,7 +133,7 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
 
     let template = '';
     try {
-      template = renderMarkdown(s.body ?? '');
+      template = templateFor(s);
     } catch (error) {
       // The render error is the only real problem here. Every downstream check
       // reads anchorsBySlug, and an absent key means "no such page" — so
@@ -158,7 +182,7 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
   // Link checks need every page's anchors, so they run once the loop is done.
   for (const s of sources) {
     const file = s.sourceFile ?? `${s.slug}.md`;
-    const template = anchorsBySlug.has(s.slug) ? renderMarkdown(s.body ?? '') : '';
+    const template = anchorsBySlug.has(s.slug) ? templateFor(s) : '';
 
     for (const href of linksOf(template)) {
       const [target, fragment] = splitFragment(href);
@@ -223,6 +247,49 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
   }
 
   return problems;
+}
+
+/**
+ * Rules for src/content/release-notes/*.md.
+ *
+ * `readReleaseSources` already refuses a file whose `version` does not match its
+ * filename, because nothing downstream can run without that. What is left here
+ * is everything a release can get wrong that still parses: a version the anchor
+ * generator would mangle, a missing date the what's-new surface would sort on,
+ * and a title that is silently blank in the heading.
+ */
+function validateReleases(releases, add) {
+  const seen = new Map();
+
+  for (const release of releases) {
+    const file = `release-notes/${release.sourceFile ?? `${release.version}.md`}`;
+
+    if (!isVersion(release.version)) {
+      add(
+        file,
+        `version "${release.version}" must be numeric (1.49.1, or the legacy two-part 1.6); the anchor "${anchorFor(release.version)}" is derived from it.`
+      );
+    }
+
+    const previous = seen.get(release.version);
+    if (previous) add(file, `version "${release.version}" is already declared by ${previous}.`);
+    else seen.set(release.version, file);
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(release.date)) {
+      add(file, `date "${release.date}" must be an ISO date (YYYY-MM-DD).`);
+    }
+
+    // An empty title is legal, not an oversight: 1.29.0 shipped with a bare
+    // version heading and `headingFor` renders exactly that. What is checked is
+    // that the field is a string, so a forgotten quote cannot reach the heading.
+    if (typeof release.title !== 'string') {
+      add(file, 'frontmatter field "title" must be a string.');
+    }
+
+    if (!Array.isArray(release.highlights)) {
+      add(file, 'frontmatter field "highlights" must be a sequence.');
+    }
+  }
 }
 
 function elementsOf(template) {

@@ -52,33 +52,55 @@ describe('Documentation search', () => {
       .and('have.focus');
   });
 
-  it('finds a section and deep-links to its heading', () => {
+  it('finds a section and deep-links to the heading that result named', () => {
     openWithShortcut();
     cy.get('[data-cy=docs-search-input]').type('material');
-
     cy.get('[data-cy=docs-search-result]').should('have.length.greaterThan', 0);
-    cy.get('[data-cy=docs-search-result]').first().click();
 
-    // The fragment survives the close, and the anchor it names is actually on
-    // the page it landed on.
-    cy.location('hash').should('not.be.empty');
-    cy.location('hash').then((hash) => {
-      cy.get(hash).should('exist');
-    });
+    // The result's own title is read out of the DOM rather than hard-coded, so
+    // this stays honest as the docs change: it proves the destination matches
+    // WHICHEVER result was clicked, instead of pinning a ranking that a future
+    // edit can reshuffle.
+    cy.get('[data-cy=docs-search-result]')
+      .first()
+      .find('.docs-search__result-title')
+      .invoke('text')
+      .then((title) => {
+        const heading = title.trim();
+        cy.get('[data-cy=docs-search-result]').first().click();
+
+        cy.location('hash').should('not.be.empty');
+        cy.location('hash').then((hash) => {
+          // The anchor exists, is on screen, and is the heading the result
+          // advertised — not merely some element carrying that id.
+          cy.get(hash).should('be.visible').and('contain.text', heading);
+        });
+      });
   });
 
-  it('scrolls to the section rather than the top of the page', () => {
+  it('scrolls the section into view rather than landing at the top', () => {
     // MatDialog restores the scroll position as it closes, so a navigation
-    // issued before then is scrolled correctly and then silently undone. This
-    // is the assertion that would have caught that.
+    // issued before then is scrolled correctly and then silently undone.
+    //
+    // Asserted on the TARGET's position, not on a scroll offset: the docs
+    // scroll `mat-sidenav-content` on desktop and the document on mobile
+    // (documentation.component.ts), so `window.scrollY` answers the wrong
+    // question on one of the two layouts. Where the heading ended up on screen
+    // is the thing that actually matters, and it is layout-independent.
     openWithShortcut();
     cy.get('[data-cy=docs-search-input]').type('material');
-
-    // A result that names an anchor; a page-level hit has nothing to scroll to.
     cy.get('[data-cy=docs-search-result]').first().click();
-    cy.location('hash').should('not.be.empty');
 
-    cy.window().its('scrollY').should('be.greaterThan', 0);
+    cy.location('hash').should('not.be.empty');
+    cy.location('hash').then((hash) => {
+      cy.get(hash).then(($el) => {
+        const top = $el[0].getBoundingClientRect().top;
+        expect(top, 'heading is inside the viewport').to.be.within(
+          0,
+          Cypress.config('viewportHeight')
+        );
+      });
+    });
   });
 
   it('searches the code samples on the integration pages', () => {
@@ -106,10 +128,23 @@ describe('Documentation search', () => {
       .type('{downarrow}')
       .should('have.attr', 'aria-activedescendant', 'docs-search-result-1');
 
-    cy.get('[data-cy=docs-search-input]').type('{enter}');
+    // Captured BEFORE Enter. Asserting `pathname` contains '/docs/' afterwards
+    // was already true of the starting page, so removing the navigation
+    // entirely still passed — the test proved only that Enter closed the
+    // dialog. Verified by mutation: dropping navigateByUrl now fails here.
+    cy.get('#docs-search-result-1 .docs-search__result-title')
+      .invoke('text')
+      .then((title) => {
+        const chosen = title.trim();
 
-    cy.location('pathname').should('include', '/docs/');
-    cy.get('[data-cy=docs-search-input]').should('not.exist');
+        cy.location('href').then((before) => {
+          cy.get('[data-cy=docs-search-input]').type('{enter}');
+
+          cy.get('[data-cy=docs-search-input]').should('not.exist');
+          cy.location('href').should('not.eq', before);
+          cy.contains(chosen).should('be.visible');
+        });
+      });
   });
 
   it('offers feedback when nothing matched', () => {
@@ -121,13 +156,52 @@ describe('Documentation search', () => {
   });
 
   it('closes on Escape without navigating', () => {
-    cy.location('pathname').then((before) => {
+    // The whole href, not just the pathname: closing must not leave a fragment
+    // or a query behind either, and a pathname comparison would not notice.
+    cy.location('href').then((before) => {
       openWithShortcut();
       cy.get('[data-cy=docs-search-input]').should('be.visible').type('{esc}');
 
       cy.get('[data-cy=docs-search-input]').should('not.exist');
-      cy.location('pathname').should('eq', before);
+      cy.location('href').should('eq', before);
     });
+  });
+
+  it('opens from the sidebar box as well as the toolbar', () => {
+    // The third entry point. It had a test hook and no test, which is the
+    // shape of a gap that stays invisible until the entry point breaks.
+    cy.get('[data-cy=docs-sidebar-search]').click();
+
+    cy.get('[data-cy=docs-search-input]')
+      .should('be.visible')
+      .and('have.focus');
+  });
+
+  it('can be closed and opened again', () => {
+    // DocsSearchOpener holds ONE ref and clears it from afterClosed(). If that
+    // teardown regressed, the second open would find a stale ref and do
+    // nothing at all — and every other test here opens the palette exactly
+    // once, so none of them would notice.
+    openWithShortcut();
+    cy.get('[data-cy=docs-search-input]').should('be.visible').type('{esc}');
+    cy.get('[data-cy=docs-search-input]').should('not.exist');
+
+    openWithShortcut();
+
+    cy.get('[data-cy=docs-search-input]')
+      .should('be.visible')
+      .and('have.focus');
+  });
+
+  it('has no accessibility violations while open', () => {
+    // The palette drives selection through aria-activedescendant against a
+    // listbox whose options are deliberately not focusable, which is the kind
+    // of hand-rolled ARIA that is easy to get subtly wrong.
+    openWithShortcut();
+    cy.get('[data-cy=docs-search-input]').type('material');
+    cy.get('[data-cy=docs-search-result]').should('have.length.greaterThan', 0);
+
+    cy.checkA11yWithReport('.docs-search');
   });
 
   it('does not stack a second palette when opened twice', () => {

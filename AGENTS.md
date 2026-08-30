@@ -34,6 +34,9 @@ npx cypress run --spec cypress/e2e/prints/print-list-filters.cy.ts  # Run a sing
 # Formatting
 npm run prettier           # Check formatting
 npm run prettier:fix       # Fix formatting
+
+# Home-page screenshots (manual; see "Generated home-page screenshots")
+npm run capture:home:all   # Boot server, capture, process into src/assets/
 ```
 
 ### Token-Efficient Commands
@@ -99,6 +102,15 @@ Marketing/SEO routes are prerendered to static HTML at build time via `@angular/
 - **Verification:** `scripts/verify-prerender.mjs` runs in CI and gates prerendered output (unique titles/descriptions, OG/Twitter, canonicals, internal link graph, crawl files).
 - **Sitemap** is generated at deploy time by `scripts/generate-sitemap.mjs` (fetches public print/user IDs, writes a `<sitemapindex>` plus chunked child sitemaps into `dist/`). It is not committed; there is no static `src/sitemap.xml`. Unit tests: `npm run test:scripts`.
 - **Deploy** ships the prebuilt `dist` with `skip_app_build: true` (no Oryx rebuild) so the generated sitemap reaches production; `refresh-sitemap.yml` redeploys the latest release tag daily.
+
+### Generated home-page screenshots
+
+The home page's three feature images are captured from the real app against Cypress fixtures and post-processed into hashed WebP in `src/assets/` — they are committed, and **no workflow regenerates them**. Nothing compares them to the current UI either, so they go stale silently: the analytics image once advertised a page that had been deleted.
+
+- **If you change the print list, the materials list, or the analytics overview tab, re-run `npm run capture:home:all` in the same change** and commit the images plus `src/app/home/home.component.html` (the processing step rewrites its `ngSrc`/`width`/`height`).
+- Requires **Chrome**; `--force-device-scale-factor=2` is a no-op in Electron. The processing step refuses a capture narrower than `MIN_2X_WIDTH` rather than publish a half-resolution image.
+- The capture spec is excluded from the normal Cypress config — it is a generator, not a test. Do not add it back to the E2E run.
+- Full detail, and the traps that have already been hit (minimatch globs vs unencoded `/` in query values, viewport clamping and stitched screenshots, fixture ordering that must match each list's default sort): `cypress/CLAUDE.md`.
 
 ### Security Headers & CSP
 

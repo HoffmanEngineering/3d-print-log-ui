@@ -77,6 +77,7 @@ test('plans a component, a template, and the shared projections', () => {
     'docs-figures.ts',
     'docs-manifest.json',
     'docs-manifest.ts',
+    'docs-outline.ts',
     'docs-search-index.json',
     'docs.routes.ts',
     'docs.server-routes.ts',

@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { extractAnchors, renderMarkdown } from './docs-markdown.mjs';
+import {
+  extractAnchors,
+  renderMarkdown,
+  slugify,
+  withHeadingIds,
+} from './docs-markdown.mjs';
 
 const render = (...lines) => renderMarkdown(lines.join('\n'));
 
@@ -17,10 +22,87 @@ test('applies an explicit heading id from a {#id} suffix', () => {
   );
 });
 
-test('never invents an id for a heading that does not declare one', () => {
-  // Re-slugging would silently mint anchors the docs never published and
-  // would not match the ids callers already bookmarked.
+test('never invents an id for a heading while rendering', () => {
+  // Ids are added afterwards, by withHeadingIds, so that the raw HTML pages get
+  // them too. The renderer stays a pure Markdown-to-template pass.
   assert.equal(render('### Materials List'), '<h3>Materials List</h3>');
+});
+
+test('derives an id for an h2-h4 that declares none', () => {
+  assert.equal(
+    withHeadingIds('<h3>How Remaining Material is Calculated</h3>'),
+    '<h3 id="how-remaining-material-is-calculated">' +
+      'How Remaining Material is Calculated</h3>'
+  );
+});
+
+test('leaves an explicit id exactly as authored', () => {
+  // docs-anchors.json holds the project to these. Re-slugging one would break
+  // every link the outside world has already published to it.
+  assert.equal(
+    withHeadingIds('<h3 id="loaded_filament">Loaded Material</h3>'),
+    '<h3 id="loaded_filament">Loaded Material</h3>'
+  );
+});
+
+test('yields to an explicit id declared later on the page', () => {
+  // Explicit ids are all reserved before any derived one is minted, so
+  // document order cannot decide which heading keeps the published anchor.
+  assert.equal(
+    withHeadingIds(['<h3>Add</h3>', '<h4 id="add">Add a Material</h4>'].join('\n')),
+    ['<h3 id="add-2">Add</h3>', '<h4 id="add">Add a Material</h4>'].join('\n')
+  );
+});
+
+test('suffixes a derived id that repeats an earlier heading', () => {
+  assert.equal(
+    withHeadingIds(['<h3>Setup</h3>', '<h3>Setup</h3>', '<h3>Setup</h3>'].join('\n')),
+    [
+      '<h3 id="setup">Setup</h3>',
+      '<h3 id="setup-2">Setup</h3>',
+      '<h3 id="setup-3">Setup</h3>',
+    ].join('\n')
+  );
+});
+
+test('derives ids only for h2 through h4', () => {
+  // h1 is the page title, and h5/h6 never reach the outline, so an id on
+  // either is a link nothing offers the reader.
+  assert.equal(withHeadingIds('<h1>Docs</h1>'), '<h1>Docs</h1>');
+  assert.equal(withHeadingIds('<h5>Deep</h5>'), '<h5>Deep</h5>');
+});
+
+test('derives an id through the markup and bindings inside a heading', () => {
+  assert.equal(
+    withHeadingIds('<h3>Use <strong>{{ endpoint }}</strong> Now</h3>'),
+    '<h3 id="use-now">Use <strong>{{ endpoint }}</strong> Now</h3>'
+  );
+});
+
+test('leaves a heading alone when its text slugifies to nothing', () => {
+  // An empty id is not a link, and "#" scrolls to the top of the page.
+  assert.equal(withHeadingIds('<h3>—</h3>'), '<h3>—</h3>');
+});
+
+test('adds ids to raw HTML headings that survived the renderer', () => {
+  const template = render(
+    '<section>',
+    '  <h2>Connect an AI Assistant</h2>',
+    '</section>'
+  );
+  assert.match(withHeadingIds(template), /<h2 id="connect-an-ai-assistant">/);
+});
+
+test('is idempotent: a second pass changes nothing', () => {
+  const once = withHeadingIds(
+    ['<h3>Add a Print</h3>', '<h3>Add a Print</h3>'].join('\n')
+  );
+  assert.equal(withHeadingIds(once), once);
+});
+
+test('slugifies to lowercase ASCII words joined by single hyphens', () => {
+  assert.equal(slugify('Print & Material Usage'), 'print-material-usage');
+  assert.equal(slugify('  Trailing punctuation!  '), 'trailing-punctuation');
 });
 
 test('renders a blank-line separated block as a paragraph', () => {

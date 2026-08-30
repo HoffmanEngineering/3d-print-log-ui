@@ -9,6 +9,10 @@ import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-ge
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocFeedbackComponent } from './doc-feedback/doc-feedback.component';
+import { DocPageNavComponent } from './doc-page-nav/doc-page-nav.component';
+import { DocRelatedComponent } from './doc-related/doc-related.component';
+import { DocTocComponent } from './doc-toc/doc-toc.component';
+import { DOC_PRIMITIVES } from './primitives';
 import { DocsSearchOpener } from './docs-search/docs-search.opener';
 import { DocsSearchService } from './docs-search/docs-search.service';
 import { DocsTelemetryService } from './docs-telemetry.service';
@@ -38,6 +42,12 @@ import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
     AdsenseModule,
     YouTubePlayerModule,
     DocFeedbackComponent,
+    DocTocComponent,
+    DocPageNavComponent,
+    DocRelatedComponent,
+    // Standalone, and imported here rather than by each page: a generated page
+    // is declared by this module, so this module is its template scope.
+    ...DOC_PRIMITIVES,
   ],
   // Provided here, not in root: search is only reachable from /docs, so both
   // classes stay in the lazy docs chunk rather than the main bundle.

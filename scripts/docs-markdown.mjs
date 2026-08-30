@@ -6,8 +6,9 @@
 // gates which elements may appear. Only code spans and plain fences are escaped.
 //
 // Two rules exist to protect deep links and directives:
-//   * Headings never get a derived id. Anchors are contractual (docs-anchors.json);
-//     a slugger would re-mint every published id under its own algorithm.
+//   * An explicit heading id is never re-minted. Anchors are contractual
+//     (docs-anchors.json), so a slugger may only ADD ids to headings that
+//     declare none — see `withHeadingIds`, which runs after rendering.
 //   * A ```angular-html fence and a raw HTML block pass through byte for byte.
 
 // Code spans are lifted out before inline Markdown runs and put back afterwards.
@@ -429,4 +430,91 @@ function escapeHtml(text) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+/**
+ * Heading levels that take a derived id, and that the per-page outline is built
+ * from. h5 and h6 are deliberately out: nothing in the docs uses them for
+ * navigation, and a six-level table of contents is a wall, not a map.
+ */
+const OUTLINE_LEVELS = /^[2-4]$/;
+
+/** A non-global twin of `ID_PATTERN`, safe to `.test` without a lastIndex. */
+const DECLARED_ID = /\sid="[^"]*"|\sid='[^']*'/;
+
+/** Any heading in a rendered template, with its attributes and inner markup. */
+const HEADING_PATTERN = /<h([1-6])([^>]*)>([\s\S]*?)<\/h\1\s*>/g;
+
+/**
+ * Gives every h2-h4 that does not declare an id one derived from its text.
+ *
+ * This runs on the RENDERED template rather than inside the heading branch of
+ * the renderer, because a third of the docs are raw HTML blocks that pass
+ * through byte for byte — `mcp.md` and `getting-started.md` are entirely
+ * `<article>`/`<h2>` markup. A slugger wired into the Markdown branch alone
+ * would leave exactly those pages without a table of contents.
+ *
+ * An explicit `{#id}` is never touched or re-minted: those are the ids
+ * `docs-anchors.json` holds the project to. Derived ids are NOT in that
+ * contract — they are navigation, and rewording a heading is allowed to move
+ * one — so an explicit id always wins a collision and a derived id yields to it
+ * with a `-2` suffix.
+ *
+ * @param {string} template a rendered Angular template
+ * @returns {string} the same template with derived heading ids added
+ */
+export function withHeadingIds(template) {
+  // Two passes: every explicit id on the page is reserved before the first
+  // derived one is minted, so a derived id can never shadow a published anchor
+  // regardless of which came first in the document.
+  const used = new Set(extractAnchors(template));
+
+  return template.replace(
+    HEADING_PATTERN,
+    (heading, level, attributes, inner) => {
+      if (!OUTLINE_LEVELS.test(level) || DECLARED_ID.test(attributes)) {
+        return heading;
+      }
+
+      const id = uniqueId(slugify(headingText(inner)), used);
+      if (!id) return heading;
+      used.add(id);
+
+      return `<h${level}${attributes} id="${id}">${inner}</h${level}>`;
+    }
+  );
+}
+
+/** The plain text of a heading: markup dropped, entities left as authored. */
+function headingText(inner) {
+  return inner
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\{\{[\s\S]*?\}\}/g, ' ')
+    .replace(/&[#a-zA-Z0-9]+;/g, ' ')
+    .trim();
+}
+
+/**
+ * A heading's text as a URL fragment.
+ *
+ * ASCII alphanumerics only. Anything else — punctuation, an em dash the
+ * typographer inserted, a non-Latin character — becomes a separator, because
+ * a fragment that survives being copied out of the address bar is worth more
+ * than one that preserves every glyph.
+ */
+export function slugify(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** `base`, or the first `base-N` that is not taken yet. */
+function uniqueId(base, used) {
+  if (!base) return '';
+  if (!used.has(base)) return base;
+
+  let n = 2;
+  while (used.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
 }

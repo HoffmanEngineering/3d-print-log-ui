@@ -48,6 +48,21 @@
         "plugin:@angular-eslint/template/recommended"
       ],
       "rules": {}
+    },
+    {
+      "files": [
+        "src/app/documentation/primitives/*.ts"
+      ],
+      "rules": {
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "prefix": "doc",
+            "style": "kebab-case",
+            "type": "element"
+          }
+        ]
+      }
     }
   ]
 }

@@ -34,9 +34,20 @@
 
     <mat-sidenav-content>
       <div class="content">
-        <router-outlet></router-outlet>
-        <app-doc-feedback [pageKey]="currentSlug()"></app-doc-feedback>
-        <app-ad></app-ad>
+        <div class="docs-layout">
+          <!-- Before the article in the DOM so it is the first thing after the
+               heading on a phone, and the first thing a screen reader reaches.
+               Grid placement moves it to the trailing rail on a wide screen. -->
+          <app-doc-toc class="docs-layout__toc" [path]="currentPath()" />
+
+          <div class="docs-layout__main">
+            <router-outlet></router-outlet>
+            <app-doc-related [path]="currentPath()" />
+            <app-doc-page-nav [path]="currentPath()" />
+            <app-doc-feedback [pageKey]="currentSlug()"></app-doc-feedback>
+            <app-ad></app-ad>
+          </div>
+        </div>
       </div>
     </mat-sidenav-content>
   </mat-sidenav-container>

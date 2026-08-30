@@ -21,14 +21,19 @@ target="_blank" >OctoPrint-Webhooks</a > plugin by <a
 href="https://plugins.octoprint.org/by_author/#blane-townsend" rel="noreferrer
 noopener" target="_blank" >Blane Townsend</a >.
 
-Note: Users have reported the Webhook Plugin settings sometimes do not save
-correctly within OctoPrint. Refreshing the OctoPrint tab, re-entering the
-settings and saving again might be necessary. If you run into issues with the
-integration working, see the **Troubleshooting** steps below.
+<doc-callout kind="warning" heading="Settings do not always save the first time">
+  <p>
+    Users have reported the Webhook Plugin settings sometimes do not save
+    correctly within OctoPrint. Refreshing the OctoPrint tab, re-entering the
+    settings and saving again might be necessary. If you run into issues with
+    the integration working, see the <strong>Troubleshooting</strong> steps
+    below.
+  </p>
+</doc-callout>
 
 ---
 
-### Features:
+### Features
 
 Using the OctoPrint Integration, when you start a print in OctoPrint, it should
 immediately save a new Print in 3D Print Log with a status of "Printing", which
@@ -46,7 +51,7 @@ Print Time and Filament Usage will be updated.
 
 ---
 
-### Limitations:
+### Limitations
 
 There are a handful of limitations from using the OctoPrint Webhook plugin. If
 you are an OctoPrint Plugin Developer and would like to help creating a custom
@@ -58,158 +63,102 @@ help!](/feedback)
 
 ---
 
-### Setup: {#Setup}
+### Setup {#Setup}
 
-<youtube-player videoId="E3kHsxSkBAw"></youtube-player>
+<doc-video
+  videoId="E3kHsxSkBAw"
+  title="Setting up the OctoPrint webhook, start to finish"
+></doc-video>
 
-#### Step 1: Download OctoPrint-Webhook Plugin
+<doc-steps>
+  <doc-step heading="Download the OctoPrint-Webhook plugin">
+    <ul>
+      <li>
+        On your OctoPrint, navigate to Settings -> Plugin Manager, and click the
+        <strong>"Get More.."</strong> button at the bottom.
+      </li>
+      <li>Search for "OctoPrint-Webhook", and install the plugin.</li>
+    </ul>
+  </doc-step>
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
-      <ul>
-        <li>
-          On your OctoPrint, navigate to Settings -> Plugin Manager, and click
-          the <strong>"Get More.."</strong> button at the bottom.
-        </li>
-        <li>Search for "OctoPrint-Webhook", and install the plugin.</li>
-      </ul>
-    </div>
-    <div fxFlex>
-      <!-- <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        alt="Example of Filament Adjustments on the Filament Edit Screen"
-        src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-      /> -->
-    </div>
-  </div>
-
-#### Step 2: Generate API Key on 3D Print Log
-
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+  <doc-step heading="Generate an API Key on 3D Print Log">
+    <p>
+      OctoPrint will need an "API Key" to authenticate. This is how 3D Print Log
+      knows what user your OctoPrint is for.
+    </p>
+    <ul>
+      <li>
+        Navigate to the <a routerLink="/api-keys">Personal Api Keys</a> page by
+        clicking on your User Profile Picture at the top-left, and selecting
+        "Personal Api Keys".
+      </li>
+      <li>Click <strong>Create new API Key</strong>.</li>
+      <li>Enter a new description (such a "Octoprint Webhook Key").</li>
+      <li>Click <strong>Submit</strong> to generate a new key.</li>
+      <li>Copy the new 32-character key for use in <strong>Step 4</strong>.</li>
+    </ul>
+    <doc-callout kind="warning" heading="Copy the key before you leave the page">
       <p>
-        OctoPrint will need an "API Key" to authenticate. This is how 3D Print
-        Log knows what user your OctoPrint is for.
+        The API Key cannot be retrieved after you leave the page. Copy it to a
+        secure location, otherwise you will have to generate a new key.
       </p>
-      <ul>
-        <li>
-          Navigate to the <a routerLink="/api-keys">Personal Api Keys</a> page
-          by clicking on your User Profile Picture at the top-left, and
-          selecting "Personal Api Keys".
-        </li>
-        <li>Click <strong>Create new API Key</strong>.</li>
-        <li>Enter a new description (such a "Octoprint Webhook Key").</li>
-        <li>Click <strong>Submit</strong> to generate a new key.</li>
-        <li>
-          Copy the new 32-character key for use in <strong>Step 5</strong>.
-          <ul>
-            <li>
-              Note: The API Key cannot be retrieved after you leave the page, so
-              copy it to a secure location, otherwise you will have to generate
-              a new key.
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-    <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
-    </div>
-  </div>
+    </doc-callout>
+  </doc-step>
 
-#### Step 3: Find your Printer ID Number in 3D Print Log
+  <doc-step heading="Find your Printer ID number in 3D Print Log">
+    <p>
+      OctoPrint needs to know what Printer to use in 3D Print Log. We'll need to
+      find the printer's id number in 3D Print Log.
+    </p>
+    <ul>
+      <li>Navigate to the <a routerLink="/printers">Printers</a> page.</li>
+      <li>
+        Find the printer you want to use, and <strong>Click</strong> on it to
+        enter the Edit Details page.
+      </li>
+      <li>
+        In your browser's URL bar, record the ID of the printer. It is the
+        number after https://www.3dprintlog.com/printers/####
+      </li>
+      <li>Copy that ID number for use in <strong>Step 4</strong>.</li>
+    </ul>
+  </doc-step>
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
-      <p>
-        OctoPrint needs to know what Printer to use in 3D Print Log. We'll need
-        to find the printer's id number in 3D Print Log.
-      </p>
-      <ul>
-        <li>Navigate to the <a routerLink="/printers">Printers</a> page.</li>
-        <li>
-          Find the printer you want to use, and <strong>Click</strong> on it to
-          enter the Edit Details page.
-        </li>
-        <li>
-          In your browser's URL bar, record the ID of the printer. It is the
-          number after https://www.3dprintlog.com/printers/####
-        </li>
-        <li>Copy that ID number for use in <strong>Step 5</strong>.</li>
-      </ul>
-    </div>
-    <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
-    </div>
-  </div>
-
-#### Step 4: Add new Webhook in OctoPrint Webhook Plugin
-
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
-      <ul>
-        <li>
-          On your OctoPrint, navigate to Settings and find the Webhooks menu
-          under Plugins.
-        </li>
-        <li>Click <strong>New Hook</strong>.</li>
-        <li>
-          Under URL, enter
-          <pre><code>https://api.3dprintlog.com/api/Octoprint</code></pre>
-        </li>
-        <li>
-          Scroll Down and expand the
-          <strong>Webhook Parameters</strong> section.
-          <ul>
-            <li>
-              Change <strong>HTTP METHOD</strong> to <strong>POST</strong>.
-            </li>
-            <li>
-              Change <strong>CONTENT TYPE</strong> to
-              <strong>x-www-form-urlencoded</strong>.
-            </li>
-            <li>
-              Change <strong>API SECRET</strong> to the
-              <strong>Personal Api Key</strong> you created in Step 2.
-            </li>
-            <li>
-              Change <strong>DEVICE IDENTIFIER</strong> to the
-              <strong>Printer ID Number</strong> from Step 3.
-            </li>
-          </ul>
-        </li>
-        <li>
-          Scroll Down and expand the <strong>Advanced</strong> section.
-          <ul>
-            <li>
-              Change <strong>HEADERS</strong> to
-              <pre>
+  <doc-step heading="Add a new webhook in the OctoPrint Webhook plugin">
+    <ul>
+      <li>
+        On your OctoPrint, navigate to Settings and find the Webhooks menu under
+        Plugins.
+      </li>
+      <li>Click <strong>New Hook</strong>.</li>
+      <li>
+        Under URL, enter
+        <pre><code>https://api.3dprintlog.com/api/Octoprint</code></pre>
+      </li>
+      <li>
+        Scroll Down and expand the <strong>Webhook Parameters</strong> section.
+        <ul>
+          <li>Change <strong>HTTP METHOD</strong> to <strong>POST</strong>.</li>
+          <li>
+            Change <strong>CONTENT TYPE</strong> to
+            <strong>x-www-form-urlencoded</strong>.
+          </li>
+          <li>
+            Change <strong>API SECRET</strong> to the
+            <strong>Personal Api Key</strong> you created in Step 2.
+          </li>
+          <li>
+            Change <strong>DEVICE IDENTIFIER</strong> to the
+            <strong>Printer ID Number</strong> from Step 3.
+          </li>
+        </ul>
+      </li>
+      <li>
+        Scroll Down and expand the <strong>Advanced</strong> section.
+        <ul>
+          <li>
+            Change <strong>HEADERS</strong> to
+            <pre>
     <code>
 &#123;
     "Content-Type": "application/json",
@@ -217,10 +166,10 @@ help!](/feedback)
 &#125;
 </code>
 </pre>
-            </li>
-            <li>
-              Change <strong>DATA</strong> to
-              <pre>
+          </li>
+          <li>
+            Change <strong>DATA</strong> to
+            <pre>
     <code>
 &#123;
     "deviceIdentifier":"&#64;deviceIdentifier",
@@ -239,93 +188,44 @@ help!](/feedback)
 &#125;
 </code>
 </pre>
-            </li>
-          </ul>
-        </li>
-        <li>Click <strong>Save</strong> to save the settings.</li>
-      </ul>
-    </div>
-    <div fxFlex>
-      <!-- <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        alt="Example of Filament Adjustments on the Filament Edit Screen"
-        src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-      /> -->
-    </div>
-  </div>
+          </li>
+        </ul>
+      </li>
+      <li>Click <strong>Save</strong> to save the settings.</li>
+    </ul>
+  </doc-step>
 
-#### Step 5: Send a Test Message
+  <doc-step heading="Send a test message">
+    <ul>
+      <li>
+        On your OctoPrint, navigate to Settings and find the Webhooks menu under
+        Plugins.
+      </li>
+      <li>
+        With the 3D Print Log webhook selected, scroll to the
+        <strong>Testing</strong> section.
+      </li>
+      <li>
+        Select the TEST EVENT of <strong>"Print Started"</strong> and click the
+        <strong>"Send Test Webhook"</strong> button.
+      </li>
+      <li>
+        If everything is setup successfully, you should see a
+        <strong>"Response: Webhook Connection to 3D Print Log is Good!"</strong>
+        message appear, with the correct printer name.
+      </li>
+      <li>If an error message is returned, see Troubleshooting below.</li>
+    </ul>
+  </doc-step>
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
-      <ul>
-        <li>
-          On your OctoPrint, navigate to Settings and find the Webhooks menu
-          under Plugins.
-        </li>
-        <li>
-          With the 3D Print Log webhook selected, scroll to the
-          <strong>Testing</strong> section
-        </li>
-        <li>
-          Select the TEST EVENT of <strong>"Print Started"</strong> and click
-          the <strong>"Send Test Webhook"</strong> button.
-        </li>
-        <li>
-          If everything is setup successfully, you should see a
-          <strong
-            >"Response: Webhook Connection to 3D Print Log is Good!"</strong
-          >
-          message appear, with the correct printer name.
-        </li>
-        <li>If an error message is returned, see Troubleshooting below.</li>
-      </ul>
-    </div>
-    <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
-    </div>
-  </div>
+  <doc-step heading="Happy printing!">
+    <p>
+      The <strong>OctoPrint Webhook</strong> plugin should now be configured.
+      Happy printing!
+    </p>
+  </doc-step>
+</doc-steps>
 
-#### Step 6: Happy Printing!
-
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
-      <p>
-        The <strong>OctoPrint Webhook</strong> plugin should now be configured.
-        Happy printing!
-      </p>
-    </div>
-
-    <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
-    </div>
-  </div>
 
 ---
 

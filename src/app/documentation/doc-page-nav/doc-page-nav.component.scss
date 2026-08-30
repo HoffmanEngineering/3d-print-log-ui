@@ -1,0 +1,56 @@
+.doc-page-nav {
+  display: flex;
+  gap: 16px;
+  margin: 40px 0 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--docs-rule);
+}
+
+.doc-page-nav__link {
+  display: flex;
+  flex: 1 1 0;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid var(--docs-rule);
+  border-radius: 8px;
+  color: var(--docs-text);
+  text-decoration: none;
+}
+
+.doc-page-nav__link:hover,
+.doc-page-nav__link:focus-visible {
+  border-color: var(--docs-link);
+}
+
+// A "next" with no "previous" still belongs on the trailing edge, so the pair
+// reads as a line the reader is moving along rather than two buttons.
+.doc-page-nav__link--next {
+  margin-left: auto;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.doc-page-nav__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.doc-page-nav__direction {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--docs-text-muted);
+}
+
+.doc-page-nav__label {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .doc-page-nav {
+    flex-direction: column;
+  }
+}

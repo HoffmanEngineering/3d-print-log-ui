@@ -13,6 +13,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs/operators';
 
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import { DocsTelemetryService } from '../docs-telemetry.service';
 import { DocSearchResult, DocsSearchService } from './docs-search.service';
@@ -38,6 +39,12 @@ export class DocsSearchDialogComponent {
   readonly active = signal(0);
   /** True once a search has run, so "no results" is not shown at rest. */
   readonly searched = signal(false);
+  /**
+   * True when the last owned search threw. The engine and the index arrive over
+   * the network, so a search CAN fail — and a palette that silently goes quiet
+   * looks like a query that matched nothing.
+   */
+  readonly failed = signal(false);
 
   private readonly skeleton = new DeferredSkeletonController();
   readonly loading = this.skeleton.visible;
@@ -45,9 +52,13 @@ export class DocsSearchDialogComponent {
   @ViewChild('input', { static: true })
   private readonly input?: ElementRef<HTMLInputElement>;
 
+  @ViewChild('list', { static: true })
+  private readonly list?: ElementRef<HTMLElement>;
+
   private readonly search = inject(DocsSearchService);
   private readonly telemetry = inject(DocsTelemetryService);
   private readonly router = inject(Router);
+  private readonly logging = inject(LoggingService);
   private readonly dialogRef = inject(MatDialogRef<DocsSearchDialogComponent>);
   private readonly data = inject<{ query?: string } | null>(MAT_DIALOG_DATA, {
     optional: true,
@@ -55,6 +66,28 @@ export class DocsSearchDialogComponent {
 
   /** The query the current results answer; reported with a result click. */
   private lastQuery = '';
+
+  /**
+   * Which invocation of `run` owns the displayed state.
+   *
+   * Comparing the query text instead would let an older `foo` commit after the
+   * box has gone `foo -> bar -> foo`, re-reporting the search and resetting the
+   * highlight under the reader. Only the newest invocation may publish.
+   */
+  private generation = 0;
+
+  /**
+   * One release per loader start that has not been handed back yet.
+   *
+   * A shared count is NOT enough: after `A -> clear -> B`, a late `stop()` from
+   * A would decrement the count B is holding and hide B's placeholder while B
+   * is still running. Each invocation gets its own idempotent release instead,
+   * so settling late is a no-op once that start has already been given back.
+   */
+  private readonly releases = new Set<() => void>();
+
+  /** Set once the dialog is closing to navigate; a second Enter must not add another. */
+  private navigating = false;
 
   constructor() {
     // The engine and index are ~55 KB and the reader is about to type into this
@@ -94,6 +127,9 @@ export class DocsSearchDialogComponent {
       this.active.set(
         (this.active() + delta + results.length) % results.length
       );
+      // The list scrolls at 12 results; without this the highlight walks off
+      // the bottom while focus — and so the viewport — stays on the input.
+      this.scrollActiveIntoView();
       return;
     }
 
@@ -106,6 +142,12 @@ export class DocsSearchDialogComponent {
 
   focusInput(): void {
     this.input?.nativeElement.focus();
+  }
+
+  /** Keeps the aria-activedescendant option inside the scrolling result list. */
+  private scrollActiveIntoView(): void {
+    const option = this.list?.nativeElement.children[this.active()];
+    option?.scrollIntoView?.({ block: 'nearest' });
   }
 
   /**
@@ -127,6 +169,15 @@ export class DocsSearchDialogComponent {
    * for, which is the one thing section-level results exist to avoid.
    */
   private closeThenNavigate(url: string): void {
+    // `close()` only starts the animation, so a held Enter or a double click
+    // gets here again while the first navigation is still waiting on it. Each
+    // pass would subscribe again and every subscription would fire on the one
+    // close, navigating two or three times.
+    if (this.navigating) {
+      return;
+    }
+    this.navigating = true;
+
     this.dialogRef
       .afterClosed()
       .pipe(take(1))
@@ -144,19 +195,25 @@ export class DocsSearchDialogComponent {
   private async run(raw: string): Promise<void> {
     const query = raw.trim();
 
+    const generation = ++this.generation;
+
     if (query.length < MIN_QUERY_LENGTH) {
       this.results.set([]);
       this.searched.set(false);
+      this.failed.set(false);
       this.lastQuery = '';
+      // Emptying the box ends the wait it described: leaving the placeholder up
+      // until a superseded search settles reads as a query that is still running.
+      this.releaseLoaders();
       return;
     }
 
-    this.skeleton.start();
+    const release = this.startLoader();
     try {
       const results = await this.search.search(query);
 
       // A slower earlier search must not overwrite a newer one's results.
-      if (this.query.value.trim() !== query) {
+      if (generation !== this.generation) {
         return;
       }
 
@@ -164,9 +221,46 @@ export class DocsSearchDialogComponent {
       this.results.set(results);
       this.active.set(0);
       this.searched.set(true);
+      this.failed.set(false);
       this.telemetry.trackSearch(query, results.length);
+    } catch (error) {
+      this.logging.logException(error);
+      if (generation !== this.generation) {
+        return;
+      }
+
+      // The old results answered a query that is no longer in the box, so they
+      // are cleared rather than left looking like an answer to this one.
+      this.results.set([]);
+      this.lastQuery = '';
+      this.searched.set(false);
+      this.failed.set(true);
     } finally {
+      release();
+    }
+  }
+
+  /** @returns the one release for this start; safe to call more than once */
+  private startLoader(): () => void {
+    this.skeleton.start();
+
+    let released = false;
+    const release = () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      this.releases.delete(release);
       this.skeleton.stop();
+    };
+
+    this.releases.add(release);
+    return release;
+  }
+
+  private releaseLoaders(): void {
+    for (const release of [...this.releases]) {
+      release();
     }
   }
 }

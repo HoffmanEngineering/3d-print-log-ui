@@ -82,13 +82,14 @@ describe('DocsSearchOpener', () => {
     expect(dialog.open.calls.mostRecent().args[1]?.data).toBeNull();
   });
 
-  it('does not steal focus from the input on open', () => {
-    // The dialog focuses its own box via cdkFocusInitial; letting MatDialog
-    // autofocus the panel instead would put the caret nowhere.
-    expect(dialog.open).not.toHaveBeenCalled();
-
+  it('puts the caret in the input on open', () => {
+    // `cdkFocusInitial` on the input is only consulted on the first-tabbable
+    // path; `autoFocus: false` focuses the panel element instead and leaves a
+    // palette opened with Ctrl+K with nowhere to type.
     opener.open();
 
-    expect(dialog.open.calls.mostRecent().args[1]?.autoFocus).toBe(false);
+    expect(dialog.open.calls.mostRecent().args[1]?.autoFocus).toBe(
+      'first-tabbable'
+    );
   });
 });

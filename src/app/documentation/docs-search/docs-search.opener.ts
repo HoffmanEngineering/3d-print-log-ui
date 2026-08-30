@@ -22,7 +22,11 @@ export class DocsSearchOpener {
   open(query?: string): void {
     if (this.ref) {
       // Already open: give it what was typed and put the caret back in it.
-      this.ref.componentInstance?.focusInput();
+      const instance = this.ref.componentInstance;
+      if (query) {
+        instance?.query.setValue(query);
+      }
+      instance?.focusInput();
       return;
     }
 
@@ -34,7 +38,10 @@ export class DocsSearchOpener {
       // results list move up the screen as it grows.
       position: { top: '10vh' },
       panelClass: 'docs-search-panel',
-      autoFocus: false,
+      // Honours the input's `cdkFocusInitial`. `false` does NOT mean "leave
+      // focus alone": MatDialog then focuses the panel element itself, and a
+      // palette opened with Ctrl+K would put the caret nowhere.
+      autoFocus: 'first-tabbable',
       restoreFocus: true,
       ariaLabel: 'Search documentation',
     });

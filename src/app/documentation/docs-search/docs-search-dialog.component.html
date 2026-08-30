@@ -28,12 +28,15 @@
   <p class="docs-search__status" aria-live="polite">
     @if (loading()) {
       Searching…
+    } @else if (failed()) {
+      Search is unavailable right now. Try again in a moment.
     } @else if (searched()) {
       {{ results().length }} {{ results().length === 1 ? 'result' : 'results' }}
     }
   </p>
 
   <ul
+    #list
     class="docs-search__results"
     id="docs-search-results"
     role="listbox"
@@ -58,7 +61,7 @@
     }
   </ul>
 
-  @if (searched() && results().length === 0 && !loading()) {
+  @if (searched() && results().length === 0 && !loading() && !failed()) {
     <p class="docs-search__empty">
       Nothing matched that. Try a different word, or
       <button type="button" class="docs-search__link" (click)="openFeedback()">

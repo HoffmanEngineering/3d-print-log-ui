@@ -3,6 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   DocsTelemetryService,
+  REDACTED_QUERY,
+  isReportableQuery,
   scrollPercentOf,
 } from './docs-telemetry.service';
 
@@ -347,12 +349,23 @@ describe('DocsTelemetryService', () => {
       expect(logging.logEvent).not.toHaveBeenCalled();
     });
 
-    it('caps a pasted query', () => {
+    it('redacts a pasted query but still counts the search', () => {
       const service = configure();
 
       service.trackSearch('x'.repeat(5000), 0);
 
-      expect((propsOf(0)['query'] as string).length).toBe(200);
+      expect(propsOf(0)['query']).toBe(REDACTED_QUERY);
+      // The row still has to reach zero-result-searches.kql: a search that
+      // found nothing counts even when its text cannot be reported.
+      expect(propsOf(0)['resultCount']).toBe(0);
+    });
+
+    it('redacts something that looks like a credential', () => {
+      const service = configure();
+
+      service.trackSearch('uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j', 0);
+
+      expect(propsOf(0)['query']).toBe(REDACTED_QUERY);
     });
   });
 
@@ -387,12 +400,65 @@ describe('DocsTelemetryService', () => {
       expect(propsOf(0)['slug']).toBe('materials');
     });
 
-    it('caps a pasted query', () => {
+    it('redacts a pasted query', () => {
       const service = configure();
 
       service.trackSearchResultClick('x'.repeat(5000), 'docs/materials', 0);
 
-      expect((propsOf(0)['query'] as string).length).toBe(200);
+      expect(propsOf(0)['query']).toBe(REDACTED_QUERY);
     });
+  });
+});
+
+describe('isReportableQuery', () => {
+  // The docs cover auth setup and the MCP page ships a real client ID, so the
+  // palette is one keystroke away from a reader holding a credential. This
+  // allows ordinary words rather than blocking known secret shapes, so an
+  // unfamiliar format fails closed instead of passing through.
+  it('reports the queries worth reading', () => {
+    for (const query of [
+      'qr code',
+      'filament cost',
+      'klipper macro',
+      "printer's nozzle",
+      'multi-material',
+      'G-code',
+      'Fehlerbehebung',
+      // Command shapes: the reader who searches a flag is the reader the
+      // integration pages are written for, and an empty analytics row for
+      // them is the blind spot this list exists to avoid.
+      '--callback-port',
+      '--callback-port 8400',
+      'claude mcp add --transport http printlog',
+      'X-Api-Key',
+      'api/Moonraker/notifier',
+      'OctoPrint-Webhook',
+      '3d_print_log',
+    ]) {
+      expect(isReportableQuery(query)).withContext(query).toBe(true);
+    }
+  });
+
+  it('withholds anything that does not read as typed words', () => {
+    for (const query of [
+      'uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0',
+      'csh.hoffman@gmail.com',
+      'https://api.3dprintlog.com/mcp',
+      'x'.repeat(5000),
+      '',
+      '   ',
+      // A flag carrying a real credential is still withheld: widening the
+      // character class for commands must not widen it for what follows one.
+      '--client-id uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j',
+      // Short enough to pass the length cap, still shaped like a key.
+      'aB3xK9mQ2pL7wR4t',
+      // Ten words is a command; more than that is prose.
+      'how do I connect my klipper printer to the print log app',
+    ]) {
+      expect(isReportableQuery(query))
+        .withContext(JSON.stringify(query.slice(0, 40)))
+        .toBe(false);
+    }
   });
 });

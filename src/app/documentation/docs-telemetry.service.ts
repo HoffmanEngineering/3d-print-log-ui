@@ -54,6 +54,84 @@ const MAX_COMMENT_LENGTH = 1000;
  */
 const MAX_QUERY_LENGTH = 200;
 
+/** Stands in for a query that did not look like something a person typed. */
+export const REDACTED_QUERY = '[redacted]';
+
+/**
+ * Longest reported query, in words. Real ones are two or three; a command
+ * fragment such as `claude mcp add --transport http printlog` runs longer, and
+ * those are worth seeing. Past this it is a paste of prose.
+ */
+const MAX_QUERY_WORDS = 10;
+
+/** Longest single word. "troubleshooting" is 15; an API key is not a word. */
+const MAX_QUERY_WORD_LENGTH = 24;
+
+/**
+ * Letters, digits, and the punctuation that appears in words, flags and paths —
+ * so `--callback-port`, `X-Api-Key` and `api/Moonraker` all report as typed.
+ *
+ * `:` and `@` are deliberately absent. They are what make a URL a URL and an
+ * address an address, and excluding them is what keeps a pasted signed link or
+ * email out of telemetry while the flags stay readable.
+ */
+const REPORTABLE_WORD = /^[\p{L}\p{N}'\-_./=]+$/u;
+
+/** Shortest word that is long enough to be worth checking for key-ness. */
+const TOKEN_MIN_LENGTH = 16;
+
+/**
+ * Whether a word reads as a generated key rather than something typed.
+ *
+ * The length cap alone stops a 32-character client ID, but not a shorter one.
+ * Mixed case AND digits AND length together is the shape of a generated
+ * secret; ordinary long words are one case (`troubleshooting`), and named
+ * things keep their case without digits (`OctoPrint-Webhook`).
+ */
+function looksLikeToken(word: string): boolean {
+  return (
+    word.length >= TOKEN_MIN_LENGTH &&
+    /\p{Ll}/u.test(word) &&
+    /\p{Lu}/u.test(word) &&
+    /\p{N}/u.test(word)
+  );
+}
+
+/**
+ * Whether a query is safe to report as written.
+ *
+ * The docs cover auth setup and the MCP page ships a real client ID, so a
+ * reader can plausibly paste a token, an email, or a signed URL into the
+ * palette — and `logEvent` would carry it straight to App Insights.
+ *
+ * This allows rather than blocks. A blocklist of things that look secret has
+ * to recognise every format a secret can take and fails open on the next one;
+ * a shape test for "a few ordinary words" fails closed instead, and the
+ * queries worth reading — `qr code`, `filament cost`, `--callback-port` —
+ * all pass it.
+ */
+export function isReportableQuery(query: string): boolean {
+  const words = query.split(/\s+/).filter(Boolean);
+
+  return (
+    words.length > 0 &&
+    words.length <= MAX_QUERY_WORDS &&
+    words.every(
+      (word) =>
+        word.length <= MAX_QUERY_WORD_LENGTH &&
+        REPORTABLE_WORD.test(word) &&
+        !looksLikeToken(word)
+    )
+  );
+}
+
+/** The query as reported: itself, or a marker that still counts as a search. */
+function reportableQuery(query: string): string {
+  return isReportableQuery(query)
+    ? query.slice(0, MAX_QUERY_LENGTH)
+    : REDACTED_QUERY;
+}
+
 /**
  * Emits the Phase 0 documentation telemetry events.
  *
@@ -141,8 +219,8 @@ export class DocsTelemetryService {
    * is the most actionable query in the whole analytics set, and it is fed
    * entirely by the searches that found nothing.
    *
-   * The query is truncated like feedback is: an accidental paste must not
-   * become the telemetry payload.
+   * The query is reported only when it looks like something a person typed;
+   * see `isReportableQuery`. An accidental paste must not become the payload.
    */
   trackSearch(query: string, resultCount: number): void {
     const trimmed = query.trim();
@@ -150,8 +228,10 @@ export class DocsTelemetryService {
       return;
     }
 
+    // Redacted rather than dropped: a search that found nothing still counts
+    // toward the zero-result rate even when its text cannot be reported.
     this.logging.logEvent('Docs_Search', {
-      query: trimmed.slice(0, MAX_QUERY_LENGTH),
+      query: reportableQuery(trimmed),
       resultCount,
     });
   }
@@ -164,7 +244,7 @@ export class DocsTelemetryService {
    */
   trackSearchResultClick(query: string, slug: string, rank: number): void {
     this.logging.logEvent('Docs_SearchResultClick', {
-      query: query.trim().slice(0, MAX_QUERY_LENGTH),
+      query: reportableQuery(query.trim()),
       slug: slugFromDocsUrl(slug),
       rank,
     });

@@ -15,8 +15,14 @@
   font: inherit;
   font-size: 1.05rem;
 
+  // The default ring is dropped because it traces the full-width box and reads
+  // as a rendering artefact against the panel edge — but focus still has to be
+  // visible, so the rule under it thickens instead.
   &:focus {
     outline: none;
+    border-bottom-color: currentColor;
+    border-bottom-width: 2px;
+    padding-bottom: calc(0.9rem - 1px);
   }
 
   // The type="search" clear affordance is a different size in every browser and

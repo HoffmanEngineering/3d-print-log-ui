@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { DocsTelemetryService } from '../docs-telemetry.service';
 import { DocsSearchDialogComponent } from './docs-search-dialog.component';
 import { DocSearchResult, DocsSearchService } from './docs-search.service';
@@ -235,6 +236,144 @@ describe('DocsSearchDialogComponent', () => {
 
     expect(dialogRef.close).toHaveBeenCalled();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/feedback');
+  }));
+
+  it('says so when the search itself fails, rather than going quiet', waitForAsync(async () => {
+    // The engine and the index are fetched, so this is a network failure, not a
+    // theoretical one. Reporting it as "0 results" would be a lie.
+    await setup();
+    search.search.and.resolveTo([result()]);
+    await type('material');
+
+    search.search.and.callFake(() =>
+      Promise.reject(new Error('chunk load failed'))
+    );
+    await type('materials');
+
+    expect(component.failed()).toBe(true);
+    expect(component.results()).toEqual([]);
+    expect(component.searched()).toBe(false);
+    expect(telemetry.trackSearch).toHaveBeenCalledTimes(1);
+  }));
+
+  it('logs a failed search', waitForAsync(async () => {
+    await setup();
+    const logging = TestBed.inject(LoggingService);
+    const logException = spyOn(logging, 'logException');
+    search.search.and.callFake(() =>
+      Promise.reject(new Error('chunk load failed'))
+    );
+
+    await type('material');
+
+    expect(logException).toHaveBeenCalled();
+  }));
+
+  it('clears the failure once a later search succeeds', waitForAsync(async () => {
+    await setup();
+    search.search.and.callFake(() =>
+      Promise.reject(new Error('chunk load failed'))
+    );
+    await type('material');
+
+    search.search.and.resolveTo([result()]);
+    await type('materials');
+
+    expect(component.failed()).toBe(false);
+    expect(component.results().length).toBe(1);
+  }));
+
+  it('ends the wait when the box is emptied mid-search', waitForAsync(async () => {
+    // Otherwise "Searching…" describes a query that is no longer there, and it
+    // stays up until a search nobody is waiting for finally settles.
+    await setup();
+    let releaseFirst: (value: DocSearchResult[]) => void = () => undefined;
+    search.search.and.returnValue(
+      new Promise<DocSearchResult[]>((resolve) => {
+        releaseFirst = resolve;
+      })
+    );
+
+    component.query.setValue('material');
+    // The debounce, and then the placeholder's own 200ms reveal delay.
+    await new Promise((resolve) =>
+      setTimeout(resolve, AFTER_DEBOUNCE_MS + 300)
+    );
+    expect(component.loading()).toBe(true);
+
+    await type('');
+    // Past the placeholder's minimum dwell, which outlives the release itself.
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    expect(component.loading()).toBe(false);
+
+    releaseFirst([result()]);
+    await fixture.whenStable();
+    expect(component.results()).toEqual([]);
+  }));
+
+  it('keeps the wait up for a newer search when an abandoned one settles', waitForAsync(async () => {
+    // A -> clear -> B -> A settles. A shared loader count would let A's late
+    // settle hand back the placeholder B is still holding.
+    await setup();
+    const pending: Array<(value: DocSearchResult[]) => void> = [];
+    search.search.and.callFake(
+      () => new Promise<DocSearchResult[]>((resolve) => pending.push(resolve))
+    );
+
+    await type('material');
+    await type('');
+    component.query.setValue('spool');
+    await new Promise((resolve) =>
+      setTimeout(resolve, AFTER_DEBOUNCE_MS + 300)
+    );
+    expect(component.loading()).toBe(true);
+
+    // The abandoned first search finally answers.
+    pending[0]([result({ id: 'stale' })]);
+    await fixture.whenStable();
+
+    expect(component.loading()).toBe(true);
+    expect(component.results()).toEqual([]);
+  }));
+
+  it('navigates once when the reader activates a result twice', waitForAsync(async () => {
+    // `close()` only starts the animation, so a held Enter gets a second pass in
+    // before the first navigation runs.
+    await setup();
+    search.search.and.resolveTo([result()]);
+    await type('material');
+
+    component.open(component.results()[0], 0);
+    component.open(component.results()[0], 0);
+
+    expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+  }));
+
+  it('ignores a slow response for a query the box has since returned to', waitForAsync(async () => {
+    // mat -> material -> mat: the first response arrives when the box reads
+    // "mat" again, so a text comparison would let it commit and re-report.
+    await setup();
+
+    let releaseFirst: (value: DocSearchResult[]) => void = () => undefined;
+    search.search.and.returnValues(
+      new Promise<DocSearchResult[]>((resolve) => {
+        releaseFirst = resolve;
+      }),
+      Promise.resolve([result({ id: 'second' })]),
+      Promise.resolve([result({ id: 'third' })])
+    );
+
+    component.query.setValue('mat');
+    await new Promise((resolve) => setTimeout(resolve, AFTER_DEBOUNCE_MS));
+    await type('material');
+    await type('mat');
+
+    releaseFirst([result({ id: 'first' })]);
+    await fixture.whenStable();
+
+    expect(component.results().map((r) => r.id)).toEqual(['third']);
+    expect(telemetry.trackSearch).toHaveBeenCalledTimes(2);
   }));
 
   it('ignores a slow response for a query that has since changed', waitForAsync(async () => {

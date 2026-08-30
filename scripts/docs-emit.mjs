@@ -211,11 +211,15 @@ const SECTION_HEADING = /<h([1-3])([^>]*)>([\s\S]*?)<\/h\1\s*>/g;
  * Splits one rendered page into searchable sections.
  *
  * @param {string} template
- * @param {{ path: string, navLabel: string, group: string }} page
+ * @param {{ path: string, navLabel: string, group: string,
+ *   constants?: Record<string, string> }} page
  * @returns {object[]}
  */
 export function sectionsOf(template, page) {
-  const source = stripComments(template);
+  // Before `plainText`, which decodes `&#123;`/`&#125;` — the escapes an author
+  // writes to SHOW a brace. Resolving after that step would treat those as
+  // bindings and substitute into text that deliberately escaped itself.
+  const source = resolveBindings(stripComments(template), page.constants);
 
   const headings = [];
   for (const match of source.matchAll(SECTION_HEADING)) {
@@ -234,7 +238,8 @@ export function sectionsOf(template, page) {
   // with the nav label rather than left blank, so a hit there still names
   // something the reader recognises from the sidebar.
   const lead = plainText(
-    source.slice(0, headings.length ? headings[0].at : source.length)
+    source.slice(0, headings.length ? headings[0].at : source.length),
+    { keepCode: true }
   );
   if (lead) {
     sections.push({ title: page.navLabel, anchor: null, text: lead });
@@ -248,7 +253,7 @@ export function sectionsOf(template, page) {
     sections.push({
       title: heading.title,
       anchor: heading.anchor,
-      text: plainText(body),
+      text: plainText(body, { keepCode: true }),
     });
   });
 
@@ -302,6 +307,70 @@ function stripComments(template) {
   return template.replace(/<!--[\s\S]*?-->/g, ' ');
 }
 
+/**
+ * An interpolated string literal, e.g. `{{' ...text... '}}`.
+ *
+ * Authors wrap a sample in one when the sample itself contains braces — the
+ * Moonraker config on the Klipper page is Jinja, so `{% set %}` would otherwise
+ * be parsed as Angular syntax. The reader sees the literal, so the index takes
+ * the literal and drops the wrapper.
+ */
+const STRING_BINDING = /\{\{\s*(['"])([\s\S]*?)\1\s*\}\}/g;
+
+/** An Angular binding to a single frontmatter constant, e.g. `{{ mcpEndpoint }}`. */
+const CONSTANT_BINDING = /\{\{\s*([A-Za-z_$][\w$]*)\s*\}\}/g;
+
+/** A constant referring to a sibling, e.g. `${this.mcpEndpoint}`. */
+const CONSTANT_REFERENCE = /\$\{\s*this\.([A-Za-z_$][\w$]*)\s*\}/g;
+
+/**
+ * Substitutes what a template's interpolations render to.
+ *
+ * The reader sees the VALUE — `https://api.3dprintlog.com/mcp` — so that is
+ * what the index has to hold. Left alone, the binding was stored verbatim:
+ * the endpoint was unsearchable and any excerpt covering it showed a reader
+ * the literal `{{ mcpEndpoint }}`.
+ *
+ * A binding with no matching constant is left as authored rather than dropped,
+ * so a typo stays visible instead of silently emptying a section.
+ *
+ * @param {string} template
+ * @param {Record<string, string> | undefined} constants
+ */
+function resolveBindings(template, constants) {
+  const text = template.replace(
+    STRING_BINDING,
+    (_binding, _quote, literal) =>
+      // A space, not nothing: the wrapper often sits tight against the prose
+      // before it, and dropping it outright would fuse two words together.
+      ` ${literal} `
+  );
+
+  if (!constants) {
+    return text;
+  }
+
+  return text.replace(CONSTANT_BINDING, (binding, name) =>
+    name in constants ? constantValue(constants, name, new Set()) : binding
+  );
+}
+
+/** One constant with its `${this.sibling}` references resolved. */
+function constantValue(constants, name, seen) {
+  if (seen.has(name)) {
+    // Constants are authored by hand, so a cycle is a mistake rather than an
+    // impossibility. Stop at the name instead of recursing forever.
+    return `\${this.${name}}`;
+  }
+  seen.add(name);
+
+  return String(constants[name]).replace(
+    CONSTANT_REFERENCE,
+    (reference, sibling) =>
+      sibling in constants ? constantValue(constants, sibling, seen) : reference
+  );
+}
+
 function headingsOf(template) {
   const headings = [];
   for (const match of stripComments(template).matchAll(
@@ -345,9 +414,22 @@ const CHARACTER_REFERENCES = {
   '&nbsp;': ' ',
 };
 
-function plainText(template) {
-  let text = stripComments(template)
-    .replace(/<pre[\s\S]*?<\/pre>/g, ' ')
+/**
+ * @param {string} template
+ * @param {{ keepCode?: boolean }} [options] `keepCode` indexes `<pre>` blocks
+ *   rather than dropping them. The commands and endpoints on the integration
+ *   pages are exactly what a reader searches for — `--callback-port` matched
+ *   nothing while these were stripped. Headings and descriptions leave it off:
+ *   a heading never contains a code block, and a meta description that opened
+ *   with a shell command would read as noise.
+ */
+function plainText(template, { keepCode = false } = {}) {
+  let text = stripComments(template);
+  if (!keepCode) {
+    text = text.replace(/<pre[\s\S]*?<\/pre>/g, ' ');
+  }
+
+  text = text
     .replace(/<[^>]+>/g, ' ')
     // Numeric references decode before the named ones so that `&amp;` stays
     // last: `&amp;#64;` is an authored literal and must not become `@`.

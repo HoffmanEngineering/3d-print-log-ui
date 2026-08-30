@@ -278,6 +278,102 @@ test('commented-out markup reaches none of the projections', () => {
   );
 });
 
+test('the search index holds the code samples a reader searches for', () => {
+  // `--callback-port` matched nothing while <pre> was stripped, which is most
+  // of the point of searching an integration page.
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints:
+        '<p>Run this:</p><pre><code>claude mcp add --callback-port 8400</code></pre>',
+    })
+  );
+
+  assert.match(index[0].text, /claude mcp add --callback-port 8400/);
+});
+
+test('the search index substitutes the constants a template interpolates', () => {
+  // The reader sees the value, so the index has to hold the value: storing the
+  // binding left the endpoint unsearchable and showed `{{ mcpEndpoint }}` in
+  // any excerpt that covered it.
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([
+        page({
+          constants: { mcpEndpoint: 'https://api.3dprintlog.com/mcp' },
+        }),
+      ]),
+      { prints: '<p>Point it at {{ mcpEndpoint }} to connect.</p>' }
+    )
+  );
+
+  assert.equal(
+    index[0].text,
+    'Point it at https://api.3dprintlog.com/mcp to connect.'
+  );
+});
+
+test('a constant that references a sibling resolves through to the value', () => {
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([
+        page({
+          constants: {
+            endpoint: 'https://api.3dprintlog.com/mcp',
+            command: 'claude mcp add ${this.endpoint} --callback-port 8400',
+          },
+        }),
+      ]),
+      { prints: '<pre><code>{{ command }}</code></pre>' }
+    )
+  );
+
+  assert.equal(
+    index[0].text,
+    'claude mcp add https://api.3dprintlog.com/mcp --callback-port 8400'
+  );
+});
+
+test('an interpolated string literal is indexed as the literal it renders', () => {
+  // Authors wrap a sample in one when the sample itself contains braces; the
+  // Klipper page's Moonraker config is Jinja.
+  const index = JSON.parse(
+    emitSearchIndexJson(buildManifest([page()]), {
+      prints: `<pre><code>{{'
+[notifier 3d_print_log]
+events: *
+'}}</code></pre>`,
+    })
+  );
+
+  assert.match(index[0].text, /\[notifier 3d_print_log\] events: \*/);
+  assert.doesNotMatch(index[0].text, /[{}]{2}/);
+});
+
+test('a binding with no matching constant is left as authored', () => {
+  // Emptying it would hide the typo; leaving it keeps the mistake visible.
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([page({ constants: { endpoint: 'https://example.com' } })]),
+      { prints: '<p>Use {{ notAConstant }} here.</p>' }
+    )
+  );
+
+  assert.equal(index[0].text, 'Use {{ notAConstant }} here.');
+});
+
+test('an escaped brace is shown, not treated as a binding', () => {
+  // `&#123;` is what an author writes to SHOW a brace. Resolving bindings after
+  // the decode step would substitute into text that escaped itself on purpose.
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([page({ constants: { endpoint: 'https://example.com' } })]),
+      { prints: '<p>Write &#123;&#123; endpoint &#125;&#125; to bind it.</p>' }
+    )
+  );
+
+  assert.equal(index[0].text, 'Write {{ endpoint }} to bind it.');
+});
+
 test('the search index decodes the character references the renderer emits', () => {
   const index = JSON.parse(
     emitSearchIndexJson(buildManifest([page()]), {

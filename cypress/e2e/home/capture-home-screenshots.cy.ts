@@ -20,10 +20,19 @@ const CAPTURE_CSS = `
 // by the CSS above). Wait past that before screenshotting so arcs are fully drawn.
 const SETTLE_MS = 1200;
 
+/** Headroom over the measured element height, so rounding can't reintroduce a seam. */
+const FIT_SLACK = 40;
+
+/** Separator for the un-stubbed-call report, one indented call per line. */
+const REPORT_SEPARATOR = '\n  ';
+
 // Per-target "the content actually rendered" assertion, matched to the real DOM.
 const READY: Record<string, () => void> = {
   PrinterList: () => {
-    cy.get('[data-cy="home-capture-prints"] [cy-print-row]').should(
+    // Cards, not table rows. The capture viewport is inside the print list's
+    // handset breakpoint (max-width: 959.98px), where the mat-table carrying
+    // [cy-print-row] is never rendered at all.
+    cy.get('[data-cy="home-capture-prints"] app-print-card').should(
       'have.length',
       5
     );
@@ -45,9 +54,14 @@ const READY: Record<string, () => void> = {
     // theirs for rendered content. Asserting the skeletons are gone matters as
     // much as asserting the values arrived: a frame still in its loading state
     // renders at the same size, so a too-early shot looks plausible.
-    cy.get(
-      '[data-cy="home-capture-analytics"] [data-testid="stat-value"]'
-    ).should('have.length', 6);
+    cy.get('[data-cy="home-capture-analytics"] [data-testid="stat-value"]')
+      .should('have.length', 6)
+      // A tile renders an em dash when its metric is null, which is exactly what
+      // a failed request produces. Counting the tiles is not evidence that any
+      // data arrived; insisting none of them is a dash is.
+      .each(($tile) => {
+        expect($tile.text().trim()).not.to.equal('—');
+      });
     cy.get(
       '[data-cy="home-capture-analytics"] [data-testid="chart-skeleton"]'
     ).should('not.exist');
@@ -119,16 +133,77 @@ function captureReady(target: (typeof CAPTURE_TARGETS)[number]) {
   });
 }
 
+/**
+ * Grow the viewport until the capture boundary fits inside it, then prove it
+ * fit.
+ *
+ * An element taller than the viewport is not screenshotted in one pass:
+ * Cypress scrolls it and stitches the frames together, and content on the seam
+ * is torn. It does not fail — it produces a plausible-looking image with a card
+ * cut in half, which is how the pre-existing print-list capture shipped.
+ *
+ * Fitting the viewport to the content is the general fix; hand-tuning a per-
+ * target height only holds until the fixtures or the layout change. The
+ * assertion is what makes it safe, because cy.viewport() is CLAMPED to what the
+ * browser window can show and reports no error when it clamps — that clamp is
+ * the original bug. If a future target needs more room than WINDOW_SIZE in
+ * cypress.config.capture.ts allows, this fails and says so.
+ */
+function fitViewportToTarget(
+  target: (typeof CAPTURE_TARGETS)[number],
+  width: number
+) {
+  cy.get(target.selector).then(($el) => {
+    const needed = Math.ceil($el[0].getBoundingClientRect().height) + FIT_SLACK;
+    if (needed > target.viewport[1]) {
+      cy.viewport(width, needed);
+    }
+  });
+  cy.window().then((win) => {
+    cy.get(target.selector).then(($el) => {
+      const height = $el[0].getBoundingClientRect().height;
+      expect(
+        win.innerHeight,
+        `${target.name}: viewport must fit the capture boundary, or Cypress ` +
+          `stitches the screenshot and tears it. Raise WINDOW_SIZE in ` +
+          `cypress.config.capture.ts`
+      ).to.be.at.least(height);
+    });
+  });
+}
+
 describe('Capture home screenshots', () => {
   const themes: Array<{ mode: 'light' | 'dark'; suffix: string }> = [
     { mode: 'light', suffix: '' },
     { mode: 'dark', suffix: '_dark' },
   ];
 
+  // Reported in afterEach, which Cypress runs even when the test itself failed,
+  // and asserted inside the test. That split is deliberate. A missed stub does
+  // not announce itself: the page renders its error state, the ready predicate
+  // waits for content that will never arrive, and the run reports the timeout
+  // with the cause thrown away — so the report has to survive the failure. The
+  // assertion stays in the test because a failing afterEach hook makes Mocha
+  // skip the rest of the suite, and one broken target should not cost the other
+  // five their captures.
+  let unhandled: string[] = [];
+
+  beforeEach(() => {
+    unhandled = [];
+  });
+
+  afterEach(() => {
+    if (unhandled.length > 0) {
+      cy.task(
+        'log',
+        ['un-stubbed API calls:', ...unhandled].join(REPORT_SEPARATOR)
+      );
+    }
+  });
+
   for (const theme of themes) {
     for (const target of CAPTURE_TARGETS) {
       it(`captures ${target.outputBase}${theme.suffix}`, () => {
-        const unhandled: string[] = [];
         cy.login();
         stubApi(unhandled);
         cy.viewport(target.viewport[0], target.viewport[1]);
@@ -141,6 +216,11 @@ describe('Capture home screenshots', () => {
         });
         prepare();
         captureReady(target);
+        // Grow the viewport first, then re-run the readiness checks: a taller
+        // viewport can reveal content that was below the fold, and its images
+        // still have to be decoded before the shot.
+        fitViewportToTarget(target, target.viewport[0]);
+        captureReady(target);
         cy.wait(SETTLE_MS);
         cy.get(target.selector).screenshot(
           `${target.outputBase}${theme.suffix}`,
@@ -148,10 +228,9 @@ describe('Capture home screenshots', () => {
             overwrite: true,
           }
         );
-        // Fail if any API call escaped the fixtures.
+        // Fail if any API call escaped the fixtures. afterEach prints the list.
         cy.wrap(null).then(() => {
-          expect(unhandled, `un-stubbed API calls:\n${unhandled.join('\n')}`).to
-            .be.empty;
+          expect(unhandled, 'un-stubbed API calls').to.be.empty;
         });
       });
     }

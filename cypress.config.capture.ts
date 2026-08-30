@@ -1,5 +1,18 @@
 import { defineConfig } from 'cypress';
 
+// The browser window, in DEVICE pixels. Every CSS pixel costs two of these at
+// the 2x device-scale-factor below, so the default headless 1280x720 window
+// leaves only 640x360 CSS to work with — and cy.viewport() is silently CLAMPED
+// to what the window can actually show.
+//
+// That clamp is why this number matters. An element taller than the viewport is
+// not screenshotted in one pass: Cypress scrolls and stitches, and content that
+// falls on the seam is torn. It does not fail, it just produces a subtly broken
+// image. The print-list capture shipped that way, cut through its third card at
+// exactly 660px - the clamped viewport height. Keep this comfortably above
+// 2 x the tallest CAPTURE_TARGETS viewport.
+const WINDOW_SIZE = '1800,4000';
+
 // Capture-only config. Adds a 2x device-scale-factor so element screenshots
 // are HiDPI, and restricts the run to the capture spec. The normal E2E config
 // (cypress.config.ts) is intentionally untouched.
@@ -17,6 +30,7 @@ export default defineConfig({
         if (browser.family === 'chromium') {
           launchOptions.args.push('--force-device-scale-factor=2');
           launchOptions.args.push('--high-dpi-support=1');
+          launchOptions.args.push(`--window-size=${WINDOW_SIZE}`);
         }
         return launchOptions;
       });

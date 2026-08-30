@@ -6,7 +6,18 @@
 // - `CAPTURE_TARGETS`: logical image name -> capture selector + route + output base.
 export interface FixtureRoute {
   method: 'GET';
-  url: string; // Cypress glob, case-sensitive
+  /**
+   * Cypress glob (case-sensitive) or a RegExp.
+   *
+   * Reach for the RegExp when a query value can contain an unencoded `/`.
+   * Cypress matches globs with minimatch, which is a PATH matcher: `*` never
+   * crosses a slash, and a trailing `**` only spans segments when it stands
+   * alone as a segment. Angular's HttpParams leaves `/` unencoded, so
+   * `timeZone=America/New_York` splits the query into two path segments and
+   * `**\/api/analytics/overview*` silently stops matching — the request falls
+   * through to the offline guard and the page renders its error state.
+   */
+  url: string | RegExp;
   fixture: string; // path under cypress/fixtures
 }
 
@@ -51,7 +62,8 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
   },
   {
     method: 'GET',
-    url: '**/api/analytics/overview*',
+    // RegExp, not a glob: the query carries an unencoded timeZone path.
+    url: /\/api\/analytics\/overview(\?|$)/,
     fixture: 'demo/analytics-overview.json',
   },
   {
@@ -81,7 +93,7 @@ export const CAPTURE_TARGETS: CaptureTarget[] = [
     route: '/analytics',
     selector: '[data-cy="home-capture-analytics"]',
     outputBase: 'Homepage_Analytics',
-    viewport: [560, 1500],
+    viewport: [720, 1500],
   },
 ];
 

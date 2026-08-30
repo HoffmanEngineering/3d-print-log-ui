@@ -153,13 +153,33 @@ If a dev server is already running on 4200, just run the two steps directly:
 - Runs in **Chrome** (`--browser chrome`); Electron ignores
   `--force-device-scale-factor`, so the DPR hook only takes effect in Chrome.
 - Demo data is fixture-driven (`cypress/fixtures/demo/manifest.ts`); the capture
-  **fails** if any `/api/**` request escapes the fixtures. When you add a page
-  call, add its stub to `FIXTURE_ROUTES`.
+  **fails** if any `/api/**` request escapes the fixtures, and `afterEach` prints
+  the offending URLs. When you add a page call, add its stub to `FIXTURE_ROUTES`.
+- **A `FIXTURE_ROUTES` glob is matched with minimatch, which is a _path_
+  matcher.** `*` never crosses a `/`, so a query value containing an unencoded
+  slash silently stops matching — Angular's `HttpParams` leaves `/` alone, which
+  is how `timeZone=America/New_York` broke the analytics stub. Use a `RegExp` for
+  those; `url` accepts either. The symptom is not a stub error, it is the page
+  rendering its own error state while the ready predicate times out.
+- **Element captures taller than the viewport are stitched, and the seam tears
+  whatever crosses it.** The spec grows the viewport to fit the boundary and then
+  asserts it fit, because `cy.viewport()` is _clamped_ to the browser window and
+  reports nothing when it clamps. That is what `WINDOW_SIZE` in
+  `cypress.config.capture.ts` is for: at DPR 2 every CSS pixel costs two device
+  pixels, and the default 1280×720 headless window left only 360 CSS px of
+  height. Raise it before adding a taller target.
 - Demo print photos and their provenance live in `cypress/fixtures/demo/images/`
   (fetched by `scripts/fetch-demo-images.mjs`).
-- The spec hides the nav bar, ad slots, and the filter panel, neutralizes
-  AdSense, and waits for async print thumbnails and the d3 status-donut
-  animation to settle before shooting.
+- The spec hides the nav bar, ad slots, the filter panel and the analytics tab's
+  export button, neutralizes AdSense, and waits for async print thumbnails and
+  the d3 status-donut animation to settle before shooting.
+- `READY` predicates must assert on **content**, not on containers. A stat tile
+  renders an em dash and a chart frame keeps its size when the request failed, so
+  counting elements passes on a page that loaded nothing.
+- The prints capture is taken inside the print list's handset breakpoint
+  (`max-width: 959.98px`), where the mat-table is not rendered at all and
+  `app-print-card` is. Analytics is captured at 720px, wide enough for its tiles
+  to go three across, which keeps the image near the other two slots' aspect.
 - The post-process caps intrinsic width at 1400px so images stay crisp on HiDPI
   without tripping NgOptimizedImage "oversized" warnings.
 - Theme swap is class-based (`html.dark-theme`) so the correct variant shows at

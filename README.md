@@ -45,13 +45,14 @@ The `sitemap.xml` is generated at deploy time from the public API (`scripts/gene
 
 ## Generated Assets
 
-The home page's feature screenshots are produced by driving the real app against fixture data in Cypress, not captured by hand. **No workflow runs this** — the images are committed WebP under `src/assets/`, so they stay as they are until someone re-runs the capture and commits the result:
+The home page's feature screenshots and the documentation figures are produced by driving the real app against fixture data in Cypress, not captured by hand. **No workflow runs this** — the images are committed WebP, so they stay as they are until someone re-runs the capture and commits the result:
 
 ```bash
-npm run capture:home:all
+npm run capture:home:all   # Home feature images -> src/assets/
+npm run capture:docs:all   # Documentation figures -> src/assets/docs/captures/
 ```
 
-Re-run it after changing the print list, the materials list, or the analytics overview tab; nothing compares the committed images against the current UI, so they go stale silently. See [cypress/CLAUDE.md](cypress/CLAUDE.md) for how it works.
+Re-run the relevant set after changing a view it captures; nothing compares the committed images against the current UI, so they go stale silently. See [cypress/CLAUDE.md](cypress/CLAUDE.md) for how it works.
 
 ## Related Repos
 

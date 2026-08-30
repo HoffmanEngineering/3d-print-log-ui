@@ -46,3 +46,17 @@ export const ANCHORS_JSON = path.join(
   'content',
   'docs-anchors.json'
 );
+
+/**
+ * `name -> { light, dark }` for every generated documentation figure, written by
+ * scripts/process-captures.mjs and checked in beside the assets it describes.
+ *
+ * Checked in for the same reason the assets are: `docs:generate` runs on every
+ * build, and a build must not depend on a Cypress run having happened.
+ */
+export const DOC_CAPTURES_JSON = path.join(
+  REPO_ROOT,
+  'src',
+  'content',
+  'docs-captures.json'
+);

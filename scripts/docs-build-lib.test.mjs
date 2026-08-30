@@ -73,6 +73,7 @@ test('plans a component, a template, and the shared projections', () => {
   const names = [...files.keys()].sort();
 
   assert.deepEqual(names, [
+    'docs-captures.ts',
     'docs-declarations.ts',
     'docs-figures.ts',
     'docs-manifest.json',

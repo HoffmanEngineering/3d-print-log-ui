@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { buildManifest } from './docs-manifest-lib.mjs';
 import {
+  emitCapturesTs,
   emitDeclarationsTs,
   emitFiguresTs,
   emitOutlineTs,
@@ -622,8 +623,42 @@ test('the release notes page gets no outline', () => {
 
 test('the emitted outline escapes an apostrophe in a heading', () => {
   const ts = emitOutlineTs(buildManifest([page()]), {
-    prints: "<h2 id=\"t\">Prints</h2><h3 id=\"g\">What You'll Get</h3>",
+    prints: '<h2 id="t">Prints</h2><h3 id="g">What You\'ll Get</h3>',
   });
 
   assert.match(ts, /text: 'What You\\'ll Get'/);
+});
+
+test('emitCapturesTs emits a name -> light/dark map', () => {
+  const ts = emitCapturesTs({
+    'print-list-table': {
+      light: {
+        src: '/assets/docs/captures/print-list-table_a1.webp',
+        width: 1700,
+        height: 900,
+      },
+      dark: {
+        src: '/assets/docs/captures/print-list-table_dark_b2.webp',
+        width: 1700,
+        height: 900,
+      },
+    },
+  });
+
+  assert.match(
+    ts,
+    /export const DOC_CAPTURES: Record<string, DocCapture> = \{/
+  );
+  assert.match(
+    ts,
+    /'print-list-table': \{\n {4}light: \{ src: '\/assets\/docs\/captures\/print-list-table_a1\.webp', width: 1700, height: 900 \},\n {4}dark: \{ src: '\/assets\/docs\/captures\/print-list-table_dark_b2\.webp', width: 1700, height: 900 \},\n {2}\},/
+  );
+});
+
+test('emitCapturesTs emits an empty map when nothing has been captured', () => {
+  // A fresh clone that has never run Cypress still has to compile.
+  assert.match(
+    emitCapturesTs({}),
+    /DOC_CAPTURES: Record<string, DocCapture> = \{\n\};/
+  );
 });

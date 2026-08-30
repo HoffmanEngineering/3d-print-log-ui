@@ -1,6 +1,6 @@
-<div fxLayout="column" fxLayoutAlign="center" data-cy="home-capture-prints">
+<div fxLayout="column" fxLayoutAlign="center" data-cy="capture-print-list">
   <!-- Header: always visible regardless of view mode -->
-  <div class="header">
+  <div class="header" data-cy="capture-print-filters">
     <!-- Row 1: Always visible — action buttons, search, filter toggle -->
     <div class="header-top">
       <div class="action-buttons">
@@ -272,6 +272,7 @@
         <mat-progress-bar mode="indeterminate" class="refresh-bar" />
       }
       <table
+        data-cy="capture-print-table"
         [class.loading]="showSkeleton()"
         [class.refreshing]="showRefreshing()"
         fxFlex="grow"

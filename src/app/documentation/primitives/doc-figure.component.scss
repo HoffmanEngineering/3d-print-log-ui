@@ -17,6 +17,25 @@ img {
   border-radius: 8px;
 }
 
+// A generated figure ships both themes; the theme decides which one is laid
+// out. Deliberately CSS and not `@if (isDark())`: the pre-paint script in
+// index.html has already set the class by first paint, while a signal only
+// settles at hydration — long enough for a prerendered page to show the wrong
+// image and then swap it.
+.doc-figure__img--dark {
+  display: none;
+}
+
+:host-context(html.dark-theme) {
+  .doc-figure__img--light {
+    display: none;
+  }
+
+  .doc-figure__img--dark {
+    display: block;
+  }
+}
+
 figcaption {
   margin-top: 8px;
   font-size: 14px;

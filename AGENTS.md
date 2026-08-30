@@ -215,6 +215,22 @@ All user-facing documentation lives in the `src/documentation` directory.
 - Update existing documentation with new functionality
 - Documentation should be written in clear english, designed to be understandable by the user.
 
+### Release notes
+
+One Markdown file per release under `src/content/release-notes/<version>.md`, with `version`, `date`
+and `title` frontmatter. Adding a release means adding one file — see `/release` step 4.2.
+
+- **The anchor is generated from `version`, not from the heading.** `1.38.0.md` publishes
+  `#v1.38.0`. A slugger would mangle the dots, and 97 of these ids are already bookmarked, so
+  `validate-docs.mjs` fails if a previously published anchor stops being emitted.
+- **The page shows the ten newest releases; the rest is a lazily imported chunk** built by
+  `scripts/release-notes-emit.mjs`. That archive is injected with `[innerHTML]`, so it is rewritten
+  first: `routerLink` becomes `href` and `<mat-icon>` becomes the ligature span, because neither
+  directive nor component exists in markup Angular never compiled. It also has to survive Angular's
+  sanitizer — do not add a `bypassSecurityTrust*` call to make some new shape work.
+- `scripts/extract-release-notes.mjs` reads these files directly to build the GitHub Release body,
+  before `npm ci` and before any generation runs, so it must never depend on a generated artifact.
+
 ## GitHub
 
 Issues and PRs are managed on GitHub.

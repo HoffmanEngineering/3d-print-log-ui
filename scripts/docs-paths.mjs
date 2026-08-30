@@ -11,6 +11,19 @@ export const REPO_ROOT = path.resolve(HERE, '..');
 /** Authored Markdown, one file per page, plus optional sibling `<slug>.scss`. */
 export const CONTENT_DIR = path.join(REPO_ROOT, 'src', 'content', 'docs');
 
+/**
+ * Authored Markdown, one file per release, named `<version>.md`.
+ *
+ * Deliberately NOT under CONTENT_DIR: readDocSources treats every `.md` there as
+ * a doc page and would mint 99 routes. These are fragments of one page.
+ */
+export const RELEASE_NOTES_DIR = path.join(
+  REPO_ROOT,
+  'src',
+  'content',
+  'release-notes'
+);
+
 /** Generated Angular sources and data artifacts. Gitignored. */
 export const GENERATED_DIR = path.join(
   REPO_ROOT,

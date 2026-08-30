@@ -7,16 +7,18 @@ import fs from 'node:fs';
 import process from 'node:process';
 
 import { readDocSources } from './docs-build-lib.mjs';
-import { ANCHORS_JSON, CONTENT_DIR } from './docs-paths.mjs';
+import { ANCHORS_JSON, CONTENT_DIR, RELEASE_NOTES_DIR } from './docs-paths.mjs';
 import { validateDocs } from './docs-validate-lib.mjs';
+import { readReleaseSources } from './release-notes-lib.mjs';
 
 try {
   const sources = readDocSources(CONTENT_DIR);
+  const releases = readReleaseSources(RELEASE_NOTES_DIR);
   const anchorBaseline = fs.existsSync(ANCHORS_JSON)
     ? JSON.parse(fs.readFileSync(ANCHORS_JSON, 'utf8'))
     : {};
 
-  const problems = validateDocs({ sources, anchorBaseline });
+  const problems = validateDocs({ sources, releases, anchorBaseline });
 
   if (problems.length > 0) {
     console.error(`Doc validation failed (${problems.length}):`);
@@ -24,7 +26,9 @@ try {
     process.exit(1);
   }
 
-  console.log(`Doc validation passed: ${sources.length} pages.`);
+  console.log(
+    `Doc validation passed: ${sources.length} pages, ${releases.length} releases.`
+  );
 } catch (error) {
   console.error(`validate-docs failed — ${error.message}`);
   process.exit(1);

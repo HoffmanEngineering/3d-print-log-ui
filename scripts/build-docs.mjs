@@ -19,7 +19,12 @@ import fs from 'node:fs';
 import process from 'node:process';
 
 import { planOutputs, readDocSources, syncOutputs } from './docs-build-lib.mjs';
-import { CONTENT_DIR, GENERATED_DIR } from './docs-paths.mjs';
+import {
+  CONTENT_DIR,
+  GENERATED_DIR,
+  RELEASE_NOTES_DIR,
+} from './docs-paths.mjs';
+import { readReleaseSources } from './release-notes-lib.mjs';
 
 const argv = process.argv.slice(2);
 const thenAt = argv.indexOf('--then');
@@ -32,7 +37,8 @@ const quiet = args.includes('--quiet');
 
 function generate() {
   const sources = readDocSources(CONTENT_DIR);
-  const { files } = planOutputs(sources);
+  const releases = readReleaseSources(RELEASE_NOTES_DIR);
+  const { files } = planOutputs(sources, releases);
   return syncOutputs(GENERATED_DIR, files, { check });
 }
 
@@ -66,9 +72,9 @@ try {
 }
 
 if (watch) {
-  console.log(`Watching ${CONTENT_DIR} for changes…`);
+  console.log(`Watching ${CONTENT_DIR} and ${RELEASE_NOTES_DIR} for changes…`);
   let pending = null;
-  fs.watch(CONTENT_DIR, { recursive: true }, () => {
+  const onChange = () => {
     // Editors save in several steps; coalesce so a half-written file is never
     // the thing that gets compiled.
     clearTimeout(pending);
@@ -84,7 +90,13 @@ if (watch) {
         console.error(`docs:generate failed — ${error.message}`);
       }
     }, 50);
-  });
+  };
+
+  // Two watchers, one debounce. The release notes are a sibling directory, not a
+  // subtree of CONTENT_DIR, so a single recursive watch would not see them.
+  for (const dir of [CONTENT_DIR, RELEASE_NOTES_DIR]) {
+    if (fs.existsSync(dir)) fs.watch(dir, { recursive: true }, onChange);
+  }
 }
 
 if (thenCommand.length > 0) {

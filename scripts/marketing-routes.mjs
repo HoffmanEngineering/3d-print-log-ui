@@ -39,5 +39,7 @@ function readDocRoutes() {
     );
   }
   const manifest = JSON.parse(fs.readFileSync(MANIFEST_JSON, 'utf8'));
-  return manifest.pages.filter((page) => !page.dormant).map((page) => page.path);
+  return manifest.pages
+    .filter((page) => !page.dormant)
+    .map((page) => page.path);
 }

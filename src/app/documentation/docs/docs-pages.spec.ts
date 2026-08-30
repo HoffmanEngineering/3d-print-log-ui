@@ -1,11 +1,13 @@
 import { NO_ERRORS_SCHEMA, Type } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { AuthService } from 'src/app/core/services/auth.service';
 import { DOC_PAGES } from '../generated/docs-manifest';
 import { DOCS_PAGE_COMPONENTS } from '../generated/docs-declarations';
 import { DocsGettingStartedComponent } from './docs-getting-started/docs-getting-started.component';
+import { DocsReleaseNotesComponent } from './docs-release-notes/docs-release-notes.component';
 
 /**
  * One spec over every /docs page, driven by the generated manifest.
@@ -24,16 +26,19 @@ describe('/docs pages', () => {
       (component) => [component.name, component] as [string, Type<unknown>]
     ),
     ['DocsGettingStartedComponent', DocsGettingStartedComponent],
+    ['DocsReleaseNotesComponent', DocsReleaseNotesComponent],
   ]);
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [...componentsByName.values()],
       providers: [
-        // docs-getting-started is auth-aware on a public route; the rest of the
-        // pages inject nothing at all.
+        // docs-getting-started is auth-aware on a public route; docs-release-notes
+        // reads the route fragment to decide whether to expand its archive. The
+        // rest of the pages inject nothing at all.
         { provide: AuthService, useValue: { login: () => undefined } },
         { provide: Router, useValue: { url: '/docs/getting-started' } },
+        { provide: ActivatedRoute, useValue: { fragment: of(null) } },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

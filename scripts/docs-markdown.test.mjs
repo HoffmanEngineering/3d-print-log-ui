@@ -256,3 +256,42 @@ test('angle brackets inside a code span stay escaped in image alt text', () => {
   assert.match(html, /alt="a &lt;b&gt; caption"/);
   assert.doesNotMatch(html, /alt="[^"]*<code>/);
 });
+
+// -- backslash escapes -------------------------------------------------------
+//
+// `prettier --write` rewrites a literal `*` or `_` in prose to `\*` / `\_`, so
+// these are not an exotic authoring choice -- they are what the repo's own
+// formatter produces, and the renderer has to read them the same way.
+
+test('renders an escaped asterisk as a literal, not as emphasis', () => {
+  const html = renderMarkdown(
+    'Show the **Estimated Time\\***, with an \\* to indicate.'
+  );
+
+  assert.match(
+    html,
+    /<strong>Estimated Time\*<\/strong>, with an \* to indicate\./
+  );
+  assert.doesNotMatch(html, /<em>/);
+});
+
+test('renders an escaped underscore as a literal', () => {
+  assert.match(renderMarkdown('a \\_b\\_ c'), /<p>a _b_ c<\/p>/);
+});
+
+test('escapes a backslash-escaped ampersand into a character reference', () => {
+  assert.match(renderMarkdown('AT\\&T'), /<p>AT&amp;T<\/p>/);
+});
+
+test('escapes backslash-escaped angle brackets rather than minting a tag', () => {
+  assert.match(renderMarkdown('\\<b\\>'), /<p>&lt;b&gt;<\/p>/);
+});
+
+test('leaves a backslash escape inside a code span untouched', () => {
+  // Escapes do not apply inside code spans, so the backslash is content.
+  assert.match(renderMarkdown('`a \\* b`'), /<code>a \\\* b<\/code>/);
+});
+
+test('leaves a backslash before a non-punctuation character alone', () => {
+  assert.match(renderMarkdown('C:\\path'), /<p>C:\\path<\/p>/);
+});

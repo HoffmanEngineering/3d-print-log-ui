@@ -15,7 +15,10 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..'
+);
 
 /**
  * Directories that must be free of strictNullChecks errors. Add one per PR and
@@ -53,7 +56,10 @@ export function isGated(file, directories = STRICT_DIRECTORIES) {
   return directories.some((directory) => normalized.includes(directory));
 }
 
-export function selectGatedDiagnostics(stdout, directories = STRICT_DIRECTORIES) {
+export function selectGatedDiagnostics(
+  stdout,
+  directories = STRICT_DIRECTORIES
+) {
   return parseDiagnostics(stdout).filter((diagnostic) =>
     isGated(diagnostic.file, directories)
   );
@@ -107,6 +113,9 @@ function main() {
   process.exitCode = 1;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
+) {
   main();
 }

@@ -30,7 +30,10 @@ test('escapeXml escapes the five XML entities', () => {
 
 test('buildUrlset wraps each url in a loc and a valid urlset', () => {
   const xml = buildUrlset(['https://x/a', 'https://x/b']);
-  assert.match(xml, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(
+    xml,
+    /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/
+  );
   assert.match(xml, /<loc>https:\/\/x\/a<\/loc>/);
   assert.match(xml, /<loc>https:\/\/x\/b<\/loc>/);
   assert.doesNotMatch(xml, /changefreq|priority/);
@@ -45,7 +48,10 @@ test('buildIndex references each child with a lastmod', () => {
   const xml = buildIndex([
     { loc: 'https://x/sitemap-pages.xml', lastmod: '2026-07-05' },
   ]);
-  assert.match(xml, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(
+    xml,
+    /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/
+  );
   assert.match(xml, /<loc>https:\/\/x\/sitemap-pages\.xml<\/loc>/);
   assert.match(xml, /<lastmod>2026-07-05<\/lastmod>/);
 });

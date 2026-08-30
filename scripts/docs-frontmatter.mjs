@@ -129,7 +129,7 @@ function isBlank(line) {
 // Fields the generator iterates. A bare scalar here is the worst kind of typo:
 // `aliases: old` parses fine, and every downstream `for...of` then walks the
 // string character by character, minting /docs/o, /docs/l and /docs/d.
-const SEQUENCE_KEYS = new Set(['aliases', 'related']);
+const SEQUENCE_KEYS = new Set(['aliases', 'related', 'highlights']);
 
 function assertSequence(key, value) {
   if (!SEQUENCE_KEYS.has(key) || value === null || Array.isArray(value)) return;

@@ -92,7 +92,7 @@ describe('BarChartComponent', () => {
     ).toBe('vertical');
   });
 
-  it('honours an explicit orientation over the width heuristic', () => {
+  it('honors an explicit orientation over the width heuristic', () => {
     expect(
       render(360, 'vertical')
         .querySelector('svg')!

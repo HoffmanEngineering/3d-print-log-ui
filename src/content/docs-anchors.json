@@ -46,6 +46,8 @@
   "docs/klipper": ["Setup"],
   "docs/slic3r-uploader": [],
   "docs/release-notes": [
+    "v1.49.1",
+    "v1.49.0",
     "v1.48.1",
     "v1.48.0",
     "v1.47.0",

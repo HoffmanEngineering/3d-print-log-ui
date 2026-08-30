@@ -10,8 +10,18 @@
 // marketing SEO text lives in Angular sources this script cannot read, and the
 // prerendered HTML is the only place both pools exist together.
 
-import { DEFAULT_DOC_SLUG, DOC_MODES } from './docs-manifest-lib.mjs';
-import { extractAnchors, ID_PATTERN, renderMarkdown } from './docs-markdown.mjs';
+import {
+  DEFAULT_DOC_SLUG,
+  DOC_MODES,
+  RELEASE_NOTES_SLUG,
+} from './docs-manifest-lib.mjs';
+import {
+  extractAnchors,
+  ID_PATTERN,
+  renderMarkdown,
+} from './docs-markdown.mjs';
+import { anchorFor, isVersion } from './release-notes-lib.mjs';
+import { renderRelease } from './release-notes-emit.mjs';
 
 const REQUIRED_FIELDS = {
   slug: 'string',
@@ -33,20 +43,79 @@ const DESCRIPTION_MAX = 170;
  * template scope has to change too.
  */
 const ELEMENT_ALLOWLIST = new Set([
-  'a', 'article', 'aside', 'b', 'blockquote', 'br', 'button', 'code', 'dd', 'dl',
-  'dt', 'div', 'em', 'figcaption', 'figure', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'hr', 'i', 'img', 'li', 'mat-icon', 'ol', 'p', 'pre', 'section', 'small',
-  'span', 'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead',
-  'tr', 'ul', 'youtube-player',
+  'a',
+  'article',
+  'aside',
+  'b',
+  'blockquote',
+  'br',
+  'button',
+  'code',
+  'dd',
+  'dl',
+  'dt',
+  'div',
+  'em',
+  'figcaption',
+  'figure',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'hr',
+  'i',
+  'img',
+  'li',
+  'mat-icon',
+  'ol',
+  'p',
+  'pre',
+  'section',
+  'small',
+  'span',
+  'strong',
+  'sub',
+  'sup',
+  'table',
+  'tbody',
+  'td',
+  'tfoot',
+  'th',
+  'thead',
+  'time',
+  'tr',
+  'ul',
+  'youtube-player',
 ]);
 
 /**
- * @param {{ sources: object[], anchorBaseline?: Record<string, string[]> }} input
+ * @param {{ sources: object[], releases?: object[], anchorBaseline?: Record<string, string[]> }} input
  * @returns {{ file: string, message: string }[]}
  */
-export function validateDocs({ sources, anchorBaseline = {} }) {
+export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
   const problems = [];
-  const add = (file, message) => problems.push({ file, message: `${file}: ${message}` });
+  const add = (file, message) =>
+    problems.push({ file, message: `${file}: ${message}` });
+
+  validateReleases(releases, add);
+
+  // The release-notes page is checked as the whole history, not as the ten
+  // releases that render into its template. Every rule below — the anchor
+  // contract above all — is about what the reader can reach, and the component
+  // expands the archive to reach an archived anchor. Checking only the page
+  // template would quietly stop guarding the great majority of published ids.
+  const renderedReleases =
+    releases.length > 0 ? releases.map(renderRelease).join('\n') : '';
+
+  /** The full page a reader can reach, release history included. */
+  const templateFor = (source) => {
+    const rendered = renderMarkdown(source.body ?? '');
+    return source.slug === RELEASE_NOTES_SLUG && renderedReleases
+      ? `${rendered}\n${renderedReleases}`
+      : rendered;
+  };
 
   // Link targets resolve against ROUTED pages only. A dormant page keeps its
   // source file but is filtered out of every route projection, so a link to it
@@ -81,7 +150,10 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
       add(file, `mode "${s.mode}" is not one of ${DOC_MODES.join(', ')}.`);
     }
 
-    if (typeof s.updated === 'string' && !/^\d{4}-\d{2}-\d{2}$/.test(s.updated)) {
+    if (
+      typeof s.updated === 'string' &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(s.updated)
+    ) {
       add(file, `updated "${s.updated}" must be an ISO date (YYYY-MM-DD).`);
     }
 
@@ -109,7 +181,7 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
 
     let template = '';
     try {
-      template = renderMarkdown(s.body ?? '');
+      template = templateFor(s);
     } catch (error) {
       // The render error is the only real problem here. Every downstream check
       // reads anchorsBySlug, and an absent key means "no such page" — so
@@ -158,14 +230,17 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
   // Link checks need every page's anchors, so they run once the loop is done.
   for (const s of sources) {
     const file = s.sourceFile ?? `${s.slug}.md`;
-    const template = anchorsBySlug.has(s.slug) ? renderMarkdown(s.body ?? '') : '';
+    const template = anchorsBySlug.has(s.slug) ? templateFor(s) : '';
 
     for (const href of linksOf(template)) {
       const [target, fragment] = splitFragment(href);
 
       if (target === '') {
         if (fragment && !anchorsBySlug.get(s.slug)?.includes(fragment)) {
-          add(file, `link to #${fragment}, but no element on the page declares that id.`);
+          add(
+            file,
+            `link to #${fragment}, but no element on the page declares that id.`
+          );
         }
         continue;
       }
@@ -225,6 +300,73 @@ export function validateDocs({ sources, anchorBaseline = {} }) {
   return problems;
 }
 
+/** An HTML character reference: `&amp;`, `&#64;`, `&mdash;`. */
+const CHARACTER_REFERENCE = /&#?[a-zA-Z0-9]+;/;
+
+/**
+ * Rules for src/content/release-notes/*.md.
+ *
+ * `readReleaseSources` already refuses a file whose `version` does not match its
+ * filename, because nothing downstream can run without that. What is left here
+ * is everything a release can get wrong that still parses: a version the anchor
+ * generator would mangle, a missing date the what's-new surface would sort on,
+ * and a title that is silently blank in the heading.
+ */
+function validateReleases(releases, add) {
+  const seen = new Map();
+  // Non-global: `.test` and `.exec` are both called on it below, and a global
+  // regex would carry lastIndex between them.
+
+  for (const release of releases) {
+    const file = `release-notes/${release.sourceFile ?? `${release.version}.md`}`;
+
+    if (!isVersion(release.version)) {
+      add(
+        file,
+        `version "${release.version}" must be numeric (1.49.1, or the legacy two-part 1.6); the anchor "${anchorFor(release.version)}" is derived from it.`
+      );
+    }
+
+    const previous = seen.get(release.version);
+    if (previous)
+      add(
+        file,
+        `version "${release.version}" is already declared by ${previous}.`
+      );
+    else seen.set(release.version, file);
+
+    if (
+      typeof release.date !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(release.date)
+    ) {
+      add(
+        file,
+        `date "${release.date}" must be a quoted ISO date (YYYY-MM-DD).`
+      );
+    }
+
+    // An empty title is legal, not an oversight: 1.29.0 shipped with a bare
+    // version heading and `headingFor` renders exactly that. What is checked is
+    // that the field is a string, so a forgotten quote cannot reach the heading.
+    if (typeof release.title !== 'string') {
+      add(file, 'frontmatter field "title" must be a string.');
+    } else if (CHARACTER_REFERENCE.test(release.title)) {
+      // A title is data, not markup: it is rendered through {{ }} in the
+      // archive and used verbatim as the GitHub Release title, and in both
+      // places an entity shows up as its literal source text. Only the
+      // generated <h3> is HTML, and that path escapes for itself.
+      add(
+        file,
+        `title contains the character reference "${CHARACTER_REFERENCE.exec(release.title)[0]}"; write the character itself.`
+      );
+    }
+
+    if (!Array.isArray(release.highlights)) {
+      add(file, 'frontmatter field "highlights" must be a sequence.');
+    }
+  }
+}
+
 function elementsOf(template) {
   const names = new Set();
   for (const match of template.matchAll(/<([A-Za-z][A-Za-z0-9-]*)/g)) {
@@ -267,7 +409,9 @@ function linksOf(template) {
 
     const parts = inner.split(',').map((part) => part.trim());
     const segments = parts.map((part) =>
-      /^'[^']*'$/.test(part) || /^"[^"]*"$/.test(part) ? part.slice(1, -1) : null
+      /^'[^']*'$/.test(part) || /^"[^"]*"$/.test(part)
+        ? part.slice(1, -1)
+        : null
     );
     if (segments.some((segment) => segment === null)) continue;
 
@@ -322,6 +466,18 @@ function membersOf(template) {
 }
 
 const RESERVED = new Set([
-  'true', 'false', 'null', 'undefined', 'as', 'let', 'of', 'track', 'async',
-  'this', 'item', 'index', 'case', 'default',
+  'true',
+  'false',
+  'null',
+  'undefined',
+  'as',
+  'let',
+  'of',
+  'track',
+  'async',
+  'this',
+  'item',
+  'index',
+  'case',
+  'default',
 ]);

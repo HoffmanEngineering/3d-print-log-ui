@@ -67,7 +67,9 @@ test('reads sources in a stable order regardless of directory listing', () => {
 });
 
 test('plans a component, a template, and the shared projections', () => {
-  const { files } = planOutputs(readDocSources(withSources({ 'prints.md': SOURCE })));
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE }))
+  );
   const names = [...files.keys()].sort();
 
   assert.deepEqual(names, [
@@ -80,15 +82,25 @@ test('plans a component, a template, and the shared projections', () => {
     'docs.server-routes.ts',
     'pages/docs-prints.component.html',
     'pages/docs-prints.component.ts',
+    // Emitted whether or not there are releases: the component imports it
+    // unconditionally, so an absent module would be a build error.
+    'release-notes-archive.ts',
   ]);
 });
 
 test('plans no component file for a page that supplies its own', () => {
   const source = SOURCE.replace(
     'mode: how-to',
-    ['mode: how-to', 'component:', '  className: DocsPrintsComponent', '  path: ../docs/x'].join('\n')
+    [
+      'mode: how-to',
+      'component:',
+      '  className: DocsPrintsComponent',
+      '  path: ../docs/x',
+    ].join('\n')
   );
-  const { files } = planOutputs(readDocSources(withSources({ 'prints.md': source })));
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': source }))
+  );
 
   assert.ok(!files.has('pages/docs-prints.component.ts'));
   assert.ok(files.has('pages/docs-prints.component.html'));
@@ -124,16 +136,34 @@ test('syncOutputs writes the planned files', () => {
 
 test('syncOutputs rewrites only the files whose contents changed', () => {
   const out = tempDir();
-  syncOutputs(out, new Map([['a.ts', 'x\n'], ['b.ts', 'y\n']]));
+  syncOutputs(
+    out,
+    new Map([
+      ['a.ts', 'x\n'],
+      ['b.ts', 'y\n'],
+    ])
+  );
 
-  const result = syncOutputs(out, new Map([['a.ts', 'x\n'], ['b.ts', 'CHANGED\n']]));
+  const result = syncOutputs(
+    out,
+    new Map([
+      ['a.ts', 'x\n'],
+      ['b.ts', 'CHANGED\n'],
+    ])
+  );
 
   assert.deepEqual(result.written, ['b.ts']);
 });
 
 test('syncOutputs deletes a generated file whose source is gone', () => {
   const out = tempDir();
-  syncOutputs(out, new Map([['a.ts', 'x\n'], ['stale.ts', 'y\n']]));
+  syncOutputs(
+    out,
+    new Map([
+      ['a.ts', 'x\n'],
+      ['stale.ts', 'y\n'],
+    ])
+  );
 
   const result = syncOutputs(out, new Map([['a.ts', 'x\n']]));
 
@@ -143,7 +173,13 @@ test('syncOutputs deletes a generated file whose source is gone', () => {
 
 test('syncOutputs removes a directory left empty by cleaning', () => {
   const out = tempDir();
-  syncOutputs(out, new Map([['pages/gone.ts', 'y\n'], ['a.ts', 'x\n']]));
+  syncOutputs(
+    out,
+    new Map([
+      ['pages/gone.ts', 'y\n'],
+      ['a.ts', 'x\n'],
+    ])
+  );
 
   syncOutputs(out, new Map([['a.ts', 'x\n']]));
 
@@ -154,7 +190,9 @@ test('check mode reports drift without touching the filesystem', () => {
   const out = tempDir();
   syncOutputs(out, new Map([['a.ts', 'x\n']]));
 
-  const result = syncOutputs(out, new Map([['a.ts', 'CHANGED\n']]), { check: true });
+  const result = syncOutputs(out, new Map([['a.ts', 'CHANGED\n']]), {
+    check: true,
+  });
 
   assert.deepEqual(result.drift, ['a.ts']);
   assert.equal(fs.readFileSync(path.join(out, 'a.ts'), 'utf8'), 'x\n');
@@ -169,7 +207,13 @@ test('check mode reports a missing output as drift', () => {
 
 test('check mode reports a stale output as drift', () => {
   const out = tempDir();
-  syncOutputs(out, new Map([['a.ts', 'x\n'], ['stale.ts', 'y\n']]));
+  syncOutputs(
+    out,
+    new Map([
+      ['a.ts', 'x\n'],
+      ['stale.ts', 'y\n'],
+    ])
+  );
 
   const result = syncOutputs(out, new Map([['a.ts', 'x\n']]), { check: true });
 
@@ -179,7 +223,10 @@ test('check mode reports a stale output as drift', () => {
 
 test('check mode reports no drift when the tree already matches', () => {
   const out = tempDir();
-  const files = new Map([['a.ts', 'x\n'], ['pages/b.ts', 'y\n']]);
+  const files = new Map([
+    ['a.ts', 'x\n'],
+    ['pages/b.ts', 'y\n'],
+  ]);
   syncOutputs(out, files);
 
   assert.deepEqual(syncOutputs(out, files, { check: true }).drift, []);
@@ -190,19 +237,27 @@ test('the route barrels are written after the files they import', () => {
   // before its page component would point the builder at a file that is not
   // there yet.
   const out = tempDir();
-  const { files } = planOutputs(readDocSources(withSources({ 'prints.md': SOURCE })));
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE }))
+  );
 
   const order = syncOutputs(out, files).written;
 
   assert.ok(
-    order.indexOf('pages/docs-prints.component.ts') < order.indexOf('docs.routes.ts'),
+    order.indexOf('pages/docs-prints.component.ts') <
+      order.indexOf('docs.routes.ts'),
     `barrel written too early: ${order.join(', ')}`
   );
-  assert.ok(order.indexOf('docs-manifest.json') < order.indexOf('docs-manifest.ts'));
+  assert.ok(
+    order.indexOf('docs-manifest.json') < order.indexOf('docs-manifest.ts')
+  );
 });
 
 test('a stylesheet beside the Markdown is copied next to the generated component', () => {
-  const dir = withSources({ 'prints.md': SOURCE, 'prints.scss': ':host { color: red; }\n' });
+  const dir = withSources({
+    'prints.md': SOURCE,
+    'prints.scss': ':host { color: red; }\n',
+  });
   const { files } = planOutputs(readDocSources(dir));
 
   assert.equal(
@@ -212,18 +267,117 @@ test('a stylesheet beside the Markdown is copied next to the generated component
 });
 
 test('a page with no stylesheet produces no stylesheet output', () => {
-  const { files } = planOutputs(readDocSources(withSources({ 'prints.md': SOURCE })));
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE }))
+  );
   assert.ok(!files.has('pages/docs-prints.component.scss'));
 });
 
 test('a hand-written component keeps its own stylesheet rather than a copy', () => {
   const source = SOURCE.replace(
     'mode: how-to',
-    ['mode: how-to', 'component:', '  className: DocsPrintsComponent', '  path: ../docs/x'].join('\n')
+    [
+      'mode: how-to',
+      'component:',
+      '  className: DocsPrintsComponent',
+      '  path: ../docs/x',
+    ].join('\n')
   );
   const { files } = planOutputs(
     readDocSources(withSources({ 'prints.md': source, 'prints.scss': 'x\n' }))
   );
 
   assert.ok(!files.has('pages/docs-prints.component.scss'));
+});
+
+// -- release notes -----------------------------------------------------------
+
+const RELEASE_PAGE = SOURCE.replace('slug: prints', 'slug: release-notes')
+  .replace('navLabel: Prints', 'navLabel: Release Notes')
+  .replace('group: features', 'group: about')
+  .replace('## Prints', '## Release Notes');
+
+const release = (version) => ({
+  version,
+  date: '2026-08-29',
+  title: `Release ${version}`,
+  highlights: [],
+  body: `What changed in ${version}.`,
+  sourceFile: `${version}.md`,
+});
+
+/** Newest first, the order readReleaseSources hands them over in. */
+const releases = (count) =>
+  Array.from({ length: count }, (_, i) => release(`1.${count - i}.0`));
+
+test('appends the newest releases to the release-notes template', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const template = files.get('pages/docs-release-notes.component.html');
+
+  assert.match(template, /<h3 id="v1\.12\.0">/);
+  assert.match(template, /<h3 id="v1\.3\.0">/);
+});
+
+test('keeps releases older than the page cutoff out of the template', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const template = files.get('pages/docs-release-notes.component.html');
+
+  // The whole point of the split: two years of history must not ship to a
+  // reader who only wanted to see what changed last week.
+  assert.ok(!template.includes('id="v1.2.0"'));
+  assert.ok(!template.includes('What changed in 1.2.0.'));
+});
+
+test('moves the releases the template dropped into the archive module', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const archive = files.get('release-notes-archive.ts');
+
+  assert.match(archive, /anchor: 'v1\.2\.0'/);
+  assert.ok(!archive.includes("anchor: 'v1.12.0'"));
+});
+
+test('records every release in the manifest, archived or not', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const manifest = JSON.parse(files.get('docs-manifest.json'));
+
+  assert.equal(manifest.releases.length, 12);
+  assert.equal(manifest.releases[0].anchor, 'v1.12.0');
+  assert.equal(manifest.releases.at(-1).anchor, 'v1.1.0');
+});
+
+test('indexes the whole release history for search, not just the page', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'release-notes.md': RELEASE_PAGE })),
+    releases(12)
+  );
+  const [entry] = JSON.parse(files.get('docs-search-index.json')).filter(
+    (row) => row.path === 'docs/release-notes'
+  );
+
+  // A reader searching for a two-year-old release should still find it; the
+  // component expands the archive to reach the anchor it lands on.
+  assert.match(entry.text, /What changed in 1\.2\.0\./);
+});
+
+test('leaves a page that is not the release index alone', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE })),
+    releases(12)
+  );
+
+  assert.ok(
+    !files.get('pages/docs-prints.component.html').includes('id="v1.12.0"')
+  );
 });

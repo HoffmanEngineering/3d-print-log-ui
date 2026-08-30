@@ -16,6 +16,9 @@
 const SPAN_MARK = String.fromCharCode(0);
 const SPAN_PATTERN = new RegExp(SPAN_MARK + '([0-9]+)' + SPAN_MARK, 'g');
 
+/** The CommonMark escapable set: ASCII punctuation, and nothing else. */
+const ESCAPED_PUNCTUATION = /\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g;
+
 const VOID_ELEMENTS = new Set([
   'area',
   'base',
@@ -334,6 +337,18 @@ function renderInline(text) {
   const spans = [];
   let out = text.replace(/`([^`]+)`/g, (_, code) => {
     spans.push(`<code>${escapeHtml(code)}</code>`);
+    return `${SPAN_MARK}${spans.length - 1}${SPAN_MARK}`;
+  });
+
+  // A backslash-escaped punctuation mark is a literal character, and is parked
+  // like a code span so no later pass can read it as syntax.
+  //
+  // This is not a nicety: `prettier --write` REWRITES a literal `*` in prose to
+  // `\*`, so without this the project's own formatter turns "an * to indicate it
+  // is estimated" into a visible backslash. Escapes do not apply inside code
+  // spans, which is why this runs after they have been lifted out.
+  out = out.replace(ESCAPED_PUNCTUATION, (_, character) => {
+    spans.push(escapeHtml(character));
     return `${SPAN_MARK}${spans.length - 1}${SPAN_MARK}`;
   });
 

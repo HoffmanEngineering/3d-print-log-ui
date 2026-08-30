@@ -1,251 +1,338 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import {
-  parseSections,
-  htmlToMarkdown,
+  anchorFor,
+  compareVersionsDesc,
   extractReleaseNotes,
-  readReleaseNotesHtml,
+  headingFor,
+  htmlToMarkdown,
+  isVersion,
+  normalizeVersion,
+  readReleaseSources,
 } from './release-notes-lib.mjs';
+import { renderMarkdown } from './docs-markdown.mjs';
+import { RELEASE_NOTES_DIR } from './docs-paths.mjs';
 
+/** A throwaway release-notes directory, so the reader can be tested on shapes
+ *  the real corpus does not (yet) contain. */
+function withReleases(files, run) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-notes-'));
+  try {
+    for (const [name, contents] of Object.entries(files)) {
+      fs.writeFileSync(path.join(dir, name), contents);
+    }
+    return run(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
 
-// Mirrors the real component: a wrapper, an <h2> that is NOT a release, then
-// two releases. The second carries every inline shape the real file uses --
-// including the capitalized <Strong> that appears 10 times in the history.
-const FIXTURE = `<div class="docs-markdown">
-  <h2>Release Notes</h2>
-  <hr />
+const RELEASE = (version, title, body) =>
+  `---\nversion: ${version}\ndate: 2026-01-02\ntitle: '${title}'\n---\n\n${body}\n`;
 
-  <h3 id="v1.47.0">1.47.0 - Material Remaining &amp; More Bulk Actions</h3>
-  <p>
-    Saved materials now tell you what is
-    left on the spool.
-  </p>
+// -- versions and anchors ----------------------------------------------------
 
-  <h3 id="v1.46.0">1.46.0 - The New Print Page</h3>
-  <p>The print page has been <em>rebuilt</em>.</p>
-  <h4>Full List of Changes:</h4>
-  <ul>
-    <li>
-      <strong>Rebuilt print page</strong> - Now an image hero. (<a
-        href="https://github.com/HoffmanEngineering/3d-print-log-ui/pull/81"
-        rel="noreferrer noopener"
-        >#81</a
-      >)
-    </li>
-    <li><Strong>Bulk editing</Strong> - Select rows and act on them.</li>
-  </ul>
-</div>`;
-
-test('parseSections returns one entry per release heading', () => {
-  const sections = parseSections(FIXTURE);
-
-  assert.equal(sections.length, 2);
-  assert.equal(sections[0].version, '1.47.0');
-  assert.equal(sections[1].version, '1.46.0');
+test('normalizeVersion pads a two-part version to three parts', () => {
+  assert.equal(normalizeVersion('1.6'), '1.6.0');
+  assert.equal(normalizeVersion('v1.6'), '1.6.0');
+  assert.equal(normalizeVersion('1.49.1'), '1.49.1');
 });
 
-test('parseSections keeps the heading text as the release title', () => {
-  const [first] = parseSections(FIXTURE);
-
-  assert.equal(first.title, '1.47.0 - Material Remaining & More Bulk Actions');
-});
-
-test('parseSections ignores the page <h2>, taking only <h3> releases', () => {
-  const versions = parseSections(FIXTURE).map((s) => s.version);
-
-  assert.deepEqual(versions, ['1.47.0', '1.46.0']);
-});
-
-test('parseSections stops a section at the next heading', () => {
-  const [first] = parseSections(FIXTURE);
-
-  assert.match(first.bodyHtml, /left on the spool/);
-  assert.doesNotMatch(first.bodyHtml, /print page has been/);
-});
-
-test('parseSections bounds sections correctly with uppercase <H3> tags', () => {
-  // The heading match is case-insensitive, so the boundary lookup must be too,
-  // or the first section swallows the second.
-  const sections = parseSections(
-    '<H3 id="v1.2.0">First</H3><p>A</p><H3 id="v1.1.0">Second</H3><p>B</p>'
+test('compareVersionsDesc sorts newest first, numerically per segment', () => {
+  const sorted = ['1.9.0', '1.43.9', '1.43.10', '1.6'].sort(
+    compareVersionsDesc
   );
 
-  assert.equal(sections.length, 2);
-  assert.match(sections[0].bodyHtml, /A/);
-  assert.doesNotMatch(sections[0].bodyHtml, /Second/);
+  // 1.43.10 above 1.43.9 is the case a string sort gets wrong.
+  assert.deepEqual(sorted, ['1.43.10', '1.43.9', '1.9.0', '1.6']);
 });
 
-test('parseSections normalizes a two-part id like v1.6 to 1.6.0', () => {
-  const sections = parseSections(
-    '<h3 id="v1.6">1.6 - Old release</h3><p>x</p>'
+test('anchorFor derives the id from the version, not from heading text', () => {
+  // The dots are the point: a Markdown slugger would mint `v1-38-0`.
+  assert.equal(anchorFor('1.38.0'), 'v1.38.0');
+  assert.equal(anchorFor('1.6'), 'v1.6');
+});
+
+test('headingFor omits the separator when a release has no title', () => {
+  assert.equal(headingFor('1.49.1', 'Push Fixes'), '1.49.1 - Push Fixes');
+  assert.equal(headingFor('1.29.0', ''), '1.29.0');
+});
+
+test('isVersion accepts two- and three-part versions and nothing else', () => {
+  assert.ok(isVersion('1.6'));
+  assert.ok(isVersion('1.49.1'));
+  assert.ok(!isVersion('v1.49.1'));
+  assert.ok(!isVersion('next'));
+});
+
+// -- reading sources ---------------------------------------------------------
+
+test('readReleaseSources returns releases newest first', () => {
+  const versions = withReleases(
+    {
+      '1.9.0.md': RELEASE('1.9.0', 'Older', 'Body.'),
+      '1.43.9.md': RELEASE('1.43.9', 'Middle', 'Body.'),
+      '1.43.10.md': RELEASE('1.43.10', 'Newest', 'Body.'),
+    },
+    (dir) => readReleaseSources(dir).map((r) => r.version)
   );
 
-  assert.equal(sections[0].version, '1.6.0');
+  assert.deepEqual(versions, ['1.43.10', '1.43.9', '1.9.0']);
 });
+
+test('readReleaseSources rejects a version that disagrees with its filename', () => {
+  assert.throws(
+    () =>
+      withReleases({ '1.9.0.md': RELEASE('1.9.1', 'Typo', 'Body.') }, (dir) =>
+        readReleaseSources(dir)
+      ),
+    /must match its filename/
+  );
+});
+
+test('readReleaseSources defaults highlights to an empty list', () => {
+  const [release] = withReleases(
+    { '1.9.0.md': RELEASE('1.9.0', 'No highlights', 'Body.') },
+    (dir) => readReleaseSources(dir)
+  );
+
+  assert.deepEqual(release.highlights, []);
+});
+
+test('readReleaseSources reads a highlights sequence', () => {
+  const [release] = withReleases(
+    {
+      '1.9.0.md': `---\nversion: 1.9.0\ndate: 2026-01-02\ntitle: 'X'\nhighlights: [labels, analytics]\n---\n\nBody.\n`,
+    },
+    (dir) => readReleaseSources(dir)
+  );
+
+  assert.deepEqual(release.highlights, ['labels', 'analytics']);
+});
+
+test('readReleaseSources preserves frontmatter types rather than coercing them', () => {
+  // Coercing here (`String(...)`) would make the validator's type rules dead
+  // code: `title: 141` would arrive as "141" and pass the check written to
+  // catch it.
+  const [release] = withReleases(
+    {
+      '1.9.0.md': `---
+version: 1.9.0
+date: 2026-01-02
+title: 141
+---
+
+Body.
+`,
+    },
+    (dir) => readReleaseSources(dir)
+  );
+
+  assert.equal(typeof release.title, 'number');
+});
+
+test('readReleaseSources returns nothing when the directory is absent', () => {
+  assert.deepEqual(readReleaseSources('does-not-exist'), []);
+});
+
+// -- html -> markdown --------------------------------------------------------
+
+const html = (markdown) => renderMarkdown(markdown);
 
 test('htmlToMarkdown renders paragraphs as single collapsed lines', () => {
-  const md = htmlToMarkdown(
-    '<p>\n  Saved materials\n  tell you what is left.\n</p>'
+  assert.equal(
+    htmlToMarkdown(html('Saved materials now tell you\nwhat is left.')),
+    'Saved materials now tell you what is left.'
   );
-
-  assert.equal(md, 'Saved materials tell you what is left.');
 });
 
 test('htmlToMarkdown renders list items as dashes', () => {
-  const md = htmlToMarkdown(
-    '<ul><li>First thing</li><li>Second thing</li></ul>'
+  assert.equal(
+    htmlToMarkdown(html('- First thing\n- Second thing')),
+    '- First thing\n- Second thing'
   );
-
-  assert.equal(md, '- First thing\n- Second thing');
 });
 
 test('htmlToMarkdown renders <strong> as bold regardless of tag case', () => {
-  const md = htmlToMarkdown(
-    '<p><strong>One</strong> and <Strong>Two</Strong></p>'
+  assert.equal(
+    htmlToMarkdown('<p><Strong>Bulk editing</Strong> - Select rows.</p>'),
+    '**Bulk editing** - Select rows.'
   );
-
-  assert.equal(md, '**One** and **Two**');
 });
 
 test('htmlToMarkdown renders links as markdown links', () => {
-  const md = htmlToMarkdown(
-    '<p>See (<a\n href="https://example.com/pull/81"\n rel="noreferrer"\n >#81</a\n >)</p>'
+  assert.match(
+    htmlToMarkdown(html('See [PR #81](https://github.com/x/y/pull/81).')),
+    /\[PR #81\]\(https:\/\/github\.com\/x\/y\/pull\/81\)/
   );
-
-  assert.equal(md, 'See ([#81](https://example.com/pull/81))');
 });
 
 test('htmlToMarkdown absolutizes routerLink into a site URL', () => {
-  // A GitHub Release body is read off-site, so an Angular routerLink has to
-  // become a real URL or it renders as a dead relative link on github.com.
-  const md = htmlToMarkdown(
-    '<p>the <a routerLink="/settings">settings page</a></p>'
+  assert.equal(
+    htmlToMarkdown(html('Open [Settings](/settings).')),
+    'Open [Settings](https://www.3dprintlog.com/settings).'
   );
-
-  assert.equal(md, 'the [settings page](https://www.3dprintlog.com/settings)');
 });
 
 test('htmlToMarkdown absolutizes the [routerLink]="[\'/x\']" binding form', () => {
-  // Older sections use Angular property-binding syntax rather than a plain
-  // routerLink attribute.
-  const md = htmlToMarkdown(
-    '<p>the <a [routerLink]="[\'/prints\']">print list</a></p>'
+  assert.equal(
+    htmlToMarkdown(`<p>Open <a [routerLink]="['/prints']">Prints</a>.</p>`),
+    'Open [Prints](https://www.3dprintlog.com/prints).'
   );
-
-  assert.equal(md, 'the [print list](https://www.3dprintlog.com/prints)');
 });
 
 test('htmlToMarkdown indents a nested list under its parent item', () => {
-  const md = htmlToMarkdown(
-    '<ul><li>Parent<ul><li>Child one</li><li>Child two</li></ul></li><li>Sibling</li></ul>'
+  assert.equal(
+    htmlToMarkdown('<ul><li>Parent<ul><li>Child</li></ul></li></ul>'),
+    '- Parent\n  - Child'
   );
-
-  assert.equal(md, '- Parent\n  - Child one\n  - Child two\n- Sibling');
 });
 
 test('htmlToMarkdown renders <h4> as a markdown heading', () => {
-  const md = htmlToMarkdown('<h4>Full List of Changes:</h4>');
-
-  assert.equal(md, '### Full List of Changes:');
+  assert.equal(
+    htmlToMarkdown(html('#### Full List of Changes:')),
+    '### Full List of Changes:'
+  );
 });
 
 test('htmlToMarkdown decodes named entities', () => {
-  const md = htmlToMarkdown('<p>Remaining &amp; more &quot;stuff&quot;</p>');
-
-  assert.equal(md, 'Remaining & more "stuff"');
+  assert.equal(
+    htmlToMarkdown('<p>Remaining &amp; More</p>'),
+    'Remaining & More'
+  );
 });
 
 test('htmlToMarkdown decodes decimal and hex numeric entities', () => {
-  const md = htmlToMarkdown('<p>It&#8217;s ready &#x1F680;</p>');
-
-  assert.equal(md, 'It’s ready \u{1F680}');
+  assert.equal(htmlToMarkdown('<p>&#64; and &#x40;</p>'), '@ and @');
 });
 
 test('htmlToMarkdown keeps &lt; and &gt; escaped so literal markup survives', () => {
-  // Prose that deliberately shows a tag must stay escaped: GitHub renders raw
-  // HTML in Markdown, so decoding these would make the tag disappear.
-  const md = htmlToMarkdown('<p>Use &lt;button&gt; literally</p>');
-
-  assert.equal(md, 'Use &lt;button&gt; literally');
+  assert.equal(
+    htmlToMarkdown('<p>supports &lt;button&gt;</p>'),
+    'supports &lt;button&gt;'
+  );
 });
 
 test('htmlToMarkdown renders every sibling list nested under one item', () => {
-  const md = htmlToMarkdown(
-    '<ul><li>Parent<ul><li>A</li></ul><ul><li>B</li></ul></li></ul>'
+  assert.equal(
+    htmlToMarkdown(
+      '<ul><li>Parent<ul><li>A</li></ul><ul><li>B</li></ul></li></ul>'
+    ),
+    '- Parent\n  - A\n  - B'
   );
-
-  assert.equal(md, '- Parent\n  - A\n  - B');
 });
 
 test('htmlToMarkdown throws on an unclosed list rather than dropping content', () => {
-  // Silently publishing a fragment of the notes is worse than a failed deploy.
   assert.throws(
-    () =>
-      htmlToMarkdown('<p>Before</p><ul><li>Outer<ul><li>Inner</li></ul></li>'),
-    /unbalanced <ul>/i
+    () => htmlToMarkdown('<ul><li>Only item</li>'),
+    /unbalanced <ul>/
   );
 });
 
 test('htmlToMarkdown renders <em> as italic', () => {
   assert.equal(
-    htmlToMarkdown('<p>has been <em>rebuilt</em></p>'),
-    'has been _rebuilt_'
+    htmlToMarkdown(html('The print page has been _rebuilt_.')),
+    'The print page has been _rebuilt_.'
   );
 });
 
-test('extractReleaseNotes returns the title and markdown body for a version', () => {
-  const release = extractReleaseNotes(FIXTURE, '1.46.0');
+test('htmlToMarkdown drops the section wrapper a rendered release carries', () => {
+  assert.equal(
+    htmlToMarkdown('<section class="release-note"><p>Body.</p></section>'),
+    'Body.'
+  );
+});
+
+// -- extraction --------------------------------------------------------------
+
+test('extractReleaseNotes returns the heading and markdown body for a version', () => {
+  const release = withReleases(
+    {
+      '1.46.0.md': RELEASE(
+        '1.46.0',
+        'The New Print Page',
+        'The print page has been _rebuilt_.\n\n#### Full List of Changes:\n\n- **Rebuilt print page** - Now an image hero.'
+      ),
+    },
+    (dir) => extractReleaseNotes('1.46.0', dir)
+  );
 
   assert.equal(release.version, '1.46.0');
   assert.equal(release.title, '1.46.0 - The New Print Page');
   assert.match(release.markdown, /^The print page has been _rebuilt_\./);
   assert.match(
     release.markdown,
-    /^- \*\*Rebuilt print page\*\* - Now an image hero/m
+    /^- \*\*Rebuilt print page\*\* - Now an image hero\./m
   );
 });
 
 test('extractReleaseNotes accepts a leading v on the version', () => {
-  assert.equal(extractReleaseNotes(FIXTURE, 'v1.46.0').version, '1.46.0');
+  const version = withReleases(
+    { '1.46.0.md': RELEASE('1.46.0', 'X', 'Body.') },
+    (dir) => extractReleaseNotes('v1.46.0', dir).version
+  );
+
+  assert.equal(version, '1.46.0');
 });
 
-test('extractReleaseNotes throws for a version with no section', () => {
+test('extractReleaseNotes matches a v1.6 tag against the 1.6 file', () => {
+  const version = withReleases(
+    { '1.6.md': RELEASE('1.6', 'X', 'Body.') },
+    (dir) => extractReleaseNotes('v1.6.0', dir).version
+  );
+
+  assert.equal(version, '1.6');
+});
+
+test('extractReleaseNotes throws for a version with no file', () => {
   assert.throws(
-    () => extractReleaseNotes(FIXTURE, '1.32.1'),
-    /no release notes section for 1\.32\.1/i
+    () =>
+      withReleases({ '1.46.0.md': RELEASE('1.46.0', 'X', 'Body.') }, (dir) =>
+        extractReleaseNotes('1.32.1', dir)
+      ),
+    /no release notes for 1\.32\.1/i
   );
 });
 
-// -- Against the real component, which is the corpus this ships against. --
+// -- Against the real corpus, which is what this ships against. --------------
 
-const REAL_HTML = readReleaseNotesHtml();
+const REAL = readReleaseSources(RELEASE_NOTES_DIR);
 
-test('every release section in the real file yields non-empty markdown', () => {
-  const sections = parseSections(REAL_HTML);
-  assert.ok(
-    sections.length >= 95,
-    `expected >=95 sections, got ${sections.length}`
-  );
+test('the real corpus holds every published release', () => {
+  assert.ok(REAL.length >= 97, `expected >=97 releases, got ${REAL.length}`);
+});
 
-  const empty = sections
-    .filter((s) => htmlToMarkdown(s.bodyHtml).trim().length === 0)
-    .map((s) => s.version);
+test('every real release yields non-empty markdown', () => {
+  const empty = REAL.filter(
+    (release) =>
+      htmlToMarkdown(renderMarkdown(release.body)).trim().length === 0
+  ).map((release) => release.version);
 
   assert.deepEqual(empty, []);
 });
 
-test('the real file leaves no unrendered HTML tags in its markdown', () => {
-  const leftovers = parseSections(REAL_HTML)
-    .map((s) => ({ v: s.version, md: htmlToMarkdown(s.bodyHtml) }))
-    .filter((s) => /<\/?[a-zA-Z]/.test(s.md))
-    .map((s) => s.v);
+test('no real release leaves unrendered HTML tags in its markdown', () => {
+  const leftovers = REAL.filter((release) =>
+    /<\/?[a-zA-Z]/.test(htmlToMarkdown(renderMarkdown(release.body)))
+  ).map((release) => release.version);
 
   assert.deepEqual(leftovers, []);
 });
 
-test('every git tag except the known-missing v1.32.1 resolves to a section', (t) => {
+test('every real release declares an ISO date', () => {
+  const bad = REAL.filter((r) => !/^\d{4}-\d{2}-\d{2}$/.test(r.date)).map(
+    (r) => r.version
+  );
+
+  assert.deepEqual(bad, []);
+});
+
+test('every git tag except the known-missing v1.32.1 resolves to a release', (t) => {
   const tags = execFileSync('git', ['tag'], { encoding: 'utf8' })
     .split('\n')
     .map((tag) => tag.trim())
@@ -262,10 +349,9 @@ test('every git tag except the known-missing v1.32.1 resolves to a section', (t)
   // them, while a tag-triggered build has only the tag it was pushed for. So
   // assert that nothing beyond the known gap is unresolved, rather than that
   // the gap itself is always present to be found.
-
   const missing = tags.filter((tag) => {
     try {
-      extractReleaseNotes(REAL_HTML, tag);
+      extractReleaseNotes(tag);
       return false;
     } catch {
       return true;
@@ -274,6 +360,6 @@ test('every git tag except the known-missing v1.32.1 resolves to a section', (t)
 
   assert.deepEqual(
     missing.filter((tag) => tag !== 'v1.32.1'),
-    [],
+    []
   );
 });

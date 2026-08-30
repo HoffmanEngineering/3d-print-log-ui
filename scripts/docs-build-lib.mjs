@@ -33,8 +33,15 @@ import {
   emitSearchIndexJson,
   emitServerRoutesTs,
 } from './docs-emit.mjs';
-import { buildManifest } from './docs-manifest-lib.mjs';
+import { buildManifest, RELEASE_NOTES_SLUG } from './docs-manifest-lib.mjs';
 import { renderMarkdown } from './docs-markdown.mjs';
+import {
+  emitArchiveTs,
+  renderArchiveHost,
+  renderRecentReleases,
+  renderRelease,
+  toReleaseManifest,
+} from './release-notes-emit.mjs';
 
 /** Barrels are written last; see the note at the top of this file. */
 const BARRELS = [
@@ -90,11 +97,13 @@ export function readDocSources(contentDir) {
 
 /**
  * @param {object[]} sources from readDocSources
+ * @param {object[]} [releases] from readReleaseSources, newest first
  * @returns {{ files: Map<string, string>, manifest: object, templates: Record<string, string> }}
  */
-export function planOutputs(sources) {
+export function planOutputs(sources, releases = []) {
   const manifest = buildManifest(
-    sources.map(({ body, sourceFile, styles, ...frontmatter }) => frontmatter)
+    sources.map(({ body, sourceFile, styles, ...frontmatter }) => frontmatter),
+    toReleaseManifest(releases)
   );
   const stylesBySlug = new Map(sources.map((s) => [s.slug, s.styles]));
 
@@ -106,6 +115,21 @@ export function planOutputs(sources) {
     } catch (error) {
       throw new Error(`${source.sourceFile}: ${error.message}`);
     }
+  }
+
+  // Search and the figure inventory index the WHOLE history, not just what the
+  // page paints on arrival: a reader searching for a two-year-old release should
+  // still find it, and the component expands the archive to reach its anchor.
+  const indexed = { ...templates };
+
+  if (templates[RELEASE_NOTES_SLUG] !== undefined && releases.length > 0) {
+    const pageBody = templates[RELEASE_NOTES_SLUG];
+    // The page itself carries only the newest releases. Everything older is a
+    // lazily imported chunk, so it is deliberately NOT in the template.
+    templates[RELEASE_NOTES_SLUG] =
+      `${pageBody}\n${renderRecentReleases(releases)}\n${renderArchiveHost(releases)}`;
+    indexed[RELEASE_NOTES_SLUG] =
+      `${pageBody}\n${releases.map(renderRelease).join('\n')}`;
   }
 
   /** @type {Map<string, string>} */
@@ -129,8 +153,9 @@ export function planOutputs(sources) {
   }
 
   files.set('docs-manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
-  files.set('docs-search-index.json', emitSearchIndexJson(manifest, templates));
-  files.set('docs-figures.ts', emitFiguresTs(manifest, templates));
+  files.set('docs-search-index.json', emitSearchIndexJson(manifest, indexed));
+  files.set('docs-figures.ts', emitFiguresTs(manifest, indexed));
+  files.set('release-notes-archive.ts', emitArchiveTs(releases));
   files.set('docs-declarations.ts', emitDeclarationsTs(manifest));
   files.set('docs-manifest.ts', emitManifestTs());
   files.set('docs.routes.ts', emitRoutesTs(manifest));

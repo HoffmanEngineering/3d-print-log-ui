@@ -1,30 +1,115 @@
-// Pure, side-effect-free helpers for turning the in-app release notes into GitHub
-// Release bodies. Safe to import in unit tests.
+// Reading the per-release Markdown sources, and turning one of them into a
+// GitHub Release body.
 //
-// `src/content/docs/release-notes.md` is the single source of truth for release
-// prose -- it is hand-written by the /release skill. This module reads it;
-// nothing here should ever write it.
+// `src/content/release-notes/<version>.md` is the single source of truth for
+// release prose -- one file per release, written by the /release skill. This
+// module reads them; nothing here should ever write one.
 //
-// It renders that Markdown here rather than reading the generated template,
-// because the deploy workflow verifies a tag's release notes BEFORE `npm ci` and
-// before any generation has run.
+// One file per release is what makes the GitHub extraction trivial: there is no
+// page to scan for section boundaries, so a release body is just "render this
+// file". It also means `extract-release-notes.mjs` reads only checked-in
+// sources -- the deploy workflow verifies a tag's notes BEFORE `npm ci` and
+// before any generation has run, so it can never depend on a generated artifact.
 
-import { readFileSync } from 'node:fs';
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { parseFrontmatter } from './docs-frontmatter.mjs';
 import { renderMarkdown } from './docs-markdown.mjs';
-import { CONTENT_DIR } from './docs-paths.mjs';
+import { RELEASE_NOTES_DIR } from './docs-paths.mjs';
 
 export const SITE_ORIGIN = 'https://www.3dprintlog.com';
 
-/** The release-notes page as the HTML the parsers below expect. */
-export function readReleaseNotesHtml() {
-  const source = readFileSync(
-    path.join(CONTENT_DIR, 'release-notes.md'),
-    'utf8'
-  );
-  return renderMarkdown(parseFrontmatter(source).body);
+/**
+ * A version as it may appear in a filename or an `id`. Two-part versions exist
+ * only as the single legacy `1.6`; new releases are always three-part.
+ */
+const VERSION = /^\d+\.\d+(?:\.\d+)?$/;
+
+/**
+ * `1.6` and `1.6.0` are the same release. Normalizing means a `v1.6` tag and a
+ * `v1.6.0` tag both find it.
+ */
+export function normalizeVersion(raw) {
+  const trimmed = String(raw).trim().replace(/^v/i, '');
+  const parts = trimmed.split('.');
+  while (parts.length < 3) parts.push('0');
+  return parts.join('.');
+}
+
+/** Newest first. Numeric per segment, so 1.43.10 sorts above 1.43.9. */
+export function compareVersionsDesc(a, b) {
+  const left = normalizeVersion(a).split('.').map(Number);
+  const right = normalizeVersion(b).split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (left[i] !== right[i]) return right[i] - left[i];
+  }
+  return 0;
+}
+
+/**
+ * The anchor for a release. Derived from the frontmatter `version`, never from
+ * the heading text: a Markdown slugger would mangle `1.38.0` into `1-38-0` and
+ * silently re-mint all 97 published ids under its own algorithm.
+ */
+export function anchorFor(version) {
+  return `v${version}`;
+}
+
+/** `1.49.1` + `Push Notification Fixes` -> `1.49.1 - Push Notification Fixes`. */
+export function headingFor(version, title) {
+  return title ? `${version} - ${title}` : version;
+}
+
+/**
+ * @param {string} [dir]
+ * @returns {{ version: string, date: string, title: string, highlights: string[],
+ *   anchor: string, body: string, sourceFile: string }[]} newest release first
+ */
+export function readReleaseSources(dir = RELEASE_NOTES_DIR) {
+  if (!fs.existsSync(dir)) return [];
+
+  const names = fs.readdirSync(dir).filter((name) => name.endsWith('.md'));
+
+  const sources = names.map((name) => {
+    const raw = fs.readFileSync(path.join(dir, name), 'utf8');
+    let parsed;
+    try {
+      parsed = parseFrontmatter(raw);
+    } catch (error) {
+      throw new Error(`${name}: ${error.message}`);
+    }
+
+    // The filename is the version. Letting them drift would put a release under
+    // an anchor nobody can predict from the file they edited.
+    const expected = name.replace(/\.md$/, '');
+    if (String(parsed.data.version) !== expected) {
+      throw new Error(
+        `${name} declares version "${parsed.data.version}" but must match its filename ("${expected}").`
+      );
+    }
+
+    // `date`, `title` and `highlights` are passed through with the types the
+    // frontmatter parser gave them. Coercing here (`String(...)`) would make the
+    // validator's type checks unreachable: `title: 141` would arrive as the
+    // string "141" and sail through the rule written to catch it.
+    return {
+      version: expected,
+      date: parsed.data.date ?? '',
+      title: parsed.data.title ?? '',
+      highlights: parsed.data.highlights ?? [],
+      anchor: anchorFor(expected),
+      body: parsed.body,
+      sourceFile: name,
+    };
+  });
+
+  return sources.sort((a, b) => compareVersionsDesc(a.version, b.version));
+}
+
+/** True for a string this module is willing to treat as a version. */
+export function isVersion(text) {
+  return VERSION.test(String(text));
 }
 
 // `lt` and `gt` are deliberately absent. GitHub renders raw HTML inside
@@ -56,15 +141,6 @@ function decodeEntities(text) {
 
 function collapse(text) {
   return text.replace(/\s+/g, ' ').trim();
-}
-
-// A version id may be two-part (the single legacy `v1.6`) or three-part.
-// Normalizing means a `v1.6` tag and a `v1.6.0` tag both find the section.
-function normalizeVersion(raw) {
-  const trimmed = String(raw).trim().replace(/^v/i, '');
-  const parts = trimmed.split('.');
-  while (parts.length < 3) parts.push('0');
-  return parts.join('.');
 }
 
 // Lists nest, so the non-greedy `<li>...</li>` and `<ul>...</ul>` matches that
@@ -153,47 +229,15 @@ function renderList(inner, depth) {
 }
 
 /**
- * Split the component HTML into one entry per release.
- * Only <h3> headings are releases; the page's <h2> title is not.
- */
-export function parseSections(html) {
-  const heading =
-    /<h3\b[^>]*\bid="v?([0-9][0-9.]*)"[^>]*>([\s\S]*?)<\/h3\s*>/gi;
-  const found = [];
-  let match;
-
-  while ((match = heading.exec(html)) !== null) {
-    found.push({
-      version: normalizeVersion(match[1]),
-      title: collapse(decodeEntities(match[2].replace(/<[^>]*>/g, ''))),
-      // Where this heading opens, and where its body starts. Keeping both means
-      // the next section's boundary is already known -- searching back for the
-      // literal '<h3' would miss an uppercase <H3> that the matcher accepted.
-      openIndex: match.index,
-      start: heading.lastIndex,
-    });
-  }
-
-  return found.map((section, i) => ({
-    version: section.version,
-    title: section.title,
-    bodyHtml: html.slice(
-      section.start,
-      i + 1 < found.length ? found[i + 1].openIndex : html.length
-    ),
-  }));
-}
-
-/**
- * Convert a release section's HTML to Markdown suitable for a GitHub Release
- * body. Handles only the shapes the component actually uses.
+ * Convert one release's rendered HTML to Markdown suitable for a GitHub Release
+ * body. Handles only the shapes the release notes actually use.
  */
 export function htmlToMarkdown(html) {
   let s = html;
 
   // Drop structural and media-only elements. Their inner block content (if any)
   // is still picked up below, since blocks are matched wherever they appear.
-  s = s.replace(/<\/?(?:div|hr|img|mat-[a-z-]+)\b[^>]*>/gi, '');
+  s = s.replace(/<\/?(?:div|section|hr|img|mat-[a-z-]+)\b[^>]*>/gi, '');
   s = s.replace(/<br\s*\/?>/gi, ' ');
 
   // Inline formatting, before blocks so it survives into the block text.
@@ -246,23 +290,30 @@ export function htmlToMarkdown(html) {
 }
 
 /**
- * Look up one release by version (with or without a leading `v`).
- * Throws when the version has no section -- a silent empty release body is
- * worse than a failed deploy.
+ * The GitHub Release body for one version (with or without a leading `v`).
+ *
+ * Throws when the version has no file -- a silent empty release body is worse
+ * than a failed deploy, and the deploy runs this as its first step so a missing
+ * file fails in seconds rather than after a full build.
+ *
+ * @param {string} version
+ * @param {string} [dir]
  */
-export function extractReleaseNotes(html, version) {
+export function extractReleaseNotes(version, dir = RELEASE_NOTES_DIR) {
   const wanted = normalizeVersion(version);
-  const section = parseSections(html).find((s) => s.version === wanted);
+  const release = readReleaseSources(dir).find(
+    (source) => normalizeVersion(source.version) === wanted
+  );
 
-  if (!section) {
+  if (!release) {
     throw new Error(
-      `no release notes section for ${wanted}: add an <h3 id="v${wanted}"> entry to the release notes component`
+      `no release notes for ${wanted}: add src/content/release-notes/${wanted}.md`
     );
   }
 
   return {
-    version: section.version,
-    title: section.title,
-    markdown: htmlToMarkdown(section.bodyHtml),
+    version: release.version,
+    title: headingFor(release.version, release.title),
+    markdown: htmlToMarkdown(renderMarkdown(release.body)),
   };
 }

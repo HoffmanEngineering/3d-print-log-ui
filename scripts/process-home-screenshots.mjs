@@ -16,6 +16,12 @@ const WEBP_QUALITY = 80;
 // (which also avoids NgOptimizedImage "oversized image" console warnings).
 // Narrower captures (e.g. the portrait analytics) are left untouched.
 const MAX_WIDTH = 1400;
+// The narrowest CAPTURE_TARGETS viewport is 560 CSS px, so a genuine 2x capture
+// is at least 1120px wide. The old floor of 400 accepted a 1x capture at 560 and
+// published it at half resolution — silently reintroducing the blurry upscaled
+// images this pipeline exists to eliminate. Raise this only alongside the
+// manifest.
+const MIN_2X_WIDTH = 1000;
 
 // Logical image bases (light + dark) — mirror manifest.ts CAPTURE_TARGETS.
 const BASES = [
@@ -53,9 +59,12 @@ async function main() {
       .webp({ quality: WEBP_QUALITY })
       .toBuffer();
     const meta = await sharp(webp).metadata();
-    if (!meta.width || !meta.height || meta.width < 400) {
+    if (!meta.width || !meta.height || meta.width < MIN_2X_WIDTH) {
       throw new Error(
-        `Suspicious dimensions for ${base}: ${meta.width}x${meta.height}`
+        `Suspicious dimensions for ${base}: ${meta.width}x${meta.height}. ` +
+          `Captures below ${MIN_2X_WIDTH}px were almost certainly taken at ` +
+          `device-scale-factor 1 — re-run \`npm run capture:home\`, which uses ` +
+          `cypress.config.capture.ts.`
       );
     }
     staged.push({

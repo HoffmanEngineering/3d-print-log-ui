@@ -136,6 +136,12 @@ cy.wait('@getFilamentsModal');
 The three home feature images (`Homepage_PrinterList`, `Homepage_Filament`,
 `Homepage_Analytics`, each light + dark) are generated, not hand-captured.
 
+**Nothing runs this for you.** No workflow invokes it, and the images are
+committed WebP under `src/assets/`, so they stay as they are until someone
+re-runs the capture and commits the result. Refresh it when you change the
+print list, the materials list, or the analytics overview tab — the images go
+stale silently, since nothing compares them against the current UI.
+
 **To refresh after a UI change:**
 
     npm run capture:home:all
@@ -152,6 +158,13 @@ If a dev server is already running on 4200, just run the two steps directly:
 
 - Runs in **Chrome** (`--browser chrome`); Electron ignores
   `--force-device-scale-factor`, so the DPR hook only takes effect in Chrome.
+- The capture spec is **excluded from the normal E2E config** — it is a
+  generator, not a test. Left in the default glob it ran in `npx cypress run`
+  and the nightly job at device-scale-factor 1 (that flag lives only in
+  `cypress.config.capture.ts`) and overwrote the same PNG filenames the
+  processing step reads, at half resolution. The processing step also refuses
+  any capture narrower than `MIN_2X_WIDTH`, so a 1× shot fails loudly instead of
+  being published as a blurry asset.
 - Demo data is fixture-driven (`cypress/fixtures/demo/manifest.ts`); the capture
   **fails** if any `/api/**` request escapes the fixtures, and `afterEach` prints
   the offending URLs. When you add a page call, add its stub to `FIXTURE_ROUTES`.

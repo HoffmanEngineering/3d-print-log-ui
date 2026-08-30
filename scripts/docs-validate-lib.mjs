@@ -402,8 +402,17 @@ function validateReleases(releases, add) {
  * including inside a value. `alt="Prints > 10"` truncated the attribute string
  * mid-way, and the rules below then reported a figure that binds neither name
  * nor src, which is true of the fragment and false of the markup.
+ *
+ * The three alternatives are DISJOINT — the last one excludes both quote
+ * characters — and that is load-bearing, not tidiness. With a plain `[^>]`
+ * there, a quote could be consumed by two different branches, so a run of them
+ * could be decomposed exponentially many ways and a long one would hang the
+ * validator (CodeQL js/redos). Disjoint alternatives leave exactly one parse.
  */
-const DOC_FIGURE = /<doc-figure\b((?:"[^"]*"|'[^']*'|[^>])*)>/g;
+const DOC_FIGURE = /<doc-figure\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+
+/** Any opening `<doc-figure`, matched or not — see `figureProblems`. */
+const DOC_FIGURE_OPEN = /<doc-figure\b/g;
 
 /**
  * Reads an attribute off a start tag, whether it is written plainly or as a
@@ -451,7 +460,20 @@ function attributeOf(attributes, name) {
 function figureProblems(template, captures) {
   const problems = [];
 
-  for (const [, attributes] of template.matchAll(DOC_FIGURE)) {
+  const tags = [...template.matchAll(DOC_FIGURE)];
+
+  // Every `<doc-figure` must have parsed. An unbalanced quote makes the tag
+  // regex fail rather than match a truncated fragment, and a figure that
+  // silently escaped every rule below is the one shape this function must not
+  // allow — it is the rule that a missing alt or an unresolvable name is caught.
+  const opened = [...template.matchAll(DOC_FIGURE_OPEN)].length;
+  if (opened !== tags.length) {
+    problems.push(
+      `${opened - tags.length} <doc-figure> tag(s) could not be parsed; check for an unbalanced quote in an attribute.`
+    );
+  }
+
+  for (const [, attributes] of tags) {
     const alt = attributeOf(attributes, 'alt');
     if (alt === null) {
       problems.push(
@@ -465,7 +487,12 @@ function figureProblems(template, captures) {
 
     const name = attributeOf(attributes, 'name');
     const src = attributeOf(attributes, 'src');
-    const label = name ? `<doc-figure name="${name}">` : '<doc-figure>';
+    // Named without rebuilding the markup around it. An interpolation into
+    // `name="..."` reads as an HTML attribute being assembled from unescaped
+    // input, which is what CodeQL's incomplete-html-attribute-sanitization rule
+    // is for. Nothing here is ever rendered — these are console messages — but
+    // a validator should not be the thing teaching that pattern.
+    const label = name ? `<doc-figure> named "${name}"` : '<doc-figure>';
 
     if (name !== null && src !== null) {
       problems.push(
@@ -501,7 +528,7 @@ function figureProblems(template, captures) {
     for (const attribute of ['width', 'height']) {
       if (attributeOf(attributes, attribute) === null) {
         problems.push(
-          `<doc-figure src="${src}"> is missing ${attribute}; without it the image reflows the prose as it loads.`
+          `<doc-figure> for "${src}" is missing ${attribute}; without it the image reflows the prose as it loads.`
         );
       }
     }

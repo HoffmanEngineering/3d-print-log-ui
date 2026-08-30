@@ -740,8 +740,8 @@ test('reports a src doc-figure missing its dimensions', () => {
   assert.deepEqual(
     figureMessages('<doc-figure src="./a.png" alt="A print"></doc-figure>'),
     [
-      'prints.md: <doc-figure src="./a.png"> is missing width; without it the image reflows the prose as it loads.',
-      'prints.md: <doc-figure src="./a.png"> is missing height; without it the image reflows the prose as it loads.',
+      'prints.md: <doc-figure> for "./a.png" is missing width; without it the image reflows the prose as it loads.',
+      'prints.md: <doc-figure> for "./a.png" is missing height; without it the image reflows the prose as it loads.',
     ]
   );
 });
@@ -766,4 +766,23 @@ test('reads single-quoted doc-figure attributes', () => {
     ),
     []
   );
+});
+
+test('reports a doc-figure tag it could not parse', () => {
+  // An unbalanced quote makes the tag regex fail rather than match a truncated
+  // fragment. Silently skipping it would mean the figure escaped every rule
+  // above — no alt check, no name resolution.
+  const [message] = figureMessages(
+    '<doc-figure name="print-list alt="A print"></doc-figure>',
+    CAPTURES
+  );
+  assert.match(message, /could not be parsed/);
+});
+
+test('the tag matcher does not backtrack on a long run of quotes', () => {
+  // js/redos: with overlapping alternatives a run of quotes could be decomposed
+  // exponentially many ways and this would never return.
+  const started = Date.now();
+  figureMessages(`<doc-figure alt=${'"'.repeat(60)}`, CAPTURES);
+  assert.ok(Date.now() - started < 1000, 'tag matching should be linear');
 });

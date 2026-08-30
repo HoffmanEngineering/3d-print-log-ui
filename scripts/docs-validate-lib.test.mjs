@@ -745,3 +745,25 @@ test('reports a src doc-figure missing its dimensions', () => {
     ]
   );
 });
+
+test('accepts a doc-figure whose alt contains a > character', () => {
+  // The tag matcher used to stop at the first `>` wherever it appeared, so this
+  // truncated mid-attribute and was reported as binding neither name nor src.
+  assert.deepEqual(
+    figureMessages(
+      '<doc-figure name="print-list" alt="Filtered to prints > 10 hours"></doc-figure>',
+      CAPTURES
+    ),
+    []
+  );
+});
+
+test('reads single-quoted doc-figure attributes', () => {
+  assert.deepEqual(
+    figureMessages(
+      "<doc-figure name='print-list' alt='He said \"no\"'></doc-figure>",
+      CAPTURES
+    ),
+    []
+  );
+});

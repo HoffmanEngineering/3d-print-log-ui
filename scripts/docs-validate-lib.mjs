@@ -395,8 +395,15 @@ function validateReleases(releases, add) {
   }
 }
 
-/** A `<doc-figure>` start tag, with its attributes. */
-const DOC_FIGURE = /<doc-figure\b([^>]*)>/g;
+/**
+ * A `<doc-figure>` start tag, with its attributes.
+ *
+ * Quote-aware, because `[^>]*` stopped at the first `>` wherever it appeared —
+ * including inside a value. `alt="Prints > 10"` truncated the attribute string
+ * mid-way, and the rules below then reported a figure that binds neither name
+ * nor src, which is true of the fragment and false of the markup.
+ */
+const DOC_FIGURE = /<doc-figure\b((?:"[^"]*"|'[^']*'|[^>])*)>/g;
 
 /**
  * Reads an attribute off a start tag, whether it is written plainly or as a
@@ -405,10 +412,12 @@ const DOC_FIGURE = /<doc-figure\b([^>]*)>/g;
  * is all any rule below needs.
  */
 function attributeOf(attributes, name) {
-  const match = new RegExp(`\\s\\[?${name}\\]?\\s*=\\s*"([^"]*)"`).exec(
+  // Single quotes are legal in the raw HTML blocks a doc page may contain, and
+  // `alt='He said "no"'` is the reason an author would reach for them.
+  const match = new RegExp(`\\s\\[?${name}\\]?\\s*=\\s*("[^"]*"|'[^']*')`).exec(
     attributes
   );
-  return match ? match[1] : null;
+  return match ? match[1].slice(1, -1) : null;
 }
 
 /**

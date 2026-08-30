@@ -21,6 +21,7 @@ import {
   imagesRendered,
   noPlaceholders,
   rendered,
+  visible,
 } from '../../support/capture';
 
 export type { CaptureSet, CaptureTarget, FixtureRoute };
@@ -78,15 +79,18 @@ export const PRINT_IMAGE_MAP: Record<string, string> = {
 const DEMO_PRINT_COUNT = 5;
 
 /**
- * One chip per print, plus a second on the multi-material wall mount.
+ * One material per print, plus a second on the multi-material wall mount.
  *
- * Material chips are the point of the print-list images — the home copy beside
+ * Material usage is the point of the print-list images — the home copy beside
  * them is about tracking filament, and the doc section is about material usage.
- * The card and the row render a chip only when a print carries `filamentUsage`,
- * so a fixture that lost it would still produce a perfectly plausible
- * screenshot of the feature not being there.
+ * Both views render it only when a print carries `filamentUsage`, so a fixture
+ * that lost it would still produce a perfectly plausible screenshot of the
+ * feature not being there.
+ *
+ * The two views spell it differently: the card renders `.material-chip`, the
+ * table column renders an `app-filament-color-swatch` per usage row.
  */
-const DEMO_MATERIAL_CHIP_COUNT = 6;
+const DEMO_MATERIAL_COUNT = 6;
 
 // ---------------------------------------------------------------------------
 // Home page
@@ -109,7 +113,7 @@ const HOME_CAPTURE_TARGETS: CaptureTarget[] = [
       // [cy-print-row] is never rendered at all.
       rendered('app-print-card', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
-      rendered('.material-chip', DEMO_MATERIAL_CHIP_COUNT),
+      rendered('.material-chip', DEMO_MATERIAL_COUNT),
     ],
   },
   {
@@ -185,6 +189,7 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
     ready: [
       rendered('[cy-print-row]', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
+      rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
     ],
   }),
   docTarget({
@@ -193,11 +198,12 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
     selector: '[data-cy="capture-print-filters"]',
     viewport: DOC_DESKTOP,
     ready: [
-      // The Status and Printers selects. Both are inside #filter-panel, which
-      // is only laid out once the panel is open — the figure exists to show
-      // exactly that, so an empty panel must fail rather than be captured.
+      // `visible`, not `rendered`. The panel collapses to max-height 0 and
+      // keeps its controls, so counting them passes on a closed panel — and a
+      // figure of a closed filter panel is exactly what this one must not be.
+      visible('#filter-panel'),
       rendered('#filter-panel mat-select', 2),
-      exists('.search-field input'),
+      visible('.search-field input'),
     ],
   }),
   docTarget({
@@ -208,6 +214,8 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
     ready: [
       rendered('[cy-print-row]', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
+      // The Materials column, which the caption below this figure describes.
+      rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
     ],
   }),
   docTarget({
@@ -218,7 +226,7 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
     ready: [
       rendered('app-print-card', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
-      rendered('.material-chip', DEMO_MATERIAL_CHIP_COUNT),
+      rendered('.material-chip', DEMO_MATERIAL_COUNT),
     ],
   }),
 ];

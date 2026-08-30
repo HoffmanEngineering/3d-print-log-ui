@@ -88,6 +88,10 @@ const SETS = {
   },
 };
 
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Cypress nests screenshots by spec path, which varies by environment — find the
 // PNG by filename anywhere under cypress/screenshots.
 function findPng(name, dir = SCREENSHOTS) {
@@ -182,7 +186,10 @@ async function main() {
   for (const f of fs.readdirSync(config.assetDir)) {
     if (keep.has(f) || !f.endsWith('.webp')) continue;
     const superseded = staged.some((s) =>
-      new RegExp(`^${s.assetBase}_[A-Za-z0-9]+\\.webp$`).test(f)
+      // Escaped: this sweep DELETES files, and an unescaped `.` in a future
+      // base (`Homepage_v2.0`) would match any character and take an unrelated
+      // asset with it.
+      new RegExp(`^${escapeRegExp(s.assetBase)}_[A-Za-z0-9]+\\.webp$`).test(f)
     );
     if (config.exclusive || superseded) {
       fs.unlinkSync(path.join(config.assetDir, f));

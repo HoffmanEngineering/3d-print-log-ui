@@ -87,6 +87,56 @@ export function docCapturesIndex(staged) {
   return index;
 }
 
+/**
+ * Checks every published figure against the bytes actually on disk.
+ *
+ * The map and the assets are written together and committed together, so they
+ * agree at birth — and then a rebase, a partial `git add`, or an LFS-less clone
+ * separates them, and NOTHING downstream notices: `docs:generate` reads the map,
+ * `validate-docs` reads the map, the Angular build never resolves a runtime
+ * `src`. The first symptom is a broken image on a published page.
+ *
+ * Verifying the hash rather than mere existence costs one read of a ~70KB file
+ * and subsumes the dimension check for free: the filename carries the content
+ * hash, so a file that hashes correctly IS the file whose width and height were
+ * recorded.
+ *
+ * @param {Record<string, {light: object, dark: object}>} captures
+ * @param {(publicPath: string) => Buffer|null} readAsset null when absent
+ * @returns {string[]} one message per problem
+ */
+export function captureAssetProblems(captures, readAsset) {
+  const problems = [];
+
+  for (const [name, entry] of Object.entries(captures)) {
+    for (const theme of ['light', 'dark']) {
+      const image = entry?.[theme];
+      if (!image?.src) {
+        problems.push(`figure "${name}" has no ${theme} src.`);
+        continue;
+      }
+
+      const bytes = readAsset(image.src);
+      if (!bytes) {
+        problems.push(
+          `figure "${name}" (${theme}) points at ${image.src}, which does not exist. Re-run \`npm run capture:docs:all\`.`
+        );
+        continue;
+      }
+
+      const expected = /_([A-Za-z0-9]+)\.webp$/.exec(image.src)?.[1];
+      const actual = contentHash(bytes);
+      if (expected !== actual) {
+        problems.push(
+          `figure "${name}" (${theme}) is ${image.src}, but that file hashes to ${actual}. The asset and the map are out of step — re-run \`npm run capture:docs:all\`.`
+        );
+      }
+    }
+  }
+
+  return problems;
+}
+
 export function contentHash(buffer) {
   return createHash('sha256').update(buffer).digest('hex').slice(0, 12);
 }

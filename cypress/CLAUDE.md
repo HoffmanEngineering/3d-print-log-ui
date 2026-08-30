@@ -162,12 +162,9 @@ If a dev server is already running on 4200, run the two steps directly:
 3. `npm run capture:docs:all`.
 4. Reference it from the Markdown. No path, no dimensions:
 
-   <doc-figure
-   name="print-list-table"
-   alt="What the screenshot shows, for a reader who cannot see it"
-   caption="Optional"
-
-   > </doc-figure>
+   ```html
+   <doc-figure name="print-list-table" alt="What the screenshot shows, for a reader who cannot see it" caption="Optional"></doc-figure>
+   ```
 
 `src` still works for a hand-placed asset (the Android app screenshots), and
 then `width` and `height` are required. `validate-docs.mjs` rejects a figure

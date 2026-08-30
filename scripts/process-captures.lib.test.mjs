@@ -1,6 +1,7 @@
 import assert from 'node:assert';
 import test from 'node:test';
 import {
+  captureAssetProblems,
   contentHash,
   deviceScale,
   docCapturesIndex,
@@ -177,4 +178,42 @@ test('docCapturesIndex refuses a figure with only one theme', () => {
     () => docCapturesIndex([staged('print-list', 'light')]),
     /has no dark capture/
   );
+});
+
+// --- published assets --------------------------------------------------------
+
+const BYTES = Buffer.from('an image');
+const HASH = contentHash(BYTES);
+const withHash = (name, theme) =>
+  `/assets/docs/captures/${name}${theme === 'dark' ? '_dark' : ''}_${HASH}.webp`;
+
+const PUBLISHED = {
+  'print-list': {
+    light: { src: withHash('print-list', 'light'), width: 8, height: 6 },
+    dark: { src: withHash('print-list', 'dark'), width: 8, height: 6 },
+  },
+};
+
+test('captureAssetProblems passes when every file matches its hash', () => {
+  assert.deepEqual(
+    captureAssetProblems(PUBLISHED, () => BYTES),
+    []
+  );
+});
+
+test('captureAssetProblems reports an asset that is not on disk', () => {
+  // The map and the assets are committed together and then separated by a
+  // rebase or a partial add. Nothing downstream resolves a runtime src, so the
+  // first symptom would be a broken image on a published page.
+  const [message] = captureAssetProblems(PUBLISHED, (src) =>
+    src.includes('_dark') ? null : BYTES
+  );
+  assert.match(message, /\(dark\) points at .*which does not exist/);
+});
+
+test('captureAssetProblems reports an asset whose content no longer matches', () => {
+  const [message] = captureAssetProblems(PUBLISHED, () =>
+    Buffer.from('a different image')
+  );
+  assert.match(message, /hashes to [a-f0-9]{12}/);
 });

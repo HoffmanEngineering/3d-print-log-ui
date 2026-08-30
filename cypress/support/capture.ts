@@ -89,6 +89,18 @@ export function exists(selector: string): ReadyStep {
 }
 
 /**
+ * `selector` is in the DOM AND laid out.
+ *
+ * The distinction is not academic. A collapsed panel keeps every control it
+ * contains — the print list's filter panel collapses to `max-height: 0`, so
+ * counting its `mat-select`s passes on a panel the reader cannot see, and the
+ * figure documents a closed panel.
+ */
+export function visible(selector: string): ReadyStep {
+  return (scope) => cy.get(`${scope} ${selector}`).should('be.visible');
+}
+
+/**
  * `selector` must NOT be inside the boundary.
  *
  * The skeleton case is the reason this exists: a chart frame still in its
@@ -181,7 +193,17 @@ function stubApi(set: CaptureSet, unhandled: string[]) {
   // Print row images -> committed demo photos, mapped by imageId (== defaultPrintImageId).
   cy.intercept('GET', '**/api/Prints/*/image/*', (req) => {
     const id = req.url.match(/\/image\/(\d+)/)?.[1] ?? '';
-    const file = set.printImages[id] ?? 'demo/images/llamas.jpg';
+    const file = set.printImages[id];
+    if (!file) {
+      // No default photo. An unmapped id used to fall back to the llamas, which
+      // meant changing a fixture's defaultPrintImageId silently published a
+      // screenshot of the wrong print — every readiness check still passes,
+      // because an image did render. Reported through the same list as a missed
+      // stub, so the run fails and says which id.
+      unhandled.push(`${req.method} ${req.url} (no demo image for id ${id})`);
+      req.reply({ statusCode: 404, body: {} });
+      return;
+    }
     req.reply({ fixture: file });
   });
 }
@@ -226,6 +248,25 @@ function captureReady(target: CaptureTarget) {
         el.decode ? el.decode().catch(() => undefined) : Promise.resolve()
       )
     );
+  });
+  // The decode rejection above is swallowed, because decode() rejects for
+  // reasons that are not failures. What is NOT allowed is an image that ended
+  // up with nothing to paint: that renders as a broken-image glyph or as empty
+  // space, and every readiness check that merely counted <img> elements would
+  // still have passed.
+  //
+  // Not `cy.get(...).each()`: cy.get fails outright on an empty match, and the
+  // materials and analytics boundaries legitimately contain no images.
+  cy.get('body').then(() => {
+    const imgs = Cypress.$(
+      `${target.selector} img`
+    ).toArray() as HTMLImageElement[];
+    for (const img of imgs) {
+      expect(
+        img.naturalWidth,
+        `image failed to load: ${img.getAttribute('src')?.slice(0, 80)}`
+      ).to.be.greaterThan(0);
+    }
   });
 }
 
@@ -373,11 +414,15 @@ export function runCaptureSuite(title: string, set: CaptureSet) {
           cy.wait(SETTLE_MS);
           const outputBase = `${target.outputBase}${theme.suffix}`;
           cy.get(target.selector).screenshot(outputBase, { overwrite: true });
-          recordResult(set.id, outputBase, target.selector);
-          // Fail if any API call escaped the fixtures. afterEach prints the list.
+          // Fail if any API call escaped the fixtures, BEFORE recording the
+          // result. Recording it first would mean a run whose page rendered an
+          // error state still handed the processing step a complete-looking
+          // sidecar, and the bad image would be published on the strength of it.
+          // afterEach prints the offending URLs.
           cy.wrap(null).then(() => {
             expect(unhandled, 'un-stubbed API calls').to.be.empty;
           });
+          recordResult(set.id, outputBase, target.selector);
         });
       }
     }

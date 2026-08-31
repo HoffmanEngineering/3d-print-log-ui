@@ -599,7 +599,9 @@ test('accepts a link to a derived heading anchor the generator will emit', () =>
   // The generated page gives every h2-h4 an id. Validating the bare Markdown
   // render instead rejected exactly the anchors the deployed page declares.
   assert.deepEqual(
-    messages({ body: '## Prints\n\n### Print List\n\nSee [the list](#print-list).\n' }),
+    messages({
+      body: '## Prints\n\n### Print List\n\nSee [the list](#print-list).\n',
+    }),
     []
   );
 });
@@ -623,8 +625,12 @@ test('accepts a cross-page link to another page derived anchor', () => {
 test('still reports a fragment link matching no heading on the page', () => {
   // Derived ids widen what may be linked to; they must not turn the check off.
   assert.deepEqual(
-    messages({ body: '## Prints\n\n### Print List\n\nSee [gone](#print-lst).\n' }),
-    ['prints.md: link to #print-lst, but no element on the page declares that id.']
+    messages({
+      body: '## Prints\n\n### Print List\n\nSee [gone](#print-lst).\n',
+    }),
+    [
+      'prints.md: link to #print-lst, but no element on the page declares that id.',
+    ]
   );
 });
 
@@ -646,7 +652,9 @@ test('reports a doc-figure whose alt is empty', () => {
     messages({
       body: '## Prints\n\n<doc-figure src="./a.png" alt="" width="8" height="6"></doc-figure>\n',
     }),
-    ['prints.md: <doc-figure> has an empty alt; describe what the screenshot shows.']
+    [
+      'prints.md: <doc-figure> has an empty alt; describe what the screenshot shows.',
+    ]
   );
 });
 
@@ -657,4 +665,124 @@ test('accepts a doc-figure that describes its image', () => {
     }),
     []
   );
+});
+
+// --- <doc-figure name="..."> ------------------------------------------------
+
+/** One page whose body is `body`, validated against a captures map. */
+const figureMessages = (body, captures = {}) =>
+  validateDocs({
+    sources: [source({ body: `## Prints\n\n${body}\n` }), landingPage()],
+    captures,
+  }).map((p) => p.message);
+
+const CAPTURES = {
+  'print-list': {
+    light: {
+      src: '/assets/docs/captures/print-list_a1.webp',
+      width: 8,
+      height: 6,
+    },
+    dark: {
+      src: '/assets/docs/captures/print-list_dark_b2.webp',
+      width: 8,
+      height: 6,
+    },
+  },
+};
+
+test('accepts a doc-figure naming a capture that exists', () => {
+  assert.deepEqual(
+    figureMessages(
+      '<doc-figure name="print-list" alt="The print list"></doc-figure>',
+      CAPTURES
+    ),
+    []
+  );
+});
+
+test('reports a doc-figure naming a capture that does not exist', () => {
+  // The gate the whole pipeline hangs off: assets are content-hashed and
+  // committed, so a figure whose capture never ran is a broken image on a
+  // published page and nothing else would notice.
+  const [message] = figureMessages(
+    '<doc-figure name="print-detail" alt="A print"></doc-figure>',
+    CAPTURES
+  );
+  assert.match(message, /names a capture that does not exist/);
+});
+
+test('reports a doc-figure that binds both name and src', () => {
+  const [message] = figureMessages(
+    '<doc-figure name="print-list" src="./a.png" alt="A print"></doc-figure>',
+    CAPTURES
+  );
+  assert.match(message, /binds both name and src/);
+});
+
+test('reports a doc-figure that binds neither name nor src', () => {
+  assert.deepEqual(figureMessages('<doc-figure alt="A print"></doc-figure>'), [
+    'prints.md: <doc-figure> binds neither name nor src; it has no image to show.',
+  ]);
+});
+
+test('reports hand-typed dimensions on a named doc-figure', () => {
+  // They would pin numbers the next recapture invalidates without touching the
+  // Markdown, which is the whole reason the map carries them.
+  const [message] = figureMessages(
+    '<doc-figure name="print-list" alt="A print" width="8" height="6"></doc-figure>',
+    CAPTURES
+  );
+  assert.match(message, /takes its dimensions from the capture/);
+});
+
+test('reports a src doc-figure missing its dimensions', () => {
+  assert.deepEqual(
+    figureMessages('<doc-figure src="./a.png" alt="A print"></doc-figure>'),
+    [
+      'prints.md: <doc-figure> for "./a.png" is missing width; without it the image reflows the prose as it loads.',
+      'prints.md: <doc-figure> for "./a.png" is missing height; without it the image reflows the prose as it loads.',
+    ]
+  );
+});
+
+test('accepts a doc-figure whose alt contains a > character', () => {
+  // The tag matcher used to stop at the first `>` wherever it appeared, so this
+  // truncated mid-attribute and was reported as binding neither name nor src.
+  assert.deepEqual(
+    figureMessages(
+      '<doc-figure name="print-list" alt="Filtered to prints > 10 hours"></doc-figure>',
+      CAPTURES
+    ),
+    []
+  );
+});
+
+test('reads single-quoted doc-figure attributes', () => {
+  assert.deepEqual(
+    figureMessages(
+      "<doc-figure name='print-list' alt='He said \"no\"'></doc-figure>",
+      CAPTURES
+    ),
+    []
+  );
+});
+
+test('reports a doc-figure tag it could not parse', () => {
+  // An unbalanced quote makes the tag regex fail rather than match a truncated
+  // fragment. Silently skipping it would mean the figure escaped every rule
+  // above — no alt check, no name resolution.
+  const [message] = figureMessages(
+    '<doc-figure name="print-list alt="A print"></doc-figure>',
+    CAPTURES
+  );
+  assert.match(message, /could not be parsed/);
+});
+
+test('the tag matcher does not backtrack on a long run of quotes', () => {
+  // js/redos: with overlapping alternatives a run of quotes could be decomposed
+  // exponentially many ways and this would never return.
+  const started = Date.now();
+  figureMessages(`<doc-figure alt=${'"'.repeat(60)}`, CAPTURES);
+  assert.ok(Date.now() - started < 1000, 'tag matching should be linear');
 });

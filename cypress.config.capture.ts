@@ -10,8 +10,11 @@ import { defineConfig } from 'cypress';
 // falls on the seam is torn. It does not fail, it just produces a subtly broken
 // image. The print-list capture shipped that way, cut through its third card at
 // exactly 660px - the clamped viewport height. Keep this comfortably above
-// 2 x the tallest CAPTURE_TARGETS viewport.
-const WINDOW_SIZE = '1800,4000';
+// 2 x the WIDEST and 2 x the TALLEST viewport across every capture set: the
+// desktop doc figures ask for 1280 CSS px, which is 2560 device px here.
+// `fitViewportToTarget` in cypress/support/capture.ts fails the run rather than
+// capturing a clamped viewport, so raising this is the documented fix.
+const WINDOW_SIZE = '2800,4200';
 
 // Capture-only config. Adds a 2x device-scale-factor so element screenshots
 // are HiDPI, and restricts the run to the capture spec. The normal E2E config
@@ -22,7 +25,7 @@ export default defineConfig({
     baseUrl: 'https://localhost:4200',
     experimentalSessionAndOrigin: true,
     supportFile: 'cypress/support/e2e.js',
-    specPattern: 'cypress/e2e/home/capture-home-screenshots.cy.ts',
+    specPattern: 'cypress/e2e/**/capture-*.cy.ts',
     setupNodeEvents(on, config) {
       // Reuse existing plugins (session bypass etc.)
       require('./cypress/plugins/index.js')(on, config);

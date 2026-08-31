@@ -99,10 +99,15 @@ const ELEMENT_ALLOWLIST = new Set([
 ]);
 
 /**
- * @param {{ sources: object[], releases?: object[], anchorBaseline?: Record<string, string[]> }} input
+ * @param {{ sources: object[], releases?: object[], anchorBaseline?: Record<string, string[]>, captures?: Record<string, object> }} input
  * @returns {{ file: string, message: string }[]}
  */
-export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
+export function validateDocs({
+  sources,
+  releases = [],
+  anchorBaseline = {},
+  captures = {},
+}) {
   const problems = [];
   const add = (file, message) =>
     problems.push({ file, message: `${file}: ${message}` });
@@ -231,7 +236,7 @@ export function validateDocs({ sources, releases = [], anchorBaseline = {} }) {
       }
     }
 
-    for (const problem of figureAltProblems(template)) {
+    for (const problem of figureProblems(template, captures)) {
       add(file, problem);
     }
 
@@ -390,36 +395,143 @@ function validateReleases(releases, add) {
   }
 }
 
-/** A `<doc-figure>` start tag, with its attributes. */
-const DOC_FIGURE = /<doc-figure\b([^>]*)>/g;
+/**
+ * A `<doc-figure>` start tag, with its attributes.
+ *
+ * Quote-aware, because `[^>]*` stopped at the first `>` wherever it appeared —
+ * including inside a value. `alt="Prints > 10"` truncated the attribute string
+ * mid-way, and the rules below then reported a figure that binds neither name
+ * nor src, which is true of the fragment and false of the markup.
+ *
+ * The three alternatives are DISJOINT — the last one excludes both quote
+ * characters — and that is load-bearing, not tidiness. With a plain `[^>]`
+ * there, a quote could be consumed by two different branches, so a run of them
+ * could be decomposed exponentially many ways and a long one would hang the
+ * validator (CodeQL js/redos). Disjoint alternatives leave exactly one parse.
+ */
+const DOC_FIGURE = /<doc-figure\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+
+/** Any opening `<doc-figure`, matched or not — see `figureProblems`. */
+const DOC_FIGURE_OPEN = /<doc-figure\b/g;
 
 /**
- * `<doc-figure>` must describe its image in words.
+ * Reads an attribute off a start tag, whether it is written plainly or as a
+ * property binding. Only the literal form carries a value this script can read;
+ * `[width]="something"` is reported as present with an unreadable value, which
+ * is all any rule below needs.
+ */
+function attributeOf(attributes, name) {
+  // Single quotes are legal in the raw HTML blocks a doc page may contain, and
+  // `alt='He said "no"'` is the reason an author would reach for them.
+  const match = new RegExp(`\\s\\[?${name}\\]?\\s*=\\s*("[^"]*"|'[^']*')`).exec(
+    attributes
+  );
+  return match ? match[1].slice(1, -1) : null;
+}
+
+/**
+ * The `<doc-figure>` contract.
  *
- * `alt` being a required input only makes the BINDING required — `alt=""`
- * compiles, and marks the screenshot decorative. It never is: a doc figure is
- * a picture of the product carrying information the prose does not repeat.
+ * `alt` must describe the image in words. `alt` being a required input only
+ * makes the BINDING required — `alt=""` compiles, and marks the screenshot
+ * decorative. It never is: a doc figure is a picture of the product carrying
+ * information the prose does not repeat. Scoped to `doc-figure` rather than to
+ * every `<img>` on purpose: a bare `<img>` in a doc is sometimes genuinely
+ * ornamental, and the existing pages include one. The primitive is the thing
+ * that promises otherwise.
  *
- * Scoped to `doc-figure` rather than to every `<img>` on purpose. A bare `<img>`
- * in a doc is sometimes genuinely ornamental, and the existing pages include
- * one. The primitive is the thing that promises otherwise.
+ * `name` and `src` are the two ways to point at an image and exactly one is
+ * allowed, because a figure carrying both would silently render the generated
+ * one and leave the author editing a path that does nothing.
+ *
+ * A `name` must resolve. This is the gate the whole capture pipeline hangs off:
+ * assets are content-hashed and committed, so a figure whose capture was never
+ * run, or whose target was renamed, is a broken image on a published page and
+ * nothing else would notice.
+ *
+ * `width`/`height` belong with `src` and only with `src`. Without them the
+ * screenshot reflows the prose under it as it loads; beside a `name` they are
+ * numbers the next recapture invalidates without touching the Markdown.
  *
  * @param {string} template
+ * @param {Record<string, object>} captures docs-captures.json
  * @returns {string[]} one message per offending figure
  */
-function figureAltProblems(template) {
+function figureProblems(template, captures) {
   const problems = [];
 
-  for (const [, attributes] of template.matchAll(DOC_FIGURE)) {
-    // Either the plain attribute or a binding: an author may write alt="..."
-    // or [alt]="expression", and only the literal form can be read here.
-    if (/\s\[?alt\]?\s*=\s*"[^"]*[^"\s][^"]*"/.test(attributes)) continue;
+  const tags = [...template.matchAll(DOC_FIGURE)];
 
+  // Every `<doc-figure` must have parsed. An unbalanced quote makes the tag
+  // regex fail rather than match a truncated fragment, and a figure that
+  // silently escaped every rule below is the one shape this function must not
+  // allow — it is the rule that a missing alt or an unresolvable name is caught.
+  const opened = [...template.matchAll(DOC_FIGURE_OPEN)].length;
+  if (opened !== tags.length) {
     problems.push(
-      /\s\[?alt\]?\s*=/.test(attributes)
-        ? '<doc-figure> has an empty alt; describe what the screenshot shows.'
-        : '<doc-figure> is missing alt; describe what the screenshot shows.'
+      `${opened - tags.length} <doc-figure> tag(s) could not be parsed; check for an unbalanced quote in an attribute.`
     );
+  }
+
+  for (const [, attributes] of tags) {
+    const alt = attributeOf(attributes, 'alt');
+    if (alt === null) {
+      problems.push(
+        '<doc-figure> is missing alt; describe what the screenshot shows.'
+      );
+    } else if (alt.trim() === '') {
+      problems.push(
+        '<doc-figure> has an empty alt; describe what the screenshot shows.'
+      );
+    }
+
+    const name = attributeOf(attributes, 'name');
+    const src = attributeOf(attributes, 'src');
+    // Named without rebuilding the markup around it. An interpolation into
+    // `name="..."` reads as an HTML attribute being assembled from unescaped
+    // input, which is what CodeQL's incomplete-html-attribute-sanitization rule
+    // is for. Nothing here is ever rendered — these are console messages — but
+    // a validator should not be the thing teaching that pattern.
+    const label = name ? `<doc-figure> named "${name}"` : '<doc-figure>';
+
+    if (name !== null && src !== null) {
+      problems.push(
+        `${label} binds both name and src; use name for a generated capture, src for a hand-placed asset.`
+      );
+      continue;
+    }
+    if (name === null && src === null) {
+      problems.push(
+        '<doc-figure> binds neither name nor src; it has no image to show.'
+      );
+      continue;
+    }
+
+    const dimensions = ['width', 'height'].filter(
+      (attribute) => attributeOf(attributes, attribute) !== null
+    );
+
+    if (name !== null) {
+      if (!Object.prototype.hasOwnProperty.call(captures, name)) {
+        problems.push(
+          `${label} names a capture that does not exist. Add it to DOC_CAPTURE_SET in cypress/fixtures/demo/manifest.ts and run \`npm run capture:docs:all\`.`
+        );
+      }
+      if (dimensions.length > 0) {
+        problems.push(
+          `${label} sets ${dimensions.join(' and ')}; a named figure takes its dimensions from the capture, and a hand-typed one goes stale on the next recapture.`
+        );
+      }
+      continue;
+    }
+
+    for (const attribute of ['width', 'height']) {
+      if (attributeOf(attributes, attribute) === null) {
+        problems.push(
+          `<doc-figure> for "${src}" is missing ${attribute}; without it the image reflows the prose as it loads.`
+        );
+      }
+    }
   }
 
   return problems;

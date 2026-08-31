@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-08-29
+updated: 2026-08-30
 related: [projects, materials]
 ---
 
@@ -18,10 +18,21 @@ Navigate to the [Prints](/prints) section to manage your list of 3D prints.
 
 ### Prints List {#list}
 
+<doc-figure
+  name="print-list"
+  alt="The Prints page, with the search and filter controls above a table of five prints showing their images, printers, start dates, statuses, print times and materials"
+  caption="The Prints page"
+></doc-figure>
+
 By default, the list shows your last 10 prints, ordered by their Start Dates.
 Use the **Search** input at the top to filter the list by the print's **Title**
 and **Notes** fields. Use the **Status** dropdown to filter by a specific print
 status.
+
+<doc-figure
+  name="print-list-filters"
+  alt="The controls above the print list: an Add New Print button, a Search box, a Filters toggle, and an open filter row with Status and Filter by Printers dropdowns beside Filter by Material and Reset Filters buttons"
+></doc-figure>
 
 #### The Print List Table
 
@@ -56,6 +67,12 @@ Layout** menu to customize columns).
 - **Material** - Gives a detailed view of the material usage of the print, including color, name, and material used
 - **Total Material (g)** - The sum of the all the material weights for the print. It will use the Actual Amount if it is greater than 0, otherwise it will use the estimated weight.
 
+<doc-figure
+  name="print-list-table"
+  alt="The print list table with its default columns: a selection checkbox, image, title, printer, start date, status, print time, materials with colour swatches and cost, comment count, and a more-options menu"
+  caption="The default columns. An asterisk marks an estimated value."
+></doc-figure>
+
 ---
 
 ### Bulk Actions {#bulk-actions}
@@ -71,6 +88,12 @@ then on a single tap adds or removes a card, and the card you are holding shows
 a <mat-icon inline="true">check_circle</mat-icon> badge on its thumbnail. Tap
 the last selected card again to leave selection mode - the cards go back to
 opening the print when tapped.
+
+<doc-figure
+  name="print-list-cards"
+  alt="The print list on a narrow screen, showing each print as a card with its image, title, printer, start date, print time, materials and status"
+  caption="The card view, shown on phones and tablets"
+></doc-figure>
 
 As soon as one print is selected, a chip showing how many prints are selected
 appears next to the view toggle, along with an <mat-icon

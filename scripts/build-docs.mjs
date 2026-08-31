@@ -18,7 +18,12 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import process from 'node:process';
 
-import { planOutputs, readDocSources, syncOutputs } from './docs-build-lib.mjs';
+import {
+  planOutputs,
+  readDocCaptures,
+  readDocSources,
+  syncOutputs,
+} from './docs-build-lib.mjs';
 import {
   CONTENT_DIR,
   GENERATED_DIR,
@@ -38,7 +43,7 @@ const quiet = args.includes('--quiet');
 function generate() {
   const sources = readDocSources(CONTENT_DIR);
   const releases = readReleaseSources(RELEASE_NOTES_DIR);
-  const { files } = planOutputs(sources, releases);
+  const { files } = planOutputs(sources, releases, readDocCaptures());
   return syncOutputs(GENERATED_DIR, files, { check });
 }
 

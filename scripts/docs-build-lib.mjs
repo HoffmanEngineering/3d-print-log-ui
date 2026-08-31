@@ -23,7 +23,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { parseFrontmatter } from './docs-frontmatter.mjs';
+import { DOC_CAPTURES_JSON } from './docs-paths.mjs';
 import {
+  emitCapturesTs,
   emitDeclarationsTs,
   emitFiguresTs,
   emitManifestTs,
@@ -97,11 +99,25 @@ export function readDocSources(contentDir) {
 }
 
 /**
+ * The checked-in figure map written by scripts/process-captures.mjs.
+ *
+ * Absent is legal and means "no figures have been captured yet" — a fresh clone
+ * that has never run Cypress still builds, and `validate-docs` is what reports a
+ * `<doc-figure name>` the map cannot resolve.
+ *
+ * @returns {Record<string, {light: object, dark: object}>}
+ */
+export function readDocCaptures(file = DOC_CAPTURES_JSON) {
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+}
+
+/**
  * @param {object[]} sources from readDocSources
  * @param {object[]} [releases] from readReleaseSources, newest first
+ * @param {Record<string, object>} [captures] from readDocCaptures
  * @returns {{ files: Map<string, string>, manifest: object, templates: Record<string, string> }}
  */
-export function planOutputs(sources, releases = []) {
+export function planOutputs(sources, releases = [], captures = {}) {
   const manifest = buildManifest(
     sources.map(({ body, sourceFile, styles, ...frontmatter }) => frontmatter),
     toReleaseManifest(releases)
@@ -158,6 +174,7 @@ export function planOutputs(sources, releases = []) {
   files.set('docs-manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
   files.set('docs-search-index.json', emitSearchIndexJson(manifest, indexed));
   files.set('docs-figures.ts', emitFiguresTs(manifest, indexed));
+  files.set('docs-captures.ts', emitCapturesTs(captures));
   files.set('docs-outline.ts', emitOutlineTs(manifest, templates));
   files.set('release-notes-archive.ts', emitArchiveTs(releases));
   files.set('docs-declarations.ts', emitDeclarationsTs(manifest));

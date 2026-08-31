@@ -23,8 +23,14 @@ h1.example-app-name {
 }
 
 .example-sidenav-container {
-  /* When the sidenav is not fixed, stretch the sidenav container to fill the available space. This
-       causes `<mat-sidenav-content>` to act as our scrolling element for desktop layouts. */
+  /* Stretches the sidenav container to fill the available space when the sidenav
+     is not fixed.
+
+     This does NOT make `<mat-sidenav-content>` the scrolling element, which an
+     earlier version of this comment claimed: nothing here constrains the
+     container's height, so it grows to the full height of the article and the
+     document is what scrolls. Anything that needs the real scrolling element
+     has to ask which one overflows — see `docs-scroll-container.ts`. */
   flex: 1;
 }
 

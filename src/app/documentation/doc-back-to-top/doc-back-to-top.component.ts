@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { resolveScrollContainer } from '../docs-scroll-container';
 import { shouldShowBackToTop } from './scroll-target';
 
 /** How often scroll position is sampled, in ms. Matches the docs shell. */
@@ -70,20 +71,9 @@ export class DocBackToTopComponent implements OnInit {
     );
   }
 
-  /**
-   * The element that actually scrolls. Which one it is depends on the layout:
-   * `mat-sidenav-content` scrolls once the sidenav is docked, the document
-   * scrolls on a phone where it is fixed over the page. Asking which of them
-   * overflows is more robust than re-deriving the shell's breakpoint here.
-   */
+  /** Shared with the shell's scroll-depth telemetry, which needs the same answer. */
   private scrollElement(): HTMLElement {
-    const content = this.document.querySelector<HTMLElement>(
-      'mat-sidenav-content'
-    );
-    if (content && content.scrollHeight > content.clientHeight) {
-      return content;
-    }
-    return this.document.documentElement;
+    return resolveScrollContainer(this.document);
   }
 
   /**

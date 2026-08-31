@@ -26,6 +26,7 @@ import {
   buildDocBreadcrumb,
 } from '../core/structured-data/doc-schema';
 import { getDocSeoTags } from './doc-seo.config';
+import { resolveScrollContainer, scrolls } from './docs-scroll-container';
 import { DocsSearchOpener } from './docs-search/docs-search.opener';
 import {
   isApplePlatform,
@@ -171,8 +172,8 @@ export class DocumentationComponent
 
   /**
    * Depth is sampled through the CDK dispatcher rather than a window listener
-   * because the scrolling element differs by layout: `mat-sidenav-content`
-   * scrolls on desktop, the document scrolls on mobile (see the component SCSS).
+   * because which element scrolls depends on the layout, and the dispatcher
+   * reports both. `resolveScrollContainer` settles which one to read.
    */
   private trackScrollDepth(): void {
     this.scrollDispatcher
@@ -187,25 +188,27 @@ export class DocumentationComponent
    * Takes one depth reading. Also called on arrival: a page that fits on screen
    * can never fire a scroll event, and without this would be reported as 0%
    * read rather than fully read.
+   *
+   * The element the dispatcher hands us is only trusted when it has somewhere
+   * to scroll. `scrollPercentOf` reads an element with no scroll range as 100%
+   * — right for a short page, badly wrong for the wrong element — so reading a
+   * container that merely exists reports every visit as fully read.
    */
   private sampleScrollDepth(scrollable?: CdkScrollable): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    const element = scrollable
-      ? scrollable.getElementRef().nativeElement
-      : (this.scrollContainer() ?? this.document.documentElement);
+    const reported = scrollable?.getElementRef().nativeElement;
+    const element =
+      reported && scrolls(reported)
+        ? reported
+        : resolveScrollContainer(this.document);
     if (element) {
       this.telemetry.trackScrollDepth(
         scrollPercentOf(element),
         this.currentSlug()
       );
     }
-  }
-
-  /** The element that actually scrolls: sidenav content on desktop, document on mobile. */
-  private scrollContainer(): HTMLElement | null {
-    return this.document.querySelector?.('mat-sidenav-content') ?? null;
   }
 
   private applySeoForUrl(url: string): void {

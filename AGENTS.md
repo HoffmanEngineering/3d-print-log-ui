@@ -49,6 +49,14 @@ When communicating with Claude about test or lint failures, use these token-effi
 
 These commands are optimized for minimal token usage while preserving actionable information about failures and warnings.
 
+**Read the last line of `test:brief`, not the exit code.** These are meant to be
+piped (`npm run test:brief | tail -20`), and a shell pipeline reports the status
+of its _last_ command — so the exit code you see belongs to `tail`, not to the
+test run. The script prints `RESULT: PASSED` or `RESULT: FAILED (ng test exited
+N)` as its final line for exactly this reason. A compile error is the case that
+bites: Karma never reaches a `TOTAL:` line, so without that verdict the output
+ends in a blank summary that looks like a clean run.
+
 ## Architecture
 
 ### Module Structure

@@ -6,10 +6,14 @@
         <li
           class="doc-toc__item"
           [class.doc-toc__item--nested]="heading.depth > 1"
+          [class.doc-toc__item--active]="heading.id === activeId()"
         >
-          <a [routerLink]="route()" [fragment]="heading.id">{{
-            heading.text
-          }}</a>
+          <a
+            [routerLink]="route()"
+            [fragment]="heading.id"
+            [attr.aria-current]="heading.id === activeId() ? 'true' : null"
+            >{{ heading.text }}</a
+          >
         </li>
       }
     </ul>

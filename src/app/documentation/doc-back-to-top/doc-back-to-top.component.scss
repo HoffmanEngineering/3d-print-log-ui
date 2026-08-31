@@ -1,0 +1,45 @@
+/**
+ * Only below the rail breakpoint in documentation.component.scss. Above it the
+ * sticky table of contents already gets the reader anywhere on the page, and a
+ * floating button would sit over the ad at the foot of the article.
+ */
+:host {
+  display: none;
+}
+
+@media (max-width: 1199px) {
+  :host {
+    display: block;
+  }
+}
+
+.doc-back-to-top__button {
+  position: fixed;
+  // Clear of the trailing edge, and clear of a phone's home indicator.
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  // Above the article, below Material's overlay container (1000), so the search
+  // dialog and any menu still cover it.
+  z-index: 100;
+}
+
+/**
+ * The button is added to the DOM when it becomes relevant, so without this it
+ * pops into place. Skipped for a reader who has asked for less motion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .doc-back-to-top__button {
+    animation: doc-back-to-top-in 150ms ease-out;
+  }
+}
+
+@keyframes doc-back-to-top-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

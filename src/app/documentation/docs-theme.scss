@@ -8,8 +8,10 @@
 
 :root {
   // Body text at a comfortable reading size, and a measure that keeps a line
-  // in the 45-75 character band the eye tracks without losing its place.
-  --docs-measure: 70ch;
+  // inside the 45-85 character band the eye tracks without losing its place.
+  // Near the upper half of that band on purpose: these pages carry tables,
+  // code blocks and screenshots that a tighter measure squeezes.
+  --docs-measure: 78ch;
   --docs-text: rgba(0, 0, 0, 0.87);
   --docs-text-muted: rgba(0, 0, 0, 0.6);
   --docs-rule: rgba(0, 0, 0, 0.12);

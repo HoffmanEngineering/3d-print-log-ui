@@ -77,6 +77,40 @@ describe('DocTocComponent', () => {
     );
   });
 
+  it('marks the section being read, for the eye and for a screen reader', async () => {
+    await render('docs/materials');
+    const second = DOC_OUTLINE['docs/materials'][1];
+
+    fixture.componentInstance.activeId.set(second.id);
+    fixture.detectChanges();
+
+    const rows = host().querySelectorAll('.doc-toc__item');
+    expect(rows[1].classList).toContain('doc-toc__item--active');
+    expect(rows[0].classList).not.toContain('doc-toc__item--active');
+    expect(items()[1].getAttribute('aria-current')).toBe('true');
+    expect(items()[0].getAttribute('aria-current')).toBeNull();
+  });
+
+  it('marks nothing before the reader reaches the first heading', async () => {
+    await render('docs/materials');
+
+    expect(host().querySelector('.doc-toc__item--active')).toBeNull();
+    expect(host().querySelector('[aria-current]')).toBeNull();
+  });
+
+  it('drops the mark when the reader navigates to another page', async () => {
+    // The component survives navigation, so a stale id from the previous page
+    // would leave an unrelated entry highlighted until the first scroll.
+    await render('docs/materials');
+    fixture.componentInstance.activeId.set(DOC_OUTLINE['docs/materials'][1].id);
+    fixture.detectChanges();
+
+    await render('docs/printers');
+
+    expect(fixture.componentInstance.activeId()).toBeNull();
+    expect(host().querySelector('.doc-toc__item--active')).toBeNull();
+  });
+
   it('names the navigation landmark so it is not just "navigation"', async () => {
     await render('docs/materials');
 

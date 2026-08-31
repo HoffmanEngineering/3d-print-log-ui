@@ -24,14 +24,31 @@
 @media (min-width: 1200px) {
   .doc-toc {
     // Clears the app navbar and the Documentation toolbar, the same two bars
-    // the headings' scroll-margin-top clears.
+    // the headings' scroll-margin-top clears. This only has anywhere to travel
+    // because the grid item stretches to the row height — see the
+    // `align-self: stretch` note in documentation.component.scss.
     position: sticky;
     top: 8rem;
-    padding: 0 0 0 16px;
+    padding: 0;
     border-radius: 0;
     background: none;
-    border-left: 1px solid var(--docs-rule);
     max-height: calc(100vh - 10rem);
+    // The rule down the left of the rail is drawn by the items rather than by
+    // this box, so the active entry can light up its own segment of it.
+    --doc-toc-gutter: 16px;
+    // An outline long enough to scroll is scrolled with the pointer already
+    // over the rail; without this, reaching its end hands the wheel to the
+    // article underneath and the reader loses the list they were reading.
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .doc-toc__item {
+    border-left: 2px solid var(--docs-rule);
+  }
+
+  .doc-toc__item--active {
+    border-left-color: var(--docs-link);
   }
 }
 
@@ -42,6 +59,9 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--docs-text-muted);
+  // The label sits on the rail's gutter so it lines up with the entries below
+  // it rather than hanging off their left edge.
+  padding-left: var(--doc-toc-gutter, 0);
 }
 
 .doc-toc__list {
@@ -54,17 +74,24 @@
   margin: 0;
 }
 
-.doc-toc__item--nested {
-  padding-left: 14px;
-}
-
 .doc-toc__item a {
   display: block;
-  padding: 4px 0;
+  // The indent is on the anchor, not the item, so the item's left border can
+  // stay flush with the rail while the text steps in from it.
+  padding: 4px 0 4px var(--doc-toc-gutter, 0);
   font-size: 14px;
   line-height: 20px;
   color: var(--docs-text-muted);
   text-decoration: none;
+}
+
+.doc-toc__item--nested a {
+  padding-left: calc(var(--doc-toc-gutter, 0px) + 14px);
+}
+
+.doc-toc__item--active a {
+  color: var(--docs-link);
+  font-weight: 600;
 }
 
 .doc-toc__item a:hover,

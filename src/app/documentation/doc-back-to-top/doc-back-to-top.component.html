@@ -1,0 +1,12 @@
+@if (visible()) {
+  <button
+    mat-fab
+    class="doc-back-to-top__button"
+    data-cy="doc-back-to-top"
+    type="button"
+    aria-label="Back to top of page"
+    (click)="scrollToTop()"
+  >
+    <mat-icon>arrow_upward</mat-icon>
+  </button>
+}

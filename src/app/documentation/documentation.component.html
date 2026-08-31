@@ -48,6 +48,10 @@
             <app-ad></app-ad>
           </div>
         </div>
+
+        <!-- Last in the DOM: it is a shortcut, not part of the reading order,
+             and it is fixed-positioned so its place here costs no layout. -->
+        <app-doc-back-to-top />
       </div>
     </mat-sidenav-content>
   </mat-sidenav-container>

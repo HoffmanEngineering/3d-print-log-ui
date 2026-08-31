@@ -35,7 +35,11 @@ h1.example-app-name {
 }
 
 .content {
-  padding: 10px;
+  // The horizontal padding only does work below the layout's own max-width;
+  // past that the centring gutters are wider than any padding would be. It
+  // scales so the article is not against the viewport edge on the tablet
+  // widths just under the rail breakpoint.
+  padding: 10px clamp(10px, 3vw, 32px);
   background-color: white;
 
   :host-context(html.dark-theme) & {
@@ -65,6 +69,14 @@ h1.example-app-name {
   grid-template-columns: minmax(0, 1fr);
   gap: 32px;
   align-items: start;
+  // The measure plus the rail plus the gap, with a little room to spare. Without
+  // a cap the grid runs the full window, so on a wide monitor the article
+  // centers itself inside an enormous left track while the rail stays pinned to
+  // the far edge — the reader sees a narrow column of prose with a chasm on
+  // either side of it. Capping the grid puts the leftover width outside BOTH
+  // columns instead of between them.
+  max-width: 1320px;
+  margin-inline: auto;
 }
 
 /**
@@ -82,27 +94,39 @@ h1.example-app-name {
     grid-row: 1;
   }
 
+  /**
+   * Lets the table of contents rail below actually stick.
+   *
+   * `position: sticky` resolves its offsets against the nearest ancestor
+   * scrollport. Material gives `.mat-drawer-container` `overflow: hidden` and
+   * `.mat-drawer-content` `overflow: auto`, so BOTH are scrollports — and on
+   * this page neither one scrolls: they are as tall as the article, and the
+   * document is what the reader actually scrolls. A sticky element measured
+   * against a box that never moves never sticks, which is why the rail rode up
+   * the page no matter what was done to the rail itself. Both have to be opened
+   * up; removing either alone changes nothing, because the other still sits
+   * between the rail and the viewport.
+   *
+   * Confined to the rail breakpoint. Below it the sidenav is `mode="over"` and
+   * `fixedInViewport`, where the clipping is doing real work, and there is no
+   * sticky rail to rescue anyway.
+   */
+  .example-sidenav-container.mat-drawer-container,
+  .example-sidenav-container > .mat-drawer-content {
+    overflow: visible;
+  }
+
   .docs-layout__toc {
     grid-column: 2;
     grid-row: 1;
+    // Overrides the grid's `align-items: start`, which is what the single-column
+    // layout wants but which collapses this item to the height of the contents
+    // list. A sticky child can only travel inside its containing block, so with
+    // no spare height the rail has nowhere to stick and rides up the page with
+    // the article. Stretching the item to the row height is what makes the
+    // `position: sticky` in doc-toc.component.scss do anything at all.
+    align-self: stretch;
   }
-}
-
-/**
- * The page furniture under the article shares the prose measure.
- *
- *  centres itself inside the column, so a full-width block
- * beneath it starts at a different left edge and the page reads as two
- * documents. A page that opts out of the measure (docs-getting-started runs
- * full width) keeps its footer at the measure, which is the intent: these are
- * navigation, not part of that page's layout.
- */
-.docs-layout__main > app-doc-related,
-.docs-layout__main > app-doc-page-nav,
-.docs-layout__main > app-doc-feedback {
-  display: block;
-  max-width: var(--docs-measure);
-  margin-inline: auto;
 }
 
 /**

@@ -59,6 +59,22 @@ Adaptive Layers:0`);
   });
 
   describe('estimateFilamentUsageInMg', () => {
+    it('should estimate Nylon weight from filament length and diameter', () => {
+      const testGcode = `; filament_type:Nylon
+; filament_diameter:1.75
+; filament used [mm]:1000`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(2549);
+    });
+
+    it('should return undefined for a material it has no density for', () => {
+      const testGcode = `; filament_type:TPU
+; filament_diameter:1.75
+; filament used [mm]:1000`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
+    });
+
     it('should return undefined when diameter or length is missing or zero', () => {
       const invalidInputs = [
         `; filament_type = PLA

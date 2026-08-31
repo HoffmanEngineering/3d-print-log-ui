@@ -1,124 +1,62 @@
-import { activeBandRootMargin, nextActiveHeading } from './active-heading';
+import { activeBandTopPx, activeHeadingAt } from './active-heading';
 
-describe('nextActiveHeading', () => {
-  const order = ['intro', 'setup', 'usage', 'troubleshooting'];
+describe('activeHeadingAt', () => {
+  const BAND = 128;
 
-  it('marks the heading that just entered the band', () => {
-    expect(
-      nextActiveHeading(null, [{ id: 'setup', isIntersecting: true }], order)
-    ).toBe('setup');
+  /** Headings laid out down the page, in document order. */
+  const at = (...tops: number[]) =>
+    tops.map((top, i) => ({ id: `h${i}`, top }));
+
+  it('marks the last heading the reader has scrolled under', () => {
+    // h0 and h1 are above the band line, h2 is still below it.
+    expect(activeHeadingAt(at(-500, 40, 600), BAND, false)).toBe('h1');
   });
 
-  it('prefers the topmost heading when several share the band', () => {
-    // A run of short subsections can put three headings in the band at once.
-    // The reader is under the first of them.
-    expect(
-      nextActiveHeading(
-        null,
-        [
-          { id: 'usage', isIntersecting: true },
-          { id: 'setup', isIntersecting: true },
-          { id: 'troubleshooting', isIntersecting: true },
-        ],
-        order
-      )
-    ).toBe('setup');
+  it('marks nothing above the first heading', () => {
+    // The page opens with prose, or with a title the outline does not list.
+    expect(activeHeadingAt(at(300, 900, 1500), BAND, false)).toBeNull();
   });
 
-  it('keeps the current heading while a long section fills the screen', () => {
-    // The section is taller than the band, so its own heading has scrolled out
-    // the top and nothing else has arrived yet. Blanking the rail here would
-    // lose the mark for the whole length of the section.
-    expect(
-      nextActiveHeading(
-        'setup',
-        [{ id: 'setup', isIntersecting: false }],
-        order
-      )
-    ).toBe('setup');
+  it('marks a heading that has landed exactly on the band line', () => {
+    // Where a deep link parks its target, via scroll-margin-top.
+    expect(activeHeadingAt(at(-200, BAND, 700), BAND, false)).toBe('h1');
   });
 
-  it('has no answer before the first heading is reached', () => {
-    expect(nextActiveHeading(null, [], order)).toBeNull();
+  it('keeps marking a long section whose heading has scrolled far away', () => {
+    expect(activeHeadingAt(at(-9000, 4000), BAND, false)).toBe('h0');
   });
 
-  it('ignores a heading that is not in the outline', () => {
-    // The page can contain anchored headings the outline does not list, e.g.
-    // one nested deeper than the outline records.
-    expect(
-      nextActiveHeading(
-        'setup',
-        [{ id: 'not-in-the-outline', isIntersecting: true }],
-        order
-      )
-    ).toBe('setup');
+  it('does not depend on which headings changed since the last reading', () => {
+    // The bug this replaced: an IntersectionObserver callback names only the
+    // targets whose state changed, so a reducer over one callback could pick a
+    // later heading while an earlier one was still in the band. Reading every
+    // position makes two headings above the line unambiguous.
+    expect(activeHeadingAt(at(-300, -100, 500), BAND, false)).toBe('h1');
+  });
+
+  it('marks the last heading at the bottom of the page', () => {
+    // A final section shorter than the viewport never brings its heading up to
+    // the band, so geometry alone would mark the section before it — and this
+    // drives aria-current, so that is a wrong answer given to a screen reader.
+    expect(activeHeadingAt(at(-2000, -900, 700), BAND, true)).toBe('h2');
+  });
+
+  it('has no answer for a page with no headings', () => {
+    expect(activeHeadingAt([], BAND, false)).toBeNull();
+    expect(activeHeadingAt([], BAND, true)).toBeNull();
   });
 });
 
-describe('activeBandRootMargin', () => {
-  it('converts the rem band to the pixels rootMargin requires', () => {
-    expect(activeBandRootMargin(16)).toBe('-128px 0px -55% 0px');
-    expect(activeBandRootMargin(20)).toBe('-160px 0px -55% 0px');
+describe('activeBandTopPx', () => {
+  it('scales the band with the root font size', () => {
+    expect(activeBandTopPx(16)).toBe(128);
+    expect(activeBandTopPx(20)).toBe(160);
   });
 
-  it('produces a value IntersectionObserver actually accepts', () => {
-    // The reason this function exists. rootMargin takes px and % only, so a
-    // rem value makes the constructor throw SyntaxError — and because the
-    // observer is built inside a render callback, that throw showed up as a
-    // console error and a rail that silently never highlighted anything,
-    // rather than as anything resembling a layout bug.
-    expect(
-      () =>
-        new IntersectionObserver(() => undefined, {
-          rootMargin: activeBandRootMargin(16),
-        })
-    ).not.toThrow();
-
-    expect(
-      () =>
-        new IntersectionObserver(() => undefined, {
-          rootMargin: '-8rem 0px -55% 0px',
-        })
-    ).toThrow();
-  });
-});
-
-describe('nextActiveHeading above the first heading', () => {
-  const order = ['intro', 'setup', 'usage'];
-
-  it('clears the mark when the reader is above the first heading', () => {
-    // Jumping to the top of the page — the Home key, or the back-to-top
-    // button — puts every observed heading below the band at once. Rule 2
-    // would keep marking whatever section was left behind.
-    expect(
-      nextActiveHeading(
-        'usage',
-        [{ id: 'usage', isIntersecting: false }],
-        order,
-        true
-      )
-    ).toBeNull();
-  });
-
-  it('still prefers a heading that is genuinely in the band', () => {
-    expect(
-      nextActiveHeading(
-        'usage',
-        [{ id: 'intro', isIntersecting: true }],
-        order,
-        true
-      )
-    ).toBe('intro');
-  });
-
-  it('keeps rule 2 intact once past the first heading', () => {
-    expect(
-      nextActiveHeading(
-        'setup',
-        [{ id: 'setup', isIntersecting: false }],
-        order,
-        false
-      )
-    ).toBe('setup');
+  it('reaches at least as far as a deep link parks its heading', () => {
+    // The band must cover scroll-margin-top (8rem in docs-typography.scss), or
+    // a heading arrived at by deep link would not read as the current one.
+    const scrollMarginTopRem = 8;
+    expect(activeBandTopPx(16)).toBeGreaterThanOrEqual(scrollMarginTopRem * 16);
   });
 });

@@ -23,16 +23,23 @@
 // Matches the rail breakpoint in documentation.component.scss.
 @media (min-width: 1200px) {
   .doc-toc {
-    // Clears the app navbar and the Documentation toolbar, the same two bars
-    // the headings' scroll-margin-top clears. This only has anywhere to travel
-    // because the grid item stretches to the row height — see the
-    // `align-self: stretch` note in documentation.component.scss.
+    // 5rem clears the ONE bar that is actually fixed — the 4rem app navbar —
+    // plus a 1rem breath. The Documentation toolbar below it is `static` and
+    // scrolls away with the page, so matching the headings' 8rem
+    // scroll-margin-top here would hold the rail 4rem below the only chrome it
+    // has to clear and cost that much of its height for nothing. The band the
+    // scroll-spy uses is still 8rem, and deliberately: that one is tied to
+    // where a deep link parks a heading, not to what is on screen.
+    //
+    // This only has anywhere to travel because the grid item stretches to the
+    // row height — see the `align-self: stretch` note in
+    // documentation.component.scss.
     position: sticky;
-    top: 8rem;
+    top: 5rem;
     padding: 0;
     border-radius: 0;
     background: none;
-    max-height: calc(100vh - 10rem);
+    max-height: calc(100vh - 7rem);
     // The rule down the left of the rail is drawn by the items rather than by
     // this box, so the active entry can light up its own segment of it.
     --doc-toc-gutter: 16px;
@@ -44,11 +51,11 @@
   }
 
   .doc-toc__item {
-    border-left: 2px solid var(--docs-rule);
+    border-inline-start: 2px solid var(--docs-rule);
   }
 
   .doc-toc__item--active {
-    border-left-color: var(--docs-link);
+    border-inline-start-color: var(--docs-link);
   }
 }
 
@@ -61,7 +68,7 @@
   color: var(--docs-text-muted);
   // The label sits on the rail's gutter so it lines up with the entries below
   // it rather than hanging off their left edge.
-  padding-left: var(--doc-toc-gutter, 0);
+  padding-inline-start: var(--doc-toc-gutter, 0);
 }
 
 .doc-toc__list {
@@ -78,7 +85,8 @@
   display: block;
   // The indent is on the anchor, not the item, so the item's left border can
   // stay flush with the rail while the text steps in from it.
-  padding: 4px 0 4px var(--doc-toc-gutter, 0);
+  padding-block: 4px;
+  padding-inline: var(--doc-toc-gutter, 0) 0;
   font-size: 14px;
   line-height: 20px;
   color: var(--docs-text-muted);
@@ -86,7 +94,7 @@
 }
 
 .doc-toc__item--nested a {
-  padding-left: calc(var(--doc-toc-gutter, 0px) + 14px);
+  padding-inline-start: calc(var(--doc-toc-gutter, 0px) + 14px);
 }
 
 .doc-toc__item--active a {

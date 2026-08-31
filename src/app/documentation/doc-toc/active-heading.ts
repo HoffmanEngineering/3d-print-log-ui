@@ -2,101 +2,80 @@
  * Which entry the table of contents should mark as the one you are reading.
  *
  * Pulled out of the component because the interesting behavior is a decision
- * about a set of intersection records, and testing that through a real
- * `IntersectionObserver` means scrolling a real viewport and waiting on
- * callbacks that fire on the browser's schedule, not the test's.
+ * about where the headings currently sit, and testing that through a real
+ * viewport means scrolling one and waiting on callbacks that fire on the
+ * browser's schedule, not the test's.
+ *
+ * This reads every heading's position on each sample rather than reacting to
+ * IntersectionObserver callbacks. An observer reports only the targets whose
+ * state CHANGED, so a callback is a delta, not a picture of the page: when a
+ * second heading enters the band while the first is still in it, the callback
+ * names only the second, and a reducer over that callback alone cannot know the
+ * first is still there. Deltas also mean no callback at all when nothing
+ * crosses a boundary — which is what a jump to the top or the bottom of a long
+ * page can look like, leaving a stale answer standing. Positions are always a
+ * complete, current picture, and rect reads on a throttled scroll cost less
+ * than the bugs the delta model brings.
  */
 
-/** One heading's visibility, as reported by the observer. */
-export interface HeadingVisibility {
+/** Where one heading sits, in px from the top of the viewport. */
+export interface HeadingPosition {
   readonly id: string;
-  readonly isIntersecting: boolean;
+  readonly top: number;
 }
 
 /**
- * The next active heading, given what the observer just reported.
+ * The heading the reader is currently under.
  *
- * Two rules, both of which exist because the observer only speaks about
- * headings that CHANGED state:
+ * `positions` must be in document order — the generated outline already is.
  *
- * 1. When several headings sit in the band at once — a run of short
- *    subsections — the topmost one wins, because that is the section heading
- *    the reader has most recently passed under.
- * 2. When nothing is in the band the previous answer stands. A section longer
- *    than the band scrolls its own heading out the top, and clearing the mark
- *    for the length of that section is worse than keeping it: the rail would
- *    go blank exactly while the reader is deepest inside a section.
- * 3. Except above the first heading, where `aboveFirstHeading` overrides rule 2
- *    and the mark clears. The reader has not reached any section yet, and a
- *    page can open with prose — or with a title the outline does not list —
- *    between the top and the first entry, so "nothing in the band" there is not
- *    the same situation as rule 2's. Without this, jumping to the top of the
- *    page (the Home key, or the back-to-top button) leaves the rail marking
- *    whatever section the reader jumped away from.
+ * - The answer is the LAST heading whose top has passed `bandTop`: the heading
+ *   the reader has most recently scrolled under.
+ * - Above the first heading the answer is null. The reader has not reached any
+ *   section yet, and a page can open with prose, or with a title the outline
+ *   does not list, before its first entry.
+ * - At the bottom of the page the answer is the last heading, whatever the
+ *   geometry says. A final section shorter than the remaining viewport can
+ *   never bring its own heading up to the band, so without this the rail marks
+ *   the second-to-last section while the reader looks at the last one. Since
+ *   this drives `aria-current`, that is a wrong answer handed to assistive
+ *   technology, not just a visual smudge.
  */
-export function nextActiveHeading(
-  current: string | null,
-  reported: readonly HeadingVisibility[],
-  order: readonly string[],
-  aboveFirstHeading = false
+export function activeHeadingAt(
+  positions: readonly HeadingPosition[],
+  bandTop: number,
+  atBottom: boolean
 ): string | null {
-  let best: string | null = null;
-  let bestIndex = Number.POSITIVE_INFINITY;
-
-  for (const { id, isIntersecting } of reported) {
-    if (!isIntersecting) {
-      continue;
-    }
-    const index = order.indexOf(id);
-    if (index !== -1 && index < bestIndex) {
-      best = id;
-      bestIndex = index;
-    }
+  if (positions.length === 0) {
+    return null;
   }
 
-  if (best !== null) {
-    return best;
+  if (atBottom) {
+    return positions[positions.length - 1].id;
   }
-  return aboveFirstHeading ? null : current;
+
+  let active: string | null = null;
+  for (const position of positions) {
+    if (position.top > bandTop) {
+      break;
+    }
+    active = position.id;
+  }
+  return active;
 }
 
 /**
  * How far below the top of the viewport a heading counts as reached, in rem.
  *
- * Matches the rail's `top: 8rem` and the headings' `scroll-margin-top: 8rem`:
- * a heading is "reached" once it clears the app navbar and the Documentation
- * toolbar, which is exactly where a deep link parks it.
+ * Tied to the headings' `scroll-margin-top` in docs-typography.scss, NOT to the
+ * rail's sticky offset, which is a different number for a different reason. A
+ * deep link parks its heading exactly `scroll-margin-top` below the top of the
+ * viewport, and the rail has to call that heading current when it lands — so
+ * the band has to reach at least that far down.
  */
 const BAND_TOP_REM = 8;
 
-/**
- * How much of the viewport below the band is excluded.
- *
- * Keeps the band near the top of the screen, so arriving at a section marks it
- * rather than the section still filling most of the viewport.
- */
-const BAND_BOTTOM = '-55%';
-
-/**
- * The observer's `rootMargin` for a given root font size.
- *
- * Built rather than written as a constant because `rootMargin` accepts ONLY px
- * and %: a `rem` value makes the IntersectionObserver constructor throw
- * `SyntaxError`, and since the observer is constructed in a render callback
- * that throw surfaces as a console error and a silently dead rail rather than
- * as anything that looks like a layout bug. The rem-to-px conversion is done
- * here so the band stays tied to the `8rem` in the stylesheets.
- */
-export function activeBandRootMargin(rootFontSizePx: number): string {
-  return `-${activeBandTopPx(rootFontSizePx)}px 0px ${BAND_BOTTOM} 0px`;
-}
-
-/**
- * Where the band starts, in px from the top of the viewport. Used to ask
- * whether the reader is above the first heading, which the observer cannot say
- * on its own: it only reports the headings it watches, and a page can open with
- * prose or with a title that the outline does not list.
- */
+/** Where the band starts, in px, for a given root font size. */
 export function activeBandTopPx(rootFontSizePx: number): number {
   return BAND_TOP_REM * rootFontSizePx;
 }

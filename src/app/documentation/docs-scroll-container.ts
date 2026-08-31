@@ -29,3 +29,24 @@ export function resolveScrollContainer(doc: Document): HTMLElement {
 export function scrolls(element: HTMLElement): boolean {
   return element.scrollHeight > element.clientHeight + 1;
 }
+
+/**
+ * Selector for the navigation drawer itself, as opposed to the content beside
+ * it. `mat-sidenav-content` is a SIBLING of `mat-sidenav`, not a descendant, so
+ * this cleanly separates the two.
+ */
+const DRAWER = 'mat-sidenav, mat-drawer';
+
+/**
+ * Whether a scroller belongs to the navigation drawer rather than the article.
+ *
+ * Material registers the drawer's own `.mat-drawer-inner-container` as a
+ * `cdkScrollable` (see sidenav.mjs), so the CDK's scroll dispatcher reports the
+ * SIDEBAR moving exactly as it reports the article moving. On a phone the
+ * drawer is `mode="over"` with a navigation list longer than the screen, so
+ * this is not hypothetical: without the distinction, scrolling the menu to its
+ * end files a "read the whole article" measurement.
+ */
+export function isDrawerScroller(element: HTMLElement): boolean {
+  return element.closest?.(DRAWER) != null;
+}

@@ -1,9 +1,11 @@
+import { ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   Injector,
@@ -11,13 +13,11 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { resolveScrollContainer, scrolls } from '../docs-scroll-container';
 import { DOC_OUTLINE, DocHeading } from '../generated/docs-outline';
-import {
-  activeBandRootMargin,
-  activeBandTopPx,
-  nextActiveHeading,
-} from './active-heading';
+import { activeBandTopPx, activeHeadingAt } from './active-heading';
 
 /**
  * The fewest entries worth a table of contents.
@@ -27,13 +27,16 @@ import {
  */
 const MINIMUM_ENTRIES = 3;
 
+/** How often the reader's position is sampled, in ms. */
+const SPY_SAMPLE_MS = 100;
+
 /**
- * Known limit of the band built by `activeBandRootMargin`: a final section
- * shorter than the remaining viewport can never reach it, so the rail keeps the
- * previous heading marked at the very bottom of such a page. Closing that needs
- * scroll-position plumbing on top of the observer, which costs more than the
- * case is worth.
+ * How close to the end counts as the bottom of the page, in px. Absorbs the
+ * fractional pixel a zoomed or scaled layout can leave between the scroll
+ * position and the scroll height, which would otherwise make the last section
+ * unreachable at the moment the reader arrives at it.
  */
+const BOTTOM_SLACK = 2;
 
 /**
  * "On this page" — the per-page table of contents.
@@ -74,84 +77,80 @@ export class DocTocComponent {
   /**
    * The heading the reader is currently under, or null before they reach the
    * first one. Writable so a test can drive the rendering without scrolling a
-   * real viewport; the observer below is the only production writer.
+   * real viewport; `sample` is the only production writer.
    */
   readonly activeId = signal<string | null>(null);
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly scrollDispatcher = inject(ScrollDispatcher);
 
   constructor() {
     effect((onCleanup) => {
       const headings = this.headings();
       this.activeId.set(null);
 
-      if (
-        !isPlatformBrowser(this.platformId) ||
-        headings.length === 0 ||
-        typeof IntersectionObserver === 'undefined'
-      ) {
+      if (!isPlatformBrowser(this.platformId) || headings.length === 0) {
         return;
       }
 
-      let observer: IntersectionObserver | undefined;
       // The headings belong to the routed page component, a sibling of this one
       // in the shell, so they are not in the DOM yet when this effect runs on a
-      // navigation. afterNextRender waits for the outlet to have swapped.
-      const pending = afterNextRender(
-        () => (observer = this.observeHeadings(headings)),
-        { injector: this.injector }
-      );
-
-      onCleanup(() => {
-        pending.destroy();
-        observer?.disconnect();
+      // navigation. afterNextRender waits for the outlet to have swapped, and
+      // this first reading places the mark before the reader scrolls at all.
+      const pending = afterNextRender(() => this.sample(), {
+        injector: this.injector,
       });
+      onCleanup(() => pending.destroy());
     });
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.scrollDispatcher
+        .scrolled(SPY_SAMPLE_MS)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.sample());
+    }
   }
 
-  private observeHeadings(
-    headings: readonly DocHeading[]
-  ): IntersectionObserver | undefined {
-    const order = headings.map((heading) => heading.id);
-    const elements = order
-      .map((id) => this.document.getElementById(id))
-      .filter((element): element is HTMLElement => element !== null);
-
-    if (elements.length === 0) {
-      return undefined;
+  /**
+   * Takes one reading of where the headings are and marks the current one.
+   *
+   * Reads a position for every heading rather than tracking what changed, so
+   * the answer never depends on which sample happened to notice what — see the
+   * note at the top of active-heading.ts.
+   */
+  private sample(): void {
+    const headings = this.headings();
+    if (headings.length === 0) {
+      return;
     }
 
-    const rootFontSize = this.rootFontSize();
-    const bandTop = activeBandTopPx(rootFontSize);
-    const [first] = elements;
+    const positions = headings
+      .map((heading) => this.document.getElementById(heading.id))
+      .filter((element): element is HTMLElement => element !== null)
+      .map((element) => ({
+        id: element.id,
+        top: element.getBoundingClientRect().top,
+      }));
 
-    const observer = new IntersectionObserver(
-      (entries) =>
-        this.activeId.update((current) =>
-          nextActiveHeading(
-            current,
-            entries.map((entry) => ({
-              id: entry.target.id,
-              isIntersecting: entry.isIntersecting,
-            })),
-            order,
-            // Only read when nothing is in the band, which is the one case
-            // where the answer matters and the observer cannot supply it.
-            first.getBoundingClientRect().top > bandTop
-          )
-        ),
-      { rootMargin: activeBandRootMargin(rootFontSize) }
+    if (positions.length === 0) {
+      return;
+    }
+
+    const container = resolveScrollContainer(this.document);
+    const atBottom =
+      scrolls(container) &&
+      container.scrollTop + container.clientHeight >=
+        container.scrollHeight - BOTTOM_SLACK;
+
+    this.activeId.set(
+      activeHeadingAt(positions, activeBandTopPx(this.rootFontSize()), atBottom)
     );
-
-    for (const element of elements) {
-      observer.observe(element);
-    }
-    return observer;
   }
 
-  /** The px value of 1rem, which is what the band has to be expressed in. */
+  /** The px value of 1rem, which is what the band is measured in. */
   private rootFontSize(): number {
     const view = this.document.defaultView;
     const size = view

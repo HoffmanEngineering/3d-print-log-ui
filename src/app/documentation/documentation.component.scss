@@ -86,9 +86,18 @@ h1.example-app-name {
 }
 
 /**
- * 1200px, not a Material breakpoint: the rail only earns its space once the
- * article still has the full measure beside it. Below that the TOC sits above
- * the prose, capped so a 27-entry page does not push the article off screen.
+ * 1200px, not a Material breakpoint.
+ *
+ * The docked sidebar takes ~300px of this before the article sees any of it, so
+ * at the breakpoint itself the article track is around 550px — near 70ch, not
+ * the 78ch measure. That is a deliberate trade, not an oversight: 70ch is the
+ * measure these pages shipped with and reads perfectly well, and setting the
+ * breakpoint where 78ch survives instead would put it past 1400px and take the
+ * rail away from every 1280px laptop. The measure is a target the article
+ * reaches on a wide screen, not a floor the layout guarantees.
+ *
+ * Below the breakpoint the TOC sits above the prose, capped so a 27-entry page
+ * does not push the article off screen.
  */
 @media (min-width: 1200px) {
   .docs-layout {

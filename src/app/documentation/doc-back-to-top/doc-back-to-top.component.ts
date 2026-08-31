@@ -89,9 +89,22 @@ export class DocBackToTopComponent implements OnInit {
     if (!heading) {
       return;
     }
-    if (!heading.hasAttribute('tabindex')) {
-      heading.setAttribute('tabindex', '-1');
+
+    // The target belongs to the routed page, or to the shell — not to this
+    // component. A programmatic focus needs it to be focusable, but leaving the
+    // attribute behind would permanently change the focus semantics of markup
+    // this component does not own, and the shell fallback persists across every
+    // navigation. Borrow it for the duration of the focus and hand it back.
+    if (heading.hasAttribute('tabindex')) {
+      heading.focus({ preventScroll: true });
+      return;
     }
+    heading.setAttribute('tabindex', '-1');
+    heading.addEventListener(
+      'blur',
+      () => heading.removeAttribute('tabindex'),
+      { once: true }
+    );
     heading.focus({ preventScroll: true });
   }
 

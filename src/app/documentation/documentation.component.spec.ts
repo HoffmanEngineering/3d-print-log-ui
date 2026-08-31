@@ -122,15 +122,31 @@ describe('DocumentationComponent telemetry', () => {
   let fixture: ComponentFixture<DocumentationComponent>;
 
   /** A CdkScrollable stand-in whose element reports the given geometry. */
+  /**
+   * A scroller the CDK dispatcher might report.
+   *
+   * A real element, not a geometry object: the component has to tell the
+   * article's scroller from the navigation drawer's, and that distinction is a
+   * question about where the element sits in the DOM. A bare stub cannot answer
+   * it, so it would let the sidebar bug through unnoticed.
+   */
   function scrollableAt(
     scrollTop: number,
     clientHeight: number,
-    scrollHeight: number
+    scrollHeight: number,
+    host: 'content' | 'drawer' = 'content'
   ): CdkScrollable {
+    const element = document.createElement('div');
+    Object.defineProperties(element, {
+      scrollTop: { value: scrollTop },
+      clientHeight: { value: clientHeight },
+      scrollHeight: { value: scrollHeight },
+    });
+    if (host === 'drawer') {
+      document.createElement('mat-sidenav').appendChild(element);
+    }
     return {
-      getElementRef: () => ({
-        nativeElement: { scrollTop, clientHeight, scrollHeight },
-      }),
+      getElementRef: () => ({ nativeElement: element }),
     } as unknown as CdkScrollable;
   }
 
@@ -217,12 +233,28 @@ describe('DocumentationComponent telemetry', () => {
     expect(component.currentSlug()).toBe('materials');
   });
 
-  it('reports scroll depth from the sidenav content, which scrolls on desktop', async () => {
+  it('reports scroll depth from the scroller the dispatcher names', async () => {
     await setup('/docs/prints');
 
     scrolled.next(scrollableAt(1600, 800, 4000));
 
     expect(telemetry.trackScrollDepth).toHaveBeenCalledWith(50, 'prints');
+  });
+
+  it('does not report scrolling the navigation drawer as reading the article', async () => {
+    // Material registers the drawer's inner container as a cdkScrollable, so
+    // the dispatcher reports the sidebar exactly as it reports the article. On
+    // a phone that list is longer than the screen; scrolling it to the end
+    // would otherwise file a 100% "read the whole page" measurement.
+    await setup('/docs/prints');
+    telemetry.trackScrollDepth.calls.reset();
+
+    // Geometry chosen to read as 50%: the fallback container in this test DOM
+    // has no scroll range and so reports 100, and asserting against 100 would
+    // pass whether the drawer was rejected or not.
+    scrolled.next(scrollableAt(1200, 600, 3000, 'drawer'));
+
+    expect(telemetry.trackScrollDepth).not.toHaveBeenCalledWith(50, 'prints');
   });
 
   it('samples depth on arrival, not only on scroll', async () => {

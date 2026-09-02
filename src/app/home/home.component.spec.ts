@@ -87,4 +87,95 @@ describe('HomeComponent', () => {
       placement: 'hero',
     });
   });
+
+  it('has exactly one h1 on the page', () => {
+    const headings = fixture.nativeElement.querySelectorAll('h1');
+
+    expect(headings.length).toBe(1);
+    expect(headings[0].textContent).toContain('Every print');
+  });
+
+  it('links to every slicer route the prerender check requires', () => {
+    const required = [
+      '/cura',
+      '/prusaslicer',
+      '/bambu-studio',
+      '/creality-print',
+      '/orcaslicer',
+    ];
+    const hrefs = Array.from(
+      fixture.nativeElement.querySelectorAll('a[href]')
+    ).map((a) => (a as HTMLAnchorElement).getAttribute('href'));
+
+    for (const route of required) {
+      expect(hrefs).toContain(route);
+    }
+  });
+
+  it('opens the Auth0 signup screen from the closing CTA', () => {
+    const cta: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      '[data-cy="closing-signup"]'
+    );
+    cta.click();
+
+    expect(auth.login).toHaveBeenCalledWith('/prints', { signup: true });
+    expect(logging.logEvent).toHaveBeenCalledWith('Home_SignupClicked', {
+      placement: 'closing',
+    });
+  });
+
+  // These are a cheap early-warning, NOT the contract. The real gate is
+  // replaceImgRefExactlyOnce (process-captures.lib.mjs), which throws unless each
+  // base matches exactly one <img> carrying ngSrc and exactly one numeric width
+  // and height — and which runs during the capture step.
+  // A cheap early-warning, NOT the contract. The real gate is
+  // replaceImgRefExactlyOnce (process-captures.lib.mjs), which throws unless each
+  // base matches exactly one <img> carrying ngSrc and exactly one numeric width
+  // and height — and which runs during the capture step.
+  //
+  // This counts ELEMENTS, not innerHTML substrings: NgOptimizedImage leaves both
+  // `ngsrc` and `src` on the rendered tag, so a substring count doubles.
+  it('references each generated capture exactly once per variant', () => {
+    const imgs: HTMLImageElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('img')
+    );
+
+    for (const base of [
+      'Homepage_PrinterList',
+      'Homepage_PrinterTable',
+      'Homepage_Filament',
+      'Homepage_Analytics',
+    ]) {
+      // `[A-Za-z0-9]+` spans one segment, so this matches the LIGHT variant
+      // only: the dark filename is `<base>_dark_<hash>.webp`, which has two
+      // segments after the base and therefore does not match.
+      const light = new RegExp(`/assets/${base}_[A-Za-z0-9]+\.webp$`);
+      const dark = new RegExp(`/assets/${base}_dark_[A-Za-z0-9]+\.webp$`);
+
+      const lightHits = imgs.filter((i) =>
+        light.test(i.getAttribute('src') ?? '')
+      );
+      const darkHits = imgs.filter((i) =>
+        dark.test(i.getAttribute('src') ?? '')
+      );
+
+      expect(lightHits.length).toBe(
+        1,
+        `${base} light variant should appear once`
+      );
+      expect(darkHits.length).toBe(
+        1,
+        `${base} dark variant should appear once`
+      );
+
+      // Both must go through NgOptimizedImage, which is what the capture
+      // pipeline's rewrite step looks for.
+      for (const img of [...lightHits, ...darkHits]) {
+        expect(img.hasAttribute('ngsrc')).toBe(
+          true,
+          `${base} should use ngSrc, not a plain src`
+        );
+      }
+    }
+  });
 });

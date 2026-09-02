@@ -7,9 +7,6 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
@@ -24,14 +21,7 @@ import { AdComponent } from '../shared/ad/ad.component';
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
-  imports: [
-    RouterModule,
-    MatToolbarModule,
-    MatButtonModule,
-    FlexLayoutModule,
-    NgOptimizedImage,
-    AdComponent,
-  ],
+  imports: [RouterModule, NgOptimizedImage, AdComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit {

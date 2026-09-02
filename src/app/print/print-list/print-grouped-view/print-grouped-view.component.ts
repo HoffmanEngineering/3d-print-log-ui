@@ -39,6 +39,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
+import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { ProjectImageComponent } from 'src/app/shared/project-image/project-image.component';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -64,6 +65,7 @@ export type GroupedRow =
     RouterLink,
     ProjectImageComponent,
     PrintListSkeletonComponent,
+    CivilDatePipe,
   ],
 })
 export class PrintGroupedViewComponent implements OnInit {
@@ -688,7 +690,7 @@ export class PrintGroupedViewComponent implements OnInit {
       key: 'start-date',
       displayName: 'Start Date',
       description:
-        'Most recent print date for project rows; individual start date for print rows.',
+        'Manually set start date, or the earliest print date, for project rows; individual start date for print rows.',
     },
     {
       key: 'start-time',

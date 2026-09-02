@@ -19,7 +19,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { DomSanitizer, SafeUrl, Title } from '@angular/platform-browser';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpHeaders,
+  HttpErrorResponse,
+} from '@angular/common/http';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, of } from 'rxjs';
 import { mergeMap, take, toArray } from 'rxjs/operators';
@@ -41,6 +45,8 @@ import {
 } from 'src/app/core/services/print.service';
 import { PrintCardComponent } from 'src/app/print/print-card/print-card.component';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { todayUtcCivilDate } from 'src/app/core/utils/civil-date';
+import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -48,6 +54,21 @@ import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { environment } from 'src/environments/environment';
+
+/**
+ * The message to show for a failed project save.
+ *
+ * The API returns a plain-text 400 for a project whose resolved finish date lands before its
+ * start, which the date pickers let a user produce. That message names the actual problem, so
+ * it is shown as-is; anything else gets the generic retry copy.
+ */
+function readSaveError(err: unknown): string {
+  if (err instanceof HttpErrorResponse && err.status === 400) {
+    const body = typeof err.error === 'string' ? err.error.trim() : '';
+    if (body && body.length <= 200) return body;
+  }
+  return 'This project could not be saved. Please try again.';
+}
 
 @Component({
   selector: 'app-project-detail',
@@ -66,6 +87,7 @@ import { environment } from 'src/environments/environment';
     ImageCarouselComponent,
     ImageThumbnailStripComponent,
     PrintCardComponent,
+    CivilDatePipe,
   ],
 })
 export class ProjectDetailComponent implements OnInit {
@@ -90,6 +112,13 @@ export class ProjectDetailComponent implements OnInit {
   loading = signal(true);
   isEditing = signal(false);
   isSaving = signal(false);
+  /**
+   * A failed save, shown above the form. The API rejects a project whose resolved
+   * finish date lands before its start, which a user can trigger from the date
+   * pickers — so a save failure here is an ordinary outcome, not just a network fault,
+   * and swallowing it leaves the form open with no explanation.
+   */
+  saveErrorMessage = signal('');
   images = signal<ProjectImageValue[]>([]);
   selectedImageIndex = signal(0);
 
@@ -158,6 +187,13 @@ export class ProjectDetailComponent implements OnInit {
       totalEstimatedPrintTimeInSeconds: 0,
       totalFilamentWeightMg: 0,
       images: [],
+      // A project being created has no prints yet, so its start date resolves to today.
+      // UTC, not local: the API derives it from the row's UTC CreatedDate, so a local
+      // reading would preview a different day than the POST response around UTC midnight.
+      startDate: todayUtcCivilDate(),
+      finishDate: null,
+      startDateOverride: null,
+      finishDateOverride: null,
     };
   }
 
@@ -319,12 +355,15 @@ export class ProjectDetailComponent implements OnInit {
       url: formValue.url || undefined,
       status: ProjectStatus.InProgress,
       viewStatus: formValue.viewStatus,
+      startDateOverride: formValue.startDateOverride,
+      finishDateOverride: formValue.finishDateOverride,
     };
 
     const stagedImages = [...this.images()].sort(
       (a, b) => a.displayOrder - b.displayOrder
     );
 
+    this.saveErrorMessage.set('');
     this.isSaving.set(true);
     let createdId: string;
     let uploadedIds: number[] = [];
@@ -376,8 +415,9 @@ export class ProjectDetailComponent implements OnInit {
           });
           this.router.navigate(['/projects', updated.id], { replaceUrl: true });
         },
-        error: () => {
+        error: (err: unknown) => {
           this.isSaving.set(false);
+          this.saveErrorMessage.set(readSaveError(err));
         },
       });
   }
@@ -391,6 +431,8 @@ export class ProjectDetailComponent implements OnInit {
       description: formValue.description || undefined,
       url: formValue.url || undefined,
       status: p.status,
+      startDateOverride: formValue.startDateOverride,
+      finishDateOverride: formValue.finishDateOverride,
       viewStatus: formValue.viewStatus,
     };
 
@@ -402,6 +444,7 @@ export class ProjectDetailComponent implements OnInit {
     const defaultImage = snapshot.find((img) => img.isDefault);
     const idsToDelete = [...this.imageIdsToDelete];
 
+    this.saveErrorMessage.set('');
     this.isSaving.set(true);
 
     let uploadedIds: number[] = [];
@@ -487,8 +530,9 @@ export class ProjectDetailComponent implements OnInit {
             reordered: snapshot.length > 1,
           });
         },
-        error: () => {
+        error: (err: unknown) => {
           this.isSaving.set(false);
+          this.saveErrorMessage.set(readSaveError(err));
         },
       });
   }
@@ -575,6 +619,11 @@ export class ProjectDetailComponent implements OnInit {
       url: p.url,
       status,
       viewStatus: p.viewStatus,
+      // Carried from the current project, not omitted: this endpoint is a full replace, so
+      // leaving these out would silently clear a pinned date every time the status dropdown
+      // is used.
+      startDateOverride: p.startDateOverride,
+      finishDateOverride: p.finishDateOverride,
     };
     this.projectService
       .updateProject(p.id, dto)

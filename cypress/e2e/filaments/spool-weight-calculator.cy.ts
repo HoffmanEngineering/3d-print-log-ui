@@ -67,7 +67,10 @@ describe('Spool weight adjustment calculator', () => {
       // Persist and confirm it round-trips.
       cy.intercept('PUT', `/api/Filaments/${filamentId}`).as('updateFilament');
       cy.get('#edit-filament-submit-btn').click();
-      cy.wait('@updateFilament');
+      // Assert the status, not just that the call happened: a rejected PUT
+      // would otherwise surface further down as "the adjustment row is missing
+      // after reload", which says nothing about what actually went wrong.
+      cy.wait('@updateFilament').its('response.statusCode').should('eq', 201);
 
       cy.visit(`/filament/${filamentId}`);
       cy.get('#filament-adjustment-used-gram-0').should('have.value', '-700');

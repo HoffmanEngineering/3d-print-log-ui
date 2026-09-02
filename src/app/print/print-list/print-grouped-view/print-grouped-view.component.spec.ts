@@ -42,6 +42,7 @@ function makePagedList<T>(items: T[]): PagedList<T> {
 
 const mockProjectItem: GroupedFeedItemDto = {
   type: 'project',
+  projectStartDate: '2026-03-02',
   sortDate: new Date('2024-01-01'),
   projectId: 'proj-1',
   projectName: 'Test Project',
@@ -56,6 +57,7 @@ const mockProjectItem: GroupedFeedItemDto = {
 
 const mockPrintItem: GroupedFeedItemDto = {
   type: 'print',
+  projectStartDate: null,
   sortDate: new Date('2024-01-02'),
   print: {
     id: 42,

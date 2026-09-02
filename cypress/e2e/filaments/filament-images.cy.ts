@@ -1,5 +1,11 @@
 /// <reference types="cypress" />
 
+// The panel renders two hidden file inputs - the gallery picker and a separate
+// `capture="environment"` one the Cordova app needs to reach the camera.
+// `[multiple]` is what tells them apart, and only the gallery input accepts
+// more than one file.
+const GALLERY_INPUT = 'input.file-input[multiple]';
+
 /**
  * Covers the spool-photo panel: staging, the thumbnail strip, the default marker,
  * and the per-material cap, all of which are client-side and worth pinning on
@@ -10,9 +16,7 @@ describe('Material photos', () => {
 
   /** The file input is visually hidden behind the Add button. */
   const stage = (count = 1) =>
-    cy
-      .get('input.file-input')
-      .selectFile(Array(count).fill(PHOTO), { force: true });
+    cy.get(GALLERY_INPUT).selectFile(Array(count).fill(PHOTO), { force: true });
 
   beforeEach(() => {
     cy.login();
@@ -91,7 +95,7 @@ describe('Material photos — upload round trip', () => {
       .clear({ force: true })
       .type('1.24', { force: true });
 
-    cy.get('input.file-input').selectFile(PHOTO, { force: true });
+    cy.get(GALLERY_INPUT).selectFile(PHOTO, { force: true });
     cy.get('app-image-thumbnail-strip img').should('have.length', 1);
 
     cy.get('#edit-filament-submit-btn').click();
@@ -106,6 +110,11 @@ describe('Material photos — upload round trip', () => {
         cy.get('app-image-thumbnail-strip img')
           .should('have.length', 1)
           .first()
+          // The strip sits below the carousel, off the bottom of the 1280x720
+          // headless viewport, and its thumbnails are `loading="lazy"`. Without
+          // scrolling to it the browser never fetches the image, so
+          // `naturalWidth` stays 0 and the decode assertion below times out.
+          .scrollIntoView()
           .should(($img) => {
             // A signed URL, not a data: preview of the bytes we picked.
             expect($img.attr('src')).to.match(/[?&]sig=/);
@@ -133,7 +142,7 @@ describe('Material photos — upload round trip', () => {
     cy.get('#edit-filament-density')
       .clear({ force: true })
       .type('1.24', { force: true });
-    cy.get('input.file-input').selectFile(PHOTO, { force: true });
+    cy.get(GALLERY_INPUT).selectFile(PHOTO, { force: true });
     cy.get('#edit-filament-submit-btn').click();
 
     cy.wait('@createFilament');

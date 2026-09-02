@@ -79,6 +79,8 @@ describe('PrintBulkProjectDialogComponent', () => {
       name: 'New Batch',
       status: ProjectStatus.InProgress,
       viewStatus: ProjectViewStatus.Private,
+      startDateOverride: null,
+      finishDateOverride: null,
     });
     expect(dialogRef.close).toHaveBeenCalledWith({
       projectId: 'created-id',

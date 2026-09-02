@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { ADSENSE_TOKEN } from 'ng2-adsense';
@@ -17,7 +17,7 @@ import {
 } from 'src/app/core/services/print.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -33,6 +33,10 @@ const mockProject: ProjectDetailDto = {
   totalEstimatedPrintTimeInSeconds: 8000,
   totalFilamentWeightMg: 250000,
   images: [],
+  startDate: '2026-03-02',
+  finishDate: '2026-03-06',
+  startDateOverride: null,
+  finishDateOverride: null,
 };
 
 describe('ProjectDetailComponent', () => {
@@ -175,6 +179,8 @@ describe('ProjectDetailComponent', () => {
       description: '',
       url: '',
       viewStatus: ProjectViewStatus.Public,
+      startDateOverride: null,
+      finishDateOverride: null,
     });
 
     await fixture.whenStable();
@@ -255,6 +261,196 @@ describe('ProjectDetailComponent', () => {
     fixture.detectChanges();
     const sidebarAd = fixture.nativeElement.querySelector('app-sidebar-ad');
     expect(sidebarAd).toBeTruthy();
+  });
+
+  describe('project dates', () => {
+    const baseFormValue = {
+      name: 'Test Voron Build',
+      reference: '',
+      description: '',
+      url: '',
+      viewStatus: ProjectViewStatus.Private,
+      startDateOverride: null,
+      finishDateOverride: null,
+    };
+
+    beforeEach(async () => {
+      // onStatusChange pipes the result, so a spy with no return value throws on undefined.
+      mockProjectService.updateProject.and.returnValue(of(mockProject));
+      mockProjectService.uploadImage = jasmine
+        .createSpy()
+        .and.returnValue(
+          of({ id: 10, isDefault: false, displayOrder: 0 } as any)
+        );
+      mockProjectService.reorderImages.and.returnValue(of(void 0));
+      mockProjectService.setDefaultImage.and.returnValue(of(void 0));
+      mockProjectService.deleteImage.and.returnValue(of(void 0));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    });
+
+    /**
+     * The regression this whole task exists for. PUT is a full replace and onStatusChange
+     * builds its payload independently of the edit form, so omitting the override fields
+     * there wipes a user's manual dates every time they change a project's status.
+     */
+    it('preserves date overrides when only the status changes', () => {
+      component.project.set({
+        ...mockProject,
+        startDateOverride: '2026-02-01',
+        finishDateOverride: '2026-03-01',
+      });
+
+      component.onStatusChange(ProjectStatus.Complete);
+
+      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      expect(dto.startDateOverride).toBe('2026-02-01');
+      expect(dto.finishDateOverride).toBe('2026-03-01');
+    });
+
+    it('leaves automatic dates automatic when only the status changes', () => {
+      component.project.set({
+        ...mockProject,
+        startDateOverride: null,
+        finishDateOverride: null,
+      });
+
+      component.onStatusChange(ProjectStatus.Complete);
+
+      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      expect(dto.startDateOverride).toBeNull();
+      expect(dto.finishDateOverride).toBeNull();
+    });
+
+    it('forwards date overrides from the edit form on update', () => {
+      component.project.set(mockProject);
+      component.onEditClick();
+
+      component.onSave({
+        ...baseFormValue,
+        startDateOverride: '2026-02-01',
+        finishDateOverride: null,
+      });
+
+      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      expect(dto.startDateOverride).toBe('2026-02-01');
+      expect(dto.finishDateOverride).toBeNull();
+    });
+
+    /**
+     * The date pickers make a 400 an ordinary outcome of this form rather than only a
+     * server fault, so the save error has to reach the user. Swallowing it leaves the
+     * form open, no longer spinning, with nothing said about why.
+     */
+    it('shows the API message when a save is rejected as an inverted range', async () => {
+      const message =
+        "A project's finish date cannot be before its start date.";
+      mockProjectService.updateProject.and.returnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 400,
+              error: message,
+            })
+        )
+      );
+
+      component.project.set(mockProject);
+      component.onEditClick();
+      component.onSave({
+        ...baseFormValue,
+        startDateOverride: '2026-03-01',
+        finishDateOverride: '2026-02-01',
+      });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.saveErrorMessage()).toBe(message);
+      expect(component.isSaving()).toBeFalse();
+      // Stays open so the user can correct the dates rather than re-entering the whole form.
+      expect(component.isEditing()).toBeTrue();
+
+      const el = fixture.nativeElement.querySelector(
+        '[data-cy="project-save-error"]'
+      );
+      expect(el.textContent.trim()).toBe(message);
+    });
+
+    it('falls back to generic copy for a non-400 save failure', async () => {
+      mockProjectService.updateProject.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+
+      component.project.set(mockProject);
+      component.onEditClick();
+      component.onSave(baseFormValue);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.saveErrorMessage()).toBe(
+        'This project could not be saved. Please try again.'
+      );
+    });
+
+    it('clears a previous save error when the next save starts', async () => {
+      mockProjectService.updateProject.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 400, error: 'nope' }))
+      );
+      component.project.set(mockProject);
+      component.onEditClick();
+      component.onSave(baseFormValue);
+      await fixture.whenStable();
+      expect(component.saveErrorMessage()).toBe('nope');
+
+      mockProjectService.updateProject.and.returnValue(of(mockProject));
+      component.onSave(baseFormValue);
+      await fixture.whenStable();
+
+      expect(component.saveErrorMessage()).toBe('');
+    });
+
+    it('renders the resolved dates', () => {
+      component.project.set({
+        ...mockProject,
+        startDate: '2026-03-02',
+        finishDate: '2026-03-06',
+      });
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('Mar 2, 2026');
+      expect(text).toContain('Mar 6, 2026');
+    });
+
+    it('renders an em dash for a project with no finish date', () => {
+      component.project.set({
+        ...mockProject,
+        startDate: '2026-03-02',
+        finishDate: null,
+      });
+      fixture.detectChanges();
+
+      const cell = fixture.nativeElement.querySelector(
+        '[data-cy="project-finish-date"]'
+      );
+      expect(cell.textContent.trim()).toBe('\u2014');
+    });
+
+    it('does not shift the rendered day into the previous one', () => {
+      // '2026-03-02' through a plain Date would parse as UTC midnight and render as Mar 1
+      // for every viewer west of UTC.
+      component.project.set({
+        ...mockProject,
+        startDate: '2026-03-02',
+        finishDate: null,
+      });
+      fixture.detectChanges();
+
+      const cell = fixture.nativeElement.querySelector(
+        '[data-cy="project-start-date"]'
+      );
+      expect(cell.textContent.trim()).toBe('Mar 2, 2026');
+    });
   });
 });
 
@@ -370,6 +566,8 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       description: '',
       url: '',
       viewStatus: ProjectViewStatus.Private,
+      startDateOverride: null,
+      finishDateOverride: null,
     });
 
     await fixture.whenStable();
@@ -379,8 +577,32 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
         name: 'My New Project',
         status: ProjectStatus.InProgress,
         viewStatus: ProjectViewStatus.Private,
+        startDateOverride: null,
+        finishDateOverride: null,
       })
     );
+  });
+
+  it('forwards non-null date overrides from the create form', async () => {
+    // Asserting only the null case would stay green even if both create-payload
+    // assignments were deleted, since an absent key reads as undefined either way.
+    mockProjectService.reorderImages.and.returnValue(of(void 0));
+
+    component.onSave({
+      name: 'Pinned Project',
+      reference: '',
+      description: '',
+      url: '',
+      viewStatus: ProjectViewStatus.Private,
+      startDateOverride: '2026-02-01',
+      finishDateOverride: '2026-03-01',
+    });
+
+    await fixture.whenStable();
+
+    const dto = mockProjectService.createProject.calls.mostRecent().args[0];
+    expect(dto.startDateOverride).toBe('2026-02-01');
+    expect(dto.finishDateOverride).toBe('2026-03-01');
   });
 
   it('should exit edit mode, set the created project, and update the URL after successful creation', async () => {
@@ -393,6 +615,8 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       description: '',
       url: '',
       viewStatus: ProjectViewStatus.Private,
+      startDateOverride: null,
+      finishDateOverride: null,
     });
 
     await fixture.whenStable();

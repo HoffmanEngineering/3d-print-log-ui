@@ -6,7 +6,7 @@ navLabel: Projects
 group: features
 order: 20
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 ---
 
@@ -52,6 +52,21 @@ project's totals are updated.
 Each project has a status: **In Progress**, **Complete**, **On Hold**, or
 **Cancelled**. The status is shown as a color-coded dot on the project chip and
 can be changed from the project detail page.
+
+### Project Dates
+
+Every project has a start date and a finish date. By default they follow the
+project's prints: the start is the date of its earliest print, and the finish is
+when its last print ended. You do not have to enter anything.
+
+If those dates are not right — you started designing weeks before the first
+print, or a print's recorded time is off — you can set either one by hand. Edit
+the project and pick a date. To go back to automatic, clear the date with the
+button next to it and save. Each date is independent, so you can pin the start
+and leave the finish tracking your prints.
+
+A project with no prints yet has no finish date, and its start date is the day
+you created it. In the print list, projects are ordered by their start date.
 
 ### Sharing a Project
 

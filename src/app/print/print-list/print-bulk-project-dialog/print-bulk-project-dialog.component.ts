@@ -77,6 +77,8 @@ export class PrintBulkProjectDialogComponent {
           name: selection.newProjectName,
           status: ProjectStatus.InProgress,
           viewStatus: ProjectViewStatus.Private,
+          startDateOverride: null,
+          finishDateOverride: null,
         })
       );
       this.dialogRef.close({

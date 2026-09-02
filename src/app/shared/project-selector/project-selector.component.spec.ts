@@ -34,6 +34,10 @@ describe('ProjectSelectorComponent', () => {
       totalEstimatedPrintTimeInSeconds: 0,
       totalFilamentWeightMg: 0,
       defaultImageId: 0,
+      startDate: '2026-03-02',
+      finishDate: '2026-03-06',
+      startDateOverride: null,
+      finishDateOverride: null,
     },
   ];
 

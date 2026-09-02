@@ -42,10 +42,16 @@ const WEBP_QUALITY = 80;
 const SETS = {
   home: {
     assetDir: path.join(REPO, 'src', 'assets'),
-    // The home feature grid caps each column at ~676px CSS. Cap the intrinsic
-    // width at ~2x that so the images stay crisp on HiDPI without being
-    // wastefully huge (which also avoids NgOptimizedImage "oversized image"
-    // console warnings). Narrower captures are left untouched.
+    // Measured against the redesigned home layout:
+    //   hero at 1440 viewport  ~730px CSS (544px column x 134% bleed) -> 1.92x
+    //   any slot at 960 viewport ~904px CSS (full shell, stacked)     -> 1.55x
+    // So 1400 is ~2x for the hero, which is the LCP image and the one that has
+    // to be crisp, and stays above MIN_DEVICE_SCALE (1.5) for the widest
+    // stacked case. Raising this to 1700 would buy sharper below-the-fold,
+    // lazy-loaded tier images at one breakpoint while making the LCP hero ~45%
+    // more pixels - not a trade worth making. It also keeps the intrinsic width
+    // close enough to the rendered size to avoid NgOptimizedImage "oversized
+    // image" console warnings. Narrower captures are left untouched.
     maxWidth: 1400,
     assetBase: (entry) => entry.outputBase,
     publicPath: (file) => `/assets/${file}`,

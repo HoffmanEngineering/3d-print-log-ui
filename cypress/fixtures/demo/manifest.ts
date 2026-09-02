@@ -96,24 +96,42 @@ const DEMO_MATERIAL_COUNT = 6;
 // Home page
 // ---------------------------------------------------------------------------
 
+/**
+ * All four home images are captured at desktop width. The 560px captures this
+ * replaced were inside the print list's handset breakpoint, which renders one
+ * card per row - that is what made them portrait strips 1522px tall on the page.
+ *
+ * NOTE: the second number is a FLOOR, not a cap. `fitViewportToTarget` grows the
+ * viewport to whatever the boundary measures. Nothing here bounds the output
+ * aspect ratio; the CSS caps in home.component.scss are what protect the layout.
+ */
+const HOME_DESKTOP: [number, number] = [1280, 1200];
+
 const HOME_CAPTURE_TARGETS: CaptureTarget[] = [
   {
     name: 'PrinterList',
     route: '/prints',
     selector: '[data-cy="capture-print-list"]',
     outputBase: 'Homepage_PrinterList',
-    // Every home target is captured narrow: the list pages switch to their
-    // stacked card view below ~600px and the analytics overview tab stacks its
-    // tiles and charts, giving the portrait crop the home feature slots are
-    // laid out for.
-    viewport: [560, 1100],
+    viewport: HOME_DESKTOP,
     ready: [
-      // Cards, not table rows. This viewport is inside the print list's handset
-      // breakpoint (max-width: 959.98px), where the mat-table carrying
-      // [cy-print-row] is never rendered at all.
-      rendered('app-print-card', DEMO_PRINT_COUNT),
+      // Table rows, not cards. Above the handset breakpoint (max-width:
+      // 959.98px) the card view carrying app-print-card is never rendered.
+      rendered('[cy-print-row]', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
-      rendered('.material-chip', DEMO_MATERIAL_COUNT),
+      rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
+    ],
+  },
+  {
+    name: 'PrinterTable',
+    route: '/prints',
+    selector: '[data-cy="capture-print-table"]',
+    outputBase: 'Homepage_PrinterTable',
+    viewport: HOME_DESKTOP,
+    ready: [
+      rendered('[cy-print-row]', DEMO_PRINT_COUNT),
+      imagesRendered('app-print-image'),
+      rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
     ],
   },
   {
@@ -121,7 +139,7 @@ const HOME_CAPTURE_TARGETS: CaptureTarget[] = [
     route: '/materials',
     selector: '[data-cy="capture-material-list"]',
     outputBase: 'Homepage_Filament',
-    viewport: [560, 1100],
+    viewport: HOME_DESKTOP,
     ready: [atLeast('[data-cy-filament-row]', 1)],
   },
   {
@@ -129,7 +147,7 @@ const HOME_CAPTURE_TARGETS: CaptureTarget[] = [
     route: '/analytics',
     selector: '[data-cy="capture-analytics-overview"]',
     outputBase: 'Homepage_Analytics',
-    viewport: [720, 1500],
+    viewport: [1280, 900],
     ready: [
       // Six tiles swap their skeleton for a value, and both chart frames swap
       // theirs for rendered content. Asserting the skeletons are gone matters
@@ -149,10 +167,10 @@ export const HOME_CAPTURE_SET: CaptureSet = {
   targets: HOME_CAPTURE_TARGETS,
   fixtures: FIXTURE_ROUTES,
   printImages: PRINT_IMAGE_MAP,
-  // The filter panel auto-opens at >=600px; the home crops want the list, not
-  // the filter chrome. The analytics tab's lone "Export this tab (CSV)" button
-  // goes for the same reason: alone above the tiles in a narrow crop it frames
-  // the chrome, not the data.
+  // The filter panel is hidden because the home crops want the data, not the
+  // chrome - at every width, now that these are captured at desktop size. The
+  // analytics tab's lone "Export this tab (CSV)" button goes for the same
+  // reason: alone above the tiles it frames the chrome, not the data.
   css: `
   #filter-panel{display:none!important}
   .overview-tab__actions{display:none!important}

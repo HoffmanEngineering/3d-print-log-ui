@@ -284,10 +284,13 @@ $bp-narrow: 560px;
 // intrinsic height decide how tall the section is — that is exactly how the
 // old page ended up with a 1:2.31 strip. `.shot` clips, so the crop is clean.
 .hero .shot img {
-  aspect-ratio: 16 / 10;
+  // Ratio matches the capture's own (1400x760), so `cover` never actually
+  // crops at the widths this layout produces. max-height is the real guard,
+  // biting only if a future recapture comes back much taller.
+  aspect-ratio: 1400 / 760;
   max-height: 560px;
   object-fit: cover;
-  object-position: top left;
+  object-position: top;
 }
 
 .home-shot-img--dark {
@@ -453,23 +456,34 @@ $bp-narrow: 560px;
 }
 
 // The height caps. Each slot declares its own ratio, because the capture
-// pipeline does not bound output height.
+// pipeline bounds output WIDTH only - nothing in it stops a tall image.
+//
+// Each ratio is the matching capture's own, measured from the generated
+// src/content/home-captures.json after the desktop recapture. Matching it means
+// `cover` does not crop at any width this layout actually produces (the widest
+// slot is ~852px CSS, at the tablet breakpoint). max-height is the real cap,
+// there to catch a recapture that comes back a different shape. If you
+// recapture and the shape changes, update both numbers from home-captures.json.
 .shot--wide img {
-  aspect-ratio: 2.47 / 1;
+  // Homepage_PrinterTable: 1400x565
+  aspect-ratio: 1400 / 565;
+  max-height: 430px;
   object-fit: cover;
   object-position: top;
 }
 
 .shot--43 img {
-  aspect-ratio: 4 / 3;
-  max-height: 430px;
+  // Homepage_Filament: 1400x595
+  aspect-ratio: 1400 / 595;
+  max-height: 480px;
   object-fit: cover;
   object-position: top;
 }
 
 .shot--32 img {
-  aspect-ratio: 3 / 2;
-  max-height: 430px;
+  // Homepage_Analytics: 1400x762
+  aspect-ratio: 1400 / 762;
+  max-height: 480px;
   object-fit: cover;
   object-position: top;
 }

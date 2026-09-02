@@ -2,11 +2,11 @@
 slug: klipper
 title: Klipper & Moonraker | 3D Print Log Docs
 description: Automatically log prints from Klipper using Moonraker webhooks. Configure your printer to send completed prints to 3D Print Log.
-navLabel: Klipper/Moonraker
+navLabel: Log prints from Klipper
 group: integrations
 order: 50
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 ---
 
@@ -19,7 +19,7 @@ target="_blank" href="https://www.klipper3d.org/" >Klipper</a >/<a
 rel="noreferrer noopener" target="_blank"
 href="https://moonraker.readthedocs.io/en/latest/" >Moonraker</a >, and
 automatically create a new Print when a print starts, and update the print when
-it finishes. It uses moonraker's built in **notifier** component, so no
+it finishes. It uses Moonraker's built-in **notifier** component, so no
 additional plugins are required, just a small configuration change.
 
 ---
@@ -40,9 +40,9 @@ Print Time and Filament Usage will be updated.
 
 ### Limitations:
 
-- Requires Moonraker to be installed with Klipper. See the <a rel="noreferrer noopener" target="_blank" href="https://moonraker.readthedocs.io/en/latest/" >Moonraker documention</a > for installation instructions.
-- Moonraker does not report the estimated print times using the notifier plugin when a print is started, so no end time will be calculated when the print is first started.
-- The Moonraker does not analyze print settings, so no print settings from the slicer will be automatically recorded in the Notes section.
+- Requires Moonraker to be installed with Klipper. See the <a rel="noreferrer noopener" target="_blank" href="https://moonraker.readthedocs.io/en/latest/" >Moonraker documentation</a > for installation instructions.
+- Moonraker does not report the estimated print times through the notifier when a print is started, so no end time will be calculated when the print is first started.
+- Moonraker does not analyze print settings, so no print settings from the slicer will be automatically recorded in the Notes section.
 
 ---
 
@@ -59,7 +59,7 @@ Print Time and Filament Usage will be updated.
       <ul>
         <li>
           Navigate to the <a routerLink="/api-keys">Personal Api Keys</a> page
-          by clicking on your User Profile Picture at the top-left, and
+          by clicking on your User Profile Picture at the top-right, and
           selecting "Personal Api Keys".
         </li>
         <li>Click <strong>Create new API Key</strong>.</li>
@@ -78,17 +78,6 @@ Print Time and Filament Usage will be updated.
       </ul>
     </div>
     <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
     </div>
   </div>
 
@@ -114,17 +103,6 @@ Print Time and Filament Usage will be updated.
       </ul>
     </div>
     <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
     </div>
   </div>
 
@@ -134,14 +112,14 @@ Print Time and Filament Usage will be updated.
     <div fxFlex="grow">
       <ul>
         <li>
-          If your Klipper installation has a UI such a Fluidd or Mainsail, then
+          If your Klipper installation has a UI such as Fluidd or Mainsail, then
           navigate to the configuration page. Otherwise, SSH into your machine
           and navigate to the config directory.
         </li>
-        <li>>Find <strong>moonraker.conf</strong> and edit it.</li>
+        <li>Find <strong>moonraker.conf</strong> and edit it.</li>
         <li>
           At the bottom of your config, paste the following notifier config.
-          Replace the <strong>APIKEYGOESHERE</strong> with the api key you
+          Replace the <strong>APIKEYGOESHERE</strong> with the API key you
           copied from step 1, and replace the
           <strong>PRINTERIDHERE</strong> with the printer id you copied from
           step 2.
@@ -160,25 +138,14 @@ body:
 </pre>
         </li>
 
-        <li>Save and restart moonraker.</li>
+        <li>Save and restart Moonraker.</li>
       </ul>
     </div>
     <div fxFlex>
-      <!-- <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        alt="Example of Filament Adjustments on the Filament Edit Screen"
-        src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-      /> -->
     </div>
   </div>
 
-#### Step 6: Happy Printing!
+#### Step 4: Happy Printing!
 
 <div fxLayout="row" fxLayout.lt-lg="column">
     <div fxFlex="grow">
@@ -189,17 +156,6 @@ body:
     </div>
 
     <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
     </div>
   </div>
 
@@ -209,7 +165,7 @@ body:
 
 If the notifier does not seem to be working, you can check the logs in the
 moonraker.log file for **NotifyJSON**. That can point you in the right
-direction, if your moonraker is having trouble reaching 3D Print log.
+direction, if your Moonraker is having trouble reaching 3D Print Log.
 
 If you need further help, please contact us through the [Feedback](/feedback)
-and we'll be happy to help.
+page and we'll be happy to help.

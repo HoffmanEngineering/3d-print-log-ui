@@ -1,13 +1,13 @@
 ---
 slug: getting-started
 title: Getting Started | 3D Print Log Docs
-description: Set up your free 3D Print Log account and log your first print. A quick walkthrough of prints, printers, and materials to get you tracking in minutes.
+description: The free 3D Print Log account, what it costs, and what you get for signing up. New here and ready to start? Log your first print instead.
 navLabel: Getting Started
 group: start
 order: 10
-mode: tutorial
-updated: 2026-08-29
-related: [prints, printers]
+mode: explanation
+updated: 2026-09-02
+related: [log-your-first-print, prints, printers]
 component:
   className: DocsGettingStartedComponent
   path: ../docs/docs-getting-started/docs-getting-started.component
@@ -45,6 +45,10 @@ component:
         Set up in 2 minutes •
         <mat-icon class="check-icon">check_circle</mat-icon>
         Access from any device
+      </p>
+      <p class="cta-secondary">
+        Already signed up?
+        <a routerLink="/docs/log-your-first-print">Log your first print</a>
       </p>
     </div>
   </div>

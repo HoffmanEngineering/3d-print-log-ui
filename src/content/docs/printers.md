@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 ---
 
@@ -29,7 +29,7 @@ results.
 ### Add a new 3D Printer
 
 From the 3D Printer list, click on the <button mat-raised-button
-color="accent">Add Printer</button> button.
+color="accent">Add New Printer</button> button.
 
 Give the printer a **Name**, select the **Printer Type** such as FDM, SLA, etc.
 Then add a **Make**, and a **Model**. Optionally add a description (which can

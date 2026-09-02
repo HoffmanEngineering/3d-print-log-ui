@@ -6,11 +6,11 @@ navLabel: About
 group: about
 order: 20
 mode: explanation
-updated: 2026-08-29
+updated: 2026-09-02
 related: [getting-started]
 ---
 
-# About
+## About
 
 ---
 
@@ -83,7 +83,7 @@ related: [getting-started]
     </div>
   </div>
 
-## Special Thanks
+### Special Thanks
 
 Gcode Parsing based on <a target="_blank"
 href="https://github.com/hudbrog/gCodeViewer" >hudbrog's gCodeViewer</a >, which

@@ -2,11 +2,11 @@
 slug: cura-plugin
 title: Cura Plugin | 3D Print Log Docs
 description: Install the 3D Print Log plugin for Ultimaker Cura to send print time, filament, and settings straight from Cura to your print log.
-navLabel: Cura Plugin
+navLabel: Send prints from Cura
 group: integrations
 order: 30
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 ---
 
@@ -22,10 +22,11 @@ You can install this plugin via the <a
 href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
 >Ultimaker Cura Marketplace</a >. Alternatively, you can download the <a
 href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
->Latest Release from Github</a > and drag/drop into Cura to install.
+>latest release from GitHub</a > and drag/drop into Cura to install.
 
 <img
     class="fade-in"
+    alt="Installing the 3D Print Log Uploader plugin from the Ultimaker Cura Marketplace"
     [ngStyle.lt-md]="{
       display: 'block',
       'max-width': '90%',

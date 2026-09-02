@@ -69,17 +69,27 @@ export function emitRoutesTs(manifest) {
 
   const entries = routes.map((route) => {
     if (route.component) {
-      return `  { path: '${route.path}', component: ${route.component} },`;
+      // runGuardsAndResolvers: 'always' is load-bearing, not defensive. The
+      // default is 'paramsChange', under which a fragment-only navigation reuses
+      // the route and never re-runs the moved-anchor guard.
+      return `  { path: '${route.path}', component: ${route.component}, canActivate: [movedAnchorGuard], runGuardsAndResolvers: 'always' },`;
     }
     if (route.pathMatch) {
       return `  { path: '${route.path}', redirectTo: '${route.redirectTo}', pathMatch: '${route.pathMatch}' },`;
     }
-    return `  { path: '${route.path}', redirectTo: '${route.redirectTo}' },`;
+    // A function redirect, because a string one drops the fragment and the query:
+    // Angular parses both off the redirect TARGET, not off the incoming URL, so
+    // `/docs/filaments#qr-labels` would arrive at `/docs/materials` bare. The
+    // function itself is hand-written in moved-anchor.guard.ts, where it can be
+    // tested — see docsAliasRedirect.
+    return `  { path: '${route.path}', redirectTo: docsAliasRedirect('${route.redirectTo}') },`;
   });
 
   return [
     BANNER,
     "import { Routes } from '@angular/router';",
+    '',
+    "import { docsAliasRedirect, movedAnchorGuard } from '../moved-anchor.guard';",
     '',
     ...imports,
     '',
@@ -150,6 +160,7 @@ export function emitManifestTs() {
     '  readonly updated: string;',
     '  readonly related: readonly string[];',
     '  readonly aliases: readonly string[];',
+    '  readonly movedAnchors: Readonly<Record<string, readonly string[]>>;',
     '  readonly dormant: boolean;',
     '  readonly className: string;',
     '  readonly selector: string;',
@@ -157,6 +168,16 @@ export function emitManifestTs() {
     '',
     'export const DOC_PAGES: readonly DocManifestPage[] =',
     '  manifest.pages as readonly DocManifestPage[];',
+    '',
+    '/**',
+    ' * `sourceSlug#id` -> the slug that now declares that id.',
+    ' *',
+    ' * A published anchor whose section moved to another page. The moved-anchor',
+    ' * guard reads this; nothing else should. See docs-validate-lib for the rules',
+    ' * that keep it honest.',
+    ' */',
+    'export const DOC_MOVED_ANCHORS: Readonly<Record<string, string>> =',
+    '  manifest.movedAnchors as Readonly<Record<string, string>>;',
     '',
     '/**',
     ' * One entry per release, newest first.',

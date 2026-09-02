@@ -187,3 +187,80 @@ test('keeps a backslash literal inside a single-quoted scalar', () => {
 
   assert.equal(data.title, 'C:docs');
 });
+
+test('parses a flow sequence prettier split across lines', () => {
+  const text = `---
+slug: x
+related:
+  [
+    prints,
+    materials,
+  ]
+---
+body
+`;
+  assert.deepEqual(parseFrontmatter(text).data.related, ['prints', 'materials']);
+});
+
+test('parses a nested flow sequence split across lines', () => {
+  const text = `---
+slug: x
+movedAnchors:
+  materials:
+    [
+      add-general,
+      add-weights,
+    ]
+---
+body
+`;
+  assert.deepEqual(parseFrontmatter(text).data.movedAnchors, {
+    materials: ['add-general', 'add-weights'],
+  });
+});
+
+test('parses a nested block sequence', () => {
+  const text = `---
+slug: x
+movedAnchors:
+  materials:
+    - add-general
+    - add-weights
+---
+body
+`;
+  assert.deepEqual(parseFrontmatter(text).data.movedAnchors, {
+    materials: ['add-general', 'add-weights'],
+  });
+});
+
+test('rejects a flow sequence that is never closed', () => {
+  const text = `---
+slug: x
+related:
+  [
+    prints,
+---
+body
+`;
+  assert.throws(() => parseFrontmatter(text), /Unterminated flow sequence/);
+});
+
+// Comment stripping happens per scalar, after the lines are joined, so a comment
+// inside the brackets would be absorbed into the next entry rather than removed.
+test('rejects a comment inside a multi-line flow sequence', () => {
+  const text = `---
+slug: x
+related:
+  [
+    materials, # the field reference
+    prints,
+  ]
+---
+body
+`;
+  assert.throws(
+    () => parseFrontmatter(text),
+    /Comment inside a multi-line flow sequence/
+  );
+});

@@ -3,7 +3,9 @@ import test from 'node:test';
 
 import {
   DEFAULT_DOC_SLUG,
+  DOC_GROUPS,
   buildManifest,
+  normalizeMovedAnchors,
   toChildRoutes,
   toDocRoutes,
   toArticleRoutes,
@@ -273,4 +275,70 @@ test('rejects a non-string alias', () => {
     () => manifest([page({ aliases: [42] })]),
     /must be a non-empty string/
   );
+});
+
+test('DOC_GROUPS orders reference between features and integrations', () => {
+  assert.ok(DOC_GROUPS.includes('reference'));
+  assert.ok(
+    DOC_GROUPS.indexOf('features') < DOC_GROUPS.indexOf('reference'),
+    'reference must sort after features'
+  );
+  assert.ok(
+    DOC_GROUPS.indexOf('reference') < DOC_GROUPS.indexOf('integrations'),
+    'reference must sort before integrations, or a reference page is orphaned from its subject'
+  );
+});
+
+test('normalizeMovedAnchors defaults to an empty object', () => {
+  assert.deepEqual(normalizeMovedAnchors({ slug: 'a' }), {});
+});
+
+test('normalizeMovedAnchors returns the declared map', () => {
+  assert.deepEqual(
+    normalizeMovedAnchors({ slug: 'a', movedAnchors: { b: ['x', 'y'] } }),
+    { b: ['x', 'y'] }
+  );
+});
+
+test('normalizeMovedAnchors rejects a non-object', () => {
+  assert.throws(
+    () => normalizeMovedAnchors({ slug: 'a', movedAnchors: 'materials' }),
+    /movedAnchors must be a mapping/
+  );
+});
+
+test('normalizeMovedAnchors rejects a scalar value', () => {
+  assert.throws(
+    () => normalizeMovedAnchors({ slug: 'a', movedAnchors: { b: 'x' } }),
+    /movedAnchors\["b"\] must be a sequence/
+  );
+});
+
+test('normalizeMovedAnchors rejects an empty id', () => {
+  assert.throws(
+    () => normalizeMovedAnchors({ slug: 'a', movedAnchors: { b: ['x', ''] } }),
+    /movedAnchors\["b"\] contains an empty id/
+  );
+});
+
+test('buildManifest flattens movedAnchors into source#id -> destination', () => {
+  const m = manifest([
+    page({ slug: 'materials', group: 'features', order: 10 }),
+    page({
+      slug: 'materials-reference',
+      group: 'reference',
+      order: 10,
+      movedAnchors: { materials: ['add-weights', 'loaded_filament'] },
+    }),
+  ]);
+
+  assert.deepEqual(m.movedAnchors, {
+    'materials#add-weights': 'materials-reference',
+    'materials#loaded_filament': 'materials-reference',
+  });
+});
+
+test('buildManifest emits an empty movedAnchors map when nothing moved', () => {
+  const m = manifest([page({ slug: 'materials', group: 'features', order: 10 })]);
+  assert.deepEqual(m.movedAnchors, {});
 });

@@ -2,11 +2,11 @@
 slug: android-app
 title: Android App | 3D Print Log Docs
 description: Install and use the 3D Print Log Android app to log prints, manage filament, and check stats from your phone. Setup and feature guide.
-navLabel: Android App
+navLabel: Log prints from your phone
 group: integrations
 order: 10
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [getting-started]
 ---
 
@@ -24,8 +24,8 @@ and install the new app from the link above. The new app features a better
 sign-in experience and improved camera permission handling for the Material QR
 Code scanning features.
 
-The Android App will always be up-to-date with the website, any data you add in
-one will be available in the other. So use whichever is most convenient for you.
+The Android App is always up to date with the website: any data you add in one
+is available in the other. So use whichever is most convenient for you.
 
 <div fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px">
     <div fxFlex>
@@ -62,7 +62,7 @@ one will be available in the other. So use whichever is most convenient for you.
           'margin-right': 'auto',
         }"
         class="fade-in"
-        alt="The homescreen of the Android App showing the 3D Print Log Logo"
+        alt="The home screen of the Android App showing the 3D Print Log Logo"
         src="./assets/docs/android-app/homescreen_655aec71e79.png"
       />
     </div>

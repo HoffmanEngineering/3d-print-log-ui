@@ -2,19 +2,19 @@
 slug: octoprint-webhook
 title: OctoPrint Webhook | 3D Print Log Docs
 description: Connect OctoPrint to 3D Print Log with a webhook so finished prints are logged automatically. Step-by-step configuration guide.
-navLabel: Octoprint Webhook
+navLabel: Log prints from OctoPrint
 group: integrations
 order: 40
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 ---
 
-## Octoprint Integration via Webhook
+## OctoPrint Integration via Webhook
 
 ---
 
-3D Print Log can retrieve information from Octoprint in order to updating print
+3D Print Log can retrieve information from OctoPrint in order to update print
 status, print time, and filament usage. This is done using the <a
 href="https://plugins.octoprint.org/plugins/webhooks/" rel="noreferrer noopener"
 target="_blank" >OctoPrint-Webhooks</a > plugin by <a
@@ -54,12 +54,12 @@ Print Time and Filament Usage will be updated.
 ### Limitations
 
 There are a handful of limitations from using the OctoPrint Webhook plugin. If
-you are an OctoPrint Plugin Developer and would like to help creating a custom
-3D Print Log Plugin, please [Send a Feedback, we are looking for
+you are an OctoPrint plugin developer and would like to help create a custom
+3D Print Log plugin, please [send us feedback — we are looking for
 help!](/feedback)
 
 - OctoPrint does not keep track of actual filament usage, so we cannot save actual filament usage on completion/failures. 3D Print Log can only record the initial estimated usage.
-- The OctoPrint does not analyze print settings, so no print settings from the slicer will be automatically recorded in the Notes section.
+- OctoPrint does not analyze print settings, so no print settings from the slicer will be automatically recorded in the Notes section.
 
 ---
 
@@ -89,11 +89,11 @@ help!](/feedback)
     <ul>
       <li>
         Navigate to the <a routerLink="/api-keys">Personal Api Keys</a> page by
-        clicking on your User Profile Picture at the top-left, and selecting
+        clicking on your User Profile Picture at the top-right, and selecting
         "Personal Api Keys".
       </li>
       <li>Click <strong>Create new API Key</strong>.</li>
-      <li>Enter a new description (such a "Octoprint Webhook Key").</li>
+      <li>Enter a new description (such as "OctoPrint Webhook Key").</li>
       <li>Click <strong>Submit</strong> to generate a new key.</li>
       <li>Copy the new 32-character key for use in <strong>Step 4</strong>.</li>
     </ul>
@@ -210,7 +210,7 @@ help!](/feedback)
         <strong>"Send Test Webhook"</strong> button.
       </li>
       <li>
-        If everything is setup successfully, you should see a
+        If everything is set up successfully, you should see a
         <strong>"Response: Webhook Connection to 3D Print Log is Good!"</strong>
         message appear, with the correct printer name.
       </li>
@@ -235,16 +235,16 @@ These steps can help you resolve issues related to the OctoPrint Webhook Plugin.
 
 #### Error Message: Invalid API Response: Invalid API Key
 
-If you receive a **Invalid API Response: Invalid API Key** when sending a Test
+If you receive an **Invalid API Response: Invalid API Key** when sending a Test
 Webhook event, this indicates your API Key is not valid:
 
-1. Refresh OctoPrint in your browser, and check that the OctoPrint Webhook plugin has the correct api key saved under **Webhook Parameters -> API SECRET**.
+1. Refresh OctoPrint in your browser, and check that the OctoPrint Webhook plugin has the correct API key saved under **Webhook Parameters -> API SECRET**.
 2. If the WebHook Plugin didn't save the API Secret, enter it and try to save again.
-3. Create a new Api Key in 3D Print Log. Follow Setup Step 2 and try a new API Key.
+3. Create a new API Key in 3D Print Log. Follow Setup Step 2 and try a new API Key.
 
 #### Error Message: Invalid API Response: Printer does not belong to current user. Please check DeviceIdentifier.
 
-If you receive a **Invalid API Response: Printer does not belong to current
+If you receive an **Invalid API Response: Printer does not belong to current
 user. Please check DeviceIdentifier.** when sending a Test Webhook event, this
 indicates your DEVICE IDENTIFIER is not correct.
 
@@ -254,7 +254,7 @@ indicates your DEVICE IDENTIFIER is not correct.
 
 #### Error Message: Invalid API Response: No Printer Id found in webhook's DeviceIdentifier.
 
-If you receive a **Invalid API Response: No Printer Id found in webhook's
+If you receive an **Invalid API Response: No Printer Id found in webhook's
 DeviceIdentifier.** when sending a Test Webhook event, this indicates your
 DEVICE IDENTIFIER is not correct.
 

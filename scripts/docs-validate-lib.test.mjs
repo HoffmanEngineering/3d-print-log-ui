@@ -786,3 +786,152 @@ test('the tag matcher does not backtrack on a long run of quotes', () => {
   figureMessages(`<doc-figure alt=${'"'.repeat(60)}`, CAPTURES);
   assert.ok(Date.now() - started < 1000, 'tag matching should be linear');
 });
+
+// --- movedAnchors ---------------------------------------------------------
+//
+// One failing test per rule. A rule with no failing test is a rule that does
+// not exist: a wrong redirect resolves to the wrong content, not to an error.
+
+const movedPair = (referenceOver = {}, materialsOver = {}) => [
+  source({
+    slug: 'materials',
+    sourceFile: 'materials.md',
+    navLabel: 'Materials',
+    title: 'Filaments & Materials | 3D Print Log Docs',
+    description: `${DESCRIPTION} Materials edition.`,
+    body: '## Materials {#list}\n\nText.\n',
+    ...materialsOver,
+  }),
+  source({
+    slug: 'materials-reference',
+    sourceFile: 'materials-reference.md',
+    navLabel: 'Material fields',
+    title: 'Material Field Reference | 3D Print Log Docs',
+    description: `${DESCRIPTION} Material fields edition.`,
+    group: 'reference',
+    mode: 'reference',
+    body: '## Weights {#add-weights}\n\nText.\n',
+    movedAnchors: { materials: ['add-weights'] },
+    ...referenceOver,
+  }),
+];
+
+const MOVED_BASELINE = { 'docs/materials': ['list', 'add-weights'] };
+
+test('a split satisfies the published-anchor baseline through movedAnchors', () => {
+  assert.deepEqual(run(movedPair(), MOVED_BASELINE), []);
+});
+
+test('rule 0: movedAnchors must be a mapping of sequences', () => {
+  const problems = run(
+    movedPair({ movedAnchors: { materials: 'add-weights' } }),
+    MOVED_BASELINE
+  );
+  assert.ok(
+    problems.some((m) => /must be a sequence/.test(m)),
+    problems
+  );
+});
+
+test('rule 1: the source slug must be a routed page', () => {
+  const problems = run(movedPair({ movedAnchors: { nope: ['add-weights'] } }), {
+    ...MOVED_BASELINE,
+    'docs/nope': ['add-weights'],
+  });
+  assert.ok(
+    problems.some((m) => /names "nope", which is not a routed doc page/.test(m)),
+    problems
+  );
+});
+
+test('rule 2: a moved id must be declared on the declaring page', () => {
+  const problems = run(movedPair({ movedAnchors: { materials: ['not-here'] } }), {
+    'docs/materials': ['list', 'not-here'],
+  });
+  assert.ok(
+    problems.some((m) =>
+      /claims "materials#not-here" but declares no id "not-here"/.test(m)
+    ),
+    problems
+  );
+});
+
+test('rule 3: a moved id must not still be declared on the source page', () => {
+  const problems = run(
+    movedPair({}, { body: '## Materials {#list}\n\n## Weights {#add-weights}\n' }),
+    MOVED_BASELINE
+  );
+  assert.ok(
+    problems.some((m) =>
+      /"materials#add-weights", but "add-weights" is still declared on "materials"/.test(
+        m
+      )
+    ),
+    problems
+  );
+});
+
+test('rule 4: two pages may not claim the same source#id', () => {
+  const problems = run(
+    [
+      ...movedPair(),
+      source({
+        slug: 'other-reference',
+        sourceFile: 'other-reference.md',
+        navLabel: 'Other',
+        title: 'Other Reference | 3D Print Log Docs',
+        description: `${DESCRIPTION} Other edition.`,
+        group: 'reference',
+        mode: 'reference',
+        order: 20,
+        body: '## Weights {#add-weights}\n',
+        movedAnchors: { materials: ['add-weights'] },
+      }),
+    ],
+    MOVED_BASELINE
+  );
+  assert.ok(
+    problems.some((m) => /"materials#add-weights" is claimed by both/.test(m)),
+    problems
+  );
+});
+
+test('rule 5: a page may not list itself as a source', () => {
+  const problems = run(
+    movedPair({ movedAnchors: { 'materials-reference': ['add-weights'] } }),
+    { ...MOVED_BASELINE, 'docs/materials-reference': ['add-weights'] }
+  );
+  assert.ok(
+    problems.some((m) => /movedAnchors lists its own slug/.test(m)),
+    problems
+  );
+});
+
+test('rule 6: a moved id must already be a published anchor', () => {
+  const problems = run(movedPair(), { 'docs/materials': ['list'] });
+  assert.ok(
+    problems.some((m) => /"materials#add-weights" was never published/.test(m)),
+    problems
+  );
+});
+
+test('rule 7: a dormant page may not claim a moved anchor', () => {
+  const problems = run(movedPair({ dormant: true }), MOVED_BASELINE);
+  assert.ok(
+    problems.some((m) =>
+      /is dormant, so the redirect would have no route/.test(m)
+    ),
+    problems
+  );
+});
+
+test('a page that fails to render reports only the render error', () => {
+  const problems = run(
+    movedPair({ body: '## Weights {#add-weights}\n\n```angular-html\nunterminated\n' }),
+    MOVED_BASELINE
+  );
+  assert.ok(
+    !problems.some((m) => /declares no id/.test(m)),
+    `a render failure must not also be reported as missing ids: ${problems}`
+  );
+});

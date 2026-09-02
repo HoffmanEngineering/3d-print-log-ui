@@ -2,11 +2,11 @@
 slug: slic3r-uploader
 title: OrcaSlicer, PrusaSlicer & Bambu Uploader | 3D Print Log Docs
 description: Use the post-processing uploader to send prints from OrcaSlicer, PrusaSlicer, and Bambu Studio to 3D Print Log automatically. Setup guide.
-navLabel: OrcaSlicer/PrusaSlicer/Bambu
+navLabel: Send prints from your slicer
 group: integrations
 order: 60
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 ---
 
@@ -55,7 +55,7 @@ C:\\uploader\\Slic3rPostProcessingUploader.exe [options]
 
 See all supported options on <a
 href="https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/tree/main?tab=readme-ov-file#options"
->the README</a >
+>the README</a >.
 
 ---
 
@@ -66,8 +66,8 @@ not work as expected.
 
 Please report any bugs or issues either by creating an issue on <a
 href="https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/issues"
->the project's github page</a >, or by submitting a bug report through the
+>the project's GitHub page</a >, or by submitting a bug report through the
 [Feedback](/feedback) page.
 
 If you need further help, please contact us through the [Feedback](/feedback)
-and we'll be happy to help.
+page and we'll be happy to help.

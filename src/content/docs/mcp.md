@@ -6,7 +6,7 @@ navLabel: Connect an AI Assistant
 group: integrations
 order: 20
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 constants:
   mcpEndpoint: 'https://api.3dprintlog.com/mcp'
@@ -15,7 +15,7 @@ constants:
 ---
 
 <article class="docs-mcp">
-  <h1>Connect an AI Assistant (MCP)</h1>
+  <h2>Connect an AI Assistant (MCP)</h2>
 
   <p>
     3D Print Log can connect to AI assistants such as
@@ -29,7 +29,7 @@ constants:
     I just finished.&rdquo;
   </p>
 
-  <h2>What the assistant can and can&rsquo;t do</h2>
+  <h3>What the assistant can and can&rsquo;t do</h3>
   <ul>
     <li>
       <strong>Reads and writes your print data.</strong> The assistant can view
@@ -68,7 +68,7 @@ constants:
     </li>
   </ul>
 
-  <h2>Questions you can ask</h2>
+  <h3>Questions you can ask</h3>
   <p>
     You don&rsquo;t need to learn any commands; just ask in your own words.
     These are only examples to give you a feel for it. Anything you could work
@@ -105,7 +105,7 @@ constants:
     </li>
   </ul>
 
-  <h2>Changes it can make for you</h2>
+  <h3>Changes it can make for you</h3>
   <p>
     With your permission, the assistant can also make changes for you. It always
     acts as you, on your own data. Again, the list below is a starting point
@@ -186,7 +186,7 @@ constants:
     one itself.
   </p>
 
-  <h2>What you&rsquo;ll need</h2>
+  <h3>What you&rsquo;ll need</h3>
   <p>Two values. Your AI client asks for both.</p>
   <dl class="connection-details">
     <dt>MCP endpoint URL</dt>
@@ -204,7 +204,7 @@ constants:
     sign in yourself, and the assistant only ever sees your own data.
   </p>
 
-  <h2>Connect to Claude</h2>
+  <h3>Connect to Claude</h3>
   <ol>
     <li>
       In Claude (web or desktop), open
@@ -227,7 +227,7 @@ constants:
     </li>
   </ol>
 
-  <h2>Connect to Claude Code</h2>
+  <h3>Connect to Claude Code</h3>
   <p>Run this, then use <code>/mcp</code> to sign in:</p>
   <pre class="endpoint"><code>{{ claudeCodeCommand }}</code></pre>
   <p class="hint">
@@ -235,7 +235,7 @@ constants:
     <strong>8400 to 8405</strong> will work.
   </p>
 
-  <h2>Connect to ChatGPT</h2>
+  <h3>Connect to ChatGPT</h3>
   <ol>
     <li>
       In ChatGPT, open the custom connector / app setup and choose to add an MCP
@@ -251,7 +251,7 @@ constants:
     </li>
   </ol>
 
-  <h2>Managing connected assistants</h2>
+  <h3>Managing connected assistants</h3>
   <p>
     You can review and disconnect connected AI assistants at any time from your
     <a routerLink="/settings">Settings</a> page under

@@ -16,6 +16,9 @@ import {
   buildSoftwareApplication,
 } from '../core/structured-data/app-schema';
 import { AdComponent } from '../shared/ad/ad.component';
+import homeCaptures from '../../content/home-captures.json';
+
+const SITE_ORIGIN = 'https://www.3dprintlog.com';
 
 @Component({
   selector: 'app-home',
@@ -38,8 +41,9 @@ export class HomeComponent implements OnInit {
       title: '3D Print Log | Track 3D Prints, Filament & Settings',
       description:
         'Log and track your 3D prints, filament, and settings. Send prints directly from OrcaSlicer, Bambu Studio, PrusaSlicer, and Cura. Create a free account.',
-      imageUrl:
-        'https://www.3dprintlog.com/assets/3d-print-log-logo_8b178eb1339b.svg',
+      // Content-hashed and rewritten by capture:home:process, so it must never
+      // be typed by hand.
+      imageUrl: `${SITE_ORIGIN}${homeCaptures['Homepage_PrinterList'].src}`,
     });
 
     this.structuredData.setJsonLd([

@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   DEFAULT_DOC_SLUG,
+  DOC_GROUPS,
   buildManifest,
   toChildRoutes,
   toDocRoutes,
@@ -272,5 +273,17 @@ test('rejects a non-string alias', () => {
   assert.throws(
     () => manifest([page({ aliases: [42] })]),
     /must be a non-empty string/
+  );
+});
+
+test('DOC_GROUPS orders reference between features and integrations', () => {
+  assert.ok(DOC_GROUPS.includes('reference'));
+  assert.ok(
+    DOC_GROUPS.indexOf('features') < DOC_GROUPS.indexOf('reference'),
+    'reference must sort after features'
+  );
+  assert.ok(
+    DOC_GROUPS.indexOf('reference') < DOC_GROUPS.indexOf('integrations'),
+    'reference must sort before integrations, or a reference page is orphaned from its subject'
   );
 });

@@ -14,7 +14,13 @@
 // manifest.
 
 /** Sidebar groups, in the order they appear. A divider separates each pair. */
-export const DOC_GROUPS = ['start', 'features', 'integrations', 'about'];
+export const DOC_GROUPS = [
+  'start',
+  'features',
+  'reference',
+  'integrations',
+  'about',
+];
 
 /** Where `/docs` lands. A generator constant: no document declares it. */
 export const DEFAULT_DOC_SLUG = 'getting-started';

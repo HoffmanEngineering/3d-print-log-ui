@@ -111,8 +111,8 @@ test('docs.routes.ts imports each component and lists the routes in order', () =
     ts,
     /import \{ DocsPrintsComponent \} from '\.\/pages\/docs-prints\.component';/
   );
-  assert.match(ts, /\{ path: 'prints', component: DocsPrintsComponent \}/);
-  assert.match(ts, /\{ path: 'old-prints', redirectTo: 'prints' \}/);
+  assert.match(ts, /\{ path: 'prints', component: DocsPrintsComponent,/);
+  assert.match(ts, /\{ path: 'old-prints', redirectTo: \(\{ fragment \}\) =>/);
   assert.match(
     ts,
     /\{ path: '', redirectTo: 'getting-started', pathMatch: 'full' \}/
@@ -671,4 +671,43 @@ test('emitManifestTs exports DOC_MOVED_ANCHORS from the JSON manifest', () => {
     /export const DOC_MOVED_ANCHORS: Readonly<Record<string, string>> =/
   );
   assert.match(ts, /manifest\.movedAnchors as Readonly<Record<string, string>>;/);
+});
+
+test('emitRoutesTs guards every page route and always re-runs it', () => {
+  const ts = emitRoutesTs(
+    buildManifest([page({ slug: 'materials', group: 'features', order: 10 })])
+  );
+  assert.match(
+    ts,
+    /import \{ movedAnchorGuard \} from '\.\.\/moved-anchor\.guard';/
+  );
+  assert.match(ts, /canActivate: \[movedAnchorGuard\]/);
+  assert.match(ts, /runGuardsAndResolvers: 'always'/);
+});
+
+test('emitRoutesTs carries the fragment through an alias redirect', () => {
+  const ts = emitRoutesTs(
+    buildManifest([
+      page({
+        slug: 'materials',
+        group: 'features',
+        order: 10,
+        aliases: ['filaments'],
+      }),
+    ])
+  );
+  // A plain string redirectTo drops the fragment: Angular parses the fragment
+  // off the TARGET, not off the incoming URL.
+  assert.doesNotMatch(ts, /path: 'filaments', redirectTo: 'materials'/);
+  assert.match(ts, /path: 'filaments', redirectTo: \(\{ fragment \}\) =>/);
+});
+
+test('emitRoutesTs leaves the default child route a plain redirect', () => {
+  const ts = emitRoutesTs(
+    buildManifest([page({ slug: 'getting-started', group: 'start', order: 10 })])
+  );
+  assert.match(
+    ts,
+    /\{ path: '', redirectTo: 'getting-started', pathMatch: 'full' \},/
+  );
 });

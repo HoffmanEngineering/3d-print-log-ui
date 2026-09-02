@@ -69,17 +69,25 @@ export function emitRoutesTs(manifest) {
 
   const entries = routes.map((route) => {
     if (route.component) {
-      return `  { path: '${route.path}', component: ${route.component} },`;
+      // runGuardsAndResolvers: 'always' is load-bearing, not defensive. The
+      // default is 'paramsChange', under which a fragment-only navigation reuses
+      // the route and never re-runs the moved-anchor guard.
+      return `  { path: '${route.path}', component: ${route.component}, canActivate: [movedAnchorGuard], runGuardsAndResolvers: 'always' },`;
     }
     if (route.pathMatch) {
       return `  { path: '${route.path}', redirectTo: '${route.redirectTo}', pathMatch: '${route.pathMatch}' },`;
     }
-    return `  { path: '${route.path}', redirectTo: '${route.redirectTo}' },`;
+    // A function redirect, because a string one drops the fragment: Angular
+    // parses the fragment off the redirect TARGET, not off the incoming URL, so
+    // `/docs/filaments#qr-labels` would arrive at `/docs/materials` bare.
+    return `  { path: '${route.path}', redirectTo: ({ fragment }) => \`/docs/${route.redirectTo}\${fragment ? \`#\${fragment}\` : ''}\` },`;
   });
 
   return [
     BANNER,
     "import { Routes } from '@angular/router';",
+    '',
+    "import { movedAnchorGuard } from '../moved-anchor.guard';",
     '',
     ...imports,
     '',

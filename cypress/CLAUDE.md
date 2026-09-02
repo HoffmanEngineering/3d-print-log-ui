@@ -138,7 +138,7 @@ not hand-captured:
 
 | Set    | Command                    | Output                                           |
 | ------ | -------------------------- | ------------------------------------------------ |
-| `home` | `npm run capture:home:all` | 3 feature images (light + dark) in `src/assets/` |
+| `home` | `npm run capture:home:all` | 4 feature images (light + dark) in `src/assets/` |
 | `docs` | `npm run capture:docs:all` | doc figures in `src/assets/docs/captures/`       |
 
 Both run the same harness — `cypress/support/capture.ts` — over a `CaptureSet`
@@ -254,15 +254,34 @@ The pipeline: capture → process + hash → commit → `docs:generate` reads
   capture machine's timezone, so a `T00:00:00+00:00` date shows the day before
   anywhere west of Greenwich — the image would differ by machine. Midday holds
   the same calendar date from UTC-11 to UTC+12.
-- The home prints capture is taken inside the print list's handset breakpoint
-  (`max-width: 959.98px`), where the mat-table is not rendered at all and
-  `app-print-card` is; the desktop doc figures sit above it and get the table.
-  Home analytics is captured at 720px, wide enough for its tiles to go three
-  across, which keeps the image near the other two slots' aspect.
-- The post-process caps intrinsic width per set — 1400px for home (the feature
-  grid's ~676px column at 2×, which also avoids NgOptimizedImage "oversized"
-  warnings) and 1700px for docs (the prose column at 2×).
-- Out of scope: the 4th "Cura marketplace" integration image is not regenerated.
+- **All four home captures are taken at desktop width** (`HOME_DESKTOP`,
+  1280px; analytics at 1280x900). They used to be captured at 560px, inside the
+  print list's handset breakpoint (`max-width: 959.98px`), where the mat-table is
+  not rendered at all and `app-print-card` is - which is why the print list image
+  was a 1:2.31 portrait strip. Above that breakpoint the ready steps must assert
+  on `[cy-print-row]` and `app-filament-color-swatch`, not `app-print-card` and
+  `.material-chip`.
+- **The viewport tuple's second number is a FLOOR, not a cap.**
+  `fitViewportToTarget` grows the viewport to whatever the boundary measures, so
+  nothing in the pipeline bounds output height or aspect ratio. The CSS caps in
+  `home.component.scss` are what protect the layout, and each one is set to its
+  capture's real ratio (read off `src/content/home-captures.json` after a run).
+  If a recapture changes an image's shape, update the matching `aspect-ratio`.
+- The post-process caps intrinsic width per set — 1400px for home and 1700px for
+  docs (the prose column at 2×). For home that is ~2× the hero's ~730px rendered
+  width at a 1440 viewport, and stays above `MIN_DEVICE_SCALE` for the widest
+  stacked case (~904px at 960). It also keeps intrinsic close enough to rendered
+  to avoid NgOptimizedImage "oversized image" warnings.
+- The home set also emits **`src/content/home-captures.json`**, a flat
+  `assetBase -> {src,width,height}` map. It exists for the one consumer that
+  cannot read the template: the OG image URL in `home.component.ts`.
+  `validate-docs.mjs` checks it against both the assets on disk and the template,
+  so a stale entry fails `npm run test:scripts` rather than shipping a social
+  preview that points at a missing file.
+- Out of scope: the "Cura marketplace" integration image is not regenerated. It
+  is a screenshot of the Cura **desktop application**, which Cypress cannot
+  drive, so it can never join `HOME_CAPTURE_TARGETS`; its CSS height cap is the
+  only thing holding it in line.
 
 ## Running in CI
 

@@ -18,6 +18,8 @@ import {
   contentHash,
   deviceScale,
   docCapturesIndex,
+  escapeRegExp,
+  homeCapturesIndex,
   MIN_DEVICE_SCALE,
   pairSidecar,
   replaceImgRefExactlyOnce,
@@ -41,10 +43,16 @@ const WEBP_QUALITY = 80;
 const SETS = {
   home: {
     assetDir: path.join(REPO, 'src', 'assets'),
-    // The home feature grid caps each column at ~676px CSS. Cap the intrinsic
-    // width at ~2x that so the images stay crisp on HiDPI without being
-    // wastefully huge (which also avoids NgOptimizedImage "oversized image"
-    // console warnings). Narrower captures are left untouched.
+    // Measured against the redesigned home layout:
+    //   hero at 1440 viewport  ~730px CSS (544px column x 134% bleed) -> 1.92x
+    //   any slot at 960 viewport ~904px CSS (full shell, stacked)     -> 1.55x
+    // So 1400 is ~2x for the hero, which is the LCP image and the one that has
+    // to be crisp, and stays above MIN_DEVICE_SCALE (1.5) for the widest
+    // stacked case. Raising this to 1700 would buy sharper below-the-fold,
+    // lazy-loaded tier images at one breakpoint while making the LCP hero ~45%
+    // more pixels - not a trade worth making. It also keeps the intrinsic width
+    // close enough to the rendered size to avoid NgOptimizedImage "oversized
+    // image" console warnings. Narrower captures are left untouched.
     maxWidth: 1400,
     assetBase: (entry) => entry.outputBase,
     publicPath: (file) => `/assets/${file}`,
@@ -61,6 +69,13 @@ const SETS = {
         });
       }
       fs.writeFileSync(html, contents);
+
+      // Also publish the map, for consumers that cannot read the template —
+      // today that is the OG image URL in home.component.ts.
+      fs.writeFileSync(
+        path.join(REPO, 'src', 'content', 'home-captures.json'),
+        `${JSON.stringify(homeCapturesIndex(staged), null, 2)}\n`
+      );
     },
   },
   docs: {
@@ -87,10 +102,6 @@ const SETS = {
     },
   },
 };
-
-function escapeRegExp(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 // Cypress nests screenshots by spec path, which varies by environment — find the
 // PNG by filename anywhere under cypress/screenshots.

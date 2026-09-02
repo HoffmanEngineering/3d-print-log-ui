@@ -141,4 +141,43 @@ describe('AuthService', () => {
       expect(order).toEqual(['auth0-logout']);
     });
   });
+
+  describe('login screen_hint', () => {
+    let service: AuthService;
+    let client: jasmine.SpyObj<{ loginWithRedirect: (o: unknown) => void }>;
+
+    beforeEach(() => {
+      service = TestBed.inject(AuthService);
+      client = jasmine.createSpyObj('Auth0Client', ['loginWithRedirect']);
+      (service as unknown as { auth0Client$: unknown }).auth0Client$ =
+        of(client);
+    });
+
+    it('omits screen_hint for an ordinary login', () => {
+      service.login('/prints');
+
+      const params = client.loginWithRedirect.calls.mostRecent().args[0] as {
+        authorizationParams: Record<string, unknown>;
+      };
+      expect(params.authorizationParams['screen_hint']).toBeUndefined();
+    });
+
+    it('sends screen_hint=signup when asked for signup', () => {
+      service.login('/prints', { signup: true });
+
+      const params = client.loginWithRedirect.calls.mostRecent().args[0] as {
+        authorizationParams: Record<string, unknown>;
+      };
+      expect(params.authorizationParams['screen_hint']).toBe('signup');
+    });
+
+    it('still carries the redirect target through appState', () => {
+      service.login('/prints', { signup: true });
+
+      const params = client.loginWithRedirect.calls.mostRecent().args[0] as {
+        appState: { target: string };
+      };
+      expect(params.appState.target).toBe('/prints');
+    });
+  });
 });

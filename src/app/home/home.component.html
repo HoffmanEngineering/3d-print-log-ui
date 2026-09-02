@@ -1,211 +1,321 @@
-<main fxLayout="column wrap" fxLayoutAlign="center center">
-  <!-- Hero Section -->
-  <mat-toolbar fxFlex="grow" color="primary" class="hero-section">
-    <div fxFlex="grow" class="docs-header-headline">
-      <img
-        class="logo"
-        src="/assets/3d-print-log-logo_8b178eb1339b.svg"
-        alt="3D Print Log Logo"
-      />
-      <h2 cy-subtitle class="hero-subtitle">Log and analyze your 3D Prints</h2>
-      <a
-        mat-raised-button
-        color="accent"
-        class="get-started cta-button"
-        routerLink="/docs/getting-started"
-        >Get started</a
-      >
-    </div>
-  </mat-toolbar>
-
-  <!-- Introduction Section -->
-  <section fxFlex="grow" class="intro-section">
-    <div class="intro-content">
-      <p class="intro-text">
-        3D Print Log is a simple tool for tracking 3D prints. Easily record
-        details of your 3D printers, filament usage, print status, print
-        duration and more.
-      </p>
-      <p class="intro-cta">
-        <a [routerLink]="['/docs', 'getting-started']" class="quick-link"
-          >View the quick start guide</a
-        >, or jump into it by
-        <a href (click)="auth.login('/prints')" class="quick-link"
-          >creating a <strong>free</strong> account</a
-        >
-        today and start logging!
-      </p>
-    </div>
-  </section>
-
-  @if (isBrowser) {
-    <app-ad></app-ad>
-  }
-
-  <!-- Features Grid Section -->
-  <section fxFlex="grow" class="example-grid features-section">
-    <div gdColumns="1fr 1fr" gdGap="48px" gdRows="auto" class="features-grid">
-      <!-- Feature 1: Track Prints -->
-      <div class="section image feature-image feature-1-image">
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="home-shell">
+      <div class="brand">
         <img
-          class="fade-in home-feature-img home-feature-img--light"
-          ngSrc="/assets/Homepage_PrinterList_0a9301c7cfa9.webp"
-          width="1120"
-          height="2582"
-          alt="Print list showing each print with its photo, printer, date, duration and the materials it used"
-          loading="lazy"
+          class="brand-logo"
+          src="/assets/3d-print-log-logo_8b178eb1339b.svg"
+          alt=""
+          width="38"
+          height="38"
         />
-        <img
-          class="fade-in home-feature-img home-feature-img--dark"
-          ngSrc="/assets/Homepage_PrinterList_dark_997d41c86c62.webp"
-          width="1120"
-          height="2582"
-          alt="Print list showing each print with its photo, printer, date, duration and the materials it used"
-          loading="lazy"
-        />
-      </div>
-      <div class="section homepage-desc feature-content feature-1-content">
-        <h2>Track Every 3D Print</h2>
-        <p>
-          Log details for every print. Upload pictures, track print times and
-          filament usage, save notes and more. Search through past prints so you
-          never forget a detail again.
-        </p>
+        <span class="brand-name">3D Print Log</span>
       </div>
 
-      <!-- Feature 2: Material Library -->
-      <div class="section homepage-desc feature-content feature-2-content">
-        <h2>Create Your Material Library</h2>
-        <p>
-          Keep track of every roll of filament and bottle of resin. See what
-          colors and materials you have, record filament usage and know exactly
-          how much material is remaining on each spool or in the bottle. Never
-          start a print again wondering if there is enough material to finish.
-        </p>
-      </div>
-      <div class="section image feature-image feature-2-image">
-        <img
-          class="fade-in home-feature-img home-feature-img--light"
-          ngSrc="/assets/Homepage_Filament_1aaca5091784.webp"
-          width="1120"
-          height="1483"
-          alt="The Filament Library with multiple rolls of filament recorded."
-          loading="lazy"
-        />
-        <img
-          class="fade-in home-feature-img home-feature-img--dark"
-          ngSrc="/assets/Homepage_Filament_dark_7c4839879f29.webp"
-          width="1120"
-          height="1483"
-          alt="The Filament Library with multiple rolls of filament recorded."
-          loading="lazy"
-        />
-      </div>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1 class="hero-title">
+            Every print you&rsquo;ve made,
+            <em>still on the record.</em>
+          </h1>
+          <p class="hero-sub">
+            Times, temperatures, filament, photos and what actually came out of
+            the printer. Captured from your slicer as you print, in one place
+            you can search years later.
+          </p>
+          <div class="hero-acts">
+            <button
+              type="button"
+              class="home-btn home-btn--primary"
+              data-cy="hero-signup"
+              (click)="signUp('hero')"
+            >
+              Create a free account
+            </button>
+            <a
+              class="home-btn home-btn--ghost"
+              routerLink="/docs/getting-started"
+              >See how it works</a
+            >
+          </div>
+          <p class="hero-micro">
+            <span><strong>Free</strong> to start</span>
+            <span>No card</span>
+            <span>Works with the slicer you already use</span>
+          </p>
+        </div>
 
-      <!-- Feature 3: Analytics -->
-      <div class="section image feature-image feature-3-image">
-        <img
-          ngSrc="/assets/Homepage_Analytics_b163ad56d415.webp"
-          width="1376"
-          height="1997"
-          class="fade-in home-feature-img home-feature-img--light"
-          alt="Screenshot of Analytics page showing print time, filament usage, and a graph of print status"
-          loading="lazy"
-        />
-        <img
-          ngSrc="/assets/Homepage_Analytics_dark_70124f2fb630.webp"
-          width="1376"
-          height="1997"
-          class="fade-in home-feature-img home-feature-img--dark"
-          alt="Screenshot of Analytics page showing print time, filament usage, and a graph of print status"
-          loading="lazy"
-        />
-      </div>
-      <div class="section homepage-desc feature-content feature-3-content">
-        <h2>View Print Analytics</h2>
-        <p>
-          See statistics about your prints. Metrics like total print times,
-          material usage, and how often your prints succeed are just a click
-          away.
-        </p>
-      </div>
-
-      <!-- Feature 4: Integrations -->
-      <div class="section homepage-desc feature-content feature-4-content">
-        <h2>Automatically Upload with Slicer Integrations</h2>
-        <p>
-          Send prints straight from your slicer. 3D Print Log works with
-          <a routerLink="/orcaslicer" class="feature-link">OrcaSlicer</a>,
-          <a routerLink="/bambu-studio" class="feature-link">Bambu Studio</a>,
-          <a routerLink="/prusaslicer" class="feature-link">PrusaSlicer</a>,
-          <a routerLink="/creality-print" class="feature-link">Creality Print</a
-          >, SuperSlicer, and
-          <a routerLink="/cura" class="feature-link">Ultimaker Cura</a>, filling
-          in your print details and settings automatically. Cura uses our
-          Marketplace plugin; the others use our post-processing uploader.
-        </p>
-        <p>
-          And you can setup
-          <a routerLink="/docs/octoprint-webhook" class="feature-link"
-            >Octoprint</a
-          >
-          or
-          <a routerLink="/docs/klipper" class="feature-link"
-            >Klipper/Moonraker</a
-          >
-          to automatically send print status updates to 3D Print Log.
-        </p>
-      </div>
-      <div class="section image feature-image feature-4-image">
-        <img
-          class="fade-in"
-          src="/assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
-          width="500"
-          height="560"
-          alt="The 3D Print Log Uploader Plugin in the Cura Marketplace"
-          loading="lazy"
-        />
+        <div class="hero-media">
+          <div class="shot">
+            <img
+              class="home-shot-img home-shot-img--light"
+              ngSrc="/assets/Homepage_PrinterList_82e715919a91.webp"
+              width="1400"
+              height="760"
+              alt="The print list in 3D Print Log, showing recent prints with photos, printers, durations and the materials each used"
+              priority
+            />
+            <img
+              class="home-shot-img home-shot-img--dark"
+              ngSrc="/assets/Homepage_PrinterList_dark_d5a941f916eb.webp"
+              width="1400"
+              height="760"
+              alt="The print list in 3D Print Log, showing recent prints with photos, printers, durations and the materials each used"
+              loading="lazy"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Bottom CTA Section -->
-  <div fxFlex="150px" class="bottom-cta-section">
-    <a
-      color="accent"
-      mat-raised-button
-      class="get-started cta-button-large"
-      routerLink="/docs/getting-started"
-      >Get started</a
-    >
-  </div>
+  <!-- Slicer proof strip -->
+  <section class="proof">
+    <div class="home-shell proof-inner">
+      <span class="proof-lede">Sends prints straight from</span>
+      <ul class="proof-list">
+        <li><a routerLink="/orcaslicer">OrcaSlicer</a></li>
+        <li><a routerLink="/bambu-studio">Bambu Studio</a></li>
+        <li><a routerLink="/prusaslicer">PrusaSlicer</a></li>
+        <li><a routerLink="/creality-print">Creality Print</a></li>
+        <!--
+          SuperSlicer has no marketing page of its own. It is a Slic3r fork and
+          uses the same post-processing script, so it points at that guide
+          rather than being the one unlinked name in the row.
+        -->
+        <li><a routerLink="/docs/slic3r-uploader">SuperSlicer</a></li>
+        <li><a routerLink="/cura">Cura</a></li>
+      </ul>
+      <span class="proof-tail">
+        and takes live status updates from
+        <a routerLink="/docs/octoprint-webhook">OctoPrint</a> and
+        <a routerLink="/docs/klipper">Klipper/Moonraker</a>.
+      </span>
+    </div>
+  </section>
 
-  <!-- Footer -->
-  <footer fxFlex="grow" fxFlexFill class="footer-section">
-    <mat-toolbar fxFlex color="primary" class="footer-toolbar">
-      <div
-        class="docs-header-headline footer-content"
-        fxFlex
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="start center"
-      >
-        <h1 fxFlex class="mat-h1 footer-title">3D Print Log</h1>
-        <h2 fxFlex class="footer-subtitle">Log and analyze your 3D Prints</h2>
-        <a
-          mat-raised-button
-          class="get-started"
-          routerLink="/docs/getting-started"
-          >Get started</a
-        >
-        <nav class="footer-slicer-links" aria-label="Slicer integrations">
+  <!-- Tiered feature sections -->
+  <section class="tier">
+    <div class="home-shell tier-inner">
+      <div class="tier-copy">
+        <span class="eyebrow">For one printer on a desk</span>
+        <h2 class="tier-title">Never lose a good setting again</h2>
+        <p class="tier-body">
+          You dialed in the temperature and speed six months ago. Log it once
+          and it stays with the print: the photo, the duration, the filament you
+          used, and the note about what went wrong the first time.
+        </p>
+      </div>
+      <div class="tier-media">
+        <div class="shot shot--wide">
+          <img
+            class="home-shot-img home-shot-img--light"
+            ngSrc="/assets/Homepage_PrinterTable_62a05394080b.webp"
+            width="1400"
+            height="565"
+            alt="A table of prints showing photo, printer, date, duration and the materials each one used"
+            loading="lazy"
+          />
+          <img
+            class="home-shot-img home-shot-img--dark"
+            ngSrc="/assets/Homepage_PrinterTable_dark_91e7bcacaba7.webp"
+            width="1400"
+            height="565"
+            alt="A table of prints showing photo, printer, date, duration and the materials each one used"
+            loading="lazy"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tier tier--alt tier--flip">
+    <div class="home-shell tier-inner">
+      <div class="tier-copy">
+        <span class="eyebrow">For a bench full of them</span>
+        <h2 class="tier-title">Know what every spool has left</h2>
+        <p class="tier-body">
+          Track each roll and bottle from first use to empty. See what is
+          running low before you start a twelve-hour print, and stop guessing
+          whether there is enough left on the spool to finish.
+        </p>
+      </div>
+      <div class="tier-media">
+        <div class="shot shot--43">
+          <img
+            class="home-shot-img home-shot-img--light"
+            ngSrc="/assets/Homepage_Filament_2a175264fe90.webp"
+            width="1400"
+            height="595"
+            alt="The material library listing rolls of filament with their colors, materials and remaining amounts"
+            loading="lazy"
+          />
+          <img
+            class="home-shot-img home-shot-img--dark"
+            ngSrc="/assets/Homepage_Filament_dark_c65376072c5c.webp"
+            width="1400"
+            height="595"
+            alt="The material library listing rolls of filament with their colors, materials and remaining amounts"
+            loading="lazy"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tier">
+    <div class="home-shell tier-inner">
+      <div class="tier-copy">
+        <span class="eyebrow">When you want the numbers</span>
+        <h2 class="tier-title">See where the time and filament went</h2>
+        <p class="tier-body">
+          Total print hours, material used, and how often prints actually
+          succeed across every printer you own. The kind of thing a spreadsheet
+          promises and never quite delivers.
+        </p>
+      </div>
+      <div class="tier-media">
+        <div class="shot shot--32">
+          <img
+            class="home-shot-img home-shot-img--light"
+            ngSrc="/assets/Homepage_Analytics_663bfd938090.webp"
+            width="1400"
+            height="762"
+            alt="The analytics overview showing print time, filament usage and a chart of print outcomes"
+            loading="lazy"
+          />
+          <img
+            class="home-shot-img home-shot-img--dark"
+            ngSrc="/assets/Homepage_Analytics_dark_b42fb40dc218.webp"
+            width="1400"
+            height="762"
+            alt="The analytics overview showing print time, filament usage and a chart of print outcomes"
+            loading="lazy"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tier tier--alt tier--flip">
+    <div class="home-shell tier-inner">
+      <div class="tier-copy">
+        <span class="eyebrow">Coming from a spreadsheet</span>
+        <h2 class="tier-title">Stop typing it in twice</h2>
+        <p class="tier-body">
+          The post-processing uploader sends the print the moment you slice it.
+          File name, printer, material, layer height and estimated time arrive
+          already filled in. Cura has a Marketplace plugin; everything else uses
+          the uploader script.
+        </p>
+        <nav class="tier-links" aria-label="Slicer guides">
           <a routerLink="/orcaslicer">OrcaSlicer</a>
           <a routerLink="/bambu-studio">Bambu Studio</a>
           <a routerLink="/prusaslicer">PrusaSlicer</a>
           <a routerLink="/creality-print">Creality Print</a>
           <a routerLink="/cura">Cura</a>
         </nav>
+        <p class="tier-callout">
+          <strong>Nothing to copy across.</strong> Slice, print, and the log
+          fills itself in.
+        </p>
       </div>
-    </mat-toolbar>
-  </footer>
+      <div class="tier-media tier-media--narrow">
+        <div class="shot">
+          <!--
+          ngSrc, not src: this is a raster static image, which is what
+          AGENTS.md's NgOptimizedImage rule covers. Safe even though it is NOT a
+          generated capture: the capture pipeline only ever matches
+          /assets/<base>_<token>.webp, and this is a .png, so it is never
+          matched or rewritten.
+
+          The two logo img tags deliberately keep plain src: they are SVGs, and
+          NgOptimizedImage generates no srcset and applies no sizing benefit to
+          a vector.
+        -->
+          <img
+            ngSrc="/assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
+            width="583"
+            height="519"
+            alt="The 3D Print Log Uploader plugin listed in the Cura Marketplace"
+            loading="lazy"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ad: after the pitch, before the ask -->
+  @if (isBrowser) {
+    <section class="adband">
+      <div class="home-shell">
+        <app-ad></app-ad>
+      </div>
+    </section>
+  }
+
+  <!-- Closing CTA -->
+  <section class="closing">
+    <div class="home-shell">
+      <h2 class="closing-title">Start your log</h2>
+      <p class="closing-sub">
+        Free to start, and the next print you slice can be the first one in it.
+      </p>
+      <div class="closing-acts">
+        <button
+          type="button"
+          class="home-btn home-btn--primary"
+          data-cy="closing-signup"
+          (click)="signUp('closing')"
+        >
+          Create a free account
+        </button>
+        <a class="home-btn home-btn--ghost" routerLink="/docs/getting-started"
+          >Read the quick start guide</a
+        >
+      </div>
+    </div>
+  </section>
 </main>
+
+<!-- Footer: navigation only -->
+<footer class="site-footer">
+  <div class="home-shell footer-grid">
+    <div class="footer-brand">
+      <div class="brand">
+        <img
+          class="brand-logo"
+          src="/assets/3d-print-log-logo_8b178eb1339b.svg"
+          alt=""
+          width="32"
+          height="32"
+        />
+        <span class="brand-name">3D Print Log</span>
+      </div>
+      <p class="footer-blurb">
+        A logbook for the things you print: what it was, what it took, and how
+        it turned out.
+      </p>
+    </div>
+    <nav class="footer-col" aria-label="Slicer integrations">
+      <h3>Slicers</h3>
+      <ul>
+        <li><a routerLink="/orcaslicer">OrcaSlicer</a></li>
+        <li><a routerLink="/bambu-studio">Bambu Studio</a></li>
+        <li><a routerLink="/prusaslicer">PrusaSlicer</a></li>
+        <li><a routerLink="/creality-print">Creality Print</a></li>
+        <li><a routerLink="/cura">Cura</a></li>
+      </ul>
+    </nav>
+    <nav class="footer-col" aria-label="Documentation">
+      <h3>Learn</h3>
+      <ul>
+        <li><a routerLink="/docs/getting-started">Quick start guide</a></li>
+        <li><a routerLink="/docs">Documentation</a></li>
+        <li><a routerLink="/docs/octoprint-webhook">OctoPrint webhook</a></li>
+        <li><a routerLink="/docs/klipper">Klipper / Moonraker</a></li>
+      </ul>
+    </nav>
+  </div>
+</footer>

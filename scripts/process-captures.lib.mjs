@@ -55,6 +55,102 @@ export function pairSidecar(sidecar) {
 }
 
 /**
+ * Home captures are hand-placed in the template, which the commit step rewrites.
+ * This map exists for the one consumer that cannot read the template: the OG
+ * image URL in home.component.ts, which needs a content-hashed filename.
+ *
+ * Keyed by assetBase (Homepage_PrinterList, Homepage_PrinterList_dark, ...)
+ * because that is what the template and the manifest already agree on.
+ */
+export function homeCapturesIndex(staged) {
+  const index = {};
+  for (const s of staged) {
+    index[s.assetBase] = {
+      src: s.publicPath,
+      width: s.width,
+      height: s.height,
+    };
+  }
+  return index;
+}
+
+/**
+ * Validates the committed home capture artifacts against each other.
+ *
+ * The home set writes three things in one step - the WebP assets, the rewritten
+ * template, and home-captures.json - and nothing else checks they stayed in
+ * agreement. A partial commit or a conflict resolution can leave the OG image
+ * (which reads the map) pointing at an asset that is not there, or leave the
+ * template on a different hash to the map, and neither the Angular build nor
+ * the component specs would notice.
+ *
+ * `readAsset` takes a public path and returns bytes or null.
+ * `html` is the home template source, used to prove the map and the template
+ * name the same file at the same size.
+ */
+/**
+ * A capture base or path can contain regex metacharacters, and one of the
+ * callers DELETES files by the pattern it builds, so escaping is not cosmetic.
+ */
+export function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function homeCaptureProblems(captures, readAsset, html) {
+  const problems = [];
+
+  for (const [base, image] of Object.entries(captures)) {
+    if (!image?.src) {
+      problems.push(`"${base}" has no src.`);
+      continue;
+    }
+
+    const bytes = readAsset(image.src);
+    if (!bytes) {
+      problems.push(
+        `"${base}" points at ${image.src}, which does not exist. Re-run \`npm run capture:home:all\`.`
+      );
+      continue;
+    }
+
+    const expected = /_([A-Za-z0-9]+)\.webp$/.exec(image.src)?.[1];
+    const actual = contentHash(bytes);
+    if (expected !== actual) {
+      problems.push(
+        `"${base}" is ${image.src}, but that file hashes to ${actual}. The asset and the map are out of step - re-run \`npm run capture:home:all\`.`
+      );
+    }
+
+    if (!(image.width > 0) || !(image.height > 0)) {
+      problems.push(
+        `"${base}" has no usable dimensions (${image.width}x${image.height}).`
+      );
+    }
+
+    // The template is the other consumer. If it disagrees with the map, one of
+    // them was hand-edited.
+    const tag = new RegExp(
+      `<img\\b[^>]*ngSrc="${escapeRegExp(image.src)}"[^>]*>`
+    ).exec(html)?.[0];
+    if (!tag) {
+      problems.push(
+        `"${base}" is ${image.src} in the map, but no <img ngSrc> in home.component.html references it.`
+      );
+      continue;
+    }
+    const w = /width="(\d+)"/.exec(tag)?.[1];
+    const h = /height="(\d+)"/.exec(tag)?.[1];
+    if (Number(w) !== image.width || Number(h) !== image.height) {
+      problems.push(
+        `"${base}" is ${image.width}x${image.height} in the map but ${w}x${h} in the template.`
+      );
+    }
+  }
+
+  return problems;
+}
+
+/**
  * `name -> { light, dark }` for the generated doc-figure map, sorted by name so
  * the checked-in JSON has a stable diff.
  *

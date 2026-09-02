@@ -5,6 +5,8 @@ import {
   contentHash,
   deviceScale,
   docCapturesIndex,
+  homeCaptureProblems,
+  homeCapturesIndex,
   MIN_DEVICE_SCALE,
   pairSidecar,
   replaceImgRefExactlyOnce,
@@ -216,4 +218,108 @@ test('captureAssetProblems reports an asset whose content no longer matches', ()
     Buffer.from('a different image')
   );
   assert.match(message, /hashes to [a-f0-9]{12}/);
+});
+
+test('homeCapturesIndex keys every staged asset by its base', () => {
+  const index = homeCapturesIndex([
+    {
+      assetBase: 'Homepage_PrinterList',
+      publicPath: '/assets/Homepage_PrinterList_abc123.webp',
+      width: 1400,
+      height: 844,
+    },
+    {
+      assetBase: 'Homepage_PrinterList_dark',
+      publicPath: '/assets/Homepage_PrinterList_dark_def456.webp',
+      width: 1400,
+      height: 844,
+    },
+  ]);
+
+  assert.deepEqual(index, {
+    Homepage_PrinterList: {
+      src: '/assets/Homepage_PrinterList_abc123.webp',
+      width: 1400,
+      height: 844,
+    },
+    Homepage_PrinterList_dark: {
+      src: '/assets/Homepage_PrinterList_dark_def456.webp',
+      width: 1400,
+      height: 844,
+    },
+  });
+});
+
+const HOME_IMG = (src, w, h) =>
+  `<img
+  class="home-shot-img"
+  ngSrc="${src}"
+  width="${w}"
+  height="${h}"
+  alt="x"
+/>`;
+
+test('homeCaptureProblems accepts a map that agrees with assets and template', () => {
+  const bytes = Buffer.from('pretend-webp');
+  const src = `/assets/Homepage_PrinterList_${contentHash(bytes)}.webp`;
+  const problems = homeCaptureProblems(
+    { Homepage_PrinterList: { src, width: 1400, height: 760 } },
+    () => bytes,
+    HOME_IMG(src, 1400, 760)
+  );
+
+  assert.deepEqual(problems, []);
+});
+
+test('homeCaptureProblems reports an asset that is not on disk', () => {
+  const problems = homeCaptureProblems(
+    {
+      Homepage_PrinterList: {
+        src: '/assets/Homepage_PrinterList_abc123.webp',
+        width: 1,
+        height: 1,
+      },
+    },
+    () => null,
+    ''
+  );
+
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /does not exist/);
+});
+
+test('homeCaptureProblems catches a map whose hash drifted from the asset', () => {
+  const bytes = Buffer.from('pretend-webp');
+  const src = '/assets/Homepage_PrinterList_deadbeef0000.webp';
+  const problems = homeCaptureProblems(
+    { Homepage_PrinterList: { src, width: 1, height: 1 } },
+    () => bytes,
+    HOME_IMG(src, 1, 1)
+  );
+
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /out of step/);
+});
+
+test('homeCaptureProblems catches a template the map no longer matches', () => {
+  const bytes = Buffer.from('pretend-webp');
+  const src = `/assets/Homepage_PrinterList_${contentHash(bytes)}.webp`;
+
+  // Template references the right file at the wrong size.
+  const wrongSize = homeCaptureProblems(
+    { Homepage_PrinterList: { src, width: 1400, height: 760 } },
+    () => bytes,
+    HOME_IMG(src, 1120, 2582)
+  );
+  assert.equal(wrongSize.length, 1);
+  assert.match(wrongSize[0], /1400x760 in the map but 1120x2582 in the template/);
+
+  // Template does not reference it at all.
+  const missing = homeCaptureProblems(
+    { Homepage_PrinterList: { src, width: 1400, height: 760 } },
+    () => bytes,
+    '<img ngSrc="/assets/Something_Else_aaa111.webp" width="1" height="1" />'
+  );
+  assert.equal(missing.length, 1);
+  assert.match(missing[0], /no <img ngSrc> in home.component.html references it/);
 });

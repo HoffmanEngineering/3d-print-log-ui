@@ -89,11 +89,15 @@ export class PrusaSlicerFileParserService implements GcodeNewPrintParser {
         filamentUsageLengthInMM,
         filamentDiameter
       );
+    } else if (filamentType.includes('Nylon')) {
+      return this.calculateWeightInMg(
+        MaterialDensities.materials.Nylon,
+        filamentUsageLengthInMM,
+        filamentDiameter
+      );
     }
 
-    // Only PLA, ABS and PETG are handled above, so anything else is unknown
-    // rather than zero. Note MaterialDensities also declares Nylon, which this
-    // chain never reaches -- see #100.
+    // Unknown materials are not estimated rather than being reported as zero.
     return undefined;
   }
 

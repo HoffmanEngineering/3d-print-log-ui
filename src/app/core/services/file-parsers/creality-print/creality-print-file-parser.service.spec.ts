@@ -59,6 +59,15 @@ Adaptive Layers:0`);
   });
 
   describe('estimateFilamentUsageInMg', () => {
+    it('should estimate Nylon using its configured density', () => {
+      const testGcode = `;Filament used: 0.0
+; filament_type: Nylon
+; filament_diameter: 1.75
+; filament used [mm]: 1000`;
+
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(2549);
+    });
+
     it('should return undefined when diameter or length is missing or zero', () => {
       const invalidInputs = [
         `; filament_type = PLA

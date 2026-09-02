@@ -5,6 +5,7 @@ import {
   contentHash,
   deviceScale,
   docCapturesIndex,
+  homeCapturesIndex,
   MIN_DEVICE_SCALE,
   pairSidecar,
   replaceImgRefExactlyOnce,
@@ -216,4 +217,34 @@ test('captureAssetProblems reports an asset whose content no longer matches', ()
     Buffer.from('a different image')
   );
   assert.match(message, /hashes to [a-f0-9]{12}/);
+});
+
+test('homeCapturesIndex keys every staged asset by its base', () => {
+  const index = homeCapturesIndex([
+    {
+      assetBase: 'Homepage_PrinterList',
+      publicPath: '/assets/Homepage_PrinterList_abc123.webp',
+      width: 1400,
+      height: 844,
+    },
+    {
+      assetBase: 'Homepage_PrinterList_dark',
+      publicPath: '/assets/Homepage_PrinterList_dark_def456.webp',
+      width: 1400,
+      height: 844,
+    },
+  ]);
+
+  assert.deepEqual(index, {
+    Homepage_PrinterList: {
+      src: '/assets/Homepage_PrinterList_abc123.webp',
+      width: 1400,
+      height: 844,
+    },
+    Homepage_PrinterList_dark: {
+      src: '/assets/Homepage_PrinterList_dark_def456.webp',
+      width: 1400,
+      height: 844,
+    },
+  });
 });

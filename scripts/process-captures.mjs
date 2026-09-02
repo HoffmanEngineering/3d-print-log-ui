@@ -18,6 +18,7 @@ import {
   contentHash,
   deviceScale,
   docCapturesIndex,
+  homeCapturesIndex,
   MIN_DEVICE_SCALE,
   pairSidecar,
   replaceImgRefExactlyOnce,
@@ -61,6 +62,13 @@ const SETS = {
         });
       }
       fs.writeFileSync(html, contents);
+
+      // Also publish the map, for consumers that cannot read the template —
+      // today that is the OG image URL in home.component.ts.
+      fs.writeFileSync(
+        path.join(REPO, 'src', 'content', 'home-captures.json'),
+        `${JSON.stringify(homeCapturesIndex(staged), null, 2)}\n`
+      );
     },
   },
   docs: {

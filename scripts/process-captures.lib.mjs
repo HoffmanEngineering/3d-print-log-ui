@@ -55,6 +55,26 @@ export function pairSidecar(sidecar) {
 }
 
 /**
+ * Home captures are hand-placed in the template, which the commit step rewrites.
+ * This map exists for the one consumer that cannot read the template: the OG
+ * image URL in home.component.ts, which needs a content-hashed filename.
+ *
+ * Keyed by assetBase (Homepage_PrinterList, Homepage_PrinterList_dark, ...)
+ * because that is what the template and the manifest already agree on.
+ */
+export function homeCapturesIndex(staged) {
+  const index = {};
+  for (const s of staged) {
+    index[s.assetBase] = {
+      src: s.publicPath,
+      width: s.width,
+      height: s.height,
+    };
+  }
+  return index;
+}
+
+/**
  * `name -> { light, dark }` for the generated doc-figure map, sorted by name so
  * the checked-in JSON has a stable diff.
  *

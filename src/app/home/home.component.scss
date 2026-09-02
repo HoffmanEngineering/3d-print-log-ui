@@ -1,3 +1,138 @@
+// Home page design tokens. Every colour on this page resolves from here, in
+// both themes — see theme.scss:130, which asks for exactly this instead of
+// hardcoded rgba(0, 0, 0, x).
+:host {
+  --home-ground: #f6f7fb;
+  --home-ground-2: #eceef6;
+  --home-surface: #ffffff;
+  --home-ink: #141726;
+  --home-muted: #585d75;
+  --home-faint: #8a90a8;
+  --home-rule: #e0e3ef;
+  --home-rule-strong: #c8cddf;
+  --home-accent: #3f51b5;
+  --home-accent-hi: #5468d6;
+  --home-accent-soft: #e7eaf8;
+  --home-on-accent: #ffffff;
+  --home-pink: #c2158b;
+  --home-pink-soft: #fbe7f4;
+  --home-plate: rgba(63, 81, 181, 0.1);
+  --home-layer: rgba(20, 23, 38, 0.05);
+  // The closing band paints its own dark gradient in BOTH themes, so its text
+  // colour is fixed light and does NOT follow --home-on-accent. See the dark
+  // block below for why that distinction has to exist.
+  --home-closing-a: #3f51b5;
+  --home-closing-b: #2f3f9c;
+  --home-closing-ink: #ffffff;
+  --home-shadow-sm: 0 1px 2px rgba(20, 23, 38, 0.06),
+    0 2px 8px rgba(20, 23, 38, 0.05);
+  --home-shadow-lg: 0 12px 28px rgba(20, 23, 38, 0.13),
+    0 2px 8px rgba(20, 23, 38, 0.07);
+
+  display: block;
+  background: var(--home-ground);
+  color: var(--home-ink);
+}
+
+:host-context(html.dark-theme) {
+  --home-ground: #101219;
+  --home-ground-2: #171a24;
+  --home-surface: #191c26;
+  --home-ink: #e9ebf3;
+  --home-muted: #9ca2ba;
+  --home-faint: #6e7591;
+  --home-rule: #282d3b;
+  --home-rule-strong: #3c4356;
+  --home-accent: #8c9eff;
+  --home-accent-hi: #a5b3ff;
+  --home-accent-soft: #212743;
+  --home-on-accent: #101219;
+  --home-pink: #f473c4;
+  --home-pink-soft: #341a2c;
+  --home-plate: rgba(140, 158, 255, 0.11);
+  --home-layer: rgba(255, 255, 255, 0.045);
+  // --home-on-accent is near-black in dark mode, because the dark accent
+  // (#8c9eff) is a LIGHT colour and needs dark text on it. The closing band is
+  // the opposite case: a dark navy panel that needs light text. Reusing
+  // --home-on-accent there would paint #101219 on #1b2048 — invisible.
+  --home-closing-a: #2b3573;
+  --home-closing-b: #1b2048;
+  --home-closing-ink: #eef0fb;
+  --home-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --home-shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.55);
+}
+
+// Breakpoints stay SCSS — custom properties cannot be used in a media query.
+$bp-wide: 960px;
+$bp-narrow: 560px;
+
+.home-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 28px;
+
+  @media (max-width: $bp-narrow) {
+    padding: 0 18px;
+  }
+}
+
+.home-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 15px 28px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
+
+  @media (max-width: $bp-narrow) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.home-btn--primary {
+  background: var(--home-accent);
+  color: var(--home-on-accent);
+  box-shadow: var(--home-shadow-sm);
+
+  &:hover {
+    background: var(--home-accent-hi);
+    transform: translateY(-1px);
+    box-shadow: var(--home-shadow-lg);
+  }
+}
+
+.home-btn--ghost {
+  color: var(--home-ink);
+  border-color: var(--home-rule-strong);
+  background: transparent;
+
+  &:hover {
+    border-color: var(--home-accent);
+    color: var(--home-accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-btn {
+    transition: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Legacy rules below. Deleted wholesale in the final task of this redesign,
+// along with the $spacing/$shadow/$breakpoint variables they depend on.
+// ---------------------------------------------------------------------------
+
 // Design System Variables
 $spacing-xs: 8px;
 $spacing-sm: 16px;

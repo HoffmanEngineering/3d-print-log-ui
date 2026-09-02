@@ -252,7 +252,7 @@ export class AuthService {
     });
   }
 
-  login(redirectPath: string = '/') {
+  login(redirectPath: string = '/', options?: { signup?: boolean }) {
     if (environment.devAuthBypass) {
       return;
     }
@@ -267,6 +267,10 @@ export class AuthService {
           redirect_uri: isCordova
             ? cordovaCallbackUri
             : `${window.location.origin}/callback`,
+          // Auth0's New Universal Login opens the signup screen on this hint;
+          // Classic ignores it. Verify against the tenant before trusting the
+          // CTA copy.
+          ...(options?.signup && { screen_hint: 'signup' }),
           ...(isCordova && { prompt: 'select_account' }),
         },
       });

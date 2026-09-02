@@ -21,8 +21,8 @@
           </h1>
           <p class="hero-sub">
             Times, temperatures, filament, photos and what actually came out of
-            the printer &mdash; captured from your slicer as you print, in one
-            place you can search a year later.
+            the printer. Captured from your slicer as you print, in one place
+            you can search years later.
           </p>
           <div class="hero-acts">
             <button
@@ -75,15 +75,22 @@
     <div class="home-shell proof-inner">
       <span class="proof-lede">Sends prints straight from</span>
       <ul class="proof-list">
-        <li>OrcaSlicer</li>
-        <li>Bambu Studio</li>
-        <li>PrusaSlicer</li>
-        <li>Creality Print</li>
-        <li>SuperSlicer</li>
-        <li>Cura</li>
+        <li><a routerLink="/orcaslicer">OrcaSlicer</a></li>
+        <li><a routerLink="/bambu-studio">Bambu Studio</a></li>
+        <li><a routerLink="/prusaslicer">PrusaSlicer</a></li>
+        <li><a routerLink="/creality-print">Creality Print</a></li>
+        <!--
+          SuperSlicer has no marketing page of its own. It is a Slic3r fork and
+          uses the same post-processing script, so it points at that guide
+          rather than being the one unlinked name in the row.
+        -->
+        <li><a routerLink="/docs/slic3r-uploader">SuperSlicer</a></li>
+        <li><a routerLink="/cura">Cura</a></li>
       </ul>
       <span class="proof-tail">
-        and takes live status updates from OctoPrint and Klipper/Moonraker.
+        and takes live status updates from
+        <a routerLink="/docs/octoprint-webhook">OctoPrint</a> and
+        <a routerLink="/docs/klipper">Klipper/Moonraker</a>.
       </span>
     </div>
   </section>
@@ -96,8 +103,8 @@
         <h2 class="tier-title">Never lose a good setting again</h2>
         <p class="tier-body">
           You dialed in the temperature and speed six months ago. Log it once
-          and it is still there &mdash; next to the photo, the duration, the
-          filament you used and the note about what went wrong the first time.
+          and it stays with the print: the photo, the duration, the filament you
+          used, and the note about what went wrong the first time.
         </p>
       </div>
       <div class="tier-media">
@@ -164,8 +171,8 @@
         <h2 class="tier-title">See where the time and filament went</h2>
         <p class="tier-body">
           Total print hours, material used, and how often prints actually
-          succeed &mdash; across every printer you own. The kind of thing a
-          spreadsheet promises and never quite delivers.
+          succeed across every printer you own. The kind of thing a spreadsheet
+          promises and never quite delivers.
         </p>
       </div>
       <div class="tier-media">
@@ -197,8 +204,8 @@
         <span class="eyebrow">Coming from a spreadsheet</span>
         <h2 class="tier-title">Stop typing it in twice</h2>
         <p class="tier-body">
-          The post-processing uploader sends the print the moment you slice it
-          &mdash; file name, printer, material, layer height and estimated time
+          The post-processing uploader sends the print the moment you slice it.
+          File name, printer, material, layer height and estimated time arrive
           already filled in. Cura has a Marketplace plugin; everything else uses
           the uploader script.
         </p>
@@ -229,8 +236,8 @@
         -->
           <img
             ngSrc="/assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
-            width="500"
-            height="560"
+            width="583"
+            height="519"
             alt="The 3D Print Log Uploader plugin listed in the Cura Marketplace"
             loading="lazy"
           />
@@ -287,8 +294,8 @@
         <span class="brand-name">3D Print Log</span>
       </div>
       <p class="footer-blurb">
-        A logbook for the things you print &mdash; what it was, what it took,
-        and how it turned out.
+        A logbook for the things you print: what it was, what it took, and how
+        it turned out.
       </p>
     </div>
     <nav class="footer-col" aria-label="Slicer integrations">

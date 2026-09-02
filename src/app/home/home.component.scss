@@ -26,6 +26,11 @@
   --home-closing-a: #3f51b5;
   --home-closing-b: #2f3f9c;
   --home-closing-ink: #ffffff;
+  // The wordmark SVG is solid #ffffff with no light variant, so on these light
+  // grounds it is invisible without something behind it. #292f77 is the navy
+  // from the square brand logo the navbar uses, so the two agree.
+  --home-brand-plate: #292f77;
+  --home-brand-plate-pad: 7px 11px;
   --home-shadow-sm: 0 1px 2px rgba(20, 23, 38, 0.06),
     0 2px 8px rgba(20, 23, 38, 0.05);
   --home-shadow-lg: 0 12px 28px rgba(20, 23, 38, 0.13),
@@ -61,6 +66,9 @@
   --home-closing-a: #2b3573;
   --home-closing-b: #1b2048;
   --home-closing-ink: #eef0fb;
+  // White on a dark ground already reads; a plate here would only box it in.
+  --home-brand-plate: transparent;
+  --home-brand-plate-pad: 0;
   --home-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --home-shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.55);
 }
@@ -166,6 +174,12 @@ $bp-narrow: 560px;
 .brand-logo {
   height: 38px;
   width: auto;
+  // content-box so the height above stays the height of the artwork in both
+  // themes and only the plate around it changes.
+  box-sizing: content-box;
+  padding: var(--home-brand-plate-pad);
+  background: var(--home-brand-plate);
+  border-radius: 9px;
 }
 
 .brand-name {
@@ -348,6 +362,21 @@ $bp-narrow: 560px;
     font-weight: 600;
     font-size: 15px;
   }
+
+  // Deliberately quieter than .tier-links: this row sits directly under the
+  // hero CTAs, and six accent-colored links there would compete with them.
+  // Ink-colored, underlined on hover only.
+  a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--home-rule-strong);
+    padding-bottom: 1px;
+
+    &:hover {
+      color: var(--home-accent);
+      border-bottom-color: var(--home-accent);
+    }
+  }
 }
 
 .proof-tail {
@@ -355,6 +384,17 @@ $bp-narrow: 560px;
   color: var(--home-muted);
   flex-basis: 100%;
   text-align: center;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid var(--home-rule-strong);
+
+    &:hover {
+      color: var(--home-accent);
+      border-bottom-color: var(--home-accent);
+    }
+  }
 }
 
 @media (max-width: $bp-wide) {
@@ -381,17 +421,21 @@ $bp-narrow: 560px;
   background: var(--home-ground-2);
 }
 
+// The copy column is capped in ch below, so the screenshots get the rest. The
+// captures are 1400px wide and their UI text is only legible from roughly 45%
+// scale up; at the original 1:1.12 split the media column landed at ~575px CSS
+// (41%) and the filament weights were a grey smear. This split gives ~680px.
 .tier-inner {
   padding-top: 78px;
   padding-bottom: 78px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
-  gap: 56px;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+  gap: 48px;
   align-items: center;
 }
 
 .tier--flip .tier-inner {
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.85fr);
 
   .tier-copy {
     order: 2;
@@ -501,6 +545,17 @@ $bp-narrow: 560px;
 
   .shot {
     max-width: 330px;
+  }
+
+  // Unlike every other slot, this one is NOT a generated capture, so nothing
+  // re-crops it to a house ratio: the box takes the PNG's own 583x519 and the
+  // image scales into it. Without a width rule the img kept its attribute
+  // width and `.shot`'s overflow:hidden sliced it down the middle.
+  .shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 583 / 519;
   }
 }
 

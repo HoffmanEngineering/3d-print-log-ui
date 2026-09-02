@@ -128,10 +128,6 @@ describe('HomeComponent', () => {
   // replaceImgRefExactlyOnce (process-captures.lib.mjs), which throws unless each
   // base matches exactly one <img> carrying ngSrc and exactly one numeric width
   // and height — and which runs during the capture step.
-  // A cheap early-warning, NOT the contract. The real gate is
-  // replaceImgRefExactlyOnce (process-captures.lib.mjs), which throws unless each
-  // base matches exactly one <img> carrying ngSrc and exactly one numeric width
-  // and height — and which runs during the capture step.
   //
   // This counts ELEMENTS, not innerHTML substrings: NgOptimizedImage leaves both
   // `ngsrc` and `src` on the rendered tag, so a substring count doubles.
@@ -149,8 +145,13 @@ describe('HomeComponent', () => {
       // `[A-Za-z0-9]+` spans one segment, so this matches the LIGHT variant
       // only: the dark filename is `<base>_dark_<hash>.webp`, which has two
       // segments after the base and therefore does not match.
-      const light = new RegExp(`/assets/${base}_[A-Za-z0-9]+\.webp$`);
-      const dark = new RegExp(`/assets/${base}_dark_[A-Za-z0-9]+\.webp$`);
+      //
+      // `\\.`, not `\.`: this is a template literal, so a single backslash is
+      // eaten by the string and the RegExp would receive a bare `.` — a
+      // wildcard that accepts `<base>_<hash>Xwebp`. The capture scripts that
+      // build the same shape (process-captures.mjs) already double it.
+      const light = new RegExp(`/assets/${base}_[A-Za-z0-9]+\\.webp$`);
+      const dark = new RegExp(`/assets/${base}_dark_[A-Za-z0-9]+\\.webp$`);
 
       const lightHits = imgs.filter((i) =>
         light.test(i.getAttribute('src') ?? '')

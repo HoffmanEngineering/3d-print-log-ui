@@ -55,7 +55,7 @@ C:\\uploader\\Slic3rPostProcessingUploader.exe [options]
 
 See all supported options on <a
 href="https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/tree/main?tab=readme-ov-file#options"
->the README</a >
+>the README</a >.
 
 ---
 
@@ -66,8 +66,8 @@ not work as expected.
 
 Please report any bugs or issues either by creating an issue on <a
 href="https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/issues"
->the project's github page</a >, or by submitting a bug report through the
+>the project's GitHub page</a >, or by submitting a bug report through the
 [Feedback](/feedback) page.
 
 If you need further help, please contact us through the [Feedback](/feedback)
-and we'll be happy to help.
+page and we'll be happy to help.

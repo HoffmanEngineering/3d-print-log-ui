@@ -22,10 +22,11 @@ You can install this plugin via the <a
 href="https://marketplace.ultimaker.com/app/cura/plugins/3d-print-log/3dPrintLogUploader"
 >Ultimaker Cura Marketplace</a >. Alternatively, you can download the <a
 href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
->Latest Release from Github</a > and drag/drop into Cura to install.
+>latest release from GitHub</a > and drag/drop into Cura to install.
 
 <img
     class="fade-in"
+    alt="Installing the 3D Print Log Uploader plugin from the Ultimaker Cura Marketplace"
     [ngStyle.lt-md]="{
       display: 'block',
       'max-width': '90%',

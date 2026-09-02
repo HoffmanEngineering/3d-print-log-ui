@@ -6,7 +6,7 @@ navLabel: Privacy Policy
 group: about
 order: 30
 mode: reference
-updated: 2026-08-29
+updated: 2026-09-02
 related: [about]
 ---
 
@@ -15,9 +15,9 @@ related: [about]
 Last Updated: Aug 29, 2026
 
 At 3D Print Log, accessible from https://www.3dprintlog.com, one of our main
-priorities is the privacy of our visitors. This Privacy Policy document contains
-types of information that is collected and recorded by 3D Print Log and how we
-use it.
+priorities is the privacy of our visitors. This Privacy Policy document describes
+the types of information that are collected and recorded by 3D Print Log and how
+we use it.
 
 If you have additional questions or require more information about our Privacy
 Policy, do not hesitate to contact us.
@@ -25,8 +25,8 @@ Policy, do not hesitate to contact us.
 ## Log Files
 
 3D Print Log follows a standard procedure of using log files. These files log
-visitors when they visit websites. All hosting companies do this and a part of
-hosting services' analytics. The information collected by log files include
+visitors when they visit websites. All hosting companies do this, and it is a part of
+hosting services' analytics. The information collected by log files includes
 internet protocol (IP) addresses, browser type, Internet Service Provider (ISP),
 date and time stamp, referring/exit pages, and possibly the number of clicks.
 These are not linked to any information that is personally identifiable. The

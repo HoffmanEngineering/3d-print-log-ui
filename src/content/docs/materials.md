@@ -26,7 +26,7 @@ bottle of resin.
 ### Materials List {#list}
 
 The Materials List shows you all of your materials. Use the **Search** input at
-the top to filter the list by the materials's **Name**, **Brand** or **Color**
+the top to filter the list by the material's **Name**, **Brand** or **Color**
 fields. Use the **Include Inactive** checkbox to include **Empty or Inactive**
 rolls of materials. Use the **Show Favorites Only** checkbox to only show
 **Favorite** materials. Use the **Show Loaded Materials Only** checkbox to only
@@ -47,7 +47,7 @@ the **Show Favorites Only** filter is applied.
 
 ### How Remaining Material is Calculated {#remaining}
 
-The Remaining Material is calculated by the Materials's **[Initial Nominal
+The Remaining Material is calculated by the material's **[Initial Nominal
 Weight]**-**[sum of Material used in Prints]**+**[sum of any Adjustments]**.
 
 **Initial Nominal Weight** is entered when Adding/Editing a material, and is the
@@ -130,7 +130,7 @@ Every field on this form is described in
 
 ### Edit a Material {#edit}
 
-Click on any row in the Material List to view and edit an existing 3D print.
+Click on any row in the Material List to view and edit an existing material.
 
 After making changes, click <button mat-raised-button
 color="primary">Submit</button> to update that material.
@@ -171,8 +171,9 @@ material you want to delete. A warning that the material will be permanently
 deleted will appear. When **Delete** is clicked, the material will be deleted.
 
 If a material has been used in a Print, you cannot delete it. Instead, you can
-**Inactive** a material by Editing, then unchecking the **Is Active** checkbox
-in the **General** section. Inactive material will not be displayed.
+mark it **inactive**: edit the material and uncheck the **Is Active** checkbox
+in the **General** section. Inactive materials are hidden from the Materials
+List unless **Include Inactive** is checked.
 
 ---
 

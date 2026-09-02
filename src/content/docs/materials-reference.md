@@ -47,7 +47,7 @@ Cubic Centimeter, and used when calculating weights.
 
 The Color section has a **Color Picker** that lets you select the color which is
 displayed. The **Color Name** lets you enter the manufacturer's name. The
-**Brand** field is for recording the materials's manufacturer. The **Diameter**
+**Brand** field is for recording the material's manufacturer. The **Diameter**
 is for the diameter of the filament in millimeters. The **Notes** section lets
 you record any additional notes/description/etc for the material.
 

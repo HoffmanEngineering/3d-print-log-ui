@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-08-30
+updated: 2026-09-02
 related: [projects, materials]
 ---
 
@@ -39,7 +39,7 @@ status.
 The print list table contains summary information about your prints. The default
 columns are:
 
-- **Image** - The default image for the print. Prints can have up to 5 images; the default image is the one shown in list views.
+- **Image** - The default image for the print. The default image is the one shown in list views.
 - **Title** - The title of the Print.
 - **Printer** - The Name (Make - Model) of the 3D printer used.
 - **Start Date** - The start date of the print.
@@ -51,21 +51,21 @@ columns are:
   - <mat-icon inline="true">launch</mat-icon> **View** - View the print.
   - <mat-icon inline="true">share</mat-icon> **Share** - Opens a share dialog with the link to the print. Here you can also change the privacy of the print.
   - <mat-icon inline="true">file_copy</mat-icon> **Duplicate** - Create a copy of the print. Useful for batch print jobs.
-  - <mat-icon inline="true">delete</mat-icon> **Delete** - Will ask if you want to delete the print. If confirmed, the print will be permanently be deleted.
+  - <mat-icon inline="true">delete</mat-icon> **Delete** - Will ask if you want to delete the print. If confirmed, the print will be permanently deleted.
   - **Change Print Status** - Lets you quickly change the print status of the print.
 
 Additional columns (hidden by default, use the **Gear Icon -> Change Table
 Layout** menu to customize columns).
 
 - **Image (Medium)** - The saved image for the print as a medium thumbnail.
-- **Image (Medium)** - The saved image for the print as a large thumbnail.
+- **Image (Large)** - The saved image for the print as a large thumbnail.
 - **Start Time** - The time the print was started.
 - **Start Date/Time** - The date and time the print was started as a single column.
 - **End Date** - The date the print will end at (if the print has saved "actual" or "estimated" print time).
 - **End Time** - The time the print will end at (if the print has saved "actual" or "estimated" print time).
 - **End Date/Time** - The date and time the print will end at (if the print has saved "actual" or "estimated" print time), as a single column.
-- **Material** - Gives a detailed view of the material usage of the print, including color, name, and material used
-- **Total Material (g)** - The sum of the all the material weights for the print. It will use the Actual Amount if it is greater than 0, otherwise it will use the estimated weight.
+- **Material** - Gives a detailed view of the material usage of the print, including color, name, and material used.
+- **Total Material (g)** - The sum of all the material weights for the print. It will use the Actual Amount if it is greater than 0, otherwise it will use the estimated weight.
 
 <doc-figure
   name="print-list-table"
@@ -157,14 +157,14 @@ color="accent">Add New Print</button> button.
 Give the print a **Title** and a **Start Date**, and select an active
 **Printer**. Optionally, enter the URL for where you found the 3D model. Use the
 **"Choose File" button** to upload one or more images for the 3D print (up to 5
-images total). The **Notes** field can be used to record any additional details
+on the free tier, or 20 with [Pro](/docs/pro-subscription)). The **Notes** field can be used to record any additional details
 you may want. Both the Title and Notes fields are searched in the Print List, so
 use keywords in the notes to help make searching easier.
 
 The Estimated and Actual **Print Time** fields accept human-readable input, such
-a *6h 12m 25s*, or *6 hours 12 minutes 25 seconds*.
+as *6h 12m 25s*, or *6 hours 12 minutes 25 seconds*.
 
-Prints can have one of 5 status: **Pending, Printing, Successful, Partial
+Prints can have one of 6 statuses: **Pending, Printing, Successful, Partial
 Success, Failed, or Cancelled**. The **Status** selection will default to
 Pending, but can be changed by clicking the dropdown.
 
@@ -174,7 +174,7 @@ Pending, but can be changed by clicking the dropdown.
     <div fxFlex="grow">
       <p>
         The <strong>Material Usage</strong> section lets you record what
-        material was used for the print. Click the
+        material was used for the print. Click
         <strong>Add New Material Record</strong> to begin. The
         <strong> Select/Change Material </strong>
         button is used to open a search box for selecting or changing the
@@ -230,10 +230,11 @@ color="primary">Submit</button> to update that 3D print.
 
 #### Managing Images {#images}
 
-Each print can have up to **5 images**. When editing a print, the image area
-supports the following:
+Each print can have up to **5 images** on the free tier, or **20** with
+[Pro](/docs/pro-subscription). When editing a print, the image area supports the
+following:
 
-- **Add images** — Click the **Choose File** button or drag and drop image files onto the upload area to add more images. You can also select multiple files at once. Adding images is disabled once 5 images are attached.
+- **Add images** — Click the **Choose File** button or drag and drop image files onto the upload area to add more images. You can also select multiple files at once. Adding images is disabled once you reach your limit.
 - **Browse images** — When a print has more than one image, a thumbnail strip appears below the main image. Click any thumbnail to view that image, or use the arrow buttons on the sides of the main image to step through them. On touch devices, swipe left or right on the main image to navigate.
 - **Set the default image** — The default image is shown in the print list and on the public print view. It is marked with a <mat-icon inline="true">star</mat-icon> in the thumbnail strip. To change the default, hover over any other thumbnail and click the <mat-icon inline="true">star_border</mat-icon> icon that appears.
 - **Reorder images** — Drag and drop thumbnails in the strip to change the display order of your images.

@@ -6,6 +6,7 @@ import {
   emitCapturesTs,
   emitDeclarationsTs,
   emitFiguresTs,
+  emitManifestTs,
   emitOutlineTs,
   emitPageComponentTs,
   emitPageTemplate,
@@ -661,4 +662,13 @@ test('emitCapturesTs emits an empty map when nothing has been captured', () => {
     emitCapturesTs({}),
     /DOC_CAPTURES: Record<string, DocCapture> = \{\n\};/
   );
+});
+
+test('emitManifestTs exports DOC_MOVED_ANCHORS from the JSON manifest', () => {
+  const ts = emitManifestTs();
+  assert.match(
+    ts,
+    /export const DOC_MOVED_ANCHORS: Readonly<Record<string, string>> =/
+  );
+  assert.match(ts, /manifest\.movedAnchors as Readonly<Record<string, string>>;/);
 });

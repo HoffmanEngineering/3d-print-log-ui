@@ -38,6 +38,10 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
     fixture: 'demo/printers-summary.json',
   },
   { method: 'GET', url: '**/api/Filaments?*', fixture: 'demo/filaments.json' },
+  // The add-print form offers to attach the print to a project. The demo set has
+  // no projects, and an empty list is the right state for a first-print figure:
+  // the tutorial never mentions projects.
+  { method: 'GET', url: '**/api/Projects?*', fixture: 'demo/projects.json' },
   {
     method: 'GET',
     url: '**/api/Filaments/storage-locations*',
@@ -234,6 +238,21 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
       imagesRendered('app-print-image'),
       // The Materials column, which the caption below this figure describes.
       rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
+    ],
+  }),
+  docTarget({
+    name: 'first-print-form',
+    route: '/prints/new/edit',
+    selector: '[data-cy="capture-print-form"]',
+    viewport: DOC_DESKTOP,
+    ready: [
+      // Descendants of the boundary, never the boundary itself: visible() runs
+      // cy.get(`${scope} ${selector}`). These name the three controls the
+      // tutorial's Step 3 walks the reader through, so a half-rendered form
+      // cannot pass as a finished one.
+      visible('mat-card-title'),
+      visible('[formControlName="printerId"]'),
+      visible('[formControlName="printTimeInSeconds"]'),
     ],
   }),
   docTarget({

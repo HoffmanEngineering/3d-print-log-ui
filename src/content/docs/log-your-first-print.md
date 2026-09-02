@@ -79,6 +79,11 @@ Fill in, in this order:
 
 Save.
 
+<doc-figure
+  name="first-print-form"
+  alt="The add-print form, showing the name, printer, material, print time and filament fields"
+></doc-figure>
+
 ---
 
 ### Step 4: Add a photo
@@ -95,6 +100,11 @@ made, and it is the fastest way to find a print again months later.
 
 Go back to **Prints**. Your print is in the list, with its photo, its printer
 and its material.
+
+<doc-figure
+  name="print-list"
+  alt="The print list, each row showing a photo, the printer and the material used"
+></doc-figure>
 
 Now open **Materials**. The roll you added in Step 2 shows less filament
 remaining than it did — the grams you entered in Step 3 came off it

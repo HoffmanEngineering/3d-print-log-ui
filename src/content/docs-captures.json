@@ -1,48 +1,60 @@
 {
+  "first-print-form": {
+    "light": {
+      "src": "/assets/docs/captures/first-print-form_6efef7cb618b.webp",
+      "width": 1700,
+      "height": 1769
+    },
+    "dark": {
+      "src": "/assets/docs/captures/first-print-form_dark_7e5c42c3173b.webp",
+      "width": 1700,
+      "height": 1769
+    }
+  },
   "print-list": {
     "light": {
-      "src": "/assets/docs/captures/print-list_26424e942135.webp",
+      "src": "/assets/docs/captures/print-list_90b678cfb428.webp",
       "width": 1700,
       "height": 1025
     },
     "dark": {
-      "src": "/assets/docs/captures/print-list_dark_cf32c37bac54.webp",
+      "src": "/assets/docs/captures/print-list_dark_f9464fed373f.webp",
       "width": 1700,
       "height": 1025
     }
   },
   "print-list-cards": {
     "light": {
-      "src": "/assets/docs/captures/print-list-cards_8ccc7d8ac1b2.webp",
+      "src": "/assets/docs/captures/print-list-cards_6429c0932820.webp",
       "width": 1120,
       "height": 2590
     },
     "dark": {
-      "src": "/assets/docs/captures/print-list-cards_dark_ca3ff14b3a4e.webp",
+      "src": "/assets/docs/captures/print-list-cards_dark_65ffc3b05c91.webp",
       "width": 1120,
       "height": 2590
     }
   },
   "print-list-filters": {
     "light": {
-      "src": "/assets/docs/captures/print-list-filters_ab5d85a30bd6.webp",
+      "src": "/assets/docs/captures/print-list-filters_d8c64c37eba6.webp",
       "width": 1700,
       "height": 187
     },
     "dark": {
-      "src": "/assets/docs/captures/print-list-filters_dark_726449f64b63.webp",
+      "src": "/assets/docs/captures/print-list-filters_dark_d529b951a4c4.webp",
       "width": 1700,
       "height": 187
     }
   },
   "print-list-table": {
     "light": {
-      "src": "/assets/docs/captures/print-list-table_19e4d1987332.webp",
+      "src": "/assets/docs/captures/print-list-table_5931935d2373.webp",
       "width": 1700,
       "height": 687
     },
     "dark": {
-      "src": "/assets/docs/captures/print-list-table_dark_0d809ff81972.webp",
+      "src": "/assets/docs/captures/print-list-table_dark_eebc1db4f57a.webp",
       "width": 1700,
       "height": 687
     }

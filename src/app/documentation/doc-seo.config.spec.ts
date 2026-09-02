@@ -11,6 +11,8 @@ describe('doc-seo.config', () => {
     expect(paths.length).toBe(DOC_PAGES.filter((page) => !page.dormant).length);
     expect(paths).toContain('docs/getting-started');
     expect(paths).toContain('docs/mcp');
+    expect(paths).toContain('docs/log-your-first-print');
+    expect(paths).toContain('docs/materials-reference');
     expect(paths).toContain('docs/privacy-policy');
   });
 

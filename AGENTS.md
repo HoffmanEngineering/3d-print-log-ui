@@ -34,6 +34,10 @@ npx cypress run --spec cypress/e2e/prints/print-list-filters.cy.ts  # Run a sing
 # Formatting
 npm run prettier           # Check formatting
 npm run prettier:fix       # Fix formatting
+
+# Generated screenshots (manual; see "Generated screenshots")
+npm run capture:home:all   # Home feature images -> src/assets/
+npm run capture:docs:all   # Documentation figures -> src/assets/docs/captures/
 ```
 
 ### Token-Efficient Commands
@@ -44,6 +48,14 @@ When communicating with Claude about test or lint failures, use these token-effi
 - **`npm run lint:brief`** - Runs linting with only errors/warnings displayed
 
 These commands are optimized for minimal token usage while preserving actionable information about failures and warnings.
+
+**Read the last line of `test:brief`, not the exit code.** These are meant to be
+piped (`npm run test:brief | tail -20`), and a shell pipeline reports the status
+of its _last_ command — so the exit code you see belongs to `tail`, not to the
+test run. The script prints `RESULT: PASSED` or `RESULT: FAILED (ng test exited
+N)` as its final line for exactly this reason. A compile error is the case that
+bites: Karma never reaches a `TOTAL:` line, so without that verdict the output
+ends in a blank summary that looks like a clean run.
 
 ## Architecture
 
@@ -99,6 +111,18 @@ Marketing/SEO routes are prerendered to static HTML at build time via `@angular/
 - **Verification:** `scripts/verify-prerender.mjs` runs in CI and gates prerendered output (unique titles/descriptions, OG/Twitter, canonicals, internal link graph, crawl files).
 - **Sitemap** is generated at deploy time by `scripts/generate-sitemap.mjs` (fetches public print/user IDs, writes a `<sitemapindex>` plus chunked child sitemaps into `dist/`). It is not committed; there is no static `src/sitemap.xml`. Unit tests: `npm run test:scripts`.
 - **Deploy** ships the prebuilt `dist` with `skip_app_build: true` (no Oryx rebuild) so the generated sitemap reaches production; `refresh-sitemap.yml` redeploys the latest release tag daily.
+
+### Generated screenshots
+
+Two sets of images are captured from the real app against Cypress fixtures and post-processed into hashed WebP: the home page's three feature images (`src/assets/`) and the documentation figures (`src/assets/docs/captures/`). Both are committed, and **no workflow regenerates them**. Nothing compares them to the current UI either, so they go stale silently: the analytics image once advertised a page that had been deleted.
+
+Both sets run the same harness (`cypress/support/capture.ts`) over a `CaptureSet` declared in `cypress/fixtures/demo/manifest.ts`; the spec files are three lines each.
+
+- **If you change a view either set captures, re-run that set's capture in the same change.** Home covers the print list, the materials list and the analytics overview tab (`npm run capture:home:all`); docs covers whatever `DOC_CAPTURE_TARGETS` lists (`npm run capture:docs:all`). Commit the images, plus `src/app/home/home.component.html` for the home set (the processing step rewrites its `ngSrc`/`width`/`height`) or `src/content/docs-captures.json` for the docs set.
+- **A doc figure is referenced by name, never by path:** `<doc-figure name="print-list-table" alt="…"></doc-figure>` resolves its src and both intrinsic dimensions from the generated map, so adding a figure never touches a template. `src` remains for hand-placed assets and then requires `width`/`height`. `validate-docs.mjs` fails on both-or-neither, on a `name` with no asset, and on hand-typed dimensions beside a `name`.
+- Requires **Chrome**; `--force-device-scale-factor=2` is a no-op in Electron. Each capture records its boundary's CSS width, and the processing step refuses anything whose PNG-to-CSS ratio is under `MIN_DEVICE_SCALE` rather than publish a half-resolution image.
+- The capture specs are excluded from the normal Cypress config — they are generators, not tests. Do not add them back to the E2E run.
+- Full detail, and the traps that have already been hit (minimatch globs vs unencoded `/` in query values, viewport clamping in both axes and stitched screenshots, fixture ordering that must match each list's default sort): `cypress/CLAUDE.md`.
 
 ### Security Headers & CSP
 
@@ -214,6 +238,23 @@ All user-facing documentation lives in the `src/documentation` directory.
 - Each integration should have it's own documentation page (integrations, mobile app, etc)
 - Update existing documentation with new functionality
 - Documentation should be written in clear english, designed to be understandable by the user.
+- Screenshots use `<doc-figure name="...">`, which resolves a generated capture. See "Generated screenshots" above.
+
+### Release notes
+
+One Markdown file per release under `src/content/release-notes/<version>.md`, with `version`, `date`
+and `title` frontmatter. Adding a release means adding one file — see `/release` step 4.2.
+
+- **The anchor is generated from `version`, not from the heading.** `1.38.0.md` publishes
+  `#v1.38.0`. A slugger would mangle the dots, and 97 of these ids are already bookmarked, so
+  `validate-docs.mjs` fails if a previously published anchor stops being emitted.
+- **The page shows the ten newest releases; the rest is a lazily imported chunk** built by
+  `scripts/release-notes-emit.mjs`. That archive is injected with `[innerHTML]`, so it is rewritten
+  first: `routerLink` becomes `href` and `<mat-icon>` becomes the ligature span, because neither
+  directive nor component exists in markup Angular never compiled. It also has to survive Angular's
+  sanitizer — do not add a `bypassSecurityTrust*` call to make some new shape work.
+- `scripts/extract-release-notes.mjs` reads these files directly to build the GitHub Release body,
+  before `npm ci` and before any generation runs, so it must never depend on a generated artifact.
 
 ## GitHub
 

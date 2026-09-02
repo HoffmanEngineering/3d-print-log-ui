@@ -7,40 +7,33 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
+import { LoggingService } from '../core/services/logging.service';
 import {
   buildOrganization,
   buildSoftwareApplication,
 } from '../core/structured-data/app-schema';
 import { AdComponent } from '../shared/ad/ad.component';
+import homeCaptures from '../../content/home-captures.json';
+
+const SITE_ORIGIN = 'https://www.3dprintlog.com';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
-  imports: [
-    RouterModule,
-    MatToolbarModule,
-    MatButtonModule,
-    FlexLayoutModule,
-    NgOptimizedImage,
-    AdComponent,
-  ],
+  imports: [RouterModule, NgOptimizedImage, AdComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit {
   readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  readonly auth = inject(AuthService);
 
-  constructor(
-    public auth: AuthService,
-    private meta: MetaTagService,
-    private structuredData: StructuredDataService
-  ) {}
+  private readonly meta = inject(MetaTagService);
+  private readonly structuredData = inject(StructuredDataService);
+  private readonly logging = inject(LoggingService);
 
   ngOnInit() {
     this.meta.setSeoTags({
@@ -48,13 +41,23 @@ export class HomeComponent implements OnInit {
       title: '3D Print Log | Track 3D Prints, Filament & Settings',
       description:
         'Log and track your 3D prints, filament, and settings. Send prints directly from OrcaSlicer, Bambu Studio, PrusaSlicer, and Cura. Create a free account.',
-      imageUrl:
-        'https://www.3dprintlog.com/assets/3d-print-log-logo_8b178eb1339b.svg',
+      // Content-hashed and rewritten by capture:home:process, so it must never
+      // be typed by hand.
+      imageUrl: `${SITE_ORIGIN}${homeCaptures['Homepage_PrinterList'].src}`,
     });
 
     this.structuredData.setJsonLd([
       buildSoftwareApplication(),
       buildOrganization(),
     ]);
+  }
+
+  /**
+   * The page's primary conversion action, in both the hero and the closing
+   * band. `placement` is what makes the two distinguishable in analytics.
+   */
+  signUp(placement: 'hero' | 'closing') {
+    this.logging.logEvent('Home_SignupClicked', { placement });
+    this.auth.login('/prints', { signup: true });
   }
 }

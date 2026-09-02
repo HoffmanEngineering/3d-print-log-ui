@@ -1,0 +1,42 @@
+{
+  "Homepage_PrinterList": {
+    "src": "/assets/Homepage_PrinterList_82e715919a91.webp",
+    "width": 1400,
+    "height": 760
+  },
+  "Homepage_PrinterList_dark": {
+    "src": "/assets/Homepage_PrinterList_dark_d5a941f916eb.webp",
+    "width": 1400,
+    "height": 760
+  },
+  "Homepage_PrinterTable": {
+    "src": "/assets/Homepage_PrinterTable_62a05394080b.webp",
+    "width": 1400,
+    "height": 565
+  },
+  "Homepage_PrinterTable_dark": {
+    "src": "/assets/Homepage_PrinterTable_dark_91e7bcacaba7.webp",
+    "width": 1400,
+    "height": 565
+  },
+  "Homepage_Filament": {
+    "src": "/assets/Homepage_Filament_2a175264fe90.webp",
+    "width": 1400,
+    "height": 595
+  },
+  "Homepage_Filament_dark": {
+    "src": "/assets/Homepage_Filament_dark_c65376072c5c.webp",
+    "width": 1400,
+    "height": 595
+  },
+  "Homepage_Analytics": {
+    "src": "/assets/Homepage_Analytics_663bfd938090.webp",
+    "width": 1400,
+    "height": 762
+  },
+  "Homepage_Analytics_dark": {
+    "src": "/assets/Homepage_Analytics_dark_b42fb40dc218.webp",
+    "width": 1400,
+    "height": 762
+  }
+}

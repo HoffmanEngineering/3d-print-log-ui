@@ -1,0 +1,27 @@
+@if (previous() || next()) {
+  <nav class="doc-page-nav" aria-label="Documentation pages">
+    @if (previous(); as link) {
+      <a class="doc-page-nav__link" [routerLink]="'/' + link.path" rel="prev">
+        <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        <span class="doc-page-nav__text">
+          <span class="doc-page-nav__direction">Previous</span>
+          <span class="doc-page-nav__label">{{ link.navLabel }}</span>
+        </span>
+      </a>
+    }
+
+    @if (next(); as link) {
+      <a
+        class="doc-page-nav__link doc-page-nav__link--next"
+        [routerLink]="'/' + link.path"
+        rel="next"
+      >
+        <span class="doc-page-nav__text">
+          <span class="doc-page-nav__direction">Next</span>
+          <span class="doc-page-nav__label">{{ link.navLabel }}</span>
+        </span>
+        <mat-icon aria-hidden="true">chevron_right</mat-icon>
+      </a>
+    }
+  </nav>
+}

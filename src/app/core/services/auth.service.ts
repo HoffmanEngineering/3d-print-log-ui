@@ -7,6 +7,7 @@ import {
   BehaviorSubject,
   combineLatest,
   EMPTY,
+  firstValueFrom,
   from,
   Observable,
   of,
@@ -192,7 +193,8 @@ export class AuthService {
       catchError((err) => {
         if (err.error === 'missing_refresh_token') {
           if (this.loggedIn) {
-            this.logout();
+            // logout is async now (push teardown runs first); nothing here can await it.
+            void this.logout();
           }
         }
 
@@ -250,7 +252,7 @@ export class AuthService {
     });
   }
 
-  login(redirectPath: string = '/') {
+  login(redirectPath: string = '/', options?: { signup?: boolean }) {
     if (environment.devAuthBypass) {
       return;
     }
@@ -265,6 +267,10 @@ export class AuthService {
           redirect_uri: isCordova
             ? cordovaCallbackUri
             : `${window.location.origin}/callback`,
+          // Auth0's New Universal Login opens the signup screen on this hint;
+          // Classic ignores it. Verify against the tenant before trusting the
+          // CTA copy.
+          ...(options?.signup && { screen_hint: 'signup' }),
           ...(isCordova && { prompt: 'select_account' }),
         },
       });
@@ -295,13 +301,23 @@ export class AuthService {
     });
   }
 
-  logout() {
+  /**
+   * Registered by PushRegistrationService. Awaited before Auth0 logout so the device's push
+   * registration is deleted while the bearer is still valid — once Auth0 tears the session
+   * down there is no credential left to authorize the DELETE with, and the phone would keep
+   * receiving the previous user's notifications.
+   */
+  public pushTeardown: ((bearerToken: string) => Promise<void>) | null = null;
+
+  async logout() {
     if (environment.devAuthBypass) {
       return;
     }
     // Stop notification polling
     this.notificationService.stopPolling();
     this.userSettingService.clearCache();
+
+    await this.runPushTeardown();
 
     // Ensure Auth0 client instance exists
     this.auth0Client$.subscribe((client: Auth0Client) => {
@@ -311,5 +327,23 @@ export class AuthService {
         logoutParams: { returnTo: `${window.location.origin}` },
       });
     });
+  }
+
+  /**
+   * Best-effort: a device that cannot be unregistered is a stale row the API prunes on the
+   * next UNREGISTERED response from FCM. Failing to log the user out over it would be far
+   * worse, so every failure here — including not being able to mint a token — is swallowed.
+   */
+  private async runPushTeardown(): Promise<void> {
+    if (!this.pushTeardown) {
+      return;
+    }
+
+    try {
+      const token = await firstValueFrom(this.getTokenSilently$());
+      await this.pushTeardown(token);
+    } catch {
+      // Intentionally ignored — see above.
+    }
   }
 }

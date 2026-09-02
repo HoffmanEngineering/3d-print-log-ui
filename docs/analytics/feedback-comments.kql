@@ -1,0 +1,11 @@
+// The free text behind the votes. Read this alongside negative-feedback.kql —
+// the ratio says which page is failing, these say why.
+customEvents
+| where name == "Docs_Feedback"
+| where timestamp > ago(90d)
+| extend slug = tostring(customDimensions.slug),
+         helpful = tobool(customDimensions.helpful),
+         comment = tostring(customDimensions.comment)
+| where isnotempty(comment)
+| project timestamp, slug, helpful, comment
+| order by timestamp desc

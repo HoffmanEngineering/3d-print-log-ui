@@ -1,0 +1,44 @@
+:host {
+  display: block;
+  margin: 24px 0;
+}
+
+.doc-figure {
+  margin: 0;
+}
+
+img {
+  display: block;
+  // width/height are set as attributes to reserve the aspect ratio before the
+  // image loads; this lets the rendered size shrink below them on a phone.
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--docs-rule);
+  border-radius: 8px;
+}
+
+// A generated figure ships both themes; the theme decides which one is laid
+// out. Deliberately CSS and not `@if (isDark())`: the pre-paint script in
+// index.html has already set the class by first paint, while a signal only
+// settles at hydration — long enough for a prerendered page to show the wrong
+// image and then swap it.
+.doc-figure__img--dark {
+  display: none;
+}
+
+:host-context(html.dark-theme) {
+  .doc-figure__img--light {
+    display: none;
+  }
+
+  .doc-figure__img--dark {
+    display: block;
+  }
+}
+
+figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--docs-text-muted);
+}

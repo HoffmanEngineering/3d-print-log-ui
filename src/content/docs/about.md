@@ -1,0 +1,91 @@
+---
+slug: about
+title: About 3D Print Log | Docs
+description: Learn what 3D Print Log is, who it is for, and the story behind the free tool for tracking 3D prints, printers, and filament.
+navLabel: About
+group: about
+order: 20
+mode: explanation
+updated: 2026-08-29
+related: [getting-started]
+---
+
+# About
+
+---
+
+<div>
+    <p>
+      3D Print Log is developed by
+      <a href="https://www.hoffman.engineering">Hoffman Engineering</a> to make
+      tracking our 3D prints easier, and we want to share it with the rest of
+      the 3D printing community!
+    </p>
+    <p>
+      Support development of 3D Print Log by becoming a
+      <a
+        href="https://www.patreon.com/HoffmanEngineering"
+        rel="noreferrer noopener"
+        target="_blank"
+      >
+        Patron of Hoffman Engineering</a
+      >
+      on Patreon.com
+    </p>
+    <p>
+      Buy me a coffee by
+      <a
+        href="https://paypal.me/hoffmanengineering"
+        rel="noreferrer noopener"
+        target="_blank"
+        >donating via PayPal.</a
+      >
+    </p>
+    <a href="http://www.hoffman.engineering"
+      ><img
+        alt="Hoffman Engineering Logo"
+        src="/assets/img/logos/HoffmanSiteLogoSmall.png"
+    /></a>
+    <div>
+      <p class="social">
+        Follow Hoffman Engineering on Social Media for development updates:<br />
+        <a href="https://www.youtube.com/hoffmanengineering"
+          ><img
+            src="assets/img/icons/social-1_round-youtube.svg"
+            alt="youtube"
+            title="Youtube"
+        /></a>
+        <a href="https://twitter.com/TheChrisHoffman"
+          ><img
+            src="assets/img/icons/social-1_round-twitter.svg"
+            alt="twitter"
+            title="Twitter"
+        /></a>
+        <a href="https://www.facebook.com/Hoffman3DPrinting"
+          ><img
+            src="assets/img/icons/social-1_round-facebook.svg"
+            alt="facebook"
+            title="Facebook"
+        /></a>
+        <a href="https://www.instagram.com/hoffmanengineering/"
+          ><img
+            src="assets/img/icons/social-1_round-instagram.svg"
+            alt="instagram"
+            title="Instagram"
+        /></a>
+        <a href="https://www.linkedin.com/in/HoffmanEngineering"
+          ><img
+            src="assets/img/icons/social-1_round-linkedin.svg"
+            alt="linkedin"
+            title="LinkedIn"
+        /></a>
+      </p>
+    </div>
+  </div>
+
+## Special Thanks
+
+Gcode Parsing based on <a target="_blank"
+href="https://github.com/hudbrog/gCodeViewer" >hudbrog's gCodeViewer</a >, which
+you can find at <a target="_blank" href="https://gcode.ws/">gcode.ws</a>. Thank
+you for providing the community an awesome tool for visualizing gcode.

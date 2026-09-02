@@ -1,0 +1,15 @@
+// THE actionable query. Every row is something a reader expected to find and
+// could not — each is a documentation task, and some are feature requests.
+// Returns no rows until docs search ships (phase 2b).
+customEvents
+| where name == "Docs_Search"
+| where timestamp > ago(30d)
+| extend query = tolower(trim(" ", tostring(customDimensions.query))),
+         resultCount = toint(customDimensions.resultCount)
+| where isnotempty(query)
+| where resultCount == 0
+| summarize searches = count(),
+            people = dcount(user_Id),
+            lastSeen = max(timestamp)
+        by query
+| order by searches desc, people desc

@@ -1,0 +1,50 @@
+:host {
+  --doc-callout-accent: var(--docs-callout-note);
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  margin: 24px 0;
+  padding: 16px;
+  border-radius: 8px;
+  // The left edge carries the colour; the tint behind it is deliberately faint
+  // so a page of callouts still reads as prose rather than as a stack of cards.
+  border-left: 4px solid var(--doc-callout-accent);
+  background: color-mix(in srgb, var(--doc-callout-accent) 8%, transparent);
+}
+
+:host(.doc-callout-tip) {
+  --doc-callout-accent: var(--docs-callout-tip);
+}
+
+:host(.doc-callout-warning) {
+  --doc-callout-accent: var(--docs-callout-warning);
+}
+
+:host(.doc-callout-danger) {
+  --doc-callout-accent: var(--docs-callout-danger);
+}
+
+.doc-callout__icon {
+  color: var(--doc-callout-accent);
+  // mat-icon defaults to 24px square; nudge it onto the first line's baseline.
+  margin-top: 1px;
+}
+
+.doc-callout__heading {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--docs-text);
+}
+
+// The body is projected prose from a doc page, so it carries that page's
+// encapsulation attribute rather than this component's. ng-deep is the only
+// way to reach it, and it is scoped under :host so it cannot leak.
+:host ::ng-deep .doc-callout__body > :first-child {
+  margin-top: 0;
+}
+
+:host ::ng-deep .doc-callout__body > :last-child {
+  margin-bottom: 0;
+}

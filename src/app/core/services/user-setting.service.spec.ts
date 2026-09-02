@@ -292,6 +292,70 @@ describe('UserSettingService', () => {
       expect(resultB!.value).toBe('$');
     });
   });
+
+  describe('addOrUpdateSetting', () => {
+    /** Lets queued microtasks run so a pending HTTP request has actually been issued. */
+    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('PUTs when a row already exists', async () => {
+      const existing = makeDto({
+        id: 99,
+        userSettingTypeId: UserSettingType.Push_PrintFailed,
+        value: 'true',
+      });
+
+      // Prime the cache through the public path, so the test exercises the same
+      // existence check the caller relies on rather than a hand-set private field.
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Push_PrintFailed
+      );
+      httpTesting.expectOne(apiUrl).flush([existing]);
+      await primed;
+
+      const promise = service.addOrUpdateSetting(
+        UserSettingType.Push_PrintFailed,
+        'false'
+      );
+      // addOrUpdateSetting resolves the existence check before issuing the write, so the
+      // request does not exist yet on the same tick.
+      await tick();
+
+      const req = httpTesting.expectOne(apiUrl);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ id: 99, value: 'false' });
+      req.flush({ ...existing, value: 'false' });
+      await promise;
+    });
+
+    it('POSTs when no row exists', async () => {
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Push_PrintCompleted
+      );
+      httpTesting.expectOne(apiUrl).flush([]);
+      await primed;
+
+      const promise = service.addOrUpdateSetting(
+        UserSettingType.Push_PrintCompleted,
+        'false'
+      );
+      await tick();
+
+      const req = httpTesting.expectOne(apiUrl);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        userSettingTypeId: UserSettingType.Push_PrintCompleted,
+        value: 'false',
+      });
+      req.flush(
+        makeDto({
+          id: 1,
+          userSettingTypeId: UserSettingType.Push_PrintCompleted,
+          value: 'false',
+        })
+      );
+      await promise;
+    });
+  });
 });
 
 describe('UserSettingService — anonymous visitor (mocked HttpClient)', () => {

@@ -1,68 +1,87 @@
-h3:not(:first-of-type) {
+// An archived release arrives through [innerHTML], so its markup never gets the
+// `_ngcontent` attribute emulated encapsulation scopes on. Every rule that has to
+// reach INSIDE a release therefore sits under `:host ::ng-deep`, which covers the
+// template releases and the injected ones with one selector instead of two
+// near-identical blocks that would drift apart.
+:host ::ng-deep {
+  // Each release is its own <section>, so the spacing that used to hang off
+  // `h3:not(:first-of-type)` now hangs off the section.
+  .release-note {
+    margin-top: 4rem;
+
+    &:first-of-type {
+      margin-top: 0;
+    }
+
+    h3 {
+      margin-bottom: 5px;
+    }
+
+    h4 {
+      margin-bottom: 0px;
+    }
+
+    p {
+      margin-top: 0px;
+    }
+
+    // Four historical releases carry a figure. The sizing used to be an inline
+    // `style` attribute, which Angular's sanitizer strips out of injected
+    // markup, so it lives here where it applies to template and archive alike.
+    img {
+      display: block;
+      max-width: 90%;
+      margin-right: auto;
+    }
+  }
+
+  .release-note__date {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+
+  // MatIcon is an Angular component and cannot be injected as markup, so the two
+  // historical inline icons are emitted as the ligature span MatIcon itself
+  // renders. This keeps them on the text baseline the way `inline` did.
+  .release-note__icon {
+    font-size: inherit;
+    height: inherit;
+    width: inherit;
+    vertical-align: middle;
+  }
+
+  .fade-in {
+    animation: fadeIn ease 2s;
+  }
+}
+
+.release-archive__actions {
   margin-top: 4rem;
+  display: flex;
+  justify-content: center;
 }
 
-h3 {
-  margin-bottom: 5px;
+.release-archive__more {
+  font: inherit;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(127, 127, 127, 0.12);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
 }
 
-h4 {
-  margin-bottom: 0px;
-}
-
-p {
-  margin-top: 0px;
-}
-
-// h4,
-// h4 ~ p {
-//   margin-left: 10px;
-// }
-
-.fade-in {
-  animation: fadeIn ease 2s;
-  -webkit-animation: fadeIn ease 2s;
-  -moz-animation: fadeIn ease 2s;
-  -o-animation: fadeIn ease 2s;
-  -ms-animation: fadeIn ease 2s;
-}
 @keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@-moz-keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@-webkit-keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@-o-keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@-ms-keyframes fadeIn {
   0% {
     opacity: 0;
   }

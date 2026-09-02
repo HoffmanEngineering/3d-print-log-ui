@@ -45,7 +45,9 @@ test('selectGatedDiagnostics keeps only errors inside the gated directories', ()
   const gated = selectGatedDiagnostics(SAMPLE);
 
   assert.equal(gated.length, 2);
-  assert.ok(gated.every((diagnostic) => diagnostic.file.includes('src/app/core/')));
+  assert.ok(
+    gated.every((diagnostic) => diagnostic.file.includes('src/app/core/'))
+  );
 });
 
 test('selectGatedDiagnostics drops errors that bleed in from ungated directories', () => {

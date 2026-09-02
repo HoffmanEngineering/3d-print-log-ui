@@ -1,0 +1,49 @@
+<figure class="doc-figure">
+  @if (capture(); as pair) {
+    <!--
+      Both themes are rendered and one is hidden in CSS, rather than picked in
+      TypeScript. The pre-paint script in index.html sets html.dark-theme before
+      first paint, so the class swap is right on the very first frame; a signal
+      read would settle only at hydration and pop the wrong image in first on
+      every prerendered page. The hidden one is display:none, so it stays out of
+      the accessibility tree and lazy loading never fetches it.
+    -->
+    <img
+      class="doc-figure__img doc-figure__img--light"
+      [src]="pair.light.src"
+      [alt]="alt()"
+      [attr.width]="pair.light.width"
+      [attr.height]="pair.light.height"
+      loading="lazy"
+      decoding="async"
+    />
+    <img
+      class="doc-figure__img doc-figure__img--dark"
+      [src]="pair.dark.src"
+      [alt]="alt()"
+      [attr.width]="pair.dark.width"
+      [attr.height]="pair.dark.height"
+      loading="lazy"
+      decoding="async"
+    />
+  } @else if (src()) {
+    <img
+      class="doc-figure__img"
+      [src]="src()"
+      [alt]="alt()"
+      [attr.width]="width()"
+      [attr.height]="height()"
+      loading="lazy"
+      decoding="async"
+    />
+  }
+  <!--
+    Nothing renders when neither a resolvable name nor a src is bound.
+    An `<img src="">` is worse than no image: the browser re-requests the
+    current page as the image. validate-docs is what turns this into a build
+    failure; the template only has to avoid making it louder than it is.
+  -->
+  @if (caption()) {
+    <figcaption>{{ caption() }}</figcaption>
+  }
+</figure>

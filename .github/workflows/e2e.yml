@@ -72,6 +72,12 @@ jobs:
       - name: Install UI dependencies
         run: npm ci
 
+      # `start:e2e` runs generation itself, but Cypress starts the server through
+      # start-server-and-test; generating here keeps the failure, if there is one,
+      # on its own step instead of buried in the server's startup log.
+      - name: Generate docs
+        run: npm run docs:generate
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:

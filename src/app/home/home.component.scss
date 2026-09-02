@@ -1,653 +1,713 @@
-// Design System Variables
-$spacing-xs: 8px;
-$spacing-sm: 16px;
-$spacing-md: 24px;
-$spacing-lg: 32px;
-$spacing-xl: 48px;
-$spacing-2xl: 64px;
-$spacing-3xl: 80px;
+// Home page design tokens. Every color on this page resolves from here, in
+// both themes — see theme.scss:130, which asks for exactly this instead of
+// hardcoded rgba(0, 0, 0, x).
+:host {
+  --home-ground: #f6f7fb;
+  --home-ground-2: #eceef6;
+  --home-surface: #ffffff;
+  --home-ink: #141726;
+  --home-muted: #585d75;
+  // WCAG AA on 11-13.5px text (proof lede, hero microcopy, footer headings),
+  // measured against the worst background it sits on, --home-ground-2: 4.54:1.
+  --home-faint: #646b87;
+  --home-rule: #e0e3ef;
+  --home-rule-strong: #c8cddf;
+  --home-accent: #3f51b5;
+  --home-accent-hi: #5468d6;
+  --home-accent-soft: #e7eaf8;
+  --home-on-accent: #ffffff;
+  --home-pink: #c2158b;
+  --home-pink-soft: #fbe7f4;
+  --home-plate: rgba(63, 81, 181, 0.1);
+  --home-layer: rgba(20, 23, 38, 0.05);
+  // The closing band paints its own dark gradient in BOTH themes, so its text
+  // color is fixed light and does NOT follow --home-on-accent. See the dark
+  // block below for why that distinction has to exist.
+  --home-closing-a: #3f51b5;
+  --home-closing-b: #2f3f9c;
+  --home-closing-ink: #ffffff;
+  // The wordmark SVG is solid #ffffff with no light variant, so on these light
+  // grounds it is invisible without something behind it. #292f77 is the navy
+  // from the square brand logo the navbar uses, so the two agree.
+  --home-brand-plate: #292f77;
+  --home-brand-plate-pad: 7px 11px;
+  --home-shadow-sm: 0 1px 2px rgba(20, 23, 38, 0.06),
+    0 2px 8px rgba(20, 23, 38, 0.05);
+  --home-shadow-lg: 0 12px 28px rgba(20, 23, 38, 0.13),
+    0 2px 8px rgba(20, 23, 38, 0.07);
 
-$breakpoint-mobile: 768px;
-$breakpoint-tablet: 1024px;
-$breakpoint-desktop: 1200px;
+  display: block;
+  background: var(--home-ground);
+  color: var(--home-ink);
+}
 
-$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+:host-context(html.dark-theme) {
+  --home-ground: #101219;
+  --home-ground-2: #171a24;
+  --home-surface: #191c26;
+  --home-ink: #e9ebf3;
+  --home-muted: #9ca2ba;
+  // As above; worst case here is --home-surface at 4.53:1.
+  --home-faint: #7d839c;
+  --home-rule: #282d3b;
+  --home-rule-strong: #3c4356;
+  --home-accent: #8c9eff;
+  --home-accent-hi: #a5b3ff;
+  --home-accent-soft: #212743;
+  --home-on-accent: #101219;
+  --home-pink: #f473c4;
+  --home-pink-soft: #341a2c;
+  --home-plate: rgba(140, 158, 255, 0.11);
+  --home-layer: rgba(255, 255, 255, 0.045);
+  // --home-on-accent is near-black in dark mode, because the dark accent
+  // (#8c9eff) is a LIGHT color and needs dark text on it. The closing band is
+  // the opposite case: a dark navy panel that needs light text. Reusing
+  // --home-on-accent there would paint #101219 on #1b2048 — invisible.
+  --home-closing-a: #2b3573;
+  --home-closing-b: #1b2048;
+  --home-closing-ink: #eef0fb;
+  // White on a dark ground already reads; a plate here would only box it in.
+  --home-brand-plate: transparent;
+  --home-brand-plate-pad: 0;
+  --home-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --home-shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.55);
+}
 
-// Hero Section
-.hero-section {
-  text-align: center;
-  padding: $spacing-2xl $spacing-md $spacing-xl;
-  min-height: 400px;
+// Breakpoints stay SCSS — custom properties cannot be used in a media query.
+$bp-wide: 960px;
+$bp-narrow: 560px;
+
+.home-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 28px;
+
+  @media (max-width: $bp-narrow) {
+    padding: 0 18px;
+  }
+}
+
+// Used on both <a> (navigation) and <button> (the Auth0 signup action), so it
+// resets the button UA styles that would otherwise differ from the anchors.
+.home-btn {
+  font-family: inherit;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 15px 28px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
+
+  @media (max-width: $bp-narrow) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.home-btn--primary {
+  background: var(--home-accent);
+  color: var(--home-on-accent);
+  box-shadow: var(--home-shadow-sm);
+
+  &:hover {
+    background: var(--home-accent-hi);
+    transform: translateY(-1px);
+    box-shadow: var(--home-shadow-lg);
+  }
+}
+
+.home-btn--ghost {
+  color: var(--home-ink);
+  border-color: var(--home-rule-strong);
+  background: transparent;
+
+  &:hover {
+    border-color: var(--home-accent);
+    color: var(--home-accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-btn {
+    transition: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hero + slicer proof strip
+// ---------------------------------------------------------------------------
+
+.hero {
+  position: relative;
+  // The media bleeds 134% wide; this is what stops it scrolling the page.
+  overflow: hidden;
+  border-bottom: 1px solid var(--home-rule);
+  background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 7px,
+      var(--home-layer) 7px 8px
+    ),
+    linear-gradient(168deg, var(--home-ground-2) 0%, var(--home-ground) 62%);
+
+  .home-shell {
+    padding-top: 26px;
+  }
+}
+
+.brand {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
+  gap: 11px;
+  margin-bottom: 52px;
+}
 
+.brand-logo {
+  height: 38px;
+  width: auto;
+  // content-box so the height above stays the height of the artwork in both
+  // themes and only the plate around it changes.
+  box-sizing: content-box;
+  padding: var(--home-brand-plate-pad);
+  background: var(--home-brand-plate);
+  border-radius: 9px;
+}
+
+.brand-name {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+  gap: 44px;
+  align-items: center;
+}
+
+.hero-copy {
+  padding-bottom: 74px;
+  max-width: 34rem;
+}
+
+.hero-title {
+  font-size: clamp(38px, 5.1vw, 60px);
+  font-weight: 900;
+  line-height: 1.03;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0;
+
+  em {
+    font-style: normal;
+    color: var(--home-accent);
+    display: block;
+  }
+}
+
+.hero-sub {
+  font-size: 19px;
+  color: var(--home-muted);
+  margin: 22px 0 0;
+  max-width: 31rem;
+  line-height: 1.62;
+}
+
+.hero-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: 34px;
+
+  @media (max-width: $bp-narrow) {
+    flex-direction: column;
+  }
+}
+
+.hero-micro {
+  margin: 18px 0 0;
+  font-size: 13.5px;
+  color: var(--home-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+
+  strong {
+    color: var(--home-pink);
+    font-weight: 500;
+  }
+}
+
+.hero-media {
+  position: relative;
+  align-self: end;
+  padding-bottom: 56px;
+
+  // Build-plate grid, faded out behind the screenshot.
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    pointer-events: none;
-  }
-}
-
-.logo {
-  max-height: 240px;
-  width: auto;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-  transition: transform 0.3s ease;
-  display: block;
-  margin: 0 auto;
-
-  &:hover {
-    transform: scale(1.02);
-  }
-}
-
-.hero-subtitle {
-  font-size: 22px !important;
-  font-weight: 400 !important;
-  line-height: 1.5 !important;
-  margin: $spacing-md 0 !important;
-  letter-spacing: 0.5px;
-  opacity: 0.95;
-}
-
-// CTA Buttons
-.cta-button {
-  margin-top: $spacing-lg;
-  margin-bottom: $spacing-md;
-  padding: 14px 40px !important;
-  font-size: 18px !important;
-  font-weight: 500 !important;
-  border-radius: 30px !important;
-  box-shadow: $shadow-md !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: $shadow-lg !important;
+    inset: -26px -40% 28px -26px;
+    border-radius: 14px;
+    background-image: linear-gradient(var(--home-plate) 1px, transparent 1px),
+      linear-gradient(90deg, var(--home-plate) 1px, transparent 1px);
+    background-size: 34px 34px;
+    // #000 here is an ALPHA STOP, not a theme color: a mask reads only the
+    // alpha channel, so the hue is meaningless and identical in both themes.
+    mask-image: radial-gradient(120% 90% at 22% 45%, #000 32%, transparent 76%);
   }
 
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.cta-button-large {
-  padding: 16px 48px !important;
-  font-size: 20px !important;
-  font-weight: 600 !important;
-  border-radius: 32px !important;
-  box-shadow: $shadow-lg !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-
-  &:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25) !important;
-  }
-}
-
-// Introduction Section
-.intro-section {
-  max-width: 900px;
-  margin: $spacing-xl auto;
-  padding: $spacing-lg $spacing-md;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  box-shadow: $shadow-sm;
-}
-
-.intro-content {
-  text-align: center;
-}
-
-.intro-text {
-  font-size: 20px;
-  line-height: 1.8;
-  color: rgba(0, 0, 0, 0.75);
-  margin-bottom: $spacing-lg;
-  font-weight: 400;
-}
-
-.intro-cta {
-  font-size: 18px;
-  line-height: 1.7;
-  color: rgba(0, 0, 0, 0.7);
-
-  strong {
-    font-weight: 600;
-    color: #c2158b;
-  }
-}
-
-.quick-link {
-  color: #3f51b5;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-bottom: 2px solid transparent;
-
-  &:hover {
-    color: #303f9f;
-    border-bottom-color: #303f9f;
-  }
-}
-
-// Features Section
-.features-section {
-  width: 100%;
-  max-width: 1400px;
-  padding: $spacing-xl $spacing-md;
-  margin: 0 auto;
-}
-
-.features-grid {
-  gap: $spacing-lg !important;
-}
-
-.section {
-  align-items: center;
-  justify-content: center;
-  display: flex;
-  flex-direction: column;
-  padding: $spacing-lg;
-  transition: transform 0.3s ease;
-}
-
-.feature-content {
-  background: white;
-  border-radius: 16px;
-  padding: $spacing-xl;
-  box-shadow: $shadow-sm;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: $shadow-md;
+  .shot {
+    width: 134%;
   }
 
-  h2 {
-    font-size: 32px;
-    font-weight: 600;
-    margin: 0 0 $spacing-md 0;
-    padding: 0;
-    color: rgba(0, 0, 0, 0.87);
-    line-height: 1.3;
-  }
+  @media (max-width: $bp-wide) {
+    align-self: auto;
 
-  p {
-    font-size: 18px;
-    font-weight: 400;
-    line-height: 1.75;
-    margin: 0 0 $spacing-md 0;
-    padding: 0;
-    color: rgba(0, 0, 0, 0.7);
+    .shot {
+      width: 100%;
+    }
 
-    &:last-child {
-      margin-bottom: 0;
+    &::before {
+      inset: -18px -18px 34px -18px;
     }
   }
 }
 
-.feature-image {
-  padding: 0;
+.shot {
+  position: relative;
+  border-radius: 13px;
   overflow: hidden;
-  border-radius: 12px;
-  box-shadow: $shadow-md;
-  transition: all 0.3s ease;
-
-  &:hover {
-    box-shadow: $shadow-lg;
-
-    img {
-      transform: scale(1.02);
-    }
-  }
-
-  img {
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+  border: 1px solid var(--home-rule-strong);
+  box-shadow: var(--home-shadow-lg);
+  background: var(--home-surface);
 }
 
-.feature-link {
-  color: #3f51b5;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  border-bottom: 2px solid rgba(63, 81, 181, 0.3);
-
-  &:hover {
-    color: #303f9f;
-    border-bottom-color: #303f9f;
-  }
-}
-
-// Images
-img {
+// Light/dark screenshot swap. The theme class is applied before first paint by
+// the inline script in index.html, so the correct variant shows immediately.
+.home-shot-img {
+  display: block;
   width: 100%;
   height: auto;
+}
+
+// The hero cap. Like every other slot, the hero refuses to let a capture's
+// intrinsic height decide how tall the section is — that is exactly how the
+// old page ended up with a 1:2.31 strip. `.shot` clips, so the crop is clean.
+.hero .shot img {
+  // Ratio matches the capture's own (1400x760), so `cover` never actually
+  // crops at the widths this layout produces. max-height is the real guard,
+  // biting only if a future recapture comes back much taller.
+  aspect-ratio: 1400 / 760;
+  max-height: 560px;
   object-fit: cover;
-  display: block;
+  object-position: top;
 }
 
-.example-grid {
-  width: 100%;
-  max-width: 1400px;
+.home-shot-img--dark {
+  display: none;
 }
 
-// Bottom CTA Section
-.bottom-cta-section {
-  margin: $spacing-xl 0;
-  text-align: center;
+:host-context(html.dark-theme) {
+  .home-shot-img--light {
+    display: none;
+  }
+
+  .home-shot-img--dark {
+    display: block;
+  }
 }
 
-// Footer
-.footer-section {
-  margin-top: $spacing-xl;
+.proof {
+  border-bottom: 1px solid var(--home-rule);
+  background: var(--home-surface);
 }
 
-.footer-toolbar {
-  text-align: center;
-  padding: $spacing-xl $spacing-md;
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.footer-content {
-  opacity: 0.95;
-}
-
-.footer-title {
-  font-size: 48px !important;
-  font-weight: 400 !important;
-  line-height: 1.2 !important;
-  margin: $spacing-md 0 !important;
-}
-
-.footer-subtitle {
-  font-size: 20px !important;
-  font-weight: 300 !important;
-  line-height: 1.5 !important;
-  margin: 0 !important;
-  opacity: 0.9;
-}
-
-.footer-slicer-links {
+.proof-inner {
+  padding-top: 26px;
+  padding-bottom: 26px;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 26px;
   justify-content: center;
-  gap: $spacing-md;
-  margin-top: $spacing-md;
-
-  a {
-    color: inherit;
-    text-decoration: underline;
-    opacity: 0.9;
-  }
 }
 
-// Legacy styles
-h1 {
-  text-align: center;
+.proof-lede {
+  font-size: 11.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--home-faint);
 }
 
-.docs-header-headline {
-  h1 {
-    font-size: 56px;
-    font-weight: 300;
-    line-height: 56px;
-  }
+.proof-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 0;
+  padding: 0;
 
-  h2 {
-    font-size: 18px;
-    font-weight: 300;
-    line-height: 28px;
-  }
-}
-
-mat-toolbar {
-  text-align: center;
-  height: auto;
-}
-
-:host-context(html.dark-theme) mat-toolbar {
-  background-color: var(--brand-toolbar-bg);
-  // The dark theme's lighter primary makes Material's on-primary contrast color
-  // dark, so hero/footer text would render near-invisible on this dark toolbar.
-  // Force white to match the dark indigo background.
-  color: white;
-}
-
-.wrapper {
-  display: inline-block;
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-}
-
-.wrapper img {
-  height: 100%;
-  width: 100%;
-  object-fit: contain;
-}
-
-.overlay {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-}
-
-// Animations
-.fade-in {
-  animation: fadeIn ease 1.5s;
-  -webkit-animation: fadeIn ease 1.5s;
-  -moz-animation: fadeIn ease 1.5s;
-  -o-animation: fadeIn ease 1.5s;
-  -ms-animation: fadeIn ease 1.5s;
-}
-
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@-moz-keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@-webkit-keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@-o-keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@-ms-keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Responsive Design
-@media (max-width: $breakpoint-desktop) {
-  .hero-section {
-    padding: $spacing-2xl $spacing-md;
-    min-height: 400px;
-  }
-
-  .logo {
-    max-height: 240px;
-  }
-
-  .hero-subtitle {
-    font-size: 22px !important;
-  }
-
-  .feature-content {
-    h2 {
-      font-size: 28px;
-    }
-
-    p {
-      font-size: 17px;
-    }
-  }
-}
-
-@media (max-width: $breakpoint-tablet) {
-  .features-grid {
-    grid-template-columns: 1fr !important;
-    gap: $spacing-lg !important;
-  }
-
-  // Reorder features on mobile: content first, then image
-  .feature-1-content {
-    order: 1;
-  }
-  .feature-1-image {
-    order: 2;
-  }
-
-  .feature-2-content {
-    order: 3;
-  }
-  .feature-2-image {
-    order: 4;
-  }
-
-  .feature-3-content {
-    order: 5;
-  }
-  .feature-3-image {
-    order: 6;
-  }
-
-  .feature-4-content {
-    order: 7;
-  }
-  .feature-4-image {
-    order: 8;
-  }
-
-  .hero-section {
-    padding: $spacing-xl $spacing-md;
-    min-height: 350px;
-  }
-
-  .logo {
-    max-height: 200px;
-  }
-
-  .hero-subtitle {
-    font-size: 20px !important;
-  }
-
-  .intro-section {
-    margin: $spacing-lg auto;
-    padding: $spacing-lg $spacing-md;
-  }
-
-  .intro-text {
-    font-size: 18px;
-  }
-
-  .intro-cta {
-    font-size: 16px;
-  }
-
-  .feature-content {
-    padding: $spacing-lg;
-
-    h2 {
-      font-size: 26px;
-    }
-
-    p {
-      font-size: 16px;
-    }
-  }
-
-  .features-section {
-    padding: $spacing-xl $spacing-md;
-  }
-
-  .cta-button {
-    padding: 12px 32px !important;
-    font-size: 16px !important;
-  }
-
-  .cta-button-large {
-    padding: 14px 40px !important;
-    font-size: 18px !important;
-  }
-
-  .footer-title {
-    font-size: 36px !important;
-  }
-
-  .footer-subtitle {
-    font-size: 18px !important;
-  }
-}
-
-@media (max-width: $breakpoint-mobile) {
-  .hero-section {
-    padding: $spacing-lg $spacing-sm;
-    min-height: 300px;
-  }
-
-  .logo {
-    max-height: 160px;
-  }
-
-  .hero-subtitle {
-    font-size: 18px !important;
-    margin: $spacing-md 0 !important;
-  }
-
-  .intro-section {
-    margin: $spacing-md auto;
-    padding: $spacing-md $spacing-sm;
-    border-radius: 12px;
-  }
-
-  .intro-text {
-    font-size: 16px;
-  }
-
-  .intro-cta {
+  li {
+    font-weight: 600;
     font-size: 15px;
   }
 
-  .feature-content {
-    padding: $spacing-md;
-    border-radius: 12px;
+  // Deliberately quieter than .tier-links: this row sits directly under the
+  // hero CTAs, and six accent-colored links there would compete with them.
+  // Ink-colored, underlined on hover only.
+  a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--home-rule-strong);
+    padding-bottom: 1px;
 
-    h2 {
-      font-size: 24px;
-      margin-bottom: $spacing-sm;
+    &:hover {
+      color: var(--home-accent);
+      border-bottom-color: var(--home-accent);
     }
-
-    p {
-      font-size: 15px;
-      line-height: 1.65;
-    }
-  }
-
-  .feature-image {
-    border-radius: 8px;
-  }
-
-  .features-section {
-    padding: $spacing-lg $spacing-sm;
-  }
-
-  .features-grid {
-    gap: $spacing-md !important;
-  }
-
-  // Reduce image size on mobile
-  .feature-image {
-    img {
-      max-height: 350px;
-      object-fit: contain;
-    }
-  }
-
-  .cta-button {
-    padding: 10px 28px !important;
-    font-size: 15px !important;
-    margin-top: $spacing-lg;
-  }
-
-  .cta-button-large {
-    padding: 12px 36px !important;
-    font-size: 17px !important;
-  }
-
-  .bottom-cta-section {
-    margin: $spacing-lg 0;
-  }
-
-  .footer-toolbar {
-    padding: $spacing-lg $spacing-sm;
-    min-height: 150px;
-  }
-
-  .footer-title {
-    font-size: 28px !important;
-  }
-
-  .footer-subtitle {
-    font-size: 16px !important;
   }
 }
 
-// Small mobile devices
-@media (max-width: 480px) {
-  .hero-section {
-    padding: $spacing-md $spacing-xs;
+.proof-tail {
+  font-size: 13.5px;
+  color: var(--home-muted);
+  flex-basis: 100%;
+  text-align: center;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid var(--home-rule-strong);
+
+    &:hover {
+      color: var(--home-accent);
+      border-bottom-color: var(--home-accent);
+    }
+  }
+}
+
+@media (max-width: $bp-wide) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 34px;
   }
 
-  .logo {
-    max-height: 140px;
+  .hero-copy {
+    padding-bottom: 0;
+    max-width: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tiered feature sections, ad band, closing CTA, footer
+// ---------------------------------------------------------------------------
+
+.tier {
+  border-bottom: 1px solid var(--home-rule);
+}
+
+.tier--alt {
+  background: var(--home-ground-2);
+}
+
+// The copy column is capped in ch below, so the screenshots get the rest. The
+// captures are 1400px wide and their UI text is only legible from roughly 45%
+// scale up; at the original 1:1.12 split the media column landed at ~575px CSS
+// (41%) and the filament weights were a grey smear. This split gives ~680px.
+.tier-inner {
+  padding-top: 78px;
+  padding-bottom: 78px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+  gap: 48px;
+  align-items: center;
+}
+
+.tier--flip .tier-inner {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.85fr);
+
+  .tier-copy {
+    order: 2;
   }
 
-  .feature-content {
-    h2 {
-      font-size: 22px;
+  .tier-media {
+    order: 1;
+  }
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--home-accent);
+  background: var(--home-accent-soft);
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+}
+
+.tier-title {
+  font-size: clamp(27px, 3.1vw, 36px);
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.tier-body {
+  font-size: 17px;
+  color: var(--home-muted);
+  margin: 17px 0 0;
+  max-width: 33rem;
+  line-height: 1.68;
+}
+
+.tier-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 22px;
+
+  a {
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--home-accent);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--home-accent-soft);
+    padding-bottom: 1px;
+
+    &:hover {
+      border-bottom-color: var(--home-accent);
+    }
+  }
+}
+
+.tier-callout {
+  margin: 24px 0 0;
+  border-left: 3px solid var(--home-pink);
+  background: var(--home-pink-soft);
+  padding: 13px 17px;
+  border-radius: 0 8px 8px 0;
+  font-size: 14.5px;
+  max-width: 33rem;
+}
+
+// The height caps. Each slot declares its own ratio, because the capture
+// pipeline bounds output WIDTH only - nothing in it stops a tall image.
+//
+// Each ratio is the matching capture's own, measured from the generated
+// src/content/home-captures.json after the desktop recapture. Matching it means
+// `cover` does not crop at any width this layout actually produces (the widest
+// slot is ~852px CSS, at the tablet breakpoint). max-height is the real cap,
+// there to catch a recapture that comes back a different shape. If you
+// recapture and the shape changes, update both numbers from home-captures.json.
+.shot--wide img {
+  // Homepage_PrinterTable: 1400x565
+  aspect-ratio: 1400 / 565;
+  max-height: 430px;
+  object-fit: cover;
+  object-position: top;
+}
+
+.shot--43 img {
+  // Homepage_Filament: 1400x595
+  aspect-ratio: 1400 / 595;
+  max-height: 480px;
+  object-fit: cover;
+  object-position: top;
+}
+
+.shot--32 img {
+  // Homepage_Analytics: 1400x762
+  aspect-ratio: 1400 / 762;
+  max-height: 480px;
+  object-fit: cover;
+  object-position: top;
+}
+
+.tier-media--narrow {
+  display: flex;
+  justify-content: center;
+
+  .shot {
+    max-width: 330px;
+  }
+
+  // Unlike every other slot, this one is NOT a generated capture, so nothing
+  // re-crops it to a house ratio: the box takes the PNG's own 583x519 and the
+  // image scales into it. Without a width rule the img kept its attribute
+  // width and `.shot`'s overflow:hidden sliced it down the middle.
+  .shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 583 / 519;
+  }
+}
+
+.adband {
+  border-bottom: 1px solid var(--home-rule);
+  padding: 30px 0;
+}
+
+// One rule for both themes: the gradient stops and the ink are tokens, so the
+// dark override is three custom properties, not a duplicated background.
+.closing {
+  text-align: center;
+  border-bottom: 1px solid var(--home-rule);
+  background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 7px,
+      var(--home-layer) 7px 8px
+    ),
+    linear-gradient(
+      158deg,
+      var(--home-closing-a) 0%,
+      var(--home-closing-b) 100%
+    );
+
+  .home-shell {
+    padding-top: 82px;
+    padding-bottom: 82px;
+  }
+
+  .home-btn--primary {
+    background: var(--home-surface);
+    color: var(--home-accent);
+  }
+
+  .home-btn--ghost {
+    color: var(--home-closing-ink);
+    // Fixed light hairline: --home-rule-strong is a dark grey in dark mode and
+    // would vanish against the navy panel.
+    border-color: rgba(255, 255, 255, 0.34);
+
+    &:hover {
+      border-color: var(--home-closing-ink);
+      color: var(--home-closing-ink);
+    }
+  }
+}
+
+.closing-title {
+  font-size: clamp(29px, 3.6vw, 42px);
+  font-weight: 900;
+  color: var(--home-closing-ink);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.closing-sub {
+  margin: 16px auto 0;
+  font-size: 18px;
+  color: var(--home-closing-ink);
+  opacity: 0.84;
+  max-width: 34rem;
+}
+
+.closing-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  justify-content: center;
+  margin-top: 30px;
+
+  @media (max-width: $bp-narrow) {
+    flex-direction: column;
+  }
+}
+
+.site-footer {
+  background: var(--home-surface);
+  padding: 52px 0 60px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+  gap: 36px;
+}
+
+.footer-blurb {
+  font-size: 14px;
+  color: var(--home-muted);
+  max-width: 26rem;
+  margin: 13px 0 0;
+}
+
+.footer-col {
+  h3 {
+    font-size: 11px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--home-faint);
+    font-weight: 500;
+    margin: 0 0 13px;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 9px;
+  }
+
+  a {
+    font-size: 14.5px;
+    color: var(--home-muted);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--home-accent);
+    }
+  }
+}
+
+@media (max-width: $bp-wide) {
+  .tier-inner,
+  .tier--flip .tier-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  .tier--flip .tier-inner {
+    .tier-copy {
+      order: 1;
     }
 
-    p {
-      font-size: 14px;
+    .tier-media {
+      order: 2;
     }
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: $bp-narrow) {
+  .footer-grid {
+    grid-template-columns: 1fr;
   }
 }

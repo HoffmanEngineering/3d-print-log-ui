@@ -131,6 +131,158 @@ cy.get('[data-cy="select-filament-btn"]').click();
 cy.wait('@getFilamentsModal');
 ```
 
+## Generated screenshots (home page and doc figures)
+
+Two sets of images are generated from the real app against committed fixtures,
+not hand-captured:
+
+| Set    | Command                    | Output                                           |
+| ------ | -------------------------- | ------------------------------------------------ |
+| `home` | `npm run capture:home:all` | 4 feature images (light + dark) in `src/assets/` |
+| `docs` | `npm run capture:docs:all` | doc figures in `src/assets/docs/captures/`       |
+
+Both run the same harness — `cypress/support/capture.ts` — over a `CaptureSet`
+declared in `cypress/fixtures/demo/manifest.ts`. The spec files are three lines
+each. Everything below applies to both sets unless it says otherwise.
+
+**Nothing runs this for you.** No workflow invokes it, and the images are
+committed WebP, so they stay as they are until someone re-runs the capture and
+commits the result. Refresh a set when you change a view it captures — the
+images go stale silently, since nothing compares them against the current UI.
+
+If a dev server is already running on 4200, run the two steps directly:
+`npm run capture:docs` then `npm run capture:docs:process`.
+
+### Adding a doc figure
+
+1. Give the view a capture boundary if it has none: `data-cy="capture-<thing>"`.
+2. Add a target to `DOC_CAPTURE_TARGETS` in `cypress/fixtures/demo/manifest.ts`.
+   `name` is the contract — it is both the `<doc-figure name>` value and the
+   published asset's basename.
+3. `npm run capture:docs:all`.
+4. Reference it from the Markdown. No path, no dimensions:
+
+   ```html
+   <doc-figure name="print-list-table" alt="What the screenshot shows, for a reader who cannot see it" caption="Optional"></doc-figure>
+   ```
+
+`src` still works for a hand-placed asset (the Android app screenshots), and
+then `width` and `height` are required. `validate-docs.mjs` rejects a figure
+that binds both or neither, a `name` with no asset, and hand-typed dimensions
+beside a `name` — those go stale on the next recapture without touching the
+Markdown that carries them.
+
+The pipeline: capture → process + hash → commit → `docs:generate` reads
+`src/content/docs-captures.json` to emit `docs-captures.ts`, which
+`<doc-figure>` resolves through the `DOC_CAPTURE_MAP` token.
+
+### Things that have already gone wrong here
+
+- Runs in **Chrome** (`--browser chrome`); Electron ignores
+  `--force-device-scale-factor`, so the DPR hook only takes effect in Chrome.
+- The capture specs are **excluded from the normal E2E config** — they are
+  generators, not tests. Left in the default glob the home one ran in
+  `npx cypress run` and the nightly job at device-scale-factor 1 (that flag lives
+  only in `cypress.config.capture.ts`) and overwrote the same PNG filenames the
+  processing step reads, at half resolution.
+- **The device-scale guard is a ratio, not a floor.** Each test records the
+  boundary's CSS width into `cypress/captures/<set>.json`; the processing step
+  divides the PNG width by it and refuses anything under `MIN_DEVICE_SCALE`. The
+  floor it replaced could only be tuned to the narrowest target in a set, so a 1×
+  capture of a 1280px-wide desktop figure sailed straight over it.
+- That sidecar also lists what the run was **supposed** to produce, written
+  before the first test. A run that died halfway leaves an expectation with no
+  result and the processing step says so, instead of publishing a mix of two
+  runs. It is gitignored and regenerated every run.
+- Demo data is fixture-driven (`FIXTURE_ROUTES` in the manifest); a capture
+  **fails** if any `/api/**` request escapes the fixtures, and `afterEach` prints
+  the offending URLs. When you add a page call, add its stub.
+- **A `FIXTURE_ROUTES` glob is matched with minimatch, which is a _path_
+  matcher.** `*` never crosses a `/`, so a query value containing an unencoded
+  slash silently stops matching — Angular's `HttpParams` leaves `/` alone, which
+  is how `timeZone=America/New_York` broke the analytics stub. Use a `RegExp` for
+  those; `url` accepts either. The symptom is not a stub error, it is the page
+  rendering its own error state while the ready steps time out.
+- **Element captures taller than the viewport are stitched, and the seam tears
+  whatever crosses it.** The harness grows the viewport to fit the boundary and
+  then asserts it fit, because `cy.viewport()` is _clamped_ to the browser window
+  and reports nothing when it clamps. It asserts the **width** was not clamped
+  too: a narrowed viewport does not tear the shot, it re-lays-out the page, so
+  you get a clean screenshot of the wrong breakpoint. Both failures point at
+  `WINDOW_SIZE` in `cypress.config.capture.ts`, which must stay above 2× the
+  widest and 2× the tallest viewport across every set.
+- **`ready` steps must assert on content, not containers.** A stat tile renders
+  an em dash and a chart frame keeps its size when its request failed, so
+  counting elements passes on a page that loaded nothing. Build them from the
+  predicates in `cypress/support/capture.ts` (`rendered`, `atLeast`, `absent`,
+  `noPlaceholders`, `imagesRendered`) rather than writing a closure per target.
+- The home set hides the filter panel and the analytics export button through its
+  own `css`; the docs set deliberately does not, because those are things the
+  docs document. Per-set CSS, not one global block.
+- A doc figure needs **both** themes. The processing step refuses to write an
+  index entry with only one, since the missing one renders as a broken image that
+  a reader will assume is their fault.
+- Theme swap is class-based (`html.dark-theme`) so the correct variant shows at
+  first paint — do not switch to a hydration-gated `@if`. `<doc-figure>` renders
+  both images and hides one in CSS for the same reason.
+
+### Fixture facts the images depend on
+
+- Demo print photos and their provenance live in `cypress/fixtures/demo/images/`
+  (fetched by `scripts/fetch-demo-images.mjs`).
+- The demo prints carry `filamentUsage`, because material tracking is what the
+  home copy beside that image is selling and what the prints doc describes. The
+  rows embed whole `FilamentSummary` objects copied from `filaments.json`, so the
+  swatches match the materials capture exactly. **`filamentUsage` is the
+  driver**; the per-print `sumActualFilamentWeightMg` /
+  `sumEstimatedFilamentWeightMg` / `totalFilamentWeightMg` are the deprecated
+  mirror of it and are derived from the rows, never the reverse.
+- Each row records the unit it was measured in.
+  `Prints_PreferredFilamentDisplayUnit` is `0` (as-recorded) in
+  `user-settings.json`, so a row renders off its own `source`: filament in grams,
+  resin in millilitres. Set a real unit there instead and the resin row gets
+  converted to grams via density, which is not what the materials it represents
+  are sold or measured in. Resin also carries no `lengthInM` — no diameter, so no
+  strand length.
+- **A list fixture must be ordered the way that list's resolver asks the API to
+  order it**, because a stub returns whatever the file says and the page does not
+  re-sort. `prints-summary.json` is `StartDate` descending and `filaments.json`
+  is `filamentRemaining` descending — see `print-list-resolver.service.ts` and
+  `filament-list-resolver.service.ts`. Both were unsorted and so stubbed a
+  response neither endpoint would ever return.
+- **Print timestamps are midday UTC, not midnight.** `localeDate` renders in the
+  capture machine's timezone, so a `T00:00:00+00:00` date shows the day before
+  anywhere west of Greenwich — the image would differ by machine. Midday holds
+  the same calendar date from UTC-11 to UTC+12.
+- **All four home captures are taken at desktop width** (`HOME_DESKTOP`,
+  1280px; analytics at 1280x900). They used to be captured at 560px, inside the
+  print list's handset breakpoint (`max-width: 959.98px`), where the mat-table is
+  not rendered at all and `app-print-card` is - which is why the print list image
+  was a 1:2.31 portrait strip. Above that breakpoint the ready steps must assert
+  on `[cy-print-row]` and `app-filament-color-swatch`, not `app-print-card` and
+  `.material-chip`.
+- **The viewport tuple's second number is a FLOOR, not a cap.**
+  `fitViewportToTarget` grows the viewport to whatever the boundary measures, so
+  nothing in the pipeline bounds output height or aspect ratio. The CSS caps in
+  `home.component.scss` are what protect the layout, and each one is set to its
+  capture's real ratio (read off `src/content/home-captures.json` after a run).
+  If a recapture changes an image's shape, update the matching `aspect-ratio`.
+- The post-process caps intrinsic width per set — 1400px for home and 1700px for
+  docs (the prose column at 2×). For home that is ~2× the hero's ~730px rendered
+  width at a 1440 viewport, and stays above `MIN_DEVICE_SCALE` for the widest
+  stacked case (~904px at 960). It also keeps intrinsic close enough to rendered
+  to avoid NgOptimizedImage "oversized image" warnings.
+- The home set also emits **`src/content/home-captures.json`**, a flat
+  `assetBase -> {src,width,height}` map. It exists for the one consumer that
+  cannot read the template: the OG image URL in `home.component.ts`.
+  `validate-docs.mjs` checks it against both the assets on disk and the template,
+  so a stale entry fails `npm run test:scripts` rather than shipping a social
+  preview that points at a missing file.
+- Out of scope: the "Cura marketplace" integration image is not regenerated. It
+  is a screenshot of the Cura **desktop application**, which Cypress cannot
+  drive, so it can never join `HOME_CAPTURE_TARGETS`; its CSS height cap is the
+  only thing holding it in line.
+
 ## Running in CI
 
 `.github/workflows/e2e.yml` runs the suite nightly, on `workflow_dispatch`, and

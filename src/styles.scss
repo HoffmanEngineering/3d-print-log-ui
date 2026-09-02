@@ -1,6 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 @use './app/shared/charts/chart-theme';
 @use './app/shared/skeleton/skeleton-theme';
+@use './app/documentation/docs-theme';
+@use './app/documentation/docs-typography';
 
 .multiline-tooltip {
   white-space: pre-line;
@@ -60,17 +62,6 @@ app-navbar {
   position: sticky;
   top: 80px;
   align-self: flex-start;
-}
-
-.docs-markdown {
-  min-height: 70vh;
-}
-
-.docs-markdown ol,
-.docs-markdown p,
-.docs-markdown ul {
-  font-size: 16px;
-  line-height: 28px;
 }
 
 /** Radius */

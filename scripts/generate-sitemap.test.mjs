@@ -30,7 +30,10 @@ test('escapeXml escapes the five XML entities', () => {
 
 test('buildUrlset wraps each url in a loc and a valid urlset', () => {
   const xml = buildUrlset(['https://x/a', 'https://x/b']);
-  assert.match(xml, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(
+    xml,
+    /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/
+  );
   assert.match(xml, /<loc>https:\/\/x\/a<\/loc>/);
   assert.match(xml, /<loc>https:\/\/x\/b<\/loc>/);
   assert.doesNotMatch(xml, /changefreq|priority/);
@@ -45,7 +48,10 @@ test('buildIndex references each child with a lastmod', () => {
   const xml = buildIndex([
     { loc: 'https://x/sitemap-pages.xml', lastmod: '2026-07-05' },
   ]);
-  assert.match(xml, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(
+    xml,
+    /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/
+  );
   assert.match(xml, /<loc>https:\/\/x\/sitemap-pages\.xml<\/loc>/);
   assert.match(xml, /<lastmod>2026-07-05<\/lastmod>/);
 });
@@ -70,8 +76,10 @@ test('pageUrls prefixes each route with the origin', () => {
   ]);
 });
 
-test('DOC_ROUTES lists the 16 concrete doc pages under docs/', () => {
-  assert.equal(DOC_ROUTES.length, 16);
+test('DOC_ROUTES lists the concrete doc pages under docs/', () => {
+  // No hard-coded count: DOC_ROUTES is derived from the docs manifest, so it
+  // cannot drift from the pages that exist.
+  assert.ok(DOC_ROUTES.length > 0);
   assert.ok(DOC_ROUTES.every((r) => r.startsWith('docs/')));
   assert.ok(DOC_ROUTES.includes('docs/getting-started'));
   assert.ok(DOC_ROUTES.includes('docs/mcp'));

@@ -2,11 +2,11 @@
 slug: klipper
 title: Klipper & Moonraker | 3D Print Log Docs
 description: Automatically log prints from Klipper using Moonraker webhooks. Configure your printer to send completed prints to 3D Print Log.
-navLabel: Klipper/Moonraker
+navLabel: Log prints from Klipper
 group: integrations
 order: 50
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 ---
 

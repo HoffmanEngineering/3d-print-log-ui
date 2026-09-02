@@ -2,11 +2,11 @@
 slug: octoprint-webhook
 title: OctoPrint Webhook | 3D Print Log Docs
 description: Connect OctoPrint to 3D Print Log with a webhook so finished prints are logged automatically. Step-by-step configuration guide.
-navLabel: Octoprint Webhook
+navLabel: Log prints from OctoPrint
 group: integrations
 order: 40
 mode: how-to
-updated: 2026-08-29
+updated: 2026-09-02
 related: [prints]
 ---
 

@@ -247,12 +247,15 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
     viewport: DOC_DESKTOP,
     ready: [
       // Descendants of the boundary, never the boundary itself: visible() runs
-      // cy.get(`${scope} ${selector}`). These name the three controls the
-      // tutorial's Step 3 walks the reader through, so a half-rendered form
-      // cannot pass as a finished one.
+      // cy.get(`${scope} ${selector}`). These name the controls the tutorial's
+      // Step 3 walks the reader through, so a half-rendered form cannot pass as
+      // a finished one -- including the Material Usage button, which is the one
+      // control whose absence would make the prose unfollowable.
       visible('mat-card-title'),
+      visible('[formControlName="title"]'),
       visible('[formControlName="printerId"]'),
       visible('[formControlName="printTimeInSeconds"]'),
+      visible('#add-new-filament-usage-btn'),
     ],
   }),
   docTarget({

@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, RedirectFunction, Router } from '@angular/router';
 
 import { DOC_MOVED_ANCHORS } from './generated/docs-manifest';
 
@@ -20,6 +20,10 @@ import { DOC_MOVED_ANCHORS } from './generated/docs-manifest';
  * hydration, so the reader sees the wrong page briefly. That is accepted: the
  * alternative is a stub id on the page whose whole purpose is to stop carrying
  * that material.
+ *
+ * Query parameters are carried across. A saved link is as likely to carry a
+ * `?utm_source=` or a `?devUserId=` as a fragment, and dropping them would make
+ * the redirect lossy in a way nothing downstream could recover.
  */
 export const movedAnchorGuard: CanActivateFn = (route) => {
   const fragment = route.fragment;
@@ -29,5 +33,27 @@ export const movedAnchorGuard: CanActivateFn = (route) => {
   const destination = DOC_MOVED_ANCHORS[`${slug}#${fragment}`];
   if (!destination) return true;
 
-  return inject(Router).createUrlTree(['/docs', destination], { fragment });
+  return inject(Router).createUrlTree(['/docs', destination], {
+    fragment,
+    queryParams: route.queryParams,
+  });
 };
+
+/**
+ * The redirect for a doc page's `aliases:` entry.
+ *
+ * A plain `redirectTo: 'materials'` string cannot be used here. Angular's
+ * `applyRedirectCreateUrlTree` builds the redirected tree from the fragment and
+ * query of the redirect TARGET, not of the incoming URL, so
+ * `/docs/filaments#qr-labels` would arrive at `/docs/materials` bare — and the
+ * moved-anchor guard would then have no fragment to act on. That was already
+ * happening before this function existed.
+ *
+ * Hand-written rather than emitted inline so the behavior has somewhere to be
+ * tested: an emitter assertion can only prove a function was emitted, not that
+ * it carries anything.
+ */
+export function docsAliasRedirect(slug: string): RedirectFunction {
+  return ({ fragment, queryParams }) =>
+    inject(Router).createUrlTree(['/docs', slug], { fragment, queryParams });
+}

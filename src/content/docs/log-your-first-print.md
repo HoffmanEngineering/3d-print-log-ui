@@ -67,22 +67,30 @@ covers how.
 
 Open **Prints** and click **Add New Print**.
 
-Fill in, in this order:
+Fill in the top of the form:
 
-1. **Name** — what you printed.
+1. **Title** — what you printed.
 2. **Printer** — the one from Step 1.
-3. **Material** — the one from Step 2.
-4. **Print Time** — how long it took. Your slicer's estimate is close enough.
-5. **Filament Used (g)** — again from your slicer. This is what gets subtracted
-   from the roll.
-6. **Date** — when you printed it. It defaults to today.
-
-Save.
+3. **Start Date** — when you printed it. It defaults to now.
+4. **Actual Print Time** — how long it took. Your slicer's estimate is close
+   enough.
 
 <doc-figure
   name="first-print-form"
-  alt="The add-print form, showing the name, printer, material, print time and filament fields"
+  alt="The add-print form as it opens, showing the Title and Printer fields and the estimated and actual print time sections"
 ></doc-figure>
+
+Material is not a single field, because one print can use several. Scroll down
+to the **Material Usage** section and click **Add New Material Record**. That
+adds a row; in it, click **Select Material** and pick the roll from Step 2. Then
+enter **Actual Material Used (g)** — again from your slicer. That number is what
+gets subtracted from the roll.
+
+The section is named after whatever the printer you chose uses, so if you added
+a resin printer in Step 1 it reads *Resin Usage* and *Select Resin*. The steps
+are the same.
+
+Save.
 
 ---
 

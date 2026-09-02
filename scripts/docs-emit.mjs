@@ -77,17 +77,19 @@ export function emitRoutesTs(manifest) {
     if (route.pathMatch) {
       return `  { path: '${route.path}', redirectTo: '${route.redirectTo}', pathMatch: '${route.pathMatch}' },`;
     }
-    // A function redirect, because a string one drops the fragment: Angular
-    // parses the fragment off the redirect TARGET, not off the incoming URL, so
-    // `/docs/filaments#qr-labels` would arrive at `/docs/materials` bare.
-    return `  { path: '${route.path}', redirectTo: ({ fragment }) => \`/docs/${route.redirectTo}\${fragment ? \`#\${fragment}\` : ''}\` },`;
+    // A function redirect, because a string one drops the fragment and the query:
+    // Angular parses both off the redirect TARGET, not off the incoming URL, so
+    // `/docs/filaments#qr-labels` would arrive at `/docs/materials` bare. The
+    // function itself is hand-written in moved-anchor.guard.ts, where it can be
+    // tested — see docsAliasRedirect.
+    return `  { path: '${route.path}', redirectTo: docsAliasRedirect('${route.redirectTo}') },`;
   });
 
   return [
     BANNER,
     "import { Routes } from '@angular/router';",
     '',
-    "import { movedAnchorGuard } from '../moved-anchor.guard';",
+    "import { docsAliasRedirect, movedAnchorGuard } from '../moved-anchor.guard';",
     '',
     ...imports,
     '',

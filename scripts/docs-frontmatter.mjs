@@ -102,9 +102,19 @@ function parseBlock(lines, indent) {
       // Prettier rewrites any flow sequence too long for the print width into a
       // multi-line bracketed form, at whatever nesting depth it sits. The value
       // is one sequence spread over several lines, so rejoin it before parsing.
-      out[key] = parseScalarOrFlow(
-        meaningful.map((l) => l.trim()).join(' ')
-      );
+      //
+      // Comments are rejected rather than joined. Comment stripping happens per
+      // scalar, after the join, so `[a, # note` + `b]` would otherwise parse to
+      // "# note b" — a silent corruption that validation cannot see, because a
+      // bogus slug in `related:` is dropped without complaint at runtime.
+      for (const l of meaningful) {
+        if (/(^|\s)#/.test(l)) {
+          throw new Error(
+            `Comment inside a multi-line flow sequence in frontmatter: "${l.trim()}". Move it above the "${key}:" line.`
+          );
+        }
+      }
+      out[key] = parseScalarOrFlow(meaningful.map((l) => l.trim()).join(' '));
     } else if (meaningful[0].trimStart().startsWith('- ')) {
       // Every line must carry its own dash. Deciding from the first line and
       // then slicing two characters off the rest turned a forgotten dash into a

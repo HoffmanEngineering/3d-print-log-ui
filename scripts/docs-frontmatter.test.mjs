@@ -245,3 +245,22 @@ body
 `;
   assert.throws(() => parseFrontmatter(text), /Unterminated flow sequence/);
 });
+
+// Comment stripping happens per scalar, after the lines are joined, so a comment
+// inside the brackets would be absorbed into the next entry rather than removed.
+test('rejects a comment inside a multi-line flow sequence', () => {
+  const text = `---
+slug: x
+related:
+  [
+    materials, # the field reference
+    prints,
+  ]
+---
+body
+`;
+  assert.throws(
+    () => parseFrontmatter(text),
+    /Comment inside a multi-line flow sequence/
+  );
+});

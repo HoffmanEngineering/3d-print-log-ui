@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, Routes } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import { movedAnchorGuard } from './moved-anchor.guard';
+import { docsAliasRedirect, movedAnchorGuard } from './moved-anchor.guard';
 
 @Component({ template: 'materials' })
 class MaterialsStubComponent {}
@@ -31,11 +31,7 @@ const routes: Routes = [
         canActivate: [movedAnchorGuard],
         runGuardsAndResolvers: 'always',
       },
-      {
-        path: 'filaments',
-        redirectTo: ({ fragment }) =>
-          `/docs/materials${fragment ? `#${fragment}` : ''}`,
-      },
+      { path: 'filaments', redirectTo: docsAliasRedirect('materials') },
     ],
   },
 ];
@@ -81,5 +77,30 @@ describe('movedAnchorGuard', () => {
   it('carries the fragment through an alias redirect', async () => {
     await RouterTestingHarness.create('/docs/filaments#add-weights');
     expect(router.url).toBe('/docs/materials-reference#add-weights');
+  });
+
+  // A saved link is as likely to carry a query as a fragment. createUrlTree
+  // builds a fresh tree, so anything not passed to it is dropped silently.
+  it('carries query parameters through a moved-anchor redirect', async () => {
+    await RouterTestingHarness.create(
+      '/docs/materials?utm_source=saved-link#add-weights'
+    );
+    expect(router.url).toBe(
+      '/docs/materials-reference?utm_source=saved-link#add-weights'
+    );
+  });
+
+  it('carries query parameters through an alias redirect', async () => {
+    await RouterTestingHarness.create('/docs/filaments?devUserId=anonymous');
+    expect(router.url).toBe('/docs/materials?devUserId=anonymous');
+  });
+
+  it('carries both a query and a fragment through both hops', async () => {
+    await RouterTestingHarness.create(
+      '/docs/filaments?utm_source=saved-link#add-weights'
+    );
+    expect(router.url).toBe(
+      '/docs/materials-reference?utm_source=saved-link#add-weights'
+    );
   });
 });

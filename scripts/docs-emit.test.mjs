@@ -112,7 +112,7 @@ test('docs.routes.ts imports each component and lists the routes in order', () =
     /import \{ DocsPrintsComponent \} from '\.\/pages\/docs-prints\.component';/
   );
   assert.match(ts, /\{ path: 'prints', component: DocsPrintsComponent,/);
-  assert.match(ts, /\{ path: 'old-prints', redirectTo: \(\{ fragment \}\) =>/);
+  assert.match(ts, /\{ path: 'old-prints', redirectTo: docsAliasRedirect\('prints'\) \}/);
   assert.match(
     ts,
     /\{ path: '', redirectTo: 'getting-started', pathMatch: 'full' \}/
@@ -679,7 +679,7 @@ test('emitRoutesTs guards every page route and always re-runs it', () => {
   );
   assert.match(
     ts,
-    /import \{ movedAnchorGuard \} from '\.\.\/moved-anchor\.guard';/
+    /import \{ docsAliasRedirect, movedAnchorGuard \} from '\.\.\/moved-anchor\.guard';/
   );
   assert.match(ts, /canActivate: \[movedAnchorGuard\]/);
   assert.match(ts, /runGuardsAndResolvers: 'always'/);
@@ -696,10 +696,15 @@ test('emitRoutesTs carries the fragment through an alias redirect', () => {
       }),
     ])
   );
-  // A plain string redirectTo drops the fragment: Angular parses the fragment
-  // off the TARGET, not off the incoming URL.
+  // A plain string redirectTo drops the fragment and the query: Angular parses
+  // both off the TARGET, not off the incoming URL. What that function actually
+  // carries is asserted in moved-anchor.guard.spec.ts, against the real
+  // docsAliasRedirect — an emitter test can only prove which one was named.
   assert.doesNotMatch(ts, /path: 'filaments', redirectTo: 'materials'/);
-  assert.match(ts, /path: 'filaments', redirectTo: \(\{ fragment \}\) =>/);
+  assert.match(
+    ts,
+    /path: 'filaments', redirectTo: docsAliasRedirect\('materials'\) \}/
+  );
 });
 
 test('emitRoutesTs leaves the default child route a plain redirect', () => {

@@ -802,3 +802,234 @@ mat-toolbar {
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Hero + slicer proof strip
+// ---------------------------------------------------------------------------
+
+.hero {
+  position: relative;
+  // The media bleeds 134% wide; this is what stops it scrolling the page.
+  overflow: hidden;
+  border-bottom: 1px solid var(--home-rule);
+  background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 7px,
+      var(--home-layer) 7px 8px
+    ),
+    linear-gradient(168deg, var(--home-ground-2) 0%, var(--home-ground) 62%);
+
+  .home-shell {
+    padding-top: 26px;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 52px;
+}
+
+.brand-logo {
+  height: 38px;
+  width: auto;
+}
+
+.brand-name {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+  gap: 44px;
+  align-items: center;
+}
+
+.hero-copy {
+  padding-bottom: 74px;
+  max-width: 34rem;
+}
+
+.hero-title {
+  font-size: clamp(38px, 5.1vw, 60px);
+  font-weight: 900;
+  line-height: 1.03;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0;
+
+  em {
+    font-style: normal;
+    color: var(--home-accent);
+    display: block;
+  }
+}
+
+.hero-sub {
+  font-size: 19px;
+  color: var(--home-muted);
+  margin: 22px 0 0;
+  max-width: 31rem;
+  line-height: 1.62;
+}
+
+.hero-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: 34px;
+
+  @media (max-width: $bp-narrow) {
+    flex-direction: column;
+  }
+}
+
+.hero-micro {
+  margin: 18px 0 0;
+  font-size: 13.5px;
+  color: var(--home-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+
+  strong {
+    color: var(--home-pink);
+    font-weight: 500;
+  }
+}
+
+.hero-media {
+  position: relative;
+  align-self: end;
+  padding-bottom: 56px;
+
+  // Build-plate grid, faded out behind the screenshot.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -26px -40% 28px -26px;
+    border-radius: 14px;
+    background-image: linear-gradient(var(--home-plate) 1px, transparent 1px),
+      linear-gradient(90deg, var(--home-plate) 1px, transparent 1px);
+    background-size: 34px 34px;
+    // #000 here is an ALPHA STOP, not a theme colour: a mask reads only the
+    // alpha channel, so the hue is meaningless and identical in both themes.
+    mask-image: radial-gradient(120% 90% at 22% 45%, #000 32%, transparent 76%);
+  }
+
+  .shot {
+    width: 134%;
+  }
+
+  @media (max-width: $bp-wide) {
+    align-self: auto;
+
+    .shot {
+      width: 100%;
+    }
+
+    &::before {
+      inset: -18px -18px 34px -18px;
+    }
+  }
+}
+
+.shot {
+  position: relative;
+  border-radius: 13px;
+  overflow: hidden;
+  border: 1px solid var(--home-rule-strong);
+  box-shadow: var(--home-shadow-lg);
+  background: var(--home-surface);
+}
+
+// Light/dark screenshot swap. The theme class is applied before first paint by
+// the inline script in index.html, so the correct variant shows immediately.
+.home-shot-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+// The hero cap. Like every other slot, the hero refuses to let a capture's
+// intrinsic height decide how tall the section is — that is exactly how the
+// old page ended up with a 1:2.31 strip. `.shot` clips, so the crop is clean.
+.hero .shot img {
+  aspect-ratio: 16 / 10;
+  max-height: 560px;
+  object-fit: cover;
+  object-position: top left;
+}
+
+.home-shot-img--dark {
+  display: none;
+}
+
+:host-context(html.dark-theme) {
+  .home-shot-img--light {
+    display: none;
+  }
+
+  .home-shot-img--dark {
+    display: block;
+  }
+}
+
+.proof {
+  border-bottom: 1px solid var(--home-rule);
+  background: var(--home-surface);
+}
+
+.proof-inner {
+  padding-top: 26px;
+  padding-bottom: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 26px;
+  justify-content: center;
+}
+
+.proof-lede {
+  font-size: 11.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--home-faint);
+}
+
+.proof-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 0;
+  padding: 0;
+
+  li {
+    font-weight: 600;
+    font-size: 15px;
+  }
+}
+
+.proof-tail {
+  font-size: 13.5px;
+  color: var(--home-muted);
+  flex-basis: 100%;
+  text-align: center;
+}
+
+@media (max-width: $bp-wide) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+  .hero-copy {
+    padding-bottom: 0;
+    max-width: none;
+  }
+}

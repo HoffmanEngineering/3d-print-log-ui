@@ -13,6 +13,7 @@ import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
+import { LoggingService } from '../core/services/logging.service';
 import {
   buildOrganization,
   buildSoftwareApplication,
@@ -39,6 +40,7 @@ export class HomeComponent implements OnInit {
 
   private readonly meta = inject(MetaTagService);
   private readonly structuredData = inject(StructuredDataService);
+  private readonly logging = inject(LoggingService);
 
   ngOnInit() {
     this.meta.setSeoTags({
@@ -54,5 +56,18 @@ export class HomeComponent implements OnInit {
       buildSoftwareApplication(),
       buildOrganization(),
     ]);
+  }
+
+  /**
+   * The page's primary conversion action, in both the hero and the closing
+   * band. `placement` is what makes the two distinguishable in analytics.
+   */
+  signUp(event: Event, placement: 'hero' | 'closing') {
+    // These are <a href> for keyboard and a11y semantics, but they hand off to
+    // Auth0 rather than navigating. Without this the empty href reloads the
+    // page — which is what it did to the Karma runner before it was added.
+    event.preventDefault();
+    this.logging.logEvent('Home_SignupClicked', { placement });
+    this.auth.login('/prints', { signup: true });
   }
 }

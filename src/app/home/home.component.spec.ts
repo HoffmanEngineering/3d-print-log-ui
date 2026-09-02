@@ -8,6 +8,7 @@ import { HomeComponent } from './home.component';
 import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
+import { LoggingService } from '../core/services/logging.service';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
@@ -15,6 +16,7 @@ describe('HomeComponent', () => {
   let auth: jasmine.SpyObj<AuthService>;
   let meta: jasmine.SpyObj<MetaTagService>;
   let structuredData: jasmine.SpyObj<StructuredDataService>;
+  let logging: jasmine.SpyObj<LoggingService>;
 
   beforeEach(waitForAsync(() => {
     auth = jasmine.createSpyObj<AuthService>('AuthService', ['login']);
@@ -25,6 +27,11 @@ describe('HomeComponent', () => {
       'StructuredDataService',
       ['setJsonLd']
     );
+
+    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logEvent',
+      'logException',
+    ]);
 
     TestBed.configureTestingModule({
       // AdsenseModule.forRoot supplies the AdsenseConfig token that
@@ -43,6 +50,7 @@ describe('HomeComponent', () => {
         { provide: AuthService, useValue: auth },
         { provide: MetaTagService, useValue: meta },
         { provide: StructuredDataService, useValue: structuredData },
+        { provide: LoggingService, useValue: logging },
       ],
     }).compileComponents();
   }));
@@ -59,5 +67,24 @@ describe('HomeComponent', () => {
 
   it('sets SEO tags on init', () => {
     expect(meta.setSeoTags).toHaveBeenCalled();
+  });
+
+  it('makes the hero headline an h1', () => {
+    const hero = fixture.nativeElement.querySelector('.hero-title');
+
+    expect(hero.tagName).toBe('H1');
+    expect(hero.textContent).toContain('Every print');
+  });
+
+  it('opens the Auth0 signup screen from the hero CTA', () => {
+    const cta: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      '[data-cy="hero-signup"]'
+    );
+    cta.click();
+
+    expect(auth.login).toHaveBeenCalledWith('/prints', { signup: true });
+    expect(logging.logEvent).toHaveBeenCalledWith('Home_SignupClicked', {
+      placement: 'hero',
+    });
   });
 });

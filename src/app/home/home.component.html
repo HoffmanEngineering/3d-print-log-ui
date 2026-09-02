@@ -1,46 +1,89 @@
 <main fxLayout="column wrap" fxLayoutAlign="center center">
-  <!-- Hero Section -->
-  <mat-toolbar fxFlex="grow" color="primary" class="hero-section">
-    <div fxFlex="grow" class="docs-header-headline">
+<!-- Hero -->
+<section class="hero">
+  <div class="home-shell">
+    <div class="brand">
       <img
-        class="logo"
+        class="brand-logo"
         src="/assets/3d-print-log-logo_8b178eb1339b.svg"
-        alt="3D Print Log Logo"
+        alt=""
+        width="38"
+        height="38"
       />
-      <h2 cy-subtitle class="hero-subtitle">Log and analyze your 3D Prints</h2>
-      <a
-        mat-raised-button
-        color="accent"
-        class="get-started cta-button"
-        routerLink="/docs/getting-started"
-        >Get started</a
-      >
+      <span class="brand-name">3D Print Log</span>
     </div>
-  </mat-toolbar>
 
-  <!-- Introduction Section -->
-  <section fxFlex="grow" class="intro-section">
-    <div class="intro-content">
-      <p class="intro-text">
-        3D Print Log is a simple tool for tracking 3D prints. Easily record
-        details of your 3D printers, filament usage, print status, print
-        duration and more.
-      </p>
-      <p class="intro-cta">
-        <a [routerLink]="['/docs', 'getting-started']" class="quick-link"
-          >View the quick start guide</a
-        >, or jump into it by
-        <a href (click)="auth.login('/prints')" class="quick-link"
-          >creating a <strong>free</strong> account</a
-        >
-        today and start logging!
-      </p>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <h1 class="hero-title">
+          Every print you&rsquo;ve made,
+          <em>still on the record.</em>
+        </h1>
+        <p class="hero-sub">
+          Times, temperatures, filament, photos and what actually came out of
+          the printer &mdash; captured from your slicer as you print, in one
+          place you can search a year later.
+        </p>
+        <div class="hero-acts">
+          <a
+            class="home-btn home-btn--primary"
+            data-cy="hero-signup"
+            href
+            (click)="signUp($event, 'hero')"
+            >Create a free account</a
+          >
+          <a class="home-btn home-btn--ghost" routerLink="/docs/getting-started"
+            >See how it works</a
+          >
+        </div>
+        <p class="hero-micro">
+          <span><strong>Free</strong> to start</span>
+          <span>No card</span>
+          <span>Works with the slicer you already use</span>
+        </p>
+      </div>
+
+      <div class="hero-media">
+        <div class="shot">
+          <img
+            class="home-shot-img home-shot-img--light"
+            ngSrc="/assets/Homepage_PrinterList_0a9301c7cfa9.webp"
+            width="1120"
+            height="2582"
+            alt="The print list in 3D Print Log, showing recent prints with photos, printers, durations and the materials each used"
+            priority
+          />
+          <img
+            class="home-shot-img home-shot-img--dark"
+            ngSrc="/assets/Homepage_PrinterList_dark_997d41c86c62.webp"
+            width="1120"
+            height="2582"
+            alt=""
+            loading="lazy"
+          />
+        </div>
+      </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  @if (isBrowser) {
-    <app-ad></app-ad>
-  }
+<!-- Slicer proof strip -->
+<section class="proof">
+  <div class="home-shell proof-inner">
+    <span class="proof-lede">Sends prints straight from</span>
+    <ul class="proof-list">
+      <li>OrcaSlicer</li>
+      <li>Bambu Studio</li>
+      <li>PrusaSlicer</li>
+      <li>Creality Print</li>
+      <li>SuperSlicer</li>
+      <li>Cura</li>
+    </ul>
+    <span class="proof-tail">
+      and takes live status updates from OctoPrint and Klipper/Moonraker.
+    </span>
+  </div>
+</section>
 
   <!-- Features Grid Section -->
   <section fxFlex="grow" class="example-grid features-section">

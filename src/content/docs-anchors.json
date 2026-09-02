@@ -37,6 +37,16 @@
     "loaded_filament",
     "color-appearance"
   ],
+  "docs/materials-reference": [
+    "add-general",
+    "add-weights",
+    "add-adjustments",
+    "adjust-from-measured-weight",
+    "add-temperatures",
+    "add-purchase",
+    "loaded_filament",
+    "color-appearance"
+  ],
   "docs/printers": ["loaded_filament", "delete_printer", "printer-wattage"],
   "docs/analytics": [],
   "docs/android-app": [],

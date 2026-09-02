@@ -78,17 +78,6 @@ Print Time and Filament Usage will be updated.
       </ul>
     </div>
     <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
     </div>
   </div>
 
@@ -114,17 +103,6 @@ Print Time and Filament Usage will be updated.
       </ul>
     </div>
     <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
     </div>
   </div>
 
@@ -164,17 +142,6 @@ body:
       </ul>
     </div>
     <div fxFlex>
-      <!-- <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto'
-        }"
-        alt="Example of Filament Adjustments on the Filament Edit Screen"
-        src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-      /> -->
     </div>
   </div>
 
@@ -189,17 +156,6 @@ body:
     </div>
 
     <div fxFlex>
-      <!-- <img
-          class="fade-in"
-          [ngStyle.lt-md]="{
-            display: 'block',
-            'max-width': '90%',
-            'margin-left': 'auto',
-            'margin-right': 'auto'
-          }"
-          alt="Example of Filament Adjustments on the Filament Edit Screen"
-          src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
-        /> -->
     </div>
   </div>
 

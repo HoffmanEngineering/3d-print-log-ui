@@ -187,3 +187,61 @@ test('keeps a backslash literal inside a single-quoted scalar', () => {
 
   assert.equal(data.title, 'C:docs');
 });
+
+test('parses a flow sequence prettier split across lines', () => {
+  const text = `---
+slug: x
+related:
+  [
+    prints,
+    materials,
+  ]
+---
+body
+`;
+  assert.deepEqual(parseFrontmatter(text).data.related, ['prints', 'materials']);
+});
+
+test('parses a nested flow sequence split across lines', () => {
+  const text = `---
+slug: x
+movedAnchors:
+  materials:
+    [
+      add-general,
+      add-weights,
+    ]
+---
+body
+`;
+  assert.deepEqual(parseFrontmatter(text).data.movedAnchors, {
+    materials: ['add-general', 'add-weights'],
+  });
+});
+
+test('parses a nested block sequence', () => {
+  const text = `---
+slug: x
+movedAnchors:
+  materials:
+    - add-general
+    - add-weights
+---
+body
+`;
+  assert.deepEqual(parseFrontmatter(text).data.movedAnchors, {
+    materials: ['add-general', 'add-weights'],
+  });
+});
+
+test('rejects a flow sequence that is never closed', () => {
+  const text = `---
+slug: x
+related:
+  [
+    prints,
+---
+body
+`;
+  assert.throws(() => parseFrontmatter(text), /Unterminated flow sequence/);
+});

@@ -6,8 +6,9 @@
 // Anything outside the subset is an error, so an unsupported construct fails loudly
 // at generation time instead of being read as something the author did not mean.
 //
-// Supported: `key: scalar`, `key: [a, b]`, block sequences of scalars, and one
-// level of nested mapping (used by `constants:`).
+// Supported: `key: scalar`, `key: [a, b]` (on one line or split over several,
+// which is how prettier formats a long one), block sequences of scalars, and
+// nested mappings (used by `constants:` and `movedAnchors:`).
 
 const FENCE = /^---\s*$/;
 
@@ -97,6 +98,13 @@ function parseBlock(lines, indent) {
     const meaningful = child.filter((l) => !isBlank(l));
     if (meaningful.length === 0) {
       out[key] = null;
+    } else if (meaningful[0].trimStart().startsWith('[')) {
+      // Prettier rewrites any flow sequence too long for the print width into a
+      // multi-line bracketed form, at whatever nesting depth it sits. The value
+      // is one sequence spread over several lines, so rejoin it before parsing.
+      out[key] = parseScalarOrFlow(
+        meaningful.map((l) => l.trim()).join(' ')
+      );
     } else if (meaningful[0].trimStart().startsWith('- ')) {
       // Every line must carry its own dash. Deciding from the first line and
       // then slicing two characters off the rest turned a forgotten dash into a
@@ -143,7 +151,9 @@ function parseScalarOrFlow(text) {
     if (!text.endsWith(']')) {
       throw new Error(`Unterminated flow sequence in frontmatter: "${text}"`);
     }
-    const inner = text.slice(1, -1).trim();
+    // A trailing comma is legal YAML and is what prettier writes when it splits
+    // a sequence over several lines; without this the last part parses to null.
+    const inner = text.slice(1, -1).trim().replace(/,$/, '').trim();
     if (inner === '') return [];
     return splitFlow(inner).map((part) => parseScalar(part.trim()));
   }

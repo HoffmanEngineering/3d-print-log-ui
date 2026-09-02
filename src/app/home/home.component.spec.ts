@@ -113,7 +113,7 @@ describe('HomeComponent', () => {
   });
 
   it('opens the Auth0 signup screen from the closing CTA', () => {
-    const cta: HTMLAnchorElement = fixture.nativeElement.querySelector(
+    const cta: HTMLButtonElement = fixture.nativeElement.querySelector(
       '[data-cy="closing-signup"]'
     );
     cta.click();

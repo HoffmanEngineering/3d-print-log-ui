@@ -1,218 +1,222 @@
-<!-- Hero -->
-<section class="hero">
-  <div class="home-shell">
-    <div class="brand">
-      <img
-        class="brand-logo"
-        src="/assets/3d-print-log-logo_8b178eb1339b.svg"
-        alt=""
-        width="38"
-        height="38"
-      />
-      <span class="brand-name">3D Print Log</span>
-    </div>
-
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <h1 class="hero-title">
-          Every print you&rsquo;ve made,
-          <em>still on the record.</em>
-        </h1>
-        <p class="hero-sub">
-          Times, temperatures, filament, photos and what actually came out of
-          the printer &mdash; captured from your slicer as you print, in one
-          place you can search a year later.
-        </p>
-        <div class="hero-acts">
-          <a
-            class="home-btn home-btn--primary"
-            data-cy="hero-signup"
-            href
-            (click)="signUp($event, 'hero')"
-            >Create a free account</a
-          >
-          <a class="home-btn home-btn--ghost" routerLink="/docs/getting-started"
-            >See how it works</a
-          >
-        </div>
-        <p class="hero-micro">
-          <span><strong>Free</strong> to start</span>
-          <span>No card</span>
-          <span>Works with the slicer you already use</span>
-        </p>
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="home-shell">
+      <div class="brand">
+        <img
+          class="brand-logo"
+          src="/assets/3d-print-log-logo_8b178eb1339b.svg"
+          alt=""
+          width="38"
+          height="38"
+        />
+        <span class="brand-name">3D Print Log</span>
       </div>
 
-      <div class="hero-media">
-        <div class="shot">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1 class="hero-title">
+            Every print you&rsquo;ve made,
+            <em>still on the record.</em>
+          </h1>
+          <p class="hero-sub">
+            Times, temperatures, filament, photos and what actually came out of
+            the printer &mdash; captured from your slicer as you print, in one
+            place you can search a year later.
+          </p>
+          <div class="hero-acts">
+            <button
+              type="button"
+              class="home-btn home-btn--primary"
+              data-cy="hero-signup"
+              (click)="signUp('hero')"
+            >
+              Create a free account
+            </button>
+            <a
+              class="home-btn home-btn--ghost"
+              routerLink="/docs/getting-started"
+              >See how it works</a
+            >
+          </div>
+          <p class="hero-micro">
+            <span><strong>Free</strong> to start</span>
+            <span>No card</span>
+            <span>Works with the slicer you already use</span>
+          </p>
+        </div>
+
+        <div class="hero-media">
+          <div class="shot">
+            <img
+              class="home-shot-img home-shot-img--light"
+              ngSrc="/assets/Homepage_PrinterList_82e715919a91.webp"
+              width="1400"
+              height="760"
+              alt="The print list in 3D Print Log, showing recent prints with photos, printers, durations and the materials each used"
+              priority
+            />
+            <img
+              class="home-shot-img home-shot-img--dark"
+              ngSrc="/assets/Homepage_PrinterList_dark_d5a941f916eb.webp"
+              width="1400"
+              height="760"
+              alt="The print list in 3D Print Log, showing recent prints with photos, printers, durations and the materials each used"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slicer proof strip -->
+  <section class="proof">
+    <div class="home-shell proof-inner">
+      <span class="proof-lede">Sends prints straight from</span>
+      <ul class="proof-list">
+        <li>OrcaSlicer</li>
+        <li>Bambu Studio</li>
+        <li>PrusaSlicer</li>
+        <li>Creality Print</li>
+        <li>SuperSlicer</li>
+        <li>Cura</li>
+      </ul>
+      <span class="proof-tail">
+        and takes live status updates from OctoPrint and Klipper/Moonraker.
+      </span>
+    </div>
+  </section>
+
+  <!-- Tiered feature sections -->
+  <section class="tier">
+    <div class="home-shell tier-inner">
+      <div class="tier-copy">
+        <span class="eyebrow">For one printer on a desk</span>
+        <h2 class="tier-title">Never lose a good setting again</h2>
+        <p class="tier-body">
+          You dialed in the temperature and speed six months ago. Log it once
+          and it is still there &mdash; next to the photo, the duration, the
+          filament you used and the note about what went wrong the first time.
+        </p>
+      </div>
+      <div class="tier-media">
+        <div class="shot shot--wide">
           <img
             class="home-shot-img home-shot-img--light"
-            ngSrc="/assets/Homepage_PrinterList_82e715919a91.webp"
+            ngSrc="/assets/Homepage_PrinterTable_62a05394080b.webp"
             width="1400"
-            height="760"
-            alt="The print list in 3D Print Log, showing recent prints with photos, printers, durations and the materials each used"
-            priority
+            height="565"
+            alt="A table of prints showing photo, printer, date, duration and the materials each one used"
+            loading="lazy"
           />
           <img
             class="home-shot-img home-shot-img--dark"
-            ngSrc="/assets/Homepage_PrinterList_dark_d5a941f916eb.webp"
+            ngSrc="/assets/Homepage_PrinterTable_dark_91e7bcacaba7.webp"
             width="1400"
-            height="760"
-            alt=""
+            height="565"
+            alt="A table of prints showing photo, printer, date, duration and the materials each one used"
             loading="lazy"
           />
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Slicer proof strip -->
-<section class="proof">
-  <div class="home-shell proof-inner">
-    <span class="proof-lede">Sends prints straight from</span>
-    <ul class="proof-list">
-      <li>OrcaSlicer</li>
-      <li>Bambu Studio</li>
-      <li>PrusaSlicer</li>
-      <li>Creality Print</li>
-      <li>SuperSlicer</li>
-      <li>Cura</li>
-    </ul>
-    <span class="proof-tail">
-      and takes live status updates from OctoPrint and Klipper/Moonraker.
-    </span>
-  </div>
-</section>
-
-<!-- Tiered feature sections -->
-<section class="tier">
-  <div class="home-shell tier-inner">
-    <div class="tier-copy">
-      <span class="eyebrow">For one printer on a desk</span>
-      <h2 class="tier-title">Never lose a good setting again</h2>
-      <p class="tier-body">
-        You dialed in the temperature and speed six months ago. Log it once and
-        it is still there &mdash; next to the photo, the duration, the filament
-        you used and the note about what went wrong the first time.
-      </p>
-    </div>
-    <div class="tier-media">
-      <div class="shot shot--wide">
-        <img
-          class="home-shot-img home-shot-img--light"
-          ngSrc="/assets/Homepage_PrinterTable_62a05394080b.webp"
-          width="1400"
-          height="565"
-          alt="A table of prints showing photo, printer, date, duration and the materials each one used"
-          loading="lazy"
-        />
-        <img
-          class="home-shot-img home-shot-img--dark"
-          ngSrc="/assets/Homepage_PrinterTable_dark_91e7bcacaba7.webp"
-          width="1400"
-          height="565"
-          alt=""
-          loading="lazy"
-        />
+  <section class="tier tier--alt tier--flip">
+    <div class="home-shell tier-inner">
+      <div class="tier-copy">
+        <span class="eyebrow">For a bench full of them</span>
+        <h2 class="tier-title">Know what every spool has left</h2>
+        <p class="tier-body">
+          Track each roll and bottle from first use to empty. See what is
+          running low before you start a twelve-hour print, and stop guessing
+          whether there is enough left on the spool to finish.
+        </p>
+      </div>
+      <div class="tier-media">
+        <div class="shot shot--43">
+          <img
+            class="home-shot-img home-shot-img--light"
+            ngSrc="/assets/Homepage_Filament_2a175264fe90.webp"
+            width="1400"
+            height="595"
+            alt="The material library listing rolls of filament with their colors, materials and remaining amounts"
+            loading="lazy"
+          />
+          <img
+            class="home-shot-img home-shot-img--dark"
+            ngSrc="/assets/Homepage_Filament_dark_c65376072c5c.webp"
+            width="1400"
+            height="595"
+            alt="The material library listing rolls of filament with their colors, materials and remaining amounts"
+            loading="lazy"
+          />
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="tier tier--alt tier--flip">
-  <div class="home-shell tier-inner">
-    <div class="tier-copy">
-      <span class="eyebrow">For a bench full of them</span>
-      <h2 class="tier-title">Know what every spool has left</h2>
-      <p class="tier-body">
-        Track each roll and bottle from first use to empty. See what is running
-        low before you start a twelve-hour print, and stop guessing whether
-        there is enough left on the spool to finish.
-      </p>
-    </div>
-    <div class="tier-media">
-      <div class="shot shot--43">
-        <img
-          class="home-shot-img home-shot-img--light"
-          ngSrc="/assets/Homepage_Filament_2a175264fe90.webp"
-          width="1400"
-          height="595"
-          alt="The material library listing rolls of filament with their colors, materials and remaining amounts"
-          loading="lazy"
-        />
-        <img
-          class="home-shot-img home-shot-img--dark"
-          ngSrc="/assets/Homepage_Filament_dark_c65376072c5c.webp"
-          width="1400"
-          height="595"
-          alt=""
-          loading="lazy"
-        />
+  <section class="tier">
+    <div class="home-shell tier-inner">
+      <div class="tier-copy">
+        <span class="eyebrow">When you want the numbers</span>
+        <h2 class="tier-title">See where the time and filament went</h2>
+        <p class="tier-body">
+          Total print hours, material used, and how often prints actually
+          succeed &mdash; across every printer you own. The kind of thing a
+          spreadsheet promises and never quite delivers.
+        </p>
+      </div>
+      <div class="tier-media">
+        <div class="shot shot--32">
+          <img
+            class="home-shot-img home-shot-img--light"
+            ngSrc="/assets/Homepage_Analytics_663bfd938090.webp"
+            width="1400"
+            height="762"
+            alt="The analytics overview showing print time, filament usage and a chart of print outcomes"
+            loading="lazy"
+          />
+          <img
+            class="home-shot-img home-shot-img--dark"
+            ngSrc="/assets/Homepage_Analytics_dark_b42fb40dc218.webp"
+            width="1400"
+            height="762"
+            alt="The analytics overview showing print time, filament usage and a chart of print outcomes"
+            loading="lazy"
+          />
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="tier">
-  <div class="home-shell tier-inner">
-    <div class="tier-copy">
-      <span class="eyebrow">When you want the numbers</span>
-      <h2 class="tier-title">See where the time and filament went</h2>
-      <p class="tier-body">
-        Total print hours, material used, and how often prints actually succeed
-        &mdash; across every printer you own. The kind of thing a spreadsheet
-        promises and never quite delivers.
-      </p>
-    </div>
-    <div class="tier-media">
-      <div class="shot shot--32">
-        <img
-          class="home-shot-img home-shot-img--light"
-          ngSrc="/assets/Homepage_Analytics_663bfd938090.webp"
-          width="1400"
-          height="762"
-          alt="The analytics overview showing print time, filament usage and a chart of print outcomes"
-          loading="lazy"
-        />
-        <img
-          class="home-shot-img home-shot-img--dark"
-          ngSrc="/assets/Homepage_Analytics_dark_b42fb40dc218.webp"
-          width="1400"
-          height="762"
-          alt=""
-          loading="lazy"
-        />
+  <section class="tier tier--alt tier--flip">
+    <div class="home-shell tier-inner">
+      <div class="tier-copy">
+        <span class="eyebrow">Coming from a spreadsheet</span>
+        <h2 class="tier-title">Stop typing it in twice</h2>
+        <p class="tier-body">
+          The post-processing uploader sends the print the moment you slice it
+          &mdash; file name, printer, material, layer height and estimated time
+          already filled in. Cura has a Marketplace plugin; everything else uses
+          the uploader script.
+        </p>
+        <nav class="tier-links" aria-label="Slicer guides">
+          <a routerLink="/orcaslicer">OrcaSlicer</a>
+          <a routerLink="/bambu-studio">Bambu Studio</a>
+          <a routerLink="/prusaslicer">PrusaSlicer</a>
+          <a routerLink="/creality-print">Creality Print</a>
+          <a routerLink="/cura">Cura</a>
+        </nav>
+        <p class="tier-callout">
+          <strong>Nothing to copy across.</strong> Slice, print, and the log
+          fills itself in.
+        </p>
       </div>
-    </div>
-  </div>
-</section>
-
-<section class="tier tier--alt tier--flip">
-  <div class="home-shell tier-inner">
-    <div class="tier-copy">
-      <span class="eyebrow">Coming from a spreadsheet</span>
-      <h2 class="tier-title">Stop typing it in twice</h2>
-      <p class="tier-body">
-        The post-processing uploader sends the print the moment you slice it
-        &mdash; file name, printer, material, layer height and estimated time
-        already filled in. Cura has a Marketplace plugin; everything else uses
-        the uploader script.
-      </p>
-      <nav class="tier-links" aria-label="Slicer guides">
-        <a routerLink="/orcaslicer">OrcaSlicer</a>
-        <a routerLink="/bambu-studio">Bambu Studio</a>
-        <a routerLink="/prusaslicer">PrusaSlicer</a>
-        <a routerLink="/creality-print">Creality Print</a>
-        <a routerLink="/cura">Cura</a>
-      </nav>
-      <p class="tier-callout">
-        <strong>Nothing to copy across.</strong> Slice, print, and the log fills
-        itself in.
-      </p>
-    </div>
-    <div class="tier-media tier-media--narrow">
-      <div class="shot">
-        <!--
+      <div class="tier-media tier-media--narrow">
+        <div class="shot">
+          <!--
           ngSrc, not src: this is a raster static image, which is what
           AGENTS.md's NgOptimizedImage rule covers. Safe even though it is NOT a
           generated capture: the capture pipeline only ever matches
@@ -223,48 +227,50 @@
           NgOptimizedImage generates no srcset and applies no sizing benefit to
           a vector.
         -->
-        <img
-          ngSrc="/assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
-          width="500"
-          height="560"
-          alt="The 3D Print Log Uploader plugin listed in the Cura Marketplace"
-          loading="lazy"
-        />
+          <img
+            ngSrc="/assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
+            width="500"
+            height="560"
+            alt="The 3D Print Log Uploader plugin listed in the Cura Marketplace"
+            loading="lazy"
+          />
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Ad: after the pitch, before the ask -->
-@if (isBrowser) {
-  <section class="adband">
+  <!-- Ad: after the pitch, before the ask -->
+  @if (isBrowser) {
+    <section class="adband">
+      <div class="home-shell">
+        <app-ad></app-ad>
+      </div>
+    </section>
+  }
+
+  <!-- Closing CTA -->
+  <section class="closing">
     <div class="home-shell">
-      <app-ad></app-ad>
+      <h2 class="closing-title">Start your log</h2>
+      <p class="closing-sub">
+        Free to start, and the next print you slice can be the first one in it.
+      </p>
+      <div class="closing-acts">
+        <button
+          type="button"
+          class="home-btn home-btn--primary"
+          data-cy="closing-signup"
+          (click)="signUp('closing')"
+        >
+          Create a free account
+        </button>
+        <a class="home-btn home-btn--ghost" routerLink="/docs/getting-started"
+          >Read the quick start guide</a
+        >
+      </div>
     </div>
   </section>
-}
-
-<!-- Closing CTA -->
-<section class="closing">
-  <div class="home-shell">
-    <h2 class="closing-title">Start your log</h2>
-    <p class="closing-sub">
-      Free to start, and the next print you slice can be the first one in it.
-    </p>
-    <div class="closing-acts">
-      <a
-        class="home-btn home-btn--primary"
-        data-cy="closing-signup"
-        href
-        (click)="signUp($event, 'closing')"
-        >Create a free account</a
-      >
-      <a class="home-btn home-btn--ghost" routerLink="/docs/getting-started"
-        >Read the quick start guide</a
-      >
-    </div>
-  </div>
-</section>
+</main>
 
 <!-- Footer: navigation only -->
 <footer class="site-footer">

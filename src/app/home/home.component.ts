@@ -56,11 +56,7 @@ export class HomeComponent implements OnInit {
    * The page's primary conversion action, in both the hero and the closing
    * band. `placement` is what makes the two distinguishable in analytics.
    */
-  signUp(event: Event, placement: 'hero' | 'closing') {
-    // These are <a href> for keyboard and a11y semantics, but they hand off to
-    // Auth0 rather than navigating. Without this the empty href reloads the
-    // page — which is what it did to the Karma runner before it was added.
-    event.preventDefault();
+  signUp(placement: 'hero' | 'closing') {
     this.logging.logEvent('Home_SignupClicked', { placement });
     this.auth.login('/prints', { signup: true });
   }

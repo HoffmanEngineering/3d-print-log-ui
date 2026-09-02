@@ -15,7 +15,10 @@ import {
   REPO_ROOT,
 } from './docs-paths.mjs';
 import { validateDocs } from './docs-validate-lib.mjs';
-import { captureAssetProblems } from './process-captures.lib.mjs';
+import {
+  captureAssetProblems,
+  homeCaptureProblems,
+} from './process-captures.lib.mjs';
 import { readReleaseSources } from './release-notes-lib.mjs';
 
 /**
@@ -24,6 +27,20 @@ import { readReleaseSources } from './release-notes-lib.mjs';
  * Only this script touches the filesystem; docs-validate-lib stays pure so its
  * corpus is whatever a test hands it.
  */
+const HOME_CAPTURES_JSON = path.join(
+  REPO_ROOT,
+  'src',
+  'content',
+  'home-captures.json'
+);
+const HOME_TEMPLATE = path.join(
+  REPO_ROOT,
+  'src',
+  'app',
+  'home',
+  'home.component.html'
+);
+
 const readAsset = (publicPath) => {
   const file = path.join(REPO_ROOT, 'src', ...publicPath.split('/'));
   return fs.existsSync(file) ? fs.readFileSync(file) : null;
@@ -48,6 +65,17 @@ try {
     ...captureAssetProblems(captures, readAsset).map((message) => ({
       file: 'docs-captures.json',
       message: `docs-captures.json: ${message}`,
+    })),
+    // The home set writes its assets, its template and its map in one step and
+    // nothing else proves they stayed in agreement. The OG image reads the map,
+    // so a stale entry ships a social preview pointing at a missing file.
+    ...homeCaptureProblems(
+      JSON.parse(fs.readFileSync(HOME_CAPTURES_JSON, 'utf8')),
+      readAsset,
+      fs.readFileSync(HOME_TEMPLATE, 'utf8')
+    ).map((message) => ({
+      file: 'home-captures.json',
+      message: `home-captures.json: ${message}`,
     })),
   ];
 

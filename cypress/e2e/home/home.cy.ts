@@ -6,10 +6,12 @@ describe('Home Page', () => {
 
     cy.get('h1').should('have.length', 1);
     cy.get('h1').should('contain.text', 'Every print');
-    cy.get('[data-cy="hero-signup"]').should(
-      'have.text',
-      'Create a free account'
-    );
+    // Trimmed: the CTA is a <button> whose text node is indented in the
+    // template, so an exact `have.text` would compare against the whitespace.
+    cy.get('[data-cy="hero-signup"]')
+      .invoke('text')
+      .invoke('trim')
+      .should('equal', 'Create a free account');
   });
 
   it('links to every slicer guide', () => {

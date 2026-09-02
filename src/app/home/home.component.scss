@@ -7,7 +7,9 @@
   --home-surface: #ffffff;
   --home-ink: #141726;
   --home-muted: #585d75;
-  --home-faint: #8a90a8;
+  // WCAG AA on 11-13.5px text (proof lede, hero microcopy, footer headings),
+  // measured against the worst background it sits on, --home-ground-2: 4.54:1.
+  --home-faint: #646b87;
   --home-rule: #e0e3ef;
   --home-rule-strong: #c8cddf;
   --home-accent: #3f51b5;
@@ -40,7 +42,8 @@
   --home-surface: #191c26;
   --home-ink: #e9ebf3;
   --home-muted: #9ca2ba;
-  --home-faint: #6e7591;
+  // As above; worst case here is --home-surface at 4.53:1.
+  --home-faint: #7d839c;
   --home-rule: #282d3b;
   --home-rule-strong: #3c4356;
   --home-accent: #8c9eff;
@@ -76,7 +79,11 @@ $bp-narrow: 560px;
   }
 }
 
+// Used on both <a> (navigation) and <button> (the Auth0 signup action), so it
+// resets the button UA styles that would otherwise differ from the anchors.
 .home-btn {
+  font-family: inherit;
+  appearance: none;
   display: inline-flex;
   align-items: center;
   gap: 9px;

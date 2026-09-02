@@ -18,6 +18,7 @@ import {
   contentHash,
   deviceScale,
   docCapturesIndex,
+  escapeRegExp,
   homeCapturesIndex,
   MIN_DEVICE_SCALE,
   pairSidecar,
@@ -101,10 +102,6 @@ const SETS = {
     },
   },
 };
-
-function escapeRegExp(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 // Cypress nests screenshots by spec path, which varies by environment — find the
 // PNG by filename anywhere under cypress/screenshots.

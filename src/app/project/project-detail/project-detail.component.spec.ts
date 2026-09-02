@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { ADSENSE_TOKEN } from 'ng2-adsense';
@@ -17,7 +17,7 @@ import {
 } from 'src/app/core/services/print.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -335,6 +335,78 @@ describe('ProjectDetailComponent', () => {
       const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
       expect(dto.startDateOverride).toBe('2026-02-01');
       expect(dto.finishDateOverride).toBeNull();
+    });
+
+    /**
+     * The date pickers make a 400 an ordinary outcome of this form rather than only a
+     * server fault, so the save error has to reach the user. Swallowing it leaves the
+     * form open, no longer spinning, with nothing said about why.
+     */
+    it('shows the API message when a save is rejected as an inverted range', async () => {
+      const message =
+        "A project's finish date cannot be before its start date.";
+      mockProjectService.updateProject.and.returnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 400,
+              error: message,
+            })
+        )
+      );
+
+      component.project.set(mockProject);
+      component.onEditClick();
+      component.onSave({
+        ...baseFormValue,
+        startDateOverride: '2026-03-01',
+        finishDateOverride: '2026-02-01',
+      });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.saveErrorMessage()).toBe(message);
+      expect(component.isSaving()).toBeFalse();
+      // Stays open so the user can correct the dates rather than re-entering the whole form.
+      expect(component.isEditing()).toBeTrue();
+
+      const el = fixture.nativeElement.querySelector(
+        '[data-cy="project-save-error"]'
+      );
+      expect(el.textContent.trim()).toBe(message);
+    });
+
+    it('falls back to generic copy for a non-400 save failure', async () => {
+      mockProjectService.updateProject.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+
+      component.project.set(mockProject);
+      component.onEditClick();
+      component.onSave(baseFormValue);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.saveErrorMessage()).toBe(
+        'This project could not be saved. Please try again.'
+      );
+    });
+
+    it('clears a previous save error when the next save starts', async () => {
+      mockProjectService.updateProject.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 400, error: 'nope' }))
+      );
+      component.project.set(mockProject);
+      component.onEditClick();
+      component.onSave(baseFormValue);
+      await fixture.whenStable();
+      expect(component.saveErrorMessage()).toBe('nope');
+
+      mockProjectService.updateProject.and.returnValue(of(mockProject));
+      component.onSave(baseFormValue);
+      await fixture.whenStable();
+
+      expect(component.saveErrorMessage()).toBe('');
     });
 
     it('renders the resolved dates', () => {

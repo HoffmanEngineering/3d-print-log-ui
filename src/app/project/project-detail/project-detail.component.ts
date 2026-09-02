@@ -19,7 +19,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { DomSanitizer, SafeUrl, Title } from '@angular/platform-browser';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpHeaders,
+  HttpErrorResponse,
+} from '@angular/common/http';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, of } from 'rxjs';
 import { mergeMap, take, toArray } from 'rxjs/operators';
@@ -50,6 +54,21 @@ import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { environment } from 'src/environments/environment';
+
+/**
+ * The message to show for a failed project save.
+ *
+ * The API returns a plain-text 400 for a project whose resolved finish date lands before its
+ * start, which the date pickers let a user produce. That message names the actual problem, so
+ * it is shown as-is; anything else gets the generic retry copy.
+ */
+function readSaveError(err: unknown): string {
+  if (err instanceof HttpErrorResponse && err.status === 400) {
+    const body = typeof err.error === 'string' ? err.error.trim() : '';
+    if (body && body.length <= 200) return body;
+  }
+  return 'This project could not be saved. Please try again.';
+}
 
 @Component({
   selector: 'app-project-detail',
@@ -93,6 +112,13 @@ export class ProjectDetailComponent implements OnInit {
   loading = signal(true);
   isEditing = signal(false);
   isSaving = signal(false);
+  /**
+   * A failed save, shown above the form. The API rejects a project whose resolved
+   * finish date lands before its start, which a user can trigger from the date
+   * pickers — so a save failure here is an ordinary outcome, not just a network fault,
+   * and swallowing it leaves the form open with no explanation.
+   */
+  saveErrorMessage = signal('');
   images = signal<ProjectImageValue[]>([]);
   selectedImageIndex = signal(0);
 
@@ -337,6 +363,7 @@ export class ProjectDetailComponent implements OnInit {
       (a, b) => a.displayOrder - b.displayOrder
     );
 
+    this.saveErrorMessage.set('');
     this.isSaving.set(true);
     let createdId: string;
     let uploadedIds: number[] = [];
@@ -388,8 +415,9 @@ export class ProjectDetailComponent implements OnInit {
           });
           this.router.navigate(['/projects', updated.id], { replaceUrl: true });
         },
-        error: () => {
+        error: (err: unknown) => {
           this.isSaving.set(false);
+          this.saveErrorMessage.set(readSaveError(err));
         },
       });
   }
@@ -416,6 +444,7 @@ export class ProjectDetailComponent implements OnInit {
     const defaultImage = snapshot.find((img) => img.isDefault);
     const idsToDelete = [...this.imageIdsToDelete];
 
+    this.saveErrorMessage.set('');
     this.isSaving.set(true);
 
     let uploadedIds: number[] = [];
@@ -501,8 +530,9 @@ export class ProjectDetailComponent implements OnInit {
             reordered: snapshot.length > 1,
           });
         },
-        error: () => {
+        error: (err: unknown) => {
           this.isSaving.set(false);
+          this.saveErrorMessage.set(readSaveError(err));
         },
       });
   }

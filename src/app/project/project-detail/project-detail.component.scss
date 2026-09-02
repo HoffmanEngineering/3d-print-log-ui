@@ -96,3 +96,9 @@ mat-select {
   font-size: 0.875rem;
   color: var(--mat-sys-on-surface-variant);
 }
+
+.save-error {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  color: var(--mat-sys-error);
+}

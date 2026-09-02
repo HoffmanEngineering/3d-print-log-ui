@@ -106,7 +106,10 @@
         <mat-icon>close</mat-icon>
       </button>
     }
-    <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+    <mat-datepicker-toggle
+      matSuffix
+      [for]="startPicker"
+    ></mat-datepicker-toggle>
     <mat-datepicker #startPicker></mat-datepicker>
     <mat-hint>
       @if (form.controls.startDateOverride.value) {

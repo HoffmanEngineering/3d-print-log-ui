@@ -109,6 +109,11 @@
                 (change)="onFileSelected($event)"
               />
             </div>
+            @if (saveErrorMessage()) {
+              <p class="save-error" role="alert" data-cy="project-save-error">
+                {{ saveErrorMessage() }}
+              </p>
+            }
             <app-project-edit-form
               [project]="p"
               [isSaving]="isSaving()"

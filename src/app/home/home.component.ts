@@ -35,12 +35,10 @@ import { AdComponent } from '../shared/ad/ad.component';
 })
 export class HomeComponent implements OnInit {
   readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  readonly auth = inject(AuthService);
 
-  constructor(
-    public auth: AuthService,
-    private meta: MetaTagService,
-    private structuredData: StructuredDataService
-  ) {}
+  private readonly meta = inject(MetaTagService);
+  private readonly structuredData = inject(StructuredDataService);
 
   ngOnInit() {
     this.meta.setSeoTags({

@@ -9,6 +9,7 @@ import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-ge
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
 import { DocumentationRoutingModule } from './documentation-routing.module';
 import { DocFeedbackComponent } from './doc-feedback/doc-feedback.component';
+import { DocBackToTopComponent } from './doc-back-to-top/doc-back-to-top.component';
 import { DocPageNavComponent } from './doc-page-nav/doc-page-nav.component';
 import { DocRelatedComponent } from './doc-related/doc-related.component';
 import { DocTocComponent } from './doc-toc/doc-toc.component';
@@ -44,6 +45,7 @@ import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
     DocFeedbackComponent,
     DocTocComponent,
     DocPageNavComponent,
+    DocBackToTopComponent,
     DocRelatedComponent,
     // Standalone, and imported here rather than by each page: a generated page
     // is declared by this module, so this module is its template scope.

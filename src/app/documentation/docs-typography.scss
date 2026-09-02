@@ -11,8 +11,8 @@
 
 .docs-markdown {
   min-height: 70vh;
-  // The measure. Somewhere near 70 characters a line is long enough to carry a
-  // clause and short enough that the eye finds the start of the next one.
+  // The measure. At this width a line is long enough to carry a clause and
+  // short enough that the eye finds the start of the next one.
   max-width: var(--docs-measure);
   margin-inline: auto;
   color: var(--docs-text);

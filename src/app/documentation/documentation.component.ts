@@ -26,6 +26,10 @@ import {
   buildDocBreadcrumb,
 } from '../core/structured-data/doc-schema';
 import { getDocSeoTags } from './doc-seo.config';
+import {
+  isDrawerScroller,
+  resolveScrollContainer,
+} from './docs-scroll-container';
 import { DocsSearchOpener } from './docs-search/docs-search.opener';
 import {
   isApplePlatform,
@@ -171,8 +175,12 @@ export class DocumentationComponent
 
   /**
    * Depth is sampled through the CDK dispatcher rather than a window listener
-   * because the scrolling element differs by layout: `mat-sidenav-content`
-   * scrolls on desktop, the document scrolls on mobile (see the component SCSS).
+   * because which element scrolls depends on the layout, and the dispatcher
+   * reports every registered scroller.
+   *
+   * Which is also why what it reports has to be filtered: Material registers
+   * the drawer's own scroller alongside the content's, so "something scrolled"
+   * is not the same question as "how far into the article are we".
    */
   private trackScrollDepth(): void {
     this.scrollDispatcher
@@ -184,17 +192,19 @@ export class DocumentationComponent
   }
 
   /**
-   * Takes one depth reading. Also called on arrival: a page that fits on screen
-   * can never fire a scroll event, and without this would be reported as 0%
-   * read rather than fully read.
+   * Takes one depth reading of the article, whatever else on the page moved.
+   *
+   * Also called on arrival: a page that fits on screen can never fire a scroll
+   * event, and without this would be reported as 0% read rather than fully
+   * read. That fallback is why the element has to be right — `scrollPercentOf`
+   * reads anything with no scroll range as 100%, so measuring a container that
+   * merely exists reports every visit as fully read.
    */
   private sampleScrollDepth(scrollable?: CdkScrollable): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    const element = scrollable
-      ? scrollable.getElementRef().nativeElement
-      : (this.scrollContainer() ?? this.document.documentElement);
+    const element = this.articleScroller(scrollable);
     if (element) {
       this.telemetry.trackScrollDepth(
         scrollPercentOf(element),
@@ -203,9 +213,20 @@ export class DocumentationComponent
     }
   }
 
-  /** The element that actually scrolls: sidenav content on desktop, document on mobile. */
-  private scrollContainer(): HTMLElement | null {
-    return this.document.querySelector?.('mat-sidenav-content') ?? null;
+  /**
+   * The element whose position answers "how much of the article was read".
+   *
+   * The dispatcher's own report is used when it is the article moving, because
+   * it is the most direct answer available. A drawer scroller is discarded —
+   * that is the sidebar, not the page — and so is a missing one, leaving
+   * `resolveScrollContainer` to work it out from the layout.
+   */
+  private articleScroller(scrollable?: CdkScrollable): HTMLElement {
+    const reported = scrollable?.getElementRef().nativeElement;
+    if (reported && !isDrawerScroller(reported)) {
+      return reported;
+    }
+    return resolveScrollContainer(this.document);
   }
 
   private applySeoForUrl(url: string): void {

@@ -14,6 +14,7 @@ import {
   DEFAULT_DOC_SLUG,
   DOC_MODES,
   RELEASE_NOTES_SLUG,
+  normalizeMovedAnchors,
 } from './docs-manifest-lib.mjs';
 import {
   extractAnchors,
@@ -255,6 +256,84 @@ export function validateDocs({
     }
   }
 
+  // movedAnchors: a published id whose section now lives on another page.
+  //
+  // These rules exist because a wrong redirect is invisible. A claim naming a
+  // nonexistent id, or an id the source page still declares, produces a link
+  // that resolves to the wrong content rather than an error.
+  /** `sourceSlug#id` -> the slug claiming it. */
+  const movedClaims = new Map();
+
+  for (const s of sources) {
+    const file = s.sourceFile ?? `${s.slug}.md`;
+
+    // A page whose template did not render has no entry in anchorsBySlug, which
+    // is indistinguishable here from "declares no ids". Reporting both would
+    // undo the one-error-per-render-failure guarantee above.
+    if (unrendered.has(s.slug)) continue;
+
+    let moved;
+    try {
+      moved = normalizeMovedAnchors(s); // rule 0
+    } catch (error) {
+      add(file, error.message);
+      continue;
+    }
+
+    if (Object.keys(moved).length > 0 && s.dormant) {
+      add(
+        file,
+        `movedAnchors is declared but "${s.slug}" is dormant, so the redirect would have no route to land on.`
+      ); // rule 7
+      continue;
+    }
+
+    for (const [sourceSlug, ids] of Object.entries(moved)) {
+      if (sourceSlug === s.slug) {
+        add(file, `movedAnchors lists its own slug "${sourceSlug}".`); // rule 5
+        continue;
+      }
+      if (!routed.some((p) => p.slug === sourceSlug)) {
+        add(
+          file,
+          `movedAnchors names "${sourceSlug}", which is not a routed doc page.`
+        ); // rule 1
+        continue;
+      }
+
+      for (const id of ids) {
+        const key = `${sourceSlug}#${id}`;
+
+        if (!anchorsBySlug.get(s.slug)?.includes(id)) {
+          add(
+            file,
+            `movedAnchors claims "${key}" but declares no id "${id}" on this page.`
+          ); // rule 2
+        }
+        if (anchorsBySlug.get(sourceSlug)?.includes(id)) {
+          add(
+            file,
+            `movedAnchors claims "${key}", but "${id}" is still declared on "${sourceSlug}". Two homes make the redirect a lie.`
+          ); // rule 3
+        }
+        if (movedClaims.has(key)) {
+          add(
+            file,
+            `"${key}" is claimed by both "${movedClaims.get(key)}" and "${s.slug}".`
+          ); // rule 4
+        } else {
+          movedClaims.set(key, s.slug);
+        }
+        if (!(anchorBaseline[`docs/${sourceSlug}`] ?? []).includes(id)) {
+          add(
+            file,
+            `movedAnchors claims "${key}" was never published; move the section and update the link instead.`
+          ); // rule 6
+        }
+      }
+    }
+  }
+
   // Link checks need every page's anchors, so they run once the loop is done.
   for (const s of sources) {
     const file = s.sourceFile ?? `${s.slug}.md`;
@@ -292,12 +371,14 @@ export function validateDocs({
     if (unrendered.has(s.slug)) continue;
 
     for (const anchor of anchorBaseline[`docs/${s.slug}`] ?? []) {
-      if (!anchorsBySlug.get(s.slug)?.includes(anchor)) {
-        add(
-          file,
-          `anchor "${anchor}" was published previously and is no longer declared.`
-        );
-      }
+      if (anchorsBySlug.get(s.slug)?.includes(anchor)) continue;
+      // A published id is also honored when another page claims it via
+      // movedAnchors: the URL still resolves, by redirect rather than in place.
+      if (movedClaims.has(`${s.slug}#${anchor}`)) continue;
+      add(
+        file,
+        `anchor "${anchor}" was published previously and is no longer declared.`
+      );
     }
   }
 

@@ -857,6 +857,27 @@ test('reports a doc-marker whose coordinate is not a number', () => {
   );
 });
 
+test('reports a coordinate JavaScript would read as a number but CSS will not', () => {
+  // `Number('0x10')` is 16, so an isFinite check passes this and the authored
+  // text still reaches CSS as `left: 0x10%`, which the browser drops -- the
+  // marker lands in the corner with nothing to say it went wrong.
+  assert.deepEqual(
+    markerMessages('<doc-marker x="0x10" y="9" label="Title"></doc-marker>'),
+    [
+      'prints.md: <doc-marker> has a non-numeric x; a marker is placed as a percentage of the image box.',
+    ]
+  );
+});
+
+test('reports a coordinate written in exponent notation', () => {
+  assert.deepEqual(
+    markerMessages('<doc-marker x="1e1" y="9" label="Title"></doc-marker>'),
+    [
+      'prints.md: <doc-marker> has a non-numeric x; a marker is placed as a percentage of the image box.',
+    ]
+  );
+});
+
 test('reports a doc-marker positioned outside the image', () => {
   assert.deepEqual(
     markerMessages('<doc-marker x="7" y="140" label="Title"></doc-marker>'),
@@ -877,6 +898,38 @@ test('reports a doc-marker written outside a doc-figure', () => {
     [
       "prints.md: 1 <doc-marker> tag(s) sit outside a <doc-figure>; a marker positions itself against a figure's image and has nothing to point at on its own.",
     ]
+  );
+});
+
+test('reports a doc-marker wrapped in another element inside its figure', () => {
+  // The quietest of the three misplacements: selective projection matches only
+  // direct children, so a wrapped marker is dropped and the figure renders as
+  // though it had never been written.
+  assert.deepEqual(
+    markerMessages(
+      '<div><doc-marker x="7" y="9" label="Title"></doc-marker></div>'
+    ),
+    [
+      'prints.md: 1 <doc-marker> tag(s) are wrapped in another element inside their <doc-figure>; the figure projects only its direct children, so a wrapped marker is dropped and never renders.',
+    ]
+  );
+});
+
+test('accepts a direct-child marker that follows a void element', () => {
+  // A void element must not move the depth counter; if <br> were treated as
+  // opening a scope, every marker after one would be reported as wrapped.
+  assert.deepEqual(
+    markerMessages('<br><doc-marker x="7" y="9" label="Title"></doc-marker>'),
+    []
+  );
+});
+
+test('accepts a direct-child marker that follows a closed wrapper', () => {
+  assert.deepEqual(
+    markerMessages(
+      '<div>Context</div><doc-marker x="7" y="9" label="Title"></doc-marker>'
+    ),
+    []
   );
 });
 

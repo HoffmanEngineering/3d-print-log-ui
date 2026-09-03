@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  numberAttribute,
+} from '@angular/core';
 
 /**
  * One numbered callout on a `<doc-figure>`.
@@ -40,11 +45,20 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   },
 })
 export class DocMarkerComponent {
-  /** Horizontal position, as a percentage of the image's width. */
-  readonly x = input.required<number | string>();
+  /**
+   * Horizontal position, as a percentage of the image's width.
+   *
+   * Coerced rather than passed through as the authored string. A doc page
+   * writes `x="7"`, and binding that string straight into `[style.left.%]`
+   * makes the declaration only as valid as the text: `x="7px"` yields
+   * `left: 7px%`, which the browser drops, leaving the marker stacked in the
+   * corner with nothing to say it went wrong. validate-docs rejects those
+   * spellings, and this is the second lock on the same door.
+   */
+  readonly x = input.required<number, unknown>({ transform: numberAttribute });
 
   /** Vertical position, as a percentage of the image's height. */
-  readonly y = input.required<number | string>();
+  readonly y = input.required<number, unknown>({ transform: numberAttribute });
 
   /** The region this marker points at, for a reader who cannot see it. */
   readonly label = input.required<string>();

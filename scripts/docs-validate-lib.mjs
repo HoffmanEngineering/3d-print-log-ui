@@ -632,11 +632,99 @@ const DOC_MARKER = /<doc-marker\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
 /** Any opening `<doc-marker`, matched or not — see `markerProblems`. */
 const DOC_MARKER_OPEN = /<doc-marker\b/g;
 
+/** A `</doc-figure>` end tag, which bounds the content a figure encloses. */
+const DOC_FIGURE_CLOSE = /<\/doc-figure\s*>/g;
+
 /**
- * The three tokens that decide whether a marker is inside a figure, in one
- * pass. `<doc-figure>` never nests, so a single in/out flag is enough.
+ * Any element tag, opening or closing, used to measure how deeply nested a
+ * marker sits inside its figure. Same disjoint attribute shape as `DOC_FIGURE`.
  */
-const FIGURE_SCAN = /<doc-figure\b|<\/doc-figure\s*>|<doc-marker\b/g;
+const ANY_TAG = /<(\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+
+/** Elements that never nest, so they must not move the depth counter. */
+const VOID_ELEMENTS = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
+]);
+
+/**
+ * A plain decimal number, which is narrower than `Number()` on purpose.
+ *
+ * `Number('0x10')` is 16 and `Number('1e2')` is 100, so a coordinate written
+ * either way would pass a `Number.isFinite` check and then reach CSS as the
+ * authored text — `left: 0x10%` — which the browser drops silently. The
+ * component coerces too, but a spelling no author meant should fail the build
+ * rather than quietly resolve to some other position.
+ */
+const DECIMAL = /^-?\d+(?:\.\d+)?$/;
+
+/**
+ * Where a page's markers sit relative to the figures that own them.
+ *
+ * Two ways to be misplaced, and they are different failures. A LOOSE marker is
+ * outside every figure: it positions itself against whatever paragraph happens
+ * to be the nearest positioned ancestor. A NESTED one is inside a figure but
+ * wrapped in something — `<div><doc-marker …></doc-marker></div>` — which the
+ * figure's `<ng-content select="doc-marker">` does not match, because selective
+ * projection only sees direct children. That one renders as nothing at all,
+ * which is the quieter and so the worse of the two.
+ *
+ * Depth is only ever counted INSIDE a figure's own content. A stack over the
+ * whole page would have to survive every raw HTML block a doc may contain,
+ * where one unbalanced tag desynchronises every figure after it; a figure's
+ * content is a handful of deliberately written lines.
+ *
+ * @param {string} template
+ * @param {number} total how many marker tags the page has, parsed
+ * @returns {{ loose: number, nested: number }}
+ */
+function misplacedMarkers(template, total) {
+  let enclosed = 0;
+  let nested = 0;
+
+  for (const open of template.matchAll(DOC_FIGURE)) {
+    const from = open.index + open[0].length;
+    DOC_FIGURE_CLOSE.lastIndex = from;
+    const close = DOC_FIGURE_CLOSE.exec(template);
+    // An unclosed figure encloses nothing this function can reason about. The
+    // element allowlist and the Angular template compiler both reject it, so
+    // reporting it a third time here would only add noise.
+    if (!close) continue;
+
+    let depth = 0;
+    for (const [, slash, name, attributes] of template
+      .slice(from, close.index)
+      .matchAll(ANY_TAG)) {
+      const closing = slash === '/';
+      const empty =
+        VOID_ELEMENTS.has(name.toLowerCase()) ||
+        attributes.trimEnd().endsWith('/');
+
+      if (name.toLowerCase() === 'doc-marker' && !closing) {
+        enclosed += 1;
+        if (depth > 0) nested += 1;
+      }
+
+      if (empty) continue;
+      if (closing) depth = Math.max(0, depth - 1);
+      else depth += 1;
+    }
+  }
+
+  return { loose: Math.max(0, total - enclosed), nested };
+}
 
 /**
  * The `<doc-marker>` contract.
@@ -646,10 +734,11 @@ const FIGURE_SCAN = /<doc-figure\b|<\/doc-figure\s*>|<doc-marker\b/g;
  * an absolutely positioned disc over whatever paragraph happens to be the
  * nearest positioned ancestor, which is a layout bug no test would catch.
  *
- * `x` and `y` are percentages and must be literal numbers in 0-100. Percentages
- * are the whole point — they survive a recapture, where pixels would not — and
- * a coordinate has nothing to compute from, so unlike `width` on a figure there
- * is no legitimate property-binding form to tolerate here.
+ * `x` and `y` are percentages and must be plain decimal numbers in 0-100.
+ * Percentages are the whole point — they survive a recapture, where pixels would
+ * not — and a coordinate has nothing to compute from, so unlike `width` on a
+ * figure there is no legitimate property-binding form to tolerate here. See
+ * `DECIMAL` for why the check is a grammar and not `Number.isFinite`.
  *
  * `label` must name the region in words, for the same reason `alt` must on a
  * figure: the disc itself shows a bare ordinal, so a reader who cannot see the
@@ -672,18 +761,15 @@ function markerProblems(template) {
     );
   }
 
-  let inFigure = false;
-  let stray = 0;
-  for (const [token] of template.matchAll(FIGURE_SCAN)) {
-    if (token.startsWith('<doc-marker')) {
-      if (!inFigure) stray += 1;
-    } else {
-      inFigure = !token.startsWith('</');
-    }
-  }
-  if (stray > 0) {
+  const { loose, nested } = misplacedMarkers(template, tags.length);
+  if (loose > 0) {
     problems.push(
-      `${stray} <doc-marker> tag(s) sit outside a <doc-figure>; a marker positions itself against a figure's image and has nothing to point at on its own.`
+      `${loose} <doc-marker> tag(s) sit outside a <doc-figure>; a marker positions itself against a figure's image and has nothing to point at on its own.`
+    );
+  }
+  if (nested > 0) {
+    problems.push(
+      `${nested} <doc-marker> tag(s) are wrapped in another element inside their <doc-figure>; the figure projects only its direct children, so a wrapped marker is dropped and never renders.`
     );
   }
 
@@ -708,7 +794,7 @@ function markerProblems(template) {
         continue;
       }
       const value = Number(raw.trim());
-      if (raw.trim() === '' || !Number.isFinite(value)) {
+      if (!DECIMAL.test(raw.trim())) {
         problems.push(
           `<doc-marker> has a non-numeric ${axis}; a marker is placed as a percentage of the image box.`
         );

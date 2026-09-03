@@ -104,14 +104,79 @@ describe('DocMarkerComponent', () => {
     ]);
   });
 
-  it('positions the overlay against the image and not the column', async () => {
-    // A marker at x="50" has to land on the middle of the screenshot, not on
-    // the middle of the prose measure the figure is as wide as.
+  it('lays the overlay exactly over the image box', async () => {
+    // The percentages are meaningless unless the overlay's box IS the image's
+    // box. Asserted as geometry rather than as shared parentage: a structural
+    // check still passes with `position` or `inset` deleted, and then every
+    // marker on every figure silently moves.
     await render();
 
     const frame = fixture.nativeElement.querySelector('.doc-figure__frame');
-    expect(frame.querySelectorAll('img').length).toBe(2);
-    expect(frame.querySelector('.doc-figure__markers')).not.toBeNull();
+    const list = fixture.nativeElement.querySelector('.doc-figure__markers');
+
+    expect(getComputedStyle(frame).position).toBe('relative');
+    expect(getComputedStyle(list).position).toBe('absolute');
+
+    const box = frame.getBoundingClientRect();
+    const overlay = list.getBoundingClientRect();
+    expect(overlay.width).toBeCloseTo(box.width, 0);
+    expect(overlay.height).toBeCloseTo(box.height, 0);
+    expect(overlay.left).toBeCloseTo(box.left, 0);
+    expect(overlay.top).toBeCloseTo(box.top, 0);
+  });
+});
+
+@Component({
+  imports: [DocFigureComponent, DocMarkerComponent],
+  // A container far wider than the image, which is what makes the frame's
+  // `fit-content` observable: a plain block frame would fill this width.
+  template: `
+    <div style="width: 800px">
+      <doc-figure name="narrow" alt="A narrow figure">
+        <doc-marker x="50" y="50" label="The middle"></doc-marker>
+      </doc-figure>
+    </div>
+  `,
+})
+class WideColumnHostComponent {}
+
+describe('DocFigureComponent, in a column wider than its image', () => {
+  let fixture: ComponentFixture<WideColumnHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [WideColumnHostComponent],
+      providers: [
+        {
+          provide: DOC_CAPTURE_MAP,
+          useValue: {
+            narrow: {
+              light: { src: '/assets/a.webp', width: 200, height: 120 },
+              dark: { src: '/assets/a_dark.webp', width: 200, height: 120 },
+            },
+          },
+        },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(WideColumnHostComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  it('sizes the marker frame to the image, not to the column', () => {
+    // Without `width: fit-content` the frame spans the full 800px column, and a
+    // marker at x="50" lands 400px in — off the 200px screenshot entirely,
+    // which is the bug this figure shape exists to prevent.
+    const frame = fixture.nativeElement.querySelector('.doc-figure__frame');
+    const image = fixture.nativeElement.querySelector(
+      '.doc-figure__img--light'
+    );
+
+    expect(frame.getBoundingClientRect().width).toBeCloseTo(
+      image.getBoundingClientRect().width,
+      1
+    );
+    expect(frame.getBoundingClientRect().width).toBeLessThan(800);
   });
 });
 
@@ -128,10 +193,20 @@ describe('DocFigureComponent, with no markers', () => {
     await fixture.whenStable();
   });
 
-  it('leaves the marker list empty, so CSS can take it out of the tree', () => {
-    // `:empty` is half of how the overlay hides itself, and a stray whitespace
-    // text node would defeat it. Angular's preserveWhitespaces default is what
-    // keeps the template's indentation from becoming one.
+  it('takes the empty marker list out of the accessibility tree', () => {
+    // The end the rule exists for, asserted directly: an empty `role="list"`
+    // left in the tree announces itself on every unannotated figure in the
+    // docs. `display: none` is what keeps it out.
+    const list = fixture.nativeElement.querySelector('.doc-figure__markers');
+
+    expect(getComputedStyle(list).display).toBe('none');
+  });
+
+  it('leaves no whitespace text node that would defeat the :empty rule', () => {
+    // The mechanism behind the assertion above, pinned separately because it is
+    // the fragile half: `:empty` matches nothing once the template's
+    // indentation reaches the DOM. Angular's preserveWhitespaces default is
+    // what strips it, and this fails the day that changes.
     const list = fixture.nativeElement.querySelector('.doc-figure__markers');
 
     expect(list.childNodes.length).toBe(0);

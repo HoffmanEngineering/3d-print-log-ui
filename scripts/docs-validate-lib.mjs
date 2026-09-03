@@ -799,8 +799,13 @@ function markerProblems(template) {
           `<doc-marker> has a non-numeric ${axis}; a marker is placed as a percentage of the image box.`
         );
       } else if (value < 0 || value > 100) {
+        // Reported as the parsed number, not the authored text. The text is a
+        // plain decimal by the time control reaches here, but echoing a string
+        // pulled out of an HTML attribute back in attribute shape is a pattern
+        // CodeQL flags on sight, and the number is the more useful thing to
+        // read anyway.
         problems.push(
-          `<doc-marker> has ${axis}="${raw}", which is outside the image; a marker is placed as a percentage of the image box.`
+          `<doc-marker> has ${axis} of ${value}, which is outside the image; a marker is placed as a percentage of the image box.`
         );
       }
     }

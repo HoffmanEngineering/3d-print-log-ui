@@ -882,7 +882,7 @@ test('reports a doc-marker positioned outside the image', () => {
   assert.deepEqual(
     markerMessages('<doc-marker x="7" y="140" label="Title"></doc-marker>'),
     [
-      'prints.md: <doc-marker> has y="140", which is outside the image; a marker is placed as a percentage of the image box.',
+      'prints.md: <doc-marker> has y of 140, which is outside the image; a marker is placed as a percentage of the image box.',
     ]
   );
 });

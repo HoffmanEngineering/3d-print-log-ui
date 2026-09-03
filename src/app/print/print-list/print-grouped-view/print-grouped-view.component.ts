@@ -15,7 +15,12 @@ import { PageEvent } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  skip,
+} from 'rxjs/operators';
 import currency from 'currency.js';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
@@ -53,6 +58,14 @@ export type GroupedRow =
   | { kind: 'print'; item: GroupedFeedItemDto }
   | { kind: 'expanded-print'; print: PrintSummary; projectId: string }
   | { kind: 'more-prints'; projectId: string; count: number };
+
+/** Element-wise equality for the id-list filters. Order is part of the filter. */
+function sameIds<T>(a: T[], b: T[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((value, index) => Object.is(value, b[index]))
+  );
+}
 
 @Component({
   selector: 'app-print-grouped-view',
@@ -167,16 +180,27 @@ export class PrintGroupedViewComponent implements OnInit {
     .pipe(skip(1), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
     .subscribe(() => this.onFilterChange());
 
+  // Compared by contents, not by identity: the parent rebuilds these arrays
+  // from the URL on every navigation, so an identity check would treat two
+  // equal id lists as a filter change and refetch the feed for nothing.
   private readonly _filterByPrinterIdsSub = toObservable(
     this.filterByPrinterIds
   )
-    .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
+    .pipe(
+      skip(1),
+      distinctUntilChanged(sameIds),
+      takeUntilDestroyed(this.destroyRef)
+    )
     .subscribe(() => this.onFilterChange());
 
   private readonly _filterByFilamentIdsSub = toObservable(
     this.filterByFilamentIds
   )
-    .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
+    .pipe(
+      skip(1),
+      distinctUntilChanged(sameIds),
+      takeUntilDestroyed(this.destroyRef)
+    )
     .subscribe(() => this.onFilterChange());
 
   private readonly _sortColumnSub = toObservable(this.sortColumn)
@@ -221,6 +245,12 @@ export class PrintGroupedViewComponent implements OnInit {
         this.sortColumn(),
         this.sortDirection()
       )
+      // `finalize`, not the subscriber, because the indicator is refcounted and
+      // the line above CANCELS whatever was in flight. An unsubscribed source
+      // never reaches next or error, so balancing the start() there would leak
+      // one `pending` per superseded request and strand the progress bar on
+      // screen for the life of the page.
+      .pipe(finalize(() => this.loadingIndicator.stop()))
       .subscribe({
         next: (result) => {
           this.feed.set(result);
@@ -228,11 +258,9 @@ export class PrintGroupedViewComponent implements OnInit {
           // Only on success: a failed first load leaves nothing on screen, so
           // the next attempt is still a first paint.
           this.hasLoadedOnce.set(true);
-          this.loadingIndicator.stop();
         },
         error: () => {
           this.loading.set(false);
-          this.loadingIndicator.stop();
         },
       });
   }

@@ -180,6 +180,40 @@ describe('PrintGroupedViewComponent', () => {
     const progressBar = () =>
       fixture.nativeElement.querySelector('mat-progress-bar');
 
+    // A superseded request is UNSUBSCRIBED, so it never reaches next or error.
+    // The busy indicator is refcounted, so the stop() that would balance its
+    // start() has to happen on cancellation too, or `pending` never returns to
+    // zero and the progress bar stays up for the life of the page.
+    it('clears the busy affordance after a superseded request is cancelled', fakeAsync(() => {
+      fixture.detectChanges();
+      tick(500);
+      fixture.detectChanges();
+
+      // Two supersessions, matching what one keystroke actually produces.
+      pendingFeed();
+      component.loadFeed();
+      tick(50);
+      pendingFeed();
+      component.loadFeed();
+      tick(50);
+
+      const settled = pendingFeed();
+      component.loadFeed();
+      tick(DEFERRED_SKELETON_DELAY_MS + 50);
+      fixture.detectChanges();
+      expect(component.isBusy()).toBeTrue();
+
+      settled.next(makePagedList([mockProjectItem, mockPrintItem]));
+      settled.complete();
+      tick(1000);
+      fixture.detectChanges();
+
+      expect(component.isBusy()).toBeFalse();
+      expect(progressBar()).toBeNull();
+
+      discardPeriodicTasks();
+    }));
+
     it('paints no skeleton when the first feed lands inside the delay', fakeAsync(() => {
       fixture.detectChanges();
       tick(DEFERRED_SKELETON_DELAY_MS + 50);

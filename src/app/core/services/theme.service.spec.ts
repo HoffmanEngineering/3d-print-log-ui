@@ -30,6 +30,15 @@ describe('ThemeService', () => {
     service = TestBed.inject(ThemeService);
   }
 
+  // These specs toggle the real <html> class, and Karma runs every spec against
+  // the same document: a run that ends in dark mode leaves `dark-theme` set for
+  // whichever spec happens to come next under random ordering. That is not
+  // hypothetical — it silently hid the light variant in the doc-figure layout
+  // specs, which measure a screenshot the theme decides to lay out.
+  afterEach(() => {
+    document.documentElement.classList.remove('dark-theme');
+  });
+
   it('defaults to system mode when localStorage is empty', () => {
     buildService(null);
     expect(service.mode()).toBe('system');

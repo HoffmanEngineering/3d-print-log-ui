@@ -144,6 +144,11 @@ describe('DocFigureComponent, in a column wider than its image', () => {
   let fixture: ComponentFixture<WideColumnHostComponent>;
 
   beforeEach(async () => {
+    // This spec measures the light variant, and the theme is what decides which
+    // variant is laid out — the other one is `display: none`, so it measures 0.
+    // Karma shares one document across every spec, so pin the class here rather
+    // than trusting whatever the previous spec left on <html>.
+    document.documentElement.classList.remove('dark-theme');
     await TestBed.configureTestingModule({
       imports: [WideColumnHostComponent],
       providers: [

@@ -28,6 +28,37 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.50.0': {
+      title: '1.50.0 - Project Dates & A New Look',
+      body: `<p>
+<strong>Project start and finish dates</strong> are here! Every project now shows when it started and when it wrapped up, based on the prints it contains, and you can pin either date by hand from the project edit form when the prints do not tell the whole story. This one came in as a user suggestion, so thank you for sending it in!
+</p>
+<p>
+The <strong>home page</strong> and the <strong>documentation</strong> have both been redesigned. Docs pages now have search, a contents rail that follows you as you scroll, and screenshots captured from the real app. Every old documentation link still works.
+</p>
+<p>
+Got an idea of your own? <a href="/feedback">Send in your feedback</a> and help shape what comes next.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.49.1': {
       redirect: '1.49.0',
     },

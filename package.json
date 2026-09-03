@@ -1,6 +1,6 @@
 {
   "name": "print-log-ui",
-  "version": "1.49.1",
+  "version": "1.50.0",
   "scripts": {
     "ng": "ng",
     "start": "node scripts/build-docs.mjs --quiet --watch --then ng serve --ssl --host 0.0.0.0",

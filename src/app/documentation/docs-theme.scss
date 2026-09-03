@@ -24,6 +24,15 @@
   --docs-callout-tip: #2e7d32;
   --docs-callout-warning: #b26a00;
   --docs-callout-danger: #c62828;
+
+  // <doc-marker> discs sit on a screenshot, not on the page, so they take a
+  // deliberate high-contrast pair rather than following --docs-link: in dark
+  // mode that token is a pale blue, which is a background no white digit reads
+  // on. The ring is the page background, which is what separates the disc from
+  // whatever product UI happens to be under it.
+  --docs-marker: #3f51b5;
+  --docs-marker-text: #ffffff;
+  --docs-marker-ring: #ffffff;
 }
 
 html.dark-theme {
@@ -40,4 +49,8 @@ html.dark-theme {
   --docs-callout-tip: #81c784;
   --docs-callout-warning: #ffb74d;
   --docs-callout-danger: #ef9a9a;
+
+  --docs-marker: #8c9eff;
+  --docs-marker-text: #1a1a2e;
+  --docs-marker-ring: #1e1e1e;
 }

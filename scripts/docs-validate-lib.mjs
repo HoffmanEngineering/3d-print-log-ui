@@ -58,6 +58,7 @@ const ELEMENT_ALLOWLIST = new Set([
   // src/app/documentation/primitives.
   'doc-callout',
   'doc-figure',
+  'doc-marker',
   'doc-step',
   'doc-steps',
   'doc-video',
@@ -238,6 +239,10 @@ export function validateDocs({
     }
 
     for (const problem of figureProblems(template, captures)) {
+      add(file, problem);
+    }
+
+    for (const problem of markerProblems(template)) {
       add(file, problem);
     }
 
@@ -610,6 +615,106 @@ function figureProblems(template, captures) {
       if (attributeOf(attributes, attribute) === null) {
         problems.push(
           `<doc-figure> for "${src}" is missing ${attribute}; without it the image reflows the prose as it loads.`
+        );
+      }
+    }
+  }
+
+  return problems;
+}
+
+/**
+ * A `<doc-marker>` start tag, with its attributes. Same quote-aware, disjoint
+ * shape as `DOC_FIGURE` and for the same two reasons — see its comment.
+ */
+const DOC_MARKER = /<doc-marker\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+
+/** Any opening `<doc-marker`, matched or not — see `markerProblems`. */
+const DOC_MARKER_OPEN = /<doc-marker\b/g;
+
+/**
+ * The three tokens that decide whether a marker is inside a figure, in one
+ * pass. `<doc-figure>` never nests, so a single in/out flag is enough.
+ */
+const FIGURE_SCAN = /<doc-figure\b|<\/doc-figure\s*>|<doc-marker\b/g;
+
+/**
+ * The `<doc-marker>` contract.
+ *
+ * A marker is only meaningful as a child of a `<doc-figure>`: it positions
+ * itself against that figure's image box. Written anywhere else it renders as
+ * an absolutely positioned disc over whatever paragraph happens to be the
+ * nearest positioned ancestor, which is a layout bug no test would catch.
+ *
+ * `x` and `y` are percentages and must be literal numbers in 0-100. Percentages
+ * are the whole point — they survive a recapture, where pixels would not — and
+ * a coordinate has nothing to compute from, so unlike `width` on a figure there
+ * is no legitimate property-binding form to tolerate here.
+ *
+ * `label` must name the region in words, for the same reason `alt` must on a
+ * figure: the disc itself shows a bare ordinal, so a reader who cannot see the
+ * screenshot gets "3" and no way to know what 3 points at.
+ *
+ * @param {string} template
+ * @returns {string[]} one message per offending marker
+ */
+function markerProblems(template) {
+  const problems = [];
+
+  const tags = [...template.matchAll(DOC_MARKER)];
+
+  // Same guard as figureProblems: a tag the regex could not parse is a tag that
+  // silently escaped every rule below.
+  const opened = [...template.matchAll(DOC_MARKER_OPEN)].length;
+  if (opened !== tags.length) {
+    problems.push(
+      `${opened - tags.length} <doc-marker> tag(s) could not be parsed; check for an unbalanced quote in an attribute.`
+    );
+  }
+
+  let inFigure = false;
+  let stray = 0;
+  for (const [token] of template.matchAll(FIGURE_SCAN)) {
+    if (token.startsWith('<doc-marker')) {
+      if (!inFigure) stray += 1;
+    } else {
+      inFigure = !token.startsWith('</');
+    }
+  }
+  if (stray > 0) {
+    problems.push(
+      `${stray} <doc-marker> tag(s) sit outside a <doc-figure>; a marker positions itself against a figure's image and has nothing to point at on its own.`
+    );
+  }
+
+  for (const [, attributes] of tags) {
+    const label = attributeOf(attributes, 'label');
+    if (label === null) {
+      problems.push(
+        '<doc-marker> is missing label; name the region the marker points at.'
+      );
+    } else if (label.trim() === '') {
+      problems.push(
+        '<doc-marker> has an empty label; name the region the marker points at.'
+      );
+    }
+
+    for (const axis of ['x', 'y']) {
+      const raw = attributeOf(attributes, axis);
+      if (raw === null) {
+        problems.push(
+          `<doc-marker> is missing ${axis}; a marker is placed as a percentage of the image box.`
+        );
+        continue;
+      }
+      const value = Number(raw.trim());
+      if (raw.trim() === '' || !Number.isFinite(value)) {
+        problems.push(
+          `<doc-marker> has a non-numeric ${axis}; a marker is placed as a percentage of the image box.`
+        );
+      } else if (value < 0 || value > 100) {
+        problems.push(
+          `<doc-marker> has ${axis}="${raw}", which is outside the image; a marker is placed as a percentage of the image box.`
         );
       }
     }

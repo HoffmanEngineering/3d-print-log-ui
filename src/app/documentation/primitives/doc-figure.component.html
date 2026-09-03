@@ -1,6 +1,14 @@
 <figure class="doc-figure">
-  @if (capture(); as pair) {
-    <!--
+  <!--
+    The frame is what <doc-marker> positions against, which is why it is
+    width: fit-content and not the figure itself: the figure is a block as wide
+    as the prose, and a marker at x="50" has to land on the middle of the IMAGE,
+    not on the middle of the column. It wraps both theme variants, so the one
+    that is laid out gives it its size.
+  -->
+  <div class="doc-figure__frame">
+    @if (capture(); as pair) {
+      <!--
       Both themes are rendered and one is hidden in CSS, rather than picked in
       TypeScript. The pre-paint script in index.html sets html.dark-theme before
       first paint, so the class swap is right on the very first frame; a signal
@@ -8,41 +16,56 @@
       every prerendered page. The hidden one is display:none, so it stays out of
       the accessibility tree and lazy loading never fetches it.
     -->
-    <img
-      class="doc-figure__img doc-figure__img--light"
-      [src]="pair.light.src"
-      [alt]="alt()"
-      [attr.width]="pair.light.width"
-      [attr.height]="pair.light.height"
-      loading="lazy"
-      decoding="async"
-    />
-    <img
-      class="doc-figure__img doc-figure__img--dark"
-      [src]="pair.dark.src"
-      [alt]="alt()"
-      [attr.width]="pair.dark.width"
-      [attr.height]="pair.dark.height"
-      loading="lazy"
-      decoding="async"
-    />
-  } @else if (src()) {
-    <img
-      class="doc-figure__img"
-      [src]="src()"
-      [alt]="alt()"
-      [attr.width]="width()"
-      [attr.height]="height()"
-      loading="lazy"
-      decoding="async"
-    />
-  }
-  <!--
+      <img
+        class="doc-figure__img doc-figure__img--light"
+        [src]="pair.light.src"
+        [alt]="alt()"
+        [attr.width]="pair.light.width"
+        [attr.height]="pair.light.height"
+        loading="lazy"
+        decoding="async"
+      />
+      <img
+        class="doc-figure__img doc-figure__img--dark"
+        [src]="pair.dark.src"
+        [alt]="alt()"
+        [attr.width]="pair.dark.width"
+        [attr.height]="pair.dark.height"
+        loading="lazy"
+        decoding="async"
+      />
+    } @else if (src()) {
+      <img
+        class="doc-figure__img"
+        [src]="src()"
+        [alt]="alt()"
+        [attr.width]="width()"
+        [attr.height]="height()"
+        loading="lazy"
+        decoding="async"
+      />
+    }
+    <!--
     Nothing renders when neither a resolvable name nor a src is bound.
     An `<img src="">` is worse than no image: the browser re-requests the
     current page as the image. validate-docs is what turns this into a build
     failure; the template only has to avoid making it louder than it is.
   -->
+    <!--
+    An <ol> so a screen reader gets the ordinals the discs show. Empty when the
+    figure carries no markers, and hidden in CSS in that case rather than gated
+    by a content query: the query settles after the first change detection pass,
+    which under prerendering is after the static HTML has been written.
+
+    The list must contain no whitespace text node, or the `:empty` half of that
+    CSS rule never matches. Angular's preserveWhitespaces default drops them at
+    compile time, which is what makes the formatting below safe to leave to
+    Prettier; doc-marker.component.spec.ts pins it.
+  -->
+    <ol class="doc-figure__markers" role="list">
+      <ng-content select="doc-marker" />
+    </ol>
+  </div>
   @if (caption()) {
     <figcaption>{{ caption() }}</figcaption>
   }

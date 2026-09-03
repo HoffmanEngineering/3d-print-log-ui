@@ -1,0 +1,47 @@
+:host {
+  position: absolute;
+  counter-increment: doc-marker;
+  // `left`/`top` come from the host bindings as percentages of the image box;
+  // the translate re-centers the disc on that point rather than hanging it
+  // down and to the right of it.
+  transform: translate(-50%, -50%);
+  // The overlay covers the whole screenshot, so a marker must not swallow a
+  // click or a text selection meant for the image under it.
+  pointer-events: none;
+}
+
+.doc-marker__pin {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--docs-marker);
+  color: var(--docs-marker-text);
+  // The screenshot underneath is arbitrary product UI, so the disc cannot rely
+  // on contrast with whatever it lands on. The ring is the page background,
+  // which separates it from a busy field or a dark toolbar alike.
+  box-shadow: 0 0 0 2px var(--docs-marker-ring);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  // Every digit the same width, so a 1 sits as centrally in its disc as a 4.
+  font-variant-numeric: tabular-nums;
+}
+
+.doc-marker__pin::before {
+  content: counter(doc-marker);
+}
+
+// The disc is a fixed size while the screenshot scales, so on a narrow screen
+// it grows relative to the image until it covers the control it points at.
+// Below the docs' single-column breakpoint it steps down; smaller than this and
+// the digit stops being readable, which is the whole job.
+@media (max-width: 700px) {
+  .doc-marker__pin {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    box-shadow: 0 0 0 1.5px var(--docs-marker-ring);
+  }
+}

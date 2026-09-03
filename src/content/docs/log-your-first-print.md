@@ -77,8 +77,14 @@ Fill in the top of the form:
 
 <doc-figure
   name="first-print-form"
-  alt="The add-print form as it opens, showing the Title and Printer fields and the estimated and actual print time sections"
-></doc-figure>
+  alt="The add-print form as it opens, with the four fields above marked one to four: Title at the top, Printer below it, Start Date in the middle, and Actual Print Time in the second row of time fields"
+  caption="The four fields this step fills in. Everything else on the form can wait."
+>
+  <doc-marker x="7" y="9.7" label="Title"></doc-marker>
+  <doc-marker x="7" y="15.5" label="Printer"></doc-marker>
+  <doc-marker x="7" y="27.2" label="Start Date"></doc-marker>
+  <doc-marker x="7" y="44.8" label="Actual Print Time"></doc-marker>
+</doc-figure>
 
 Material is not a single field, because one print can use several. Scroll down
 to the **Material Usage** section and click **Add New Material Record**. That

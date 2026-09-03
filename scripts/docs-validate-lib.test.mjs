@@ -787,6 +787,176 @@ test('the tag matcher does not backtrack on a long run of quotes', () => {
   assert.ok(Date.now() - started < 1000, 'tag matching should be linear');
 });
 
+// --- <doc-marker> ----------------------------------------------------------
+//
+// One failing test per rule, in the spirit of the <doc-figure> rules above: a
+// marker that escapes a rule is a misplaced disc on a published page, and
+// nothing downstream looks at it again.
+
+/** A figure wrapping `markers`, so a marker under test is where it belongs. */
+const markerMessages = (markers) =>
+  figureMessages(
+    `<doc-figure name="print-list" alt="The print list">${markers}</doc-figure>`,
+    CAPTURES
+  );
+
+test('accepts a doc-figure carrying well formed markers', () => {
+  assert.deepEqual(
+    markerMessages(
+      '<doc-marker x="7" y="9.7" label="Title"></doc-marker>' +
+        '<doc-marker x="7" y="15.5" label="Printer"></doc-marker>'
+    ),
+    []
+  );
+});
+
+test('accepts markers at the edges of the image box', () => {
+  assert.deepEqual(
+    markerMessages(
+      '<doc-marker x="0" y="0" label="Top left"></doc-marker>' +
+        '<doc-marker x="100" y="100" label="Bottom right"></doc-marker>'
+    ),
+    []
+  );
+});
+
+test('reports a doc-marker with no label', () => {
+  assert.deepEqual(markerMessages('<doc-marker x="7" y="9"></doc-marker>'), [
+    'prints.md: <doc-marker> is missing label; name the region the marker points at.',
+  ]);
+});
+
+test('reports a doc-marker whose label is empty', () => {
+  // Same reasoning as an empty alt: the disc shows a bare ordinal, so a reader
+  // who cannot see the figure gets "3" and nothing to attach it to.
+  assert.deepEqual(
+    markerMessages('<doc-marker x="7" y="9" label=" "></doc-marker>'),
+    [
+      'prints.md: <doc-marker> has an empty label; name the region the marker points at.',
+    ]
+  );
+});
+
+test('reports a doc-marker missing a coordinate', () => {
+  assert.deepEqual(
+    markerMessages('<doc-marker x="7" label="Title"></doc-marker>'),
+    [
+      'prints.md: <doc-marker> is missing y; a marker is placed as a percentage of the image box.',
+    ]
+  );
+});
+
+test('reports a doc-marker whose coordinate is not a number', () => {
+  // Percentages survive a recapture and pixels do not, so `x="120px"` is not a
+  // near miss to be coerced — it is the mistake this rule exists to catch.
+  assert.deepEqual(
+    markerMessages('<doc-marker x="120px" y="9" label="Title"></doc-marker>'),
+    [
+      'prints.md: <doc-marker> has a non-numeric x; a marker is placed as a percentage of the image box.',
+    ]
+  );
+});
+
+test('reports a coordinate JavaScript would read as a number but CSS will not', () => {
+  // `Number('0x10')` is 16, so an isFinite check passes this and the authored
+  // text still reaches CSS as `left: 0x10%`, which the browser drops -- the
+  // marker lands in the corner with nothing to say it went wrong.
+  assert.deepEqual(
+    markerMessages('<doc-marker x="0x10" y="9" label="Title"></doc-marker>'),
+    [
+      'prints.md: <doc-marker> has a non-numeric x; a marker is placed as a percentage of the image box.',
+    ]
+  );
+});
+
+test('reports a coordinate written in exponent notation', () => {
+  assert.deepEqual(
+    markerMessages('<doc-marker x="1e1" y="9" label="Title"></doc-marker>'),
+    [
+      'prints.md: <doc-marker> has a non-numeric x; a marker is placed as a percentage of the image box.',
+    ]
+  );
+});
+
+test('reports a doc-marker positioned outside the image', () => {
+  assert.deepEqual(
+    markerMessages('<doc-marker x="7" y="140" label="Title"></doc-marker>'),
+    [
+      'prints.md: <doc-marker> has y of 140, which is outside the image; a marker is placed as a percentage of the image box.',
+    ]
+  );
+});
+
+test('reports a doc-marker written outside a doc-figure', () => {
+  // Loose, it positions itself against whatever paragraph happens to be the
+  // nearest positioned ancestor -- a layout bug no rendering test would catch.
+  assert.deepEqual(
+    figureMessages(
+      '<doc-marker x="7" y="9" label="Title"></doc-marker>',
+      CAPTURES
+    ),
+    [
+      "prints.md: 1 <doc-marker> tag(s) sit outside a <doc-figure>; a marker positions itself against a figure's image and has nothing to point at on its own.",
+    ]
+  );
+});
+
+test('reports a doc-marker wrapped in another element inside its figure', () => {
+  // The quietest of the three misplacements: selective projection matches only
+  // direct children, so a wrapped marker is dropped and the figure renders as
+  // though it had never been written.
+  assert.deepEqual(
+    markerMessages(
+      '<div><doc-marker x="7" y="9" label="Title"></doc-marker></div>'
+    ),
+    [
+      'prints.md: 1 <doc-marker> tag(s) are wrapped in another element inside their <doc-figure>; the figure projects only its direct children, so a wrapped marker is dropped and never renders.',
+    ]
+  );
+});
+
+test('accepts a direct-child marker that follows a void element', () => {
+  // A void element must not move the depth counter; if <br> were treated as
+  // opening a scope, every marker after one would be reported as wrapped.
+  assert.deepEqual(
+    markerMessages('<br><doc-marker x="7" y="9" label="Title"></doc-marker>'),
+    []
+  );
+});
+
+test('accepts a direct-child marker that follows a closed wrapper', () => {
+  assert.deepEqual(
+    markerMessages(
+      '<div>Context</div><doc-marker x="7" y="9" label="Title"></doc-marker>'
+    ),
+    []
+  );
+});
+
+test('reports a doc-marker written after a figure has closed', () => {
+  // The scan is a single in/out flag, so the close tag has to actually turn it
+  // off; without that every marker after the page's first figure would pass.
+  const [message] = figureMessages(
+    '<doc-figure name="print-list" alt="The print list"></doc-figure>' +
+      '<doc-marker x="7" y="9" label="Title"></doc-marker>',
+    CAPTURES
+  );
+  assert.match(message, /outside a <doc-figure>/);
+});
+
+test('reports a doc-marker tag it could not parse', () => {
+  const [message] = markerMessages(
+    '<doc-marker x="7 y="9" label="Title"></doc-marker>'
+  );
+  assert.match(message, /could not be parsed/);
+});
+
+test('the marker matcher does not backtrack on a long run of quotes', () => {
+  const started = Date.now();
+  markerMessages(`<doc-marker label=${'"'.repeat(60)}`);
+  assert.ok(Date.now() - started < 1000, 'tag matching should be linear');
+});
+
 // --- movedAnchors ---------------------------------------------------------
 //
 // One failing test per rule. A rule with no failing test is a rule that does
@@ -839,15 +1009,20 @@ test('rule 1: the source slug must be a routed page', () => {
     'docs/nope': ['add-weights'],
   });
   assert.ok(
-    problems.some((m) => /names "nope", which is not a routed doc page/.test(m)),
+    problems.some((m) =>
+      /names "nope", which is not a routed doc page/.test(m)
+    ),
     problems
   );
 });
 
 test('rule 2: a moved id must be declared on the declaring page', () => {
-  const problems = run(movedPair({ movedAnchors: { materials: ['not-here'] } }), {
-    'docs/materials': ['list', 'not-here'],
-  });
+  const problems = run(
+    movedPair({ movedAnchors: { materials: ['not-here'] } }),
+    {
+      'docs/materials': ['list', 'not-here'],
+    }
+  );
   assert.ok(
     problems.some((m) =>
       /claims "materials#not-here" but declares no id "not-here"/.test(m)
@@ -858,7 +1033,10 @@ test('rule 2: a moved id must be declared on the declaring page', () => {
 
 test('rule 3: a moved id must not still be declared on the source page', () => {
   const problems = run(
-    movedPair({}, { body: '## Materials {#list}\n\n## Weights {#add-weights}\n' }),
+    movedPair(
+      {},
+      { body: '## Materials {#list}\n\n## Weights {#add-weights}\n' }
+    ),
     MOVED_BASELINE
   );
   assert.ok(
@@ -927,7 +1105,9 @@ test('rule 7: a dormant page may not claim a moved anchor', () => {
 
 test('a page that fails to render reports only the render error', () => {
   const problems = run(
-    movedPair({ body: '## Weights {#add-weights}\n\n```angular-html\nunterminated\n' }),
+    movedPair({
+      body: '## Weights {#add-weights}\n\n```angular-html\nunterminated\n',
+    }),
     MOVED_BASELINE
   );
   assert.ok(

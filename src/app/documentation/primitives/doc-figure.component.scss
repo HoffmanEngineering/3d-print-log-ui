@@ -7,6 +7,38 @@
   margin: 0;
 }
 
+// The positioning context for <doc-marker>, and sized to the image rather than
+// to the column: `fit-content` shrinks it to the rendered width of whichever
+// theme variant is laid out, so a marker's percentage lands on the screenshot
+// and not on the empty prose width beside it. The `max-width` keeps that from
+// overflowing on a phone, where the image itself is already scaled down.
+.doc-figure__frame {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.doc-figure__markers {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: doc-marker;
+  // The overlay covers the whole screenshot; without this it would eat every
+  // click and drag-select aimed at the image beneath it.
+  pointer-events: none;
+}
+
+// A figure with no markers must not leave an empty list in the accessibility
+// tree. Two selectors for one rule: `:has` is immune to a stray whitespace text
+// node, `:empty` is the fallback where `:has` is unsupported.
+.doc-figure__markers:empty,
+.doc-figure__markers:not(:has(> doc-marker)) {
+  display: none;
+}
+
 img {
   display: block;
   // width/height are set as attributes to reserve the aspect ratio before the

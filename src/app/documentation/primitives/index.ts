@@ -1,11 +1,13 @@
 import { DocCalloutComponent } from './doc-callout.component';
 import { DocFigureComponent } from './doc-figure.component';
+import { DocMarkerComponent } from './doc-marker.component';
 import { DocStepComponent } from './doc-step.component';
 import { DocStepsComponent } from './doc-steps.component';
 import { DocVideoComponent } from './doc-video.component';
 
 export { DocCalloutComponent } from './doc-callout.component';
 export { DocFigureComponent } from './doc-figure.component';
+export { DocMarkerComponent } from './doc-marker.component';
 export { DocStepComponent } from './doc-step.component';
 export { DocStepsComponent } from './doc-steps.component';
 export { DocVideoComponent } from './doc-video.component';
@@ -26,6 +28,7 @@ export { DocVideoComponent } from './doc-video.component';
 export const DOC_PRIMITIVES = [
   DocCalloutComponent,
   DocFigureComponent,
+  DocMarkerComponent,
   DocStepComponent,
   DocStepsComponent,
   DocVideoComponent,

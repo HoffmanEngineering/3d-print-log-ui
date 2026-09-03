@@ -1,0 +1,8 @@
+<!--
+  The disc is decorative in the accessibility tree: its digit is a CSS counter,
+  which assistive technology exposes inconsistently, and the ordinal is already
+  carried by the marker's position in the figure's <ol>. The label is the text
+  that has to be readable, so it is the only thing left in the tree.
+-->
+<span class="doc-marker__pin" aria-hidden="true"></span>
+<span class="cdk-visually-hidden">{{ label() }}</span>

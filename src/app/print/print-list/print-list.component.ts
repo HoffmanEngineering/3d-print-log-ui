@@ -15,7 +15,8 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
+import { filter, finalize, take } from 'rxjs/operators';
+import { setIfChanged } from 'src/app/core/utils/set-if-changed';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -206,8 +207,18 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   set viewMode(value: 'list' | 'grouped') {
+    const previous = this._viewMode;
     this._viewMode = value;
     localStorage.setItem(this.VIEW_MODE_KEY, value);
+
+    // updateFilter() skips the flat fetch while grouped is selected, so the
+    // rows still on hand are whatever the last list-view load produced — stale
+    // the moment a filter changed in grouped mode. Coming back has to refetch.
+    // Only on an actual change, and only in that direction: the grouped view
+    // loads its own feed.
+    if (previous !== value && value === 'list') {
+      this.updateFilter();
+    }
   }
 
   public filterByStatus = signal<PrintStatus | null>(null);
@@ -480,19 +491,20 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.sortColumn = +params.get('sortColumn');
       }
 
-      if (params.has('filterByPrinterId')) {
-        this.filterByPrinterIds.set(
-          params.getAll('filterByPrinterId').map((id) => +id)
-        );
-      } else {
-        this.filterByPrinterIds.set([]);
-      }
-
-      if (params.has('filterByFilamentId')) {
-        this.filterByFilamentIds.set(params.getAll('filterByFilamentId'));
-      } else {
-        this.filterByFilamentIds.set([]);
-      }
+      // setIfChanged, not set: these are signals compared with Object.is, so a
+      // fresh array is always a "change" even when it holds the same ids (and
+      // `[]` vs `[]` is the common case). Every updateFilter() writes the
+      // filters back into the URL, so a plain set() made each navigation emit
+      // on both signals, and the grouped view re-fetched its feed twice per
+      // keystroke — cancelling the request already in flight each time.
+      setIfChanged(
+        this.filterByPrinterIds,
+        params.getAll('filterByPrinterId').map((id) => +id)
+      );
+      setIfChanged(
+        this.filterByFilamentIds,
+        params.getAll('filterByFilamentId')
+      );
     });
 
     this.activatedRoute.data.subscribe((data) => {
@@ -748,6 +760,20 @@ export class PrintListComponent implements OnInit, OnDestroy {
         relativeTo: this.activatedRoute,
       })
       .then(() => {
+        // The grouped view renders /Prints/grouped and never reads this flat
+        // page, so fetching it here put a second request on every keystroke
+        // whose response was parsed and then thrown away.
+        //
+        // The resolver cannot cover this refetch: runGuardsAndResolvers
+        // defaults to 'paramsChange', which compares path params and URL
+        // segments only, so a query-param navigation never re-runs it. It
+        // populates first activation; every refetch after that is this call.
+        if (this.viewMode !== 'list') {
+          this.isLoading = false;
+          this.loadingIndicator.stop();
+          return;
+        }
+
         this.printSearchSubscription?.unsubscribe?.();
 
         this.printSearchSubscription = this.printService
@@ -762,18 +788,23 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.sortColumn,
             undefined
           )
+          // Only stop() moves into finalize. It is the refcounted one, and the
+          // unsubscribe above CANCELS whatever was in flight — a cancelled
+          // source reaches neither next nor error, so a stop() in the subscriber
+          // leaked one `pending` per superseded request and stranded the
+          // progress bar for the life of the page. `isLoading` is a plain flag
+          // and stays where it was, cleared when a response actually lands.
+          .pipe(finalize(() => this.loadingIndicator.stop()))
           .subscribe(
             (prints) => {
               this.handlePagedList(prints);
               this.isLoading = false;
-              this.loadingIndicator.stop();
             },
             () => {
               // A failed first load leaves the list empty, so the NEXT attempt
               // is still a first paint — hasLoadedOnce is only set on success,
               // in handlePagedList.
               this.isLoading = false;
-              this.loadingIndicator.stop();
             }
           );
       });

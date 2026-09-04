@@ -11,7 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, of, throwError } from 'rxjs';
@@ -116,7 +116,7 @@ describe('PrintListComponent', () => {
         printers: [],
         filaments: [],
       }),
-      queryParamMap: of({ has: () => false }),
+      queryParamMap: of(convertToParamMap({})),
       snapshot: {},
     };
 
@@ -539,6 +539,59 @@ describe('PrintListComponent', () => {
     expect(heading.textContent.trim()).toEqual('Add a printer to get started');
   });
 
+  describe('switching back from the grouped view', () => {
+    // The setter persists the choice, and _viewMode initializes from storage —
+    // so without this every later spec builds the component in grouped mode and
+    // finds no table.
+    afterEach(() => {
+      localStorage.removeItem('print_list_view_mode');
+    });
+
+    // updateFilter() skips the flat fetch while grouped is selected, so the
+    // rows on hand are whatever the last list-view load produced. A filter
+    // changed in grouped mode leaves them stale, and nothing else refetches.
+    it('refetches the flat page so the current filters are applied', async () => {
+      fixture.detectChanges();
+      component.viewMode = 'grouped';
+      mockPrintService.getPrintSummaries.calls.reset();
+
+      component.viewMode = 'list';
+      // The setter does not hand back updateFilter's promise, so let the real
+      // router navigation settle on its own before asserting.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalled();
+    });
+
+    it('does not fetch the flat page when switching INTO the grouped view', async () => {
+      fixture.detectChanges();
+      mockPrintService.getPrintSummaries.calls.reset();
+
+      component.viewMode = 'grouped';
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(mockPrintService.getPrintSummaries).not.toHaveBeenCalled();
+    });
+
+    // The grouped view has its own feed and its own indicator; the flat page is
+    // not fetched, so nothing must be left holding the list's busy state up.
+    it('leaves no busy affordance running after a search in grouped mode', async () => {
+      fixture.detectChanges();
+      component.viewMode = 'grouped';
+
+      await component.updateFilter();
+      await new Promise((resolve) =>
+        setTimeout(
+          resolve,
+          DEFERRED_SKELETON_DELAY_MS + DEFERRED_SKELETON_MIN_VISIBLE_MS + 60
+        )
+      );
+
+      expect(component.isBusy()).toBeFalse();
+      expect(component.isLoading).toBeFalse();
+    });
+  });
+
   it('should keep the toast when a filter empties the list for a user with no printer', async () => {
     // Arrange - the empty state shows filter guidance, not printer guidance
     withNoPrinters();
@@ -947,6 +1000,9 @@ describe('PrintListComponent', () => {
           totalPages: 1,
         },
       });
+      // An HttpClient response observable completes after its single emission,
+      // and completion is what releases the refcounted indicator.
+      pending.complete();
       fixture.changeDetectorRef.markForCheck();
       fixture.detectChanges();
 

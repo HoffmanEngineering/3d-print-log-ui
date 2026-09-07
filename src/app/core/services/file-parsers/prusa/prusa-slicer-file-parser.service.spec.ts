@@ -61,16 +61,13 @@ describe('PrusaSlicerFileParserService', () => {
       expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
     });
 
-    // Characterizes existing behavior that is WRONG: a Nylon density is declared
-    // in MaterialDensities but the material chain never branches on it, so a
-    // valid Nylon file loses its estimate. Tracked in #100.
-    it('should currently return undefined for Nylon despite having its density', () => {
+    it('should estimate Nylon using its configured density', () => {
       const testGcode = `; total filament used [g] = 0.0
 ; filament_type = Nylon
 ; filament_diameter = 1.75
 ; filament used [mm] = 1000`;
 
-      expect(service.estimateFilamentUsageInMg(testGcode)).toBeUndefined();
+      expect(service.estimateFilamentUsageInMg(testGcode)).toBe(2549);
     });
 
     it('should return undefined when the diameter is missing', () => {

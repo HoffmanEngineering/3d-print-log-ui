@@ -44,6 +44,17 @@ export class PrinterThumbnailStore {
   private readonly phase = signal<Phase>('idle');
   private fetchedAt = 0;
 
+  /**
+   * Bumped on every completed fetch, so a consumer can tell "the same URL, freshly
+   * confirmed" from "the same URL I already gave up on".
+   *
+   * Signing is bucketed to six hours server-side, which makes a re-signed URL
+   * byte-identical - deliberately, so the browser image cache can hit. That means a
+   * consumer suppressing a URL that failed cannot use the URL itself to decide when to try
+   * again: within a bucket the refreshed value is the value it is suppressing.
+   */
+  readonly generation = signal(0);
+
   /** The single in-flight request, shared by every caller that arrives during it. */
   private inFlight: Observable<PrinterThumbnail[]> | null = null;
 
@@ -116,6 +127,7 @@ export class PrinterThumbnailStore {
         );
         this.phase.set('loaded');
         this.fetchedAt = Date.now();
+        this.generation.update((n) => n + 1);
       }),
       catchError(() => {
         // Degrade to no photos rather than breaking the page. The phase records the

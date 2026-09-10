@@ -181,4 +181,33 @@ describe('PrinterThumbnailStore', () => {
     store.thumbnailFor(1);
     httpMock.expectNone(url);
   });
+
+  // Consumers suppress a url that failed to load, and re-signing inside the six-hour
+  // bucket hands back the identical url - so "this is a fresh answer" cannot be read off
+  // the url. The generation is what carries it.
+  it('bumps the generation on each completed fetch, including an unchanged url', () => {
+    setUp();
+
+    store.thumbnailFor(1);
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'same' }]);
+    const first = store.generation();
+
+    store.invalidate();
+    store.thumbnailFor(1);
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'same' }]);
+
+    expect(store.thumbnailFor(1)).toBe('same');
+    expect(store.generation()).toBeGreaterThan(first);
+  });
+
+  it('does not bump the generation when the fetch fails', () => {
+    setUp();
+
+    store.thumbnailFor(1);
+    httpMock
+      .expectOne(url)
+      .flush(null, { status: 500, statusText: 'Server Error' });
+
+    expect(store.generation()).toBe(0);
+  });
 });

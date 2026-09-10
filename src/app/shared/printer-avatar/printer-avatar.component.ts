@@ -37,18 +37,35 @@ export class PrinterAvatarComponent {
   size = input<'sm' | 'md'>('sm');
 
   /**
-   * The URL that failed, not a boolean. A latched flag would make `noteLoadFailure`
-   * pointless: the store refreshes the map, and the component would never read the new URL.
+   * The URL that failed, and the store generation it failed in.
+   *
+   * Not a latched boolean: that would make `noteLoadFailure` pointless, because the
+   * component would never read the refreshed map. But not the URL alone either - signing
+   * is bucketed to six hours server-side, so a refetch inside the bucket returns the SAME
+   * URL, and matching on the URL would keep a transiently-failed photo hidden forever.
+   * Pairing it with the generation gives every completed refetch exactly one fresh attempt,
+   * while a genuinely dead blob simply fails again and re-suppresses.
    */
-  private readonly failedUrl = signal<string | null>(null);
+  private readonly failed = signal<{ url: string; generation: number } | null>(
+    null
+  );
 
   protected readonly src = computed(() => {
     const url = this.store.thumbnailFor(this.printerId());
-    return url && url !== this.failedUrl() ? url : null;
+    if (!url) return null;
+    const failed = this.failed();
+    const suppressed =
+      failed !== null &&
+      failed.url === url &&
+      failed.generation === this.store.generation();
+    return suppressed ? null : url;
   });
 
   protected onError(): void {
-    this.failedUrl.set(this.store.thumbnailFor(this.printerId()));
+    const url = this.store.thumbnailFor(this.printerId());
+    if (url) {
+      this.failed.set({ url, generation: this.store.generation() });
+    }
     this.store.noteLoadFailure(this.printerId());
   }
 }

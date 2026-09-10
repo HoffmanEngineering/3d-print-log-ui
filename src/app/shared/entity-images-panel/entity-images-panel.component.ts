@@ -9,6 +9,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -38,6 +39,27 @@ export interface EntityImageValue {
   file?: File | null;
   isDefault: boolean;
   displayOrder: number;
+}
+
+/**
+ * What the API accepts. The panel prechecks both so a rejection the user can act on
+ * arrives before the upload rather than as an opaque 400 afterwards.
+ */
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+/**
+ * The outcome of an upload run.
+ *
+ * Permanent and transient failures are separate because the caller navigates away on
+ * success: a file the API will never accept must not be reported as something worth
+ * retrying, and must not be mistaken for success either. `allSucceeded` is the only thing
+ * a caller should branch its navigation on.
+ */
+export interface UploadResult {
+  transientFailures: File[];
+  permanentFailures: File[];
+  allSucceeded: boolean;
 }
 
 let nextStagedKey = 1;
@@ -88,6 +110,13 @@ export class EntityImagesPanelComponent {
   protected readonly failedFiles = signal<File[]>([]);
   /** Files dropped on the floor because they would exceed `maxImages`. */
   protected readonly rejectedCount = signal(0);
+  /** Files the API would certainly reject, refused before any request is made. */
+  protected readonly precheckRejection = signal<string | null>(null);
+  /**
+   * Files the API refused with a 400. Kept out of `failedFiles` so no retry is offered:
+   * re-posting the same bytes to the same endpoint would fail identically.
+   */
+  protected readonly permanentFailedFiles = signal<File[]>([]);
   /** A failed delete / reorder / set-default, surfaced next to the images. */
   protected readonly actionError = signal<string | null>(null);
   /** True for the whole upload, unlike `busy`, which is deferred by 200ms. */
@@ -130,10 +159,8 @@ export class EntityImagesPanelComponent {
     });
   }
 
-  /** Uploads everything currently staged, resolving with the files that failed. */
-  uploadStagedImages(
-    entityId: string | number
-  ): Observable<{ failed: File[] }> {
+  /** Uploads everything currently staged, resolving with how each file fared. */
+  uploadStagedImages(entityId: string | number): Observable<UploadResult> {
     return this.uploadItems(
       entityId,
       this.items().filter((item) => !!item.file)
@@ -141,9 +168,7 @@ export class EntityImagesPanelComponent {
   }
 
   /** Re-posts only the files that failed last time, leaving newer picks alone. */
-  retryFailedUploads(
-    entityId: string | number
-  ): Observable<{ failed: File[] }> {
+  retryFailedUploads(entityId: string | number): Observable<UploadResult> {
     const failed = this.failedFiles();
     return this.uploadItems(
       entityId,
@@ -199,6 +224,9 @@ export class EntityImagesPanelComponent {
     if (image.file) {
       this.releaseObjectUrl(image.url);
       this.failedFiles.update((files) => files.filter((f) => f !== image.file));
+      this.permanentFailedFiles.update((files) =>
+        files.filter((f) => f !== image.file)
+      );
       this.removeItem(image);
       return;
     }
@@ -301,15 +329,20 @@ export class EntityImagesPanelComponent {
   private uploadItems(
     entityId: string | number,
     targets: EntityImageValue[]
-  ): Observable<{ failed: File[] }> {
+  ): Observable<UploadResult> {
     this.lastUploadEntityId = entityId;
 
     if (targets.length === 0) {
       this.failedFiles.set([]);
-      return of({ failed: [] });
+      return of({
+        transientFailures: [],
+        permanentFailures: [],
+        allSucceeded: true,
+      });
     }
 
-    const failed: File[] = [];
+    const transientFailures: File[] = [];
+    const permanentFailures: File[] = [];
     // The user may have starred a staged photo. That choice cannot be sent
     // until the upload assigns it an ID, so remember which one it was.
     const desiredDefaultKey = this.items().find(
@@ -331,23 +364,39 @@ export class EntityImagesPanelComponent {
               }
               this.replaceStaged(item, uploaded);
             }),
-            catchError(() => {
-              failed.push(item.file!);
+            catchError((error: unknown) => {
+              // A 400 is the API saying these bytes are not a usable image - too
+              // large, or not a format it can decode. Retrying posts the same
+              // bytes to the same endpoint, so it is recorded apart from the
+              // failures a retry could actually clear.
+              const permanent =
+                error instanceof HttpErrorResponse && error.status === 400;
+              (permanent ? permanentFailures : transientFailures).push(
+                item.file!
+              );
               return of(null);
             })
           )
       )
     ).pipe(
       toArray(),
-      map(() => ({ failed })),
-      tap(() => {
-        this.failedFiles.set(failed);
+      map(
+        (): UploadResult => ({
+          transientFailures,
+          permanentFailures,
+          allSucceeded:
+            transientFailures.length === 0 && permanentFailures.length === 0,
+        })
+      ),
+      tap((result) => {
+        this.failedFiles.set(transientFailures);
+        this.permanentFailedFiles.set(permanentFailures);
         const defaultId =
           desiredDefaultKey === undefined
             ? undefined
             : assignedIds.get(desiredDefaultKey);
         if (defaultId !== undefined) this.persistDefault(entityId, defaultId);
-        if (failed.length === 0 && this.pendingReorder) this.flushReorder();
+        if (result.allSucceeded && this.pendingReorder) this.flushReorder();
       }),
       finalize(() => {
         this.uploading.set(false);
@@ -396,7 +445,21 @@ export class EntityImagesPanelComponent {
   }
 
   private addFiles(files: File[]): void {
-    const images = files.filter((file) => file.type.startsWith('image/'));
+    const rejections: string[] = [];
+    const images = files.filter((file) => {
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        rejections.push(`${file.name} is not a JPEG, PNG or WebP image.`);
+        return false;
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        rejections.push(`${file.name} is larger than the 10MB limit.`);
+        return false;
+      }
+      return true;
+    });
+    this.precheckRejection.set(
+      rejections.length > 0 ? rejections.join(' ') : null
+    );
     if (images.length === 0) return;
 
     this.items.update((items) => {
@@ -432,6 +495,7 @@ export class EntityImagesPanelComponent {
   private removeItem(image: EntityImageValue): void {
     // Room has been freed, so the over-cap notice no longer describes anything.
     this.rejectedCount.set(0);
+    this.precheckRejection.set(null);
     this.items.update((items) =>
       items
         .filter((item) => !this.isSame(item, image))

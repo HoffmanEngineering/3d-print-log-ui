@@ -90,6 +90,26 @@
     </div>
   }
 
+  @if (precheckRejection(); as message) {
+    <div class="upload-failures" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>{{ message }}</span>
+    </div>
+  }
+
+  @if (permanentFailedFiles().length > 0) {
+    <!-- No retry: the API refused these bytes outright, so re-posting them would
+         fail identically. -->
+    <div class="upload-failures" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>
+        {{ permanentFailedFiles().length }} photo(s) cannot be uploaded — the
+        server could not read them as an image. Remove them and try a different
+        file.
+      </span>
+    </div>
+  }
+
   @if (actionError(); as message) {
     <div class="upload-failures" role="alert">
       <mat-icon aria-hidden="true">error_outline</mat-icon>

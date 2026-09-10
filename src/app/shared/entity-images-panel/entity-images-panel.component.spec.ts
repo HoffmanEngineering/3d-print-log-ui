@@ -15,6 +15,7 @@ import { EntityImage, EntityImageTarget } from './entity-image-gateway';
 import {
   EntityImagesPanelComponent,
   EntityImageValue,
+  UploadResult,
 } from './entity-images-panel.component';
 
 describe('EntityImagesPanelComponent', () => {
@@ -75,6 +76,8 @@ describe('EntityImagesPanelComponent', () => {
       items: () => EntityImageValue[];
       actionError: () => string | null;
       rejectedCount: () => number;
+      precheckRejection: () => string | null;
+      permanentFailedFiles: () => File[];
       uploading: () => boolean;
       onFilesSelected: (event: Event) => void;
       onImageDeleted: (image: EntityImageValue) => void;
@@ -210,7 +213,7 @@ describe('EntityImagesPanelComponent', () => {
     const bad = aFile('bad.png');
     pickFiles(good, bad);
 
-    let result: { failed: File[] } | undefined;
+    let result: UploadResult | undefined;
     component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
 
     const requests = () =>
@@ -227,7 +230,8 @@ describe('EntityImagesPanelComponent', () => {
     });
     requests()[0].flush('nope', { status: 500, statusText: 'Server Error' });
 
-    expect(result!.failed).toEqual([bad]);
+    expect(result!.transientFailures).toEqual([bad]);
+    expect(result!.allSucceeded).toBeFalse();
     expect(component.hasStagedImages()).toBeTrue();
   });
 
@@ -249,7 +253,7 @@ describe('EntityImagesPanelComponent', () => {
       .match(url)[0]
       .flush('nope', { status: 500, statusText: 'Server Error' });
 
-    let result: { failed: File[] } | undefined;
+    let result: UploadResult | undefined;
     component.retryFailedUploads(ENTITY_ID).subscribe((r) => (result = r));
 
     const retried = httpMock.match(url);
@@ -265,7 +269,8 @@ describe('EntityImagesPanelComponent', () => {
       isDefault: false,
       displayOrder: 1,
     });
-    expect(result!.failed).toEqual([]);
+    expect(result!.transientFailures).toEqual([]);
+    expect(result!.allSucceeded).toBeTrue();
     expect(component.hasStagedImages()).toBeFalse();
   });
 
@@ -565,5 +570,81 @@ describe('EntityImagesPanelComponent', () => {
     expect(revoke).toHaveBeenCalledWith(urls[0]);
     expect(revoke).toHaveBeenCalledWith(urls[1]);
     expect(destroy).toHaveBeenCalled();
+  });
+
+  describe('upload precheck and failure classification', () => {
+    const rejectionText = () =>
+      fixture.debugElement
+        .queryAll(By.css('.upload-failures'))
+        .map((el) => (el.nativeElement as HTMLElement).textContent ?? '')
+        .join(' ');
+
+    const retryButton = () =>
+      fixture.debugElement
+        .queryAll(By.css('.upload-failures button'))
+        .find((el) =>
+          ((el.nativeElement as HTMLElement).textContent ?? '').includes(
+            'Retry'
+          )
+        ) ?? null;
+
+    const flushUpload = (status: number) =>
+      httpMock
+        .expectOne(`${api}/api/TestEntities/${ENTITY_ID}/images`)
+        .flush('nope', { status, statusText: 'Rejected' });
+
+    it('rejects an oversized file before uploading it', () => {
+      pickFiles(
+        new File([new ArrayBuffer(11 * 1024 * 1024)], 'big.jpg', {
+          type: 'image/jpeg',
+        })
+      );
+
+      expect(inner().items().length).toBe(0);
+      httpMock.expectNone(`${api}/api/TestEntities/${ENTITY_ID}/images`);
+      expect(rejectionText()).toContain('10MB');
+    });
+
+    it('rejects a file whose type the API cannot decode', () => {
+      pickFiles(new File(['x'], 'clip.gif', { type: 'image/gif' }));
+
+      expect(inner().items().length).toBe(0);
+      expect(rejectionText()).toContain('clip.gif');
+    });
+
+    it('reports a 400 as permanent and offers no retry', () => {
+      pickFiles(aFile());
+
+      let result: UploadResult | undefined;
+      component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
+      flushUpload(400);
+      fixture.detectChanges();
+
+      expect(result!.permanentFailures.length).toBe(1);
+      expect(result!.transientFailures).toEqual([]);
+      expect(result!.allSucceeded).toBeFalse();
+      expect(retryButton()).toBeNull();
+      expect(rejectionText()).toContain('cannot be uploaded');
+    });
+
+    it('reports a 500 as transient and offers retry', () => {
+      pickFiles(aFile());
+
+      let result: UploadResult | undefined;
+      component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
+      flushUpload(500);
+      fixture.detectChanges();
+
+      expect(result!.transientFailures.length).toBe(1);
+      expect(result!.permanentFailures).toEqual([]);
+      expect(retryButton()).not.toBeNull();
+    });
+
+    it('reports allSucceeded when there was nothing staged', () => {
+      let result: UploadResult | undefined;
+      component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
+
+      expect(result!.allSucceeded).toBeTrue();
+    });
   });
 });

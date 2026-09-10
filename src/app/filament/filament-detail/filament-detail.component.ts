@@ -901,15 +901,20 @@ export class FilamentDetailComponent
 
         const filamentId = filament.id;
 
-        panel.uploadStagedImages(filamentId).subscribe(({ failed }) => {
+        panel.uploadStagedImages(filamentId).subscribe((result) => {
           // Clear `saving` either way, or the retry button stays disabled
           // forever.
           this.saving = false;
 
-          if (failed.length === 0) {
+          if (result.allSucceeded) {
             this.finishSave();
             return;
           }
+
+          // A file the API refused outright is not worth retrying, but it is
+          // still not a success, so the page stays put either way.
+          const failedCount =
+            result.transientFailures.length + result.permanentFailures.length;
 
           // Stay put: the material is saved, and the user needs a surface on
           // which to retry the photos. Navigating away would discard that
@@ -918,7 +923,7 @@ export class FilamentDetailComponent
           if (wasNew) this.replaceUrlWithSaved(filamentId);
 
           this.toastr.warning(
-            `Material saved, but ${failed.length} image(s) failed to upload. You can retry them below.`
+            `Material saved, but ${failedCount} image(s) failed to upload. See the photos panel below.`
           );
         });
       },

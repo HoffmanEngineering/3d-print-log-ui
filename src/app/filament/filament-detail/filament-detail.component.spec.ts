@@ -190,7 +190,13 @@ describe('FilamentDetailComponent', () => {
     it('uploads staged images after creating a new filament, then navigates', async () => {
       setUpNewFilamentForm();
       stagedImages(true);
-      imagesPanelStub.uploadStagedImages.and.returnValue(of({ failed: [] }));
+      imagesPanelStub.uploadStagedImages.and.returnValue(
+        of({
+          transientFailures: [],
+          permanentFailures: [],
+          allSucceeded: true,
+        })
+      );
 
       component.onSubmit();
       await fixture.whenStable();
@@ -205,7 +211,11 @@ describe('FilamentDetailComponent', () => {
       setUpNewFilamentForm();
       stagedImages(true);
       imagesPanelStub.uploadStagedImages.and.returnValue(
-        of({ failed: [new File(['x'], 'spool.png')] })
+        of({
+          transientFailures: [new File(['x'], 'spool.png')],
+          permanentFailures: [],
+          allSucceeded: false,
+        })
       );
 
       component.onSubmit();
@@ -240,7 +250,11 @@ describe('FilamentDetailComponent', () => {
       setUpNewFilamentForm();
       stagedImages(true);
       imagesPanelStub.uploadStagedImages.and.returnValue(
-        of({ failed: [new File(['x'], 'spool.png')] })
+        of({
+          transientFailures: [new File(['x'], 'spool.png')],
+          permanentFailures: [],
+          allSucceeded: false,
+        })
       );
 
       let guardAnswer: boolean | null = null;

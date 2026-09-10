@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -14,6 +15,7 @@ import {
   PrinterSummarySimple,
 } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
+import { SignedImageComponent } from 'src/app/shared/signed-image/signed-image.component';
 import { PrinterListComponent } from './printer-list.component';
 
 /**
@@ -74,6 +76,7 @@ describe('PrinterListComponent', () => {
         SharedModule,
         NoopAnimationsModule,
         EmptyStateComponent,
+        SignedImageComponent,
         // The table rows and the empty-state buttons are routerLinks.
         RouterTestingModule,
         // The template renders app-ad for real, which needs the Adsense config.
@@ -119,5 +122,25 @@ describe('PrinterListComponent', () => {
 
     component.searchText = 'voron';
     expect(component.hasActiveSearch).toBeTrue();
+  });
+
+  describe('default photo thumbnail', () => {
+    it('renders a thumbnail when the printer has a default image', async () => {
+      await setUp([
+        aPrinter({
+          defaultImageThumbnailUrl: 'https://blob.example/thumb.webp?sig=abc',
+        }),
+      ]);
+
+      const image = fixture.debugElement.query(By.css('app-signed-image'));
+      expect(image).toBeTruthy();
+      expect(image.componentInstance.alt() as string).toContain('Voron 2.4');
+    });
+
+    it('renders no thumbnail element when there is no default image', async () => {
+      await setUp([aPrinter({ defaultImageThumbnailUrl: null })]);
+
+      expect(fixture.debugElement.query(By.css('app-signed-image'))).toBeNull();
+    });
   });
 });

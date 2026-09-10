@@ -33,6 +33,18 @@
       <th mat-header-cell *matHeaderCellDef>ID</th>
       <td mat-cell *matCellDef="let printer">{{ printer.id }}</td>
     </ng-container>
+    <ng-container matColumnDef="image">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let printer">
+        @if (printer.defaultImageThumbnailUrl) {
+          <app-signed-image
+            class="printer-thumb"
+            [src]="printer.defaultImageThumbnailUrl"
+            [alt]="printer.name + ' photo'"
+          />
+        }
+      </td>
+    </ng-container>
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Name</th>
       <td mat-cell *matCellDef="let printer">

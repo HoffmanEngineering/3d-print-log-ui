@@ -1,38 +1,38 @@
 {
   "first-print-form": {
     "light": {
-      "src": "/assets/docs/captures/first-print-form_c5ac1f13a90f.webp",
+      "src": "/assets/docs/captures/first-print-form_fef0fb14bd6c.webp",
       "width": 1700,
       "height": 1769
     },
     "dark": {
-      "src": "/assets/docs/captures/first-print-form_dark_4289e6cad4a8.webp",
+      "src": "/assets/docs/captures/first-print-form_dark_0be2b9181825.webp",
       "width": 1700,
       "height": 1769
     }
   },
   "print-list": {
     "light": {
-      "src": "/assets/docs/captures/print-list_90b678cfb428.webp",
+      "src": "/assets/docs/captures/print-list_1ac04cfb906d.webp",
       "width": 1700,
       "height": 1025
     },
     "dark": {
-      "src": "/assets/docs/captures/print-list_dark_f9464fed373f.webp",
+      "src": "/assets/docs/captures/print-list_dark_9cbc4118c8d7.webp",
       "width": 1700,
       "height": 1025
     }
   },
   "print-list-cards": {
     "light": {
-      "src": "/assets/docs/captures/print-list-cards_6429c0932820.webp",
+      "src": "/assets/docs/captures/print-list-cards_7262f8fd9a7d.webp",
       "width": 1120,
-      "height": 2590
+      "height": 2650
     },
     "dark": {
-      "src": "/assets/docs/captures/print-list-cards_dark_65ffc3b05c91.webp",
+      "src": "/assets/docs/captures/print-list-cards_dark_73b8f224c9e3.webp",
       "width": 1120,
-      "height": 2590
+      "height": 2650
     }
   },
   "print-list-filters": {
@@ -49,12 +49,12 @@
   },
   "print-list-table": {
     "light": {
-      "src": "/assets/docs/captures/print-list-table_5931935d2373.webp",
+      "src": "/assets/docs/captures/print-list-table_38683230ef2a.webp",
       "width": 1700,
       "height": 687
     },
     "dark": {
-      "src": "/assets/docs/captures/print-list-table_dark_eebc1db4f57a.webp",
+      "src": "/assets/docs/captures/print-list-table_dark_71dceda14e8e.webp",
       "width": 1700,
       "height": 687
     }

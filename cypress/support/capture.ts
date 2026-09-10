@@ -65,6 +65,8 @@ export interface CaptureSet {
   fixtures: FixtureRoute[];
   /** defaultPrintImageId -> committed demo image. */
   printImages: Record<string, string>;
+  /** printerId -> committed demo photo, for the thumbnails the avatars render. */
+  printerImages: Record<string, string>;
   /** CSS appended to BASE_CAPTURE_CSS for this set only. */
   css?: string;
 }
@@ -218,6 +220,25 @@ function stubApi(set: CaptureSet, unhandled: string[]) {
       // because an image did render. Reported through the same list as a missed
       // stub, so the run fails and says which id.
       unhandled.push(`${req.method} ${req.url} (no demo image for id ${id})`);
+      req.reply({ statusCode: 404, body: {} });
+      return;
+    }
+    req.reply({ fixture: file });
+  });
+  // Printer avatars. The thumbnails fixture points at these relative paths rather than
+  // at real blob SAS URLs, so the photos come from the repo and no capture depends on
+  // an external host. The glob cannot collide with the thumbnails map itself: minimatch
+  // `*` never crosses a `/`, so `Printers/*/thumbnail` needs the two segments this has
+  // and `Printers/thumbnails` has only one.
+  cy.intercept('GET', '**/api/Printers/*/thumbnail*', (req) => {
+    const id = req.url.match(/\/Printers\/(\d+)\/thumbnail/)?.[1] ?? '';
+    const file = set.printerImages[id];
+    if (!file) {
+      // Reported like a missed stub rather than falling back to some other machine's
+      // photo, which every readiness check would still pass.
+      unhandled.push(
+        `${req.method} ${req.url} (no demo photo for printer ${id})`
+      );
       req.reply({ statusCode: 404, body: {} });
       return;
     }

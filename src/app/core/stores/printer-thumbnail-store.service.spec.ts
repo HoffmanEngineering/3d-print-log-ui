@@ -45,6 +45,17 @@ describe('PrinterThumbnailStore', () => {
     httpMock.expectNone(url);
   });
 
+  // The whole-page shape of the same guarantee: a public print page renders an avatar
+  // per printer it names, and a logged-out visitor must produce no request at all -
+  // `httpMock.verify()` in afterEach is what proves "no request", not just "no map".
+  it('issues nothing at all when many avatars read it while signed out', () => {
+    setUp(false);
+
+    [1, 2, 3, 4, 5].forEach((id) => expect(store.thumbnailFor(id)).toBeNull());
+
+    httpMock.expectNone(url);
+  });
+
   it('does not call the API before auth has resolved', () => {
     // `loggedIn` is null until Auth0 answers. Fetching then would just 401.
     setUp(null);

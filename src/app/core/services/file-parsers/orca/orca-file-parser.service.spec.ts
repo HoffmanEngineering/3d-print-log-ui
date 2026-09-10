@@ -38,6 +38,16 @@ describe('OrcaFileParserService', () => {
   });
 
   describe('estimateFilamentUsageInMg', () => {
+    it('should compute the weight for Nylon using density 1.06', () => {
+      const testGcode = `; total filament used [g] = 0.0
+; filament_type = Nylon
+; filament_diameter = 1.75
+; filament used [mm] = 1000`;
+
+      const actual = service.estimateFilamentUsageInMg(testGcode);
+      expect(actual).toBe(2549);
+    });
+
     it('should return undefined when diameter or length is missing or zero', () => {
       const invalidInputs = [
         `; filament_type = PLA

@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -5,7 +7,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 import { SharedModule } from 'src/app/shared/shared.module';
 import {
@@ -13,6 +15,8 @@ import {
   PrinterService,
 } from 'src/app/core/services/printer.service';
 import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { PrinterDetailComponent } from './printer-detail.component';
 
 const fffCategory = {
@@ -54,9 +58,19 @@ describe('PrinterDetailComponent', () => {
     printerService = jasmine.createSpyObj<PrinterService>('PrinterService', [
       'addPrinter',
       'updatePrinter',
+      'imageTarget',
     ]);
     printerService.addPrinter.and.returnValue(of(aPrinterDetail()));
     printerService.updatePrinter.and.returnValue(of(aPrinterDetail()));
+    printerService.imageTarget.and.callFake((id) => ({
+      id,
+      gateway: jasmine.createSpyObj('EntityImageGateway', [
+        'upload',
+        'delete',
+        'reorder',
+        'setDefault',
+      ]),
+    }));
 
     router = jasmine.createSpyObj<Router>('Router', [
       'navigate',
@@ -68,6 +82,7 @@ describe('PrinterDetailComponent', () => {
     const toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
       'success',
       'error',
+      'warning',
     ]);
     const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
 
@@ -82,6 +97,8 @@ describe('PrinterDetailComponent', () => {
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
       ],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: PrinterService, useValue: printerService },
         { provide: Router, useValue: router },
         { provide: ToastrService, useValue: toastr },
@@ -160,5 +177,171 @@ describe('PrinterDetailComponent', () => {
 
     expect(printerService.addPrinter).toHaveBeenCalled();
     expect(printerService.updatePrinter).not.toHaveBeenCalled();
+  });
+
+  describe('photos panel', () => {
+    let panel: jasmine.SpyObj<EntityImagesPanelComponent>;
+
+    const aFile = () => new File(['x'], 'printer.jpg', { type: 'image/jpeg' });
+
+    const succeeded = () =>
+      of({
+        transientFailures: [],
+        permanentFailures: [],
+        allSucceeded: true,
+      });
+
+    const transientlyFailed = () =>
+      of({
+        transientFailures: [aFile()],
+        permanentFailures: [],
+        allSucceeded: false,
+      });
+
+    const stubPanel = (staged: boolean) => {
+      panel = jasmine.createSpyObj<EntityImagesPanelComponent>(
+        'EntityImagesPanelComponent',
+        ['uploadStagedImages', 'retryFailedUploads'],
+        {
+          hasStagedImages: jasmine.createSpy().and.returnValue(staged) as never,
+        }
+      );
+      (component as unknown as { imagesPanel: () => unknown }).imagesPanel =
+        () => panel;
+    };
+
+    const fillCreateForm = () => {
+      component.printerForm.get('id')!.setValue(null);
+      component.printerForm.patchValue({
+        name: 'New',
+        make: 'X',
+        model: 'Y',
+      });
+    };
+
+    it('exposes the resolved printer photos to the panel', async () => {
+      await setUp(
+        aPrinterDetail({
+          images: [
+            {
+              id: 1,
+              url: 'u',
+              thumbnailUrl: 't',
+              isDefault: true,
+              displayOrder: 0,
+            },
+          ],
+        })
+      );
+
+      expect(
+        (
+          component as unknown as { printerImages: () => unknown[] }
+        ).printerImages().length
+      ).toBe(1);
+    });
+
+    it('retargets the panel at the id the form currently holds', async () => {
+      await setUp(aPrinterDetail());
+
+      expect(
+        (
+          component as unknown as { imageTarget: () => { id: number | null } }
+        ).imageTarget().id
+      ).toBe(42);
+    });
+
+    it('uploads staged images before navigating away on create', async () => {
+      await setUp(null);
+      stubPanel(true);
+      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
+      panel.uploadStagedImages.and.returnValue(succeeded());
+      fillCreateForm();
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      expect(panel.uploadStagedImages).toHaveBeenCalledWith(42);
+      expect(router.navigateByUrl).toHaveBeenCalled();
+    });
+
+    it('stays on the page and writes back the id when an upload fails', async () => {
+      await setUp(null);
+      stubPanel(true);
+      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
+      panel.uploadStagedImages.and.returnValue(transientlyFailed());
+      fillCreateForm();
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+      expect(component.printerForm.get('id')!.value).toBe(42);
+      expect(component.saving).toBeFalse();
+    });
+
+    it('updates rather than re-creating after a failed upload', async () => {
+      await setUp(null);
+      stubPanel(true);
+      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
+      panel.uploadStagedImages.and.returnValue(transientlyFailed());
+      fillCreateForm();
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      printerService.addPrinter.calls.reset();
+      component.onSubmit();
+      await fixture.whenStable();
+
+      expect(printerService.addPrinter).not.toHaveBeenCalled();
+      expect(printerService.updatePrinter).toHaveBeenCalled();
+    });
+
+    it('does not navigate while the staged photos are still uploading', async () => {
+      await setUp(null);
+      stubPanel(true);
+      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
+      // Never emits: the upload is in flight for the whole test.
+      panel.uploadStagedImages.and.returnValue(new Subject());
+      fillCreateForm();
+
+      component.onSubmit();
+
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('blocks deactivation while images are staged', async () => {
+      await setUp(aPrinterDetail());
+      stubPanel(true);
+      component.printerForm.markAsPristine();
+
+      expect(component.canDeactivate()).toBeFalse();
+    });
+
+    it('leaves the guard alone for its own post-save URL rewrite', async () => {
+      await setUp(null);
+      stubPanel(true);
+      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
+      panel.uploadStagedImages.and.returnValue(transientlyFailed());
+      fillCreateForm();
+
+      let guardAnswer: boolean | null = null;
+      router.navigate.and.callFake(() => {
+        // The guard runs during the navigation, with photos still staged for the
+        // retry. It must not prompt for a navigation the page started itself.
+        guardAnswer = component.canDeactivate() as boolean;
+        return Promise.resolve(true);
+      });
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      expect(router.navigate).toHaveBeenCalledWith(['/printers', 42], {
+        replaceUrl: true,
+      });
+      expect(guardAnswer).toBeTrue();
+    });
   });
 });

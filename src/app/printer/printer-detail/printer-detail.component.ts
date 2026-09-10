@@ -1,4 +1,13 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import {
   AbstractControl,
   UntypedFormArray,
@@ -16,6 +25,8 @@ import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { EMPTY_GUID } from 'src/app/core/services/print.service';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import {
   PrinterDetail,
@@ -37,6 +48,33 @@ export class PrinterDetailComponent
 {
   public printerForm: UntypedFormGroup;
   public saving = false;
+
+  protected readonly imagesPanel = viewChild(EntityImagesPanelComponent);
+
+  private readonly subscriptionService = inject(SubscriptionService);
+
+  /** Images allowed on one printer, by subscription tier. */
+  protected readonly maxImages = this.subscriptionService.maxImages;
+
+  /** The printer as resolved, kept only so the panel can render its stored photos. */
+  private readonly printerDetail = signal<PrinterDetail | null>(null);
+
+  protected readonly printerImages = computed(
+    () => this.printerDetail()?.images ?? []
+  );
+
+  /**
+   * Tracks the form's id rather than `printerDetail`, so a create that writes the new id
+   * back onto the form immediately retargets the panel at the saved printer.
+   */
+  private readonly formPrinterId = signal<number | null>(null);
+
+  protected readonly imageTarget = computed(() =>
+    this.printerService.imageTarget(this.formPrinterId())
+  );
+
+  /** See `canDeactivate`: suppresses the guard for app-initiated navigation. */
+  private isSelfNavigating = false;
 
   // public referencePrinter = defaultPrinters;
 
@@ -85,7 +123,28 @@ export class PrinterDetailComponent
 
   @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
-    return !this.printerForm.dirty;
+    // A navigation this component started itself is never the user abandoning work, so it
+    // must not be second-guessed. Without this, rewriting the URL after a create prompts
+    // "You have unsaved changes" about the very photos the save is uploading.
+    if (this.isSelfNavigating) return true;
+
+    // The form is blind to staged photos, so without the panel a user who has only picked
+    // images would navigate away and silently lose them.
+    return !this.printerForm.dirty && !this.imagesPanel()?.hasStagedImages();
+  }
+
+  /**
+   * Points the URL at the saved printer without prompting. Used only after a create whose
+   * photos failed, where the page stays put for the retry - the success path leaves for
+   * the list instead.
+   */
+  private replaceUrlWithSaved(printerId: number): void {
+    this.isSelfNavigating = true;
+    this.router
+      .navigate(['/printers', printerId], { replaceUrl: true })
+      // Restore the guard however the navigation ends, or the rest of this component's
+      // life would silently skip the unsaved-changes check.
+      .finally(() => (this.isSelfNavigating = false));
   }
 
   ngOnInit() {
@@ -99,7 +158,9 @@ export class PrinterDetailComponent
 
       this.groupPrinterCategoriesByMaterial();
 
+      this.printerDetail.set(data.printer ?? null);
       this.printerForm = this.buildFormFromPrinterDetail(data.printer);
+      this.formPrinterId.set(this.printerForm.get('id').value ?? null);
 
       this.recalculateFormFieldsForSelectedPrinterCategory(
         this.printerForm.get('type').value
@@ -421,8 +482,9 @@ export class PrinterDetailComponent
     const newPrinter: PrinterDetail = this.getPrinterFromForm();
 
     let savePrinter: Observable<PrinterDetail>;
+    const wasNew = newPrinter.id === null;
 
-    if (newPrinter.id === null) {
+    if (wasNew) {
       savePrinter = this.printerService.addPrinter(newPrinter);
     } else {
       savePrinter = this.printerService.updatePrinter(newPrinter);
@@ -430,19 +492,55 @@ export class PrinterDetailComponent
 
     savePrinter.subscribe(
       (printer) => {
-        this.saving = false;
         this.printerForm.markAsPristine();
 
-        const url = this.getRedirectUrl();
+        // The record is no longer new. Write the ID back BEFORE any upload, so a retry is
+        // an update and never a second POST.
+        if (wasNew && printer?.id) {
+          this.printerForm.get('id').setValue(printer.id);
+          this.formPrinterId.set(printer.id);
+        }
 
-        this.router.navigateByUrl(url).then(() => {
-          this.toastr.success('Save successful!');
+        const panel = this.imagesPanel();
+        if (!panel?.hasStagedImages() || !printer?.id) {
+          this.finishSave();
+          return;
+        }
+
+        const printerId = printer.id;
+
+        panel.uploadStagedImages(printerId).subscribe((result) => {
+          // Clear `saving` either way, or the retry button stays disabled forever.
+          this.saving = false;
+
+          if (result.allSucceeded) {
+            this.finishSave();
+            return;
+          }
+
+          // Stay put: the printer is saved, and the user needs a surface on which to deal
+          // with the photos. Navigating away would discard that chance. Only now is the
+          // URL rewritten, so a reload lands on the saved printer rather than on `new`.
+          if (wasNew) this.replaceUrlWithSaved(printerId);
+
+          const failedCount =
+            result.transientFailures.length + result.permanentFailures.length;
+          this.toastr.warning(
+            `Printer saved, but ${failedCount} image(s) failed to upload. See the photos panel below.`
+          );
         });
       },
       (err) => {
         this.saving = false;
       }
     );
+  }
+
+  private finishSave(): void {
+    this.saving = false;
+    this.router.navigateByUrl(this.getRedirectUrl()).then(() => {
+      this.toastr.success('Save successful!');
+    });
   }
 
   /**

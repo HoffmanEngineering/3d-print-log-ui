@@ -18,6 +18,20 @@
         fxLayout="column"
         fxLayoutAlign="space-evenly center"
       >
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">Photos</h2>
+        </div>
+        <app-entity-images-panel
+          fxFlex="grow"
+          fxFlexFill
+          [target]="imageTarget()"
+          [images]="printerImages()"
+          [maxImages]="maxImages()"
+          imageAlt="Printer photo"
+        />
+        <div fxFlex="grow" fxFlexFill>
+          <h2 style="text-align: start">General</h2>
+        </div>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Name</mat-label>
           <input

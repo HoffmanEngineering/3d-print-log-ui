@@ -33,6 +33,7 @@ export class PrinterListComponent implements OnInit {
   public searchText = '';
 
   public displayedColumns: string[] = [
+    'image',
     'name',
     'make',
     'model',

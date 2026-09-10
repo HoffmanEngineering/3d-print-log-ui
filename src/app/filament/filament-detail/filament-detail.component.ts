@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  inject,
   signal,
   viewChild,
 } from '@angular/core';
@@ -22,6 +23,7 @@ import { Observable, Subscription } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { Material } from 'src/app/core/services/material.service';
 import {
   UserSetting,
@@ -41,7 +43,7 @@ import {
   FilamentSummary,
 } from '../../core/services/filament.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
-import { FilamentImagesPanelComponent } from './filament-images-panel/filament-images-panel.component';
+import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { MatDialog } from '@angular/material/dialog';
 import { MatChipListboxChange } from '@angular/material/chips';
 import {
@@ -124,7 +126,22 @@ export class FilamentDetailComponent
   public filamentForm: UntypedFormGroup;
   public loadedFilament: FilamentDetail | null = null;
 
-  protected readonly imagesPanel = viewChild(FilamentImagesPanelComponent);
+  protected readonly imagesPanel = viewChild(EntityImagesPanelComponent);
+
+  private readonly subscriptionService = inject(SubscriptionService);
+
+  /** Images allowed on one material, by subscription tier. */
+  protected readonly maxImages = this.subscriptionService.maxImages;
+
+  /**
+   * Recomputed from the form's id rather than from `loadedFilament`, so a create that
+   * writes the new id back onto the form immediately retargets the panel.
+   */
+  protected readonly imageTarget = computed(() =>
+    this.filamentService.imageTarget(
+      (this.formValue()?.['id'] as string | null) ?? null
+    )
+  );
   public saving = false;
   /** See `canDeactivate`: suppresses the guard for app-initiated navigation. */
   private isSelfNavigating = false;
@@ -884,15 +901,20 @@ export class FilamentDetailComponent
 
         const filamentId = filament.id;
 
-        panel.uploadStagedImages(filamentId).subscribe(({ failed }) => {
+        panel.uploadStagedImages(filamentId).subscribe((result) => {
           // Clear `saving` either way, or the retry button stays disabled
           // forever.
           this.saving = false;
 
-          if (failed.length === 0) {
+          if (result.allSucceeded) {
             this.finishSave();
             return;
           }
+
+          // A file the API refused outright is not worth retrying, but it is
+          // still not a success, so the page stays put either way.
+          const failedCount =
+            result.transientFailures.length + result.permanentFailures.length;
 
           // Stay put: the material is saved, and the user needs a surface on
           // which to retry the photos. Navigating away would discard that
@@ -901,7 +923,7 @@ export class FilamentDetailComponent
           if (wasNew) this.replaceUrlWithSaved(filamentId);
 
           this.toastr.warning(
-            `Material saved, but ${failed.length} image(s) failed to upload. You can retry them below.`
+            `Material saved, but ${failedCount} image(s) failed to upload. See the photos panel below.`
           );
         });
       },

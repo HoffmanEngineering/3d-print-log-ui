@@ -41,7 +41,13 @@
     @if (printer(); as p) {
       <dt>Printer</dt>
       <dd>
+        <!-- Only owners get an avatar: the store's endpoint is authenticated, so a public
+             visitor's map is empty and nothing renders. -->
         @if (isOwner()) {
+          <app-printer-avatar
+            [printerId]="print().printerId"
+            [printerName]="p.make + ' ' + p.model"
+          />
           <a
             data-cy-printer-link
             [routerLink]="['/printers', print().printerId]"

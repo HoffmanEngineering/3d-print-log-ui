@@ -24,7 +24,12 @@
       <tbody>
         @for (row of sorted(); track row.printerId) {
           <tr (click)="onSelect(row)">
-            <th scope="row">{{ row.name }}</th>
+            <th scope="row">
+              <app-printer-avatar
+                [printerId]="row.printerId"
+                [printerName]="row.name"
+              />{{ row.name }}
+            </th>
             @if (row.isIdle) {
               <td [attr.colspan]="columns.length - 1">
                 No prints in this range
@@ -74,7 +79,12 @@
   <ul class="printer-comparison__cards">
     @for (row of sorted(); track row.printerId) {
       <li class="printer-comparison__card" (click)="onSelect(row)">
-        <h3 class="printer-comparison__card-title">{{ row.name }}</h3>
+        <h3 class="printer-comparison__card-title">
+          <app-printer-avatar
+            [printerId]="row.printerId"
+            [printerName]="row.name"
+          />{{ row.name }}
+        </h3>
         @if (row.isIdle) {
           <p class="printer-comparison__idle">No prints in this range</p>
         } @else {

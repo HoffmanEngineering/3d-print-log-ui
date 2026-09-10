@@ -39,3 +39,13 @@ table {
     0 0 0 1px rgba(0, 0, 0, 0.08),
     0 1px 4px rgba(0, 0, 0, 0.18);
 }
+
+// A fixed square so a row's height never depends on the photo's aspect ratio. The crop
+// itself comes from the component's `fit` input, not from a ::ng-deep override here.
+.printer-thumb {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+}

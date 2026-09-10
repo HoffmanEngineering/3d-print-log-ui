@@ -22,6 +22,14 @@ describe('Anonymous public print view', () => {
       // Registered before the visit so the attachment fetch is captured.
       cy.intercept('GET', '**/api/Prints/*/files*').as('attachments');
 
+      // The thumbnail map is authenticated-only, so a logged-out visitor must never
+      // even ask for it - that is what keeps a printer's photos off a public print.
+      cy.intercept(
+        'GET',
+        '**/api/Printers/thumbnails*',
+        cy.spy().as('thumbnailRequest')
+      );
+
       cy.visit(`/prints/${print.id}?devUserId=anonymous`);
 
       // 1) No bounce to home (#66).
@@ -41,6 +49,8 @@ describe('Anonymous public print view', () => {
       cy.get('[data-cy-edit-btn]').should('not.exist');
       cy.get('[data-cy-printer-link]').should('not.exist');
       cy.get('a[href*="/filament/"]').should('not.exist');
+      cy.get('app-printer-avatar img').should('not.exist');
+      cy.get('@thumbnailRequest').should('not.have.been.called');
 
       // 4) Cost absence is asserted but is NOT evidence of gating, and must
       //    not be cited as such. Material cost needs a recorded filament price

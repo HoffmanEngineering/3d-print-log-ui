@@ -113,8 +113,8 @@
       "loadedInPrinter": {
         "id": 103,
         "name": "Resin Station",
-        "make": "Anycubic",
-        "model": "Photon Mono M7 Pro",
+        "make": "HeyGears",
+        "model": "Reflex RS Turbo",
         "isActive": true,
         "category": null
       },
@@ -200,8 +200,8 @@
       "loadedInPrinter": {
         "id": 101,
         "name": "Living Room",
-        "make": "Bambu Lab",
-        "model": "A1",
+        "make": "Snapmaker",
+        "model": "U1",
         "isActive": true,
         "category": null
       },
@@ -247,8 +247,8 @@
       "loadedInPrinter": {
         "id": 102,
         "name": "Workshop",
-        "make": "Prusa",
-        "model": "MK4S",
+        "make": "Anycubic",
+        "model": "Kobra S1",
         "isActive": true,
         "category": null
       },

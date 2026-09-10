@@ -9,6 +9,9 @@ export interface SubscriptionDto {
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   isPro: boolean;
+  /** Images allowed per print, per material and per printer. One cap governs all three. */
+  maxImages: number;
+  /** @deprecated Kept for wire compatibility; always equals {@link maxImages}. */
   maxImagesPerPrint: number;
   maxFilesPerPrint: number;
   maxFileStorageBytes: number;
@@ -33,8 +36,17 @@ export class SubscriptionService {
   readonly cancelAtPeriodEnd = computed(
     () => this._subscription()?.cancelAtPeriodEnd ?? false
   );
+  /**
+   * Images allowed on one print, material or printer.
+   *
+   * Defaults to the FREE cap, never the Pro one: an unloaded subscription must not
+   * promise a user headroom the API will reject.
+   */
+  readonly maxImages = computed(() => this._subscription()?.maxImages ?? 5);
+
+  /** @deprecated Use {@link maxImages}; the API sends the same number for both. */
   readonly maxImagesPerPrint = computed(
-    () => this._subscription()?.maxImagesPerPrint ?? 5
+    () => this._subscription()?.maxImages ?? 5
   );
   readonly maxFilesPerPrint = computed(
     () => this._subscription()?.maxFilesPerPrint ?? 0

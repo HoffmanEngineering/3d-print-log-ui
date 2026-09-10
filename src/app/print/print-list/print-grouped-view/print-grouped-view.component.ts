@@ -52,6 +52,7 @@ import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/prin
 import { ColumnDefinition } from '../print-list.component';
 import { PrintListSkeletonComponent } from '../print-list-skeleton/print-list-skeleton.component';
 import { PrintTableLayoutComponent } from '../print-table-layout/print-table-layout.component';
+import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
 
 export type GroupedRow =
   | { kind: 'project'; item: GroupedFeedItemDto }
@@ -73,6 +74,7 @@ function sameIds<T>(a: T[], b: T[]): boolean {
   styleUrls: ['./print-grouped-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    PrinterAvatarComponent,
     SharedModule,
     ProjectChipComponent,
     RouterLink,

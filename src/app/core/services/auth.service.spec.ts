@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { UserService } from './user.service';
 import { NotificationService } from './notification.service';
 import { SubscriptionService } from './subscription.service';
+import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
 
 describe('AuthService', () => {
   let mockUserService: jasmine.SpyObj<UserService>;
@@ -112,6 +113,20 @@ describe('AuthService', () => {
       await service.logout();
 
       expect(order).toEqual(['push-teardown', 'auth0-logout']);
+    });
+
+    // The signed thumbnail map is per user. Left behind, the previous user's printer
+    // photos stay on screen in any session that outlives the Auth0 redirect.
+    it('clears the printer thumbnail map on logout', async () => {
+      const service = TestBed.inject(AuthService);
+      spyOn(service, 'getTokenSilently$').and.returnValue(of('bearer-abc'));
+      trackAuth0Logout(service, []);
+      const store = TestBed.inject(PrinterThumbnailStore);
+      const invalidate = spyOn(store, 'invalidate');
+
+      await service.logout();
+
+      expect(invalidate).toHaveBeenCalled();
     });
 
     it('still logs the user out when the teardown hook throws', async () => {

@@ -19,6 +19,7 @@ import {
   exists,
   FixtureRoute,
   imagesRendered,
+  imagesLoaded,
   noPlaceholders,
   rendered,
   visible,
@@ -36,6 +37,13 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
     method: 'GET',
     url: '**/api/printers/summary*',
     fixture: 'demo/printers-summary.json',
+  },
+  // Every surface that names a printer reads this map through PrinterThumbnailStore.
+  // Without a stub the capture run fails on an unhandled /api/** request.
+  {
+    method: 'GET',
+    url: '**/api/Printers/thumbnails*',
+    fixture: 'demo/printer-thumbnails.json',
   },
   { method: 'GET', url: '**/api/Filaments?*', fixture: 'demo/filaments.json' },
   // The add-print form offers to attach the print to a project. The demo set has
@@ -77,6 +85,17 @@ export const PRINT_IMAGE_MAP: Record<string, string> = {
   '1003': 'demo/images/trophy.jpg',
   '1004': 'demo/images/oculus.jpg',
   '1005': 'demo/images/cat-headbands.jpg',
+};
+
+/**
+ * The three demo printers in printers-summary.json, each with a photo of the machine the
+ * fixture names. `printer-thumbnails.json` points at `/api/Printers/{id}/thumbnail`, which
+ * `stubApi` serves from this map.
+ */
+export const PRINTER_IMAGE_MAP: Record<string, string> = {
+  '101': 'demo/images/snapmaker_u1.jpg',
+  '102': 'demo/images/anycubic_kobra_s1.jpg',
+  '103': 'demo/images/heygears_reflex_rs_turbo.jpg',
 };
 
 /** The five demo prints in prints-summary.json. */
@@ -123,6 +142,9 @@ const HOME_CAPTURE_TARGETS: CaptureTarget[] = [
       // 959.98px) the card view carrying app-print-card is never rendered.
       rendered('[cy-print-row]', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
+      // Decoded, not merely present: a photo still in flight is exactly what a
+      // capture loses silently.
+      imagesLoaded('app-printer-avatar'),
       rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
     ],
   },
@@ -135,6 +157,9 @@ const HOME_CAPTURE_TARGETS: CaptureTarget[] = [
     ready: [
       rendered('[cy-print-row]', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
+      // Decoded, not merely present: a photo still in flight is exactly what a
+      // capture loses silently.
+      imagesLoaded('app-printer-avatar'),
       rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
     ],
   },
@@ -171,6 +196,7 @@ export const HOME_CAPTURE_SET: CaptureSet = {
   targets: HOME_CAPTURE_TARGETS,
   fixtures: FIXTURE_ROUTES,
   printImages: PRINT_IMAGE_MAP,
+  printerImages: PRINTER_IMAGE_MAP,
   // The filter panel is hidden because the home crops want the data, not the
   // chrome - at every width, now that these are captured at desktop size. The
   // analytics tab's lone "Export this tab (CSV)" button goes for the same
@@ -211,6 +237,9 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
     ready: [
       rendered('[cy-print-row]', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
+      // Decoded, not merely present: a photo still in flight is exactly what a
+      // capture loses silently.
+      imagesLoaded('app-printer-avatar'),
       rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
     ],
   }),
@@ -236,6 +265,9 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
     ready: [
       rendered('[cy-print-row]', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
+      // Decoded, not merely present: a photo still in flight is exactly what a
+      // capture loses silently.
+      imagesLoaded('app-printer-avatar'),
       // The Materials column, which the caption below this figure describes.
       rendered('app-filament-color-swatch', DEMO_MATERIAL_COUNT),
     ],
@@ -266,6 +298,9 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
     ready: [
       rendered('app-print-card', DEMO_PRINT_COUNT),
       imagesRendered('app-print-image'),
+      // Decoded, not merely present: a photo still in flight is exactly what a
+      // capture loses silently.
+      imagesLoaded('app-printer-avatar'),
       rendered('.material-chip', DEMO_MATERIAL_COUNT),
     ],
   }),
@@ -276,6 +311,7 @@ export const DOC_CAPTURE_SET: CaptureSet = {
   targets: DOC_CAPTURE_TARGETS,
   fixtures: FIXTURE_ROUTES,
   printImages: PRINT_IMAGE_MAP,
+  printerImages: PRINTER_IMAGE_MAP,
   // Deliberately no extra CSS. The docs are documenting the filter panel and
   // the tab actions the home crops hide, so hiding them here would document a
   // product that does not exist.

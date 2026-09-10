@@ -15,7 +15,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Observable, concat, of } from 'rxjs';
-import { catchError, finalize, map, tap, toArray } from 'rxjs/operators';
+import {
+  catchError,
+  concatMap,
+  finalize,
+  map,
+  tap,
+  toArray,
+} from 'rxjs/operators';
 import { isCordova } from 'src/app/core/utils/platform';
 import { SignedImageComponent } from 'src/app/shared/signed-image/signed-image.component';
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
@@ -159,11 +166,21 @@ export class EntityImagesPanelComponent {
     });
   }
 
-  /** Uploads everything currently staged, resolving with how each file fared. */
+  /**
+   * Uploads everything currently staged, resolving with how each file fared.
+   *
+   * Files the API already rejected outright are NOT re-posted - the bytes and the endpoint
+   * are unchanged, so the request is known to fail - but they are still reported, so the
+   * caller does not treat a save that left them behind as a clean success.
+   */
   uploadStagedImages(entityId: string | number): Observable<UploadResult> {
+    const permanent = this.permanentFailedFiles();
     return this.uploadItems(
       entityId,
-      this.items().filter((item) => !!item.file)
+      this.items().filter(
+        (item) => !!item.file && !permanent.includes(item.file)
+      ),
+      permanent
     );
   }
 
@@ -290,8 +307,20 @@ export class EntityImagesPanelComponent {
     this.flushReorder(previous);
   }
 
-  /** `rollbackTo` is the order to restore if the API rejects the new one. */
+  /**
+   * `rollbackTo` is the order to restore if the API rejects the new one.
+   *
+   * Fire-and-forget, for the drag the user just made. The upload path uses
+   * `flushReorder$` instead, so the write is part of what the caller waits on.
+   */
   private flushReorder(rollbackTo?: EntityImageValue[]): void {
+    this.flushReorder$(rollbackTo)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
+
+  /** Completes when the reorder has been written, or immediately if it cannot be sent. */
+  private flushReorder$(rollbackTo?: EntityImageValue[]): Observable<void> {
     const items = this.items();
     const entityId = this.target().id ?? this.lastUploadEntityId;
 
@@ -303,32 +332,38 @@ export class EntityImagesPanelComponent {
       items.some((item) => item.id === undefined)
     ) {
       this.pendingReorder = true;
-      return;
+      return of(void 0);
     }
 
     this.actionError.set(null);
-    this.target()
+    return this.target()
       .gateway.reorder(
         entityId,
         items.map((item) => item.id as number)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
+      .pipe(
         // Only a confirmed write clears the pending flag, or a failed reorder
         // would never be retried when the staged items finish uploading.
-        next: () => (this.pendingReorder = false),
-        error: () => {
+        tap(() => (this.pendingReorder = false)),
+        catchError(() => {
           if (rollbackTo) this.items.set(rollbackTo);
           this.actionError.set(
             'That new photo order could not be saved. Please try again.'
           );
-        },
-      });
+          return of(void 0);
+        }),
+        map(() => void 0)
+      );
   }
 
+  /**
+   * `carriedPermanentFailures` are files an earlier run proved the API will not accept.
+   * They are not re-posted, but they still count against `allSucceeded`.
+   */
   private uploadItems(
     entityId: string | number,
-    targets: EntityImageValue[]
+    targets: EntityImageValue[],
+    carriedPermanentFailures: File[] = []
   ): Observable<UploadResult> {
     this.lastUploadEntityId = entityId;
 
@@ -336,13 +371,13 @@ export class EntityImagesPanelComponent {
       this.failedFiles.set([]);
       return of({
         transientFailures: [],
-        permanentFailures: [],
-        allSucceeded: true,
+        permanentFailures: [...carriedPermanentFailures],
+        allSucceeded: carriedPermanentFailures.length === 0,
       });
     }
 
     const transientFailures: File[] = [];
-    const permanentFailures: File[] = [];
+    const permanentFailures: File[] = [...carriedPermanentFailures];
     // The user may have starred a staged photo. That choice cannot be sent
     // until the upload assigns it an ID, so remember which one it was.
     const desiredDefaultKey = this.items().find(
@@ -388,15 +423,31 @@ export class EntityImagesPanelComponent {
             transientFailures.length === 0 && permanentFailures.length === 0,
         })
       ),
-      tap((result) => {
+      // concatMap, not tap: these writes have to finish before the caller is told the
+      // upload succeeded. Started as independent subscriptions they were cancelled by the
+      // navigation that the very same success triggered, silently dropping the default
+      // the user starred and the order they dragged.
+      concatMap((result) => {
         this.failedFiles.set(transientFailures);
         this.permanentFailedFiles.set(permanentFailures);
         const defaultId =
           desiredDefaultKey === undefined
             ? undefined
             : assignedIds.get(desiredDefaultKey);
-        if (defaultId !== undefined) this.persistDefault(entityId, defaultId);
-        if (result.allSucceeded && this.pendingReorder) this.flushReorder();
+
+        const followUps: Observable<void>[] = [];
+        if (defaultId !== undefined) {
+          followUps.push(this.persistDefault$(entityId, defaultId));
+        }
+        if (result.allSucceeded && this.pendingReorder) {
+          followUps.push(this.flushReorder$());
+        }
+
+        if (followUps.length === 0) return of(result);
+        return concat(...followUps).pipe(
+          toArray(),
+          map(() => result)
+        );
       }),
       finalize(() => {
         this.uploading.set(false);
@@ -405,26 +456,38 @@ export class EntityImagesPanelComponent {
     );
   }
 
-  /** Sends a default the user picked before the image had a server-side ID. */
-  private persistDefault(entityId: string | number, imageId: number): void {
+  /**
+   * Sends a default the user picked before the image had a server-side ID.
+   *
+   * Completes when the write has landed, so the upload the caller is waiting on does not
+   * report success while this is still in flight - the caller navigates away on success,
+   * and a cancelled request loses the star the user just set.
+   */
+  private persistDefault$(
+    entityId: string | number,
+    imageId: number
+  ): Observable<void> {
     const stored = this.items().find((item) => item.id === imageId);
     // The API picks the first image as the default on its own; if that is
     // already this one, there is nothing to send.
-    if (!stored || stored.isDefault) return;
+    if (!stored || stored.isDefault) return of(void 0);
 
-    this.target()
+    return this.target()
       .gateway.setDefault(entityId, imageId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () =>
+      .pipe(
+        tap(() =>
           this.items.update((items) =>
             items.map((item) => ({ ...item, isDefault: item.id === imageId }))
-          ),
-        error: () =>
+          )
+        ),
+        catchError(() => {
           this.actionError.set(
             'That photo could not be set as the default. Please try again.'
-          ),
-      });
+          );
+          return of(void 0);
+        }),
+        map(() => void 0)
+      );
   }
 
   private replaceStaged(staged: EntityImageValue, uploaded: EntityImage): void {

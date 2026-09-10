@@ -647,4 +647,127 @@ describe('EntityImagesPanelComponent', () => {
       expect(result!.allSucceeded).toBeTrue();
     });
   });
+
+  describe('deferred writes are part of the upload result', () => {
+    const url = `${api}/api/TestEntities/${ENTITY_ID}/images`;
+
+    const uploaded = (id: number, isDefault: boolean) => ({
+      id,
+      url: `u${id}`,
+      thumbnailUrl: `t${id}`,
+      isDefault,
+      displayOrder: id - 1,
+    });
+
+    // The caller navigates away the instant this emits. Reported before the set-default
+    // landed, that navigation destroyed the panel and cancelled the request, so the photo
+    // the user starred silently stayed un-starred.
+    it('does not report success until a staged default has been written', () => {
+      pickFiles(aFile('one.png'), aFile('two.png'));
+      // Star the second, which has no server-side id yet.
+      inner().onDefaultChanged(inner().items()[1]);
+
+      let result: UploadResult | undefined;
+      component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
+
+      httpMock.match(url)[0].flush(uploaded(1, true));
+      httpMock.match(url)[0].flush(uploaded(2, false));
+
+      // The uploads are done, but the star has not been sent yet.
+      expect(result).toBeUndefined();
+
+      httpMock
+        .expectOne(
+          `${api}/api/TestEntities/${ENTITY_ID}/images/2/set-as-default`
+        )
+        .flush(null);
+
+      expect(result!.allSucceeded).toBeTrue();
+      expect(inner().items()[1].isDefault).toBeTrue();
+    });
+
+    it('does not report success until a pending reorder has been written', () => {
+      pickFiles(aFile('one.png'), aFile('two.png'));
+      // Reordering while items are still staged cannot be sent, so it is held.
+      inner().onImagesReordered({ previousIndex: 1, currentIndex: 0 });
+
+      let result: UploadResult | undefined;
+      component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
+
+      // After the drag, two.png uploads first. one.png carries the star, and the server
+      // reports it as already default, so no set-default is queued and this test isolates
+      // the reorder.
+      httpMock.match(url)[0].flush(uploaded(1, false));
+      httpMock.match(url)[0].flush(uploaded(2, true));
+
+      expect(result).toBeUndefined();
+
+      httpMock
+        .expectOne(`${api}/api/TestEntities/${ENTITY_ID}/images/reorder`)
+        .flush(null);
+
+      expect(result!.allSucceeded).toBeTrue();
+    });
+
+    it('still reports success when a deferred write fails', () => {
+      pickFiles(aFile('one.png'), aFile('two.png'));
+      inner().onDefaultChanged(inner().items()[1]);
+
+      let result: UploadResult | undefined;
+      component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
+
+      httpMock.match(url)[0].flush(uploaded(1, true));
+      httpMock.match(url)[0].flush(uploaded(2, false));
+      httpMock
+        .expectOne(
+          `${api}/api/TestEntities/${ENTITY_ID}/images/2/set-as-default`
+        )
+        .flush(null, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      // The photos ARE saved; only the star is not. Blocking the save on that would
+      // strand the user on a page whose work is already committed.
+      expect(result!.allSucceeded).toBeTrue();
+      expect(inner().actionError()).toContain('default');
+    });
+  });
+
+  describe('permanently rejected files', () => {
+    const url = `${api}/api/TestEntities/${ENTITY_ID}/images`;
+
+    // The panel hides its own Retry button for these, but the parent Save button calls
+    // uploadStagedImages directly - which used to re-post bytes already known to fail.
+    it('does not re-post a file the API already refused', () => {
+      pickFiles(aFile());
+      component.uploadStagedImages(ENTITY_ID).subscribe();
+      httpMock
+        .expectOne(url)
+        .flush('nope', { status: 400, statusText: 'Bad Request' });
+
+      let result: UploadResult | undefined;
+      component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
+
+      httpMock.expectNone(url);
+      // Not re-posted, but still not a success: the caller must not navigate away and
+      // leave the user with no way to see what was dropped.
+      expect(result!.permanentFailures.length).toBe(1);
+      expect(result!.allSucceeded).toBeFalse();
+    });
+
+    it('saves cleanly once the rejected file is removed', () => {
+      pickFiles(aFile());
+      component.uploadStagedImages(ENTITY_ID).subscribe();
+      httpMock
+        .expectOne(url)
+        .flush('nope', { status: 400, statusText: 'Bad Request' });
+
+      inner().onImageDeleted(inner().items()[0]);
+
+      let result: UploadResult | undefined;
+      component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
+
+      httpMock.expectNone(url);
+      expect(result!.allSucceeded).toBeTrue();
+    });
+  });
 });

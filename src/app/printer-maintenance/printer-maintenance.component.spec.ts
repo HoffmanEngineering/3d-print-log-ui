@@ -15,6 +15,8 @@ import {
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { PrinterMaintenanceComponent } from './printer-maintenance.component';
+import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
+import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
 
 const page = (
   items: Partial<PrinterMaintenanceDto>[]
@@ -94,10 +96,19 @@ describe('PrinterMaintenanceComponent', () => {
         SharedModule,
         FormsModule,
         NoopAnimationsModule,
+        PrinterAvatarComponent,
         // The template renders app-ad for real, which needs the Adsense config.
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
       ],
       providers: [
+        // Stubbed: the real store would issue its own authenticated fetch.
+        {
+          provide: PrinterThumbnailStore,
+          useValue: jasmine.createSpyObj<PrinterThumbnailStore>(
+            'PrinterThumbnailStore',
+            ['thumbnailFor', 'invalidate', 'noteLoadFailure']
+          ),
+        },
         {
           provide: PrinterMaintenanceService,
           useValue: maintenanceService,
@@ -144,5 +155,13 @@ describe('PrinterMaintenanceComponent', () => {
     await setUp([anEntry()]);
 
     expect(component.categories).toEqual(['Nozzle', 'Belts']);
+  });
+
+  it('shows a printer avatar beside the printer name on each row', async () => {
+    await setUp([anEntry()]);
+
+    expect(
+      fixture.nativeElement.querySelector('td app-printer-avatar')
+    ).toBeTruthy();
   });
 });

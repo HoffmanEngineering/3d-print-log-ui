@@ -61,12 +61,21 @@ export class PrinterThumbnailStore {
   /** Debounces `noteLoadFailure` so a dead blob cannot become a refetch loop. */
   private failureRefreshQueued = false;
 
+  /** Collapses the many reads of one render pass into a single deferred check. */
+  private ensureQueued = false;
+
   /**
    * The signed thumbnail for one printer, or null. Reading this is what triggers the
    * fetch, so callers need no lifecycle of their own.
+   *
+   * The fetch is scheduled on a microtask rather than started inline because this is read
+   * from inside `computed()`s, and Angular forbids writing a signal during one (NG0600).
+   * Started inline it threw out of the first avatar that rendered, which took the whole
+   * print-list table down with it - the cell template never completed, so not one row
+   * appeared.
    */
   thumbnailFor(printerId: number): string | null {
-    this.ensureLoaded();
+    this.scheduleEnsureLoaded();
     return this.map().get(printerId) ?? null;
   }
 
@@ -94,6 +103,15 @@ export class PrinterThumbnailStore {
     queueMicrotask(() => {
       this.failureRefreshQueued = false;
       this.invalidate();
+    });
+  }
+
+  private scheduleEnsureLoaded(): void {
+    if (this.ensureQueued) return;
+    this.ensureQueued = true;
+    queueMicrotask(() => {
+      this.ensureQueued = false;
+      this.ensureLoaded();
     });
   }
 

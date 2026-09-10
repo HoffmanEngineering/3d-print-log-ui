@@ -1,8 +1,15 @@
 import { WritableSignal, signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
+import { AuthService } from 'src/app/core/services/auth.service';
 import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
+import { environment } from 'src/environments/environment';
 import { PrinterAvatarComponent } from './printer-avatar.component';
 
 describe('PrinterAvatarComponent', () => {
@@ -128,5 +135,64 @@ describe('PrinterAvatarComponent', () => {
     fixture.detectChanges();
 
     expect(img()).toBeNull();
+  });
+});
+
+/**
+ * The stubbed-store tests above cannot see the one failure that mattered most: reading the
+ * REAL store from inside the component's computed used to write a signal during that
+ * computed, which Angular rejects with NG0600. The error propagated out of the cell
+ * template that rendered the avatar, so the print list came up with no rows at all.
+ */
+describe('PrinterAvatarComponent with the real store', () => {
+  let fixture: ComponentFixture<PrinterAvatarComponent>;
+  let httpMock: HttpTestingController;
+
+  const url = `${environment.printLogApiUrl}/api/Printers/thumbnails`;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [PrinterAvatarComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: { loggedIn: true } },
+      ],
+    }).compileComponents();
+
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(PrinterAvatarComponent);
+    fixture.componentRef.setInput('printerId', 101);
+    fixture.componentRef.setInput('printerName', 'Living Room');
+  });
+
+  it('renders without throwing and shows the photo once the map arrives', async () => {
+    expect(() => fixture.detectChanges()).not.toThrow();
+
+    // The fetch is scheduled, not inline, so let the microtask run.
+    await Promise.resolve();
+    httpMock
+      .expectOne(url)
+      .flush([{ printerId: 101, thumbnailUrl: 'https://blob/101.webp?sig=x' }]);
+    fixture.detectChanges();
+
+    const img = fixture.debugElement.query(By.css('img'));
+    expect(img).toBeTruthy();
+    expect((img.nativeElement as HTMLImageElement).alt).toBe(
+      'Living Room photo'
+    );
+    httpMock.verify();
+  });
+
+  it('issues one request no matter how many avatars render', async () => {
+    const second = TestBed.createComponent(PrinterAvatarComponent);
+    second.componentRef.setInput('printerId', 102);
+
+    fixture.detectChanges();
+    second.detectChanges();
+    await Promise.resolve();
+
+    httpMock.expectOne(url).flush([]);
+    httpMock.verify();
   });
 });

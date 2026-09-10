@@ -24,6 +24,7 @@ import {
   FilamentPreferredDisplayResult,
   getFilamentPreferredDisplay,
 } from 'src/app/shared/utils/filament-display.utils';
+import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
 
 @Component({
   selector: 'app-print-card',
@@ -36,6 +37,7 @@ import {
     SharedModule,
     ProjectChipComponent,
     PrintStatusBadgeComponent,
+    PrinterAvatarComponent,
   ],
 })
 export class PrintCardComponent {

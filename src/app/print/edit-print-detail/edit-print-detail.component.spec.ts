@@ -1,4 +1,10 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  flush,
+  waitForAsync,
+} from '@angular/core/testing';
 
 import {
   NO_ERRORS_SCHEMA,
@@ -7,11 +13,11 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Title } from '@angular/platform-browser';
+import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import {
   PrintDetail,
   PrintService,
@@ -25,9 +31,12 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { MatSelect, MatSelectModule } from '@angular/material/select';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { PrinterService } from 'src/app/core/services/printer.service';
+import {
+  PrinterSummary,
+  PrinterService,
+} from 'src/app/core/services/printer.service';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
@@ -705,4 +714,44 @@ describe('EditPrintDetailComponent', () => {
       expect(component.saving).toBe(false);
     });
   });
+
+  // The printers have to be in the route data BEFORE the first change detection: creating
+  // the @for views afterwards makes dev mode's check-no-changes pass compare freshly
+  // created bindings against their initial undefined and report NG0100.
+  it('shows a printer avatar in each option of the printer picker', fakeAsync(() => {
+    const route = TestBed.inject(ActivatedRoute);
+    let resolved: Record<string, unknown>;
+    route.data.subscribe(
+      (data) => (resolved = data as Record<string, unknown>)
+    );
+    (route as { data: Observable<unknown> }).data = of({
+      ...resolved!,
+      printers: [
+        {
+          id: 1,
+          name: 'Voron 2.4',
+          make: 'Formbot',
+          model: 'Voron 2.4 350',
+          isActive: true,
+        },
+      ] as PrinterSummary[],
+    });
+
+    const picker = TestBed.createComponent(EditPrintDetailComponent);
+    picker.detectChanges();
+
+    (
+      picker.debugElement.query(
+        By.css('#edit-print-printer .mat-mdc-select-trigger')
+      ).nativeElement as HTMLElement
+    ).click();
+    picker.detectChanges();
+    flush();
+
+    expect(
+      document.querySelector('mat-option app-printer-avatar')
+    ).toBeTruthy();
+
+    picker.destroy();
+  }));
 });

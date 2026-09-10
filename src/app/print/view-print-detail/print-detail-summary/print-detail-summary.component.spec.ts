@@ -12,9 +12,11 @@ import {
   PrintService,
   PrintStatus,
 } from 'src/app/core/services/print.service';
+import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
 
 describe('PrintDetailSummaryComponent', () => {
   let fixture: ComponentFixture<PrintDetailSummaryComponent>;
+  let thumbnailStore: jasmine.SpyObj<PrinterThumbnailStore>;
 
   const print = {
     id: 1,
@@ -82,12 +84,23 @@ describe('PrintDetailSummaryComponent', () => {
       },
     });
 
+    thumbnailStore = jasmine.createSpyObj<PrinterThumbnailStore>(
+      'PrinterThumbnailStore',
+      ['thumbnailFor', 'invalidate', 'noteLoadFailure']
+    );
+    thumbnailStore.thumbnailFor.and.returnValue(
+      'https://blob.example/printer.webp?sig=x'
+    );
+
     await TestBed.configureTestingModule({
       imports: [PrintDetailSummaryComponent, RouterTestingModule],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: PrintService, useValue: printService },
+        // Stubbed rather than real: the store would issue its own authenticated fetch
+        // and every test here would have to drain it.
+        { provide: PrinterThumbnailStore, useValue: thumbnailStore },
       ],
       // No NO_ERRORS_SCHEMA: the rail's children are real standalone
       // components pulled in via its own imports, so the schema would suppress
@@ -341,5 +354,15 @@ describe('PrintDetailSummaryComponent', () => {
         .toBeTruthy();
       expect(target!.textContent!.trim().length).toBeGreaterThan(0);
     });
+  });
+
+  it('shows a printer avatar beside the printer name for the owner', () => {
+    expect(renderAs(true).querySelector('app-printer-avatar')).toBeTruthy();
+  });
+
+  // The store's endpoint is authenticated, so a public visitor's map is empty anyway;
+  // this keeps a printer photo off a public print page structurally as well.
+  it('shows no printer avatar to a non-owner', () => {
+    expect(renderAs(false).querySelector('app-printer-avatar')).toBeNull();
   });
 });

@@ -15,17 +15,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Observable, concat, of } from 'rxjs';
 import { catchError, finalize, map, tap, toArray } from 'rxjs/operators';
-import {
-  FilamentImage,
-  FilamentService,
-} from 'src/app/core/services/filament.service';
 import { isCordova } from 'src/app/core/utils/platform';
-import { FilamentImageComponent } from 'src/app/shared/filament-image/filament-image.component';
+import { SignedImageComponent } from 'src/app/shared/signed-image/signed-image.component';
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
+import { AnyEntityImageTarget, EntityImage } from './entity-image-gateway';
 
-export interface FilamentImageValue {
+export interface EntityImageValue {
   /** Absent while the image is staged and not yet uploaded. */
   id?: number;
   /**
@@ -46,9 +43,9 @@ export interface FilamentImageValue {
 let nextStagedKey = 1;
 
 @Component({
-  selector: 'app-filament-images-panel',
-  templateUrl: './filament-images-panel.component.html',
-  styleUrls: ['./filament-images-panel.component.scss'],
+  selector: 'app-entity-images-panel',
+  templateUrl: './entity-images-panel.component.html',
+  styleUrls: ['./entity-images-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatButtonModule,
@@ -56,25 +53,36 @@ let nextStagedKey = 1;
     MatProgressBarModule,
     ImageCarouselComponent,
     ImageThumbnailStripComponent,
-    FilamentImageComponent,
+    SignedImageComponent,
   ],
 })
-export class FilamentImagesPanelComponent {
-  private readonly filamentService = inject(FilamentService);
+export class EntityImagesPanelComponent {
   /** Picks which hidden file input the add affordances open. */
   protected readonly isCordova = isCordova;
   private readonly destroyRef = inject(DestroyRef);
 
-  filamentId = input<string | null>(null);
-  images = input<FilamentImageValue[]>([]);
   /**
-   * The API enforces the real per-tier cap (3 free, 10 pro) and exposes no
-   * client-visible field for it, so the add affordance is capped at the highest
-   * tier and an over-quota upload surfaces the API's own rejection.
+   * The entity these images belong to, and the gateway that talks to its endpoints. They
+   * arrive as one object so an ID can never be paired with the wrong gateway.
    */
-  maxImages = input(10);
+  target = input.required<AnyEntityImageTarget>();
 
-  protected readonly items = signal<FilamentImageValue[]>([]);
+  images = input<EntityImageValue[]>([]);
+
+  /**
+   * Defaults to the FREE cap. Callers bind SubscriptionService.maxImages; until that
+   * loads, promising the Pro cap would let the user stage photos the API then rejects.
+   */
+  maxImages = input(5);
+
+  /**
+   * Alt text for the large image. The carousel shows one photo of one thing, so a single
+   * label is right; callers name the subject ("Material photo", "Printer photo") because
+   * this is where it reaches the accessibility tree.
+   */
+  imageAlt = input('Photo');
+
+  protected readonly items = signal<EntityImageValue[]>([]);
   protected readonly selectedIndex = signal(0);
   protected readonly isDragOver = signal(false);
   protected readonly failedFiles = signal<File[]>([]);
@@ -104,7 +112,7 @@ export class FilamentImagesPanelComponent {
    */
   private pendingReorder = false;
   /** The ID uploads last ran against, so retry works after a create. */
-  private lastUploadFilamentId: string | null = null;
+  private lastUploadEntityId: string | number | null = null;
 
   private readonly skeleton = new DeferredSkeletonController();
   protected readonly busy = this.skeleton.visible;
@@ -123,18 +131,22 @@ export class FilamentImagesPanelComponent {
   }
 
   /** Uploads everything currently staged, resolving with the files that failed. */
-  uploadStagedImages(filamentId: string): Observable<{ failed: File[] }> {
+  uploadStagedImages(
+    entityId: string | number
+  ): Observable<{ failed: File[] }> {
     return this.uploadItems(
-      filamentId,
+      entityId,
       this.items().filter((item) => !!item.file)
     );
   }
 
   /** Re-posts only the files that failed last time, leaving newer picks alone. */
-  retryFailedUploads(filamentId: string): Observable<{ failed: File[] }> {
+  retryFailedUploads(
+    entityId: string | number
+  ): Observable<{ failed: File[] }> {
     const failed = this.failedFiles();
     return this.uploadItems(
-      filamentId,
+      entityId,
       this.items().filter((item) => !!item.file && failed.includes(item.file))
     );
   }
@@ -144,9 +156,9 @@ export class FilamentImagesPanelComponent {
     // events before the disabled attribute is painted, and each subscription
     // would POST the same file again.
     if (this.uploading()) return;
-    const filamentId = this.filamentId() ?? this.lastUploadFilamentId;
-    if (!filamentId) return;
-    this.retryFailedUploads(filamentId)
+    const entityId = this.target().id ?? this.lastUploadEntityId;
+    if (entityId === null || entityId === undefined) return;
+    this.retryFailedUploads(entityId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
   }
@@ -178,12 +190,12 @@ export class FilamentImagesPanelComponent {
     this.selectedIndex.set(index);
   }
 
-  protected onThumbnailSelected(image: FilamentImageValue): void {
+  protected onThumbnailSelected(image: EntityImageValue): void {
     const index = this.items().findIndex((item) => this.isSame(item, image));
     if (index >= 0) this.selectedIndex.set(index);
   }
 
-  protected onImageDeleted(image: FilamentImageValue): void {
+  protected onImageDeleted(image: EntityImageValue): void {
     if (image.file) {
       this.releaseObjectUrl(image.url);
       this.failedFiles.update((files) => files.filter((f) => f !== image.file));
@@ -191,13 +203,14 @@ export class FilamentImagesPanelComponent {
       return;
     }
 
-    const filamentId = this.filamentId() ?? this.lastUploadFilamentId;
-    if (!filamentId || image.id === undefined) return;
+    const entityId = this.target().id ?? this.lastUploadEntityId;
+    if (entityId === null || entityId === undefined || image.id === undefined)
+      return;
 
     this.actionError.set(null);
     this.skeleton.start();
-    this.filamentService
-      .deleteFilamentImage(filamentId, image.id)
+    this.target()
+      .gateway.delete(entityId, image.id)
       .pipe(
         finalize(() => this.skeleton.stop()),
         takeUntilDestroyed(this.destroyRef)
@@ -211,9 +224,9 @@ export class FilamentImagesPanelComponent {
       });
   }
 
-  protected onDefaultChanged(image: FilamentImageValue): void {
-    const filamentId = this.filamentId() ?? this.lastUploadFilamentId;
-    if (image.id === undefined || !filamentId) {
+  protected onDefaultChanged(image: EntityImageValue): void {
+    const entityId = this.target().id ?? this.lastUploadEntityId;
+    if (image.id === undefined || entityId === null || entityId === undefined) {
       // Staged images have no server-side identity yet; `uploadItems` replays
       // the choice once the upload assigns an ID.
       this.markDefaultLocally(image);
@@ -221,8 +234,8 @@ export class FilamentImagesPanelComponent {
     }
 
     this.actionError.set(null);
-    this.filamentService
-      .setFilamentImageAsDefault(filamentId, image.id)
+    this.target()
+      .gateway.setDefault(entityId, image.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => this.markDefaultLocally(image),
@@ -250,21 +263,25 @@ export class FilamentImagesPanelComponent {
   }
 
   /** `rollbackTo` is the order to restore if the API rejects the new one. */
-  private flushReorder(rollbackTo?: FilamentImageValue[]): void {
+  private flushReorder(rollbackTo?: EntityImageValue[]): void {
     const items = this.items();
-    const filamentId = this.filamentId() ?? this.lastUploadFilamentId;
+    const entityId = this.target().id ?? this.lastUploadEntityId;
 
     // A partial list is a 400: the endpoint validates the exact set of stored
     // IDs, so hold the order locally until every item has one.
-    if (!filamentId || items.some((item) => item.id === undefined)) {
+    if (
+      entityId === null ||
+      entityId === undefined ||
+      items.some((item) => item.id === undefined)
+    ) {
       this.pendingReorder = true;
       return;
     }
 
     this.actionError.set(null);
-    this.filamentService
-      .reorderFilamentImages(
-        filamentId,
+    this.target()
+      .gateway.reorder(
+        entityId,
         items.map((item) => item.id as number)
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -282,10 +299,10 @@ export class FilamentImagesPanelComponent {
   }
 
   private uploadItems(
-    filamentId: string,
-    targets: FilamentImageValue[]
+    entityId: string | number,
+    targets: EntityImageValue[]
   ): Observable<{ failed: File[] }> {
-    this.lastUploadFilamentId = filamentId;
+    this.lastUploadEntityId = entityId;
 
     if (targets.length === 0) {
       this.failedFiles.set([]);
@@ -305,18 +322,20 @@ export class FilamentImagesPanelComponent {
 
     return concat(
       ...targets.map((item) =>
-        this.filamentService.uploadFilamentImage(filamentId, item.file!).pipe(
-          tap((uploaded) => {
-            if (item.stagedKey !== undefined) {
-              assignedIds.set(item.stagedKey, uploaded.id);
-            }
-            this.replaceStaged(item, uploaded);
-          }),
-          catchError(() => {
-            failed.push(item.file!);
-            return of(null);
-          })
-        )
+        this.target()
+          .gateway.upload(entityId, item.file!)
+          .pipe(
+            tap((uploaded) => {
+              if (item.stagedKey !== undefined) {
+                assignedIds.set(item.stagedKey, uploaded.id);
+              }
+              this.replaceStaged(item, uploaded);
+            }),
+            catchError(() => {
+              failed.push(item.file!);
+              return of(null);
+            })
+          )
       )
     ).pipe(
       toArray(),
@@ -327,7 +346,7 @@ export class FilamentImagesPanelComponent {
           desiredDefaultKey === undefined
             ? undefined
             : assignedIds.get(desiredDefaultKey);
-        if (defaultId !== undefined) this.persistDefault(filamentId, defaultId);
+        if (defaultId !== undefined) this.persistDefault(entityId, defaultId);
         if (failed.length === 0 && this.pendingReorder) this.flushReorder();
       }),
       finalize(() => {
@@ -338,14 +357,14 @@ export class FilamentImagesPanelComponent {
   }
 
   /** Sends a default the user picked before the image had a server-side ID. */
-  private persistDefault(filamentId: string, imageId: number): void {
+  private persistDefault(entityId: string | number, imageId: number): void {
     const stored = this.items().find((item) => item.id === imageId);
     // The API picks the first image as the default on its own; if that is
     // already this one, there is nothing to send.
     if (!stored || stored.isDefault) return;
 
-    this.filamentService
-      .setFilamentImageAsDefault(filamentId, imageId)
+    this.target()
+      .gateway.setDefault(entityId, imageId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () =>
@@ -359,10 +378,7 @@ export class FilamentImagesPanelComponent {
       });
   }
 
-  private replaceStaged(
-    staged: FilamentImageValue,
-    uploaded: FilamentImage
-  ): void {
+  private replaceStaged(staged: EntityImageValue, uploaded: EntityImage): void {
     this.releaseObjectUrl(staged.url);
     this.items.update((items) =>
       items.map((item) =>
@@ -401,19 +417,19 @@ export class FilamentImagesPanelComponent {
           file,
           isDefault: items.length === 0 && offset === 0,
           displayOrder: items.length + offset,
-        } satisfies FilamentImageValue;
+        } satisfies EntityImageValue;
       });
       return [...items, ...added];
     });
   }
 
-  private markDefaultLocally(image: FilamentImageValue): void {
+  private markDefaultLocally(image: EntityImageValue): void {
     this.items.update((items) =>
       items.map((item) => ({ ...item, isDefault: this.isSame(item, image) }))
     );
   }
 
-  private removeItem(image: FilamentImageValue): void {
+  private removeItem(image: EntityImageValue): void {
     // Room has been freed, so the over-cap notice no longer describes anything.
     this.rejectedCount.set(0);
     this.items.update((items) =>
@@ -430,7 +446,7 @@ export class FilamentImagesPanelComponent {
    * Identity that survives the object copies `syncStoredImages` and every
    * `items.update` make: the stored ID once there is one, the staged key before.
    */
-  private isSame(a: FilamentImageValue, b: FilamentImageValue): boolean {
+  private isSame(a: EntityImageValue, b: EntityImageValue): boolean {
     if (a.id !== undefined || b.id !== undefined) return a.id === b.id;
     return a.stagedKey !== undefined && a.stagedKey === b.stagedKey;
   }
@@ -446,7 +462,7 @@ export class FilamentImagesPanelComponent {
    * Staged items always sort after stored ones so a reorder never sends a
    * partial ID set.
    */
-  private syncStoredImages(incoming: FilamentImageValue[]): void {
+  private syncStoredImages(incoming: EntityImageValue[]): void {
     const staged = this.items().filter((item) => !!item.file);
     const stored = [...incoming].sort(
       (a, b) => a.displayOrder - b.displayOrder

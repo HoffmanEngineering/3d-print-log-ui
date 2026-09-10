@@ -28,9 +28,28 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
 
 import { FilamentDetailComponent } from './filament-detail.component';
-import { FilamentImagesPanelComponent } from './filament-images-panel/filament-images-panel.component';
+import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
 import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
+
+/**
+ * The detail component builds its images-panel target from the service, so a spy without
+ * `imageTarget` throws on the first render. createSpyObj's object form only spies the keys
+ * it is given, hence the explicit assignment.
+ */
+function stubImageTarget(service: jasmine.SpyObj<FilamentService>): void {
+  service.imageTarget = jasmine
+    .createSpy('imageTarget')
+    .and.callFake((id: string | null) => ({
+      id,
+      gateway: jasmine.createSpyObj('EntityImageGateway', [
+        'upload',
+        'delete',
+        'reorder',
+        'setDefault',
+      ]),
+    }));
+}
 
 describe('FilamentDetailComponent', () => {
   let component: FilamentDetailComponent;
@@ -47,6 +66,7 @@ describe('FilamentDetailComponent', () => {
         updateFilament: of({} as FilamentDetail),
       }
     );
+    stubImageTarget(mockFilamentService);
 
     const mockToastrservice = jasmine.createSpyObj<ToastrService>(
       'ToastrService',
@@ -109,7 +129,7 @@ describe('FilamentDetailComponent', () => {
   });
 
   describe('staged image save flow', () => {
-    let imagesPanelStub: jasmine.SpyObj<FilamentImagesPanelComponent>;
+    let imagesPanelStub: jasmine.SpyObj<EntityImagesPanelComponent>;
     let filamentService: jasmine.SpyObj<FilamentService>;
     let toastr: jasmine.SpyObj<ToastrService>;
     let router: Router;
@@ -124,8 +144,8 @@ describe('FilamentDetailComponent', () => {
     };
 
     beforeEach(() => {
-      imagesPanelStub = jasmine.createSpyObj<FilamentImagesPanelComponent>(
-        'FilamentImagesPanelComponent',
+      imagesPanelStub = jasmine.createSpyObj<EntityImagesPanelComponent>(
+        'EntityImagesPanelComponent',
         ['uploadStagedImages', 'retryFailedUploads'],
         { hasStagedImages: jasmine.createSpy().and.returnValue(false) as never }
       );
@@ -315,6 +335,7 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
         updateFilament: of({} as FilamentDetail),
       }
     );
+    stubImageTarget(mockFilamentService);
     const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
       'success',
     ]);
@@ -494,6 +515,7 @@ describe('FilamentDetailComponent - value serialization', () => {
       addFilament: of({} as never),
       updateFilament: of({} as never),
     });
+    stubImageTarget(mockFilamentSvc);
     const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
       'success',
     ]);
@@ -717,6 +739,7 @@ describe('FilamentDetailComponent - usage panels', () => {
         updateFilament: of({} as FilamentDetail),
       }
     );
+    stubImageTarget(mockFilamentService);
     const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
       'success',
     ]);

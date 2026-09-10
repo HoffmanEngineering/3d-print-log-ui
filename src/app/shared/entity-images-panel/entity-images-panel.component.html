@@ -1,4 +1,4 @@
-<div class="filament-images-panel">
+<div class="entity-images-panel">
   <input
     #imgFileInput
     type="file"
@@ -51,9 +51,9 @@
       >
         @if (selected(); as image) {
           <div class="main-image">
-            <app-filament-image
+            <app-signed-image
               [src]="image.url ?? ''"
-              alt="Material photo"
+              [alt]="imageAlt()"
               (delete)="onImageDeleted(image)"
             />
           </div>
@@ -84,8 +84,8 @@
     <div class="upload-failures" role="alert">
       <mat-icon aria-hidden="true">info_outline</mat-icon>
       <span>
-        {{ rejectedCount() }} photo(s) were not added — this material can hold
-        at most {{ maxImages() }}.
+        {{ rejectedCount() }} photo(s) were not added — at most
+        {{ maxImages() }} can be attached here.
       </span>
     </div>
   }
@@ -101,8 +101,8 @@
     <div class="upload-failures" role="alert">
       <mat-icon aria-hidden="true">error_outline</mat-icon>
       <span>
-        {{ failedFiles().length }} photo(s) failed to upload. The material
-        itself is saved.
+        {{ failedFiles().length }} photo(s) failed to upload. Everything else
+        is saved.
       </span>
       <button
         type="button"

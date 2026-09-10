@@ -1,19 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
-import { FilamentImageComponent } from './filament-image.component';
+import { SignedImageComponent } from './signed-image.component';
 
-describe('FilamentImageComponent', () => {
-  let component: FilamentImageComponent;
-  let fixture: ComponentFixture<FilamentImageComponent>;
+describe('SignedImageComponent', () => {
+  let component: SignedImageComponent;
+  let fixture: ComponentFixture<SignedImageComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FilamentImageComponent, NoopAnimationsModule],
+      imports: [SignedImageComponent, NoopAnimationsModule],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(FilamentImageComponent);
+    fixture = TestBed.createComponent(SignedImageComponent);
     component = fixture.componentInstance;
+    // alt is required, so every test needs one; individual tests override it.
+    fixture.componentRef.setInput('alt', 'A photo');
   });
 
   it('should create', () => {
@@ -73,7 +75,7 @@ describe('FilamentImageComponent', () => {
     const emitted = spyOn(component.delete, 'emit');
     const wrapperClick = jasmine.createSpy('wrapperClick');
     fixture.nativeElement
-      .querySelector('.filament-image')
+      .querySelector('.signed-image')
       .addEventListener('click', wrapperClick);
 
     fixture.nativeElement.querySelector('.delete-btn').click();

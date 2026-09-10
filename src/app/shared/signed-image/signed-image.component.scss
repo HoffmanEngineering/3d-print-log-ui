@@ -7,7 +7,7 @@
   max-width: 100%;
 }
 
-.filament-image {
+.signed-image {
   position: relative;
   height: 100%;
   width: 100%;
@@ -16,7 +16,7 @@
   justify-content: center;
 }
 
-.filament-image img {
+.signed-image img {
   height: 100%;
   width: 100%;
   // Belt and braces: contain letterboxes to the box above, and the max-* pair
@@ -47,7 +47,7 @@
   transition: opacity 150ms ease-in-out;
 }
 
-.filament-image:hover .delete-btn,
+.signed-image:hover .delete-btn,
 .delete-btn:focus-visible {
   opacity: 1;
 }

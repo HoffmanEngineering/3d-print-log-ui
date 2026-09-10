@@ -5,7 +5,13 @@
       <span>Image unavailable</span>
     </div>
   } @else {
-    <img [src]="src()" [alt]="alt()" loading="lazy" (error)="onError()" />
+    <img
+      [src]="src()"
+      [alt]="alt()"
+      [style.object-fit]="fit()"
+      loading="lazy"
+      (error)="onError()"
+    />
   }
 
   @if (showDeleteOnHover()) {

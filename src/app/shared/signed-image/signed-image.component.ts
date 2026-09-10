@@ -31,6 +31,17 @@ export class SignedImageComponent {
    */
   alt = input.required<string>();
 
+  /**
+   * How the image fills its box. `contain` letterboxes and is right for the carousel,
+   * where the whole photo matters; `cover` crops and is right for a fixed-size list
+   * thumbnail, where a letterboxed square reads as a rendering fault.
+   *
+   * An input rather than a caller-supplied CSS override: the component's own
+   * `.signed-image img` rule ties on specificity with anything a parent can write through
+   * ::ng-deep, so which one won came down to stylesheet order.
+   */
+  fit = input<'contain' | 'cover'>('contain');
+
   showDeleteOnHover = input(false);
 
   delete = output<void>();

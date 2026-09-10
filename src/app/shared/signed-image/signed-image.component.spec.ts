@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { SignedImageComponent } from './signed-image.component';
@@ -82,5 +83,24 @@ describe('SignedImageComponent', () => {
 
     expect(emitted).toHaveBeenCalled();
     expect(wrapperClick).not.toHaveBeenCalled();
+  });
+
+  // The component's own `.signed-image img` rule ties on specificity with anything a
+  // parent writes through ::ng-deep, so a caller could not reliably override it - the
+  // printer list's square thumbnail rendered letterboxed. Inline style settles it.
+  it('letterboxes by default and crops when asked to', () => {
+    fixture.componentRef.setInput('src', 'https://blob/a.webp?sig=x');
+    fixture.componentRef.setInput('alt', 'A photo');
+    fixture.detectChanges();
+
+    const img = () =>
+      fixture.debugElement.query(By.css('img'))
+        .nativeElement as HTMLImageElement;
+    expect(img().style.objectFit).toBe('contain');
+
+    fixture.componentRef.setInput('fit', 'cover');
+    fixture.detectChanges();
+
+    expect(img().style.objectFit).toBe('cover');
   });
 });

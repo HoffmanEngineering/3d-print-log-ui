@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { PagedList } from 'src/app/core/types/paging';
 import { environment } from 'src/environments/environment';
 import {
@@ -11,6 +11,8 @@ import {
   FilamentSummary,
 } from './filament.service';
 import { PrinterCategory } from './printer-categories.service';
+import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
+import { EntityImageTarget } from '../../shared/entity-images-panel/entity-image-gateway';
 
 export interface PrinterSummary {
   id: number;
@@ -20,6 +22,8 @@ export interface PrinterSummary {
   isActive: boolean;
   wattageW?: number | null;
   printTimeInSeconds?: number | null;
+  /** Signed thumbnail of the default photo, or null when the printer has none. */
+  defaultImageThumbnailUrl?: string | null;
   category: PrinterCategory;
 }
 
@@ -54,6 +58,15 @@ export interface PrinterFilamentForSummary {
  */
 export interface PrinterSummarySimple extends PrinterSummary {
   loadedFilaments: PrinterFilamentForSummary[];
+}
+
+/** One photo attached to a printer. */
+export interface PrinterImage {
+  id: number;
+  url: string | null;
+  thumbnailUrl: string | null;
+  isDefault: boolean;
+  displayOrder: number;
 }
 
 /**
@@ -93,6 +106,9 @@ export interface PrinterDetail {
   hasHeatedBed?: boolean;
   hasHeatedChamber?: boolean;
   wattageW?: number | null;
+
+  /** Photos attached to this printer, ordered by displayOrder. */
+  images?: PrinterImage[];
 }
 
 export interface PrinterFilamentSummaryDto {
@@ -150,6 +166,7 @@ export interface AddPrinterFilamentSummaryDto {
 })
 export class PrinterService {
   private readonly baseApi = environment.printLogApiUrl;
+  private readonly thumbnailStore = inject(PrinterThumbnailStore);
 
   constructor(private http: HttpClient) {}
 
@@ -257,5 +274,78 @@ export class PrinterService {
     };
 
     return printDto;
+  }
+
+  // ----------------------------------------------------------------------------------
+  // Printer images
+  // ----------------------------------------------------------------------------------
+
+  uploadPrinterImage(printerId: number, file: File): Observable<PrinterImage> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http
+      .post<PrinterImage>(
+        `${this.baseApi}/api/Printers/${printerId}/images`,
+        formData
+      )
+      .pipe(tap(() => this.thumbnailStore.invalidate()));
+  }
+
+  deletePrinterImage(printerId: number, imageId: number): Observable<void> {
+    return this.http
+      .delete<void>(
+        `${this.baseApi}/api/Printers/${printerId}/images/${imageId}`
+      )
+      .pipe(tap(() => this.thumbnailStore.invalidate()));
+  }
+
+  /** The API requires the complete, duplicate-free set of image IDs. */
+  reorderPrinterImages(
+    printerId: number,
+    orderedImageIds: number[]
+  ): Observable<void> {
+    return this.http
+      .put<void>(
+        `${this.baseApi}/api/Printers/${printerId}/images/reorder`,
+        orderedImageIds
+      )
+      .pipe(tap(() => this.thumbnailStore.invalidate()));
+  }
+
+  setPrinterImageAsDefault(
+    printerId: number,
+    imageId: number
+  ): Observable<void> {
+    return this.http
+      .post<void>(
+        `${this.baseApi}/api/Printers/${printerId}/images/${imageId}/set-as-default`,
+        {}
+      )
+      .pipe(tap(() => this.thumbnailStore.invalidate()));
+  }
+
+  /**
+   * Adapts this service to the shape EntityImagesPanelComponent consumes.
+   *
+   * The ID and the gateway travel together so a printer ID can never be handed to another
+   * entity's endpoints. `id` is null on the create route, before the printer is saved.
+   *
+   * Every mutation invalidates the thumbnail store on the SUCCESS notification only, via
+   * `tap` in the methods above: a failed mutation must leave the cached map alone, and
+   * without invalidation an avatar keeps the old photo for up to an hour after the user
+   * changes it.
+   */
+  imageTarget(id: number | null): EntityImageTarget<number> {
+    return {
+      id,
+      gateway: {
+        upload: (entityId, file) => this.uploadPrinterImage(entityId, file),
+        delete: (entityId, imageId) =>
+          this.deletePrinterImage(entityId, imageId),
+        reorder: (entityId, ids) => this.reorderPrinterImages(entityId, ids),
+        setDefault: (entityId, imageId) =>
+          this.setPrinterImageAsDefault(entityId, imageId),
+      },
+    };
   }
 }

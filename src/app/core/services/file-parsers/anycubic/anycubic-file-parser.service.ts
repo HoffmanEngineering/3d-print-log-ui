@@ -115,29 +115,23 @@ export class AnycubicFileParserService implements GcodeNewPrintParser {
       return undefined;
     }
 
-    if (filamentType.includes('PLA')) {
-      return this.calculateWeightInMg(
-        MaterialDensities.materials.PLA,
-        filamentUsageLengthInMM,
-        filamentDiameter
-      );
-    } else if (filamentType.includes('ABS')) {
-      return this.calculateWeightInMg(
-        MaterialDensities.materials.ABS,
-        filamentUsageLengthInMM,
-        filamentDiameter
-      );
-    } else if (filamentType.includes('PETG')) {
-      return this.calculateWeightInMg(
-        MaterialDensities.materials.PETG,
-        filamentUsageLengthInMM,
-        filamentDiameter
-      );
+    const materials: Array<[string, number]> = [
+      ['PLA', MaterialDensities.materials.PLA],
+      ['ABS', MaterialDensities.materials.ABS],
+      ['PETG', MaterialDensities.materials.PETG],
+      ['Nylon', MaterialDensities.materials.Nylon],
+    ];
+
+    for (const [type, density] of materials) {
+      if (filamentType.includes(type)) {
+        return this.calculateWeightInMg(
+          density,
+          filamentUsageLengthInMM,
+          filamentDiameter
+        );
+      }
     }
 
-    // Only PLA, ABS and PETG are handled above, so anything else is unknown
-    // rather than zero. Note MaterialDensities also declares Nylon, which this
-    // chain never reaches -- see #100.
     return undefined;
   }
 

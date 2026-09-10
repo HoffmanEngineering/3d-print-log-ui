@@ -37,6 +37,13 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
     url: '**/api/printers/summary*',
     fixture: 'demo/printers-summary.json',
   },
+  // Every surface that names a printer reads this map through PrinterThumbnailStore.
+  // Without a stub the capture run fails on an unhandled /api/** request.
+  {
+    method: 'GET',
+    url: '**/api/Printers/thumbnails*',
+    fixture: 'demo/printer-thumbnails.json',
+  },
   { method: 'GET', url: '**/api/Filaments?*', fixture: 'demo/filaments.json' },
   // The add-print form offers to attach the print to a project. The demo set has
   // no projects, and an empty list is the right state for a first-print figure:

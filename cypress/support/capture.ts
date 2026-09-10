@@ -142,6 +142,23 @@ export function imagesRendered(host: string, timeout = 10000): ReadyStep {
   };
 }
 
+/**
+ * Every `<img>` under `selector` has DECODED, not merely been created.
+ *
+ * `imagesRendered` compares host and `<img>` counts, which a still-loading image
+ * already satisfies - so it cannot detect the one race that actually loses a photo
+ * from a capture. This waits on the pixels.
+ */
+export function imagesLoaded(selector: string, timeout = 10000): ReadyStep {
+  return (scope) =>
+    cy.get(`${scope} ${selector} img`, { timeout }).should(($imgs) => {
+      $imgs.each((_, img) => {
+        expect((img as HTMLImageElement).complete).to.be.true;
+        expect((img as HTMLImageElement).naturalWidth).to.be.greaterThan(0);
+      });
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Harness
 // ---------------------------------------------------------------------------

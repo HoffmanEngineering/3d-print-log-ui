@@ -28,6 +28,34 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.51.0': {
+      title: '1.51.0 - Slicer Uploader 1.2 & Setup Wizard',
+      body: `<p>
+<strong>The slicer uploader has a setup wizard</strong>! Version 1.2.0 of the Slic3r Post-Processing Uploader configures OrcaSlicer, Snapmaker Orca and Anycubic Slicer Next for you: double-click it, answer two questions, and every process profile gets a matching "- 3DPrintLog" preset that logs the print when you export. No more hunting for the post-processing scripts field.
+</p>
+<p>
+<strong>The uploader itself got smarter</strong> too. It now reads PrusaSlicer binary G-code, logs one material per filament slot on multi-color prints, picks the sharpest thumbnail, and tells you when a newer version is out. The <a href="/docs/slic3r-uploader">uploader documentation</a> has been rewritten as a step-by-step guide with screenshots.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.50.0': {
       title: '1.50.0 - Project Dates & A New Look',
       body: `<p>

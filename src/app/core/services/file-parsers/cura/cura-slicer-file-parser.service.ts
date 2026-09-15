@@ -1,32 +1,50 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { capitalize, flatMap } from 'lodash-es';
-import { GcodeNewPrintParser } from '../../gcode-file-parser.service';
 import { LoggingService } from '../../logging.service';
-import { PrintDetail, PrintStatus } from '../../print.service';
+import { PrintFilamentSummaryDto } from '../../print.service';
+import { parseCuraStyleFilamentUsage } from '../core/cura-style-filament-usage';
+import { GcodeParserBase } from '../core/gcode-parser-base';
+import { GcodeSettings, UNSPACED_COLON } from '../core/gcode-settings';
+
+const CURA_SETTING_KEYS: readonly string[] = [
+  'TIME',
+  'Filament used',
+  'Layer height',
+  'MINX',
+  'MAXZ',
+];
 
 @Injectable({
   providedIn: 'root',
 })
-export class CuraSlicerFileParserService implements GcodeNewPrintParser {
-  constructor(private readonly loggingService: LoggingService) {}
+export class CuraSlicerFileParserService extends GcodeParserBase {
+  private readonly loggingService = inject(LoggingService);
 
-  public async parse(gcode: string, fileName?: string): Promise<PrintDetail> {
-    const print: PrintDetail = {
-      ...this.getDefaultPrintDetail(),
-    };
+  readonly slicerName = 'Cura';
+  readonly settingsOptions = UNSPACED_COLON;
+  readonly settingKeys = CURA_SETTING_KEYS;
 
-    // Print Times:
-    print.estimatedPrintTimeInSeconds = this.parseEstimatedPrintTime(gcode);
-
-    const settings = this.parseSetting(gcode);
-    print.notes = settings;
-
-    // print.estimatedFilamentUsageMg = this.estimateFilamentUsageInMg(gcode);
-
-    // print.notes = this.parseSettingsIntoNotes(gcode);
-
-    return print;
+  detect(gcode: string): boolean {
+    return /Cura_SteamEngine/.test(gcode);
   }
+
+  protected buildNotes(_settings: GcodeSettings, gcode: string): string {
+    return this.parseSetting(gcode);
+  }
+
+  protected override parseEstimatedPrintTime(
+    _gcode: string,
+    settings: GcodeSettings
+  ): number | null {
+    return settings.getNumber('TIME') ?? null;
+  }
+
+  protected override getFilamentUsage(
+    settings: GcodeSettings
+  ): PrintFilamentSummaryDto[] {
+    return parseCuraStyleFilamentUsage(settings.get('Filament used'));
+  }
+
   parseSetting(gcode: string): string {
     let settings = gcode.match(/;End of Gcode(?<test>(.|\n)*)/g)?.[0];
 
@@ -322,44 +340,5 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
     }
 
     return output;
-  }
-
-  private parseEstimatedPrintTime(gcode: string) {
-    let estPrintTime: number | null = null;
-    const printTimeString = gcode.match(/TIME:(.+)$/im);
-    if (printTimeString?.[1]) {
-      estPrintTime = +printTimeString[1];
-      if (isNaN(estPrintTime)) {
-        estPrintTime = null;
-      }
-    }
-
-    return estPrintTime;
-  }
-
-  private getDefaultPrintDetail() {
-    const print: PrintDetail = {
-      id: null,
-      title: '',
-      printerId: null,
-      startDate: new Date(),
-      estimatedPrintTimeInSeconds: null,
-      estimatedFilamentUsageMg: null,
-      printTimeInSeconds: null,
-      filamentUsageMg: null,
-      filamentType: '',
-      notes: '',
-      url: '',
-      status: PrintStatus.Pending,
-      viewStatus: null,
-      images: [],
-      allowComments: null,
-      createdByUserId: null,
-      comments: [],
-      filamentUsage: [],
-      fileName: '',
-    };
-
-    return print;
   }
 }

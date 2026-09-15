@@ -33,8 +33,9 @@
     color: var(--mat-sys-primary, #3f51b5);
   }
 
-  // Animated ellipsis on the running step only.
-  &.active .label::after {
+  // Animated ellipsis on the running step only ("Done" is active and
+  // complete at once, and must not animate).
+  &.active:not(.complete) .label::after {
     display: inline-block;
     overflow: hidden;
     vertical-align: bottom;

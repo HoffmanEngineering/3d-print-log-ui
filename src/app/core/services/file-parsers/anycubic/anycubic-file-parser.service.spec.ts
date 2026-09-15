@@ -64,4 +64,13 @@ describe('AnycubicFileParserService filament estimates', () => {
       expect(service.estimateFilamentUsageInMg(gcode)).toBeUndefined();
     });
   });
+
+  it('should estimate Nylon using its configured density', () => {
+    const testGcode = `; total filament used [g] = 0.0
+; filament_type = Nylon
+; filament_diameter = 1.75
+; filament used [mm] = 1000`;
+
+    expect(service.estimateFilamentUsageInMg(testGcode)).toBe(2549);
+  });
 });

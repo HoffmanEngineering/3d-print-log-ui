@@ -27,13 +27,13 @@ describe('CuraSlicerFileParserService', () => {
       );
     });
 
-    it('should set the estimated print time to null if the gcode does not contain a TIME row', async () => {
+    it('should leave the estimated print time undefined if the gcode does not contain a TIME row', async () => {
       // const testGcode = multipleExtruderTestFile.data;
       // const expectedTimeInSeconds = 669;
       const noTimeRowGcode = 'Test; Test; Test;';
       const actualPrint = await service.parse(noTimeRowGcode);
 
-      expect(actualPrint.estimatedPrintTimeInSeconds).toBeNull();
+      expect(actualPrint.estimatedPrintTimeInSeconds).toBeUndefined();
     });
   });
 
@@ -50,6 +50,14 @@ describe('CuraSlicerFileParserService', () => {
       expect(actualPrint.filamentUsage[0].estimatedLengthInM).toBe(0.838);
       expect(actualPrint.notes).toContain('Profile:');
     });
+  });
+
+  it('degrades to an empty note when the settings block is missing', async () => {
+    const print = await service.parse(
+      ';Generated with Cura_SteamEngine 5.0\n;TIME:10\n;End of Gcode\n'
+    );
+    expect(print.notes).toBe('');
+    expect(print.estimatedPrintTimeInSeconds).toBe(10);
   });
 
   it('detects Cura by its engine marker', () => {

@@ -35,8 +35,8 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
   protected override parseEstimatedPrintTime(
     _gcode: string,
     settings: GcodeSettings
-  ): number | null {
-    return settings.getNumber('TIME') ?? null;
+  ): number | undefined {
+    return settings.getNumber('TIME');
   }
 
   protected override getFilamentUsage(
@@ -57,7 +57,10 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
 
     settings = settings.replace(/\n/gm, '');
 
-    const globalQuality = settings.match(/"global_quality": ".*?\\n\\n"/g);
+    // A Cura file with no embedded settings block (or a truncated one) has no
+    // matches; coalesce so the parser degrades to an empty note, never a throw.
+    const globalQuality =
+      settings.match(/"global_quality": ".*?\\n\\n"/g) ?? [];
 
     const globalGeneral =
       globalQuality.length > 0
@@ -66,9 +69,8 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
     const globalValues =
       globalQuality.length > 0 ? this.parseValues(globalQuality[0]) : [];
 
-    const extruderQuality = settings.match(
-      /"extruder_quality": \[.*?\\n\\n\"\](,|})/g
-    );
+    const extruderQuality =
+      settings.match(/"extruder_quality": \[.*?\\n\\n\"\](,|})/g) ?? [];
 
     const extruderGeneral =
       extruderQuality.length > 0
@@ -287,7 +289,7 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
     // console.log('Parse General', valueRegex);
 
     const result = [];
-    for (const value of valueRegex) {
+    for (const value of valueRegex ?? []) {
       let valueString = value.replace('[general]\\n', '');
       valueString = valueString.replace('\\n[', '');
       // console.log('General String', valueString);
@@ -308,7 +310,7 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
     // console.log('Parse Values', valueRegex);
 
     const result = [];
-    for (const value of valueRegex) {
+    for (const value of valueRegex ?? []) {
       let valueString = value.replace('[values]\\n', '');
       valueString = valueString.replace('\\n\\n"', '');
       // console.log('Value String', valueString);

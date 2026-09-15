@@ -63,6 +63,22 @@ interface ViewerMessage {
 export type ViewerStep = 'reading' | 'analyzing' | 'done';
 
 /**
+ * The worker keys filamentByExtruder by the extrusion axis letter it saw
+ * (Worker.js: 'e', then 'a'/'b'/'c' for multi-axis firmware), not by tool
+ * number. Map those to 0-based slots; a numeric key is passed through.
+ */
+const EXTRUDER_AXIS_SLOT: Record<string, number> = { e: 0, a: 1, b: 2, c: 3 };
+
+function extruderSlot(key: string): number | undefined {
+  const byAxis = EXTRUDER_AXIS_SLOT[key.toLowerCase()];
+  if (byAxis !== undefined) {
+    return byAxis;
+  }
+  const numeric = Number(key);
+  return Number.isInteger(numeric) && numeric >= 0 ? numeric : undefined;
+}
+
+/**
  * Last-resort parser: runs hudbrog's gCodeViewer in a hidden iframe to
  * estimate a print from the toolpath when no slicer parser recognized the
  * file. Time is a floor (no acceleration model) and settings are geometry only.
@@ -215,8 +231,8 @@ export class GcodeViewerModalComponent implements AfterViewInit {
    */
   private filamentUsageFrom(info: ModelInfo): PrintFilamentSummaryDto[] {
     const byExtruder = Object.entries(info.filamentByExtruder ?? {})
-      .map(([extruder, mm]) => ({ extruder: +extruder, mm }))
-      .filter((slot) => slot.mm > 0)
+      .map(([key, mm]) => ({ extruder: extruderSlot(key), mm }))
+      .filter((slot) => slot.extruder !== undefined && slot.mm > 0)
       .sort((a, b) => a.extruder - b.extruder);
 
     const slots =

@@ -19,7 +19,7 @@ export class BambuStudioFileParserService extends GcodeParserBase {
   readonly settingKeys = ORCA_FAMILY_SETTING_KEYS;
 
   detect(gcode: string): boolean {
-    return /; BambuStudio /.test(gcode);
+    return /^\s*; BambuStudio /m.test(gcode);
   }
 
   protected buildNotes(settings: GcodeSettings, gcode: string): string {

@@ -73,7 +73,8 @@ describe('GcodeViewerModalComponent', () => {
         data: {
           printTime: '1234.6',
           totalFilament: 1500,
-          filamentByExtruder: { 0: 1000, 1: 0, 2: 500 },
+          // Real worker payload: keyed by extrusion axis letter, not tool.
+          filamentByExtruder: { e: 1000, a: 0, b: 500 },
           layerCnt: 42,
           layerHeight: 0.2,
           modelSize: { x: 10, y: 20.5, z: 8.4 },

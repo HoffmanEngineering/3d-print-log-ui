@@ -16,6 +16,13 @@ import { trimGcodeWindow } from './gcode-window';
  */
 export const HEURISTIC_MATCH_THRESHOLD = 0.25;
 
+/**
+ * A parser with few fingerprint keys clears the fraction on a single generic
+ * header line (";FLAVOR:Marlin" alone is 1/4 of Creality's), so a match also
+ * needs at least this many resolved keys.
+ */
+export const HEURISTIC_MIN_KEY_HITS = 2;
+
 export type ParserConfidence = 'detected' | 'heuristic' | 'none';
 
 export interface ResolvedParser {
@@ -31,15 +38,17 @@ export interface ResolvedParser {
 export class SlicerRegistry {
   /**
    * Order matters: it is the detection order, and the heuristic resolves ties
-   * in favor of the earlier entry (so Orca wins over Bambu, which shares its keys).
+   * in favor of the earlier entry. Orca wins over Bambu, which shares its keys;
+   * Cura comes before Creality Print (a Cura fork) because its parser is the
+   * more general of the two for a marker-less file.
    */
   readonly parsers: readonly GcodeParserBase[] = [
     inject(OrcaFileParserService),
     inject(BambuStudioFileParserService),
     inject(PrusaSlicerFileParserService),
-    inject(CrealityPrintFileParserService),
     inject(AnycubicFileParserService),
     inject(CuraSlicerFileParserService),
+    inject(CrealityPrintFileParserService),
   ];
 
   getSupportedSlicerNames(): string[] {
@@ -56,7 +65,8 @@ export class SlicerRegistry {
 
     // Parsers differ only in separator style, so index once per distinct style.
     const settingsByStyle = new Map<string, GcodeSettings>();
-    let best: { parser: GcodeParserBase; score: number } | null = null;
+    let best: { parser: GcodeParserBase; score: number; hits: number } | null =
+      null;
 
     for (const parser of this.parsers) {
       const styleKey = `${parser.settingsOptions.separators}|${parser.settingsOptions.spaced}`;
@@ -66,13 +76,18 @@ export class SlicerRegistry {
         settingsByStyle.set(styleKey, settings);
       }
       const score = parser.score(settings);
+      const hits = parser.settingKeys.filter((key) => settings.has(key)).length;
       // Strict > keeps the earlier entry on a tie.
       if (!best || score > best.score) {
-        best = { parser, score };
+        best = { parser, score, hits };
       }
     }
 
-    if (best && best.score >= HEURISTIC_MATCH_THRESHOLD) {
+    if (
+      best &&
+      best.score >= HEURISTIC_MATCH_THRESHOLD &&
+      best.hits >= HEURISTIC_MIN_KEY_HITS
+    ) {
       return {
         parser: best.parser,
         confidence: 'heuristic',

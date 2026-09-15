@@ -1,19 +1,26 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   HostListener,
-  Inject,
   ViewChild,
+  computed,
+  inject,
+  signal,
 } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { capitalize, snakeCase } from 'lodash-es';
+import { lastValueFrom } from 'rxjs';
 import {
-  EMPTY_GUID,
+  createDefaultPrintDetail,
+  getTitleFromFileName,
+  OTHER_FILAMENT,
+} from 'src/app/core/services/file-parsers/core/print-detail-defaults';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
-  PrintStatus,
+  PrintFilamentSummaryDto,
 } from 'src/app/core/services/print.service';
 import {
   PrinterDetail,
@@ -23,7 +30,6 @@ import {
   UserSettingService,
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
-import { SimpleDialogComponent } from '../simple-dialog/simple-dialog.component';
 
 export interface DialogData {
   gcode: string;
@@ -38,36 +44,79 @@ export enum Actions {
   MODEL_INFO = 'MODEL_INFO',
 }
 
+/** What the gcode-viewer worker reports in MODEL_INFO (the fields we read). */
+interface ModelInfo {
+  printTime?: number | string;
+  totalFilament?: number;
+  filamentByExtruder?: Record<string, number>;
+  layerCnt?: number;
+  layerHeight?: number;
+  modelSize?: { x: number; y: number; z: number };
+  max?: { speed?: number };
+  min?: { speed?: number };
+}
+
+interface ViewerMessage {
+  data: { type: string; progress?: number; data?: ModelInfo };
+}
+
+export type ViewerStep = 'reading' | 'analyzing' | 'done';
+
+/**
+ * Last-resort parser: runs hudbrog's gCodeViewer in a hidden iframe to
+ * estimate a print from the toolpath when no slicer parser recognized the
+ * file. Time is a floor (no acceleration model) and settings are geometry only.
+ */
 @Component({
   selector: 'app-gcode-viewer-modal',
   templateUrl: './gcode-viewer-modal.component.html',
   styleUrls: ['./gcode-viewer-modal.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GcodeViewerModalComponent implements AfterViewInit {
-  @ViewChild('iframe') iframe: ElementRef;
+  @ViewChild('iframe') iframe: ElementRef<HTMLIFrameElement>;
 
-  public loadingProgress = 0;
-  public analyzingProgress = 0;
+  readonly dialogRef =
+    inject<MatDialogRef<GcodeViewerModalComponent>>(MatDialogRef);
+  readonly data = inject<DialogData>(MAT_DIALOG_DATA);
+  private readonly userSettingService = inject(UserSettingService);
+  private readonly printerService = inject(PrinterService);
+  private readonly loggingService = inject(LoggingService);
 
-  public lastSelectedPrinter: PrinterDetail = null;
+  readonly loadingProgress = signal(0);
+  readonly analyzingProgress = signal(0);
+  readonly overallProgress = computed(
+    () => this.loadingProgress() / 2 + this.analyzingProgress() / 2
+  );
+  readonly step = computed<ViewerStep>(() => {
+    if (this.analyzingProgress() >= 100) return 'done';
+    if (this.analyzingProgress() > 0 || this.loadingProgress() >= 100) {
+      return 'analyzing';
+    }
+    return 'reading';
+  });
+
+  private lastSelectedPrinter: PrinterDetail | null = null;
+
+  constructor() {
+    this.loggingService.logEvent('GcodeViewerModal_Opened', {
+      fileSize: this.data.gcode?.length ?? 0,
+    });
+  }
 
   @HostListener('window:message', ['$event'])
-  public async onMessage(e) {
-    const type = e.data.type;
-
-    switch (type) {
-      case Actions.GCODE_PARSER_INIT:
+  public async onMessage(e: ViewerMessage) {
+    switch (e.data.type) {
+      case Actions.GCODE_PARSER_INIT: {
         const lastSelectedPrinterId =
           +(await this.getLastSelectedPrinter())?.value || null;
-
         if (lastSelectedPrinterId) {
           this.lastSelectedPrinter = await lastValueFrom(
             this.printerService.getPrinterDetail(lastSelectedPrinterId)
           );
         }
-
-        const action = {
+        this.sendMessage({
           type: Actions.START_LOAD_GCODE,
           gcode: this.data.gcode,
           options: {
@@ -79,82 +128,57 @@ export class GcodeViewerModalComponent implements AfterViewInit {
               ? 'ABS'
               : 'PLA',
           },
-        };
-
-        this.sendMessage(action);
+        });
         break;
-      case Actions.MODEL_INFO:
-        const detail = this.parseModelInfoToPrintDetail(e.data.data);
-
-        if (this.lastSelectedPrinter) {
-          detail.printerId = this.lastSelectedPrinter.id;
-        }
-
-        if (this.data.fileName) {
-          detail.fileName = this.data.fileName;
-          detail.title = (snakeCase(this.data.fileName) as string)
-            .split('_')
-            .filter((segment) => segment.toLocaleLowerCase() !== 'gcode')
-            .map((s) => capitalize(s))
-            .join(' ');
-        }
-
-        this.dialogRef.close(detail);
+      }
+      case Actions.MODEL_INFO: {
+        this.analyzingProgress.set(100);
+        this.dialogRef.close(
+          this.parseModelInfoToPrintDetail(e.data.data ?? {})
+        );
         break;
+      }
       case Actions.SET_LOAD_PROGRESS:
-        this.loadingProgress = e.data.progress;
+        this.loadingProgress.set(e.data.progress ?? 0);
         break;
-      case Actions.SET_ANALYZE_PROGRESS:
-        const progress = e.data.progress;
-
+      case Actions.SET_ANALYZE_PROGRESS: {
+        const progress = e.data.progress ?? 0;
         if (progress > 0) {
-          this.loadingProgress = 100;
+          this.loadingProgress.set(100);
         }
-        this.analyzingProgress = progress;
+        this.analyzingProgress.set(progress);
         break;
+      }
     }
   }
 
-  constructor(
-    public dialogRef: MatDialogRef<SimpleDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData,
-    private readonly userSettingService: UserSettingService,
-    private readonly printerService: PrinterService
-  ) {}
+  cancel() {
+    this.loggingService.logEvent('GcodeViewerModal_Cancelled');
+    this.dialogRef.close(false);
+  }
 
   ngAfterViewInit() {
-    let content = `<html>
-         <head>
-             <h1>Hello world</h1>
-             <script type="text/javascript" src="assets/js/gcode-viewer/ui.js"></script>
-             <script type="text/javascript" src="assets/js/gcode-viewer/gCodeReader.js"></script>
-             <script type="text/javascript" src="assets/js/gcode-viewer/renderer.js"></script>
-             <script type="text/javascript" src="assets/js/gcode-viewer/analyzer.js"></script>
-             <script type="text/javascript" src="assets/js/gcode-viewer/adapter.js"></script>
-          </head>
-            <body>
-            <canvas id="canvas" width="650" height="620"></canvas>
-             <script>
-             GCODE.ui.initHandlers();
-            </script>
-            <script>
-              GCODE.ui.initHandlers();
-          </script>
-        </body>
-      </html>`;
-    let doc =
-      this.iframe.nativeElement.contentDocument ||
-      this.iframe.nativeElement.contentWindow;
+    const content = `<html>
+  <head>
+    <script type="text/javascript" src="assets/js/gcode-viewer/ui.js"></script>
+    <script type="text/javascript" src="assets/js/gcode-viewer/gCodeReader.js"></script>
+    <script type="text/javascript" src="assets/js/gcode-viewer/renderer.js"></script>
+    <script type="text/javascript" src="assets/js/gcode-viewer/analyzer.js"></script>
+    <script type="text/javascript" src="assets/js/gcode-viewer/adapter.js"></script>
+  </head>
+  <body>
+    <canvas id="canvas" width="650" height="620"></canvas>
+    <script>GCODE.ui.initHandlers();</script>
+  </body>
+</html>`;
+    const doc = this.iframe.nativeElement.contentDocument;
     doc.open();
     doc.write(content);
     doc.close();
   }
 
-  private sendMessage(action) {
-    (this.iframe.nativeElement as HTMLIFrameElement).contentWindow.postMessage(
-      action,
-      '*'
-    );
+  private sendMessage(action: unknown) {
+    this.iframe.nativeElement.contentWindow.postMessage(action, '*');
   }
 
   private getLastSelectedPrinter() {
@@ -162,82 +186,83 @@ export class GcodeViewerModalComponent implements AfterViewInit {
       UserSettingType.Prints_LastSelectedPrinterId
     );
   }
-  private parseModelInfoToPrintDetail(info: any): PrintDetail {
-    const print: PrintDetail = {
-      ...this.getDefaultPrintDetail(),
-    };
+
+  private parseModelInfoToPrintDetail(info: ModelInfo): PrintDetail {
+    const print = createDefaultPrintDetail();
 
     if (info.printTime) {
-      print.estimatedPrintTimeInSeconds = parseInt(info.printTime, 10);
+      print.estimatedPrintTimeInSeconds = parseInt(String(info.printTime), 10);
     }
 
-    if (info.totalFilament) {
-      const filamentInMeters = +(info.totalFilament / 1000).toFixed(2);
+    print.filamentUsage = this.filamentUsageFrom(info);
+    print.notes = this.buildNotes(info);
 
-      print.filamentUsage = [
-        {
-          id: EMPTY_GUID,
-          filament: this.lastSelectedPrinter?.loadedFilaments?.[0]?.filament,
-          source: PrintFilamentSourceMeasurement.Length,
-          estimatedSource: PrintFilamentSourceMeasurement.Length,
-          estimatedLengthInM: filamentInMeters,
-        },
-      ];
+    if (this.lastSelectedPrinter) {
+      print.printerId = this.lastSelectedPrinter.id;
     }
-
-    print.notes = this.parseNotes(info);
+    if (this.data.fileName) {
+      print.fileName = this.data.fileName;
+      print.title = getTitleFromFileName(this.data.fileName);
+    }
 
     return print;
   }
-  private parseNotes(info: any): string {
-    let notes = '';
 
-    if (info.layerCnt) {
-      notes += `  Layers: ${info.layerCnt.toFixed(0)}\n`;
-    }
+  /**
+   * One row per extruder that extruded anything. Slot 1 gets the last used
+   * printer's first loaded filament (the common single-extruder case); the
+   * rest get "Other" for the user to pick.
+   */
+  private filamentUsageFrom(info: ModelInfo): PrintFilamentSummaryDto[] {
+    const byExtruder = Object.entries(info.filamentByExtruder ?? {})
+      .map(([extruder, mm]) => ({ extruder: +extruder, mm }))
+      .filter((slot) => slot.mm > 0)
+      .sort((a, b) => a.extruder - b.extruder);
 
-    if (info.layerHeight && info.layerHeight > 0) {
-      notes += `  Layer Height: ${parseFloat(info.layerHeight).toFixed(2)}mm\n`;
-    }
+    const slots =
+      byExtruder.length > 0
+        ? byExtruder
+        : info.totalFilament > 0
+          ? [{ extruder: 0, mm: info.totalFilament }]
+          : [];
 
-    if (info.modelSize) {
-      notes += `  Model Size:\n`;
-      notes += `    X: ${info.modelSize.x.toFixed(2)}mm\n`;
-      notes += `    Y: ${info.modelSize.y.toFixed(2)}mm\n`;
-      notes += `    Z: ${info.modelSize.z.toFixed(2)}mm\n`;
-    }
+    const firstLoaded =
+      this.lastSelectedPrinter?.loadedFilaments?.[0]?.filament;
 
-    // Add Header
-    if (notes !== '') {
-      notes = 'Settings:\n' + notes;
-    }
-
-    return notes;
-  }
-
-  private getDefaultPrintDetail() {
-    const print: PrintDetail = {
+    return slots.map((slot, i) => ({
       id: null,
-      title: '',
-      printerId: null,
-      startDate: new Date(),
-      estimatedPrintTimeInSeconds: null,
-      estimatedFilamentUsageMg: null,
-      printTimeInSeconds: null,
-      filamentUsageMg: null,
-      filamentType: '',
-      notes: '',
-      url: '',
-      fileName: '',
-      status: PrintStatus.Pending,
-      viewStatus: null,
-      images: [],
-      allowComments: null,
-      createdByUserId: null,
-      comments: [],
-      filamentUsage: [],
-    };
+      filament: i === 0 && firstLoaded ? firstLoaded : OTHER_FILAMENT,
+      source: PrintFilamentSourceMeasurement.Length,
+      estimatedSource: PrintFilamentSourceMeasurement.Length,
+      estimatedLengthInM: +(slot.mm / 1000).toFixed(2),
+      notes: `Slot ${slot.extruder + 1}`,
+    }));
+  }
 
-    return print;
+  private buildNotes(info: ModelInfo): string {
+    const lines = [
+      'Source: G-code toolpath analysis (slicer not recognized)',
+      'Estimated time is a floor — actual time is typically 15–40% longer.',
+    ];
+    if (info.layerCnt) {
+      lines.push(`  Layers: ${info.layerCnt.toFixed(0)}`);
+    }
+    if (info.layerHeight > 0) {
+      lines.push(`  Layer Height: ${info.layerHeight.toFixed(2)}mm`);
+    }
+    if (info.modelSize) {
+      const { x, y, z } = info.modelSize;
+      lines.push(
+        `  Model Size: ${x.toFixed(2)} x ${y.toFixed(2)} x ${z.toFixed(2)}mm`
+      );
+    }
+    // Feedrates are mm/min in gcode; show mm/s.
+    if (info.max?.speed > 0) {
+      const min = info.min?.speed > 0 ? info.min.speed : info.max.speed;
+      lines.push(
+        `  Print Speed: ${Math.round(min / 60)}–${Math.round(info.max.speed / 60)} mm/s`
+      );
+    }
+    return lines.join('\n');
   }
 }

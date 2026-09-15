@@ -12,17 +12,7 @@ import { capitalize, snakeCase } from 'lodash-es';
 import { OrcaFileParserService } from './file-parsers/orca/orca-file-parser.service';
 import { AnycubicFileParserService } from './file-parsers/anycubic/anycubic-file-parser.service';
 
-/**
- * Parses Gcode text into a new PrintDetail object
- */
-export interface GcodeNewPrintParser {
-  /**
-   * Parse PrintDetails from gcode
-   * @param gcode The contents of a gcode file
-   * @param fileName Optional file name of the gcode file
-   */
-  parse(gcode: string, fileName?: string): Promise<PrintDetail>;
-}
+export type { GcodeNewPrintParser } from './file-parsers/core/gcode-new-print-parser';
 
 export enum SupportedGcodeParserSlicers {
   PrusaSlicer = 'Prusa Slicer',

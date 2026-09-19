@@ -161,7 +161,7 @@ export abstract class GcodeParserBase implements GcodeNewPrintParser {
     const density =
       settings.getNumberList('filament_density')[0] ||
       densityForMaterialType(settings.getStringList('filament_type')[0] ?? '');
-    if (!(density > 0)) {
+    if (density === undefined || !(density > 0)) {
       return undefined;
     }
     return this.calculateWeightInMg(density, lengthMm, diameter);

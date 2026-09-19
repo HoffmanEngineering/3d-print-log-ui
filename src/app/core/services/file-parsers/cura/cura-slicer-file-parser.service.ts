@@ -59,25 +59,23 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
 
     // A Cura file with no embedded settings block (or a truncated one) has no
     // matches; coalesce so the parser degrades to an empty note, never a throw.
-    const globalQuality =
-      settings.match(/"global_quality": ".*?\\n\\n"/g) ?? [];
+    const globalQuality = settings.match(/"global_quality": ".*?\\n\\n"/g)?.[0];
 
-    const globalGeneral =
-      globalQuality.length > 0
-        ? this.parseGeneralSection(globalQuality[0])
-        : [];
-    const globalValues =
-      globalQuality.length > 0 ? this.parseValues(globalQuality[0]) : [];
+    const globalGeneral = globalQuality
+      ? this.parseGeneralSection(globalQuality)
+      : [];
+    const globalValues = globalQuality ? this.parseValues(globalQuality) : [];
 
-    const extruderQuality =
-      settings.match(/"extruder_quality": \[.*?\\n\\n\"\](,|})/g) ?? [];
+    const extruderQuality = settings.match(
+      /"extruder_quality": \[.*?\\n\\n\"\](,|})/g
+    )?.[0];
 
-    const extruderGeneral =
-      extruderQuality.length > 0
-        ? this.parseGeneralSection(extruderQuality[0])
-        : [];
-    const extruderValues =
-      extruderQuality.length > 0 ? this.parseValues(extruderQuality[0]) : [];
+    const extruderGeneral = extruderQuality
+      ? this.parseGeneralSection(extruderQuality)
+      : [];
+    const extruderValues = extruderQuality
+      ? this.parseValues(extruderQuality)
+      : [];
 
     if (extruderValues.length === 1) {
       // There is only one extruder
@@ -101,10 +99,10 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
       this.loggingService.logTrace('Problem while parsing Cura Code', {
         gcodeLength: gcode.length,
         settingSectionLength: settings.length,
-        globalQualityLength: globalQuality.length,
+        globalQualityLength: globalQuality?.length ?? 0,
         globalGeneralLength: globalGeneral.length,
         globalValueLength: globalValues.length,
-        extruderQualityLength: extruderQuality.length,
+        extruderQualityLength: extruderQuality?.length ?? 0,
         extruderGeneralLength: extruderGeneral.length,
         extruderValuesLength: extruderValues.length,
       });
@@ -288,7 +286,7 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
 
     // console.log('Parse General', valueRegex);
 
-    const result = [];
+    const result: Array<{ [key: string]: string }> = [];
     for (const value of valueRegex ?? []) {
       let valueString = value.replace('[general]\\n', '');
       valueString = valueString.replace('\\n[', '');
@@ -309,7 +307,7 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
 
     // console.log('Parse Values', valueRegex);
 
-    const result = [];
+    const result: Array<{ [key: string]: string }> = [];
     for (const value of valueRegex ?? []) {
       let valueString = value.replace('[values]\\n', '');
       valueString = valueString.replace('\\n\\n"', '');
@@ -332,8 +330,8 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
   private createKeyValuePairs(valueString: string): { [key: string]: string } {
     const kvpRegex = /(?<key>.*?) = (?<value>.*?)\\n/g;
 
-    let matches: any[];
-    const output = {};
+    let matches: RegExpExecArray | null;
+    const output: { [key: string]: string } = {};
 
     // eslint-disable-next-line
     while ((matches = kvpRegex.exec(valueString)) !== null) {

@@ -1,32 +1,50 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { capitalize, flatMap } from 'lodash-es';
-import { GcodeNewPrintParser } from '../../gcode-file-parser.service';
 import { LoggingService } from '../../logging.service';
-import { PrintDetail, PrintStatus } from '../../print.service';
+import { PrintFilamentSummaryDto } from '../../print.service';
+import { parseCuraStyleFilamentUsage } from '../core/cura-style-filament-usage';
+import { GcodeParserBase } from '../core/gcode-parser-base';
+import { GcodeSettings, UNSPACED_COLON } from '../core/gcode-settings';
+
+const CURA_SETTING_KEYS: readonly string[] = [
+  'TIME',
+  'Filament used',
+  'Layer height',
+  'MINX',
+  'MAXZ',
+];
 
 @Injectable({
   providedIn: 'root',
 })
-export class CuraSlicerFileParserService implements GcodeNewPrintParser {
-  constructor(private readonly loggingService: LoggingService) {}
+export class CuraSlicerFileParserService extends GcodeParserBase {
+  private readonly loggingService = inject(LoggingService);
 
-  public async parse(gcode: string, fileName?: string): Promise<PrintDetail> {
-    const print: PrintDetail = {
-      ...this.getDefaultPrintDetail(),
-    };
+  readonly slicerName = 'Cura';
+  readonly settingsOptions = UNSPACED_COLON;
+  readonly settingKeys = CURA_SETTING_KEYS;
 
-    // Print Times:
-    print.estimatedPrintTimeInSeconds = this.parseEstimatedPrintTime(gcode);
-
-    const settings = this.parseSetting(gcode);
-    print.notes = settings;
-
-    // print.estimatedFilamentUsageMg = this.estimateFilamentUsageInMg(gcode);
-
-    // print.notes = this.parseSettingsIntoNotes(gcode);
-
-    return print;
+  detect(gcode: string): boolean {
+    return /Cura_SteamEngine/.test(gcode);
   }
+
+  protected buildNotes(_settings: GcodeSettings, gcode: string): string {
+    return this.parseSetting(gcode);
+  }
+
+  protected override parseEstimatedPrintTime(
+    _gcode: string,
+    settings: GcodeSettings
+  ): number | undefined {
+    return settings.getNumber('TIME');
+  }
+
+  protected override getFilamentUsage(
+    settings: GcodeSettings
+  ): PrintFilamentSummaryDto[] {
+    return parseCuraStyleFilamentUsage(settings.get('Filament used'));
+  }
+
   parseSetting(gcode: string): string {
     let settings = gcode.match(/;End of Gcode(?<test>(.|\n)*)/g)?.[0];
 
@@ -39,25 +57,25 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
 
     settings = settings.replace(/\n/gm, '');
 
-    const globalQuality = settings.match(/"global_quality": ".*?\\n\\n"/g);
+    // A Cura file with no embedded settings block (or a truncated one) has no
+    // matches; coalesce so the parser degrades to an empty note, never a throw.
+    const globalQuality = settings.match(/"global_quality": ".*?\\n\\n"/g)?.[0];
 
-    const globalGeneral =
-      globalQuality.length > 0
-        ? this.parseGeneralSection(globalQuality[0])
-        : [];
-    const globalValues =
-      globalQuality.length > 0 ? this.parseValues(globalQuality[0]) : [];
+    const globalGeneral = globalQuality
+      ? this.parseGeneralSection(globalQuality)
+      : [];
+    const globalValues = globalQuality ? this.parseValues(globalQuality) : [];
 
     const extruderQuality = settings.match(
       /"extruder_quality": \[.*?\\n\\n\"\](,|})/g
-    );
+    )?.[0];
 
-    const extruderGeneral =
-      extruderQuality.length > 0
-        ? this.parseGeneralSection(extruderQuality[0])
-        : [];
-    const extruderValues =
-      extruderQuality.length > 0 ? this.parseValues(extruderQuality[0]) : [];
+    const extruderGeneral = extruderQuality
+      ? this.parseGeneralSection(extruderQuality)
+      : [];
+    const extruderValues = extruderQuality
+      ? this.parseValues(extruderQuality)
+      : [];
 
     if (extruderValues.length === 1) {
       // There is only one extruder
@@ -81,10 +99,10 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
       this.loggingService.logTrace('Problem while parsing Cura Code', {
         gcodeLength: gcode.length,
         settingSectionLength: settings.length,
-        globalQualityLength: globalQuality.length,
+        globalQualityLength: globalQuality?.length ?? 0,
         globalGeneralLength: globalGeneral.length,
         globalValueLength: globalValues.length,
-        extruderQualityLength: extruderQuality.length,
+        extruderQualityLength: extruderQuality?.length ?? 0,
         extruderGeneralLength: extruderGeneral.length,
         extruderValuesLength: extruderValues.length,
       });
@@ -268,8 +286,8 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
 
     // console.log('Parse General', valueRegex);
 
-    const result = [];
-    for (const value of valueRegex) {
+    const result: Array<{ [key: string]: string }> = [];
+    for (const value of valueRegex ?? []) {
       let valueString = value.replace('[general]\\n', '');
       valueString = valueString.replace('\\n[', '');
       // console.log('General String', valueString);
@@ -289,8 +307,8 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
 
     // console.log('Parse Values', valueRegex);
 
-    const result = [];
-    for (const value of valueRegex) {
+    const result: Array<{ [key: string]: string }> = [];
+    for (const value of valueRegex ?? []) {
       let valueString = value.replace('[values]\\n', '');
       valueString = valueString.replace('\\n\\n"', '');
       // console.log('Value String', valueString);
@@ -312,8 +330,8 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
   private createKeyValuePairs(valueString: string): { [key: string]: string } {
     const kvpRegex = /(?<key>.*?) = (?<value>.*?)\\n/g;
 
-    let matches: any[];
-    const output = {};
+    let matches: RegExpExecArray | null;
+    const output: { [key: string]: string } = {};
 
     // eslint-disable-next-line
     while ((matches = kvpRegex.exec(valueString)) !== null) {
@@ -322,44 +340,5 @@ export class CuraSlicerFileParserService implements GcodeNewPrintParser {
     }
 
     return output;
-  }
-
-  private parseEstimatedPrintTime(gcode: string) {
-    let estPrintTime: number | null = null;
-    const printTimeString = gcode.match(/TIME:(.+)$/im);
-    if (printTimeString?.[1]) {
-      estPrintTime = +printTimeString[1];
-      if (isNaN(estPrintTime)) {
-        estPrintTime = null;
-      }
-    }
-
-    return estPrintTime;
-  }
-
-  private getDefaultPrintDetail() {
-    const print: PrintDetail = {
-      id: null,
-      title: '',
-      printerId: null,
-      startDate: new Date(),
-      estimatedPrintTimeInSeconds: null,
-      estimatedFilamentUsageMg: null,
-      printTimeInSeconds: null,
-      filamentUsageMg: null,
-      filamentType: '',
-      notes: '',
-      url: '',
-      status: PrintStatus.Pending,
-      viewStatus: null,
-      images: [],
-      allowComments: null,
-      createdByUserId: null,
-      comments: [],
-      filamentUsage: [],
-      fileName: '',
-    };
-
-    return print;
   }
 }

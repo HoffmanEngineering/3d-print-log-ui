@@ -1,121 +1,61 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
-
 import { PrintDetail } from 'src/app/core/services/print.service';
 import { GcodeViewerModalComponent } from 'src/app/shared/gcode-viewer-modal/gcode-viewer-modal.component';
 import { ParserUnavailableDialogComponent } from 'src/app/shared/parser-unavailable-dialog/parser-unavailable-dialog.component';
-import { PrusaSlicerFileParserService } from './file-parsers/prusa/prusa-slicer-file-parser.service';
+import { SlicerRegistry } from './file-parsers/core/slicer-registry';
 import { LoggingService } from './logging.service';
-import { CrealityPrintFileParserService } from './file-parsers/creality-print/creality-print-file-parser.service';
-import { capitalize, snakeCase } from 'lodash-es';
-import { OrcaFileParserService } from './file-parsers/orca/orca-file-parser.service';
-import { AnycubicFileParserService } from './file-parsers/anycubic/anycubic-file-parser.service';
+
+export type { GcodeNewPrintParser } from './file-parsers/core/gcode-new-print-parser';
 
 /**
- * Parses Gcode text into a new PrintDetail object
+ * Front door for "Add Print From Gcode": picks a slicer parser through the
+ * registry (exact marker, then heuristic) and falls back to the toolpath
+ * simulator modal only when the file carries no recognizable settings.
+ * Returns null when the user cancels the modal or a parse fails.
  */
-export interface GcodeNewPrintParser {
-  /**
-   * Parse PrintDetails from gcode
-   * @param gcode The contents of a gcode file
-   * @param fileName Optional file name of the gcode file
-   */
-  parse(gcode: string, fileName?: string): Promise<PrintDetail>;
-}
-
-export enum SupportedGcodeParserSlicers {
-  PrusaSlicer = 'Prusa Slicer',
-  CrealityPrint = 'Creality Print',
-  Orca = 'Orca',
-  BambuStudio = 'Bambu Studio',
-  AnycubicSlicer = 'Anycubic Slicer',
-}
-
 @Injectable({
   providedIn: 'root',
 })
-// Deliberately does NOT implement GcodeNewPrintParser. That interface describes
-// a single slicer's parser, which always yields a PrintDetail; this is the
-// dispatcher in front of them, and it returns null for an unsupported slicer or
-// a failed parse.
 export class GcodeFileParserService {
-  constructor(
-    private readonly loggingService: LoggingService,
-    private readonly prusaSlicerParser: PrusaSlicerFileParserService,
-    private readonly crealityPrintParser: CrealityPrintFileParserService,
-    private readonly orcaParser: OrcaFileParserService,
-
-    private readonly anycubicParser: AnycubicFileParserService,
-    private readonly dialog: MatDialog,
-    private readonly toastrService: ToastrService
-  ) {}
+  private readonly loggingService = inject(LoggingService);
+  private readonly registry = inject(SlicerRegistry);
+  private readonly dialog = inject(MatDialog);
+  private readonly toastrService = inject(ToastrService);
 
   public getSupportedSlicers(): string[] {
-    return Object.values(SupportedGcodeParserSlicers);
+    return this.registry.getSupportedSlicerNames();
   }
 
   public async parse(
     gcode: string,
     fileName?: string
   ): Promise<PrintDetail | null> {
-    const slicer: string = this.detectSlicerFromGcode(gcode);
+    const { parser, confidence, score } = this.registry.resolve(gcode);
 
     this.loggingService.logEvent('GcodeAnalyzed', {
-      slicer,
+      slicer: parser?.slicerName ?? 'unknown',
+      confidence,
+      score,
     });
 
     try {
-      switch (slicer) {
-        case SupportedGcodeParserSlicers.PrusaSlicer:
-          const prusaResult = await this.prusaSlicerParser.parse(gcode);
-          if (fileName) {
-            prusaResult.fileName = fileName;
-            prusaResult.title = this.getTitle(fileName);
-          }
-
-          return prusaResult;
-
-        case SupportedGcodeParserSlicers.CrealityPrint:
-          const creatilyPrintResult =
-            await this.crealityPrintParser.parse(gcode);
-          if (fileName) {
-            creatilyPrintResult.fileName = fileName;
-            creatilyPrintResult.title = this.getTitle(fileName);
-          }
-
-          return creatilyPrintResult;
-
-        case SupportedGcodeParserSlicers.Orca:
-          const orcaResult = await this.orcaParser.parse(gcode);
-          if (fileName) {
-            orcaResult.fileName = fileName;
-            orcaResult.title = this.getTitle(fileName);
-          }
-
-          return orcaResult;
-
-        case SupportedGcodeParserSlicers.BambuStudio:
-          const bamboResult = this.getBamboResult(gcode, fileName);
-
-          return bamboResult || null;
-
-        case SupportedGcodeParserSlicers.AnycubicSlicer:
-          const anycubicResult = await this.anycubicParser.parse(gcode);
-
-          if (fileName) {
-            anycubicResult.fileName = fileName;
-            anycubicResult.title = this.getTitle(fileName);
-          }
-
-          return anycubicResult || null;
-
-        default:
-          const result = this.showGenericGcodeViewerModal(gcode, fileName);
-
-          return result || null;
+      if (!parser) {
+        return (
+          (await this.showGenericGcodeViewerModal(gcode, fileName)) || null
+        );
       }
+
+      if (confidence === 'heuristic') {
+        this.toastrService.info(
+          `Slicer not recognized — parsed as ${parser.slicerName}. Some settings may be missing.`
+        );
+      }
+
+      return await parser.parse(gcode, fileName);
     } catch (e: unknown) {
+      this.loggingService.logException(e as Error);
       this.toastrService.error(
         'An error occurred while parsing gcode, unable to extract settings.',
         'Error'
@@ -123,90 +63,28 @@ export class GcodeFileParserService {
       return null;
     }
   }
-  async getBamboResult(gcode: string, fileName: any) {
-    const printFromGcode = await this.showGenericGcodeViewerModal(
-      gcode,
-      fileName
-    );
-
-    // Orca is a fork of bambu with newer features.
-    const printFromOrca = await this.orcaParser.parse(gcode);
-    if (fileName) {
-      printFromOrca.fileName = fileName;
-      printFromOrca.title = this.getTitle(fileName);
-    }
-
-    const combinedPrint = { ...printFromGcode, ...printFromOrca };
-
-    if (
-      printFromOrca.filamentUsage.length === 0 &&
-      printFromGcode.filamentUsage.length > 0
-    ) {
-      combinedPrint.filamentUsage = printFromGcode.filamentUsage;
-    }
-
-    return combinedPrint;
-  }
-  GcodeViewerModalComponent;
 
   async showGenericGcodeViewerModal(
     gcode: string,
     fileName?: string
   ): Promise<PrintDetail> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const dialogRef = this.dialog.open(GcodeViewerModalComponent, {
         disableClose: true,
         minWidth: 300,
         maxWidth: 450,
-        data: { gcode: gcode, fileName: fileName },
+        data: { gcode, fileName },
       });
 
-      dialogRef.afterClosed().subscribe((result) => {
-        resolve(result);
-      });
+      dialogRef.afterClosed().subscribe((result) => resolve(result));
     });
   }
 
   showParserUnavailableDialog() {
-    const dialogRef = this.dialog.open(ParserUnavailableDialogComponent, {
+    this.dialog.open(ParserUnavailableDialogComponent, {
       minWidth: 300,
       maxWidth: 450,
       data: { supportedSlicers: this.getSupportedSlicers().join(', ') },
     });
-
-    dialogRef.afterClosed().subscribe((result) => {});
-  }
-  private detectSlicerFromGcode(gcode: string): string {
-    if (gcode.match(/generated by PrusaSlicer/)) {
-      return SupportedGcodeParserSlicers.PrusaSlicer;
-    }
-
-    if (gcode.match(/generated by OrcaSlicer/)) {
-      return SupportedGcodeParserSlicers.Orca;
-    }
-
-    if (gcode.match(/BambuStudio/)) {
-      return SupportedGcodeParserSlicers.BambuStudio;
-    }
-
-    if (gcode.match(/Creality Print GCode/)) {
-      return SupportedGcodeParserSlicers.CrealityPrint;
-    }
-
-    if (gcode.match(/generated by AnycubicSlicer/)) {
-      return SupportedGcodeParserSlicers.AnycubicSlicer;
-    }
-
-    return 'unknown';
-  }
-
-  private getTitle(filename: string) {
-    return (snakeCase(filename) as string)
-      .split('_')
-      .filter((segment) => segment.toLocaleLowerCase() !== 'gcode')
-      .map((s) => capitalize(s))
-      .join(' ')
-      .trim()
-      .substring(0, 100); // Limit to 100 characters
   }
 }

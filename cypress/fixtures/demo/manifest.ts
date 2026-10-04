@@ -281,6 +281,17 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
       rendered('.material-chip', DEMO_MATERIAL_COUNT),
     ],
   }),
+  docTarget({
+    name: 'achievements-grid',
+    route: '/achievements',
+    selector: '[data-cy="capture-achievements-grid"]',
+    viewport: DOC_DESKTOP,
+    ready: [
+      // 30 public families plus the revealed hidden one, and three "???" cells.
+      rendered('[data-key]', 31),
+      rendered('.cell.secret', 3),
+    ],
+  }),
 ];
 
 export const DOC_CAPTURE_SET: CaptureSet = {

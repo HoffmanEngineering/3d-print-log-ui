@@ -100,6 +100,7 @@ const LOADING: PageState = { phase: 'loading' };
           }
           @case ('ready') {
             <app-achievement-grid
+              data-cy="capture-achievements-grid"
               [catalog]="ready()!.catalog"
               [earned]="earned()"
               [progress]="progress()"

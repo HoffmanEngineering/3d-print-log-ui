@@ -110,3 +110,10 @@ export const EMPTY_PUBLIC_ACHIEVEMENTS: PublicAchievements = {
 export function isBigMoment(n: AchievementNotification): boolean {
   return n.summary || n.key === 'first-print' || (n.tier ?? 0) >= 3;
 }
+
+/** "Earned by 9% of makers", or "fewer than 1%" below that. */
+export function rarityText(percent: number | null | undefined): string | null {
+  if (percent === null || percent === undefined) return null;
+  if (percent < 1) return 'Earned by fewer than 1% of makers';
+  return `Earned by ${Math.round(percent)}% of makers`;
+}

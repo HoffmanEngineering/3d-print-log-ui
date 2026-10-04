@@ -16,7 +16,7 @@ import { combineLatest, map, of, switchMap } from 'rxjs';
 
 import { AchievementService } from '../../core/services/achievement.service';
 import { CelebrationItem } from '../../core/services/achievement-celebration.service';
-import { TIER_NAMES } from '../../core/types/achievement';
+import { rarityText, TIER_NAMES } from '../../core/types/achievement';
 import { AchievementBadgeComponent } from './achievement-badge.component';
 import {
   AchievementVisualsService,
@@ -24,13 +24,6 @@ import {
 } from './achievement-visuals.service';
 
 const SUMMARY_BADGES = 8;
-
-/** "Earned by 9% of makers", or "fewer than 1%" below that. */
-export function rarityText(percent: number | null | undefined): string | null {
-  if (percent === null || percent === undefined) return null;
-  if (percent < 1) return 'Earned by fewer than 1% of makers';
-  return `Earned by ${Math.round(percent)}% of makers`;
-}
 
 interface SummaryBadge {
   visual: BadgeVisual;

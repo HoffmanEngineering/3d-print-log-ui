@@ -106,6 +106,15 @@ export const appRoutes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    // Not preloaded: most visits to the app never open the collection.
+    path: 'achievements',
+    loadChildren: () =>
+      import('./achievements/achievements.routes').then(
+        (m) => m.ACHIEVEMENTS_ROUTES
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'notifications',
     loadChildren: () =>
       import('./notifications/notifications.module').then(

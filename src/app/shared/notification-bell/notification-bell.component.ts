@@ -16,6 +16,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ToastrService } from 'ngx-toastr';
 import { AchievementCelebrationService } from 'src/app/core/services/achievement-celebration.service';
+import { TimeZoneSyncService } from 'src/app/core/services/time-zone-sync.service';
 import {
   NotificationService,
   getNotificationIcon,
@@ -46,6 +47,7 @@ import {
 export class NotificationBellComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private celebrations = inject(AchievementCelebrationService);
+  private timeZoneSync = inject(TimeZoneSyncService);
   private toastr = inject(ToastrService);
 
   readonly unreadCount = this.notificationService.unreadCount;
@@ -59,6 +61,7 @@ export class NotificationBellComponent implements OnInit {
     this.notificationService.startPolling();
     // The bell exists only for a signed-in user, which is exactly when celebrations apply.
     this.celebrations.start();
+    void this.timeZoneSync.syncOnce();
   }
 
   onMenuOpened(): void {

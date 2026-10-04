@@ -17,6 +17,7 @@ import { ToastrService } from 'ngx-toastr';
 import { SubscriptionService } from '../core/services/subscription.service';
 import { LoggingService } from '../core/services/logging.service';
 import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
+import { AchievementSettingsComponent } from './achievement-settings/achievement-settings.component';
 import { ConnectedAgentsService } from '../core/services/connected-agents.service';
 import { NativeBridgeService } from '../core/services/native-bridge.service';
 import { PushPreferencesService } from '../core/services/push-preferences.service';
@@ -85,7 +86,15 @@ describe('SettingsComponent', () => {
     ]);
     const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
       'UserSettingService',
-      ['updateUserSetting', 'addUserSetting']
+      [
+        'updateUserSetting',
+        'addUserSetting',
+        'getCurrentUsersSettingByType',
+        'addOrUpdateSetting',
+      ]
+    );
+    mockUserSettingService.getCurrentUsersSettingByType.and.returnValue(
+      Promise.resolve(null)
     );
     const mockPrintService = jasmine.createSpyObj<PrintService>(
       'PrintService',
@@ -157,6 +166,7 @@ describe('SettingsComponent', () => {
         NoopAnimationsModule,
         RouterTestingModule,
         ConnectedAgentsComponent,
+        AchievementSettingsComponent,
       ],
       providers: [
         {
@@ -293,6 +303,33 @@ describe('SettingsComponent', () => {
       expect(mockPushPreferences.setEnabled).toHaveBeenCalledWith(
         UserSettingType.Push_PrintFailed,
         false
+      );
+    });
+
+    it('offers an achievement toggle that reflects and writes its own setting', async () => {
+      mockNativeBridge.isAvailable.and.returnValue(true);
+      mockPushPreferences.isEnabled.and.callFake((type) =>
+        Promise.resolve(type !== UserSettingType.Push_Achievement)
+      );
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+      await fixture.whenStable();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="push-achievement"]')
+      ).not.toBeNull();
+      expect(component.achievementPush).toBeFalse();
+
+      await component.onPushPreferenceChanged(
+        UserSettingType.Push_Achievement,
+        true
+      );
+      expect(mockPushPreferences.setEnabled).toHaveBeenCalledWith(
+        UserSettingType.Push_Achievement,
+        true
       );
     });
   });

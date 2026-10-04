@@ -23,6 +23,7 @@ import { AuthInterceptorService } from './core/http/auth-interceptor.service';
 import { ErrorHandlerService } from './core/services/error-handler.service';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { AccountDeactivationBannerComponent } from './shared/account-deactivation-banner/account-deactivation-banner.component';
+import { AchievementBadgeDefsComponent } from './shared/achievements/achievement-badge-defs.component';
 
 @NgModule({
   bootstrap: [AppComponent],
@@ -39,6 +40,7 @@ import { AccountDeactivationBannerComponent } from './shared/account-deactivatio
     LoadingBarRouterModule,
     NavbarComponent,
     AccountDeactivationBannerComponent,
+    AchievementBadgeDefsComponent,
     ToastrModule.forRoot({
       timeOut: 5000,
       positionClass: 'toast-bottom-right',

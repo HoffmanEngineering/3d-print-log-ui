@@ -15,6 +15,16 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ToastrService } from 'ngx-toastr';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
+import { AchievementService } from 'src/app/core/services/achievement.service';
+import { AchievementCategory } from 'src/app/core/types/achievement';
+import { AchievementBadgeComponent } from '../achievements/achievement-badge.component';
+import {
+  actionUrlFragment,
+  actionUrlPath,
+  actionUrlQueryParams,
+} from 'src/app/core/utils/action-url';
 import { AchievementCelebrationService } from 'src/app/core/services/achievement-celebration.service';
 import { TimeZoneSyncService } from 'src/app/core/services/time-zone-sync.service';
 import {
@@ -27,6 +37,15 @@ import {
   NotificationSummaryDto,
   NotificationType,
 } from 'src/app/core/types/notification';
+
+interface BellBadge {
+  glyph: string;
+  category: AchievementCategory;
+  tier: number;
+  oneTime: boolean;
+  numeral?: number;
+  title: string;
+}
 
 @Component({
   selector: 'app-notification-bell',
@@ -42,10 +61,18 @@ import {
     MatDividerModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    AchievementBadgeComponent,
   ],
 })
 export class NotificationBellComponent implements OnInit {
   private notificationService = inject(NotificationService);
+  // One cached request per session; a failure just means achievement entries show "?".
+  private readonly catalog = toSignal(
+    inject(AchievementService)
+      .catalog()
+      .pipe(catchError(() => of(null))),
+    { initialValue: null }
+  );
   private celebrations = inject(AchievementCelebrationService);
   private timeZoneSync = inject(TimeZoneSyncService);
   private toastr = inject(ToastrService);
@@ -122,15 +149,57 @@ export class NotificationBellComponent implements OnInit {
     return getTimeAgo(date, true); // Use short format for dropdown
   }
 
+  /**
+   * How an Achievement entry draws its badge, or null for every other type (which keeps its
+   * Material icon). A key missing from the public catalog is a hidden badge: shown as "?".
+   */
+  achievementBadge(notification: NotificationSummaryDto): BellBadge | null {
+    const achievement = notification.achievement;
+    if (notification.type !== NotificationType.Achievement || !achievement) {
+      return null;
+    }
+    if (achievement.summary) {
+      return {
+        glyph: 'stack',
+        category: AchievementCategory.GettingStarted,
+        tier: 1,
+        oneTime: true,
+        title: notification.title,
+      };
+    }
+
+    const family = this.catalog()?.families.find(
+      (f) => f.key === achievement.key
+    );
+    if (!family) {
+      return {
+        glyph: 'question',
+        category: AchievementCategory.Hidden,
+        tier: 1,
+        oneTime: true,
+        title: notification.title,
+      };
+    }
+    const tier = achievement.tier ?? 1;
+    return {
+      glyph: family.glyph,
+      category: family.category,
+      tier,
+      oneTime: family.tiers.length === 1,
+      numeral: family.tiers[tier - 1]?.threshold,
+      title: family.title,
+    };
+  }
+
   getUrlPath(url: string | null): string | null {
-    if (!url) return null;
-    const hashIndex = url.indexOf('#');
-    return hashIndex >= 0 ? url.substring(0, hashIndex) : url;
+    return actionUrlPath(url);
+  }
+
+  getUrlQueryParams(url: string | null): Record<string, string> | null {
+    return actionUrlQueryParams(url);
   }
 
   getUrlFragment(url: string | null): string | null {
-    if (!url) return null;
-    const hashIndex = url.indexOf('#');
-    return hashIndex >= 0 ? url.substring(hashIndex + 1) : null;
+    return actionUrlFragment(url);
   }
 }

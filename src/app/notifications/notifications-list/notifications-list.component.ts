@@ -19,6 +19,11 @@ import {
 } from 'src/app/core/types/notification';
 import { PageInfo } from 'src/app/core/types/paging';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import {
+  actionUrlFragment,
+  actionUrlPath,
+  actionUrlQueryParams,
+} from 'src/app/core/utils/action-url';
 
 @Component({
   selector: 'app-notifications-list',
@@ -213,14 +218,14 @@ export class NotificationsListComponent implements OnInit {
   }
 
   getUrlPath(url: string | null): string | null {
-    if (!url) return null;
-    const hashIndex = url.indexOf('#');
-    return hashIndex >= 0 ? url.substring(0, hashIndex) : url;
+    return actionUrlPath(url);
+  }
+
+  getUrlQueryParams(url: string | null): Record<string, string> | null {
+    return actionUrlQueryParams(url);
   }
 
   getUrlFragment(url: string | null): string | null {
-    if (!url) return null;
-    const hashIndex = url.indexOf('#');
-    return hashIndex >= 0 ? url.substring(hashIndex + 1) : null;
+    return actionUrlFragment(url);
   }
 }

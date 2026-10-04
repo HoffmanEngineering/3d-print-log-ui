@@ -8,11 +8,17 @@ import {
 import { inject, Injectable, Injector } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
+import { environment } from '../../../environments/environment';
 import { NotificationService } from '../services/notification.service';
 
-/** Writes that can earn an achievement. */
+/**
+ * Writes that can earn an achievement, on our own API only. `Users` covers the profile and user
+ * settings on purpose: saving the time zone can grant date badges, and switching celebrations
+ * back on should play the backlog without waiting for the poll.
+ */
 const ACHIEVEMENT_WRITES =
-  /\/api\/(Prints|Printers|Filaments|Projects|PrinterMaintenance|Users)\b/i;
+  /^\/api\/(Prints|Printers|Filaments|Projects|PrinterMaintenance|Users)\b/i;
+const API_BASE = environment.printLogApiUrl.replace(/\/+$/, '');
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH']);
 
 /**
@@ -30,7 +36,11 @@ export class AchievementRefreshInterceptor implements HttpInterceptor {
     req: HttpRequest<unknown>,
     next: HttpHandler
   ): Observable<HttpEvent<unknown>> {
-    if (!WRITE_METHODS.has(req.method) || !ACHIEVEMENT_WRITES.test(req.url)) {
+    if (
+      !WRITE_METHODS.has(req.method) ||
+      !req.url.startsWith(API_BASE) ||
+      !ACHIEVEMENT_WRITES.test(req.url.substring(API_BASE.length))
+    ) {
       return next.handle(req);
     }
 

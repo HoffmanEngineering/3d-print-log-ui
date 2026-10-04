@@ -36,16 +36,19 @@ const MAX_BADGES = 3;
   template: `
     <div
       class="toast"
+      [class.quiet]="quiet()"
       role="status"
       aria-live="polite"
       (mouseenter)="pause()"
       (mouseleave)="resume()"
     >
-      <div class="confetti" aria-hidden="true">
-        @for (c of confetti; track $index) {
-          <i [style.--i]="$index"></i>
-        }
-      </div>
+      @if (!quiet()) {
+        <div class="confetti" aria-hidden="true">
+          @for (c of confetti; track $index) {
+            <i [style.--i]="$index"></i>
+          }
+        </div>
+      }
       <button type="button" class="toast-body" (click)="open()">
         <span class="badges" [class.stacked]="badges().length > 1">
           @for (b of badges(); track $index) {
@@ -158,10 +161,10 @@ const MAX_BADGES = 3;
       background: hsl(calc(var(--i) * 37deg) 85% 60%);
     }
     @media (prefers-reduced-motion: no-preference) {
-      .pop {
+      .toast:not(.quiet) .pop {
         animation: ach-pop 600ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
       }
-      .toast::after {
+      .toast:not(.quiet)::after {
         content: '';
         position: absolute;
         inset: 0;
@@ -211,6 +214,8 @@ const MAX_BADGES = 3;
 })
 export class AchievementToastComponent implements OnInit {
   readonly items = input.required<CelebrationItem[]>();
+  /** "Quiet" celebrations: the card alone, with no confetti and no motion. */
+  readonly quiet = input<boolean>(false);
   readonly closed = output<void>();
 
   private readonly router = inject(Router);

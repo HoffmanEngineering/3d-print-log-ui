@@ -20,7 +20,10 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
   private readonly injector = inject(Injector);
   private toastRef: OverlayRef | null = null;
 
-  async toast(items: CelebrationItem[]): Promise<void> {
+  async toast(
+    items: CelebrationItem[],
+    options: { quiet: boolean }
+  ): Promise<void> {
     const { AchievementToastComponent } = await import(
       './achievement-toast.component'
     );
@@ -41,9 +44,15 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
       new ComponentPortal(AchievementToastComponent, null, this.injector)
     );
     component.setInput('items', items);
-    component.instance.closed.subscribe(() => {
-      ref.dispose();
-      if (this.toastRef === ref) this.toastRef = null;
+    component.setInput('quiet', options.quiet);
+
+    // Resolves on close, so its items are marked read only after their full display time.
+    await new Promise<void>((resolve) => {
+      component.instance.closed.subscribe(() => {
+        ref.dispose();
+        if (this.toastRef === ref) this.toastRef = null;
+        resolve();
+      });
     });
   }
 

@@ -8,7 +8,7 @@ import {
 } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { BehaviorSubject, delay, of } from 'rxjs';
+import { BehaviorSubject, delay, map, NEVER, of } from 'rxjs';
 
 import { AchievementService } from '../../core/services/achievement.service';
 import { LoggingService } from '../../core/services/logging.service';
@@ -49,6 +49,7 @@ describe('MyAchievementsComponent', () => {
   let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let logging: jasmine.SpyObj<LoggingService>;
   let me$ = of(ME);
+  let wide$: BehaviorSubject<boolean>;
 
   function create(): HTMLElement {
     TestBed.configureTestingModule({
@@ -66,11 +67,19 @@ describe('MyAchievementsComponent', () => {
         { provide: LoggingService, useValue: logging },
         {
           provide: BreakpointObserver,
-          useValue: { observe: () => of({ matches: true, breakpoints: {} }) },
+          useValue: {
+            observe: () =>
+              wide$.pipe(map((matches) => ({ matches, breakpoints: {} }))),
+          },
         },
         {
           provide: MatBottomSheet,
-          useValue: jasmine.createSpyObj('MatBottomSheet', ['open']),
+          useValue: {
+            open: () => ({
+              afterDismissed: () => NEVER,
+              dismiss: () => undefined,
+            }),
+          },
         },
       ],
     });
@@ -85,6 +94,7 @@ describe('MyAchievementsComponent', () => {
       'logEvent',
     ]);
     me$ = of(ME);
+    wide$ = new BehaviorSubject(true);
   });
 
   it('shows tiers earned out of the total and the next hint', () => {
@@ -107,6 +117,21 @@ describe('MyAchievementsComponent', () => {
       key: 'mcp',
       earned: true,
     });
+  });
+
+  it('logs a detail open once, not again when the layout changes', () => {
+    queryParams.next(convertToParamMap({ badge: 'mcp' }));
+    create();
+
+    wide$.next(false);
+    fixture.detectChanges();
+    wide$.next(true);
+    fixture.detectChanges();
+
+    const opens = logging.logEvent.calls
+      .allArgs()
+      .filter(([name]) => name === 'AchievementDetail_Opened');
+    expect(opens.length).toBe(1);
   });
 
   it('skeleton deferred', fakeAsync(() => {

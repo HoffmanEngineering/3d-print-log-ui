@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
@@ -64,7 +65,7 @@ interface BellBadge {
     AchievementBadgeComponent,
   ],
 })
-export class NotificationBellComponent implements OnInit {
+export class NotificationBellComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   // One cached request per session; a failure just means achievement entries show "?".
   private readonly catalog = toSignal(
@@ -89,6 +90,11 @@ export class NotificationBellComponent implements OnInit {
     // The bell exists only for a signed-in user, which is exactly when celebrations apply.
     this.celebrations.start();
     void this.timeZoneSync.syncOnce();
+  }
+
+  ngOnDestroy(): void {
+    // Abandons any celebration in flight, so nothing from this session plays after sign-out.
+    this.celebrations.stop();
   }
 
   onMenuOpened(): void {

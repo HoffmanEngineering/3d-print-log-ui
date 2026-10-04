@@ -12,14 +12,22 @@ import { UserSettingService, UserSettingType } from './user-setting.service';
 export class TimeZoneSyncService {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly settings = inject(UserSettingService);
-  private started = false;
+  private done = false;
+  private inFlight: Promise<void> | null = null;
 
-  async syncOnce(): Promise<void> {
-    if (!this.isBrowser || this.started) {
-      return;
+  /**
+   * Done once it has succeeded; a failed attempt (offline, a 5xx) leaves the next call free to
+   * try again. Concurrent calls share one attempt.
+   */
+  syncOnce(): Promise<void> {
+    if (!this.isBrowser || this.done) {
+      return Promise.resolve();
     }
-    this.started = true;
+    this.inFlight ??= this.sync().finally(() => (this.inFlight = null));
+    return this.inFlight;
+  }
 
+  private async sync(): Promise<void> {
     try {
       const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (!zone) return;
@@ -33,8 +41,9 @@ export class TimeZoneSyncService {
           zone
         );
       }
+      this.done = true;
     } catch {
-      // Best effort: without it, streaks count UTC days until the next session.
+      // Best effort: without it, streaks count UTC days until a later attempt succeeds.
     }
   }
 }

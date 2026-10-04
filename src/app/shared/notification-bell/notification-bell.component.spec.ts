@@ -36,6 +36,10 @@ function note(over: Partial<NotificationSummaryDto>): NotificationSummaryDto {
 describe('NotificationBellComponent', () => {
   let fixture: ComponentFixture<NotificationBellComponent>;
   let component: NotificationBellComponent;
+  const celebrations = jasmine.createSpyObj<AchievementCelebrationService>(
+    'AchievementCelebrationService',
+    ['start', 'stop']
+  );
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -55,10 +59,7 @@ describe('NotificationBellComponent', () => {
           provide: AchievementService,
           useValue: { catalog: () => of(TEST_CATALOG) },
         },
-        {
-          provide: AchievementCelebrationService,
-          useValue: { start: () => undefined },
-        },
+        { provide: AchievementCelebrationService, useValue: celebrations },
         {
           provide: TimeZoneSyncService,
           useValue: { syncOnce: () => Promise.resolve() },
@@ -69,6 +70,14 @@ describe('NotificationBellComponent', () => {
     fixture = TestBed.createComponent(NotificationBellComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('starts celebrations, and stops them when the bell goes away', () => {
+    expect(celebrations.start).toHaveBeenCalled();
+
+    fixture.destroy();
+
+    expect(celebrations.stop).toHaveBeenCalled();
   });
 
   it('achievement notification renders sm badge from catalog', () => {

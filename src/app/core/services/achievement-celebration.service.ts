@@ -33,8 +33,14 @@ export interface CelebrationItem {
  * bundle carries only the queue below.
  */
 export abstract class CelebrationPresenter {
-  /** Shows one toast for these items; resolves once it is on screen. */
-  abstract toast(items: CelebrationItem[]): Promise<void>;
+  /**
+   * Shows one toast for these items; resolves when it closes, so nothing is marked read before
+   * the user has had its full display time. `quiet` drops the confetti and motion.
+   */
+  abstract toast(
+    items: CelebrationItem[],
+    options: { quiet: boolean }
+  ): Promise<void>;
   /** Shows the big-moment dialog; resolves when it closes. */
   abstract dialog(item: CelebrationItem): Promise<void>;
 }
@@ -102,6 +108,13 @@ export class AchievementCelebrationService {
 
   private watcher: EffectRef | null = null;
   private busy = false;
+  /** Bumped by stop(): a cycle started under an older generation abandons at its next step. */
+  private generation = 0;
+  /**
+   * Shown, but the read receipt has not gone through yet. A later cycle retries the receipt
+   * without playing the celebration a second time.
+   */
+  private readonly awaitingReceipt = new Set<string>();
 
   /** Starts watching for achievements. Idempotent, and a no-op outside the browser. */
   start(): void {
@@ -121,9 +134,13 @@ export class AchievementCelebrationService {
     );
   }
 
+  /** Stops watching and abandons any cycle in flight (e.g. one waiting for the tab to show). */
   stop(): void {
     this.watcher?.destroy();
     this.watcher = null;
+    this.generation++;
+    this.busy = false;
+    this.awaitingReceipt.clear();
   }
 
   private async cycle(): Promise<void> {
@@ -131,24 +148,37 @@ export class AchievementCelebrationService {
       return;
     }
     this.busy = true;
+    const generation = this.generation;
+    const current = () => generation === this.generation;
     try {
-      const mode = await this.mode();
-      if (mode === 'off') {
+      if ((await this.mode()) === 'off' || !current()) {
         return; // nothing plays and the notifications stay unread
       }
 
       if (!this.visibility.isVisible()) {
         await this.visibility.whenVisible();
+        if (!current()) return;
       }
 
       await this.withLock(async () => {
-        const items = await this.fetchAll();
-        await this.play(items, mode);
+        // Read again: the setting may have changed while this tab waited.
+        const mode = await this.mode();
+        if (mode === 'off' || !current()) return;
+
+        const { items, unplayable } = await this.fetchAll();
+        if (!current()) return;
+
+        const retries = items.filter((i) => this.awaitingReceipt.has(i.id));
+        const fresh = items.filter((i) => !this.awaitingReceipt.has(i.id));
+        // Notifications this build cannot read (malformed, or a newer metadata version) are
+        // consumed, or the unread count would keep this loop fetching them forever.
+        await this.receipt([...retries.map((i) => i.id), ...unplayable]);
+        await this.play(fresh, mode, current);
       });
     } catch {
       // A failed cycle leaves the notifications unread; the next poll tries again.
     } finally {
-      this.busy = false;
+      if (current()) this.busy = false;
     }
   }
 
@@ -178,8 +208,12 @@ export class AchievementCelebrationService {
     });
   }
 
-  private async fetchAll(): Promise<CelebrationItem[]> {
+  private async fetchAll(): Promise<{
+    items: CelebrationItem[];
+    unplayable: string[];
+  }> {
     const items: CelebrationItem[] = [];
+    const unplayable: string[] = [];
     for (let page = 1; page <= MAX_PAGES; page++) {
       const result = await lastValueFrom(
         this.notifications.getNotifications(
@@ -189,7 +223,10 @@ export class AchievementCelebrationService {
           NotificationType.Achievement
         )
       );
-      items.push(...result.items.filter(hasAchievement).map(toItem));
+      for (const n of result.items) {
+        if (hasAchievement(n)) items.push(toItem(n));
+        else unplayable.push(n.id);
+      }
       if (
         page >= (result.paging?.totalPages ?? 1) ||
         result.items.length < PAGE_SIZE
@@ -198,12 +235,13 @@ export class AchievementCelebrationService {
       }
     }
     // Oldest first, so a backlog plays in the order it was earned.
-    return items.reverse();
+    return { items: items.reverse(), unplayable };
   }
 
   private async play(
     items: CelebrationItem[],
-    mode: CelebrationMode
+    mode: CelebrationMode,
+    current: () => boolean
   ): Promise<void> {
     if (items.length === 0) {
       return;
@@ -214,29 +252,37 @@ export class AchievementCelebrationService {
     const small = items.filter((i) => !big.includes(i));
 
     for (const item of big) {
+      if (!current()) return;
       this.logShown(item, item.achievement.summary ? 'summary' : 'modal', 1);
       await this.presenter.dialog(item);
-      await this.markRead([item]);
+      await this.shown([item]);
     }
 
-    if (small.length > 0) {
+    if (small.length > 0 && current()) {
       // Everything that arrived together merges into one toast.
       this.logShown(
         small[0],
         small.length > 1 ? 'merged' : 'card',
         small.length
       );
-      await this.presenter.toast(small);
-      await this.markRead(small);
+      await this.presenter.toast(small, { quiet: mode === 'quiet' });
+      await this.shown(small);
     }
 
     this.notifications.refreshUnreadCount();
   }
 
-  private async markRead(items: CelebrationItem[]): Promise<void> {
-    await lastValueFrom(
-      this.notifications.markMultipleAsRead(items.map((i) => i.id))
-    );
+  /** The user has seen these: never play them again, and send the read receipt. */
+  private async shown(items: CelebrationItem[]): Promise<void> {
+    const ids = items.map((i) => i.id);
+    ids.forEach((id) => this.awaitingReceipt.add(id));
+    await this.receipt(ids);
+  }
+
+  private async receipt(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await lastValueFrom(this.notifications.markMultipleAsRead(ids));
+    ids.forEach((id) => this.awaitingReceipt.delete(id));
   }
 
   private logShown(

@@ -85,6 +85,17 @@ describe('AchievementToastComponent', () => {
     expect(el.querySelectorAll('app-achievement-badge').length).toBe(3);
   });
 
+  it('quiet shows the card with no confetti or motion', () => {
+    fixture.componentRef.setInput('items', [item('a', 'first-print')]);
+    fixture.componentRef.setInput('quiet', true);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('.confetti')).toBeNull();
+    expect(el.querySelector('.toast')!.classList).toContain('quiet');
+    expect(el.textContent).toContain('First Layer');
+  });
+
   it('closes itself after 6 seconds unless hovered', () => {
     jasmine.clock().install();
     try {

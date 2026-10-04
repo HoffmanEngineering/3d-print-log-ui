@@ -263,6 +263,7 @@ export class MyAchievementsComponent {
   private sheet: MatBottomSheetRef<AchievementDetailSheetComponent> | null =
     null;
   private opened = false;
+  private loggedDetail: string | null = null;
 
   constructor() {
     effect(() => {
@@ -279,12 +280,16 @@ export class MyAchievementsComponent {
       const sel = this.selection();
       const wide = this.wide();
       untracked(() => {
-        if (sel) {
+        // Logged per badge opened, not per layout change: the sheet/panel swap on a resize
+        // or rotation re-runs this effect without the user opening anything.
+        const key = sel?.family.key ?? null;
+        if (sel && key !== this.loggedDetail) {
           this.logging.logEvent('AchievementDetail_Opened', {
-            key: sel.family.key,
+            key,
             earned: sel.earned.length > 0,
           });
         }
+        this.loggedDetail = key;
         this.syncSheet(sel, wide);
       });
     });

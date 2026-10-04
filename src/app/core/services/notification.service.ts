@@ -10,6 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   concat,
+  EMPTY,
   interval,
   last,
   Observable,
@@ -17,7 +18,7 @@ import {
   Subject,
   Subscription,
 } from 'rxjs';
-import { map, startWith, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
 import {
@@ -140,7 +141,10 @@ export class NotificationService {
       .pipe(
         startWith(undefined),
         switchMap(() => interval(this.POLLING_INTERVAL_MS).pipe(startWith(0))),
-        switchMap(() => this.fetchUnreadCount()),
+        // Errors are absorbed per request: one failed poll must not end the stream, or
+        // achievements earned elsewhere (slicer, printer host, another tab) would never be
+        // noticed for the rest of the session.
+        switchMap(() => this.fetchUnreadCount().pipe(catchError(() => EMPTY))),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({

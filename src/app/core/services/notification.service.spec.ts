@@ -139,6 +139,22 @@ describe('NotificationService', () => {
     discardPeriodicTasks();
   }));
 
+  it('a failed poll does not stop polling', fakeAsync(() => {
+    service.startPolling();
+    http
+      .expectOne(countUrl)
+      .flush('down', { status: 503, statusText: 'Service Unavailable' });
+
+    tick(30000);
+    http
+      .expectOne(countUrl)
+      .flush({ unreadCount: 2, unreadAchievementCount: 1 });
+
+    expect(service.unreadAchievementCount()).toBe(1);
+    service.stopPolling();
+    discardPeriodicTasks();
+  }));
+
   it('stopPolling resets both counts', fakeAsync(() => {
     service.startPolling();
     http

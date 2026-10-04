@@ -22,7 +22,7 @@ describe('AchievementSettingsComponent', () => {
       'addOrUpdateSetting',
     ]);
     settings.getCurrentUsersSettingByType.and.callFake((type) =>
-      Promise.resolve(
+      settingsDelay.then(() =>
         stored[type] !== undefined
           ? ({ value: stored[type] } as UserSetting)
           : null
@@ -44,11 +44,18 @@ describe('AchievementSettingsComponent', () => {
     fixture = TestBed.createComponent(AchievementSettingsComponent);
     fixture.detectChanges();
     await fixture.whenStable();
+    // The settings load is a promise chain, which whenStable does not track.
+    await new Promise((r) => setTimeout(r));
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
 
-  beforeEach(() => (stored = {}));
+  let settingsDelay: Promise<void>;
+
+  beforeEach(() => {
+    stored = {};
+    settingsDelay = Promise.resolve();
+  });
 
   it('loads current values', async () => {
     stored = {
@@ -102,6 +109,48 @@ describe('AchievementSettingsComponent', () => {
       UserSettingType.Achievements_ShowOnProfile,
       'false'
     );
+  });
+
+  it('keeps the controls disabled until the saved values load', async () => {
+    let release: () => void = () => undefined;
+    stored = { [UserSettingType.Achievements_Celebrations]: 'off' };
+    const gate = new Promise<void>((r) => (release = r));
+    settingsDelay = gate;
+    const pending = render();
+
+    // Still loading: a choice made now would be overwritten by the load, so none is possible.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(fixture.componentInstance.form.disabled).toBeTrue();
+
+    release();
+    await pending;
+    await new Promise((r) => setTimeout(r));
+    expect(fixture.componentInstance.form.enabled).toBeTrue();
+    expect(fixture.componentInstance.form.controls.celebrations.value).toBe(
+      'off'
+    );
+  });
+
+  it('saves rapid changes one at a time, last value last', async () => {
+    await render();
+    const resolvers: (() => void)[] = [];
+    settings.addOrUpdateSetting.and.callFake(
+      () => new Promise<void>((r) => resolvers.push(r))
+    );
+
+    fixture.componentInstance.form.controls.celebrations.setValue('quiet');
+    fixture.componentInstance.form.controls.celebrations.setValue('off');
+    await fixture.whenStable();
+    expect(settings.addOrUpdateSetting).toHaveBeenCalledTimes(1);
+
+    resolvers[0]();
+    await new Promise((r) => setTimeout(r));
+    expect(settings.addOrUpdateSetting).toHaveBeenCalledTimes(2);
+    expect(settings.addOrUpdateSetting.calls.mostRecent().args).toEqual([
+      UserSettingType.Achievements_Celebrations,
+      'off',
+    ]);
+    resolvers[1]();
   });
 
   it('settings links to /docs/achievements', async () => {

@@ -66,6 +66,20 @@ describe('TimeZoneSyncService', () => {
     expect(settings.getCurrentUsersSettingByType).not.toHaveBeenCalled();
   });
 
+  it('retries after a failed attempt', async () => {
+    const service = create(null);
+    settings.addOrUpdateSetting.and.returnValues(
+      Promise.reject(new Error('offline')),
+      Promise.resolve()
+    );
+
+    await service.syncOnce();
+    await service.syncOnce();
+    await service.syncOnce();
+
+    expect(settings.addOrUpdateSetting).toHaveBeenCalledTimes(2);
+  });
+
   it('swallows errors', async () => {
     const service = create(null);
     settings.addOrUpdateSetting.and.returnValue(

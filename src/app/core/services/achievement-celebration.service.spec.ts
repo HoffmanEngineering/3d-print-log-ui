@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import {
   NotificationSummaryDto,
@@ -52,9 +52,17 @@ function page(
 
 class FakePresenter extends CelebrationPresenter {
   toasts: CelebrationItem[][] = [];
+  toastOptions: { quiet: boolean }[] = [];
   dialogs: CelebrationItem[] = [];
-  toast(items: CelebrationItem[]): Promise<void> {
+  /** When set, toasts stay open until the test calls the resolver. */
+  holdToasts = false;
+  closeToast: () => void = () => undefined;
+  toast(items: CelebrationItem[], options: { quiet: boolean }): Promise<void> {
     this.toasts.push(items);
+    this.toastOptions.push(options);
+    if (this.holdToasts) {
+      return new Promise((resolve) => (this.closeToast = resolve));
+    }
     return Promise.resolve();
   }
   dialog(item: CelebrationItem): Promise<void> {
@@ -349,6 +357,110 @@ describe('AchievementCelebrationService', () => {
     await settle();
 
     expect(notifications.getNotifications).toHaveBeenCalled();
+  });
+
+  it('quiet toasts are told they are quiet', async () => {
+    celebrations = 'quiet';
+    notifications.getNotifications.and.returnValue(
+      of(page([note('a', 'first-printer', 1)]))
+    );
+    setup();
+
+    unread(1);
+    await settle();
+
+    expect(presenter.toastOptions).toEqual([{ quiet: true }]);
+  });
+
+  it('marks a toast read only once it has closed', async () => {
+    presenter.holdToasts = true;
+    notifications.getNotifications.and.returnValue(
+      of(page([note('a', 'first-printer', 1)]))
+    );
+    setup();
+
+    unread(1);
+    await settle();
+    expect(presenter.toasts.length).toBe(1);
+    expect(notifications.markMultipleAsRead).not.toHaveBeenCalled();
+
+    // A second poll while it is still showing neither replaces it nor re-fetches.
+    unread(1);
+    await settle();
+    expect(presenter.toasts.length).toBe(1);
+
+    presenter.closeToast();
+    await settle();
+    expect(notifications.markMultipleAsRead).toHaveBeenCalledWith(['a']);
+  });
+
+  it('a failed receipt is retried without replaying the celebration', async () => {
+    notifications.getNotifications.and.returnValue(
+      of(page([note('a', 'first-printer', 1)]))
+    );
+    notifications.markMultipleAsRead.and.returnValues(
+      throwError(() => new Error('503')),
+      of(undefined)
+    );
+    setup();
+
+    unread(1);
+    await settle();
+    unread(1);
+    await settle();
+
+    expect(presenter.toasts.length).toBe(1);
+    expect(notifications.markMultipleAsRead).toHaveBeenCalledTimes(2);
+    expect(notifications.markMultipleAsRead.calls.mostRecent().args[0]).toEqual(
+      ['a']
+    );
+  });
+
+  it('consumes malformed achievement notifications without showing them', async () => {
+    const malformed = { ...note('bad', null, null), achievement: null };
+    notifications.getNotifications.and.returnValue(of(page([malformed])));
+    setup();
+
+    unread(1);
+    await settle();
+
+    expect(presenter.toasts.length).toBe(0);
+    expect(presenter.dialogs.length).toBe(0);
+    expect(notifications.markMultipleAsRead).toHaveBeenCalledWith(['bad']);
+  });
+
+  it('re-reads the celebration level after waiting to become visible', async () => {
+    visible = false;
+    notifications.getNotifications.and.returnValue(
+      of(page([note('a', 'first-printer', 1)]))
+    );
+    setup();
+    unread(1);
+    await settle();
+
+    celebrations = 'off';
+    visible = true;
+    becomeVisible();
+    await settle();
+
+    expect(notifications.getNotifications).not.toHaveBeenCalled();
+  });
+
+  it('stop abandons a cycle that is waiting to become visible', async () => {
+    visible = false;
+    notifications.getNotifications.and.returnValue(
+      of(page([note('a', 'first-printer', 1)]))
+    );
+    setup();
+    unread(1);
+    await settle();
+
+    service.stop();
+    visible = true;
+    becomeVisible();
+    await settle();
+
+    expect(notifications.getNotifications).not.toHaveBeenCalled();
   });
 
   it('ignores a zero count', async () => {

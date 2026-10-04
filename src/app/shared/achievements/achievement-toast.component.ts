@@ -14,6 +14,7 @@ import { Router } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
 
 import { CelebrationItem } from '../../core/services/achievement-celebration.service';
+import { AchievementCategory } from '../../core/types/achievement';
 import { LoggingService } from '../../core/services/logging.service';
 import { AchievementBadgeComponent } from './achievement-badge.component';
 import {
@@ -22,6 +23,15 @@ import {
 } from './achievement-visuals.service';
 
 const DISPLAY_MS = 6000;
+
+const SUMMARY_BADGE: BadgeVisual = {
+  key: '',
+  title: 'Your achievements',
+  glyph: 'stack',
+  category: AchievementCategory.GettingStarted,
+  oneTime: true,
+  family: null,
+};
 const MAX_BADGES = 3;
 
 /**
@@ -65,10 +75,16 @@ const MAX_BADGES = 3;
           }
         </span>
         <span class="text">
-          <span class="eyebrow">Achievement unlocked</span>
-          @if (items().length > 1) {
+          @if (summary()) {
+            <strong>{{ first()?.title }}</strong>
+            @if (first()?.message; as message) {
+              <span class="message">{{ message }}</span>
+            }
+          } @else if (items().length > 1) {
+            <span class="eyebrow">Achievement unlocked</span>
             <strong>{{ items().length }} achievements unlocked</strong>
           } @else {
+            <span class="eyebrow">Achievement unlocked</span>
             <strong>{{ badges()[0]?.visual?.title ?? first()?.title }}</strong>
             @if (first()?.message; as message) {
               <span class="message">{{ message }}</span>
@@ -225,6 +241,10 @@ export class AchievementToastComponent implements OnInit {
 
   protected readonly confetti = Array.from({ length: 12 });
   protected readonly first = computed(() => this.items()[0] ?? null);
+  /** The launch summary: "You've earned N achievements", a stack of badges, no tier. */
+  protected readonly summary = computed(
+    () => this.items().length === 1 && !!this.first()?.achievement.summary
+  );
 
   protected readonly badges = toSignal(
     toObservable(this.items).pipe(
@@ -233,7 +253,10 @@ export class AchievementToastComponent implements OnInit {
           ? of([])
           : combineLatest(
               items.slice(0, MAX_BADGES).map((i) =>
-                this.visuals.lookup(i.achievement.key).pipe(
+                (i.achievement.summary
+                  ? of(SUMMARY_BADGE)
+                  : this.visuals.lookup(i.achievement.key)
+                ).pipe(
                   switchMap((visual: BadgeVisual) =>
                     of({
                       visual,
@@ -281,7 +304,11 @@ export class AchievementToastComponent implements OnInit {
     this.logging.logEvent('AchievementCelebration_Clicked', {
       key: first.achievement.key,
       tier: first.achievement.tier,
-      variant: this.items().length > 1 ? 'merged' : 'card',
+      variant: this.summary()
+        ? 'summary'
+        : this.items().length > 1
+          ? 'merged'
+          : 'card',
     });
     this.close();
     void this.router.navigate(['/achievements'], {

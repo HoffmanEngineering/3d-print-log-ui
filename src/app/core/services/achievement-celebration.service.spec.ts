@@ -359,6 +359,22 @@ describe('AchievementCelebrationService', () => {
     expect(notifications.getNotifications).toHaveBeenCalled();
   });
 
+  it('the launch summary plays as its own toast, never a dialog', async () => {
+    notifications.getNotifications.and.returnValue(
+      of(page([note('sum', null, null, true), note('a', 'first-printer', 1)]))
+    );
+    setup();
+
+    unread(2);
+    await settle();
+
+    expect(presenter.dialogs.length).toBe(0);
+    expect(presenter.toasts.map((t) => t.map((i) => i.id))).toEqual([
+      ['sum'],
+      ['a'],
+    ]);
+  });
+
   it('quiet toasts are told they are quiet', async () => {
     celebrations = 'quiet';
     notifications.getNotifications.and.returnValue(

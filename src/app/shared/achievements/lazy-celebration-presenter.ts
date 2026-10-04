@@ -24,6 +24,7 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
     items: CelebrationItem[],
     options: { quiet: boolean }
   ): Promise<void> {
+    await this.whenNoDialogOpen();
     const { AchievementToastComponent } = await import(
       './achievement-toast.component'
     );
@@ -57,6 +58,7 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
   }
 
   async dialog(item: CelebrationItem): Promise<void> {
+    await this.whenNoDialogOpen();
     const { AchievementCelebrationDialogComponent } = await import(
       './achievement-celebration-dialog.component'
     );
@@ -67,5 +69,16 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
       autoFocus: 'button.nice',
     });
     await firstValueFrom(ref.afterClosed());
+  }
+
+  /**
+   * Waits until no other dialog is open (a version release note, a delete confirmation), so a
+   * celebration never stacks a second backdrop on one, and a toast never ticks away its display
+   * time unseen behind one. The notification stays unread meanwhile, so nothing is lost.
+   */
+  private async whenNoDialogOpen(): Promise<void> {
+    while (this.matDialog.openDialogs.length > 0) {
+      await firstValueFrom(this.matDialog.afterAllClosed);
+    }
   }
 }

@@ -249,11 +249,22 @@ export class AchievementCelebrationService {
 
     const big =
       mode === 'on' ? items.filter((i) => isBigMoment(i.achievement)) : [];
-    const small = items.filter((i) => !big.includes(i));
+    // A summary is its own card: merged with grants it would read as "N achievements unlocked".
+    const summaries = items.filter((i) => i.achievement.summary);
+    const small = items.filter(
+      (i) => !big.includes(i) && !summaries.includes(i)
+    );
+
+    for (const summary of summaries) {
+      if (!current()) return;
+      this.logShown(summary, 'summary', summary.achievement.count ?? 1);
+      await this.presenter.toast([summary], { quiet: mode === 'quiet' });
+      await this.shown([summary]);
+    }
 
     for (const item of big) {
       if (!current()) return;
-      this.logShown(item, item.achievement.summary ? 'summary' : 'modal', 1);
+      this.logShown(item, 'modal', 1);
       await this.presenter.dialog(item);
       await this.shown([item]);
     }

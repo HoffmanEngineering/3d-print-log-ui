@@ -85,6 +85,26 @@ describe('AchievementToastComponent', () => {
     expect(el.querySelectorAll('app-achievement-badge').length).toBe(3);
   });
 
+  it('renders the launch summary with its own title', () => {
+    fixture.componentRef.setInput('items', [
+      {
+        id: 's',
+        achievement: { key: null, tier: null, summary: true, count: 12 },
+        title: "You've earned 12 achievements",
+        message: 'Your print history already earned these.',
+      },
+    ]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.textContent).toContain("You've earned 12 achievements");
+    expect(el.textContent).not.toContain('Achievement unlocked');
+    (el.querySelector('button.toast-body') as HTMLButtonElement).click();
+    expect(router.navigate).toHaveBeenCalledWith(['/achievements'], {
+      queryParams: {},
+    });
+  });
+
   it('quiet shows the card with no confetti or motion', () => {
     fixture.componentRef.setInput('items', [item('a', 'first-print')]);
     fixture.componentRef.setInput('quiet', true);

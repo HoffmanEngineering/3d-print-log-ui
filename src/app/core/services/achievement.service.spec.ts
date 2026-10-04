@@ -89,7 +89,8 @@ describe('AchievementService', () => {
 
   describe('isBigMoment', () => {
     const cases: [string, Parameters<typeof isBigMoment>[0], boolean][] = [
-      ['summary', { key: null, tier: null, summary: true, count: 12 }, true],
+      // The launch summary follows the release note, so it is a card, not a second modal.
+      ['summary', { key: null, tier: null, summary: true, count: 12 }, false],
       [
         'first print',
         { key: 'first-print', tier: 1, summary: false, count: null },

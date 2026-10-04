@@ -104,11 +104,13 @@ export const EMPTY_PUBLIC_ACHIEVEMENTS: PublicAchievements = {
 };
 
 /**
- * Big moments play as the modal; everything else is a toast. The first print, anything Gold Silk
- * or above, and the launch summary.
+ * Big moments play as the modal; everything else is a toast: the first print, and anything Gold
+ * Silk or above. The launch summary is deliberately not one. It arrives on a user's first visit
+ * to a new version, right behind that version's release note, which already announces
+ * achievements, so it is a card rather than a second modal.
  */
 export function isBigMoment(n: AchievementNotification): boolean {
-  return n.summary || n.key === 'first-print' || (n.tier ?? 0) >= 3;
+  return !n.summary && (n.key === 'first-print' || (n.tier ?? 0) >= 3);
 }
 
 /** "Earned by 9% of makers", or "fewer than 1%" below that. */

@@ -15,6 +15,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ToastrService } from 'ngx-toastr';
+import { AchievementCelebrationService } from 'src/app/core/services/achievement-celebration.service';
 import {
   NotificationService,
   getNotificationIcon,
@@ -44,6 +45,7 @@ import {
 })
 export class NotificationBellComponent implements OnInit {
   private notificationService = inject(NotificationService);
+  private celebrations = inject(AchievementCelebrationService);
   private toastr = inject(ToastrService);
 
   readonly unreadCount = this.notificationService.unreadCount;
@@ -55,6 +57,8 @@ export class NotificationBellComponent implements OnInit {
 
   ngOnInit(): void {
     this.notificationService.startPolling();
+    // The bell exists only for a signed-in user, which is exactly when celebrations apply.
+    this.celebrations.start();
   }
 
   onMenuOpened(): void {

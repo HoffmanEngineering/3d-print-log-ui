@@ -1,3 +1,4 @@
+import { AchievementStripComponent } from './achievement-strip/achievement-strip.component';
 import { NgModule } from '@angular/core';
 
 import { AdsenseModule } from 'ng2-adsense';
@@ -18,7 +19,12 @@ import { UsersComponent } from './users.component';
     StatsComponent,
     InvalidUserComponent,
   ],
-  imports: [SharedModule, UsersRoutingModule, AdsenseModule],
+  imports: [
+    SharedModule,
+    UsersRoutingModule,
+    AdsenseModule,
+    AchievementStripComponent,
+  ],
   providers: [UserDetailResolverService],
 })
 export class UsersModule {}

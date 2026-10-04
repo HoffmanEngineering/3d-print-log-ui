@@ -1,0 +1,104 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+} from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
+import { catchError, combineLatest, map, of, switchMap } from 'rxjs';
+
+import { AchievementService } from '../../core/services/achievement.service';
+import { AchievementFamily } from '../../core/types/achievement';
+import { AchievementBadgeComponent } from '../../shared/achievements/achievement-badge.component';
+import {
+  BadgeVisual,
+  toVisual,
+} from '../../shared/achievements/achievement-visuals.service';
+
+interface Featured {
+  visual: BadgeVisual;
+  tier: number;
+}
+
+/**
+ * A maker's four best badges on their profile, linking to the full public grid. Renders nothing
+ * until there is something to show, and nothing at all for a profile with no visible badges.
+ */
+@Component({
+  selector: 'app-achievement-strip',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AchievementBadgeComponent, RouterLink],
+  template: `
+    @if (strip(); as s) {
+      @if (s.count > 0) {
+        <div class="strip">
+          <div class="badges">
+            @for (f of s.featured; track f.visual.key) {
+              <app-achievement-badge
+                [glyph]="f.visual.glyph"
+                [category]="f.visual.category"
+                [tier]="f.tier"
+                [oneTime]="f.visual.oneTime"
+                [numeral]="f.visual.family?.tiers?.[f.tier - 1]?.threshold"
+                [label]="f.visual.title"
+                size="md"
+              />
+            }
+          </div>
+          <a class="all" [routerLink]="['/users', userId(), 'achievements']">
+            {{ s.count }} achievements →
+          </a>
+        </div>
+      }
+    }
+  `,
+  styles: `
+    .strip {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .badges {
+      display: flex;
+      gap: 8px;
+    }
+    .all {
+      font-weight: 600;
+    }
+  `,
+})
+export class AchievementStripComponent {
+  readonly userId = input.required<number>();
+
+  private readonly achievements = inject(AchievementService);
+
+  protected readonly strip = toSignal(
+    toObservable(this.userId).pipe(
+      switchMap((id) =>
+        combineLatest([
+          this.achievements.catalog(),
+          this.achievements.forUser(id),
+        ])
+      ),
+      map(([catalog, dto]) => {
+        const families: AchievementFamily[] = [
+          ...catalog.families,
+          ...dto.revealedHidden,
+        ];
+        const featured: Featured[] = dto.featured.flatMap((f) => {
+          const family = families.find((c) => c.key === f.key);
+          return family
+            ? [{ visual: toVisual(family), tier: f.highestTier }]
+            : [];
+        });
+        return { count: dto.earnedTierCount, featured };
+      }),
+      // A public profile must never break over its badges: show nothing instead.
+      catchError(() => of(null))
+    ),
+    { initialValue: null }
+  );
+}

@@ -8,7 +8,15 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, Observable, Subject } from 'rxjs';
+import {
+  concat,
+  interval,
+  last,
+  Observable,
+  of,
+  Subject,
+  Subscription,
+} from 'rxjs';
 import { map, startWith, switchMap, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
@@ -93,6 +101,8 @@ export function getTimeAgo(date: Date, short: boolean = false): string {
 export class NotificationService {
   private readonly baseApiUrl = `${environment.printLogApiUrl}/api/notifications`;
   private readonly POLLING_INTERVAL_MS = 30000;
+  /** The API's MaxNotificationIds for PUT api/notifications/read. */
+  private readonly MARK_READ_CHUNK = 100;
 
   private http = inject(HttpClient);
   private destroyRef = inject(DestroyRef);
@@ -101,7 +111,20 @@ export class NotificationService {
   public readonly unreadCount = this._unreadCount.asReadonly();
   public readonly hasUnread = computed(() => this._unreadCount() > 0);
 
-  private pollingStarted = false;
+  private readonly _unreadAchievementCount = signal<number>(0);
+  /** Unread achievement notifications: while above 0 there is a celebration to play. */
+  public readonly unreadAchievementCount =
+    this._unreadAchievementCount.asReadonly();
+
+  private readonly _pollTick = signal<number>(0);
+  /**
+   * Bumped after every unread-count response, whether or not the counts changed. A signal set
+   * to its current value does not notify, so anything that must retry while a count stays
+   * positive (the celebration's tab lock) keys off this.
+   */
+  public readonly pollTick = this._pollTick.asReadonly();
+
+  private polling: Subscription | null = null;
   private refreshTrigger$ = new Subject<void>();
 
   /**
@@ -109,13 +132,11 @@ export class NotificationService {
    * Should be called when the user logs in.
    */
   startPolling(): void {
-    if (this.pollingStarted) {
+    if (this.polling) {
       return;
     }
 
-    this.pollingStarted = true;
-
-    this.refreshTrigger$
+    this.polling = this.refreshTrigger$
       .pipe(
         startWith(undefined),
         switchMap(() => interval(this.POLLING_INTERVAL_MS).pipe(startWith(0))),
@@ -123,9 +144,7 @@ export class NotificationService {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (response) => {
-          this._unreadCount.set(response.unreadCount);
-        },
+        next: (response) => this.applyCounts(response),
         error: () => {
           // Silently handle polling errors
         },
@@ -137,9 +156,7 @@ export class NotificationService {
    */
   refreshUnreadCount(): void {
     this.fetchUnreadCount().subscribe({
-      next: (response) => {
-        this._unreadCount.set(response.unreadCount);
-      },
+      next: (response) => this.applyCounts(response),
       error: () => {
         // Silently handle errors
       },
@@ -152,7 +169,8 @@ export class NotificationService {
   getNotifications(
     page: number = 1,
     size: number = 10,
-    unreadOnly: boolean = false
+    unreadOnly: boolean = false,
+    type?: NotificationType
   ): Observable<PagedList<NotificationSummaryDto>> {
     let params = new HttpParams()
       .set('pageNumber', page.toString())
@@ -160,6 +178,10 @@ export class NotificationService {
 
     if (unreadOnly) {
       params = params.set('unreadOnly', 'true');
+    }
+
+    if (type !== undefined) {
+      params = params.set('type', type.toString());
     }
 
     return this.http
@@ -211,6 +233,35 @@ export class NotificationService {
   }
 
   /**
+   * Mark several notifications as read, in sequential requests of at most 100 ids (the API's
+   * limit). Both unread counts drop optimistically once all have succeeded.
+   */
+  markMultipleAsRead(ids: string[]): Observable<void> {
+    if (ids.length === 0) {
+      return of(undefined);
+    }
+
+    const url = `${this.baseApiUrl}/read`;
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += this.MARK_READ_CHUNK) {
+      chunks.push(ids.slice(i, i + this.MARK_READ_CHUNK));
+    }
+
+    return concat(
+      ...chunks.map((notificationIds) =>
+        this.http.put<void>(url, { notificationIds })
+      )
+    ).pipe(
+      last(),
+      tap(() => {
+        this._unreadCount.update((c) => Math.max(0, c - ids.length));
+        this._unreadAchievementCount.update((c) => Math.max(0, c - ids.length));
+      }),
+      map(() => undefined)
+    );
+  }
+
+  /**
    * Mark all notifications as read.
    */
   markAllAsRead(): Observable<void> {
@@ -218,6 +269,7 @@ export class NotificationService {
     return this.http.put<void>(url, {}).pipe(
       tap(() => {
         this._unreadCount.set(0);
+        this._unreadAchievementCount.set(0);
       })
     );
   }
@@ -242,7 +294,16 @@ export class NotificationService {
    * Useful for logout scenarios.
    */
   stopPolling(): void {
-    this.pollingStarted = false;
+    // Unsubscribe, or every logout/login in one session would stack another poller.
+    this.polling?.unsubscribe();
+    this.polling = null;
     this._unreadCount.set(0);
+    this._unreadAchievementCount.set(0);
+  }
+
+  private applyCounts(response: UnreadCountResponse): void {
+    this._unreadCount.set(response.unreadCount);
+    this._unreadAchievementCount.set(response.unreadAchievementCount ?? 0);
+    this._pollTick.update((t) => t + 1);
   }
 }

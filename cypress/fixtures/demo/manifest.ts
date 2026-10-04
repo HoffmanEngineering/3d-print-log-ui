@@ -68,6 +68,18 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
     url: '**/api/notifications/unread-count*',
     fixture: 'demo/notifications-unread-count.json',
   },
+  // The prints list shows a next-achievement hint. `nextHint: null` renders nothing, so the
+  // print-list images stay exactly as they were.
+  {
+    method: 'GET',
+    url: '**/api/achievements/me',
+    fixture: 'demo/achievements-me.json',
+  },
+  {
+    method: 'GET',
+    url: '**/api/achievements/catalog',
+    fixture: 'demo/achievements-catalog.json',
+  },
 ];
 
 // defaultPrintImageId -> committed demo image, for the /api/Prints/*/image/* intercept.

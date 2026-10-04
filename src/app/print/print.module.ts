@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { NextAchievementHintComponent } from './print-list/next-achievement-hint/next-achievement-hint.component';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -52,6 +53,7 @@ import { PrintEmptyStateComponent } from './print-list/print-empty-state/print-e
     MatButtonToggleModule,
     PrintGroupedViewComponent,
     PrintCardComponent,
+    NextAchievementHintComponent,
     PrintCommentsComponent,
     PrintListSkeletonComponent,
     PrintBulkActionBarComponent,

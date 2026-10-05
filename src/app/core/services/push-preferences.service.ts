@@ -4,7 +4,8 @@ import { UserSettingService, UserSettingType } from './user-setting.service';
 /** The setting types that govern push delivery. */
 export type PushNotificationType =
   | UserSettingType.Push_PrintCompleted
-  | UserSettingType.Push_PrintFailed;
+  | UserSettingType.Push_PrintFailed
+  | UserSettingType.Push_Achievement;
 
 const DISABLED = 'false';
 const ENABLED = 'true';

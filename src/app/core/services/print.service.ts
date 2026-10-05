@@ -238,6 +238,11 @@ export interface PrintDetail {
   projectId?: string;
   projectName?: string;
   newProjectName?: string;
+  /**
+   * The slicer-plugin setting this print was prefilled from. Not editable: it only tells the API
+   * where the print came from (slicer badges). Carried through the form explicitly.
+   */
+  curaSettingId?: string;
 }
 
 /**
@@ -263,6 +268,7 @@ export interface AddPrintDTO {
   allowComments: boolean | null;
   projectId?: string;
   newProjectName?: string;
+  curaSettingId?: string;
 }
 
 export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
@@ -445,6 +451,9 @@ export class PrintService {
       projectId: newPrint.projectId,
       newProjectName: newPrint.newProjectName,
     };
+    if (newPrint.curaSettingId) {
+      printDto.curaSettingId = newPrint.curaSettingId;
+    }
 
     return this.http.post<any>(url, printDto);
   }

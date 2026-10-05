@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "hiddenCount": 4,
+  "families": [
+    {
+      "key": "first-print",
+      "category": 1,
+      "glyph": "layers",
+      "title": "First Layer",
+      "hintOrder": 3,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log your first print.",
+          "rarityPercent": 81
+        }
+      ]
+    },
+    {
+      "key": "prints-logged",
+      "category": 2,
+      "glyph": "numeral",
+      "title": "Prolific Printer",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 10,
+          "description": "Log 10 prints.",
+          "rarityPercent": 44
+        },
+        {
+          "tier": 2,
+          "threshold": 25,
+          "description": "Log 25 prints.",
+          "rarityPercent": 20
+        }
+      ]
+    },
+    {
+      "key": "octoprint",
+      "category": 4,
+      "glyph": "octopus",
+      "title": "Octo Pilot",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Have OctoPrint log a print for you automatically.",
+          "rarityPercent": 7
+        }
+      ]
+    }
+  ]
+}

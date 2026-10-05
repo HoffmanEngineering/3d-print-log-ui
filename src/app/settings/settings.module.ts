@@ -1,3 +1,4 @@
+import { AchievementSettingsComponent } from './achievement-settings/achievement-settings.component';
 import { NgModule } from '@angular/core';
 
 import { SharedModule } from '../shared/shared.module';
@@ -9,7 +10,12 @@ import { ConnectedAgentsComponent } from './connected-agents/connected-agents.co
 
 @NgModule({
   declarations: [SettingsComponent],
-  imports: [SharedModule, SettingsRoutingModule, ConnectedAgentsComponent],
+  imports: [
+    SharedModule,
+    SettingsRoutingModule,
+    ConnectedAgentsComponent,
+    AchievementSettingsComponent,
+  ],
   providers: [CurrentUserDetailResolverService],
 })
 export class SettingsModule {}

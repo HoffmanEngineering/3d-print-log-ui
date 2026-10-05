@@ -1747,6 +1747,8 @@ export class EditPrintDetailComponent
       createdByUserId: null,
       allowComments: this.printForm.controls.allowComments.value,
       allowFileDownloads: this.printForm.controls.allowFileDownloads.value,
+      // Not a form field: carried from the resolved print so a slicer upload keeps its origin.
+      curaSettingId: this.printDetail?.curaSettingId,
     };
 
     if (this.pendingProjectSelection?.type === 'existing') {

@@ -118,13 +118,18 @@ export const ACHIEVEMENT_GLYPHS: Readonly<
   ],
 
   // Getting started.
+  // A filament spool lying on its side: flanges left and right, filament wound between them.
   spool: [
-    rect(8, 6, 32, 6, 2),
-    rect(8, 36, 32, 6, 2),
-    rect(13, 12, 22, 24, 1),
-    stroked('M13 18h22M13 24h22M13 30h22', 2),
-    circle(24, 9, 1.8, cut),
-    circle(24, 39, 1.8, cut),
+    rect(4, 5, 7, 38, 2.5),
+    rect(37, 5, 7, 38, 2.5),
+    rect(12.5, 10, 23, 28, 2),
+    {
+      kind: 'path',
+      d: 'M16.5 10v28M20.5 10v28M24 10v28M27.5 10v28M31.5 10v28',
+      fill: 'none',
+      stroke: 'cut',
+      strokeWidth: 1,
+    },
   ],
   layers: [
     rect(8, 34, 32, 6, 2),

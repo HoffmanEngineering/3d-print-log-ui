@@ -33,7 +33,8 @@
     "parse-orca": "ts-node --project orca-machine-def-parser/tsconfig.json orca-machine-def-parser/parser.ts",
     "compare-printers": "ts-node --project orca-machine-def-parser/tsconfig.json orca-machine-def-parser/compare.ts",
     "prepare": "husky install",
-    "docs:generate": "node scripts/build-docs.mjs"
+    "docs:generate": "node scripts/build-docs.mjs",
+    "email-assets": "node scripts/generate-email-assets.mjs"
   },
   "private": true,
   "dependencies": {
@@ -95,6 +96,7 @@
     "baseline-browser-mapping": "^2.10.29",
     "cypress": "^13.17.0",
     "cypress-axe": "^1.7.0",
+    "esbuild": "0.27.3",
     "eslint": "^9.39.4",
     "husky": "^7.0.4",
     "jasmine-core": "~5.1.2",

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { PrinterRow } from '../../models/analytics.models';
 import { PrinterComparisonComponent } from './printer-comparison.component';
+import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
 
 const row = (overrides: Partial<PrinterRow>): PrinterRow => ({
   printerId: 1,
@@ -26,6 +27,16 @@ describe('PrinterComparisonComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PrinterComparisonComponent, NoopAnimationsModule],
+      providers: [
+        // Stubbed: the real store would issue its own authenticated fetch.
+        {
+          provide: PrinterThumbnailStore,
+          useValue: jasmine.createSpyObj<PrinterThumbnailStore>(
+            'PrinterThumbnailStore',
+            ['thumbnailFor', 'invalidate', 'noteLoadFailure']
+          ),
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PrinterComparisonComponent);
@@ -116,5 +127,14 @@ describe('PrinterComparisonComponent', () => {
     component.onSelect(component.sorted()[0]);
 
     expect(emitted).toEqual({ printerId: 7 });
+  });
+
+  it('shows a printer avatar beside each printer name', () => {
+    fixture.componentRef.setInput('rows', [row({ printerId: 7 })]);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('th app-printer-avatar')
+    ).toBeTruthy();
   });
 });

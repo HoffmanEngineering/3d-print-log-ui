@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { PrinterRow } from '../../models/analytics.models';
+import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
 
 export type PrinterSortColumn =
   | 'name'
@@ -28,7 +29,7 @@ export type PrinterSortColumn =
  */
 @Component({
   selector: 'app-printer-comparison',
-  imports: [DecimalPipe, MatButtonModule],
+  imports: [DecimalPipe, MatButtonModule, PrinterAvatarComponent],
   templateUrl: './printer-comparison.component.html',
   styleUrls: ['./printer-comparison.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

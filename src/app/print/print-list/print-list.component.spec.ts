@@ -1043,4 +1043,36 @@ describe('PrintListComponent', () => {
       expect(component.skeletonRowCount()).toBe(10);
     });
   });
+
+  // NO_ERRORS_SCHEMA keeps the real avatar out of this fixture, so this asserts the
+  // markup is placed and bound, not what the avatar itself renders.
+  it('shows a printer avatar beside the printer name in the table', () => {
+    const print = {
+      id: 7,
+      title: 'Benchy',
+      status: PrintStatus.Success,
+      startDate: new Date('2021-05-27'),
+      printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+      filamentUsage: [],
+      commentCount: 0,
+      sumActualFilamentWeightMg: 0,
+      sumEstimatedFilamentWeightMg: 0,
+      totalFilamentWeightMg: 0,
+    } as unknown as PrintSummary;
+
+    TestBed.inject(ActivatedRoute).data = of({
+      printList: {
+        items: [print],
+        paging: { currentPage: 1, pageSize: 10, totalCount: 1, totalPages: 1 },
+      } as PagedList<PrintSummary>,
+      printers: [],
+      filaments: [],
+    });
+
+    fixture.detectChanges();
+
+    expect(
+      fixture.debugElement.query(By.css('td app-printer-avatar'))
+    ).toBeTruthy();
+  });
 });

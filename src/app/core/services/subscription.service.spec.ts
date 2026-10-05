@@ -32,6 +32,30 @@ describe('SubscriptionService', () => {
     expect(service.isPro()).toBeFalse();
   });
 
+  it('should default maxImages to the free cap, not the pro one', () => {
+    // Defaulting to 20 here would let the UI accept uploads the API rejects.
+    expect(service.maxImages()).toBe(5);
+  });
+
+  it('exposes the image cap from the /me response', () => {
+    service.loadSubscription();
+
+    httpMock.expectOne(`${baseUrl}/me`).flush({
+      status: 'active',
+      plan: 'pro_monthly',
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      isPro: true,
+      maxImages: 20,
+      maxImagesPerPrint: 20,
+      maxFilesPerPrint: 5,
+      maxFileStorageBytes: 1,
+      usedFileStorageBytes: 0,
+    } as SubscriptionDto);
+
+    expect(service.maxImages()).toBe(20);
+  });
+
   it('should default maxImagesPerPrint to 5', () => {
     expect(service.maxImagesPerPrint()).toBe(5);
   });
@@ -60,6 +84,7 @@ describe('SubscriptionService', () => {
         currentPeriodEnd: '2026-03-27T00:00:00Z',
         cancelAtPeriodEnd: false,
         isPro: true,
+        maxImages: 20,
         maxImagesPerPrint: 20,
         maxFilesPerPrint: 5,
         maxFileStorageBytes: 53687091200,

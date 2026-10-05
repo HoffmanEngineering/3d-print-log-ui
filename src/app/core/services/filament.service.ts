@@ -8,6 +8,7 @@ import { SortDirection } from '../types/sort-request';
 import { EMPTY_GUID } from './print.service';
 import { PrinterSummary } from './printer.service';
 import { MaterialCategory } from './material-categories.service';
+import { EntityImageTarget } from '../../shared/entity-images-panel/entity-image-gateway';
 
 export enum FilamentSourceMeasurement {
   Weight = 1,
@@ -348,6 +349,27 @@ export class FilamentService {
       `${this.baseApi}/api/Filaments/${filamentId}/images/${imageId}/set-as-default`,
       {}
     );
+  }
+
+  /**
+   * Adapts this service to the shape EntityImagesPanelComponent consumes.
+   *
+   * The ID and the gateway travel together so a filament GUID can never be handed to
+   * another entity's endpoints. `id` is null on the create route, before the filament has
+   * been saved.
+   */
+  imageTarget(id: string | null): EntityImageTarget<string> {
+    return {
+      id,
+      gateway: {
+        upload: (entityId, file) => this.uploadFilamentImage(entityId, file),
+        delete: (entityId, imageId) =>
+          this.deleteFilamentImage(entityId, imageId),
+        reorder: (entityId, ids) => this.reorderFilamentImages(entityId, ids),
+        setDefault: (entityId, imageId) =>
+          this.setFilamentImageAsDefault(entityId, imageId),
+      },
+    };
   }
 
   /**

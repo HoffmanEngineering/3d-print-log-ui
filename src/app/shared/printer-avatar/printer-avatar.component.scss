@@ -1,0 +1,24 @@
+// Inline so the avatar sits on the text baseline beside a printer name rather than
+// forcing its own line inside a table cell, a mat-option or a link.
+:host {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.printer-avatar {
+  border-radius: 4px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  margin-inline-end: 0.5rem;
+}
+
+.printer-avatar--sm {
+  width: 24px;
+  height: 24px;
+}
+
+.printer-avatar--md {
+  width: 40px;
+  height: 40px;
+}

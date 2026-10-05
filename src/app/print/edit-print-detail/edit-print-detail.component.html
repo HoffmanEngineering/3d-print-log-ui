@@ -134,9 +134,12 @@
             id="edit-print-printer"
           >
             @for (printer of printers; track printer) {
-              <mat-option [value]="printer.id">{{
-                getPrinterLabel(printer)
-              }}</mat-option>
+              <mat-option [value]="printer.id">
+                <app-printer-avatar
+                  [printerId]="printer.id"
+                  [printerName]="printer.name"
+                />{{ getPrinterLabel(printer) }}
+              </mat-option>
             }
           </mat-select>
           @if (printForm.controls['printerId'].hasError('required')) {

@@ -1,4 +1,10 @@
-import { inject, Injectable, NgZone, PLATFORM_ID } from '@angular/core';
+import {
+  inject,
+  Injectable,
+  Injector,
+  NgZone,
+  PLATFORM_ID,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
@@ -17,6 +23,7 @@ import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
+import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
 import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
 import { UserSettingService } from './user-setting.service';
@@ -98,6 +105,11 @@ export class AuthService {
 
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly userSettingService = inject(UserSettingService);
+  /**
+   * Resolved lazily on logout rather than injected: PrinterThumbnailStore injects this
+   * service, so a direct dependency here would be a cycle.
+   */
+  private readonly injector = inject(Injector);
 
   constructor(
     private router: Router,
@@ -316,6 +328,10 @@ export class AuthService {
     // Stop notification polling
     this.notificationService.stopPolling();
     this.userSettingService.clearCache();
+    // The signed thumbnail map is per user. Clearing it here rather than waiting for the
+    // store's own next read means the previous user's printer photos cannot survive on
+    // screen in a session that outlives the Auth0 redirect.
+    this.injector.get(PrinterThumbnailStore).invalidate();
 
     await this.runPushTeardown();
 

@@ -64,11 +64,13 @@
         <div fxFlex="grow" fxFlexFill>
           <h2 style="text-align: start">Photos</h2>
         </div>
-        <app-filament-images-panel
+        <app-entity-images-panel
           fxFlex="grow"
           fxFlexFill
-          [filamentId]="loadedFilament?.id ?? null"
+          [target]="imageTarget()"
           [images]="loadedFilament?.images ?? []"
+          [maxImages]="maxImages()"
+          imageAlt="Material photo"
         />
         <div fxFlex="grow" fxFlexFill>
           <h2 style="text-align: start">General</h2>

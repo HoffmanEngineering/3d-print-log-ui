@@ -181,6 +181,12 @@
                   <div class="card-meta">
                     <div class="meta-item">
                       <mat-icon class="meta-icon">print</mat-icon>
+                      @if (p.printer; as printer) {
+                        <app-printer-avatar
+                          [printerId]="printer.id"
+                          [printerName]="printer.name"
+                        />
+                      }
                       <span>{{ getPrinterLabel(p.printer) }}</span>
                     </div>
                     <div class="meta-item">
@@ -372,6 +378,12 @@
                 <div class="card-meta">
                   <div class="meta-item">
                     <mat-icon class="meta-icon">print</mat-icon>
+                    @if (ep.printer; as printer) {
+                      <app-printer-avatar
+                        [printerId]="printer.id"
+                        [printerName]="printer.name"
+                      />
+                    }
                     <span>{{ getPrinterLabel(ep.printer) }}</span>
                   </div>
                   <div class="meta-item">
@@ -697,11 +709,28 @@
       <td mat-cell *matCellDef="let row">
         @if (row.kind === 'project') {
           @for (printer of row.item.printers; track printer.id) {
-            <div>{{ getPrinterLabel(printer) }}</div>
+            <div>
+              <app-printer-avatar
+                [printerId]="printer.id"
+                [printerName]="printer.name"
+              />{{ getPrinterLabel(printer) }}
+            </div>
           }
         } @else if (row.kind === 'expanded-print') {
+          @if (row.print.printer; as printer) {
+            <app-printer-avatar
+              [printerId]="printer.id"
+              [printerName]="printer.name"
+            />
+          }
           {{ getPrinterLabel(row.print.printer) }}
         } @else {
+          @if (row.item.print?.printer; as printer) {
+            <app-printer-avatar
+              [printerId]="printer.id"
+              [printerName]="printer.name"
+            />
+          }
           {{ getPrinterLabel(row.item.print?.printer) }}
         }
       </td>

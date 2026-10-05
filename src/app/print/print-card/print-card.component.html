@@ -45,6 +45,12 @@
         <div class="card-meta">
           <div class="meta-item">
             <mat-icon class="meta-icon">print</mat-icon>
+            @if (print().printer; as printer) {
+              <app-printer-avatar
+                [printerId]="printer.id"
+                [printerName]="printer.name"
+              />
+            }
             <span>{{ getPrinterLabel(print().printer) }}</span>
           </div>
 

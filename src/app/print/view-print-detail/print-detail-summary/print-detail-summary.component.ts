@@ -34,6 +34,7 @@ import {
   hasLegacyFilamentData,
 } from '../print-legacy-filament-usage/print-legacy-filament-usage.component';
 import { environment } from 'src/environments/environment';
+import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
 
 @Component({
   selector: 'app-print-detail-summary',
@@ -41,6 +42,7 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./print-detail-summary.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    PrinterAvatarComponent,
     RouterLink,
     MatButtonModule,
     MatIconModule,

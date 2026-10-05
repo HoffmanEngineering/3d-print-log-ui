@@ -32,6 +32,7 @@ import { PrintCardComponent } from './print-card/print-card.component';
 import { PrintListSkeletonComponent } from './print-list/print-list-skeleton/print-list-skeleton.component';
 import { PrintBulkActionBarComponent } from './print-list/print-bulk-action-bar/print-bulk-action-bar.component';
 import { PrintEmptyStateComponent } from './print-list/print-empty-state/print-empty-state.component';
+import { PrinterAvatarComponent } from '../shared/printer-avatar/printer-avatar.component';
 
 @NgModule({
   declarations: [
@@ -58,6 +59,7 @@ import { PrintEmptyStateComponent } from './print-list/print-empty-state/print-e
     PrintListSkeletonComponent,
     PrintBulkActionBarComponent,
     PrintEmptyStateComponent,
+    PrinterAvatarComponent,
   ],
   providers: [
     PrintDetailResolverService,

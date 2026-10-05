@@ -35,9 +35,12 @@
           [disabled]="this.editId !== null"
         >
           @for (printer of printers; track printer) {
-            <mat-option [value]="printer.id">{{
-              getPrinterLabel(printer)
-            }}</mat-option>
+            <mat-option [value]="printer.id">
+              <app-printer-avatar
+                [printerId]="printer.id"
+                [printerName]="printer.name"
+              />{{ getPrinterLabel(printer) }}
+            </mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -135,9 +138,12 @@
               #printerValue="ngModel"
             >
               @for (printer of printers; track printer) {
-                <mat-option [value]="printer.id">{{
-                  getPrinterLabel(printer)
-                }}</mat-option>
+                <mat-option [value]="printer.id">
+                  <app-printer-avatar
+                    [printerId]="printer.id"
+                    [printerName]="printer.name"
+                  />{{ getPrinterLabel(printer) }}
+                </mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -149,6 +155,12 @@
         }
         @if (entry.id !== this.editId) {
           <span>
+            @if (entry.printer; as printer) {
+              <app-printer-avatar
+                [printerId]="printer.id"
+                [printerName]="printer.name"
+              />
+            }
             {{ getPrinterLabel(entry.printer) }}
           </span>
         }

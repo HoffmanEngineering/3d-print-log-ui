@@ -1,0 +1,5 @@
+[
+  { "printerId": 101, "thumbnailUrl": "/api/Printers/101/thumbnail" },
+  { "printerId": 102, "thumbnailUrl": "/api/Printers/102/thumbnail" },
+  { "printerId": 103, "thumbnailUrl": "/api/Printers/103/thumbnail" }
+]

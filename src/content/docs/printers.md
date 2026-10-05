@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-09-02
+updated: 2026-09-10
 related: [prints]
 ---
 
@@ -50,6 +50,35 @@ Click on any row in the list to view and edit an existing 3D Printer.
 
 After making changes, click <button mat-raised-button
 color="primary">Submit</button> to update that 3D printer.
+
+---
+
+### Photos {#printer_photos}
+
+Add photos of a printer so you can tell your machines apart at a glance.
+
+On the **Add** or **Edit** printer page, the **Photos** panel sits at the top of
+the form. Click **Add Photo** to pick files, or drag them onto the panel. On a
+phone, the same button opens the camera. Accepted formats are JPEG, PNG and
+WebP, up to 10MB each.
+
+Photos you pick while creating a printer are uploaded when you click
+**Submit**, once the printer itself has been saved. If an upload fails, the page
+stays open with the printer saved so you can retry without creating a duplicate.
+
+The first photo you add becomes the **default**. To choose a different one,
+hover a thumbnail and click its star. Drag the thumbnails to reorder them, and
+use the delete button on a thumbnail to remove a photo.
+
+The default photo appears beside the printer's name throughout the app — in the
+printer list, the printer picker when logging a print, on a print's details, and
+in maintenance and analytics.
+
+**Printer photos are private.** They are never shown on a print's public page,
+so sharing a print does not share pictures of your workspace.
+
+You can attach up to **5 photos per printer** on the free plan, or **20** with
+[3D Print Log Pro](/settings/subscription).
 
 ---
 

@@ -1,0 +1,9 @@
+@if (src(); as url) {
+  <img
+    [class]="'printer-avatar printer-avatar--' + size()"
+    [src]="url"
+    [alt]="printerName() + ' photo'"
+    loading="lazy"
+    (error)="onError()"
+  />
+}

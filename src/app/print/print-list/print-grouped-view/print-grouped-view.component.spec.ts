@@ -27,6 +27,7 @@ import { SharedModule } from 'src/app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ComponentRef } from '@angular/core';
 import { DEFERRED_SKELETON_DELAY_MS } from 'src/app/shared/skeleton/deferred-skeleton';
+import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
 
 function makePagedList<T>(items: T[]): PagedList<T> {
   return {
@@ -140,6 +141,14 @@ describe('PrintGroupedViewComponent', () => {
         { provide: MatDialog, useValue: mockDialog },
         { provide: LoggingService, useValue: mockLoggingService },
         { provide: MediaMatcher, useValue: mockMediaMatcher },
+        // Stubbed: the real store would issue its own authenticated fetch.
+        {
+          provide: PrinterThumbnailStore,
+          useValue: jasmine.createSpyObj<PrinterThumbnailStore>(
+            'PrinterThumbnailStore',
+            ['thumbnailFor', 'invalidate', 'noteLoadFailure']
+          ),
+        },
       ],
     }).compileComponents();
 
@@ -527,4 +536,16 @@ describe('PrintGroupedViewComponent', () => {
       expect(component.getProjectTotalCost(mockProjectItem)).toBe('$1.50');
     });
   });
+
+  it('shows a printer avatar beside the printer name', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(500);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('app-printer-avatar')
+    ).toBeTruthy();
+
+    discardPeriodicTasks();
+  }));
 });

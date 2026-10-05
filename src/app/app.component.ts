@@ -2,10 +2,12 @@ import {
   Component,
   computed,
   Inject,
+  inject,
   OnInit,
   PLATFORM_ID,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { EmailClickTrackerService } from './core/services/email-click-tracker.service';
 import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { AuthService } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
@@ -23,6 +25,8 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
 })
 export class AppComponent implements OnInit {
   title = 'print-log-ui';
+
+  private readonly emailClicks = inject(EmailClickTrackerService);
 
   /** Whether native accepted our pending-tap listener, so we stop retrying. */
   private tapListenerInstalled = false;
@@ -49,6 +53,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.themeService.initialize();
+    this.emailClicks.start();
     this.auth.localAuthSetup();
 
     this.auth.userProfile$.subscribe((user) => {

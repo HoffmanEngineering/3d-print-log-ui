@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
@@ -11,12 +11,18 @@ import { LoggingService } from './logging.service';
  * Every link in an email carries `utm_source=email`, `utm_campaign` and `utm_content`. On the
  * first navigation this logs `Email_Clicked` and replaces the URL without the `utm_*`
  * parameters, so they are not bookmarked, shared or counted twice on reload.
+ *
+ * The address bar is rewritten in place rather than through the router: a router navigation
+ * would fire another `NavigationEnd` and so another analytics page view. It starts from the live
+ * `location`, not the router's URL, so it keeps whatever the page has already done to the
+ * fragment — on /email-preferences that fragment is a token the page strips as it loads.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class EmailClickTrackerService {
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
   private readonly logging = inject(LoggingService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -49,9 +55,18 @@ export class EmailClickTrackerService {
       content: params['utm_content'] ?? '',
     });
 
-    tree.queryParams = Object.fromEntries(
-      Object.entries(params).filter(([key]) => !key.startsWith('utm_'))
+    const location = this.document.location;
+    const search = new URLSearchParams(location.search);
+    for (const key of [...search.keys()]) {
+      if (key.startsWith('utm_')) {
+        search.delete(key);
+      }
+    }
+    const query = search.toString();
+    this.document.defaultView?.history.replaceState(
+      this.document.defaultView.history.state,
+      '',
+      location.pathname + (query ? `?${query}` : '') + location.hash
     );
-    void this.router.navigateByUrl(tree, { replaceUrl: true });
   }
 }

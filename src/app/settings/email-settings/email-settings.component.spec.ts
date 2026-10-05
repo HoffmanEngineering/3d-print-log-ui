@@ -151,6 +151,40 @@ describe('EmailSettingsComponent', () => {
     });
   });
 
+  it('puts a toggle back and says so when its save fails', async () => {
+    const el = await render();
+    settings.addOrUpdateSetting.and.returnValue(
+      Promise.reject(new Error('offline'))
+    );
+
+    fixture.componentInstance.form.controls.monthlyRecap.setValue(false);
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+
+    expect(
+      fixture.componentInstance.form.controls.monthlyRecap.value
+    ).toBeTrue();
+    expect(el.querySelector('[data-testid="email-save-error"]')).not.toBeNull();
+    expect(logging.logEvent).not.toHaveBeenCalledWith(
+      'EmailSettings_Changed',
+      jasmine.anything()
+    );
+  });
+
+  it('restores the categories when a failed master-switch save is undone', async () => {
+    await render();
+    settings.addOrUpdateSetting.and.returnValue(
+      Promise.reject(new Error('offline'))
+    );
+    const form = fixture.componentInstance.form;
+
+    form.controls.all.setValue(false);
+    await new Promise((r) => setTimeout(r));
+
+    expect(form.controls.all.value).toBeTrue();
+    expect(form.controls.monthlyRecap.enabled).toBeTrue();
+  });
+
   it('saves the master switch', async () => {
     await render();
 

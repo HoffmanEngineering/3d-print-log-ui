@@ -4,6 +4,7 @@ import {
   DestroyRef,
   inject,
   OnInit,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -105,6 +106,12 @@ const CATEGORIES: EmailSetting[] = [
           </mat-slide-toggle>
         </div>
       </div>
+      @if (saveFailed()) {
+        <p class="warning" role="alert" data-testid="email-save-error">
+          We couldn't save that change, so it's back to how it was. Please try
+          again.
+        </p>
+      }
       <p class="help">
         Account and security messages are sent regardless.
         <a routerLink="/docs/email-notifications">What we send and when</a>
@@ -166,6 +173,17 @@ export class EmailSettingsComponent implements OnInit {
     ),
   });
 
+  /** Whether the most recent save failed; cleared by the next successful one. */
+  readonly saveFailed = signal(false);
+
+  /** What the server last confirmed for each setting, so a failed save can be undone on screen. */
+  private readonly stored: Record<EmailSetting, boolean> = {
+    all: true,
+    onboarding: true,
+    monthlyRecap: true,
+    printerSilent: true,
+  };
+
   /** One save at a time, in order: the last value chosen is the last value stored. */
   private readonly saves = new Subject<{
     setting: EmailSetting;
@@ -187,12 +205,10 @@ export class EmailSettingsComponent implements OnInit {
           this.settings.getCurrentUsersSettingByType(SETTING_TYPES[k])
         )
       );
-      keys.forEach((k, i) =>
-        this.form.controls[k].setValue(
-          isEmailPreferenceEnabled(values[i]?.value),
-          { emitEvent: false }
-        )
-      );
+      keys.forEach((k, i) => {
+        this.stored[k] = isEmailPreferenceEnabled(values[i]?.value);
+        this.form.controls[k].setValue(this.stored[k], { emitEvent: false });
+      });
     } catch (e) {
       // Leave the controls disabled: enabling them over unknown stored values would let a
       // click overwrite a choice the user never saw.
@@ -228,14 +244,27 @@ export class EmailSettingsComponent implements OnInit {
   }
 
   private async save(setting: EmailSetting, value: boolean): Promise<void> {
-    this.logging.logEvent('EmailSettings_Changed', { setting, value });
     try {
       await this.settings.addOrUpdateSetting(
         SETTING_TYPES[setting],
         String(value)
       );
     } catch (e) {
+      // A toggle left showing a value the server never stored would keep the user getting
+      // email they think they turned off, so put it back and say so.
       this.logging.logException(e as Error);
+      this.logging.logEvent('EmailSettings_Error', { setting, value });
+      this.form.controls[setting].setValue(this.stored[setting], {
+        emitEvent: false,
+      });
+      if (setting === 'all') {
+        this.applyMaster(this.stored.all);
+      }
+      this.saveFailed.set(true);
+      return;
     }
+    this.stored[setting] = value;
+    this.saveFailed.set(false);
+    this.logging.logEvent('EmailSettings_Changed', { setting, value });
   }
 }

@@ -1,5 +1,6 @@
 // The page unsubscribe and manage links from emails land on. Public and token-authenticated,
 // so this deliberately does NOT call cy.login(): a visitor from an email is usually signed out.
+// `?devUserId=anonymous` matters: without it the dev auth bypass signs in a mock user.
 //
 // Every email endpoint is intercepted, so this needs no seeded data, only the app.
 
@@ -18,7 +19,7 @@ describe('Email preferences (signed out)', () => {
       req.reply({ category: 24 });
     }).as('confirm');
 
-    cy.visit(`/email-preferences#u=${RECAP_UNSUB_TOKEN}`);
+    cy.visit(`/email-preferences?devUserId=anonymous#u=${RECAP_UNSUB_TOKEN}`);
 
     cy.contains('Unsubscribe from monthly recaps?').should('be.visible');
     cy.location('hash').should('eq', '');
@@ -46,7 +47,7 @@ describe('Email preferences (signed out)', () => {
       req.reply({ maskedEmail: 'a•••@example.com', ...req.body });
     }).as('update');
 
-    cy.visit('/email-preferences#m=MANAGE');
+    cy.visit('/email-preferences?devUserId=anonymous#m=MANAGE');
     cy.wait('@read');
     cy.location('hash').should('eq', '');
 
@@ -60,7 +61,7 @@ describe('Email preferences (signed out)', () => {
   it('explains an expired link', () => {
     cy.intercept('GET', '**/api/email/preferences', { statusCode: 400 });
 
-    cy.visit('/email-preferences#m=EXPIRED');
+    cy.visit('/email-preferences?devUserId=anonymous#m=EXPIRED');
 
     cy.get('[data-testid="email-preferences-invalid"]').should('be.visible');
   });

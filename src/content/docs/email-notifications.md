@@ -47,8 +47,9 @@ these settings and are always sent.
   switches. Your email app may also show its own unsubscribe button next to the sender, which
   does the same thing.
 
-Links in an email are tied to your account and expire after a while. If one no longer works,
-sign in and use Settings instead.
+Links in an email are tied to your account. **Unsubscribe** links don't expire. **Manage email
+preferences** links expire after 60 days; if one no longer works, sign in and use Settings
+instead.
 
 ### Privacy {#privacy}
 

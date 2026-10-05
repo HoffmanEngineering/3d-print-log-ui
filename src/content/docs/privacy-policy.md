@@ -84,10 +84,12 @@ them and when each is sent.
 - **What we keep.** We record which emails were sent to your account and when, so we don't send
   the same one twice, and we measure whether emails are useful by comparing a small group who
   don't receive a given email with those who do. That record is deleted with your account.
-- **Suppression list.** If an address bounces permanently, is reported as spam, or is
-  unsubscribed, we keep a one-way cryptographic fingerprint of it (not the address itself) so we
-  don't email it again. This fingerprint is kept even after you delete your account, because its
-  only purpose is to make sure we never email that address again.
+- **Suppression list.** If an address bounces permanently or is reported as spam, we keep a
+  one-way cryptographic fingerprint of it (not the address itself) so we don't email it again.
+  This fingerprint is kept even after you delete your account, because its only purpose is to
+  make sure we never email that address again. Unsubscribing works differently: it turns off that
+  kind of email for your account, you can turn it back on in Settings, and it is deleted with
+  your account.
 
 ## Cookies and Web Beacons
 

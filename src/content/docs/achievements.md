@@ -45,6 +45,10 @@ Carbon Fiber, and Glow-in-the-Dark. Each badge shows your progress toward its ne
 Streaks count the days (or weeks) you **started** a print, in your own time zone. 3D Print Log
 saves your time zone automatically from your browser.
 
+Streaks and the date-based hidden badges wait until your time zone is known, so a late-evening
+print is never counted as the next day. If you only log prints through OctoPrint, Klipper or an
+API key, open 3D Print Log in your browser once and those badges catch up.
+
 - A print counts toward a streak only if you log it within **48 hours** of starting it.
   Back-filling old prints still counts toward your totals, but not toward streaks or the
   date-based hidden badges.

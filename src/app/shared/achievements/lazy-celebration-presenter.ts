@@ -64,7 +64,7 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
     );
     const ref = this.matDialog.open(AchievementCelebrationDialogComponent, {
       data: item,
-      width: '420px',
+      width: '380px',
       maxWidth: 'calc(100vw - 32px)',
       autoFocus: 'button.nice',
     });

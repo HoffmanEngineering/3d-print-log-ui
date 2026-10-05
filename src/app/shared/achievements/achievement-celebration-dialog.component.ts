@@ -98,7 +98,13 @@ interface SummaryBadge {
         >
           View collection
         </button>
-        <button mat-flat-button type="button" class="nice" (click)="close()">
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          class="nice"
+          (click)="close()"
+        >
           Nice!
         </button>
       </mat-dialog-actions>
@@ -111,8 +117,21 @@ interface SummaryBadge {
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding-top: 16px;
+      padding: 32px 8px 12px;
       overflow: hidden;
+      /* Material's supporting text is 54% black, too faint on white for the line the dialog
+         exists to deliver. The title's token is full-strength and follows the theme. */
+      --ach-text: var(--mat-dialog-subhead-color, rgba(0, 0, 0, 0.87));
+    }
+    .description {
+      margin: 4px 0 0;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--ach-text);
+    }
+    mat-dialog-actions {
+      gap: 8px;
+      padding-top: 8px;
     }
     .stage {
       position: absolute;
@@ -121,7 +140,7 @@ interface SummaryBadge {
       width: 320px;
       height: 320px;
       margin-left: -160px;
-      margin-top: -100px;
+      margin-top: -84px;
       pointer-events: none;
     }
     .rays {
@@ -143,11 +162,14 @@ interface SummaryBadge {
       font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
+      color: var(--ach-text);
       opacity: 0.75;
     }
     .rarity {
+      margin: 12px 0 0;
       font-size: 13px;
-      opacity: 0.7;
+      color: var(--ach-text);
+      opacity: 0.75;
     }
     .summary-grid {
       display: grid;

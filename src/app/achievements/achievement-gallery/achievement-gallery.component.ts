@@ -1,5 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 
+import {
+  CelebrationItem,
+  CelebrationPresenter,
+} from '../../core/services/achievement-celebration.service';
 import { AchievementCategory, TIER_NAMES } from '../../core/types/achievement';
 import { AchievementBadgeComponent } from '../../shared/achievements/achievement-badge.component';
 import { REQUIRED_GLYPHS } from '../../shared/achievements/achievement-glyphs';
@@ -11,9 +16,16 @@ import { REQUIRED_GLYPHS } from '../../shared/achievements/achievement-glyphs';
 @Component({
   selector: 'app-achievement-gallery',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AchievementBadgeComponent],
+  imports: [AchievementBadgeComponent, MatButtonModule],
   template: `
     <h1>Badge gallery</h1>
+    <div class="previews">
+      @for (p of previews; track p.label) {
+        <button mat-stroked-button type="button" (click)="p.show()">
+          {{ p.label }}
+        </button>
+      }
+    </div>
     <table>
       <thead>
         <tr>
@@ -108,6 +120,60 @@ import { REQUIRED_GLYPHS } from '../../shared/achievements/achievement-glyphs';
   `,
 })
 export class AchievementGalleryComponent {
+  private readonly presenter = inject(CelebrationPresenter);
+
+  /** Plays the real celebration UI with sample data, without earning anything. */
+  protected readonly previews: { label: string; show: () => void }[] = [
+    {
+      label: 'Modal: First Layer',
+      show: () =>
+        void this.presenter.dialog(
+          preview('first-print', 1, 'You logged your first print.')
+        ),
+    },
+    {
+      label: 'Modal: Marathon, Gold Silk',
+      show: () =>
+        void this.presenter.dialog(
+          preview(
+            'longest-print',
+            3,
+            'Gold Silk · You finished a 48-hour print.'
+          )
+        ),
+    },
+    {
+      label: 'Toast: two badges',
+      show: () =>
+        void this.presenter.toast(
+          [
+            preview('first-printer', 1, 'You added your first printer.'),
+            preview(
+              'prints-logged',
+              2,
+              "Silver PLA · You've logged 25 prints."
+            ),
+          ],
+          { quiet: false }
+        ),
+    },
+    {
+      label: 'Toast: launch summary',
+      show: () =>
+        void this.presenter.toast(
+          [
+            {
+              id: 'preview-summary',
+              achievement: { key: null, tier: null, summary: true, count: 12 },
+              title: "You've earned 12 achievements",
+              message: null,
+            },
+          ],
+          { quiet: false }
+        ),
+    },
+  ];
+
   protected readonly Milestones = AchievementCategory.Milestones;
   protected readonly tierNames = TIER_NAMES;
   protected readonly glyphs = [
@@ -121,4 +187,13 @@ export class AchievementGalleryComponent {
     { label: 'Community', category: AchievementCategory.Community },
     { label: 'Hidden', category: AchievementCategory.Hidden },
   ];
+}
+
+function preview(key: string, tier: number, message: string): CelebrationItem {
+  return {
+    id: `preview-${key}-${tier}`,
+    achievement: { key, tier, summary: false, count: null },
+    title: 'Achievement unlocked',
+    message,
+  };
 }

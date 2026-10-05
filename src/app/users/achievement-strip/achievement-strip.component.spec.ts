@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatTooltip } from '@angular/material/tooltip';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -76,5 +78,27 @@ describe('AchievementStripComponent', () => {
     const link = el.querySelector('a.all') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/users/42/achievements');
     expect(link.textContent).toContain('9 achievements');
+  });
+
+  it('names each badge in a tooltip and links it to its detail', () => {
+    render({
+      earnedTierCount: 9,
+      featured: [fam('prints-logged', 2), fam('mcp')],
+      families: [fam('prints-logged', 2), fam('mcp')],
+      revealedHidden: [],
+    });
+
+    const tips = fixture.debugElement
+      .queryAll(By.directive(MatTooltip))
+      .map((d) => d.injector.get(MatTooltip).message);
+    expect(tips).toEqual(['Prolific Printer · Silver PLA: Do 25', 'mcp: Do 1']);
+
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('a.badge')
+    ).map((a) => a.getAttribute('href'));
+    expect(links).toEqual([
+      '/users/42/achievements?badge=prints-logged',
+      '/users/42/achievements?badge=mcp',
+    ]);
   });
 });

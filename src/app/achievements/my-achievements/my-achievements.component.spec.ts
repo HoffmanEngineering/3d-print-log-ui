@@ -50,6 +50,7 @@ describe('MyAchievementsComponent', () => {
   let logging: jasmine.SpyObj<LoggingService>;
   let me$ = of(ME);
   let wide$: BehaviorSubject<boolean>;
+  let router: jasmine.SpyObj<Router>;
 
   function create(): HTMLElement {
     TestBed.configureTestingModule({
@@ -60,10 +61,7 @@ describe('MyAchievementsComponent', () => {
           useValue: { catalog: () => of(TEST_CATALOG), me: () => me$ },
         },
         { provide: ActivatedRoute, useValue: { queryParamMap: queryParams } },
-        {
-          provide: Router,
-          useValue: jasmine.createSpyObj('Router', ['navigate']),
-        },
+        { provide: Router, useValue: router },
         { provide: LoggingService, useValue: logging },
         {
           provide: BreakpointObserver,
@@ -95,6 +93,8 @@ describe('MyAchievementsComponent', () => {
     ]);
     me$ = of(ME);
     wide$ = new BehaviorSubject(true);
+    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    router.navigate.and.resolveTo(true);
   });
 
   it('shows tiers earned out of the total and the next hint', () => {
@@ -116,22 +116,22 @@ describe('MyAchievementsComponent', () => {
     expect(logging.logEvent).toHaveBeenCalledWith('AchievementDetail_Opened', {
       key: 'mcp',
       earned: true,
+      source: 'mine',
     });
   });
 
-  it('logs a detail open once, not again when the layout changes', () => {
-    queryParams.next(convertToParamMap({ badge: 'mcp' }));
-    create();
+  it('selecting a badge updates ?badge without scrolling the page', () => {
+    const el = create();
+    (el.querySelector('[data-key="mcp"]') as HTMLButtonElement).click();
 
-    wide$.next(false);
-    fixture.detectChanges();
-    wide$.next(true);
-    fixture.detectChanges();
-
-    const opens = logging.logEvent.calls
-      .allArgs()
-      .filter(([name]) => name === 'AchievementDetail_Opened');
-    expect(opens.length).toBe(1);
+    expect(router.navigate).toHaveBeenCalledWith(
+      [],
+      jasmine.objectContaining({
+        queryParams: { badge: 'mcp' },
+        replaceUrl: true,
+        scroll: 'manual',
+      })
+    );
   });
 
   it('skeleton deferred', fakeAsync(() => {

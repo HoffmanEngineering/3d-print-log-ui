@@ -1,19 +1,12 @@
-import { BreakpointObserver } from '@angular/cdk/layout';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
-  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  MatBottomSheet,
-  MatBottomSheetRef,
-} from '@angular/material/bottom-sheet';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, combineLatest, map, of } from 'rxjs';
@@ -29,12 +22,7 @@ import {
 } from '../../core/types/achievement';
 import { withDeferredSkeleton } from '../../shared/skeleton/deferred-skeleton';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
-import {
-  AchievementDetailComponent,
-  AchievementDetailSheetComponent,
-  AchievementDetailSheetData,
-} from '../achievement-detail/achievement-detail.component';
-import { AchievementGridComponent } from '../achievement-grid/achievement-grid.component';
+import { AchievementBrowserComponent } from '../achievement-browser/achievement-browser.component';
 
 type PageState =
   | { phase: 'idle' }
@@ -45,46 +33,36 @@ type PageState =
 const IDLE: PageState = { phase: 'idle' };
 const LOADING: PageState = { phase: 'loading' };
 
-/** The signed-in user's trophy shelf at /achievements, with a deep-linkable detail panel. */
+/**
+ * The signed-in user's trophy shelf at /achievements, with a deep-linkable detail panel. The header
+ * is projected into the browser once loaded, so the side panel sits beside it rather than below.
+ */
 @Component({
   selector: 'app-my-achievements',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    AchievementGridComponent,
-    AchievementDetailComponent,
+    AchievementBrowserComponent,
+    NgTemplateOutlet,
     SkeletonComponent,
     MatProgressBarModule,
-    MatButtonModule,
-    MatIconModule,
     RouterLink,
   ],
   template: `
-    <div class="page" [class.with-panel]="wide() && !!selection()">
-      <main>
-        <header>
-          <h1>Achievements</h1>
-          @if (state(); as s) {
-            @if (s.phase === 'ready') {
-              <p class="count">
-                {{ s.me.earnedTierCount }} / {{ s.me.totalTierCount }} tiers
-              </p>
-              <mat-progress-bar mode="determinate" [value]="overallPercent()" />
-              @if (nextTitle(); as next) {
-                <p class="next">Next: {{ next }}</p>
-              }
-              @if (s.me.earnedTierCount === 0) {
-                <p class="empty">
-                  Nothing earned yet. Log a print, add a printer, or connect
-                  your slicer to start your collection.
-                </p>
-              }
-            }
-          }
-          <a class="docs" routerLink="/docs/achievements"
-            >How achievements work</a
-          >
-        </header>
-
+    <div class="page">
+      @if (ready(); as r) {
+        <app-achievement-browser
+          [catalog]="r.catalog"
+          [earned]="earned()"
+          [progress]="progress()"
+          [revealedHidden]="r.me.revealedHidden"
+          [selectedKey]="badgeParam()"
+          source="mine"
+          (selectedKeyChange)="select($event)"
+        >
+          <ng-container *ngTemplateOutlet="header" />
+        </app-achievement-browser>
+      } @else {
+        <ng-container *ngTemplateOutlet="header" />
         @switch (state().phase) {
           @case ('loading') {
             <div class="skeleton-grid app-skeleton-immediate">
@@ -98,49 +76,39 @@ const LOADING: PageState = { phase: 'loading' };
               Your achievements couldn't be loaded. Try again in a moment.
             </p>
           }
-          @case ('ready') {
-            <app-achievement-grid
-              data-cy="capture-achievements-grid"
-              [catalog]="ready()!.catalog"
-              [earned]="earned()"
-              [progress]="progress()"
-              [revealedHidden]="ready()!.me.revealedHidden"
-              (selected)="select($event)"
-            />
-          }
         }
-      </main>
-
-      @if (wide() && selection(); as sel) {
-        <aside>
-          <button
-            mat-icon-button
-            class="close"
-            aria-label="Close details"
-            (click)="select(null)"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
-          <app-achievement-detail
-            [family]="sel.family"
-            [earned]="sel.earned"
-            [progress]="sel.progress"
-          />
-        </aside>
       }
     </div>
+
+    <ng-template #header>
+      <header>
+        <h1>Achievements</h1>
+        @if (ready(); as r) {
+          <p class="count">
+            {{ r.me.earnedTierCount }} / {{ r.me.totalTierCount }} tiers
+          </p>
+          <mat-progress-bar mode="determinate" [value]="overallPercent()" />
+          @if (nextTitle(); as next) {
+            <p class="next">Next: {{ next }}</p>
+          }
+          @if (r.me.earnedTierCount === 0) {
+            <p class="empty">
+              Nothing earned yet. Log a print, add a printer, or connect your
+              slicer to start your collection.
+            </p>
+          }
+        }
+        <a class="docs" routerLink="/docs/achievements"
+          >How achievements work</a
+        >
+      </header>
+    </ng-template>
   `,
   styles: `
     .page {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
       max-width: 1200px;
       margin: 0 auto;
       padding: 16px;
-    }
-    .page.with-panel {
-      grid-template-columns: 1fr 340px;
     }
     header {
       margin-bottom: 20px;
@@ -161,17 +129,6 @@ const LOADING: PageState = { phase: 'loading' };
       margin-top: 8px;
       font-size: 14px;
     }
-    aside {
-      position: sticky;
-      top: 16px;
-      align-self: start;
-      border-radius: 16px;
-      border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
-      background: var(--mat-sys-surface-container-low, transparent);
-    }
-    .close {
-      float: right;
-    }
     .skeleton-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
@@ -184,7 +141,6 @@ export class MyAchievementsComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly logging = inject(LoggingService);
-  private readonly bottomSheet = inject(MatBottomSheet);
 
   protected readonly skeletonCells = Array.from({ length: 12 }, (_, i) => i);
 
@@ -202,14 +158,7 @@ export class MyAchievementsComponent {
     return s.phase === 'ready' ? s : null;
   });
 
-  protected readonly wide = toSignal(
-    inject(BreakpointObserver)
-      .observe('(min-width: 960px)')
-      .pipe(map((r) => r.matches)),
-    { initialValue: true }
-  );
-
-  private readonly badgeParam = toSignal(
+  protected readonly badgeParam = toSignal(
     this.route.queryParamMap.pipe(map((p) => p.get('badge'))),
     { initialValue: null }
   );
@@ -231,21 +180,6 @@ export class MyAchievementsComponent {
     return r ? [...r.catalog.families, ...r.me.revealedHidden] : [];
   });
 
-  protected readonly selection = computed<AchievementDetailSheetData | null>(
-    () => {
-      const key = this.badgeParam();
-      const family = key
-        ? this.allFamilies().find((f) => f.key === key)
-        : undefined;
-      if (!family) return null;
-      return {
-        family,
-        earned: this.earned().get(family.key) ?? [],
-        progress: this.progress().get(family.key) ?? null,
-      };
-    }
-  );
-
   protected readonly overallPercent = computed(() => {
     const me = this.ready()?.me;
     return me && me.totalTierCount > 0
@@ -260,10 +194,7 @@ export class MyAchievementsComponent {
       : null;
   });
 
-  private sheet: MatBottomSheetRef<AchievementDetailSheetComponent> | null =
-    null;
   private opened = false;
-  private loggedDetail: string | null = null;
 
   constructor() {
     effect(() => {
@@ -275,24 +206,6 @@ export class MyAchievementsComponent {
         });
       }
     });
-
-    effect(() => {
-      const sel = this.selection();
-      const wide = this.wide();
-      untracked(() => {
-        // Logged per badge opened, not per layout change: the sheet/panel swap on a resize
-        // or rotation re-runs this effect without the user opening anything.
-        const key = sel?.family.key ?? null;
-        if (sel && key !== this.loggedDetail) {
-          this.logging.logEvent('AchievementDetail_Opened', {
-            key,
-            earned: sel.earned.length > 0,
-          });
-        }
-        this.loggedDetail = key;
-        this.syncSheet(sel, wide);
-      });
-    });
   }
 
   protected select(key: string | null): void {
@@ -301,27 +214,8 @@ export class MyAchievementsComponent {
       queryParams: { badge: key },
       queryParamsHandling: 'merge',
       replaceUrl: true,
-    });
-  }
-
-  /** Narrow screens show the detail as a bottom sheet instead of the side panel. */
-  private syncSheet(
-    sel: AchievementDetailSheetData | null,
-    wide: boolean
-  ): void {
-    this.sheet?.dismiss();
-    this.sheet = null;
-    if (!sel || wide) return;
-
-    const sheet = this.bottomSheet.open(AchievementDetailSheetComponent, {
-      data: sel,
-    });
-    this.sheet = sheet;
-    sheet.afterDismissed().subscribe(() => {
-      if (this.sheet === sheet) {
-        this.sheet = null;
-        this.select(null);
-      }
+      // Opening a badge is not a page change: keep the reader's place in the grid.
+      scroll: 'manual',
     });
   }
 }

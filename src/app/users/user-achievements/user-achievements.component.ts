@@ -3,18 +3,15 @@ import {
   Component,
   computed,
   inject,
-  signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, combineLatest, map, of, switchMap } from 'rxjs';
 
-import { AchievementDetailComponent } from '../../achievements/achievement-detail/achievement-detail.component';
-import { AchievementGridComponent } from '../../achievements/achievement-grid/achievement-grid.component';
+import { AchievementBrowserComponent } from '../../achievements/achievement-browser/achievement-browser.component';
 import { AchievementService } from '../../core/services/achievement.service';
 import {
   AchievementCatalog,
-  AchievementFamily,
   AchievementProgress,
   EarnedTier,
   EMPTY_PUBLIC_ACHIEVEMENTS,
@@ -34,34 +31,32 @@ interface View {
 @Component({
   selector: 'app-user-achievements',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AchievementGridComponent, AchievementDetailComponent, RouterLink],
+  imports: [AchievementBrowserComponent, RouterLink],
   template: `
     <div class="page">
-      <h1>Achievements</h1>
       @if (view(); as v) {
         @if (v.dto.earnedTierCount === 0) {
+          <h1>Achievements</h1>
           <p class="empty">
             No achievements to show yet.
             <a routerLink="/docs/achievements">How achievements work</a>
           </p>
         } @else {
-          <p class="count">{{ v.dto.earnedTierCount }} tiers earned</p>
-          <app-achievement-grid
+          <app-achievement-browser
             [catalog]="v.catalog"
             [earned]="earned()"
             [progress]="noProgress"
             [revealedHidden]="v.dto.revealedHidden"
-            (selected)="selectedKey.set($event)"
-          />
-          @if (selection(); as sel) {
-            <aside>
-              <app-achievement-detail
-                [family]="sel.family"
-                [earned]="sel.earned"
-              />
-            </aside>
-          }
+            [selectedKey]="badgeParam()"
+            source="profile"
+            (selectedKeyChange)="select($event)"
+          >
+            <h1>Achievements</h1>
+            <p class="count">{{ v.dto.earnedTierCount }} tiers earned</p>
+          </app-achievement-browser>
         }
+      } @else {
+        <h1>Achievements</h1>
       }
     </div>
   `,
@@ -74,19 +69,19 @@ interface View {
     .count {
       font-weight: 600;
     }
-    aside {
-      margin-top: 24px;
-      border-radius: 16px;
-      border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
-    }
   `,
 })
 export class UserAchievementsComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly achievements = inject(AchievementService);
 
   protected readonly noProgress = new Map<string, AchievementProgress | null>();
-  protected readonly selectedKey = signal<string | null>(null);
+
+  protected readonly badgeParam = toSignal(
+    this.route.queryParamMap.pipe(map((p) => p.get('badge'))),
+    { initialValue: null }
+  );
 
   protected readonly view = toSignal(
     this.route.paramMap.pipe(
@@ -116,15 +111,14 @@ export class UserAchievementsComponent {
     return map;
   });
 
-  protected readonly selection = computed(() => {
-    const key = this.selectedKey();
-    const v = this.view();
-    if (!key || !v) return null;
-    const families: AchievementFamily[] = [
-      ...v.catalog.families,
-      ...v.dto.revealedHidden,
-    ];
-    const family = families.find((f) => f.key === key);
-    return family ? { family, earned: this.earned().get(key) ?? [] } : null;
-  });
+  protected select(key: string | null): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { badge: key },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+      // Opening a badge is not a page change: keep the reader's place in the grid.
+      scroll: 'manual',
+    });
+  }
 }

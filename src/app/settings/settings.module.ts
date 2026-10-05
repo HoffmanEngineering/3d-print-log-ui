@@ -1,4 +1,5 @@
 import { AchievementSettingsComponent } from './achievement-settings/achievement-settings.component';
+import { EmailSettingsComponent } from './email-settings/email-settings.component';
 import { NgModule } from '@angular/core';
 
 import { SharedModule } from '../shared/shared.module';
@@ -15,6 +16,7 @@ import { ConnectedAgentsComponent } from './connected-agents/connected-agents.co
     SettingsRoutingModule,
     ConnectedAgentsComponent,
     AchievementSettingsComponent,
+    EmailSettingsComponent,
   ],
   providers: [CurrentUserDetailResolverService],
 })

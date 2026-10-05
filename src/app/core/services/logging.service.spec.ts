@@ -6,6 +6,9 @@ import { LoggingService } from './logging.service';
 /** Minimal fake of the App Insights instance LoggingService uses. */
 function makeFakeAi() {
   return {
+    initializers: [] as Array<(item: any) => boolean | void>,
+    emittedDuringLoad: [] as any[],
+    addTelemetryInitializer: jasmine.createSpy('addTelemetryInitializer'),
     loadAppInsights: jasmine.createSpy('loadAppInsights'),
     context: { application: { ver: '' } },
     trackPageView: jasmine.createSpy('trackPageView'),
@@ -56,6 +59,35 @@ class TestableLoggingService extends LoggingService {
 }
 
 describe('LoggingService', () => {
+  it('registers the email token redactor before loading, so telemetry sent during load is redacted', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: LoggingService, useClass: TestableLoggingService },
+      ],
+    });
+    const service = TestBed.inject(LoggingService) as TestableLoggingService;
+    const fakeAi = makeFakeAi();
+    fakeAi.addTelemetryInitializer.and.callFake((fn: any) =>
+      fakeAi.initializers.push(fn)
+    );
+    // The real SDK tracks the initial page view from inside loadAppInsights().
+    fakeAi.loadAppInsights.and.callFake(() => {
+      const item = {
+        baseData: {
+          uri: 'https://www.3dprintlog.com/email-preferences#m=SECRET',
+        },
+      };
+      fakeAi.initializers.forEach((fn) => fn(item));
+      fakeAi.emittedDuringLoad.push(item);
+    });
+    service.importResult = Promise.resolve(makeFakeModule(fakeAi));
+
+    await service.runInitialize();
+
+    expect(fakeAi.emittedDuringLoad.length).toBe(1);
+    expect(JSON.stringify(fakeAi.emittedDuringLoad)).not.toContain('SECRET');
+  });
+
   it('should be created (no-key stub path)', () => {
     const service = TestBed.inject(LoggingService);
     expect(service).toBeTruthy();

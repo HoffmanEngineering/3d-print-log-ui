@@ -1,0 +1,25 @@
+@if (visible()) {
+  <aside class="email-notice" role="status" data-testid="email-notice">
+    <p>
+      We'll occasionally email you about your prints — onboarding tips, a
+      monthly recap, and a heads-up if a printer stops reporting.
+    </p>
+    <div class="actions">
+      <button
+        mat-button
+        data-testid="email-notice-settings"
+        (click)="dismiss('settings')"
+      >
+        Email settings
+      </button>
+      <button
+        mat-flat-button
+        color="primary"
+        data-testid="email-notice-dismiss"
+        (click)="dismiss('got-it')"
+      >
+        Got it
+      </button>
+    </div>
+  </aside>
+}

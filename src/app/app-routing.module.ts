@@ -55,6 +55,14 @@ export const appRoutes: Routes = [
     pathMatch: 'full',
   },
   {
+    // Public: unsubscribe and manage links from emails land here. The token is the credential.
+    path: 'email-preferences',
+    loadComponent: () =>
+      import('./email-preferences/email-preferences.component').then(
+        (m) => m.EmailPreferencesComponent
+      ),
+  },
+  {
     path: 'feedback',
     loadComponent: () =>
       import('./shared/feedback/feedback.component').then(

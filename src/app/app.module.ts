@@ -23,6 +23,7 @@ import { AuthInterceptorService } from './core/http/auth-interceptor.service';
 import { ErrorHandlerService } from './core/services/error-handler.service';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { AccountDeactivationBannerComponent } from './shared/account-deactivation-banner/account-deactivation-banner.component';
+import { EmailNoticeComponent } from './shared/email-notice/email-notice.component';
 import { AchievementBadgeDefsComponent } from './shared/achievements/achievement-badge-defs.component';
 import { LazyCelebrationPresenter } from './shared/achievements/lazy-celebration-presenter';
 import { AchievementRefreshInterceptor } from './core/http/achievement-refresh.interceptor';
@@ -43,6 +44,7 @@ import { CelebrationPresenter } from './core/services/achievement-celebration.se
     LoadingBarRouterModule,
     NavbarComponent,
     AccountDeactivationBannerComponent,
+    EmailNoticeComponent,
     AchievementBadgeDefsComponent,
     ToastrModule.forRoot({
       timeOut: 5000,

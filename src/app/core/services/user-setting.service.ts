@@ -43,6 +43,16 @@ export enum UserSettingType {
   General_TimeZone = 20,
   /** Push a notification when an achievement is earned (default true). */
   Push_Achievement = 21,
+  /** Master switch for engagement email ("true"/"false", default true). */
+  Email_All = 22,
+  /** Onboarding tips email (default true). */
+  Email_Onboarding = 23,
+  /** Monthly recap email (default true). */
+  Email_MonthlyRecap = 24,
+  /** "Your printer stopped reporting" email (default true). */
+  Email_PrinterSilent = 25,
+  /** When the one-time in-app email notice was dismissed, as an ISO timestamp. */
+  Email_NoticeSeenAt = 26,
 }
 
 export interface UserSetting {

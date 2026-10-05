@@ -170,5 +170,11 @@
     "v1.1.0"
   ],
   "docs/about": [],
-  "docs/privacy-policy": []
+  "docs/privacy-policy": ["email"],
+  "docs/email-notifications": [
+    "address",
+    "what-we-send",
+    "turning-off",
+    "privacy"
+  ]
 }

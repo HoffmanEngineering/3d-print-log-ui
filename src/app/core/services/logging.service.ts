@@ -1,6 +1,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from 'src/environments/environment';
+import { redactEmailTokens } from '../utils/redact-email-tokens';
 
 /** The subset of the App Insights API that LoggingService depends on. */
 interface TelemetrySink {
@@ -121,6 +122,11 @@ export class LoggingService {
           enableRequestHeaderTracking: false,
           enableResponseHeaderTracking: true,
         },
+      });
+      // Before loading: the SDK sends the initial page view from inside loadAppInsights(), and on
+      // /email-preferences that URL still holds the token fragment.
+      appInsights.addTelemetryInitializer((item) => {
+        redactEmailTokens(item);
       });
       appInsights.loadAppInsights();
       appInsights.context.application.ver = environment.version;

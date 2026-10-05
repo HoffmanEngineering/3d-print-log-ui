@@ -42,6 +42,26 @@ describe('GoogleAnalyticsService', () => {
     );
   });
 
+  it('never sends an email token from the preferences page', () => {
+    const gtagSpy = jasmine.createSpy('gtag');
+    (window as unknown as { gtag: unknown }).gtag = gtagSpy;
+
+    configure();
+    events$.next(
+      new NavigationEnd(
+        1,
+        '/email-preferences#m=SECRET',
+        '/email-preferences#m=SECRET'
+      )
+    );
+
+    expect(gtagSpy).toHaveBeenCalledWith(
+      'config',
+      environment.googleAnalyticsMeasurementId,
+      { page_path: '/email-preferences' }
+    );
+  });
+
   it('does not throw on NavigationEnd when gtag is unavailable', () => {
     delete (window as unknown as { gtag?: unknown }).gtag;
     configure();

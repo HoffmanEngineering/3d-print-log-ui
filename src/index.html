@@ -83,7 +83,15 @@
       }
       gtag('js', new Date());
 
-      gtag('config', 'G-4TEMNSY6QX');
+      // On /email-preferences the fragment is an unsubscribe or manage token, and this runs
+      // before the app strips it, so the first page view is sent without it.
+      if (location.pathname.indexOf('/email-preferences') === 0) {
+        gtag('config', 'G-4TEMNSY6QX', {
+          page_location: location.origin + location.pathname + location.search,
+        });
+      } else {
+        gtag('config', 'G-4TEMNSY6QX');
+      }
     </script>
     <!-- AdSense loader is injected on first user interaction by
          AdsenseLoaderService (deferred for bf-cache + performance). -->

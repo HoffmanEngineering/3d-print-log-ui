@@ -26,10 +26,18 @@ export function redactEmailTokens(item: {
 
   for (const field of URL_FIELDS) {
     const value = data[field];
-    if (typeof value === 'string' && EMAIL_PATH.test(value)) {
-      data[field] = redact(value);
+    if (typeof value === 'string') {
+      data[field] = redactEmailUrl(value);
     }
   }
+}
+
+/**
+ * The same redaction for any other place a URL leaves the app, such as Google Analytics page
+ * views. URLs outside the email paths come back unchanged.
+ */
+export function redactEmailUrl(value: string): string {
+  return EMAIL_PATH.test(value) ? redact(value) : value;
 }
 
 function redact(value: string): string {

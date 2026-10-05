@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 
 import { environment } from 'src/environments/environment';
+import { redactEmailUrl } from '../utils/redact-email-tokens';
 
 @Injectable({
   providedIn: 'root',
@@ -14,8 +15,9 @@ export class GoogleAnalyticsService {
     if (!this.isBrowser) return;
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
+        // The router keeps the fragment, and on /email-preferences that fragment is a token.
         this.gtag('config', environment.googleAnalyticsMeasurementId, {
-          page_path: event.urlAfterRedirects,
+          page_path: redactEmailUrl(event.urlAfterRedirects),
         });
       }
     });

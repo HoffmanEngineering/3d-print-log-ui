@@ -6,13 +6,13 @@ navLabel: Privacy Policy
 group: about
 order: 30
 mode: reference
-updated: 2026-09-02
+updated: 2026-10-05
 related: [about]
 ---
 
 # Privacy Policy for 3D Print Log
 
-Last Updated: Aug 29, 2026
+Last Updated: Oct 5, 2026
 
 At 3D Print Log, accessible from https://www.3dprintlog.com, one of our main
 priorities is the privacy of our visitors. This Privacy Policy document describes
@@ -65,6 +65,29 @@ you need to contact us privately, use the contact details on our
 Analytics data is retained according to the default retention periods of Google
 Analytics and Azure Application Insights, after which it is deleted
 automatically.
+
+## Email {#email}
+
+3D Print Log sends a few kinds of email about your own account activity: onboarding tips after
+you sign up, a monthly recap of your prints, and an alert when a printer that usually logs prints
+automatically stops reporting. The [Email Notifications](/docs/email-notifications) page lists
+them and when each is sent.
+
+- **Which address.** We use the email address on the account you sign in with, copied from our
+  sign-in provider (Auth0). We only email it once that provider has verified it.
+- **Opting out.** Each kind of email can be turned off in Settings, or from the unsubscribe and
+  manage links in every email, without signing in. Account and security messages are sent
+  regardless.
+- **Who sends it.** Email is delivered by **Amazon Web Services (Amazon SES)**, which processes
+  your address and the message content to deliver it, and tells us whether a message was
+  delivered, bounced or reported as spam.
+- **What we keep.** We record which emails were sent to your account and when, so we don't send
+  the same one twice, and we measure whether emails are useful by comparing a small group who
+  don't receive a given email with those who do. That record is deleted with your account.
+- **Suppression list.** If an address bounces permanently, is reported as spam, or is
+  unsubscribed, we keep a one-way cryptographic fingerprint of it (not the address itself) so we
+  don't email it again. This fingerprint is kept even after you delete your account, because its
+  only purpose is to make sure we never email that address again.
 
 ## Cookies and Web Beacons
 

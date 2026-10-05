@@ -24,5 +24,7 @@ const marketingRoutes: ServerRoute[] = [
 export const serverRoutes: ServerRoute[] = [
   ...marketingRoutes,
   ...DOCS_SERVER_ROUTES,
+  // Token-authenticated and personal: never prerendered.
+  { path: 'email-preferences', renderMode: RenderMode.Client },
   { path: '**', renderMode: RenderMode.Client },
 ];

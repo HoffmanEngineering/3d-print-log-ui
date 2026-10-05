@@ -1,0 +1,106 @@
+<main class="email-preferences" data-testid="email-preferences">
+  <h1>Email preferences</h1>
+
+  @switch (phase()) {
+    @case ('loading') {
+      @if (showSpinner()) {
+        <div class="center" aria-busy="true">
+          <mat-spinner diameter="40" aria-label="Loading your preferences" />
+        </div>
+      }
+    }
+    @case ('confirm-unsubscribe') {
+      <p class="lead">
+        @if (pendingCategory(); as category) {
+          Unsubscribe from {{ category }}?
+        } @else {
+          Unsubscribe from these emails?
+        }
+      </p>
+      <p>You can turn them back on any time in Settings.</p>
+      <button
+        mat-flat-button
+        color="primary"
+        data-testid="email-unsubscribe-confirm"
+        [disabled]="busy()"
+        (click)="confirmUnsubscribe()"
+      >
+        Unsubscribe
+      </button>
+    }
+    @case ('unsubscribed') {
+      <p class="lead" data-testid="email-unsubscribed">
+        You're unsubscribed from {{ unsubscribedFrom() }}.
+      </p>
+      <p>
+        To manage other emails, sign in and open
+        <a routerLink="/settings" fragment="email">Settings</a>.
+      </p>
+    }
+    @case ('preferences') {
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <p>
+          Email settings for <strong>{{ maskedEmail() }}</strong>
+        </p>
+        <div class="row">
+          <mat-slide-toggle formControlName="all" data-testid="prefs-all">
+            Email me about my account activity
+          </mat-slide-toggle>
+        </div>
+        <div class="categories">
+          <div class="row">
+            <mat-slide-toggle formControlName="onboarding">
+              Onboarding tips
+            </mat-slide-toggle>
+          </div>
+          <div class="row">
+            <mat-slide-toggle formControlName="monthlyRecap">
+              Monthly recap
+            </mat-slide-toggle>
+          </div>
+          <div class="row">
+            <mat-slide-toggle formControlName="printerSilent">
+              Printer stopped reporting alerts
+            </mat-slide-toggle>
+          </div>
+        </div>
+        <p class="help">Account and security messages are sent regardless.</p>
+        <div class="actions">
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            data-testid="email-preferences-save"
+            [disabled]="busy()"
+          >
+            Save
+          </button>
+          @if (saved()) {
+            <span role="status" data-testid="email-preferences-saved"
+              >Saved.</span
+            >
+          }
+          @if (saveFailed()) {
+            <span role="alert">We couldn't save that. Please try again.</span>
+          }
+        </div>
+      </form>
+    }
+    @case ('invalid') {
+      <p class="lead" data-testid="email-preferences-invalid">
+        This link isn't valid anymore.
+      </p>
+      <p>
+        Links in older emails expire. Sign in and open
+        <a routerLink="/settings" fragment="email">Settings</a> to change which
+        emails you get.
+      </p>
+    }
+    @case ('error') {
+      <p class="lead" data-testid="email-preferences-error">
+        Something went wrong on our side.
+      </p>
+      <p>Please try the link again in a few minutes.</p>
+    }
+  }
+</main>

@@ -1,6 +1,6 @@
-// Builds the permanent images campaign emails reference from www.3dprintlog.com/assets/email/.
-// Sent emails point at these URLs forever, so files are only ever added, never renamed or
-// deleted (see AGENTS.md, "Email assets"). The badge art is assembled from the same TypeScript
+// Builds the images campaign emails reference from www.3dprintlog.com/assets/email/.
+// Sent emails point at these URLs forever, so a file may be regenerated in place but is never
+// renamed or deleted (see AGENTS.md, "Email assets"). The badge art is assembled from the same TypeScript
 // sources the in-app badge component renders, bundled for Node with esbuild.
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';

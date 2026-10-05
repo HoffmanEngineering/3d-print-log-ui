@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generates the permanent images campaign emails reference (src/assets/email/v1/) and the
+// Generates the images campaign emails reference (src/assets/email/v1/) and the
 // manifest the email-assets test guards. Run by hand after adding an achievement family or glyph,
 // then deploy the UI before the API starts referencing the new files:
 //

@@ -1,23 +1,64 @@
-.pending {
-  opacity: 0.4;
-}
-.loading:after {
-  overflow: hidden;
-  display: inline-block;
-  vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4, end) 900ms infinite;
-  animation: ellipsis steps(4, end) 900ms infinite;
-  content: '\2026'; /* ascii code for the ellipsis character */
-  width: 0px;
+.file-name {
+  margin: 0 0 12px;
+  font-weight: 500;
+  word-break: break-all;
 }
 
-@keyframes ellipsis {
-  to {
-    width: 1em;
+.steps {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.55;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.active,
+  &.complete {
+    opacity: 1;
+  }
+
+  &.complete mat-icon {
+    color: var(--mat-sys-primary, #3f51b5);
+  }
+
+  // Animated ellipsis on the running step only ("Done" is active and
+  // complete at once, and must not animate).
+  &.active:not(.complete) .label::after {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    width: 0;
+    content: '\2026';
+    animation: ellipsis steps(4, end) 900ms infinite;
   }
 }
 
-@-webkit-keyframes ellipsis {
+.hint {
+  margin: 12px 0 0;
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.viewer-frame {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 0;
+}
+
+@keyframes ellipsis {
   to {
     width: 1em;
   }

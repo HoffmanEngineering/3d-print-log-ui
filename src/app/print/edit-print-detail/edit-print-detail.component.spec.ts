@@ -704,6 +704,15 @@ describe('EditPrintDetailComponent', () => {
   });
 
   describe('Save handling', () => {
+    it('carries the resolved print curaSettingId into the saved print', () => {
+      component.printDetail = {
+        ...component.printDetail!,
+        curaSettingId: 'setting-1',
+      };
+
+      expect(component.getPrintFromForm().curaSettingId).toBe('setting-1');
+    });
+
     it('should reset saving to false after handleSaveSuccess', () => {
       const router = TestBed.inject(Router);
       spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));

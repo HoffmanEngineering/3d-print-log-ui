@@ -597,8 +597,8 @@
 
           @if (!pushPermissionGranted) {
             <p data-testid="push-permission-warning">
-              Notifications are turned off for 3D Print Log on this device, so these
-              settings have no effect yet.
+              Notifications are turned off for 3D Print Log on this device, so
+              these settings have no effect yet.
             </p>
             <p>
               <button
@@ -641,8 +641,28 @@
               Print failed
             </mat-slide-toggle>
           </div>
+
+          <div>
+            <mat-slide-toggle
+              data-testid="push-achievement"
+              [(ngModel)]="achievementPush"
+              (change)="
+                onPushPreferenceChanged(
+                  userSettingTypes.Push_Achievement,
+                  $event.checked
+                )
+              "
+            >
+              Achievement earned
+            </mat-slide-toggle>
+          </div>
         </div>
       }
+
+      <hr />
+      <div fxFlex="grow" fxFlexFill>
+        <app-achievement-settings />
+      </div>
 
       <hr />
       <div fxFlex="grow" fxFlexFill>

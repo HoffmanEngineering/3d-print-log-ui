@@ -107,6 +107,7 @@ export class SettingsComponent implements OnInit {
   public pushAvailable = false;
   public printCompletedPush = true;
   public printFailedPush = true;
+  public achievementPush = true;
 
   /**
    * The toggles write a preference, but a preference cannot make Android display anything.
@@ -146,6 +147,9 @@ export class SettingsComponent implements OnInit {
     );
     this.printFailedPush = await this.pushPreferences.isEnabled(
       UserSettingType.Push_PrintFailed
+    );
+    this.achievementPush = await this.pushPreferences.isEnabled(
+      UserSettingType.Push_Achievement
     );
     this.pushPermissionGranted = this.nativeBridge.permission === 'granted';
   }

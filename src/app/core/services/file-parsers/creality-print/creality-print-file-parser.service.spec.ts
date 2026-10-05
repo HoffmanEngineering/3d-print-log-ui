@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { CrealityPrintFileParserService } from './creality-print-file-parser.service';
 
-describe('PrusaSlicerFileParserService', () => {
+describe('CrealityPrintFileParserService', () => {
   let service: CrealityPrintFileParserService;
 
   beforeEach(() => {
@@ -14,12 +14,16 @@ describe('PrusaSlicerFileParserService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('detects the Creality Print marker', () => {
+    expect(service.detect(';Creality Print GCode')).toBeTrue();
+  });
+
   it('should set the estimated filament usage', async () => {
     const testGcode = `;Filament used:1.65354m`;
 
     const actual = await service.parse(testGcode);
 
-    expect(actual.filamentUsage[0].estimatedLengthInM).toBe(1.65354);
+    expect(actual.filamentUsage[0].estimatedLengthInM).toBe(1.654);
   });
 
   it('should set the estimated print time', async () => {

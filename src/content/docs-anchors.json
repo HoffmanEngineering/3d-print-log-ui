@@ -54,8 +54,19 @@
   "docs/cura-plugin": ["usage", "customize-settings"],
   "docs/octoprint-webhook": ["Setup"],
   "docs/klipper": ["Setup"],
-  "docs/slic3r-uploader": [],
+  "docs/slic3r-uploader": [
+    "download",
+    "add-printers",
+    "setup-wizard",
+    "pick-preset",
+    "export",
+    "manual-setup",
+    "options",
+    "maintenance",
+    "troubleshooting"
+  ],
   "docs/release-notes": [
+    "v1.51.0",
     "v1.50.0",
     "v1.49.1",
     "v1.49.0",

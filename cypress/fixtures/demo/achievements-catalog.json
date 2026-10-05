@@ -1,0 +1,792 @@
+{
+  "version": 1,
+  "hiddenCount": 4,
+  "families": [
+    {
+      "key": "first-printer",
+      "category": 1,
+      "glyph": "printer-bedslinger",
+      "title": "Bed Leveled",
+      "hintOrder": 1,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Add your first printer.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "first-material",
+      "category": 1,
+      "glyph": "spool",
+      "title": "Spooled Up",
+      "hintOrder": 2,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Add your first spool of material.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "first-print",
+      "category": 1,
+      "glyph": "layers",
+      "title": "First Layer",
+      "hintOrder": 3,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log your first print.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "plugged-in",
+      "category": 1,
+      "glyph": "plug",
+      "title": "Plugged In",
+      "hintOrder": 4,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log a print straight from your slicer.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "first-photo",
+      "category": 1,
+      "glyph": "camera",
+      "title": "Say Cheese",
+      "hintOrder": 5,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Add a photo to one of your prints.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "maker-profile",
+      "category": 1,
+      "glyph": "id-badge",
+      "title": "Maker Profile",
+      "hintOrder": 6,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Add a display name, profile picture and bio.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "prints-logged",
+      "category": 2,
+      "glyph": "numeral",
+      "title": "Prolific Printer",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 10,
+          "description": "Log 10 prints.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 25,
+          "description": "Log 25 prints.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 50,
+          "description": "Log 50 prints.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 100,
+          "description": "Log 100 prints.",
+          "rarityPercent": 9
+        },
+        {
+          "tier": 5,
+          "threshold": 250,
+          "description": "Log 250 prints.",
+          "rarityPercent": 3
+        },
+        {
+          "tier": 6,
+          "threshold": 500,
+          "description": "Log 500 prints.",
+          "rarityPercent": 0.6
+        }
+      ]
+    },
+    {
+      "key": "print-hours",
+      "category": 2,
+      "glyph": "clock",
+      "title": "Machine Hours",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 24,
+          "description": "Rack up 24 hours of total print time.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 100,
+          "description": "Rack up 100 hours of total print time.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 250,
+          "description": "Rack up 250 hours of total print time.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 500,
+          "description": "Rack up 500 hours of total print time.",
+          "rarityPercent": 9
+        },
+        {
+          "tier": 5,
+          "threshold": 1000,
+          "description": "Rack up 1,000 hours of total print time.",
+          "rarityPercent": 3
+        },
+        {
+          "tier": 6,
+          "threshold": 2500,
+          "description": "Rack up 2,500 hours of total print time.",
+          "rarityPercent": 0.6
+        }
+      ]
+    },
+    {
+      "key": "material-used",
+      "category": 2,
+      "glyph": "scale",
+      "title": "Plastic Fantastic",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Use 1 kg of material across your prints.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 5,
+          "description": "Use 5 kg of material across your prints.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 10,
+          "description": "Use 10 kg of material across your prints.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 25,
+          "description": "Use 25 kg of material across your prints.",
+          "rarityPercent": 9
+        },
+        {
+          "tier": 5,
+          "threshold": 50,
+          "description": "Use 50 kg of material across your prints.",
+          "rarityPercent": 3
+        },
+        {
+          "tier": 6,
+          "threshold": 100,
+          "description": "Use 100 kg of material across your prints.",
+          "rarityPercent": 0.6
+        }
+      ]
+    },
+    {
+      "key": "longest-print",
+      "category": 2,
+      "glyph": "timer",
+      "title": "Marathon",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 8,
+          "description": "Successfully finish a single print that ran 8 hours.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 24,
+          "description": "Successfully finish a single print that ran 24 hours.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 48,
+          "description": "Successfully finish a single print that ran 48 hours.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 72,
+          "description": "Successfully finish a single print that ran 72 hours.",
+          "rarityPercent": 9
+        }
+      ]
+    },
+    {
+      "key": "printers-owned",
+      "category": 2,
+      "glyph": "factory",
+      "title": "Print Farm",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 2,
+          "description": "Have 2 printers in your workshop.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 3,
+          "description": "Have 3 printers in your workshop.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 5,
+          "description": "Have 5 printers in your workshop.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 10,
+          "description": "Have 10 printers in your workshop.",
+          "rarityPercent": 9
+        }
+      ]
+    },
+    {
+      "key": "materials-owned",
+      "category": 2,
+      "glyph": "shelf",
+      "title": "Spool Collector",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 5,
+          "description": "Add 5 spools of material.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 10,
+          "description": "Add 10 spools of material.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 25,
+          "description": "Add 25 spools of material.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 50,
+          "description": "Add 50 spools of material.",
+          "rarityPercent": 9
+        },
+        {
+          "tier": 5,
+          "threshold": 100,
+          "description": "Add 100 spools of material.",
+          "rarityPercent": 3
+        }
+      ]
+    },
+    {
+      "key": "material-types",
+      "category": 2,
+      "glyph": "flask",
+      "title": "Material Scientist",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 2,
+          "description": "Print with 2 different material types.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 3,
+          "description": "Print with 3 different material types.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 5,
+          "description": "Print with 5 different material types.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 8,
+          "description": "Print with 8 different material types.",
+          "rarityPercent": 9
+        }
+      ]
+    },
+    {
+      "key": "multi-material",
+      "category": 2,
+      "glyph": "palette",
+      "title": "Technicolor",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 2,
+          "description": "Log a single print that uses 2 materials.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 4,
+          "description": "Log a single print that uses 4 materials.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 8,
+          "description": "Log a single print that uses 8 materials.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 16,
+          "description": "Log a single print that uses 16 materials.",
+          "rarityPercent": 9
+        }
+      ]
+    },
+    {
+      "key": "projects",
+      "category": 2,
+      "glyph": "folder-star",
+      "title": "Project Manager",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Organize prints into 1 project.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 5,
+          "description": "Organize prints into 5 projects.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 10,
+          "description": "Organize prints into 10 projects.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 25,
+          "description": "Organize prints into 25 projects.",
+          "rarityPercent": 9
+        }
+      ]
+    },
+    {
+      "key": "daily-streak",
+      "category": 3,
+      "glyph": "flame",
+      "title": "On a Roll",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 3,
+          "description": "Print 3 days in a row.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 5,
+          "description": "Print 5 days in a row.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 10,
+          "description": "Print 10 days in a row.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 20,
+          "description": "Print 20 days in a row.",
+          "rarityPercent": 9
+        },
+        {
+          "tier": 5,
+          "threshold": 30,
+          "description": "Print 30 days in a row.",
+          "rarityPercent": 3
+        }
+      ]
+    },
+    {
+      "key": "weekly-streak",
+      "category": 3,
+      "glyph": "calendar",
+      "title": "Every Week",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 4,
+          "description": "Print at least once a week for 4 weeks running.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 8,
+          "description": "Print at least once a week for 8 weeks running.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 12,
+          "description": "Print at least once a week for 12 weeks running.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 26,
+          "description": "Print at least once a week for 26 weeks running.",
+          "rarityPercent": 9
+        },
+        {
+          "tier": 5,
+          "threshold": 52,
+          "description": "Print at least once a week for 52 weeks running.",
+          "rarityPercent": 3
+        }
+      ]
+    },
+    {
+      "key": "busy-day",
+      "category": 3,
+      "glyph": "stack-plates",
+      "title": "Full Plate",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 3,
+          "description": "Start 3 prints in a single day.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 5,
+          "description": "Start 5 prints in a single day.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 10,
+          "description": "Start 10 prints in a single day.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 20,
+          "description": "Start 20 prints in a single day.",
+          "rarityPercent": 9
+        }
+      ]
+    },
+    {
+      "key": "slicer-cura",
+      "category": 4,
+      "glyph": "initials:Cu",
+      "title": "Cura Connected",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log a print with the Cura plugin.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "slicer-prusaslicer",
+      "category": 4,
+      "glyph": "initials:Pr",
+      "title": "Prusa Connected",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log a print from PrusaSlicer with the Slicer Uploader.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "slicer-orcaslicer",
+      "category": 4,
+      "glyph": "initials:Or",
+      "title": "Orca Connected",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log a print from OrcaSlicer with the Slicer Uploader.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "slicer-bambustudio",
+      "category": 4,
+      "glyph": "initials:Bs",
+      "title": "Bambu Connected",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log a print from Bambu Studio with the Slicer Uploader.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "slicer-anycubic",
+      "category": 4,
+      "glyph": "initials:Ac",
+      "title": "Anycubic Connected",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log a print from Anycubic Slicer Next with the Slicer Uploader.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "slicer-sampler",
+      "category": 4,
+      "glyph": "fork",
+      "title": "Slicer Sampler",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 2,
+          "description": "Log prints from 2 different slicers.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 3,
+          "description": "Log prints from 3 different slicers.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 4,
+          "description": "Log prints from 4 different slicers.",
+          "rarityPercent": 22
+        }
+      ]
+    },
+    {
+      "key": "octoprint",
+      "category": 4,
+      "glyph": "octopus",
+      "title": "Octo Pilot",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Have OctoPrint log a print for you automatically.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "moonraker",
+      "category": 4,
+      "glyph": "moon-link",
+      "title": "Klipper Linked",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Have Klipper (Moonraker) log a print for you automatically.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "mcp",
+      "category": 4,
+      "glyph": "robot",
+      "title": "Robot Co-Pilot",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log a print by asking your AI assistant.",
+          "rarityPercent": 64
+        }
+      ]
+    },
+    {
+      "key": "public-prints",
+      "category": 5,
+      "glyph": "globe",
+      "title": "Show and Tell",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Share 1 print publicly.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 10,
+          "description": "Share 10 prints publicly.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 25,
+          "description": "Share 25 prints publicly.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 50,
+          "description": "Share 50 prints publicly.",
+          "rarityPercent": 9
+        }
+      ]
+    },
+    {
+      "key": "comments-received",
+      "category": 5,
+      "glyph": "chat",
+      "title": "Conversation Starter",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Get comments from 1 different maker on your prints.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 5,
+          "description": "Get comments from 5 different makers on your prints.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 25,
+          "description": "Get comments from 25 different makers on your prints.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 50,
+          "description": "Get comments from 50 different makers on your prints.",
+          "rarityPercent": 9
+        }
+      ]
+    },
+    {
+      "key": "maintenance",
+      "category": 5,
+      "glyph": "wrench",
+      "title": "Well Oiled",
+      "hintOrder": 0,
+      "tiers": [
+        {
+          "tier": 1,
+          "threshold": 1,
+          "description": "Log 1 printer maintenance task.",
+          "rarityPercent": 64
+        },
+        {
+          "tier": 2,
+          "threshold": 5,
+          "description": "Log 5 printer maintenance tasks.",
+          "rarityPercent": 38
+        },
+        {
+          "tier": 3,
+          "threshold": 10,
+          "description": "Log 10 printer maintenance tasks.",
+          "rarityPercent": 22
+        },
+        {
+          "tier": 4,
+          "threshold": 25,
+          "description": "Log 25 printer maintenance tasks.",
+          "rarityPercent": 9
+        }
+      ]
+    }
+  ]
+}

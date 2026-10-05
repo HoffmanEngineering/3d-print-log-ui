@@ -59,6 +59,7 @@
               class="notification-link"
               [routerLink]="getUrlPath(notification.actionUrl)"
               [fragment]="getUrlFragment(notification.actionUrl)"
+              [queryParams]="getUrlQueryParams(notification.actionUrl)"
               (click)="onNotificationClick(notification)"
             >
               <mat-card-content>

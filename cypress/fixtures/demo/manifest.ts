@@ -76,6 +76,18 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
     url: '**/api/notifications/unread-count*',
     fixture: 'demo/notifications-unread-count.json',
   },
+  // The prints list shows a next-achievement hint. `nextHint: null` renders nothing, so the
+  // print-list images stay exactly as they were.
+  {
+    method: 'GET',
+    url: '**/api/achievements/me',
+    fixture: 'demo/achievements-me.json',
+  },
+  {
+    method: 'GET',
+    url: '**/api/achievements/catalog',
+    fixture: 'demo/achievements-catalog.json',
+  },
 ];
 
 // defaultPrintImageId -> committed demo image, for the /api/Prints/*/image/* intercept.
@@ -302,6 +314,17 @@ const DOC_CAPTURE_TARGETS: CaptureTarget[] = [
       // capture loses silently.
       imagesLoaded('app-printer-avatar'),
       rendered('.material-chip', DEMO_MATERIAL_COUNT),
+    ],
+  }),
+  docTarget({
+    name: 'achievements-grid',
+    route: '/achievements',
+    selector: '[data-cy="capture-achievements-grid"]',
+    viewport: DOC_DESKTOP,
+    ready: [
+      // 30 public families plus the revealed hidden one, and three "???" cells.
+      rendered('[data-key]', 31),
+      rendered('.cell.secret', 3),
     ],
   }),
 ];

@@ -1,0 +1,49 @@
+{
+  "earnedTierCount": 3,
+  "featured": [
+    {
+      "key": "prints-logged",
+      "highestTier": 2,
+      "tiers": [
+        {
+          "tier": 2,
+          "unlockedAt": "2026-10-02T12:00:00Z",
+          "retroactive": false
+        }
+      ]
+    },
+    {
+      "key": "first-print",
+      "highestTier": 1,
+      "tiers": [
+        { "tier": 1, "unlockedAt": "2026-10-01T12:00:00Z", "retroactive": true }
+      ]
+    }
+  ],
+  "families": [
+    {
+      "key": "first-print",
+      "highestTier": 1,
+      "tiers": [
+        { "tier": 1, "unlockedAt": "2026-10-01T12:00:00Z", "retroactive": true }
+      ]
+    },
+    {
+      "key": "prints-logged",
+      "highestTier": 2,
+      "tiers": [
+        {
+          "tier": 1,
+          "unlockedAt": "2026-10-01T12:00:00Z",
+          "retroactive": true
+        },
+        {
+          "tier": 2,
+          "unlockedAt": "2026-10-02T12:00:00Z",
+          "retroactive": false
+        }
+      ]
+    }
+  ],
+  "revealedHidden": []
+}

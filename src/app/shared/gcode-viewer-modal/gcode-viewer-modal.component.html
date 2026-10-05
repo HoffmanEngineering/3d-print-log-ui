@@ -1,40 +1,60 @@
-<h1>Parsing Gcode</h1>
-@if (loadingProgress === 0) {
-  <h2 class="pending">Loading.</h2>
-}
-@if (loadingProgress > 0 && loadingProgress < 100) {
-  <h2 class="loading">Loading</h2>
-}
-@if (loadingProgress === 100) {
-  <h2>Loading Complete.</h2>
-}
-<mat-progress-bar
-  mode="determinate"
-  aria-label="Loading Progress"
-  [attr.aria-valuenow]="loadingProgress"
-  [value]="loadingProgress"
-></mat-progress-bar>
-@if (analyzingProgress === 0) {
-  <h2 class="pending">Analyzing.</h2>
-}
-@if (analyzingProgress > 0 && analyzingProgress < 100) {
-  <h2 class="loading">Analyzing</h2>
-}
-@if (analyzingProgress === 100) {
-  <h2>Analyzing Complete.</h2>
-}
-<mat-progress-bar
-  mode="determinate"
-  aria-label="Analyzing Progress"
-  [attr.aria-valuenow]="analyzingProgress"
-  [value]="analyzingProgress"
-></mat-progress-bar>
+<h2 mat-dialog-title>Analyzing G-code</h2>
+<mat-dialog-content>
+  @if (data.fileName) {
+    <p class="file-name">{{ data.fileName }}</p>
+  }
+
+  <ol class="steps" aria-live="polite">
+    <li
+      class="step"
+      [class.active]="step() === 'reading'"
+      [class.complete]="step() !== 'reading'"
+    >
+      <mat-icon aria-hidden="true">{{
+        step() !== 'reading' ? 'check_circle' : 'radio_button_unchecked'
+      }}</mat-icon>
+      <span class="label">Reading file</span>
+    </li>
+    <li
+      class="step"
+      [class.active]="step() === 'analyzing'"
+      [class.complete]="step() === 'done'"
+    >
+      <mat-icon aria-hidden="true">{{
+        step() === 'done' ? 'check_circle' : 'radio_button_unchecked'
+      }}</mat-icon>
+      <span class="label">Analyzing toolpath</span>
+    </li>
+    <li
+      class="step"
+      [class.active]="step() === 'done'"
+      [class.complete]="step() === 'done'"
+    >
+      <mat-icon aria-hidden="true">{{
+        step() === 'done' ? 'check_circle' : 'radio_button_unchecked'
+      }}</mat-icon>
+      <span class="label">Done</span>
+    </li>
+  </ol>
+
+  <mat-progress-bar
+    mode="determinate"
+    aria-label="Analysis progress"
+    [value]="overallProgress()"
+  ></mat-progress-bar>
+
+  <p class="hint">
+    This slicer wasn't recognized, so the print is estimated from the toolpath.
+    Settings will be limited and the time estimate is a floor.
+  </p>
+</mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button [mat-dialog-close]="false" cdkFocusInitial color="warn">
-    Cancel
-  </button>
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
 </mat-dialog-actions>
 <iframe
-  style="position: absolute; width: 0; height: 0; border: 0"
+  class="viewer-frame"
   #iframe
+  aria-hidden="true"
+  tabindex="-1"
+  title="G-code analysis worker"
 ></iframe>

@@ -54,17 +54,31 @@
             mat-menu-item
             [routerLink]="getUrlPath(notification.actionUrl)"
             [fragment]="getUrlFragment(notification.actionUrl)"
+            [queryParams]="getUrlQueryParams(notification.actionUrl)"
             class="notification-item"
             [class.unread]="!notification.isRead"
             (click)="onNotificationClick(notification)"
           >
             <div class="notification-item-content">
-              <mat-icon
-                class="notification-icon"
-                [class]="getNotificationIconClass(notification.type)"
-              >
-                {{ getNotificationIcon(notification.type) }}
-              </mat-icon>
+              @if (achievementBadge(notification); as badge) {
+                <app-achievement-badge
+                  class="notification-icon"
+                  size="sm"
+                  [glyph]="badge.glyph"
+                  [category]="badge.category"
+                  [tier]="badge.tier"
+                  [oneTime]="badge.oneTime"
+                  [numeral]="badge.numeral"
+                  [label]="badge.title"
+                />
+              } @else {
+                <mat-icon
+                  class="notification-icon"
+                  [class]="getNotificationIconClass(notification.type)"
+                >
+                  {{ getNotificationIcon(notification.type) }}
+                </mat-icon>
+              }
               <div class="notification-text">
                 <span class="notification-item-title">{{
                   notification.title
@@ -91,12 +105,25 @@
             (click)="onNotificationClick(notification)"
           >
             <div class="notification-item-content">
-              <mat-icon
-                class="notification-icon"
-                [class]="getNotificationIconClass(notification.type)"
-              >
-                {{ getNotificationIcon(notification.type) }}
-              </mat-icon>
+              @if (achievementBadge(notification); as badge) {
+                <app-achievement-badge
+                  class="notification-icon"
+                  size="sm"
+                  [glyph]="badge.glyph"
+                  [category]="badge.category"
+                  [tier]="badge.tier"
+                  [oneTime]="badge.oneTime"
+                  [numeral]="badge.numeral"
+                  [label]="badge.title"
+                />
+              } @else {
+                <mat-icon
+                  class="notification-icon"
+                  [class]="getNotificationIconClass(notification.type)"
+                >
+                  {{ getNotificationIcon(notification.type) }}
+                </mat-icon>
+              }
               <div class="notification-text">
                 <span class="notification-item-title">{{
                   notification.title

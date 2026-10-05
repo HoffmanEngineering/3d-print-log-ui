@@ -40,6 +40,8 @@ export class CuraParserV1pt2pt0Service implements NewPrintParser {
 
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),
+      // Provenance only: the API records which slicer logged this print.
+      curaSettingId: settingId ?? undefined,
     };
 
     const settings = curaData.settings as any;

@@ -9,6 +9,7 @@ import {
 } from '@angular/common/http';
 import {
   BulkPrintResult,
+  PrintDetail,
   PrintService,
   PrintStatus,
   PrintViewStatus,
@@ -250,6 +251,46 @@ describe('PrintService', () => {
 
       req.flush(result);
       expect(actual).toEqual(result);
+    });
+  });
+
+  describe('addPrint provenance', () => {
+    let httpMock: HttpTestingController;
+    const base = {
+      id: null,
+      title: 'From Cura',
+      printerId: 1,
+      filamentType: null,
+      filamentUsage: [],
+      notes: '',
+      url: '',
+      fileName: '',
+      status: 3,
+      viewStatus: 3,
+      allowComments: false,
+      createdByUserId: null,
+    } as unknown as Omit<PrintDetail, 'comments'>;
+
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => httpMock.verify());
+
+    it('addPrint posts curaSettingId', () => {
+      service.addPrint({ ...base, curaSettingId: 'setting-1' }).subscribe();
+
+      const request = httpMock.expectOne((r) => r.method === 'POST');
+      expect(request.request.body.curaSettingId).toBe('setting-1');
+      request.flush({ id: 1 });
+    });
+
+    it('addPrint omits curaSettingId when absent', () => {
+      service.addPrint(base).subscribe();
+
+      const request = httpMock.expectOne((r) => r.method === 'POST');
+      expect('curaSettingId' in request.request.body).toBeFalse();
+      request.flush({ id: 1 });
     });
   });
 });

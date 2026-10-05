@@ -33,6 +33,16 @@ export enum UserSettingType {
   Push_PrintCompleted = 15,
   /** Send a push notification when a print fails. */
   Push_PrintFailed = 16,
+  /** Show achievements on the public profile ("true"/"false", default true). */
+  Achievements_ShowOnProfile = 17,
+  /** How new achievements are celebrated ("on"/"quiet"/"off", default on). */
+  Achievements_Celebrations = 18,
+  /** The dismissed hint, as "key:tier". */
+  Achievements_DismissedHint = 19,
+  /** The user's IANA time zone, used for daily and weekly streaks. */
+  General_TimeZone = 20,
+  /** Push a notification when an achievement is earned (default true). */
+  Push_Achievement = 21,
 }
 
 export interface UserSetting {

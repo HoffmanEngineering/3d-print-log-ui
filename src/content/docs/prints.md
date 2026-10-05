@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-09-02
+updated: 2026-09-14
 related: [projects, materials]
 ---
 
@@ -167,6 +167,24 @@ as *6h 12m 25s*, or *6 hours 12 minutes 25 seconds*.
 Prints can have one of 6 statuses: **Pending, Printing, Successful, Partial
 Success, Failed, or Cancelled**. The **Status** selection will default to
 Pending, but can be changed by clicking the dropdown.
+
+### Create a print from a G-code file {#from-gcode}
+
+Open the menu beside **Add New Print** and choose **Add Print From Gcode**.
+3D Print Log reads the slicer's comments from the file and opens the new print
+form pre-filled with the estimated print time, one material row per filament
+slot the print used, and a note summarizing the print settings.
+
+Files from **OrcaSlicer, Bambu Studio, PrusaSlicer, Creality Print, Anycubic
+Slicer and Cura** are recognized directly. A slicer derived from one of those
+(Snapmaker Orca, Elegoo Slicer, SuperSlicer, and other forks) is parsed by its
+closest match — you will see a short notice saying which parser was used, and a
+few settings may be missing from the note.
+
+A file with no slicer comments at all (raw G-code from a printer or a plain
+Marlin export) is analyzed from its toolpath instead. That gives layer count,
+model size and a per-extruder filament estimate, but the time estimate is a
+floor and no slicer settings are available.
 
 ### Material Usage {#print-material-usage}
 

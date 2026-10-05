@@ -28,6 +28,34 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.52.0': {
+      title: '1.52.0 - Achievements & Printer Photos',
+      body: `<p>
+<strong>Achievements</strong> are here! Logging prints, keeping a streak going and trying new materials now earn badges, with tiers from Bronze PLA all the way up to Glow-in-the-Dark. Browse your collection on the new <a href="/achievements">Achievements</a> page, see how rare each badge is, and show them off on your public profile. Prefer a calmer celebration? Set it to Quiet or Off in <a href="/settings">Settings</a>.
+</p>
+<p>
+<strong>Printer photos</strong> let you tell your machines apart at a glance. Add a photo to each printer and it shows up next to the printer's name on your prints, the printer picker, maintenance and analytics.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.51.0': {
       title: '1.51.0 - Slicer Uploader 1.2 & Setup Wizard',
       body: `<p>

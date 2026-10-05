@@ -1,6 +1,5 @@
 import { AchievementCategory } from '../../core/types/achievement';
 import {
-  BADGE_DEFS_SVG,
   BADGE_PALETTE,
   badgeFillId,
   badgeFillSuffix,
@@ -20,10 +19,8 @@ describe('achievement-badge-art', () => {
     'ach-fill-hi',
   ];
 
-  it('defines the layer pattern and every fill the badges paint with', () => {
-    expect(BADGE_DEFS_SVG).toContain('id="ach-layers"');
+  it('has glyph colors for every fill the badges paint with', () => {
     for (const id of FILL_IDS) {
-      expect(BADGE_DEFS_SVG).withContext(id).toContain(`id="${id}"`);
       expect(BADGE_PALETTE[id]).withContext(id).toBeDefined();
     }
   });

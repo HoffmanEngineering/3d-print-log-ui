@@ -3,6 +3,7 @@
 // deleted (see AGENTS.md, "Email assets"). The badge art is assembled from the same TypeScript
 // sources the in-app badge component renders, bundled for Node with esbuild.
 import { build } from 'esbuild';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,8 +28,8 @@ export const BADGE_HEIGHT = 125;
 
 /**
  * The badge art and glyph tables, loaded from the app's TypeScript: SHIELD_PATH, BADGE_PALETTE,
- * BADGE_DEFS_SVG, badgeFillId, badgeFillSuffix, ACHIEVEMENT_GLYPHS, REQUIRED_GLYPHS,
- * INITIALS_PREFIX.
+ * badgeFillId, badgeFillSuffix, ACHIEVEMENT_GLYPHS, REQUIRED_GLYPHS,
+ * INITIALS_PREFIX, plus BADGE_DEFS_SVG from the defs component's template.
  */
 export async function loadBadgeArt() {
   const result = await build({
@@ -45,9 +46,22 @@ export async function loadBadgeArt() {
     logLevel: 'silent',
   });
   const code = result.outputFiles[0].text;
-  return import(
+  const modules = await import(
     `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`
   );
+  return { ...modules, BADGE_DEFS_SVG: readBadgeDefs() };
+}
+
+/** The inner markup of the app's one shared <defs>, read from the defs component's template. */
+function readBadgeDefs() {
+  const html = readFileSync(
+    join(ACHIEVEMENTS_DIR, 'achievement-badge-defs.component.html'),
+    'utf8'
+  );
+  const match = html.match(/<defs>([\s\S]*)<\/defs>/);
+  if (!match)
+    throw new Error('achievement-badge-defs.component.html has no <defs>');
+  return match[1];
 }
 
 /** `clock` + `t3` -> `clock-t3.png`; `initials:Cu` -> `initials-cu-…`; numerals carry the threshold. */

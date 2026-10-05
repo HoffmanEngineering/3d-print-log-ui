@@ -32,6 +32,25 @@ const FIXTURE_CATALOG = {
   ],
 };
 
+test('loadBadgeArt reads the shared defs from the defs component template', () => {
+  assert.ok(art.BADGE_DEFS_SVG.includes('id="ach-layers"'));
+  for (const fill of [
+    't1',
+    't2',
+    't3',
+    't4',
+    't5',
+    't6',
+    'gs',
+    'in',
+    'co',
+    'hi',
+  ]) {
+    assert.ok(art.BADGE_DEFS_SVG.includes(`id="ach-fill-${fill}"`), fill);
+  }
+  assert.ok(!art.BADGE_DEFS_SVG.includes('<defs'), 'inner markup only');
+});
+
 test('badgeFileName names plain, initials and numeral badges', () => {
   assert.equal(badgeFileName('clock', 't3'), 'clock-t3.png');
   assert.equal(badgeFileName('initials:Cu', 'in'), 'initials-cu-in.png');

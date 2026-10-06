@@ -7,6 +7,11 @@ import {
 } from '@angular/core';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { LoggingService } from '../../core/services/logging.service';
+import {
+  annualPricePerMonth,
+  annualSavingsPercent,
+  proPlan,
+} from '../../core/pricing/pro-pricing';
 
 @Component({
   selector: 'app-pricing',
@@ -21,6 +26,12 @@ export class PricingComponent implements OnInit {
 
   readonly isPro = this.subscriptionService.isPro;
   readonly plan = this.subscriptionService.plan;
+
+  /** Prices come from src/content/pro-pricing.json, never typed into the template. */
+  readonly monthly = proPlan('pro_monthly');
+  readonly annual = proPlan('pro_annual');
+  readonly annualPerMonth = annualPricePerMonth();
+  readonly annualSavingsPercent = annualSavingsPercent();
 
   /**
    * A signal rather than a plain field because this component is OnPush and the

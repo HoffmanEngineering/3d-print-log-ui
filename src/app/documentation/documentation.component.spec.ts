@@ -98,7 +98,28 @@ describe('DocumentationComponent SEO lifecycle', () => {
     expect(nodes.map((n) => n['@type'])).toEqual([
       'TechArticle',
       'BreadcrumbList',
+      'Organization',
     ]);
+  });
+
+  it('resolves every @id reference within the same graph', () => {
+    const nodes = structuredData.setJsonLd.calls.mostRecent().args[0];
+    const ids = new Set(nodes.map((n) => n['@id']).filter(Boolean));
+    const article = nodes.find((n) => n['@type'] === 'TechArticle');
+    expect(ids).toContain((article?.['publisher'] as { '@id': string })['@id']);
+    expect(ids).toContain((article?.['author'] as { '@id': string })['@id']);
+  });
+
+  it('adds a HowTo for a page written as numbered steps', () => {
+    events.next(new NavigationEnd(3, '/docs/klipper', '/docs/klipper'));
+    const nodes = structuredData.setJsonLd.calls.mostRecent().args[0];
+    const howTo = nodes.find((n) => n['@type'] === 'HowTo');
+    expect(howTo?.['name']).toBe('Log prints from Klipper');
+    const steps = howTo?.['step'] as Array<Record<string, unknown>>;
+    expect(steps.length).toBe(4);
+    expect(steps[0]['url']).toBe(
+      'https://www.3dprintlog.com/docs/klipper#step-1-generate-api-key-on-3d-print-log'
+    );
   });
 
   it('clears structured data when navigating to a non-doc url while alive', () => {

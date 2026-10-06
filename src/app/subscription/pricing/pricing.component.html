@@ -30,7 +30,7 @@
             </mat-card-header>
             <mat-card-content>
               <div class="price">
-                <span class="amount">$2.99</span>
+                <span class="amount">${{ monthly.price }}</span>
                 <span class="period">/month</span>
               </div>
               <ul class="features">
@@ -59,14 +59,18 @@
           >
             <mat-card-header>
               <mat-card-title>Annual</mat-card-title>
-              <mat-card-subtitle>Save 16%</mat-card-subtitle>
+              <mat-card-subtitle
+                >Save {{ annualSavingsPercent }}%</mat-card-subtitle
+              >
             </mat-card-header>
             <mat-card-content>
               <div class="price">
-                <span class="amount">$29.99</span>
+                <span class="amount">${{ annual.price }}</span>
                 <span class="period">/year</span>
               </div>
-              <p class="price-detail">That's just $2.50/month</p>
+              <p class="price-detail">
+                That's just ${{ annualPerMonth }}/month
+              </p>
               <ul class="features">
                 <li>Ad-free experience</li>
                 <li>Up to 20 images per print</li>

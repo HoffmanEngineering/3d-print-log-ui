@@ -9,6 +9,22 @@ import {
 } from './marketing-routes.mjs';
 
 const DIST = 'dist/print-log-ui/browser';
+
+// The single source for Pro prices; the homepage Offers must match it.
+const PRO_PRICING = JSON.parse(
+  readFileSync(
+    new URL('../src/content/pro-pricing.json', import.meta.url),
+    'utf8'
+  )
+);
+
+// Docs pages written as a numbered "Step N:" walkthrough, which therefore carry
+// a HowTo. buildDocHowTo derives it from the outline; this list pins it.
+const DOC_HOWTO_ROUTES = [
+  'docs/klipper',
+  'docs/slic3r-uploader',
+  'docs/log-your-first-print',
+];
 const ORIGIN = SITE_ORIGIN;
 const routes = MARKETING_ROUTES;
 
@@ -49,9 +65,9 @@ function markdownAlternateHref(html) {
   }
   return '';
 }
-// Parse the page's <script type="application/ld+json"> and return the set of
-// @type strings found in its @graph. Returns null if missing/invalid JSON.
-function jsonLdTypes(html) {
+// Parse the page's <script type="application/ld+json"> and return its @graph
+// array. Returns null if missing/invalid JSON.
+function jsonLdGraph(html) {
   const m = html.match(
     /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i
   );
@@ -62,9 +78,43 @@ function jsonLdTypes(html) {
   } catch {
     return null;
   }
-  const graph = Array.isArray(data['@graph']) ? data['@graph'] : [];
+  return Array.isArray(data['@graph']) ? data['@graph'] : [];
+}
+function jsonLdTypes(graph) {
   return new Set(graph.map((n) => n && n['@type']).filter(Boolean));
 }
+// Every object anywhere in the graph, so nested nodes (a parentOrganization)
+// count as declaring an @id and nested references get checked too.
+function jsonLdObjects(value, out = []) {
+  if (Array.isArray(value)) {
+    for (const v of value) jsonLdObjects(v, out);
+  } else if (value && typeof value === 'object') {
+    out.push(value);
+    for (const v of Object.values(value)) jsonLdObjects(v, out);
+  }
+  return out;
+}
+// A bare { "@id": ... } is a reference. It has to name a node declared in the
+// same graph, or a consumer sees a pointer to nothing.
+function danglingJsonLdRefs(graph) {
+  const objects = jsonLdObjects(graph);
+  const declared = new Set(
+    objects
+      .filter((o) => o['@id'] && Object.keys(o).length > 1)
+      .map((o) => o['@id'])
+  );
+  return objects
+    .filter((o) => o['@id'] && Object.keys(o).length === 1)
+    .map((o) => o['@id'])
+    .filter((id) => !declared.has(id));
+}
+const isHttpsUrl = (value) => {
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
 function read(route) {
   const file = `${DIST}/${route ? route + '/' : ''}index.html`;
   if (!existsSync(file)) {
@@ -116,20 +166,99 @@ for (const r of [...routes, ...DOC_ROUTES]) {
     );
   // Structured data (JSON-LD): every prerendered page carries a valid @graph with
   // the @type(s) expected for its route class.
-  const types = jsonLdTypes(html);
-  if (!types) {
+  const graph = jsonLdGraph(html);
+  if (!graph) {
     errors.push(`${file}: missing or invalid JSON-LD (application/ld+json)`);
   } else {
+    const types = jsonLdTypes(graph);
     const expected =
       r === ''
-        ? ['WebApplication', 'Organization']
+        ? ['WebApplication', 'MobileApplication', 'Organization']
         : DOC_ROUTES.includes(r)
-          ? ['TechArticle', 'BreadcrumbList']
+          ? [
+              'TechArticle',
+              'BreadcrumbList',
+              'Organization',
+              ...(DOC_HOWTO_ROUTES.includes(r) ? ['HowTo'] : []),
+            ]
           : ['HowTo'];
     for (const t of expected) {
       if (!types.has(t)) {
         errors.push(`${file}: JSON-LD missing @type "${t}"`);
       }
+    }
+    for (const id of danglingJsonLdRefs(graph)) {
+      errors.push(`${file}: JSON-LD references @id "${id}" it never declares`);
+    }
+    if (r === '') checkHomeJsonLd(file, graph, desc);
+  }
+}
+
+// The homepage's JSON-LD is what an agent reads to answer "what is this, who
+// runs it, how do I reach them, and what does it cost" (#212).
+function checkHomeJsonLd(file, graph, metaDescription) {
+  const node = (type) => graph.find((n) => n['@type'] === type) ?? {};
+  const app = node('WebApplication');
+  const mobile = node('MobileApplication');
+  const org = node('Organization');
+
+  for (const [label, n] of [
+    ['WebApplication', app],
+    ['MobileApplication', mobile],
+  ]) {
+    if (!n.description) {
+      errors.push(`${file}: ${label} has no description`);
+    } else if (n.description !== metaDescription) {
+      errors.push(
+        `${file}: ${label} description differs from the meta description`
+      );
+    }
+  }
+
+  const sameAs = Array.isArray(org.sameAs) ? org.sameAs : [];
+  if (sameAs.length === 0 || !sameAs.every(isHttpsUrl)) {
+    errors.push(
+      `${file}: Organization sameAs must be a non-empty list of https URLs`
+    );
+  }
+  const contact = org.contactPoint ?? {};
+  if (contact['@type'] !== 'ContactPoint' || !contact.email) {
+    errors.push(`${file}: Organization has no ContactPoint with an email`);
+  }
+  // Owner decision (#217): never publish a postal address.
+  if ('address' in org) {
+    errors.push(`${file}: Organization must not publish an address`);
+  }
+
+  // Free plus every plan in pro-pricing.json, each with a price, a currency and,
+  // for the paid ones, a billing period.
+  const offers = Array.isArray(app.offers) ? app.offers : [];
+  for (const offer of offers) {
+    if (
+      offer['@type'] !== 'Offer' ||
+      offer.price === undefined ||
+      !offer.priceCurrency
+    ) {
+      errors.push(
+        `${file}: Offer "${offer.name}" needs price and priceCurrency`
+      );
+    }
+  }
+  if (!offers.some((o) => String(o.price) === '0')) {
+    errors.push(`${file}: no free Offer`);
+  }
+  for (const plan of PRO_PRICING.plans) {
+    const offer = offers.find((o) => o.price === plan.price);
+    const spec = offer?.priceSpecification ?? {};
+    if (!offer) {
+      errors.push(`${file}: no Offer for ${plan.id} at ${plan.price}`);
+    } else if (
+      spec['@type'] !== 'UnitPriceSpecification' ||
+      spec.price !== plan.price ||
+      spec.priceCurrency !== PRO_PRICING.currency ||
+      spec.billingDuration !== plan.billingDuration
+    ) {
+      errors.push(`${file}: ${plan.id} Offer has a wrong priceSpecification`);
     }
   }
 }

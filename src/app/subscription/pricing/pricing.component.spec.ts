@@ -9,6 +9,11 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { PricingComponent } from './pricing.component';
 import { SharedModule } from '../../shared/shared.module';
 import { LoggingService } from '../../core/services/logging.service';
+import {
+  annualPricePerMonth,
+  annualSavingsPercent,
+  proPlan,
+} from '../../core/pricing/pro-pricing';
 
 describe('PricingComponent', () => {
   let component: PricingComponent;
@@ -35,6 +40,14 @@ describe('PricingComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('shows the prices from pro-pricing.json', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain(`$${proPlan('pro_monthly').price}`);
+    expect(text).toContain(`$${proPlan('pro_annual').price}`);
+    expect(text).toContain(`$${annualPricePerMonth()}/month`);
+    expect(text).toContain(`Save ${annualSavingsPercent()}%`);
   });
 
   it('should default isPro to false', () => {

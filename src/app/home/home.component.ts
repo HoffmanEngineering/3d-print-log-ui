@@ -12,6 +12,7 @@ import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
 import { LoggingService } from '../core/services/logging.service';
 import {
+  buildMobileApplication,
   buildOrganization,
   buildSoftwareApplication,
 } from '../core/structured-data/app-schema';
@@ -19,6 +20,13 @@ import { AdComponent } from '../shared/ad/ad.component';
 import homeCaptures from '../../content/home-captures.json';
 
 const SITE_ORIGIN = 'https://www.3dprintlog.com';
+
+/**
+ * The homepage meta description, which is also the description the JSON-LD
+ * gives both apps. scripts/verify-prerender.mjs checks the two stay equal.
+ */
+export const HOME_DESCRIPTION =
+  'Log and track your 3D prints, filament, and settings. Send prints directly from OrcaSlicer, Bambu Studio, PrusaSlicer, and Cura. Create a free account.';
 
 @Component({
   selector: 'app-home',
@@ -39,8 +47,7 @@ export class HomeComponent implements OnInit {
     this.meta.setSeoTags({
       url: 'https://www.3dprintlog.com/',
       title: '3D Print Log | Track 3D Prints, Filament & Settings',
-      description:
-        'Log and track your 3D prints, filament, and settings. Send prints directly from OrcaSlicer, Bambu Studio, PrusaSlicer, and Cura. Create a free account.',
+      description: HOME_DESCRIPTION,
       // Content-hashed and rewritten by capture:home:process, so it must never
       // be typed by hand.
       imageUrl: `${SITE_ORIGIN}${homeCaptures['Homepage_PrinterList'].src}`,
@@ -50,7 +57,8 @@ export class HomeComponent implements OnInit {
     });
 
     this.structuredData.setJsonLd([
-      buildSoftwareApplication(),
+      buildSoftwareApplication(HOME_DESCRIPTION),
+      buildMobileApplication(HOME_DESCRIPTION),
       buildOrganization(),
     ]);
   }

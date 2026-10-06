@@ -1,4 +1,8 @@
-import { buildDocArticle, buildDocBreadcrumb } from './doc-schema';
+import {
+  buildDocArticle,
+  buildDocBreadcrumb,
+  buildDocHowTo,
+} from './doc-schema';
 import { ORGANIZATION_ID } from './app-schema';
 
 const tags = {
@@ -36,6 +40,63 @@ describe('doc-schema', () => {
       position: 3,
       name: tags.title,
       item: tags.url,
+    });
+  });
+
+  describe('buildDocHowTo', () => {
+    const page = {
+      url: 'https://www.3dprintlog.com/docs/klipper',
+      name: 'Log prints from Klipper',
+      description: 'Set up Klipper.',
+    };
+
+    it('turns "Step N:" headings into positioned HowToSteps with anchors', () => {
+      const howTo = buildDocHowTo(page, [
+        { id: 'features', text: 'Features:' },
+        { id: 'step-1', text: 'Step 1: Generate an API key' },
+        { id: 'step-2', text: 'Step 2: Update Moonraker' },
+        { id: 'troubleshooting', text: 'Troubleshooting' },
+      ]);
+      expect(howTo).toEqual({
+        '@type': 'HowTo',
+        name: page.name,
+        description: page.description,
+        url: page.url,
+        step: [
+          {
+            '@type': 'HowToStep',
+            position: 1,
+            name: 'Generate an API key',
+            text: 'Generate an API key',
+            url: `${page.url}#step-1`,
+          },
+          {
+            '@type': 'HowToStep',
+            position: 2,
+            name: 'Update Moonraker',
+            text: 'Update Moonraker',
+            url: `${page.url}#step-2`,
+          },
+        ],
+      });
+    });
+
+    it('returns null for a page without a numbered walkthrough', () => {
+      expect(
+        buildDocHowTo(page, [
+          { id: 'usage', text: 'Usage' },
+          { id: 'step-1', text: 'Step 1: Only one step' },
+        ])
+      ).toBeNull();
+    });
+
+    it('returns null when the step numbers are not 1, 2, 3...', () => {
+      expect(
+        buildDocHowTo(page, [
+          { id: 'a', text: 'Step 1: First' },
+          { id: 'b', text: 'Step 3: Third' },
+        ])
+      ).toBeNull();
     });
   });
 });

@@ -21,11 +21,15 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
+import { buildOrganization } from '../core/structured-data/app-schema';
 import {
   buildDocArticle,
   buildDocBreadcrumb,
+  buildDocHowTo,
 } from '../core/structured-data/doc-schema';
 import { getDocSeoTags } from './doc-seo.config';
+import { DOC_PAGES } from './generated/docs-manifest';
+import { DOC_OUTLINE } from './generated/docs-outline';
 import {
   isDrawerScroller,
   resolveScrollContainer,
@@ -235,9 +239,23 @@ export class DocumentationComponent
     const tags = getDocSeoTags(path);
     if (tags) {
       this.metaTagService.setSeoTags(tags);
+      const howTo = buildDocHowTo(
+        {
+          url: tags.url,
+          name:
+            DOC_PAGES.find((page) => page.path === path)?.navLabel ??
+            tags.title,
+          description: tags.description,
+        },
+        DOC_OUTLINE[path] ?? []
+      );
       this.structuredData.setJsonLd([
         buildDocArticle(tags),
         buildDocBreadcrumb(tags),
+        ...(howTo ? [howTo] : []),
+        // The article names this Organization as author and publisher by @id,
+        // so the node has to be in the same graph for the reference to resolve.
+        buildOrganization(),
       ]);
     } else {
       this.title.setTitle('Documentation - 3D Print Log');

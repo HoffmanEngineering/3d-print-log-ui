@@ -352,7 +352,12 @@ function elementChildren(node) {
 }
 
 function cellText(content) {
-  return content.replace(/\n+/g, ' ').trim().replace(/\|/g, '\\|');
+  // A pipe splits the cell unless escaped. Turndown has already written its own
+  // backslash escapes, so escape only the pipes that are not escaped yet.
+  return content
+    .replace(/\n+/g, ' ')
+    .trim()
+    .replace(/(?<!\\)\|/g, '\\|');
 }
 
 function altText(node) {

@@ -21,6 +21,8 @@ import { resolveSwaRewrite } from './swa-routes-lib.mjs';
 const ORIGIN = 'https://www.3dprintlog.com';
 const PAGE_URL = `${ORIGIN}/docs/prints`;
 
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const read = (file) =>
   readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 
@@ -253,7 +255,7 @@ test('a twin opens with the page title as its only h1', () => {
   assert.doesNotMatch(twin, /^## Prints$/m);
   assert.doesNotMatch(twin, /^---$/m);
   assert.match(twin, /^### List$/m);
-  assert.match(twin, new RegExp(`HTML version: ${PAGE_URL}\\.`));
+  assert.match(twin, new RegExp(`HTML version: ${escapeRegExp(PAGE_URL)}\\.`));
   assert.equal(twin.match(/^# /gm).length, 1);
 });
 

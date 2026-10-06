@@ -109,6 +109,17 @@ Campaign emails sent by the API reference images at `https://www.3dprintlog.com/
 - An unknown path _under_ a known segment (`/prints/1/nope`) still loads the app, and the Angular `**` route renders `NotFoundComponent`.
 - To check the behavior locally, run `npx @azure/static-web-apps-cli start dist/print-log-ui/browser` after `npm run build`.
 
+### Agent discovery files
+
+`/.well-known/api-catalog` (RFC 9727), `/.well-known/mcp/server-card.json` (also served at `/.well-known/mcp`), `/.well-known/ard.json` and its legacy copy `/.well-known/ai-catalog.json` all come from `scripts/discovery-lib.mjs`. They're committed under `src/well-known/`, which `angular.json` copies to `.well-known/`.
+
+- **Never hand-edit `src/well-known/`.** Change the lib, run `npm run discovery:generate`, and commit both. `discovery.test.mjs` fails when they disagree, and prettier ignores the folder so it can't reformat one of the two byte-identical catalogs.
+- **Content types come from route rules.** `api-catalog` has no extension, so only its rule in `staticwebapp.config.json` makes it `application/linkset+json`. SWA applies only the first matching route, so each specific `/.well-known/…` rule repeats the CORS header that `/.well-known/*` sets.
+- **The deploy artifact must keep hidden files.** `actions/upload-artifact` drops dot-prefixed paths by default, so the upload step in `deploy.yml` sets `include-hidden-files: true`.
+- `/openapi.json` is a 301 redirect to the API's document. SWA can't proxy another host.
+- The server card's `name` and `version` mirror `server.json` in the API repo, and the card's `description` is capped at 100 characters by the schema. ARD (v0.91) and the server card are drafts, so check them again when they reach 1.0.
+- The site-wide `Link` header in `globalHeaders` advertises the catalog, the ARD manifest, the OpenAPI document, `llms.txt` and the sitemap.
+
 ### Security Headers & CSP
 
 Response headers are served by Azure Static Web Apps from `src/staticwebapp.config.json` (`globalHeaders`), which ships as a build asset — SWA reads it literally, so it stays hand-edited JSON.

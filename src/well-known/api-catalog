@@ -1,0 +1,57 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://www.3dprintlog.com/.well-known/api-catalog",
+      "item": [
+        {
+          "href": "https://api.3dprintlog.com/api"
+        },
+        {
+          "href": "https://api.3dprintlog.com/mcp"
+        }
+      ]
+    },
+    {
+      "anchor": "https://api.3dprintlog.com/api",
+      "service-desc": [
+        {
+          "href": "https://api.3dprintlog.com/swagger/v1/swagger.json",
+          "type": "application/vnd.oai.openapi+json"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://www.3dprintlog.com/docs/api",
+          "type": "text/html"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://api.3dprintlog.com/health",
+          "type": "text/plain"
+        }
+      ]
+    },
+    {
+      "anchor": "https://api.3dprintlog.com/mcp",
+      "service-desc": [
+        {
+          "href": "https://www.3dprintlog.com/.well-known/mcp/server-card.json",
+          "type": "application/mcp-server-card+json"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://www.3dprintlog.com/docs/mcp",
+          "type": "text/html"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://api.3dprintlog.com/health",
+          "type": "text/plain"
+        }
+      ]
+    }
+  ]
+}

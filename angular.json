@@ -31,6 +31,7 @@
               "src/robots.txt",
               "src/llms.txt",
               "src/auth.md",
+              { "glob": "**/*", "input": "src/well-known", "output": ".well-known" },
               "src/404.html",
               "src/staticwebapp.config.json"
             ],
@@ -55,6 +56,7 @@
                 "src/robots.txt",
                 "src/llms.txt",
                 "src/auth.md",
+                { "glob": "**/*", "input": "src/well-known", "output": ".well-known" },
                 "src/404.html",
                 "src/staticwebapp.config.json"
               ],

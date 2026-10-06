@@ -108,7 +108,8 @@ You can see and disconnect connected assistants on the [Settings](/settings) pag
 ### API reference {#reference}
 
 - **Swagger UI:** [https://api.3dprintlog.com/swagger](https://api.3dprintlog.com/swagger) lists every endpoint and lets you try requests.
-- **OpenAPI document:** [https://api.3dprintlog.com/swagger/v1/swagger.json](https://api.3dprintlog.com/swagger/v1/swagger.json) is machine-readable and suits client generators and agent tool builders. Operation ids follow `Controller_Action`, such as `Prints_GetPrintById`.
+- **OpenAPI document:** [https://api.3dprintlog.com/swagger/v1/swagger.json](https://api.3dprintlog.com/swagger/v1/swagger.json) is machine-readable and suits client generators and agent tool builders. Operation ids follow `Controller_Action`, such as `Prints_GetPrintById`. `https://www.3dprintlog.com/openapi.json` redirects to it.
+- **Discovery files:** tools that look for an API on `www.3dprintlog.com` find it through the [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727) API catalog at `/.well-known/api-catalog`, the MCP server card at `/.well-known/mcp/server-card.json`, the agent resource manifest at `/.well-known/ard.json`, and [llms.txt](https://www.3dprintlog.com/llms.txt). Every page also sends a `Link` header pointing at them.
 
 All endpoints live under `/api`. Request and response bodies are JSON with camelCase property names, and dates are ISO 8601 strings. List endpoints are paged with `pageNumber` (starting at 1) and `pageSize`.
 

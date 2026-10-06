@@ -1,0 +1,48 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "3D Print Log",
+    "identifier": "3dprintlog.com",
+    "documentationUrl": "https://www.3dprintlog.com/docs/getting-started"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:3dprintlog.com:server:printlog",
+      "displayName": "3D Print Log",
+      "type": "application/mcp-server-card+json",
+      "url": "https://www.3dprintlog.com/.well-known/mcp/server-card.json",
+      "description": "Log and query your 3D prints, printers and filament inventory.",
+      "tags": [
+        "3d-printing",
+        "filament",
+        "print-log",
+        "mcp"
+      ],
+      "representativeQueries": [
+        "log the print I just finished",
+        "how much PLA do I have left",
+        "what's my success rate on the Prusa MK4",
+        "what settings did I use for my last benchy",
+        "add these prints to my cosplay project"
+      ]
+    },
+    {
+      "identifier": "urn:air:3dprintlog.com:api:rest",
+      "displayName": "3D Print Log REST API",
+      "type": "application/vnd.oai.openapi+json",
+      "url": "https://api.3dprintlog.com/swagger/v1/swagger.json",
+      "description": "The HTTP API behind 3D Print Log, for scripts and integrations. Authenticate with a personal API key or an OAuth 2.0 token.",
+      "tags": [
+        "3d-printing",
+        "filament",
+        "openapi",
+        "rest"
+      ],
+      "representativeQueries": [
+        "export my 3D print history with a script",
+        "record a print automatically when my printer finishes",
+        "sync my filament spool inventory from another tool"
+      ]
+    }
+  ]
+}

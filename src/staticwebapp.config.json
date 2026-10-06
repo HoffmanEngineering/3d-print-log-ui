@@ -46,6 +46,7 @@
     { "route": "/shells/*", "headers": { "cache-control": "no-cache" } }
   ],
   "responseOverrides": { "404": { "rewrite": "/404.html" } },
+  "mimeTypes": { ".md": "text/markdown; charset=utf-8" },
   "globalHeaders": {
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
     "X-Content-Type-Options": "nosniff",

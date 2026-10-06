@@ -177,6 +177,16 @@ if (!existsSync(`${DIST}/llms.txt`)) {
   }
 }
 
+// auth.md (#209) tells agents how to authenticate. Same failure mode as llms.txt:
+// without the file, the 404 page answers in its place.
+if (!existsSync(`${DIST}/auth.md`)) {
+  errors.push('missing auth.md');
+} else if (
+  /^<!doctype|^<html/i.test(readFileSync(`${DIST}/auth.md`, 'utf8').trimStart())
+) {
+  errors.push('auth.md is HTML, not Markdown');
+}
+
 // sitemap.xml is generated at deploy time by scripts/generate-sitemap.mjs, not on
 // PR builds. When present it must be a sitemap index referencing sitemap-pages.xml,
 // and sitemap-pages.xml must list every marketing route.

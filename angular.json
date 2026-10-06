@@ -30,6 +30,7 @@
               "src/ads.txt",
               "src/robots.txt",
               "src/llms.txt",
+              "src/auth.md",
               "src/404.html",
               "src/staticwebapp.config.json"
             ],
@@ -53,6 +54,7 @@
                 "src/ads.txt",
                 "src/robots.txt",
                 "src/llms.txt",
+                "src/auth.md",
                 "src/404.html",
                 "src/staticwebapp.config.json"
               ],

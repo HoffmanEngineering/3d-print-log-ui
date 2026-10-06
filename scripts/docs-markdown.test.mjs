@@ -49,14 +49,18 @@ test('yields to an explicit id declared later on the page', () => {
   // Explicit ids are all reserved before any derived one is minted, so
   // document order cannot decide which heading keeps the published anchor.
   assert.equal(
-    withHeadingIds(['<h3>Add</h3>', '<h4 id="add">Add a Material</h4>'].join('\n')),
+    withHeadingIds(
+      ['<h3>Add</h3>', '<h4 id="add">Add a Material</h4>'].join('\n')
+    ),
     ['<h3 id="add-2">Add</h3>', '<h4 id="add">Add a Material</h4>'].join('\n')
   );
 });
 
 test('suffixes a derived id that repeats an earlier heading', () => {
   assert.equal(
-    withHeadingIds(['<h3>Setup</h3>', '<h3>Setup</h3>', '<h3>Setup</h3>'].join('\n')),
+    withHeadingIds(
+      ['<h3>Setup</h3>', '<h3>Setup</h3>', '<h3>Setup</h3>'].join('\n')
+    ),
     [
       '<h3 id="setup">Setup</h3>',
       '<h3 id="setup-2">Setup</h3>',
@@ -191,6 +195,61 @@ test('renders a fenced code block as escaped pre/code', () => {
   assert.equal(
     render('```', '<script>alert(1)</script>', '```'),
     '<pre><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>'
+  );
+});
+
+test('renders a pipe table with a header and body', () => {
+  assert.equal(
+    render(
+      '| Name | Value |',
+      '| --- | :---: |',
+      '| **a** | `b` |',
+      '| c | d |'
+    ),
+    '<table>\n<thead>\n<tr><th>Name</th><th>Value</th></tr>\n</thead>\n<tbody>\n' +
+      '<tr><td><strong>a</strong></td><td><code>b</code></td></tr>\n' +
+      '<tr><td>c</td><td>d</td></tr>\n</tbody>\n</table>'
+  );
+});
+
+test('a pipe inside a code span or escaped with a backslash is cell content', () => {
+  assert.equal(
+    render('| A | B |', '| --- | --- |', '| `x | y` | 1 \\| 2 |'),
+    '<table>\n<thead>\n<tr><th>A</th><th>B</th></tr>\n</thead>\n<tbody>\n' +
+      '<tr><td><code>x | y</code></td><td>1 | 2</td></tr>\n</tbody>\n</table>'
+  );
+});
+
+test('pads a short table row and drops cells past the header', () => {
+  assert.equal(
+    render('| A | B |', '| --- | --- |', '| 1 |', '| 1 | 2 | 3 |'),
+    '<table>\n<thead>\n<tr><th>A</th><th>B</th></tr>\n</thead>\n<tbody>\n' +
+      '<tr><td>1</td><td></td></tr>\n<tr><td>1</td><td>2</td></tr>\n</tbody>\n</table>'
+  );
+});
+
+test('a table ends a paragraph, and a pipe line without a delimiter row is prose', () => {
+  assert.equal(
+    render('Intro text.', '| A |', '| --- |', '| 1 |'),
+    '<p>Intro text.</p>\n<table>\n<thead>\n<tr><th>A</th></tr>\n</thead>\n<tbody>\n' +
+      '<tr><td>1</td></tr>\n</tbody>\n</table>'
+  );
+  assert.equal(render('| not a table |'), '<p>| not a table |</p>');
+});
+
+test('escapes Angular template syntax inside a fenced code block', () => {
+  // An unescaped `{` is an ICU expression to the Angular compiler and `@` opens
+  // a control-flow block, so a JSON or email sample would fail the build.
+  assert.equal(
+    render('```json', '{ "a": "x@y" }', '```'),
+    '<pre><code>&#123; "a": "x&#64;y" &#125;</code></pre>'
+  );
+});
+
+test('escapes Angular template syntax inside a code span', () => {
+  assert.equal(
+    render('Send `{"key": "@value"}` here.'),
+    '<p>Send <code>&#123;"key": "&#64;value"&#125;</code> here.</p>'
   );
 });
 

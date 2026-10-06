@@ -57,7 +57,7 @@ jobs:
 
       - name: Sitemap unit tests
         if: steps.tag.outputs.skip != 'true'
-        run: npm run test:sitemap
+        run: node --test scripts/generate-sitemap.test.mjs
 
       - name: Generate sitemap
         if: steps.tag.outputs.skip != 'true'

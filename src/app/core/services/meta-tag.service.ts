@@ -43,6 +43,12 @@ export class MetaTagService {
     title: string;
     description: string;
     imageUrl: string;
+    /**
+     * The page's Markdown twin (#211), advertised as
+     * `<link rel="alternate" type="text/markdown">`. Omitted for a page with
+     * no twin, which also clears one left behind by the previous page.
+     */
+    markdownUrl?: string;
   }): void {
     this.setTitle(opts.title); // sets the document <title> (setSocialMediaTags does NOT)
     this.setSocialMediaTags(
@@ -58,6 +64,23 @@ export class MetaTagService {
       content: 'summary_large_image',
     });
     this.setCanonical(opts.url);
+    this.setMarkdownAlternate(opts.markdownUrl);
+  }
+
+  private setMarkdownAlternate(url: string | undefined): void {
+    const selector = 'link[rel="alternate"][type="text/markdown"]';
+    let link = this.document.querySelector<HTMLLinkElement>(selector);
+    if (!url) {
+      link?.remove();
+      return;
+    }
+    if (!link) {
+      link = this.document.createElement('link');
+      link.setAttribute('rel', 'alternate');
+      link.setAttribute('type', 'text/markdown');
+      this.document.head.appendChild(link);
+    }
+    link.setAttribute('href', url);
   }
 
   private setCanonical(url: string): void {

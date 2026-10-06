@@ -42,6 +42,7 @@ describe('doc-seo.config', () => {
       title: DOC_SEO['docs/prints'].title,
       description: DOC_SEO['docs/prints'].description,
       imageUrl: ogImage,
+      markdownUrl: 'https://www.3dprintlog.com/docs/prints.md',
     });
   });
 

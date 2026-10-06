@@ -60,3 +60,9 @@ export const DOC_CAPTURES_JSON = path.join(
   'content',
   'docs-captures.json'
 );
+
+/**
+ * The site-wide llms.txt. Hand-written and shipped as-is; the docs generator
+ * also republishes it as `/llms.md` (#211).
+ */
+export const LLMS_TXT = path.join(REPO_ROOT, 'src', 'llms.txt');

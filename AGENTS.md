@@ -195,6 +195,14 @@ User-facing documentation is authored as Markdown in **`src/content/docs/*.md`**
 - Screenshots use `<doc-figure name="...">`, which resolves a generated capture. See "Generated screenshots" above.
 - Validate with `node scripts/validate-docs.mjs`
 
+### Markdown twins
+
+Every routed docs page also ships as Markdown at its URL plus `.md` (`/docs/prints.md`), indexed by `/docs/llms.txt`, and `/llms.md` is a copy of `/llms.txt`. `scripts/docs-twins.mjs` converts each page's **rendered** template with Turndown inside `docs:generate`, so twins are gitignored build output and cannot drift. Pages advertise them with `<link rel="alternate" type="text/markdown">` via `MetaTagService.setSeoTags({ markdownUrl })`, and `verify-prerender.mjs` checks every advertised file exists in `dist` and is Markdown.
+
+- A doc template may only interpolate a declared `constants:` entry or a string literal. Anything else fails generation, because the twin cannot evaluate it.
+- A new doc primitive (`<doc-…>`) needs a Turndown rule in `docs-twins.mjs`, or its content reaches the twin as plain text at best.
+- **`src/index.md` (the homepage twin) is hand-written.** Update it when the home page's pitch, features or pricing change; `docs-twins.test.mjs` only checks its links and Pro prices.
+
 ### Release notes
 
 One Markdown file per release under `src/content/release-notes/<version>.md`, with `version`, `date` and `title` frontmatter. Adding a release means adding one file — see `/release` step 4.2.

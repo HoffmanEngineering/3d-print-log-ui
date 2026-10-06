@@ -53,4 +53,53 @@ describe('MetaTagService.setSeoTags', () => {
       doc.querySelector('link[rel="canonical"]')?.getAttribute('href')
     ).toBe('https://www.3dprintlog.com/orcaslicer');
   });
+
+  describe('the Markdown alternate link', () => {
+    const selector = 'link[rel="alternate"][type="text/markdown"]';
+    const base = {
+      url: 'https://www.3dprintlog.com/docs/prints',
+      title: 'Prints',
+      description: 'desc',
+      imageUrl: 'https://www.3dprintlog.com/assets/og.png',
+    };
+
+    afterEach(() => doc.querySelector(selector)?.remove());
+
+    it('is added when the page has a twin', () => {
+      service.setSeoTags({
+        ...base,
+        markdownUrl: 'https://www.3dprintlog.com/docs/prints.md',
+      });
+      const links = doc.querySelectorAll(selector);
+      expect(links.length).toBe(1);
+      expect(links[0].getAttribute('href')).toBe(
+        'https://www.3dprintlog.com/docs/prints.md'
+      );
+    });
+
+    it('is updated in place, not duplicated, on the next page', () => {
+      service.setSeoTags({
+        ...base,
+        markdownUrl: 'https://www.3dprintlog.com/docs/prints.md',
+      });
+      service.setSeoTags({
+        ...base,
+        markdownUrl: 'https://www.3dprintlog.com/docs/printers.md',
+      });
+      const links = doc.querySelectorAll(selector);
+      expect(links.length).toBe(1);
+      expect(links[0].getAttribute('href')).toBe(
+        'https://www.3dprintlog.com/docs/printers.md'
+      );
+    });
+
+    it('is removed for a page without a twin, so it never points at the wrong page', () => {
+      service.setSeoTags({
+        ...base,
+        markdownUrl: 'https://www.3dprintlog.com/docs/prints.md',
+      });
+      service.setSeoTags(base);
+      expect(doc.querySelector(selector)).toBeNull();
+    });
+  });
 });

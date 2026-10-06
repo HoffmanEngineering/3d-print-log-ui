@@ -36,6 +36,9 @@ Don't use it to control a printer, start or stop a job, send files to a machine,
 
 ## Docs
 
+Every docs page is also published as Markdown at the same URL plus `.md` (for example `https://www.3dprintlog.com/docs/prints.md`).
+
+- [Docs index (Markdown)](https://www.3dprintlog.com/docs/llms.txt): Every docs page below, linked to its Markdown version.
 - [Getting started](https://www.3dprintlog.com/docs/getting-started): The free account and what it includes.
 - [Log your first print](https://www.3dprintlog.com/docs/log-your-first-print): A walkthrough of adding a print.
 - [Tracking prints](https://www.3dprintlog.com/docs/prints): Creating, editing, rating, and organizing prints.
@@ -63,5 +66,5 @@ Don't use it to control a printer, start or stop a job, send files to a machine,
 
 ## Optional
 
-- [Home](https://www.3dprintlog.com/): Overview and free account signup.
+- [Home](https://www.3dprintlog.com/): Overview and free account signup. Also in Markdown at [/index.md](https://www.3dprintlog.com/index.md).
 - Public print and user pages are indexable; everything else requires an account.

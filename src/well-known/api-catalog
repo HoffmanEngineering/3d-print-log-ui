@@ -8,6 +8,9 @@
         },
         {
           "href": "https://api.3dprintlog.com/mcp"
+        },
+        {
+          "href": "https://api.3dprintlog.com/mcp/docs"
         }
       ]
     },
@@ -44,6 +47,25 @@
         {
           "href": "https://www.3dprintlog.com/docs/mcp",
           "type": "text/html"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://api.3dprintlog.com/health",
+          "type": "text/plain"
+        }
+      ]
+    },
+    {
+      "anchor": "https://api.3dprintlog.com/mcp/docs",
+      "service-doc": [
+        {
+          "href": "https://www.3dprintlog.com/docs/mcp",
+          "type": "text/html"
+        },
+        {
+          "href": "https://www.3dprintlog.com/docs/llms.txt",
+          "type": "text/plain"
         }
       ],
       "status": [

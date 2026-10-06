@@ -42,6 +42,14 @@ export const REST_API_URL = `${API_ORIGIN}/api`;
 export const API_HEALTH_URL = `${API_ORIGIN}/health`;
 /** Streamable HTTP MCP endpoint. */
 export const MCP_URL = `${API_ORIGIN}/mcp`;
+/**
+ * The anonymous docs MCP endpoint (api#129): the docs tools and `docs://`
+ * resources only, no sign-in. `/mcp` serves the same docs tools to signed-in
+ * clients, so this is for agents that want the docs without an account.
+ */
+export const MCP_DOCS_SERVER_URL = `${API_ORIGIN}/mcp/docs`;
+/** The Markdown docs index the docs endpoint serves its content from (#211). */
+export const DOCS_LLMS_URL = `${SITE_ORIGIN}/docs/llms.txt`;
 
 export const API_DOCS_URL = `${SITE_ORIGIN}/docs/api`;
 export const MCP_DOCS_URL = `${SITE_ORIGIN}/docs/mcp`;
@@ -96,14 +104,14 @@ export const MCP_SERVER_NAME = 'com.3dprintlog/printlog';
  * does, and the API's publish job refuses a changed `server.json` whose version
  * was not bumped. Change it here in the same breath.
  */
-export const MCP_SERVER_VERSION = '1.0.0';
+export const MCP_SERVER_VERSION = '1.1.0';
 
 /**
  * Must stay equal to `description` in the API repo's `server.json`. Both the
  * Server Card schema and the MCP Registry schema cap it at 100 characters.
  */
 export const MCP_DESCRIPTION =
-  'Log and query your 3D prints, printers, filament inventory, and projects on 3dprintlog.com.';
+  'Log and query 3D prints, printers, filament, and projects on 3dprintlog.com, and search its docs.';
 
 /** The committed copy of SKILL.md that the build serves at SKILL_PATH. */
 export const SKILL_MIRROR_FILE = new URL(
@@ -154,7 +162,11 @@ export function buildApiCatalog() {
     linkset: [
       {
         anchor: `${SITE_ORIGIN}${API_CATALOG_PATH}`,
-        item: [{ href: REST_API_URL }, { href: MCP_URL }],
+        item: [
+          { href: REST_API_URL },
+          { href: MCP_URL },
+          { href: MCP_DOCS_SERVER_URL },
+        ],
       },
       {
         anchor: REST_API_URL,
@@ -171,6 +183,17 @@ export function buildApiCatalog() {
           },
         ],
         'service-doc': [{ href: MCP_DOCS_URL, type: 'text/html' }],
+        status: [{ href: API_HEALTH_URL, type: 'text/plain' }],
+      },
+      {
+        // No server card of its own: a card describes one server, and the
+        // docs endpoint is a subset of the one above. Its content is the
+        // Markdown docs index, which is the closest thing to a description.
+        anchor: MCP_DOCS_SERVER_URL,
+        'service-doc': [
+          { href: MCP_DOCS_URL, type: 'text/html' },
+          { href: DOCS_LLMS_URL, type: 'text/plain' },
+        ],
         status: [{ href: API_HEALTH_URL, type: 'text/plain' }],
       },
     ],
@@ -196,6 +219,29 @@ export function buildServerCard() {
       source: 'github',
     },
     remotes: [{ type: 'streamable-http', url: MCP_URL }],
+  };
+}
+
+/**
+ * The anonymous docs endpoint, as a Server Card. Embedded in the ARD manifest
+ * only. Its name is not a registry name: the registry lists the main server,
+ * whose `/mcp` carries the same docs tools.
+ */
+export function buildDocsServerCard() {
+  return {
+    $schema:
+      'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json',
+    name: `${MCP_SERVER_NAME}-docs`,
+    title: '3D Print Log Docs',
+    description:
+      'Search and read the 3D Print Log user documentation. No sign-in needed.',
+    version: MCP_SERVER_VERSION,
+    websiteUrl: MCP_DOCS_URL,
+    repository: {
+      url: 'https://github.com/HoffmanEngineering/3d-print-log-api',
+      source: 'github',
+    },
+    remotes: [{ type: 'streamable-http', url: MCP_DOCS_SERVER_URL }],
   };
 }
 
@@ -230,6 +276,24 @@ export function buildArdManifest() {
           "what's my success rate on the Prusa MK4",
           'what settings did I use for my last benchy',
           'add these prints to my cosplay project',
+        ],
+      },
+      {
+        // Inline (ARD `data`) rather than a second card file: the anonymous
+        // docs endpoint is listed nowhere else, and a card URL would be one
+        // more document to keep in step with the API.
+        identifier: 'urn:air:3dprintlog.com:server:printlog-docs',
+        displayName: '3D Print Log docs',
+        type: MCP_SERVER_CARD_MEDIA_TYPE,
+        data: buildDocsServerCard(),
+        description:
+          'Search and read the 3D Print Log user documentation over MCP, ' +
+          'with no sign-in.',
+        tags: ['3d-printing', 'documentation', 'mcp'],
+        representativeQueries: [
+          'how do I connect Klipper to 3D Print Log',
+          'what does 3D Print Log Pro include',
+          'how do I log prints from OctoPrint automatically',
         ],
       },
       {

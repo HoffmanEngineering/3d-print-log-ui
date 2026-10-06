@@ -11,7 +11,12 @@ import {
   API_CATALOG_CONTENT_TYPE,
   API_DOCS_URL,
   API_HEALTH_URL,
+  DOCS_LLMS_URL,
+  MCP_DESCRIPTION,
+  MCP_DOCS_SERVER_URL,
   MCP_DOCS_URL,
+  MCP_SERVER_NAME,
+  MCP_SERVER_VERSION,
   MCP_SERVER_CARD_MEDIA_TYPE,
   MCP_URL,
   OPENAPI_MEDIA_TYPE,
@@ -28,6 +33,7 @@ import {
   buildApiCatalog,
   buildArdManifest,
   buildDiscoveryFiles,
+  buildDocsServerCard,
   buildServerCard,
   parseLinkHeader,
 } from './discovery-lib.mjs';
@@ -102,7 +108,7 @@ test('the deploy artifact keeps the hidden .well-known folder', () => {
 /* RFC 9727 API catalog                                                        */
 /* -------------------------------------------------------------------------- */
 
-test('api-catalog is a Linkset that lists both APIs as items', () => {
+test('api-catalog is a Linkset that lists every API endpoint as an item', () => {
   const { linkset } = buildApiCatalog();
   assert.ok(Array.isArray(linkset));
   const index = linkset.find(
@@ -111,8 +117,20 @@ test('api-catalog is a Linkset that lists both APIs as items', () => {
   assert.ok(index, 'no item anchored at the catalog itself');
   assert.deepEqual(
     index.item.map((i) => i.href),
-    [REST_API_URL, MCP_URL]
+    [REST_API_URL, MCP_URL, MCP_DOCS_SERVER_URL]
   );
+});
+
+test('api-catalog points the docs MCP endpoint at the docs and their index', () => {
+  const docs = buildApiCatalog().linkset.find(
+    (l) => l.anchor === MCP_DOCS_SERVER_URL
+  );
+  assert.deepEqual(
+    docs['service-doc'].map((d) => d.href),
+    [MCP_DOCS_URL, DOCS_LLMS_URL]
+  );
+  // It has no card of its own; the main server's card is not its description.
+  assert.equal(docs['service-desc'], undefined);
 });
 
 test('api-catalog describes the REST API with its OpenAPI, docs and status', () => {
@@ -175,6 +193,32 @@ test('the server card has the fields the Server Card schema requires', () => {
   assert.deepEqual(card.remotes, [{ type: 'streamable-http', url: MCP_URL }]);
 });
 
+test('the docs endpoint card is the main card with its own name and remote', () => {
+  const card = buildDocsServerCard();
+  const main = buildServerCard();
+  assert.equal(card.$schema, main.$schema);
+  assert.equal(card.name, `${MCP_SERVER_NAME}-docs`);
+  assert.match(card.name, /^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/);
+  assert.equal(card.version, main.version);
+  assert.ok(card.description.length >= 1 && card.description.length <= 100);
+  assert.deepEqual(card.remotes, [
+    { type: 'streamable-http', url: MCP_DOCS_SERVER_URL },
+  ]);
+});
+
+/**
+ * The card and the API's server.json describe the same registry listing. A
+ * byte comparison would need the other repo, so this pins the values the
+ * listing published last; change them together with server.json.
+ */
+test('the server card matches the registry listing in the API repo', () => {
+  assert.equal(MCP_SERVER_VERSION, '1.1.0');
+  assert.equal(
+    MCP_DESCRIPTION,
+    'Log and query 3D prints, printers, filament, and projects on 3dprintlog.com, and search its docs.'
+  );
+});
+
 test('the server card does not list tools or auth', () => {
   // Agents trust the live tools/list; auth comes from the 401 + RFC 9728.
   const card = buildServerCard();
@@ -228,6 +272,14 @@ test('the ARD manifest points at the server card and the OpenAPI document', () =
   assert.equal(mcp?.url, `${SITE_ORIGIN}${SERVER_CARD_PATH}`);
   const rest = entries.find((e) => e.type === OPENAPI_MEDIA_TYPE);
   assert.equal(rest?.url, OPENAPI_URL);
+});
+
+test('the ARD manifest carries the docs endpoint card inline', () => {
+  const docs = buildArdManifest().entries.find(
+    (e) => e.identifier === 'urn:air:3dprintlog.com:server:printlog-docs'
+  );
+  assert.equal(docs?.type, MCP_SERVER_CARD_MEDIA_TYPE);
+  assert.deepEqual(docs.data, buildDocsServerCard());
 });
 
 test('the ARD manifest points at the served agent skill', () => {

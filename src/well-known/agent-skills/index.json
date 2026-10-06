@@ -4,9 +4,9 @@
     {
       "name": "3d-print-log",
       "type": "skill-md",
-      "description": "Log and query 3D prints, printers, filament and resin spools, and projects in a user's 3D Print Log account (3dprintlog.com) through its MCP server. Use when the user wants to record a finished or failed print with the material it used, check how much of a spool is left or whether they have enough for a print, correct a spool's remaining amount, see per-printer success rates and print time, find a past print and the settings it used, or file prints under a project. Not for controlling a printer, starting or stopping a job, sending files to a machine, or slicing a model.",
+      "description": "Log and query 3D prints, printers, filament and resin spools, and projects in a user's 3D Print Log account (3dprintlog.com) through its MCP server. Use when the user wants to record a finished or failed print with the material it used, check how much of a spool is left or whether they have enough for a print, correct a spool's remaining amount, see per-printer success rates and print time, find a past print and the settings it used, file prints under a project, or answer how 3D Print Log and its integrations work from its documentation. Not for controlling a printer, starting or stopping a job, sending files to a machine, or slicing a model.",
       "url": "/.well-known/agent-skills/3d-print-log/SKILL.md",
-      "digest": "sha256:679a09ad7c6acf88d0382881296a5ce4367526b35e8acc6ec8901355aa5460fb"
+      "digest": "sha256:385a2c77bae7c78936b73e678b3f69e788b859be1b12d699f7f5153f58b4ed53"
     }
   ]
 }

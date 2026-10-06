@@ -106,6 +106,12 @@ constants:
       speeds did I use on the soap dish?&rdquo; This is answerable for prints
       whose notes hold a slicer summary (see the limitation above).
     </li>
+    <li>
+      <strong>How 3D Print Log works.</strong> &ldquo;How do I connect
+      Klipper?&rdquo; or &ldquo;What does Pro include?&rdquo; The assistant can
+      search and read these docs pages, so it answers from the current
+      documentation instead of guessing.
+    </li>
   </ul>
 
   <h3>Changes it can make for you</h3>
@@ -295,6 +301,15 @@ constants:
     <a routerLink="/settings">Settings</a> page under
     <strong>Connected AI Agents</strong>. Disconnecting immediately revokes
     access for all connected assistants.
+  </p>
+
+  <h3>Read the docs without signing in</h3>
+  <p>
+    An assistant that only needs these docs, not your data, can connect to
+    <code>https://api.3dprintlog.com/mcp/docs</code>. It needs no account and no
+    sign-in, and it can only search and read the documentation: it can&rsquo;t
+    see anyone&rsquo;s prints, printers, or materials. Once you connect the
+    main server above, the assistant already has the docs too.
   </p>
 
   <h3>For developers</h3>

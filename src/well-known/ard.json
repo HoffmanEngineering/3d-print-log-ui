@@ -27,6 +27,40 @@
       ]
     },
     {
+      "identifier": "urn:air:3dprintlog.com:server:printlog-docs",
+      "displayName": "3D Print Log docs",
+      "type": "application/mcp-server-card+json",
+      "data": {
+        "$schema": "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
+        "name": "com.3dprintlog/printlog-docs",
+        "title": "3D Print Log Docs",
+        "description": "Search and read the 3D Print Log user documentation. No sign-in needed.",
+        "version": "1.1.0",
+        "websiteUrl": "https://www.3dprintlog.com/docs/mcp",
+        "repository": {
+          "url": "https://github.com/HoffmanEngineering/3d-print-log-api",
+          "source": "github"
+        },
+        "remotes": [
+          {
+            "type": "streamable-http",
+            "url": "https://api.3dprintlog.com/mcp/docs"
+          }
+        ]
+      },
+      "description": "Search and read the 3D Print Log user documentation over MCP, with no sign-in.",
+      "tags": [
+        "3d-printing",
+        "documentation",
+        "mcp"
+      ],
+      "representativeQueries": [
+        "how do I connect Klipper to 3D Print Log",
+        "what does 3D Print Log Pro include",
+        "how do I log prints from OctoPrint automatically"
+      ]
+    },
+    {
       "identifier": "urn:air:3dprintlog.com:api:rest",
       "displayName": "3D Print Log REST API",
       "type": "application/vnd.oai.openapi+json",

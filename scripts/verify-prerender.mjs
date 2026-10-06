@@ -37,6 +37,18 @@ function canonicalHref(html) {
   }
   return '';
 }
+function markdownAlternateHref(html) {
+  for (const tag of html.match(/<link\b[^>]*>/gi) || []) {
+    if (
+      /rel\s*=\s*"alternate"/i.test(tag) &&
+      /type\s*=\s*"text\/markdown"/i.test(tag)
+    ) {
+      const m = tag.match(/href\s*=\s*"([^"]*)"/i);
+      if (m) return m[1];
+    }
+  }
+  return '';
+}
 // Parse the page's <script type="application/ld+json"> and return the set of
 // @type strings found in its @graph. Returns null if missing/invalid JSON.
 function jsonLdTypes(html) {
@@ -120,6 +132,60 @@ for (const r of [...routes, ...DOC_ROUTES]) {
       }
     }
   }
+}
+
+// Markdown twins (#211). The homepage and every docs page advertise one with
+// <link rel="alternate" type="text/markdown">, and each advertised file must be
+// real Markdown in dist: "an advertisement pointing at HTML is worse than none".
+for (const r of [...routes, ...DOC_ROUTES]) {
+  const file = `${DIST}/${r ? r + '/' : ''}index.html`;
+  if (!existsSync(file)) continue; // already reported above
+  const href = markdownAlternateHref(readFileSync(file, 'utf8'));
+  const required = r === '' || DOC_ROUTES.includes(r);
+  if (!href) {
+    if (required) errors.push(`${file}: no Markdown alternate link`);
+    continue;
+  }
+  let url;
+  try {
+    url = new URL(href);
+  } catch {
+    errors.push(`${file}: Markdown alternate "${href}" is not an absolute URL`);
+    continue;
+  }
+  if (url.origin !== ORIGIN || !url.pathname.endsWith('.md')) {
+    errors.push(
+      `${file}: Markdown alternate "${href}" is not a .md on ${ORIGIN}`
+    );
+    continue;
+  }
+  const twin = `${DIST}${decodeURIComponent(url.pathname)}`;
+  if (!existsSync(twin)) {
+    errors.push(`${file}: advertises ${href}, but ${twin} does not exist`);
+    continue;
+  }
+  const body = readFileSync(twin, 'utf8').trimStart();
+  if (body.startsWith('<')) {
+    errors.push(`${twin} is HTML, not Markdown`);
+  } else if (!body.startsWith('# ')) {
+    errors.push(`${twin} does not start with a "# " heading`);
+  }
+}
+for (const name of ['docs/llms.txt', 'llms.md']) {
+  const file = `${DIST}/${name}`;
+  if (!existsSync(file)) {
+    errors.push(`missing ${name}`);
+  } else if (!readFileSync(file, 'utf8').startsWith('# ')) {
+    errors.push(`${name} does not start with a "# " heading`);
+  }
+}
+if (
+  existsSync(`${DIST}/llms.md`) &&
+  existsSync(`${DIST}/llms.txt`) &&
+  readFileSync(`${DIST}/llms.md`, 'utf8') !==
+    readFileSync(`${DIST}/llms.txt`, 'utf8')
+) {
+  errors.push('llms.md differs from llms.txt');
 }
 
 // Fork pages: each must link to the hub in body and carry its own hook (checked via a
@@ -254,5 +320,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files.`
+  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files, Markdown twins.`
 );

@@ -87,7 +87,20 @@ test('plans a component, a template, and the shared projections', () => {
     // Emitted whether or not there are releases: the component imports it
     // unconditionally, so an absent module would be a build error.
     'release-notes-archive.ts',
+    // Markdown twins (#211), copied to the site root by angular.json.
+    'twins/docs/llms.txt',
+    'twins/docs/prints.md',
   ]);
+});
+
+test('republishes llms.txt as llms.md when it is supplied', () => {
+  const { files } = planOutputs(
+    readDocSources(withSources({ 'prints.md': SOURCE })),
+    [],
+    {},
+    { llmsTxt: '# 3D Print Log\n' }
+  );
+  assert.equal(files.get('twins/llms.md'), '# 3D Print Log\n');
 });
 
 test('plans no component file for a page that supplies its own', () => {

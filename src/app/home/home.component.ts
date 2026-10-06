@@ -44,6 +44,9 @@ export class HomeComponent implements OnInit {
       // Content-hashed and rewritten by capture:home:process, so it must never
       // be typed by hand.
       imageUrl: `${SITE_ORIGIN}${homeCaptures['Homepage_PrinterList'].src}`,
+      // Hand-written in src/index.md. Update it when this page's pitch,
+      // features or pricing change.
+      markdownUrl: `${SITE_ORIGIN}/index.md`,
     });
 
     this.structuredData.setJsonLd([

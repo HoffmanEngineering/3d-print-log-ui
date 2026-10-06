@@ -27,6 +27,7 @@ export function getDocSeoTags(path: string): {
   title: string;
   description: string;
   imageUrl: string;
+  markdownUrl: string;
 } | null {
   const seo = DOC_SEO[path];
   if (!seo) return null;
@@ -35,5 +36,8 @@ export function getDocSeoTags(path: string): {
     title: seo.title,
     description: seo.description,
     imageUrl: ogImage,
+    // Every routed page has a twin, generated beside it by
+    // scripts/docs-twins.mjs: /docs/prints -> /docs/prints.md.
+    markdownUrl: siteUrl(`${path}.md`),
   };
 }

@@ -27,6 +27,7 @@ import {
 import {
   CONTENT_DIR,
   GENERATED_DIR,
+  LLMS_TXT,
   RELEASE_NOTES_DIR,
 } from './docs-paths.mjs';
 import { readReleaseSources } from './release-notes-lib.mjs';
@@ -43,7 +44,12 @@ const quiet = args.includes('--quiet');
 function generate() {
   const sources = readDocSources(CONTENT_DIR);
   const releases = readReleaseSources(RELEASE_NOTES_DIR);
-  const { files } = planOutputs(sources, releases, readDocCaptures());
+  const llmsTxt = fs.existsSync(LLMS_TXT)
+    ? fs.readFileSync(LLMS_TXT, 'utf8')
+    : null;
+  const { files } = planOutputs(sources, releases, readDocCaptures(), {
+    llmsTxt,
+  });
   return syncOutputs(GENERATED_DIR, files, { check });
 }
 

@@ -186,4 +186,10 @@ describe('HomeComponent', () => {
     expect(opts.imageUrl).toContain('Homepage_PrinterList');
     expect(opts.imageUrl).toMatch(/^https:\/\/www\.3dprintlog\.com\//);
   });
+
+  it('advertises the hand-written Markdown twin at /index.md', () => {
+    const opts = meta.setSeoTags.calls.mostRecent().args[0];
+
+    expect(opts.markdownUrl).toBe('https://www.3dprintlog.com/index.md');
+  });
 });

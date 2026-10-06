@@ -38,6 +38,7 @@ import {
 } from './docs-emit.mjs';
 import { buildManifest, RELEASE_NOTES_SLUG } from './docs-manifest-lib.mjs';
 import { renderMarkdown, withHeadingIds } from './docs-markdown.mjs';
+import { planTwins } from './docs-twins.mjs';
 import {
   emitArchiveTs,
   renderArchiveHost,
@@ -45,6 +46,13 @@ import {
   renderRelease,
   toReleaseManifest,
 } from './release-notes-emit.mjs';
+
+/**
+ * Subdirectory of the generated tree that holds the Markdown twins. angular.json
+ * copies it to the site root, so `twins/docs/prints.md` ships as
+ * `/docs/prints.md`.
+ */
+export const TWINS_DIR = 'twins';
 
 /** Barrels are written last; see the note at the top of this file. */
 const BARRELS = [
@@ -115,9 +123,16 @@ export function readDocCaptures(file = DOC_CAPTURES_JSON) {
  * @param {object[]} sources from readDocSources
  * @param {object[]} [releases] from readReleaseSources, newest first
  * @param {Record<string, object>} [captures] from readDocCaptures
+ * @param {{ llmsTxt?: string | null }} [options] `llmsTxt` is the site-wide
+ *   src/llms.txt, republished as `/llms.md`
  * @returns {{ files: Map<string, string>, manifest: object, templates: Record<string, string> }}
  */
-export function planOutputs(sources, releases = [], captures = {}) {
+export function planOutputs(
+  sources,
+  releases = [],
+  captures = {},
+  options = {}
+) {
   const manifest = buildManifest(
     sources.map(({ body, sourceFile, styles, ...frontmatter }) => frontmatter),
     toReleaseManifest(releases)
@@ -181,6 +196,15 @@ export function planOutputs(sources, releases = [], captures = {}) {
   files.set('docs-manifest.ts', emitManifestTs());
   files.set('docs.routes.ts', emitRoutesTs(manifest));
   files.set('docs.server-routes.ts', emitServerRoutesTs(manifest));
+
+  // Markdown twins (#211), served from the site root by an angular.json asset
+  // entry. They convert `indexed`, so the release notes twin carries the whole
+  // history rather than only the releases the page paints on arrival.
+  for (const [relative, contents] of planTwins(manifest, indexed, captures, {
+    llmsTxt: options.llmsTxt ?? null,
+  })) {
+    files.set(`${TWINS_DIR}/${relative}`, contents);
+  }
 
   return { files, manifest, templates };
 }

@@ -31,7 +31,9 @@
               "src/robots.txt",
               "src/llms.txt",
               "src/auth.md",
+              "src/index.md",
               { "glob": "**/*", "input": "src/well-known", "output": ".well-known" },
+              { "glob": "**/*", "input": "src/app/documentation/generated/twins", "output": "/" },
               "src/404.html",
               "src/staticwebapp.config.json"
             ],
@@ -56,7 +58,9 @@
                 "src/robots.txt",
                 "src/llms.txt",
                 "src/auth.md",
+                "src/index.md",
                 { "glob": "**/*", "input": "src/well-known", "output": ".well-known" },
+                { "glob": "**/*", "input": "src/app/documentation/generated/twins", "output": "/" },
                 "src/404.html",
                 "src/staticwebapp.config.json"
               ],

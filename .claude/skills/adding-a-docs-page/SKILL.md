@@ -81,6 +81,10 @@ ordinary Markdown:
   them. To publish an anchor, write it explicitly: `### Prints List {#list}`.
 - **Raw HTML passes through byte for byte**, as does a ` ```angular-html ` fence. Use those
   when you need markup Markdown cannot express (`<mat-icon>`, `<youtube-player>`, a `<dl>`).
+  Raw HTML is also where `{`, `}` and `@` must be written as `&#123;`, `&#125;` and `&#64;`.
+  Code spans and plain fences escape them for you, so a JSON sample in a ` ``` ` fence is fine.
+- **Pipe tables** (`| A | B |` then `| --- | --- |`) render as `<table>`. Column alignment
+  markers are accepted and ignored.
 
 Link forms:
 

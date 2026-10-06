@@ -169,3 +169,48 @@ test('no rule rewrites a prerendered page', () => {
     );
   }
 });
+
+/* -------------------------------------------------------------------------- */
+/* /auth.md (issue #209)                                                       */
+/* -------------------------------------------------------------------------- */
+
+test('auth.md ships as a build asset in every configuration', () => {
+  const angular = JSON.parse(read('angular.json'));
+  const build = Object.values(angular.projects)[0].architect.build;
+  const assetLists = [
+    build.options.assets,
+    ...Object.values(build.configurations).map((c) => c.assets),
+  ].filter(Boolean);
+  for (const assets of assetLists) {
+    assert.ok(
+      assets.includes('src/auth.md'),
+      'src/auth.md missing from assets'
+    );
+  }
+});
+
+test('Markdown files are served as text/markdown', () => {
+  // Agents probing /auth.md decide by content type whether they found the
+  // file or an HTML page.
+  assert.match(config.mimeTypes?.['.md'] ?? '', /^text\/markdown\b/);
+});
+
+test('auth.md follows the auth.md section layout and links the docs', () => {
+  const authMd = read('src/auth.md');
+  assert.match(authMd, /^# auth\.md$/m);
+  for (const heading of [
+    /^## Step 1 — Discover$/m,
+    /^## Step 2 — Pick a method$/m,
+    /^## Step 3 — Register$/m,
+    /^## Step 4 — Claim ceremony$/m,
+    /^## Step 5 — Exchange$/m,
+    /^## Step 6 — Use the access_token$/m,
+    /^## Errors$/m,
+    /^## Revocation$/m,
+  ]) {
+    assert.match(authMd, heading);
+  }
+  assert.ok(authMd.includes('https://www.3dprintlog.com/docs/api'));
+  // Honesty about the extension we do not implement.
+  assert.match(authMd, /does \*\*not\*\* implement the `agent_auth` extension/);
+});

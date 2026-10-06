@@ -3,7 +3,8 @@
 // The output is an Angular template, not inert HTML: `routerLink`, `<mat-icon>`,
 // `<youtube-player>` and `{{ interpolation }}` must survive to AOT. So inline text
 // is NOT HTML-escaped — docs Markdown is trusted repo content, and validate-docs.mjs
-// gates which elements may appear. Only code spans and plain fences are escaped.
+// gates which elements may appear. Only code spans and plain fences are escaped
+// (including the Angular-significant `{`, `}` and `@`).
 //
 // Two rules exist to protect deep links and directives:
 //   * An explicit heading id is never re-minted. Anchors are contractual
@@ -152,6 +153,13 @@ function renderBlocks(lines, indent) {
       continue;
     }
 
+    if (isTableStart(lines, i, indent)) {
+      const { block, next } = takeTable(lines, i, indent);
+      out.push(block);
+      i = next;
+      continue;
+    }
+
     // Paragraph: run to the next blank line or the next block-level construct.
     const para = [];
     while (i < lines.length) {
@@ -162,6 +170,7 @@ function renderBlocks(lines, indent) {
         /^-{3,}\s*$/.test(text.trim()) ||
         /^`{3,}/.test(text.trim()) ||
         listMarker(text) ||
+        isTableStart(lines, i, indent) ||
         isRawHtmlStart(text) ||
         text.startsWith('<!--')
       ) {
@@ -243,6 +252,79 @@ function takeList(lines, start, indent) {
 
   const tag = ordered ? 'ol' : 'ul';
   return { block: `<${tag}>\n${items.join('\n')}\n</${tag}>`, next: i };
+}
+
+/**
+ * A GitHub-style pipe table: a `|`-led header row followed by a delimiter row
+ * such as `| --- | :---: |`. Both rows are required, so a stray line that merely
+ * starts with a pipe stays a paragraph.
+ */
+function isTableStart(lines, i, indent) {
+  const header = lines[i]?.slice(indent).trim();
+  const delimiter = lines[i + 1]?.slice(indent).trim();
+  if (!header?.startsWith('|') || !delimiter) return false;
+  const cells = splitTableRow(delimiter);
+  return (
+    cells.length > 0 &&
+    cells.length === splitTableRow(header).length &&
+    cells.every((cell) => /^:?-{3,}:?$/.test(cell))
+  );
+}
+
+/** Consumes a pipe table: header, delimiter, then every `|`-led row after it. */
+function takeTable(lines, start, indent) {
+  const header = splitTableRow(lines[start].slice(indent).trim());
+  // Column alignment (`:---:`) is accepted and ignored: the docs stylesheet
+  // left-aligns every cell, and an inline style would be the only way to honor it.
+  const cell = (tag, text) => `<${tag}>${renderInline(text)}</${tag}>`;
+
+  const rows = [];
+  let i = start + 2;
+  while (i < lines.length && lines[i].slice(indent).trim().startsWith('|')) {
+    const cells = splitTableRow(lines[i].slice(indent).trim());
+    // A short row is padded and a long one trimmed, as GitHub does.
+    const padded = header.map((_, column) => cells[column] ?? '');
+    rows.push(`<tr>${padded.map((text) => cell('td', text)).join('')}</tr>`);
+    i += 1;
+  }
+
+  const head = `<tr>${header.map((text) => cell('th', text)).join('')}</tr>`;
+  const body = rows.length ? `\n<tbody>\n${rows.join('\n')}\n</tbody>` : '';
+  return {
+    block: `<table>\n<thead>\n${head}\n</thead>${body}\n</table>`,
+    next: i,
+  };
+}
+
+/**
+ * Splits a table row on its pipes. A pipe inside a code span, or one escaped
+ * as `\|`, is cell content rather than a separator (the escape is dropped, as
+ * in GitHub's renderer, so `\|` reads as `|` even inside a code span).
+ */
+function splitTableRow(row) {
+  const cells = [];
+  let current = '';
+  let inCode = false;
+  for (let c = 0; c < row.length; c += 1) {
+    const ch = row[c];
+    if (ch === '\\' && row[c + 1] === '|') {
+      current += '|';
+      c += 1;
+    } else if (ch === '`') {
+      inCode = !inCode;
+      current += ch;
+    } else if (ch === '|' && !inCode) {
+      cells.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current);
+  // The leading and trailing pipes delimit the row; they open no cell.
+  if (row.startsWith('|')) cells.shift();
+  if (row.endsWith('|') && !row.endsWith('\\|')) cells.pop();
+  return cells.map((text) => text.trim());
 }
 
 function isRawHtmlStart(text) {
@@ -425,11 +507,21 @@ function renderLink(label, href) {
   return `<a routerLink="${href}">${label}</a>`;
 }
 
+/**
+ * Escapes a literal sample for the Angular template it lands in. Besides the
+ * HTML-significant characters, `{`, `}` and `@` are Angular template syntax: an
+ * unescaped `{` in a JSON sample is read as an ICU expression and fails the
+ * build, and `@` opens a control-flow block. The numeric references render as
+ * the same characters, and the search index decodes them back (`plainText`).
+ */
 function escapeHtml(text) {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/\{/g, '&#123;')
+    .replace(/\}/g, '&#125;')
+    .replace(/@/g, '&#64;');
 }
 
 /**

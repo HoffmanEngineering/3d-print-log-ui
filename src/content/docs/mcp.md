@@ -6,8 +6,8 @@ navLabel: Connect an AI Assistant
 group: integrations
 order: 20
 mode: how-to
-updated: 2026-09-02
-related: [prints]
+updated: 2026-10-06
+related: [prints, api]
 constants:
   mcpEndpoint: 'https://api.3dprintlog.com/mcp'
   mcpClientId: uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j
@@ -257,5 +257,16 @@ constants:
     <a routerLink="/settings">Settings</a> page under
     <strong>Connected AI Agents</strong>. Disconnecting immediately revokes
     access for all connected assistants.
+  </p>
+
+  <h3>For developers</h3>
+  <p>
+    The scopes the connector asks for, how sign-in works, and the REST API
+    behind it are covered in
+    <a routerLink="/docs/api">REST API &amp; Authentication</a>. Agents can
+    read the same details at
+    <a href="https://www.3dprintlog.com/auth.md" target="_blank" rel="noopener"
+      >/auth.md</a
+    >.
   </p>
 </article>

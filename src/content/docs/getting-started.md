@@ -6,7 +6,7 @@ navLabel: Getting Started
 group: start
 order: 10
 mode: explanation
-updated: 2026-09-02
+updated: 2026-10-06
 related: [log-your-first-print, prints, printers]
 component:
   className: DocsGettingStartedComponent
@@ -192,6 +192,14 @@ component:
       <div class="feature-item">
         <mat-icon color="accent">check_circle</mat-icon>
         <span>Responsive design for mobile & desktop</span>
+      </div>
+      <div class="feature-item">
+        <mat-icon color="accent">check_circle</mat-icon>
+        <span
+          >A <a routerLink="/docs/api">REST API</a> and an
+          <a routerLink="/docs/mcp">AI assistant connector</a> for your own
+          tools</span
+        >
       </div>
     </div>
   </div>

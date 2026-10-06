@@ -6,6 +6,9 @@
 
 - [Home](https://www.3dprintlog.com/): Overview and free account signup.
 - [Documentation](https://www.3dprintlog.com/docs/getting-started): Getting started, features, and integrations.
+- [REST API & authentication](https://www.3dprintlog.com/docs/api): API keys, OAuth 2.0, scopes, errors, and the OpenAPI reference.
+- [Connect an AI assistant (MCP)](https://www.3dprintlog.com/docs/mcp): The MCP server at https://api.3dprintlog.com/mcp, for Claude, ChatGPT, and other MCP clients.
+- [auth.md](https://www.3dprintlog.com/auth.md): How an agent authenticates, step by step.
 
 ## Notes
 

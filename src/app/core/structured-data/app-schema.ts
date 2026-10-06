@@ -49,7 +49,7 @@ export function buildOrganization(): Record<string, unknown> {
       '@type': 'ContactPoint',
       contactType: 'customer support',
       email: SUPPORT_EMAIL,
-      url: siteUrl('feedback'),
+      url: siteUrl('docs/contact'),
       availableLanguage: 'English',
     },
     parentOrganization: {

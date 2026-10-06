@@ -5,6 +5,18 @@
       "redirect": "https://api.3dprintlog.com/swagger/v1/swagger.json",
       "statusCode": 301
     },
+    { "route": "/about", "redirect": "/docs/about", "statusCode": 301 },
+    {
+      "route": "/privacy",
+      "redirect": "/docs/privacy-policy",
+      "statusCode": 301
+    },
+    {
+      "route": "/privacy-policy",
+      "redirect": "/docs/privacy-policy",
+      "statusCode": 301
+    },
+    { "route": "/contact", "redirect": "/docs/contact", "statusCode": 301 },
     {
       "route": "/.well-known/api-catalog",
       "headers": {

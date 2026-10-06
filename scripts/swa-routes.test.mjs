@@ -6,6 +6,7 @@ import { MANIFEST_JSON } from './docs-paths.mjs';
 import { DOC_ROUTES, MARKETING_ROUTES } from './marketing-routes.mjs';
 import {
   matchSwaRoute,
+  resolveSwaRedirect,
   resolveSwaRewrite,
   topLevelAppPaths,
 } from './swa-routes-lib.mjs';
@@ -166,6 +167,64 @@ test('no rule rewrites a prerendered page', () => {
       resolveSwaRewrite(config, `/${route}`),
       null,
       `/${route} is prerendered but rewritten`
+    );
+  }
+});
+
+/* -------------------------------------------------------------------------- */
+/* Trust pages at their conventional paths (issue #213)                        */
+/* -------------------------------------------------------------------------- */
+
+const TRUST_REDIRECTS = {
+  '/about': '/docs/about',
+  '/privacy': '/docs/privacy-policy',
+  '/privacy-policy': '/docs/privacy-policy',
+  '/contact': '/docs/contact',
+};
+
+test('resolveSwaRedirect: the first matching rule decides', () => {
+  const cfg = {
+    routes: [
+      { route: '/a', redirect: '/b', statusCode: 301 },
+      { route: '/c', rewrite: '/d.html' },
+      { route: '/e', redirect: '/f' },
+    ],
+  };
+  assert.deepEqual(resolveSwaRedirect(cfg, '/a'), {
+    location: '/b',
+    statusCode: 301,
+  });
+  assert.equal(resolveSwaRedirect(cfg, '/c'), null);
+  assert.equal(resolveSwaRedirect(cfg, '/e').statusCode, 302);
+  assert.equal(resolveSwaRedirect(cfg, '/z'), null);
+});
+
+test('the conventional trust-page paths redirect permanently to the docs', () => {
+  // Agents and people probe /about, /privacy and /contact before anything
+  // else; without these rules each one is a 404.
+  for (const [path, location] of Object.entries(TRUST_REDIRECTS)) {
+    assert.deepEqual(
+      resolveSwaRedirect(config, path),
+      { location, statusCode: 301 },
+      `${path} should 301 to ${location}`
+    );
+  }
+});
+
+test('every trust-page redirect lands on a prerendered docs page', () => {
+  for (const location of Object.values(TRUST_REDIRECTS)) {
+    const route = location.slice(1);
+    assert.ok(DOC_ROUTES.includes(route), `${location} is not a docs page`);
+    assert.equal(resolveSwaRedirect(config, location), null);
+    assert.equal(resolveSwaRewrite(config, location), null);
+  }
+});
+
+test('trust-page redirects do not shadow a client route', () => {
+  for (const path of Object.keys(TRUST_REDIRECTS)) {
+    assert.ok(
+      !appPaths.includes(path.slice(1)),
+      `${path} is also an app route; the redirect would hide it`
     );
   }
 });

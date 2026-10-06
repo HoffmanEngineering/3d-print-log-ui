@@ -41,6 +41,12 @@ HTML version: https://www.3dprintlog.com/
 - [Getting started](https://www.3dprintlog.com/docs/getting-started.md): what the free account includes.
 - [Log your first print](https://www.3dprintlog.com/docs/log-your-first-print.md): a step-by-step walkthrough.
 
+## About
+
+- [About](https://www.3dprintlog.com/docs/about.md): who builds 3D Print Log and why.
+- [Contact](https://www.3dprintlog.com/docs/contact.md): email hello@3dprintlog.com, or use in-app feedback or GitHub issues.
+- [Privacy policy](https://www.3dprintlog.com/docs/privacy-policy.md): what data is collected and how it's used.
+
 ## More for agents
 
 - [llms.txt](https://www.3dprintlog.com/llms.txt): when to use 3D Print Log, plus the API, MCP, and docs links.

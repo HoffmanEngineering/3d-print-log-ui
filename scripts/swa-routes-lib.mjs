@@ -31,6 +31,17 @@ export function resolveSwaRewrite(config, path) {
 }
 
 /**
+ * The redirect the first matching rule issues for a path, as
+ * `{ location, statusCode }`, or `null` when that rule does not redirect (or
+ * no rule matches). SWA defaults a redirect without a status code to 302.
+ */
+export function resolveSwaRedirect(config, path) {
+  const rule = (config.routes ?? []).find((r) => matchSwaRoute(r.route, path));
+  if (!rule?.redirect) return null;
+  return { location: rule.redirect, statusCode: rule.statusCode ?? 302 };
+}
+
+/**
  * The top-level paths declared in `appRoutes` (app-routing.module.ts). Read
  * from source because these scripts run on plain Node with no TS loader; the
  * file has no nested `path:` keys, so every match is a top-level route.

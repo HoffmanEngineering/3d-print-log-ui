@@ -57,6 +57,7 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [Pro subscription](https://www.3dprintlog.com/docs/pro-subscription): What the paid tier adds.
 - [Release notes](https://www.3dprintlog.com/docs/release-notes): What changed in each version.
 - [About](https://www.3dprintlog.com/docs/about): Who builds 3D Print Log.
+- [Contact](https://www.3dprintlog.com/docs/contact): Support email (hello@3dprintlog.com), in-app feedback, GitHub issues, and response times.
 - [Privacy policy](https://www.3dprintlog.com/docs/privacy-policy): What data is collected and how it's used.
 
 ## Source

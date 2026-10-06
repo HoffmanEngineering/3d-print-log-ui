@@ -225,6 +225,13 @@ function checkHomeJsonLd(file, graph, metaDescription) {
   if (contact['@type'] !== 'ContactPoint' || !contact.email) {
     errors.push(`${file}: Organization has no ContactPoint with an email`);
   }
+  // The contact URL must be a page a logged-out visitor can read (#213): the
+  // public Contact page, which is itself prerendered.
+  if (contact.url !== `${SITE_ORIGIN}/docs/contact`) {
+    errors.push(
+      `${file}: ContactPoint url should be ${SITE_ORIGIN}/docs/contact, got ${contact.url}`
+    );
+  }
   // Owner decision (#217): never publish a postal address.
   if ('address' in org) {
     errors.push(`${file}: Organization must not publish an address`);
@@ -343,6 +350,20 @@ if (home) {
   for (const t of [...TIER1, HUB]) {
     if (!home.html.includes(`href="/${t}"`))
       errors.push(`homepage: no link to /${t}`);
+  }
+}
+// Trust pages (#213): the homepage and every docs page link About, Contact and
+// the Privacy Policy, so a crawler that lands anywhere can find who runs the
+// site. Compared as exact href values, not substrings.
+const TRUST_LINKS = ['/docs/about', '/docs/contact', '/docs/privacy-policy'];
+const hrefsOf = (html) =>
+  new Set([...html.matchAll(/\bhref="([^"]*)"/g)].map((m) => m[1]));
+for (const route of ['', ...DOC_ROUTES]) {
+  const doc = read(route);
+  if (!doc) continue;
+  const hrefs = hrefsOf(doc.html);
+  for (const link of TRUST_LINKS) {
+    if (!hrefs.has(link)) errors.push(`${doc.file}: no link to ${link}`);
   }
 }
 // Hub page: must link to every fork.

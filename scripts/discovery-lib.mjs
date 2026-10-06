@@ -217,7 +217,9 @@ export const SITE_LINK_RELATIONS = [
  */
 export function parseLinkHeader(value) {
   const links = [];
-  const pattern = /<([^>]*)>((?:\s*;\s*[^;,]+)*)\s*(?:,|$)/gy;
+  // Each parameter starts at a literal `;` and runs to the next `;` or `,`, so
+  // there is exactly one way to match a string (no backtracking blow-up).
+  const pattern = /<([^>]*)>\s*((?:;[^;,]*)*)(?:,|$)/gy;
   const source = String(value).trim();
   let match;
   while (pattern.lastIndex < source.length) {

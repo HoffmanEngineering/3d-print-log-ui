@@ -34,6 +34,7 @@
     "compare-printers": "ts-node --project orca-machine-def-parser/tsconfig.json orca-machine-def-parser/compare.ts",
     "prepare": "husky install",
     "docs:generate": "node scripts/build-docs.mjs",
+    "discovery:generate": "node scripts/generate-discovery.mjs",
     "email-assets": "node scripts/generate-email-assets.mjs"
   },
   "private": true,

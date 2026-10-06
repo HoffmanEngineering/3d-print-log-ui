@@ -187,6 +187,41 @@ if (!existsSync(`${DIST}/auth.md`)) {
   errors.push('auth.md is HTML, not Markdown');
 }
 
+// Discovery files (#210). The folder is a dot-directory, so check it reached
+// the build output, that each file parses, and that the legacy AI Catalog copy
+// still matches ard.json byte for byte.
+const discovery = {};
+for (const name of [
+  'api-catalog',
+  'mcp/server-card.json',
+  'ard.json',
+  'ai-catalog.json',
+]) {
+  const file = `${DIST}/.well-known/${name}`;
+  if (!existsSync(file)) {
+    errors.push(`missing .well-known/${name}`);
+    continue;
+  }
+  discovery[name] = readFileSync(file, 'utf8');
+  try {
+    JSON.parse(discovery[name]);
+  } catch (error) {
+    errors.push(`.well-known/${name} is not valid JSON: ${error.message}`);
+  }
+}
+if (
+  discovery['ard.json'] !== undefined &&
+  discovery['ard.json'] !== discovery['ai-catalog.json']
+) {
+  errors.push('.well-known/ai-catalog.json differs from ard.json');
+}
+if (existsSync(`${DIST}/llms.txt`)) {
+  const llms = readFileSync(`${DIST}/llms.txt`, 'utf8');
+  if (!/^## When to use 3D Print Log$/m.test(llms)) {
+    errors.push('llms.txt is missing its "When to use" section');
+  }
+}
+
 // sitemap.xml is generated at deploy time by scripts/generate-sitemap.mjs, not on
 // PR builds. When present it must be a sitemap index referencing sitemap-pages.xml,
 // and sitemap-pages.xml must list every marketing route.
@@ -219,5 +254,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files.`
+  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files.`
 );

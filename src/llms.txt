@@ -1,15 +1,67 @@
 # 3D Print Log
 
-> 3D Print Log is a web app for tracking 3D prints, printers, filament, and print statistics, with direct-send integrations for OrcaSlicer, Bambu Studio, PrusaSlicer, Cura, Creality Print, and Anycubic slicers.
+> 3D Print Log is a web app for tracking 3D prints, printers, filament, and print statistics. Users log prints by hand or straight from their slicer (OrcaSlicer, Bambu Studio, PrusaSlicer, Cura, Creality Print, and Anycubic), and agents can read and update the same records through an MCP server or a REST API.
 
-## Key pages
+Every credential acts as one signed-in user and reaches only that user's data. A human has to sign in (MCP) or create an API key (REST); an agent can't create an account on its own.
+
+## When to use 3D Print Log
+
+Use it when the user keeps, or wants to keep, a record of their 3D printing. Typical jobs:
+
+- Logging a print that just finished, with the printer, the filament used and how much of it, and whether it succeeded.
+- Checking how much of a spool is left before starting a print, or adjusting a spool's remaining weight.
+- Printer statistics: success rate, print count, and hours per printer.
+- Finding a past print and the settings it used. Settings are only available when they were saved with the print, usually by a slicer integration.
+- Filing prints under projects and managing those projects.
+- Searching print history by name, project, status, printer, filament, or date.
+
+Don't use it to control a printer, start or stop a job, send files to a machine, or slice a model. 3D Print Log keeps records; it doesn't touch the hardware.
+
+## MCP
+
+- [MCP server](https://api.3dprintlog.com/mcp): Streamable HTTP. The preferred way for an agent to work with a user's data.
+- [Connect an AI assistant (MCP)](https://www.3dprintlog.com/docs/mcp): Setup for Claude, Claude Code, ChatGPT, and other MCP clients.
+- [Server card](https://www.3dprintlog.com/.well-known/mcp/server-card.json): Name, version, and endpoint. Tools come from the live `tools/list`.
+- Capabilities: search and read prints, printers, materials, and projects; per-printer stats and print summaries; create and update prints, printers, materials, and projects; adjust a spool's remaining amount.
+- Limits: it can't delete anything, it sees only the signed-in user's own records, and it returns structured data only (no photos, comments, or files).
+- Auth: OAuth 2.0 authorization code with PKCE, scopes `read:printdata` and `write:printdata`. An unauthenticated request returns `401` with a `resource_metadata` link (RFC 9728).
+
+## API
+
+- [OpenAPI document](https://api.3dprintlog.com/swagger/v1/swagger.json): Machine-readable description of the REST API at `https://api.3dprintlog.com/api`. Also linked from `https://www.3dprintlog.com/openapi.json`.
+- [REST API & authentication](https://www.3dprintlog.com/docs/api): API keys, OAuth 2.0, errors, rate limits, and versioning.
+- [auth.md](https://www.3dprintlog.com/auth.md): How an agent authenticates, step by step.
+- Auth: a personal API key in the `X-Api-Key` header, or an OAuth 2.0 access token as `Authorization: Bearer <token>`.
+- [API catalog](https://www.3dprintlog.com/.well-known/api-catalog): RFC 9727 list of the APIs and their descriptions.
+
+## Docs
+
+- [Getting started](https://www.3dprintlog.com/docs/getting-started): The free account and what it includes.
+- [Log your first print](https://www.3dprintlog.com/docs/log-your-first-print): A walkthrough of adding a print.
+- [Tracking prints](https://www.3dprintlog.com/docs/prints): Creating, editing, rating, and organizing prints.
+- [Managing printers](https://www.3dprintlog.com/docs/printers): Printers, maintenance, and per-printer stats.
+- [Filaments & materials](https://www.3dprintlog.com/docs/materials): Spool inventory and remaining amounts.
+- [Material field reference](https://www.3dprintlog.com/docs/materials-reference): Every material field explained.
+- [Projects](https://www.3dprintlog.com/docs/projects): Grouping prints into projects.
+- [Analytics & statistics](https://www.3dprintlog.com/docs/analytics): Totals, filament usage, print time, cost, and trends.
+- [Achievements](https://www.3dprintlog.com/docs/achievements): Badges for printing milestones.
+- [OrcaSlicer, PrusaSlicer & Bambu uploader](https://www.3dprintlog.com/docs/slic3r-uploader): Send prints straight from the slicer.
+- [Cura plugin](https://www.3dprintlog.com/docs/cura-plugin): Log prints from Ultimaker Cura.
+- [OctoPrint webhook](https://www.3dprintlog.com/docs/octoprint-webhook): Record prints from OctoPrint.
+- [Klipper & Moonraker](https://www.3dprintlog.com/docs/klipper): Record prints from Klipper.
+- [Android app](https://www.3dprintlog.com/docs/android-app): The mobile app.
+- [Email notifications](https://www.3dprintlog.com/docs/email-notifications): Which emails are sent and how to change them.
+- [Pro subscription](https://www.3dprintlog.com/docs/pro-subscription): What the paid tier adds.
+- [Release notes](https://www.3dprintlog.com/docs/release-notes): What changed in each version.
+- [About](https://www.3dprintlog.com/docs/about): Who builds 3D Print Log.
+- [Privacy policy](https://www.3dprintlog.com/docs/privacy-policy): What data is collected and how it's used.
+
+## Source
+
+- [3d-print-log-ui](https://github.com/HoffmanEngineering/3d-print-log-ui): The Angular web app. Its AGENTS.md describes the architecture and conventions.
+- [3d-print-log-api](https://github.com/HoffmanEngineering/3d-print-log-api): The .NET API and MCP server, also with an AGENTS.md.
+
+## Optional
 
 - [Home](https://www.3dprintlog.com/): Overview and free account signup.
-- [Documentation](https://www.3dprintlog.com/docs/getting-started): Getting started, features, and integrations.
-- [REST API & authentication](https://www.3dprintlog.com/docs/api): API keys, OAuth 2.0, scopes, errors, and the OpenAPI reference.
-- [Connect an AI assistant (MCP)](https://www.3dprintlog.com/docs/mcp): The MCP server at https://api.3dprintlog.com/mcp, for Claude, ChatGPT, and other MCP clients.
-- [auth.md](https://www.3dprintlog.com/auth.md): How an agent authenticates, step by step.
-
-## Notes
-
-- Public print and user pages are indexable; authenticated app data requires an account.
+- Public print and user pages are indexable; everything else requires an account.

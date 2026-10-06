@@ -82,6 +82,9 @@ jobs:
           path: dist/print-log-ui/browser
           retention-days: 7
           if-no-files-found: error
+          # The discovery files live under .well-known/, and upload-artifact
+          # skips dot-prefixed paths unless told otherwise.
+          include-hidden-files: true
 
   # The only gated job. `environment: production` carries the required-reviewer
   # rule, so approving this ships the already-built artifact and nothing else.
@@ -96,6 +99,9 @@ jobs:
         with:
           name: site
           path: site
+
+      - name: Check the discovery files survived the artifact
+        run: test -f site/.well-known/api-catalog && test -f site/.well-known/ard.json && test -f site/.well-known/mcp/server-card.json
 
       - name: Deploy to Azure Static Web Apps (prebuilt)
         uses: Azure/static-web-apps-deploy@v1

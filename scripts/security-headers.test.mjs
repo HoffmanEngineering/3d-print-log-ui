@@ -9,6 +9,7 @@ import {
   SWA_DEFAULT_HEADERS,
   validateSecurityHeaders,
 } from './security-headers-lib.mjs';
+import { SITE_LINK_RELATIONS, parseLinkHeader } from './discovery-lib.mjs';
 
 /** Rebuild the config with one CSP source removed, to prove validation bites. */
 function configWithout(directive, source) {
@@ -419,4 +420,18 @@ test('the list-skeleton rewrites are untouched', () => {
 test('the shells route still opts out of caching', () => {
   const shells = config.routes.find((r) => r.route === '/shells/*');
   assert.equal(shells.headers['cache-control'], 'no-cache');
+});
+
+test('globalHeaders carries the discovery Link header (#210)', () => {
+  // Link is not a security header and SWA sends none by default, so it can't
+  // shadow a platform value. Its contents are asserted in discovery.test.mjs;
+  // this pins that it lives in globalHeaders, where every response gets it,
+  // including the HEAD on /.well-known/api-catalog that RFC 9727 requires.
+  assert.equal('Link' in SWA_DEFAULT_HEADERS, false);
+  const rels = parseLinkHeader(globalHeaders.Link).map((l) => l.rel);
+  assert.deepEqual(
+    rels,
+    SITE_LINK_RELATIONS.map((l) => l.rel)
+  );
+  assert.deepEqual(validateSecurityHeaders(config), []);
 });

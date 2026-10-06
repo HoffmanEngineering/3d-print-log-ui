@@ -43,6 +43,24 @@
         "record a print automatically when my printer finishes",
         "sync my filament spool inventory from another tool"
       ]
+    },
+    {
+      "identifier": "urn:air:3dprintlog.com:skill:3d-print-log",
+      "displayName": "3D Print Log agent skill",
+      "type": "application/ai-skill+md",
+      "url": "https://www.3dprintlog.com/.well-known/agent-skills/3d-print-log/SKILL.md",
+      "description": "Instructions for an agent using the 3D Print Log MCP server: which tools to call for each job, in what order, and what they never do.",
+      "tags": [
+        "3d-printing",
+        "filament",
+        "agent-skill",
+        "mcp"
+      ],
+      "representativeQueries": [
+        "log the print I just finished with the filament it used",
+        "do I have enough blue PLA for a 300 g print",
+        "I weighed my spool, update how much is left"
+      ]
     }
   ]
 }

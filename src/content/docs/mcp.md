@@ -12,6 +12,9 @@ constants:
   mcpEndpoint: 'https://api.3dprintlog.com/mcp'
   mcpClientId: uzxvtpefYIrWoYbaJteoRzZtIYw4wP7j
   claudeCodeCommand: 'claude mcp add --transport http printlog ${this.mcpEndpoint} --client-id ${this.mcpClientId} --callback-port 8400'
+  skillsAddCommand: 'npx skills add HoffmanEngineering/3d-print-log-api'
+  pluginMarketplaceCommand: 'claude plugin marketplace add HoffmanEngineering/3d-print-log-api'
+  pluginInstallCommand: 'claude plugin install 3d-print-log@3d-print-log'
 ---
 
 <article class="docs-mcp">
@@ -233,6 +236,41 @@ constants:
   <p class="hint">
     If port 8400 is already in use on your machine, any port from
     <strong>8400 to 8405</strong> will work.
+  </p>
+
+  <h3>Add the 3D Print Log skill</h3>
+  <p>
+    A skill is a short set of instructions that tells an assistant how to use
+    3D Print Log well: which spool to record a print against, how to check
+    whether you have enough material, and what it must never do. The connection
+    above works without it; the skill makes the assistant ask fewer questions
+    and make fewer mistakes.
+  </p>
+  <p>
+    For Claude Code, Codex, Cursor, and the other coding agents the skills tool
+    supports, run:
+  </p>
+  <pre class="endpoint"><code>{{ skillsAddCommand }}</code></pre>
+  <p>
+    In Claude Code you can install the skill and the connection together, as a
+    plugin. Run these two commands, then use <code>/mcp</code> to sign in:
+  </p>
+  <pre class="endpoint"><code>{{ pluginMarketplaceCommand }}
+{{ pluginInstallCommand }}</code></pre>
+  <p class="hint">
+    The skill's source is public on
+    <a
+      href="https://github.com/HoffmanEngineering/3d-print-log-api/tree/main/skills/3d-print-log"
+      target="_blank"
+      rel="noopener"
+      >GitHub</a
+    >. Agents can also find it at
+    <a
+      href="https://www.3dprintlog.com/.well-known/agent-skills/index.json"
+      target="_blank"
+      rel="noopener"
+      >/.well-known/agent-skills/index.json</a
+    >.
   </p>
 
   <h3>Connect to ChatGPT</h3>

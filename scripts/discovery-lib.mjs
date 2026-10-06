@@ -7,6 +7,7 @@
  *   /.well-known/mcp                       the same card (rewritten in SWA)
  *   /.well-known/ard.json                  Agentic Resource Discovery manifest
  *   /.well-known/ai-catalog.json           byte-identical legacy copy of ard.json
+ *   /.well-known/agent-skills/index.json   Agent Skills discovery index (#215)
  *
  * The files are committed under `src/well-known/` (copied to `.well-known/` by
  * the Angular assets config) and regenerated with `npm run discovery:generate`.
@@ -20,7 +21,15 @@
  *     `specVersion` and `entries`, so the one document satisfies both specs.
  *   - MCP Server Card, SEP-2127 / experimental-ext-server-card `schema.ts`:
  *     `$schema`, `name`, `version`, `description` are required; no tools list.
+ *   - Agent Skills Discovery via Well-Known URIs v0.2.0 (Draft, updated
+ *     2026-03-12): https://github.com/cloudflare/agent-skills-discovery-rfc
+ *     Its `$schema` URI is an opaque identifier; nothing is published at it,
+ *     so there is no JSON Schema to vendor and the tests check the fields.
  */
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+
+import { parseFrontmatter } from './docs-frontmatter.mjs';
 import { SITE_ORIGIN } from './marketing-routes.mjs';
 
 export const API_ORIGIN = 'https://api.3dprintlog.com';
@@ -41,6 +50,25 @@ export const API_CATALOG_PATH = '/.well-known/api-catalog';
 export const SERVER_CARD_PATH = '/.well-known/mcp/server-card.json';
 export const ARD_PATH = '/.well-known/ard.json';
 export const AI_CATALOG_PATH = '/.well-known/ai-catalog.json';
+export const AGENT_SKILLS_INDEX_PATH = '/.well-known/agent-skills/index.json';
+
+/**
+ * The one published skill (#215). Its source of truth is the API repo, which
+ * owns the MCP tools it describes and tests the skill against them; the site
+ * serves a byte-identical copy so the index can carry a digest of bytes it
+ * controls. `npm run discovery:sync-skill` refreshes the copy from `main`.
+ */
+export const SKILL_NAME = '3d-print-log';
+export const SKILL_PATH = `/.well-known/agent-skills/${SKILL_NAME}/SKILL.md`;
+/** The repo `npx skills add` installs from, and the home of the plugin manifests. */
+export const SKILL_REPOSITORY = 'HoffmanEngineering/3d-print-log-api';
+export const SKILL_SOURCE_URL = `https://raw.githubusercontent.com/${SKILL_REPOSITORY}/main/skills/${SKILL_NAME}/SKILL.md`;
+
+/** Agent Skills discovery v0.2.0 identifies its index format by this URI. */
+export const AGENT_SKILLS_SCHEMA =
+  'https://schemas.agentskills.io/discovery/0.2.0/schema.json';
+/** ARD's example media type for a skill (ARD v0.91 §4.4); not yet registered. */
+export const SKILL_MEDIA_TYPE = 'application/ai-skill+md';
 
 /** RFC 9727 §4.2: the Linkset SHOULD carry this profile parameter. */
 export const API_CATALOG_CONTENT_TYPE =
@@ -76,6 +104,49 @@ export const MCP_SERVER_VERSION = '1.0.0';
  */
 export const MCP_DESCRIPTION =
   'Log and query your 3D prints, printers, filament inventory, and projects on 3dprintlog.com.';
+
+/** The committed copy of SKILL.md that the build serves at SKILL_PATH. */
+export const SKILL_MIRROR_FILE = new URL(
+  `../src/well-known${SKILL_PATH.slice('/.well-known'.length)}`,
+  import.meta.url
+);
+
+/** The mirrored SKILL.md, as the exact bytes the site serves. */
+export function readMirroredSkill() {
+  return readFileSync(SKILL_MIRROR_FILE);
+}
+
+/** `sha256:{hex}` over raw bytes, the digest format discovery v0.2.0 requires. */
+export function skillDigest(bytes) {
+  return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
+}
+
+/** The skill's frontmatter `name` and `description`. */
+export function readSkillFrontmatter(bytes) {
+  const { data } = parseFrontmatter(bytes.toString('utf8'));
+  return { name: data.name, description: data.description };
+}
+
+/**
+ * The Agent Skills discovery index. One `skill-md` entry, served from this
+ * origin: the digest covers bytes this repo commits, so it cannot be broken by
+ * a change in another repo, only made stale.
+ */
+export function buildAgentSkillsIndex(skillBytes = readMirroredSkill()) {
+  const { name, description } = readSkillFrontmatter(skillBytes);
+  return {
+    $schema: AGENT_SKILLS_SCHEMA,
+    skills: [
+      {
+        name,
+        type: 'skill-md',
+        description,
+        url: SKILL_PATH,
+        digest: skillDigest(skillBytes),
+      },
+    ],
+  };
+}
 
 /** RFC 9727 API catalog, Linkset format (RFC 9264). */
 export function buildApiCatalog() {
@@ -176,6 +247,21 @@ export function buildArdManifest() {
           'sync my filament spool inventory from another tool',
         ],
       },
+      {
+        identifier: `urn:air:3dprintlog.com:skill:${SKILL_NAME}`,
+        displayName: '3D Print Log agent skill',
+        type: SKILL_MEDIA_TYPE,
+        url: `${SITE_ORIGIN}${SKILL_PATH}`,
+        description:
+          'Instructions for an agent using the 3D Print Log MCP server: which ' +
+          'tools to call for each job, in what order, and what they never do.',
+        tags: ['3d-printing', 'filament', 'agent-skill', 'mcp'],
+        representativeQueries: [
+          'log the print I just finished with the filament it used',
+          'do I have enough blue PLA for a 300 g print',
+          'I weighed my spool, update how much is left',
+        ],
+      },
     ],
   };
 }
@@ -196,6 +282,7 @@ export function buildDiscoveryFiles() {
     'mcp/server-card.json': serialize(buildServerCard()),
     'ard.json': ard,
     'ai-catalog.json': ard,
+    'agent-skills/index.json': serialize(buildAgentSkillsIndex()),
   };
 }
 
@@ -206,6 +293,9 @@ export function buildDiscoveryFiles() {
 export const SITE_LINK_RELATIONS = [
   { href: API_CATALOG_PATH, rel: 'api-catalog' },
   { href: ARD_PATH, rel: 'ard' },
+  // Not defined by the discovery RFC; the relation its adopters use to point
+  // at the index from any page.
+  { href: AGENT_SKILLS_INDEX_PATH, rel: 'agent-skills' },
   { href: OPENAPI_URL, rel: 'service-desc' },
   { href: '/llms.txt', rel: 'describedby' },
   { href: '/sitemap.xml', rel: 'sitemap' },

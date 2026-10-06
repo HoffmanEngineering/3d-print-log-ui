@@ -35,6 +35,7 @@
     "prepare": "husky install",
     "docs:generate": "node scripts/build-docs.mjs",
     "discovery:generate": "node scripts/generate-discovery.mjs",
+    "discovery:sync-skill": "node scripts/sync-agent-skill.mjs",
     "email-assets": "node scripts/generate-email-assets.mjs"
   },
   "private": true,

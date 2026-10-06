@@ -57,7 +57,7 @@ function main() {
   );
   const targets = [
     ...(config.routes || []).map((r) => r.rewrite).filter(Boolean),
-    config.navigationFallback?.rewrite,
+    ...Object.values(config.responseOverrides || {}).map((o) => o.rewrite),
   ].filter(Boolean);
   for (const t of [...new Set(targets)]) {
     check(

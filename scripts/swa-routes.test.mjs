@@ -210,7 +210,7 @@ test('auth.md follows the auth.md section layout and links the docs', () => {
   ]) {
     assert.match(authMd, heading);
   }
-  assert.ok(authMd.includes('https://www.3dprintlog.com/docs/api'));
+  assert.match(authMd, /<https:\/\/www\.3dprintlog\.com\/docs\/api>/);
   // Honesty about the extension we do not implement.
   assert.match(authMd, /does \*\*not\*\* implement the `agent_auth` extension/);
 });

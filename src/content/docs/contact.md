@@ -14,7 +14,7 @@ related: [about, privacy-policy]
 
 ---
 
-3D Print Log is built and run by [Hoffman Engineering](https://www.hoffman.engineering), a small independent team. There is no call center and no ticket queue: every message is read by the people who build the app.
+3D Print Log is built and run by [Hoffman Engineering](https://www.hoffman.engineering), a small independent developer. There is no call center and no ticket queue: every message is read by the person who builds the app.
 
 ### Email {#email}
 
@@ -41,4 +41,4 @@ GitHub issues are public, so keep account details out of them and email us inste
 
 ### Response times {#response-times}
 
-We usually reply within two business days, often sooner. Account access, billing, and data deletion requests take priority. A bug report may get a quick acknowledgment first and a fix in a later release; the [release notes](/docs/release-notes) list what changed in each version.
+We aim to reply within a few business days. A bug report may get a quick acknowledgment first and a fix in a later release; the [release notes](/docs/release-notes) list what changed in each version.

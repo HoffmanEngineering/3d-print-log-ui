@@ -69,6 +69,19 @@ describe('HomeComponent', () => {
     expect(meta.setSeoTags).toHaveBeenCalled();
   });
 
+  it('gives the JSON-LD apps the same description as the meta tag', () => {
+    const description = meta.setSeoTags.calls.mostRecent().args[0].description;
+    const nodes = structuredData.setJsonLd.calls.mostRecent().args[0];
+
+    expect(nodes.map((n) => n['@type'])).toEqual([
+      'WebApplication',
+      'MobileApplication',
+      'Organization',
+    ]);
+    expect(nodes[0]['description']).toBe(description);
+    expect(nodes[1]['description']).toBe(description);
+  });
+
   it('makes the hero headline an h1', () => {
     const hero = fixture.nativeElement.querySelector('.hero-title');
 

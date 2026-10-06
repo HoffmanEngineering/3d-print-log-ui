@@ -1,0 +1,19 @@
+{
+  "currency": "USD",
+  "plans": [
+    {
+      "id": "pro_monthly",
+      "label": "Monthly",
+      "price": "2.99",
+      "billingDuration": "P1M",
+      "unitCode": "MON"
+    },
+    {
+      "id": "pro_annual",
+      "label": "Annual",
+      "price": "29.99",
+      "billingDuration": "P1Y",
+      "unitCode": "ANN"
+    }
+  ]
+}

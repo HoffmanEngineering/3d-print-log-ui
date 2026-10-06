@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs';
+import { skillDigest } from './discovery-lib.mjs';
 import {
   SITE_ORIGIN,
   MARKETING_ROUTES,
@@ -412,6 +413,7 @@ for (const name of [
   'mcp/server-card.json',
   'ard.json',
   'ai-catalog.json',
+  'agent-skills/index.json',
 ]) {
   const file = `${DIST}/.well-known/${name}`;
   if (!existsSync(file)) {
@@ -430,6 +432,25 @@ if (
   discovery['ard.json'] !== discovery['ai-catalog.json']
 ) {
   errors.push('.well-known/ai-catalog.json differs from ard.json');
+}
+// Agent Skills index (#215): each skill-md entry must resolve to a built file
+// whose bytes hash to its digest, or compliant clients refuse the skill.
+if (discovery['agent-skills/index.json'] !== undefined) {
+  try {
+    const { skills } = JSON.parse(discovery['agent-skills/index.json']);
+    for (const { name, url, digest } of skills) {
+      const path = new URL(url, `${ORIGIN}/.well-known/agent-skills/index.json`)
+        .pathname;
+      const file = `${DIST}${path}`;
+      if (!existsSync(file)) {
+        errors.push(`agent skill ${name}: ${path} is not in the build`);
+      } else if (skillDigest(readFileSync(file)) !== digest) {
+        errors.push(`agent skill ${name}: ${path} does not match its digest`);
+      }
+    }
+  } catch (error) {
+    errors.push(`agent-skills/index.json is unusable: ${error.message}`);
+  }
 }
 if (existsSync(`${DIST}/llms.txt`)) {
   const llms = readFileSync(`${DIST}/llms.txt`, 'utf8');
@@ -470,5 +491,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files, Markdown twins.`
+  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files, agent skills, Markdown twins.`
 );

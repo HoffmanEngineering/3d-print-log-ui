@@ -1,9 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import { MANIFEST_JSON } from './docs-paths.mjs';
 import {
+  AGENT_SKILLS_INDEX_PATH,
+  AGENT_SKILLS_SCHEMA,
   AI_CATALOG_CONTENT_TYPE,
   API_CATALOG_CONTENT_TYPE,
   API_DOCS_URL,
@@ -16,6 +19,12 @@ import {
   REST_API_URL,
   SERVER_CARD_PATH,
   SITE_LINK_RELATIONS,
+  SKILL_MEDIA_TYPE,
+  SKILL_NAME,
+  SKILL_PATH,
+  SKILL_REPOSITORY,
+  SKILL_SOURCE_URL,
+  buildAgentSkillsIndex,
   buildApiCatalog,
   buildArdManifest,
   buildDiscoveryFiles,
@@ -194,7 +203,10 @@ test('every ARD entry has the required members and 2 to 5 queries', () => {
   assert.ok(entries.length > 0);
   const identifiers = new Set();
   for (const entry of entries) {
-    assert.match(entry.identifier, /^urn:air:3dprintlog\.com:[a-z-]+:[a-z-]+$/);
+    assert.match(
+      entry.identifier,
+      /^urn:air:3dprintlog\.com:[a-z-]+:[a-z0-9-]+$/
+    );
     assert.ok(!identifiers.has(entry.identifier), 'duplicate identifier');
     identifiers.add(entry.identifier);
     assert.ok(entry.displayName);
@@ -218,11 +230,127 @@ test('the ARD manifest points at the server card and the OpenAPI document', () =
   assert.equal(rest?.url, OPENAPI_URL);
 });
 
+test('the ARD manifest points at the served agent skill', () => {
+  const skill = buildArdManifest().entries.find(
+    (e) => e.type === SKILL_MEDIA_TYPE
+  );
+  assert.equal(skill?.url, `${SITE_ORIGIN}${SKILL_PATH}`);
+});
+
 test('the legacy AI Catalog copy is served with its own media type', () => {
   assert.equal(
     ruleFor('/.well-known/ai-catalog.json')?.headers?.['content-type'],
     AI_CATALOG_CONTENT_TYPE
   );
+});
+
+/* -------------------------------------------------------------------------- */
+/* Agent Skills discovery (#215)                                               */
+/* -------------------------------------------------------------------------- */
+
+/** The committed copy of the skill that the site serves at SKILL_PATH. */
+const skillFile = `src/well-known${SKILL_PATH.slice('/.well-known'.length)}`;
+const skillBytes = readFileSync(new URL(`../${skillFile}`, import.meta.url));
+const skillIndex = buildAgentSkillsIndex();
+
+/** Agent Skills name rule: 1 to 64 of a-z and 0-9, joined by single hyphens. */
+const isSkillName = (name) =>
+  name.length <= 64 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name);
+
+test('the skills index has the v0.2.0 shape and nothing else', () => {
+  assert.deepEqual(Object.keys(skillIndex), ['$schema', 'skills']);
+  assert.equal(
+    AGENT_SKILLS_SCHEMA,
+    'https://schemas.agentskills.io/discovery/0.2.0/schema.json'
+  );
+  assert.equal(skillIndex.$schema, AGENT_SKILLS_SCHEMA);
+  const [entry, ...rest] = skillIndex.skills;
+  assert.deepEqual(rest, []);
+  assert.deepEqual(Object.keys(entry), [
+    'name',
+    'type',
+    'description',
+    'url',
+    'digest',
+  ]);
+  assert.equal(entry.name, SKILL_NAME);
+  assert.ok(isSkillName(entry.name), `${entry.name} breaks the naming rule`);
+  assert.equal(entry.type, 'skill-md');
+  assert.ok(entry.description.length >= 1 && entry.description.length <= 1024);
+  assert.match(entry.digest, /^sha256:[0-9a-f]{64}$/);
+});
+
+test('isSkillName follows the Agent Skills naming rule', () => {
+  for (const name of ['3d-print-log', 'a', 'pdf-processing']) {
+    assert.ok(isSkillName(name), name);
+  }
+  for (const name of ['', '-pdf', 'pdf-', 'pdf--x', 'PDF', 'a'.repeat(65)]) {
+    assert.ok(!isSkillName(name), name);
+  }
+});
+
+test('the skill URL resolves to the committed copy', () => {
+  // Resolved per RFC 3986 against the index URL, as the RFC tells clients to.
+  const [entry] = skillIndex.skills;
+  const resolved = new URL(
+    entry.url,
+    `${SITE_ORIGIN}${AGENT_SKILLS_INDEX_PATH}`
+  );
+  assert.equal(resolved.href, `${SITE_ORIGIN}${SKILL_PATH}`);
+  assert.equal(
+    `src/well-known${resolved.pathname.slice('/.well-known'.length)}`,
+    skillFile
+  );
+});
+
+test('the digest is the SHA-256 of the exact bytes served', () => {
+  // Clients refuse a skill whose bytes do not hash to the digest, so this is
+  // computed here independently rather than through the generator.
+  const [entry] = skillIndex.skills;
+  const hex = createHash('sha256').update(skillBytes).digest('hex');
+  assert.equal(entry.digest, `sha256:${hex}`);
+});
+
+test('the served skill is a valid Agent Skill matching its index entry', () => {
+  const text = skillBytes.toString('utf8');
+  // A CRLF checkout would change the bytes, and so the digest, on one machine.
+  assert.ok(!text.includes('\r'), `${skillFile} has CR line endings`);
+  assert.ok(text.startsWith('---\n'), `${skillFile} has no frontmatter`);
+  const lines = text.slice(4, text.indexOf('\n---\n')).split('\n');
+  const [entry] = skillIndex.skills;
+  assert.ok(lines.includes(`name: ${SKILL_NAME}`));
+  assert.ok(
+    lines.includes(`description: ${entry.description}`),
+    'the index description must equal the SKILL.md description'
+  );
+  // The Agent Skills spec requires the name to equal the parent directory.
+  assert.equal(skillFile.split('/').at(-2), SKILL_NAME);
+});
+
+test('the served skill bytes are protected from reformatting', () => {
+  assert.ok(read('.prettierignore').split(/\r?\n/).includes('src/well-known/'));
+  assert.ok(
+    read('.gitattributes')
+      .split(/\r?\n/)
+      .includes('src/well-known/agent-skills/** -text')
+  );
+});
+
+test('the skill is mirrored from the API repo that tests it', () => {
+  assert.equal(
+    SKILL_SOURCE_URL,
+    `https://raw.githubusercontent.com/${SKILL_REPOSITORY}/main/skills/${SKILL_NAME}/SKILL.md`
+  );
+});
+
+test('the skills index is served as JSON, the skill as Markdown', () => {
+  assert.equal(
+    ruleFor(AGENT_SKILLS_INDEX_PATH)?.headers?.['content-type'],
+    'application/json'
+  );
+  // SKILL.md takes the site-wide .md type; the RFC allows text/markdown.
+  assert.equal(ruleFor(SKILL_PATH)?.headers?.['content-type'], undefined);
+  assert.match(config.mimeTypes['.md'], /^text\/markdown;/);
 });
 
 /* -------------------------------------------------------------------------- */
@@ -244,6 +372,8 @@ test('discovery files are readable cross-origin', () => {
     SERVER_CARD_PATH,
     '/.well-known/ard.json',
     '/.well-known/ai-catalog.json',
+    AGENT_SKILLS_INDEX_PATH,
+    SKILL_PATH,
   ]) {
     assert.equal(
       ruleFor(path)?.headers?.['access-control-allow-origin'],
@@ -274,6 +404,16 @@ test('parseLinkHeader reads quoted, bare and multi-valued rel parameters', () =>
 test('the Link header advertises the site-level discovery relations', () => {
   const links = parseLinkHeader(config.globalHeaders.Link);
   assert.deepEqual(links, SITE_LINK_RELATIONS);
+});
+
+test('each Link value carries only its rel parameter', () => {
+  // The SWA CLI emulator (2.0.10) silently dropped a link-value that also
+  // carried `type="application/json"`, while serving the others. Keeping each
+  // value to `<target>; rel="..."` avoids depending on how the platform
+  // handles extra parameters.
+  for (const value of config.globalHeaders.Link.split(', ')) {
+    assert.match(value, /^<[^>]+>; rel="[a-z-]+"$/);
+  }
 });
 
 test('every same-origin Link target ships with the site', () => {
@@ -322,6 +462,8 @@ test('llms.txt links the API, MCP and discovery surfaces', () => {
     `${SITE_ORIGIN}/auth.md`,
     `${SITE_ORIGIN}${SERVER_CARD_PATH}`,
     `${SITE_ORIGIN}/.well-known/api-catalog`,
+    `${SITE_ORIGIN}${AGENT_SKILLS_INDEX_PATH}`,
+    `https://github.com/${SKILL_REPOSITORY}/tree/main/skills/${SKILL_NAME}`,
     'https://github.com/HoffmanEngineering/3d-print-log-ui',
     'https://github.com/HoffmanEngineering/3d-print-log-api',
   ]) {

@@ -119,7 +119,8 @@ Campaign emails sent by the API reference images at `https://www.3dprintlog.com/
 - **The deploy artifact must keep hidden files.** `actions/upload-artifact` drops dot-prefixed paths by default, so the upload step in `deploy.yml` sets `include-hidden-files: true`.
 - `/openapi.json` is a 301 redirect to the API's document. SWA can't proxy another host.
 - The server card's `name` and `version` mirror `server.json` in the API repo, and the card's `description` is capped at 100 characters by the schema. ARD (v0.91) and the server card are drafts, so check them again when they reach 1.0.
-- The site-wide `Link` header in `globalHeaders` advertises the catalog, the ARD manifest, the OpenAPI document, `llms.txt` and the sitemap.
+- The site-wide `Link` header in `globalHeaders` advertises the catalog, the ARD manifest, the skills index, the OpenAPI document, `llms.txt` and the sitemap. Keep each value to `<target>; rel="…"`: the SWA emulator dropped one that also carried a `type` parameter.
+- **The agent skill is a copy, and the API repo owns it** (#215). `/.well-known/agent-skills/index.json` (Agent Skills discovery v0.2.0, a draft) lists `src/well-known/agent-skills/3d-print-log/SKILL.md` with a SHA-256 of its exact bytes, and clients refuse a skill whose bytes don't match. That file is the one exception to the hand-edit rule: never edit it here. Change `skills/3d-print-log/SKILL.md` in the API repo, where `AgentSkillTests` check it against the live MCP tools, then run `npm run discovery:sync-skill` after it merges and commit the result (`-- --check` reports drift without writing). `.gitattributes` marks the folder `-text` so no checkout rewrites its line endings.
 
 ### Security Headers & CSP
 

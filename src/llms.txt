@@ -22,9 +22,10 @@ Don't use it to control a printer, start or stop a job, send files to a machine,
 - [MCP server](https://api.3dprintlog.com/mcp): Streamable HTTP. The preferred way for an agent to work with a user's data.
 - [Connect an AI assistant (MCP)](https://www.3dprintlog.com/docs/mcp): Setup for Claude, Claude Code, ChatGPT, and other MCP clients.
 - [Server card](https://www.3dprintlog.com/.well-known/mcp/server-card.json): Name, version, and endpoint. Tools come from the live `tools/list`.
+- [Docs MCP server](https://api.3dprintlog.com/mcp/docs): Streamable HTTP, no sign-in. Searches and reads the user documentation (`search_docs`, `get_doc`, `docs://` resources). The main server has the same docs tools for signed-in clients.
 - [Agent skill](https://github.com/HoffmanEngineering/3d-print-log-api/tree/main/skills/3d-print-log): Which tools to call for each job, in what order, and the guardrails. Install with `npx skills add HoffmanEngineering/3d-print-log-api`, or as a Claude Code plugin that adds the MCP server too.
 - [Agent skills index](https://www.3dprintlog.com/.well-known/agent-skills/index.json): The same skill, served from this site with its SHA-256 digest.
-- Capabilities: search and read prints, printers, materials, and projects; per-printer stats and print summaries; create and update prints, printers, materials, and projects; adjust a spool's remaining amount.
+- Capabilities: search and read prints, printers, materials, and projects; per-printer stats and print summaries; create and update prints, printers, materials, and projects; adjust a spool's remaining amount; search and read the documentation.
 - Limits: it can't delete anything, it sees only the signed-in user's own records, and it returns structured data only (no photos, comments, or files).
 - Auth: OAuth 2.0 authorization code with PKCE, scopes `read:printdata` and `write:printdata`. An unauthenticated request returns `401` with a `resource_metadata` link (RFC 9728).
 

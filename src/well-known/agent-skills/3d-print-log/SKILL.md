@@ -1,6 +1,6 @@
 ---
 name: 3d-print-log
-description: Log and query 3D prints, printers, filament and resin spools, and projects in a user's 3D Print Log account (3dprintlog.com) through its MCP server. Use when the user wants to record a finished or failed print with the material it used, check how much of a spool is left or whether they have enough for a print, correct a spool's remaining amount, see per-printer success rates and print time, find a past print and the settings it used, or file prints under a project. Not for controlling a printer, starting or stopping a job, sending files to a machine, or slicing a model.
+description: Log and query 3D prints, printers, filament and resin spools, and projects in a user's 3D Print Log account (3dprintlog.com) through its MCP server. Use when the user wants to record a finished or failed print with the material it used, check how much of a spool is left or whether they have enough for a print, correct a spool's remaining amount, see per-printer success rates and print time, find a past print and the settings it used, file prints under a project, or answer how 3D Print Log and its integrations work from its documentation. Not for controlling a printer, starting or stopping a job, sending files to a machine, or slicing a model.
 metadata:
   author: Hoffman Engineering
   homepage: https://www.3dprintlog.com/docs/mcp
@@ -28,6 +28,10 @@ Use the MCP server. Everything below describes its tools.
   the tools the token allows. If `create_print` is missing, the user granted read-only access; tell
   them, don't work around it.
 
+The documentation is public and needs no sign-in. `https://api.3dprintlog.com/mcp/docs` is a
+second MCP server that serves only the docs tools below, anonymously. The same tools are also on
+`/mcp`, so a signed-in agent needs no second connection.
+
 Only when MCP is not available, use the REST API at `https://api.3dprintlog.com/api` with a personal
 API key the user creates at <https://www.3dprintlog.com/api-keys>, sent as the `X-Api-Key` header.
 It is the website's own API and behaves differently; read [REST is different](#rest-is-different)
@@ -45,7 +49,8 @@ first. Reference: <https://www.3dprintlog.com/docs/api> and <https://www.3dprint
   estimate. Never present an estimate as measured.
 - Lists are paginated (`page`, `pageSize`, default 25, max 100) and report `totalPages`. Read every
   page before telling the user something does not exist.
-- Errors carry a code: `not_found`, `invalid_arguments`, `conflict` or `forbidden`. An
+- Errors carry a code: `not_found`, `invalid_arguments`, `conflict`, `forbidden` or (docs tools
+  only) `unavailable`. An
   `invalid_arguments` message often lists the accepted values (material categories, printer
   categories); use them rather than guessing again.
 
@@ -150,6 +155,19 @@ starts one. File a print under it with `create_print(projectId)` or `update_prin
   (filament) needs `diameterMm`.
 - On both, pass an `idempotencyKey`. Without one a retried call creates a second record, and nothing
   can delete it.
+
+## Answer a question about 3D Print Log itself
+
+For how something works rather than what is in the user's account (connecting Klipper or
+OctoPrint, what Pro includes, how API keys or privacy work), read the documentation instead of
+guessing.
+
+- `search_docs(query)` returns the best-matching pages with an excerpt and each page's `slug`.
+- `get_doc(slug)` returns a whole page as Markdown. `list_docs` lists every page.
+- The pages are also MCP resources, `docs://<slug>`, for clients that read resources.
+- Cite the page's HTML URL (the `url` field, or the first lines of the page) when you quote it.
+- An `unavailable` error means the docs site could not be read just now. Point the user to
+  <https://www.3dprintlog.com/docs> rather than answering from memory.
 
 ## REST is different
 

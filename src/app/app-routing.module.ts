@@ -207,9 +207,13 @@ export const appRoutes: Routes = [
   },
 
   {
+    // Reached only under a known segment (e.g. /prints/1/nope): Static Web Apps
+    // serves a real 404 for unknown top-level paths before the app ever loads.
     path: '**',
-    redirectTo: '/home-redirect',
-    pathMatch: 'full',
+    loadComponent: () =>
+      import('./not-found/not-found.component').then(
+        (m) => m.NotFoundComponent
+      ),
   },
 ];
 

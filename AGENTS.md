@@ -100,6 +100,15 @@ Campaign emails sent by the API reference images at `https://www.3dprintlog.com/
 - **Badges are rendered from the app's own sources** (`achievement-badge-art.ts` and `achievement-glyphs.ts`), not redrawn. Names are `badges/{glyph}-{fill}.png`, and `badges/numeral-{threshold}-{fill}.png` for numeral badges. The API's `BadgeImage.FileName` builds the same names.
 - **After adding an achievement family or glyph, re-run `npm run email-assets`** (it reads the catalog from the production API, or `--catalog <url|file>` for a local one) and deploy the UI before the API sends email that references the new badge. Until then, those emails show a broken image with the badge title beside it.
 
+### SPA routes and real 404s
+
+`src/staticwebapp.config.json` has **no `navigationFallback`**. A catch-all answered every unknown path, including agents probing `/.well-known/*` or `/openapi.json`, with 200 and the app shell (#208). Each top-level client route instead has its own `/seg` and `/seg/*` rewrite to a shell. Anything else that is not a file gets `src/404.html` with a real 404 status, via `responseOverrides`.
+
+- **Adding a top-level route to `app-routing.module.ts` means adding its two rules too**, or a hard refresh on that page 404s. `scripts/swa-routes.test.mjs` fails until you do. The same goes for a new doc alias (`/docs/<alias>`).
+- **Never add a rule for a prerendered path** (marketing pages, `/docs/<page>`). A rewrite shadows the static HTML, and the same test fails on it.
+- An unknown path _under_ a known segment (`/prints/1/nope`) still loads the app, and the Angular `**` route renders `NotFoundComponent`.
+- To check the behavior locally, run `npx @azure/static-web-apps-cli start dist/print-log-ui/browser` after `npm run build`.
+
 ### Security Headers & CSP
 
 Response headers are served by Azure Static Web Apps from `src/staticwebapp.config.json` (`globalHeaders`), which ships as a build asset — SWA reads it literally, so it stays hand-edited JSON.

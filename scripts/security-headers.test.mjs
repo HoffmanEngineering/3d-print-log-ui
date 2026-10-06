@@ -405,7 +405,8 @@ test('validation rejects mixing a nonce or hash with unsafe-inline', () => {
 /* Regressions in the rest of the config                                       */
 /* -------------------------------------------------------------------------- */
 
-test('the app-shell rewrites and navigation fallback are untouched', () => {
+test('the list-skeleton rewrites are untouched', () => {
+  // The SPA rewrite rules and the 404 override are covered in swa-routes.test.mjs.
   const routes = Object.fromEntries(
     config.routes.filter((r) => r.rewrite).map((r) => [r.route, r.rewrite])
   );
@@ -413,7 +414,6 @@ test('the app-shell rewrites and navigation fallback are untouched', () => {
   assert.equal(routes['/materials'], '/shells/list-skeleton.html');
   assert.equal(routes['/filament'], '/shells/list-skeleton.html');
   assert.equal(routes['/printers'], '/shells/list-skeleton.html');
-  assert.equal(config.navigationFallback.rewrite, '/shells/app-shell.html');
 });
 
 test('the shells route still opts out of caching', () => {

@@ -4,12 +4,16 @@ import {
   chunk,
   buildUrlset,
   buildIndex,
-  contentUrls,
-  pageUrls,
+  contentEntries,
+  pageEntries,
+  maxLastmod,
+  fetchPrintRows,
+  fetchJsonArray,
 } from './sitemap-lib.mjs';
 import {
   MARKETING_ROUTES,
   DOC_ROUTES,
+  DOC_LASTMODS,
   SITE_ORIGIN,
 } from './marketing-routes.mjs';
 
@@ -23,56 +27,58 @@ const ORIGIN = (process.env.SITEMAP_SITE_ORIGIN || SITE_ORIGIN).replace(
 const OUT_DIR = process.env.SITEMAP_OUT_DIR || 'dist/print-log-ui/browser';
 const CHUNK_SIZE = 20000;
 
-async function fetchIds(path) {
-  const res = await fetch(`${API_URL}${path}`);
-  if (!res.ok) throw new Error(`${path} -> HTTP ${res.status}`);
-  const data = await res.json();
-  if (!Array.isArray(data)) {
-    throw new Error(`${path} -> response is not a JSON array`);
-  }
-  // An empty array is a valid state (a new or staging environment with no public
-  // content yet). Marketing pages still produce a sitemap; the content chunks are
-  // simply omitted. Only a failed request or a non-array shape is fatal, so a real
-  // API outage never silently ships a thin sitemap.
-  return data;
+// Every child file is listed in the index with the latest <lastmod> of its own
+// entries, or with none when no entry has one. Never the build date: that would
+// tell crawlers everything changed on every deploy (#214).
+function writeFile(name, entries, index) {
+  writeFileSync(join(OUT_DIR, name), buildUrlset(entries));
+  index.push({
+    loc: `${ORIGIN}/${name}`,
+    lastmod: maxLastmod(entries.map((e) => e.lastmod)),
+  });
 }
 
-function writeChunks(prefix, urls, files) {
-  chunk(urls, CHUNK_SIZE).forEach((c, i) => {
-    const name = `${prefix}-${i + 1}.xml`;
-    writeFileSync(join(OUT_DIR, name), buildUrlset(c));
-    files.push(name);
+function writeChunks(prefix, entries, index) {
+  chunk(entries, CHUNK_SIZE).forEach((c, i) => {
+    writeFile(`${prefix}-${i + 1}.xml`, c, index);
   });
 }
 
 async function main() {
-  const printIds = await fetchIds('/api/Prints/public');
-  const userIds = await fetchIds('/api/Users/public');
+  const prints = await fetchPrintRows(fetch, API_URL);
+  if (!prints.withLastmod) {
+    console.warn(
+      'The API has no /api/Prints/public/sitemap yet; print entries are listed without <lastmod>.'
+    );
+  }
+  // Users carry no <lastmod>: the API has no profile modification time, and a
+  // profile page also shows stats and achievements a print date would not cover.
+  const userIds = await fetchJsonArray(fetch, API_URL, '/api/Users/public');
 
   if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
 
-  const staticPageUrls = pageUrls(ORIGIN, [...MARKETING_ROUTES, ...DOC_ROUTES]);
-  const printUrls = contentUrls(ORIGIN, 'prints', printIds);
-  const userUrls = contentUrls(ORIGIN, 'users', userIds);
-
-  const files = [];
-  writeFileSync(
-    join(OUT_DIR, 'sitemap-pages.xml'),
-    buildUrlset(staticPageUrls)
+  const staticPages = pageEntries(
+    ORIGIN,
+    [...MARKETING_ROUTES, ...DOC_ROUTES],
+    DOC_LASTMODS
   );
-  files.push('sitemap-pages.xml');
-  writeChunks('sitemap-prints', printUrls, files);
-  writeChunks('sitemap-users', userUrls, files);
+  const printEntries = contentEntries(ORIGIN, 'prints', prints.rows);
+  const userEntries = contentEntries(ORIGIN, 'users', userIds);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const index = buildIndex(
-    files.map((f) => ({ loc: `${ORIGIN}/${f}`, lastmod: today }))
-  );
-  writeFileSync(join(OUT_DIR, 'sitemap.xml'), index);
+  const index = [];
+  writeFile('sitemap-pages.xml', staticPages, index);
+  writeChunks('sitemap-prints', printEntries, index);
+  writeChunks('sitemap-users', userEntries, index);
 
+  writeFileSync(join(OUT_DIR, 'sitemap.xml'), buildIndex(index));
+
+  const dated = [...staticPages, ...printEntries, ...userEntries].filter(
+    (e) => e.lastmod
+  ).length;
   console.log(
-    `Sitemap generated in ${OUT_DIR}: ${files.length} child sitemaps ` +
-      `(${staticPageUrls.length} pages, ${printUrls.length} prints, ${userUrls.length} users).`
+    `Sitemap generated in ${OUT_DIR}: ${index.length} child sitemaps ` +
+      `(${staticPages.length} pages, ${printEntries.length} prints, ${userEntries.length} users; ` +
+      `${dated} with <lastmod>).`
   );
 }
 

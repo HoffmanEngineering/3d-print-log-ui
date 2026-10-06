@@ -74,6 +74,7 @@ Marketing/SEO routes are prerendered to static HTML at build time via `@angular/
 - **Marketing routes** are defined once in `scripts/marketing-routes.mjs`. To add a prerendered page, add it there AND in `app.routes.server.ts`.
 - **Verification:** `scripts/verify-prerender.mjs` runs in CI and gates prerendered output (unique titles/descriptions, OG/Twitter, canonicals, internal link graph, crawl files).
 - **Sitemap** is generated at deploy time by `scripts/generate-sitemap.mjs` (fetches public print/user IDs, writes a `<sitemapindex>` plus chunked child sitemaps into `dist/`). It is not committed; there is no static `src/sitemap.xml`.
+- **`<lastmod>` is written only where a truthful date exists** (#214): docs pages use their `updated:` frontmatter (release notes also follow the newest release), prints use `lastModified` from `GET /api/Prints/public/sitemap`, and each index entry is the max of its child's entries. Marketing pages and user profiles get none. Never stamp the build date; it tells crawlers everything changed on every deploy. Against an API without that endpoint (404) the generator falls back to `/api/Prints/public` and omits print lastmods.
 - **Deploy** ships the prebuilt `dist` with `skip_app_build: true` (no Oryx rebuild) so the generated sitemap reaches production; `refresh-sitemap.yml` redeploys the latest release tag daily.
 
 ### Generated screenshots

@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 
 import { MANIFEST_JSON } from './docs-paths.mjs';
+import { docLastmods } from './sitemap-lib.mjs';
 
 export const SITE_ORIGIN = 'https://www.3dprintlog.com';
 
@@ -30,16 +31,23 @@ export const MARKETING_ROUTES = ['', ...TIER1, HUB, ...FORKS];
 //
 // The manifest is JSON, not TypeScript, precisely so these plain-Node scripts can
 // read it: they run on Node with no TS loader.
-export const DOC_ROUTES = readDocRoutes();
+const DOCS_MANIFEST = readDocsManifest();
 
-function readDocRoutes() {
+export const DOC_ROUTES = DOCS_MANIFEST.pages
+  .filter((page) => !page.dormant)
+  .map((page) => page.path);
+
+// Doc route -> `<lastmod>` for the sitemap, from each page's `updated`
+// frontmatter (the release-notes page also follows the newest release). The
+// marketing routes have no entry: their content spans many source files and the
+// deploy checkout is shallow, so no single date is truthful for them (#214).
+export const DOC_LASTMODS = docLastmods(DOCS_MANIFEST);
+
+function readDocsManifest() {
   if (!fs.existsSync(MANIFEST_JSON)) {
     throw new Error(
       `Docs manifest is missing (${MANIFEST_JSON}). Run \`npm run docs:generate\` first.`
     );
   }
-  const manifest = JSON.parse(fs.readFileSync(MANIFEST_JSON, 'utf8'));
-  return manifest.pages
-    .filter((page) => !page.dormant)
-    .map((page) => page.path);
+  return JSON.parse(fs.readFileSync(MANIFEST_JSON, 'utf8'));
 }

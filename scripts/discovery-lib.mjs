@@ -62,12 +62,17 @@ export const MCP_SERVER_CARD_MEDIA_TYPE = 'application/mcp-server-card+json';
  * describe the same server.
  */
 export const MCP_SERVER_NAME = 'com.3dprintlog/printlog';
-/** Mirrors `version` in the API repo's `server.json`. */
+/**
+ * Mirrors `version` in the API repo's `server.json`. That version belongs to
+ * the registry listing, not to API releases: it changes only when `server.json`
+ * does, and the API's publish job refuses a changed `server.json` whose version
+ * was not bumped. Change it here in the same breath.
+ */
 export const MCP_SERVER_VERSION = '1.0.0';
 
 /**
- * The Server Card schema caps `description` at 100 characters, so this is
- * shorter than the description in the API repo's `server.json`.
+ * Must stay equal to `description` in the API repo's `server.json`. Both the
+ * Server Card schema and the MCP Registry schema cap it at 100 characters.
  */
 export const MCP_DESCRIPTION =
   'Log and query your 3D prints, printers, filament inventory, and projects on 3dprintlog.com.';

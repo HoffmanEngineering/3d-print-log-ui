@@ -7,7 +7,7 @@ group: about
 order: 30
 mode: reference
 updated: 2026-10-05
-related: [about]
+related: [about, contact]
 ---
 
 # Privacy Policy for 3D Print Log
@@ -20,7 +20,7 @@ the types of information that are collected and recorded by 3D Print Log and how
 we use it.
 
 If you have additional questions or require more information about our Privacy
-Policy, do not hesitate to contact us.
+Policy, do not hesitate to [contact us](/docs/contact).
 
 ## Log Files
 
@@ -59,8 +59,9 @@ we can see which pages are unclear and what people were unable to find.
 **Please do not enter personal or sensitive information into these boxes.** They
 are intended for comments about the documentation, and anything typed into them
 is stored with our analytics data rather than treated as a private message. If
-you need to contact us privately, use the contact details on our
-[About](/docs/about) page instead.
+you need to contact us privately, email
+[hello@3dprintlog.com](mailto:hello@3dprintlog.com) or see the
+[Contact](/docs/contact) page instead.
 
 Analytics data is retained according to the default retention periods of Google
 Analytics and Azure Application Insights, after which it is deleted
@@ -147,8 +148,8 @@ monitor and guide their online activity.
 
 3D Print Log does not knowingly collect any Personal Identifiable Information
 from children under the age of 13. If you think that your child provided this
-kind of information on our website, we strongly encourage you to contact us
-immediately and we will do our best efforts to promptly remove such information
+kind of information on our website, we strongly encourage you to
+[contact us](/docs/contact) immediately and we will do our best efforts to promptly remove such information
 from our records.
 
 ## Online Privacy Policy Only

@@ -38,6 +38,8 @@ describe('app-schema', () => {
         '@type': 'ContactPoint',
         contactType: 'customer support',
         email: 'hello@3dprintlog.com',
+        // The public Contact page (#213), not /feedback, which needs sign-in.
+        url: 'https://www.3dprintlog.com/docs/contact',
       })
     );
     // Deliberately unpublished (#212, #217): it would be a home address.

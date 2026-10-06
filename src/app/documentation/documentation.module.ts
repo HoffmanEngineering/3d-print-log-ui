@@ -12,6 +12,7 @@ import { DocFeedbackComponent } from './doc-feedback/doc-feedback.component';
 import { DocBackToTopComponent } from './doc-back-to-top/doc-back-to-top.component';
 import { DocPageNavComponent } from './doc-page-nav/doc-page-nav.component';
 import { DocRelatedComponent } from './doc-related/doc-related.component';
+import { DocSiteFooterComponent } from './doc-site-footer/doc-site-footer.component';
 import { DocTocComponent } from './doc-toc/doc-toc.component';
 import { DOC_PRIMITIVES } from './primitives';
 import { DocsSearchOpener } from './docs-search/docs-search.opener';
@@ -47,6 +48,7 @@ import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
     DocPageNavComponent,
     DocBackToTopComponent,
     DocRelatedComponent,
+    DocSiteFooterComponent,
     // Standalone, and imported here rather than by each page: a generated page
     // is declared by this module, so this module is its template scope.
     ...DOC_PRIMITIVES,

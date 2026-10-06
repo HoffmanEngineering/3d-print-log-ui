@@ -184,12 +184,13 @@
     "v1.2.0",
     "v1.1.0"
   ],
-  "docs/about": [],
+  "docs/about": ["who-builds-it"],
   "docs/privacy-policy": ["email"],
   "docs/email-notifications": [
     "address",
     "what-we-send",
     "turning-off",
     "privacy"
-  ]
+  ],
+  "docs/contact": ["email", "feedback", "github", "response-times"]
 }

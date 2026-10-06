@@ -6,13 +6,21 @@ navLabel: About
 group: about
 order: 20
 mode: explanation
-updated: 2026-09-02
-related: [getting-started]
+updated: 2026-10-06
+related: [getting-started, contact, privacy-policy]
 ---
 
 ## About
 
 ---
+
+3D Print Log is a free web app, with an Android companion, for keeping a record of everything you 3D print. Each print gets its photos, print time, filament used, slicer settings, rating, and notes, linked to the printer that made it and the spool or bottle it came from. Over time that log answers the questions that are hard to answer from memory: which settings worked on this printer, how much of a spool is left, what a part actually cost, and why the last attempt failed.
+
+It started as a way to keep track of our own prints. Logging can be manual or automatic: the [slicer uploader](/docs/slic3r-uploader), the [Cura plugin](/docs/cura-plugin), and the [OctoPrint](/docs/octoprint-webhook) and [Klipper](/docs/klipper) integrations create entries as you print. The core app is free with unlimited prints, printers, and materials; an optional [Pro subscription](/docs/pro-subscription) removes ads and adds file attachments.
+
+Questions, bug reports, and privacy requests are welcome. See [Contact](/docs/contact) for how to reach us, and the [Privacy Policy](/docs/privacy-policy) for what data the app collects and why.
+
+### Who builds it {#who-builds-it}
 
 <div>
     <p>

@@ -1,0 +1,24 @@
+.doc-site-footer {
+  margin-top: 40px;
+  padding: 20px 0 24px;
+  border-top: 1px solid var(--docs-rule);
+  font-size: 14px;
+  color: var(--docs-text-muted);
+}
+
+.doc-site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-site-footer a {
+  color: var(--docs-link);
+}
+
+.doc-site-footer__note {
+  margin: 12px 0 0;
+}

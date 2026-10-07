@@ -571,6 +571,17 @@ describe('EditPrintDetailComponent', () => {
     });
   });
 
+  describe('parseAsSeconds', () => {
+    it('reads a typed duration as whole seconds', () => {
+      expect(component.parseAsSeconds('1h 30m')).toBe(5_400);
+    });
+
+    // A typo used to be saved as a print time of 0 seconds.
+    it('treats text that is not a duration as no value', () => {
+      expect(component.parseAsSeconds('soon')).toBeNull();
+    });
+  });
+
   describe('Completion date/time calculation', () => {
     // Start: Feb 18 2026 22:41:46 with 963ms sub-second noise from the API
     const START_DATE_WITH_MS = new Date(2026, 1, 18, 22, 41, 46, 963);

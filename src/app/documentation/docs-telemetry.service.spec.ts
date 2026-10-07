@@ -1,4 +1,5 @@
 import { DOCUMENT } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
@@ -101,6 +102,32 @@ describe('DocsTelemetryService', () => {
       service.trackPageView('/docs');
 
       expect(propsOf(0)['slug']).toBe('getting-started');
+    });
+
+    // #230: the server DOM throws on document.referrer, and the docs layout
+    // calls this from ngOnInit, so a throw here emptied every prerendered page.
+    it('does nothing during prerendering, without reading document.referrer', () => {
+      logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
+        'logEvent',
+      ]);
+      const serverDocument = {
+        get referrer(): string {
+          throw new Error('NotYetImplemented');
+        },
+      };
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          DocsTelemetryService,
+          { provide: LoggingService, useValue: logging },
+          { provide: DOCUMENT, useValue: serverDocument },
+          { provide: PLATFORM_ID, useValue: 'server' },
+        ],
+      });
+      const service = TestBed.inject(DocsTelemetryService);
+
+      expect(() => service.trackPageView('/docs/prints')).not.toThrow();
+      expect(logging.logEvent).not.toHaveBeenCalled();
     });
   });
 

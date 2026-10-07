@@ -1,5 +1,5 @@
-import { DOCUMENT } from '@angular/common';
-import { inject, Injectable } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { LoggingService } from 'src/app/core/services/logging.service';
 
 /** How the reader arrived at a docs page. */
@@ -158,11 +158,19 @@ function reportableQuery(query: string): string {
  * Everything goes through `LoggingService`, which already no-ops without a
  * browser or an instrumentation key — so prerendering and logged-out visits
  * degrade cleanly rather than throwing.
+ *
+ * A page view is also skipped outright during prerendering, before it touches
+ * `document`. The server DOM throws `NotYetImplemented` on `document.referrer`,
+ * and the docs layout reports its page view from `ngOnInit`: that throw aborted
+ * the layout's first change detection pass, so its child `<router-outlet>`
+ * never activated and every prerendered docs page shipped without a body
+ * (#230). A prerender is not a visit, so there is nothing to report anyway.
  */
 @Injectable()
 export class DocsTelemetryService {
   private readonly logging = inject(LoggingService);
   private readonly document = inject(DOCUMENT);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /** Slug of the page currently being read; null before the first page view. */
   private currentSlug: string | null = null;
@@ -174,6 +182,9 @@ export class DocsTelemetryService {
   private hasReportedFirstView = false;
 
   trackPageView(url: string): void {
+    if (!this.isBrowser) {
+      return;
+    }
     this.currentSlug = slugFromDocsUrl(url);
     this.reportedBuckets.clear();
 

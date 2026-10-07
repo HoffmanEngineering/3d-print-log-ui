@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { skillDigest } from './discovery-lib.mjs';
+import { docBodyProblems } from './prerender-body-lib.mjs';
 import {
   SITE_ORIGIN,
   MARKETING_ROUTES,
@@ -353,6 +354,22 @@ if (home) {
       errors.push(`homepage: no link to /${t}`);
   }
 }
+// Docs bodies (#230): each docs page's prerendered HTML must carry the page
+// itself inside the layout's <router-outlet>, not just <head> metadata. The
+// expected text is taken from the page's Markdown twin, which is converted from
+// the same rendered template, so it cannot drift from the page.
+for (const r of DOC_ROUTES) {
+  const doc = read(r);
+  if (!doc) continue;
+  const twinFile = `${DIST}/${r}.md`;
+  if (!existsSync(twinFile)) continue; // reported by the Markdown twin check
+  for (const problem of docBodyProblems(
+    doc.html,
+    readFileSync(twinFile, 'utf8')
+  )) {
+    errors.push(`${doc.file}: ${problem}`);
+  }
+}
 // Trust pages (#213): the homepage and every docs page link About, Contact and
 // the Privacy Policy, so a crawler that lands anywhere can find who runs the
 // site. Compared as exact href values, not substrings.
@@ -491,5 +508,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files, agent skills, Markdown twins.`
+  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files, agent skills, Markdown twins, docs bodies.`
 );

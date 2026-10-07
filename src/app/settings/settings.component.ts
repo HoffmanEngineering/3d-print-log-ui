@@ -1,7 +1,7 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { KeyValue } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { map } from 'rxjs';
@@ -138,6 +138,7 @@ export class SettingsComponent implements OnInit {
   private readonly pushPreferences = inject(PushPreferencesService);
   private readonly nativeBridge = inject(NativeBridgeService);
   private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * The filament display unit toggles are about 440px wide in a row, wider than a phone
@@ -252,14 +253,16 @@ export class SettingsComponent implements OnInit {
         : null;
     });
 
-    this.authService.userProfile$.subscribe((user) => {
-      if (user.deactivationDateTime) {
-        this.deactivateHasBeenClicked = true;
-      } else {
-        // If the deactivate date time gets set back to null, then clear the click
-        this.deactivateHasBeenClicked = false;
-      }
-    });
+    this.authService.userProfile$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        if (user?.deactivationDateTime) {
+          this.deactivateHasBeenClicked = true;
+        } else {
+          // If the deactivate date time gets set back to null, then clear the click
+          this.deactivateHasBeenClicked = false;
+        }
+      });
   }
 
   public sortByName = (

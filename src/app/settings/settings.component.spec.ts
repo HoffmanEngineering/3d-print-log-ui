@@ -25,27 +25,6 @@ import { PushPreferencesService } from '../core/services/push-preferences.servic
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
 import { UserSettingType } from '../core/services/user-setting.service';
 
-xdescribe('SettingsComponent (original)', () => {
-  let component: SettingsComponent;
-  let fixture: ComponentFixture<SettingsComponent>;
-
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [SettingsComponent],
-    }).compileComponents();
-  }));
-
-  beforeEach(() => {
-    fixture = TestBed.createComponent(SettingsComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
-
 describe('SettingsComponent', () => {
   let breakpoint$: BehaviorSubject<BreakpointState>;
   let component: SettingsComponent;
@@ -53,6 +32,7 @@ describe('SettingsComponent', () => {
   let mockNativeBridge: jasmine.SpyObj<NativeBridgeService>;
   let mockPushPreferences: jasmine.SpyObj<PushPreferencesService>;
   let mockPushPermissionPrompt: jasmine.SpyObj<PushPermissionPromptService>;
+  let userProfile$: BehaviorSubject<UserProfileInfo | null>;
 
   const mockUserDetails = {
     id: '1',
@@ -75,11 +55,14 @@ describe('SettingsComponent', () => {
   };
 
   beforeEach(waitForAsync(() => {
+    userProfile$ = new BehaviorSubject<UserProfileInfo | null>({
+      deactivationDateTime: null,
+    } as UserProfileInfo);
     const mockAuthService = jasmine.createSpyObj<AuthService>(
       'AuthService',
       ['updateCurrentUserDeactivationDate'],
       {
-        userProfile$: of({ deactivationDateTime: null } as UserProfileInfo),
+        userProfile$: userProfile$.asObservable(),
       }
     );
     const mockUserService = jasmine.createSpyObj<UserService>('UserService', [
@@ -215,6 +198,24 @@ describe('SettingsComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
+  });
+
+  describe('user profile subscription', () => {
+    it('unsubscribes from the user profile when destroyed', () => {
+      fixture.detectChanges();
+      expect(userProfile$.observed).toBeTrue();
+
+      fixture.destroy();
+
+      expect(userProfile$.observed).toBeFalse();
+    });
+
+    it('tolerates a null user profile (logged out)', () => {
+      fixture.detectChanges();
+
+      expect(() => userProfile$.next(null)).not.toThrow();
+      expect(component.deactivateHasBeenClicked).toBeFalse();
+    });
   });
 
   describe('theme toggle', () => {

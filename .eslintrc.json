@@ -36,6 +36,7 @@
             "type": "attribute"
           }
         ],
+        "@angular-eslint/prefer-host-metadata-property": "error",
         "@angular-eslint/prefer-inject": "off",
         "@angular-eslint/prefer-standalone": "off"
       }

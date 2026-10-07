@@ -2,7 +2,6 @@ import { Location } from '@angular/common';
 import {
   Component,
   ElementRef,
-  HostListener,
   OnDestroy,
   OnInit,
   computed,
@@ -116,6 +115,7 @@ function toServerAdjustmentRows(
 
 @Component({
   selector: 'app-filament-detail',
+  host: { '(window:beforeunload)': 'canDeactivate()' },
   templateUrl: './filament-detail.component.html',
   styleUrls: ['./filament-detail.component.scss'],
   standalone: false,
@@ -207,7 +207,6 @@ export class FilamentDetailComponent
     private readonly dialog: MatDialog
   ) {}
 
-  @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
     // A navigation this component started itself is never the user abandoning
     // work, so it must not be second-guessed. Without this, rewriting the URL

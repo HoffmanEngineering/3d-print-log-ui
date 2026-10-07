@@ -66,6 +66,16 @@ describe('GcodeViewerModalComponent', () => {
     expect(component.overallProgress()).toBe(75);
   });
 
+  it('listens for viewer progress messages posted to the window', () => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: { type: 'SET_LOAD_PROGRESS', progress: 50 },
+      })
+    );
+
+    expect(component.overallProgress()).toBe(25);
+  });
+
   it('maps MODEL_INFO into a print with one usage row per extruder', () => {
     component.onMessage({
       data: {

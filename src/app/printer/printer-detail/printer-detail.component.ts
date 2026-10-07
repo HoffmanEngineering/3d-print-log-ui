@@ -1,6 +1,5 @@
 import {
   Component,
-  HostListener,
   OnDestroy,
   OnInit,
   computed,
@@ -39,6 +38,7 @@ import { MaterialCategory } from 'src/app/core/services/material-categories.serv
 
 @Component({
   selector: 'app-printer-detail',
+  host: { '(window:beforeunload)': 'canDeactivate()' },
   templateUrl: './printer-detail.component.html',
   styleUrls: ['./printer-detail.component.scss'],
   standalone: false,
@@ -121,7 +121,6 @@ export class PrinterDetailComponent
     this.printerCategorySubscription?.unsubscribe?.();
   }
 
-  @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
     // A navigation this component started itself is never the user abandoning work, so it
     // must not be second-guessed. Without this, rewriting the URL after a create prompts

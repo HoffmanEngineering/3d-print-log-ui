@@ -12,3 +12,12 @@ hr {
     border-top-color: rgba(255, 255, 255, 0.12);
   }
 }
+
+// A vertical toggle group is inline-flex and sizes to its widest label, which leaves it
+// floating beside the label text on a phone. Full width puts it on its own line with
+// tap targets that span the card (#152).
+.stacked-toggle-group {
+  display: flex;
+  width: 100%;
+  margin-top: 8px;
+}

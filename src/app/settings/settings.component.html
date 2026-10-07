@@ -367,6 +367,8 @@
           <mat-button-toggle-group
             [(ngModel)]="preferredFilamentDisplayUnit"
             aria-label="Preferred filament display unit"
+            [vertical]="stackDisplayUnitToggles()"
+            [class.stacked-toggle-group]="stackDisplayUnitToggles()"
           >
             <mat-button-toggle
               [value]="printFilamentSourceMeasurementTypes.AsRecorded"

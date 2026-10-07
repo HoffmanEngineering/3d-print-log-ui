@@ -1,15 +1,15 @@
-@if (allowComments) {
+@if (allowComments()) {
   <div>
     <div>
       <h3>Comments:</h3>
       <button mat-flat-button (click)="scrollToReply()">Reply</button>
     </div>
-    @for (comment of comments; track comment) {
+    @for (comment of comments(); track comment) {
       <div class="comment">
         <app-comment
           [comment]="comment"
           [showDelete]="
-            printOwnerUserId === currentUserId ||
+            printOwnerUserId() === currentUserId ||
             comment.createdById === currentUserId
           "
           (delete)="deleteComment(comment)"
@@ -66,7 +66,7 @@
     </div>
   </div>
 }
-@if (!allowComments) {
+@if (!allowComments()) {
   <div>
     <mat-card appearance="outlined">
       Comments are disabled for this print.

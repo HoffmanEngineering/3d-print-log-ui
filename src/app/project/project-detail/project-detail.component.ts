@@ -4,10 +4,10 @@ import {
   DestroyRef,
   ElementRef,
   OnInit,
-  ViewChild,
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -103,7 +103,8 @@ export class ProjectDetailComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly sanitizer = inject(DomSanitizer);
 
-  @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
+  readonly fileInputRef =
+    viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
   private readonly resolvedUrls = signal<Map<number, SafeUrl>>(new Map());
 
@@ -538,7 +539,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   onAddImageClicked(): void {
-    this.fileInputRef.nativeElement.click();
+    this.fileInputRef().nativeElement.click();
   }
 
   onFileSelected(event: Event): void {

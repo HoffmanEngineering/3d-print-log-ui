@@ -4,10 +4,10 @@ import {
   Component,
   ElementRef,
   HostListener,
-  ViewChild,
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { lastValueFrom } from 'rxjs';
@@ -91,7 +91,7 @@ function extruderSlot(key: string): number | undefined {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GcodeViewerModalComponent implements AfterViewInit {
-  @ViewChild('iframe') iframe: ElementRef<HTMLIFrameElement>;
+  readonly iframe = viewChild<ElementRef<HTMLIFrameElement>>('iframe');
 
   readonly dialogRef =
     inject<MatDialogRef<GcodeViewerModalComponent>>(MatDialogRef);
@@ -187,14 +187,14 @@ export class GcodeViewerModalComponent implements AfterViewInit {
     <script>GCODE.ui.initHandlers();</script>
   </body>
 </html>`;
-    const doc = this.iframe.nativeElement.contentDocument;
+    const doc = this.iframe().nativeElement.contentDocument;
     doc.open();
     doc.write(content);
     doc.close();
   }
 
   private sendMessage(action: unknown) {
-    this.iframe.nativeElement.contentWindow.postMessage(action, '*');
+    this.iframe().nativeElement.contentWindow.postMessage(action, '*');
   }
 
   private getLastSelectedPrinter() {

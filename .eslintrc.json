@@ -36,6 +36,11 @@
             "type": "attribute"
           }
         ],
+        "@angular-eslint/prefer-signals": [
+          "error",
+          { "preferReadonlySignalProperties": false }
+        ],
+        "@angular-eslint/prefer-output-emitter-ref": "error",
         "@angular-eslint/prefer-inject": "off",
         "@angular-eslint/prefer-standalone": "off"
       }
@@ -48,6 +53,14 @@
         "plugin:@angular-eslint/template/recommended"
       ],
       "rules": {}
+    },
+    {
+      "files": [
+        "src/app/shared/simple-dialog/simple-dialog.component.ts"
+      ],
+      "rules": {
+        "@angular-eslint/prefer-signals": "off"
+      }
     },
     {
       "files": [

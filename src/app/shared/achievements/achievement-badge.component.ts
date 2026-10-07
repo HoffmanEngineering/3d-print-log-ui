@@ -171,7 +171,7 @@ export class AchievementBadgeComponent {
   /** The badge's accessible name. */
   readonly label = input<string>('');
   /** The number the `numeral` glyph shows (the tier threshold). */
-  readonly numeral = input<number | undefined>(undefined);
+  readonly numeral = input<number | undefined>();
 
   protected readonly shield = SHIELD_PATH;
 

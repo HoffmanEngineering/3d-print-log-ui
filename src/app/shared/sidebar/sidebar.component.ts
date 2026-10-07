@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { INavData } from './types';
 
 @Component({
@@ -8,7 +8,7 @@ import { INavData } from './types';
   standalone: false,
 })
 export class SidebarComponent {
-  @Input() navItems: INavData[];
+  readonly navItems = input<INavData[]>();
 
   constructor() {}
 }

@@ -3,9 +3,9 @@ import {
   Component,
   DestroyRef,
   ElementRef,
-  ViewChild,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -49,11 +49,9 @@ export class DocsSearchDialogComponent {
   private readonly skeleton = new DeferredSkeletonController();
   readonly loading = this.skeleton.visible;
 
-  @ViewChild('input', { static: true })
-  private readonly input?: ElementRef<HTMLInputElement>;
+  private readonly input = viewChild<ElementRef<HTMLInputElement>>('input');
 
-  @ViewChild('list', { static: true })
-  private readonly list?: ElementRef<HTMLElement>;
+  private readonly list = viewChild<ElementRef<HTMLElement>>('list');
 
   private readonly search = inject(DocsSearchService);
   private readonly telemetry = inject(DocsTelemetryService);
@@ -145,12 +143,12 @@ export class DocsSearchDialogComponent {
   }
 
   focusInput(): void {
-    this.input?.nativeElement.focus();
+    this.input()?.nativeElement.focus();
   }
 
   /** Keeps the aria-activedescendant option inside the scrolling result list. */
   private scrollActiveIntoView(): void {
-    const option = this.list?.nativeElement.children[this.active()];
+    const option = this.list()?.nativeElement.children[this.active()];
     option?.scrollIntoView?.({ block: 'nearest' });
   }
 

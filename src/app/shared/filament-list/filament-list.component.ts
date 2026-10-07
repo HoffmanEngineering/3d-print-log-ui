@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, OnInit, output, input, linkedSignal } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { debounce } from 'lodash-es';
@@ -26,11 +26,7 @@ import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
   standalone: false,
 })
 export class FilamentListComponent implements OnInit {
-  @Input()
-  public showAddFilamentButton: false;
-
-  @Input()
-  public multiSelect = false;
+  public readonly multiSelect = input(false);
 
   public filaments: FilamentSummary[] = [];
   public selectedFilaments = new Map<string, FilamentSummary>();
@@ -91,7 +87,7 @@ export class FilamentListComponent implements OnInit {
     if (this.includeInactive) count++;
     if (this.showFavoritesOnly) count++;
     if (this.showLoadedFilamentOnly) count++;
-    if (this._filterByMaterialCategory) count++;
+    if (this.materialCategoryFilter()) count++;
     if (this.filterByColorPatterns.length) count++;
     if (this.filterByFinishTypes.length) count++;
     if (this.filterByEffects.length) count++;
@@ -102,20 +98,15 @@ export class FilamentListComponent implements OnInit {
 
   public materialCategories: MaterialCategory[] = [];
 
-  @Input()
-  get filterByMaterialCategory(): string {
-    return this._filterByMaterialCategory;
-  }
-  set filterByMaterialCategory(filterByMaterialCategory: string) {
-    this._filterByMaterialCategory = filterByMaterialCategory;
-  }
-  protected _filterByMaterialCategory = '';
+  public readonly filterByMaterialCategory = input('');
+  /** Starts from the parent's category and then follows the filter dropdown. */
+  protected readonly materialCategoryFilter = linkedSignal(() =>
+    this.filterByMaterialCategory()
+  );
 
-  @Output()
-  public filamentSelected = new EventEmitter<FilamentSummary>();
+  public readonly filamentSelected = output<FilamentSummary>();
 
-  @Output()
-  public selectionChanged = new EventEmitter<FilamentSummary[]>();
+  public readonly selectionChanged = output<FilamentSummary[]>();
 
   constructor(
     private filamentService: FilamentService,
@@ -125,7 +116,7 @@ export class FilamentListComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.multiSelect) {
+    if (this.multiSelect()) {
       this.displayedColumns = ['select', ...this.displayedColumns];
     }
 
@@ -177,7 +168,7 @@ export class FilamentListComponent implements OnInit {
         this.includeInactive,
         this.showFavoritesOnly,
         this.showLoadedFilamentOnly,
-        this.filterByMaterialCategory,
+        this.materialCategoryFilter(),
         undefined,
         this.filterByColorPatterns.length
           ? this.filterByColorPatterns

@@ -1,5 +1,5 @@
 <mat-nav-list class="sidebar">
-  @for (item of navItems; track item) {
+  @for (item of navItems(); track item) {
     @if (item.divider) {
       <div class="divider">
         <mat-divider></mat-divider>

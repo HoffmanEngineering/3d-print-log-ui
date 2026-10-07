@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'app-stat-panel',
@@ -10,10 +10,10 @@ import { Component, Input } from '@angular/core';
  * Used to display a single metric.
  */
 export class StatPanelComponent {
-  @Input() title: string;
-  @Input() value: number | string;
+  readonly title = input<string>();
+  readonly value = input<number | string>();
 
-  @Input() invertDisplay = false;
+  readonly invertDisplay = input(false);
 
   constructor() {}
 }

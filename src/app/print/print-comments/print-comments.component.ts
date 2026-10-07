@@ -1,11 +1,10 @@
 import {
   Component,
   ElementRef,
-  EventEmitter,
-  Input,
   OnInit,
-  Output,
-  ViewChild,
+  input,
+  output,
+  viewChild,
 } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -20,12 +19,12 @@ import { SharedModule } from 'src/app/shared/shared.module';
   imports: [SharedModule],
 })
 export class PrintCommentsComponent implements OnInit {
-  @Input() printId: number;
-  @Input() printOwnerUserId: number;
-  @Input() comments: Comment[];
-  @Input() allowComments: boolean;
+  readonly printId = input<number>();
+  readonly printOwnerUserId = input<number>();
+  readonly comments = input<Comment[]>();
+  readonly allowComments = input<boolean>();
 
-  @Output() addNewComment = new EventEmitter<string>();
+  readonly addNewComment = output<string>();
 
   /**
    * Deletion is reported upward for the same reason `addNewComment` is: the
@@ -33,13 +32,11 @@ export class PrintCommentsComponent implements OnInit {
    * from this component's input array mutates the array without repainting
    * anything.
    */
-  @Output() commentDeleted = new EventEmitter<Comment>();
+  readonly commentDeleted = output<Comment>();
 
-  @ViewChild('newCommentTextArea', { static: false })
-  newCommentTextArea: ElementRef;
+  readonly newCommentTextArea = viewChild<ElementRef>('newCommentTextArea');
 
-  @ViewChild('notLoggedIn', { static: false })
-  notLoggedIn: ElementRef;
+  readonly notLoggedIn = viewChild<ElementRef>('notLoggedIn');
 
   public currentUserProfilePicture = '';
   public currentUserId: number | null = null;
@@ -71,16 +68,18 @@ export class PrintCommentsComponent implements OnInit {
   }
 
   public scrollToReply() {
-    if (this.newCommentTextArea) {
-      this.newCommentTextArea.nativeElement.scrollIntoView();
-      this.newCommentTextArea.nativeElement.focus();
-    } else if (this.notLoggedIn) {
-      this.notLoggedIn.nativeElement.scrollIntoView();
+    const newCommentTextArea = this.newCommentTextArea();
+    const notLoggedIn = this.notLoggedIn();
+    if (newCommentTextArea) {
+      newCommentTextArea.nativeElement.scrollIntoView();
+      newCommentTextArea.nativeElement.focus();
+    } else if (notLoggedIn) {
+      notLoggedIn.nativeElement.scrollIntoView();
     }
   }
 
   public deleteComment(comment: Comment) {
-    this.printService.deletePrintComment(this.printId, comment.id).subscribe(
+    this.printService.deletePrintComment(this.printId(), comment.id).subscribe(
       () => {
         this.toastrService.success('Comment deleted successfully.');
 

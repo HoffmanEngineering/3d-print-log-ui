@@ -1,9 +1,9 @@
 import {
   Component,
-  Input,
   OnChanges,
   OnInit,
   SimpleChanges,
+  input,
 } from '@angular/core';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
 
@@ -14,7 +14,7 @@ import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stat
   standalone: false,
 })
 export class StatsComponent implements OnChanges {
-  @Input() userId: number;
+  readonly userId = input<number>();
 
   public printCountTotal = 0;
   public printCountLast30Days = 0;
@@ -48,7 +48,7 @@ export class StatsComponent implements OnChanges {
     endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
       .getUsersTotalFilamentUsage(
-        this.userId,
+        this.userId(),
         new Date(new Date().setHours(0, 0, 0, 0) - 30 * 86_400_000),
         endOfToday
       )
@@ -61,7 +61,7 @@ export class StatsComponent implements OnChanges {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
-      .getUsersTotalFilamentUsage(this.userId, this.MIN_DATE, endOfToday)
+      .getUsersTotalFilamentUsage(this.userId(), this.MIN_DATE, endOfToday)
       .subscribe((result) => {
         const totalFilamentUsage = +(result ?? 0) / 1000;
         this.totalFilamentUsageInG = `${totalFilamentUsage} (g)`;
@@ -72,7 +72,7 @@ export class StatsComponent implements OnChanges {
     endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
       .getUsersTotalPrintTimeInSeconds(
-        this.userId,
+        this.userId(),
         new Date(new Date().setHours(0, 0, 0, 0) - 30 * 86_400_000),
         endOfToday
       )
@@ -86,7 +86,7 @@ export class StatsComponent implements OnChanges {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
-      .getUsersTotalPrintTimeInSeconds(this.userId, this.MIN_DATE, endOfToday)
+      .getUsersTotalPrintTimeInSeconds(this.userId(), this.MIN_DATE, endOfToday)
       .subscribe((result) => {
         const durationString = this.formatTotalDuration(result);
 
@@ -98,7 +98,7 @@ export class StatsComponent implements OnChanges {
     endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
       .getUsersPrintCount(
-        this.userId,
+        this.userId(),
         new Date(new Date().setHours(0, 0, 0, 0) - 30 * 86_400_000),
         endOfToday
       )
@@ -121,7 +121,7 @@ export class StatsComponent implements OnChanges {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
     this.userPrintsService
-      .getUsersPrintCount(this.userId, this.MIN_DATE, endOfToday)
+      .getUsersPrintCount(this.userId(), this.MIN_DATE, endOfToday)
       .subscribe((result) => {
         this.printCountTotal = result;
       });

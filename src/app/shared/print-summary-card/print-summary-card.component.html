@@ -1,22 +1,22 @@
 <mat-card appearance="outlined" class="mat-elevation-z4">
   <mat-card-header>
-    @if (userProfilePictureUrl) {
-      <img mat-card-avatar [src]="this.userProfilePictureUrl" />
+    @if (userProfilePictureUrl()) {
+      <img mat-card-avatar [src]="userProfilePictureUrl()" />
     }
     <mat-card-title>
-      <a [routerLink]="['/prints', print.id]">{{ print.title }}</a>
+      <a [routerLink]="['/prints', print().id]">{{ print().title }}</a>
     </mat-card-title>
-    @if (userId && userName) {
+    @if (userId() && userName()) {
       <mat-card-subtitle>
         Printed by
-        <a [routerLink]="['/users', userId]">{{ userName }}</a> on
-        {{ print.startDate | localeDate: 'long' }}
+        <a [routerLink]="['/users', userId()]">{{ userName() }}</a> on
+        {{ print().startDate | localeDate: 'long' }}
       </mat-card-subtitle>
     }
-    @if (!userId || !userName) {
+    @if (!userId() || !userName()) {
       <mat-card-subtitle>
         Printed on
-        {{ print.startDate | localeDate: 'long' }}
+        {{ print().startDate | localeDate: 'long' }}
       </mat-card-subtitle>
     }
   </mat-card-header>
@@ -27,10 +27,10 @@
   >
     <div fxLayout="row">
       <div class="main-image">
-        @if (print.defaultPrintImageId > 0) {
+        @if (print().defaultPrintImageId > 0) {
           <app-print-image
-            [printId]="print.id"
-            [imageId]="print.defaultPrintImageId"
+            [printId]="print().id"
+            [imageId]="print().defaultPrintImageId"
           ></app-print-image>
         }
       </div>

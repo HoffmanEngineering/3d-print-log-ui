@@ -302,62 +302,6 @@
           [userProfilePictureUrl]="this.userDetail.profilePicture"
         ></app-user-prints>
       </mat-card-content>
-      <!-- <div fxFlex>
-            <div
-              fxFlex
-              class="card-img-top main-image"
-              *ngIf="selectedImage && selectedImage.value"
-              >
-              <app-print-image
-                fxFlex
-                [printId]="printForm.get('id').value"
-                [imageId]="selectedImage.value.id"
-                [imageData]="selectedImage.value.url"
-                [showDeleteOnHover]="true"
-                (imageDataChange)="selectedImage.value.url = $event"
-              ></app-print-image>
-            </div>
-            <div
-              class="images-preview mt-2"
-              *ngIf="false"
-              fxLayout
-              fxLayoutAlign="center center"
-              >
-              <div
-                fxFlex
-                formArrayName="images"
-                *ngFor="let image of images.controls; let i = index"
-                >
-                <div
-                  [formGroupName]="i"
-                  class="image-preview"
-                  [ngClass]="{
-                  isDefault: image?.value?.isDefault === true,
-                  isSelected: selectedImage === image
-                  }"
-                  >
-                  <app-print-image
-                    fxFlex
-                    [printId]="printForm.get('id').value"
-                    [imageId]="image.value.id"
-                    [imageData]="image.value.url"
-                    (imageDataChange)="image.value.url = $event"
-                  ></app-print-image>
-                </div>
-              </div>
-            </div>
-          </div> -->
-      <!-- <mat-card-actions
-          fxLayout
-          fxLayoutAlign="space-between center"
-          fxLayoutGap="15px"
-          >
-          <div fxFlex fxFlexFill>
-            <button fxFlex mat-raised-button type="button" color="warn">
-              Close
-            </button>
-          </div>
-        </mat-card-actions> -->
     </div>
   </mat-card>
 </div>

@@ -159,19 +159,6 @@ export class PrinterListComponent implements OnInit {
     this.totalCount = response.paging.totalCount;
   }
 
-  public formatLoadedInFilament(printer: PrinterSummarySimple) {
-    let result = '';
-    if (printer?.loadedFilaments?.length > 0) {
-      result = printer.loadedFilaments
-        .map((f) => {
-          return `${f.filament.displayName} (${f.filament.materialType})`;
-        })
-        .join(', ');
-    }
-
-    return result;
-  }
-
   public deletePrinter(printer: PrinterSummarySimple) {
     const dialogRef = this.dialog.open(SimpleDialogComponent, {
       maxWidth: '350px',

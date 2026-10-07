@@ -122,8 +122,8 @@
 
     <div class="print-container">
       @for (page of pages(); track $index; let pageIdx = $index) {
-        <div class="print-page" [ngStyle]="pageStyle()">
-          <div class="print-page-grid" [ngStyle]="gridStyle()">
+        <div class="print-page" [style]="pageStyle()">
+          <div class="print-page-grid" [style]="gridStyle()">
             @for (label of page; track $index) {
               <div class="label-card" [class]="labelClass()">
                 <div class="qr-code" [innerHTML]="label.qrCodeSvg"></div>

@@ -1,3 +1,4 @@
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { signal, WritableSignal } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -7,7 +8,7 @@ import { SettingsComponent } from './settings.component';
 import { ThemeService, ThemeMode } from '../core/services/theme.service';
 import { SharedModule } from '../shared/shared.module';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { AuthService, UserProfileInfo } from '../core/services/auth.service';
 import { UserService } from '../core/services/user.service';
 import { UserSettingService } from '../core/services/user-setting.service';
@@ -46,6 +47,7 @@ xdescribe('SettingsComponent (original)', () => {
 });
 
 describe('SettingsComponent', () => {
+  let breakpoint$: BehaviorSubject<BreakpointState>;
   let component: SettingsComponent;
   let fixture: ComponentFixture<SettingsComponent>;
   let mockNativeBridge: jasmine.SpyObj<NativeBridgeService>;
@@ -159,6 +161,11 @@ describe('SettingsComponent', () => {
       outcome: 'shown',
     });
 
+    breakpoint$ = new BehaviorSubject<BreakpointState>({
+      matches: false,
+      breakpoints: {},
+    });
+
     TestBed.configureTestingModule({
       declarations: [SettingsComponent],
       imports: [
@@ -175,6 +182,10 @@ describe('SettingsComponent', () => {
             getConnectedAgents: () => of([]),
             revoke: () => of(undefined),
           },
+        },
+        {
+          provide: BreakpointObserver,
+          useValue: { observe: () => breakpoint$.asObservable() },
         },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: AuthService, useValue: mockAuthService },
@@ -237,6 +248,30 @@ describe('SettingsComponent', () => {
       lightToggle.click();
       fixture.detectChanges();
       expect(themeService.setMode).toHaveBeenCalledWith('light');
+    });
+  });
+
+  describe('filament display unit toggles (#152)', () => {
+    const displayUnitGroup = (): HTMLElement =>
+      fixture.nativeElement.querySelector(
+        'mat-button-toggle-group[aria-label="Preferred filament display unit"]'
+      );
+
+    it('lays the toggles out in a row on wider screens', () => {
+      fixture.detectChanges();
+
+      const group = displayUnitGroup();
+      expect(group.classList).not.toContain('mat-button-toggle-vertical');
+      expect(group.classList).not.toContain('stacked-toggle-group');
+    });
+
+    it('stacks the toggles full width on a phone so the page cannot scroll sideways', () => {
+      breakpoint$.next({ matches: true, breakpoints: {} });
+      fixture.detectChanges();
+
+      const group = displayUnitGroup();
+      expect(group.classList).toContain('mat-button-toggle-vertical');
+      expect(group.classList).toContain('stacked-toggle-group');
     });
   });
 

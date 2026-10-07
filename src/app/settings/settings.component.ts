@@ -1,7 +1,10 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { KeyValue } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { map } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import {
@@ -135,6 +138,18 @@ export class SettingsComponent implements OnInit {
   private readonly pushPreferences = inject(PushPreferencesService);
   private readonly nativeBridge = inject(NativeBridgeService);
   private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
+
+  /**
+   * The filament display unit toggles are about 440px wide in a row, wider than a phone
+   * viewport (#152). Below this width they stack vertically at full width instead, so the
+   * page never scrolls sideways.
+   */
+  readonly stackDisplayUnitToggles = toSignal(
+    inject(BreakpointObserver)
+      .observe('(max-width: 599.98px)')
+      .pipe(map((state) => state.matches)),
+    { initialValue: false }
+  );
 
   private async loadPushPreferences(): Promise<void> {
     this.pushAvailable = this.nativeBridge.isAvailable();

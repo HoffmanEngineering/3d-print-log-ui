@@ -8,16 +8,24 @@
 // that is neither a file nor a rule gets the static 404.html with a 404 status.
 
 /**
+ * A route or path without its trailing slash (`/` itself is kept). SWA treats
+ * `/docs` and `/docs/` as one route, and rejects a config that lists both.
+ */
+export function normalizeSwaRoute(route) {
+  return route.length > 1 ? route.replace(/\/$/, '') : route;
+}
+
+/**
  * Whether an SWA route pattern matches a request path. `*` matches any run of
  * characters, `/prints/*` matches everything under `/prints/` but not `/prints`
- * itself, and matching ignores case, as SWA does.
+ * itself, and matching ignores case and a trailing slash, as SWA does.
  */
 export function matchSwaRoute(pattern, path) {
-  const source = pattern
+  const source = normalizeSwaRoute(pattern)
     .split('*')
     .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
     .join('.*');
-  return new RegExp(`^${source}$`, 'i').test(path);
+  return new RegExp(`^${source}$`, 'i').test(normalizeSwaRoute(path));
 }
 
 /**

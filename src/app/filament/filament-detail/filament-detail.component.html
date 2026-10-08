@@ -608,11 +608,6 @@
             type="number"
             formControlName="spoolWeightG"
           />
-          <!-- <mat-error
-            *ngIf="filamentForm.controls['brand'].hasError('required')"
-            >
-            A Name is <strong>required</strong>
-          </mat-error> -->
         </mat-form-field>
         <div fxFlex="grow" fxFlexFill>
           <h3 style="margin-block-end: 5px">
@@ -823,11 +818,6 @@
               type="number"
               formControlName="tempRangeStart"
             />
-            <!-- <mat-error
-              *ngIf="filamentForm.controls['brand'].hasError('required')"
-              >
-              A Name is <strong>required</strong>
-            </mat-error> -->
           </mat-form-field>
         }
         @if (this.filamentForm.get('tempRangeEnd').enabled) {
@@ -839,11 +829,6 @@
               type="number"
               formControlName="tempRangeEnd"
             />
-            <!-- <mat-error
-              *ngIf="filamentForm.controls['brand'].hasError('required')"
-              >
-              A Name is <strong>required</strong>
-            </mat-error> -->
           </mat-form-field>
         }
         @if (this.filamentForm.get('recommendedTemp').enabled) {
@@ -955,11 +940,6 @@
             [for]="picker"
           ></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
-          <!-- <mat-error
-                                                                    *ngIf="filamentForm.controls['brand'].hasError('required')"
-                                                                    >
-                                                                    A Name is <strong>required</strong>
-                                                                  </mat-error> -->
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Purchase Location</mat-label>
@@ -981,11 +961,6 @@
               </mat-option>
             }
           </mat-autocomplete>
-          <!-- <mat-error
-                                                                    *ngIf="filamentForm.controls['brand'].hasError('required')"
-                                                                    >
-                                                                    A Name is <strong>required</strong>
-                                                                  </mat-error> -->
         </mat-form-field>
         <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
           <mat-form-field style="margin: 0" fxFlex>

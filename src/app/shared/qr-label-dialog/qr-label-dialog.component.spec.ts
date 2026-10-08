@@ -343,6 +343,24 @@ describe('QrLabelDialogComponent', () => {
     });
   });
 
+  it('sizes each rendered page and its grid from the layout', fakeAsync(() => {
+    component.paperSize.set('A4');
+    component.labelSize.set('small');
+    component.columnOverride.set(3);
+    fixture.detectChanges();
+    flushMicrotasks();
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement.querySelector(
+      '.print-page'
+    ) as HTMLElement;
+    const grid = page.querySelector('.print-page-grid') as HTMLElement;
+
+    expect(page.style.width).toBe('210mm');
+    expect(page.style.height).toBe('297mm');
+    expect(grid.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
+  }));
+
   it('should compute label class based on size', () => {
     component.labelSize.set('small');
     expect(component.labelClass()).toBe('label-small');

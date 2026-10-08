@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
   UntypedFormBuilder,
   UntypedFormGroup,
@@ -25,6 +25,7 @@ import {
 
 @Component({
   selector: 'app-feedback',
+  host: { '(window:beforeunload)': 'canDeactivate()' },
   templateUrl: './feedback.component.html',
   styleUrls: ['./feedback.component.scss'],
   imports: [
@@ -53,7 +54,6 @@ export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
     private titleService: Title
   ) {}
 
-  @HostListener('window:beforeunload')
   canDeactivate(): boolean | Observable<boolean> {
     return !this.form.dirty;
   }

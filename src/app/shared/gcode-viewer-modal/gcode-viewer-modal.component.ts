@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  HostListener,
   ViewChild,
   computed,
   inject,
@@ -85,6 +84,7 @@ function extruderSlot(key: string): number | undefined {
  */
 @Component({
   selector: 'app-gcode-viewer-modal',
+  host: { '(window:message)': 'onMessage($event)' },
   templateUrl: './gcode-viewer-modal.component.html',
   styleUrls: ['./gcode-viewer-modal.component.scss'],
   standalone: false,
@@ -121,7 +121,6 @@ export class GcodeViewerModalComponent implements AfterViewInit {
     });
   }
 
-  @HostListener('window:message', ['$event'])
   public async onMessage(e: ViewerMessage) {
     switch (e.data.type) {
       case Actions.GCODE_PARSER_INIT: {

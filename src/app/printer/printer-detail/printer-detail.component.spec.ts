@@ -1,3 +1,4 @@
+import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -158,6 +159,14 @@ describe('PrinterDetailComponent', () => {
 
     component.printerForm.markAsDirty();
     expect(component.canDeactivate()).toBeFalse();
+  });
+
+  it('asks before the page unloads only while the form is dirty', async () => {
+    await setUp(aPrinterDetail());
+    expect(dispatchBeforeUnload().defaultPrevented).toBeFalse();
+
+    component.printerForm.markAsDirty();
+    expect(dispatchBeforeUnload().defaultPrevented).toBeTrue();
   });
 
   it('updates rather than creating when the form already carries an id', async () => {

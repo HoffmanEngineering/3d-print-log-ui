@@ -1,3 +1,4 @@
+import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
@@ -126,6 +127,13 @@ describe('FilamentDetailComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('asks before the page unloads only while the form is dirty', () => {
+    expect(dispatchBeforeUnload().defaultPrevented).toBeFalse();
+
+    component.filamentForm.markAsDirty();
+    expect(dispatchBeforeUnload().defaultPrevented).toBeTrue();
   });
 
   describe('staged image save flow', () => {

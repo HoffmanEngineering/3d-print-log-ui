@@ -165,19 +165,35 @@ export function docLastmods(manifest) {
 }
 
 // Fetches the public prints with their modification times, falling back to the
-// bare-id endpoint while an API without `/public/sitemap` is still deployed.
-// Only a 404 falls back. Any other failure is fatal, so a real outage never
-// silently ships a thin sitemap.
-export async function fetchPrintRows(fetchImpl, apiUrl) {
+// bare-id endpoint while an API without `/public/sitemap` is still deployed, or
+// when that endpoint does not answer within `timeoutMs` (API v1.15.0 shipped it
+// hanging). The fallback still lists every print, only without <lastmod>. A
+// server error is fatal, so a real outage never silently ships a thin sitemap:
+// the fallback endpoint would fail the same way.
+export async function fetchPrintRows(
+  fetchImpl,
+  apiUrl,
+  { timeoutMs = 60_000 } = {}
+) {
   const path = '/api/Prints/public/sitemap';
-  const res = await fetchImpl(`${apiUrl}${path}`);
-  if (res.status === 404) {
-    return {
-      rows: await fetchJsonArray(fetchImpl, apiUrl, '/api/Prints/public'),
-      withLastmod: false,
-    };
+  const bareIds = async () => ({
+    rows: await fetchJsonArray(fetchImpl, apiUrl, '/api/Prints/public'),
+    withLastmod: false,
+  });
+  try {
+    // The signal also bounds reading the body, so the read stays inside the try.
+    const res = await fetchImpl(`${apiUrl}${path}`, {
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (res.status === 404) return await bareIds();
+    return { rows: await readJsonArray(res, path), withLastmod: true };
+  } catch (err) {
+    if (err?.name !== 'TimeoutError') throw err;
+    console.warn(
+      `${path} did not answer within ${timeoutMs}ms; listing prints without <lastmod>.`
+    );
+    return bareIds();
   }
-  return { rows: await readJsonArray(res, path), withLastmod: true };
 }
 
 export async function fetchJsonArray(fetchImpl, apiUrl, path) {

@@ -68,7 +68,7 @@
     "minisearch": "^7.2.0",
     "ng2-adsense": "^13.0.0",
     "ngx-toastr": "^19.1.0",
-    "parse-duration": "^1.1.2",
+    "parse-duration": "^2.1.9",
     "qrcode": "^1.5.4",
     "rxjs": "^7.8.1",
     "tslib": "^2.3.1",

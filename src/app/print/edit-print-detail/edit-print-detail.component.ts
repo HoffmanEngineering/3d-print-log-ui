@@ -17,7 +17,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
-import parse from 'parse-duration';
+import { parseDurationAsSeconds } from 'src/app/core/utils/duration';
 import { environment } from 'src/environments/environment';
 
 import { MatDialog } from '@angular/material/dialog';
@@ -1763,12 +1763,7 @@ export class EditPrintDetailComponent
   }
 
   parseAsSeconds(input: string): number | null {
-    if (input == null || input.trim() === '') {
-      return null;
-    }
-    const durationAsMs = parse(input);
-    const durationAsSeconds = durationAsMs / 1000;
-    return Math.floor(durationAsSeconds);
+    return parseDurationAsSeconds(input);
   }
 
   parseIntoString(seconds: number | null): string {

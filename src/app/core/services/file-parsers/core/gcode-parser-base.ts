@@ -1,4 +1,4 @@
-import parse from 'parse-duration';
+import { parseDurationAsSeconds } from 'src/app/core/utils/duration';
 import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
@@ -183,10 +183,6 @@ export abstract class GcodeParserBase implements GcodeNewPrintParser {
   }
 
   protected parseAsSeconds(input: string): number | null {
-    if (input == null || input.trim() === '') {
-      return null;
-    }
-    const ms = parse(input);
-    return ms == null ? null : Math.floor(ms / 1000);
+    return parseDurationAsSeconds(input);
   }
 }

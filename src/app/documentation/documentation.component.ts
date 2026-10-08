@@ -1,3 +1,4 @@
+import { MatSidenav } from '@angular/material/sidenav';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
@@ -13,7 +14,7 @@ import {
   OnInit,
   PLATFORM_ID,
   signal,
-  ViewChild,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
@@ -98,7 +99,7 @@ export class DocumentationComponent
     isPlatformBrowser(this.platformId) && isApplePlatform(navigator.platform)
   )})`;
 
-  @ViewChild('snav', { static: true }) snav;
+  readonly snav = viewChild.required<MatSidenav>('snav');
 
   constructor(
     private changeDetectorRef: ChangeDetectorRef,
@@ -111,9 +112,9 @@ export class DocumentationComponent
     this.mobileQueryListener = () => {
       this.ngZone.run(() => {
         if (!this.mobileQuery.matches) {
-          this.snav.open();
+          this.snav().open();
         } else {
-          this.snav.close();
+          this.snav().close();
         }
         this.changeDetectorRef.detectChanges();
       });
@@ -125,7 +126,7 @@ export class DocumentationComponent
   ngAfterViewInit() {
     if (!this.mobileQuery.matches) {
       setTimeout(() => {
-        this.snav.open();
+        this.snav().open();
       }, 0);
     }
   }
@@ -278,7 +279,7 @@ export class DocumentationComponent
 
   handleSidebarClick() {
     if (this.mobileQuery.matches) {
-      this.snav.toggle();
+      this.snav().toggle();
     }
   }
 }

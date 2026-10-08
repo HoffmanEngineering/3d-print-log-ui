@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 /**
  * The card only renders these four fields, so it accepts anything that carries
@@ -18,10 +18,8 @@ export interface PrintSummaryCardPrint {
   standalone: false,
 })
 export class PrintSummaryCardComponent {
-  @Input() userProfilePictureUrl: string = null;
-  @Input() userName: string = null;
-  @Input() userId: number = null;
-  @Input() print: PrintSummaryCardPrint;
-
-  constructor() {}
+  readonly userProfilePictureUrl = input<string>(null);
+  readonly userName = input<string>(null);
+  readonly userId = input<number>(null);
+  readonly print = input.required<PrintSummaryCardPrint>();
 }

@@ -75,8 +75,8 @@ describe('PrintCommentsComponent', () => {
 
     const target = { id: 7 } as Comment;
     const comments = [target, { id: 8 } as Comment];
-    component.printId = 1;
-    component.comments = comments;
+    fixture.componentRef.setInput('printId', 1);
+    fixture.componentRef.setInput('comments', comments);
 
     let emitted: Comment | null = null;
     component.commentDeleted.subscribe((c) => (emitted = c));

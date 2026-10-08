@@ -1,12 +1,11 @@
 import {
   Component,
   ElementRef,
-  Input,
   OnChanges,
   OnInit,
-  QueryList,
   SimpleChanges,
-  ViewChildren,
+  input,
+  viewChildren,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
@@ -27,11 +26,11 @@ import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
   standalone: false,
 })
 export class UserPrintsComponent implements OnChanges, OnInit {
-  @Input() userId: number;
-  @Input() userProfilePictureUrl: string;
-  @Input() userName: string;
+  readonly userId = input<number>();
+  readonly userProfilePictureUrl = input<string>();
+  readonly userName = input<string>();
 
-  @ViewChildren('PrintSummaryCard') summaryCards: QueryList<ElementRef>;
+  readonly summaryCards = viewChildren<ElementRef>('PrintSummaryCard');
 
   public prints: PrintSummary[] = [];
 
@@ -105,7 +104,7 @@ export class UserPrintsComponent implements OnChanges, OnInit {
           [],
           undefined,
           undefined,
-          this.userId
+          this.userId()
         )
         .subscribe((response) => {
           this.pageNumber = response.paging.currentPage;
@@ -124,7 +123,7 @@ export class UserPrintsComponent implements OnChanges, OnInit {
     this.loggingService.logEvent('UserPrintLoadMorePrintClicked');
     this.pageNumber++;
 
-    const previousLastPrint = this.summaryCards.last;
+    const previousLastPrint = this.summaryCards().at(-1)!;
 
     await this.updateFilter();
     setTimeout(() => {

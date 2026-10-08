@@ -23,7 +23,7 @@ export class ProjectImageComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   projectId = input.required<string>();
-  imageId = input<number | undefined>(undefined);
+  imageId = input<number | undefined>();
 
   imageData = signal('');
 

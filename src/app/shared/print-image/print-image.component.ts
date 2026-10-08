@@ -1,13 +1,13 @@
 import {
   ChangeDetectorRef,
   Component,
-  EventEmitter,
-  Input,
   OnChanges,
   OnInit,
-  Output,
   SimpleChanges,
   inject,
+  input,
+  model,
+  output,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,15 +20,14 @@ import { PrintService } from '../../core/services/print.service';
   imports: [MatButtonModule, MatIconModule],
 })
 export class PrintImageComponent implements OnInit, OnChanges {
-  @Input() printId: number;
-  @Input() imageId: number;
-  @Input() imageData: string = null;
-  @Input() showDeleteOnHover = false;
+  readonly printId = input<number>();
+  readonly imageId = input<number>();
+  readonly imageData = model<string>(null);
+  readonly showDeleteOnHover = input(false);
   /** Meaningful alternative text; falls back to a generic description. */
-  @Input() alt: string;
+  readonly alt = input<string>();
 
-  @Output() imageDataChange = new EventEmitter<string>();
-  @Output() delete = new EventEmitter();
+  readonly delete = output();
 
   public imageHovered = false;
 
@@ -38,12 +37,11 @@ export class PrintImageComponent implements OnInit, OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
-    if (this.imageData === null && this.printId > 0 && this.imageId > 0) {
+    if (this.imageData() === null && this.printId() > 0 && this.imageId() > 0) {
       this.printService
-        .getPrintImage(this.printId, this.imageId)
+        .getPrintImage(this.printId(), this.imageId())
         .subscribe((data) => {
-          this.imageData = data;
-          this.imageDataChange.emit(data);
+          this.imageData.set(data);
           this.cdr.markForCheck();
         });
     }

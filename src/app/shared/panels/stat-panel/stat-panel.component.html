@@ -1,17 +1,17 @@
 <mat-card appearance="outlined" class="container">
-  @if (!invertDisplay) {
+  @if (!invertDisplay()) {
     <mat-card-header>
-      <mat-card-title class="title">{{ title }}</mat-card-title>
+      <mat-card-title class="title">{{ title() }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      {{ value }}
+      {{ value() }}
     </mat-card-content>
   } @else {
     <mat-card-header>
-      <mat-card-title class="title">{{ value }}</mat-card-title>
+      <mat-card-title class="title">{{ value() }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      {{ title }}
+      {{ title() }}
     </mat-card-content>
   }
 </mat-card>

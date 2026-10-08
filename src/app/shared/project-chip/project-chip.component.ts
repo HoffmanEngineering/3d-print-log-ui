@@ -21,7 +21,7 @@ export class ProjectChipComponent {
 
   projectName = input.required<string>();
   projectStatus = input.required<ProjectStatus>();
-  projectId = input<string | undefined>(undefined);
+  projectId = input<string | undefined>();
   chipClicked = output<string>();
 
   readonly ProjectStatus = ProjectStatus;

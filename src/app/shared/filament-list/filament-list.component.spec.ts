@@ -74,10 +74,9 @@ describe('FilamentListComponent', () => {
         configurable: true,
         value: 1024,
       });
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       expect(c.isFilterPanelOpen).toBeTrue();
     });
 
@@ -87,10 +86,9 @@ describe('FilamentListComponent', () => {
         configurable: true,
         value: 400,
       });
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       expect(c.isFilterPanelOpen).toBeFalse();
     });
 
@@ -100,10 +98,9 @@ describe('FilamentListComponent', () => {
         configurable: true,
         value: 1024,
       });
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       expect(c.isFilterPanelOpen).toBeTrue();
       c.toggleFilterPanel();
       expect(c.isFilterPanelOpen).toBeFalse();
@@ -122,84 +119,72 @@ describe('FilamentListComponent', () => {
     });
 
     it('should return 0 when no filters are active', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       expect(c.activeFilterCount).toBe(0);
     });
 
     it('should count includeInactive', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.includeInactive = true;
       expect(c.activeFilterCount).toBe(1);
     });
 
     it('should count showFavoritesOnly', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.showFavoritesOnly = true;
       expect(c.activeFilterCount).toBe(1);
     });
 
     it('should count showLoadedFilamentOnly', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.showLoadedFilamentOnly = true;
       expect(c.activeFilterCount).toBe(1);
     });
 
     it('should count non-empty filterByMaterialCategory', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
-      c['_filterByMaterialCategory'] = 'PLA';
-      expect(c.activeFilterCount).toBe(1);
+      const f = TestBed.createComponent(FilamentListComponent);
+      f.componentRef.setInput('filterByMaterialCategory', 'PLA');
+      expect(f.componentInstance.activeFilterCount).toBe(1);
     });
 
     it('should count all active filters together', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const f = TestBed.createComponent(FilamentListComponent);
+      const c = f.componentInstance;
       c.includeInactive = true;
       c.showFavoritesOnly = true;
       c.showLoadedFilamentOnly = true;
-      c['_filterByMaterialCategory'] = 'PETG';
+      f.componentRef.setInput('filterByMaterialCategory', 'PETG');
       expect(c.activeFilterCount).toBe(4);
     });
 
     it('should count filterByColorPatterns when non-empty', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.filterByColorPatterns = [ColorPatternType.Multi];
       expect(c.activeFilterCount).toBe(1);
     });
 
     it('should count filterByFinishTypes when non-empty', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.filterByFinishTypes = [FilamentFinishType.Silk];
       expect(c.activeFilterCount).toBe(1);
     });
 
     it('should count filterByEffects when non-empty', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.filterByEffects = [FilamentEffect.Sparkle];
       expect(c.activeFilterCount).toBe(1);
     });
@@ -207,10 +192,9 @@ describe('FilamentListComponent', () => {
 
   describe('new color/finish/effect filters passed to service', () => {
     it('should pass colorPatterns to getCurrentUserFilamentSummaries when set', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.filterByColorPatterns = [ColorPatternType.Gradient];
       c.updateFilter();
       const callArgs =
@@ -221,10 +205,9 @@ describe('FilamentListComponent', () => {
     });
 
     it('should pass undefined for colorPatterns when array is empty', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.filterByColorPatterns = [];
       c.updateFilter();
       const callArgs =
@@ -234,10 +217,9 @@ describe('FilamentListComponent', () => {
     });
 
     it('should pass finishTypes to getCurrentUserFilamentSummaries when set', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.filterByFinishTypes = [FilamentFinishType.Matte];
       c.updateFilter();
       const callArgs =
@@ -247,10 +229,9 @@ describe('FilamentListComponent', () => {
     });
 
     it('should pass effects to getCurrentUserFilamentSummaries when set', () => {
-      const c = new FilamentListComponent(
-        mockFilamentService,
-        mockMaterialCategoryService
-      );
+      const c = TestBed.createComponent(
+        FilamentListComponent
+      ).componentInstance;
       c.filterByEffects = [FilamentEffect.GlowInDark];
       c.updateFilter();
       const callArgs =

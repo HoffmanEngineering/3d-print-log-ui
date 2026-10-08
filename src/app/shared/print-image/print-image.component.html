@@ -4,7 +4,7 @@
   (mouseleave)="imageHovered = false"
   (click)="imageHovered = !imageHovered"
 >
-  @if (showDeleteOnHover && imageHovered) {
+  @if (showDeleteOnHover() && imageHovered) {
     <button
       mat-raised-button
       aria-hidden="false"
@@ -17,11 +17,11 @@
       <mat-icon>delete</mat-icon>Remove
     </button>
   }
-  @if (imageData && !imageFailed) {
+  @if (imageData() && !imageFailed) {
     <img
-      [src]="imageData"
+      [src]="imageData()"
       class="fade-in"
-      [alt]="alt || 'Image of 3D print'"
+      [alt]="alt() || 'Image of 3D print'"
       (error)="onImageError()"
     />
   } @else if (imageFailed) {

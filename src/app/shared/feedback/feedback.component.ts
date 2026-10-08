@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, viewChild } from '@angular/core';
 import {
   UntypedFormBuilder,
   UntypedFormGroup,
@@ -39,8 +39,7 @@ import {
   ],
 })
 export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
-  @ViewChild(FormGroupDirective, { static: true })
-  feedbackForm: FormGroupDirective;
+  readonly feedbackForm = viewChild(FormGroupDirective);
   public form: UntypedFormGroup;
 
   public readonly feedbackTypes = FeedbackType;
@@ -77,7 +76,7 @@ export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
         this.saving = false;
         this.toastr.success('Thank you for your feedback.', 'Feedback sent!');
 
-        this.feedbackForm.resetForm({ type: FeedbackType.Suggestion });
+        this.feedbackForm().resetForm({ type: FeedbackType.Suggestion });
       },
       (error) => {
         this.saving = false;

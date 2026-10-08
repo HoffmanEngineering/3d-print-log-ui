@@ -74,8 +74,8 @@ export class DocFigureComponent {
   readonly alt = input.required<string>();
 
   /** Intrinsic pixel dimensions; they reserve the space before the load. */
-  readonly width = input<string | number | undefined>(undefined);
-  readonly height = input<string | number | undefined>(undefined);
+  readonly width = input<string | number | undefined>();
+  readonly height = input<string | number | undefined>();
 
   readonly caption = input('');
 

@@ -30,6 +30,25 @@ describe('PrintImageComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('fetches the image when none is bound and reports it to the parent', () => {
+    const printService = TestBed.inject(
+      PrintService
+    ) as jasmine.SpyObj<PrintService>;
+    printService.getPrintImage.and.returnValue(of('data:image/png;base64,AA'));
+    const f = TestBed.createComponent(PrintImageComponent);
+    f.componentRef.setInput('printId', 3);
+    f.componentRef.setInput('imageId', 9);
+    const reported: string[] = [];
+    f.componentInstance.imageData.subscribe((d) => reported.push(d));
+
+    f.detectChanges();
+
+    expect(printService.getPrintImage).toHaveBeenCalledWith(3, 9);
+    expect(reported).toEqual(['data:image/png;base64,AA']);
+    const img = f.nativeElement.querySelector('img') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe('data:image/png;base64,AA');
+  });
+
   describe('with an image bound', () => {
     // A fresh fixture: the outer beforeEach already ran change detection with
     // no image, and flipping the @if branch afterwards trips NG0100.

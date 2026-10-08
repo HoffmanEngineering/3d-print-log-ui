@@ -106,7 +106,6 @@
     { "route": "/home-redirect", "rewrite": "/shells/app-shell.html" },
     { "route": "/home-redirect/*", "rewrite": "/shells/app-shell.html" },
     { "route": "/docs", "rewrite": "/shells/app-shell.html" },
-    { "route": "/docs/", "rewrite": "/shells/app-shell.html" },
     { "route": "/docs/filaments", "rewrite": "/shells/app-shell.html" },
     { "route": "/shells/*", "headers": { "cache-control": "no-cache" } }
   ],

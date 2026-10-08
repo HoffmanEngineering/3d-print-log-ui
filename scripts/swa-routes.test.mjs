@@ -6,6 +6,7 @@ import { MANIFEST_JSON } from './docs-paths.mjs';
 import { DOC_ROUTES, MARKETING_ROUTES } from './marketing-routes.mjs';
 import {
   matchSwaRoute,
+  normalizeSwaRoute,
   resolveSwaRedirect,
   resolveSwaRewrite,
   topLevelAppPaths,
@@ -65,6 +66,27 @@ test('resolveSwaRewrite: the first matching rule wins', () => {
 /* -------------------------------------------------------------------------- */
 /* Real 404s (issue #208)                                                      */
 /* -------------------------------------------------------------------------- */
+
+test('no two rules are the same route to SWA', () => {
+  // SWA rejects the whole config at deploy time ("A rule was already processed
+  // with a duplicate route") when two rules differ only by case or a trailing
+  // slash. The v1.52.2 deploy failed on `/docs` beside `/docs/`.
+  const seen = new Map();
+  for (const { route } of config.routes ?? []) {
+    const key = normalizeSwaRoute(route).toLowerCase();
+    assert.ok(
+      !seen.has(key),
+      `${route} duplicates ${seen.get(key)} as far as SWA is concerned`
+    );
+    seen.set(key, route);
+  }
+});
+
+test('matchSwaRoute: a trailing slash is the same path, as in SWA', () => {
+  assert.ok(matchSwaRoute('/docs', '/docs/'));
+  assert.ok(matchSwaRoute('/docs/', '/docs'));
+  assert.ok(matchSwaRoute('/', '/'));
+});
 
 test('there is no catch-all navigation fallback', () => {
   // A fallback answers every unknown path with 200 + the app shell, so an agent

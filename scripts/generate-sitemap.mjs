@@ -48,7 +48,7 @@ async function main() {
   const prints = await fetchPrintRows(fetch, API_URL);
   if (!prints.withLastmod) {
     console.warn(
-      'The API has no /api/Prints/public/sitemap yet; print entries are listed without <lastmod>.'
+      'Print entries are listed without <lastmod> (see the warning above, or the API has no /api/Prints/public/sitemap yet).'
     );
   }
   // Users carry no <lastmod>: the API has no profile modification time, and a

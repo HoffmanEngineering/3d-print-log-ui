@@ -252,6 +252,25 @@ test('fetchPrintRows falls back to bare ids when /public/sitemap is not deployed
   });
 });
 
+test('fetchPrintRows falls back to bare ids when /public/sitemap never answers', async () => {
+  // v1.15.0 of the API shipped an endpoint that hangs in production; a deploy
+  // must not wait on it, or fail because of it.
+  const { impl: bare } = stubFetch({ 'https://api/api/Prints/public': [1, 2] });
+  const impl = (url, init) =>
+    url.endsWith('/public/sitemap')
+      ? new Promise((_, reject) =>
+          init.signal.addEventListener('abort', () =>
+            reject(init.signal.reason)
+          )
+        )
+      : bare(url);
+
+  assert.deepEqual(
+    await fetchPrintRows(impl, 'https://api', { timeoutMs: 10 }),
+    { rows: [1, 2], withLastmod: false }
+  );
+});
+
 test('fetchPrintRows fails on a server error instead of falling back', async () => {
   const { impl } = stubFetch({
     'https://api/api/Prints/public/sitemap': 500,

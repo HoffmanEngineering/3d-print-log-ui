@@ -1,4 +1,5 @@
 /// <reference types="cypress" />
+import { apiUrl } from '../../support/api-url';
 
 // The panel renders two hidden file inputs - the gallery picker and a separate
 // `capture="environment"` one the Cordova app needs to reach the camera.
@@ -49,12 +50,23 @@ describe('Material photos', () => {
   });
 
   it('warns the user rather than staging past the per-material cap', () => {
-    // The panel caps at the highest tier the API allows.
-    stage(11);
+    // The cap is the user's subscription tier (Free 5, Pro 20), so read it from the
+    // same endpoint the panel uses rather than pinning one tier's number here.
+    cy.request({
+      method: 'GET',
+      url: `${apiUrl()}/api/Subscription/me`,
+      headers: { 'X-Dev-User-Id': '1' },
+    })
+      .its('body.maxImages')
+      .then((cap: number) => {
+        stage(cap + 1);
 
-    cy.get('app-image-thumbnail-strip img').should('have.length', 10);
-    cy.contains(/were not added/i).should('be.visible');
-    cy.contains(/maximum 10 images reached/i).should('be.visible');
+        cy.get('app-image-thumbnail-strip img').should('have.length', cap);
+        cy.contains(/were not added/i).should('be.visible');
+        cy.contains(new RegExp(`maximum ${cap} images reached`, 'i')).should(
+          'be.visible'
+        );
+      });
   });
 
   it('drops a staged photo again when it is deleted', () => {

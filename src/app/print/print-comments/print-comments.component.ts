@@ -1,11 +1,14 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
+  inject,
   input,
   output,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Comment } from 'src/app/core/services/comment.service';
@@ -44,6 +47,8 @@ export class PrintCommentsComponent implements OnInit {
 
   public isLoggedIn = false;
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor(
     private readonly authService: AuthService,
     private readonly printService: PrintService,
@@ -51,13 +56,15 @@ export class PrintCommentsComponent implements OnInit {
   ) {}
 
   public ngOnInit(): void {
-    this.authService.userProfile$.subscribe((user) => {
-      if (user) {
-        this.isLoggedIn = true;
-      }
-      this.currentUserProfilePicture = user?.profilePicture ?? '';
-      this.currentUserId = user?.id;
-    });
+    this.authService.userProfile$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        if (user) {
+          this.isLoggedIn = true;
+        }
+        this.currentUserProfilePicture = user?.profilePicture ?? '';
+        this.currentUserId = user?.id;
+      });
   }
 
   public addComment() {

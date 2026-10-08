@@ -62,12 +62,6 @@
       <th mat-header-cell *matHeaderCellDef>Model</th>
       <td mat-cell *matCellDef="let printer">{{ printer.model }}</td>
     </ng-container>
-    <!-- <ng-container matColumnDef="filament">
-        <th mat-header-cell *matHeaderCellDef>Loaded Filament</th>
-        <td mat-cell *matCellDef="let printer">
-          {{ formatLoadedInFilament(printer) }}
-        </td>
-      </ng-container> -->
     <ng-container matColumnDef="filament">
       <th mat-header-cell *matHeaderCellDef>Loaded Filament</th>
       <td mat-cell *matCellDef="let printer">

@@ -175,6 +175,18 @@ export interface PrintDetailDTO {
   comments: Comment[];
   projectId?: string;
   projectName?: string;
+  /**
+   * The connector that logged this print (`moonraker`, `moonraker-notifier`, ...) and its job id
+   * there. Read-only: set when the print is created, and the API returns them to the print's
+   * creator only, so a public visitor never receives them.
+   */
+  externalSource?: string | null;
+  externalId?: string | null;
+  /**
+   * The connection that logged this print, for "Logged automatically by ...". Null when none
+   * did or it has since been deleted. Creator-only, like the external pair.
+   */
+  connectionDisplayName?: string | null;
 }
 
 /**
@@ -243,6 +255,18 @@ export interface PrintDetail {
    * where the print came from (slicer badges). Carried through the form explicitly.
    */
   curaSettingId?: string;
+  /**
+   * Read from the API, never sent back (see `updatePrint`). The connector that logged this print (`moonraker`, `moonraker-notifier`, ...) and its job id
+   * there. Read-only: set when the print is created, and the API returns them to the print's
+   * creator only, so a public visitor never receives them.
+   */
+  externalSource?: string | null;
+  externalId?: string | null;
+  /**
+   * The connection that logged this print, for "Logged automatically by ...". Null when none
+   * did or it has since been deleted. Creator-only, like the external pair.
+   */
+  connectionDisplayName?: string | null;
 }
 
 /**
@@ -423,6 +447,9 @@ export class PrintService {
           allowFileDownloads: newPrint.allowFileDownloads ?? false,
           projectId: newPrint.projectId,
           projectName: newPrint.projectName,
+          externalSource: newPrint.externalSource ?? null,
+          externalId: newPrint.externalId ?? null,
+          connectionDisplayName: newPrint.connectionDisplayName ?? null,
         };
         return print;
       })

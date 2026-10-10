@@ -115,6 +115,17 @@ describe('AppComponent (ThemeService)', () => {
     }).compileComponents();
   }));
 
+  // #254: signed-in users see the notifier notice wherever they land, not only on a printer page.
+  it('mounts the notifier notice in the shell', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        'app-notifier-notice'
+      )
+    ).not.toBeNull();
+  });
+
   it('calls themeService.initialize() on ngOnInit', () => {
     const themeService = TestBed.inject(ThemeService);
     const fixture = TestBed.createComponent(AppComponent);

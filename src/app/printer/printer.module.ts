@@ -11,6 +11,7 @@ import { SignedImageComponent } from '../shared/signed-image/signed-image.compon
 import { PrinterRoutingModule } from './printer-routing.module';
 import { PrinterDetailResolverService } from './resolvers/printer-detail-resolver.service';
 import { PrinterListResolverService } from './resolvers/printer-list-resolver.service';
+import { PrinterConnectionsComponent } from './printer-connections/printer-connections.component';
 
 @NgModule({
   declarations: [PrinterListComponent, PrinterDetailComponent],
@@ -23,6 +24,7 @@ import { PrinterListResolverService } from './resolvers/printer-list-resolver.se
     EmptyStateComponent,
     EntityImagesPanelComponent,
     SignedImageComponent,
+    PrinterConnectionsComponent,
   ],
   providers: [PrinterListResolverService, PrinterDetailResolverService],
 })

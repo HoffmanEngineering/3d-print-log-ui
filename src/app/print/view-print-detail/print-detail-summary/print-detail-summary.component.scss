@@ -25,6 +25,11 @@ $muted-dark: rgba(255, 255, 255, 0.7);
   overflow-wrap: anywhere;
 }
 
+// Sits under "Printed by" as the second half of the same attribution.
+.byline + .logged-by {
+  margin-top: -12px;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;

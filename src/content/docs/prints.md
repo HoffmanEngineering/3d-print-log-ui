@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-09-14
+updated: 2026-10-10
 related: [projects, materials]
 ---
 
@@ -242,6 +242,14 @@ color="primary">Submit</button> to save your new 3D Print.
 ### Edit an existing 3D Print {#edit}
 
 Click on any row in the print list to view and edit an existing 3D print.
+
+Prints logged by an integration, such as the
+[Moonraker notifier](/docs/klipper), the
+[OctoPrint webhook](/docs/octoprint-webhook) or a printer
+[connection](/docs/printers#connections), show **Logged via** and the job's
+**Job ID** on the print page. A print logged by a connection also says
+"Logged automatically by" and the connection's name. These details are read-only
+and only you can see them, even on a public print.
 
 After making changes, click <button mat-raised-button
 color="primary">Submit</button> to update that 3D print.

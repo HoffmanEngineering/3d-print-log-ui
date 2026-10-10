@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-09-10
+updated: 2026-10-10
 related: [prints]
 ---
 
@@ -104,6 +104,29 @@ the old printer.
 
 **Quick Unload** - On the Printer List, click the **...** menu and select the
 **Unload Material** button to remove that printer's currently loaded filament.
+
+---
+
+### Connections {#connections}
+
+A connection is a program on your printer, such as the 3D Print Log bridge,
+that logs your prints automatically. A printer's **Edit Page** lists its
+connections, with:
+
+- **Name and type**, such as "Klipper (Moonraker)", and the version it runs.
+- **Status** — **Online** while the connection checks in, or **Stale** after
+  15 minutes without hearing from it. If it stays stale, check that the
+  printer and the program are running and online.
+- **Last seen** — when it last checked in.
+
+To remove a connection, click its <mat-icon inline="true">delete</mat-icon>
+button and confirm. The prints it already logged are kept. Only the link to the
+connection is removed.
+
+If the bridge logs a Klipper printer that still has the
+[Moonraker notifier](/docs/klipper) set up, each print is logged only once, and
+a banner suggests removing the notifier section from `moonraker.conf`. Once you
+dismiss the banner, it stays dismissed on every device.
 
 ---
 

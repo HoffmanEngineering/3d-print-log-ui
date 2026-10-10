@@ -402,6 +402,13 @@
             </div>
           }
         </div>
+        @if (savedPrinterId(); as printerId) {
+          <app-printer-connections
+            fxFlex="grow"
+            fxFlexFill
+            [printerId]="printerId"
+          />
+        }
       </mat-card-content>
       <mat-card-actions
         fxLayout

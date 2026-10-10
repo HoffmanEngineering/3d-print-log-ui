@@ -16,6 +16,12 @@
   <p class="byline">Printed on {{ print().startDate | localeDate: 'long' }}</p>
 }
 
+@if (connectionDisplayName(); as name) {
+  <p class="byline logged-by" data-cy-logged-by>
+    Logged automatically by {{ name }}
+  </p>
+}
+
 <div class="chip-row">
   <app-print-status-badge [status]="print().status" />
 </div>
@@ -115,6 +121,15 @@
     } @else if (sourceLabel(); as label) {
       <dt>Source</dt>
       <dd>{{ label }}</dd>
+    }
+
+    @if (externalSource(); as source) {
+      <dt>Logged via</dt>
+      <dd data-cy-external-source>{{ source }}</dd>
+    }
+    @if (externalId(); as id) {
+      <dt>Job ID</dt>
+      <dd class="wrap-anywhere" data-cy-external-id>{{ id }}</dd>
     }
 
     @if (print().fileName) {

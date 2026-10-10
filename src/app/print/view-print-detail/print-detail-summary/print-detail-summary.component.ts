@@ -29,6 +29,7 @@ import {
   externalUrlLabel,
   safeExternalUrl,
 } from 'src/app/shared/utils/external-url.utils';
+import { externalSourceLabel } from 'src/app/shared/utils/external-source.utils';
 import {
   PrintLegacyFilamentUsageComponent,
   hasLegacyFilamentData,
@@ -134,6 +135,21 @@ export class PrintDetailSummaryComponent {
     const raw = this.print()?.url?.trim();
     return raw ? externalUrlLabel(raw) : null;
   });
+
+  /**
+   * Who logged the print and its job id there (#251). Shown whenever the payload carries them:
+   * the API returns them to the print's creator only, so a public visitor has nothing to render.
+   */
+  protected readonly externalSource = computed(() => {
+    const raw = this.print()?.externalSource?.trim();
+    return raw ? externalSourceLabel(raw) : null;
+  });
+  protected readonly externalId = computed(
+    () => this.print()?.externalId?.trim() || null
+  );
+  protected readonly connectionDisplayName = computed(
+    () => this.print()?.connectionDisplayName?.trim() || null
+  );
 
   protected readonly hasFilamentUsage = computed(
     () => (this.print()?.filamentUsage?.length ?? 0) > 0

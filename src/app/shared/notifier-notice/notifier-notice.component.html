@@ -1,0 +1,23 @@
+@if (connections().length) {
+  <aside class="notifier-notice" role="status" data-testid="notifier-notice">
+    <p>
+      The bridge now logs your prints from {{ names() }}. Your printer's
+      Moonraker notifier is still sending them too, so we're ignoring those to
+      avoid logging each print twice. You can remove the
+      <code>[notifier 3d_print_log]</code> section from
+      <code>moonraker.conf</code>.
+      <a routerLink="/docs/klipper">How to switch</a>
+    </p>
+    <div class="actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        data-testid="notifier-notice-dismiss"
+        (click)="dismiss()"
+      >
+        Got it
+      </button>
+    </div>
+  </aside>
+}

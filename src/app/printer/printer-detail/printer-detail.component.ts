@@ -69,6 +69,9 @@ export class PrinterDetailComponent
    */
   private readonly formPrinterId = signal<number | null>(null);
 
+  /** Only a saved printer can have connections; the create route has no id yet. */
+  protected readonly savedPrinterId = computed(() => this.formPrinterId());
+
   protected readonly imageTarget = computed(() =>
     this.printerService.imageTarget(this.formPrinterId())
   );

@@ -1,0 +1,49 @@
+@if (connections().length) {
+  <section class="connections" aria-labelledby="connections-heading">
+    <h2 id="connections-heading">Connections</h2>
+    <ul>
+      @for (c of connections(); track c.instanceId) {
+        <li class="connection" data-testid="connection-row">
+          <div class="identity">
+            <span class="name">{{ c.displayName }}</span>
+            <span class="meta">
+              {{ kindLabel(c.kind) }}
+              @if (c.agentVersion) {
+                · version {{ c.agentVersion }}
+              }
+            </span>
+          </div>
+          <div class="state">
+            <span
+              class="status"
+              [class.stale]="c.status === ConnectionStatus.Stale"
+              data-testid="connection-status"
+              >{{
+                c.status === ConnectionStatus.Stale ? 'Stale' : 'Online'
+              }}</span
+            >
+            <span class="meta" data-testid="connection-last-seen">
+              Last seen
+              <time [attr.datetime]="c.lastSeenAt.toISOString()">{{
+                c.lastSeenAt | localeDate: 'datetime'
+              }}</time>
+            </span>
+          </div>
+          <button
+            mat-icon-button
+            type="button"
+            data-testid="connection-delete"
+            [attr.aria-label]="'Remove connection ' + c.displayName"
+            (click)="confirmDelete(c)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+    <p class="hint">
+      A connection is stale after 15 minutes without hearing from it. Removing
+      one keeps the prints it logged.
+    </p>
+  </section>
+}

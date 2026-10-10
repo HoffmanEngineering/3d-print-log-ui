@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
@@ -19,6 +20,7 @@ import { PrinterCategory } from 'src/app/core/services/printer-categories.servic
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { PrinterDetailComponent } from './printer-detail.component';
+import { PrinterConnectionsComponent } from '../printer-connections/printer-connections.component';
 
 const fffCategory = {
   nickname: 'FFF',
@@ -94,6 +96,7 @@ describe('PrinterDetailComponent', () => {
         FormsModule,
         ReactiveFormsModule,
         NoopAnimationsModule,
+        PrinterConnectionsComponent,
         // The template renders app-ad for real, which needs the Adsense config.
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
       ],
@@ -135,6 +138,27 @@ describe('PrinterDetailComponent', () => {
 
     expect(component.printerForm.get('id')!.value).toBe(42);
     expect(component.printerForm.get('name')!.value).toBe('Voron 2.4');
+  });
+
+  // #252: a saved printer lists the connections logging it.
+  it('shows the connections panel for a saved printer', async () => {
+    await setUp(aPrinterDetail());
+
+    const panel = fixture.debugElement.query(
+      By.directive(PrinterConnectionsComponent)
+    );
+    expect(panel).withContext('app-printer-connections').not.toBeNull();
+    expect(
+      (panel.componentInstance as PrinterConnectionsComponent).printerId()
+    ).toBe(42);
+  });
+
+  it('shows no connections panel before the printer is saved', async () => {
+    await setUp(null);
+
+    expect(
+      fixture.debugElement.query(By.directive(PrinterConnectionsComponent))
+    ).toBeNull();
   });
 
   it('starts with a null id on the create route', async () => {

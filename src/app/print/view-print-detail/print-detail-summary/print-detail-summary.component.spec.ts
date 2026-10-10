@@ -365,4 +365,71 @@ describe('PrintDetailSummaryComponent', () => {
   it('shows no printer avatar to a non-owner', () => {
     expect(renderAs(false).querySelector('app-printer-avatar')).toBeNull();
   });
+
+  describe('external source (#251)', () => {
+    const logged = {
+      ...print,
+      externalSource: 'moonraker',
+      externalId: 'voron-1:000042',
+      connectionDisplayName: 'Voron in the garage',
+    };
+
+    const text = (selector: string) =>
+      (fixture.nativeElement as HTMLElement)
+        .querySelector(selector)
+        ?.textContent?.replace(/\s+/g, ' ')
+        .trim();
+
+    it('says which connection logged the print', () => {
+      fixture.componentRef.setInput('print', logged);
+      renderAs(true);
+
+      expect(text('[data-cy-logged-by]')).toBe(
+        'Logged automatically by Voron in the garage'
+      );
+    });
+
+    it('shows the source and job id as read-only values', () => {
+      fixture.componentRef.setInput('print', logged);
+      const el = renderAs(true);
+
+      expect(text('[data-cy-external-source]')).toBe('Klipper (Moonraker)');
+      expect(text('[data-cy-external-id]')).toBe('voron-1:000042');
+      expect(
+        el.querySelector('.glance input, .glance textarea, .glance select')
+      ).toBeNull();
+    });
+
+    it('names the legacy integrations', () => {
+      fixture.componentRef.setInput('print', {
+        ...logged,
+        externalSource: 'moonraker-notifier',
+        connectionDisplayName: null,
+      });
+      renderAs(true);
+
+      expect(text('[data-cy-external-source]')).toBe('Moonraker notifier');
+      expect(text('[data-cy-logged-by]')).toBeUndefined();
+    });
+
+    it('shows an unknown source as sent', () => {
+      fixture.componentRef.setInput('print', {
+        ...logged,
+        externalSource: 'bambu-cloud-v2',
+      });
+      renderAs(true);
+
+      expect(text('[data-cy-external-source]')).toBe('bambu-cloud-v2');
+    });
+
+    // The API strips these for anyone but the creator, so a public visitor's payload has none and
+    // the rail has nothing to render; there is no per-template owner check to forget.
+    it('renders nothing when the payload carries no source', () => {
+      const el = renderAs(false);
+
+      expect(el.querySelector('[data-cy-logged-by]')).toBeNull();
+      expect(el.querySelector('[data-cy-external-source]')).toBeNull();
+      expect(el.querySelector('[data-cy-external-id]')).toBeNull();
+    });
+  });
 });

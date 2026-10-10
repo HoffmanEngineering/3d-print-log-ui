@@ -293,4 +293,63 @@ describe('PrintService', () => {
       request.flush({ id: 1 });
     });
   });
+
+  // The external pair and the connection name are read-only (#251): the detail view shows them,
+  // and nothing the edit form saves can change or clear them.
+  describe('external source', () => {
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => httpMock.verify());
+
+    const detailDto = {
+      id: 9,
+      title: 'Benchy',
+      printerId: 3,
+      printer: { make: 'Voron', model: '2.4', name: '' },
+      filamentUsage: [],
+      filamentType: '',
+      notes: '',
+      url: '',
+      fileName: 'benchy.gcode',
+      status: PrintStatus.Success,
+      viewStatus: PrintViewStatus.Private,
+      createdByUserId: 7,
+      allowComments: false,
+      comments: [],
+      externalSource: 'moonraker',
+      externalId: 'voron-1:000042',
+      connectionDisplayName: 'Voron in the garage',
+    };
+
+    it('getPrintDetail carries the external source and connection name', () => {
+      let print: PrintDetail | undefined;
+      service.getPrintDetail(9).subscribe((p) => (print = p));
+      httpMock
+        .expectOne((r) => r.url.endsWith('/api/Prints/9'))
+        .flush(detailDto);
+
+      expect(print?.externalSource).toBe('moonraker');
+      expect(print?.externalId).toBe('voron-1:000042');
+      expect(print?.connectionDisplayName).toBe('Voron in the garage');
+    });
+
+    it('updatePrint never sends them', () => {
+      let print: PrintDetail | undefined;
+      service.getPrintDetail(9).subscribe((p) => (print = p));
+      httpMock
+        .expectOne((r) => r.url.endsWith('/api/Prints/9'))
+        .flush(detailDto);
+
+      service.updatePrint(print!).subscribe();
+      const request = httpMock.expectOne((r) => r.method === 'PUT');
+      expect('externalSource' in request.request.body).toBeFalse();
+      expect('externalId' in request.request.body).toBeFalse();
+      expect('connectionDisplayName' in request.request.body).toBeFalse();
+      request.flush({});
+    });
+  });
 });

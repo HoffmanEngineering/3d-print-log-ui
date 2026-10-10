@@ -14,11 +14,11 @@ describe('doc-seo.config', () => {
     expect(paths).toContain('docs/log-your-first-print');
     expect(paths).toContain('docs/materials-reference');
     expect(paths).toContain('docs/privacy-policy');
+    expect(paths).toContain('docs/terms-of-service');
   });
 
-  it('excludes redirect-only and dormant routes', () => {
+  it('excludes redirect-only routes', () => {
     expect(paths).not.toContain('docs/filaments');
-    expect(paths).not.toContain('docs/terms-of-service');
   });
 
   it('has a globally unique title and description per page', () => {

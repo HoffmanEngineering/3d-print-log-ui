@@ -388,9 +388,9 @@ test('DOC_ROUTES lists the concrete doc pages under docs/', () => {
   assert.ok(DOC_ROUTES.includes('docs/getting-started'));
   assert.ok(DOC_ROUTES.includes('docs/mcp'));
   assert.ok(DOC_ROUTES.includes('docs/privacy-policy'));
-  // No redirect-only or disabled routes.
+  assert.ok(DOC_ROUTES.includes('docs/terms-of-service'));
+  // No redirect-only routes.
   assert.ok(!DOC_ROUTES.includes('docs/filaments'));
-  assert.ok(!DOC_ROUTES.includes('docs/terms-of-service'));
 });
 
 test('DOC_ROUTES do not overlap MARKETING_ROUTES', () => {

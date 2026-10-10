@@ -62,6 +62,7 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [About](https://www.3dprintlog.com/docs/about): Who builds 3D Print Log.
 - [Contact](https://www.3dprintlog.com/docs/contact): Support email (hello@3dprintlog.com), in-app feedback, GitHub issues, and response times.
 - [Privacy policy](https://www.3dprintlog.com/docs/privacy-policy): What data is collected and how it's used.
+- [Terms of service](https://www.3dprintlog.com/docs/terms-of-service): The terms for accounts, content, Pro subscriptions, integrations and AI assistants.
 
 ## Source
 

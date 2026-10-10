@@ -6,21 +6,104 @@ navLabel: Privacy Policy
 group: about
 order: 30
 mode: reference
-updated: 2026-10-05
-related: [about, contact]
+updated: 2026-10-10
+related: [about, contact, terms-of-service]
 ---
 
 # Privacy Policy for 3D Print Log
 
-Last Updated: Oct 5, 2026
+Last Updated: Oct 10, 2026
 
 At 3D Print Log, accessible from https://www.3dprintlog.com, one of our main
 priorities is the privacy of our visitors. This Privacy Policy document describes
 the types of information that are collected and recorded by 3D Print Log and how
 we use it.
 
+3D Print Log is operated by **Hoffman Technologies, LLC**, a Florida limited liability company,
+which is responsible for the personal data described here.
+
 If you have additional questions or require more information about our Privacy
 Policy, do not hesitate to [contact us](/docs/contact).
+
+## Information in Your Account {#account-data}
+
+When you create an account and use 3D Print Log, we store:
+
+- **Account details:** your email address and whether it has been verified, copied from our
+  sign-in provider, and any display name, bio, profile picture or cover image you add.
+- **Your print records:** prints, printers, materials, projects, maintenance entries, notes,
+  comments, photos and attached files, and the slicer details that integrations send with a print.
+- **Settings:** your preferences, such as currency and electricity rate.
+- **Subscription status:** if you subscribe to Pro, your Stripe customer and subscription
+  identifiers and whether your subscription is active. Your card details go to Stripe and never
+  reach us.
+- **Devices and integrations:** push notification tokens for the Android app, API keys you create
+  (we store only a one-way hash of each key), and which AI assistants you have connected.
+- **Feedback** you send us, including through an AI assistant.
+
+We use this information to provide the service: to show you your records, calculate material
+usage, costs and statistics, sync your devices and integrations, send the email described below,
+process your subscription, and answer support requests. We do not sell it.
+
+Prints, projects and profiles are private unless you choose to make them public. Public items can
+be seen by anyone, including search engines.
+
+## Service Providers {#service-providers}
+
+We use these companies to run 3D Print Log. Each processes personal data only to provide its part
+of the service:
+
+| Provider | What it does | Data it handles |
+| --- | --- | --- |
+| Okta (Auth0) | Sign-in | Email address, password or social sign-in details, sign-in records |
+| Microsoft Azure | Hosting, database, file storage, Application Insights | Everything in your account, plus usage and error data |
+| Stripe | Pro subscription payments | Payment details, email address, subscription status |
+| Amazon Web Services (SES) | Sending email | Email address and message content |
+| Google (Firebase Cloud Messaging) | Android push notifications | Device token and notification content |
+| Google (Analytics, AdSense) | Site analytics and ads | Usage data and cookies, as described below |
+
+## AI Assistants {#ai-assistants}
+
+You can connect AI assistants, such as Claude (by Anthropic) and ChatGPT (by OpenAI), to your
+account through our MCP connector. Nothing is shared until you connect one and sign in to approve
+it.
+
+- **What the assistant can see:** the records in your own account (prints, printers, materials,
+  projects and statistics), when it calls a tool to answer your request. It cannot see other
+  users' private data.
+- **What it can change:** it can create and update prints, printers, materials and projects, and
+  send us feedback, when you ask it to. It cannot delete anything.
+- **Where that data goes:** information an assistant reads from your account is sent to the
+  company that provides the assistant, and is handled under that company's terms and privacy
+  policy, not ours.
+- **Disconnecting:** you can review and disconnect connected assistants at any time in
+  [Settings](/settings), under **Connected AI Agents**. Disconnecting revokes their access
+  immediately.
+
+## Keeping and Deleting Your Data {#retention}
+
+We keep your account data for as long as your account exists.
+
+- **Deleting your account:** you can deactivate your account in [Settings](/settings). All of your
+  data, including photos and files, is deleted 24 hours after deactivation, and your sign-in
+  account is removed from Auth0.
+- **Exceptions:** the email suppression fingerprint described below, and records Stripe must keep
+  about past payments under its own legal obligations.
+- **Analytics data** is kept for the default retention periods of Google Analytics and Azure
+  Application Insights.
+
+## Your Choices and Rights {#your-rights}
+
+- **See and correct** your data in the app at any time.
+- **Export** your prints as a CSV file from [Settings](/settings).
+- **Delete** individual records in the app, or your whole account as described above.
+- **Turn off email** by type in Settings or from any email.
+- **Disconnect** AI assistants and revoke API keys in Settings.
+
+For anything else, including a copy of your data or a question about how it is used, email
+[hello@3dprintlog.com](mailto:hello@3dprintlog.com). Depending on where you live, you may have
+further rights under local law, such as the right to object to processing or to complain to a data
+protection authority.
 
 ## Log Files
 
@@ -161,5 +244,5 @@ collected offline or via channels other than this website.
 
 ## Consent
 
-By using our website, you hereby consent to our Privacy Policy and agree to its
-Terms and Conditions.
+By using our website, you hereby consent to our Privacy Policy and agree to our
+[Terms of Service](/docs/terms-of-service).

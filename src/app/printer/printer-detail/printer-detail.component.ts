@@ -72,6 +72,22 @@ export class PrinterDetailComponent
   /** Only a saved printer can have connections; the create route has no id yet. */
   protected readonly savedPrinterId = computed(() => this.formPrinterId());
 
+  /** The slot count as saved. Slots are managed live, so they wait for the count to be saved. */
+  private readonly savedSlotCount = computed(
+    () => this.printerDetail()?.slotCount ?? 1
+  );
+
+  /** A saved multi-slot printer loads spools per slot instead of in the form's list. */
+  protected readonly showSlots = computed(
+    () => this.savedPrinterId() != null && this.savedSlotCount() > 1
+  );
+
+  protected readonly slotCount = this.savedSlotCount;
+
+  protected readonly slotLoaded = computed(
+    () => this.printerDetail()?.loadedFilaments ?? []
+  );
+
   protected readonly imageTarget = computed(() =>
     this.printerService.imageTarget(this.formPrinterId())
   );
@@ -435,6 +451,10 @@ export class PrinterDetailComponent
           : false,
       ],
       wattageW: [printer?.wattageW ?? null, [Validators.min(0)]],
+      slotCount: [
+        printer?.slotCount ?? 1,
+        [Validators.required, Validators.min(1), Validators.max(64)],
+      ],
     });
 
     return form;
@@ -476,6 +496,20 @@ export class PrinterDetailComponent
 
   public removeFilament(index: number) {
     this.loadedFilaments.removeAt(index);
+  }
+
+  /**
+   * The slots saved a change already. Mirror it into the form so the printer PUT sends the
+   * same list, and leave the form pristine: there is nothing unsaved.
+   */
+  protected onSlotsChanged(loaded: PrinterFilamentSummaryDto[]): void {
+    this.loadedFilaments.clear({ emitEvent: false });
+    loaded.forEach((pf) =>
+      this.loadedFilaments.push(
+        this.GetNewLoadedFilamentFormElement(pf.id, pf.filament),
+        { emitEvent: false }
+      )
+    );
   }
 
   onSubmit() {
@@ -618,6 +652,7 @@ export class PrinterDetailComponent
         ? this.printerForm.controls.hasHeatedChamber.value
         : undefined,
       wattageW: this.printerForm.controls.wattageW.value ?? undefined,
+      slotCount: this.printerForm.controls.slotCount.value ?? undefined,
     };
 
     return printer;

@@ -50,6 +50,9 @@ export interface FilamentSummaryForPrinter {
 export interface PrinterFilamentForSummary {
   id: string;
   filament: FilamentSummaryForPrinter;
+  /** 0-based slot (tool, AMS position), or null when loaded without one. */
+  slot?: number | null;
+  slotLabel?: string | null;
 }
 
 /**
@@ -107,6 +110,9 @@ export interface PrinterDetail {
   hasHeatedChamber?: boolean;
   wattageW?: number | null;
 
+  /** Filament positions (tools, AMS slots). 1 for a single-tool printer. */
+  slotCount?: number;
+
   /** Photos attached to this printer, ordered by displayOrder. */
   images?: PrinterImage[];
 }
@@ -117,6 +123,12 @@ export interface PrinterFilamentSummaryDto {
    */
   id: string;
   filament: FilamentSummary;
+  /** 0-based slot (tool, AMS position), or null when loaded without one. */
+  slot?: number | null;
+  /** What the printer calls the slot, such as `T2` or `AMS A3`. */
+  slotLabel?: string | null;
+  /** ISO timestamp of when the spool was loaded. */
+  loadedAt?: string;
 }
 
 export interface AddPrinterDetailDto {
@@ -148,6 +160,8 @@ export interface AddPrinterDetailDto {
   hasHeatedBed?: boolean;
   hasHeatedChamber?: boolean;
   wattageW?: number | null;
+  /** Omitted keeps the printer's current count. */
+  slotCount?: number;
 }
 
 export interface AddPrinterFilamentSummaryDto {
@@ -240,6 +254,29 @@ export class PrinterService {
     return this.http.put<void>(url, {});
   }
 
+  /**
+   * Load a spool into one slot. The API unloads whatever was there, and the spool from any
+   * other slot or printer. Emits the printer's loaded filament in slot order.
+   */
+  loadSlot(
+    printerId: number,
+    slot: number,
+    filamentId: string,
+    slotLabel?: string | null
+  ): Observable<PrinterFilamentSummaryDto[]> {
+    const url = `${this.baseApi}/api/Printers/${printerId}/slots/${slot}`;
+    return this.http.put<PrinterFilamentSummaryDto[]>(url, {
+      filamentId,
+      slotLabel: slotLabel ?? null,
+    });
+  }
+
+  /** Unload whatever is in one slot. */
+  unloadSlot(printerId: number, slot: number): Observable<void> {
+    const url = `${this.baseApi}/api/Printers/${printerId}/slots/${slot}`;
+    return this.http.delete<void>(url);
+  }
+
   private getAddPrinterDto(printer: PrinterDetail): AddPrinterDetailDto {
     const filamentUsage: AddPrinterFilamentSummaryDto[] =
       printer.loadedFilaments.map((pf) => {
@@ -271,6 +308,7 @@ export class PrinterService {
       hasHeatedBed: printer.hasHeatedBed,
       hasHeatedChamber: printer.hasHeatedChamber,
       wattageW: printer.wattageW,
+      slotCount: printer.slotCount,
     };
 
     return printDto;

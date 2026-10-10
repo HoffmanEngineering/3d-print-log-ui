@@ -88,6 +88,7 @@ export interface PrintFilamentUsageFormValue {
   estimatedSource: PrintFilamentSourceMeasurement;
   filament: FilamentSummary | null;
   notes: string | null;
+  slot: number | null;
 }
 
 export type FilamentUsageFormGroup = FormGroup<{
@@ -102,6 +103,7 @@ export type FilamentUsageFormGroup = FormGroup<{
   estimatedSource: FormControl<PrintFilamentSourceMeasurement>;
   filament: FormControl<FilamentSummary | null>;
   notes: FormControl<string | null>;
+  slot: FormControl<number | null>;
 }>;
 
 export interface PrintFormValue {
@@ -841,7 +843,8 @@ export class EditPrintDetailComponent
           pf.estimatedVolumeMl,
           pf.estimatedSource,
           pf.filament,
-          pf.notes
+          pf.notes,
+          pf.slot ?? null
         );
 
         printFilamentUsageArray.push(newFormGroup);
@@ -959,7 +962,9 @@ export class EditPrintDetailComponent
     estimatedVolumeMl: number | null,
     estimatedSource: PrintFilamentSourceMeasurement,
     filament: FilamentSummary | null,
-    notes: string | null
+    notes: string | null,
+    // Not editable here; carried so a save does not drop the tool a connector recorded.
+    slot: number | null = null
   ): FilamentUsageFormGroup {
     return this.formBuilder.group({
       id: this.formBuilder.control(id, { nonNullable: true }),
@@ -981,6 +986,7 @@ export class EditPrintDetailComponent
       }),
       filament: this.formBuilder.control<FilamentSummary | null>(filament),
       notes: this.formBuilder.control<string | null>(notes),
+      slot: this.formBuilder.control<number | null>(slot),
     });
   }
 
@@ -1713,6 +1719,7 @@ export class EditPrintDetailComponent
         volumeMl: this.parseNumericValue(printFilament.get('volumeMl').value),
         source: printFilament.get('source').value,
         notes: printFilament.get('notes').value,
+        slot: printFilament.get('slot')?.value ?? null,
       };
 
       return newPf;

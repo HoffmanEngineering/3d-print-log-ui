@@ -20,6 +20,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Observable, of } from 'rxjs';
 import {
   PrintDetail,
+  PrintFilamentSourceMeasurement,
   PrintService,
   PrintStatus,
 } from 'src/app/core/services/print.service';
@@ -715,6 +716,24 @@ describe('EditPrintDetailComponent', () => {
   });
 
   describe('Save handling', () => {
+    it("keeps each usage row's slot through the form", () => {
+      component.printForm = component.buildFormFromPrintDetail({
+        ...component.printDetail!,
+        filamentUsage: [
+          {
+            id: 'a3f1c2d4-0000-4000-8000-000000000001',
+            filament: null,
+            slot: 2,
+            lengthInM: 1.5,
+            source: PrintFilamentSourceMeasurement.Length,
+            estimatedSource: PrintFilamentSourceMeasurement.Length,
+          },
+        ],
+      });
+
+      expect(component.getPrintFromForm().filamentUsage[0].slot).toBe(2);
+    });
+
     it('carries the resolved print curaSettingId into the saved print', () => {
       component.printDetail = {
         ...component.printDetail!,

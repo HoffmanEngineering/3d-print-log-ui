@@ -12,6 +12,7 @@ import { PrinterRoutingModule } from './printer-routing.module';
 import { PrinterDetailResolverService } from './resolvers/printer-detail-resolver.service';
 import { PrinterListResolverService } from './resolvers/printer-list-resolver.service';
 import { PrinterConnectionsComponent } from './printer-connections/printer-connections.component';
+import { PrinterSlotsComponent } from './printer-slots/printer-slots.component';
 
 @NgModule({
   declarations: [PrinterListComponent, PrinterDetailComponent],
@@ -25,6 +26,7 @@ import { PrinterConnectionsComponent } from './printer-connections/printer-conne
     EntityImagesPanelComponent,
     SignedImageComponent,
     PrinterConnectionsComponent,
+    PrinterSlotsComponent,
   ],
   providers: [PrinterListResolverService, PrinterDetailResolverService],
 })

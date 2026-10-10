@@ -1,0 +1,53 @@
+<ol class="slots">
+  @for (row of rows(); track row.slot) {
+    <li class="slot" data-testid="printer-slot">
+      <span class="slot-label">{{ row.label }}</span>
+      @if (row.loaded?.filament; as filament) {
+        <app-filament-color-swatch [filament]="filament" [decorative]="true" />
+        <span class="spool">
+          <span class="name">{{ filament.displayName }}</span>
+          @if (filament.colorName) {
+            <span class="meta">{{ filament.colorName }}</span>
+          }
+        </span>
+      } @else {
+        <span class="spool empty">Empty</span>
+      }
+      <span class="actions">
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="slot-load"
+          [attr.aria-label]="(row.loaded ? 'Change ' : 'Load ') + row.label"
+          (click)="load(row)"
+        >
+          {{ row.loaded ? 'Change' : 'Load' }}
+        </button>
+        @if (row.loaded) {
+          <button
+            mat-button
+            type="button"
+            data-testid="slot-unload"
+            [attr.aria-label]="'Unload ' + row.label"
+            (click)="unload(row)"
+          >
+            Unload
+          </button>
+        }
+      </span>
+    </li>
+  }
+</ol>
+
+@if (unslotted().length) {
+  <div class="unslotted" data-testid="unslotted">
+    <p class="hint">
+      Also loaded, without a slot. Load one into a slot to place it there.
+    </p>
+    <ul>
+      @for (pf of unslotted(); track pf.id) {
+        <li>{{ pf.filament?.displayName || 'Other' }}</li>
+      }
+    </ul>
+  </div>
+}

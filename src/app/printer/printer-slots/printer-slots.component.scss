@@ -1,0 +1,58 @@
+.slots,
+.unslotted ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.slot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.slot-label {
+  min-width: 3.5em;
+  font-weight: 500;
+  // Set by the agent; may be one unbroken token.
+  overflow-wrap: anywhere;
+}
+
+.spool {
+  display: flex;
+  flex: 1 1 160px;
+  flex-direction: column;
+  min-width: 0;
+  text-align: start;
+
+  &.empty {
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.name {
+  overflow-wrap: anywhere;
+}
+
+.meta,
+.hint {
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.unslotted {
+  margin-top: 12px;
+  text-align: start;
+}
+
+.hint {
+  margin: 0 0 4px;
+}

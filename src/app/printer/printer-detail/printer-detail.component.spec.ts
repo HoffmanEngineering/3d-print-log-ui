@@ -21,6 +21,7 @@ import { SubscriptionService } from 'src/app/core/services/subscription.service'
 import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { PrinterDetailComponent } from './printer-detail.component';
 import { PrinterConnectionsComponent } from '../printer-connections/printer-connections.component';
+import { PrinterSlotsComponent } from '../printer-slots/printer-slots.component';
 
 const fffCategory = {
   nickname: 'FFF',
@@ -97,6 +98,7 @@ describe('PrinterDetailComponent', () => {
         ReactiveFormsModule,
         NoopAnimationsModule,
         PrinterConnectionsComponent,
+        PrinterSlotsComponent,
         // The template renders app-ad for real, which needs the Adsense config.
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
       ],
@@ -210,6 +212,86 @@ describe('PrinterDetailComponent', () => {
 
     expect(printerService.addPrinter).toHaveBeenCalled();
     expect(printerService.updatePrinter).not.toHaveBeenCalled();
+  });
+
+  // #255: multi-tool printers manage loaded filament per slot.
+  describe('slots', () => {
+    const spool = (id: string) => ({ id, displayName: `Spool ${id}` }) as never;
+
+    const slotsPanel = () =>
+      fixture.debugElement.query(By.directive(PrinterSlotsComponent));
+
+    const legacyLoadButton = () =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+      ).find((b) => b.textContent!.includes('Load Material'));
+
+    it('starts a new printer with one slot', async () => {
+      await setUp(null);
+
+      expect(component.printerForm.get('slotCount')!.value).toBe(1);
+    });
+
+    it("saves the printer's slot count", async () => {
+      await setUp(aPrinterDetail({ slotCount: 4 }));
+      component.printerForm.patchValue({ slotCount: 2 });
+
+      component.onSubmit();
+
+      expect(
+        printerService.updatePrinter.calls.mostRecent().args[0].slotCount
+      ).toBe(2);
+    });
+
+    it('rejects a slot count below 1 or above 64', async () => {
+      await setUp(aPrinterDetail());
+      const control = component.printerForm.get('slotCount')!;
+
+      control.setValue(0);
+      expect(control.valid).toBeFalse();
+      control.setValue(65);
+      expect(control.valid).toBeFalse();
+      control.setValue(4);
+      expect(control.valid).toBeTrue();
+    });
+
+    it('shows the slots for a saved multi-slot printer', async () => {
+      await setUp(aPrinterDetail({ slotCount: 4 }));
+
+      const panel = slotsPanel();
+      expect(panel).withContext('app-printer-slots').not.toBeNull();
+      expect(
+        (panel.componentInstance as PrinterSlotsComponent).slotCount()
+      ).toBe(4);
+      expect(legacyLoadButton()).toBeUndefined();
+    });
+
+    it('keeps the single-tool list for a one-slot printer', async () => {
+      await setUp(aPrinterDetail({ slotCount: 1 }));
+
+      expect(slotsPanel()).toBeNull();
+      expect(legacyLoadButton()).toBeDefined();
+    });
+
+    it('keeps the single-tool list for a printer from before slots', async () => {
+      await setUp(aPrinterDetail());
+
+      expect(slotsPanel()).toBeNull();
+    });
+
+    it('saves what the slots loaded, without marking the form dirty', async () => {
+      await setUp(aPrinterDetail({ slotCount: 4 }));
+
+      (
+        slotsPanel().componentInstance as PrinterSlotsComponent
+      ).loadedChange.emit([{ id: 'pf-1', filament: spool('a'), slot: 2 }]);
+      fixture.detectChanges();
+
+      expect(component.printerForm.dirty).toBeFalse();
+      component.onSubmit();
+      const saved = printerService.updatePrinter.calls.mostRecent().args[0];
+      expect(saved.loadedFilaments.map((pf) => pf.id)).toEqual(['pf-1']);
+    });
   });
 
   describe('photos panel', () => {

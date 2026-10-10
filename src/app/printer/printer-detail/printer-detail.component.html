@@ -284,6 +284,26 @@
             <mat-error>Wattage cannot be negative</mat-error>
           }
         </mat-form-field>
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Material slots</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            max="64"
+            step="1"
+            formControlName="slotCount"
+            data-testid="slot-count"
+          />
+          <mat-hint>Tools or AMS slots. 1 for a single-tool printer.</mat-hint>
+          @if (
+            printerForm.controls['slotCount'].hasError('min') ||
+            printerForm.controls['slotCount'].hasError('max') ||
+            printerForm.controls['slotCount'].hasError('required')
+          ) {
+            <mat-error>Enter a number from 1 to 64</mat-error>
+          }
+        </mat-form-field>
         <!-- Checkboxes for hasHeatedBed and hasHeatedChamber-->
         @if (printerForm.get('hasHeatedBed').enabled) {
           <mat-checkbox
@@ -302,106 +322,119 @@
           >
         }
         <h2>Loaded Materials</h2>
-        <div fxFlex="grow" fxFlexFill>
-          <button
-            type="button"
-            mat-raised-button
-            (click)="loadFilament()"
-            color="accent"
-            style="margin-bottom: 5px"
-          >
-            Load Material
-          </button>
-        </div>
-        <div formArrayName="loadedFilaments">
-          @for (
-            printFilament of loadedFilaments.controls;
-            track printFilament;
-            let printFilamentIndex = $index
-          ) {
-            <div style="margin-bottom: 5px">
-              <div [formGroupName]="printFilamentIndex">
-                <mat-card
-                  appearance="outlined"
-                  class="mat-elevation-z4"
-                  fxFlex="grow"
-                  fxFlexFill
-                  fxLayout="row"
-                >
-                  <mat-card-content>
-                    <div fxFlex="grow" fxLayout="column" fxLayoutGap="4px">
-                      <div fxFlex style="padding-bottom: 10px">
-                        <div
-                          class="filament-color-cell"
-                          [style]="
-                            printFilament.get('filament').value?.colors
-                              | filamentColorSwatchStyle
-                                : printFilament.get('filament').value
-                                    ?.colorPattern
-                                : printFilament.get('filament').value
-                                    ?.finishType
-                                : printFilament.get('filament').value?.effects
-                          "
-                        ></div>
-                      </div>
-                      <div fxFlex>
-                        {{
-                          printFilament.get('filament').value?.displayName ||
-                            'Other'
-                        }}
-                      </div>
-                      @if (
-                        printFilament.get('filament').value?.colorName !== ''
-                      ) {
+        @if (showSlots()) {
+          <app-printer-slots
+            fxFlex="grow"
+            fxFlexFill
+            [printerId]="savedPrinterId()"
+            [slotCount]="slotCount()"
+            [loaded]="slotLoaded()"
+            (loadedChange)="onSlotsChanged($event)"
+          />
+        } @else {
+          <div fxFlex="grow" fxFlexFill>
+            <button
+              type="button"
+              mat-raised-button
+              (click)="loadFilament()"
+              color="accent"
+              style="margin-bottom: 5px"
+            >
+              Load Material
+            </button>
+          </div>
+          <div formArrayName="loadedFilaments">
+            @for (
+              printFilament of loadedFilaments.controls;
+              track printFilament;
+              let printFilamentIndex = $index
+            ) {
+              <div style="margin-bottom: 5px">
+                <div [formGroupName]="printFilamentIndex">
+                  <mat-card
+                    appearance="outlined"
+                    class="mat-elevation-z4"
+                    fxFlex="grow"
+                    fxFlexFill
+                    fxLayout="row"
+                  >
+                    <mat-card-content>
+                      <div fxFlex="grow" fxLayout="column" fxLayoutGap="4px">
+                        <div fxFlex style="padding-bottom: 10px">
+                          <div
+                            class="filament-color-cell"
+                            [style]="
+                              printFilament.get('filament').value?.colors
+                                | filamentColorSwatchStyle
+                                  : printFilament.get('filament').value
+                                      ?.colorPattern
+                                  : printFilament.get('filament').value
+                                      ?.finishType
+                                  : printFilament.get('filament').value?.effects
+                            "
+                          ></div>
+                        </div>
                         <div fxFlex>
-                          {{ printFilament.get('filament').value?.colorName }}
-                        </div>
-                      }
-                      <div fxFlex>
-                        {{ printFilament.get('filament').value?.materialType }}
-                      </div>
-                      @if (printFilament.get('filament').value !== null) {
-                        <div fxFlex="grow">
                           {{
-                            printFilament.get('filament').value
-                              ?.filamentRemaining / 1000 | number
-                          }}
-                          (g) remaining
-                        </div>
-                      }
-                      @if (printFilament.get('filament').value !== null) {
-                        <div fxFlex="grow">
-                          {{
-                            printFilament.get('filament').value
-                              ?.filamentLengthRemainingInM | number
-                          }}
-                          (m) remaining
-                        </div>
-                      }
-                      <div
-                        fxFlex
-                        fxLayoutAlign="center"
-                        style="padding-top: 10px"
-                      >
-                        <button
-                          type="button"
-                          mat-raised-button
-                          (click)="removeFilament(printFilamentIndex)"
-                          attr.aria-label="Unload {{
                             printFilament.get('filament').value?.displayName ||
                               'Other'
-                          }}"
+                          }}
+                        </div>
+                        @if (
+                          printFilament.get('filament').value?.colorName !== ''
+                        ) {
+                          <div fxFlex>
+                            {{ printFilament.get('filament').value?.colorName }}
+                          </div>
+                        }
+                        <div fxFlex>
+                          {{
+                            printFilament.get('filament').value?.materialType
+                          }}
+                        </div>
+                        @if (printFilament.get('filament').value !== null) {
+                          <div fxFlex="grow">
+                            {{
+                              printFilament.get('filament').value
+                                ?.filamentRemaining / 1000 | number
+                            }}
+                            (g) remaining
+                          </div>
+                        }
+                        @if (printFilament.get('filament').value !== null) {
+                          <div fxFlex="grow">
+                            {{
+                              printFilament.get('filament').value
+                                ?.filamentLengthRemainingInM | number
+                            }}
+                            (m) remaining
+                          </div>
+                        }
+                        <div
+                          fxFlex
+                          fxLayoutAlign="center"
+                          style="padding-top: 10px"
                         >
-                          <mat-icon>delete</mat-icon>Unload
-                        </button>
+                          <button
+                            type="button"
+                            mat-raised-button
+                            (click)="removeFilament(printFilamentIndex)"
+                            attr.aria-label="Unload {{
+                              printFilament.get('filament').value
+                                ?.displayName || 'Other'
+                            }}"
+                          >
+                            <mat-icon>delete</mat-icon>Unload
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </mat-card-content>
-                </mat-card>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
               </div>
-            </div>
-          }
-        </div>
+            }
+          </div>
+        }
         @if (savedPrinterId(); as printerId) {
           <app-printer-connections
             fxFlex="grow"

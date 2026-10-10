@@ -89,6 +89,9 @@ export interface PrintFilamentSummaryDto {
   id: string | null;
   filament: FilamentSummary;
 
+  /** The printer slot (tool) the material was fed from, if known. */
+  slot?: number | null;
+
   amountMg?: number;
   lengthInM?: number;
   volumeMl?: number;
@@ -109,6 +112,9 @@ export interface PutPrintFilamentSummaryDto {
    */
   id: string | null;
   filamentId?: string;
+
+  /** The printer slot (tool) the material was fed from, if known. */
+  slot?: number | null;
 
   amountMg?: number;
   lengthInM?: number;
@@ -493,6 +499,7 @@ export class PrintService {
         const usage: PutPrintFilamentSummaryDto = {
           id: pf.id,
           filamentId: pf.filament?.id ?? null,
+          slot: pf.slot ?? null,
           estimatedAmountMg: pf.estimatedAmountMg,
           estimatedLengthInM: pf.estimatedLengthInM,
           estimatedVolumeMl: pf.estimatedVolumeMl,

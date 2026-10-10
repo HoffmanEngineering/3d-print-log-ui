@@ -43,6 +43,62 @@ describe('FilamentUsageSummaryComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  describe('slots', () => {
+    const slotRow = (overrides: Record<string, unknown>) =>
+      ({
+        filament: null,
+        notes: '',
+        lengthInM: 1.5,
+        source: PrintFilamentSourceMeasurement.Length,
+        estimatedSource: PrintFilamentSourceMeasurement.Length,
+        ...overrides,
+      }) as any;
+
+    function slotBadges(): string[] {
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll(
+          '[data-testid="usage-slot"]'
+        )
+      ).map((el) => el.textContent.trim());
+    }
+
+    it('names the tool a row was fed from', () => {
+      fixture.componentRef.setInput('filamentUsage', [slotRow({ slot: 2 })]);
+      fixture.detectChanges();
+
+      expect(slotBadges()).toEqual(['T2']);
+    });
+
+    it('says when a slot row has no spool linked', () => {
+      fixture.componentRef.setInput('filamentUsage', [slotRow({ slot: 0 })]);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('No spool linked');
+    });
+
+    it('keeps the notes on a slot row with no spool', () => {
+      fixture.componentRef.setInput('filamentUsage', [
+        slotRow({ slot: 1, notes: 'Silk gold' }),
+      ]);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Silk gold');
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'No spool linked'
+      );
+    });
+
+    it('shows no slot on a row without one', () => {
+      fixture.componentRef.setInput('filamentUsage', [slotRow({ slot: null })]);
+      fixture.detectChanges();
+
+      expect(slotBadges()).toEqual([]);
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'No spool linked'
+      );
+    });
+  });
+
   describe('fail-closed link and price gating', () => {
     // `source` is required: getFilamentPreferredDisplay resolves the recorded
     // value via actualValue(fu, fu.source), so an undefined source renders an

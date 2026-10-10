@@ -25,3 +25,19 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+// The tool a row was fed from (T0-T3 on a multi-tool printer).
+.slot {
+  display: inline-block;
+  margin-inline-end: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.no-spool {
+  color: var(--mat-sys-on-surface-variant);
+}

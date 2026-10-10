@@ -218,6 +218,13 @@ floor and no slicer settings are available.
         A Material Usage can be removed from the print by clicking the Delete
         button.
       </p>
+      <p>
+        Prints logged automatically from a
+        <a routerLink="/docs/printers" fragment="slots">multi-slot printer</a>
+        show which tool each material was fed from, such as
+        <strong>T2</strong>. A tool with no roll linked shows
+        <strong>No spool linked</strong>.
+      </p>
     </div>
     <div fxFlex>
       <img

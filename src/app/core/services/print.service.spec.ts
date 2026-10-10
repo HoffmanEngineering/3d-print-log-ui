@@ -351,5 +351,30 @@ describe('PrintService', () => {
       expect('connectionDisplayName' in request.request.body).toBeFalse();
       request.flush({});
     });
+
+    it("updatePrint keeps each usage row's slot", () => {
+      let print: PrintDetail | undefined;
+      service.getPrintDetail(9).subscribe((p) => (print = p));
+      httpMock
+        .expectOne((r) => r.url.endsWith('/api/Prints/9'))
+        .flush({
+          ...detailDto,
+          filamentUsage: [
+            {
+              id: 'a3f1c2d4-0000-4000-8000-000000000001',
+              filament: null,
+              slot: 2,
+              source: 2,
+              estimatedSource: 2,
+              lengthInM: 1.5,
+            },
+          ],
+        });
+
+      service.updatePrint(print!).subscribe();
+      const request = httpMock.expectOne((r) => r.method === 'PUT');
+      expect(request.request.body.filamentUsage[0].slot).toBe(2);
+      request.flush({});
+    });
   });
 });

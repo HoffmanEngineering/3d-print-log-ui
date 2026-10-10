@@ -9,6 +9,9 @@
       }
     </div>
     <div class="name-cell">
+      @if (fu.slot !== null && fu.slot !== undefined) {
+        <span class="slot" data-testid="usage-slot">T{{ fu.slot }}</span>
+      }
       @if (fu.filament !== null) {
         @if (linkFilaments()) {
           <a
@@ -22,6 +25,8 @@
         @if (fu.filament.colorName) {
           ({{ fu.filament.colorName }})
         }
+      } @else if (fu.slot !== null && fu.slot !== undefined && !fu.notes) {
+        <span class="no-spool">No spool linked</span>
       } @else {
         {{ fu.notes }}
       }

@@ -105,6 +105,27 @@ the old printer.
 **Quick Unload** - On the Printer List, click the **...** menu and select the
 **Unload Material** button to remove that printer's currently loaded filament.
 
+#### Material Slots {#slots}
+
+A printer with more than one tool or material slot, such as a tool changer, an
+IDEX printer or one with an AMS-style unit, can track which roll is in which
+slot. Set **Material slots** on the printer's **Edit Page** to the number of
+tools or slots it has, then click **Submit**. Single-tool printers keep the
+default of 1.
+
+When you open a printer with more than one slot, **Loaded Materials** lists
+every slot in order (T0, T1, T2 and so on, or the names the printer reports).
+
+- Click **Load** on an empty slot, or **Change** on a full one, to pick a roll.
+  The change is saved straight away.
+- Click **Unload** to empty one slot. **Unload Material** on the Printer List
+  still empties every slot at once.
+- A roll is in one place at a time. Loading a roll that is in another slot, or
+  on another printer, moves it, and 3D Print Log tells you where it came from.
+
+Saving a new print doesn't change a multi-slot printer's slots. The slots
+already say what is loaded.
+
 ---
 
 ### Connections {#connections}

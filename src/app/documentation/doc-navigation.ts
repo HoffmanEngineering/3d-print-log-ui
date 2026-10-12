@@ -13,6 +13,10 @@ export interface DocLink {
  * `DOC_PAGES` is already ordered by group and then by `order` — the sidebar
  * walks it verbatim — so "the next page" is simply the next entry. A dormant
  * page has no route, so it is skipped rather than offered as a dead end.
+ *
+ * A `nav: false` page stays in this walk. It has no sidebar row, but it sits
+ * next to the listed page that introduces it (the printlog-bridge sub-pages
+ * follow the overview), so previous/next reads through that guide in order.
  */
 const ROUTED = DOC_PAGES.filter((page) => !page.dormant);
 

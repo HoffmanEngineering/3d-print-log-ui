@@ -3,6 +3,7 @@ slug: printlog-bridge-privacy
 title: printlog-bridge Privacy & Security | 3D Print Log Docs
 description: Exactly what printlog-bridge sends to 3D Print Log, every connection it makes, how it keeps your API key, and what it stores on the printer.
 navLabel: Bridge – privacy
+nav: false
 group: integrations
 order: 48
 mode: reference
@@ -13,6 +14,8 @@ related: [printlog-bridge, printlog-bridge-troubleshooting, privacy-policy, api]
 ## printlog-bridge Privacy & Security
 
 ---
+
+Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 
 This page lists what [printlog-bridge](/docs/printlog-bridge) sends, where it connects, and how it keeps your keys. Each guarantee is what the bridge's code does today, and a test in the bridge's repository fails if that changes. The bridge's own [privacy document](https://github.com/HoffmanEngineering/printlog-bridge/blob/main/docs/privacy.md) names each test.
 

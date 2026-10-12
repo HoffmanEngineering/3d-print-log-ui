@@ -61,6 +61,7 @@ during development.
 | `order`       | yes      | Sort position within the group. Leave gaps (10, 20, 30) so a page can be inserted later.    |
 | `mode`        | yes      | Diátaxis mode: `tutorial`, `how-to`, `reference`, `explanation`.                            |
 | `updated`     | yes      | `YYYY-MM-DD`.                                                                               |
+| `nav`         | no       | `nav: false` leaves the page out of the sidebar. See "Pages outside the sidebar" below.     |
 | `related`     | no       | Slugs of related pages.                                                                     |
 | `aliases`     | no       | Old paths that should redirect here, e.g. `aliases: [filaments]` on `materials.md`.         |
 | `constants`   | no       | See escape hatches below.                                                                   |
@@ -71,6 +72,32 @@ no frontmatter field for it.
 
 Aliases generate a redirect route only. They are excluded from `DOC_ROUTES`, the sitemap and
 the prerender set, so an old URL keeps working without competing for the same SEO metadata.
+
+## Pages outside the sidebar
+
+`nav: false` takes a page out of the sidebar and **nothing else**. The page keeps its route,
+its prerender entry, its sitemap entry, its search-palette sections, its Markdown twin and
+its `/docs/llms.txt` line, its SEO metadata, and it can still be named in another page's
+`related:`. It also stays in the previous/next walk, in `order` position.
+
+Use it for the sub-pages of a guide whose overview is the one sidebar row: the overview is
+listed, and its sub-pages are not. The printlog-bridge pages are the example. "Log prints
+from Klipper" (`printlog-bridge.md`) is listed; install, Docker, spool macros, Snapmaker U1,
+troubleshooting, privacy, switching from the notifier and the legacy notifier page are not.
+When you do this:
+
+- Give the overview an **In this guide** list near the top that links every sub-page, with a
+  one-line description each.
+- Open each sub-page, right under the title rule, with the same back link:
+  `Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.`
+- Keep `group` and `order` on the sub-pages so they sort next to the overview.
+
+Do not use it to hide a page you have not finished, or to retire one. That is `dormant: true`,
+which unpublishes the page entirely: no route, no prerender, no sitemap, no search, no twin.
+
+`validate-docs` fails when a `nav: false` page is not linked from at least one page that **is**
+in the sidebar (a link from another unlisted page, or from the page itself, does not count),
+when `nav` is not a boolean, and when the default page (`getting-started`) is unlisted.
 
 ## Writing the body
 
@@ -142,7 +169,8 @@ npm run build && node scripts/verify-prerender.mjs
 mistyped frontmatter, a slug that does not match its filename, a duplicate slug or alias, a
 description outside 50–170 characters, a duplicate title or description within docs, a broken
 internal doc link or dangling `#anchor` (including the `[routerLink]="['/docs/x']"` form that
-raw HTML blocks use), a link to a dormant page, a duplicate `id` within a page, a previously
+raw HTML blocks use), a link to a dormant page, a `nav: false` page that no listed page
+links to, a duplicate `id` within a page, a previously
 published anchor that disappeared — including one orphaned by deleting its whole page
 (baseline: `src/content/docs-anchors.json`), a disallowed element, and a template referencing
 a class member that is not declared.
@@ -166,4 +194,6 @@ marketing SEO metadata lives in Angular sources a Node prebuild script cannot re
 - Changing or removing a published anchor. `docs-anchors.json` is a contract; validation fails.
 - Description under 50 or over 170 characters, or reusing a marketing page's title.
 - Reaching for `constants:` when the page needs a service. That is what `component:` is for.
+- Using `dormant: true` to keep a page out of the sidebar. It unpublishes the page; `nav: false`
+  is the sidebar-only switch.
 - Forgetting `npm run docs:generate` after adding a page while a plain `ng` command is running.

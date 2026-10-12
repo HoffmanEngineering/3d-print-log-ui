@@ -1,7 +1,7 @@
 import { Component, PLATFORM_ID, inject, output } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { INavData } from 'src/app/shared/sidebar/types';
-import { DOC_PAGES } from '../generated/docs-manifest';
+import { DOC_PAGES, DocManifestPage } from '../generated/docs-manifest';
 import {
   isApplePlatform,
   shortcutLabel,
@@ -11,7 +11,8 @@ import {
  * The docs sidebar, derived from the docs manifest: each page's `navLabel`,
  * `group` and `order` frontmatter place it, and a divider is inserted wherever
  * the group changes. Adding a page to the sidebar is no longer a separate
- * registration step.
+ * registration step. A page with `nav: false` is published but left out: it is
+ * reached from a page that is listed (validate-docs enforces that link).
  */
 @Component({
   selector: 'app-doc-sidebar',
@@ -33,12 +34,14 @@ export class DocSidebarComponent {
   );
 }
 
-function buildNavItems(): INavData[] {
+export function buildNavItems(
+  pages: readonly DocManifestPage[] = DOC_PAGES
+): INavData[] {
   const items: INavData[] = [];
   let previousGroup: string | null = null;
 
-  for (const page of DOC_PAGES) {
-    if (page.dormant) continue;
+  for (const page of pages) {
+    if (page.dormant || !page.nav) continue;
     if (previousGroup !== null && page.group !== previousGroup) {
       items.push({ divider: true });
     }

@@ -3,6 +3,7 @@ slug: printlog-bridge-install
 title: Install printlog-bridge on a Klipper Printer | 3D Print Log Docs
 description: Install printlog-bridge on your Klipper printer's host as a systemd service, connect it to your 3D Print Log account, and check that it works.
 navLabel: Bridge – install on the printer
+nav: false
 group: integrations
 order: 43
 mode: how-to
@@ -13,6 +14,8 @@ related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, print
 ## Install printlog-bridge on the Printer
 
 ---
+
+Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 
 In local mode, [printlog-bridge](/docs/printlog-bridge) runs on the printer's own host, next to Klipper and Moonraker: MainsailOS, FluiddPi, or any Klipper install with Moonraker. If you can't install software on the printer, or you want one bridge for several printers, [run it in Docker](/docs/printlog-bridge-docker) instead.
 

@@ -1115,3 +1115,114 @@ test('a page that fails to render reports only the render error', () => {
     `a render failure must not also be reported as missing ids: ${problems}`
   );
 });
+
+// --- nav: false (#273) -------------------------------------------------------
+
+// An unlisted page has no sidebar row, so a link from a listed page is the only
+// way a reader browsing the docs can reach it.
+const unlistedPage = (over = {}) =>
+  source({
+    slug: 'printlog-bridge-install',
+    sourceFile: 'printlog-bridge-install.md',
+    title: 'Install | 3D Print Log Docs',
+    description: `${DESCRIPTION} Install edition.`,
+    navLabel: 'Install',
+    group: 'integrations',
+    body: '## Install\n\nInstall it.\n',
+    nav: false,
+    ...over,
+  });
+
+test('accepts an unlisted page linked from a listed page', () => {
+  assert.deepEqual(
+    run([
+      source({
+        body: '## Prints\n\n[Install](/docs/printlog-bridge-install)\n',
+      }),
+      unlistedPage(),
+    ]),
+    []
+  );
+});
+
+test('accepts an unlisted page linked from raw HTML on a listed page', () => {
+  assert.deepEqual(
+    run([
+      source({
+        body: '## Prints\n\n<p><a routerLink="/docs/printlog-bridge-install#x">Install</a></p>\n',
+      }),
+      unlistedPage({ body: '## Install\n\n### Step {#x}\n' }),
+    ]),
+    []
+  );
+});
+
+test('reports an unlisted page that no listed page links to', () => {
+  assert.deepEqual(run([source(), unlistedPage()]), [
+    'printlog-bridge-install.md: nav: false hides this page from the sidebar, but no page in the sidebar links to it.',
+  ]);
+});
+
+// Two unlisted pages linking to each other are still an island.
+test('reports an unlisted page linked only from another unlisted page', () => {
+  const problems = run([
+    source(),
+    unlistedPage({
+      body: '## Install\n\n[Docker](/docs/printlog-bridge-docker)\n',
+    }),
+    unlistedPage({
+      slug: 'printlog-bridge-docker',
+      sourceFile: 'printlog-bridge-docker.md',
+      title: 'Docker | 3D Print Log Docs',
+      description: `${DESCRIPTION} Docker edition.`,
+      navLabel: 'Docker',
+      body: '## Docker\n\n[Install](/docs/printlog-bridge-install)\n',
+    }),
+  ]);
+
+  assert.deepEqual(problems, [
+    'printlog-bridge-install.md: nav: false hides this page from the sidebar, but no page in the sidebar links to it.',
+    'printlog-bridge-docker.md: nav: false hides this page from the sidebar, but no page in the sidebar links to it.',
+  ]);
+});
+
+// A link to a page from itself is not a way in.
+test('a self-link does not count for an unlisted page', () => {
+  assert.deepEqual(
+    run([
+      source(),
+      unlistedPage({
+        body: '## Install\n\n[here](/docs/printlog-bridge-install)\n',
+      }),
+    ]),
+    [
+      'printlog-bridge-install.md: nav: false hides this page from the sidebar, but no page in the sidebar links to it.',
+    ]
+  );
+});
+
+test('reports a nav field that is not a boolean', () => {
+  assert.deepEqual(messages({ nav: 'no' }), [
+    'prints.md: frontmatter field "nav" must be a boolean (write "nav: false" to leave the page out of the sidebar).',
+  ]);
+});
+
+// /docs redirects to the landing page; it is the one page that must be listed.
+test('reports an unlisted default doc page', () => {
+  const problems = validate([
+    source({
+      slug: 'getting-started',
+      sourceFile: 'getting-started.md',
+      navLabel: 'Start',
+      group: 'start',
+      nav: false,
+    }),
+  ]);
+
+  assert.ok(
+    problems.some((p) =>
+      /default doc page "getting-started" must stay in the sidebar/.test(p)
+    ),
+    `expected an unlisted-default problem, got ${JSON.stringify(problems)}`
+  );
+});

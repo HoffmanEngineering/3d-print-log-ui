@@ -3,6 +3,7 @@ slug: printlog-bridge-troubleshooting
 title: Troubleshooting printlog-bridge | 3D Print Log Docs
 description: Fix printlog-bridge problems with its doctor and status commands, find its logs and state, record a trace, and solve common Klipper and Moonraker issues.
 navLabel: Bridge – troubleshooting
+nav: false
 group: integrations
 order: 47
 mode: how-to
@@ -13,6 +14,8 @@ related: [printlog-bridge, printlog-bridge-install, printlog-bridge-docker, prin
 ## Troubleshooting printlog-bridge
 
 ---
+
+Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 
 [printlog-bridge](/docs/printlog-bridge) has two commands for finding out what's wrong: `doctor` checks the setup, and `status` shows what the running bridge is doing. How you run them depends on where the bridge runs:
 

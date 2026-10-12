@@ -2,7 +2,7 @@
 slug: printlog-bridge
 title: printlog-bridge for Klipper & Moonraker | 3D Print Log Docs
 description: printlog-bridge logs every Klipper and Moonraker print to 3D Print Log by itself, with its outcome, print time, filament per tool, pictures and spools.
-navLabel: printlog-bridge (Klipper)
+navLabel: Log prints from Klipper
 group: integrations
 order: 42
 mode: explanation
@@ -27,6 +27,17 @@ It runs either on the printer's own host or in a Docker container on another com
     explains how to send a report.
   </p>
 </doc-callout>
+
+### In this guide {#pages}
+
+- [Install on the printer (local mode)](/docs/printlog-bridge-install): run the bridge as a service on the printer's own host and connect it to your account.
+- [Run it in Docker (remote mode)](/docs/printlog-bridge-docker): one container on a NAS, home server or Pi watches your printers over the network.
+- [Assign spools with PRINTLOG_SET_SPOOL](/docs/printlog-bridge-spools): tell 3D Print Log which spool is in each tool from Klipper's console or a macro.
+- [Snapmaker U1](/docs/snapmaker-u1): filament per tool on all four tools, with spools assigned from their RFID tags.
+- [Troubleshooting](/docs/printlog-bridge-troubleshooting): the `doctor` and `status` commands, logs, traces and common problems.
+- [Privacy and security](/docs/printlog-bridge-privacy): every connection the bridge makes, what it sends, and how it keeps your key.
+- [Switch from the Moonraker notifier](/docs/switch-from-notifier): move a printer from the notifier to the bridge, and how the two run side by side.
+- [Moonraker notifier (legacy)](/docs/klipper): the older way to log Klipper prints, for printers that still use it.
 
 ---
 
@@ -97,14 +108,6 @@ If the printer still sends prints through the [Moonraker notifier](/docs/klipper
 
 ---
 
-### Set it up {#pages}
-
-- [Install on the printer (local mode)](/docs/printlog-bridge-install)
-- [Run it in Docker (remote mode)](/docs/printlog-bridge-docker)
-- [Assign spools with PRINTLOG_SET_SPOOL](/docs/printlog-bridge-spools)
-- [Snapmaker U1](/docs/snapmaker-u1)
-- [Switch from the Moonraker notifier](/docs/switch-from-notifier)
-- [Troubleshooting: `status`, `doctor`, logs and traces](/docs/printlog-bridge-troubleshooting)
-- [Privacy: exactly what the bridge sends](/docs/printlog-bridge-privacy)
+### Once it runs {#running}
 
 Once the bridge runs, the printer's **Edit Page** lists it under [Connections](/docs/printers#connections) as `printlog-bridge (voron)`, with the name you gave the printer in the bridge's config. It checks in every 5 minutes, and the app shows it as **Stale** after 15 minutes without hearing from it.

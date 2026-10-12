@@ -112,7 +112,10 @@ test('docs.routes.ts imports each component and lists the routes in order', () =
     /import \{ DocsPrintsComponent \} from '\.\/pages\/docs-prints\.component';/
   );
   assert.match(ts, /\{ path: 'prints', component: DocsPrintsComponent,/);
-  assert.match(ts, /\{ path: 'old-prints', redirectTo: docsAliasRedirect\('prints'\) \}/);
+  assert.match(
+    ts,
+    /\{ path: 'old-prints', redirectTo: docsAliasRedirect\('prints'\) \}/
+  );
   assert.match(
     ts,
     /\{ path: '', redirectTo: 'getting-started', pathMatch: 'full' \}/
@@ -670,7 +673,10 @@ test('emitManifestTs exports DOC_MOVED_ANCHORS from the JSON manifest', () => {
     ts,
     /export const DOC_MOVED_ANCHORS: Readonly<Record<string, string>> =/
   );
-  assert.match(ts, /manifest\.movedAnchors as Readonly<Record<string, string>>;/);
+  assert.match(
+    ts,
+    /manifest\.movedAnchors as Readonly<Record<string, string>>;/
+  );
 });
 
 test('emitRoutesTs guards every page route and always re-runs it', () => {
@@ -709,10 +715,42 @@ test('emitRoutesTs carries the fragment through an alias redirect', () => {
 
 test('emitRoutesTs leaves the default child route a plain redirect', () => {
   const ts = emitRoutesTs(
-    buildManifest([page({ slug: 'getting-started', group: 'start', order: 10 })])
+    buildManifest([
+      page({ slug: 'getting-started', group: 'start', order: 10 }),
+    ])
   );
   assert.match(
     ts,
     /\{ path: '', redirectTo: 'getting-started', pathMatch: 'full' \},/
   );
+});
+
+// --- nav: false (#273) -------------------------------------------------------
+
+test('a nav: false page stays in the search index', () => {
+  const index = JSON.parse(
+    emitSearchIndexJson(
+      buildManifest([page({ slug: 'terms', navLabel: 'Terms', nav: false })]),
+      { terms: '<h2>Terms</h2>\n<p>Read these.</p>' }
+    )
+  );
+
+  assert.deepEqual(
+    index.map((entry) => entry.url),
+    ['/docs/terms']
+  );
+});
+
+test('a nav: false page keeps its component, route and prerender entry', () => {
+  const m = buildManifest([
+    page({ slug: 'terms', navLabel: 'Terms', nav: false }),
+  ]);
+
+  assert.match(emitDeclarationsTs(m), /DocsTermsComponent/);
+  assert.match(emitRoutesTs(m), /path: 'terms'/);
+  assert.match(emitServerRoutesTs(m), /docs\/terms/);
+});
+
+test('DocManifestPage declares the nav flag the sidebar reads', () => {
+  assert.match(emitManifestTs(), /readonly nav: boolean;/);
 });

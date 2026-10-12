@@ -456,3 +456,16 @@ test('no SWA rule rewrites a Markdown twin or index', () => {
     assert.equal(resolveSwaRewrite(config, url), null, `${url} is rewritten`);
   }
 });
+
+test('a nav: false page keeps its twin, its llms.txt entry and related links', () => {
+  const manifest = {
+    pages: [
+      page({ related: ['terms'] }),
+      page({ slug: 'terms', navLabel: 'Terms', nav: false }),
+    ],
+  };
+  const files = planTwins(manifest, { prints: '<p>x</p>', terms: '<p>y</p>' });
+  assert.ok(files.has('docs/terms.md'));
+  assert.match(files.get('docs/llms.txt'), /\/docs\/terms\.md/);
+  assert.match(files.get('docs/prints.md'), /\[Terms\]\(.*\/docs\/terms\.md\)/);
+});

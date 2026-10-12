@@ -172,6 +172,13 @@ export function validateDocs({
       }
     }
 
+    if (s.nav !== undefined && s.nav !== null && typeof s.nav !== 'boolean') {
+      add(
+        file,
+        'frontmatter field "nav" must be a boolean (write "nav: false" to leave the page out of the sidebar).'
+      );
+    }
+
     if (typeof s.mode === 'string' && !DOC_MODES.includes(s.mode)) {
       add(file, `mode "${s.mode}" is not one of ${DOC_MODES.join(', ')}.`);
     }
@@ -339,6 +346,13 @@ export function validateDocs({
     }
   }
 
+  /**
+   * Slugs that some page in the sidebar links to. An unlisted (`nav: false`)
+   * page has no sidebar row, so one of these links is the only way a reader
+   * browsing the docs finds it.
+   */
+  const linkedFromSidebar = new Set();
+
   // Link checks need every page's anchors, so they run once the loop is done.
   for (const s of sources) {
     const file = s.sourceFile ?? `${s.slug}.md`;
@@ -365,6 +379,7 @@ export function validateDocs({
         add(file, `link to ${target}, but there is no doc page "${slug}".`);
         continue;
       }
+      if (isListed(s) && resolved !== s.slug) linkedFromSidebar.add(resolved);
       if (fragment && !anchorsBySlug.get(resolved)?.includes(fragment)) {
         add(
           file,
@@ -385,6 +400,24 @@ export function validateDocs({
         `anchor "${anchor}" was published previously and is no longer declared.`
       );
     }
+  }
+
+  for (const s of routed) {
+    if (isListed(s) || linkedFromSidebar.has(s.slug)) continue;
+    add(
+      s.sourceFile ?? `${s.slug}.md`,
+      'nav: false hides this page from the sidebar, but no page in the sidebar links to it.'
+    );
+  }
+
+  // /docs lands on the default page, and the sidebar is how a reader leaves it
+  // and comes back; it is the one page that may not be unlisted.
+  const landing = routed.find((s) => s.slug === DEFAULT_DOC_SLUG);
+  if (landing && !isListed(landing)) {
+    add(
+      landing.sourceFile ?? `${landing.slug}.md`,
+      `the default doc page "${DEFAULT_DOC_SLUG}" must stay in the sidebar; remove nav: false.`
+    );
   }
 
   // The default child route is a generator constant, so nothing otherwise ties
@@ -412,6 +445,11 @@ export function validateDocs({
   }
 
   return problems;
+}
+
+/** True unless the page opts out of the sidebar with `nav: false`. */
+function isListed(source) {
+  return !source.dormant && source.nav !== false;
 }
 
 /** An HTML character reference: `&amp;`, `&#64;`, `&mdash;`. */

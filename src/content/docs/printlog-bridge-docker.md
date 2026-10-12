@@ -3,6 +3,7 @@ slug: printlog-bridge-docker
 title: Run printlog-bridge in Docker | 3D Print Log Docs
 description: Run printlog-bridge in Docker on a NAS, home server or Raspberry Pi to log prints from Klipper printers on your network, with Compose and Synology steps.
 navLabel: Bridge – Docker (remote mode)
+nav: false
 group: integrations
 order: 44
 mode: how-to
@@ -13,6 +14,8 @@ related: [printlog-bridge, printlog-bridge-install, snapmaker-u1, printlog-bridg
 ## Run printlog-bridge in Docker
 
 ---
+
+Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 
 In remote mode, one [printlog-bridge](/docs/printlog-bridge) container watches every printer in its config over the network, through each printer's Moonraker WebSocket. That suits a NAS, a home server, or a Raspberry Pi that isn't a printer, and it covers printers you can't install software on, such as the [Snapmaker U1](/docs/snapmaker-u1).
 

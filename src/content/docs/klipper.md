@@ -3,6 +3,7 @@ slug: klipper
 title: Klipper & Moonraker | 3D Print Log Docs
 description: Automatically log prints from Klipper using Moonraker webhooks. Configure your printer to send completed prints to 3D Print Log.
 navLabel: Klipper notifier (legacy)
+nav: false
 group: integrations
 order: 50
 mode: how-to
@@ -13,6 +14,8 @@ related: [printlog-bridge, switch-from-notifier, prints]
 ## Klipper/Moonraker Notifier
 
 ---
+
+Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 
 3D Print Log can receive print information from <a rel="noreferrer noopener"
 target="_blank" href="https://www.klipper3d.org/" >Klipper</a >/<a

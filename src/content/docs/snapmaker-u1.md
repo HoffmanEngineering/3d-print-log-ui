@@ -3,6 +3,7 @@ slug: snapmaker-u1
 title: Snapmaker U1 Print Logging with printlog-bridge | 3D Print Log Docs
 description: Log Snapmaker U1 prints to 3D Print Log automatically with printlog-bridge, with filament per tool on all four tools and spools assigned from their RFID tags.
 navLabel: Bridge – Snapmaker U1
+nav: false
 group: integrations
 order: 46
 mode: how-to
@@ -13,6 +14,8 @@ related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, mater
 ## Snapmaker U1
 
 ---
+
+Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 
 The Snapmaker U1 runs Snapmaker's own versions of Klipper and Moonraker, and you can't install extra software on it. [printlog-bridge](/docs/printlog-bridge) logs its prints from another computer on your network, in [remote mode](/docs/printlog-bridge-docker).
 

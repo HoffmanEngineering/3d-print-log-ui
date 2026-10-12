@@ -195,6 +195,7 @@ User-facing documentation is authored as Markdown in **`src/content/docs/*.md`**
 - Each main page gets its own doc page (Prints, printers, filaments/materials, etc.), as does each integration (mobile app, MCP, etc.)
 - Update existing documentation with new functionality; write for the user, not the developer
 - Screenshots use `<doc-figure name="...">`, which resolves a generated capture. See "Generated screenshots" above.
+- A guide's sub-pages can stay out of the sidebar with `nav: false` in their frontmatter. They stay routed, prerendered and in the sitemap, search, twins and `llms.txt`, and must be linked from a listed page (the validator checks). The `adding-a-docs-page` skill has the details.
 - Validate with `node scripts/validate-docs.mjs`
 
 ### Markdown twins

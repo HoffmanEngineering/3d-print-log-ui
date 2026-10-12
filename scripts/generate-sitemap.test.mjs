@@ -210,6 +210,20 @@ test('docLastmods maps each page to its updated date, release notes to the newes
   );
 });
 
+test('docLastmods keeps a nav: false page, which is unlisted but published', () => {
+  const lastmods = docLastmods({
+    pages: [
+      {
+        slug: 'klipper',
+        path: 'docs/klipper',
+        updated: '2026-10-12',
+        nav: false,
+      },
+    ],
+  });
+  assert.deepEqual([...lastmods], [['docs/klipper', '2026-10-12']]);
+});
+
 test('DOC_LASTMODS dates every doc route and no marketing route', () => {
   for (const r of DOC_ROUTES) {
     assert.match(DOC_LASTMODS.get(r) ?? '', /^\d{4}-\d{2}-\d{2}$/, r);

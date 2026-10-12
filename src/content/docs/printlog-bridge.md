@@ -7,7 +7,7 @@ group: integrations
 order: 42
 mode: explanation
 updated: 2026-10-12
-related: [printlog-bridge-install, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy]
+related: [printlog-bridge-install, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
 ---
 
 ## printlog-bridge
@@ -93,7 +93,7 @@ The bridge signs in with a personal API key, which you create on the [Personal A
 
 #### Already using the Moonraker notifier? {#notifier}
 
-If the printer still sends prints through the [Moonraker notifier](/docs/klipper), 3D Print Log logs each print only once, from the bridge, and shows a banner on the printer suggesting you remove the notifier. See [Connections](/docs/printers#connections).
+If the printer still sends prints through the [Moonraker notifier](/docs/klipper), 3D Print Log logs each print only once, from the bridge, and shows a banner suggesting you remove the notifier. [Switch from the notifier](/docs/switch-from-notifier) has the steps and the exact rule.
 
 ---
 
@@ -103,6 +103,7 @@ If the printer still sends prints through the [Moonraker notifier](/docs/klipper
 - [Run it in Docker (remote mode)](/docs/printlog-bridge-docker)
 - [Assign spools with PRINTLOG_SET_SPOOL](/docs/printlog-bridge-spools)
 - [Snapmaker U1](/docs/snapmaker-u1)
+- [Switch from the Moonraker notifier](/docs/switch-from-notifier)
 - [Troubleshooting: `status`, `doctor`, logs and traces](/docs/printlog-bridge-troubleshooting)
 - [Privacy: exactly what the bridge sends](/docs/printlog-bridge-privacy)
 

@@ -61,7 +61,8 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [Snapmaker U1](https://www.3dprintlog.com/docs/snapmaker-u1): Per-tool usage and spools from RFID tags with printlog-bridge.
 - [printlog-bridge troubleshooting](https://www.3dprintlog.com/docs/printlog-bridge-troubleshooting): The status and doctor commands, logs, traces and common problems.
 - [printlog-bridge privacy](https://www.3dprintlog.com/docs/printlog-bridge-privacy): Every call and field the bridge sends, and how it keeps keys.
-- [Klipper & Moonraker](https://www.3dprintlog.com/docs/klipper): Record prints from Klipper.
+- [Switch from the Moonraker notifier](https://www.3dprintlog.com/docs/switch-from-notifier): Move a Klipper printer from the notifier to printlog-bridge, and how the two run side by side.
+- [Klipper & Moonraker notifier (legacy)](https://www.3dprintlog.com/docs/klipper): Record prints from Klipper with Moonraker's notifier. New setups should use printlog-bridge.
 - [Android app](https://www.3dprintlog.com/docs/android-app): The mobile app.
 - [Email notifications](https://www.3dprintlog.com/docs/email-notifications): Which emails are sent and how to change them.
 - [Pro subscription](https://www.3dprintlog.com/docs/pro-subscription): What the paid tier adds.

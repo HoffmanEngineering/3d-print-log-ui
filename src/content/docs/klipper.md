@@ -2,12 +2,12 @@
 slug: klipper
 title: Klipper & Moonraker | 3D Print Log Docs
 description: Automatically log prints from Klipper using Moonraker webhooks. Configure your printer to send completed prints to 3D Print Log.
-navLabel: Log prints from Klipper
+navLabel: Klipper notifier (legacy)
 group: integrations
 order: 50
 mode: how-to
 updated: 2026-10-12
-related: [printlog-bridge, prints]
+related: [printlog-bridge, switch-from-notifier, prints]
 ---
 
 ## Klipper/Moonraker Notifier
@@ -22,13 +22,20 @@ automatically create a new Print when a print starts, and update the print when
 it finishes. It uses Moonraker's built-in **notifier** component, so no
 additional plugins are required, just a small configuration change.
 
-<doc-callout kind="tip" heading="Try printlog-bridge">
+<doc-callout kind="note" heading="Legacy: use printlog-bridge for new setups">
   <p>
-    <a routerLink="/docs/printlog-bridge">printlog-bridge</a> logs Klipper
-    prints with more detail than the notifier: the real outcome, filament per
-    tool linked to your spools, the slicer's thumbnail and a webcam snapshot.
-    It runs on the printer itself, or in Docker on another computer on your
-    network.
+    The notifier is the older way to log Klipper prints. For a new printer, use
+    <a routerLink="/docs/printlog-bridge">printlog-bridge</a> instead: it logs
+    the real outcome, filament per tool linked to your spools, the slicer's
+    thumbnail and a webcam snapshot. It runs on the printer itself, or in
+    Docker on another computer on your network.
+  </p>
+  <p>
+    Already using the notifier? It keeps working, and so does its address,
+    <code>/api/Moonraker/notifier</code>. When you're ready,
+    <a routerLink="/docs/switch-from-notifier">switch from the notifier</a>:
+    install the bridge first and remove the notifier later. The steps below
+    stay here for printers that already use it.
   </p>
 </doc-callout>
 
@@ -146,6 +153,12 @@ body:
     '}}
 </code>
 </pre>
+        </li>
+
+        <li>
+          The <code>+X-Api-Key=</code> part of the <code>url</code> line makes
+          Moonraker send the key in an <code>X-Api-Key</code> header rather
+          than in the address. Keep the <code>+</code>.
         </li>
 
         <li>Save and restart Moonraker.</li>

@@ -45,7 +45,7 @@ The REST API accepts two kinds of credentials. Both act as you, with access to y
 
 | Credential | Send it as | Best for |
 | --- | --- | --- |
-| Personal API key | `X-Api-Key: <key>` header, or an `api_key` query parameter | Your own scripts, printer integrations, anything that runs unattended |
+| Personal API key | `X-Api-Key: <key>` header. An `api_key` query parameter also works, as a fallback for clients that can't set headers | Your own scripts, printer integrations, anything that runs unattended |
 | OAuth 2.0 access token | `Authorization: Bearer <token>` header | The 3D Print Log web and mobile apps, and trying requests in Swagger UI |
 
 Requests to public data, such as a public print, need no credentials at all.

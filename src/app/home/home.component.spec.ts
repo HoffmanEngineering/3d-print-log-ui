@@ -108,13 +108,14 @@ describe('HomeComponent', () => {
     expect(headings[0].textContent).toContain('Every print');
   });
 
-  it('links to every slicer route the prerender check requires', () => {
+  it('links to every marketing route the prerender check requires', () => {
     const required = [
       '/cura',
       '/prusaslicer',
       '/bambu-studio',
       '/creality-print',
       '/orcaslicer',
+      '/klipper',
     ];
     const hrefs = Array.from(
       fixture.nativeElement.querySelectorAll('a[href]')

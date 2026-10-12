@@ -8,6 +8,7 @@ import {
   TIER1,
   HUB,
   FORKS,
+  INTEGRATIONS,
 } from './marketing-routes.mjs';
 
 const DIST = 'dist/print-log-ui/browser';
@@ -346,10 +347,11 @@ for (const f of FORKS) {
     );
 }
 
-// Homepage link graph: must link to all Tier 1 pages + hub.
+// Homepage link graph: must link to all Tier 1 pages, the hub and every
+// integration page.
 const home = read('');
 if (home) {
-  for (const t of [...TIER1, HUB]) {
+  for (const t of [...TIER1, HUB, ...INTEGRATIONS]) {
     if (!home.html.includes(`href="/${t}"`))
       errors.push(`homepage: no link to /${t}`);
   }

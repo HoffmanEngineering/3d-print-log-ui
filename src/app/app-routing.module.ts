@@ -7,6 +7,7 @@ import { PendingChangesGuard } from './core/guards/pending-changes.guard';
 import { SelectivePreloadStrategy } from './core/routing/selective-preload.strategy';
 import { HomeComponent } from './home/home.component';
 import { SlicerLandingComponent } from './slicer/slicer-landing.component';
+import { KlipperLandingComponent } from './klipper/klipper-landing.component';
 
 export const appRoutes: Routes = [
   {
@@ -194,6 +195,10 @@ export const appRoutes: Routes = [
     path: 'orca-flashforge',
     component: SlicerLandingComponent,
     data: { slicerKey: 'orca-flashforge' },
+  },
+  {
+    path: 'klipper',
+    component: KlipperLandingComponent,
   },
   {
     path: '',

@@ -15,6 +15,7 @@ const marketingRoutes: ServerRoute[] = [
   { path: 'elegoo-slicer', renderMode: RenderMode.Prerender },
   { path: 'qidi-studio', renderMode: RenderMode.Prerender },
   { path: 'orca-flashforge', renderMode: RenderMode.Prerender },
+  { path: 'klipper', renderMode: RenderMode.Prerender },
 ];
 
 /**

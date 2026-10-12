@@ -1,0 +1,106 @@
+<main class="klipper-landing">
+  <header class="hero">
+    <p class="eyebrow">printlog-bridge for Klipper &amp; Moonraker</p>
+    <h1>{{ page.h1 }}</h1>
+    <p class="intro">{{ page.intro }}</p>
+    <ul class="badges" aria-label="At a glance">
+      <li>Free for every 3D Print Log account</li>
+      <li>Open source (MIT)</li>
+      <li>One bridge, several printers</li>
+    </ul>
+    <div class="actions">
+      <a
+        class="btn btn--primary"
+        routerLink="/docs/printlog-bridge"
+        data-cy="klipper-cta"
+        >Read the setup guide</a
+      >
+      <a class="btn btn--ghost" [href]="repoUrl" target="_blank" rel="noopener"
+        >Source on GitHub</a
+      >
+    </div>
+  </header>
+
+  <section
+    class="features"
+    aria-labelledby="klipper-features-heading"
+    data-cy="klipper-features"
+  >
+    <h2 id="klipper-features-heading">What it logs for you</h2>
+    <ul class="feature-grid">
+      @for (feature of page.features; track feature.heading) {
+        <li class="feature">
+          <h3>{{ feature.heading }}</h3>
+          <p>{{ feature.body }}</p>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="printers" aria-labelledby="klipper-printers-heading">
+    <h2 id="klipper-printers-heading">Which printers</h2>
+    <p>
+      Any Klipper printer running Moonraker, such as a Voron or another
+      self-built machine with Mainsail or Fluidd. It has been tested on real
+      hardware with the <a routerLink="/docs/snapmaker-u1">Snapmaker U1</a> and
+      the Infimech EX.
+    </p>
+  </section>
+
+  <section class="setup" aria-labelledby="klipper-setup-heading">
+    <h2 id="klipper-setup-heading">How to set it up</h2>
+    <ol class="steps">
+      @for (step of page.steps; track step) {
+        <li>{{ step }}</li>
+      }
+    </ol>
+    <ul class="guides">
+      @for (guide of page.guides; track guide.route) {
+        <li>
+          <a [routerLink]="guide.route">{{ guide.label }}</a>
+          <span>{{ guide.summary }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <aside class="status" data-cy="klipper-status" aria-label="Release status">
+    <p>
+      <strong>The bridge is new.</strong> It has no numbered release yet: you
+      install it from its GitHub repository, and the Docker image is published
+      under the <code>edge</code> tag. The
+      <a routerLink="/docs/printlog-bridge">printlog-bridge guide</a> always has
+      the current steps.
+    </p>
+  </aside>
+
+  <section
+    class="planned"
+    aria-labelledby="klipper-planned-heading"
+    data-cy="klipper-planned"
+  >
+    <h2 id="klipper-planned-heading">Planned</h2>
+    <ul>
+      @for (item of page.planned; track item) {
+        <li>{{ item }}</li>
+      }
+    </ul>
+  </section>
+
+  <section class="notifier" aria-labelledby="klipper-notifier-heading">
+    <h2 id="klipper-notifier-heading">Already using the Moonraker notifier?</h2>
+    <p>
+      The bridge replaces the older
+      <a routerLink="/docs/klipper">Moonraker notifier</a>, and each print is
+      logged only once while both are installed.
+      <a routerLink="/docs/switch-from-notifier">Switch from the notifier</a>
+      has the steps.
+    </p>
+  </section>
+
+  <nav class="links" aria-label="More from 3D Print Log">
+    <a routerLink="/docs/printlog-bridge">printlog-bridge guide</a>
+    <a routerLink="/">3D Print Log home</a>
+    <a routerLink="/docs/release-notes">Release notes</a>
+  </nav>
+</main>

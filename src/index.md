@@ -26,7 +26,8 @@ HTML version: https://www.3dprintlog.com/
 ## Integrations
 
 - Slicers: [OrcaSlicer](https://www.3dprintlog.com/orcaslicer), [Bambu Studio](https://www.3dprintlog.com/bambu-studio), [PrusaSlicer](https://www.3dprintlog.com/prusaslicer), [Creality Print](https://www.3dprintlog.com/creality-print), and SuperSlicer use the [post-processing uploader](https://www.3dprintlog.com/docs/slic3r-uploader.md). [Cura](https://www.3dprintlog.com/cura) has a [Marketplace plugin](https://www.3dprintlog.com/docs/cura-plugin.md).
-- Live print status: [OctoPrint](https://www.3dprintlog.com/docs/octoprint-webhook.md) and [Klipper/Moonraker](https://www.3dprintlog.com/docs/klipper.md).
+- Klipper and Moonraker: [printlog-bridge](https://www.3dprintlog.com/klipper) logs every print automatically, with filament per tool, pictures and spools. See the [printlog-bridge guide](https://www.3dprintlog.com/docs/printlog-bridge.md).
+- Live print status: [OctoPrint](https://www.3dprintlog.com/docs/octoprint-webhook.md).
 - AI assistants: an [MCP server](https://www.3dprintlog.com/docs/mcp.md) for Claude, ChatGPT, and other MCP clients.
 - Your own code: a [REST API](https://www.3dprintlog.com/docs/api.md) with personal API keys or OAuth 2.0. Agents should read [auth.md](https://www.3dprintlog.com/auth.md) first.
 

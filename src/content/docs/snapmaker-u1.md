@@ -16,7 +16,7 @@ related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, mater
 
 The Snapmaker U1 runs Snapmaker's own versions of Klipper and Moonraker, and you can't install extra software on it. [printlog-bridge](/docs/printlog-bridge) logs its prints from another computer on your network, in [remote mode](/docs/printlog-bridge-docker).
 
-The bridge's U1 support follows Snapmaker's published firmware, and has been checked against a real U1 (Klipper 2.0.0.205, Moonraker 2.0.0): its job history, its tools and its RFID reader. A whole print on a U1 hasn't been recorded through the bridge yet, so if something looks wrong, please [send a trace](/docs/printlog-bridge-troubleshooting#trace).
+The bridge's U1 support follows Snapmaker's published firmware, and has been checked against a real U1 (Klipper 2.0.0.205, Moonraker 2.0.0): its job history, its tools, its RFID reader and a two-tool print logged from start to finish. If something looks wrong, please [send a trace](/docs/printlog-bridge-troubleshooting#trace).
 
 ### Set it up {#setup}
 

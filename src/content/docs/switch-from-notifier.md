@@ -3,6 +3,7 @@ slug: switch-from-notifier
 title: Switch from the Moonraker Notifier to printlog-bridge | 3D Print Log Docs
 description: Move a Klipper printer from the Moonraker notifier to printlog-bridge. Install the bridge first, then remove the notifier section from moonraker.conf.
 navLabel: Bridge – switch from the notifier
+nav: false
 group: integrations
 order: 49
 mode: how-to
@@ -13,6 +14,8 @@ related: [printlog-bridge, printlog-bridge-install, printlog-bridge-docker, klip
 ## Switch from the Moonraker Notifier
 
 ---
+
+Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 
 If your Klipper printer logs prints through the [Moonraker notifier](/docs/klipper), you can move it to [printlog-bridge](/docs/printlog-bridge). The bridge records the real outcome, filament per tool linked to your spools, the slicer's thumbnail and a webcam snapshot, and it keeps events on disk while 3D Print Log is out of reach.
 

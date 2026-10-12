@@ -162,6 +162,8 @@ export function emitManifestTs() {
     '  readonly aliases: readonly string[];',
     '  readonly movedAnchors: Readonly<Record<string, readonly string[]>>;',
     '  readonly dormant: boolean;',
+    '  /** False when the page is published but left out of the sidebar. */',
+    '  readonly nav: boolean;',
     '  readonly className: string;',
     '  readonly selector: string;',
     '}',

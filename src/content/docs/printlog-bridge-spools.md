@@ -3,6 +3,7 @@ slug: printlog-bridge-spools
 title: Assign Spools from Klipper with PRINTLOG_SET_SPOOL | 3D Print Log Docs
 description: Tell 3D Print Log which spool is in each tool from Klipper's console or a macro, by spool id or RFID/NFC tag, with printlog-bridge's PRINTLOG_SET_SPOOL macros.
 navLabel: Bridge – spool macros
+nav: false
 group: integrations
 order: 45
 mode: how-to
@@ -13,6 +14,8 @@ related: [printlog-bridge, printers, materials, snapmaker-u1]
 ## Assign Spools with PRINTLOG_SET_SPOOL
 
 ---
+
+Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 
 [printlog-bridge](/docs/printlog-bridge) links each tool's filament usage to the material loaded in that tool's slot in 3D Print Log. You can load materials in the app, on the printer's page (see [Material Slots](/docs/printers#slots)), or from the printer itself with two Klipper macros, `PRINTLOG_SET_SPOOL` and `PRINTLOG_CLEAR_SPOOL`.
 

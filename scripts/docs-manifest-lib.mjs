@@ -109,6 +109,10 @@ export function buildManifest(pages, releases = []) {
       aliases: page.aliases ?? [],
       related: page.related ?? [],
       dormant: page.dormant === true,
+      // `nav: false` hides the page from the sidebar and from nothing else: it
+      // keeps its route, prerender entry, sitemap entry, search sections,
+      // Markdown twin and llms.txt line. Contrast `dormant`, which unpublishes.
+      nav: page.nav !== false,
       movedAnchors: normalizeMovedAnchors(page),
     };
   });
@@ -222,6 +226,7 @@ export function toSidebar(manifest) {
   let previousGroup = null;
 
   for (const page of live(manifest)) {
+    if (!page.nav) continue;
     if (previousGroup !== null && page.group !== previousGroup) {
       nav.push({ divider: true });
     }

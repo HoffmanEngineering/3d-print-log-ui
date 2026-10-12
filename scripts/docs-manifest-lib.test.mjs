@@ -339,6 +339,72 @@ test('buildManifest flattens movedAnchors into source#id -> destination', () => 
 });
 
 test('buildManifest emits an empty movedAnchors map when nothing moved', () => {
-  const m = manifest([page({ slug: 'materials', group: 'features', order: 10 })]);
+  const m = manifest([
+    page({ slug: 'materials', group: 'features', order: 10 }),
+  ]);
   assert.deepEqual(m.movedAnchors, {});
+});
+
+// --- nav: false (#273) -------------------------------------------------------
+
+// `nav: false` takes a page out of the sidebar and nothing else. Unlike
+// `dormant`, the page is still routed, prerendered, in the sitemap and SEO map.
+const unlisted = () =>
+  page({
+    slug: 'printlog-bridge-install',
+    navLabel: 'Install',
+    group: 'integrations',
+    order: 43,
+    nav: false,
+  });
+
+test('a page is listed in the sidebar unless it says nav: false', () => {
+  const m = manifest([page(), unlisted()]);
+
+  assert.deepEqual(
+    m.pages.map((p) => [p.slug, p.nav]),
+    [
+      ['prints', true],
+      ['printlog-bridge-install', false],
+    ]
+  );
+});
+
+test('the sidebar omits a nav: false page', () => {
+  assert.deepEqual(toSidebar(manifest([page(), unlisted()])), [
+    { name: 'Prints', url: '/docs/prints' },
+  ]);
+});
+
+test('a group whose only pages are nav: false gets no divider', () => {
+  assert.deepEqual(
+    toSidebar(
+      manifest([
+        page(),
+        unlisted(),
+        page({ slug: 'about', navLabel: 'About', group: 'about' }),
+      ])
+    ),
+    [
+      { name: 'Prints', url: '/docs/prints' },
+      { divider: true },
+      { name: 'About', url: '/docs/about' },
+    ]
+  );
+});
+
+test('a nav: false page keeps its route, prerender entry, doc route and SEO', () => {
+  const m = manifest([page(), unlisted()]);
+
+  assert.ok(
+    toChildRoutes(m).some((r) => r.path === 'printlog-bridge-install'),
+    'child route'
+  );
+  assert.ok(
+    toServerRoutes(m).some((r) => r.path === 'docs/printlog-bridge-install'),
+    'prerender route'
+  );
+  assert.ok(toDocRoutes(m).includes('docs/printlog-bridge-install'), 'sitemap');
+  assert.ok(toArticleRoutes(m).includes('docs/printlog-bridge-install'));
+  assert.ok(toSeo(m)['docs/printlog-bridge-install'], 'SEO');
 });

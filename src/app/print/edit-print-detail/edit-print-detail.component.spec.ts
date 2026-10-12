@@ -42,6 +42,11 @@ import { PrinterRedirectPromptService } from '../services/printer-redirect-promp
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
+import {
+  ProjectService,
+  ProjectStatus,
+  ProjectViewStatus,
+} from 'src/app/core/services/project.service';
 
 describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
@@ -52,6 +57,7 @@ describe('EditPrintDetailComponent', () => {
       'PrintService',
       {
         addPrint: of(),
+        patchPrint: of(),
         calculatePrintCost: { valid: false, message: '' },
         calculateElectricityCost: { valid: false, message: '' },
       }
@@ -107,6 +113,11 @@ describe('EditPrintDetailComponent', () => {
       }
     );
 
+    const mockProjectService = jasmine.createSpyObj<ProjectService>(
+      'ProjectService',
+      ['createProject']
+    );
+
     TestBed.configureTestingModule({
       declarations: [EditPrintDetailComponent],
       imports: [
@@ -134,6 +145,7 @@ describe('EditPrintDetailComponent', () => {
         },
         { provide: LoggingService, useValue: mockLogger },
         { provide: SubscriptionService, useValue: mockSubscriptionService },
+        { provide: ProjectService, useValue: mockProjectService },
         { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
         {
           provide: ActivatedRoute,
@@ -752,6 +764,232 @@ describe('EditPrintDetailComponent', () => {
 
       expect(component.saving).toBe(false);
     });
+  });
+
+  // #263: an existing print saves with PATCH, sending only what the user changed, so a form opened
+  // before a connector completed the print cannot revert the connector's status, duration and usage.
+  describe('Saving an existing print', () => {
+    let printService: jasmine.SpyObj<PrintService>;
+    let projectService: jasmine.SpyObj<ProjectService>;
+    let editor: ComponentFixture<EditPrintDetailComponent> | undefined;
+
+    const usageRow = {
+      id: 'a3f1c2d4-0000-4000-8000-000000000001',
+      filament: null,
+      slot: null,
+      estimatedAmountMg: 20_000,
+      estimatedLengthInM: null,
+      estimatedVolumeMl: null,
+      estimatedSource: PrintFilamentSourceMeasurement.Weight,
+      amountMg: null,
+      lengthInM: null,
+      volumeMl: null,
+      source: PrintFilamentSourceMeasurement.Weight,
+      notes: '',
+    };
+
+    // As the API returns it: a string start date with sub-second precision, a duration the
+    // form reformats, and a usage row holding only an estimate.
+    const existingPrint = {
+      id: 5,
+      title: 'Benchy',
+      printerId: 1,
+      startDate: '2026-10-10T12:00:00.734+00:00',
+      estimatedPrintTimeInSeconds: 3725,
+      printTimeInSeconds: null,
+      estimatedFilamentUsageMg: null,
+      filamentUsageMg: null,
+      filamentType: null,
+      filamentUsage: [usageRow],
+      notes: 'first layer was fine',
+      url: null,
+      fileName: 'benchy.gcode',
+      status: PrintStatus.Printing,
+      viewStatus: 3,
+      allowComments: true,
+      allowFileDownloads: false,
+      createdByUserId: 7,
+      images: [],
+      comments: [],
+      externalSource: 'moonraker',
+      externalId: 'voron-1:000042',
+    } as unknown as PrintDetail;
+
+    function openEditor(print: PrintDetail): EditPrintDetailComponent {
+      const route = TestBed.inject(ActivatedRoute);
+      let resolved: Record<string, unknown>;
+      route.data.subscribe(
+        (data) => (resolved = data as Record<string, unknown>)
+      );
+      (route as { data: Observable<unknown> }).data = of({
+        ...resolved!,
+        print: { print },
+      });
+
+      editor = TestBed.createComponent(EditPrintDetailComponent);
+      editor.detectChanges();
+      return editor.componentInstance;
+    }
+
+    beforeEach(() => {
+      printService = TestBed.inject(
+        PrintService
+      ) as jasmine.SpyObj<PrintService>;
+      printService.patchPrint.and.returnValue(of({ id: 5 } as PrintDetail));
+      projectService = TestBed.inject(
+        ProjectService
+      ) as jasmine.SpyObj<ProjectService>;
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+    });
+
+    afterEach(() => editor?.destroy());
+
+    it('sends only the notes when only the notes were edited', () => {
+      const form = openEditor(existingPrint);
+
+      form.printForm.controls.notes.setValue('added a note');
+      form.onSubmit();
+
+      expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+        notes: 'added a note',
+      });
+      expect(printService.addPrint).not.toHaveBeenCalled();
+    });
+
+    it('sends nothing when nothing changed', () => {
+      const form = openEditor(existingPrint);
+
+      form.onSubmit();
+
+      expect(printService.patchPrint).not.toHaveBeenCalled();
+      expect(form.saving).toBeFalse();
+    });
+
+    it('clears a field the user emptied', () => {
+      const form = openEditor(existingPrint);
+
+      form.printForm.controls.notes.setValue('');
+      form.onSubmit();
+
+      expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+        clear: ['notes'],
+      });
+    });
+
+    it('replaces the usage rows when a row was edited', () => {
+      const form = openEditor(existingPrint);
+
+      form.filamentUsage.at(0).get('amountG')!.setValue(21.5);
+      form.onSubmit();
+
+      const [, patch] = printService.patchPrint.calls.mostRecent().args;
+      expect(Object.keys(patch)).toEqual(['filamentUsage']);
+      expect(patch.filamentUsage![0].id).toBe(usageRow.id);
+      expect(patch.filamentUsage![0].amountMg).toBe(21_500);
+      expect(patch.filamentUsage![0].estimatedAmountMg).toBe(20_000);
+    });
+
+    // A print from before usage rows: the form shows its legacy fields as one row. Sending
+    // filamentUsage (the rows, or [] once the row is deleted) is what makes the API clear the
+    // legacy fields, so the view does not show both and a deleted row does not come back.
+    describe('a legacy print', () => {
+      const legacyPrint = {
+        ...existingPrint,
+        filamentUsage: [],
+        filamentType: 'PLA',
+        filamentUsageMg: 15_000,
+        estimatedFilamentUsageMg: 14_000,
+      } as unknown as PrintDetail;
+
+      it('sends the converted row when it was edited', () => {
+        const form = openEditor(legacyPrint);
+        expect(form.filamentUsage.length).toBe(1);
+
+        form.filamentUsage.at(0).get('amountG')!.setValue(16);
+        form.onSubmit();
+
+        const [id, patch] = printService.patchPrint.calls.mostRecent().args;
+        expect(id).toBe(5);
+        expect(Object.keys(patch)).toEqual(['filamentUsage']);
+        expect(patch.filamentUsage!.length).toBe(1);
+        expect(patch.filamentUsage![0].amountMg).toBe(16_000);
+        expect(patch.filamentUsage![0].estimatedAmountMg).toBe(14_000);
+      });
+
+      it('sends an empty filamentUsage when the row was deleted', () => {
+        const form = openEditor(legacyPrint);
+        // The row holds usage, so removing it asks first; confirm.
+        spyOn(form.dialog, 'open').and.returnValue({
+          componentInstance: {},
+          afterClosed: () => of(true),
+        } as never);
+
+        form.removeFilament(0);
+        form.onSubmit();
+
+        expect(form.filamentUsage.length).toBe(0);
+        expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+          filamentUsage: [],
+        });
+      });
+
+      it('leaves the legacy usage alone when only another field changed', () => {
+        const form = openEditor(legacyPrint);
+
+        form.printForm.controls.notes.setValue('added a note');
+        form.onSubmit();
+
+        expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+          notes: 'added a note',
+        });
+      });
+    });
+
+    it('saves the start date the form showed when the print had none', () => {
+      const form = openEditor({ ...existingPrint, startDate: null });
+
+      form.onSubmit();
+
+      const [, patch] = printService.patchPrint.calls.mostRecent().args;
+      expect(Object.keys(patch)).toEqual(['startDate']);
+      expect(patch.startDate).toEqual(form.getCombinedStartDateTime());
+    });
+
+    it('creates a new project first, then assigns it', () => {
+      projectService.createProject.and.returnValue(
+        of({ id: 'project-9', name: 'Boats' } as never)
+      );
+      const form = openEditor(existingPrint);
+
+      form.onProjectSelected({ type: 'new', newProjectName: 'Boats' });
+      form.onSubmit();
+
+      expect(projectService.createProject).toHaveBeenCalledOnceWith({
+        name: 'Boats',
+        status: ProjectStatus.InProgress,
+        viewStatus: ProjectViewStatus.Private,
+        startDateOverride: null,
+        finishDateOverride: null,
+      });
+      expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+        projectId: 'project-9',
+      });
+    });
+  });
+
+  it('creates a new print with POST', () => {
+    const printService = TestBed.inject(
+      PrintService
+    ) as jasmine.SpyObj<PrintService>;
+
+    component.printForm.controls.title.setValue('New print');
+    component.filamentUsage.clear();
+    component.onSubmit();
+
+    expect(printService.addPrint).toHaveBeenCalledTimes(1);
+    expect(printService.patchPrint).not.toHaveBeenCalled();
   });
 
   // The printers have to be in the route data BEFORE the first change detection: creating

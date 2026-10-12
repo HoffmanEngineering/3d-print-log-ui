@@ -336,45 +336,35 @@ describe('PrintService', () => {
       expect(print?.externalId).toBe('voron-1:000042');
       expect(print?.connectionDisplayName).toBe('Voron in the garage');
     });
+  });
 
-    it('updatePrint never sends them', () => {
-      let print: PrintDetail | undefined;
-      service.getPrintDetail(9).subscribe((p) => (print = p));
-      httpMock
-        .expectOne((r) => r.url.endsWith('/api/Prints/9'))
-        .flush(detailDto);
+  // The edit form saves with PATCH (#263) so it cannot revert a connector's updates.
+  describe('patchPrint', () => {
+    let httpMock: HttpTestingController;
 
-      service.updatePrint(print!).subscribe();
-      const request = httpMock.expectOne((r) => r.method === 'PUT');
-      expect('externalSource' in request.request.body).toBeFalse();
-      expect('externalId' in request.request.body).toBeFalse();
-      expect('connectionDisplayName' in request.request.body).toBeFalse();
-      request.flush({});
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
     });
 
-    it("updatePrint keeps each usage row's slot", () => {
-      let print: PrintDetail | undefined;
-      service.getPrintDetail(9).subscribe((p) => (print = p));
-      httpMock
-        .expectOne((r) => r.url.endsWith('/api/Prints/9'))
-        .flush({
-          ...detailDto,
-          filamentUsage: [
-            {
-              id: 'a3f1c2d4-0000-4000-8000-000000000001',
-              filament: null,
-              slot: 2,
-              source: 2,
-              estimatedSource: 2,
-              lengthInM: 1.5,
-            },
-          ],
-        });
+    afterEach(() => httpMock.verify());
 
-      service.updatePrint(print!).subscribe();
-      const request = httpMock.expectOne((r) => r.method === 'PUT');
-      expect(request.request.body.filamentUsage[0].slot).toBe(2);
-      request.flush({});
+    it('sends exactly the patch with PATCH to the print', () => {
+      let saved: PrintDetail | undefined;
+      service
+        .patchPrint(9, { notes: 'added a note', clear: ['url'] })
+        .subscribe((p) => (saved = p));
+
+      const request = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/Prints/9`
+      );
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({
+        notes: 'added a note',
+        clear: ['url'],
+      });
+      request.flush({ id: 9 });
+
+      expect(saved?.id).toBe(9);
     });
   });
 });

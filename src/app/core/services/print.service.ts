@@ -195,32 +195,57 @@ export interface PrintDetailDTO {
   connectionDisplayName?: string | null;
 }
 
+/** A field `PatchPrintDTO.clear` can null out. */
+export type PrintClearableField =
+  | 'startDate'
+  | 'estimatedPrintTimeInSeconds'
+  | 'printTimeInSeconds'
+  | 'notes'
+  | 'url'
+  | 'fileName'
+  | 'projectId';
+
 /**
- * The payload this client sends on update. The nullable fields mirror
- * `PrintDetail`, which can still be holding an unsaved scaffold -- the API's own
- * validation is the authority on what it accepts, so this describes what we can
- * actually send rather than over-claiming.
+ * The body of `PATCH /api/Prints/{id}`. Only the fields sent change: a field left out, or sent as
+ * null, keeps its value, so a field is nulled out by naming it in `clear`. Setting and clearing
+ * the same field is a 400. `filamentUsage`, when sent, replaces every usage row on the print.
  */
-export interface PutPrintDetailDTO {
-  id: number | null;
-  title: string;
-  printerId: number | null;
-  startDate?: Date | null;
-  estimatedPrintTimeInSeconds?: number | null;
-  estimatedFilamentUsageMg?: number | null;
-  printTimeInSeconds?: number | null;
-  filamentUsage: PutPrintFilamentSummaryDto[];
-  filamentUsageMg?: number | null;
-  filamentType: string;
-  notes: string;
-  url: string;
-  fileName: string;
-  status: PrintStatus;
-  viewStatus: PrintViewStatus | null;
-  allowComments: boolean | null;
+export interface PatchPrintDTO {
+  title?: string;
+  status?: PrintStatus;
+  startDate?: Date;
+  printerId?: number;
+  estimatedPrintTimeInSeconds?: number;
+  printTimeInSeconds?: number;
+  notes?: string;
+  url?: string;
+  fileName?: string;
+  allowComments?: boolean;
   allowFileDownloads?: boolean;
+  viewStatus?: PrintViewStatus;
   projectId?: string;
-  newProjectName?: string;
+  filamentUsage?: PutPrintFilamentSummaryDto[];
+  clear?: PrintClearableField[];
+}
+
+/** One usage row in the shape the API takes on write (PATCH and the legacy PUT). */
+export function toPutPrintFilamentSummary(
+  pf: PrintFilamentSummaryDto
+): PutPrintFilamentSummaryDto {
+  return {
+    id: pf.id,
+    filamentId: pf.filament?.id ?? null,
+    slot: pf.slot ?? null,
+    estimatedAmountMg: pf.estimatedAmountMg,
+    estimatedLengthInM: pf.estimatedLengthInM,
+    estimatedVolumeMl: pf.estimatedVolumeMl,
+    estimatedSource: pf.estimatedSource,
+    amountMg: pf.amountMg,
+    lengthInM: pf.lengthInM,
+    volumeMl: pf.volumeMl,
+    source: pf.source,
+    notes: pf.notes,
+  };
 }
 
 /**
@@ -262,7 +287,7 @@ export interface PrintDetail {
    */
   curaSettingId?: string;
   /**
-   * Read from the API, never sent back (see `updatePrint`). The connector that logged this print (`moonraker`, `moonraker-notifier`, ...) and its job id
+   * Read from the API, never sent back (see `buildPrintPatch`). The connector that logged this print (`moonraker`, `moonraker-notifier`, ...) and its job id
    * there. Read-only: set when the print is created, and the API returns them to the print's
    * creator only, so a public visitor never receives them.
    */
@@ -278,7 +303,11 @@ export interface PrintDetail {
 /**
  * DTO to create a new print
  */
-/** The payload this client sends on create. See `PutPrintDetailDTO`. */
+/**
+ * The payload this client sends on create. The nullable fields mirror `PrintDetail`, which can
+ * still be holding an unsaved scaffold; the API's own validation is the authority on what it
+ * accepts.
+ */
 export interface AddPrintDTO {
   title: string;
   printerId: number | null;
@@ -491,53 +520,14 @@ export class PrintService {
     return this.http.post<any>(url, printDto);
   }
 
-  updatePrint(print: Omit<PrintDetail, 'comments'>): Observable<any> {
-    const url = `${this.baseApi}/api/Prints/${print.id}`;
-
-    const filamentUsage: PutPrintFilamentSummaryDto[] = print.filamentUsage.map(
-      (pf) => {
-        const usage: PutPrintFilamentSummaryDto = {
-          id: pf.id,
-          filamentId: pf.filament?.id ?? null,
-          slot: pf.slot ?? null,
-          estimatedAmountMg: pf.estimatedAmountMg,
-          estimatedLengthInM: pf.estimatedLengthInM,
-          estimatedVolumeMl: pf.estimatedVolumeMl,
-          estimatedSource: pf.estimatedSource,
-          amountMg: pf.amountMg,
-          lengthInM: pf.lengthInM,
-          volumeMl: pf.volumeMl,
-          source: pf.source,
-          notes: pf.notes,
-        };
-
-        return usage;
-      }
-    );
-
-    const printDto: PutPrintDetailDTO = {
-      estimatedFilamentUsageMg: print.estimatedFilamentUsageMg,
-      estimatedPrintTimeInSeconds: print.estimatedPrintTimeInSeconds,
-      filamentType: print.filamentType,
-      filamentUsageMg: print.filamentUsageMg,
-      filamentUsage,
-      notes: print.notes,
-      printTimeInSeconds: print.printTimeInSeconds,
-      printerId: print.printerId,
-      startDate: print.startDate,
-      status: print.status,
-      title: print.title,
-      url: print.url,
-      fileName: print.fileName,
-      id: print.id,
-      viewStatus: print.viewStatus,
-      allowComments: print.allowComments,
-      allowFileDownloads: print.allowFileDownloads,
-      projectId: print.projectId,
-      newProjectName: print.newProjectName,
-    };
-
-    return this.http.put<any>(url, printDto);
+  /**
+   * Changes only the fields in `patch` (#263). The edit form uses this rather than a full PUT so
+   * that saving a form opened before a connector completed the print cannot revert the status,
+   * duration or usage the connector recorded.
+   */
+  patchPrint(id: number, patch: PatchPrintDTO): Observable<PrintDetail> {
+    const url = `${this.baseApi}/api/Prints/${id}`;
+    return this.http.patch<PrintDetail>(url, patch);
   }
 
   public updatePrintStatus(id: number, newStatus: PrintStatus) {

@@ -99,7 +99,7 @@ cy.contains('[cy-print-row]', printTitle).click();
 Always `cy.wait('@alias')` after an action that triggers a mutation — don't rely on UI updates alone:
 
 ```typescript
-cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+cy.intercept('PATCH', '/api/Prints/*').as('updatePrint');
 cy.get('#edit-print-submit-btn').click();
 cy.wait('@updatePrint');
 ```

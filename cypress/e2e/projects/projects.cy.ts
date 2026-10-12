@@ -168,7 +168,7 @@ describe('Projects', () => {
         cy.visit(`/prints/${printId}`);
         cy.get('[data-cy-edit-btn]').click();
 
-        cy.intercept('PUT', '/api/Prints/*').as('assignPrint');
+        cy.intercept('PATCH', '/api/Prints/*').as('assignPrint');
         cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
         cy.get('mat-option').contains(projectName).click();
         cy.get('#edit-print-submit-btn').click();
@@ -203,7 +203,7 @@ describe('Projects', () => {
         cy.visit(`/prints/${printId}`);
         cy.get('[data-cy-edit-btn]').click();
 
-        cy.intercept('PUT', '/api/Prints/*').as('assignPrint');
+        cy.intercept('PATCH', '/api/Prints/*').as('assignPrint');
         cy.get('[data-cy="project-selector-input"]').clear().type(projectName);
         cy.get('mat-option').contains(projectName).click();
         cy.get('#edit-print-submit-btn').click();
@@ -212,7 +212,7 @@ describe('Projects', () => {
         cy.visit(`/prints/${printId}`);
         cy.get('[data-cy-edit-btn]').click();
 
-        cy.intercept('PUT', '/api/Prints/*').as('removePrint');
+        cy.intercept('PATCH', '/api/Prints/*').as('removePrint');
         cy.get('button[aria-label="Clear"]').click();
         cy.get('#edit-print-submit-btn').click();
         cy.wait('@removePrint');

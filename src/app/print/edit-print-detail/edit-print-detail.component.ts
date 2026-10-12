@@ -64,6 +64,12 @@ import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.s
 import { isCordova } from 'src/app/core/utils/platform';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import {
+  ProjectService,
+  ProjectStatus,
+  ProjectViewStatus,
+} from 'src/app/core/services/project.service';
+import { buildPrintPatch } from './print-patch';
+import {
   ProjectSelectorComponent,
   ProjectSelection,
 } from 'src/app/shared/project-selector/project-selector.component';
@@ -173,6 +179,12 @@ export class EditPrintDetailComponent
   public printDetail: PrintDetail | null = null;
 
   public pendingProjectSelection: ProjectSelection | null = null;
+
+  /**
+   * An existing print as the form read it on load, which a save diffs against so it sends only
+   * what the user changed (#263). Null for a new print.
+   */
+  private printOnLoad: Omit<PrintDetail, 'comments'> | null = null;
 
   public printers: PrinterSummary[] = [];
 
@@ -288,6 +300,7 @@ export class EditPrintDetailComponent
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly subscriptionService = inject(SubscriptionService);
+  private readonly projectService = inject(ProjectService);
 
   public readonly maxImages = this.subscriptionService.maxImagesPerPrint;
 
@@ -358,6 +371,7 @@ export class EditPrintDetailComponent
       }
       this.printForm = this.buildFormFromPrintDetail(data.print.print);
       this.updateCachedImagesForStrip();
+      this.printOnLoad = this.readPrintOnLoad(data.print.print);
 
       // update print form with the last loaded filament
       const printIsNew = this.printForm.get('id').value === null;
@@ -1564,10 +1578,10 @@ export class EditPrintDetailComponent
     const newDefaultImageId = this.getNewDefaultImageId();
 
     // Choose save method and execute pipeline
-    const savePrint =
+    const savePrint: Observable<{ id: number }> =
       newPrint.id === null
         ? this.printService.addPrint(newPrint)
-        : this.printService.updatePrint(newPrint);
+        : this.saveChanges(newPrint.id, newPrint);
 
     savePrint
       .pipe(
@@ -1580,6 +1594,83 @@ export class EditPrintDetailComponent
         next: () => this.handleSaveSuccess(newPrint),
         error: (err) => this.handleSaveError(err, newPrint),
       });
+  }
+
+  /**
+   * The form's own reading of the print it loaded, so that a value the form merely reformats
+   * compares equal on save. The one exception is a start date the print did not have: the form
+   * shows "now" in its place, and saving keeps what the user saw, as the full save always did.
+   */
+  private readPrintOnLoad(
+    print: PrintDetail | null
+  ): Omit<PrintDetail, 'comments'> | null {
+    if (print?.id == null) {
+      return null;
+    }
+    const onLoad = this.getPrintFromForm();
+    if (!print.startDate) {
+      onLoad.startDate = null;
+    }
+    return onLoad;
+  }
+
+  /**
+   * Saves an existing print with PATCH, sending only the fields that differ from what the form
+   * loaded (#263). A full PUT would send back the status, duration and usage the form loaded,
+   * reverting whatever a connector, another tab or the mobile app wrote since. Fields the user
+   * did edit are last-writer-wins.
+   */
+  private saveChanges(
+    printId: number,
+    edited: Omit<PrintDetail, 'comments'>
+  ): Observable<{ id: number }> {
+    return this.createPendingProject(edited).pipe(
+      mergeMap((resolved) => {
+        const patch = buildPrintPatch(
+          this.printOnLoad ?? this.printDetail!,
+          resolved
+        );
+        return Object.keys(patch).length === 0
+          ? of({ id: printId })
+          : this.printService.patchPrint(printId, patch);
+      })
+    );
+  }
+
+  /**
+   * PATCH can only assign an existing project, so a new one is created first. The selection then
+   * points at it, so a retry after a failed save assigns it instead of creating a second one.
+   */
+  private createPendingProject(
+    edited: Omit<PrintDetail, 'comments'>
+  ): Observable<Omit<PrintDetail, 'comments'>> {
+    const newProjectName = edited.newProjectName?.trim();
+    if (!newProjectName) {
+      return of(edited);
+    }
+
+    return this.projectService
+      .createProject({
+        name: newProjectName,
+        status: ProjectStatus.InProgress,
+        viewStatus: ProjectViewStatus.Private,
+        startDateOverride: null,
+        finishDateOverride: null,
+      })
+      .pipe(
+        map((project) => {
+          this.pendingProjectSelection = {
+            type: 'existing',
+            projectId: project.id,
+            projectName: project.name,
+          };
+          return {
+            ...edited,
+            projectId: project.id,
+            newProjectName: undefined,
+          };
+        })
+      );
   }
 
   /**

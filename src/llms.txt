@@ -54,6 +54,13 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [OrcaSlicer, PrusaSlicer & Bambu uploader](https://www.3dprintlog.com/docs/slic3r-uploader): Send prints straight from the slicer.
 - [Cura plugin](https://www.3dprintlog.com/docs/cura-plugin): Log prints from Ultimaker Cura.
 - [OctoPrint webhook](https://www.3dprintlog.com/docs/octoprint-webhook): Record prints from OctoPrint.
+- [printlog-bridge for Klipper](https://www.3dprintlog.com/docs/printlog-bridge): Log every Klipper/Moonraker print automatically, with filament per tool, pictures and spools.
+- [Install printlog-bridge on the printer](https://www.3dprintlog.com/docs/printlog-bridge-install): Local mode, as a systemd service, and connecting it with an API key.
+- [Run printlog-bridge in Docker](https://www.3dprintlog.com/docs/printlog-bridge-docker): Remote mode on a NAS, home server or Pi.
+- [printlog-bridge spool macros](https://www.3dprintlog.com/docs/printlog-bridge-spools): PRINTLOG_SET_SPOOL and PRINTLOG_CLEAR_SPOOL, by spool id or tag.
+- [Snapmaker U1](https://www.3dprintlog.com/docs/snapmaker-u1): Per-tool usage and spools from RFID tags with printlog-bridge.
+- [printlog-bridge troubleshooting](https://www.3dprintlog.com/docs/printlog-bridge-troubleshooting): The status and doctor commands, logs, traces and common problems.
+- [printlog-bridge privacy](https://www.3dprintlog.com/docs/printlog-bridge-privacy): Every call and field the bridge sends, and how it keeps keys.
 - [Klipper & Moonraker](https://www.3dprintlog.com/docs/klipper): Record prints from Klipper.
 - [Android app](https://www.3dprintlog.com/docs/android-app): The mobile app.
 - [Email notifications](https://www.3dprintlog.com/docs/email-notifications): Which emails are sent and how to change them.

@@ -6,7 +6,7 @@ navLabel: REST API & Authentication
 group: integrations
 order: 70
 mode: reference
-updated: 2026-10-06
+updated: 2026-10-12
 related: [mcp, klipper, octoprint-webhook]
 ---
 
@@ -142,14 +142,17 @@ The MCP endpoint has its own error format and isn't covered by this section.
 
 ### Rate limits {#rate-limits}
 
-Requests are counted in one-minute windows:
+Requests are counted per minute:
 
 | Traffic | Limit |
 | --- | --- |
 | Requests with an API key or token | 300 per minute, per user |
+| Writes with an API key (`POST`, `PUT`, `PATCH`, `DELETE`) | 60 per minute, per key, after a burst of 20. Counted on top of the per-user limit. |
 | Images and other media | 1,200 per minute, counted separately |
 | Requests without credentials | 600 per minute, per network address |
 | MCP requests | 60 per minute, per user |
+
+The write limit is for integrations that sign in with a personal API key, such as [printlog-bridge](/docs/printlog-bridge), so a bridge catching up on a backlog can't hold up your other keys. Each key has its own budget, and nothing you do in the web or mobile app counts against it.
 
 These numbers can change. Don't hard-code them: back off when you get a `429`, and honor `Retry-After`.
 

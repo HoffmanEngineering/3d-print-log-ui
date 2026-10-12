@@ -193,5 +193,71 @@
     "turning-off",
     "privacy"
   ],
-  "docs/contact": ["email", "feedback", "github", "response-times"]
+  "docs/contact": ["email", "feedback", "github", "response-times"],
+  "docs/printlog-bridge": [
+    "what-it-logs",
+    "multi-tool",
+    "modes",
+    "requirements",
+    "account",
+    "notifier",
+    "pages"
+  ],
+  "docs/printlog-bridge-install": [
+    "before",
+    "install",
+    "connect",
+    "check",
+    "config",
+    "update",
+    "uninstall"
+  ],
+  "docs/printlog-bridge-docker": [
+    "image",
+    "data",
+    "setup",
+    "setup-folder",
+    "setup-config",
+    "setup-user",
+    "setup-compose",
+    "connect",
+    "setup-check",
+    "moonraker-auth",
+    "macros",
+    "allow-http-on-lan",
+    "update"
+  ],
+  "docs/printlog-bridge-spools": [
+    "setup",
+    "commands",
+    "replies",
+    "slots",
+    "timing",
+    "tags",
+    "spoolman"
+  ],
+  "docs/snapmaker-u1": ["setup", "tools", "rfid", "snapshot"],
+  "docs/printlog-bridge-troubleshooting": [
+    "doctor",
+    "status",
+    "logs",
+    "trace",
+    "problems",
+    "unreachable",
+    "already-connected",
+    "not-logging",
+    "outbox",
+    "stale",
+    "tag-not-found",
+    "snapshot",
+    "help"
+  ],
+  "docs/printlog-bridge-privacy": [
+    "sent",
+    "connections",
+    "keys",
+    "stored",
+    "traces",
+    "not-covered"
+  ]
 }

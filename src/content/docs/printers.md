@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-10-10
+updated: 2026-10-12
 related: [prints]
 ---
 
@@ -148,6 +148,7 @@ If the bridge logs a Klipper printer that still has the
 [Moonraker notifier](/docs/klipper) set up, each print is logged only once, and
 a banner suggests removing the notifier section from `moonraker.conf`. Once you
 dismiss the banner, it stays dismissed on every device.
+[Switch from the notifier](/docs/switch-from-notifier) explains how to remove it.
 
 ---
 

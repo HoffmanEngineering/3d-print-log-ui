@@ -259,5 +259,14 @@
     "stored",
     "traces",
     "not-covered"
+  ],
+  "docs/switch-from-notifier": [
+    "before-after",
+    "install",
+    "check",
+    "remove",
+    "revoke-key",
+    "coexistence",
+    "staying"
   ]
 }

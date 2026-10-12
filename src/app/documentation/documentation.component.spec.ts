@@ -114,7 +114,7 @@ describe('DocumentationComponent SEO lifecycle', () => {
     events.next(new NavigationEnd(3, '/docs/klipper', '/docs/klipper'));
     const nodes = structuredData.setJsonLd.calls.mostRecent().args[0];
     const howTo = nodes.find((n) => n['@type'] === 'HowTo');
-    expect(howTo?.['name']).toBe('Log prints from Klipper');
+    expect(howTo?.['name']).toBe('Klipper notifier (legacy)');
     const steps = howTo?.['step'] as Array<Record<string, unknown>>;
     expect(steps.length).toBe(4);
     expect(steps[0]['url']).toBe(

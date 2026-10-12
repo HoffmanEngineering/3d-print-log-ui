@@ -104,7 +104,7 @@ describe('NotifierNoticeComponent', () => {
     answer([dropping()]);
 
     const link = banner()?.querySelector('a');
-    expect(link?.getAttribute('href')).toBe('/docs/klipper');
+    expect(link?.getAttribute('href')).toBe('/docs/switch-from-notifier');
   });
 
   it('stays hidden without dropped notifier events', async () => {

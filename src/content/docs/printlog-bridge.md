@@ -16,7 +16,7 @@ related: [printlog-bridge-install, printlog-bridge-docker, printlog-bridge-spool
 
 printlog-bridge is a small open-source program that watches your Klipper printers through Moonraker and logs every print to 3D Print Log by itself. You don't type anything in, and you don't have to edit the printer's configuration by hand.
 
-It runs either on the printer's own host or in a Docker container on another computer on your network, and one bridge can watch several printers. The source is on GitHub under the MIT license: [HoffmanEngineering/printlog-bridge](https://github.com/HoffmanEngineering/printlog-bridge).
+It runs either on the printer's own host or in a Docker container on another computer on your network, and one bridge can watch several printers. The source is on GitHub under the MIT license: [HoffmanEngineering/printlog-bridge](https://github.com/HoffmanEngineering/printlog-bridge). For a short overview to share, see [Automatic print logging for Klipper](/klipper).
 
 <doc-callout kind="note" heading="The bridge is new">
   <p>

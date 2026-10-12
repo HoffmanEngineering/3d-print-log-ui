@@ -1,0 +1,208 @@
+// Page tokens, resolved per theme so every color works in light and dark.
+:host {
+  --kl-ink: rgba(0, 0, 0, 0.87);
+  --kl-muted: rgba(0, 0, 0, 0.64);
+  --kl-surface: #ffffff;
+  --kl-ground: #f6f7fb;
+  --kl-rule: #e0e3ef;
+  --kl-accent: #3f51b5;
+  --kl-accent-soft: #e7eaf8;
+  --kl-on-accent: #ffffff;
+  --kl-note: #fff6e0;
+  --kl-note-rule: #e8c66a;
+
+  display: block;
+  color: var(--kl-ink);
+}
+
+:host-context(html.dark-theme) {
+  --kl-ink: #e9ebf3;
+  --kl-muted: #b0b5c9;
+  --kl-surface: #191c26;
+  --kl-ground: #101219;
+  --kl-rule: #2d3243;
+  --kl-accent: #8c9eff;
+  --kl-accent-soft: #212743;
+  --kl-on-accent: #101219;
+  --kl-note: #2a2416;
+  --kl-note-rule: #7a6431;
+}
+
+.klipper-landing {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  overflow-wrap: anywhere;
+
+  a {
+    color: var(--kl-accent);
+  }
+
+  p,
+  li {
+    line-height: 1.55;
+  }
+
+  h2 {
+    margin: 40px 0 12px;
+    font-size: 1.4rem;
+  }
+}
+
+.hero {
+  .eyebrow {
+    margin: 0 0 8px;
+    color: var(--kl-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0 0 12px;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15;
+  }
+
+  .intro {
+    max-width: 64ch;
+    font-size: 1.1rem;
+    line-height: 1.55;
+  }
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--kl-accent-soft);
+    font-size: 0.9rem;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border: 1px solid var(--kl-accent);
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 3px solid var(--kl-accent);
+    outline-offset: 2px;
+  }
+}
+
+.klipper-landing .btn--primary {
+  background: var(--kl-accent);
+  color: var(--kl-on-accent);
+}
+
+.klipper-landing .btn--ghost {
+  color: var(--kl-accent);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature {
+  padding: 16px 18px;
+  border: 1px solid var(--kl-rule);
+  border-radius: 12px;
+  background: var(--kl-surface);
+
+  h3 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--kl-muted);
+    line-height: 1.5;
+  }
+}
+
+.steps {
+  padding-left: 20px;
+
+  li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+}
+
+.guides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--kl-ground);
+  }
+
+  a {
+    font-weight: 600;
+  }
+
+  span {
+    color: var(--kl-muted);
+    font-size: 0.92rem;
+  }
+}
+
+.status {
+  margin-top: 40px;
+  padding: 14px 18px;
+  border-left: 4px solid var(--kl-note-rule);
+  border-radius: 6px;
+  background: var(--kl-note);
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+.planned ul {
+  padding-left: 20px;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--kl-rule);
+}

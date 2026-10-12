@@ -17,8 +17,11 @@ export const FORKS = [
   'orca-flashforge',
 ];
 
+// Printer-side integrations with a landing page of their own (#259).
+export const INTEGRATIONS = ['klipper'];
+
 // '' is the homepage. Order is cosmetic.
-export const MARKETING_ROUTES = ['', ...TIER1, HUB, ...FORKS];
+export const MARKETING_ROUTES = ['', ...TIER1, HUB, ...FORKS, ...INTEGRATIONS];
 
 // Public documentation pages that are prerendered for SEO. These are pure static
 // content (no auth, no API). Kept separate from MARKETING_ROUTES so the

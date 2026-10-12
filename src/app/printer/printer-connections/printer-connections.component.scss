@@ -1,4 +1,33 @@
+// The app's theme is Material 2 (src/styles/theme.scss), which emits no --mat-sys-* system
+// tokens. Colours here come from what it does emit (--mat-divider-color), the app's
+// theme-aware --app-text-* variables, and print-status-badge's status pairs with a
+// dark-theme override.
+
+// Same success/failed pairs as print-status-badge, which records their contrast ratios.
+$online-bg: #e8f5e9;
+$online-fg: #2e7d32;
+$stale-bg: #ffebee;
+$stale-fg: #c62828;
+$dark-online-bg: rgba(46, 125, 50, 0.2);
+$dark-online-fg: #a5d6a7;
+$dark-stale-bg: rgba(198, 40, 40, 0.2);
+$dark-stale-fg: #ffcdd2;
+
+:host {
+  display: block;
+}
+
+.connections {
+  // The row layout follows the section's own width, not the viewport's: the section sits in
+  // a dialog that is much narrower than the window on a desktop.
+  container-type: inline-size;
+  margin: 24px 0 8px;
+}
+
 h2 {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  font-weight: 500;
   text-align: start;
 }
 
@@ -8,25 +37,40 @@ ul {
   padding: 0;
 }
 
+// One row at dialog width: the name takes what the status column and delete button leave,
+// and the status column stays narrow by putting the time on its own line.
 .connection {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: 'identity state delete';
   align-items: center;
-  gap: 8px 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  gap: 4px 16px;
+  padding: 12px 0;
+  // The M2 theme emits this for mat-divider, in both light and dark.
+  border-bottom: 1px solid var(--mat-divider-color);
+}
+
+.identity {
+  grid-area: identity;
+}
+
+.state {
+  grid-area: state;
+  align-items: flex-end;
+}
+
+.connection > button {
+  grid-area: delete;
+  // The icon button's own padding already spaces it from the edge.
+  margin-inline-end: -8px;
 }
 
 .identity,
 .state {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
-}
-
-.identity {
-  flex: 1 1 200px;
 }
 
 .name {
@@ -38,24 +82,73 @@ ul {
 .meta,
 .hint {
   font-size: 0.875rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-text-secondary);
+}
+
+.version {
+  white-space: nowrap;
+}
+
+.state .meta {
+  text-align: end;
+
+  time {
+    display: block;
+    white-space: nowrap;
+  }
 }
 
 .status {
-  align-self: flex-start;
   padding: 2px 10px;
   border-radius: 999px;
   font-size: 0.8125rem;
   font-weight: 500;
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
+  line-height: 1.25rem;
+  background-color: $online-bg;
+  color: $online-fg;
 
   &.stale {
-    background: var(--mat-sys-error-container);
-    color: var(--mat-sys-on-error-container);
+    background-color: $stale-bg;
+    color: $stale-fg;
+  }
+}
+
+:host-context(html.dark-theme) .status {
+  background-color: $dark-online-bg;
+  color: $dark-online-fg;
+
+  &.stale {
+    background-color: $dark-stale-bg;
+    color: $dark-stale-fg;
   }
 }
 
 .hint {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
+}
+
+// Phone width: the status and last-seen line move under the name, and delete stays at the
+// end of the name's line.
+@container (max-width: 440px) {
+  .connection {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'identity delete'
+      'state state';
+  }
+
+  .state {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+  }
+
+  .state .meta {
+    text-align: start;
+
+    time {
+      display: inline;
+    }
+  }
 }

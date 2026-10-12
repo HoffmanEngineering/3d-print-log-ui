@@ -167,7 +167,7 @@ describe('Print List Filters', () => {
     cy.get('#edit-print-actual-measure-type-0').click();
     cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('50');
-    cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+    cy.intercept('PATCH', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 

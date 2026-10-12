@@ -51,9 +51,13 @@ export class PrintShareDialogComponent implements OnInit {
 
   public updatePrint(newViewStatus: PrintViewStatus) {
     const newPrint: PrintDetail = { ...this.print, viewStatus: newViewStatus };
-    this.printService.updatePrint(newPrint).subscribe((_) => {
-      this.handlePrintChange(newPrint);
-    });
+    // Only the view status: sending the whole print loaded when the dialog opened would revert
+    // anything a connector recorded since (#263).
+    this.printService
+      .patchPrint(newPrint.id, { viewStatus: newViewStatus })
+      .subscribe((_) => {
+        this.handlePrintChange(newPrint);
+      });
   }
 
   public copyToClipboard() {

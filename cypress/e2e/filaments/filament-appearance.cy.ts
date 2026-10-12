@@ -586,7 +586,7 @@ describe('Cross-screen swatch rendering', () => {
     cy.get('[data-cy-filament-row]').should('have.length.greaterThan', 0);
     cy.get('[data-cy-filament-row]').first().click();
 
-    cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+    cy.intercept('PATCH', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 

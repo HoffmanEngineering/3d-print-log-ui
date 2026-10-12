@@ -61,7 +61,7 @@ describe('Filament Usage', () => {
     cy.get('#edit-print-actual-measure-type-0').click();
     cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('100');
-    cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+    cy.intercept('PATCH', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 
@@ -110,7 +110,7 @@ describe('Filament Usage', () => {
     cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-1').clear().type('30');
 
-    cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+    cy.intercept('PATCH', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 
@@ -141,7 +141,7 @@ describe('Filament Usage', () => {
     cy.get('#edit-print-actual-measure-type-0').click();
     cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('50');
-    cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+    cy.intercept('PATCH', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 
@@ -149,7 +149,7 @@ describe('Filament Usage', () => {
       cy.visit(`/prints/${printId}/edit`);
     });
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('75');
-    cy.intercept('PUT', '/api/Prints/*').as('updatePrint2');
+    cy.intercept('PATCH', '/api/Prints/*').as('updatePrint2');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint2');
 
@@ -183,7 +183,7 @@ describe('Filament Usage', () => {
     cy.get('#edit-print-actual-measure-type-0').click();
     cy.contains('mat-option', 'Weight').click();
     cy.get('#edit-print-actual-filament-used-gram-0').clear().type('50');
-    cy.intercept('PUT', '/api/Prints/*').as('updatePrint');
+    cy.intercept('PATCH', '/api/Prints/*').as('updatePrint');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint');
 
@@ -193,7 +193,7 @@ describe('Filament Usage', () => {
     cy.get('[data-cy="delete-filament-btn"]').click();
     cy.get('mat-dialog-container').contains('button', 'Delete').click();
     cy.get('.filament-entry-card').should('not.exist');
-    cy.intercept('PUT', '/api/Prints/*').as('updatePrint2');
+    cy.intercept('PATCH', '/api/Prints/*').as('updatePrint2');
     cy.get('#edit-print-submit-btn').click();
     cy.wait('@updatePrint2');
 

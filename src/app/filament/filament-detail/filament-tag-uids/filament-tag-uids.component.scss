@@ -1,0 +1,42 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.tag-uids {
+  h3 {
+    margin-bottom: 4px;
+    text-align: start;
+  }
+}
+
+.tag-uids__help {
+  margin: 0 0 8px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.tag-uids__chips {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.tag-uids__uid {
+  font-family: 'Roboto Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  letter-spacing: 0.02em;
+}
+
+.tag-uids__chip--conflict {
+  outline: 2px solid var(--mat-sys-error);
+  outline-offset: 1px;
+}
+
+.tag-uids__field {
+  width: 100%;
+  max-width: 360px;
+}
+
+.tag-uids__error {
+  margin: 4px 0 0;
+  color: var(--mat-sys-error);
+  overflow-wrap: anywhere;
+}

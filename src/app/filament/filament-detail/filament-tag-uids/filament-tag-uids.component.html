@@ -1,0 +1,74 @@
+<section class="tag-uids" aria-labelledby="tag-uids-heading">
+  <h3 id="tag-uids-heading">RFID / NFC tags</h3>
+  <p class="tag-uids__help">
+    Link the tags on this spool so a printer or reader that scans one picks this
+    material. Paste the UID in any format, such as 04:A2:3F:11.
+  </p>
+
+  @if (tags().length > 0) {
+    <mat-chip-set
+      class="tag-uids__chips"
+      aria-label="Tag UIDs on this material"
+    >
+      @for (uid of tags(); track uid) {
+        <mat-chip
+          data-testid="tag-uid-chip"
+          [class.tag-uids__chip--conflict]="conflict()?.tagUid === uid"
+          [disabled]="disabled()"
+          (removed)="remove(uid)"
+        >
+          <span class="tag-uids__uid">{{ uid }}</span>
+          <button matChipRemove [attr.aria-label]="'Remove tag ' + uid">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip>
+      }
+    </mat-chip-set>
+  }
+
+  <mat-form-field class="tag-uids__field" subscriptSizing="dynamic">
+    <mat-label>Tag UID</mat-label>
+    <input
+      matInput
+      data-testid="tag-uid-input"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="04:A2:3F:11"
+      [value]="draft()"
+      [disabled]="disabled() || atCap()"
+      (input)="onInput($any($event.target).value)"
+      (keydown.enter)="onEnter($event)"
+      (blur)="onBlur()"
+    />
+    <button
+      matSuffix
+      mat-icon-button
+      type="button"
+      aria-label="Add tag"
+      [disabled]="disabled() || atCap() || draft().trim() === ''"
+      (mousedown)="$event.preventDefault()"
+      (click)="add()"
+    >
+      <mat-icon>add</mat-icon>
+    </button>
+    @if (atCap()) {
+      <mat-hint>A material can have up to {{ maxTags }} tags.</mat-hint>
+    }
+  </mat-form-field>
+
+  @if (error(); as message) {
+    <p class="tag-uids__error" data-testid="tag-uid-error" role="alert">
+      {{ message }}
+    </p>
+  }
+
+  @if (conflict(); as c) {
+    <p class="tag-uids__error" data-testid="tag-uid-conflict" role="alert">
+      Tag <span class="tag-uids__uid">{{ c.tagUid }}</span> is already on
+      <a [routerLink]="['/filament', c.filamentId]" target="_blank">{{
+        c.filamentDisplayName
+      }}</a
+      >. Remove it there, or remove it here, then save again.
+    </p>
+  }
+</section>

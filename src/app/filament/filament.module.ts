@@ -14,6 +14,7 @@ import { EmptyStateComponent } from '../shared/empty-state/empty-state.component
 import { FilamentPrintsPanelComponent } from './filament-detail/filament-prints-panel/filament-prints-panel.component';
 import { FilamentRemainingCardComponent } from './filament-detail/filament-remaining-card/filament-remaining-card.component';
 import { EntityImagesPanelComponent } from '../shared/entity-images-panel/entity-images-panel.component';
+import { FilamentTagUidsComponent } from './filament-detail/filament-tag-uids/filament-tag-uids.component';
 
 @NgModule({
   declarations: [FilamentDetailComponent, FilamentListContainerComponent],
@@ -25,6 +26,7 @@ import { EntityImagesPanelComponent } from '../shared/entity-images-panel/entity
     FilamentRemainingCardComponent,
     FilamentPrintsPanelComponent,
     EntityImagesPanelComponent,
+    FilamentTagUidsComponent,
   ],
   providers: [
     FilamentListResolverService,

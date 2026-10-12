@@ -891,6 +891,62 @@ describe('EditPrintDetailComponent', () => {
       expect(patch.filamentUsage![0].estimatedAmountMg).toBe(20_000);
     });
 
+    // A print from before usage rows: the form shows its legacy fields as one row. Sending
+    // filamentUsage (the rows, or [] once the row is deleted) is what makes the API clear the
+    // legacy fields, so the view does not show both and a deleted row does not come back.
+    describe('a legacy print', () => {
+      const legacyPrint = {
+        ...existingPrint,
+        filamentUsage: [],
+        filamentType: 'PLA',
+        filamentUsageMg: 15_000,
+        estimatedFilamentUsageMg: 14_000,
+      } as unknown as PrintDetail;
+
+      it('sends the converted row when it was edited', () => {
+        const form = openEditor(legacyPrint);
+        expect(form.filamentUsage.length).toBe(1);
+
+        form.filamentUsage.at(0).get('amountG')!.setValue(16);
+        form.onSubmit();
+
+        const [id, patch] = printService.patchPrint.calls.mostRecent().args;
+        expect(id).toBe(5);
+        expect(Object.keys(patch)).toEqual(['filamentUsage']);
+        expect(patch.filamentUsage!.length).toBe(1);
+        expect(patch.filamentUsage![0].amountMg).toBe(16_000);
+        expect(patch.filamentUsage![0].estimatedAmountMg).toBe(14_000);
+      });
+
+      it('sends an empty filamentUsage when the row was deleted', () => {
+        const form = openEditor(legacyPrint);
+        // The row holds usage, so removing it asks first; confirm.
+        spyOn(form.dialog, 'open').and.returnValue({
+          componentInstance: {},
+          afterClosed: () => of(true),
+        } as never);
+
+        form.removeFilament(0);
+        form.onSubmit();
+
+        expect(form.filamentUsage.length).toBe(0);
+        expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+          filamentUsage: [],
+        });
+      });
+
+      it('leaves the legacy usage alone when only another field changed', () => {
+        const form = openEditor(legacyPrint);
+
+        form.printForm.controls.notes.setValue('added a note');
+        form.onSubmit();
+
+        expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+          notes: 'added a note',
+        });
+      });
+    });
+
     it('saves the start date the form showed when the print had none', () => {
       const form = openEditor({ ...existingPrint, startDate: null });
 

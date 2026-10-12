@@ -6,8 +6,8 @@ navLabel: Log prints from Klipper
 group: integrations
 order: 50
 mode: how-to
-updated: 2026-09-02
-related: [prints]
+updated: 2026-10-12
+related: [printlog-bridge, prints]
 ---
 
 ## Klipper/Moonraker Notifier
@@ -21,6 +21,16 @@ href="https://moonraker.readthedocs.io/en/latest/" >Moonraker</a >, and
 automatically create a new Print when a print starts, and update the print when
 it finishes. It uses Moonraker's built-in **notifier** component, so no
 additional plugins are required, just a small configuration change.
+
+<doc-callout kind="tip" heading="Try printlog-bridge">
+  <p>
+    <a routerLink="/docs/printlog-bridge">printlog-bridge</a> logs Klipper
+    prints with more detail than the notifier: the real outcome, filament per
+    tool linked to your spools, the slicer's thumbnail and a webcam snapshot.
+    It runs on the printer itself, or in Docker on another computer on your
+    network.
+  </p>
+</doc-callout>
 
 ---
 

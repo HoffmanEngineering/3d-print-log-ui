@@ -1,0 +1,140 @@
+---
+slug: printlog-bridge-install
+title: Install printlog-bridge on a Klipper Printer | 3D Print Log Docs
+description: Install printlog-bridge on your Klipper printer's host as a systemd service, connect it to your 3D Print Log account, and check that it works.
+navLabel: Bridge – install on the printer
+group: integrations
+order: 43
+mode: how-to
+updated: 2026-10-12
+related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, printlog-bridge-troubleshooting]
+---
+
+## Install printlog-bridge on the Printer
+
+---
+
+In local mode, [printlog-bridge](/docs/printlog-bridge) runs on the printer's own host, next to Klipper and Moonraker: MainsailOS, FluiddPi, or any Klipper install with Moonraker. If you can't install software on the printer, or you want one bridge for several printers, [run it in Docker](/docs/printlog-bridge-docker) instead.
+
+### Before you start {#before}
+
+- **Python 3.9 or newer** on the printer's host. Raspberry Pi OS Bullseye and later have it.
+- **SSH access as the user Klipper runs as**, such as `pi`. The installer refuses to run as root, and uses `sudo` to install the service.
+- **The printer's number in 3D Print Log.** Open the printer from the [Printers](/printers) page. Its number is the end of the address: `42` in `https://www.3dprintlog.com/printers/42`.
+- **A personal API key**, from the [Personal API Keys](/api-keys) page. See [Connect to your account](#connect).
+
+### Install {#install}
+
+On the printer's host, run:
+
+```
+cd ~ && git clone https://github.com/HoffmanEngineering/printlog-bridge.git
+./printlog-bridge/install.sh
+```
+
+The installer asks for the API key (what you paste isn't shown) and the printer's number. Press Enter at either one to fill it in later. It then:
+
+- makes a virtualenv in `~/printlog-bridge-env` and installs the bridge into it;
+- stores the API key in `~/.local/share/printlog-bridge/api_key`, readable only by you;
+- writes `~/printer_data/config/printlog-bridge.cfg`, next to `printer.cfg`, unless you already have one;
+- installs and starts a `printlog-bridge` systemd service;
+- adds `printlog-bridge` to `~/printer_data/moonraker.asvc`, so Mainsail and Fluidd can restart it;
+- adds an `[update_manager printlog-bridge]` section to `moonraker.conf`, so updates show up in the update panel of Mainsail and Fluidd, and restarts Moonraker to load it;
+- copies the spool macros to `~/printer_data/config/printlog.cfg` and adds `[include printlog.cfg]` to `printer.cfg`.
+
+The installer doesn't restart Klipper, since that would end a print. Restart it yourself when the printer is idle (`FIRMWARE_RESTART` in the console) to load the [spool macros](/docs/printlog-bridge-spools).
+
+Running `install.sh` again is safe. Its options:
+
+| Option | What it does |
+| --- | --- |
+| `--printer-data DIR` | Moonraker's data folder, when it isn't `~/printer_data` |
+| `--printer-id N` | The printer's number in 3D Print Log, so it isn't asked for |
+| `--venv DIR` | Where to make the virtualenv (default `~/printlog-bridge-env`) |
+| `--moonraker-service NAME` | Moonraker's systemd service, when it isn't `moonraker` |
+| `--no-macros` | Don't install the spool macros or include them from `printer.cfg` |
+| `--yes` | Ask nothing. Fill in the config afterwards. |
+
+`install.sh --help` lists them too. The installer sets up one Klipper instance per host. To move it to another `printer_data` folder, uninstall it first.
+
+### Connect to your account {#connect}
+
+Until one-step pairing arrives (it's planned), the bridge signs in with a [personal API key](/docs/api#api-keys) and needs to know which printer in 3D Print Log its prints belong to.
+
+1. Create a key on the [Personal API Keys](/api-keys) page and copy it. Give each bridge its own key, so you can revoke one without stopping the others.
+2. If you skipped the key during the install, store it now, and paste it when asked:
+
+  ```
+  ~/printlog-bridge-env/bin/printlog-bridge store-key
+  ```
+
+  `store-key` keeps the key in `~/.local/share/printlog-bridge/api_key`, readable only by you, and replaces any key already there.
+
+3. If you skipped the printer's number, set `printer_id` in `printlog-bridge.cfg`. Mainsail and Fluidd can edit the file (under **Machine**), or edit it over SSH:
+
+  ```
+  [printer voron]
+  printer_id = 42
+  socket = /home/pi/printer_data/comms/moonraker.sock
+  ```
+
+4. Restart printlog-bridge from the services menu in Mainsail or Fluidd, or run `sudo systemctl restart printlog-bridge`.
+
+While its config needs fixing (no key, no `printer_id`), the service stops and waits for you rather than restarting itself.
+
+<doc-callout kind="warning" heading="Keep the key out of printlog-bridge.cfg">
+  <p>
+    Moonraker lets anyone who can open Mainsail or Fluidd download every file in
+    Klipper's config folder, including <code>printlog-bridge.cfg</code>. An
+    <code>api_key</code> line there still works, but <code>doctor</code> warns
+    about it. Run <code>store-key</code> to move it: it writes the key file and
+    empties the line in the config.
+  </p>
+</doc-callout>
+
+The bridge looks for the key in this order: the `PRINTLOG_API_KEY` environment variable, then the key file, then `api_key` in the `[bridge]` section.
+
+### Check it {#check}
+
+When both the key and the printer's number were given, the installer checks the setup with `doctor` before it finishes. Run the same check any time:
+
+```
+~/printlog-bridge-env/bin/printlog-bridge doctor
+~/printlog-bridge-env/bin/printlog-bridge status
+```
+
+`doctor` checks the config, the API key, the computer's clock and the printer, and says what to fix. `status` shows what the running bridge is doing. [Troubleshooting](/docs/printlog-bridge-troubleshooting#doctor) explains both.
+
+In 3D Print Log, the printer's **Edit Page** now lists the bridge under [Connections](/docs/printers#connections). Start a print and it shows up on your [Print List](/prints) as **Printing**.
+
+### Config file {#config}
+
+The installer writes `~/printer_data/config/printlog-bridge.cfg`, with one `[printer <name>]` section named after the host. Each printer is a section, so one bridge can watch several. After a change, restart printlog-bridge.
+
+| Section | Option | Default | What it is |
+| --- | --- | --- | --- |
+| `[bridge]` | `api_url` | `https://api.3dprintlog.com` | 3D Print Log's API. Must be `https`. |
+| `[bridge]` | `state_dir` | `~/.local/share/printlog-bridge` | Where the key file, the outbox, the log and the status live. `PRINTLOG_BRIDGE_STATE_DIR` sets it when this doesn't. |
+| `[bridge]` | `trace` | `false` | Record every Moonraker message, to [report a problem](/docs/printlog-bridge-troubleshooting#trace). |
+| `[bridge]` | `allow_http_on_lan` | `false` | Allow plain `http` to a development API on your network. See [the Docker page](/docs/printlog-bridge-docker#allow-http-on-lan). |
+| `[bridge]` | `api_key` | | Works, but use `store-key` instead. |
+| `[printer <name>]` | `printer_id` | | The printer's number in 3D Print Log. Required. |
+| `[printer <name>]` | `socket` | `~/printer_data/comms/moonraker.sock` | Moonraker's socket, in local mode. |
+| `[printer <name>]` | `url` | | Moonraker's address, such as `http://192.168.1.50:7125`, in remote mode. Set `url` or `socket`, not both. |
+| `[printer <name>]` | `moonraker_api_key` | | Remote mode only, when Moonraker has `[authorization]` on and doesn't trust the bridge's computer. |
+| `[printer <name>]` | `snapshots` | `true` | `false` never asks the webcam for anything. |
+| `[printer <name>]` | `adapter` | `moonraker` | The kind of printer. Moonraker is the only one today. |
+
+The bridge looks for its config in this order: `--config` on the command line, the `PRINTLOG_BRIDGE_CONFIG` environment variable, `~/printer_data/config/printlog-bridge.cfg`, then `~/.config/printlog-bridge/printlog-bridge.cfg`. Every option is described in [printlog-bridge.example.cfg](https://github.com/HoffmanEngineering/printlog-bridge/blob/main/printlog-bridge.example.cfg).
+
+### Update {#update}
+
+Updates show up as **printlog-bridge** in the update panel of Mainsail and Fluidd, next to Klipper and Moonraker.
+
+### Uninstall {#uninstall}
+
+```
+./printlog-bridge/uninstall.sh
+```
+
+It removes the service and the virtualenv, and puts `moonraker.conf`, `moonraker.asvc` and `printer.cfg` back exactly as they were. It removes `printlog.cfg` too, unless you changed it. Your config and the state directory, including any prints not yet logged, are kept for a reinstall. Add `--purge` to remove those as well.

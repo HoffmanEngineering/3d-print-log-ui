@@ -12,7 +12,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -32,6 +33,7 @@ import { FilamentDetailComponent } from './filament-detail.component';
 import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
 import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
+import { FilamentTagUidsComponent } from './filament-tag-uids/filament-tag-uids.component';
 
 /**
  * The detail component builds its images-panel target from the service, so a spy without
@@ -98,6 +100,7 @@ describe('FilamentDetailComponent', () => {
         MatAutocompleteModule,
         MatButtonToggleModule,
         MatChipsModule,
+        FilamentTagUidsComponent,
       ],
       providers: [
         { provide: FilamentService, useValue: mockFilamentService },
@@ -384,6 +387,7 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
         MatAutocompleteModule,
         MatButtonToggleModule,
         MatChipsModule,
+        FilamentTagUidsComponent,
         MatButtonModule,
         MatTooltipModule,
       ],
@@ -514,6 +518,7 @@ describe('FilamentDetailComponent - value serialization', () => {
   let serComponent: FilamentDetailComponent;
   let serFixture: ComponentFixture<FilamentDetailComponent>;
   let mockFilamentSvc: jasmine.SpyObj<FilamentService>;
+  let mockToastr: jasmine.SpyObj<ToastrService>;
 
   const baseFilament = {
     id: 'filament-1',
@@ -538,8 +543,9 @@ describe('FilamentDetailComponent - value serialization', () => {
       updateFilament: of({} as never),
     });
     stubImageTarget(mockFilamentSvc);
-    const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
+    mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
       'success',
+      'error',
     ]);
     const mockUserSettings = jasmine.createSpyObj<UserSettingService>(
       'UserSettingService',
@@ -564,6 +570,7 @@ describe('FilamentDetailComponent - value serialization', () => {
         MatAutocompleteModule,
         MatButtonToggleModule,
         MatChipsModule,
+        FilamentTagUidsComponent,
         MatButtonModule,
         MatTooltipModule,
       ],
@@ -727,6 +734,88 @@ describe('FilamentDetailComponent - value serialization', () => {
     expect(adj[0].amountMg).toBeNull(); // was silently becoming 0 on load
     expect(adj[0].lengthInM).toBe(100);
   });
+
+  describe('tag UIDs', () => {
+    const conflict = () =>
+      new HttpErrorResponse({
+        status: 409,
+        error: {
+          title: 'Tag already assigned',
+          status: 409,
+          detail: 'Tag 04A23F11 is already on "Blue PLA".',
+          tagUid: '04A23F11',
+          filamentId: 'other-spool',
+          filamentDisplayName: 'Blue PLA',
+        },
+      });
+
+    it('saves the loaded tags back unchanged', async () => {
+      await setupSerialization({ tagUids: ['04A23F11', 'DEADBEEF'] });
+
+      serComponent.onSubmit();
+
+      expect(savedFilament().tagUids).toEqual(['04A23F11', 'DEADBEEF']);
+    });
+
+    it('sends an empty list once the last tag is removed, which clears them', async () => {
+      await setupSerialization({ tagUids: ['04A23F11'] });
+      serComponent.filamentForm.get('tagUids')!.setValue([]);
+
+      serComponent.onSubmit();
+
+      expect(savedFilament().tagUids).toEqual([]);
+    });
+
+    // PUT keeps a spool's tags when the field is absent. A response without
+    // the field means an API that predates tags, and an empty list sent back
+    // to a newer one would wipe tags this page never displayed.
+    it('leaves tagUids out when the loaded filament had no tagUids field', async () => {
+      await setupSerialization({});
+
+      serComponent.onSubmit();
+
+      expect('tagUids' in savedFilament()).toBeFalse();
+    });
+
+    it('names the spool that already holds a tag when the save conflicts', async () => {
+      await setupSerialization({ tagUids: [] });
+      mockFilamentSvc.updateFilament.and.returnValue(
+        throwError(() => conflict())
+      );
+      serComponent.filamentForm.get('tagUids')!.setValue(['04A23F11']);
+
+      serComponent.onSubmit();
+      serFixture.detectChanges();
+
+      expect(serComponent.saving).toBeFalse();
+      const message = (serFixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="tag-uid-conflict"]'
+      );
+      expect(message?.textContent).toContain('Blue PLA');
+      expect(message?.querySelector('a')?.getAttribute('href')).toBe(
+        '/filament/other-spool'
+      );
+      expect(mockToastr.error).toHaveBeenCalled();
+    });
+
+    it('clears the conflict once the tags change', async () => {
+      await setupSerialization({ tagUids: [] });
+      mockFilamentSvc.updateFilament.and.returnValue(
+        throwError(() => conflict())
+      );
+      serComponent.filamentForm.get('tagUids')!.setValue(['04A23F11']);
+      serComponent.onSubmit();
+
+      serComponent.filamentForm.get('tagUids')!.setValue([]);
+      serFixture.detectChanges();
+
+      expect(
+        (serFixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="tag-uid-conflict"]'
+        )
+      ).toBeNull();
+    });
+  });
 });
 
 describe('FilamentDetailComponent - usage panels', () => {
@@ -796,6 +885,7 @@ describe('FilamentDetailComponent - usage panels', () => {
         MatAutocompleteModule,
         MatButtonToggleModule,
         MatChipsModule,
+        FilamentTagUidsComponent,
         MatButtonModule,
         MatTooltipModule,
         FilamentRemainingCardComponent,

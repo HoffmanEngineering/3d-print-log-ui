@@ -27,6 +27,10 @@ export class CopyFilamentDetailResolverService {
           // A material photo is of one physical spool. Unlike a print's slicer
           // render, it is not valid for the copy.
           images: [],
+          // A tag is stuck to one physical spool, and the API lets a UID sit
+          // on only one of the user's spools, so a copy that kept them would
+          // fail to save with a 409.
+          tagUids: [],
         };
 
         return cleanedFilament;

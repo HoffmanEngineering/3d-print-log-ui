@@ -463,6 +463,12 @@
         <mat-checkbox fxFlex="grow" formControlName="isFavorite"
           >Is Favorite</mat-checkbox
         >
+        <app-filament-tag-uids
+          fxFlex="grow"
+          fxFlexFill
+          formControlName="tagUids"
+          [conflict]="tagUidConflict()"
+        ></app-filament-tag-uids>
         <div fxFlex="grow" fxFlexFill>
           <h2 style="text-align: start">Weights</h2>
         </div>

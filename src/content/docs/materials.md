@@ -6,7 +6,7 @@ navLabel: Materials
 group: features
 order: 30
 mode: how-to
-updated: 2026-09-02
+updated: 2026-10-12
 related: [materials-reference, prints]
 aliases: [filaments]
 ---
@@ -225,6 +225,30 @@ can scan a QR code label instead of searching manually:
 4. Point your camera at a material's QR code label. The material will be automatically looked up and selected.
 5. Use the camera dropdown to switch between cameras if your device has multiple cameras.
 6. Click the <mat-icon inline>list</mat-icon> icon to return to the search list view.
+
+---
+
+### RFID / NFC Tags {#tags}
+
+Many spools, including Bambu Lab spools, carry an RFID or NFC tag. Add a tag's
+UID to a material so that tools which read tags can find the right spool by
+scanning it.
+
+To add a tag, edit the material and find **RFID / NFC tags** in the **General**
+section. Type or paste the UID into **Tag UID** and press **Enter**. Any
+format works: `04:A2:3F:11`, `04-a2-3f-11` and `04A23F11` are the same tag,
+and it is shown as `04A23F11`. A UID is hex digits (0-9, A-F) and must be whole
+bytes, so it always has an even number of digits. A material can have up to 16
+tags; a Bambu Lab spool has two.
+
+To remove a tag, click the <mat-icon inline>cancel</mat-icon> icon on it. Your
+changes to tags are saved when you click **Submit**.
+
+A tag belongs to one physical spool, so it can be on only one of your
+materials. If you add a tag that is already on another material, the save is
+refused and the page names that material with a link to it. Remove the tag
+from one of the two, then save again. Like photos, tags are not carried over
+when you copy a material.
 
 ---
 

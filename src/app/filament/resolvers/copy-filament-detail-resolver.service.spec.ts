@@ -69,6 +69,24 @@ describe('CopyFilamentDetailResolverService', () => {
     });
   });
 
+  it('does not carry tag UIDs into the copy', (done) => {
+    filamentService.getFilamentDetail.and.returnValue(
+      of({ ...aFilament, tagUids: ['04A23F11'] } as FilamentDetail)
+    );
+
+    (
+      service.resolve(
+        routeWithId('orig'),
+        {} as RouterStateSnapshot
+      ) as Observable<FilamentDetail>
+    ).subscribe((copied: FilamentDetail) => {
+      // A tag is stuck to one physical spool, and the API allows it on only
+      // one of the user's spools, so carrying it over would 409 the save.
+      expect(copied.tagUids).toEqual([]);
+      done();
+    });
+  });
+
   it('returns null for the new-filament route', () => {
     expect(
       service.resolve(routeWithId('new'), {} as RouterStateSnapshot)

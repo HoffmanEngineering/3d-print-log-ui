@@ -91,6 +91,14 @@ export interface FilamentDetail {
   images?: FilamentImage[];
 
   /**
+   * RFID/NFC tag UIDs on this spool, normalized (uppercase hex, no
+   * separators) and sorted by the API. On PUT, leaving the field out keeps the
+   * spool's tags and an empty list clears them. Absent from responses of an
+   * API that predates tags.
+   */
+  tagUids?: string[];
+
+  /**
    * Server-computed remaining filament weight in mg (nominal − print usage +
    * weight adjustments). Null when nominal weight is absent. Read-only: the
    * server ignores it on write, so writers may omit it.

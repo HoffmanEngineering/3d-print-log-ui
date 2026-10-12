@@ -61,6 +61,7 @@ import {
   ProjectionResult,
   projectRemainingMg,
 } from './remaining-projection';
+import { TagUidConflict, readTagUidConflict } from '../tag-uid';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
@@ -252,6 +253,13 @@ export class FilamentDetailComponent
   private readonly formValue = signal<Record<string, unknown> | null>(null);
   private formValueSubscription: Subscription;
 
+  /**
+   * The spool that already holds a tag this save tried to add, from the API's
+   * 409. Cleared as soon as the tag list changes.
+   */
+  protected readonly tagUidConflict = signal<TagUidConflict | null>(null);
+  private tagUidsSubscription: Subscription;
+
   /** False in add mode (no filament) and copy mode (a clone is not the source spool). */
   protected readonly showUsagePanels = signal(false);
 
@@ -358,6 +366,12 @@ export class FilamentDetailComponent
           this.formValue.set(this.filamentForm.getRawValue());
         }
       );
+
+      this.tagUidConflict.set(null);
+      this.tagUidsSubscription?.unsubscribe();
+      this.tagUidsSubscription = this.filamentForm
+        .get('tagUids')
+        .valueChanges.subscribe(() => this.tagUidConflict.set(null));
 
       this.normalizedColors = this.computeNormalizedColors();
       this.colorsSubscription = this.colorsFormArray.valueChanges.subscribe(
@@ -518,6 +532,7 @@ export class FilamentDetailComponent
     this.materialCategorySubscription?.unsubscribe();
     this.colorsSubscription?.unsubscribe();
     this.formValueSubscription?.unsubscribe();
+    this.tagUidsSubscription?.unsubscribe();
   }
 
   private computeNormalizedColors(): string[] {
@@ -703,6 +718,7 @@ export class FilamentDetailComponent
       layerTimeS: [filament?.layerTimeS ?? null],
       meltingTemperature: [filament?.meltingTemperature ?? null],
       materialRefreshRatio: [filament?.materialRefreshRatio ?? null],
+      tagUids: [filament?.tagUids ?? []],
     });
 
     return form;
@@ -928,6 +944,15 @@ export class FilamentDetailComponent
       },
       (err) => {
         this.saving = false;
+
+        const conflict = readTagUidConflict(err);
+        if (conflict) {
+          this.tagUidConflict.set(conflict);
+          this.toastr.error(
+            `Tag ${conflict.tagUid} is already on "${conflict.filamentDisplayName}".`,
+            'Not saved'
+          );
+        }
       }
     );
   }
@@ -1050,6 +1075,15 @@ export class FilamentDetailComponent
       finishType: this.filamentForm.get('finishType')!.value,
       effects: this.filamentForm.get('effects')!.value ?? [],
     };
+
+    // PUT keeps a spool's tags when the field is absent and clears them on an
+    // empty list. A loaded filament without the field came from an API that
+    // predates tags, so sending [] there could wipe tags this page never
+    // showed. Send the list only when tags are known or the user added some.
+    const tagUids = (this.filamentForm.get('tagUids')?.value ?? []) as string[];
+    if (this.loadedFilament?.tagUids !== undefined || tagUids.length > 0) {
+      filament.tagUids = tagUids;
+    }
 
     // Keep colorHex in sync with colors[0]
     if (this.normalizedColors.length > 0) {

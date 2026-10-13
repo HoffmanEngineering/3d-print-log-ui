@@ -34,10 +34,10 @@
   border-radius: 4px;
   font-size: 0.8125rem;
   font-weight: 500;
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
+  background: var(--app-surface-container);
+  color: var(--app-text-primary);
 }
 
 .no-spool {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-text-secondary);
 }

@@ -303,7 +303,7 @@ form > div {
 
 .preferred-unit-hint {
   font-size: 0.75rem;
-  color: var(--mat-sys-outline);
+  color: var(--app-text-tertiary);
   display: block;
   // Pull hint up past mat-form-field's subscript area (~20px) and the column gap (8px)
   margin-top: -24px;

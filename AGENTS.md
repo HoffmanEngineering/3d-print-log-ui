@@ -164,6 +164,15 @@ If a lazily-loading store must be readable from a computed, keep the read pure a
 
 A child's own `.thing img` rule and a parent's `::ng-deep .thing img` tie on specificity, so which wins depends on stylesheet order — which is not something a caller can rely on. When a child needs to render differently for one caller, give it an input (see `SignedImageComponent.fit`), not a CSS escape hatch.
 
+### Theme colours: the theme is Material 2, so there are no `--mat-sys-*` tokens
+
+`src/styles/theme.scss` builds an **M2** theme, which emits component tokens (`--mat-divider-color`, …) but no Material 3 `--mat-sys-*` system tokens. A `var(--mat-sys-…)` therefore resolves to its fallback, which is a light-theme value that stays light in dark mode, or to nothing, which drops the declaration. Unit tests pass either way, and nothing looks wrong until someone opens the page in dark mode (#269, #270).
+
+- Use the theme-aware tokens defined in `theme.scss`: `--app-text-primary`/`-secondary`/`-tertiary`/`-hint` for text, `--app-primary`, `--app-error-text`, `--app-surface-container` (tinted callouts, chips, code blocks), `--app-surface-raised` (opaque floating surfaces), and `--mat-divider-color` for borders and dividers.
+- If none fits, add an `--app-*` token with a light value on `html` and a dark value on `html.dark-theme` in `theme.scss`. Use a per-component `:host-context(html.dark-theme)` override only for colours one component owns, such as status pills.
+- `scripts/theme-tokens.test.mjs` (run by `npm run test:scripts`) fails on any `var(--mat-sys-…)` under `src`.
+- Check a colour change in **both** themes. The theme lives in the `theme-mode` localStorage key (`light`/`dark`), or you can switch it in Settings.
+
 ### Loading States (skeletons, spinners, progress bars)
 
 **Never render a busy affordance unconditionally.** Most responses land in tens of milliseconds, and a placeholder that appears and vanishes inside two frames reads as a rendering glitch, not as feedback. Every busy affordance goes through `src/app/shared/skeleton/deferred-skeleton.ts`, which enforces two thresholds — show nothing for the first 200ms, and once shown stay up for 400ms so the flash cannot just move to the boundary.

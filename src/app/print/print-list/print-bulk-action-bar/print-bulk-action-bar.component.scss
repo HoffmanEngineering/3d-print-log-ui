@@ -58,7 +58,7 @@
 }
 
 .bulk-menu__danger {
-  color: var(--mat-sys-error, #b3261e);
+  color: var(--app-error-text);
 
   mat-icon {
     color: inherit;

@@ -105,8 +105,8 @@ import { AchievementGridComponent } from '../achievement-grid/achievement-grid.c
       max-height: calc(100vh - 96px);
       overflow-y: auto;
       border-radius: 16px;
-      border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
-      background: var(--mat-sys-surface-container-low, transparent);
+      border: 1px solid var(--mat-divider-color);
+      background: transparent;
     }
     .close {
       float: right;

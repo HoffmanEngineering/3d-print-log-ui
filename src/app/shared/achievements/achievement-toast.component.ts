@@ -112,8 +112,8 @@ const MAX_BADGES = 3;
       display: flex;
       align-items: flex-start;
       border-radius: 14px;
-      background: var(--mat-sys-surface-container-high, #fff);
-      color: var(--mat-sys-on-surface, #1b1b1f);
+      background: var(--app-surface-raised);
+      color: var(--app-text-primary);
       box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
       overflow: hidden;
     }
@@ -146,7 +146,7 @@ const MAX_BADGES = 3;
       font-size: 11px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: var(--mat-sys-primary, #3f51b5);
+      color: var(--app-primary);
       font-weight: 600;
     }
     .message {

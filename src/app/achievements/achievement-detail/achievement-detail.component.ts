@@ -108,12 +108,12 @@ interface Rung {
       gap: 2px;
       padding: 10px 12px;
       border-radius: 10px;
-      border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
+      border: 1px solid var(--mat-divider-color);
       opacity: 0.6;
     }
     .rung.earned {
       opacity: 1;
-      border-color: var(--mat-sys-primary, #3f51b5);
+      border-color: var(--app-primary);
     }
     .name {
       font-size: 12px;

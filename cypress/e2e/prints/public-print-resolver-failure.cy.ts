@@ -78,6 +78,15 @@ describe('Signed-in print detail with a failing settings endpoint', () => {
       statusCode: 500,
       body: {},
     }).as('settings');
+    // With settings failing, the celebration service cannot read the opt-out
+    // cy.login() wrote and falls back to 'on' - so an unread achievement
+    // earned by an earlier spec would open its dialog over the print list and
+    // cover the row this test clicks (#265). Reporting no unread achievements
+    // keeps the celebration from starting at all.
+    cy.intercept('GET', '**/api/notifications/unread-count', {
+      statusCode: 200,
+      body: { unreadCount: 0, unreadAchievementCount: 0 },
+    });
 
     cy.visit('/prints');
     // Scoped to the desktop table row: a bare cy.contains(title) matches the

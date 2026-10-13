@@ -6,7 +6,7 @@
   inset-block-start: 64px;
   z-index: 1;
   // Opaque so charts scroll underneath rather than showing through.
-  background: var(--mat-sys-surface, #fff);
+  background: #fff;
   padding-block: 0.5rem;
 
   &__row {
@@ -65,7 +65,7 @@
 }
 
 :host-context(html.dark-theme) .analytics-filter-bar {
-  background: var(--mat-sys-surface, #303030);
+  background: #303030;
 }
 
 @container (max-width: 52rem) {

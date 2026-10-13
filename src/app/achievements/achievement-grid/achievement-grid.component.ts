@@ -133,9 +133,9 @@ interface Section {
       align-items: center;
       gap: 6px;
       padding: 12px 8px;
-      border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
+      border: 1px solid var(--mat-divider-color);
       border-radius: 12px;
-      background: var(--mat-sys-surface-container-low, transparent);
+      background: var(--app-surface-subtle);
       color: inherit;
       font: inherit;
       text-align: center;
@@ -145,7 +145,7 @@ interface Section {
       cursor: default;
     }
     .cell:focus-visible {
-      outline: 2px solid var(--mat-sys-primary, #3f51b5);
+      outline: 2px solid var(--app-primary);
       outline-offset: 2px;
     }
     .title {

@@ -11,7 +11,7 @@
   align-items: center;
   gap: 8px 12px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--mat-divider-color);
 }
 
 .slot-label {
@@ -29,7 +29,7 @@
   text-align: start;
 
   &.empty {
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-text-secondary);
   }
 }
 
@@ -40,7 +40,7 @@
 .meta,
 .hint {
   font-size: 0.875rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-text-secondary);
 }
 
 .actions {

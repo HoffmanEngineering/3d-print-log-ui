@@ -139,6 +139,21 @@ html {
   // Accent-colored text that needs a lighter variant on the dark surface.
   --app-accent-info-text: #1565c0;
   --app-accent-warn-text: #b26a00;
+
+  // This is an M2 theme, so it emits no Material 3 --mat-sys-* system tokens: reading one
+  // gives its fallback or nothing (#270), and scripts/theme-tokens.test.mjs rejects it.
+  // Use these instead, with --mat-divider-color (which the theme does emit) for borders.
+  // Primary matches each theme's primary: indigo 500 here, indigo A100 on dark.
+  --app-primary: #3f51b5;
+  // Error text and outlines. Red 800, not the warn palette's red 500 (#f44336), which is
+  // only 3.7:1 on white; this is 5.6:1.
+  --app-error-text: #c62828;
+  // Opaque raised surface for floating content (toasts): Material's card colour.
+  --app-surface-raised: #fff;
+  // Translucent tints, so they read the same on the page, a card or a dialog.
+  // Container: callouts, chips and code blocks. Subtle: tiles with a border.
+  --app-surface-container: rgba(0, 0, 0, 0.05);
+  --app-surface-subtle: rgba(0, 0, 0, 0.02);
 }
 
 // mat-elevation-z* class rules are not emitted by the custom M2 theme (only the prebuilt does this).
@@ -183,4 +198,10 @@ html.dark-theme {
   --app-text-hint: rgba(255, 255, 255, 0.5);
   --app-accent-info-text: #64b5f6;
   --app-accent-warn-text: #ffb74d;
+  --app-primary: #8c9eff;
+  // Red 200: 10:1 on #121212, 7:1 on the #424242 card surface.
+  --app-error-text: #ef9a9a;
+  --app-surface-raised: #424242;
+  --app-surface-container: rgba(255, 255, 255, 0.08);
+  --app-surface-subtle: rgba(255, 255, 255, 0.04);
 }

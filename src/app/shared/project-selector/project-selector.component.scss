@@ -3,14 +3,14 @@
 }
 
 .reference {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-text-secondary);
   font-size: 0.875em;
 }
 
 .status-label {
   margin-left: 8px;
   font-size: 0.75em;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-text-secondary);
   font-style: italic;
 }
 
@@ -19,6 +19,6 @@
   align-items: center;
   gap: 8px;
   margin: -8px 0 8px;
-  color: var(--mat-sys-error, #b3261e);
+  color: var(--app-error-text);
   font-size: 12px;
 }

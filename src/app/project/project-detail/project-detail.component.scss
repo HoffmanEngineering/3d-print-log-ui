@@ -52,7 +52,7 @@
 
   .label {
     font-size: 0.75rem;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-text-secondary);
   }
   .value {
     font-size: 1.125rem;
@@ -85,7 +85,7 @@ mat-select {
 
 .status-label {
   font-size: 0.875rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-text-secondary);
 }
 
 .private-prints-note {
@@ -94,11 +94,11 @@ mat-select {
   gap: 4px;
   margin: 8px 0 0;
   font-size: 0.875rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-text-secondary);
 }
 
 .save-error {
   margin: 0 0 12px;
   font-size: 0.875rem;
-  color: var(--mat-sys-error);
+  color: var(--app-error-text);
 }

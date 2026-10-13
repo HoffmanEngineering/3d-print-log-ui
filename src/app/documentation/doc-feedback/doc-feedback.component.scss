@@ -2,7 +2,7 @@
   display: block;
   margin: 3rem 0 1rem;
   padding: 1.25rem 1.5rem;
-  border: 1px solid var(--mat-sys-outline-variant, rgba(128, 128, 128, 0.35));
+  border: 1px solid var(--mat-divider-color);
   border-radius: 8px;
 }
 
@@ -26,7 +26,7 @@
   font: inherit;
   color: inherit;
   background: transparent;
-  border: 1px solid var(--mat-sys-outline-variant, rgba(128, 128, 128, 0.35));
+  border: 1px solid var(--mat-divider-color);
   border-radius: 4px;
   resize: vertical;
 }

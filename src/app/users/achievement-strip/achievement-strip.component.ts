@@ -92,7 +92,7 @@ function tooltipFor(family: AchievementFamily, tier: number): string {
       border-radius: 8px;
     }
     .badge:focus-visible {
-      outline: 2px solid var(--mat-sys-primary, #3f51b5);
+      outline: 2px solid var(--app-primary);
       outline-offset: 2px;
     }
     .all {

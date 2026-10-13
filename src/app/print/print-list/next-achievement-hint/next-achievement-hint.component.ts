@@ -80,8 +80,8 @@ interface Hint {
       margin: 8px 0 12px;
       padding: 10px 12px;
       border-radius: 12px;
-      border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
-      background: var(--mat-sys-surface-container-low, transparent);
+      border: 1px solid var(--mat-divider-color);
+      background: var(--app-surface-subtle);
     }
     .text {
       flex: 1;

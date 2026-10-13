@@ -6,7 +6,13 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -40,9 +46,16 @@ import { MAX_TAG_UIDS, TagUidConflict, normalizeTagUid } from '../../tag-uid';
       useExisting: forwardRef(() => FilamentTagUidsComponent),
       multi: true,
     },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => FilamentTagUidsComponent),
+      multi: true,
+    },
   ],
 })
-export class FilamentTagUidsComponent implements ControlValueAccessor {
+export class FilamentTagUidsComponent
+  implements ControlValueAccessor, Validator
+{
   /** The spool that already holds one of these tags, from a failed save. */
   readonly conflict = input<TagUidConflict | null>(null);
 
@@ -55,6 +68,7 @@ export class FilamentTagUidsComponent implements ControlValueAccessor {
 
   private onChange: (value: string[]) => void = () => {};
   private onTouched: () => void = () => {};
+  private onValidatorChange: () => void = () => {};
 
   writeValue(value: string[] | null): void {
     this.tags.set([...(value ?? [])]);
@@ -72,9 +86,22 @@ export class FilamentTagUidsComponent implements ControlValueAccessor {
     this.disabled.set(isDisabled);
   }
 
+  /**
+   * Invalid while a refused UID sits in the field. Without this the error
+   * shows but the form still saves, and the UID the user typed is dropped.
+   */
+  validate(): ValidationErrors | null {
+    const message = this.error();
+    return message === null ? null : { tagUidDraft: message };
+  }
+
+  registerOnValidatorChange(fn: () => void): void {
+    this.onValidatorChange = fn;
+  }
+
   protected onInput(value: string): void {
     this.draft.set(value);
-    this.error.set(null);
+    this.setError(null);
   }
 
   /** Enter adds the tag. It must not also submit the material form. */
@@ -85,7 +112,8 @@ export class FilamentTagUidsComponent implements ControlValueAccessor {
 
   /**
    * A UID left in the field when the user clicks Submit is still added: blur
-   * fires before the click, so the form value already includes it.
+   * fires before the click, so the form value already includes it. An invalid
+   * one marks the control invalid instead, which stops the save.
    */
   protected onBlur(): void {
     this.onTouched();
@@ -99,12 +127,12 @@ export class FilamentTagUidsComponent implements ControlValueAccessor {
 
     const result = normalizeTagUid(this.draft());
     if ('error' in result) {
-      this.error.set(result.error);
+      this.setError(result.error);
       return;
     }
 
     this.draft.set('');
-    this.error.set(null);
+    this.setError(null);
     if (this.tags().includes(result.uid)) return;
 
     this.update([...this.tags(), result.uid]);
@@ -112,6 +140,12 @@ export class FilamentTagUidsComponent implements ControlValueAccessor {
 
   protected remove(uid: string): void {
     this.update(this.tags().filter((t) => t !== uid));
+  }
+
+  private setError(message: string | null): void {
+    if (this.error() === message) return;
+    this.error.set(message);
+    this.onValidatorChange();
   }
 
   private update(tags: string[]): void {

@@ -99,6 +99,21 @@ describe('FilamentTagUidsComponent', () => {
     expect(input().value).toBe('04A23F1');
   });
 
+  it('keeps the control invalid while a refused UID is in the field', () => {
+    type('04A23F1');
+    input().dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    expect(host.control.valid).toBeFalse();
+    expect(host.control.errors?.['tagUidDraft']).toContain(
+      'even number of hex digits'
+    );
+
+    type('');
+
+    expect(host.control.valid).toBeTrue();
+  });
+
   it('merges a UID already on this spool in another format', () => {
     host.control.setValue(['04A23F11']);
     fixture.detectChanges();

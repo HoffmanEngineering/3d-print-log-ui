@@ -127,6 +127,12 @@ export class FilamentDetailComponent
   public filamentForm: UntypedFormGroup;
   public loadedFilament: FilamentDetail | null = null;
 
+  /**
+   * Whether the API holds a tag list this page has shown, so an empty list
+   * may be sent to clear it. Set on load, and after any save that sent tags.
+   */
+  private tagUidsKnown = false;
+
   protected readonly imagesPanel = viewChild(EntityImagesPanelComponent);
 
   private readonly subscriptionService = inject(SubscriptionService);
@@ -341,6 +347,7 @@ export class FilamentDetailComponent
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
+      this.tagUidsKnown = this.loadedFilament?.tagUids !== undefined;
 
       // `AsRecorded` is 0, so `|| Weight` would silently coerce a valid
       // preference into the wrong unit. Test for null, not for falsiness.
@@ -880,7 +887,11 @@ export class FilamentDetailComponent
           const invalidControl = this.el.nativeElement.querySelector(
             '[formcontrolname="' + key + '"]'
           );
-          invalidControl.focus();
+          // A custom control's host isn't focusable; focus its input instead.
+          (invalidControl.matches('input, textarea')
+            ? invalidControl
+            : (invalidControl.querySelector('input') ?? invalidControl)
+          ).focus();
           break;
         }
       }
@@ -901,6 +912,15 @@ export class FilamentDetailComponent
     saveFilament.subscribe(
       (filament) => {
         this.filamentForm.markAsPristine();
+
+        // The page stays put when a photo fails, and a later save that removes
+        // every tag must still send the empty list, or the API keeps them.
+        if (
+          newFilament.tagUids !== undefined ||
+          filament?.tagUids !== undefined
+        ) {
+          this.tagUidsKnown = true;
+        }
 
         // The record is no longer new. Write the ID back BEFORE any upload, so a
         // retry is an update and never a second POST.
@@ -1081,7 +1101,7 @@ export class FilamentDetailComponent
     // predates tags, so sending [] there could wipe tags this page never
     // showed. Send the list only when tags are known or the user added some.
     const tagUids = (this.filamentForm.get('tagUids')?.value ?? []) as string[];
-    if (this.loadedFilament?.tagUids !== undefined || tagUids.length > 0) {
+    if (this.tagUidsKnown || tagUids.length > 0) {
       filament.tagUids = tagUids;
     }
 

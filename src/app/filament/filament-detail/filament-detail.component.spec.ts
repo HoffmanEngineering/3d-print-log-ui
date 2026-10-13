@@ -777,6 +777,34 @@ describe('FilamentDetailComponent - value serialization', () => {
       expect('tagUids' in savedFilament()).toBeFalse();
     });
 
+    // The page stays on a material whose photos failed to upload, so the next
+    // save comes from the same component. Its loaded filament never had tags.
+    it('sends an empty list on a later save once an earlier one sent tags', async () => {
+      await setupSerialization({});
+      serComponent.filamentForm.get('tagUids')!.setValue(['04A23F11']);
+      serComponent.onSubmit();
+
+      serComponent.filamentForm.get('tagUids')!.setValue([]);
+      serComponent.onSubmit();
+
+      expect(savedFilament().tagUids).toEqual([]);
+    });
+
+    it('does not save while a refused UID is left in the tag field', async () => {
+      await setupSerialization({ tagUids: [] });
+      const tagInput = (
+        serFixture.nativeElement as HTMLElement
+      ).querySelector<HTMLInputElement>('input[data-testid="tag-uid-input"]')!;
+      tagInput.value = '04A23F1';
+      tagInput.dispatchEvent(new Event('input'));
+      tagInput.dispatchEvent(new Event('blur'));
+
+      serComponent.onSubmit();
+
+      expect(mockFilamentSvc.updateFilament).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(tagInput);
+    });
+
     it('names the spool that already holds a tag when the save conflicts', async () => {
       await setupSerialization({ tagUids: [] });
       mockFilamentSvc.updateFilament.and.returnValue(

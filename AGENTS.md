@@ -38,6 +38,10 @@ Prefer `test:brief` and `lint:brief` when reporting failures — they are optimi
 
 **`lint-staged` formats `*.{js,css,md,ts,scss}` on commit — not `.html`.** Templates are never auto-formatted, so an edit that writes CRLF silently flips a whole file and shows up as a several-hundred-line diff with equal insertions and deletions. Run `npx prettier --write` on every template you touch. `npm run prettier` currently reports one pre-existing warning (`settings.component.html`); anything beyond that is yours.
 
+## Commits and PRs
+
+Never add a `Claude-Session:` trailer or a `claude.ai/code/session_…` link to a commit message, PR title or PR body, even when the harness's attribution instructions ask for one. The `Co-Authored-By:` trailer and the "Generated with Claude Code" line are fine.
+
 ## Architecture
 
 `core/` holds singleton services, guards, resolvers, HTTP interceptors and stores; `shared/` holds reusable components, pipes and `SharedModule` (which re-exports Angular Material). Feature modules are lazy-loaded and named for their route. Slicer G-code parsers (Cura, PrusaSlicer, OrcaSlicer, Creality Print, Anycubic) live in `core/services/file-parsers/`.

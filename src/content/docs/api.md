@@ -6,7 +6,7 @@ navLabel: REST API & Authentication
 group: integrations
 order: 70
 mode: reference
-updated: 2026-10-12
+updated: 2026-10-13
 related: [mcp, klipper, octoprint-webhook]
 ---
 
@@ -112,6 +112,15 @@ You can see and disconnect connected assistants on the [Settings](/settings) pag
 - **Discovery files:** tools that look for an API on `www.3dprintlog.com` find it through the [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727) API catalog at `/.well-known/api-catalog`, the MCP server card at `/.well-known/mcp/server-card.json`, the agent resource manifest at `/.well-known/ard.json`, and [llms.txt](https://www.3dprintlog.com/llms.txt). Every page also sends a `Link` header pointing at them.
 
 All endpoints live under `/api`. Request and response bodies are JSON with camelCase property names, and dates are ISO 8601 strings. List endpoints are paged with `pageNumber` (starting at 1) and `pageSize`.
+
+#### OpenAPI spec and generated clients {#openapi}
+
+The OpenAPI 3.0 document at [https://api.3dprintlog.com/swagger/v1/swagger.json](https://api.3dprintlog.com/swagger/v1/swagger.json) is the reference for every request and response shape, including the request bodies sent by the [Klipper and Moonraker notifier](/docs/klipper) and the [OctoPrint webhook](/docs/octoprint-webhook). It stays at this address, so you can point a build step at it.
+
+You can generate a typed client from it without editing the generated code. It has been checked with [openapi-generator](https://openapi-generator.tech/) (`typescript-fetch`), [@hey-api/openapi-ts](https://heyapi.dev/), and [openapi-python-client](https://github.com/openapi-generators/openapi-python-client).
+
+- **Enums are integers.** Enum values are sent and returned as numbers, not strings: a successful print has `"status": 3`, not `"Success"`. The spec names each value with `x-enumNames` and `x-enum-varnames`, so generators that read either extension create named constants instead of bare numbers.
+- **Request bodies are `application/json`.** Every JSON request body is listed with that one content type, so generators don't create duplicate methods for other media types.
 
 ### Errors {#errors}
 

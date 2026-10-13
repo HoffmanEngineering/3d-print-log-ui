@@ -6,7 +6,7 @@ navLabel: Log prints from OctoPrint
 group: integrations
 order: 40
 mode: how-to
-updated: 2026-09-02
+updated: 2026-10-13
 related: [prints]
 ---
 
@@ -193,6 +193,11 @@ help!](/feedback)
       </li>
       <li>Click <strong>Save</strong> to save the settings.</li>
     </ul>
+    <p>
+      Sending to this address from your own code? The request body is
+      described in the
+      <a routerLink="/docs/api" fragment="openapi">OpenAPI spec</a>.
+    </p>
   </doc-step>
 
   <doc-step heading="Send a test message">

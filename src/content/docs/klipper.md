@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 50
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-13
 related: [printlog-bridge, switch-from-notifier, prints]
 ---
 
@@ -162,6 +162,11 @@ body:
           The <code>+X-Api-Key=</code> part of the <code>url</code> line makes
           Moonraker send the key in an <code>X-Api-Key</code> header rather
           than in the address. Keep the <code>+</code>.
+        </li>
+
+        <li>
+          Building your own sender? The request body is described in the
+          <a routerLink="/docs/api" fragment="openapi">OpenAPI spec</a>.
         </li>
 
         <li>Save and restart Moonraker.</li>

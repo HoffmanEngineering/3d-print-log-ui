@@ -62,6 +62,9 @@ jobs:
       - name: Strict null checks (gated directories)
         run: npm run typecheck:strict
 
+      - name: Typecheck Cypress specs
+        run: npm run typecheck:cypress
+
       - name: Generate sitemap
         run: node scripts/generate-sitemap.mjs
         env:

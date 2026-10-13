@@ -45,6 +45,9 @@ jobs:
       - name: Strict null checks (gated directories)
         run: npm run typecheck:strict
 
+      - name: Typecheck Cypress specs
+        run: npm run typecheck:cypress
+
       - name: Build (dev/base config)
         run: npm run build:dev
 

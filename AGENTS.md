@@ -21,6 +21,7 @@ npm run test:scripts       # Node tests for scripts/ (security headers, docs val
 npm run lint               # ESLint
 npm run lint:fix
 npm run lint:brief         # Token-efficient: errors/warnings only
+npm run typecheck:cypress  # tsc over cypress/ (ng lint and typecheck:strict only cover src/)
 
 npm run e2e                # Cypress interactive
 npx cypress run --spec cypress/e2e/prints/print-list-filters.cy.ts

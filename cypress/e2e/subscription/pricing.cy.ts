@@ -79,7 +79,9 @@ describe('Pro subscription', () => {
     // Delayed so the in-flight window is observable instead of raced. Without
     // the guard the component is under, a double click bills the user twice.
     cy.intercept('POST', '**/api/Subscription/checkout', (req) => {
-      req.on('response', (res) => res.setDelay(2000));
+      req.on('response', (res) => {
+        res.setDelay(2000);
+      });
       req.reply({ statusCode: 200, body: { url: '/subscription/canceled' } });
     }).as('checkout');
 

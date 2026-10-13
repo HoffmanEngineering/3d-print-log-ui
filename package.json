@@ -14,6 +14,7 @@
     "test:brief": "node scripts/build-docs.mjs && bash scripts/test-brief.sh",
     "test:scripts": "node scripts/build-docs.mjs && node scripts/validate-docs.mjs && node --test scripts/*.test.mjs",
     "typecheck:strict": "node scripts/typecheck-strict.mjs",
+    "typecheck:cypress": "tsc -p cypress/tsconfig.json --noEmit",
     "verify:shells": "node scripts/verify-shells.mjs",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",

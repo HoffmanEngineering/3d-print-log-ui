@@ -100,7 +100,9 @@ describe('Anonymous public print view', () => {
       cy.clearLocalStorage();
 
       cy.intercept('GET', `**/api/Prints/${print.id}`, (req) => {
-        req.on('response', (res) => res.setDelay(1500));
+        req.on('response', (res) => {
+          res.setDelay(1500);
+        });
       }).as('printDetail');
 
       cy.visit(`/prints/${print.id}?devUserId=anonymous`);

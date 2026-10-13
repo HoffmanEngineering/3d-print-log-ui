@@ -1,8 +1,4 @@
-const VIEWPORTS: [number, number][] = [
-  [375, 667],
-  [768, 1024],
-  [1440, 900],
-];
+import { VIEWPORTS } from '../../support/viewports';
 
 /**
  * The e2e database has no priced prints and none with both an estimate and a measured time, so

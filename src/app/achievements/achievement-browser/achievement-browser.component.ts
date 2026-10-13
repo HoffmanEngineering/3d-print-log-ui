@@ -106,7 +106,7 @@ import { AchievementGridComponent } from '../achievement-grid/achievement-grid.c
       overflow-y: auto;
       border-radius: 16px;
       border: 1px solid var(--mat-divider-color);
-      background: var(--app-surface-subtle);
+      background: transparent;
     }
     .close {
       float: right;

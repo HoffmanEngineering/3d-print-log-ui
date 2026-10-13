@@ -135,7 +135,7 @@ interface Section {
       padding: 12px 8px;
       border: 1px solid var(--mat-divider-color);
       border-radius: 12px;
-      background: var(--app-surface-subtle);
+      background: transparent;
       color: inherit;
       font: inherit;
       text-align: center;

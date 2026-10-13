@@ -151,9 +151,8 @@ html {
   // Opaque raised surface for floating content (toasts): Material's card colour.
   --app-surface-raised: #fff;
   // Translucent tints, so they read the same on the page, a card or a dialog.
-  // Container: callouts, chips and code blocks. Subtle: tiles with a border.
+  // Callouts, chips and code blocks.
   --app-surface-container: rgba(0, 0, 0, 0.05);
-  --app-surface-subtle: rgba(0, 0, 0, 0.02);
 }
 
 // mat-elevation-z* class rules are not emitted by the custom M2 theme (only the prebuilt does this).
@@ -203,5 +202,4 @@ html.dark-theme {
   --app-error-text: #ef9a9a;
   --app-surface-raised: #424242;
   --app-surface-container: rgba(255, 255, 255, 0.08);
-  --app-surface-subtle: rgba(255, 255, 255, 0.04);
 }

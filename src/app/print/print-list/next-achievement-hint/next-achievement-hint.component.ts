@@ -81,7 +81,7 @@ interface Hint {
       padding: 10px 12px;
       border-radius: 12px;
       border: 1px solid var(--mat-divider-color);
-      background: var(--app-surface-subtle);
+      background: transparent;
     }
     .text {
       flex: 1;

@@ -1,8 +1,54 @@
 import { apiUrl } from './api-url';
 
+// Celebrations are turned off on every login (#265). Spools and prints that
+// specs create pile up on dev user 1 - the API re-seeds only when it boots - so
+// sooner or later a count crosses an achievement threshold and the celebration
+// dialog opens over whatever page the next spec is on, covering the element it
+// clicks. Done outside cy.session so it re-applies even when the session is
+// restored from cache, and so a spec that turned celebrations back on cannot
+// leak that into the next one.
 Cypress.Commands.add('login', () => {
   cy.session('dev-bypass', () => {
     cy.visit('/');
+  });
+  cy.setCelebrations('off');
+});
+
+// Writes the dev user's Achievements_Celebrations setting ('on' | 'quiet' |
+// 'off'). A spec that tests celebrations calls `cy.setCelebrations('on')` after
+// `cy.login()`; the next spec's login turns them off again.
+//
+// There is one row per setting type and the API rejects a second POST for the
+// same type, so this updates the row when it exists and creates it otherwise -
+// the same choice UserSettingService.addOrUpdateSetting makes.
+const ACHIEVEMENTS_CELEBRATIONS = 18; // UserSettingType.Achievements_Celebrations
+
+Cypress.Commands.add('setCelebrations', (mode) => {
+  const url = `${apiUrl()}/api/Users/me/user-settings`;
+  const headers = { 'X-Dev-User-Id': '1' };
+
+  return cy.request({ method: 'GET', url, headers }).then(({ body }) => {
+    const existing = body.find(
+      (s) => s.userSettingTypeId === ACHIEVEMENTS_CELEBRATIONS
+    );
+    if (existing?.value === mode) {
+      return;
+    }
+    cy.request(
+      existing
+        ? {
+            method: 'PUT',
+            url,
+            headers,
+            body: { id: existing.id, value: mode },
+          }
+        : {
+            method: 'POST',
+            url,
+            headers,
+            body: { userSettingTypeId: ACHIEVEMENTS_CELEBRATIONS, value: mode },
+          }
+    );
   });
 });
 

@@ -10,6 +10,8 @@
 
 All tests start with `cy.login()`, which uses `cy.session('dev-bypass', ...)` to cache the session (cookies, localStorage, sessionStorage) after a single real browser visit. The uncaught-exception suppressor matters on that first cold visit.
 
+`cy.login()` also sets the dev user's `Achievements_Celebrations` setting to `off` on every call, outside the cached session (#265). Records specs create pile up on dev user 1 across a run, and once a count crosses an achievement threshold the celebration dialog opens over whatever page the next spec is on and covers what it clicks. A spec that tests celebrations turns them back on with `cy.setCelebrations('on')` after logging in. A spec that makes `user-settings` fail cannot rely on the opt-out (the service falls back to `'on'` when it can't read the setting), so it must also stub `**/api/notifications/unread-count` with `unreadAchievementCount: 0` — see `public-print-resolver-failure.cy.ts`.
+
 ## Selector Strategy
 
 Prefer `@testing-library/cypress` semantic selectors over `data-cy` attributes. Angular Material `mat-select` renders with `role="combobox"` and `aria-labelledby` pointing to its `mat-label`:

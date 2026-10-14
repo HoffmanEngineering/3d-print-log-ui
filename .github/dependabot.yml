@@ -14,12 +14,28 @@ version: 2
 #   - The Node version used by CI and the deploy workflow, which is pinned in the
 #     workflow files, not in package.json.
 
+# Every entry waits five days before proposing a new version. Compromised releases
+# (the 2025 npm worms, for one) are usually pulled within hours to a day, and
+# patch/minor bumps are auto-merged once CI is green in the repos that run
+# dependabot-auto-merge.yml, so without a delay a malicious patch release is exactly
+# what would pass CI and merge itself. Security updates ignore the cooldown.
+
 updates:
   - package-ecosystem: npm
     directory: '/'
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 5
     open-pull-requests-limit: 5
+
+    # `run-e2e` puts every npm PR through the Cypress suite (e2e.yml), which unit tests
+    # and the build cannot stand in for on a framework bump. Labels apply to the whole
+    # entry, not per group, so this covers the routine bumps too. Setting `labels`
+    # replaces Dependabot's defaults, which is why `dependencies` is listed.
+    labels:
+      - dependencies
+      - run-e2e
 
     groups:
       # Angular packages are versioned in lockstep and must move together -- a
@@ -65,6 +81,8 @@ updates:
     directory: '/'
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 5
     groups:
       actions:
         patterns:

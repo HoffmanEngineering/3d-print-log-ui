@@ -17,7 +17,16 @@ concurrency:
   # The event name is part of the group so a manual dispatch on main cannot
   # cancel an in-flight nightly run, or vice versa. Without it both share the
   # group `e2e-refs/heads/main`.
-  group: e2e-${{ github.event_name }}-${{ github.ref }}
+  #
+  # A run triggered by any label other than `run-e2e` skips its job, but would still
+  # cancel an in-flight suite on the same PR if it shared the group. Dependabot opens
+  # its PRs with `dependencies` and `run-e2e` together, so the two `labeled` events
+  # race and the irrelevant one could kill the real run. Those runs get a group of
+  # their own instead.
+  group: >-
+    ${{ github.event.action == 'labeled' && github.event.label.name != 'run-e2e'
+    && format('e2e-ignored-label-{0}', github.run_id)
+    || format('e2e-{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: true
 
 env:

@@ -212,16 +212,6 @@ export const PrintIt: React.FC = () => {
           ) : null}
         </BrowserWindow>
       </div>
-      {/* The push ends on the label filling the frame, which cuts to the 3D label. */}
-      <AbsoluteFill
-        style={{
-          background: '#ffffff',
-          opacity: interpolate(frame, [108, 119], [0, 1], {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
-          }),
-        }}
-      />
       <Headline
         lines={['Print it.']}
         color={COLOR.graphite}

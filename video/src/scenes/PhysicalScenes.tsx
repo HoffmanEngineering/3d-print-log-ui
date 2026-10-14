@@ -21,7 +21,17 @@ import { COLOR, SPRING_OBJECT, SPRING_UI, STAGE_GLOW } from '../theme';
 
 const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
 
-/** Shot 6: the printed label, alone, turning to camera as a light glint crosses it. */
+/**
+ * Where the label preview sits on the last frame of "Print it" (PrintIt's push ends on it),
+ * measured from a render: centre and width in px. The 3D label starts face-on exactly there,
+ * so the cut reads as the label lifting off the page.
+ */
+const PREVIEW_END = {
+  portrait: { x: 539, y: 928, w: 658 },
+  landscape: { x: 1295, y: 559, w: 722 },
+};
+
+/** Shot 6: the printed label lifts off the page and turns to camera as a light glint crosses it. */
 export const LabelHero: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -29,29 +39,39 @@ export const LabelHero: React.FC = () => {
   const map = useLabelTexture();
   const t = spring({ frame, fps, config: SPRING_OBJECT });
   const glintX = interpolate(frame, [18, 70], [-1.2, 1.2], clamp);
+  const camZ = portrait ? 2.9 : 1.9;
+  const fov = 30;
+  // World units per pixel on the label's plane (z = 0), for matching the preview.
+  const unit = (2 * camZ * Math.tan(((fov / 2) * Math.PI) / 180)) / height;
+  const start = portrait ? PREVIEW_END.portrait : PREVIEW_END.landscape;
+  const from = {
+    x: (start.x - width / 2) * unit,
+    y: -(start.y - height / 2) * unit,
+    scale: (start.w * unit) / LABEL_POSE.width,
+  };
   return (
     <AbsoluteFill style={{ background: COLOR.offWhite }}>
       <ThreeCanvas width={width} height={height}>
-        <Studio envIntensity={1.1} keyIntensity={1.6} rimIntensity={1} />
+        <Studio envIntensity={1.6} keyIntensity={2.6} rimIntensity={1} />
         <pointLight
           position={[glintX, 0.25, 0.55]}
           intensity={2.2}
           distance={3}
         />
-        <CameraRig
-          position={[0, 0, portrait ? 2.9 : 1.9]}
-          target={[0, 0, 0]}
-          fov={30}
-        />
+        <CameraRig position={[0, 0, camZ]} target={[0, 0, 0]} fov={fov} />
         <Label
           map={map}
-          position={[0, interpolate(t, [0, 1], [-0.12, 0]), 0]}
-          rotation={[
-            interpolate(t, [0, 1], [-1.1, 0.1]),
-            interpolate(t, [0, 1], [0.9, -0.22]) + frame * 0.002,
-            interpolate(t, [0, 1], [0.25, 0.02]),
+          position={[
+            interpolate(t, [0, 1], [from.x, 0]),
+            interpolate(t, [0, 1], [from.y, 0]),
+            0,
           ]}
-          scale={1.0 + frame * 0.0008}
+          rotation={[
+            interpolate(t, [0, 1], [0, 0.1]),
+            interpolate(t, [0, 1], [0, -0.22]) + frame * 0.002,
+            interpolate(t, [0, 1], [0, 0.02]),
+          ]}
+          scale={interpolate(t, [0, 1], [from.scale, 1]) + frame * 0.0008}
         />
       </ThreeCanvas>
     </AbsoluteFill>
@@ -82,9 +102,9 @@ export const StickIt: React.FC = () => {
       : 1;
   const p = LABEL_POSE.position;
   const pos: [number, number, number] = [
-    interpolate(align, [0, 1], [p.x + 0.25, p.x]),
-    interpolate(align, [0, 1], [p.y + 0.3, p.y]),
-    interpolate(press, [0, 1], [p.z + 0.9, p.z]),
+    interpolate(align, [0, 1], [p.x + 0.55, p.x]),
+    interpolate(align, [0, 1], [p.y + 0.2, p.y]),
+    interpolate(press, [0, 1], [p.z + 0.6, p.z]),
   ];
   const rot: [number, number, number] = [
     interpolate(align, [0, 1], [-0.6, 0]),
@@ -94,7 +114,9 @@ export const StickIt: React.FC = () => {
   const pull = interpolate(frame, [0, 90], [0, 1], clamp);
   const spoolY = portrait ? -0.75 : -0.1;
   return (
-    <AbsoluteFill style={{ background: COLOR.black }}>
+    <AbsoluteFill
+      style={{ background: STAGE_GLOW(portrait ? '50%' : '62%', '55%') }}
+    >
       <ThreeCanvas width={width} height={height}>
         <Studio
           envIntensity={1.0}
@@ -275,6 +297,14 @@ export const NozzleMacro: React.FC = () => {
         />
         <Printer printing />
       </ThreeCanvas>
+      {/* A soft scrim behind the type: the PTFE tube and the white toolhead run behind it. */}
+      <AbsoluteFill
+        style={{
+          background: portrait
+            ? 'linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 14%, rgba(0,0,0,0) 30%)'
+            : 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0) 50%)',
+        }}
+      />
       <Headline
         lines={['Right filament.', 'Every time.']}
         from={8}

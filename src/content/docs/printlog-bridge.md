@@ -6,8 +6,8 @@ navLabel: Log prints from Klipper
 group: integrations
 order: 42
 mode: explanation
-updated: 2026-10-12
-related: [printlog-bridge-install, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
+updated: 2026-10-14
+related: [printlog-bridge-install, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
 ---
 
 ## printlog-bridge
@@ -37,6 +37,7 @@ It runs either on the printer's own host or in a Docker container on another com
 - [Troubleshooting](/docs/printlog-bridge-troubleshooting): the `doctor` and `status` commands, logs, traces and common problems.
 - [Privacy and security](/docs/printlog-bridge-privacy): every connection the bridge makes, what it sends, and how it keeps your key.
 - [Switch from the Moonraker notifier](/docs/switch-from-notifier): move a printer from the notifier to the bridge, and how the two run side by side.
+- [Connect Klipper via Spoolman](/docs/klipper-spoolman): your 3D Print Log spools in the Mainsail, Fluidd and KlipperScreen spool pickers, with nothing to install.
 - [Moonraker notifier (legacy)](/docs/klipper): the older way to log Klipper prints, for printers that still use it.
 
 ---

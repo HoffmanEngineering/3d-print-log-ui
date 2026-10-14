@@ -59,7 +59,7 @@ import { ThumbnailImage } from 'src/app/shared/image-thumbnail-strip/image-thumb
 import {
   Currencies,
   Currency,
-} from 'src/app/core/resolvers/currencies-resolver.service';
+} from 'src/app/core/resolvers/currencies.resolver';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { isCordova } from 'src/app/core/utils/platform';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';

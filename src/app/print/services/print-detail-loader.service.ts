@@ -24,7 +24,7 @@ export interface PrintDetailWithUser {
  * emits `{ print: null, user: null }` instead, which the detail page renders as
  * its "Print not found" state.
  *
- * `PrintDetailResolverService` delegates here so the `/prints/:id/edit` route
+ * `printDetailResolver` delegates here so the `/prints/:id/edit` route
  * and the view route cannot drift apart.
  */
 @Injectable({

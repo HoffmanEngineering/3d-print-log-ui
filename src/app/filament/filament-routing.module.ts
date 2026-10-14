@@ -2,19 +2,21 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '../core/guards/auth.guard';
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
-import { CurrencySymbolResolverService } from '../core/resolvers/currency-symbol-resolver.service';
-import { DefaultFilamentDiameterSettingResolverService } from '../core/resolvers/default-filament-diameter-setting-resolver.service';
-import { DefaultFilamentPriceSettingResolverService } from '../core/resolvers/default-filament-price-setting-resolver.service';
+import {
+  currencySymbolSettingResolver,
+  defaultFilamentDiameterSettingResolver,
+  defaultFilamentPriceSettingResolver,
+  filamentDisplayUnitSettingResolver,
+} from '../core/resolvers/user-setting.resolvers';
 import { FilamentDetailComponent } from './filament-detail/filament-detail.component';
 import { FilamentListContainerComponent } from './filament-list-container/filament-list-container.component';
-import { CopyFilamentDetailResolverService } from './resolvers/copy-filament-detail-resolver.service';
+import { copyFilamentDetailResolver } from './resolvers/copy-filament-detail.resolver';
 
-import { FilamentDetailResolverService } from './resolvers/filament-detail-resolver.service';
-import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
-import { MaterialResolverService } from './resolvers/material-resolver.service';
-import { MaterialCategoryResolverService } from '../core/resolvers/material-category-resolver.service';
-import { FilamentDisplayUnitResolverService } from './resolvers/filament-display-unit-resolver.service';
-import { FilamentStorageLocationResolverService } from './resolvers/filament-storage-location-resolver.service';
+import { filamentDetailResolver } from './resolvers/filament-detail.resolver';
+import { filamentListResolver } from './resolvers/filament-list.resolver';
+import { materialsResolver } from './resolvers/materials.resolver';
+import { materialCategoriesResolver } from '../core/resolvers/material-categories.resolver';
+import { filamentStorageLocationsResolver } from './resolvers/filament-storage-locations.resolver';
 
 export const filamentRoutes: Routes = [
   {
@@ -25,9 +27,9 @@ export const filamentRoutes: Routes = [
         component: FilamentListContainerComponent,
         canActivate: [AuthGuard],
         resolve: {
-          filamentList: FilamentListResolverService,
-          materialCategories: MaterialCategoryResolverService,
-          storageLocations: FilamentStorageLocationResolverService,
+          filamentList: filamentListResolver,
+          materialCategories: materialCategoriesResolver,
+          storageLocations: filamentStorageLocationsResolver,
         },
       },
       {
@@ -35,16 +37,15 @@ export const filamentRoutes: Routes = [
         component: FilamentDetailComponent,
         canActivate: [AuthGuard],
         resolve: {
-          filament: CopyFilamentDetailResolverService,
-          materials: MaterialResolverService,
-          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          filament: copyFilamentDetailResolver,
+          materials: materialsResolver,
+          preferredCurrencySymbolSetting: currencySymbolSettingResolver,
           defaultFilamentDiameterMmSetting:
-            DefaultFilamentDiameterSettingResolverService,
-          defaultFilamentPriceSetting:
-            DefaultFilamentPriceSettingResolverService,
-          materialCategories: MaterialCategoryResolverService,
+            defaultFilamentDiameterSettingResolver,
+          defaultFilamentPriceSetting: defaultFilamentPriceSettingResolver,
+          materialCategories: materialCategoriesResolver,
           preferredFilamentDisplayUnitSetting:
-            FilamentDisplayUnitResolverService,
+            filamentDisplayUnitSettingResolver,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -53,16 +54,15 @@ export const filamentRoutes: Routes = [
         component: FilamentDetailComponent,
         canActivate: [AuthGuard],
         resolve: {
-          filament: FilamentDetailResolverService,
-          materials: MaterialResolverService,
-          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          filament: filamentDetailResolver,
+          materials: materialsResolver,
+          preferredCurrencySymbolSetting: currencySymbolSettingResolver,
           defaultFilamentDiameterMmSetting:
-            DefaultFilamentDiameterSettingResolverService,
-          defaultFilamentPriceSetting:
-            DefaultFilamentPriceSettingResolverService,
-          materialCategories: MaterialCategoryResolverService,
+            defaultFilamentDiameterSettingResolver,
+          defaultFilamentPriceSetting: defaultFilamentPriceSettingResolver,
+          materialCategories: materialCategoriesResolver,
           preferredFilamentDisplayUnitSetting:
-            FilamentDisplayUnitResolverService,
+            filamentDisplayUnitSettingResolver,
         },
         canDeactivate: [PendingChangesGuard],
       },

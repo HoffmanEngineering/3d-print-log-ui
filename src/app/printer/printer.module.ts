@@ -9,8 +9,6 @@ import { EmptyStateComponent } from '../shared/empty-state/empty-state.component
 import { EntityImagesPanelComponent } from '../shared/entity-images-panel/entity-images-panel.component';
 import { SignedImageComponent } from '../shared/signed-image/signed-image.component';
 import { PrinterRoutingModule } from './printer-routing.module';
-import { PrinterDetailResolverService } from './resolvers/printer-detail-resolver.service';
-import { PrinterListResolverService } from './resolvers/printer-list-resolver.service';
 import { PrinterConnectionsComponent } from './printer-connections/printer-connections.component';
 import { PrinterSlotsComponent } from './printer-slots/printer-slots.component';
 
@@ -28,6 +26,5 @@ import { PrinterSlotsComponent } from './printer-slots/printer-slots.component';
     PrinterConnectionsComponent,
     PrinterSlotsComponent,
   ],
-  providers: [PrinterListResolverService, PrinterDetailResolverService],
 })
 export class PrinterModule {}

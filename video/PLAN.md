@@ -53,11 +53,21 @@ _Add it. Print it. Stick it. Scan it._
 | 3   | 135–179 | **Title card.** #f5f5f7. QR glyph in an indigo app-icon tile.                                                                                                                      | "Spool Labels" + small "3D Print Log" | tick           |
 | 4   | 180–299 | **Add it.** Floating browser window, real Materials list. Cursor glides to _Add New Material_ and clicks. Cut to the filled form ("Sunset Orange", PLA) with a slow push.          | "Add it."                             | click          |
 | 5   | 300–419 | **Print it.** Real material page. Cursor clicks _Print QR Label_. The real QR dialog springs up, then a push into the label preview that scale-throughs into…                      | "Print it."                           | click, whoosh  |
-| 6   | 420–509 | **The label.** 3D: the label card (the app's real QR code) floats in, turns to camera, light glint sweeps across.                                                                  | —                                     | paper flick    |
-| 7   | 510–599 | **Stick it.** 3D close-up: the label drops onto the spool flange and presses flat.                                                                                                 | "Stick it on."                        | soft press     |
-| 8   | 600–704 | **Load it.** 3D: generic CoreXY printer (deliberately unbranded). The spool slides onto the side holder and settles with a quarter-turn.                                           | "Load it up."                         | slide, clunk   |
-| 9   | 705–809 | **Scan it.** Phone, real Select Filament scanner. The viewfinder shows the live 3D label, the scan brackets lock, then a cut to the real result: _"Loaded Sunset Orange into T2."_ | "Scan it." → "Done."                  | chime          |
-| 10  | 810–899 | **End card.** White. Brand mark, **3D Print Log**, "Every spool, accounted for.", 3dprintlog.com.                                                                                  | —                                     | final hit      |
+| 6   | 420–494 | **The label.** 3D: the label card (the app's real QR code) floats in, turns to camera, light glint sweeps across.                                                                  | —                                     | paper flick    |
+| 7   | 495–574 | **Stick it.** 3D close-up: the label drops onto the spool flange and presses flat.                                                                                                 | "Stick it on."                        | soft press     |
+| 8   | 575–664 | **Load it.** 3D: generic CoreXY printer (deliberately unbranded), mid-print. The spool slides onto the side holder, rolls and settles label-up.                                    | "Load it up."                         | slide, clunk   |
+| 9   | 665–764 | **Scan it.** Phone, real Select Filament scanner. The viewfinder shows the live 3D label, the scan brackets lock, then a cut to the real result: _"Loaded Sunset Orange into T2."_ | "Scan it." → "Done."                  | chime          |
+| 10  | 765–824 | **Printing.** Macro on the hotend: fan spinning, brass nozzle with a hot tip laying the next orange layer on a ribbed vase. _(v2)_                                                 | "Right filament. / Every time."       | printer whir   |
+| 11  | 825–899 | **End card.** White. Brand mark, **3D Print Log**, "Every spool, accounted for.", 3dprintlog.com.                                                                                  | —                                     | final hit      |
+
+**v2** (this version) added the printer detail: a toolhead with a spinning fan, ducts,
+heatsink, a wired heater block and a brass nozzle; a linear rail, belts, motors and lead screws;
+a print in progress; a PTFE tube carrying the filament. It also added shot 10, the hotend macro,
+and trimmed shots 6 to 9 and 11 to stay at 30 s.
+
+**16:9.** The landscape cut uses the same edit. Headlines move to the left (`Headline x`), with
+the window, phone or object on the right. The 3D shots use a lens shift (`CameraRig shift`), so
+the subject moves over without the perspective changing.
 
 ### Why the scan shot is genuine
 
@@ -92,6 +102,19 @@ video/
   from fixtures (the same approach as `cypress/support/capture.ts`). No API or database is needed.
 - **Aspect ratio is a prop.** Layout reads `useVideoConfig()` and places type and devices for
   portrait or landscape. 16:9 is a second `<Composition>` over the same scenes.
+
+### Gotchas already hit
+
+- **Render frames as PNG.** With JPEG capture, `remotion render` washes out the WebGL canvas
+  and flattens its bump detail, while DOM layers and every `remotion still` look right. The
+  config sets PNG. Check the MP4, not just stills.
+- **ThreeCanvas needs integer sizes.** Round anything computed.
+- **Up-facing dark surfaces mirror the studio ceiling as white** under the `RoomEnvironment`.
+  Use Lambert for matte plates and floors.
+- **The fake camera decodes instantly.** The capture gives it 4 s of blank lead-in so the
+  scanner screen can be captured before the code is in view.
+- **Mastering:** loudnorm alone undershoots a sparse SFX track, so `master.sh` adds a measured
+  gain trim.
 
 ## 4. Commands
 

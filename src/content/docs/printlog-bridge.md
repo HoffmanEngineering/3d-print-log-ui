@@ -6,7 +6,7 @@ navLabel: Log prints from Klipper
 group: integrations
 order: 42
 mode: explanation
-updated: 2026-10-12
+updated: 2026-10-14
 related: [printlog-bridge-install, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
 ---
 
@@ -43,7 +43,7 @@ It runs either on the printer's own host or in a Docker container on another com
 
 ### What it logs {#what-it-logs}
 
-**When a print starts**, a new print appears on your [Print List](/prints) with the status **Printing**. Its title comes from the file name, and it carries the slicer's estimated print time and filament when the file has them. The largest thumbnail the slicer embedded in the file (OrcaSlicer, PrusaSlicer, Cura and SuperSlicer all embed one) becomes its picture.
+**When a print starts**, a new print appears on your [Print List](/prints) with the status **Printing**. Its title comes from the file name, and it carries the slicer's estimated print time and filament when the file has them. The largest thumbnail the slicer embedded in the file (OrcaSlicer, PrusaSlicer, Cura and SuperSlicer all embed one) becomes its picture. Shortly after, the print gets the slicer and its version, and the [slicer settings](#slicer-settings) it was sliced with in its notes.
 
 **When the print ends**, the bridge records the outcome, the print time and the filament Klipper actually fed, and adds one frame from the printer's webcam. For a failed print, that frame becomes the picture shown.
 
@@ -61,6 +61,21 @@ It runs either on the printer's own host or in a Docker container on another com
 **What you change in the app while it prints is kept**: the title, your notes (the bridge adds its note after them), the spool on a usage row, and a status you already chose, such as Partial Success. A print you delete stays deleted.
 
 **Nothing is lost while 3D Print Log is out of reach.** The bridge writes each event to an outbox on disk before sending it, and sends it once the connection is back, oldest first, even if the bridge was restarted in between. When the bridge itself was stopped, it catches up on jobs that started or ended while it was away. On its very first run it picks up a print that is already running, but not older history.
+
+#### Slicer settings {#slicer-settings}
+
+Each print records the settings it was sliced with, as the [Slic3r uploader](/docs/slic3r-uploader) and the [Cura plugin](/docs/cura-plugin) do. Once a print starts, the bridge sends the settings the slicer wrote into the file, along with the summary Moonraker read from it (slicer, layer heights, nozzle, filament name and type, first layer temperatures). In 3D Print Log:
+
+- the print's **Slicer** and slicer version are filled in;
+- a **Slicer settings** section is added to the end of its notes, between `--- Slicer settings (…) ---` and `--- End of slicer settings ---`. If the settings are sent again, that section is replaced, not added twice, and the notes you wrote are kept.
+
+It is on by default. To turn it off, set `slicer_settings = false` in `[bridge]` for every printer, or in a printer's section for just that one; the bridge then never reads the G-code file.
+
+Good to know:
+
+- **Only the settings are read, never the toolpaths**, and the file is never uploaded. Hosts, API keys, passwords and other credentials are blanked before anything leaves the printer. [Privacy and security](/docs/printlog-bridge-privacy#sent) lists exactly what is read and sent.
+- **OrcaSlicer, PrusaSlicer, Anycubic Slicer Next and their forks** write the full settings block the bridge reads. **Bambu Studio and FLSun Slicer** put their settings near the top of the file, so for their prints only Moonraker's summary is recorded today.
+- **The uploader's and the plugin's settings win.** When the bridge logs a job to a print you already made with the Slic3r uploader or the Cura plugin, that print keeps the richer settings they recorded, and the bridge doesn't send its own.
 
 #### Printers with more than one tool {#multi-tool}
 

@@ -1,5 +1,10 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Subscription } from 'rxjs';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,36 +29,23 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
     MatTooltipModule,
     NotificationBellComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NavbarComponent implements OnInit, OnDestroy {
+export class NavbarComponent {
   auth = inject(AuthService);
 
   public versionNumber = environment.version;
-  public profilePictureUrl: string | null = null;
-  public userId: number | null = null;
 
-  private userProfileSubscription: Subscription;
+  private readonly user = toSignal(this.auth.userProfile$, {
+    initialValue: null,
+  });
+  readonly profilePictureUrl = computed(
+    () => this.user()?.profilePicture || null
+  );
+  readonly userId = computed(() => this.user()?.id ?? null);
 
   public isUserProfileFeatureEnabled = environment.features.userProfile;
 
   private readonly subscriptionService = inject(SubscriptionService);
   readonly isPro = this.subscriptionService.isPro;
-
-  ngOnInit() {
-    this.userProfileSubscription = this.auth.userProfile$.subscribe((user) => {
-      if (user && user.profilePicture) {
-        this.profilePictureUrl = user.profilePicture;
-        this.userId = user.id;
-      } else {
-        this.profilePictureUrl = null;
-        this.userId = null;
-      }
-    });
-  }
-
-  ngOnDestroy(): void {
-    if (this.userProfileSubscription) {
-      this.userProfileSubscription.unsubscribe();
-    }
-  }
 }

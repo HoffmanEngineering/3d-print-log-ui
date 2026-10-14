@@ -26,12 +26,12 @@
     </div>
 
     <div class="nav-links">
-      @if (!auth.loggedIn) {
+      @if (!auth.isLoggedIn()) {
         <a class="link" mat-button routerLink="/" routerLinkActive="active"
           >Home</a
         >
       }
-      @if (auth.loggedIn) {
+      @if (auth.isLoggedIn()) {
         <a
           mat-button
           class="link"
@@ -69,7 +69,7 @@
     indigo toolbar but only ~1.5:1 on the menu's light surface, and it is the
     one item worth keeping one tap away. Below the breakpoint the label is
     dropped and the star carries it. -->
-    @if (auth.loggedIn && !isPro()) {
+    @if (auth.isLoggedIn() && !isPro()) {
       <a
         mat-button
         class="link upgrade-link"
@@ -82,28 +82,28 @@
         <span class="upgrade-label">Upgrade to Pro</span>
       </a>
     }
-    @if (auth.loggedIn && isPro()) {
+    @if (auth.isLoggedIn() && isPro()) {
       <span class="pro-badge" matTooltip="You're on the Pro plan">
         <mat-icon>star</mat-icon>
         <span class="upgrade-label">Pro</span>
       </span>
     }
 
-    @if (auth.loggedIn) {
+    @if (auth.isLoggedIn()) {
       <app-notification-bell></app-notification-bell>
     }
 
     <div class="nav-account">
-      @if (auth.loggedIn) {
+      @if (auth.isLoggedIn()) {
         <button class="transparent" [matMenuTriggerFor]="profileMenu">
-          @if (profilePictureUrl) {
+          @if (profilePictureUrl()) {
             <img
               class="profile-picture"
-              [src]="profilePictureUrl"
+              [src]="profilePictureUrl()"
               alt="User's Profile Picture"
             />
           }
-          @if (!profilePictureUrl) {
+          @if (!profilePictureUrl()) {
             <img
               class="profile-picture"
               src="/assets/user.svg"
@@ -112,7 +112,7 @@
           }
         </button>
       }
-      @if (!auth.loggedIn) {
+      @if (!auth.isLoggedIn()) {
         <button
           id="loginButton"
           mat-raised-button
@@ -130,12 +130,12 @@
 with the wide-screen buttons above; only one trigger set is ever visible, so a
 single instance of each submenu is enough. -->
 <mat-menu #mobileMenu="matMenu">
-  @if (!auth.loggedIn) {
+  @if (!auth.isLoggedIn()) {
     <a class="menu-link" mat-menu-item routerLink="/" routerLinkActive="active"
       >Home</a
     >
   }
-  @if (auth.loggedIn) {
+  @if (auth.isLoggedIn()) {
     <a
       class="menu-link"
       mat-menu-item
@@ -187,7 +187,7 @@ single instance of each submenu is enough. -->
     routerLinkActive="active"
     >Documentation</a
   >
-  @if (auth.loggedIn) {
+  @if (auth.isLoggedIn()) {
     <a
       class="menu-link"
       mat-menu-item
@@ -206,16 +206,16 @@ single instance of each submenu is enough. -->
 </mat-menu>
 
 <mat-menu #profileMenu="matMenu">
-  @if (auth.loggedIn && isUserProfileFeatureEnabled) {
+  @if (auth.isLoggedIn() && isUserProfileFeatureEnabled) {
     <a
       class="menu-link"
       mat-menu-item
-      [routerLink]="['users', userId]"
+      [routerLink]="['users', userId()]"
       routerLinkActive="active"
       >My Profile</a
     >
   }
-  @if (auth.loggedIn) {
+  @if (auth.isLoggedIn()) {
     <a
       class="menu-link"
       mat-menu-item

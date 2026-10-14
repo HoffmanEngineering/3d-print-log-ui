@@ -1,4 +1,11 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { Sort, MatSort, MatSortHeader } from '@angular/material/sort';
@@ -102,6 +109,7 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
     DecimalPipe,
     FilamentColorSwatchStylePipe,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilamentListContainerComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
@@ -111,11 +119,11 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly toastrService = inject(ToastrService);
 
-  public filaments: FilamentSummary[] = [];
+  readonly filaments = signal<FilamentSummary[]>([]);
 
-  public pageSize: number;
-  public currentPage: number;
-  public totalCount: number;
+  readonly pageSize = signal<number | undefined>(undefined);
+  readonly currentPage = signal<number | undefined>(undefined);
+  readonly totalCount = signal<number | undefined>(undefined);
 
   public displayedColumns: string[] = [
     'select',
@@ -133,7 +141,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     'more',
   ];
 
-  public selectedFilaments = new Map<string, FilamentSummary>();
+  readonly selectedFilaments = signal(new Map<string, FilamentSummary>());
 
   public debouncedUpdateFilter;
 
@@ -161,14 +169,14 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription = new Subscription();
 
-  public isLoading = false;
+  readonly isLoading = signal(false);
 
   public filamentSearchSubscription: Subscription | null = null;
 
-  public materialCategories: MaterialCategory[] = [];
+  readonly materialCategories = signal<MaterialCategory[]>([]);
 
   public filterByMaterialCategory: string = '';
-  public storageLocations: string[] = [];
+  readonly storageLocations = signal<string[]>([]);
   public filterByStorageLocation: string = '';
   public filterByColorPatterns: ColorPatternType[] = [];
   public filterByFinishTypes: FilamentFinishType[] = [];
@@ -180,12 +188,12 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     // Mark the list as loading on the keystroke itself, not when the debounce
     // finally fires, so the empty state cannot flash stale copy for 400ms.
     const debouncedFilterUpdate = debounce(() => {
-      this.currentPage = 1;
+      this.currentPage.set(1);
       this.updateFilter();
     }, 400);
 
     this.debouncedUpdateFilter = () => {
-      this.isLoading = true;
+      this.isLoading.set(true);
       debouncedFilterUpdate();
     };
 
@@ -244,10 +252,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       }
 
       if (params.has('pageNumber')) {
-        this.currentPage = +params.get('pageNumber');
+        this.currentPage.set(+params.get('pageNumber'));
       }
       if (params.has('pageSize')) {
-        this.pageSize = +params.get('pageSize');
+        this.pageSize.set(+params.get('pageSize'));
       }
 
       this.filterByColorPatterns = params
@@ -262,8 +270,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     });
 
     this.activatedRoute.data.subscribe((data) => {
-      this.materialCategories = data.materialCategories;
-      this.storageLocations = data.storageLocations ?? [];
+      this.materialCategories.set(data.materialCategories);
+      this.storageLocations.set(data.storageLocations ?? []);
 
       const pagedResponse: PagedList<FilamentSummary> = data.filamentList;
       this.handlePagedList(pagedResponse);
@@ -277,22 +285,25 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   }
 
   public pageChange(pageEvent: PageEvent) {
-    this.currentPage = pageEvent.pageIndex + 1;
-    this.pageSize = pageEvent.pageSize;
+    this.currentPage.set(pageEvent.pageIndex + 1);
+    this.pageSize.set(pageEvent.pageSize);
 
     this.updateFilter();
   }
 
   public updateFilter() {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
-    localStorage.setItem('filament_list_page_size', this.pageSize.toString(10));
+    localStorage.setItem(
+      'filament_list_page_size',
+      this.pageSize().toString(10)
+    );
 
     return this.router
       .navigate(['.'], {
         queryParams: {
-          pageNumber: this.currentPage,
-          pageSize: this.pageSize,
+          pageNumber: this.currentPage(),
+          pageSize: this.pageSize(),
           searchText: this.searchText || '',
           includeInactive: this.includeInactive,
           showFavoritesOnly: this.showFavoritesOnly,
@@ -317,8 +328,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
         this.filamentSearchSubscription = this.filamentService
           .getCurrentUserFilamentSummaries(
-            this.currentPage,
-            this.pageSize,
+            this.currentPage(),
+            this.pageSize(),
             this.sortColumn,
             this.sortDirection,
             this.searchText,
@@ -338,10 +349,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
           .subscribe(
             (filaments) => {
               this.handlePagedList(filaments);
-              this.isLoading = false;
+              this.isLoading.set(false);
             },
             () => {
-              this.isLoading = false;
+              this.isLoading.set(false);
             }
           );
       });
@@ -364,9 +375,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
         this.filamentService.deleteFilament(filament.id).subscribe(
           (_) => {
             // Remove from selection if selected
-            if (this.selectedFilaments.has(filament.id)) {
-              this.selectedFilaments.delete(filament.id);
-              this.selectedFilaments = new Map(this.selectedFilaments);
+            if (this.selectedFilaments().has(filament.id)) {
+              const selected = new Map(this.selectedFilaments());
+              selected.delete(filament.id);
+              this.selectedFilaments.set(selected);
             }
             this.updateFilter().then(() => {
               this.toastrService.success(
@@ -406,17 +418,17 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     this.sortDirection =
       sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc;
 
-    this.currentPage = 1;
+    this.currentPage.set(1);
 
     this.updateFilter();
   }
 
   private handlePagedList(response: PagedList<FilamentSummary>) {
-    this.filaments = response.items;
+    this.filaments.set(response.items);
 
-    this.currentPage = response.paging.currentPage;
-    this.pageSize = response.paging.pageSize;
-    this.totalCount = response.paging.totalCount;
+    this.currentPage.set(response.paging.currentPage);
+    this.pageSize.set(response.paging.pageSize);
+    this.totalCount.set(response.paging.totalCount);
   }
 
   public getPrinterLabel(filament: FilamentSummary) {
@@ -467,7 +479,11 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     this.filamentService
       .changeFavorite(filament.id, newIsFavorite)
       .subscribe((_) => {
-        filament.isFavorite = newIsFavorite;
+        this.filaments.update((filaments) =>
+          filaments.map((f) =>
+            f.id === filament.id ? { ...f, isFavorite: newIsFavorite } : f
+          )
+        );
       });
   }
 
@@ -480,8 +496,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   public printAllLabels() {
     const filamentsToPrint = this.hasSelection()
-      ? Array.from(this.selectedFilaments.values())
-      : this.filaments;
+      ? Array.from(this.selectedFilaments().values())
+      : this.filaments();
 
     if (filamentsToPrint.length === 0) {
       return;
@@ -494,55 +510,55 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   // Selection methods
   public isSelected(filament: FilamentSummary): boolean {
-    return this.selectedFilaments.has(filament.id);
+    return this.selectedFilaments().has(filament.id);
   }
 
   public toggleSelection(filament: FilamentSummary): void {
-    if (this.selectedFilaments.has(filament.id)) {
-      this.selectedFilaments.delete(filament.id);
+    const selected = new Map(this.selectedFilaments());
+    if (selected.has(filament.id)) {
+      selected.delete(filament.id);
     } else {
-      this.selectedFilaments.set(filament.id, filament);
+      selected.set(filament.id, filament);
     }
-    // Reassign to trigger change detection
-    this.selectedFilaments = new Map(this.selectedFilaments);
+    this.selectedFilaments.set(selected);
   }
 
   public toggleSelectAll(): void {
+    const selected = new Map(this.selectedFilaments());
     if (this.isAllOnPageSelected()) {
       // Deselect all on current page
-      this.filaments.forEach((f) => this.selectedFilaments.delete(f.id));
+      this.filaments().forEach((f) => selected.delete(f.id));
     } else {
       // Select all on current page
-      this.filaments.forEach((f) => this.selectedFilaments.set(f.id, f));
+      this.filaments().forEach((f) => selected.set(f.id, f));
     }
-    // Reassign to trigger change detection
-    this.selectedFilaments = new Map(this.selectedFilaments);
+    this.selectedFilaments.set(selected);
   }
 
   public isAllOnPageSelected(): boolean {
     return (
-      this.filaments.length > 0 &&
-      this.filaments.every((f) => this.selectedFilaments.has(f.id))
+      this.filaments().length > 0 &&
+      this.filaments().every((f) => this.selectedFilaments().has(f.id))
     );
   }
 
   public isIndeterminate(): boolean {
-    const selectedOnPage = this.filaments.filter((f) =>
-      this.selectedFilaments.has(f.id)
+    const selectedOnPage = this.filaments().filter((f) =>
+      this.selectedFilaments().has(f.id)
     ).length;
-    return selectedOnPage > 0 && selectedOnPage < this.filaments.length;
+    return selectedOnPage > 0 && selectedOnPage < this.filaments().length;
   }
 
   public hasSelection(): boolean {
-    return this.selectedFilaments.size > 0;
+    return this.selectedFilaments().size > 0;
   }
 
   public clearSelection(): void {
-    this.selectedFilaments = new Map();
+    this.selectedFilaments.set(new Map());
   }
 
   public getSelectionCount(): number {
-    return this.selectedFilaments.size;
+    return this.selectedFilaments().size;
   }
 
   public isFilterPanelOpen = false;
@@ -568,7 +584,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     const idx = this.filterByColorPatterns.indexOf(pattern);
     if (idx >= 0) this.filterByColorPatterns.splice(idx, 1);
     else this.filterByColorPatterns.push(pattern);
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.updateFilter();
   }
 
@@ -576,7 +592,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     const idx = this.filterByFinishTypes.indexOf(finish);
     if (idx >= 0) this.filterByFinishTypes.splice(idx, 1);
     else this.filterByFinishTypes.push(finish);
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.updateFilter();
   }
 
@@ -584,7 +600,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     const idx = this.filterByEffects.indexOf(effect);
     if (idx >= 0) this.filterByEffects.splice(idx, 1);
     else this.filterByEffects.push(effect);
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.updateFilter();
   }
 
@@ -614,7 +630,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     this.filterByColorPatterns = [];
     this.filterByFinishTypes = [];
     this.filterByEffects = [];
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.updateFilter();
   }
 

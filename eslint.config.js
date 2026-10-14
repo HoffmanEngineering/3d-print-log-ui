@@ -55,7 +55,6 @@ module.exports = tseslint.config(
       'src/app/app.component.ts',
       'src/app/documentation/documentation.component.ts',
       'src/app/filament/filament-detail/filament-detail.component.ts',
-      'src/app/filament/filament-list-container/filament-list-container.component.ts',
       'src/app/print/edit-print-detail/edit-print-detail.component.ts',
       'src/app/print/print-list/print-list.component.ts',
       'src/app/shared/simple-dialog/simple-dialog.component.ts',

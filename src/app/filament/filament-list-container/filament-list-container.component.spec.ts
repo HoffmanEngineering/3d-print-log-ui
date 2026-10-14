@@ -128,7 +128,7 @@ describe('FilamentListContainerComponent (isolated)', () => {
       expect(component.includeInactive).toBeFalse();
       expect(component.filterByMaterialCategory).toBe('');
       expect(component.filterByStorageLocation).toBe('');
-      expect(component.currentPage).toBe(1);
+      expect(component.currentPage()).toBe(1);
     });
 
     it('calls updateFilter after resetting', () => {

@@ -1,4 +1,11 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { Sort, MatSort, MatSortHeader } from '@angular/material/sort';
@@ -109,6 +116,7 @@ import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
     AdComponent,
     LocaleDatePipe,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
@@ -118,22 +126,22 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
   private readonly toastrService = inject(ToastrService);
   dialog = inject(MatDialog);
 
-  public editId: string | null = null;
+  readonly editId = signal<string | null>(null);
 
-  public entries: PrinterMaintenanceDto[] = [];
-  public printers: PrinterSummary[] = [];
+  readonly entries = signal<PrinterMaintenanceDto[]>([]);
+  readonly printers = signal<PrinterSummary[]>([]);
   public categories: string[] = [];
-  public pageSize: number;
-  public currentPage: number;
-  public totalCount: number;
+  readonly pageSize = signal<number | undefined>(undefined);
+  readonly currentPage = signal<number | undefined>(undefined);
+  readonly totalCount = signal<number | undefined>(undefined);
 
   private subscriptions: Subscription = new Subscription();
 
-  public preferredCurrencySymbolSetting: UserSetting | null = null;
+  readonly preferredCurrencySymbolSetting = signal<UserSetting | null>(null);
 
-  public searchText = '';
+  readonly searchText = signal('');
 
-  public filterByPrinterIds: number[] = [];
+  readonly filterByPrinterIds = signal<number[]>([]);
 
   public printerMaintenanceSortColumn = toSortHeaderIds(
     PrinterMaintenanceSortColumn
@@ -151,7 +159,7 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
   public printSearchSubscription: Subscription | null = null;
 
-  public filteredCategories: string[] = [];
+  readonly filteredCategories = signal<string[]>([]);
 
   public displayedColumns: string[] = [
     'done',
@@ -166,15 +174,15 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
   public preEditEntry: PrinterMaintenanceDto | null = null;
 
-  public dateError: string | null = null;
-  public printerError: string | null = null;
+  readonly dateError = signal<string | null>(null);
+  readonly printerError = signal<string | null>(null);
 
   public emptyGuid = EMPTY_GUID;
 
   constructor() {
     this.debouncedUpdateFilter = debounce(() => {
       this.isLoading = true;
-      this.currentPage = 1;
+      this.currentPage.set(1);
       this.updateFilter();
     }, 400);
   }
@@ -187,7 +195,7 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
     this.activatedRoute.queryParamMap.subscribe((params) => {
       if (params.has('searchText')) {
-        this.searchText = params.get('searchText');
+        this.searchText.set(params.get('searchText'));
       }
       if (params.has('includeDone')) {
         this.includeDone = !!params.get('includeDone');
@@ -204,11 +212,11 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
       }
 
       if (params.has('filterByPrinterId')) {
-        this.filterByPrinterIds = params
-          .getAll('filterByPrinterId')
-          .map((id) => +id);
+        this.filterByPrinterIds.set(
+          params.getAll('filterByPrinterId').map((id) => +id)
+        );
       } else {
-        this.filterByPrinterIds = [];
+        this.filterByPrinterIds.set([]);
       }
     });
 
@@ -216,12 +224,14 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
     // Get the data from the resolver
     this.activatedRoute.data.subscribe((data) => {
-      this.preferredCurrencySymbolSetting = data.preferredCurrencySymbolSetting;
+      this.preferredCurrencySymbolSetting.set(
+        data.preferredCurrencySymbolSetting
+      );
 
       const pagedResponse: PagedList<PrinterMaintenanceDto> = data.entries;
       this.handlePagedList(pagedResponse);
 
-      this.printers = data.printers;
+      this.printers.set(data.printers);
     });
   }
 
@@ -230,21 +240,21 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
       .getPrinterMaintenanceCategories()
       .subscribe((dto) => {
         this.categories = dto.categories;
-        this.filteredCategories = dto.categories;
+        this.filteredCategories.set(dto.categories);
       });
   }
 
   private handlePagedList(response: PagedList<PrinterMaintenanceDto>) {
-    this.entries = response.items;
+    this.entries.set(response.items);
 
-    this.currentPage = response.paging.currentPage;
-    this.pageSize = response.paging.pageSize;
-    this.totalCount = response.paging.totalCount;
+    this.currentPage.set(response.paging.currentPage);
+    this.pageSize.set(response.paging.pageSize);
+    this.totalCount.set(response.paging.totalCount);
   }
 
   public pageChange(pageEvent: PageEvent) {
-    this.currentPage = pageEvent.pageIndex + 1;
-    this.pageSize = pageEvent.pageSize;
+    this.currentPage.set(pageEvent.pageIndex + 1);
+    this.pageSize.set(pageEvent.pageSize);
 
     this.updateFilter();
   }
@@ -255,17 +265,17 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
     this.sortDirection =
       sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc;
 
-    this.currentPage = 1;
+    this.currentPage.set(1);
 
     this.updateFilter();
   }
 
   public resetFilters() {
-    this.currentPage = 1;
-    this.searchText = '';
+    this.currentPage.set(1);
+    this.searchText.set('');
     this.includeDone = true;
     this.includeNotDone = true;
-    this.filterByPrinterIds = [];
+    this.filterByPrinterIds.set([]);
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrinterMaintenanceSortColumn.Date;
@@ -278,16 +288,16 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
     localStorage.setItem(
       'printer_maintenance_list_page_size',
-      this.pageSize.toString(10)
+      this.pageSize().toString(10)
     );
 
     return this.router
       .navigate(['.'], {
         queryParams: {
-          pageNumber: this.currentPage,
-          pageSize: this.pageSize,
-          searchText: this.searchText || '',
-          filterByPrinterId: this.filterByPrinterIds,
+          pageNumber: this.currentPage(),
+          pageSize: this.pageSize(),
+          searchText: this.searchText() || '',
+          filterByPrinterId: this.filterByPrinterIds(),
           includeDone: this.includeDone,
           includeNotDone: this.includeNotDone,
           sortDirection: this.sortDirection,
@@ -301,10 +311,10 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
         this.printSearchSubscription = this.printerMaintenanceService
           .getCurrentUserPrinterMaintenance(
-            this.currentPage,
-            this.pageSize,
-            this.searchText || '',
-            this.filterByPrinterIds,
+            this.currentPage(),
+            this.pageSize(),
+            this.searchText() || '',
+            this.filterByPrinterIds(),
             this.includeDone,
             this.includeNotDone,
             this.sortDirection,
@@ -355,20 +365,20 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
       return '';
     }
 
-    const symbol = this.preferredCurrencySymbolSetting?.value ?? '$';
+    const symbol = this.preferredCurrencySymbolSetting()?.value ?? '$';
 
     return `${symbol}${entry.priceValue}`;
   }
 
   addEntry() {
-    if (this.entries.some((e) => e.id === EMPTY_GUID)) {
+    if (this.entries().some((e) => e.id === EMPTY_GUID)) {
       return;
     }
 
-    this.printerError = null;
-    this.dateError = null;
+    this.printerError.set(null);
+    this.dateError.set(null);
 
-    this.entries = [
+    this.entries.set([
       {
         id: EMPTY_GUID,
         date: (() => {
@@ -384,17 +394,17 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
         priceValue: null,
         notes: '',
       },
-      ...this.entries,
-    ];
+      ...this.entries(),
+    ]);
 
-    this.editId = EMPTY_GUID;
+    this.editId.set(EMPTY_GUID);
   }
 
   editEntry(entry: PrinterMaintenanceDto) {
-    this.printerError = null;
-    this.dateError = null;
+    this.printerError.set(null);
+    this.dateError.set(null);
 
-    this.editId = entry.id;
+    this.editId.set(entry.id);
     this.preEditEntry = { ...entry };
   }
 
@@ -406,19 +416,19 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
     // Validate the date and printerId, if they are invalid, don't save
     if (entry.date == null) {
       this.isLoading = false;
-      this.dateError = 'Date is required';
+      this.dateError.set('Date is required');
     } else {
-      this.dateError = null;
+      this.dateError.set(null);
     }
 
     if (entry.printerId == null) {
       this.isLoading = false;
-      this.printerError = 'Printer is required';
+      this.printerError.set('Printer is required');
     } else {
-      this.printerError = null;
+      this.printerError.set(null);
     }
 
-    if (this.dateError || this.printerError) {
+    if (this.dateError() || this.printerError()) {
       return;
     }
 
@@ -437,18 +447,19 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
       this.printerMaintenanceService
         .addPrinterMaintenanceEntry(entry)
         .subscribe((result) => {
-          this.entries = this.entries.filter((e) => e.id !== EMPTY_GUID);
+          this.entries.update((entries) => [
+            result,
+            ...entries.filter((e) => e.id !== EMPTY_GUID),
+          ]);
 
-          this.entries = [result, ...this.entries];
-
-          this.editId = null;
+          this.editId.set(null);
 
           checkCategory();
 
           const callback = () => {
             this.isLoading = false;
             // if the new entry is not on the current page, display a toast to let the user know
-            if (this.entries.findIndex((e) => e.id === result.id) === -1) {
+            if (this.entries().findIndex((e) => e.id === result.id) === -1) {
               this.toastrService.info(
                 'The new entry was added to a different page. Use the pagination controls to view it.'
               );
@@ -461,40 +472,37 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
       this.printerMaintenanceService
         .updatePrinterMaintenanceEntry(entry)
         .subscribe((result) => {
-          this.entries = this.entries.filter((e) => e.id !== EMPTY_GUID);
-
-          this.entries = this.entries.map((e) => {
-            if (e.id === result.id) {
-              return result;
-            }
-
-            return e;
-          });
+          this.entries.update((entries) =>
+            entries
+              .filter((e) => e.id !== EMPTY_GUID)
+              .map((e) => (e.id === result.id ? result : e))
+          );
 
           checkCategory();
 
           this.isLoading = false;
 
-          this.editId = null;
+          this.editId.set(null);
         });
     }
   }
 
   cancelEdit() {
-    if (this.editId === EMPTY_GUID) {
-      this.entries = this.entries.filter((e) => e.id !== EMPTY_GUID);
+    const editId = this.editId();
+    if (editId === EMPTY_GUID) {
+      this.entries.update((entries) =>
+        entries.filter((e) => e.id !== EMPTY_GUID)
+      );
     } else {
-      const entryIndex = this.entries.findIndex((e) => e.id === this.editId);
-
-      this.entries[entryIndex] = this.preEditEntry;
-
-      this.entries = [...this.entries];
+      this.entries.update((entries) =>
+        entries.map((e) => (e.id === editId ? this.preEditEntry : e))
+      );
     }
 
-    this.printerError = null;
-    this.dateError = null;
+    this.printerError.set(null);
+    this.dateError.set(null);
 
-    this.editId = null;
+    this.editId.set(null);
   }
 
   updateDate(entry: PrinterMaintenanceDto, date: any) {
@@ -502,14 +510,14 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
   }
 
   updatePrinter(entry: PrinterMaintenanceDto, printerId: number) {
-    const printer = this.printers.find((p) => p.id === printerId);
+    const printer = this.printers().find((p) => p.id === printerId);
 
     entry.printerId = printer.id;
     entry.printer = printer;
   }
 
   public filterCategories(value: string) {
-    this.filteredCategories = this._filterCategories(value);
+    this.filteredCategories.set(this._filterCategories(value));
   }
 
   private _filterCategories(value: string): string[] {
@@ -545,7 +553,7 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
         this.printerMaintenanceService
           .deletePrinterMaintenanceEntry(entryId)
           .subscribe((_) => {
-            this.editId = null;
+            this.editId.set(null);
 
             this.updateFilter().then(() => {
               this.toastrService.success(

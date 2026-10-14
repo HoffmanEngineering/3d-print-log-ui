@@ -1,3 +1,4 @@
+import { provideZoneChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -5,7 +6,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { SharedModule } from 'src/app/shared/shared.module';
 import {
@@ -58,9 +59,15 @@ describe('PrinterMaintenanceComponent', () => {
   let fixture: ComponentFixture<PrinterMaintenanceComponent>;
   let maintenanceService: jasmine.SpyObj<PrinterMaintenanceService>;
 
+  /**
+   * `later` makes the list and save calls answer only when the test says so, the
+   * way HTTP does. Those tests run under zone change detection like the app, with
+   * startup settled first, so a view that is not repainted shows up as stale.
+   */
   const setUp = async (
     entries: Partial<PrinterMaintenanceDto>[],
-    printers: PrinterSummary[] = [aPrinter()]
+    printers: PrinterSummary[] = [aPrinter()],
+    later?: Subject<unknown>
   ) => {
     maintenanceService = jasmine.createSpyObj<PrinterMaintenanceService>(
       'PrinterMaintenanceService',
@@ -69,13 +76,17 @@ describe('PrinterMaintenanceComponent', () => {
         'getCurrentUserPrinterMaintenance',
         'deletePrinterMaintenanceEntry',
         'getPrinterMaintenanceEntry',
+        'updatePrinterMaintenanceEntry',
       ]
     );
     maintenanceService.getPrinterMaintenanceCategories.and.returnValue(
       of({ categories: ['Nozzle', 'Belts'] } as never)
     );
     maintenanceService.getCurrentUserPrinterMaintenance.and.returnValue(
-      of(page(entries))
+      later ? (later as never) : of(page(entries))
+    );
+    maintenanceService.updatePrinterMaintenanceEntry.and.returnValue(
+      (later ?? of()) as never
     );
 
     const router = jasmine.createSpyObj<Router>('Router', [
@@ -101,6 +112,7 @@ describe('PrinterMaintenanceComponent', () => {
         PrinterMaintenanceComponent,
       ],
       providers: [
+        ...(later ? [provideZoneChangeDetection()] : []),
         // Stubbed: the real store would issue its own authenticated fetch.
         {
           provide: PrinterThumbnailStore,
@@ -134,6 +146,10 @@ describe('PrinterMaintenanceComponent', () => {
     fixture = TestBed.createComponent(PrinterMaintenanceComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    if (later) {
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
   };
 
   it('creates', async () => {
@@ -144,8 +160,8 @@ describe('PrinterMaintenanceComponent', () => {
   it('takes its first page and its printers from the resolver', async () => {
     await setUp([anEntry()]);
 
-    expect(component.entries.length).toBe(1);
-    expect(component.printers.length).toBe(1);
+    expect(component.entries().length).toBe(1);
+    expect(component.printers().length).toBe(1);
     expect(
       maintenanceService.getCurrentUserPrinterMaintenance
     ).not.toHaveBeenCalled();
@@ -163,5 +179,46 @@ describe('PrinterMaintenanceComponent', () => {
     expect(
       fixture.nativeElement.querySelector('td app-printer-avatar')
     ).toBeTruthy();
+  });
+
+  describe('once a response arrives', () => {
+    const text = () => (fixture.nativeElement as HTMLElement).textContent;
+    let later: Subject<unknown>;
+
+    beforeEach(async () => {
+      later = new Subject();
+      await setUp([anEntry()], [aPrinter()], later);
+    });
+
+    it('shows the next page', async () => {
+      await component.updateFilter();
+      fixture.detectChanges();
+
+      later.next(
+        page([anEntry({ id: 'second-page', description: 'Tighten belts' })])
+      );
+      fixture.detectChanges();
+
+      expect(text()).toContain('Tighten belts');
+      expect(text()).not.toContain('Replace nozzle');
+    });
+
+    it('leaves edit mode showing the saved entry', () => {
+      const entry = component.entries()[0];
+      component.editEntry(entry);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('td input[matInput]'))
+        .withContext('editing')
+        .toBeTruthy();
+
+      component.saveEntry(entry);
+      later.next({ ...entry, description: 'Replace nozzle, 0.6 mm' });
+      fixture.detectChanges();
+
+      expect(text()).toContain('Replace nozzle, 0.6 mm');
+      expect(fixture.nativeElement.querySelector('td input[matInput]'))
+        .withContext('editing')
+        .toBeNull();
+    });
   });
 });

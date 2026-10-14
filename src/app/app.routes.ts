@@ -33,25 +33,25 @@ export const appRoutes: Routes = [
   {
     path: 'prints',
     loadChildren: () =>
-      import('./print/print.module').then((m) => m.PrintModule),
+      import('./print/print.routes').then((m) => m.PRINT_ROUTES),
     data: { preload: true },
   },
   {
     path: 'projects',
     loadChildren: () =>
-      import('./project/project.module').then((m) => m.ProjectModule),
+      import('./project/project.routes').then((m) => m.PROJECT_ROUTES),
   },
   {
     path: 'printers',
     loadChildren: () =>
-      import('./printer/printer.module').then((m) => m.PrinterModule),
+      import('./printer/printer.routes').then((m) => m.PRINTER_ROUTES),
     data: { preload: true },
   },
   {
     path: 'printer-maintenance',
     loadChildren: () =>
-      import('./printer-maintenance/printer-maintenance.module').then(
-        (m) => m.PrinterMaintenanceModule
+      import('./printer-maintenance/printer-maintenance.routes').then(
+        (m) => m.PRINTER_MAINTENANCE_ROUTES
       ),
     canActivate: [authGuard],
   },
@@ -94,13 +94,13 @@ export const appRoutes: Routes = [
     ? {
         path: 'users',
         loadChildren: () =>
-          import('./users/users.module').then((m) => m.UsersModule),
+          import('./users/users.routes').then((m) => m.USERS_ROUTES),
       }
     : { path: 'users', redirectTo: '/home-redirect' },
   {
     path: 'settings',
     loadChildren: () =>
-      import('./settings/settings.module').then((m) => m.SettingsModule),
+      import('./settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
     canActivate: [authGuard],
   },
   {
@@ -110,13 +110,13 @@ export const appRoutes: Routes = [
   {
     path: 'materials',
     loadChildren: () =>
-      import('./filament/filament.module').then((m) => m.FilamentModule),
+      import('./filament/filament.routes').then((m) => m.FILAMENT_ROUTES),
     data: { preload: true },
   },
   {
     path: 'api-keys',
     loadChildren: () =>
-      import('./apikeys/apikeys.module').then((m) => m.ApikeysModule),
+      import('./apikeys/apikeys.routes').then((m) => m.APIKEYS_ROUTES),
     canActivate: [authGuard],
   },
   {
@@ -131,16 +131,16 @@ export const appRoutes: Routes = [
   {
     path: 'notifications',
     loadChildren: () =>
-      import('./notifications/notifications.module').then(
-        (m) => m.NotificationsModule
+      import('./notifications/notifications.routes').then(
+        (m) => m.NOTIFICATIONS_ROUTES
       ),
     canActivate: [authGuard],
   },
   {
     path: 'subscription',
     loadChildren: () =>
-      import('./subscription/subscription.module').then(
-        (m) => m.SubscriptionModule
+      import('./subscription/subscription.routes').then(
+        (m) => m.SUBSCRIPTION_ROUTES
       ),
     canActivate: [authGuard],
   },
@@ -212,7 +212,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'feed',
-    loadChildren: () => import('./feed/feed.module').then((m) => m.FeedModule),
+    loadChildren: () => import('./feed/feed.routes').then((m) => m.FEED_ROUTES),
     canActivate: [authGuard],
   },
 

@@ -45,7 +45,7 @@ Never add a `Claude-Session:` trailer or a `claude.ai/code/session_…` link to 
 
 ## Architecture
 
-`core/` holds singleton services, guards, resolvers, HTTP interceptors and stores; `shared/` holds reusable components, pipes and `SharedModule` (which re-exports Angular Material). Feature modules are lazy-loaded and named for their route. Slicer G-code parsers (Cura, PrusaSlicer, OrcaSlicer, Creality Print, Anycubic) live in `core/services/file-parsers/`.
+`core/` holds singleton services, guards, resolvers, HTTP interceptors and stores; `shared/` holds reusable components, pipes and `SharedModule` (which re-exports Angular Material). Each feature is a lazy-loaded route array in `<feature>.routes.ts`, named for its route. A section's `''` route provides `importProvidersFrom(SharedModule)`, because Material's `DateAdapter` and a section-scoped `MatDialog` come from there, and a page without them fails only at runtime. Documentation keeps an NgModule because it declares the generated doc pages. Slicer G-code parsers (Cura, PrusaSlicer, OrcaSlicer, Creality Print, Anycubic) live in `core/services/file-parsers/`.
 
 ### Authentication Flow
 

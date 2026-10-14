@@ -1,14 +1,18 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { importProvidersFrom } from '@angular/core';
+import { Routes } from '@angular/router';
+import { SharedModule } from '../shared/shared.module';
 
 import { InvalidUserComponent } from './invalid-user/invalid-user.component';
 import { userDetailResolver } from './resolvers/user-detail.resolver';
 import { UserAchievementsComponent } from './user-achievements/user-achievements.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 
-const routes: Routes = [
+export const USERS_ROUTES: Routes = [
   {
     path: '',
+    // The providers SharedModule's imports carry, notably the native
+    // DateAdapter and a MatDialog scoped to this section.
+    providers: [importProvidersFrom(SharedModule)],
     children: [
       {
         path: 'not-found',
@@ -30,9 +34,3 @@ const routes: Routes = [
     ],
   },
 ];
-
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-})
-export class UsersRoutingModule {}

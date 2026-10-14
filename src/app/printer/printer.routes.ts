@@ -1,5 +1,6 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { importProvidersFrom } from '@angular/core';
+import { Routes } from '@angular/router';
+import { SharedModule } from '../shared/shared.module';
 import { authGuard } from '../core/guards/auth.guard';
 import { pendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { PrinterDetailComponent } from './printer-detail/printer-detail.component';
@@ -9,9 +10,12 @@ import { printerListResolver } from './resolvers/printer-list.resolver';
 import { printerCategoriesResolver } from '../core/resolvers/printer-categories.resolver';
 import { materialCategoriesResolver } from '../core/resolvers/material-categories.resolver';
 
-export const printerRoutes: Routes = [
+export const PRINTER_ROUTES: Routes = [
   {
     path: '',
+    // The providers SharedModule's imports carry, notably the native
+    // DateAdapter and a MatDialog scoped to this section.
+    providers: [importProvidersFrom(SharedModule)],
     children: [
       {
         path: '',
@@ -33,9 +37,3 @@ export const printerRoutes: Routes = [
     ],
   },
 ];
-
-@NgModule({
-  imports: [RouterModule.forChild(printerRoutes)],
-  exports: [RouterModule],
-})
-export class PrinterRoutingModule {}

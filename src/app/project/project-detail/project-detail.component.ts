@@ -108,33 +108,33 @@ export class ProjectDetailComponent implements OnInit {
 
   private readonly resolvedUrls = signal<Map<number, SafeUrl>>(new Map());
 
-  project = signal<ProjectDetailDto | null>(null);
-  prints = signal<PrintSummary[]>([]);
-  loading = signal(true);
-  isEditing = signal(false);
-  isSaving = signal(false);
+  readonly project = signal<ProjectDetailDto | null>(null);
+  readonly prints = signal<PrintSummary[]>([]);
+  readonly loading = signal(true);
+  readonly isEditing = signal(false);
+  readonly isSaving = signal(false);
   /**
    * A failed save, shown above the form. The API rejects a project whose resolved
    * finish date lands before its start, which a user can trigger from the date
    * pickers — so a save failure here is an ordinary outcome, not just a network fault,
    * and swallowing it leaves the form open with no explanation.
    */
-  saveErrorMessage = signal('');
-  images = signal<ProjectImageValue[]>([]);
-  selectedImageIndex = signal(0);
+  readonly saveErrorMessage = signal('');
+  readonly images = signal<ProjectImageValue[]>([]);
+  readonly selectedImageIndex = signal(0);
 
   imageIdsToDelete: number[] = [];
   private defaultImageIdOnLoad: number | null = null;
 
-  private currentUserId = signal<number | null>(null);
+  private readonly currentUserId = signal<number | null>(null);
 
-  isOwner = computed(() => {
+  readonly isOwner = computed(() => {
     const p = this.project();
     const uid = this.currentUserId();
     return p !== null && uid !== null && p.createdByUserId === uid;
   });
 
-  carouselImages = computed<ProjectImageValue[]>(() => {
+  readonly carouselImages = computed<ProjectImageValue[]>(() => {
     const p = this.project();
     if (!p || p.images.length === 0) return [];
     const resolved = this.resolvedUrls();

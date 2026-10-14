@@ -98,29 +98,31 @@ export class PrintGroupedViewComponent implements OnInit {
     'grouped_table_displayed_columns';
 
   // ---- Inputs from PrintListComponent ----
-  searchText = input<string>('');
-  filterByStatus = input<PrintStatus | null>(null);
-  filterByPrinterIds = input<number[]>([]);
-  filterByFilamentIds = input<string[]>([]);
-  sortColumn = input<PrintSummarySortColumn>(PrintSummarySortColumn.StartDate);
-  sortDirection = input<SortDirection>(SortDirection.Desc);
-  displayedColumns = signal<string[]>(this.loadDisplayedColumns());
-  defaultFilamentPriceSetting = input<UserSetting | null>(null);
-  preferredCurrencySymbolSetting = input<UserSetting | null>(null);
-  defaultElectricityKwhRateSetting = input<UserSetting | null>(null);
-  defaultElectricityWattageSetting = input<UserSetting | null>(null);
-  preferredUnit = input<PrintFilamentSourceMeasurement>(
+  readonly searchText = input<string>('');
+  readonly filterByStatus = input<PrintStatus | null>(null);
+  readonly filterByPrinterIds = input<number[]>([]);
+  readonly filterByFilamentIds = input<string[]>([]);
+  readonly sortColumn = input<PrintSummarySortColumn>(
+    PrintSummarySortColumn.StartDate
+  );
+  readonly sortDirection = input<SortDirection>(SortDirection.Desc);
+  readonly displayedColumns = signal<string[]>(this.loadDisplayedColumns());
+  readonly defaultFilamentPriceSetting = input<UserSetting | null>(null);
+  readonly preferredCurrencySymbolSetting = input<UserSetting | null>(null);
+  readonly defaultElectricityKwhRateSetting = input<UserSetting | null>(null);
+  readonly defaultElectricityWattageSetting = input<UserSetting | null>(null);
+  readonly preferredUnit = input<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.Weight
   );
 
   // ---- Internal state ----
-  feed = signal<PagedList<GroupedFeedItemDto> | null>(null);
+  readonly feed = signal<PagedList<GroupedFeedItemDto> | null>(null);
 
   /**
    * Raw "a request is in flight". Not what the template renders — see
    * `showSkeleton` / `showRefreshing`.
    */
-  loading = signal(true);
+  readonly loading = signal(true);
 
   /** Whether rows have ever been painted. See PrintListComponent.hasLoadedOnce. */
   private readonly hasLoadedOnce = signal(false);
@@ -148,7 +150,7 @@ export class PrintGroupedViewComponent implements OnInit {
     () => this.loadingIndicator.visible() && this.hasLoadedOnce()
   );
 
-  pageNumber = signal(1);
+  readonly pageNumber = signal(1);
   pageSize = +(localStorage.getItem('print_list_page_size') ?? 10);
 
   /** Placeholder count while loading — see PrintListComponent.skeletonRowCount. */
@@ -156,9 +158,11 @@ export class PrintGroupedViewComponent implements OnInit {
     return Math.min(this.pageSize || 10, 10);
   }
 
-  expandedProjectPrints = signal<Map<string, PrintSummary[]>>(new Map());
+  readonly expandedProjectPrints = signal<Map<string, PrintSummary[]>>(
+    new Map()
+  );
 
-  flatRows = computed<GroupedRow[]>(() => {
+  readonly flatRows = computed<GroupedRow[]>(() => {
     const items = this.feed()?.items ?? [];
     return this.buildFlatRows(items);
   });

@@ -65,6 +65,7 @@ Spool ids in 3D Print Log are your spool numbers: 1, 2, 3 and so on, in the orde
 - Logging prints with the `[notifier 3d_print_log]` section: each print is logged when it starts and when it succeeds, fails or is cancelled.
 - Filament used, charged per spool to the spool that was active in Moonraker while printing, however you picked it (Mainsail, Fluidd, KlipperScreen or `SET_ACTIVE_SPOOL`). On a printer with one tool, that spool is also loaded on the printer in 3D Print Log.
 - With [printlog-bridge](/docs/printlog-bridge), spools stay in sync both ways. A spool picked on the printer is loaded into the active tool's slot in 3D Print Log, and a spool loaded in the app, with `PRINTLOG_SET_SPOOL` or by the Snapmaker U1's RFID reader becomes Moonraker's active spool when that tool is active.
+- Fluidd's spool scanner, which recognises 3D Print Log's QR labels and selects that spool. See [QR Code Labels](/docs/materials#qr-labels).
 - Fluidd's **Manage spools** button, which opens your materials in 3D Print Log. A link to one spool opens that spool's material.
 
 ### What doesn't work yet {#not-yet}
@@ -87,9 +88,9 @@ Fluidd's Spoolman card may show "Live updates from Spoolman aren't working". Tha
 
 ### Security {#security}
 
-- **The `server` line contains a token.** Anyone who can open Mainsail or Fluidd on your printer can read `moonraker.conf`, and the token with it.
-- The token only reaches your spools, through this printer's connection. You can revoke it at any time: choose **Disconnect** on the printer's page, or **Revoke** under **Spoolman Connections** in [Settings](/settings), where every connected printer is listed.
-- **Moonraker writes the address, token included, into `moonraker.log`.** Remove the token before you share that log, or revoke and reconnect the printer afterwards.
+- **Both the `server` line and the notifier `url` line contain the secret.** Anyone who can open Mainsail or Fluidd on your printer can read `moonraker.conf`, and the secret with it.
+- The secret reaches your spools and logs prints for this printer, through this printer's connection, and nothing else. You can revoke it at any time: choose **Disconnect** on the printer's page, or **Revoke** under **Spoolman Connections** in [Settings](/settings), where every connected printer is listed.
+- **Moonraker writes both addresses, secret included, into `moonraker.log`.** Remove the secret from both lines before you share `moonraker.conf` or that log, or revoke and reconnect the printer afterwards.
 
 ### Troubleshooting {#troubleshooting}
 
@@ -97,7 +98,7 @@ Fluidd's Spoolman card may show "Live updates from Spoolman aren't working". Tha
 
 **Moonraker won't load its config after you pasted the block.** Look for a second `[notifier 3d_print_log]` section in `moonraker.conf`. Delete the old one from the API-key setup, keep the one from the new block, then choose **Save & Restart**.
 
-**`moonraker.log` shows `401`.** The token was revoked or mistyped. Choose **Reconnect** on the printer's page and paste the new block.
+**`moonraker.log` shows `401`.** The secret was revoked or mistyped. Choose **Reconnect** on the printer's page and paste the new block.
 
 ### Compared with the other Klipper integrations {#compare}
 

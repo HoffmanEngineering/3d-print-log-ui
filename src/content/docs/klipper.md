@@ -25,7 +25,7 @@ automatically create a new Print when a print starts, and update the print when
 it finishes. It uses Moonraker's built-in **notifier** component, so no
 additional plugins are required, just a small configuration change.
 
-Want the simplest setup, with no API key to create? The **Connect Spoolman** block on the printer's page now logs prints too: it adds a notifier section that uses the same secret as the spool pickers. See [Connect Klipper via Spoolman](/docs/klipper-spoolman). The steps below, with an API key, are for people who don't want Spoolman.
+Want the simplest setup, with no API key to create? The **Connect Spoolman** block on the printer's page logs prints too: it adds a notifier section that uses the same secret as the spool pickers. See [Connect Klipper via Spoolman](/docs/klipper-spoolman). The steps below, with an API key, are for people who don't want Spoolman.
 
 <doc-callout kind="note" heading="Legacy: use printlog-bridge for new setups">
   <p>
@@ -59,7 +59,7 @@ There are three ways to connect a Klipper printer to 3D Print Log. They do diffe
 | --- | --- | --- | --- |
 | What it does | Logs prints | Logs prints | Shows your spools on the printer, and logs prints |
 | Install | A section in `moonraker.conf` | A small program, on the printer or in Docker | A section in `moonraker.conf` |
-| Print outcome | Success or Failed | The real outcome, with Klipper's message | Success, or Failed or Cancelled |
+| Print outcome | Success or Failed | The real outcome, with Klipper's message | Success or Failed |
 | Filament used | The job's total | Per tool, linked to your spools | Charged to the active spool, per spool |
 | Pictures | None | Slicer thumbnail and a webcam frame | None |
 | Spool pickers in Mainsail, Fluidd and KlipperScreen | No | No | Yes |

@@ -1,4 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { lastValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -21,6 +27,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   templateUrl: './printer-list.component.html',
   styleUrls: ['./printer-list.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrinterListComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);
@@ -29,11 +36,11 @@ export class PrinterListComponent implements OnInit {
   private readonly toastrService = inject(ToastrService);
   dialog = inject(MatDialog);
 
-  public printers: PrinterSummarySimple[] = [];
+  readonly printers = signal<PrinterSummarySimple[]>([]);
 
-  public pageSize: number;
-  public currentPage: number;
-  public totalCount: number;
+  readonly pageSize = signal<number | undefined>(undefined);
+  private currentPage: number | undefined;
+  readonly totalCount = signal<number | undefined>(undefined);
 
   public includeInactive = false;
   public searchText = '';
@@ -51,7 +58,7 @@ export class PrinterListComponent implements OnInit {
 
   public debouncedUpdateFilter;
 
-  public isLoading = false;
+  readonly isLoading = signal(false);
 
   /** Guards against an older search response overwriting a newer one. */
   private latestRequestId = 0;
@@ -62,7 +69,7 @@ export class PrinterListComponent implements OnInit {
     const debouncedFilterUpdate = debounce(() => this.updateFilter(), 400);
 
     this.debouncedUpdateFilter = () => {
-      this.isLoading = true;
+      this.isLoading.set(true);
       debouncedFilterUpdate();
     };
   }
@@ -82,7 +89,7 @@ export class PrinterListComponent implements OnInit {
 
     localStorage.setItem('printer_list_page_size', newPageSize.toString(10));
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     const requestId = ++this.latestRequestId;
 
     this.printerService
@@ -102,15 +109,16 @@ export class PrinterListComponent implements OnInit {
   }
 
   public async updateFilter() {
-    localStorage.setItem('printer_list_page_size', this.pageSize.toString(10));
+    const pageSize = this.pageSize();
+    localStorage.setItem('printer_list_page_size', pageSize.toString(10));
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     const requestId = ++this.latestRequestId;
 
     const response = await lastValueFrom(
       this.printerService.getCurrentUserPrinterSummaries(
         this.currentPage,
-        this.pageSize,
+        pageSize,
         this.searchText,
         this.includeInactive
       )
@@ -151,12 +159,12 @@ export class PrinterListComponent implements OnInit {
   }
 
   private handlePagedList(response: PagedList<PrinterSummarySimple>) {
-    this.isLoading = false;
-    this.printers = response.items;
+    this.isLoading.set(false);
+    this.printers.set(response.items);
 
     this.currentPage = response.paging.currentPage;
-    this.pageSize = response.paging.pageSize;
-    this.totalCount = response.paging.totalCount;
+    this.pageSize.set(response.paging.pageSize);
+    this.totalCount.set(response.paging.totalCount);
   }
 
   public deletePrinter(printer: PrinterSummarySimple) {

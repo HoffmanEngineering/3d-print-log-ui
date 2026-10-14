@@ -18,16 +18,16 @@
         fxLayoutAlign="start start"
       >
         <div fxFlex="grow" class="cover-photo-container">
-          @if (this.userDetail.coverPicture) {
-            <img [src]="this.userDetail.coverPicture" class="cover-photo" />
+          @if (userDetail().coverPicture) {
+            <img [src]="userDetail().coverPicture" class="cover-photo" />
           }
-          @if (!this.userDetail.coverPicture) {
+          @if (!userDetail().coverPicture) {
             <div class="empty-cover-photo">&nbsp;</div>
           }
           @if (
-            userDetail.id === currentUser?.id &&
-            !isEditingDescription &&
-            !isEditingDisplayName
+            userDetail().id === currentUser()?.id &&
+            !isEditingDescription() &&
+            !isEditingDisplayName()
           ) {
             <button
               mat-button
@@ -60,15 +60,12 @@
         </div>
         <div fxFlex="grow" class="profile-picture-container">
           <div class="profile-picture-wrapper">
-            <img
-              [src]="this.userDetail.profilePicture"
-              class="profile-picture"
-            />
+            <img [src]="userDetail().profilePicture" class="profile-picture" />
           </div>
           @if (
-            userDetail.id === currentUser?.id &&
-            !isEditingDescription &&
-            !isEditingDisplayName
+            userDetail().id === currentUser()?.id &&
+            !isEditingDescription() &&
+            !isEditingDisplayName()
           ) {
             <button
               type="button"
@@ -94,18 +91,19 @@
           fxLayoutAlign="start center"
         >
           <div fxFlex="grow" class="user-display-name">
-            @if (!isEditingDisplayName) {
+            @if (!isEditingDisplayName()) {
               <div
                 fxLayout="column"
                 fxLayoutAlign="start center"
                 fxLayoutGap="15px"
               >
                 <h2 fxFlex="grow" aria-label="User name">
-                  {{ userDetail.displayName }}
+                  {{ userDetail().displayName }}
                 </h2>
                 <div fxFlex="grow">
                   @if (
-                    userDetail.id === currentUser?.id && !isEditingDescription
+                    userDetail().id === currentUser()?.id &&
+                    !isEditingDescription()
                   ) {
                     <button
                       mat-raised-button
@@ -120,7 +118,7 @@
                 </div>
               </div>
             }
-            @if (isEditingDisplayName) {
+            @if (isEditingDisplayName()) {
               <div class="mat-elevation-z5 display-name" style="padding: 10px">
                 <mat-form-field style="width: 100%">
                   <mat-label>Display name:</mat-label>
@@ -133,7 +131,7 @@
                     cdkAutosizeMaxRows="2"
                   ></textarea>
                   <mat-hint>
-                    {{ 30 - displayName.length }} characters
+                    {{ 30 - displayName().length }} characters
                     remaining.</mat-hint
                   >
                 </mat-form-field>
@@ -160,20 +158,21 @@
             }
           </div>
           <div fxFlex="grow" class="user-bio">
-            @if (!isEditingDescription) {
+            @if (!isEditingDescription()) {
               <div
                 fxLayout="column"
                 fxLayoutAlign="start center"
                 fxLayoutGap="15px"
               >
-                @if (!isEditingDescription) {
+                @if (!isEditingDescription()) {
                   <div style="white-space: pre-wrap" fxFlex>
-                    {{ userDetail.bio }}
+                    {{ userDetail().bio }}
                   </div>
                 }
                 <div fxFlex>
                   @if (
-                    userDetail.id === currentUser?.id && !isEditingDisplayName
+                    userDetail().id === currentUser()?.id &&
+                    !isEditingDisplayName()
                   ) {
                     <button
                       type="button"
@@ -187,7 +186,7 @@
                 </div>
               </div>
             }
-            @if (isEditingDescription) {
+            @if (isEditingDescription()) {
               <div class="mat-elevation-z5" style="padding: 10px">
                 <mat-form-field style="width: 100%">
                   <mat-label>Describe who you are:</mat-label>
@@ -200,7 +199,7 @@
                     cdkAutosizeMaxRows="10"
                   ></textarea>
                   <mat-hint>
-                    {{ 1000 - bio.length }} characters remaining.</mat-hint
+                    {{ 1000 - bio().length }} characters remaining.</mat-hint
                   >
                 </mat-form-field>
                 <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
@@ -225,7 +224,7 @@
               </div>
             }
           </div>
-          @if (userDetail.id === currentUser?.id) {
+          @if (userDetail().id === currentUser()?.id) {
             <div fxFlex="grow">
               <hr />
               <div>
@@ -248,7 +247,7 @@
                   </option>
                 </select>
               </div>
-              @if (viewStatus !== this.userDetail.viewStatus) {
+              @if (viewStatus() !== userDetail().viewStatus) {
                 <div>
                   <div
                     style="margin-top: 10px"
@@ -260,7 +259,7 @@
                       mat-raised-button
                       type="submit"
                       color="primary"
-                      (click)="saveProfileVisibility(viewStatus)"
+                      (click)="saveProfileVisibility(viewStatus())"
                     >
                       Save Visibility
                     </button>
@@ -268,7 +267,7 @@
                       mat-raised-button
                       type="button"
                       class="close"
-                      (click)="viewStatus = this.userDetail.viewStatus"
+                      (click)="viewStatus.set(userDetail().viewStatus)"
                       color="warn"
                     >
                       Cancel
@@ -281,10 +280,10 @@
           }
         </div>
         <div fxFlex="grow">
-          <app-stats [userId]="this.userDetail.id"></app-stats>
+          <app-stats [userId]="userDetail().id"></app-stats>
         </div>
         <div fxFlex="grow">
-          <app-achievement-strip [userId]="this.userDetail.id" />
+          <app-achievement-strip [userId]="userDetail().id" />
         </div>
         <div fxFlex="grow" fxFlexFill>
           <app-ad></app-ad>
@@ -297,9 +296,9 @@
         fxLayoutGap="10px"
       >
         <app-user-prints
-          [userId]="this.userDetail.id"
-          [userName]="this.userDetail.displayName"
-          [userProfilePictureUrl]="this.userDetail.profilePicture"
+          [userId]="userDetail().id"
+          [userName]="userDetail().displayName"
+          [userProfilePictureUrl]="userDetail().profilePicture"
         ></app-user-prints>
       </mat-card-content>
     </div>

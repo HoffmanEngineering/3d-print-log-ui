@@ -47,12 +47,6 @@
       }
     },
     {
-      "files": ["src/app/shared/simple-dialog/simple-dialog.component.ts"],
-      "rules": {
-        "@angular-eslint/prefer-signals": "off"
-      }
-    },
-    {
       "files": ["src/app/documentation/primitives/*.ts"],
       "rules": {
         "@angular-eslint/component-selector": [

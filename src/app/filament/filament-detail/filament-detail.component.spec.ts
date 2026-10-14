@@ -134,6 +134,63 @@ describe('FilamentDetailComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('once a response arrives', () => {
+    const button = (label: string) =>
+      Array.from(
+        (
+          fixture.nativeElement as HTMLElement
+        ).querySelectorAll<HTMLButtonElement>('button')
+      ).find((b) => b.textContent!.trim() === label);
+
+    it('re-enables Save when the save fails', () => {
+      const saved = new Subject<FilamentDetail>();
+      const filaments = TestBed.inject(
+        FilamentService
+      ) as jasmine.SpyObj<FilamentService>;
+      filaments.addFilament.and.returnValue(saved);
+      component.filamentForm.get('id')!.setValue(null);
+      component.filamentForm.get('displayName')!.setValue('Blue PLA');
+      component.filamentForm.get('materialType')!.setValue('PLA');
+      component.filamentForm
+        .get('materialDensityGramPerCubicCm')!
+        .setValue(1.24);
+      fixture.detectChanges();
+
+      component.onSubmit();
+      fixture.detectChanges();
+      expect(button('Submit')!.disabled).withContext('saving').toBeTrue();
+
+      saved.error(new HttpErrorResponse({ status: 500 }));
+      fixture.detectChanges();
+
+      expect(button('Submit')!.disabled).toBeFalse();
+    });
+
+    it('drops "Save as Default" once the default price is saved', () => {
+      const saved = new Subject<unknown>();
+      const settings = TestBed.inject(UserSettingService);
+      settings.addUserSetting = jasmine
+        .createSpy('addUserSetting')
+        .and.returnValue(saved);
+      // The resolver answers null when no default is stored.
+      component.defaultFilamentPriceSetting.set(null);
+
+      const price = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector<HTMLInputElement>('#edit-filament-purchase-price')!;
+      price.value = '24.99';
+      price.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      button('Save as Default Filament Price')!.click();
+      fixture.detectChanges();
+
+      saved.next({ id: 3, value: '24.99' });
+      fixture.detectChanges();
+
+      expect(button('Save as Default Filament Price')).toBeUndefined();
+    });
+  });
+
   it('asks before the page unloads only while the form is dirty', () => {
     expect(dispatchBeforeUnload().defaultPrevented).toBeFalse();
 
@@ -237,7 +294,7 @@ describe('FilamentDetailComponent', () => {
       // Without this the form ID stays null and the next submit POSTs another
       // material.
       expect(component.filamentForm.get('id')!.value).toBe('new-filament-id');
-      expect(component.saving).toBeFalse();
+      expect(component.saving()).toBeFalse();
       expect(router.navigateByUrl).not.toHaveBeenCalled();
       expect(toastr.warning).toHaveBeenCalled();
     });
@@ -819,7 +876,7 @@ describe('FilamentDetailComponent - value serialization', () => {
       serComponent.onSubmit();
       serFixture.detectChanges();
 
-      expect(serComponent.saving).toBeFalse();
+      expect(serComponent.saving()).toBeFalse();
       const message = (serFixture.nativeElement as HTMLElement).querySelector(
         '[data-testid="tag-uid-conflict"]'
       );

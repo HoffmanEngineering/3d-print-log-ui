@@ -134,7 +134,9 @@ export const Printer: React.FC<
   const ptfe = useMemo(() => {
     const curve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(tool.x, tool.y + 0.3, tool.z - 0.04),
-      new THREE.Vector3(tool.x * 0.6, h + 0.3, tool.z * 0.5 - 0.15),
+      // Up and back first, so the tube stays behind the toolhead from the front.
+      new THREE.Vector3(tool.x, tool.y + 0.7, tool.z - 0.6),
+      new THREE.Vector3(tool.x * 0.6, h + 0.3, tool.z * 0.5 - 0.6),
       new THREE.Vector3(w / 2 - 0.35, h + 0.15, HOLDER.z),
       new THREE.Vector3(w / 2 + 0.06, HOLDER.y + 0.58, HOLDER.z),
     ]);

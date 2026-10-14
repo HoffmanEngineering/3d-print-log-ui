@@ -105,9 +105,10 @@ video/
 
 ### Gotchas already hit
 
-- **Render frames as PNG.** With JPEG capture, `remotion render` washes out the WebGL canvas
-  and flattens its bump detail, while DOM layers and every `remotion still` look right. The
-  config sets PNG. Check the MP4, not just stills.
+- **Apply renderer/scene settings in a layout effect** (`Studio`). With a plain `useEffect`
+  the first frame a canvas draws has no environment lighting and every later frame does. A
+  `remotion still` is always a first frame, so the look-dev and the render disagreed: the MP4
+  came out greyed and peach until this was fixed. Check the MP4, not just stills.
 - **ThreeCanvas needs integer sizes.** Round anything computed.
 - **Up-facing dark surfaces mirror the studio ceiling as white** under the `RoomEnvironment`.
   Use Lambert for matte plates and floors.

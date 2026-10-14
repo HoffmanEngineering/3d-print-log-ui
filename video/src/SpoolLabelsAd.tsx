@@ -28,9 +28,9 @@ export const SHOTS: { name: string; frames: number; Scene: React.FC }[] = [
   { name: 'Title card', frames: 45, Scene: TitleCard },
   { name: 'Add it', frames: 120, Scene: AddIt },
   { name: 'Print it', frames: 120, Scene: PrintIt },
-  { name: 'The label', frames: 65, Scene: LabelHero },
-  { name: 'Stick it on', frames: 80, Scene: StickIt },
-  { name: 'Load it up', frames: 80, Scene: LoadIt },
+  { name: 'The label', frames: 75, Scene: LabelHero },
+  { name: 'Stick it on', frames: 75, Scene: StickIt },
+  { name: 'Load it up', frames: 75, Scene: LoadIt },
   { name: 'Scan it', frames: 120, Scene: ScanIt },
   { name: 'Printing', frames: 60, Scene: NozzleMacro },
   { name: 'End card', frames: 75, Scene: EndCard },
@@ -73,6 +73,14 @@ const CUES: [string, number, number][] = [
   ['hit', at(10, 0), 1],
 ];
 
+/**
+ * The music bed: "Inspired", Kevin MacLeod (incompetech.com), CC BY 4.0. The file is the
+ * 30.5 s window from 4:02.5 that scripts/analyze-music.mjs ranked best: at 120 BPM a beat is
+ * exactly 15 frames, every cut lands on one, and a downbeat lands on the end card. Credit it
+ * wherever the video is published (public/music/CREDITS.md).
+ */
+const MUSIC = { file: 'music/inspired.mp3', volume: 0.7, hitFrame: 825 };
+
 export const SpoolLabelsAd: React.FC = () => (
   <AbsoluteFill style={{ background: '#000' }}>
     {SHOTS.map(({ name, frames, Scene }, i) => (
@@ -86,13 +94,13 @@ export const SpoolLabelsAd: React.FC = () => (
       </Sequence>
     ))}
     <Audio
-      src={staticFile('sfx/air.wav')}
+      src={staticFile(MUSIC.file)}
       volume={(f) =>
         interpolate(
           f,
-          [0, 20, AD_FRAMES - 100, AD_FRAMES - 70],
-          [0, 0.5, 0.5, 0],
-          { extrapolateRight: 'clamp' }
+          [0, 24, MUSIC.hitFrame, AD_FRAMES - 6],
+          [0, MUSIC.volume, MUSIC.volume, 0],
+          { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
         )
       }
     />

@@ -15,17 +15,17 @@ launch films. The second, more useful, is
 six Apple recap videos (1,107 s, 33,187 frames) through OCR, spring fitting, optical-flow and
 loudness measurements. Its numbers are used directly in `src/theme.ts`.
 
-| Trait                                    | What Apple does (measured where a number is given)                                                                                                               | How this project does it                                                                                          |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **One idea per shot**                    | Median shot is 1.9 s (56 frames). Most shots run 1 to 7 beats, plus a few long holds on product or UI.                                                           | 10 shots in 30 s, 2 to 4.5 s each.                                                                                |
-| **The cut is the transition**            | 92% hard cuts, 5% whips, about 1% each for dissolve and scale-through.                                                                                           | Hard cuts throughout. One scale-through (UI → 3D label) and one whip into the end card.                           |
-| **Type is punctuation**                  | 1 to 4 words, one line (84%), Semibold, tight tracking (−0.015 em). Flat white on black or near-black (#1d1d1f) on white/#f5f5f7. No outlines, shadows or boxes. | `Headline` component: Inter 600 (SF Pro is not licensable for this), at most two short lines.                     |
-| **Fast, calm entries**                   | Type is visibly in within ~8 frames. Spring damping 15.3, stiffness 115: about 2% overshoot, no visible bounce. Most type simply cuts on with its shot.          | `SPRING_TEXT`. Every headline cuts on or fades/rises in about 8 frames.                                           |
-| **Something always moves**               | 62% of shots carry a camera move. Push/pull runs about 4.5% scale per second, pans about 2.6% of the frame per second.                                           | Every UI shot has a slow push (`PUSH_PER_FRAME`). Every 3D shot has a slow orbit or dolly.                        |
-| **Product as hero, on a seamless stage** | Pure black or #f5f5f7 sweep. Soft key light, hard rim light drawing the silhouette. Color lives in the product.                                                  | Black stage for the 3D shots, #f5f5f7 for the UI. The orange spool is the only saturated color.                   |
-| **Real UI, framed**                      | UI shots are real screens in a device, pushed into the element being talked about, often zooming into a control and cutting on the zoom.                         | Real screenshots of the app (see §3) in a browser window or phone, with a cursor/tap and a push into the control. |
-| **Sparse sound**                         | Whooshes on whips, soft clicks on taps, one hit on the logo. About −17 LUFS, −2 dBTP peak.                                                                       | Synthesized SFX only (`scripts/synth-sfx.mjs`), mastered to −17 LUFS. Add a licensed music bed later if wanted.   |
-| **End on the name**                      | Logo or wordmark on white or black, held about 3 s.                                                                                                              | Brand mark, "3D Print Log", one-line tagline and URL, held 3 s.                                                   |
+| Trait                                    | What Apple does (measured where a number is given)                                                                                                               | How this project does it                                                                                            |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **One idea per shot**                    | Median shot is 1.9 s (56 frames). Most shots run 1 to 7 beats, plus a few long holds on product or UI.                                                           | 10 shots in 30 s, 2 to 4.5 s each.                                                                                  |
+| **The cut is the transition**            | 92% hard cuts, 5% whips, about 1% each for dissolve and scale-through.                                                                                           | Hard cuts throughout. One scale-through (UI → 3D label) and one whip into the end card.                             |
+| **Type is punctuation**                  | 1 to 4 words, one line (84%), Semibold, tight tracking (−0.015 em). Flat white on black or near-black (#1d1d1f) on white/#f5f5f7. No outlines, shadows or boxes. | `Headline` component: Inter 600 (SF Pro is not licensable for this), at most two short lines.                       |
+| **Fast, calm entries**                   | Type is visibly in within ~8 frames. Spring damping 15.3, stiffness 115: about 2% overshoot, no visible bounce. Most type simply cuts on with its shot.          | `SPRING_TEXT`. Every headline cuts on or fades/rises in about 8 frames.                                             |
+| **Something always moves**               | 62% of shots carry a camera move. Push/pull runs about 4.5% scale per second, pans about 2.6% of the frame per second.                                           | Every UI shot has a slow push (`PUSH_PER_FRAME`). Every 3D shot has a slow orbit or dolly.                          |
+| **Product as hero, on a seamless stage** | Pure black or #f5f5f7 sweep. Soft key light, hard rim light drawing the silhouette. Color lives in the product.                                                  | Black stage for the 3D shots, #f5f5f7 for the UI. The orange spool is the only saturated color.                     |
+| **Real UI, framed**                      | UI shots are real screens in a device, pushed into the element being talked about, often zooming into a control and cutting on the zoom.                         | Real screenshots of the app (see §3) in a browser window or phone, with a cursor/tap and a push into the control.   |
+| **Sparse sound**                         | Whooshes on whips, soft clicks on taps, one hit on the logo. About −17 LUFS, −2 dBTP peak.                                                                       | Synthesized SFX (`scripts/synth-sfx.mjs`) over a CC BY music bed ("Inspired", Kevin MacLeod), mastered to −17 LUFS. |
+| **End on the name**                      | Logo or wordmark on white or black, held about 3 s.                                                                                                              | Brand mark, "3D Print Log", one-line tagline and URL, held 3 s.                                                     |
 
 The Reddit thread you linked couldn't be fetched from this environment, because Reddit blocks it.
 The workflow it describes (Claude writing Remotion plus three.js code, rendered to video) is the
@@ -53,9 +53,9 @@ _Add it. Print it. Stick it. Scan it._
 | 3   | 135–179 | **Title card.** #f5f5f7. QR glyph in an indigo app-icon tile.                                                                                                                                                                                                                     | "Spool Labels" + small "3D Print Log" | tick             |
 | 4   | 180–299 | **Add it.** Floating browser window, real Materials list. Cursor glides to _Add New Material_ and clicks. Cut to the filled form ("Sunset Orange", PETG) with a slow push.                                                                                                        | "Add it."                             | click            |
 | 5   | 300–419 | **Print it.** Real material page. Cursor clicks _Print QR Label_. The real QR dialog springs up, then a push into the label preview, which match-cuts into…                                                                                                                       | "Print it."                           | click, whoosh    |
-| 6   | 420–484 | **The label.** 3D: the label card (the app's real QR code) starts face-on exactly where the preview ended, lifts off the page and turns to camera as a light glint sweeps across.                                                                                                 | —                                     | paper flick      |
-| 7   | 485–564 | **Stick it.** 3D close-up: the label drops onto the spool flange and presses flat.                                                                                                                                                                                                | "Stick it on."                        | soft press       |
-| 8   | 565–644 | **Load it.** 3D: generic CoreXY printer (deliberately unbranded), mid-print. The spool slides onto the side holder, rolls and settles label-up.                                                                                                                                   | "Load it up."                         | slide, clunk     |
+| 6   | 420–494 | **The label.** 3D: the label card (the app's real QR code) starts face-on exactly where the preview ended, lifts off the page and turns to camera as a light glint sweeps across.                                                                                                 | —                                     | paper flick      |
+| 7   | 495–569 | **Stick it.** 3D close-up: the label drops onto the spool flange and presses flat.                                                                                                                                                                                                | "Stick it on."                        | soft press       |
+| 8   | 570–644 | **Load it.** 3D: generic CoreXY printer (deliberately unbranded), mid-print. The spool slides onto the side holder, rolls and settles label-up.                                                                                                                                   | "Load it up."                         | slide, clunk     |
 | 9   | 645–764 | **Scan it.** Phone, real printer page: a tap on _Load_ beside the empty T2 slot, then the real Select Filament scanner. The viewfinder shows the live 3D label and the brackets lock. Back on the printer page, T2 turns from _Empty_ to _Sunset Orange_ as the camera pushes in. | "Scan it." → "Done."                  | tap, chime, tick |
 | 10  | 765–824 | **Printing.** Macro on the hotend: fan spinning, brass nozzle with a hot tip laying the next orange layer on a ribbed vase. _(v2)_                                                                                                                                                | "Right filament. / Every time."       | printer whir     |
 | 11  | 825–899 | **End card.** White. Brand mark, **3D Print Log**, "Every spool, accounted for.", 3dprintlog.com.                                                                                                                                                                                 | —                                     | final hit        |
@@ -160,10 +160,23 @@ edit table and a few new shots:
    world is the point.
 5. End on the mark and a one-line promise.
 
+### Music
+
+The bed is "Inspired" by Kevin MacLeod (incompetech.com), CC BY 4.0: **credit it in the post
+text of every published copy**, or buy the paid license (`public/music/CREDITS.md`).
+
+`scripts/analyze-music.mjs <track.mp3> <catalogBpm>` picks the excerpt. It fits a beat grid from
+spectral-flux onsets (seeded by the catalog BPM, since incompetech's `pieces.json` lists one
+per track), takes the downbeats from where the kick sits, and ranks every 30 s window by the
+accent on the end-card cut (frame 825), the lift into it and the build across the ad. It also
+reports how many frames each cut sits off the beat.
+
+At 120 BPM a beat is exactly 15 frames, so every cut is a multiple of 15 and lands on a beat.
+Keep shot lengths in multiples of 15 while this track is in. "Newer Wave" (110 BPM, more punch)
+was the runner-up; swapping it in means re-running the analyzer and nudging cuts onto its grid.
+
 ### Ideas worth exploring next
 
-- **A licensed music bed** at about 118 BPM, Apple's measured median. Snap the big moments (title
-  card, end card) to downbeats.
 - **A voice-over** at about 3 words per second, with type landing about 2 frames before the
   spoken word.
 - **Real footage** of the label going onto a real spool, swapped into shot 7 (`<OffthreadVideo>`).

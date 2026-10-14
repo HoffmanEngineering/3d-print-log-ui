@@ -35,17 +35,19 @@ function useWindow() {
 
 /**
  * Text being typed into a field of the captured form: covers the captured value with the
- * field's own background, then uncovers it a character at a time with a caret.
+ * field's own background, then uncovers it a character at a time with a caret. The caret
+ * blinks once the text is in, until `blurAt`, when focus moves to the next field.
  */
 const Typing: React.FC<{
   frame: number;
   from: number;
+  blurAt?: number;
   chars: number;
   x: number;
   y: number;
   w: number;
   h: number;
-}> = ({ frame, from, chars, x, y, w, h }) => {
+}> = ({ frame, from, blurAt = Infinity, chars, x, y, w, h }) => {
   const typed = Math.max(0, Math.min(chars, Math.floor((frame - from) / 1.6)));
   const done = typed >= chars;
   const shown = (w * typed) / chars;
@@ -62,7 +64,7 @@ const Typing: React.FC<{
           background: '#f5f5f5',
         }}
       />
-      {caretOn && frame >= from - 6 ? (
+      {caretOn && frame >= from - 6 && frame < blurAt ? (
         <div
           style={{
             position: 'absolute',
@@ -132,6 +134,7 @@ export const AddIt: React.FC = () => {
             <Typing
               frame={frame}
               from={cut + 6}
+              blurAt={cut + 34 - 6}
               chars={13}
               x={231}
               y={482}

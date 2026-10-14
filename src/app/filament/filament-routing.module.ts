@@ -15,6 +15,7 @@ import { MaterialResolverService } from './resolvers/material-resolver.service';
 import { MaterialCategoryResolverService } from '../core/resolvers/material-category-resolver.service';
 import { FilamentDisplayUnitResolverService } from './resolvers/filament-display-unit-resolver.service';
 import { FilamentStorageLocationResolverService } from './resolvers/filament-storage-location-resolver.service';
+import { spoolNumberRedirectGuard } from './spool-number-redirect.guard';
 
 export const filamentRoutes: Routes = [
   {
@@ -47,6 +48,11 @@ export const filamentRoutes: Routes = [
             FilamentDisplayUnitResolverService,
         },
         canDeactivate: [PendingChangesGuard],
+      },
+      {
+        path: 'spool/:number',
+        canActivate: [AuthGuard, spoolNumberRedirectGuard],
+        children: [],
       },
       {
         path: ':id',

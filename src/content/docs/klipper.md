@@ -29,8 +29,13 @@ Want the simplest setup, with no API key to create? The **Connect Spoolman** blo
 
 <doc-callout kind="note" heading="Legacy: use printlog-bridge for new setups">
   <p>
-    The notifier is the older way to log Klipper prints. For a new printer, use
-    <a routerLink="/docs/printlog-bridge">printlog-bridge</a> instead: it logs
+    The notifier is the older way to log Klipper prints. For a new printer, the
+    simplest way is the <strong>Connect Spoolman</strong> block (see
+    <a routerLink="/docs/klipper-spoolman">Spoolman for Klipper</a>), which logs
+    prints with no API key. If you set up this notifier with an API key, delete
+    its <code>[notifier 3d_print_log]</code> section before you paste that
+    block. For fuller logging, use
+    <a routerLink="/docs/printlog-bridge">printlog-bridge</a>: it logs
     the real outcome, filament per tool linked to your spools, the slicer's
     thumbnail and a webcam snapshot. It runs on the printer itself, or in
     Docker on another computer on your network.

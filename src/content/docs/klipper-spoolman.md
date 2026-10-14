@@ -32,10 +32,15 @@ The block has two sections, `[spoolman]` and `[notifier 3d_print_log]`, with you
 
 ```
 [spoolman]
-server: https://printer-<id>:<token>@api.3dprintlog.com/spoolman
+server: https://printer-<id>:<secret>@api.3dprintlog.com/spoolman
 
 [notifier 3d_print_log]
-url: ...
+url: jsons://printer-<id>:<secret>@api.3dprintlog.com/spoolman/notifier
+events: started, complete, error, cancelled
+body:
+    {% set payload = {"event_name": event_name} %}
+    {% do payload.update(event_args[1]) %}
+    { payload|tojson }
 ```
 
 The `[notifier 3d_print_log]` section logs each print on this printer when it starts, succeeds, fails or is cancelled. It uses the same secret as `[spoolman]`, so you need no API key and no printer id.

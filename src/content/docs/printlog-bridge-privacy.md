@@ -38,7 +38,7 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 | `POST /api/Prints/{id}/image` | A print starts, and when it ends | The slicer's thumbnail (at start) and one webcam frame (at the end, unless `snapshots = false`) |
 | `GET /api/Filaments/by-tag/{uid}` | `PRINTLOG_SET_SPOOL TAG=…`, or a Snapmaker U1 reads a spool's RFID tag | The tag's UID |
 | `GET /api/Filaments/by-number/{n}` | A spool is picked on the printer, with Spoolman pointed at 3D Print Log | The spool number |
-| `PUT /api/Printers/{id}/slots/{slot}` | `PRINTLOG_SET_SPOOL`, or a U1 tag that matches one of your spools | `filamentId` (the spool), `slotLabel` (`T0`, `T1`…) |
+| `PUT /api/Printers/{id}/slots/{slot}` | `PRINTLOG_SET_SPOOL`, a U1 tag that matches one of your spools, or a spool picked on the printer (Mainsail, Fluidd, KlipperScreen or `SET_ACTIVE_SPOOL`) when `[spoolman]` points at 3D Print Log | `filamentId` (the spool), `slotLabel` (`T0`, `T1`…) |
 | `DELETE /api/Printers/{id}/slots/{slot}` | `PRINTLOG_CLEAR_SPOOL` | Nothing |
 | `PUT /api/Printers/{id}` | A spool is assigned to a tool beyond the printer's slot count | The printer as 3D Print Log returned it, with only `slotCount` raised to the printer's tool count |
 

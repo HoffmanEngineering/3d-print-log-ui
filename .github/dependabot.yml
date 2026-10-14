@@ -46,6 +46,7 @@ updates:
           - '@angular/*'
           - '@angular-devkit/*'
           - '@angular-eslint/*'
+          - 'angular-eslint'
           - '@ngtools/*'
           - 'ng-packagr'
           - 'typescript'
@@ -65,6 +66,7 @@ updates:
         patterns:
           - 'eslint*'
           - '@typescript-eslint/*'
+          - 'typescript-eslint'
           - 'prettier*'
           - 'husky'
           - 'lint-staged'

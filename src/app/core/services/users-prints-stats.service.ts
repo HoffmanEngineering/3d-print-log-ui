@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -12,8 +12,9 @@ export interface SinglePrintStatDto {
   providedIn: 'root',
 })
 export class UsersPrintsStatsService {
+  private readonly http = inject(HttpClient);
+
   private readonly baseApi = environment.printLogApiUrl;
-  constructor(private readonly http: HttpClient) {}
 
   getUsersTotalFilamentUsage(
     userId: number,

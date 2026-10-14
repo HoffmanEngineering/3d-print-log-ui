@@ -64,6 +64,18 @@ export interface ColumnDefinition {
   providers: [PrintBulkActionsService, BLOCK_SCROLL_WHILE_MENU_OPEN],
 })
 export class PrintListComponent implements OnInit, OnDestroy {
+  private activatedRoute = inject(ActivatedRoute);
+  private printerRedirectPromptService = inject(PrinterRedirectPromptService);
+  private toastrService = inject(ToastrService);
+  private titleService = inject(Title);
+  private router = inject(Router);
+  dialog = inject(MatDialog);
+  private media = inject(MediaMatcher);
+  private printService = inject(PrintService);
+  private readonly loggingService = inject(LoggingService);
+  private readonly gcodeParserService = inject(GcodeFileParserService);
+  private readonly newPrintStoreService = inject(NewPrintStoreService);
+
   public prints: PrintSummary[] = [];
   public printers: PrinterSummary[] = [];
   public filaments: FilamentSummary[] = [];
@@ -395,19 +407,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public defaultElectricityWattageSetting: UserSetting | null = null;
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private printerRedirectPromptService: PrinterRedirectPromptService,
-    private toastrService: ToastrService,
-    private titleService: Title,
-    private router: Router,
-    public dialog: MatDialog,
-    private media: MediaMatcher,
-    private printService: PrintService,
-    private readonly loggingService: LoggingService,
-    private readonly gcodeParserService: GcodeFileParserService,
-    private readonly newPrintStoreService: NewPrintStoreService
-  ) {
+  constructor() {
+    const router = this.router;
+
     // Read synchronously, in the constructor: the first render has to pick the
     // right branch on its own, since correcting it afterwards is the flash this
     // replaces.

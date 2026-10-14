@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
@@ -7,7 +7,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
   styleUrls: ['./callback.component.scss'],
 })
 export class CallbackComponent implements OnInit {
-  constructor(private auth: AuthService) {}
+  private auth = inject(AuthService);
 
   ngOnInit() {
     this.auth.handleAuthCallback();

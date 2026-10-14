@@ -124,6 +124,18 @@ function toServerAdjustmentRows(
 export class FilamentDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy
 {
+  private activatedRoute = inject(ActivatedRoute);
+  private router = inject(Router);
+  private formBuilder = inject(UntypedFormBuilder);
+  private filamentService = inject(FilamentService);
+  private toastr = inject(ToastrService);
+  private titleService = inject(Title);
+  private el = inject(ElementRef);
+  private location = inject(Location);
+  private readonly loggingService = inject(LoggingService);
+  private readonly userSettingService = inject(UserSettingService);
+  private readonly dialog = inject(MatDialog);
+
   public filamentForm: UntypedFormGroup;
   public loadedFilament: FilamentDetail | null = null;
 
@@ -199,20 +211,6 @@ export class FilamentDetailComponent
     { label: 'Galaxy', colors: ['1a1a2e', '7c8cf8', 'c44dff', 'f72585'] },
     { label: 'Forest', colors: ['2d6a4f', '52b788', '95d5b2', 'd8f3dc'] },
   ];
-
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private router: Router,
-    private formBuilder: UntypedFormBuilder,
-    private filamentService: FilamentService,
-    private toastr: ToastrService,
-    private titleService: Title,
-    private el: ElementRef,
-    private location: Location,
-    private readonly loggingService: LoggingService,
-    private readonly userSettingService: UserSettingService,
-    private readonly dialog: MatDialog
-  ) {}
 
   canDeactivate(): boolean {
     // A navigation this component started itself is never the user abandoning

@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { from, fromEvent, Observable, of } from 'rxjs';
 import { catchError, concatMap, map, switchMap, take } from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
@@ -368,15 +368,13 @@ export type ElectricityCost = ElectricityCostValid | ElectricityCostInvalid;
   providedIn: 'root',
 })
 export class PrintService {
+  private http = inject(HttpClient);
+  private imageResizer = inject(ImageResizerService);
+
   private readonly baseApi = environment.printLogApiUrl;
 
   private readonly IMAGE_QUALITY = 0.9;
   private readonly IMAGE_MAX_SIZE_PX = 1280;
-
-  constructor(
-    private http: HttpClient,
-    private imageResizer: ImageResizerService
-  ) {}
 
   getPrintSummaries(
     pageNumber: number = 1,

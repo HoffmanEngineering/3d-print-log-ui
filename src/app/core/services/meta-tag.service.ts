@@ -18,6 +18,9 @@ export class MetaTag {
   providedIn: 'root',
 })
 export class MetaTagService {
+  private titleService = inject(Title);
+  private metaService = inject(Meta);
+
   private readonly description: string = 'description';
   private readonly urlMeta: string = 'og:url';
   private readonly titleMeta: string = 'og:title';
@@ -28,11 +31,6 @@ export class MetaTagService {
   private readonly twitterImageMeta: string = 'twitter:image';
 
   private readonly document = inject(DOCUMENT);
-
-  constructor(
-    private titleService: Title,
-    private metaService: Meta
-  ) {}
 
   public setTitle(title: string): void {
     this.titleService.setTitle(title);

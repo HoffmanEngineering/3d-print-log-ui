@@ -179,10 +179,10 @@ export interface AddPrinterFilamentSummaryDto {
   providedIn: 'root',
 })
 export class PrinterService {
+  private http = inject(HttpClient);
+
   private readonly baseApi = environment.printLogApiUrl;
   private readonly thumbnailStore = inject(PrinterThumbnailStore);
-
-  constructor(private http: HttpClient) {}
 
   getCurrentUserPrinterSummaries(
     pageNumber: number = 1,

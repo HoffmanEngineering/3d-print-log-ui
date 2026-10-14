@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -33,6 +33,13 @@ import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
   standalone: false,
 })
 export class FilamentListContainerComponent implements OnInit, OnDestroy {
+  private activatedRoute = inject(ActivatedRoute);
+  private filamentService = inject(FilamentService);
+  private titleService = inject(Title);
+  private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
+  private readonly toastrService = inject(ToastrService);
+
   public filaments: FilamentSummary[] = [];
 
   public pageSize: number;
@@ -96,14 +103,9 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   public filterByFinishTypes: FilamentFinishType[] = [];
   public filterByEffects: FilamentEffect[] = [];
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private filamentService: FilamentService,
-    private titleService: Title,
-    private readonly router: Router,
-    private readonly dialog: MatDialog,
-    private readonly toastrService: ToastrService
-  ) {
+  constructor() {
+    const router = this.router;
+
     // Mark the list as loading on the keystroke itself, not when the debounce
     // finally fires, so the empty state cannot flash stale copy for 400ms.
     const debouncedFilterUpdate = debounce(() => {

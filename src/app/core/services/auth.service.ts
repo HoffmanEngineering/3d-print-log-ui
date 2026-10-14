@@ -56,6 +56,11 @@ export interface UserProfileInfo {
   providedIn: 'root',
 })
 export class AuthService {
+  private router = inject(Router);
+  private userService = inject(UserService);
+  private notificationService = inject(NotificationService);
+  private ngZone = inject(NgZone);
+
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   // Create an observable of Auth0 instance of client
@@ -111,12 +116,7 @@ export class AuthService {
    */
   private readonly injector = inject(Injector);
 
-  constructor(
-    private router: Router,
-    private userService: UserService,
-    private notificationService: NotificationService,
-    private ngZone: NgZone
-  ) {
+  constructor() {
     if (isCordova) {
       (window as any).handleOpenURL = (url: string) => {
         // Called by cordova-plugin-customurlscheme when the app receives a callback URL

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from 'src/app/core/services/auth.service';
 
@@ -9,5 +9,5 @@ import { AuthService } from 'src/app/core/services/auth.service';
   imports: [CommonModule],
 })
 export class UserProfileComponent {
-  constructor(public auth: AuthService) {}
+  auth = inject(AuthService);
 }

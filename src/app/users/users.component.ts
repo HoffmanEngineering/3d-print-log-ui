@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   styleUrls: ['./users.component.scss'],
   standalone: false,
 })
-export class UsersComponent {
-  constructor() {}
-}
+export class UsersComponent {}

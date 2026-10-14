@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ParamMap } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -10,13 +10,11 @@ import { NewPrintParser } from './types';
 
 @Injectable()
 export class CuraParserService implements NewPrintParser {
-  constructor(
-    private readonly parserV1pt0pt0: CuraParserV1pt0pt0Service,
-    private readonly parserV1pt1pt0: CuraParserV1pt1pt0Service,
-    private readonly parserV1pt2pt0: CuraParserV1pt2pt0Service,
-    private readonly loggingService: LoggingService,
-    private readonly toastrService: ToastrService
-  ) {}
+  private readonly parserV1pt0pt0 = inject(CuraParserV1pt0pt0Service);
+  private readonly parserV1pt1pt0 = inject(CuraParserV1pt1pt0Service);
+  private readonly parserV1pt2pt0 = inject(CuraParserV1pt2pt0Service);
+  private readonly loggingService = inject(LoggingService);
+  private readonly toastrService = inject(ToastrService);
 
   async parse(params: ParamMap): Promise<PrintDetail> {
     if (!params.has('plugin_version')) {

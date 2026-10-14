@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { environment } from 'src/environments/environment';
 
 export interface CuraSettingsDto {
@@ -13,9 +13,9 @@ export interface CuraSettingsDto {
   providedIn: 'root',
 })
 export class CuraSettingServiceService {
-  private readonly baseApi = environment.printLogApiUrl;
+  private readonly httpClient = inject(HttpClient);
 
-  constructor(private readonly httpClient: HttpClient) {}
+  private readonly baseApi = environment.printLogApiUrl;
 
   getSettings(id: string) {
     const url = `${this.baseApi}/api/Cura/settings`;

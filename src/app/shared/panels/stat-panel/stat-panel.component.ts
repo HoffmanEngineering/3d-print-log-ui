@@ -14,6 +14,4 @@ export class StatPanelComponent {
   readonly value = input<number | string>();
 
   readonly invertDisplay = input(false);
-
-  constructor() {}
 }

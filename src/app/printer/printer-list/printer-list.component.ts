@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { lastValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -23,6 +23,12 @@ import { HttpErrorResponse } from '@angular/common/http';
   standalone: false,
 })
 export class PrinterListComponent implements OnInit {
+  private activatedRoute = inject(ActivatedRoute);
+  private printerService = inject(PrinterService);
+  private titleService = inject(Title);
+  private readonly toastrService = inject(ToastrService);
+  dialog = inject(MatDialog);
+
   public printers: PrinterSummarySimple[] = [];
 
   public pageSize: number;
@@ -50,13 +56,7 @@ export class PrinterListComponent implements OnInit {
   /** Guards against an older search response overwriting a newer one. */
   private latestRequestId = 0;
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private printerService: PrinterService,
-    private titleService: Title,
-    private readonly toastrService: ToastrService,
-    public dialog: MatDialog
-  ) {
+  constructor() {
     // Mark the list as loading on the keystroke itself, not when the debounce
     // finally fires, so the empty state cannot flash stale copy for 400ms.
     const debouncedFilterUpdate = debounce(() => this.updateFilter(), 400);

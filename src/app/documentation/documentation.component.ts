@@ -66,6 +66,10 @@ let apiLoaded = false;
 export class DocumentationComponent
   implements OnInit, OnDestroy, AfterViewInit
 {
+  private changeDetectorRef = inject(ChangeDetectorRef);
+  private title = inject(Title);
+  private ngZone = inject(NgZone);
+
   /** Slug of the docs page on screen; drives the feedback widget's per-page reset. */
   readonly currentSlug = signal('');
 
@@ -101,12 +105,9 @@ export class DocumentationComponent
 
   readonly snav = viewChild.required<MatSidenav>('snav');
 
-  constructor(
-    private changeDetectorRef: ChangeDetectorRef,
-    media: MediaMatcher,
-    private title: Title,
-    private ngZone: NgZone
-  ) {
+  constructor() {
+    const media = inject(MediaMatcher);
+
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
 
     this.mobileQueryListener = () => {

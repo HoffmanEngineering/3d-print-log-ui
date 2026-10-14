@@ -1,4 +1,4 @@
-import { Component, OnInit, viewChild } from '@angular/core';
+import { Component, OnInit, viewChild, inject } from '@angular/core';
 import {
   UntypedFormBuilder,
   UntypedFormGroup,
@@ -38,19 +38,17 @@ import {
   ],
 })
 export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
+  private router = inject(Router);
+  private formBuilder = inject(UntypedFormBuilder);
+  private feedbackService = inject(FeedbackService);
+  private toastr = inject(ToastrService);
+  private titleService = inject(Title);
+
   readonly feedbackForm = viewChild(FormGroupDirective);
   public form: UntypedFormGroup;
 
   public readonly feedbackTypes = FeedbackType;
   public saving = false;
-
-  constructor(
-    private router: Router,
-    private formBuilder: UntypedFormBuilder,
-    private feedbackService: FeedbackService,
-    private toastr: ToastrService,
-    private titleService: Title
-  ) {}
 
   canDeactivate(): boolean {
     return !this.form.dirty;

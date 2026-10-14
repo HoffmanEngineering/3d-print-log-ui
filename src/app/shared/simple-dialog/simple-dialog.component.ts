@@ -1,4 +1,4 @@
-import { Component, Inject, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MatDialogModule,
@@ -21,17 +21,15 @@ import { DialogData } from 'src/app/print/print-share-dialog/print-share-dialog.
   imports: [MatButtonModule, MatDialogModule],
 })
 export class SimpleDialogComponent {
+  dialogRef = inject<MatDialogRef<SimpleDialogComponent>>(MatDialogRef);
+  data = inject<DialogData>(MAT_DIALOG_DATA);
+
   @Input() public title: string;
   @Input() public yesText = 'Yes';
   @Input() public yesColor = 'primary';
   @Input() public noText = 'No';
   @Input() public noColor = 'primary';
   @Input() public body: string;
-
-  constructor(
-    public dialogRef: MatDialogRef<SimpleDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData
-  ) {}
 
   onNoClick(): void {
     this.dialogRef.close();

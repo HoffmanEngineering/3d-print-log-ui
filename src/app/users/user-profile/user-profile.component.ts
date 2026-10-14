@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, DOCUMENT } from '@angular/core';
+import { Component, OnInit, DOCUMENT, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -22,6 +22,14 @@ import {
   standalone: false,
 })
 export class UserProfileComponent implements OnInit {
+  private activatedRoute = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
+  private readonly toastrService = inject(ToastrService);
+  private readonly metaTagService = inject(MetaTagService);
+  private readonly loggingService = inject(LoggingService);
+  private readonly document = inject<Document>(DOCUMENT);
+
   public userDetail: UserDetailDto;
 
   public currentUser: UserProfileInfo;
@@ -48,16 +56,6 @@ export class UserProfileComponent implements OnInit {
    */
   public displayName = '';
   public isEditingDisplayName = false;
-
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private readonly authService: AuthService,
-    private readonly userService: UserService,
-    private readonly toastrService: ToastrService,
-    private readonly metaTagService: MetaTagService,
-    private readonly loggingService: LoggingService,
-    @Inject(DOCUMENT) private readonly document: Document
-  ) {}
 
   ngOnInit(): void {
     this.activatedRouteSubscription = this.activatedRoute.data.subscribe(

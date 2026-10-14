@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ParamMap } from '@angular/router';
 import { capitalize, snakeCase } from 'lodash-es';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -24,7 +24,8 @@ export interface ExtruderSettings {
 
 @Injectable()
 export class CuraParserV1pt1pt0Service implements NewPrintParser {
-  constructor(private readonly loggingService: LoggingService) {}
+  private readonly loggingService = inject(LoggingService);
+
   async parse(params: ParamMap): Promise<PrintDetail> {
     const print: PrintDetail = {
       ...this.getDefaultPrintDetail(),

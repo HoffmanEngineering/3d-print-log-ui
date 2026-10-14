@@ -22,6 +22,10 @@ import { SharedModule } from 'src/app/shared/shared.module';
   imports: [SharedModule],
 })
 export class PrintCommentsComponent implements OnInit {
+  private readonly authService = inject(AuthService);
+  private readonly printService = inject(PrintService);
+  private readonly toastrService = inject(ToastrService);
+
   readonly printId = input<number>();
   readonly printOwnerUserId = input<number>();
   readonly comments = input<Comment[]>();
@@ -48,12 +52,6 @@ export class PrintCommentsComponent implements OnInit {
   public isLoggedIn = false;
 
   private readonly destroyRef = inject(DestroyRef);
-
-  constructor(
-    private readonly authService: AuthService,
-    private readonly printService: PrintService,
-    private readonly toastrService: ToastrService
-  ) {}
 
   public ngOnInit(): void {
     this.authService.userProfile$

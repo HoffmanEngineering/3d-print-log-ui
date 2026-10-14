@@ -19,6 +19,11 @@ export interface UserApiKeySummaryWithKey extends UserApiKeySummary {
   standalone: false,
 })
 export class ApikeysComponent implements OnInit {
+  private readonly apiKeyService = inject(ApiKeyService);
+  private readonly clipboard = inject(Clipboard);
+  private readonly toastrService = inject(ToastrService);
+  private readonly metaService = inject(MetaTagService);
+
   public keys: UserApiKeySummary[] = [];
   public loading = false;
 
@@ -34,13 +39,6 @@ export class ApikeysComponent implements OnInit {
   public newKeyDescription = '';
 
   private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
-
-  constructor(
-    private readonly apiKeyService: ApiKeyService,
-    private readonly clipboard: Clipboard,
-    private readonly toastrService: ToastrService,
-    private readonly metaService: MetaTagService
-  ) {}
 
   ngOnInit(): void {
     this.metaService.setTitle('Personal Api Keys | 3D Print Log');

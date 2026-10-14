@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
@@ -25,6 +25,9 @@ export interface ReleaseNoteHistory {
   providedIn: 'root',
 })
 export class VersionReleaseNoteDialogService {
+  private readonly dialog = inject(MatDialog);
+  private readonly localStorageService = inject(LocalStorageService);
+
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
@@ -2002,11 +2005,6 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
     </p>`,
     },
   };
-
-  constructor(
-    private readonly dialog: MatDialog,
-    private readonly localStorageService: LocalStorageService
-  ) {}
 
   public async checkLastLoggedInVersion() {
     const version = this.localStorageService.getItem(this.LOCAL_STORAGE_KEY);

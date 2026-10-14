@@ -6,6 +6,7 @@ import {
   SimpleChanges,
   input,
   viewChildren,
+  inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
@@ -26,6 +27,11 @@ import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
   standalone: false,
 })
 export class UserPrintsComponent implements OnChanges, OnInit {
+  private readonly printService = inject(PrintService);
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly loggingService = inject(LoggingService);
+
   readonly userId = input<number>();
   readonly userProfilePictureUrl = input<string>();
   readonly userName = input<string>();
@@ -50,12 +56,7 @@ export class UserPrintsComponent implements OnChanges, OnInit {
   public showLoadMore = true;
   printListSubscription: Subscription;
 
-  constructor(
-    private readonly printService: PrintService,
-    private readonly router: Router,
-    private readonly activatedRoute: ActivatedRoute,
-    private readonly loggingService: LoggingService
-  ) {
+  constructor() {
     this.debouncedUpdateFilter = debounce(() => {
       this.router.navigate(['.'], {
         queryParams: {

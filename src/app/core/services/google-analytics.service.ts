@@ -9,9 +9,11 @@ import { redactEmailUrl } from '../utils/redact-email-tokens';
   providedIn: 'root',
 })
 export class GoogleAnalyticsService {
+  router = inject(Router);
+
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  constructor(public router: Router) {
+  constructor() {
     if (!this.isBrowser) return;
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {

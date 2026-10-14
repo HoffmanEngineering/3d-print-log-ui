@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { of } from 'rxjs';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -23,10 +23,10 @@ export interface MaterialCategory {
   providedIn: 'root',
 })
 export class MaterialCategoryService {
+  private readonly http = inject(HttpClient);
+
   private readonly baseApi = environment.printLogApiUrl;
   private cachedMaterialCategories: MaterialCategory[] | null = null;
-
-  constructor(private readonly http: HttpClient) {}
 
   /**
    * Cached endpoint to get the list of material categories

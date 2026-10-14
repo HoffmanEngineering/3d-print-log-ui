@@ -1,5 +1,6 @@
 import { MediaMatcher } from '@angular/cdk/layout';
 import {
+  ChangeDetectionStrategy,
   Component,
   OnDestroy,
   OnInit,
@@ -111,6 +112,7 @@ export interface ColumnDefinition {
 
 @Component({
   selector: 'app-print-list',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
   providers: [PrintBulkActionsService, BLOCK_SCROLL_WHILE_MENU_OPEN],
@@ -182,12 +184,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private readonly gcodeParserService = inject(GcodeFileParserService);
   private readonly newPrintStoreService = inject(NewPrintStoreService);
 
-  public prints: PrintSummary[] = [];
-  public printers: PrinterSummary[] = [];
+  readonly prints = signal<PrintSummary[]>([]);
+  readonly printers = signal<PrinterSummary[]>([]);
   public filaments: FilamentSummary[] = [];
-  public pageSize: number;
-  public currentPage: number;
-  public totalCount: number;
+  readonly pageSize = signal<number | undefined>(undefined);
+  readonly currentPage = signal<number | undefined>(undefined);
+  readonly totalCount = signal<number | undefined>(undefined);
 
   public allPossibleColumns: ColumnDefinition[] = [
     {
@@ -284,7 +286,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     },
   ];
 
-  public displayedColumns: string[] = [
+  readonly displayedColumns = signal<string[]>([
     'image',
     'title',
     'printer',
@@ -294,7 +296,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     'filamentSummary',
     'commentCount',
     'more',
-  ];
+  ]);
 
   public searchText = '';
 
@@ -311,7 +313,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
    * desktop-only for free.
    */
   public get tableColumns(): string[] {
-    return ['select', ...this.displayedColumns];
+    return ['select', ...this.displayedColumns()];
   }
 
   private readonly VIEW_MODE_KEY = 'print_list_view_mode';
@@ -420,7 +422,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
    * suppression; it deliberately does NOT drive what the user sees, because it
    * flips true for requests too short to be worth reporting.
    */
-  public isLoading = false;
+  readonly isLoading = signal(false);
 
   /**
    * Whether this list has ever painted rows.
@@ -486,7 +488,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
    * capped so a 100-per-page view does not paint a screen and a half of grey.
    */
   public skeletonRowCount(): number {
-    return Math.min(this.pageSize || 10, 10);
+    return Math.min(this.pageSize() || 10, 10);
   }
 
   public toggleFilterPanel(): void {
@@ -538,12 +540,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
     // not count against its 200ms delay — otherwise the progress bar would
     // appear while the user was still typing, before a request even exists.
     const debouncedFilterUpdate = debounce(() => {
-      this.currentPage = 1;
+      this.currentPage.set(1);
       this.updateFilter();
     }, 400);
 
     this.debouncedUpdateFilter = () => {
-      this.isLoading = true;
+      this.isLoading.set(true);
       debouncedFilterUpdate();
     };
 
@@ -626,7 +628,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       const pagedResponse: PagedList<PrintSummary> = data.printList;
       this.handlePagedList(pagedResponse);
 
-      this.printers = data.printers;
+      this.printers.set(data.printers);
       this.filaments = data.filaments;
 
       this.filterByFilaments.set(
@@ -671,20 +673,20 @@ export class PrintListComponent implements OnInit, OnDestroy {
       Array.isArray(columns) &&
       columns.every((entry) => typeof entry === 'string')
     ) {
-      this.displayedColumns = columns;
+      this.displayedColumns.set(columns);
     } else {
       // Initialize with defaults for size;
       if (this.mobileQuery.matches) {
-        this.displayedColumns = [
+        this.displayedColumns.set([
           'image',
           'title',
           'printer',
           'start-date',
           'status',
           'more',
-        ];
+        ]);
       } else {
-        this.displayedColumns = [
+        this.displayedColumns.set([
           'image',
           'title',
           'printer',
@@ -694,12 +696,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
           'filamentSummary',
           'commentCount',
           'more',
-        ];
+        ]);
       }
 
       localStorage.setItem(
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
-        JSON.stringify(this.displayedColumns)
+        JSON.stringify(this.displayedColumns())
       );
     }
 
@@ -717,21 +719,21 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public pageChange(pageEvent: PageEvent) {
-    this.currentPage = pageEvent.pageIndex + 1;
-    this.pageSize = pageEvent.pageSize;
+    this.currentPage.set(pageEvent.pageIndex + 1);
+    this.pageSize.set(pageEvent.pageSize);
 
     this.updateFilter();
   }
 
   private handlePagedList(response: PagedList<PrintSummary>) {
-    this.prints = response.items;
+    this.prints.set(response.items);
     // Reached from the resolver on first activation and from every refetch, so
     // this is the one place that knows rows have actually been painted.
     this.hasLoadedOnce.set(true);
 
-    this.currentPage = response.paging.currentPage;
-    this.pageSize = response.paging.pageSize;
-    this.totalCount = response.paging.totalCount;
+    this.currentPage.set(response.paging.currentPage);
+    this.pageSize.set(response.paging.pageSize);
+    this.totalCount.set(response.paging.totalCount);
 
     this.printListLoaded = true;
     this.syncAddPrinterPrompt();
@@ -744,7 +746,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private emptyStateShowsPrinterGuidance(): boolean {
     return (
       this.hasPrinters() === false &&
-      this.totalCount === 0 &&
+      this.totalCount() === 0 &&
       this.activeFilterCount() === 0 &&
       // Trimmed to agree with PrintEmptyStateComponent.hasSearch(), otherwise
       // whitespace-only search text shows the empty state and the toast.
@@ -819,13 +821,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.sortDirection =
       sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc;
 
-    this.currentPage = 1;
+    this.currentPage.set(1);
 
     this.updateFilter();
   }
 
   public resetFilters() {
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.searchText = '';
     this.filterByStatus.set(null);
     this.filterByPrinterIds.set([]);
@@ -847,16 +849,16 @@ export class PrintListComponent implements OnInit, OnDestroy {
    * have since scrolled off the current page.
    */
   public updateFilter() {
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.loadingIndicator.start();
 
-    localStorage.setItem('print_list_page_size', this.pageSize.toString(10));
+    localStorage.setItem('print_list_page_size', this.pageSize().toString(10));
 
     return this.router
       .navigate(['.'], {
         queryParams: {
-          pageNumber: this.currentPage,
-          pageSize: this.pageSize,
+          pageNumber: this.currentPage(),
+          pageSize: this.pageSize(),
           searchText: this.searchText || '',
           filterByStatus: this.filterByStatus(),
           filterByPrinterId: this.filterByPrinterIds(),
@@ -877,7 +879,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         // segments only, so a query-param navigation never re-runs it. It
         // populates first activation; every refetch after that is this call.
         if (this.viewMode !== 'list') {
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.loadingIndicator.stop();
           return;
         }
@@ -886,8 +888,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
         this.printSearchSubscription = this.printService
           .getPrintSummaries(
-            this.currentPage,
-            this.pageSize,
+            this.currentPage(),
+            this.pageSize(),
             this.searchText || '',
             this.filterByStatus(),
             this.filterByPrinterIds(),
@@ -906,13 +908,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
           .subscribe(
             (prints) => {
               this.handlePagedList(prints);
-              this.isLoading = false;
+              this.isLoading.set(false);
             },
             () => {
               // A failed first load leaves the list empty, so the NEXT attempt
               // is still a first paint — hasLoadedOnce is only set on success,
               // in handlePagedList.
-              this.isLoading = false;
+              this.isLoading.set(false);
             }
           );
       });
@@ -987,14 +989,14 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     const subscription = onSelectionChange.subscribe((selectedColumns) => {
       // Always add the 'more' column at the end
-      this.displayedColumns = [
+      this.displayedColumns.set([
         ...selectedColumns.filter((col) => col !== 'more'),
         'more',
-      ];
+      ]);
 
       localStorage.setItem(
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
-        JSON.stringify(this.displayedColumns)
+        JSON.stringify(this.displayedColumns())
       );
     });
 
@@ -1007,7 +1009,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         allPossibleColumns: this.allPossibleColumns.filter(
           (column) => column.key !== 'more'
         ),
-        currentColumns: this.displayedColumns,
+        currentColumns: this.displayedColumns(),
         defaultColumns: [
           'image',
           'title',
@@ -1027,7 +1029,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       subscription.unsubscribe();
 
       this.loggingService.logEvent('PrintListLayoutChanged', {
-        columns: JSON.stringify(this.displayedColumns),
+        columns: JSON.stringify(this.displayedColumns()),
       });
     });
   }
@@ -1040,11 +1042,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public changeStatus(id: number, newStatus: PrintStatus) {
     this.printService.updatePrintStatus(id, newStatus).subscribe(() => {
       this.toastrService.success('Status Updated.', 'Success');
-      const print = this.prints.find((p) => p.id === id);
-
-      if (print) {
-        print.status = newStatus;
-      }
+      this.prints.update((prints) =>
+        prints.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
+      );
     });
   }
 
@@ -1330,7 +1330,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.filterByFilaments.update((fs) => [...fs, filament]);
           }
         }
-        this.currentPage = 1;
+        this.currentPage.set(1);
         this.updateFilter();
       }
     });
@@ -1343,7 +1343,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.filterByFilaments.update((fs) =>
       fs.filter((f) => f.id !== filament.id)
     );
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.updateFilter();
   }
 

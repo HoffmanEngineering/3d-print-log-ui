@@ -85,7 +85,7 @@
           <mat-select
             [ngModel]="filterByStatus()"
             (ngModelChange)="
-              filterByStatus.set($event); currentPage = 1; updateFilter()
+              filterByStatus.set($event); currentPage.set(1); updateFilter()
             "
           >
             <mat-option [value]="-1">All</mat-option>
@@ -109,11 +109,11 @@
           <mat-select
             [ngModel]="filterByPrinterIds()"
             (ngModelChange)="
-              filterByPrinterIds.set($event); currentPage = 1; updateFilter()
+              filterByPrinterIds.set($event); currentPage.set(1); updateFilter()
             "
             multiple
           >
-            @for (printer of printers; track printer) {
+            @for (printer of printers(); track printer) {
               <mat-option [value]="printer.id">
                 <app-printer-avatar
                   [printerId]="printer.id"
@@ -177,8 +177,8 @@
            viewport, where a selection made by long-pressing a card can still reach it
            after scrolling. -->
       <app-print-bulk-action-bar
-        [printers]="printers"
-        [pagePrints]="prints"
+        [printers]="printers()"
+        [pagePrints]="prints()"
         (batchCompleted)="onBulkActionCompleted()"
       />
     }
@@ -239,7 +239,7 @@
             [count]="skeletonRowCount()"
           />
         } @else {
-          @for (print of prints; track print.id) {
+          @for (print of prints(); track print.id) {
             <!-- hasSelection() doubles as "selection mode": a long press selects the
                first card and turns the mode on, taps toggle from then on, and
                clearing the last one turns it back off. No second flag to keep in
@@ -286,7 +286,7 @@
         [attr.aria-busy]="showRefreshing() ? 'true' : null"
         [attr.aria-live]="showSkeleton() ? 'off' : 'polite'"
         mat-table
-        [dataSource]="prints"
+        [dataSource]="prints()"
         matSort
         (matSortChange)="sortData($event)"
         [matSortDisableClear]="true"
@@ -294,10 +294,10 @@
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-cell">
             <mat-checkbox
-              [checked]="bulkActions.isAllOnPageSelected(prints)"
-              [indeterminate]="bulkActions.isIndeterminate(prints)"
+              [checked]="bulkActions.isAllOnPageSelected(prints())"
+              [indeterminate]="bulkActions.isIndeterminate(prints())"
               [disabled]="bulkActions.isRunning()"
-              (change)="bulkActions.toggleSelectAllOnPage(prints)"
+              (change)="bulkActions.toggleSelectAllOnPage(prints())"
               aria-label="Select all prints on this page"
               matTooltip="Select all prints on this page"
               data-cy-select-all-prints
@@ -733,7 +733,7 @@
          where the minimum dwell keeps a skeleton or progress bar on screen for
          up to another 400ms — rendering "no prints found" beside a running
          indicator would contradict it. -->
-    @if (!isLoading && !isBusy() && totalCount === 0) {
+    @if (!isLoading() && !isBusy() && totalCount() === 0) {
       <app-print-empty-state
         [activeFilterCount]="activeFilterCount()"
         [searchText]="searchText"
@@ -743,9 +743,9 @@
       />
     }
     <mat-paginator
-      [pageIndex]="currentPage - 1"
-      [length]="totalCount"
-      [pageSize]="pageSize"
+      [pageIndex]="currentPage() - 1"
+      [length]="totalCount()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       (page)="pageChange($event)"
     >

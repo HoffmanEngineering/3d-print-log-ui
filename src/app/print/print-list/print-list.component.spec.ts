@@ -127,6 +127,7 @@ describe('PrintListComponent', () => {
     mockPrintService = jasmine.createSpyObj<PrintService>('PrintService', [
       'deletePrint',
       'getPrintSummaries',
+      'updatePrintStatus',
     ]);
     mockPrintService.getPrintSummaries.and.returnValue(
       of(mockPrintPagedResult)
@@ -586,7 +587,7 @@ describe('PrintListComponent', () => {
       );
 
       expect(component.isBusy()).toBeFalse();
-      expect(component.isLoading).toBeFalse();
+      expect(component.isLoading()).toBeFalse();
     });
   });
 
@@ -713,7 +714,7 @@ describe('PrintListComponent', () => {
 
     it('should always render the select column first, ahead of the configured columns', () => {
       fixture.detectChanges();
-      component.displayedColumns = ['title', 'status', 'more'];
+      component.displayedColumns.set(['title', 'status', 'more']);
 
       expect(component.tableColumns).toEqual([
         'select',
@@ -858,9 +859,8 @@ describe('PrintListComponent', () => {
       }) as unknown as PrintSummary;
 
     const rowsOnScreen = (): void => {
-      component.prints = [rowFor(1), rowFor(2)];
-      component.totalCount = 2;
-      fixture.changeDetectorRef.markForCheck();
+      component.prints.set([rowFor(1), rowFor(2)]);
+      component.totalCount.set(2);
       fixture.detectChanges();
     };
 
@@ -880,7 +880,6 @@ describe('PrintListComponent', () => {
       await new Promise((resolve) =>
         setTimeout(resolve, DEFERRED_SKELETON_DELAY_MS + 30)
       );
-      fixture.changeDetectorRef.markForCheck();
       fixture.detectChanges();
     };
 
@@ -888,7 +887,6 @@ describe('PrintListComponent', () => {
       await new Promise((resolve) =>
         setTimeout(resolve, DEFERRED_SKELETON_MIN_VISIBLE_MS + 30)
       );
-      fixture.changeDetectorRef.markForCheck();
       fixture.detectChanges();
     };
 
@@ -953,7 +951,7 @@ describe('PrintListComponent', () => {
 
     it('shows no skeleton once the results have landed', () => {
       fixture.detectChanges();
-      component.isLoading = false;
+      component.isLoading.set(false);
       fixture.detectChanges();
 
       expect(
@@ -966,10 +964,7 @@ describe('PrintListComponent', () => {
     // suppressed through the pre-skeleton window too.
     it('suppresses the empty state while loading', () => {
       fixture.detectChanges();
-      component.isLoading = true;
-      // Plain-field mutations do not mark the view dirty in the zoneless test
-      // harness, so the embedded @if block would not be refreshed.
-      fixture.changeDetectorRef.markForCheck();
+      component.isLoading.set(true);
       fixture.detectChanges();
 
       expect(
@@ -1001,10 +996,9 @@ describe('PrintListComponent', () => {
       // An HttpClient response observable completes after its single emission,
       // and completion is what releases the refcounted indicator.
       pending.complete();
-      fixture.changeDetectorRef.markForCheck();
       fixture.detectChanges();
 
-      expect(component.isLoading).toBeFalse();
+      expect(component.isLoading()).toBeFalse();
       expect(component.isBusy()).toBeTrue();
       expect(
         fixture.debugElement.query(By.css('app-print-empty-state'))
@@ -1036,8 +1030,41 @@ describe('PrintListComponent', () => {
       pending.complete();
     });
 
+    it('shows the next page once it arrives', async () => {
+      fixture.detectChanges();
+      rowsOnScreen();
+
+      const pending = pendingRefetch();
+      await fixture.whenStable();
+      pending.next({
+        items: [rowFor(7)],
+        paging: { currentPage: 2, pageSize: 10, totalCount: 11, totalPages: 2 },
+      });
+      pending.complete();
+      fixture.detectChanges();
+
+      const text = (fixture.nativeElement as HTMLElement).textContent;
+      expect(text).toContain('Print 7');
+      expect(text).not.toContain('Print 2');
+    });
+
+    it('shows a changed status once the server confirms it', () => {
+      fixture.detectChanges();
+      rowsOnScreen();
+      const updated = new Subject<void>();
+      mockPrintService.updatePrintStatus.and.returnValue(updated as never);
+
+      component.changeStatus(1, PrintStatus.Failed);
+      updated.next();
+      fixture.detectChanges();
+
+      const firstRow = fixture.debugElement.query(By.css('tr[mat-row]'))
+        .nativeElement as HTMLElement;
+      expect(firstRow.textContent).toContain('Failed');
+    });
+
     it('caps the placeholder count so a 100-per-page view is not a wall of grey', () => {
-      component.pageSize = 100;
+      component.pageSize.set(100);
       expect(component.skeletonRowCount()).toBe(10);
     });
   });

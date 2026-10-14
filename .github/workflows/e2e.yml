@@ -11,7 +11,11 @@ on:
         default: 'main'
   pull_request:
     branches: [main]
-    types: [labeled, synchronize]
+    # `opened` is here only so every PR reports an `e2e` check, which lets the
+    # ruleset require it. Without it, a PR that is never labelled and never pushed
+    # to again reports nothing, and a required check that never reports blocks the
+    # merge forever. The job's own `if` makes an `opened` run a skip.
+    types: [opened, reopened, labeled, synchronize]
 
 concurrency:
   # The event name is part of the group so a manual dispatch on main cannot
@@ -22,10 +26,11 @@ concurrency:
   # cancel an in-flight suite on the same PR if it shared the group. Dependabot opens
   # its PRs with `dependencies` and `run-e2e` together, so the two `labeled` events
   # race and the irrelevant one could kill the real run. Those runs get a group of
-  # their own instead.
+  # their own instead, and so does `opened`, which only ever skips.
   group: >-
-    ${{ github.event.action == 'labeled' && github.event.label.name != 'run-e2e'
-    && format('e2e-ignored-label-{0}', github.run_id)
+    ${{ (github.event.action == 'opened'
+    || (github.event.action == 'labeled' && github.event.label.name != 'run-e2e'))
+    && format('e2e-skip-only-{0}', github.run_id)
     || format('e2e-{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: true
 
@@ -38,18 +43,32 @@ permissions:
 
 jobs:
   e2e:
+    # The ruleset requires the check named `e2e`. A run for an unrelated label
+    # always skips, and under that name its newer skipped check would replace a
+    # failed suite run on the same commit and let the PR merge. So it reports
+    # under a name nothing requires.
+    name: >-
+      ${{ github.event.action == 'labeled' && github.event.label.name != 'run-e2e'
+      && 'e2e (label ignored)' || 'e2e' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # Two conditions, both needed:
     #  - the PR must currently carry `run-e2e`, so a `synchronize` push to a
     #    labeled PR re-runs the suite;
-    #  - if this run was triggered BY a label, it must have been that label.
-    #    Without the second clause, adding any unrelated label to an already
-    #    labeled PR fires a full e2e run.
+    #  - the event must be one that should run it. A label event must be for
+    #    `run-e2e` itself, or adding any unrelated label to an already labeled PR
+    #    fires a full e2e run. `opened` never runs it: labels set at creation also
+    #    send their own `labeled` events, so running here too would run the suite
+    #    twice. `reopened` does, because reopening sends no label events and its
+    #    check would otherwise stand in for an earlier failed one.
+    # A skipped job still reports a passing `e2e` check, which is what makes it
+    # safe to require.
     if: >
       github.event_name != 'pull_request' ||
       (contains(github.event.pull_request.labels.*.name, 'run-e2e') &&
-       (github.event.action != 'labeled' || github.event.label.name == 'run-e2e'))
+       (github.event.action == 'synchronize' ||
+        github.event.action == 'reopened' ||
+        (github.event.action == 'labeled' && github.event.label.name == 'run-e2e')))
 
     services:
       mssql:

@@ -22,11 +22,13 @@ const center = (b: Box) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
 /** Window placement shared by both UI shots. */
 function useWindow() {
   const { portrait, width, height } = useLayout();
-  const w = portrait ? width * 0.94 : width * 0.6;
+  // 9:16: full-width window under the headline. 16:9: window on the right, type on the left.
+  const w = portrait ? width * 0.94 : width * 0.58;
+  const h = (w / 1280) * (800 + 44);
   return {
     w,
-    top: portrait ? height * 0.3 : height * 0.24,
-    left: (width - w) / 2,
+    top: portrait ? height * 0.3 : (height - h) / 2,
+    left: portrait ? (width - w) / 2 : width * 0.385,
     portrait,
   };
 }
@@ -80,7 +82,7 @@ const Typing: React.FC<{
 export const AddIt: React.FC = () => {
   const frame = useCurrentFrame();
   const { w, top, left } = useWindow();
-  const { headlineY } = useLayout();
+  const { headlineY, besideX } = useLayout();
   const add = center(listTargets.addButton);
   const cut = 58;
 
@@ -95,7 +97,12 @@ export const AddIt: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ background: COLOR.offWhite }}>
-      <Headline lines={['Add it.']} color={COLOR.graphite} y={headlineY} />
+      <Headline
+        lines={['Add it.']}
+        color={COLOR.graphite}
+        x={besideX}
+        y={besideX ? 0.5 : headlineY}
+      />
       <div style={{ position: 'absolute', left, top }}>
         {list ? (
           <BrowserWindow
@@ -152,7 +159,7 @@ export const PrintIt: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { w, top, left } = useWindow();
-  const { headlineY } = useLayout();
+  const { headlineY, besideX } = useLayout();
   const btn = center(detailTargets.printQrButton);
   const printBtn = center(dialogTargets.printButton);
   const label = center(dialogTargets.label);
@@ -218,7 +225,8 @@ export const PrintIt: React.FC = () => {
       <Headline
         lines={['Print it.']}
         color={COLOR.graphite}
-        y={headlineY}
+        x={besideX}
+        y={besideX ? 0.5 : headlineY}
         until={pushFrom + 10}
       />
     </AbsoluteFill>

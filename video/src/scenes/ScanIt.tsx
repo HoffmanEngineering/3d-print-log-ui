@@ -73,10 +73,10 @@ const Brackets: React.FC<{ frame: number }> = ({ frame }) => {
 export const ScanIt: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { portrait, width, height, headlineY } = useLayout();
+  const { portrait, width, height, headlineY, besideX } = useLayout();
   const cut = 52;
   const scanning = frame < cut;
-  const phoneH = portrait ? height * 0.66 : height * 0.8;
+  const phoneH = portrait ? height * 0.66 : height * 0.82;
   const rise = spring({ frame, fps, config: SPRING_UI });
   const rowGlow = spring({ frame: frame - cut - 6, fps, config: SPRING_UI });
   // The viewfinder is rendered at the feed's on-screen size times 2, so it stays sharp.
@@ -86,20 +86,22 @@ export const ScanIt: React.FC = () => {
       <Headline
         lines={['Scan it.']}
         color={COLOR.graphite}
-        y={headlineY}
+        x={besideX}
+        y={besideX ? 0.5 : headlineY}
         until={cut}
       />
       <Headline
         lines={['Done.']}
         color={COLOR.graphite}
-        y={headlineY}
+        x={besideX}
+        y={besideX ? 0.5 : headlineY}
         from={cut}
       />
       <div
         style={{
           position: 'absolute',
-          left: '50%',
-          top: portrait ? height * 0.27 : height * 0.16,
+          left: portrait ? '50%' : '62%',
+          top: portrait ? height * 0.27 : height * 0.1,
           transform: `translateX(-50%) translateY(${(1 - rise) * height * 0.04}px) scale(${1 + frame * 0.0006})`,
           transformOrigin: '50% 30%',
         }}

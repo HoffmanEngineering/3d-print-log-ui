@@ -61,7 +61,7 @@ export const LabelHero: React.FC = () => {
 export const StickIt: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { width, height, portrait, headlineY } = useLayout();
+  const { width, height, portrait, headlineY, besideX } = useLayout();
   const map = useLabelTexture();
   const land = 34;
   const t = spring({
@@ -97,10 +97,11 @@ export const StickIt: React.FC = () => {
           rimColor="#ffd2b8"
         />
         <CameraRig
+          shift={portrait ? 0 : 0.18}
           position={[
             1.1 + pull * 0.5,
             1.0 + spoolY + pull * 0.2,
-            (portrait ? 4.6 : 3.0) + pull * 1.2,
+            (portrait ? 4.6 : 3.9) + pull * 1.2,
           ]}
           target={[0, 0.25 + spoolY + (portrait ? 0.55 : 0) - pull * 0.3, 0]}
           fov={30}
@@ -118,7 +119,12 @@ export const StickIt: React.FC = () => {
           />
         </Spool>
       </ThreeCanvas>
-      <Headline lines={['Stick it on.']} from={land + 4} y={headlineY} />
+      <Headline
+        lines={['Stick it on.']}
+        from={land + 4}
+        x={besideX}
+        y={besideX ? 0.5 : headlineY}
+      />
     </AbsoluteFill>
   );
 };
@@ -127,7 +133,7 @@ export const StickIt: React.FC = () => {
 export const LoadIt: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { width, height, portrait, headlineY } = useLayout();
+  const { width, height, portrait, headlineY, besideX } = useLayout();
   const map = useLabelTexture();
   const slide = spring({
     frame: frame - 4,
@@ -140,14 +146,15 @@ export const LoadIt: React.FC = () => {
   const orbit = interpolate(frame, [0, 105], [0, 1]);
   const cam: [number, number, number] = portrait
     ? [8.6 - orbit * 0.8, 3.9, 9.4 + orbit * 0.5]
-    : [8.4 - orbit * 0.8, 3.6, 7.6 + orbit * 0.5];
+    : [8.9 - orbit * 0.8, 3.9, 8.0 + orbit * 0.5];
   return (
     <AbsoluteFill style={{ background: COLOR.black }}>
       <ThreeCanvas width={width} height={height}>
         <Studio envIntensity={0.9} keyIntensity={2.6} rimIntensity={3.5} />
         <CameraRig
+          shift={portrait ? 0 : 0.16}
           position={cam}
-          target={portrait ? [1.1, 2.0, 0] : [0.8, 1.7, 0]}
+          target={portrait ? [1.1, 2.0, 0] : [0.7, 1.9, 0]}
           fov={portrait ? 40 : 32}
         />
         <StageFloor />
@@ -165,7 +172,12 @@ export const LoadIt: React.FC = () => {
           </Spool>
         </group>
       </ThreeCanvas>
-      <Headline lines={['Load it up.']} from={8} y={headlineY} />
+      <Headline
+        lines={['Load it up.']}
+        from={8}
+        x={besideX}
+        y={besideX ? 0.5 : headlineY}
+      />
     </AbsoluteFill>
   );
 };
@@ -226,12 +238,12 @@ export const ViewfinderScene: React.FC<{ width: number; height: number }> = ({
 /** Shot 10: macro on the hotend, printing in the spool that was just scanned. */
 export const NozzleMacro: React.FC = () => {
   const frame = useCurrentFrame();
-  const { width, height, portrait, headlineY } = useLayout();
+  const { width, height, portrait, headlineY, besideX } = useLayout();
   const tool = toolheadPose(frame);
   const tip = { x: tool.x, y: tool.y + NOZZLE_TIP_Y, z: tool.z };
   // Camera rides with the toolhead, low and close, drifting slowly around the nozzle.
   const a = 0.5 + frame * 0.004;
-  const dist = portrait ? 2.5 : 1.3;
+  const dist = portrait ? 2.5 : 2.1;
   return (
     <AbsoluteFill style={{ background: COLOR.black }}>
       <ThreeCanvas width={width} height={height}>
@@ -242,6 +254,7 @@ export const NozzleMacro: React.FC = () => {
           rimColor="#ffd2b8"
         />
         <CameraRig
+          shift={portrait ? 0 : 0.2}
           position={[
             tip.x + Math.sin(a) * dist,
             tip.y + 0.1,
@@ -256,7 +269,8 @@ export const NozzleMacro: React.FC = () => {
         lines={['Right filament.', 'Every time.']}
         from={8}
         entry="rise"
-        y={portrait ? 0.1 : headlineY}
+        x={besideX}
+        y={portrait ? 0.1 : 0.5}
       />
     </AbsoluteFill>
   );

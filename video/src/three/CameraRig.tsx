@@ -9,14 +9,31 @@ export const CameraRig: React.FC<{
   position: V3;
   target: V3;
   fov?: number;
-}> = ({ position, target, fov = 30 }) => {
+  /**
+   * Slides the subject sideways in frame, as a fraction of the frame width (positive = right),
+   * without changing perspective: a lens shift, not a camera move. Used to make room for type
+   * beside the subject in the 16:9 cut.
+   */
+  shift?: number;
+}> = ({ position, target, fov = 30, shift = 0 }) => {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
   useLayoutEffect(() => {
     camera.position.set(...position);
     camera.fov = fov;
     camera.near = 0.05;
     camera.far = 100;
     camera.lookAt(new THREE.Vector3(...target));
+    if (shift)
+      camera.setViewOffset(
+        size.width,
+        size.height,
+        -shift * size.width,
+        0,
+        size.width,
+        size.height
+      );
+    else camera.clearViewOffset();
     camera.updateProjectionMatrix();
   });
   return null;

@@ -41,7 +41,8 @@ export const TitleCard: React.FC = () => {
       <Headline
         lines={['Spool Labels']}
         color={COLOR.graphite}
-        y={0.4 + (size / height) * 0.5 + 0.075}
+        // Below the icon, clear of it in either aspect.
+        y={0.4 + (size / height) * 0.5 + (height > width ? 0.075 : 0.14)}
         from={4}
         entry="fade"
         size={0.11}

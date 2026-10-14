@@ -38,7 +38,7 @@ export const HookLineup: React.FC = () => {
         <CameraRig
           position={cam}
           target={
-            portrait ? [-0.6 - p * 0.8, 0.85, 0] : [-1.2 - p * 0.8, 0.3, 0]
+            portrait ? [-0.6 - p * 0.8, 0.85, 0] : [-1.2 - p * 0.8, 0.75, 0]
           }
           fov={portrait ? 36 : 30}
         />
@@ -61,7 +61,7 @@ export const HookLineup: React.FC = () => {
 export const HookReveal: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { portrait, width, height, headlineY } = useLayout();
+  const { portrait, width, height, headlineY, besideX } = useLayout();
   const t = spring({ frame, fps, config: SPRING_OBJECT });
   const ry = interpolate(t, [0, 1], [-1.6, -0.85]) + frame * 0.003;
   const y = interpolate(t, [0, 1], [-0.45, 0]);
@@ -80,6 +80,7 @@ export const HookReveal: React.FC = () => {
           rimColor="#ffd2b8"
         />
         <CameraRig
+          shift={portrait ? 0 : 0.2}
           position={[0.4, 0.5, camZ]}
           target={[0, portrait ? 0.55 : -0.1, 0]}
           fov={30}
@@ -92,9 +93,10 @@ export const HookReveal: React.FC = () => {
       </ThreeCanvas>
       <Headline
         lines={['Never guess', 'again.']}
+        x={besideX}
         from={14}
         entry="rise"
-        y={headlineY}
+        y={besideX ? 0.5 : headlineY}
       />
     </AbsoluteFill>
   );

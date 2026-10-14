@@ -20,6 +20,11 @@ type Props = {
   color?: string;
   /** Vertical centre of the block, as a fraction of frame height. */
   y?: number;
+  /**
+   * Horizontal centre of the block, as a fraction of frame width. Leave unset for full-width
+   * centred type; set it to put type beside a device in the 16:9 cut.
+   */
+  x?: number;
   /** Font size as a fraction of the frame's short side. */
   size?: number;
   weight?: 500 | 600 | 700;
@@ -39,6 +44,7 @@ export const Headline: React.FC<Props> = ({
   entry = 'cut',
   color = COLOR.white,
   y = 0.18,
+  x,
   size = 0.1,
   weight = 600,
   eyebrow,
@@ -65,15 +71,15 @@ export const Headline: React.FC<Props> = ({
       <div
         style={{
           position: 'absolute',
-          left: 0,
-          right: 0,
+          left: x === undefined ? 0 : width * (x - 0.2),
+          width: x === undefined ? width : width * 0.4,
           top: height * y,
           transform: `translate(0, -50%) translateY(${translateY}px) scale(${scale})`,
           opacity,
-          textAlign: 'center',
+          textAlign: x === undefined ? 'center' : 'left',
           fontFamily: FONT,
           color,
-          padding: `0 ${width * 0.06}px`,
+          padding: x === undefined ? `0 ${width * 0.06}px` : 0,
         }}
       >
         {eyebrow ? (

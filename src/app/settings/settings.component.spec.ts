@@ -8,10 +8,13 @@ import { SettingsComponent } from './settings.component';
 import { ThemeService, ThemeMode } from '../core/services/theme.service';
 import { SharedModule } from '../shared/shared.module';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { AuthService, UserProfileInfo } from '../core/services/auth.service';
 import { UserService } from '../core/services/user.service';
-import { UserSettingService } from '../core/services/user-setting.service';
+import {
+  UserSetting,
+  UserSettingService,
+} from '../core/services/user-setting.service';
 import { PrintService } from '../core/services/print.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { ToastrService } from 'ngx-toastr';
@@ -214,7 +217,7 @@ describe('SettingsComponent', () => {
       fixture.detectChanges();
 
       expect(() => userProfile$.next(null)).not.toThrow();
-      expect(component.deactivateHasBeenClicked).toBeFalse();
+      expect(component.deactivateHasBeenClicked()).toBeFalse();
     });
   });
 
@@ -322,8 +325,8 @@ describe('SettingsComponent', () => {
       await fixture.whenStable();
       await fixture.whenStable();
 
-      expect(component.printCompletedPush).toBeTrue();
-      expect(component.printFailedPush).toBeFalse();
+      expect(component.printCompletedPush()).toBeTrue();
+      expect(component.printFailedPush()).toBeFalse();
     });
 
     it('writes the print-failed setting when that toggle changes', async () => {
@@ -357,7 +360,7 @@ describe('SettingsComponent', () => {
       expect(
         fixture.nativeElement.querySelector('[data-testid="push-achievement"]')
       ).not.toBeNull();
-      expect(component.achievementPush).toBeFalse();
+      expect(component.achievementPush()).toBeFalse();
 
       await component.onPushPreferenceChanged(
         UserSettingType.Push_Achievement,
@@ -436,7 +439,59 @@ describe('SettingsComponent', () => {
       // Asserted on the field, not the DOM: re-running change detection after this
       // async state change trips NG0100 in the harness. That the field drives the
       // warning's visibility is covered by the granted/denied/default render tests above.
-      expect(component.pushPermissionGranted).toBeTrue();
+      expect(component.pushPermissionGranted()).toBeTrue();
+    });
+  });
+
+  describe('once a response arrives', () => {
+    const buttons = () =>
+      Array.from(
+        (
+          fixture.nativeElement as HTMLElement
+        ).querySelectorAll<HTMLButtonElement>('button')
+      );
+    const button = (label: string) =>
+      buttons().find((b) => b.textContent!.trim() === label);
+
+    it('drops the Save button once the setting is saved', () => {
+      const saved = new Subject<UserSetting>();
+      const settings = TestBed.inject(
+        UserSettingService
+      ) as jasmine.SpyObj<UserSettingService>;
+      settings.addUserSetting.and.returnValue(saved);
+      fixture.detectChanges();
+
+      const diameter = (
+        fixture.nativeElement as HTMLElement
+      ).querySelector<HTMLInputElement>('#default-filament-diameter-mm')!;
+      diameter.value = '1.75';
+      diameter.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      button('Save Default Filament Diameter')!.click();
+      fixture.detectChanges();
+
+      saved.next({ id: 9, value: '1.75' } as UserSetting);
+      fixture.detectChanges();
+
+      expect(button('Save Default Filament Diameter')).toBeUndefined();
+    });
+
+    it('re-enables Export when the export fails', () => {
+      const exported = new Subject<Blob>();
+      const prints = TestBed.inject(
+        PrintService
+      ) as jasmine.SpyObj<PrintService>;
+      prints.exportAllPrintsAsCsv.and.returnValue(exported);
+      fixture.detectChanges();
+
+      button('Export')!.click();
+      fixture.detectChanges();
+      expect(button('Export')!.disabled).withContext('exporting').toBeTrue();
+
+      exported.error(new Error('500'));
+      fixture.detectChanges();
+
+      expect(button('Export')!.disabled).toBeFalse();
     });
   });
 });

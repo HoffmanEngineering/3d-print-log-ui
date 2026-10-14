@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from 'src/app/core/services/auth.service';
 
@@ -7,6 +7,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss'],
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserProfileComponent {
   auth = inject(AuthService);

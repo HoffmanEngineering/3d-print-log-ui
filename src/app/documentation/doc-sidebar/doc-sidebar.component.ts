@@ -1,4 +1,10 @@
-import { Component, PLATFORM_ID, inject, output } from '@angular/core';
+import {
+  Component,
+  PLATFORM_ID,
+  inject,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { INavData } from 'src/app/shared/sidebar/types';
 import { DOC_PAGES, DocManifestPage } from '../generated/docs-manifest';
@@ -19,6 +25,7 @@ import {
   templateUrl: './doc-sidebar.component.html',
   styleUrls: ['./doc-sidebar.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocSidebarComponent {
   public navItems: INavData[] = buildNavItems();

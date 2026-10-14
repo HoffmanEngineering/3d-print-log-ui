@@ -1,0 +1,108 @@
+// The theme is Material 2 (src/styles/theme.scss): colours come from the --app-* tokens and
+// --mat-divider-color it emits, never from --mat-sys-* (see AGENTS.md).
+
+:host {
+  display: block;
+}
+
+.spoolman {
+  // Lays out by the section's own width: it sits in a card narrower than the window.
+  container-type: inline-size;
+  margin: 24px 0 8px;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  font-weight: 500;
+  text-align: start;
+}
+
+.hint,
+.meta {
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+.hint {
+  margin: 0 0 12px;
+}
+
+.note,
+.warning {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background-color: var(--app-surface-container);
+  font-size: 0.875rem;
+
+  mat-icon {
+    flex: none;
+    margin-top: 1px;
+  }
+}
+
+.warning {
+  font-weight: 500;
+  color: var(--app-error-text);
+}
+
+.config,
+.limit {
+  margin: 0 0 16px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--mat-divider-color);
+  border-bottom: 1px solid var(--mat-divider-color);
+}
+
+pre {
+  margin: 0 0 8px;
+  padding: 12px;
+  border-radius: 4px;
+  background-color: var(--app-surface-container);
+  color: var(--app-text-primary);
+  // A one-line URL with a long token: wrap it rather than scroll the card sideways.
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+}
+
+.steps {
+  margin: 12px 0;
+  padding-inline-start: 20px;
+}
+
+.config > button[mat-raised-button] {
+  margin-bottom: 8px;
+}
+
+.connection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--mat-divider-color);
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

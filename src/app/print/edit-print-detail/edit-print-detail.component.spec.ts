@@ -25,7 +25,7 @@ import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
@@ -783,10 +783,69 @@ describe('EditPrintDetailComponent', () => {
       const router = TestBed.inject(Router);
       spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
 
-      component.saving = true;
+      component.saving.set(true);
       component['handleSaveSuccess']({ id: 1 } as any);
 
-      expect(component.saving).toBe(false);
+      expect(component.saving()).toBe(false);
+    });
+  });
+
+  describe('once a response arrives', () => {
+    it('re-enables Submit when the save fails', () => {
+      const submit = () =>
+        (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+          '#edit-print-submit-btn'
+        )!;
+      component.saving.set(true);
+      fixture.detectChanges();
+      expect(submit().disabled).withContext('saving').toBeTrue();
+
+      const logger = TestBed.inject(LoggingService) as unknown as Record<
+        string,
+        unknown
+      >;
+      logger['logTrace'] = jasmine.createSpy('logTrace');
+      component['handleSaveError'](new Error('500'), { id: null } as never);
+      fixture.detectChanges();
+
+      expect(submit().disabled).toBeFalse();
+    });
+
+    it('lists the material loaded in a newly chosen printer', () => {
+      const loaded = new Subject<unknown>();
+      (
+        TestBed.inject(PrinterService) as jasmine.SpyObj<PrinterService>
+      ).getLoadedFilamentForPrinter.and.returnValue(loaded as never);
+      // Choosing a printer also remembers it as the last one used.
+      const settings = TestBed.inject(UserSettingService) as unknown as Record<
+        string,
+        unknown
+      >;
+      settings['addUserSetting'] = jasmine
+        .createSpy('addUserSetting')
+        .and.returnValue(of({}));
+      settings['updateUserSetting'] = jasmine
+        .createSpy('updateUserSetting')
+        .and.returnValue(of({}));
+      component.printForm.get('id')!.setValue(null);
+      component.printForm.get('printerId')!.setValue(2);
+      fixture.detectChanges();
+
+      loaded.next([
+        {
+          id: 'pf-1',
+          filament: {
+            id: 'spool-1',
+            displayName: 'Prusament Galaxy Black',
+            materialType: 'PLA',
+          },
+        },
+      ]);
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Prusament Galaxy Black'
+      );
     });
   });
 
@@ -888,7 +947,7 @@ describe('EditPrintDetailComponent', () => {
       form.onSubmit();
 
       expect(printService.patchPrint).not.toHaveBeenCalled();
-      expect(form.saving).toBeFalse();
+      expect(form.saving()).toBeFalse();
     });
 
     it('clears a field the user emptied', () => {

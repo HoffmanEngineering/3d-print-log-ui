@@ -54,7 +54,6 @@ module.exports = tseslint.config(
     files: [
       'src/app/app.component.ts',
       'src/app/documentation/documentation.component.ts',
-      'src/app/print/edit-print-detail/edit-print-detail.component.ts',
       'src/app/shared/simple-dialog/simple-dialog.component.ts',
     ],
     rules: {

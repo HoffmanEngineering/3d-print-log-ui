@@ -1,10 +1,12 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   OnInit,
   output,
   input,
   linkedSignal,
   inject,
+  signal,
 } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -31,6 +33,7 @@ import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
   templateUrl: './filament-list.component.html',
   styleUrls: ['./filament-list.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilamentListComponent implements OnInit {
   private filamentService = inject(FilamentService);
@@ -38,12 +41,12 @@ export class FilamentListComponent implements OnInit {
 
   public readonly multiSelect = input(false);
 
-  public filaments: FilamentSummary[] = [];
+  readonly filaments = signal<FilamentSummary[]>([]);
   public selectedFilaments = new Map<string, FilamentSummary>();
 
-  public pageSize: number;
-  public currentPage: number;
-  public totalCount: number;
+  readonly pageSize = signal<number | undefined>(undefined);
+  private currentPage: number | undefined;
+  readonly totalCount = signal<number | undefined>(undefined);
 
   public displayedColumns: string[] = [
     'isFavorite',
@@ -106,7 +109,7 @@ export class FilamentListComponent implements OnInit {
 
   public searchText = '';
 
-  public materialCategories: MaterialCategory[] = [];
+  readonly materialCategories = signal<MaterialCategory[]>([]);
 
   public readonly filterByMaterialCategory = input('');
   /** Starts from the parent's category and then follows the filter dropdown. */
@@ -136,10 +139,10 @@ export class FilamentListComponent implements OnInit {
     this.materialCategoryService
       .getMaterialCategories()
       .subscribe((response) => {
-        this.materialCategories = response;
+        this.materialCategories.set(response);
       });
 
-    this.pageSize = defaultPageSize;
+    this.pageSize.set(defaultPageSize);
 
     this.updateFilter();
   }
@@ -158,17 +161,15 @@ export class FilamentListComponent implements OnInit {
   }
 
   public updateFilter() {
-    if (this.pageSize) {
-      localStorage.setItem(
-        'filament_list_page_size',
-        this.pageSize.toString(10)
-      );
+    const pageSize = this.pageSize();
+    if (pageSize) {
+      localStorage.setItem('filament_list_page_size', pageSize.toString(10));
     }
 
     this.filamentService
       .getCurrentUserFilamentSummaries(
         this.currentPage,
-        this.pageSize,
+        pageSize,
         this.sortColumn,
         this.sortDirection,
         this.searchText,
@@ -200,11 +201,11 @@ export class FilamentListComponent implements OnInit {
   }
 
   private handlePagedList(response: PagedList<FilamentSummary>) {
-    this.filaments = response.items;
+    this.filaments.set(response.items);
 
     this.currentPage = response.paging.currentPage;
-    this.pageSize = response.paging.pageSize;
-    this.totalCount = response.paging.totalCount;
+    this.pageSize.set(response.paging.pageSize);
+    this.totalCount.set(response.paging.totalCount);
   }
 
   public getPrinterLabel(filament: FilamentSummary) {
@@ -260,7 +261,11 @@ export class FilamentListComponent implements OnInit {
     this.filamentService
       .changeFavorite(filament.id, newIsFavorite)
       .subscribe((_) => {
-        filament.isFavorite = newIsFavorite;
+        this.filaments.update((filaments) =>
+          filaments.map((f) =>
+            f.id === filament.id ? { ...f, isFavorite: newIsFavorite } : f
+          )
+        );
       });
   }
 }

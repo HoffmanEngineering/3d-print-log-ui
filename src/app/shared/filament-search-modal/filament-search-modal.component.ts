@@ -1,4 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {
   FilamentDetail,
@@ -22,6 +27,7 @@ export type ViewMode = 'list' | 'scanner';
   templateUrl: './filament-search-modal.component.html',
   styleUrls: ['./filament-search-modal.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilamentSearchModalComponent {
   readonly dialogRef = inject(MatDialogRef<FilamentSearchModalComponent>);

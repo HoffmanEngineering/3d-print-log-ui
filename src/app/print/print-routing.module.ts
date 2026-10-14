@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from '../core/guards/auth.guard';
+import { authGuard } from '../core/guards/auth.guard';
 
-import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
+import { pendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { currenciesResolver } from '../core/resolvers/currencies.resolver';
 import {
   currencyNameSettingResolver,
@@ -30,7 +30,7 @@ export const printRoutes: Routes = [
       {
         path: '',
         component: PrintListComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
         resolve: {
           printList: printListResolver,
           printers: currentUserPrinterSummariesResolver,
@@ -46,7 +46,7 @@ export const printRoutes: Routes = [
       {
         path: 'copy/:id',
         component: EditPrintDetailComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
         resolve: {
           print: copyPrintDetailResolver,
           printers: currentUserPrinterSummariesResolver,
@@ -62,7 +62,7 @@ export const printRoutes: Routes = [
           defaultElectricityWattageSetting:
             defaultElectricityWattageSettingResolver,
         },
-        canDeactivate: [PendingChangesGuard],
+        canDeactivate: [pendingChangesGuard],
       },
       {
         path: ':id/edit',
@@ -82,8 +82,8 @@ export const printRoutes: Routes = [
           defaultElectricityWattageSetting:
             defaultElectricityWattageSettingResolver,
         },
-        canActivate: [AuthGuard],
-        canDeactivate: [PendingChangesGuard],
+        canActivate: [authGuard],
+        canDeactivate: [pendingChangesGuard],
       },
       {
         path: 'new/cura',

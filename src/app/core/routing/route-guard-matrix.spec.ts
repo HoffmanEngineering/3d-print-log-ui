@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from '../guards/auth.guard';
+import { authGuard } from '../guards/auth.guard';
 
 // Import the route arrays under test (exported from their routing modules).
 import { appRoutes } from '../../app-routing.module';
@@ -11,7 +11,7 @@ function find(routes: Routes, path: string): Routes[number] | undefined {
   return routes.find((r) => r.path === path);
 }
 function guarded(route?: Routes[number]): boolean {
-  return !!route?.canActivate?.includes(AuthGuard);
+  return !!route?.canActivate?.includes(authGuard);
 }
 
 describe('route guard matrix', () => {

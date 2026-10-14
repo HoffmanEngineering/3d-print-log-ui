@@ -1,35 +1,15 @@
-import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-  UrlTree,
-} from '@angular/router';
-import { isObservable, Observable } from 'rxjs';
+import { CanDeactivateFn } from '@angular/router';
 
 export interface ComponentCanDeactivate {
-  canDeactivate: () => boolean | Observable<boolean>;
+  /** `true` when there is nothing unsaved to lose. */
+  canDeactivate: () => boolean;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
-export class PendingChangesGuard {
-  canDeactivate(
-    component: ComponentCanDeactivate,
-    currentRoute: ActivatedRouteSnapshot,
-    currentState: RouterStateSnapshot,
-    nextState?: RouterStateSnapshot
-  ):
-    | Observable<boolean | UrlTree>
-    | Promise<boolean | UrlTree>
-    | boolean
-    | UrlTree {
-    if (component.canDeactivate()) {
-      return true;
-    } else {
-      return confirm(
-        'You have unsaved changes. Do you want to leave this page and discard your changes?'
-      );
-    }
-  }
-}
+/** Asks before navigating away from a component that has unsaved changes. */
+export const pendingChangesGuard: CanDeactivateFn<ComponentCanDeactivate> = (
+  component
+) =>
+  component.canDeactivate() ||
+  confirm(
+    'You have unsaved changes. Do you want to leave this page and discard your changes?'
+  );

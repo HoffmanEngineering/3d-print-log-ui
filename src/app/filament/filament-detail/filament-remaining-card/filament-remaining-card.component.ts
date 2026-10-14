@@ -16,7 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
  * Read-only summary of how much filament a spool has left.
  *
  * Takes only inputs. It must never reach into the filament form: a false dirty
- * state would trip `PendingChangesGuard` and block navigation off the page.
+ * state would trip `pendingChangesGuard` and block navigation off the page.
  */
 @Component({
   selector: 'app-filament-remaining-card',

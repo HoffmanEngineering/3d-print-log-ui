@@ -328,7 +328,7 @@ export class EditPrintDetailComponent
     this.actualCompletedDateSubscription?.unsubscribe?.();
   }
 
-  canDeactivate(): boolean | Observable<boolean> {
+  canDeactivate(): boolean {
     return !this.printForm.dirty;
   }
 

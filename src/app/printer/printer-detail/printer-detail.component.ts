@@ -140,7 +140,7 @@ export class PrinterDetailComponent
     this.printerCategorySubscription?.unsubscribe?.();
   }
 
-  canDeactivate(): boolean | Observable<boolean> {
+  canDeactivate(): boolean {
     // A navigation this component started itself is never the user abandoning work, so it
     // must not be second-guessed. Without this, rewriting the URL after a create prompts
     // "You have unsaved changes" about the very photos the save is uploading.

@@ -1,3 +1,4 @@
+import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -16,7 +17,6 @@ describe('PrinterConnectionsComponent', () => {
   let fixture: ComponentFixture<PrinterConnectionsComponent>;
   let httpMock: HttpTestingController;
   let dialog: jasmine.SpyObj<MatDialog>;
-  let dialogInstance: { title?: string; body?: string; yesText?: string };
   let confirm: boolean | undefined;
   let toastr: jasmine.SpyObj<ToastrService>;
   let logging: jasmine.SpyObj<LoggingService>;
@@ -42,12 +42,10 @@ describe('PrinterConnectionsComponent', () => {
 
   beforeEach(async () => {
     confirm = true;
-    dialogInstance = {};
     dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
     dialog.open.and.callFake(
       () =>
         ({
-          componentInstance: dialogInstance,
           afterClosed: () => of(confirm),
         }) as any
     );
@@ -162,7 +160,7 @@ describe('PrinterConnectionsComponent', () => {
     ).click();
 
     expect(dialog.open).toHaveBeenCalled();
-    expect(dialogInstance.body).toContain('kept');
+    expect(lastSimpleDialogData(dialog).body).toContain('kept');
     const request = httpMock.expectOne(`${base}/voron-1`);
     expect(request.request.method).toBe('DELETE');
     request.flush(null, { status: 204, statusText: 'No Content' });

@@ -36,7 +36,7 @@ import {
 import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   FilamentPrice,
   FilamentPriceInvalid,
@@ -957,15 +957,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public deletePrint(print: PrintSummary) {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    dialogRef.componentInstance.title = 'Delete?';
-    // eslint-disable-next-line max-len
-    dialogRef.componentInstance.body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
-    dialogRef.componentInstance.yesText = 'Delete';
-    dialogRef.componentInstance.yesColor = 'warn';
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete?',
+        body: `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`,
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
 
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {

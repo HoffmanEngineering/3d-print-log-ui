@@ -48,7 +48,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { todayUtcCivilDate } from 'src/app/core/utils/civil-date';
 import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.component';
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
@@ -275,14 +275,17 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   onPrintDeleted(print: PrintSummary): void {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    dialogRef.componentInstance.title = 'Delete?';
-    dialogRef.componentInstance.body = `Are you sure you want to delete print "${print.title}"?<br /><br />This action cannot be undone.`;
-    dialogRef.componentInstance.yesText = 'Delete';
-    dialogRef.componentInstance.yesColor = 'warn';
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete?',
+        body: `Are you sure you want to delete print "${print.title}"?<br /><br />This action cannot be undone.`,
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
     dialogRef
       .afterClosed()
       .pipe(take(1))
@@ -637,14 +640,17 @@ export class ProjectDetailComponent implements OnInit {
 
   onDeleteProject(): void {
     const p = this.project()!;
-    const confirmRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '450px',
-    });
-    confirmRef.componentInstance.title = 'Delete Project';
-    confirmRef.componentInstance.body = `Are you sure you want to delete <strong>${p.name}</strong>? This cannot be undone.`;
-    confirmRef.componentInstance.yesText = 'Delete Project';
-    confirmRef.componentInstance.yesColor = 'warn';
-    confirmRef.componentInstance.noText = 'Cancel';
+    const confirmRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete Project',
+        body: `Are you sure you want to delete <strong>${p.name}</strong>? This cannot be undone.`,
+        yesText: 'Delete Project',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '450px' }
+    );
 
     confirmRef
       .afterClosed()
@@ -652,14 +658,17 @@ export class ProjectDetailComponent implements OnInit {
       .subscribe((confirmed) => {
         if (!confirmed) return;
 
-        const printsRef = this.dialog.open(SimpleDialogComponent, {
-          maxWidth: '450px',
-        });
-        printsRef.componentInstance.title = 'Delete Prints?';
-        printsRef.componentInstance.body = `Do you also want to delete the prints in this project?`;
-        printsRef.componentInstance.yesText = 'Delete prints too';
-        printsRef.componentInstance.yesColor = 'warn';
-        printsRef.componentInstance.noText = 'Keep prints';
+        const printsRef = openSimpleDialog(
+          this.dialog,
+          {
+            title: 'Delete Prints?',
+            body: `Do you also want to delete the prints in this project?`,
+            yesText: 'Delete prints too',
+            yesColor: 'warn',
+            noText: 'Keep prints',
+          },
+          { maxWidth: '450px' }
+        );
 
         printsRef
           .afterClosed()

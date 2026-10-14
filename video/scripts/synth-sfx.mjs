@@ -223,6 +223,29 @@ const sfx = {
     }
     return [d, 0.6];
   },
+  /** The printer at work: fan hiss under a soft stepper whine that wanders with the moves. */
+  whir() {
+    const len = 2.2,
+      d = buf(len),
+      bp = biquad('bp'),
+      lp = biquad('lp');
+    let phase = 0;
+    for (let i = 0; i < d.length; i++) {
+      const t = i / SR,
+        p = t / len;
+      const f =
+        620 +
+        140 * Math.sin(2 * Math.PI * 0.9 * t) +
+        60 * Math.sin(2 * Math.PI * 2.3 * t);
+      phase += (2 * Math.PI * f) / SR;
+      const fade = Math.min(1, t / 0.15) * Math.min(1, (len - t) / 0.3);
+      d[i] =
+        (lp(rand(), 2400) * 0.35 +
+          bp(Math.sin(phase) + 0.3 * Math.sin(phase * 2), f, 3) * 0.6) *
+        fade;
+    }
+    return [d, 0.5];
+  },
   /** The end card: a deep, clean hit with a high shimmer that rings out. */
   hit() {
     const len = 3.2,

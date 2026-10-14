@@ -8,7 +8,12 @@ import {
 } from 'remotion';
 import { EndCard } from './scenes/EndCard';
 import { HookLineup, HookReveal } from './scenes/Hook';
-import { LabelHero, LoadIt, StickIt } from './scenes/PhysicalScenes';
+import {
+  LabelHero,
+  LoadIt,
+  NozzleMacro,
+  StickIt,
+} from './scenes/PhysicalScenes';
 import { ScanIt } from './scenes/ScanIt';
 import { TitleCard } from './scenes/TitleCard';
 import { AddIt, PrintIt } from './scenes/UiScenes';
@@ -23,11 +28,12 @@ export const SHOTS: { name: string; frames: number; Scene: React.FC }[] = [
   { name: 'Title card', frames: 45, Scene: TitleCard },
   { name: 'Add it', frames: 120, Scene: AddIt },
   { name: 'Print it', frames: 120, Scene: PrintIt },
-  { name: 'The label', frames: 90, Scene: LabelHero },
-  { name: 'Stick it on', frames: 90, Scene: StickIt },
-  { name: 'Load it up', frames: 105, Scene: LoadIt },
-  { name: 'Scan it', frames: 105, Scene: ScanIt },
-  { name: 'End card', frames: 90, Scene: EndCard },
+  { name: 'The label', frames: 75, Scene: LabelHero },
+  { name: 'Stick it on', frames: 80, Scene: StickIt },
+  { name: 'Load it up', frames: 90, Scene: LoadIt },
+  { name: 'Scan it', frames: 100, Scene: ScanIt },
+  { name: 'Printing', frames: 60, Scene: NozzleMacro },
+  { name: 'End card', frames: 75, Scene: EndCard },
 ];
 
 export const AD_FRAMES = SHOTS.reduce((n, s) => n + s.frames, 0);
@@ -62,7 +68,8 @@ const CUES: [string, number, number][] = [
   ['clunk', at(7, 26), 0.9],
   ['chime', at(8, 40), 0.8],
   ['tick', at(8, 52), 0.5],
-  ['hit', at(9, 0), 1],
+  ['whir', at(9, 0), 0.6],
+  ['hit', at(10, 0), 1],
 ];
 
 export const SpoolLabelsAd: React.FC = () => (

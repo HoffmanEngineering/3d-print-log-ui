@@ -12,7 +12,8 @@ import { Headline } from '../components/Headline';
 import { useLayout } from '../layout';
 import { CameraRig, StageFloor } from '../three/CameraRig';
 import { useLabelTexture } from '../three/labelTexture';
-import { HOLDER, Printer } from '../three/Printer';
+import { HOLDER, Printer, toolheadPose } from '../three/Printer';
+import { NOZZLE_TIP_Y } from '../three/Toolhead';
 import { Label, LABEL_POSE, Spool, SPOOL } from '../three/Spool';
 import { Studio } from '../three/Studio';
 import { COLOR, SPRING_OBJECT, SPRING_UI } from '../theme';
@@ -150,7 +151,7 @@ export const LoadIt: React.FC = () => {
           fov={portrait ? 40 : 32}
         />
         <StageFloor />
-        <Printer toolheadX={Math.sin(frame / 16) * 0.6} />
+        <Printer />
         <group
           position={[x, HOLDER.y, HOLDER.z]}
           rotation={[0, Math.PI / 2, 0]}
@@ -219,5 +220,44 @@ export const ViewfinderScene: React.FC<{ width: number; height: number }> = ({
         </Spool>
       </group>
     </ThreeCanvas>
+  );
+};
+
+/** Shot 10: macro on the hotend, printing in the spool that was just scanned. */
+export const NozzleMacro: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { width, height, portrait, headlineY } = useLayout();
+  const tool = toolheadPose(frame);
+  const tip = { x: tool.x, y: tool.y + NOZZLE_TIP_Y, z: tool.z };
+  // Camera rides with the toolhead, low and close, drifting slowly around the nozzle.
+  const a = 0.5 + frame * 0.004;
+  const dist = portrait ? 2.5 : 1.3;
+  return (
+    <AbsoluteFill style={{ background: COLOR.black }}>
+      <ThreeCanvas width={width} height={height}>
+        <Studio
+          envIntensity={0.6}
+          keyIntensity={1.6}
+          rimIntensity={3}
+          rimColor="#ffd2b8"
+        />
+        <CameraRig
+          position={[
+            tip.x + Math.sin(a) * dist,
+            tip.y + 0.1,
+            tip.z + Math.cos(a) * dist,
+          ]}
+          target={[tip.x, tip.y + (portrait ? 0.36 : 0.12), tip.z]}
+          fov={portrait ? 36 : 30}
+        />
+        <Printer printing />
+      </ThreeCanvas>
+      <Headline
+        lines={['Right filament.', 'Every time.']}
+        from={8}
+        entry="rise"
+        y={portrait ? 0.1 : headlineY}
+      />
+    </AbsoluteFill>
   );
 };

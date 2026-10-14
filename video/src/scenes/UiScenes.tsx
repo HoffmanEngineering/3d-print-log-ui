@@ -141,10 +141,10 @@ export const AddIt: React.FC = () => {
             <Typing
               frame={frame}
               from={cut + 34}
-              chars={3}
+              chars={4}
               x={231}
               y={638}
-              w={30}
+              w={42}
               h={24}
             />
           </BrowserWindow>

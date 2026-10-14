@@ -87,7 +87,7 @@ const Vase: React.FC<ThreeElements['group']> = (group) => {
           side={THREE.DoubleSide}
         />
       </mesh>
-      <mesh position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.22, 64]} />
         <meshPhysicalMaterial color={COLOR.spool} roughness={0.4} />
       </mesh>
@@ -112,9 +112,9 @@ const Rail: React.FC<{
   <mesh position={from}>
     <boxGeometry args={size} />
     <meshPhysicalMaterial
-      color="#3a3a40"
-      roughness={0.3}
-      metalness={0.7}
+      color="#8a8d96"
+      roughness={0.32}
+      metalness={0.75}
       clearcoat={0.4}
     />
   </mesh>
@@ -166,22 +166,24 @@ export const Printer: React.FC<
       {posts.map(([px, pz]) => (
         <Rail key={`p${px}${pz}`} from={[px, h / 2, pz]} size={[r, h, r]} />
       ))}
-      {/* Top and bottom rings */}
+      {/* Top and bottom rings, cut to fit between the uprights: rails that ran through them
+          shared their outer faces and z-fought. */}
       {[r / 2, h - r / 2].map((y) => (
         <group key={`ring${y}`}>
-          <Rail from={[0, y, z]} size={[w, r, r]} />
-          <Rail from={[0, y, -z]} size={[w, r, r]} />
-          <Rail from={[x, y, 0]} size={[r, r, d]} />
-          <Rail from={[-x, y, 0]} size={[r, r, d]} />
+          <Rail from={[0, y, z]} size={[w - r * 2, r, r]} />
+          <Rail from={[0, y, -z]} size={[w - r * 2, r, r]} />
+          <Rail from={[x, y, 0]} size={[r, r, d - r * 2]} />
+          <Rail from={[-x, y, 0]} size={[r, r, d - r * 2]} />
         </group>
       ))}
-      {/* Base plinth */}
-      <mesh position={[0, 0.22, 0]}>
-        <boxGeometry args={[w, 0.44, d]} />
-        <meshLambertMaterial color="#18181b" />
+      {/* Base plinth: a hair wider than the frame so it sleeves the uprights and bottom ring
+          rather than sharing their faces, and lifted off the stage floor for the same reason. */}
+      <mesh position={[0, 0.224, 0]}>
+        <boxGeometry args={[w + 0.02, 0.432, d + 0.02]} />
+        <meshLambertMaterial color="#2c2c31" />
       </mesh>
       {/* Display */}
-      <mesh position={[w * 0.28, 0.24, d / 2 + 0.006]}>
+      <mesh position={[w * 0.28, 0.24, d / 2 + 0.016]}>
         <boxGeometry args={[0.46, 0.16, 0.01]} />
         <meshStandardMaterial
           color="#0a0a0c"
@@ -190,11 +192,12 @@ export const Printer: React.FC<
           roughness={0.2}
         />
       </mesh>
-      {/* Smoked side and back panels */}
+      {/* Smoked side and back panels, seated on the frame's centre lines so their edges hide
+          inside the rails and no face lies in a rail's plane. */}
       {[
-        { p: [0, h / 2, -d / 2 + 0.01], s: [w - r, h - r, 0.02] },
-        { p: [-w / 2 + 0.01, h / 2, 0], s: [0.02, h - r, d - r] },
-        { p: [w / 2 - 0.01, h / 2, 0], s: [0.02, h - r, d - r] },
+        { p: [0, h / 2, -z], s: [w - r, h - r, 0.02] },
+        { p: [-x, h / 2, 0], s: [0.02, h - r, d - r] },
+        { p: [x, h / 2, 0], s: [0.02, h - r, d - r] },
       ].map(({ p, s }, i) => (
         <mesh key={`panel${i}`} position={p as [number, number, number]}>
           <boxGeometry args={s as [number, number, number]} />
@@ -288,7 +291,7 @@ export const Printer: React.FC<
         </mesh>
       ))}
       <group position={[tool.x, tool.y, tool.z]}>
-        <Toolhead frame={frame} extruding={printing} />
+        <Toolhead frame={frame} />
       </group>
       {/* Filament path: PTFE tube from the side entry to the toolhead, filament inside */}
       <mesh geometry={ptfe.tube}>

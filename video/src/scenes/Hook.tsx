@@ -12,7 +12,7 @@ import { useLayout } from '../layout';
 import { CameraRig } from '../three/CameraRig';
 import { Spool } from '../three/Spool';
 import { Studio } from '../three/Studio';
-import { COLOR, SPRING_OBJECT } from '../theme';
+import { COLOR, SPRING_OBJECT, STAGE_GLOW } from '../theme';
 
 // Five spools nobody could tell apart: the same off-white, the same black flanges.
 const LINEUP = [
@@ -32,9 +32,11 @@ export const HookLineup: React.FC = () => {
     ? [5.6 - p * 1.4, 1.5, 5.4 + p * 0.2]
     : [5.2 - p * 1.6, 1.2, 6.2];
   return (
-    <AbsoluteFill style={{ background: COLOR.black }}>
+    // The flanges are black, so the stage behind them is lit: they read as silhouettes
+    // against the glow instead of disappearing into the background.
+    <AbsoluteFill style={{ background: STAGE_GLOW('50%', '58%') }}>
       <ThreeCanvas width={width} height={height}>
-        <Studio envIntensity={0.45} keyIntensity={1.3} rimIntensity={5} />
+        <Studio envIntensity={1.2} keyIntensity={2} rimIntensity={5} />
         <CameraRig
           position={cam}
           target={
@@ -71,10 +73,12 @@ export const HookReveal: React.FC = () => {
     [portrait ? 8.6 : 6.4, portrait ? 8.0 : 6.0]
   );
   return (
-    <AbsoluteFill style={{ background: COLOR.black }}>
+    <AbsoluteFill
+      style={{ background: STAGE_GLOW(portrait ? '50%' : '62%', '58%') }}
+    >
       <ThreeCanvas width={width} height={height}>
         <Studio
-          envIntensity={interpolate(t, [0, 1], [0.15, 1.0])}
+          envIntensity={interpolate(t, [0, 1], [0.3, 1.2])}
           keyIntensity={interpolate(t, [0, 1], [0.3, 3])}
           rimIntensity={4}
           rimColor="#ffd2b8"

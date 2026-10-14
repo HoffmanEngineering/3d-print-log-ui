@@ -92,10 +92,7 @@ const Wire: React.FC<{
   );
 };
 
-export const Toolhead: React.FC<{ frame: number; extruding?: boolean }> = ({
-  frame,
-  extruding = true,
-}) => {
+export const Toolhead: React.FC<{ frame: number }> = ({ frame }) => {
   const shroud = useMemo(() => roundedBox(0.52, 0.5, 0.42, 0.07), []);
   const face = useMemo(() => roundedBox(0.42, 0.38, 0.03, 0.05), []);
   const duct = useMemo(() => roundedBox(0.09, 0.2, 0.22, 0.03), []);
@@ -245,19 +242,6 @@ export const Toolhead: React.FC<{ frame: number; extruding?: boolean }> = ({
         distance={0.6}
         color="#ffb070"
       />
-      {/* Fresh filament leaving the tip */}
-      {extruding ? (
-        <mesh position={[0, NOZZLE_TIP_Y - 0.012, 0]}>
-          <cylinderGeometry args={[0.0085, 0.0085, 0.024, 12]} />
-          <meshPhysicalMaterial
-            color={COLOR.spool}
-            roughness={0.2}
-            clearcoat={0.8}
-            emissive={COLOR.spool}
-            emissiveIntensity={0.25}
-          />
-        </mesh>
-      ) : null}
       {/* PTFE coupling on top */}
       <mesh position={[0, 0.27, -0.04]}>
         <cylinderGeometry args={[0.035, 0.035, 0.05, 6]} />

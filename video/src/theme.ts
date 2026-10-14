@@ -19,6 +19,13 @@ export const COLOR = {
   success: '#34c759',
 };
 
+/**
+ * A lit stage behind the printer shots: a pool of soft grey falling off to black, so a dark
+ * machine reads as a silhouette instead of disappearing into the background.
+ */
+export const STAGE_GLOW = (x = '50%', y = '45%') =>
+  `radial-gradient(ellipse 75% 60% at ${x} ${y}, #3a3a40 0%, #1c1c20 45%, #000000 100%)`;
+
 export const FONT =
   '"Inter", -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif';
 

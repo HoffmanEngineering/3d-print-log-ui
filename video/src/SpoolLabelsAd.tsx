@@ -14,7 +14,7 @@ import {
   NozzleMacro,
   StickIt,
 } from './scenes/PhysicalScenes';
-import { ScanIt } from './scenes/ScanIt';
+import { SCAN_BEATS, ScanIt } from './scenes/ScanIt';
 import { TitleCard } from './scenes/TitleCard';
 import { AddIt, PrintIt } from './scenes/UiScenes';
 
@@ -28,10 +28,10 @@ export const SHOTS: { name: string; frames: number; Scene: React.FC }[] = [
   { name: 'Title card', frames: 45, Scene: TitleCard },
   { name: 'Add it', frames: 120, Scene: AddIt },
   { name: 'Print it', frames: 120, Scene: PrintIt },
-  { name: 'The label', frames: 75, Scene: LabelHero },
+  { name: 'The label', frames: 65, Scene: LabelHero },
   { name: 'Stick it on', frames: 80, Scene: StickIt },
-  { name: 'Load it up', frames: 90, Scene: LoadIt },
-  { name: 'Scan it', frames: 100, Scene: ScanIt },
+  { name: 'Load it up', frames: 80, Scene: LoadIt },
+  { name: 'Scan it', frames: 120, Scene: ScanIt },
   { name: 'Printing', frames: 60, Scene: NozzleMacro },
   { name: 'End card', frames: 75, Scene: EndCard },
 ];
@@ -54,7 +54,7 @@ const CUES: [string, number, number][] = [
     at(3, 64 + i * 2),
     0.35,
   ]),
-  ...Array.from({ length: 3 }, (_, i): [string, number, number] => [
+  ...Array.from({ length: 4 }, (_, i): [string, number, number] => [
     'key',
     at(3, 92 + i * 2),
     0.35,
@@ -66,8 +66,9 @@ const CUES: [string, number, number][] = [
   ['press', at(6, 33), 1],
   ['slide', at(7, 2), 0.8],
   ['clunk', at(7, 26), 0.9],
-  ['chime', at(8, 40), 0.8],
-  ['tick', at(8, 52), 0.5],
+  ['click', at(8, SCAN_BEATS.TAP), 0.6],
+  ['chime', at(8, SCAN_BEATS.LOCK), 0.8],
+  ['tick', at(8, SCAN_BEATS.FILL), 0.5],
   ['whir', at(9, 0), 0.6],
   ['hit', at(10, 0), 1],
 ];

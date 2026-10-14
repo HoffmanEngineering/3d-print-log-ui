@@ -2,6 +2,7 @@ import { ThreeCanvas } from '@remotion/three';
 import React from 'react';
 import {
   AbsoluteFill,
+  Easing,
   interpolate,
   spring,
   useCurrentFrame,
@@ -16,7 +17,7 @@ import { HOLDER, Printer, toolheadPose } from '../three/Printer';
 import { NOZZLE_TIP_Y } from '../three/Toolhead';
 import { Label, LABEL_POSE, Spool, SPOOL } from '../three/Spool';
 import { Studio } from '../three/Studio';
-import { COLOR, SPRING_OBJECT, SPRING_UI } from '../theme';
+import { COLOR, SPRING_OBJECT, SPRING_UI, STAGE_GLOW } from '../theme';
 
 const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
 
@@ -60,15 +61,20 @@ export const LabelHero: React.FC = () => {
 /** Shot 7: the label drops onto the flange and presses flat. */
 export const StickIt: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
   const { width, height, portrait, headlineY, besideX } = useLayout();
   const map = useLabelTexture();
   const land = 34;
-  const t = spring({
-    frame: frame - 6,
-    fps,
-    config: SPRING_UI,
-    durationInFrames: land - 6,
+  // No spring here: the label sits 1 mm off the flange, so any overshoot sinks it into the
+  // flange and it blinks out. An ease-out lands exactly once. The label lines up over its
+  // spot and flattens first, then presses straight down onto the flange.
+  const easeOut = Easing.bezier(0.2, 0.7, 0.3, 1);
+  const align = interpolate(frame, [6, land - 6], [0, 1], {
+    ...clamp,
+    easing: easeOut,
+  });
+  const press = interpolate(frame, [6, land], [0, 1], {
+    ...clamp,
+    easing: easeOut,
   });
   const squash =
     frame >= land && frame < land + 8
@@ -76,14 +82,14 @@ export const StickIt: React.FC = () => {
       : 1;
   const p = LABEL_POSE.position;
   const pos: [number, number, number] = [
-    interpolate(t, [0, 1], [p.x + 0.25, p.x]),
-    interpolate(t, [0, 1], [p.y + 0.3, p.y]),
-    interpolate(t, [0, 1], [p.z + 0.9, p.z]),
+    interpolate(align, [0, 1], [p.x + 0.25, p.x]),
+    interpolate(align, [0, 1], [p.y + 0.3, p.y]),
+    interpolate(press, [0, 1], [p.z + 0.9, p.z]),
   ];
   const rot: [number, number, number] = [
-    interpolate(t, [0, 1], [-0.6, 0]),
-    interpolate(t, [0, 1], [0.5, 0]),
-    interpolate(t, [0, 1], [0.25, 0]),
+    interpolate(align, [0, 1], [-0.6, 0]),
+    interpolate(align, [0, 1], [0.5, 0]),
+    interpolate(align, [0, 1], [0.25, 0]),
   ];
   const pull = interpolate(frame, [0, 90], [0, 1], clamp);
   const spoolY = portrait ? -0.75 : -0.1;
@@ -148,9 +154,11 @@ export const LoadIt: React.FC = () => {
     ? [8.6 - orbit * 0.8, 3.9, 9.4 + orbit * 0.5]
     : [8.9 - orbit * 0.8, 3.9, 8.0 + orbit * 0.5];
   return (
-    <AbsoluteFill style={{ background: COLOR.black }}>
+    <AbsoluteFill
+      style={{ background: STAGE_GLOW(portrait ? '55%' : '62%', '42%') }}
+    >
       <ThreeCanvas width={width} height={height}>
-        <Studio envIntensity={0.9} keyIntensity={2.6} rimIntensity={3.5} />
+        <Studio envIntensity={1.4} keyIntensity={3} rimIntensity={4.5} />
         <CameraRig
           shift={portrait ? 0 : 0.16}
           position={cam}
@@ -245,7 +253,9 @@ export const NozzleMacro: React.FC = () => {
   const a = 0.5 + frame * 0.004;
   const dist = portrait ? 2.5 : 2.1;
   return (
-    <AbsoluteFill style={{ background: COLOR.black }}>
+    <AbsoluteFill
+      style={{ background: STAGE_GLOW(portrait ? '50%' : '62%', '55%') }}
+    >
       <ThreeCanvas width={width} height={height}>
         <Studio
           envIntensity={0.6}

@@ -46,19 +46,19 @@ _Add it. Print it. Stick it. Scan it._
 
 ### Shot list (30 fps, 900 frames)
 
-| #   | Frames  | Shot                                                                                                                                                                               | On screen                             | Sound          |
-| --- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------- |
-| 1   | 0–74    | **Hook.** Black stage. Five unlabeled spools in a row in low light, very similar colors. Slow lateral dolly.                                                                       | "Which one is / the PETG?" (cut on)   | low room tone  |
-| 2   | 75–134  | **Reveal.** The other spools fall into darkness. The orange spool rises forward into the key light and turns to show a clean, empty flange.                                        | "Never guess / again."                | soft whoosh up |
-| 3   | 135–179 | **Title card.** #f5f5f7. QR glyph in an indigo app-icon tile.                                                                                                                      | "Spool Labels" + small "3D Print Log" | tick           |
-| 4   | 180–299 | **Add it.** Floating browser window, real Materials list. Cursor glides to _Add New Material_ and clicks. Cut to the filled form ("Sunset Orange", PLA) with a slow push.          | "Add it."                             | click          |
-| 5   | 300–419 | **Print it.** Real material page. Cursor clicks _Print QR Label_. The real QR dialog springs up, then a push into the label preview that scale-throughs into…                      | "Print it."                           | click, whoosh  |
-| 6   | 420–494 | **The label.** 3D: the label card (the app's real QR code) floats in, turns to camera, light glint sweeps across.                                                                  | —                                     | paper flick    |
-| 7   | 495–574 | **Stick it.** 3D close-up: the label drops onto the spool flange and presses flat.                                                                                                 | "Stick it on."                        | soft press     |
-| 8   | 575–664 | **Load it.** 3D: generic CoreXY printer (deliberately unbranded), mid-print. The spool slides onto the side holder, rolls and settles label-up.                                    | "Load it up."                         | slide, clunk   |
-| 9   | 665–764 | **Scan it.** Phone, real Select Filament scanner. The viewfinder shows the live 3D label, the scan brackets lock, then a cut to the real result: _"Loaded Sunset Orange into T2."_ | "Scan it." → "Done."                  | chime          |
-| 10  | 765–824 | **Printing.** Macro on the hotend: fan spinning, brass nozzle with a hot tip laying the next orange layer on a ribbed vase. _(v2)_                                                 | "Right filament. / Every time."       | printer whir   |
-| 11  | 825–899 | **End card.** White. Brand mark, **3D Print Log**, "Every spool, accounted for.", 3dprintlog.com.                                                                                  | —                                     | final hit      |
+| #   | Frames  | Shot                                                                                                                                                                                                                                                                              | On screen                             | Sound            |
+| --- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------- |
+| 1   | 0–74    | **Hook.** Black stage. Five unlabeled spools in a row in low light, very similar colors. Slow lateral dolly.                                                                                                                                                                      | "Which one is / the PETG?" (cut on)   | low room tone    |
+| 2   | 75–134  | **Reveal.** The other spools fall into darkness. The orange spool rises forward into the key light and turns to show a clean, empty flange.                                                                                                                                       | "Never guess / again."                | soft whoosh up   |
+| 3   | 135–179 | **Title card.** #f5f5f7. QR glyph in an indigo app-icon tile.                                                                                                                                                                                                                     | "Spool Labels" + small "3D Print Log" | tick             |
+| 4   | 180–299 | **Add it.** Floating browser window, real Materials list. Cursor glides to _Add New Material_ and clicks. Cut to the filled form ("Sunset Orange", PETG) with a slow push.                                                                                                        | "Add it."                             | click            |
+| 5   | 300–419 | **Print it.** Real material page. Cursor clicks _Print QR Label_. The real QR dialog springs up, then a push into the label preview that scale-throughs into…                                                                                                                     | "Print it."                           | click, whoosh    |
+| 6   | 420–484 | **The label.** 3D: the label card (the app's real QR code) floats in, turns to camera, light glint sweeps across.                                                                                                                                                                 | —                                     | paper flick      |
+| 7   | 485–564 | **Stick it.** 3D close-up: the label drops onto the spool flange and presses flat.                                                                                                                                                                                                | "Stick it on."                        | soft press       |
+| 8   | 565–644 | **Load it.** 3D: generic CoreXY printer (deliberately unbranded), mid-print. The spool slides onto the side holder, rolls and settles label-up.                                                                                                                                   | "Load it up."                         | slide, clunk     |
+| 9   | 645–764 | **Scan it.** Phone, real printer page: a tap on _Load_ beside the empty T2 slot, then the real Select Filament scanner. The viewfinder shows the live 3D label and the brackets lock. Back on the printer page, T2 turns from _Empty_ to _Sunset Orange_ as the camera pushes in. | "Scan it." → "Done."                  | tap, chime, tick |
+| 10  | 765–824 | **Printing.** Macro on the hotend: fan spinning, brass nozzle with a hot tip laying the next orange layer on a ribbed vase. _(v2)_                                                                                                                                                | "Right filament. / Every time."       | printer whir     |
+| 11  | 825–899 | **End card.** White. Brand mark, **3D Print Log**, "Every spool, accounted for.", 3dprintlog.com.                                                                                                                                                                                 | —                                     | final hit        |
 
 **v2** (this version) added the printer detail: a toolhead with a spinning fan, ducts,
 heatsink, a wired heater block and a brass nozzle; a linear rail, belts, motors and lead screws;
@@ -114,6 +114,14 @@ video/
   Use Lambert for matte plates and floors.
 - **The fake camera decodes instantly.** The capture gives it 4 s of blank lead-in so the
   scanner screen can be captured before the code is in view.
+- **Don't spring anything onto a surface it nearly touches.** The label sits 1 mm off the
+  flange, so the landing spring's overshoot sank it into the flange and it blinked out for a
+  few frames. A clamped ease-out lands exactly once.
+- **`colorHex` in fixtures has no `#`.** That is the API's format, and the QR label dialog
+  prepends one, so `#ff6a13` became `##ff6a13` and the label's swatch rendered white.
+- **Restart `ng serve` after `npm install` in the repo root.** A dev server that outlives a
+  dependency change serves stale prebundled chunks, so a lazy `import()` fails. Here that
+  showed up as the QR dialog's "Something went wrong generating the QR codes".
 - **Mastering:** loudnorm alone undershoots a sparse SFX track, so `master.sh` adds a measured
   gain trim.
 

@@ -18,18 +18,22 @@ export const AppIconTile: React.FC<{ size: number }> = ({ size }) => {
       <rect x={x + 9} y={y + 9} width="10" height="10" rx="2" fill="#fff" />
     </g>
   );
+  // Finders (stroke included) cover 7–41 at each corner they sit in, and the orange accent
+  // 88–104, so every dot keeps at least 4 units clear of both.
   const dots = [
-    [62, 22],
-    [74, 22],
-    [62, 46],
-    [50, 58],
-    [62, 70],
-    [74, 70],
-    [86, 58],
-    [86, 82],
-    [62, 86],
-    [74, 94],
-    [50, 94],
+    [53, 10],
+    [53, 30],
+    [10, 53],
+    [30, 53],
+    [53, 53],
+    [65, 65],
+    [77, 53],
+    [97, 53],
+    [53, 77],
+    [53, 97],
+    [74, 75],
+    [97, 70],
+    [70, 95],
   ];
   return (
     <div

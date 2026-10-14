@@ -1,0 +1,20 @@
+{
+  "loadButton": {
+    "x": 305.046875,
+    "y": 628.25,
+    "width": 67.953125,
+    "height": 36
+  },
+  "emptyRow": {
+    "x": 17,
+    "y": 618.25,
+    "width": 356,
+    "height": 57
+  },
+  "loadedRow": {
+    "x": 17,
+    "y": 618.25,
+    "width": 356,
+    "height": 101
+  }
+}

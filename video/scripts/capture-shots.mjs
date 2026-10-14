@@ -37,7 +37,7 @@ export default {
       .fill(HERO.displayName);
     const type = page.locator('[formcontrolname="materialType"]');
     await type.click();
-    await type.fill('PLA');
+    await type.fill(HERO.materialType);
     await page.keyboard.press('Escape');
     await page.locator('[formcontrolname="colorName"]').fill(HERO.colorName);
     await page.locator('[formcontrolname="brand"]').fill(HERO.brand);
@@ -147,6 +147,16 @@ export default {
     await page.evaluate(() => window.scrollBy(0, 260));
     await settle(page, 400);
     await shot(page, 'phone-printer-slots');
+    // The scan shot taps this button, then swaps the empty T2 row for the loaded one.
+    const t2Row = () =>
+      slots.locator('[data-testid="printer-slot"]').nth(2).boundingBox();
+    const slotTargets = {
+      loadButton: await slots
+        .getByRole('button', { name: 'Load T2' })
+        .first()
+        .boundingBox(),
+      emptyRow: await t2Row(),
+    };
     console.log('clicking load');
     page.on('console', (m) => console.log('[page]', m.text().slice(0, 200)));
     await slots
@@ -182,6 +192,10 @@ export default {
       .waitFor({ state: 'detached', timeout: 15000 });
     await settle(page, 600);
     await shot(page, 'phone-slot-loaded');
+    fs.writeFileSync(
+      path.join(outDir, 'phone-printer-slots.json'),
+      JSON.stringify({ ...slotTargets, loadedRow: await t2Row() }, null, 2)
+    );
     await browser.close();
   },
 };

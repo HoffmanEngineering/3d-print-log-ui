@@ -34,7 +34,7 @@ export function drawLabel(qr: HTMLImageElement): HTMLCanvasElement {
   g.fillStyle = '#333333';
   g.font = '500 44px Inter, Arial, sans-serif';
   g.fillText('Polymaker', x, 210);
-  g.fillText('PLA', x, 300);
+  g.fillText('PETG', x, 300);
   g.beginPath();
   g.arc(x + 22, 375, 20, 0, Math.PI * 2);
   g.fillStyle = COLOR.spool;
@@ -43,7 +43,7 @@ export function drawLabel(qr: HTMLImageElement): HTMLCanvasElement {
   g.fillText('Sunset Orange', x + 58, 390);
   g.font = '500 38px Inter, Arial, sans-serif';
   g.fillStyle = '#666666';
-  g.fillText('Nozzle: 215°C', x, 500);
+  g.fillText('Nozzle: 240°C', x, 500);
   return c;
 }
 

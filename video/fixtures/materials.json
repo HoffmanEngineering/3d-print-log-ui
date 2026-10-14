@@ -1,0 +1,37 @@
+[
+  {
+    "id": "d4000000-0000-0000-0000-000000000000",
+    "acronym": "PLA",
+    "name": "Polylactic Acid",
+    "materialCategoryNickname": "filament",
+    "densityGramPerCubicCm": 1.24
+  },
+  {
+    "id": "d4000000-0000-0000-0000-000000000001",
+    "acronym": "PETG",
+    "name": "Polyethylene Terephthalate Glycol",
+    "materialCategoryNickname": "filament",
+    "densityGramPerCubicCm": 1.27
+  },
+  {
+    "id": "d4000000-0000-0000-0000-000000000002",
+    "acronym": "ABS",
+    "name": "Acrylonitrile Butadiene Styrene",
+    "materialCategoryNickname": "filament",
+    "densityGramPerCubicCm": 1.04
+  },
+  {
+    "id": "d4000000-0000-0000-0000-000000000003",
+    "acronym": "TPU",
+    "name": "Thermoplastic Polyurethane",
+    "materialCategoryNickname": "filament",
+    "densityGramPerCubicCm": 1.21
+  },
+  {
+    "id": "d4000000-0000-0000-0000-000000000004",
+    "acronym": "ASA",
+    "name": "Acrylonitrile Styrene Acrylate",
+    "materialCategoryNickname": "filament",
+    "densityGramPerCubicCm": 1.07
+  }
+]

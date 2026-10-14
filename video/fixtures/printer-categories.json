@@ -1,0 +1,27 @@
+[
+  {
+    "nickname": "FFF",
+    "name": "Fused Filament Fabrication",
+    "description": "Material extruded through a nozzle.",
+    "materialCategory": {
+      "nickname": "filament",
+      "name": "Filament",
+      "description": "A single continuous filament of material",
+      "hasDiameter": true,
+      "showNozzleTemperature": true,
+      "showBedTemperature": true,
+      "showMeltingTemperature": false,
+      "showRecommendedInitialLayerTimeInSeconds": false,
+      "showRecommendedLayerTimeInSeconds": false,
+      "showMaterialRefreshRatio": false,
+      "showInertGas": false
+    },
+    "showNozzleDiameter": true,
+    "showFilamentDiameter": true,
+    "showBeamDiameter": false,
+    "showBedSize": true,
+    "showScreenResolution": false,
+    "showHasHeatedBed": true,
+    "showHasHeatedChamber": true
+  }
+]

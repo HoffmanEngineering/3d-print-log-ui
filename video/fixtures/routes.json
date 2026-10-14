@@ -1,0 +1,9 @@
+[
+  ["GET", "/api/Printers/104$", "printer.json"],
+  ["PUT", "/api/Printers/104/slots/\\d+$", "slots-after-load.json"],
+  ["GET", "/api/PrinterCategories", "printer-categories.json"],
+  ["GET", "/api/Materials(\\?|$)", "materials.json"],
+  ["GET", "/api/Filaments/brands", "brands.json"],
+  ["GET", "/api/Filaments/purchase-locations", "purchase-locations.json"],
+  ["GET", "/api/Connections", "empty-list.json"]
+]

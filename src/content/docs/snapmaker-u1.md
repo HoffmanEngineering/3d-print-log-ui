@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 46
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-14
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, materials]
 ---
 
@@ -58,7 +58,7 @@ To have a spool assigned:
   Read the log with `docker logs printlog-bridge`, or in `state/bridge.log` in the bridge's folder.
 
 2. Add the UID to the material in the app, under **RFID / NFC tags** (see [RFID / NFC Tags](/docs/materials#tags)).
-3. Restart the bridge's container while the printer is idle. The bridge looks up a tag it didn't find only once, and looks again when it restarts.
+3. Wait up to 5 minutes. While a tag nobody has stays in its slot, the bridge checks it again every 5 minutes, and assigns the spool once it finds the tag. To have it assigned straight away, take the spool out and put it back.
 
 From then on, loading that spool into any slot assigns it there.
 

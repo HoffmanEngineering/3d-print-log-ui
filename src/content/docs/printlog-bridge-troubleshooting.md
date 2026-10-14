@@ -127,7 +127,7 @@ The bridge checks in every 5 minutes, and the printer's [Connections](/docs/prin
 
 `no spool in 3D Print Log has tag 04A23F11` means none of your materials has that tag UID. Add it on the material's page under **RFID / NFC tags** (see [RFID / NFC Tags](/docs/materials#tags)), then run `PRINTLOG_SET_SPOOL` again. Any common format works, as long as it's whole bytes of hex.
 
-On a Snapmaker U1, you don't need to run anything. After you add the tag in the app, the bridge finds it within 5 minutes, or straight away if you take the spool out and put it back. Its log mentions the unknown tag once each time the spool goes in, not on every check. See [Spools from RFID tags](/docs/snapmaker-u1#rfid).
+On a Snapmaker U1, you don't need to run anything. From printlog-bridge 0.1.1, after you add the tag in the app, the bridge finds it within 5 minutes. Taking the spool out and putting it back is usually quicker. Its log mentions a tag that no material has once each time the spool goes in, not on every check. On older versions, restart the bridge. See [Spools from RFID tags](/docs/snapmaker-u1#rfid).
 
 If the macro doesn't answer at all, see [What the console shows](/docs/printlog-bridge-spools#replies).
 

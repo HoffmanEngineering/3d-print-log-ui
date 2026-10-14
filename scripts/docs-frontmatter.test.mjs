@@ -199,7 +199,10 @@ related:
 ---
 body
 `;
-  assert.deepEqual(parseFrontmatter(text).data.related, ['prints', 'materials']);
+  assert.deepEqual(parseFrontmatter(text).data.related, [
+    'prints',
+    'materials',
+  ]);
 });
 
 test('parses a nested flow sequence split across lines', () => {

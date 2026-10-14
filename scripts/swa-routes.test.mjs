@@ -16,7 +16,7 @@ const read = (path) =>
   readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const config = JSON.parse(read('src/staticwebapp.config.json'));
-const appPaths = topLevelAppPaths(read('src/app/app-routing.module.ts'));
+const appPaths = topLevelAppPaths(read('src/app/app.routes.ts'));
 const manifest = JSON.parse(readFileSync(MANIFEST_JSON, 'utf8'));
 
 const SHELLS = ['/shells/app-shell.html', '/shells/list-skeleton.html'];
@@ -152,7 +152,7 @@ test('the routing module parse finds the known top-level routes', () => {
 });
 
 test('every client-only top-level route has a rewrite rule', () => {
-  // Fails when a route is added to app-routing.module.ts without a matching
+  // Fails when a route is added to app.routes.ts without a matching
   // rule in staticwebapp.config.json: that page would 404 on a hard refresh.
   for (const segment of clientSegments) {
     for (const path of [`/${segment}`, `/${segment}/some/child`]) {

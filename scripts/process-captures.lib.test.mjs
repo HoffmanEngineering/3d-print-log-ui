@@ -312,7 +312,10 @@ test('homeCaptureProblems catches a template the map no longer matches', () => {
     HOME_IMG(src, 1120, 2582)
   );
   assert.equal(wrongSize.length, 1);
-  assert.match(wrongSize[0], /1400x760 in the map but 1120x2582 in the template/);
+  assert.match(
+    wrongSize[0],
+    /1400x760 in the map but 1120x2582 in the template/
+  );
 
   // Template does not reference it at all.
   const missing = homeCaptureProblems(
@@ -321,5 +324,8 @@ test('homeCaptureProblems catches a template the map no longer matches', () => {
     '<img ngSrc="/assets/Something_Else_aaa111.webp" width="1" height="1" />'
   );
   assert.equal(missing.length, 1);
-  assert.match(missing[0], /no <img ngSrc> in home.component.html references it/);
+  assert.match(
+    missing[0],
+    /no <img ngSrc> in home.component.html references it/
+  );
 });

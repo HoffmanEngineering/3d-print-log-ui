@@ -32,7 +32,8 @@ function readComponent(file) {
 // everything it renders. A Default child that sets a plain field from an HTTP
 // response is waiting for exactly that tick, so it would stop repainting. The
 // same goes for routed components under an OnPush <router-outlet> host. Convert
-// the child first; this rule retires itself once nothing is left on Default.
+// the child first. Every component is OnPush today, so this catches one that
+// opts back out with a lint disable comment.
 test('no OnPush component renders a Default component or a router outlet', () => {
   const components = [...componentFiles(app)].map(readComponent);
   const defaults = components.filter((c) => !c.onPush && c.selector);

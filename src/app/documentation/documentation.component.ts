@@ -8,7 +8,7 @@ import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   AfterViewInit,
-  ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
@@ -95,11 +95,11 @@ let apiLoaded = false;
     DocSiteFooterComponent,
     DocBackToTopComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocumentationComponent
   implements OnInit, OnDestroy, AfterViewInit
 {
-  private changeDetectorRef = inject(ChangeDetectorRef);
   private title = inject(Title);
   private ngZone = inject(NgZone);
 
@@ -114,8 +114,11 @@ export class DocumentationComponent
     this.currentSlug() ? `docs/${this.currentSlug()}` : ''
   );
 
-  mobileQuery: MediaQueryList;
-  private mobileQueryListener: () => void;
+  private readonly mobileQuery: MediaQueryList;
+  private readonly mobileQueryListener: () => void;
+
+  /** Whether the viewport is phone-width, where the sidebar becomes an overlay. */
+  readonly isMobile = signal(false);
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
@@ -142,15 +145,16 @@ export class DocumentationComponent
     const media = inject(MediaMatcher);
 
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
+    this.isMobile.set(this.mobileQuery.matches);
 
     this.mobileQueryListener = () => {
       this.ngZone.run(() => {
+        this.isMobile.set(this.mobileQuery.matches);
         if (!this.mobileQuery.matches) {
           this.snav().open();
         } else {
           this.snav().close();
         }
-        this.changeDetectorRef.detectChanges();
       });
     };
 
@@ -312,7 +316,7 @@ export class DocumentationComponent
   }
 
   handleSidebarClick() {
-    if (this.mobileQuery.matches) {
+    if (this.isMobile()) {
       this.snav().toggle();
     }
   }

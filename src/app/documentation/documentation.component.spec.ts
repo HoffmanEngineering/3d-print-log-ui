@@ -280,3 +280,99 @@ describe('DocumentationComponent telemetry', () => {
     expect(telemetry.trackScrollDepth).not.toHaveBeenCalled();
   });
 });
+
+describe('DocumentationComponent layout', () => {
+  let query: {
+    matches: boolean;
+    addListener: (listener: () => void) => void;
+    removeListener: () => void;
+  };
+  let onChange: () => void;
+  let fixture: ComponentFixture<DocumentationComponent>;
+
+  beforeEach(async () => {
+    query = {
+      matches: false,
+      addListener: (listener) => (onChange = listener),
+      removeListener: () => {},
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [DocumentationComponent],
+      providers: [
+        {
+          provide: Router,
+          useValue: { url: '/docs/prints', events: new Subject() },
+        },
+        { provide: DocsSearchOpener, useValue: searchOpener() },
+        {
+          provide: StructuredDataService,
+          useValue: jasmine.createSpyObj<StructuredDataService>(
+            'StructuredDataService',
+            ['setJsonLd']
+          ),
+        },
+        {
+          provide: MetaTagService,
+          useValue: jasmine.createSpyObj<MetaTagService>('MetaTagService', [
+            'setSeoTags',
+            'setTitle',
+          ]),
+        },
+        {
+          provide: MediaMatcher,
+          useValue: { matchMedia: () => query },
+        },
+        {
+          provide: ScrollDispatcher,
+          // The real sidenav registers its scrollers.
+          useValue: {
+            scrolled: () => new Subject(),
+            register: () => {},
+            deregister: () => {},
+          },
+        },
+        {
+          provide: DocsTelemetryService,
+          useValue: jasmine.createSpyObj<DocsTelemetryService>(
+            'DocsTelemetryService',
+            ['trackPageView', 'trackScrollDepth']
+          ),
+        },
+      ],
+    })
+      // Just the sidenav and the class the real template switches on; the
+      // shell's other children each need their own services.
+      .overrideComponent(DocumentationComponent, {
+        set: {
+          template: `
+            <div class="shell" [class.example-is-mobile]="isMobile()">
+              <mat-sidenav-container>
+                <mat-sidenav #snav [mode]="isMobile() ? 'over' : 'side'" />
+              </mat-sidenav-container>
+            </div>`,
+        },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(DocumentationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  it('switches to the phone layout when the viewport narrows', async () => {
+    const shell = (fixture.nativeElement as HTMLElement).querySelector(
+      '.shell'
+    ) as HTMLElement;
+    expect(shell.classList).not.toContain('example-is-mobile');
+
+    query.matches = true;
+    onChange();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(shell.classList).toContain('example-is-mobile');
+    expect(fixture.componentInstance.snav().mode).toBe('over');
+    expect(fixture.componentInstance.snav().opened).toBeFalse();
+  });
+});

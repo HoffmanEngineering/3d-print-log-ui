@@ -91,7 +91,6 @@ describe('PrinterDetailComponent', () => {
     const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
 
     await TestBed.configureTestingModule({
-      declarations: [PrinterDetailComponent],
       imports: [
         SharedModule,
         FormsModule,
@@ -101,6 +100,7 @@ describe('PrinterDetailComponent', () => {
         PrinterSlotsComponent,
         // The template renders app-ad for real, which needs the Adsense config.
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
+        PrinterDetailComponent,
       ],
       providers: [
         provideHttpClient(),

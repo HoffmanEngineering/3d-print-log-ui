@@ -24,16 +24,33 @@ import {
   actionUrlPath,
   actionUrlQueryParams,
 } from 'src/app/core/utils/action-url';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { RouterLink } from '@angular/router';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-notifications-list',
   templateUrl: './notifications-list.component.html',
   styleUrls: ['./notifications-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: false,
   host: {
     '(window:scroll)': 'onScroll()',
   },
+  imports: [
+    MatSlideToggle,
+    MatButton,
+    MatIcon,
+    MatProgressSpinner,
+    MatCard,
+    RouterLink,
+    MatCardContent,
+    MatTooltip,
+    MatIconButton,
+  ],
 })
 export class NotificationsListComponent implements OnInit {
   private notificationService = inject(NotificationService);

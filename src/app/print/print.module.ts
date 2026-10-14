@@ -29,12 +29,6 @@ import { PrintEmptyStateComponent } from './print-list/print-empty-state/print-e
 import { PrinterAvatarComponent } from '../shared/printer-avatar/printer-avatar.component';
 
 @NgModule({
-  declarations: [
-    PrintListComponent,
-    EditPrintDetailComponent,
-    PrintShareDialogComponent,
-    PrintTableLayoutComponent,
-  ],
   imports: [
     CommonModule,
     PrintRoutingModule,
@@ -54,6 +48,10 @@ import { PrinterAvatarComponent } from '../shared/printer-avatar/printer-avatar.
     PrintBulkActionBarComponent,
     PrintEmptyStateComponent,
     PrinterAvatarComponent,
+    PrintListComponent,
+    EditPrintDetailComponent,
+    PrintShareDialogComponent,
+    PrintTableLayoutComponent,
   ],
   providers: [
     PrintService,

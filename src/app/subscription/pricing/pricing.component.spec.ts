@@ -21,8 +21,12 @@ describe('PricingComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [PricingComponent],
-      imports: [SharedModule, NoopAnimationsModule, RouterTestingModule],
+      imports: [
+        SharedModule,
+        NoopAnimationsModule,
+        RouterTestingModule,
+        PricingComponent,
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),

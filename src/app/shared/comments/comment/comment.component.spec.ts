@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -35,8 +36,14 @@ describe('CommentComponent', () => {
 
   beforeEach(waitForAsync(async () => {
     await TestBed.configureTestingModule({
-      declarations: [CommentComponent, HumanizePipe],
-      imports: [MatMenuModule, NoopAnimationsModule, LocaleDatePipe],
+      providers: [provideRouter([])],
+      imports: [
+        MatMenuModule,
+        NoopAnimationsModule,
+        LocaleDatePipe,
+        CommentComponent,
+        HumanizePipe,
+      ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 

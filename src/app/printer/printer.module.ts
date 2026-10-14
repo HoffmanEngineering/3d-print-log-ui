@@ -13,7 +13,6 @@ import { PrinterConnectionsComponent } from './printer-connections/printer-conne
 import { PrinterSlotsComponent } from './printer-slots/printer-slots.component';
 
 @NgModule({
-  declarations: [PrinterListComponent, PrinterDetailComponent],
   imports: [
     SharedModule,
     PrinterRoutingModule,
@@ -25,6 +24,8 @@ import { PrinterSlotsComponent } from './printer-slots/printer-slots.component';
     SignedImageComponent,
     PrinterConnectionsComponent,
     PrinterSlotsComponent,
+    PrinterListComponent,
+    PrinterDetailComponent,
   ],
 })
 export class PrinterModule {}

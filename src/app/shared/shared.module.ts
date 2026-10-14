@@ -61,19 +61,6 @@ import { AuthImagePipe } from './pipes/auth-image.pipe';
 import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-style.pipe';
 
 @NgModule({
-  declarations: [
-    SidebarComponent,
-    PrintSummaryCardComponent,
-    StatPanelComponent,
-    CommentComponent,
-    HumanizePipe,
-    ParserUnavailableDialogComponent,
-    MaterialNamePipe,
-    FilamentListComponent,
-    FilamentSearchModalComponent,
-    GcodeViewerModalComponent,
-    SidebarAdComponent,
-  ],
   imports: [
     CommonModule,
     MatMenuModule,
@@ -125,6 +112,17 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     AdComponent,
     PrintImageComponent,
     DurationPipe,
+    SidebarComponent,
+    PrintSummaryCardComponent,
+    StatPanelComponent,
+    CommentComponent,
+    HumanizePipe,
+    ParserUnavailableDialogComponent,
+    MaterialNamePipe,
+    FilamentListComponent,
+    FilamentSearchModalComponent,
+    GcodeViewerModalComponent,
+    SidebarAdComponent,
   ],
   exports: [
     CommonModule,

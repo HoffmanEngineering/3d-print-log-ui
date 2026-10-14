@@ -42,7 +42,7 @@ describe('DocumentationComponent SEO lifecycle', () => {
     ]);
 
     await TestBed.configureTestingModule({
-      declarations: [DocumentationComponent],
+      imports: [DocumentationComponent],
       providers: [
         { provide: Router, useValue: { url: '/docs/prints', events } },
         { provide: DocsSearchOpener, useValue: searchOpener() },
@@ -159,7 +159,7 @@ describe('DocumentationComponent telemetry', () => {
     );
 
     await TestBed.configureTestingModule({
-      declarations: [DocumentationComponent],
+      imports: [DocumentationComponent],
       providers: [
         { provide: Router, useValue: { url: initialUrl, events } },
         { provide: DocsSearchOpener, useValue: searchOpener() },

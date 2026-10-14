@@ -1,4 +1,4 @@
-import { Location } from '@angular/common';
+import { Location, AsyncPipe } from '@angular/common';
 import {
   Component,
   ElementRef,
@@ -14,9 +14,11 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup,
   Validators,
+  FormsModule,
+  ReactiveFormsModule,
 } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Observable, Subscription } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
@@ -44,7 +46,11 @@ import {
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { MatDialog } from '@angular/material/dialog';
-import { MatChipListboxChange } from '@angular/material/chips';
+import {
+  MatChipListboxChange,
+  MatChipListbox,
+  MatChipOption,
+} from '@angular/material/chips';
 import {
   QrLabelDialogComponent,
   QrLabelDialogData,
@@ -62,6 +68,56 @@ import {
   projectRemainingMg,
 } from './remaining-projection';
 import { TagUidConflict, readTagUidConflict } from '../tag-uid';
+import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
+import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
+import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
+import {
+  MatCard,
+  MatCardTitle,
+  MatCardContent,
+  MatCardActions,
+} from '@angular/material/card';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultLayoutGapDirective,
+  DefaultFlexDirective,
+  FlexFillDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { EntityImagesPanelComponent as EntityImagesPanelComponent_1 } from '../../shared/entity-images-panel/entity-images-panel.component';
+import {
+  MatFormField,
+  MatLabel,
+  MatError,
+  MatHint,
+  MatSuffix,
+  MatPrefix,
+} from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatSelect, MatOption } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
+import {
+  MatAutocompleteTrigger,
+  MatAutocomplete,
+} from '@angular/material/autocomplete';
+import {
+  MatButtonToggleGroup,
+  MatButtonToggle,
+} from '@angular/material/button-toggle';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MaterialIconComponent } from '../../shared/material-icon/material-icon.component';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { FilamentTagUidsComponent } from './filament-tag-uids/filament-tag-uids.component';
+import { DefaultStyleDirective } from '@ngbracket/ngx-layout/extended';
+import {
+  MatDatepickerInput,
+  MatDatepickerToggle,
+  MatDatepicker,
+} from '@angular/material/datepicker';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { MaterialNamePipe as MaterialNamePipe_1 } from '../../shared/pipes/material-name.pipe';
+import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
@@ -119,7 +175,54 @@ function toServerAdjustmentRows(
   host: { '(window:beforeunload)': 'canDeactivate()' },
   templateUrl: './filament-detail.component.html',
   styleUrls: ['./filament-detail.component.scss'],
-  standalone: false,
+  imports: [
+    FilamentRemainingCardComponent,
+    FilamentPrintsPanelComponent,
+    SidebarAdComponent,
+    MatCard,
+    FormsModule,
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    DefaultLayoutGapDirective,
+    ReactiveFormsModule,
+    MatCardTitle,
+    DefaultFlexDirective,
+    MatCardContent,
+    FlexFillDirective,
+    EntityImagesPanelComponent_1,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatHint,
+    MatSelect,
+    MatOption,
+    MatTooltip,
+    MatAutocompleteTrigger,
+    MatAutocomplete,
+    MatButtonToggleGroup,
+    MatButtonToggle,
+    MatButton,
+    MatIconButton,
+    MatIcon,
+    MatChipListbox,
+    MatChipOption,
+    MaterialIconComponent,
+    MatCheckbox,
+    FilamentTagUidsComponent,
+    DefaultStyleDirective,
+    RouterLink,
+    MatDatepickerInput,
+    MatDatepickerToggle,
+    MatSuffix,
+    MatDatepicker,
+    MatPrefix,
+    MatCardActions,
+    AdComponent,
+    AsyncPipe,
+    MaterialNamePipe_1,
+    FilamentColorSwatchStylePipe,
+  ],
 })
 export class FilamentDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy

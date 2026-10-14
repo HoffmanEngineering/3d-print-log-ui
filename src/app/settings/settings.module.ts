@@ -8,13 +8,13 @@ import { SettingsComponent } from './settings.component';
 import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
 
 @NgModule({
-  declarations: [SettingsComponent],
   imports: [
     SharedModule,
     SettingsRoutingModule,
     ConnectedAgentsComponent,
     AchievementSettingsComponent,
     EmailSettingsComponent,
+    SettingsComponent,
   ],
 })
 export class SettingsModule {}

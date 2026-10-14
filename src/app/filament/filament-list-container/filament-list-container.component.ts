@@ -1,9 +1,14 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { PageEvent } from '@angular/material/paginator';
-import { Sort } from '@angular/material/sort';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
+import { Sort, MatSort, MatSortHeader } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterLink,
+} from '@angular/router';
 import { debounce, isNumber } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
@@ -25,12 +30,78 @@ import {
   QrLabelDialogData,
 } from 'src/app/shared/qr-label-dialog/qr-label-dialog.component';
 import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatButton } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatBadge } from '@angular/material/badge';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatSelect, MatOption } from '@angular/material/select';
+import { MatChipListbox, MatChipOption } from '@angular/material/chips';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow,
+} from '@angular/material/table';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MaterialIconComponent } from '../../shared/material-icon/material-icon.component';
+import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { DecimalPipe } from '@angular/common';
+import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 @Component({
   selector: 'app-filament-list-container',
   templateUrl: './filament-list-container.component.html',
   styleUrls: ['./filament-list-container.component.scss'],
-  standalone: false,
+  imports: [
+    MatProgressBar,
+    MatButton,
+    RouterLink,
+    MatTooltip,
+    MatIcon,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatBadge,
+    MatCheckbox,
+    MatSelect,
+    MatOption,
+    MatChipListbox,
+    MatChipOption,
+    MatTable,
+    MatSort,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCellDef,
+    MatCell,
+    MatSortHeader,
+    MatMenuTrigger,
+    MatMenu,
+    MatMenuItem,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    MaterialIconComponent,
+    EmptyStateComponent,
+    MatPaginator,
+    AdComponent,
+    DecimalPipe,
+    FilamentColorSwatchStylePipe,
+  ],
 })
 export class FilamentListContainerComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);

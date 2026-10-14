@@ -91,7 +91,6 @@ describe('PrinterMaintenanceComponent', () => {
     const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
 
     await TestBed.configureTestingModule({
-      declarations: [PrinterMaintenanceComponent],
       imports: [
         SharedModule,
         FormsModule,
@@ -99,6 +98,7 @@ describe('PrinterMaintenanceComponent', () => {
         PrinterAvatarComponent,
         // The template renders app-ad for real, which needs the Adsense config.
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
+        PrinterMaintenanceComponent,
       ],
       providers: [
         // Stubbed: the real store would issue its own authenticated fetch.

@@ -6,6 +6,7 @@ import {
   PrintFeedSummary,
 } from 'src/app/core/services/feed.service';
 
+import { PrintSummaryCardComponent } from 'src/app/shared/print-summary-card/print-summary-card.component';
 import { FeedListComponent } from './feed-list.component';
 
 describe('FeedListComponent', () => {
@@ -28,9 +29,11 @@ describe('FeedListComponent', () => {
       of([item(1, '2026-10-03T00:00:00Z'), item(2, '2026-10-02T00:00:00Z')])
     );
     TestBed.configureTestingModule({
-      declarations: [FeedListComponent],
+      imports: [FeedListComponent],
       providers: [{ provide: FeedService, useValue: feedService }],
-      schemas: [NO_ERRORS_SCHEMA],
+    }).overrideComponent(FeedListComponent, {
+      remove: { imports: [PrintSummaryCardComponent] },
+      add: { schemas: [NO_ERRORS_SCHEMA] },
     });
     fixture = TestBed.createComponent(FeedListComponent);
     component = fixture.componentInstance;

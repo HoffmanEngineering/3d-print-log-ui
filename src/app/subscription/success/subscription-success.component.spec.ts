@@ -12,8 +12,11 @@ describe('SubscriptionSuccessComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SubscriptionSuccessComponent],
-      imports: [SharedModule, RouterTestingModule],
+      imports: [
+        SharedModule,
+        RouterTestingModule,
+        SubscriptionSuccessComponent,
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),

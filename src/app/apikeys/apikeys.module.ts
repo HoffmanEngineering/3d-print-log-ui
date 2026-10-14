@@ -5,7 +5,6 @@ import { ApikeysRoutingModule } from './apikeys-routing.module';
 import { ApikeysComponent } from './apikeys.component';
 
 @NgModule({
-  declarations: [ApikeysComponent],
-  imports: [SharedModule, ApikeysRoutingModule],
+  imports: [SharedModule, ApikeysRoutingModule, ApikeysComponent],
 })
 export class ApikeysModule {}

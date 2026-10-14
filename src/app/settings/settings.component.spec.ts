@@ -150,13 +150,13 @@ describe('SettingsComponent', () => {
     });
 
     TestBed.configureTestingModule({
-      declarations: [SettingsComponent],
       imports: [
         SharedModule,
         NoopAnimationsModule,
         RouterTestingModule,
         ConnectedAgentsComponent,
         AchievementSettingsComponent,
+        SettingsComponent,
       ],
       providers: [
         {

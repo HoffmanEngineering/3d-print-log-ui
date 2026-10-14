@@ -6,11 +6,34 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose,
+} from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { ColumnDefinition } from '../print-list.component';
 import { Subject } from 'rxjs';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import {
+  CdkDragDrop,
+  moveItemInArray,
+  CdkDropList,
+  CdkDrag,
+  CdkDragHandle,
+} from '@angular/cdk/drag-drop';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatSelectionList, MatListOption } from '@angular/material/list';
+import { FormsModule } from '@angular/forms';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { MatButton } from '@angular/material/button';
 
 export interface DialogData {
   title: string;
@@ -24,8 +47,25 @@ export interface DialogData {
   selector: 'app-print-table-layout',
   templateUrl: './print-table-layout.component.html',
   styleUrls: ['./print-table-layout.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatSelectionList,
+    CdkDropList,
+    FormsModule,
+    CdkDrag,
+    MatIcon,
+    CdkDragHandle,
+    MatListOption,
+    MatTooltip,
+    MatDialogActions,
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    MatButton,
+    MatDialogClose,
+  ],
 })
 export class PrintTableLayoutComponent implements OnInit {
   dialogRef = inject<MatDialogRef<PrintTableLayoutComponent>>(MatDialogRef);

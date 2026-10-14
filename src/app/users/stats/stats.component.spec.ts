@@ -33,8 +33,7 @@ describe('StatsComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [StatsComponent],
-      imports: [SharedModule],
+      imports: [SharedModule, StatsComponent],
       providers: [{ provide: UsersPrintsStatsService, useValue: stats }],
     });
     fixture = TestBed.createComponent(StatsComponent);

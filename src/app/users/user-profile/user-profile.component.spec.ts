@@ -1,3 +1,7 @@
+import { UserPrintsComponent } from '../user-prints/user-prints.component';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { AchievementStripComponent } from '../achievement-strip/achievement-strip.component';
+import { StatsComponent } from '../stats/stats.component';
 import { NO_ERRORS_SCHEMA, provideZoneChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -58,7 +62,7 @@ describe('UserProfileComponent', () => {
     toastr = jasmine.createSpyObj<ToastrService>('ToastrService', ['error']);
 
     TestBed.configureTestingModule({
-      declarations: [UserProfileComponent],
+      imports: [UserProfileComponent],
       providers: [
         {
           provide: ActivatedRoute,
@@ -185,8 +189,7 @@ describe('UserProfileComponent rendering', () => {
     userService.updateCurrentUserDetail.and.returnValue(saved);
 
     TestBed.configureTestingModule({
-      declarations: [UserProfileComponent],
-      imports: [FormsModule, MatMenuModule],
+      imports: [FormsModule, MatMenuModule, UserProfileComponent],
       providers: [
         provideZoneChangeDetection(),
         {
@@ -209,6 +212,17 @@ describe('UserProfileComponent rendering', () => {
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
+    });
+    TestBed.overrideComponent(UserProfileComponent, {
+      remove: {
+        imports: [
+          StatsComponent,
+          AchievementStripComponent,
+          AdComponent,
+          UserPrintsComponent,
+        ],
+      },
+      add: { schemas: [NO_ERRORS_SCHEMA] },
     });
     fixture = TestBed.createComponent(UserProfileComponent);
     fixture.detectChanges();

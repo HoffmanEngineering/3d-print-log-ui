@@ -7,7 +7,12 @@ import { FeedRoutingModule } from './feed-routing.module';
 import { FeedComponent } from './feed.component';
 
 @NgModule({
-  declarations: [FeedComponent, FeedListComponent],
-  imports: [CommonModule, FeedRoutingModule, SharedModule],
+  imports: [
+    CommonModule,
+    FeedRoutingModule,
+    SharedModule,
+    FeedComponent,
+    FeedListComponent,
+  ],
 })
 export class FeedModule {}

@@ -12,13 +12,42 @@ import {
   annualSavingsPercent,
   proPlan,
 } from '../../core/pricing/pro-pricing';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultFlexDirective,
+  DefaultLayoutGapDirective,
+} from '@ngbracket/ngx-layout/flex';
+import {
+  MatCard,
+  MatCardContent,
+  MatCardHeader,
+  MatCardTitle,
+  MatCardActions,
+  MatCardSubtitle,
+} from '@angular/material/card';
+import { RouterLink } from '@angular/router';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'app-pricing',
   templateUrl: './pricing.component.html',
   styleUrls: ['./pricing.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    DefaultFlexDirective,
+    DefaultLayoutGapDirective,
+    MatCard,
+    MatCardContent,
+    RouterLink,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardActions,
+    MatButton,
+    MatCardSubtitle,
+  ],
 })
 export class PricingComponent implements OnInit {
   private readonly subscriptionService = inject(SubscriptionService);

@@ -13,6 +13,8 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup,
   Validators,
+  FormsModule,
+  ReactiveFormsModule,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
@@ -35,13 +37,85 @@ import {
 import defaultPrinters from './cura-exported-printers';
 import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultLayoutGapDirective,
+  DefaultFlexDirective,
+  FlexFillDirective,
+} from '@ngbracket/ngx-layout/flex';
+import {
+  MatCard,
+  MatCardTitle,
+  MatCardContent,
+  MatCardActions,
+} from '@angular/material/card';
+import { EntityImagesPanelComponent as EntityImagesPanelComponent_1 } from '../../shared/entity-images-panel/entity-images-panel.component';
+import {
+  MatFormField,
+  MatLabel,
+  MatError,
+  MatHint,
+} from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatSelect, MatOptgroup, MatOption } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
+import {
+  MatAutocompleteTrigger,
+  MatAutocomplete,
+} from '@angular/material/autocomplete';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { PrinterSlotsComponent } from '../printer-slots/printer-slots.component';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { PrinterConnectionsComponent } from '../printer-connections/printer-connections.component';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
+import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
+import { AsyncPipe, DecimalPipe } from '@angular/common';
+import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 @Component({
   selector: 'app-printer-detail',
   host: { '(window:beforeunload)': 'canDeactivate()' },
   templateUrl: './printer-detail.component.html',
   styleUrls: ['./printer-detail.component.scss'],
-  standalone: false,
+  imports: [
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    DefaultLayoutGapDirective,
+    MatCard,
+    DefaultFlexDirective,
+    FormsModule,
+    ReactiveFormsModule,
+    MatCardTitle,
+    MatCardContent,
+    FlexFillDirective,
+    EntityImagesPanelComponent_1,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatSelect,
+    MatOptgroup,
+    MatOption,
+    MatTooltip,
+    MatAutocompleteTrigger,
+    MatHint,
+    MatAutocomplete,
+    MatCheckbox,
+    PrinterSlotsComponent,
+    MatButton,
+    MatIcon,
+    PrinterConnectionsComponent,
+    MatCardActions,
+    AdComponent,
+    DefaultShowHideDirective,
+    SidebarAdComponent,
+    AsyncPipe,
+    DecimalPipe,
+    FilamentColorSwatchStylePipe,
+  ],
 })
 export class PrinterDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy

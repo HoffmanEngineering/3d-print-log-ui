@@ -196,7 +196,7 @@ A child's own `.thing img` rule and a parent's `::ng-deep .thing img` tie on spe
 
 Jasmine + Karma with Chrome, specs co-located with source (`*.spec.ts`), unit-test environment in `src/environments/environment.unittest.ts`. Cypress E2E against `https://localhost:4200`; **E2E needs the API running in `E2ETesting` mode**, so ask before running it.
 
-Standalone components go in TestBed `imports`, module-declared ones in `declarations`. Mock services with `jasmine.createSpyObj<T>`. Async work needs `fixture.detectChanges()` then `await fixture.whenStable()`.
+Components are standalone and go in TestBed `imports`. The docs pages are the exception: generated pages and the two hand-written ones are declared by `DocumentationModule`, whose imports are their template scope, so their specs use `declarations`. Mock services with `jasmine.createSpyObj<T>`. Async work needs `fixture.detectChanges()` then `await fixture.whenStable()`.
 
 **Stubbing every collaborator can hide the bug that matters.** A component's contract with a service is not just the values it returns — with signals it includes _when_ that service touches reactive state. Every spec around `PrinterAvatarComponent` stubbed the store and passed while the print list rendered nothing in a real browser (see NG0600 above). When a component depends on a service that reads or writes signals, add at least one spec that wires the **real** service with `provideHttpClientTesting`, and assert the first `detectChanges()` does not throw.
 

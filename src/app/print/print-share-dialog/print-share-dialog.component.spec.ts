@@ -50,7 +50,7 @@ describe('PrintShareDialogComponent sharing', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [PrintShareDialogComponent],
+      imports: [PrintShareDialogComponent],
       providers: [
         { provide: PrintService, useValue: printService },
         { provide: MatDialogRef, useValue: dialogRef },

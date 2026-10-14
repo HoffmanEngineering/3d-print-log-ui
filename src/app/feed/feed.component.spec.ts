@@ -1,24 +1,20 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 
 import { FeedComponent } from './feed.component';
 
-xdescribe('FeedComponent', () => {
-  let component: FeedComponent;
-  let fixture: ComponentFixture<FeedComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+describe('FeedComponent', () => {
+  it('hosts the feed list', () => {
+    TestBed.configureTestingModule({
       declarations: [FeedComponent],
-    }).compileComponents();
-  });
+      schemas: [NO_ERRORS_SCHEMA],
+    });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(FeedComponent);
-    component = fixture.componentInstance;
+    const fixture = TestBed.createComponent(FeedComponent);
     fixture.detectChanges();
-  });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('app-feed-list')
+    ).not.toBeNull();
   });
 });

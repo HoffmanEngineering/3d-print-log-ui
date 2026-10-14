@@ -1,24 +1,20 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 import { CallbackComponent } from './callback.component';
 
-xdescribe('CallbackComponent', () => {
-  let component: CallbackComponent;
-  let fixture: ComponentFixture<CallbackComponent>;
-
-  beforeEach(waitForAsync(() => {
+describe('CallbackComponent', () => {
+  it('finishes the Auth0 login when the redirect lands here', () => {
+    const auth = jasmine.createSpyObj<AuthService>('AuthService', [
+      'handleAuthCallback',
+    ]);
     TestBed.configureTestingModule({
       imports: [CallbackComponent],
-    }).compileComponents();
-  }));
+      providers: [{ provide: AuthService, useValue: auth }],
+    });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(CallbackComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    TestBed.createComponent(CallbackComponent).detectChanges();
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(auth.handleAuthCallback).toHaveBeenCalledTimes(1);
   });
 });

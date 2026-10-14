@@ -1,8 +1,7 @@
-import { Component, OnInit, DOCUMENT, inject } from '@angular/core';
-import { Title } from '@angular/platform-browser';
+import { Component, DestroyRef, OnInit, DOCUMENT, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Subscription } from 'rxjs';
 import {
   AuthService,
   UserProfileInfo,
@@ -29,15 +28,13 @@ export class UserProfileComponent implements OnInit {
   private readonly metaTagService = inject(MetaTagService);
   private readonly loggingService = inject(LoggingService);
   private readonly document = inject<Document>(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
 
   public userDetail: UserDetailDto;
 
   public currentUser: UserProfileInfo;
 
   public profileViewStatusTypes = ProfileViewStatus;
-
-  authServiceSubscription: Subscription;
-  activatedRouteSubscription: Subscription;
 
   public isEditingDescription = false;
 
@@ -58,24 +55,20 @@ export class UserProfileComponent implements OnInit {
   public isEditingDisplayName = false;
 
   ngOnInit(): void {
-    this.activatedRouteSubscription = this.activatedRoute.data.subscribe(
-      (data) => {
-        if (this.authServiceSubscription) {
-          this.authServiceSubscription.unsubscribe();
-        }
-
+    this.activatedRoute.data
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data) => {
         this.userDetail = data.userDetail;
         this.viewStatus = this.userDetail.viewStatus;
 
         this.setMetaTags();
+      });
 
-        this.authServiceSubscription = this.authService.userProfile$.subscribe(
-          (user) => {
-            this.currentUser = user;
-          }
-        );
-      }
-    );
+    this.authService.userProfile$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        this.currentUser = user;
+      });
   }
 
   setMetaTags() {

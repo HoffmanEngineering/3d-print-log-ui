@@ -1,24 +1,28 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { BehaviorSubject } from 'rxjs';
+import {
+  AuthService,
+  UserProfileInfo,
+} from 'src/app/core/services/auth.service';
 
 import { UserProfileComponent } from './user-profile.component';
 
-xdescribe('UserProfileComponent', () => {
-  let component: UserProfileComponent;
-  let fixture: ComponentFixture<UserProfileComponent>;
-
-  beforeEach(waitForAsync(() => {
+describe('UserProfileComponent (/profile)', () => {
+  it("shows the signed-in user's profile", () => {
+    const userProfile$ = new BehaviorSubject<UserProfileInfo | null>({
+      id: 3,
+      displayName: 'Ada',
+    } as UserProfileInfo);
     TestBed.configureTestingModule({
       imports: [UserProfileComponent],
-    }).compileComponents();
-  }));
+      providers: [{ provide: AuthService, useValue: { userProfile$ } }],
+    });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(UserProfileComponent);
-    component = fixture.componentInstance;
+    const fixture = TestBed.createComponent(UserProfileComponent);
     fixture.detectChanges();
-  });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('code')?.textContent
+    ).toContain('"displayName": "Ada"');
   });
 });

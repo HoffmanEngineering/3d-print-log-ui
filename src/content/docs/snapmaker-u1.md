@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 46
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-14
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, materials]
 ---
 
@@ -61,6 +61,8 @@ To have a spool assigned:
 3. Restart the bridge's container while the printer is idle. The bridge looks up a tag it didn't find only once, and looks again when it restarts.
 
 From then on, loading that spool into any slot assigns it there.
+
+**Changing a spool mid-print.** When you swap a tagged spool into a slot partway through a print, that tool's filament is split between the two spools: what was printed before goes to the old one, the rest to the new one, and the print gets a note such as `T0: Spool A → Spool B at 63% (layer 112)`. The U1's runout sensors (`e0_filament` to `e3_filament`, one per tool) tell the bridge which tool ran out. When a spool runs out and the new one has no tag the bridge knows, the console asks you to run `PRINTLOG_SET_SPOOL` for that tool. See [Changing spools mid-print](/docs/printlog-bridge-spools#mid-print).
 
 Only Snapmaker's own tags are read. A spool with no tag, or with a tag that isn't Snapmaker's, is left alone: load it in the app, or with the [spool macros](/docs/printlog-bridge-spools) where you can install them.
 

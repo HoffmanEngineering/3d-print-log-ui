@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 47
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-14
 related: [printlog-bridge, printlog-bridge-install, printlog-bridge-docker, printlog-bridge-privacy]
 ---
 
@@ -130,6 +130,10 @@ The bridge checks in every 5 minutes, and the printer's [Connections](/docs/prin
 On a Snapmaker U1, the bridge looks up each tag the reader sees only once. After adding the tag in the app, restart the bridge so it looks again. See [Spools from RFID tags](/docs/snapmaker-u1#rfid).
 
 If the macro doesn't answer at all, see [What the console shows](/docs/printlog-bridge-spools#replies).
+
+#### A print has all its filament on one spool after a spool change {#spool-change}
+
+The bridge splits a tool's filament only when it knows the new spool. Run `PRINTLOG_SET_SPOOL` for the tool while the print is paused, before you resume. If you resumed without it, the print has a note saying so; split the usage by hand on the print in the app. See [Changing spools mid-print](/docs/printlog-bridge-spools#mid-print).
 
 #### The webcam snapshot was skipped {#snapshot}
 

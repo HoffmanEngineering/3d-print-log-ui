@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 48
 mode: reference
-updated: 2026-10-12
+updated: 2026-10-14
 related: [printlog-bridge, printlog-bridge-troubleshooting, privacy-policy, api]
 ---
 
@@ -33,8 +33,8 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 | `PUT /api/Connections/{instance}` | At start, then every 5 minutes | `kind` (`moonraker`), `displayName` (`printlog-bridge (name)`, with the printer's name from your config), `agentVersion`, `printerId` |
 | `POST /api/Prints` | A print starts | `printerId`; `title` (made from the file name); `fileName` (without its folders); `startDate`; `status`; `viewStatus` and `allowComments` (your account's defaults); `externalSource` (`moonraker`); `externalId` and `connectionInstanceId` (a random id the bridge made for the printer, plus Moonraker's job id); the slicer's estimated print time and filament (length and weight, and weight per tool on a multi-tool file), when the file has them; each tool's row linked to the spool loaded in its slot; and `notes` when the printer's RFID reader disagrees with a spool's material or color |
 | `GET /api/Prints/{id}` | A print ends | Nothing. Reads what you changed in the app. |
-| `POST /api/Prints/{id}/complete` | A print ends | `status` (the outcome), `endedAt`, `printTimeInSeconds`, and per tool (`slot`) the filament length Klipper fed, linked to the spool you chose |
-| `PATCH /api/Prints/{id}` | A print fails or is cut short | `notes`: a line saying why, with Klipper's error message when there is one |
+| `POST /api/Prints/{id}/complete` | A print ends | `status` (the outcome), `endedAt`, `printTimeInSeconds`, and per tool (`slot`) the filament length Klipper fed, linked to the spool you chose, split into a row per spool when a tool's spool changed mid-print |
+| `PATCH /api/Prints/{id}` | A print fails or is cut short, a spool changed mid-print, or a print was paused for a filament change with no spool assigned | `notes`: a line saying why, with Klipper's error message when there is one; which spools a tool changed between, and where; how to split a filament change's usage |
 | `POST /api/Prints/{id}/image` | A print starts, and when it ends | The slicer's thumbnail (at start) and one webcam frame (at the end, unless `snapshots = false`) |
 | `GET /api/Filaments/by-tag/{uid}` | `PRINTLOG_SET_SPOOL TAG=…`, or a Snapmaker U1 reads a spool's RFID tag | The tag's UID |
 | `PUT /api/Printers/{id}/slots/{slot}` | `PRINTLOG_SET_SPOOL`, or a U1 tag that matches one of your spools | `filamentId` (the spool), `slotLabel` (`T0`, `T1`…) |

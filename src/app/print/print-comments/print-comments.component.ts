@@ -1,14 +1,14 @@
 import {
   Component,
-  DestroyRef,
   ElementRef,
-  OnInit,
   inject,
   input,
   output,
   viewChild,
+  ChangeDetectionStrategy,
+  computed,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Comment } from 'src/app/core/services/comment.service';
@@ -20,8 +20,9 @@ import { SharedModule } from 'src/app/shared/shared.module';
   templateUrl: './print-comments.component.html',
   styleUrls: ['./print-comments.component.scss'],
   imports: [SharedModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PrintCommentsComponent implements OnInit {
+export class PrintCommentsComponent {
   private readonly authService = inject(AuthService);
   private readonly printService = inject(PrintService);
   private readonly toastrService = inject(ToastrService);
@@ -45,25 +46,17 @@ export class PrintCommentsComponent implements OnInit {
 
   readonly notLoggedIn = viewChild<ElementRef>('notLoggedIn');
 
-  public currentUserProfilePicture = '';
-  public currentUserId: number | null = null;
+  private readonly user = toSignal(this.authService.userProfile$, {
+    initialValue: null,
+  });
+
+  readonly isLoggedIn = computed(() => this.user() !== null);
+  readonly currentUserId = computed(() => this.user()?.id ?? null);
+  readonly currentUserProfilePicture = computed(
+    () => this.user()?.profilePicture ?? ''
+  );
+
   public newComment = '';
-
-  public isLoggedIn = false;
-
-  private readonly destroyRef = inject(DestroyRef);
-
-  public ngOnInit(): void {
-    this.authService.userProfile$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => {
-        if (user) {
-          this.isLoggedIn = true;
-        }
-        this.currentUserProfilePicture = user?.profilePicture ?? '';
-        this.currentUserId = user?.id;
-      });
-  }
 
   public addComment() {
     if (this.newComment !== '') {

@@ -63,6 +63,19 @@ describe('AccountDeactivationBannerComponent', () => {
     expect(banner?.textContent).toContain('Reactivate Account');
   });
 
+  it('appears when the account is deactivated while the page is open', () => {
+    render({ deactivationDateTime: null } as UserProfileInfo);
+
+    userProfile$.next(deactivated);
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '.pending-deletion-banner'
+      )
+    ).not.toBeNull();
+  });
+
   it('reactivates the account and clears the deactivation date', () => {
     userService.reactivateCurrentUser.and.returnValue(
       of({ deactivationDateTime: null } as UserDetailDto)

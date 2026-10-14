@@ -1,10 +1,10 @@
 <div
   class="wrapper"
-  (mouseenter)="imageHovered = true"
-  (mouseleave)="imageHovered = false"
-  (click)="imageHovered = !imageHovered"
+  (mouseenter)="imageHovered.set(true)"
+  (mouseleave)="imageHovered.set(false)"
+  (click)="imageHovered.set(!imageHovered())"
 >
-  @if (showDeleteOnHover() && imageHovered) {
+  @if (showDeleteOnHover() && imageHovered()) {
     <button
       mat-raised-button
       aria-hidden="false"
@@ -17,14 +17,14 @@
       <mat-icon>delete</mat-icon>Remove
     </button>
   }
-  @if (imageData() && !imageFailed) {
+  @if (imageData() && !imageFailed()) {
     <img
       [src]="imageData()"
       class="fade-in"
       [alt]="alt() || 'Image of 3D print'"
       (error)="onImageError()"
     />
-  } @else if (imageFailed) {
+  } @else if (imageFailed()) {
     <div class="image-failed">
       <mat-icon aria-hidden="true">broken_image</mat-icon>
       <span>Image unavailable</span>

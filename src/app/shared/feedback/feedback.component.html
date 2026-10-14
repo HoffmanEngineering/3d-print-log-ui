@@ -58,9 +58,9 @@
         <button
           mat-raised-button
           type="submit"
-          [disabled]="!form.valid || saving"
+          [disabled]="!form.valid || saving()"
           color="primary"
-          [class.spinner]="saving"
+          [class.spinner]="saving()"
         >
           Submit
         </button>

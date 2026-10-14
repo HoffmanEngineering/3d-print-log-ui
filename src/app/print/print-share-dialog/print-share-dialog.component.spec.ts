@@ -67,7 +67,7 @@ describe('PrintShareDialogComponent sharing', () => {
     const component = openDialog();
 
     expect(printService.getPrintDetail).toHaveBeenCalledOnceWith(5);
-    expect(component.printLink).toBe(`${location.origin}/prints/5`);
+    expect(component.printLink()).toBe(`${location.origin}/prints/5`);
   });
 
   // #263: changing who can see a print must not PUT back the whole print the dialog loaded,
@@ -80,7 +80,7 @@ describe('PrintShareDialogComponent sharing', () => {
     expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
       viewStatus: PrintViewStatus.Public,
     });
-    expect(component.print.viewStatus).toBe(PrintViewStatus.Public);
+    expect(component.print()!.viewStatus).toBe(PrintViewStatus.Public);
   });
 
   it('copies the link, confirms it and closes', () => {

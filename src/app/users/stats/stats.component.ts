@@ -1,10 +1,11 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   OnChanges,
-  OnInit,
   SimpleChanges,
   input,
   inject,
+  signal,
 } from '@angular/core';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
 
@@ -13,20 +14,21 @@ import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stat
   templateUrl: './stats.component.html',
   styleUrls: ['./stats.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatsComponent implements OnChanges {
   private readonly userPrintsService = inject(UsersPrintsStatsService);
 
   readonly userId = input<number>();
 
-  public printCountTotal = 0;
-  public printCountLast30Days = 0;
+  readonly printCountTotal = signal(0);
+  readonly printCountLast30Days = signal(0);
 
-  public totalPrintTimeTotal = '';
-  public totalPrintTimeLast30Days = '';
+  readonly totalPrintTimeTotal = signal('');
+  readonly totalPrintTimeLast30Days = signal('');
 
-  public totalFilamentUsageInG = '';
-  public totalFilamentUsageLast30DaysInG = '';
+  readonly totalFilamentUsageInG = signal('');
+  readonly totalFilamentUsageLast30DaysInG = signal('');
 
   public readonly MIN_DATE = new Date('1910-01-01');
 
@@ -55,7 +57,7 @@ export class StatsComponent implements OnChanges {
       )
       .subscribe((result) => {
         const totalFilamentUsage = +(result ?? 0) / 1000;
-        this.totalFilamentUsageLast30DaysInG = `${totalFilamentUsage} (g)`;
+        this.totalFilamentUsageLast30DaysInG.set(`${totalFilamentUsage} (g)`);
       });
   }
   calculatePrintCountTotalFilamentUsage() {
@@ -65,7 +67,7 @@ export class StatsComponent implements OnChanges {
       .getUsersTotalFilamentUsage(this.userId(), this.MIN_DATE, endOfToday)
       .subscribe((result) => {
         const totalFilamentUsage = +(result ?? 0) / 1000;
-        this.totalFilamentUsageInG = `${totalFilamentUsage} (g)`;
+        this.totalFilamentUsageInG.set(`${totalFilamentUsage} (g)`);
       });
   }
   calculateTotalPrintTimeLast30Days() {
@@ -80,7 +82,7 @@ export class StatsComponent implements OnChanges {
       .subscribe((result) => {
         const durationString = this.formatTotalDuration(result);
 
-        this.totalPrintTimeLast30Days = durationString;
+        this.totalPrintTimeLast30Days.set(durationString);
       });
   }
   calculateTotalPrintTime() {
@@ -91,7 +93,7 @@ export class StatsComponent implements OnChanges {
       .subscribe((result) => {
         const durationString = this.formatTotalDuration(result);
 
-        this.totalPrintTimeTotal = durationString;
+        this.totalPrintTimeTotal.set(durationString);
       });
   }
   calculatePrintCountLast30Days() {
@@ -104,18 +106,18 @@ export class StatsComponent implements OnChanges {
         endOfToday
       )
       .subscribe((result) => {
-        this.printCountLast30Days = result;
+        this.printCountLast30Days.set(result);
       });
   }
   resetStats() {
-    this.printCountTotal = 0;
-    this.printCountLast30Days = 0;
+    this.printCountTotal.set(0);
+    this.printCountLast30Days.set(0);
 
-    this.totalPrintTimeTotal = '';
-    this.totalPrintTimeLast30Days = '';
+    this.totalPrintTimeTotal.set('');
+    this.totalPrintTimeLast30Days.set('');
 
-    this.totalFilamentUsageInG = '';
-    this.totalFilamentUsageLast30DaysInG = '';
+    this.totalFilamentUsageInG.set('');
+    this.totalFilamentUsageLast30DaysInG.set('');
   }
 
   calculatePrintCount() {
@@ -124,7 +126,7 @@ export class StatsComponent implements OnChanges {
     this.userPrintsService
       .getUsersPrintCount(this.userId(), this.MIN_DATE, endOfToday)
       .subscribe((result) => {
-        this.printCountTotal = result;
+        this.printCountTotal.set(result);
       });
   }
 

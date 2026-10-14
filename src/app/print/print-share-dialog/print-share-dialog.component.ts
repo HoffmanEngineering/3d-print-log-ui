@@ -1,4 +1,12 @@
-import { Component, OnInit, DOCUMENT, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  DOCUMENT,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {
   PrintDetail,
@@ -20,6 +28,7 @@ export interface DialogData {
   templateUrl: './print-share-dialog.component.html',
   styleUrls: ['./print-share-dialog.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrintShareDialogComponent implements OnInit {
   dialogRef = inject<MatDialogRef<PrintShareDialogComponent>>(MatDialogRef);
@@ -30,9 +39,12 @@ export class PrintShareDialogComponent implements OnInit {
   navigatorShareService = inject(NavigatorShareService);
   private readonly document = inject<Document>(DOCUMENT);
 
-  print: PrintDetail;
+  readonly print = signal<PrintDetail | null>(null);
 
-  printLink = '';
+  readonly printLink = computed(() => {
+    const print = this.print();
+    return print ? `${this.document.location.origin}/prints/${print.id}` : '';
+  });
 
   printViewStatusTypes = PrintViewStatus;
 
@@ -43,12 +55,14 @@ export class PrintShareDialogComponent implements OnInit {
   }
 
   handlePrintChange(newPrint: PrintDetail) {
-    this.print = newPrint;
-    this.printLink = `${this.document.location.origin}/prints/${newPrint.id}`;
+    this.print.set(newPrint);
   }
 
   public updatePrint(newViewStatus: PrintViewStatus) {
-    const newPrint: PrintDetail = { ...this.print, viewStatus: newViewStatus };
+    const newPrint: PrintDetail = {
+      ...this.print(),
+      viewStatus: newViewStatus,
+    };
     // Only the view status: sending the whole print loaded when the dialog opened would revert
     // anything a connector recorded since (#263).
     this.printService
@@ -59,7 +73,7 @@ export class PrintShareDialogComponent implements OnInit {
   }
 
   public copyToClipboard() {
-    this.clipboard.copy(this.printLink);
+    this.clipboard.copy(this.printLink());
     this.toastrService.success('Link Copied to Clipboard', 'Success');
 
     this.dialogRef.close();
@@ -69,8 +83,8 @@ export class PrintShareDialogComponent implements OnInit {
     if (this.navigatorShareService.canShare()) {
       this.navigatorShareService
         .share({
-          title: `${this.print.title} | 3D Print Log`,
-          url: `https://www.3dprintlog.com/prints/${this.print.id}`,
+          title: `${this.print().title} | 3D Print Log`,
+          url: `https://www.3dprintlog.com/prints/${this.print().id}`,
         })
         .then((response) => {
           this.dialogRef.close();

@@ -134,4 +134,16 @@ describe('FilamentSearchModalComponent', () => {
       expect(component.selectedFilaments()[0].filamentRemaining).toBe(750000);
     });
   });
+
+  it('shows why a scanned label was rejected', () => {
+    component.toggleViewMode();
+    fixture.detectChanges();
+
+    component.handleQrScanned({ success: false, rawText: 'hello' });
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'This QR code is not a 3D Print Log filament label'
+    );
+  });
 });

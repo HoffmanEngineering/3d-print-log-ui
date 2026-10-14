@@ -1,5 +1,5 @@
 import {
-  ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
   OnChanges,
   OnInit,
@@ -8,6 +8,7 @@ import {
   input,
   model,
   output,
+  signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,6 +19,7 @@ import { PrintService } from '../../core/services/print.service';
   templateUrl: './print-image.component.html',
   styleUrls: ['./print-image.component.scss'],
   imports: [MatButtonModule, MatIconModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrintImageComponent implements OnInit, OnChanges {
   readonly printId = input<number>();
@@ -29,12 +31,11 @@ export class PrintImageComponent implements OnInit, OnChanges {
 
   readonly delete = output();
 
-  public imageHovered = false;
+  protected readonly imageHovered = signal(false);
 
-  protected imageFailed = false;
+  protected readonly imageFailed = signal(false);
 
   private readonly printService = inject(PrintService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
     if (this.imageData() === null && this.printId() > 0 && this.imageId() > 0) {
@@ -42,7 +43,6 @@ export class PrintImageComponent implements OnInit, OnChanges {
         .getPrintImage(this.printId(), this.imageId())
         .subscribe((data) => {
           this.imageData.set(data);
-          this.cdr.markForCheck();
         });
     }
   }
@@ -51,12 +51,12 @@ export class PrintImageComponent implements OnInit, OnChanges {
     // Without this a single failure would persist across carousel navigation,
     // showing "Image unavailable" for every subsequent image.
     if (changes['imageId'] || changes['imageData']) {
-      this.imageFailed = false;
+      this.imageFailed.set(false);
     }
   }
 
   protected onImageError(): void {
-    this.imageFailed = true;
+    this.imageFailed.set(true);
   }
 
   handleDeleteClick(event: Event) {

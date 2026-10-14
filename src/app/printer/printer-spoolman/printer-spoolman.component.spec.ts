@@ -128,6 +128,24 @@ describe('PrinterSpoolmanComponent', () => {
     expect(docs).not.toBeNull();
   });
 
+  it('says in the intro that prints are logged too', () => {
+    render([]);
+
+    const intro = squash(el().querySelector('section p.hint'));
+    expect(intro).toContain('log every print');
+  });
+
+  it('tells the reader to delete an old [notifier 3d_print_log] section before pasting', () => {
+    render([]);
+    clickConnect();
+    httpMock.expectOne(connectUrl).flush(created());
+    fixture.detectChanges();
+
+    const note = squash(q('spoolman-notifier-note'));
+    expect(note).toContain('[notifier 3d_print_log]');
+    expect(note).toContain('delete');
+  });
+
   it('ignores another printer’s connection and a revoked one', () => {
     render([
       connection({ id: 'x', printerId: 9 }),

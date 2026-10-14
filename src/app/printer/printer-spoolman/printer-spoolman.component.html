@@ -3,7 +3,7 @@
     <h2 id="spoolman-heading">Spoolman</h2>
     <p class="hint">
       Show your 3D Print Log spools in the Mainsail, Fluidd and KlipperScreen
-      spool pickers, with nothing to install.
+      spool pickers and log every print, with nothing to install.
       <a [routerLink]="docsLink">How it works</a>
     </p>
 
@@ -41,6 +41,14 @@
           <mat-icon>content_copy</mat-icon>
           Copy
         </button>
+        <p class="note" data-testid="spoolman-notifier-note">
+          <mat-icon inline aria-hidden="true">info</mat-icon>
+          <span>
+            If your <code>moonraker.conf</code> already has a
+            <code>[notifier 3d_print_log]</code> section from an API-key setup,
+            delete it first. This block replaces it.
+          </span>
+        </p>
         <ol class="steps">
           <li>Open <code>moonraker.conf</code> in Mainsail or Fluidd.</li>
           <li>Paste the block at the bottom of the file.</li>
@@ -49,6 +57,10 @@
         <p class="hint">
           Then pick a spool in Mainsail or Fluidd.
           <a [routerLink]="docsLink">Read the setup guide</a>
+        </p>
+        <p class="hint">
+          If printlog-bridge is running for this printer, the bridge logs this
+          printer's prints instead.
         </p>
         <button
           mat-raised-button

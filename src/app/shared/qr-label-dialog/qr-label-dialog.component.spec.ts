@@ -31,6 +31,7 @@ describe('QrLabelDialogComponent', () => {
 
   const mockFilament: FilamentSummary = {
     id: 'test-id-123',
+    spoolNumber: 7,
     displayName: 'Test PLA',
     brand: 'Test Brand',
     materialCategoryNickname: 'filament',
@@ -121,7 +122,8 @@ describe('QrLabelDialogComponent', () => {
     fixture.detectChanges(); // propagates signal updates (loading, labels) to view
 
     expect(mockQrCodeService.generateFilamentUrl).toHaveBeenCalledWith(
-      'test-id-123'
+      'test-id-123',
+      7
     );
     expect(mockQrCodeService.generateSvg).toHaveBeenCalled();
     expect(component.loading()).toBe(false);

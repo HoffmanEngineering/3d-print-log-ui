@@ -1,4 +1,10 @@
-import { Component, OnInit, DOCUMENT, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  DOCUMENT,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
@@ -19,6 +25,7 @@ export interface DialogData {
   templateUrl: './print-table-layout.component.html',
   styleUrls: ['./print-table-layout.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrintTableLayoutComponent implements OnInit {
   dialogRef = inject<MatDialogRef<PrintTableLayoutComponent>>(MatDialogRef);

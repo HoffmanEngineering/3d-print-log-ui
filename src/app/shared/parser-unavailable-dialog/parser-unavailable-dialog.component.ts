@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import {
@@ -16,6 +16,7 @@ export interface ParserUnavailableDialogData {
   templateUrl: './parser-unavailable-dialog.component.html',
   styleUrls: ['./parser-unavailable-dialog.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ParserUnavailableDialogComponent {
   private readonly feedbackService = inject(FeedbackService);

@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * The card only renders these four fields, so it accepts anything that carries
@@ -16,6 +16,7 @@ export interface PrintSummaryCardPrint {
   templateUrl: './print-summary-card.component.html',
   styleUrls: ['./print-summary-card.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrintSummaryCardComponent {
   readonly userProfilePictureUrl = input<string>(null);

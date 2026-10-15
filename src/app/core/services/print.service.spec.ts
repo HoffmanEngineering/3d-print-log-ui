@@ -52,6 +52,44 @@ describe('PrintService', () => {
       totalCount: 0,
     };
 
+    it('sends each tag id as filterByTagIds', () => {
+      service
+        .getPrintSummaries(
+          1,
+          10,
+          '',
+          null,
+          [],
+          [],
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          ['tag-a', 'tag-b']
+        )
+        .subscribe();
+
+      const request = httpMock.expectOne((candidate) =>
+        candidate.url.endsWith('/api/Prints/summary')
+      );
+      expect(request.request.params.getAll('filterByTagIds')).toEqual([
+        'tag-a',
+        'tag-b',
+      ]);
+      request.flush(emptyPage);
+    });
+
+    it('sends no tag filter by default', () => {
+      service.getPrintSummaries().subscribe();
+
+      const request = httpMock.expectOne((candidate) =>
+        candidate.url.endsWith('/api/Prints/summary')
+      );
+      expect(request.request.params.has('filterByTagIds')).toBeFalse();
+      request.flush(emptyPage);
+    });
+
     it('sends a half-open date range when one is supplied', () => {
       service
         .getPrintSummaries(
@@ -335,6 +373,24 @@ describe('PrintService', () => {
       expect(print?.externalSource).toBe('moonraker');
       expect(print?.externalId).toBe('voron-1:000042');
       expect(print?.connectionDisplayName).toBe('Voron in the garage');
+    });
+
+    it('getPrintDetail carries the creator’s tags, and null when the API sends none', () => {
+      let print: PrintDetail | undefined;
+      service.getPrintDetail(9).subscribe((p) => (print = p));
+      httpMock
+        .expectOne((r) => r.url.endsWith('/api/Prints/9'))
+        .flush({
+          ...detailDto,
+          tags: [{ id: 't', name: 'Gifts', color: null }],
+        });
+      expect(print?.tags).toEqual([{ id: 't', name: 'Gifts', color: null }]);
+
+      service.getPrintDetail(9).subscribe((p) => (print = p));
+      httpMock
+        .expectOne((r) => r.url.endsWith('/api/Prints/9'))
+        .flush(detailDto);
+      expect(print?.tags).toBeNull();
     });
   });
 

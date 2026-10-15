@@ -31,7 +31,7 @@
         ],
         "@angular-eslint/prefer-signals": [
           "error",
-          { "preferReadonlySignalProperties": false }
+          { "preferReadonlySignalProperties": true }
         ],
         "@angular-eslint/prefer-output-emitter-ref": "error",
         "@angular-eslint/prefer-host-metadata-property": "error",
@@ -44,12 +44,6 @@
       "extends": ["plugin:@angular-eslint/template/recommended"],
       "rules": {
         "@angular-eslint/template/prefer-control-flow": "error"
-      }
-    },
-    {
-      "files": ["src/app/shared/simple-dialog/simple-dialog.component.ts"],
-      "rules": {
-        "@angular-eslint/prefer-signals": "off"
       }
     },
     {

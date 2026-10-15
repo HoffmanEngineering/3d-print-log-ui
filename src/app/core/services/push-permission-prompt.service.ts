@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
-import { SimpleDialogComponent } from '../../shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from '../../shared/simple-dialog/simple-dialog.component';
 import { NativeBridgeService } from './native-bridge.service';
 import { PushPermissionState } from '../types/native-bridge';
 
@@ -118,13 +118,14 @@ export class PushPermissionPromptService {
       return { permission: current, outcome: 'suppressed' };
     }
 
-    const dialogRef = this.dialog.open(SimpleDialogComponent, { data: {} });
-    dialogRef.componentInstance.title = 'Get notified about your prints?';
-    dialogRef.componentInstance.body = `<p>${reason}</p>
-      <p>3D Print Log can notify you when a print finishes or fails, so you do not
-      have to keep checking. You can change this any time in Settings.</p>`;
-    dialogRef.componentInstance.yesText = 'Enable notifications';
-    dialogRef.componentInstance.noText = 'Not now';
+    const dialogRef = openSimpleDialog(this.dialog, {
+      title: 'Get notified about your prints?',
+      body: `<p>${reason}</p>
+        <p>3D Print Log can notify you when a print finishes or fails, so you do not
+        have to keep checking. You can change this any time in Settings.</p>`,
+      yesText: 'Enable notifications',
+      noText: 'Not now',
+    });
 
     const accepted = await firstValueFrom(dialogRef.afterClosed());
     if (!accepted) {

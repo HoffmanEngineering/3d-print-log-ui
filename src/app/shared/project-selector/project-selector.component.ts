@@ -57,14 +57,14 @@ export type ProjectSelection =
   ],
 })
 export class ProjectSelectorComponent implements OnInit {
-  initialProjectId = input<string | null>(null);
-  initialProjectName = input<string | null>(null);
+  readonly initialProjectId = input<string | null>(null);
+  readonly initialProjectName = input<string | null>(null);
   /**
    * Field label. "(optional)" is right on the print form, where the project is one
    * field among many and leaving it blank is a real choice; in a dialog whose only
    * job is picking a project it reads as though the whole dialog can be skipped.
    */
-  label = input<string>('Project (optional)');
+  readonly label = input<string>('Project (optional)');
 
   projectSelected = output<ProjectSelection | null>();
 
@@ -74,12 +74,12 @@ export class ProjectSelectorComponent implements OnInit {
   readonly ProjectStatus = ProjectStatus;
 
   searchControl = new FormControl<string>('');
-  filteredProjects = signal<ProjectSummaryDto[]>([]);
-  selectedProject = signal<ProjectSelection | null>(null);
-  showNewOption = signal(false);
-  isDefaultView = signal(true);
+  readonly filteredProjects = signal<ProjectSummaryDto[]>([]);
+  readonly selectedProject = signal<ProjectSelection | null>(null);
+  readonly showNewOption = signal(false);
+  readonly isDefaultView = signal(true);
   /** True when the last lookup failed, so the empty list has an explanation. */
-  loadFailed = signal(false);
+  readonly loadFailed = signal(false);
 
   /**
    * Re-runs the current search on demand. `valueChanges` cannot do this: the retry re-uses

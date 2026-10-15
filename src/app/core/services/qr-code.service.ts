@@ -98,10 +98,17 @@ export class QrCodeService {
 
   /**
    * Generates the deep link URL for a filament.
+   *
+   * A spool number rides in the fragment as `#/spool/show/{n}`, which Fluidd's spool
+   * scanner recognises anywhere in a code, so the same label selects the spool in
+   * Fluidd. The path is unchanged: our scanner and a phone camera read only that, and
+   * a browser never sends the fragment.
    * @param filamentId The ID of the filament
+   * @param spoolNumber The spool's number, when it has one
    * @returns The full URL to the filament detail page
    */
-  generateFilamentUrl(filamentId: string): string {
-    return `${window.location.origin}/materials/${filamentId}`;
+  generateFilamentUrl(filamentId: string, spoolNumber?: number | null): string {
+    const url = `${window.location.origin}/materials/${filamentId}`;
+    return spoolNumber ? `${url}#/spool/show/${spoolNumber}` : url;
   }
 }

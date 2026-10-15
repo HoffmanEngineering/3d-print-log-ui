@@ -1201,6 +1201,7 @@ export class FilamentDetailComponent
     // Create a FilamentSummary from the current form data for the dialog
     const filamentSummary: FilamentSummary = {
       id: filamentId,
+      spoolNumber: this.loadedFilament?.spoolNumber,
       displayName: this.filamentForm.get('displayName')?.value ?? '',
       brand: this.filamentForm.get('brand')?.value ?? '',
       materialCategoryNickname:

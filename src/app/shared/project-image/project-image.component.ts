@@ -22,10 +22,10 @@ export class ProjectImageComponent {
   private readonly projectService = inject(ProjectService);
   private readonly destroyRef = inject(DestroyRef);
 
-  projectId = input.required<string>();
-  imageId = input<number | undefined>();
+  readonly projectId = input.required<string>();
+  readonly imageId = input<number | undefined>();
 
-  imageData = signal('');
+  readonly imageData = signal('');
 
   constructor() {
     effect(() => {

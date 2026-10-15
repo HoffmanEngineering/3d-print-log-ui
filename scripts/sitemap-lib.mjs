@@ -39,7 +39,7 @@ export function buildUrlset(entries) {
 }
 
 // `lastmod` is optional here too: a child sitemap none of whose entries carries
-// one (the users chunks, today) is listed without it.
+// one (the users and projects chunks, today) is listed without it.
 export function buildIndex(entries) {
   const body = entries
     .map((e) => {
@@ -194,6 +194,22 @@ export async function fetchPrintRows(
     );
     return bareIds();
   }
+}
+
+// Like fetchJsonArray, but for an endpoint the deployed API may not have yet:
+// the UI can deploy before the API. Returns null when the endpoint is missing.
+// An older API answers 400 as well as 404 for `/api/Projects/public`, because
+// it binds "public" as the `{id}` of `/api/Projects/{id}` and fails to parse a
+// Guid. Any other failure is fatal, exactly as in fetchJsonArray.
+export async function fetchOptionalJsonArray(
+  fetchImpl,
+  apiUrl,
+  path,
+  { missingStatuses = [400, 404] } = {}
+) {
+  const res = await fetchImpl(`${apiUrl}${path}`);
+  if (missingStatuses.includes(res.status)) return null;
+  return readJsonArray(res, path);
 }
 
 export async function fetchJsonArray(fetchImpl, apiUrl, path) {

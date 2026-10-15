@@ -5,7 +5,6 @@ import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/user.service';
-import { SimpleDialogComponent } from '../simple-dialog/simple-dialog.component';
 import { LocaleDatePipe } from '../pipes/locale-date.pipe';
 
 @Component({

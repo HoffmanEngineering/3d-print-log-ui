@@ -15,13 +15,13 @@ import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-colo
   imports: [FilamentColorSwatchStylePipe],
 })
 export class FilamentColorSwatchComponent {
-  filament = input.required<FilamentSummary>();
+  readonly filament = input.required<FilamentSummary>();
 
   /**
    * Set when an adjacent visible label already names the color. Prevents the
    * color being announced twice by a screen reader.
    */
-  decorative = input(false);
+  readonly decorative = input(false);
 
   protected readonly accessibleName = computed(
     () => this.filament()?.colorName?.trim() || 'Filament color'

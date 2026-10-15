@@ -6,6 +6,9 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { Subject } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import { DialogData } from 'src/app/print/print-list/print-table-layout/print-table-layout.component';
 import {
   FilamentService,
   FilamentSummary,
@@ -13,6 +16,10 @@ import {
 import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { FilamentListContainerComponent } from './filament-list-container.component';
+import {
+  DEFAULT_FILAMENT_TABLE_COLUMNS,
+  FILAMENT_TABLE_COLUMNS_KEY,
+} from './filament-table-columns';
 
 const aSpool = (overrides: Partial<FilamentSummary> = {}) =>
   ({
@@ -52,11 +59,42 @@ describe('FilamentListContainerComponent (rendered)', () => {
   let harness: RouterTestingHarness;
   let filamentService: jasmine.SpyObj<FilamentService>;
   let listed: Subject<PagedList<FilamentSummary>>;
+  let dialog: jasmine.SpyObj<MatDialog>;
+  let loggingService: jasmine.SpyObj<LoggingService>;
+  let savedLayout: string | null;
 
   const text = () => (harness.routeNativeElement as HTMLElement).textContent;
 
-  beforeEach(async () => {
+  /** The column keys of the header row, in the order the table renders them. */
+  const headerColumns = () =>
+    Array.from(
+      (harness.routeNativeElement as HTMLElement).querySelectorAll(
+        'tr.mat-mdc-header-row th'
+      )
+    ).map((cell) =>
+      Array.from(cell.classList)
+        .find((name) => name.startsWith('mat-column-'))!
+        .slice('mat-column-'.length)
+    );
+
+  const open = async () => {
+    harness = await RouterTestingHarness.create('/materials');
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    return harness.routeDebugElement!
+      .componentInstance as FilamentListContainerComponent;
+  };
+
+  beforeEach(() => {
+    savedLayout = localStorage.getItem(FILAMENT_TABLE_COLUMNS_KEY);
+    localStorage.removeItem(FILAMENT_TABLE_COLUMNS_KEY);
+
     listed = new Subject();
+    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    loggingService = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logEvent',
+      'logException',
+    ]);
     filamentService = jasmine.createSpyObj<FilamentService>('FilamentService', [
       'getCurrentUserFilamentSummaries',
       'changeFavorite',
@@ -83,6 +121,8 @@ describe('FilamentListContainerComponent (rendered)', () => {
           },
         ]),
         { provide: FilamentService, useValue: filamentService },
+        { provide: MatDialog, useValue: dialog },
+        { provide: LoggingService, useValue: loggingService },
         {
           provide: ToastrService,
           useValue: jasmine.createSpyObj('ToastrService', ['success', 'error']),
@@ -98,15 +138,18 @@ describe('FilamentListContainerComponent (rendered)', () => {
         },
       ],
     });
+  });
 
-    harness = await RouterTestingHarness.create('/materials');
-    await harness.fixture.whenStable();
-    harness.detectChanges();
+  afterEach(() => {
+    if (savedLayout === null) {
+      localStorage.removeItem(FILAMENT_TABLE_COLUMNS_KEY);
+    } else {
+      localStorage.setItem(FILAMENT_TABLE_COLUMNS_KEY, savedLayout);
+    }
   });
 
   it('shows the next page', async () => {
-    const component = harness.routeDebugElement!
-      .componentInstance as FilamentListContainerComponent;
+    const component = await open();
 
     await component.pageChange({ pageIndex: 1, pageSize: 10 } as never);
     harness.detectChanges();
@@ -128,11 +171,10 @@ describe('FilamentListContainerComponent (rendered)', () => {
     expect(text()).not.toContain('Galaxy Black');
   });
 
-  it('stars a favorite once the server confirms it', () => {
+  it('stars a favorite once the server confirms it', async () => {
     const favorited = new Subject<unknown>();
     filamentService.changeFavorite.and.returnValue(favorited as never);
-    const component = harness.routeDebugElement!
-      .componentInstance as FilamentListContainerComponent;
+    const component = await open();
     const stars = () =>
       Array.from(
         (harness.routeNativeElement as HTMLElement).querySelectorAll('mat-icon')
@@ -144,5 +186,105 @@ describe('FilamentListContainerComponent (rendered)', () => {
     harness.detectChanges();
 
     expect(stars()).toBeGreaterThan(before);
+  });
+
+  describe('column layout', () => {
+    it('renders the same columns as before when nothing is saved', async () => {
+      await open();
+
+      expect(headerColumns()).toEqual([
+        'select',
+        ...DEFAULT_FILAMENT_TABLE_COLUMNS,
+        'more',
+      ]);
+    });
+
+    it('renders a saved layout in its saved order', async () => {
+      localStorage.setItem(
+        FILAMENT_TABLE_COLUMNS_KEY,
+        JSON.stringify(['filamentRemaining', 'displayName', 'brand'])
+      );
+
+      await open();
+
+      expect(headerColumns()).toEqual([
+        'select',
+        'filamentRemaining',
+        'displayName',
+        'brand',
+        'more',
+      ]);
+      expect(text()).toContain('Galaxy Black PLA');
+    });
+
+    it('falls back to the defaults when the saved layout is unreadable', async () => {
+      localStorage.setItem(FILAMENT_TABLE_COLUMNS_KEY, '{not json');
+
+      await open();
+
+      expect(headerColumns()).toEqual([
+        'select',
+        ...DEFAULT_FILAMENT_TABLE_COLUMNS,
+        'more',
+      ]);
+    });
+
+    it('offers the layout dialog from the table header', async () => {
+      await open();
+
+      const button = (harness.routeNativeElement as HTMLElement).querySelector(
+        'tr.mat-mdc-header-row [data-cy-table-settings]'
+      );
+      expect(button?.getAttribute('aria-label')).toBe('Open table settings');
+    });
+
+    it('applies and saves the layout chosen in the dialog', async () => {
+      const closed = new Subject<unknown>();
+      dialog.open.and.returnValue({ afterClosed: () => closed } as never);
+      const component = await open();
+
+      component.openTableLayout();
+      const data = dialog.open.calls.mostRecent().args[1]!.data as DialogData;
+      expect(data.currentColumns).toEqual([...DEFAULT_FILAMENT_TABLE_COLUMNS]);
+      expect(data.defaultColumns).toEqual([...DEFAULT_FILAMENT_TABLE_COLUMNS]);
+      expect(data.allPossibleColumns.map((column) => column.key)).toEqual([
+        ...DEFAULT_FILAMENT_TABLE_COLUMNS,
+      ]);
+
+      data.changeEvent.next(['brand', 'colorName']);
+      harness.detectChanges();
+
+      expect(headerColumns()).toEqual(['select', 'brand', 'colorName', 'more']);
+      expect(
+        JSON.parse(localStorage.getItem(FILAMENT_TABLE_COLUMNS_KEY)!)
+      ).toEqual(['brand', 'colorName']);
+
+      closed.next(undefined);
+      expect(loggingService.logEvent).toHaveBeenCalledWith(
+        'FilamentList_LayoutChanged',
+        { columns: JSON.stringify(['brand', 'colorName']) }
+      );
+    });
+
+    it('restores the defaults when the dialog resets them', async () => {
+      localStorage.setItem(
+        FILAMENT_TABLE_COLUMNS_KEY,
+        JSON.stringify(['brand'])
+      );
+      const closed = new Subject<unknown>();
+      dialog.open.and.returnValue({ afterClosed: () => closed } as never);
+      const component = await open();
+
+      component.openTableLayout();
+      const data = dialog.open.calls.mostRecent().args[1]!.data as DialogData;
+      data.changeEvent.next(data.defaultColumns);
+      harness.detectChanges();
+
+      expect(headerColumns()).toEqual([
+        'select',
+        ...DEFAULT_FILAMENT_TABLE_COLUMNS,
+        'more',
+      ]);
+    });
   });
 });

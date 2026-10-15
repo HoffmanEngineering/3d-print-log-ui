@@ -3,6 +3,8 @@ import {
   Component,
   OnDestroy,
   OnInit,
+  PLATFORM_ID,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -18,7 +20,7 @@ import {
 } from '@angular/router';
 import { debounce, isNumber } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import {
   ColorPatternType,
@@ -64,7 +66,17 @@ import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MaterialIconComponent } from '../../shared/material-icon/material-icon.component';
 import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 import { AdComponent } from '../../shared/ad/ad.component';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, isPlatformBrowser } from '@angular/common';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import { PrintTableLayoutComponent } from 'src/app/print/print-list/print-table-layout/print-table-layout.component';
+import {
+  DEFAULT_FILAMENT_TABLE_COLUMNS,
+  FILAMENT_TABLE_COLUMNS,
+  readFilamentTableColumns,
+  sanitizeFilamentTableColumns,
+  toFilamentTableRow,
+  writeFilamentTableColumns,
+} from './filament-table-columns';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 @Component({
@@ -125,21 +137,32 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   readonly currentPage = signal<number | undefined>(undefined);
   readonly totalCount = signal<number | undefined>(undefined);
 
-  public displayedColumns: string[] = [
-    'select',
-    'isFavorite',
-    'image',
-    'colorHex',
-    'displayName',
-    'brand',
-    'colorName',
-    'materialType',
-    'storageLocation',
-    'loadedInPrinter',
-    'filamentRemaining',
-    'isActive',
-    'more',
-  ];
+  private readonly loggingService = inject(LoggingService);
+
+  /**
+   * `localStorage` on the browser, or null during prerender and wherever the
+   * browser refuses access to it outright.
+   */
+  private readonly storage: Storage | null = (() => {
+    if (!isPlatformBrowser(inject(PLATFORM_ID))) {
+      return null;
+    }
+    try {
+      return localStorage;
+    } catch {
+      return null;
+    }
+  })();
+
+  /** The columns the user chose, without the pinned checkbox and menu. */
+  readonly chosenColumns = signal<string[]>(
+    readFilamentTableColumns(this.storage)
+  );
+
+  /** What the table renders: the checkbox first and the menu last. */
+  readonly displayedColumns = computed(() =>
+    toFilamentTableRow(this.chosenColumns())
+  );
 
   readonly selectedFilaments = signal(new Map<string, FilamentSummary>());
 
@@ -633,6 +656,42 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
     this.filterByEffects = [];
     this.currentPage.set(1);
     this.updateFilter();
+  }
+
+  /**
+   * Opens the same layout dialog the print list uses. Every change in the
+   * dialog applies and saves immediately, the way it does there, so Close
+   * (which re-sends the layout the dialog opened with) is what undoes them.
+   */
+  public openTableLayout(): void {
+    const onSelectionChange = new Subject<string[]>();
+
+    const subscription = onSelectionChange.subscribe((columns) => {
+      const chosen = sanitizeFilamentTableColumns(columns);
+      this.chosenColumns.set(chosen);
+      writeFilamentTableColumns(this.storage, chosen);
+    });
+
+    const dialogRef = this.dialog.open(PrintTableLayoutComponent, {
+      width: '450px',
+      maxWidth: '95vw',
+      disableClose: true,
+      data: {
+        title: 'Materials Table Layout',
+        allPossibleColumns: [...FILAMENT_TABLE_COLUMNS],
+        currentColumns: this.chosenColumns(),
+        defaultColumns: [...DEFAULT_FILAMENT_TABLE_COLUMNS],
+        changeEvent: onSelectionChange,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      subscription.unsubscribe();
+
+      this.loggingService.logEvent('FilamentList_LayoutChanged', {
+        columns: JSON.stringify(this.chosenColumns()),
+      });
+    });
   }
 
   public navigateToFilament(id: string): void {

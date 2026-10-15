@@ -69,6 +69,7 @@ import { PrinterSlotsComponent } from '../printer-slots/printer-slots.component'
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { PrinterConnectionsComponent } from '../printer-connections/printer-connections.component';
+import { PrinterSpoolmanComponent } from '../printer-spoolman/printer-spoolman.component';
 import { AdComponent } from '../../shared/ad/ad.component';
 import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
@@ -108,6 +109,7 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
     MatButton,
     MatIcon,
     PrinterConnectionsComponent,
+    PrinterSpoolmanComponent,
     MatCardActions,
     AdComponent,
     DefaultShowHideDirective,
@@ -153,6 +155,20 @@ export class PrinterDetailComponent
 
   /** Only a saved printer can have connections; the create route has no id yet. */
   protected readonly savedPrinterId = computed(() => this.formPrinterId());
+
+  /**
+   * The category, make and model as saved, for the Spoolman panel: it offers a connection
+   * only to a saved FDM printer, and an unsaved edit to the form does not change that.
+   */
+  protected readonly savedCategory = computed(
+    () => this.printerDetail()?.category ?? null
+  );
+  protected readonly savedMake = computed(
+    () => this.printerDetail()?.make ?? null
+  );
+  protected readonly savedModel = computed(
+    () => this.printerDetail()?.model ?? null
+  );
 
   /** The slot count as saved. Slots are managed live, so they wait for the count to be saved. */
   private readonly savedSlotCount = computed(

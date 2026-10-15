@@ -18,6 +18,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { QrLabelDialogData } from 'src/app/shared/qr-label-dialog/qr-label-dialog.component';
 import {
   ColorPatternType,
   FilamentAdjustmentSourceMeasurement,
@@ -514,6 +515,16 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
     calcComponent.openSpoolWeightCalculator();
 
     expect(calcComponent.filamentAdjustments.length).toBe(before);
+  });
+
+  it('passes the spool number to the QR label dialog', async () => {
+    await setup({ spoolNumber: 7 });
+
+    calcComponent.printQrLabel();
+
+    const data = mockDialog.open.calls.mostRecent().args[1]
+      ?.data as QrLabelDialogData;
+    expect(data.filaments[0].spoolNumber).toBe(7);
   });
 });
 

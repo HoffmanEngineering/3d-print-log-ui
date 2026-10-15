@@ -40,16 +40,16 @@ export interface ThumbnailImage {
   ],
 })
 export class ImageThumbnailStripComponent {
-  images = input.required<ThumbnailImage[]>();
-  selectedId = input<number | undefined>();
-  selectedUrl = input<string | undefined>();
-  editable = input(false);
-  maxImages = input(5);
+  readonly images = input.required<ThumbnailImage[]>();
+  readonly selectedId = input<number | undefined>();
+  readonly selectedUrl = input<string | undefined>();
+  readonly editable = input(false);
+  readonly maxImages = input(5);
   /** When true, render `<img [src]>` directly instead of routing through
    *  AuthImagePipe. Required for pre-signed URLs: the pipe's HttpClient fetch
    *  bypasses the browser image cache the signature exists to enable.
    *  Defaults false so prints and projects are unaffected. */
-  directUrls = input(false);
+  readonly directUrls = input(false);
 
   imageSelected = output<ThumbnailImage>();
   imageDeleted = output<ThumbnailImage>();
@@ -75,7 +75,7 @@ export class ImageThumbnailStripComponent {
     });
   }
 
-  canAddMore = computed(() => this.images().length < this.maxImages());
+  readonly canAddMore = computed(() => this.images().length < this.maxImages());
 
   onThumbnailClick(image: ThumbnailImage): void {
     this.imageSelected.emit(image);

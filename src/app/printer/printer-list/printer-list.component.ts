@@ -18,7 +18,7 @@ import {
 import { Title } from '@angular/platform-browser';
 import { debounce } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButton } from '@angular/material/button';
@@ -235,16 +235,17 @@ export class PrinterListComponent implements OnInit {
   }
 
   public deletePrinter(printer: PrinterSummarySimple) {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    (dialogRef.componentInstance as any).title = 'Delete?';
-    // eslint-disable-next-line max-len
-    (dialogRef.componentInstance as any).body =
-      `Are you sure you want to delete printer "${printer.name}"? <br /> <br />  This action cannot be undone.`;
-    (dialogRef.componentInstance as any).yesText = 'Delete';
-    (dialogRef.componentInstance as any).yesColor = 'warn';
-    (dialogRef.componentInstance as any).noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete?',
+        body: `Are you sure you want to delete printer "${printer.name}"? <br /> <br />  This action cannot be undone.`,
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
 
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {

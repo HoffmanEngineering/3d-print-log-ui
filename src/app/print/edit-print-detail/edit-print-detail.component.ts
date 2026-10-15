@@ -47,7 +47,7 @@ import {
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   EMPTY_GUID,
   ElectricityCost,
@@ -284,9 +284,10 @@ export class EditPrintDetailComponent
 
   public isCordova = isCordova;
 
-  public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
-    PrintFilamentSourceMeasurement.AsRecorded
-  );
+  public readonly preferredFilamentUnit =
+    signal<PrintFilamentSourceMeasurement>(
+      PrintFilamentSourceMeasurement.AsRecorded
+    );
 
   public printDetail: PrintDetail | null = null;
 
@@ -2075,15 +2076,17 @@ export class EditPrintDetailComponent
         filamentFormGroup.get('notes')?.value.trim() !== '');
 
     if (hasNonZeroData) {
-      const dialogRef = this.dialog.open(SimpleDialogComponent, {
-        maxWidth: '350px',
-      });
-      (dialogRef.componentInstance as any).title = 'Remove Filament Record?';
-      (dialogRef.componentInstance as any).body =
-        'Are you sure? This filament record has usage data that will be lost.';
-      (dialogRef.componentInstance as any).yesText = 'Delete';
-      (dialogRef.componentInstance as any).yesColor = 'warn';
-      (dialogRef.componentInstance as any).noText = 'Cancel';
+      const dialogRef = openSimpleDialog(
+        this.dialog,
+        {
+          title: 'Remove Filament Record?',
+          body: 'Are you sure? This filament record has usage data that will be lost.',
+          yesText: 'Delete',
+          yesColor: 'warn',
+          noText: 'Cancel',
+        },
+        { maxWidth: '350px' }
+      );
 
       dialogRef.afterClosed().subscribe((shouldDelete) => {
         if (shouldDelete) {

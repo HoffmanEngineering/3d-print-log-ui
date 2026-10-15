@@ -10,6 +10,7 @@ import { provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { environment } from 'src/environments/environment';
 import { SpoolmanConnectionsComponent } from './spoolman-connections.component';
 
@@ -17,7 +18,6 @@ describe('SpoolmanConnectionsComponent', () => {
   let fixture: ComponentFixture<SpoolmanConnectionsComponent>;
   let httpMock: HttpTestingController;
   let dialog: jasmine.SpyObj<MatDialog>;
-  let dialogInstance: { title?: string; body?: string; yesText?: string };
   let confirm: boolean | undefined;
   let toastr: jasmine.SpyObj<ToastrService>;
   let logging: jasmine.SpyObj<LoggingService>;
@@ -40,12 +40,10 @@ describe('SpoolmanConnectionsComponent', () => {
 
   beforeEach(async () => {
     confirm = true;
-    dialogInstance = {};
     dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
     dialog.open.and.callFake(
       () =>
         ({
-          componentInstance: dialogInstance,
           afterClosed: () => of(confirm),
         }) as any
     );
@@ -144,7 +142,7 @@ describe('SpoolmanConnectionsComponent', () => {
     fixture.detectChanges();
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
-    expect(dialogInstance.yesText).toBe('Revoke');
+    expect(lastSimpleDialogData(dialog).yesText).toBe('Revoke');
     const del = httpMock.expectOne(`${listUrl}/c1`);
     expect(del.request.method).toBe('DELETE');
     del.flush(null, { status: 204, statusText: 'No Content' });

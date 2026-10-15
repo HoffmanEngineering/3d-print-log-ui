@@ -12,6 +12,7 @@ import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
+import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { environment } from 'src/environments/environment';
 import { PrinterSpoolmanComponent } from './printer-spoolman.component';
 
@@ -19,7 +20,6 @@ describe('PrinterSpoolmanComponent', () => {
   let fixture: ComponentFixture<PrinterSpoolmanComponent>;
   let httpMock: HttpTestingController;
   let dialog: jasmine.SpyObj<MatDialog>;
-  let dialogInstance: { title?: string; body?: string; yesText?: string };
   let confirm: boolean | undefined;
   let toastr: jasmine.SpyObj<ToastrService>;
   let logging: jasmine.SpyObj<LoggingService>;
@@ -59,12 +59,10 @@ describe('PrinterSpoolmanComponent', () => {
 
   beforeEach(async () => {
     confirm = true;
-    dialogInstance = {};
     dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
     dialog.open.and.callFake(
       () =>
         ({
-          componentInstance: dialogInstance,
           afterClosed: () => of(confirm),
         }) as any
     );
@@ -341,7 +339,7 @@ describe('PrinterSpoolmanComponent', () => {
     fixture.detectChanges();
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
-    expect(dialogInstance.yesText).toBe('Disconnect');
+    expect(lastSimpleDialogData(dialog).yesText).toBe('Disconnect');
     const del = httpMock.expectOne(`${listUrl}/c1`);
     expect(del.request.method).toBe('DELETE');
     del.flush(null, { status: 204, statusText: 'No Content' });

@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   inject,
@@ -36,6 +37,7 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
     NotifierNoticeComponent,
     AchievementBadgeDefsComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit {
   /**

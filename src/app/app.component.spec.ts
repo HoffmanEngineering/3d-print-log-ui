@@ -100,6 +100,22 @@ describe('AppComponent (ThemeService)', () => {
     ).not.toBeNull();
   });
 
+  // The shell is OnPush, so the bar repaints only because it reads the theme as a signal.
+  it('recolors the loading bar when the theme flips after first paint', async () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const bar = (fixture.nativeElement as HTMLElement).querySelector(
+      'ngx-loading-bar'
+    ) as HTMLElement & { color: string };
+    expect(bar.color).toBe('#3f51b5');
+
+    (mockThemeService.isDark as ReturnType<typeof signal<boolean>>).set(true);
+    fixture.detectChanges();
+
+    expect(bar.color).toBe('#283593');
+  });
+
   it('calls themeService.initialize() on ngOnInit', () => {
     const themeService = TestBed.inject(ThemeService);
     const fixture = TestBed.createComponent(AppComponent);

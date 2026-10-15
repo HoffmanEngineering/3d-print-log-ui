@@ -49,17 +49,6 @@ module.exports = tseslint.config(
     },
   },
   {
-    // Still on Default change detection. This list only shrinks: see
-    // "OnPush goes leaf-first" in AGENTS.md.
-    files: [
-      'src/app/app.component.ts',
-      'src/app/documentation/documentation.component.ts',
-    ],
-    rules: {
-      '@angular-eslint/prefer-on-push-component-change-detection': 'off',
-    },
-  },
-  {
     files: ['src/app/documentation/primitives/*.ts'],
     rules: {
       '@angular-eslint/component-selector': [

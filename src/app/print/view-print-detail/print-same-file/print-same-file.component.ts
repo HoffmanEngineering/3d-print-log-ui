@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { RouterLink } from '@angular/router';
-import { catchError, of, switchMap } from 'rxjs';
+import { catchError, of, startWith, switchMap } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   PrintService,
@@ -53,14 +53,21 @@ export class PrintSameFileComponent {
 
   /**
    * Re-fetched per id: the router reuses the detail page between prints. Null until the answer
-   * arrives and on any failure, which renders nothing either way.
+   * arrives and on any failure, which renders nothing either way. `startWith(null)` clears the
+   * previous print's answer as soon as the id changes, so it never stands in for this one's.
    */
   private readonly result = toSignal(
     toObservable(this.printId).pipe(
       switchMap((id) =>
-        this.printService
-          .getSameFilePrints(id)
-          .pipe(catchError(() => of<SameFilePrints | null>(null)))
+        this.printService.getSameFilePrints(id).pipe(
+          catchError((error: unknown) => {
+            this.loggingService.logException(
+              error instanceof Error ? error : new Error(String(error))
+            );
+            return of(null);
+          }),
+          startWith<SameFilePrints | null>(null)
+        )
       )
     ),
     { initialValue: null }

@@ -11,8 +11,13 @@
     Printed {{ s.count }} times
   </button>
 
-  <mat-menu #sameFileMenu="matMenu" class="same-file-menu" xPosition="before">
-    <p class="menu-heading">Other prints of this file</p>
+  <mat-menu
+    #sameFileMenu="matMenu"
+    class="same-file-menu"
+    xPosition="before"
+    aria-label="Other prints of this file"
+  >
+    <p class="menu-heading" aria-hidden="true">Other prints of this file</p>
     @for (p of s.prints; track p.id) {
       <a
         mat-menu-item
@@ -33,7 +38,11 @@
       </a>
     }
     @if (s.more > 0) {
-      <p class="menu-more">and {{ s.more }} more</p>
+      <!-- A disabled item rather than a paragraph: inside role="menu" a screen reader moves
+           item to item and would skip plain text. -->
+      <button mat-menu-item type="button" disabled data-cy-same-file-more>
+        and {{ s.more }} more
+      </button>
     }
   </mat-menu>
 }

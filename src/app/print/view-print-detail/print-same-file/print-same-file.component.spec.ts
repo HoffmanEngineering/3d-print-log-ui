@@ -31,6 +31,7 @@ describe('PrintSameFileComponent', () => {
   beforeEach(async () => {
     logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logEvent',
+      'logException',
     ]);
 
     // The real PrintService over the HTTP testing backend: the request itself (URL, no
@@ -99,6 +100,7 @@ describe('PrintSameFileComponent', () => {
 
     expect(() => fixture.detectChanges()).not.toThrow();
     expect(trigger(fixture.nativeElement)).toBeNull();
+    expect(logging.logException).toHaveBeenCalledTimes(1);
   });
 
   it('lists the other prints as links to them', async () => {
@@ -127,6 +129,29 @@ describe('PrintSameFileComponent', () => {
 
     // 14 prints: this one, the two listed, and 11 more.
     expect(menu.textContent).toContain('11 more');
+  });
+
+  it('announces the rest as a disabled menu item', async () => {
+    const el = respond({ count: 14, prints: [other(8), other(6)] });
+
+    const menu = await openMenu(el);
+    const more = menu.querySelector<HTMLElement>('[data-cy-same-file-more]');
+
+    // A plain paragraph inside role="menu" is skipped by screen readers moving item to item.
+    expect(more?.getAttribute('role')).toBe('menuitem');
+    expect(more?.getAttribute('aria-disabled')).toBe('true');
+    expect(more?.textContent).toContain('11 more');
+  });
+
+  it('labels the menu and hides the visual heading from screen readers', async () => {
+    const el = respond({ count: 3, prints: [other(8), other(6)] });
+
+    const menu = await openMenu(el);
+
+    expect(menu.getAttribute('aria-label')).toBe('Other prints of this file');
+    expect(
+      menu.querySelector('.menu-heading')?.getAttribute('aria-hidden')
+    ).toBe('true');
   });
 
   it('does not mention more when the list is complete', async () => {
@@ -165,6 +190,8 @@ describe('PrintSameFileComponent', () => {
 
     fixture.componentRef.setInput('printId', 8);
     fixture.detectChanges();
+    // Print 6's answer must not stand in for print 8's while that one is in flight.
+    expect(trigger(fixture.nativeElement)).toBeNull();
     httpMock
       .expectOne((r) => r.url.endsWith('/api/Prints/8/same-file'))
       .flush({ count: 1, prints: [] });

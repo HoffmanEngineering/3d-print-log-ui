@@ -8,8 +8,7 @@
 
 // The menu's content is declared in this template, so these rules reach it through the usual
 // encapsulation even though the panel renders in the overlay container.
-.menu-heading,
-.menu-more {
+.menu-heading {
   margin: 0;
   padding: 8px 16px;
   font-size: 0.75rem;

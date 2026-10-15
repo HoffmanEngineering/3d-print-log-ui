@@ -1,5 +1,6 @@
 import { Location, AsyncPipe } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   OnDestroy,
@@ -172,6 +173,7 @@ function toServerAdjustmentRows(
 
 @Component({
   selector: 'app-filament-detail',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:beforeunload)': 'canDeactivate()' },
   templateUrl: './filament-detail.component.html',
   styleUrls: ['./filament-detail.component.scss'],
@@ -264,7 +266,7 @@ export class FilamentDetailComponent
       (this.formValue()?.['id'] as string | null) ?? null
     )
   );
-  public saving = false;
+  readonly saving = signal(false);
   /** See `canDeactivate`: suppresses the guard for app-initiated navigation. */
   private isSelfNavigating = false;
 
@@ -275,18 +277,22 @@ export class FilamentDetailComponent
 
   public preferredCurrencySymbol = '$';
 
-  public defaultFilamentDiameterMmSetting: UserSetting | null = null;
-  public defaultFilamentPriceSetting: UserSetting | null = null;
+  readonly defaultFilamentDiameterMmSetting = signal<UserSetting | null>(null);
+  readonly defaultFilamentPriceSetting = signal<UserSetting | null>(null);
 
   public filamentStorageLocations: string[] = [];
 
   public filamentPurchaseLocations: string[] = [];
 
-  public filteredFilamentStorageLocations: Observable<string[]> = null;
+  readonly filteredFilamentStorageLocations = signal<Observable<
+    string[]
+  > | null>(null);
 
-  public filteredFilamentPurchaseLocations: Observable<string[]> = null;
+  readonly filteredFilamentPurchaseLocations = signal<Observable<
+    string[]
+  > | null>(null);
   filamentBrands: string[];
-  filteredFilamentBrands: Observable<string[]>;
+  readonly filteredFilamentBrands = signal<Observable<string[]> | null>(null);
 
   materialCategorySubscription: Subscription;
 
@@ -442,9 +448,10 @@ export class FilamentDetailComponent
 
       this.materialCategories = data.materialCategories;
 
-      this.defaultFilamentDiameterMmSetting =
-        data.defaultFilamentDiameterMmSetting;
-      this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
+      this.defaultFilamentDiameterMmSetting.set(
+        data.defaultFilamentDiameterMmSetting
+      );
+      this.defaultFilamentPriceSetting.set(data.defaultFilamentPriceSetting);
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
@@ -540,34 +547,34 @@ export class FilamentDetailComponent
       this.filamentService.getFilamentStorageLocations().subscribe((dto) => {
         this.filamentStorageLocations = dto.storageLocations;
 
-        this.filteredFilamentStorageLocations = this.filamentForm
-          .get('storageLocation')
-          .valueChanges.pipe(
+        this.filteredFilamentStorageLocations.set(
+          this.filamentForm.get('storageLocation').valueChanges.pipe(
             startWith(''),
             map((value) => this._filterStorageLocations(value))
-          );
+          )
+        );
       });
 
       this.filamentService.getFilamentPurchaseLocations().subscribe((dto) => {
         this.filamentPurchaseLocations = dto.purchaseLocations;
 
-        this.filteredFilamentPurchaseLocations = this.filamentForm
-          .get('purchaseLocation')
-          .valueChanges.pipe(
+        this.filteredFilamentPurchaseLocations.set(
+          this.filamentForm.get('purchaseLocation').valueChanges.pipe(
             startWith(''),
             map((value) => this._filterPurchaseLocations(value))
-          );
+          )
+        );
       });
 
       this.filamentService.getFilamentBrands().subscribe((dto) => {
         this.filamentBrands = dto.brands;
 
-        this.filteredFilamentBrands = this.filamentForm
-          .get('brand')
-          .valueChanges.pipe(
+        this.filteredFilamentBrands.set(
+          this.filamentForm.get('brand').valueChanges.pipe(
             startWith(''),
             map((value) => this._filterBrands(value))
-          );
+          )
+        );
       });
     });
   }
@@ -769,8 +776,8 @@ export class FilamentDetailComponent
       diameterMm: [
         filament?.diameterMm
           ? filament.diameterMm
-          : this.defaultFilamentDiameterMmSetting
-            ? +this.defaultFilamentDiameterMmSetting.value
+          : this.defaultFilamentDiameterMmSetting()
+            ? +this.defaultFilamentDiameterMmSetting().value
             : null,
       ],
       initialTotalWeightG: [
@@ -975,12 +982,12 @@ export class FilamentDetailComponent
   }
 
   onSubmit() {
-    this.saving = true;
+    this.saving.set(true);
 
     // Validate
     this.filamentForm.markAllAsTouched();
     if (!this.filamentForm.valid) {
-      this.saving = false;
+      this.saving.set(false);
 
       // Loop through all controls, focusing the first invalid control.
       for (const key of Object.keys(this.filamentForm.controls)) {
@@ -1040,7 +1047,7 @@ export class FilamentDetailComponent
         panel.uploadStagedImages(filamentId).subscribe((result) => {
           // Clear `saving` either way, or the retry button stays disabled
           // forever.
-          this.saving = false;
+          this.saving.set(false);
 
           if (result.allSucceeded) {
             this.finishSave();
@@ -1064,7 +1071,7 @@ export class FilamentDetailComponent
         });
       },
       (err) => {
-        this.saving = false;
+        this.saving.set(false);
 
         const conflict = readTagUidConflict(err);
         if (conflict) {
@@ -1079,7 +1086,7 @@ export class FilamentDetailComponent
   }
 
   private finishSave(): void {
-    this.saving = false;
+    this.saving.set(false);
     this.router.navigateByUrl('/filament').then(() => {
       this.toastr.success('Save successful!');
     });
@@ -1230,14 +1237,14 @@ export class FilamentDetailComponent
     this.loggingService.logEvent('ChangedDefaultFilamentDiameter', {
       diameter: newDiameterMm,
     });
-    if (this.defaultFilamentDiameterMmSetting) {
+    if (this.defaultFilamentDiameterMmSetting()) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultFilamentDiameterMmSetting.id,
+          this.defaultFilamentDiameterMmSetting().id,
           newDiameterMm.toString()
         )
         .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSetting = setting;
+          this.defaultFilamentDiameterMmSetting.set(setting);
         });
     } else {
       this.userSettingService
@@ -1246,7 +1253,7 @@ export class FilamentDetailComponent
           newDiameterMm.toString()
         )
         .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSetting = setting;
+          this.defaultFilamentDiameterMmSetting.set(setting);
         });
     }
   }
@@ -1260,14 +1267,14 @@ export class FilamentDetailComponent
       price: newPrice,
       symbol: this.preferredCurrencySymbol,
     });
-    if (this.defaultFilamentPriceSetting) {
+    if (this.defaultFilamentPriceSetting()) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultFilamentPriceSetting.id,
+          this.defaultFilamentPriceSetting().id,
           newPrice.toString()
         )
         .subscribe((setting) => {
-          this.defaultFilamentPriceSetting = setting;
+          this.defaultFilamentPriceSetting.set(setting);
         });
     } else {
       this.userSettingService
@@ -1276,7 +1283,7 @@ export class FilamentDetailComponent
           newPrice.toString()
         )
         .subscribe((setting) => {
-          this.defaultFilamentPriceSetting = setting;
+          this.defaultFilamentPriceSetting.set(setting);
         });
     }
   }

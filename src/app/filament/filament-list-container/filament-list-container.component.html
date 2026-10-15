@@ -7,7 +7,7 @@
       background: white;
     "
   >
-    @if (isLoading) {
+    @if (isLoading()) {
       <mat-progress-bar
         color="primary"
         mode="indeterminate"
@@ -15,7 +15,7 @@
       >
       </mat-progress-bar>
     }
-    @if (!isLoading) {
+    @if (!isLoading()) {
       <div style="height: 4px"></div>
     }
   </div>
@@ -36,7 +36,7 @@
           mat-raised-button
           type="button"
           (click)="printAllLabels()"
-          [disabled]="filaments.length === 0 && !hasSelection()"
+          [disabled]="filaments().length === 0 && !hasSelection()"
           [matTooltip]="
             hasSelection()
               ? 'Print QR labels for selected materials'
@@ -140,7 +140,7 @@
           >
             <mat-option value="">No Filter</mat-option>
             @for (
-              materialCategory of materialCategories;
+              materialCategory of materialCategories();
               track materialCategory
             ) {
               <mat-option [value]="materialCategory.nickname">{{
@@ -156,7 +156,7 @@
             (ngModelChange)="updateFilter()"
           >
             <mat-option value="">No Filter</mat-option>
-            @for (location of storageLocations; track location) {
+            @for (location of storageLocations(); track location) {
               <mat-option [value]="location">{{ location }}</mat-option>
             }
             <mat-option value="__unassigned__">Unassigned</mat-option>
@@ -261,7 +261,7 @@
   </div>
   <table
     mat-table
-    [dataSource]="filaments"
+    [dataSource]="filaments()"
     matSort
     [matSortActive]="sortColumnId"
     [matSortDirection]="sortDirection === 1 ? 'asc' : 'desc'"
@@ -524,7 +524,7 @@
   </table>
   <!-- Mobile card list (shown < 600px via CSS, table hidden) -->
   <div class="filament-cards">
-    @for (filament of filaments; track filament.id) {
+    @for (filament of filaments(); track filament.id) {
       <div
         class="filament-card"
         [class.filament-card--selected]="isSelected(filament)"
@@ -671,7 +671,7 @@
       </div>
     }
   </div>
-  @if (!isLoading && totalCount === 0) {
+  @if (!isLoading() && totalCount() === 0) {
     @if (activeFilterCount > 0 || searchText.trim().length > 0) {
       <app-empty-state
         icon="filter_alt_off"
@@ -707,8 +707,8 @@
     }
   }
   <mat-paginator
-    [length]="totalCount"
-    [pageSize]="pageSize"
+    [length]="totalCount()"
+    [pageSize]="pageSize()"
     [pageSizeOptions]="[5, 10, 25, 100]"
     (page)="pageChange($event)"
   >

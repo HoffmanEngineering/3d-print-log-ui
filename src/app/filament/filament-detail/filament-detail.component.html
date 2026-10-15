@@ -362,7 +362,7 @@
             [matAutocomplete]="autoBrands"
           />
           <mat-autocomplete #autoBrands="matAutocomplete">
-            @for (option of this.filteredFilamentBrands | async; track option) {
+            @for (option of filteredFilamentBrands() | async; track option) {
               <mat-option [value]="option">
                 {{ option }}
               </mat-option>
@@ -392,9 +392,9 @@
               this.filamentForm.get('diameterMm').enabled &&
               this.filamentForm.get('diameterMm').dirty &&
               this.filamentForm.get('diameterMm').value !== null &&
-              (this.defaultFilamentDiameterMmSetting === null ||
+              (defaultFilamentDiameterMmSetting() === null ||
                 this.filamentForm.get('diameterMm').value?.toString() !==
-                  this.defaultFilamentDiameterMmSetting.value.toString())
+                  defaultFilamentDiameterMmSetting().value.toString())
             ) {
               <button
                 fxFlex
@@ -425,7 +425,7 @@
           />
           <mat-autocomplete #autoStorageLocations="matAutocomplete">
             @for (
-              option of this.filteredFilamentStorageLocations | async;
+              option of filteredFilamentStorageLocations() | async;
               track option
             ) {
               <mat-option [value]="option">
@@ -959,7 +959,7 @@
           />
           <mat-autocomplete #autoPurchaseLocations="matAutocomplete">
             @for (
-              option of this.filteredFilamentPurchaseLocations | async;
+              option of filteredFilamentPurchaseLocations() | async;
               track option
             ) {
               <mat-option [value]="option">
@@ -978,8 +978,8 @@
               type="text"
               formControlName="purchasePriceValue"
               [placeholder]="
-                defaultFilamentPriceSetting
-                  ? defaultFilamentPriceSetting.value
+                defaultFilamentPriceSetting()
+                  ? defaultFilamentPriceSetting().value
                   : null
               "
               maxlength="256"
@@ -994,9 +994,9 @@
             this.filamentForm &&
             this.filamentForm.get('purchasePriceValue').dirty &&
             this.filamentForm.get('purchasePriceValue').valid &&
-            (this.defaultFilamentPriceSetting === null ||
+            (defaultFilamentPriceSetting() === null ||
               this.filamentForm.get('purchasePriceValue').value.toString() !==
-                this.defaultFilamentPriceSetting.value.toString())
+                defaultFilamentPriceSetting().value.toString())
           ) {
             <button
               fxFlex
@@ -1041,9 +1041,9 @@
           <button
             mat-raised-button
             type="submit"
-            [disabled]="saving"
+            [disabled]="saving()"
             color="primary"
-            [class.spinner]="saving"
+            [class.spinner]="saving()"
             id="edit-filament-submit-btn"
           >
             Submit

@@ -35,7 +35,7 @@ import {
 import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   FilamentPrice,
   FilamentPriceInvalid,
@@ -339,12 +339,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
     }
   }
 
-  public filterByStatus = signal<PrintStatus | null>(null);
+  public readonly filterByStatus = signal<PrintStatus | null>(null);
 
-  public filterByPrinterIds = signal<number[]>([]);
+  public readonly filterByPrinterIds = signal<number[]>([]);
 
-  public filterByFilamentIds = signal<string[]>([]);
-  public filterByFilaments = signal<FilamentSummary[]>([]);
+  public readonly filterByFilamentIds = signal<string[]>([]);
+  public readonly filterByFilaments = signal<FilamentSummary[]>([]);
 
   public printStatusTypes = PrintStatus;
 
@@ -500,9 +500,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private readonly PRINT_TABLE_DISPLAYED_COLUMNS =
     'print_table_displayed_columns';
 
-  public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
-    PrintFilamentSourceMeasurement.AsRecorded
-  );
+  public readonly preferredFilamentUnit =
+    signal<PrintFilamentSourceMeasurement>(
+      PrintFilamentSourceMeasurement.AsRecorded
+    );
   private readonly userSettingService = inject(UserSettingService);
 
   public defaultFilamentPriceSetting: UserSetting | null = null;
@@ -955,15 +956,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public deletePrint(print: PrintSummary) {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    dialogRef.componentInstance.title = 'Delete?';
-    // eslint-disable-next-line max-len
-    dialogRef.componentInstance.body = `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`;
-    dialogRef.componentInstance.yesText = 'Delete';
-    dialogRef.componentInstance.yesColor = 'warn';
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete?',
+        body: `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`,
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
 
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {

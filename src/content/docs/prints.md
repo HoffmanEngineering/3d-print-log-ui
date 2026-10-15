@@ -283,11 +283,21 @@ once, your print page says so: a <mat-icon inline="true">repeat</mat-icon>
 **Printed 11 times** button appears next to the print's status. Click it to see
 your other prints of that file, newest first, and open any of them.
 
-Prints are matched by the file's fingerprint, which the
-[OctoPrint webhook](/docs/octoprint-webhook) records when it logs a print.
-Prints logged another way have no fingerprint yet, so the count does not appear
-on them. With OctoPrint, renaming a file keeps it the same file, and re-slicing
-it makes a new one.
+Prints are matched by a fingerprint of the file, which two integrations record:
+
+- The [OctoPrint webhook](/docs/octoprint-webhook) records the file's SHA-1, a
+  hash of its contents. Renaming a file keeps it the same file, and re-slicing
+  it makes a new one.
+- The [printlog-bridge](/docs/printlog-bridge) records an identity made from
+  the file's size and modified time as Moonraker recorded them, without reading
+  the file ([what the bridge sends](/docs/printlog-bridge-privacy)). Re-slicing
+  the file, or uploading it to Moonraker again, starts a new count.
+
+The two fingerprints never match each other, so prints of one file logged
+through OctoPrint and through the bridge are counted separately. Prints from
+the Slic3r uploader, the Cura plugin or entered by hand have no fingerprint, so
+the count does not appear on them, unless the bridge later takes the print over
+while it runs.
 
 Only you see the count, even on a public print.
 

@@ -214,7 +214,7 @@ export class FilamentDetailComponent
     private readonly dialog: MatDialog
   ) {}
 
-  canDeactivate(): boolean | Observable<boolean> {
+  canDeactivate(): boolean {
     // A navigation this component started itself is never the user abandoning
     // work, so it must not be second-guessed. Without this, rewriting the URL
     // after a create prompts "You have unsaved changes" about the very photos
@@ -254,7 +254,7 @@ export class FilamentDetailComponent
 
   /**
    * Mirrors the form value so computed signals can react to edits. Reading a
-   * form's value never marks it dirty, so `PendingChangesGuard` is unaffected.
+   * form's value never marks it dirty, so `pendingChangesGuard` is unaffected.
    */
   private readonly formValue = signal<Record<string, unknown> | null>(null);
   private formValueSubscription: Subscription;

@@ -1,28 +1,41 @@
-import { inject, TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import {
+  ActivatedRouteSnapshot,
+  provideRouter,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
+import { firstValueFrom, isObservable, of } from 'rxjs';
 
-import { RouterTestingModule } from '@angular/router/testing';
 import { AuthService } from '../services/auth.service';
-import { HomepageRedirectGuard } from './homepage-redirect.guard';
+import { homepageRedirectGuard } from './homepage-redirect.guard';
 
-describe('HomepageRedirectGuard', () => {
-  beforeEach(() => {
-    const mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', [
-      'getUser$',
-    ]);
-
+describe('homepageRedirectGuard', () => {
+  const redirectFor = async (loggedIn: boolean) => {
     TestBed.configureTestingModule({
       providers: [
-        HomepageRedirectGuard,
-        { provide: AuthService, useValue: mockAuthService },
+        provideRouter([]),
+        { provide: AuthService, useValue: { isAuthenticated$: of(loggedIn) } },
       ],
-      imports: [RouterTestingModule],
     });
+    const result = TestBed.runInInjectionContext(() =>
+      homepageRedirectGuard(
+        {} as ActivatedRouteSnapshot,
+        { url: '/home-redirect' } as RouterStateSnapshot
+      )
+    );
+    const tree = (
+      isObservable(result) ? await firstValueFrom(result) : result
+    ) as UrlTree;
+    return TestBed.inject(Router).serializeUrl(tree);
+  };
+
+  it('sends a signed-in user to their prints', async () => {
+    await expectAsync(redirectFor(true)).toBeResolvedTo('/prints');
   });
 
-  it('should ...', inject(
-    [HomepageRedirectGuard],
-    (guard: HomepageRedirectGuard) => {
-      expect(guard).toBeTruthy();
-    }
-  ));
+  it('sends a signed-out visitor to the home page', async () => {
+    await expectAsync(redirectFor(false)).toBeResolvedTo('/home');
+  });
 });

@@ -15,7 +15,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { ToastrService } from 'ngx-toastr';
-import { Observable } from 'rxjs';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import {
   AddFeedback,
@@ -53,7 +52,7 @@ export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
     private titleService: Title
   ) {}
 
-  canDeactivate(): boolean | Observable<boolean> {
+  canDeactivate(): boolean {
     return !this.form.dirty;
   }
 

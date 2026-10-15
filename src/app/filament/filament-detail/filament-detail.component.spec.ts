@@ -242,7 +242,7 @@ describe('FilamentDetailComponent', () => {
     });
 
     // The URL used to be rewritten the instant the create returned, while the
-    // photos were still uploading. That navigation ran PendingChangesGuard,
+    // photos were still uploading. That navigation ran pendingChangesGuard,
     // which asks the panel whether anything is staged - and mid-upload the
     // answer is yes, so saving a new material prompted "You have unsaved
     // changes" about the very photos it was uploading.
@@ -979,7 +979,7 @@ describe('FilamentDetailComponent - usage panels', () => {
 
   it('does not mark the form dirty when the cards render', async () => {
     await setup();
-    // A false dirty state would trip PendingChangesGuard and block navigation.
+    // A false dirty state would trip pendingChangesGuard and block navigation.
     expect(usageComponent.filamentForm.dirty).toBeFalse();
   });
 

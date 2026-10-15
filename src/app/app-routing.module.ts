@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { environment } from 'src/environments/environment';
-import { AuthGuard } from './core/guards/auth.guard';
-import { HomepageRedirectGuard } from './core/guards/homepage-redirect.guard';
-import { PendingChangesGuard } from './core/guards/pending-changes.guard';
+import { authGuard } from './core/guards/auth.guard';
+import { homepageRedirectGuard } from './core/guards/homepage-redirect.guard';
+import { pendingChangesGuard } from './core/guards/pending-changes.guard';
 import { SelectivePreloadStrategy } from './core/routing/selective-preload.strategy';
 import { HomeComponent } from './home/home.component';
 import { SlicerLandingComponent } from './slicer/slicer-landing.component';
@@ -23,7 +23,7 @@ export const appRoutes: Routes = [
       import('./shared/user-profile/user-profile.component').then(
         (m) => m.UserProfileComponent
       ),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   {
     path: 'prints',
@@ -48,7 +48,7 @@ export const appRoutes: Routes = [
       import('./printer-maintenance/printer-maintenance.module').then(
         (m) => m.PrinterMaintenanceModule
       ),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   {
     path: 'home',
@@ -69,8 +69,8 @@ export const appRoutes: Routes = [
       import('./shared/feedback/feedback.component').then(
         (m) => m.FeedbackComponent
       ),
-    canActivate: [AuthGuard],
-    canDeactivate: [PendingChangesGuard],
+    canActivate: [authGuard],
+    canDeactivate: [pendingChangesGuard],
   },
   {
     path: 'docs',
@@ -83,7 +83,7 @@ export const appRoutes: Routes = [
     path: 'analytics',
     loadChildren: () =>
       import('./analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   environment.features.userProfile
     ? {
@@ -96,7 +96,7 @@ export const appRoutes: Routes = [
     path: 'settings',
     loadChildren: () =>
       import('./settings/settings.module').then((m) => m.SettingsModule),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   {
     path: 'filament',
@@ -112,7 +112,7 @@ export const appRoutes: Routes = [
     path: 'api-keys',
     loadChildren: () =>
       import('./apikeys/apikeys.module').then((m) => m.ApikeysModule),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   {
     // Not preloaded: most visits to the app never open the collection.
@@ -121,7 +121,7 @@ export const appRoutes: Routes = [
       import('./achievements/achievements.routes').then(
         (m) => m.ACHIEVEMENTS_ROUTES
       ),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   {
     path: 'notifications',
@@ -129,7 +129,7 @@ export const appRoutes: Routes = [
       import('./notifications/notifications.module').then(
         (m) => m.NotificationsModule
       ),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   {
     path: 'subscription',
@@ -137,11 +137,11 @@ export const appRoutes: Routes = [
       import('./subscription/subscription.module').then(
         (m) => m.SubscriptionModule
       ),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   {
     path: 'home-redirect',
-    canActivate: [HomepageRedirectGuard],
+    canActivate: [homepageRedirectGuard],
     pathMatch: 'full',
     children: [],
   },
@@ -208,7 +208,7 @@ export const appRoutes: Routes = [
   {
     path: 'feed',
     loadChildren: () => import('./feed/feed.module').then((m) => m.FeedModule),
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
 
   {

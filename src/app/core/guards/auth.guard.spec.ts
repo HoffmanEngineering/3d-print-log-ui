@@ -1,46 +1,48 @@
-import { inject, TestBed, waitForAsync } from '@angular/core/testing';
-import { Observable } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-
-import { AuthService } from '../services/auth.service';
-import { AuthGuard } from './auth.guard';
+import { firstValueFrom, isObservable, of } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
-describe('AuthGuard', () => {
+import { AuthService } from '../services/auth.service';
+import { authGuard } from './auth.guard';
+
+describe('authGuard', () => {
+  let auth: { isAuthenticated$: unknown; login: jasmine.Spy };
+
+  const canActivate = async (url = '/prints') => {
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot)
+    );
+    return isObservable(result) ? firstValueFrom(result) : result;
+  };
+
   beforeEach(() => {
-    const mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', [
-      'getUser$',
-    ]);
+    auth = { isAuthenticated$: of(false), login: jasmine.createSpy('login') };
     TestBed.configureTestingModule({
-      providers: [
-        AuthGuard,
-        { provide: AuthService, useValue: mockAuthService },
-      ],
+      providers: [{ provide: AuthService, useValue: auth }],
     });
   });
 
   afterEach(() => {
-    (environment as any).devAuthBypass = false;
+    (environment as { devAuthBypass?: boolean }).devAuthBypass = false;
   });
 
-  it('should ...', inject([AuthGuard], (guard: AuthGuard) => {
-    expect(guard).toBeTruthy();
-  }));
+  it('lets a signed-in user through', async () => {
+    auth.isAuthenticated$ = of(true);
 
-  it('should return true immediately when devAuthBypass is true', (done) => {
-    // Arrange: set bypass flag
-    (environment as any).devAuthBypass = true;
-    const guard = TestBed.inject(AuthGuard);
-    const route = {} as ActivatedRouteSnapshot;
-    const state = { url: '/prints' } as RouterStateSnapshot;
+    await expectAsync(canActivate()).toBeResolvedTo(true);
+    expect(auth.login).not.toHaveBeenCalled();
+  });
 
-    // Act
-    const result$ = guard.canActivate(route, state) as Observable<boolean>;
+  it('blocks a signed-out visitor and sends them to log in, returning to the page', async () => {
+    await expectAsync(canActivate('/printers/3')).toBeResolvedTo(false);
+    expect(auth.login).toHaveBeenCalledOnceWith('/printers/3');
+  });
 
-    // Assert
-    result$.subscribe((value) => {
-      expect(value).toBeTrue();
-      done();
-    });
+  it('lets everyone through when the dev auth bypass is on', async () => {
+    (environment as { devAuthBypass?: boolean }).devAuthBypass = true;
+
+    await expectAsync(canActivate()).toBeResolvedTo(true);
+    expect(auth.login).not.toHaveBeenCalled();
   });
 });

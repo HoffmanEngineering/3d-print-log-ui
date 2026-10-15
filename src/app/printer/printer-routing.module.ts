@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from '../core/guards/auth.guard';
-import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
+import { authGuard } from '../core/guards/auth.guard';
+import { pendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { PrinterDetailComponent } from './printer-detail/printer-detail.component';
 import { PrinterListComponent } from './printer-list/printer-list.component';
 import { printerDetailResolver } from './resolvers/printer-detail.resolver';
@@ -16,19 +16,19 @@ export const printerRoutes: Routes = [
       {
         path: '',
         component: PrinterListComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
         resolve: { printerList: printerListResolver },
       },
       {
         path: ':id',
         component: PrinterDetailComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
         resolve: {
           printer: printerDetailResolver,
           printerCategories: printerCategoriesResolver,
           materialCategories: materialCategoriesResolver,
         },
-        canDeactivate: [PendingChangesGuard],
+        canDeactivate: [pendingChangesGuard],
       },
     ],
   },

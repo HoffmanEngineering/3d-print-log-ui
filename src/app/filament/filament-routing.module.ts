@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from '../core/guards/auth.guard';
-import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
+import { authGuard } from '../core/guards/auth.guard';
+import { pendingChangesGuard } from '../core/guards/pending-changes.guard';
 import {
   currencySymbolSettingResolver,
   defaultFilamentDiameterSettingResolver,
@@ -26,7 +26,7 @@ export const filamentRoutes: Routes = [
       {
         path: '',
         component: FilamentListContainerComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
         resolve: {
           filamentList: filamentListResolver,
           materialCategories: materialCategoriesResolver,
@@ -36,7 +36,7 @@ export const filamentRoutes: Routes = [
       {
         path: 'copy/:id',
         component: FilamentDetailComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
         resolve: {
           filament: copyFilamentDetailResolver,
           materials: materialsResolver,
@@ -48,7 +48,7 @@ export const filamentRoutes: Routes = [
           preferredFilamentDisplayUnitSetting:
             filamentDisplayUnitSettingResolver,
         },
-        canDeactivate: [PendingChangesGuard],
+        canDeactivate: [pendingChangesGuard],
       },
       {
         path: 'spool/:number',
@@ -58,7 +58,7 @@ export const filamentRoutes: Routes = [
       {
         path: ':id',
         component: FilamentDetailComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
         resolve: {
           filament: filamentDetailResolver,
           materials: materialsResolver,
@@ -70,7 +70,7 @@ export const filamentRoutes: Routes = [
           preferredFilamentDisplayUnitSetting:
             filamentDisplayUnitSettingResolver,
         },
-        canDeactivate: [PendingChangesGuard],
+        canDeactivate: [pendingChangesGuard],
       },
     ],
   },

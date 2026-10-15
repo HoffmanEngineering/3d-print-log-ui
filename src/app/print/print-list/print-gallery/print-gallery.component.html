@@ -1,0 +1,64 @@
+<ul class="print-gallery" data-cy="print-gallery">
+  @for (print of prints(); track print.id) {
+    <li
+      class="print-gallery__tile"
+      data-testid="print-gallery-tile"
+      [class.print-gallery__tile--selected]="selectedIds().has(print.id)"
+    >
+      <!-- The link is named by the title alone. Left to compute its name from
+           its content it would read the alt text, the title, the status, the
+           date and the printer as one long label. -->
+      <a
+        class="print-gallery__link"
+        [routerLink]="['/prints', print.id]"
+        [attr.aria-labelledby]="'print-gallery-title-' + print.id"
+      >
+        <div class="print-gallery__thumb">
+          @if (print.defaultPrintImageId > 0) {
+            <app-print-image
+              [printId]="print.id"
+              [imageId]="print.defaultPrintImageId"
+              [alt]="'Photo of ' + print.title"
+              fit="cover"
+            />
+          } @else {
+            <div
+              class="print-gallery__placeholder"
+              data-testid="print-gallery-placeholder"
+            >
+              <mat-icon aria-hidden="true">photo_camera</mat-icon>
+              <span>No photo</span>
+            </div>
+          }
+        </div>
+        <div class="print-gallery__body">
+          <h3
+            class="print-gallery__title"
+            [id]="'print-gallery-title-' + print.id"
+          >
+            {{ print.title }}
+          </h3>
+          <app-print-status-badge [status]="print.status" />
+          <p class="print-gallery__meta">
+            <span data-testid="print-gallery-date">{{
+              print.startDate | localeDate
+            }}</span>
+            @if (printerLabel(print.printer); as printer) {
+              <span class="print-gallery__printer">{{ printer }}</span>
+            }
+          </p>
+        </div>
+      </a>
+      <!-- A sibling of the link, never inside it: an interactive control nested
+           in an <a> is invalid, and a click on it would also navigate. -->
+      <mat-checkbox
+        class="print-gallery__select"
+        [checked]="selectedIds().has(print.id)"
+        [disabled]="selectionDisabled()"
+        (change)="selectionToggled.emit(print)"
+        [aria-label]="'Select print ' + print.title"
+        [attr.data-cy-select-print]="print.id"
+      />
+    </li>
+  }
+</ul>

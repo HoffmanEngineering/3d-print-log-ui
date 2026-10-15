@@ -1,0 +1,133 @@
+// Tiles never narrower than 160px, so a phone gets two columns and a wide
+// desktop five or six; auto-fill keeps the last row's tiles the same width.
+.print-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 600px) {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+.print-gallery__tile {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  border: 1px solid var(--mat-divider-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--app-surface-raised);
+
+  // Same tint and edge as a selected table row or phone card.
+  &--selected {
+    border-color: var(--app-selected-edge);
+    box-shadow: inset 0 0 0 1px var(--app-selected-edge);
+
+    .print-gallery__body {
+      background-color: var(--app-selected-bg);
+    }
+  }
+}
+
+.print-gallery__link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .print-gallery__title {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--app-primary);
+    outline-offset: -2px;
+  }
+}
+
+// A fixed 4:3 box, so a page of mixed portrait and landscape photos still lines
+// up in rows and the grid does not reflow as each image arrives.
+.print-gallery__thumb {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  background-color: var(--app-surface-container);
+
+  app-print-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.print-gallery__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 100%;
+  color: var(--app-text-hint);
+  font-size: 0.8125rem;
+
+  mat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+  }
+}
+
+.print-gallery__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  flex: 1;
+  padding: 10px 12px 12px;
+}
+
+.print-gallery__title {
+  margin: 0;
+  width: 100%;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--app-text-primary);
+  // Two lines, then an ellipsis: titles are user text and can be any length.
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.print-gallery__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--app-text-secondary);
+}
+
+.print-gallery__printer {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Over the photo's corner, on its own surface so it stays visible on any image.
+.print-gallery__select {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  border-radius: 50%;
+  background-color: var(--app-surface-raised);
+  opacity: 0.92;
+}

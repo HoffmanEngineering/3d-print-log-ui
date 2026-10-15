@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 44
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-15
 related: [printlog-bridge, printlog-bridge-install, snapmaker-u1, printlog-bridge-troubleshooting]
 ---
 
@@ -158,3 +158,5 @@ The [spool macros](/docs/printlog-bridge-spools) work in remote mode too, becaus
 ### Update {#update}
 
 Pull the image again and recreate the container. With Compose, that's `docker compose pull` and then `docker compose up -d` in the project's folder. The config and everything in `/data` stay as they are.
+
+You don't have to watch for new versions: when one is out, the printer's Connections in 3D Print Log say so, and so do the bridge's log, `status` and `doctor`. See [Update](/docs/printlog-bridge#update).

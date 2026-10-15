@@ -1,7 +1,7 @@
 ---
 slug: printlog-bridge-privacy
 title: printlog-bridge Privacy & Security | 3D Print Log Docs
-description: Exactly what printlog-bridge sends to 3D Print Log, every connection it makes, how it keeps your API key, and what it stores on the printer.
+description: Exactly what printlog-bridge sends to 3D Print Log, what it reads from a G-code file, every connection it makes, how it keeps your API key, and what it stores.
 navLabel: Bridge – privacy
 nav: false
 group: integrations
@@ -36,6 +36,7 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 | `POST /api/Prints/{id}/complete` | A print ends | `status` (the outcome), `endedAt`, `printTimeInSeconds`, and per tool (`slot`) the filament length Klipper fed, linked to the spool you chose, split into a row per spool when a tool's spool changed mid-print |
 | `PATCH /api/Prints/{id}` | A print fails or is cut short, a spool changed mid-print, or a print was paused for a filament change with no spool assigned | `notes`: a line saying why, with Klipper's error message when there is one; which spools a tool changed between, and where; how to split a filament change's usage |
 | `POST /api/Prints/{id}/image` | A print starts, and when it ends | The slicer's thumbnail (at start) and one webcam frame (at the end, unless `snapshots = false`) |
+| `POST /api/Prints/{id}/slicer-settings` | Once per print, after it starts, unless `slicer_settings = false` (and not for a print you made with the Slic3r uploader or the Cura plugin, which has the slicer's own) | `configBlock`: the `; key = value` settings the slicer wrote after the G-code; `header`: the file's first comment lines, through `; HEADER_BLOCK_END` (PrusaSlicer: its first line), which name the slicer and its version; both with hosts and credentials blanked (see below). `metadata`: what Moonraker read from the file: `slicer`, `slicerVersion`, `layerHeightMm`, `firstLayerHeightMm`, `nozzleDiameterMm`, `filamentName`, `filamentType`, `firstLayerNozzleTemperatureC`, `firstLayerBedTemperatureC` |
 | `GET /api/Filaments/by-tag/{uid}` | `PRINTLOG_SET_SPOOL TAG=…`, or a Snapmaker U1 reads a spool's RFID tag | The tag's UID |
 | `GET /api/Filaments/by-number/{n}` | A spool is picked on the printer, with Spoolman pointed at 3D Print Log | The spool number |
 | `PUT /api/Printers/{id}/slots/{slot}` | `PRINTLOG_SET_SPOOL`, a U1 tag that matches one of your spools, or a spool picked on the printer (Mainsail, Fluidd, KlipperScreen or `SET_ACTIVE_SPOOL`) when `[spoolman]` points at 3D Print Log | `filamentId` (the spool), `slotLabel` (`T0`, `T1`…) |
@@ -46,7 +47,11 @@ Every request also carries the API key (`X-Api-Key`) and `User-Agent: printlog-b
 
 That is all. In particular:
 
-- **No G-code leaves the printer.** The bridge never reads, downloads or uploads a G-code file. The thumbnail is read from the picture Moonraker extracted from the file, and only from a file named as a picture (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`). A file that isn't a picture is never sent, whatever its name.
+- **No toolpaths leave the printer, and only two parts of a G-code file are read: its header and its slicer settings.** The bridge reads only what lies outside the G-code itself, by byte range: the comment lines the file begins with, through `; HEADER_BLOCK_END` (at most the first 64 KB), and the settings block the slicer wrote after the last G-code line (at most the last 512 KB). It never reads a G-code line, and the thumbnails in the header are not sent this way. It reads only `.gcode`, `.g` and `.gco` files, once per print, and skips a file that was replaced since the job started.
+- **The G-code file is never uploaded.** Only the two parts above are sent, as text, in the `slicer-settings` call.
+- **Hosts and credentials are blanked before the settings leave the printer.** A slicer writes how it reaches your printer into every file. In the header and the settings block, the value of every setting whose name contains `print_host`, `printhost`, `apikey`, `api_key`, `password`, `passwd`, `token`, `secret`, `user`, `cookie`, `credential`, `authorization`, `access_code` or `post_process` is removed; the setting's name stays, with an empty value. 3D Print Log removes the same settings again on its side, and never stores the text it receives: it keeps only what it adds to the print (see [Slicer settings](/docs/printlog-bridge#slicer-settings)).
+- **`slicer_settings = false` turns it off**, in `[bridge]` for every printer, or in a printer's section for that one. Then the G-code file is never read, and no slicer settings are sent, not even Moonraker's summary.
+- **The thumbnail is read only from a picture.** It is read from the picture Moonraker extracted from the file, and only from a file named as a picture (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`). A file that isn't a picture is never sent, whatever its name.
 - **No folder names or paths.** `fileName` is the file's own name; the folders it sits in on the printer are dropped.
 - **No other printer data.** Temperatures, positions, macros, the rest of `printer.cfg` and the rest of Moonraker's history stay on the printer.
 - **The webcam is asked only when a print ends**, for one frame, and never when `snapshots = false` is set for the printer.
@@ -55,7 +60,7 @@ That is all. In particular:
 
 The bridge only makes outbound connections, to:
 
-1. **Moonraker**: its local socket in local mode, or the `url` you set in remote mode (HTTP and WebSocket, on your network). In remote mode it also downloads the thumbnail from Moonraker's file API. It reads the server address in `[spoolman]` and the active spool, to see whether Spoolman points at 3D Print Log, and it sets the active spool on tool changes and when you load a spool in the app. The `[spoolman]` address contains the Spoolman secret. The bridge keeps only its host name, and never stores or sends the secret.
+1. **Moonraker**: its local socket in local mode, or the `url` you set in remote mode (HTTP and WebSocket, on your network). In remote mode it also downloads the thumbnail from Moonraker's file API, and the two parts of the G-code file that hold its header and settings (unless `slicer_settings = false`). It reads the server address in `[spoolman]` and the active spool, to see whether Spoolman points at 3D Print Log, and it sets the active spool on tool changes and when you load a spool in the app. The `[spoolman]` address contains the Spoolman secret. The bridge keeps only its host name, and never stores or sends the secret.
 2. **The webcam's snapshot URL**, as Mainsail or Fluidd have it set in Moonraker (usually the printer itself), when a print ends.
 3. **3D Print Log**, at `api_url` (`https://api.3dprintlog.com` by default), **over HTTPS only.** The config refuses a plain `http` address, except to the computer the bridge runs on (`localhost`, `127.0.0.1`, `::1`). With `allow_http_on_lan` set, it also accepts plain `http` to a private-network IP address, for a development API on your own network; the API key then travels unencrypted on that network.
 
@@ -76,7 +81,7 @@ The bridge holds up to three secrets: your 3D Print Log API key, Moonraker's API
 
 ### What it keeps on the printer {#stored}
 
-In the state directory (`~/.local/share/printlog-bridge` by default): the key file, which job it logged as which print, the outbox of events and pictures not yet sent, `status.json` and `bridge.log`, and with tracing on, the traces. An event still unsent after 30 days is dropped. `uninstall.sh --purge` removes all of it.
+In the state directory (`~/.local/share/printlog-bridge` by default): the key file, which job it logged as which print, the outbox of events, pictures and slicer settings (already scrubbed) not yet sent, kept only until they are sent, `status.json` and `bridge.log`, and with tracing on, the traces. An event still unsent after 30 days is dropped. `uninstall.sh --purge` removes all of it.
 
 #### Traces {#traces}
 
@@ -89,7 +94,7 @@ A trace holds what Moonraker tells the bridge, and what the bridge asks it:
 - the printer's list of objects, its webcams (with their URLs scrubbed), and lines printed to the console;
 - the bridge's own requests, such as which objects it subscribes to.
 
-It holds no G-code. Every secret the support bundle removes is removed from a trace before it is written.
+It holds no G-code, and none of the header or settings read for the slicer settings. The support bundle's copy of the outbox leaves their text out too. Every secret the support bundle removes is removed from a trace before it is written.
 
 ### Not covered yet {#not-covered}
 

@@ -29,7 +29,7 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 | --- | --- | --- |
 | `GET /api/Users/me` | `doctor` | Nothing. Checks the key. |
 | `GET /api/Printers/{id}` | `doctor`; at start and every 5 minutes; when a print starts and ends | Nothing. Checks `printer_id`, and reads which spool is loaded in each slot. |
-| `GET /api/Users/me/user-settings` | The first print after a start | Nothing. Reads your default visibility and comment settings. |
+| `GET /api/Users/me/user-settings` | The first print after a start, and when `printlog-bridge backfill` starts | Nothing. Reads your default visibility and comment settings. |
 | `PUT /api/Connections/{instance}` | At start, then every 5 minutes | `kind` (`moonraker`), `displayName` (`printlog-bridge (name)`, with the printer's name from your config), `agentVersion`, `printerId`. The answer carries `latestAgentVersion`, the newest bridge version, which is how the bridge hears about an [update](/docs/printlog-bridge#update) |
 | `GET /api/Prints/claimable` | A print starts (and when a print ends that the bridge saw no start for), unless `adopt_prints = false` | `printerId` and `createdAfter` (the start time less `adopt_window`). Looks for a print you made yourself, with the Slic3r uploader, the Cura plugin or by hand, to log the job to instead of a new one. The file name is compared on the bridge, not sent. |
 | `POST /api/Prints/{id}/claim` | A print starts and one of yours matches it | `externalSource`, `externalId`, `connectionInstanceId`, `startDate` and `fileHash`, as for `POST /api/Prints`. Your print keeps everything else, including a `fileHash` it already has. |
@@ -44,6 +44,7 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 | `PUT /api/Printers/{id}/slots/{slot}` | `PRINTLOG_SET_SPOOL`, a U1 tag that matches one of your spools, or a spool picked on the printer (Mainsail, Fluidd, KlipperScreen or `SET_ACTIVE_SPOOL`) when `[spoolman]` points at 3D Print Log | `filamentId` (the spool), `slotLabel` (`T0`, `T1`…) |
 | `DELETE /api/Printers/{id}/slots/{slot}` | `PRINTLOG_CLEAR_SPOOL` | Nothing |
 | `PUT /api/Printers/{id}` | A spool is assigned to a tool beyond the printer's slot count | The printer as 3D Print Log returned it, with only `slotCount` raised to the printer's tool count |
+| `POST /api/Prints` (backfill) | You run `printlog-bridge backfill`: once for each finished job in Moonraker's history that isn't logged yet, at most one request a second | The same fields as above, from the job's history entry, plus `printTimeInSeconds` and `imported: true`. `status` is how the job ended, `notes` says "Imported from Moonraker history" (and why the job failed, when it did), and the job's total filament is one row with no tool and no spool. A job whose file is no longer on the printer isn't sent. |
 
 Every request also carries the API key (`X-Api-Key`) and `User-Agent: printlog-bridge/<version>`.
 
@@ -57,6 +58,7 @@ That is all. In particular:
 - **No folder names or paths.** `fileName` is the file's own name; the folders it sits in on the printer are dropped.
 - **`fileHash` identifies the file, not what's in it**, so 3D Print Log can count how often you printed it. It is a hash of the file's size and modified time as Moonraker recorded them, the same two things Moonraker checks to tell whether a file changed. Uploading a file always sets a new modified time, so every print of one file gets the same `fileHash`, and a re-sliced file a new one. Only when Moonraker didn't record both is it a hash of the id Moonraker gave the file instead. The file is never read for it, and it is compared only with your own prints. It is also sent when the bridge takes over a print you started yourself, which keeps a `fileHash` it already has.
 - **No other printer data.** Temperatures, positions, macros, the rest of `printer.cfg` and the rest of Moonraker's history stay on the printer.
+- **`printlog-bridge backfill` reads Moonraker's job history and nothing else.** It uses a connection of its own, so the running bridge keeps its place, reads the bridge's state without changing it, and sends no thumbnail, webcam frame or slicer settings: only the creates above. Its prints change no spool's remaining filament and nothing loaded on the printer.
 - **The webcam is asked only when a print ends**, for one frame, and never when `snapshots = false` is set for the printer.
 
 ### Where it connects {#connections}

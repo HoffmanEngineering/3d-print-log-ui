@@ -1,5 +1,11 @@
 import { Clipboard } from '@angular/cdk/clipboard';
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+  signal,
+} from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import {
   ApiKeyService,
@@ -17,6 +23,7 @@ export interface UserApiKeySummaryWithKey extends UserApiKeySummary {
   templateUrl: './apikeys.component.html',
   styleUrls: ['./apikeys.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApikeysComponent implements OnInit {
   private readonly apiKeyService = inject(ApiKeyService);
@@ -24,8 +31,8 @@ export class ApikeysComponent implements OnInit {
   private readonly toastrService = inject(ToastrService);
   private readonly metaService = inject(MetaTagService);
 
-  public keys: UserApiKeySummary[] = [];
-  public loading = false;
+  readonly keys = signal<UserApiKeySummary[]>([]);
+  readonly loading = signal(false);
 
   public displayedColumns: string[] = [
     'description',
@@ -34,7 +41,7 @@ export class ApikeysComponent implements OnInit {
     'delete',
   ];
 
-  public addingKey = false;
+  readonly addingKey = signal(false);
 
   public newKeyDescription = '';
 
@@ -43,28 +50,28 @@ export class ApikeysComponent implements OnInit {
   ngOnInit(): void {
     this.metaService.setTitle('Personal Api Keys | 3D Print Log');
 
-    this.loading = true;
+    this.loading.set(true);
     this.apiKeyService.getApiKeySummaryForUser().subscribe((keys) => {
-      this.keys = keys;
-      this.loading = false;
+      this.keys.set(keys);
+      this.loading.set(false);
     });
   }
 
   startAddNewKey() {
     this.newKeyDescription = '';
-    this.addingKey = true;
+    this.addingKey.set(true);
   }
 
   cancelAddNewKey() {
     this.newKeyDescription = '';
-    this.addingKey = false;
+    this.addingKey.set(false);
   }
 
   addNewKey() {
     this.apiKeyService.createNewApiKey(this.newKeyDescription).subscribe(
       (newKey) => {
         this.newKeyDescription = '';
-        this.addingKey = false;
+        this.addingKey.set(false);
 
         const newSummary: UserApiKeySummaryWithKey = {
           description: newKey.description,
@@ -76,7 +83,7 @@ export class ApikeysComponent implements OnInit {
           createdById: -1,
           updatedById: -1,
         };
-        this.keys = [newSummary, ...this.keys];
+        this.keys.update((keys) => [newSummary, ...keys]);
         this.toastrService.success('Key created successfully.');
 
         // The moment the app gains the ability to tell the user something time-sensitive:
@@ -102,7 +109,7 @@ export class ApikeysComponent implements OnInit {
   deleteKey(keyId: string) {
     this.apiKeyService.deleteApiKey(keyId).subscribe(
       (_) => {
-        this.keys = this.keys.filter((key) => key.id !== keyId);
+        this.keys.update((keys) => keys.filter((key) => key.id !== keyId));
         this.toastrService.success('Key deleted successfully');
       },
       (_) => {

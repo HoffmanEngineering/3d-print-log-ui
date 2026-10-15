@@ -53,6 +53,43 @@ describe('PrintCommentsComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('the reply box', () => {
+    const replyBox = () =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '#add-comment-textarea'
+      );
+    const text = () => (fixture.nativeElement as HTMLElement).textContent;
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('allowComments', true);
+      fixture.componentRef.setInput('comments', []);
+      fixture.detectChanges();
+    });
+
+    it('asks a signed-out visitor to log in', () => {
+      expect(replyBox()).toBeNull();
+      expect(text()).toContain('Please log in to add comments');
+    });
+
+    it('appears once the visitor signs in', () => {
+      userProfile$.next({ id: 4, profilePicture: '' } as UserProfileInfo);
+      fixture.detectChanges();
+
+      expect(replyBox()).not.toBeNull();
+      expect(text()).not.toContain('Please log in to add comments');
+    });
+
+    it('goes away again when the user signs out', () => {
+      userProfile$.next({ id: 4, profilePicture: '' } as UserProfileInfo);
+      fixture.detectChanges();
+
+      userProfile$.next(null);
+      fixture.detectChanges();
+
+      expect(replyBox()).toBeNull();
+    });
+  });
+
   it('unsubscribes from the user profile when destroyed', () => {
     expect(userProfile$.observed).toBeTrue();
 

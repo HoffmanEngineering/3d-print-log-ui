@@ -34,8 +34,8 @@
       </mat-form-field>
     </div>
   </div>
-  @if (prints.length > 0) {
-    @for (print of prints; track print) {
+  @if (prints().length > 0) {
+    @for (print of prints(); track print) {
       <div #PrintSummaryCard style="margin-bottom: 10px">
         <app-print-summary-card
           [print]="print"
@@ -46,7 +46,7 @@
         </app-print-summary-card>
       </div>
     }
-    @if (showLoadMore) {
+    @if (showLoadMore()) {
       <button
         fxFlex="grow"
         style="margin: 0 auto"
@@ -58,7 +58,7 @@
       </button>
     }
   }
-  @if (prints.length === 0) {
+  @if (prints().length === 0) {
     <mat-card appearance="outlined" fxFlex>
       No Prints Found. The user shared any prints publicly that match the
       search.

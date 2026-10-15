@@ -9,8 +9,8 @@
         <app-comment
           [comment]="comment"
           [showDelete]="
-            printOwnerUserId() === currentUserId ||
-            comment.createdById === currentUserId
+            printOwnerUserId() === currentUserId() ||
+            comment.createdById === currentUserId()
           "
           (delete)="deleteComment(comment)"
         >
@@ -19,13 +19,17 @@
     }
     <div>
       <mat-card appearance="outlined" class="mat-elevation-z4">
-        @if (isLoggedIn) {
+        @if (isLoggedIn()) {
           <div>
             <mat-card-content>
-              @if (currentUserProfilePicture !== '') {
+              @if (currentUserProfilePicture() !== '') {
                 <!-- Decorative: it depicts the signed-in user, who is already
                      identified by the surrounding form. -->
-                <img mat-card-avatar alt="" [src]="currentUserProfilePicture" />
+                <img
+                  mat-card-avatar
+                  alt=""
+                  [src]="currentUserProfilePicture()"
+                />
               }
               <mat-form-field style="width: 100%">
                 <mat-label>Add Comment:</mat-label>
@@ -55,7 +59,7 @@
             </mat-card-content>
           </div>
         }
-        @if (!isLoggedIn) {
+        @if (!isLoggedIn()) {
           <div>
             <mat-card-content #notLoggedIn>
               <p>Please log in to add comments</p>

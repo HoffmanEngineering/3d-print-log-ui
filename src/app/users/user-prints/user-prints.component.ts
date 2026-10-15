@@ -1,5 +1,7 @@
 import {
+  ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   OnChanges,
   OnInit,
@@ -7,7 +9,9 @@ import {
   input,
   viewChildren,
   inject,
+  signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash-es';
 import { Subscription } from 'rxjs';
@@ -25,12 +29,14 @@ import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
   templateUrl: './user-prints.component.html',
   styleUrls: ['./user-prints.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserPrintsComponent implements OnChanges, OnInit {
   private readonly printService = inject(PrintService);
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly loggingService = inject(LoggingService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly userId = input<number>();
   readonly userProfilePictureUrl = input<string>();
@@ -38,14 +44,14 @@ export class UserPrintsComponent implements OnChanges, OnInit {
 
   readonly summaryCards = viewChildren<ElementRef>('PrintSummaryCard');
 
-  public prints: PrintSummary[] = [];
+  readonly prints = signal<PrintSummary[]>([]);
 
   public pageNumber = 1;
   public PAGE_SIZE = 10;
 
-  public searchText = '';
+  readonly searchText = signal('');
 
-  public filterByStatus: PrintStatus | null = null;
+  readonly filterByStatus = signal<PrintStatus | null>(null);
 
   public printStatusTypes = PrintStatus;
 
@@ -53,14 +59,14 @@ export class UserPrintsComponent implements OnChanges, OnInit {
 
   public debouncedUpdateFilter;
 
-  public showLoadMore = true;
+  readonly showLoadMore = signal(true);
   printListSubscription: Subscription;
 
   constructor() {
     this.debouncedUpdateFilter = debounce(() => {
       this.router.navigate(['.'], {
         queryParams: {
-          searchText: this.searchText !== '' ? this.searchText : null,
+          searchText: this.searchText() !== '' ? this.searchText() : null,
         },
         relativeTo: this.activatedRoute,
       });
@@ -68,27 +74,29 @@ export class UserPrintsComponent implements OnChanges, OnInit {
   }
 
   ngOnInit() {
-    this.activatedRoute.queryParamMap.subscribe((params) => {
-      if (params.has('searchText')) {
-        this.searchText = params.get('searchText');
-        this.clearPrints();
-        this.pageNumber = 1;
-        this.updateFilter();
-      }
-    });
+    this.activatedRoute.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        if (params.has('searchText')) {
+          this.searchText.set(params.get('searchText'));
+          this.clearPrints();
+          this.pageNumber = 1;
+          this.updateFilter();
+        }
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.userId) {
-      this.searchText = '';
-      this.filterByStatus = null;
+      this.searchText.set('');
+      this.filterByStatus.set(null);
       this.clearPrints();
       this.updateFilter();
     }
   }
 
   public clearPrints() {
-    this.prints = [];
+    this.prints.set([]);
   }
   public async updateFilter(): Promise<void> {
     return new Promise((resolve) => {
@@ -99,8 +107,8 @@ export class UserPrintsComponent implements OnChanges, OnInit {
         .getPrintSummaries(
           this.pageNumber,
           this.PAGE_SIZE,
-          this.searchText,
-          this.filterByStatus,
+          this.searchText(),
+          this.filterByStatus(),
           [],
           [],
           undefined,
@@ -109,9 +117,9 @@ export class UserPrintsComponent implements OnChanges, OnInit {
         )
         .subscribe((response) => {
           this.pageNumber = response.paging.currentPage;
-          this.prints = [...this.prints, ...response.items];
+          this.prints.update((prints) => [...prints, ...response.items]);
 
-          this.showLoadMore = this.pageNumber < response.paging.totalPages;
+          this.showLoadMore.set(this.pageNumber < response.paging.totalPages);
           resolve();
         });
     });

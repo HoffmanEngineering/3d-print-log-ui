@@ -161,6 +161,14 @@ Angular throws **NG0600** for a signal write during `computed()` evaluation, and
 
 If a lazily-loading store must be readable from a computed, keep the read pure and schedule the work.
 
+### OnPush goes leaf-first
+
+An OnPush component that is not dirty is skipped on a zone tick, and so is everything it renders. A Default child that sets a plain field from an HTTP response is waiting for that tick, so under an OnPush parent it silently stops repainting. Convert children before their parents, and routed components before their `<router-outlet>` host.
+
+- The `prefer-on-push-component-change-detection` lint rule is an error everywhere except the exemption list in `.eslintrc.json`, which only shrinks. New components are OnPush.
+- `scripts/onpush-hosts.test.mjs` (run by `npm run test:scripts`) fails when an OnPush component renders a Default one or a `<router-outlet>`.
+- The zoneless TestBed throws NG0100 when a plain field changes in a `subscribe`, which makes a DOM assertion after an async response the natural failing test for a conversion. Signals fix it in both the test and the app.
+
 ### A component input beats a `::ng-deep` override
 
 A child's own `.thing img` rule and a parent's `::ng-deep .thing img` tie on specificity, so which wins depends on stylesheet order — which is not something a caller can rely on. When a child needs to render differently for one caller, give it an input (see `SignedImageComponent.fit`), not a CSS escape hatch.

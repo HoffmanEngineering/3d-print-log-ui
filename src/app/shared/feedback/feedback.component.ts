@@ -1,4 +1,11 @@
-import { Component, OnInit, viewChild, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  viewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   UntypedFormBuilder,
   UntypedFormGroup,
@@ -36,6 +43,7 @@ import {
     MatInputModule,
     MatButtonModule,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
   private router = inject(Router);
@@ -48,7 +56,7 @@ export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
   public form: UntypedFormGroup;
 
   public readonly feedbackTypes = FeedbackType;
-  public saving = false;
+  readonly saving = signal(false);
 
   canDeactivate(): boolean {
     return !this.form.dirty;
@@ -65,18 +73,18 @@ export class FeedbackComponent implements OnInit, ComponentCanDeactivate {
   }
 
   onSubmit() {
-    this.saving = true;
+    this.saving.set(true);
     const newFeedback: AddFeedback = this.getFeedbackFromForm();
 
     this.feedbackService.addFeedback(newFeedback).subscribe(
       (_) => {
-        this.saving = false;
+        this.saving.set(false);
         this.toastr.success('Thank you for your feedback.', 'Feedback sent!');
 
         this.feedbackForm().resetForm({ type: FeedbackType.Suggestion });
       },
       (error) => {
-        this.saving = false;
+        this.saving.set(false);
         this.toastr.error(
           'Please try again in a few seconds.',
           'An error occurred.'

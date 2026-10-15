@@ -55,27 +55,19 @@
     },
     {
       "files": [
-        "src/app/apikeys/apikeys.component.ts",
         "src/app/app.component.ts",
         "src/app/documentation/documentation.component.ts",
         "src/app/filament/filament-detail/filament-detail.component.ts",
         "src/app/filament/filament-list-container/filament-list-container.component.ts",
         "src/app/print/edit-print-detail/edit-print-detail.component.ts",
-        "src/app/print/print-comments/print-comments.component.ts",
         "src/app/print/print-list/print-list.component.ts",
-        "src/app/print/print-share-dialog/print-share-dialog.component.ts",
         "src/app/printer/printer-detail/printer-detail.component.ts",
         "src/app/printer/printer-list/printer-list.component.ts",
         "src/app/printer-maintenance/printer-maintenance.component.ts",
         "src/app/settings/settings.component.ts",
-        "src/app/shared/account-deactivation-banner/account-deactivation-banner.component.ts",
-        "src/app/shared/feedback/feedback.component.ts",
         "src/app/shared/filament-list/filament-list.component.ts",
         "src/app/shared/filament-search-modal/filament-search-modal.component.ts",
         "src/app/shared/navbar/navbar.component.ts",
-        "src/app/shared/print-image/print-image.component.ts",
-        "src/app/users/stats/stats.component.ts",
-        "src/app/users/user-prints/user-prints.component.ts",
         "src/app/users/user-profile/user-profile.component.ts"
       ],
       "rules": {

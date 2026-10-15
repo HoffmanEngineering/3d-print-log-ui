@@ -23,7 +23,7 @@
         >
           Create new API Key
         </button>
-        @if (addingKey) {
+        @if (addingKey()) {
           <div class="mat-elevation-z5 new-key" style="padding: 10px">
             <p>
               API keys are used by applications outside the browser to access
@@ -68,10 +68,10 @@
             </div>
           </div>
         }
-        @if (loading) {
+        @if (loading()) {
           <div class="spinner">Loading...</div>
         }
-        <table fxFlex="grow" fxFlexFill mat-table [dataSource]="keys">
+        <table fxFlex="grow" fxFlexFill mat-table [dataSource]="keys()">
           <ng-container matColumnDef="description">
             <th mat-header-cell *matHeaderCellDef>Description</th>
             <td mat-cell *matCellDef="let key">

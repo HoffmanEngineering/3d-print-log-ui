@@ -3,7 +3,7 @@
   <mat-form-field>
     <mat-label> Sharing To:</mat-label>
     <mat-select
-      [ngModel]="print?.viewStatus"
+      [ngModel]="print()?.viewStatus"
       (ngModelChange)="updatePrint($event)"
     >
       <mat-option [value]="printViewStatusTypes.Public"
@@ -19,7 +19,7 @@
   </mat-form-field>
   <mat-form-field>
     <mat-label> Link to Print:</mat-label>
-    <input matInput readonly="true" [ngModel]="printLink" />
+    <input matInput readonly="true" [ngModel]="printLink()" />
   </mat-form-field>
 </div>
 <div mat-dialog-actions fxLayout fxLayoutAlign="space-around">

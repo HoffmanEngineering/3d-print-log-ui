@@ -8,11 +8,9 @@ import { StatsComponent } from './stats/stats.component';
 import { UserPrintsComponent } from './user-prints/user-prints.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UsersRoutingModule } from './users-routing.module';
-import { UsersComponent } from './users.component';
 
 @NgModule({
   declarations: [
-    UsersComponent,
     UserProfileComponent,
     UserPrintsComponent,
     StatsComponent,

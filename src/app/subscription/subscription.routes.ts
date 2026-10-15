@@ -1,5 +1,6 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { importProvidersFrom } from '@angular/core';
+import { Routes } from '@angular/router';
+import { SharedModule } from '../shared/shared.module';
 import { PricingComponent } from './pricing/pricing.component';
 import { SubscriptionSuccessComponent } from './success/subscription-success.component';
 import { SubscriptionCanceledComponent } from './canceled/subscription-canceled.component';
@@ -10,8 +11,12 @@ const routes: Routes = [
   { path: 'canceled', component: SubscriptionCanceledComponent },
 ];
 
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-})
-export class SubscriptionRoutingModule {}
+export const SUBSCRIPTION_ROUTES: Routes = [
+  {
+    path: '',
+    // The providers SharedModule's imports carry, notably the native
+    // DateAdapter and a MatDialog scoped to this section.
+    providers: [importProvidersFrom(SharedModule)],
+    children: routes,
+  },
+];

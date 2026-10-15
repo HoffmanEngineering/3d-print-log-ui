@@ -1,5 +1,10 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { importProvidersFrom } from '@angular/core';
+import { Routes } from '@angular/router';
+import { SharedModule } from '../shared/shared.module';
+import { CuraParserService } from './services/integration/cura-parser.service';
+import { CuraParserV1pt0pt0Service } from './services/integration/cura/cura-parser-v1-0-0.service';
+import { CuraParserV1pt1pt0Service } from './services/integration/cura/cura-parser-v1-1-0.service';
+import { CuraParserV1pt2pt0Service } from './services/integration/cura/cura-parser-v1-2-0.service';
 import { authGuard } from '../core/guards/auth.guard';
 
 import { pendingChangesGuard } from '../core/guards/pending-changes.guard';
@@ -23,9 +28,18 @@ import { printListResolver } from './resolvers/print-list.resolver';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
 import { filamentFilterResolver } from './resolvers/filament-filter.resolver';
 
-export const printRoutes: Routes = [
+export const PRINT_ROUTES: Routes = [
   {
     path: '',
+    // The providers SharedModule's imports carry, notably the native
+    // DateAdapter and a MatDialog scoped to this section.
+    providers: [
+      importProvidersFrom(SharedModule),
+      CuraParserService,
+      CuraParserV1pt0pt0Service,
+      CuraParserV1pt1pt0Service,
+      CuraParserV1pt2pt0Service,
+    ],
     children: [
       {
         path: '',
@@ -103,9 +117,3 @@ export const printRoutes: Routes = [
     ],
   },
 ];
-
-@NgModule({
-  exports: [RouterModule],
-  imports: [RouterModule.forChild(printRoutes)],
-})
-export class PrintRoutingModule {}

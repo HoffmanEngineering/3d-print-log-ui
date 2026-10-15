@@ -1,5 +1,6 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { importProvidersFrom } from '@angular/core';
+import { Routes } from '@angular/router';
+import { SharedModule } from '../shared/shared.module';
 import { currencySymbolSettingResolver } from '../core/resolvers/user-setting.resolvers';
 import { PrinterMaintenanceComponent } from './printer-maintenance.component';
 import { printerMaintenanceListResolver } from './resolvers/printer-maintenance-list.resolver';
@@ -17,8 +18,12 @@ const routes: Routes = [
   },
 ];
 
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-})
-export class PrinterMaintenanceRoutingModule {}
+export const PRINTER_MAINTENANCE_ROUTES: Routes = [
+  {
+    path: '',
+    // The providers SharedModule's imports carry, notably the native
+    // DateAdapter and a MatDialog scoped to this section.
+    providers: [importProvidersFrom(SharedModule)],
+    children: routes,
+  },
+];

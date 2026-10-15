@@ -1,5 +1,6 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { importProvidersFrom } from '@angular/core';
+import { Routes } from '@angular/router';
+import { SharedModule } from '../shared/shared.module';
 import { authGuard } from '../core/guards/auth.guard';
 import { pendingChangesGuard } from '../core/guards/pending-changes.guard';
 import {
@@ -19,9 +20,12 @@ import { materialCategoriesResolver } from '../core/resolvers/material-categorie
 import { filamentStorageLocationsResolver } from './resolvers/filament-storage-locations.resolver';
 import { spoolNumberRedirectGuard } from './spool-number-redirect.guard';
 
-export const filamentRoutes: Routes = [
+export const FILAMENT_ROUTES: Routes = [
   {
     path: '',
+    // The providers SharedModule's imports carry, notably the native
+    // DateAdapter and a MatDialog scoped to this section.
+    providers: [importProvidersFrom(SharedModule)],
     children: [
       {
         path: '',
@@ -75,9 +79,3 @@ export const filamentRoutes: Routes = [
     ],
   },
 ];
-
-@NgModule({
-  imports: [RouterModule.forChild(filamentRoutes)],
-  exports: [RouterModule],
-})
-export class FilamentRoutingModule {}

@@ -1,0 +1,39 @@
+// The theme is Material 2: colours come from the --app-* tokens and --mat-divider-color.
+
+.spoolman-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mat-divider-color);
+  }
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+.state.paused {
+  color: var(--app-error-text);
+  font-weight: 500;
+}

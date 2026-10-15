@@ -26,10 +26,10 @@ import { PrintImageValue } from '../print-image-value.model';
   ],
 })
 export class PrintDetailHeroComponent {
-  printId = input.required<number>();
-  images = input<PrintImageValue[]>([]);
+  readonly printId = input.required<number>();
+  readonly images = input<PrintImageValue[]>([]);
   /** Print title, used to build meaningful alternative text. */
-  title = input<string>('');
+  readonly title = input<string>('');
 
   readonly selectedIndex = signal(0);
 

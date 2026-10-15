@@ -20,14 +20,14 @@ import {
   imports: [FilamentSpoolIconComponent, BottleIconComponent],
 })
 export class MaterialIconComponent {
-  color = input<string>('');
-  categoryNickname = input<string>('');
-  colorPattern = input<ColorPatternType>(ColorPatternType.Solid);
-  colors = input<string[]>([]);
-  finishType = input<FilamentFinishType>(FilamentFinishType.Standard);
-  effects = input<FilamentEffect[]>([]);
+  readonly color = input<string>('');
+  readonly categoryNickname = input<string>('');
+  readonly colorPattern = input<ColorPatternType>(ColorPatternType.Solid);
+  readonly colors = input<string[]>([]);
+  readonly finishType = input<FilamentFinishType>(FilamentFinishType.Standard);
+  readonly effects = input<FilamentEffect[]>([]);
 
-  protected isSpoolType = computed(() =>
+  protected readonly isSpoolType = computed(() =>
     ['filament', 'wire'].includes(this.categoryNickname())
   );
 }

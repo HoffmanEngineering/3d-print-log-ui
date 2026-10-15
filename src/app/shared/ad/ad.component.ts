@@ -16,7 +16,7 @@ import { SubscriptionService } from '../../core/services/subscription.service';
 })
 export class AdComponent {
   private readonly subscriptionService = inject(SubscriptionService);
-  adSlot = input<number | null>(null);
-  fullWidthResponsive = input<boolean>(true);
+  readonly adSlot = input<number | null>(null);
+  readonly fullWidthResponsive = input<boolean>(true);
   readonly isPro = this.subscriptionService.isPro;
 }

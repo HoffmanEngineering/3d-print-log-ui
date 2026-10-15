@@ -7,8 +7,8 @@ nav: false
 group: integrations
 order: 50
 mode: how-to
-updated: 2026-10-13
-related: [printlog-bridge, switch-from-notifier, prints]
+updated: 2026-10-14
+related: [printlog-bridge, klipper-spoolman, switch-from-notifier, prints]
 ---
 
 ## Klipper/Moonraker Notifier
@@ -25,10 +25,17 @@ automatically create a new Print when a print starts, and update the print when
 it finishes. It uses Moonraker's built-in **notifier** component, so no
 additional plugins are required, just a small configuration change.
 
+Want the simplest setup, with no API key to create? The **Connect Spoolman** block on the printer's page logs prints too: it adds a notifier section that uses the same secret as the spool pickers. See [Connect Klipper via Spoolman](/docs/klipper-spoolman). The steps below, with an API key, are for people who don't want Spoolman.
+
 <doc-callout kind="note" heading="Legacy: use printlog-bridge for new setups">
   <p>
-    The notifier is the older way to log Klipper prints. For a new printer, use
-    <a routerLink="/docs/printlog-bridge">printlog-bridge</a> instead: it logs
+    The notifier is the older way to log Klipper prints. For a new printer, the
+    simplest way is the <strong>Connect Spoolman</strong> block (see
+    <a routerLink="/docs/klipper-spoolman">Spoolman for Klipper</a>), which logs
+    prints with no API key. If you set up this notifier with an API key, delete
+    its <code>[notifier 3d_print_log]</code> section before you paste that
+    block. For fuller logging, use
+    <a routerLink="/docs/printlog-bridge">printlog-bridge</a>: it logs
     the real outcome, filament per tool linked to your spools, the slicer's
     thumbnail and a webcam snapshot. It runs on the printer itself, or in
     Docker on another computer on your network.
@@ -41,6 +48,24 @@ additional plugins are required, just a small configuration change.
     stay here for printers that already use it.
   </p>
 </doc-callout>
+
+---
+
+### Klipper integrations compared {#compare}
+
+There are three ways to connect a Klipper printer to 3D Print Log. They do different jobs, and you can combine them.
+
+| | Moonraker notifier (this page) | [printlog-bridge](/docs/printlog-bridge) | [Spoolman](/docs/klipper-spoolman) |
+| --- | --- | --- | --- |
+| What it does | Logs prints | Logs prints | Shows your spools on the printer, and logs prints |
+| Install | A section in `moonraker.conf` | A small program, on the printer or in Docker | A section in `moonraker.conf` |
+| Print outcome | Success or Failed | The real outcome, with Klipper's message | Success or Failed |
+| Filament used | The job's total | Per tool, linked to your spools | Charged to the active spool, per spool |
+| Pictures | None | Slicer thumbnail and a webcam frame | None |
+| Spool pickers in Mainsail, Fluidd and KlipperScreen | No | No | Yes |
+| Plan | Free | Free | 1 printer on Free, unlimited on Pro |
+
+For a new printer, the Spoolman block is the simplest way to log prints and pick spools, with nothing to install. Add printlog-bridge for the real outcome, filament per tool, pictures, and spools kept in sync with the printer. While the bridge runs for a printer, it logs the prints and the block's notifier is ignored, so nothing is logged twice.
 
 ---
 

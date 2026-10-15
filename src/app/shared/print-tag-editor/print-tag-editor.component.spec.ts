@@ -134,6 +134,56 @@ describe('PrintTagEditorComponent', () => {
     );
   });
 
+  it('sends one save at a time, and then only the latest set', async () => {
+    await create(7);
+
+    component.add(gifts);
+    component.add(cosplay);
+    component.add(functional);
+
+    // One request in flight; the two later changes wait and are coalesced.
+    const first = httpMock.match(`${api}/api/Prints/7/tags`);
+    expect(first.length).toBe(1);
+    expect(first[0].request.body).toEqual({ tagIds: ['g'] });
+    expect(component.selected().map((t) => t.id)).toEqual(['g', 'c', 'f']);
+    first[0].flush([gifts]);
+
+    const second = httpMock.expectOne(`${api}/api/Prints/7/tags`);
+    expect(second.request.body).toEqual({ tagIds: ['g', 'c', 'f'] });
+    // The first response must not have overwritten the newer selection.
+    expect(component.selected().map((t) => t.id)).toEqual(['g', 'c', 'f']);
+    second.flush([cosplay, functional, gifts]);
+
+    expect(component.selected()).toEqual([cosplay, functional, gifts]);
+    expect(emitted).toEqual([[cosplay, functional, gifts]]);
+  });
+
+  it('keeps the input usable while a save is in flight', async () => {
+    await create(7);
+
+    component.add(gifts);
+    fixture.detectChanges();
+
+    const input: HTMLInputElement =
+      fixture.nativeElement.querySelector('input');
+    expect(input.disabled).toBeFalse();
+    httpMock.expectOne(`${api}/api/Prints/7/tags`).flush([gifts]);
+  });
+
+  it('goes back to the last saved tags when a queued save fails', async () => {
+    await create(7, [gifts]);
+
+    component.add(cosplay);
+    component.remove(gifts);
+    httpMock.expectOne(`${api}/api/Prints/7/tags`).flush([cosplay, gifts]);
+    httpMock
+      .expectOne(`${api}/api/Prints/7/tags`)
+      .flush('nope', { status: 500, statusText: 'Server Error' });
+
+    expect(component.selected()).toEqual([cosplay, gifts]);
+    expect(toastr.error).toHaveBeenCalled();
+  });
+
   it('puts the old tags back and says so when the save fails', async () => {
     await create(7, [gifts]);
 

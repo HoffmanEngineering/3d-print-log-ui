@@ -2,11 +2,7 @@
   <mat-label>Tags</mat-label>
   <mat-chip-grid #chipGrid aria-label="Tags" data-cy="print-tag-editor">
     @for (tag of selected(); track tag.id) {
-      <mat-chip-row
-        (removed)="remove(tag)"
-        [disabled]="saving()"
-        data-cy="print-tag-editor-chip"
-      >
+      <mat-chip-row (removed)="remove(tag)" data-cy="print-tag-editor-chip">
         <span
           class="print-tag-dot"
           aria-hidden="true"
@@ -23,7 +19,7 @@
       data-cy="print-tag-input"
       [placeholder]="atLimit() ? '' : 'Add a tag'"
       [attr.maxlength]="maxNameLength"
-      [disabled]="atLimit() || saving()"
+      [disabled]="atLimit()"
       [matChipInputFor]="chipGrid"
       [matAutocomplete]="auto"
       (input)="query.set(tagInput.value)"

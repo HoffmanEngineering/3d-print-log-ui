@@ -69,6 +69,14 @@ export class PrintTagEditorComponent {
   /** Follows the input, and is changed optimistically while a save is in flight. */
   readonly selected = linkedSignal<PrintTag[]>(() => this.tags() ?? []);
 
+  /** The set the API last confirmed, which a failed save goes back to. */
+  private readonly confirmed = linkedSignal<PrintTag[]>(
+    () => this.tags() ?? []
+  );
+  private inFlight = false;
+  /** The newest set chosen while a save was in flight, sent when it answers. */
+  private queued: PrintTag[] | null = null;
+
   /** The user's tags, or null until they have loaded. */
   readonly allTags = signal<PrintTag[] | null>(null);
   readonly query = signal('');
@@ -203,8 +211,19 @@ export class PrintTagEditorComponent {
       return;
     }
 
-    const previous = this.selected();
     this.selected.set(next);
+    // One PUT at a time. Each one replaces the whole set, so two in flight could land in either
+    // order and leave the print with the older set. Changes made meanwhile are coalesced: only
+    // the latest set is sent once the current request answers.
+    if (this.inFlight) {
+      this.queued = next;
+      return;
+    }
+    this.send(printId, next);
+  }
+
+  private send(printId: number, next: PrintTag[]): void {
+    this.inFlight = true;
     this.saving.set(true);
     this.tagService
       .setPrintTags(
@@ -214,6 +233,15 @@ export class PrintTagEditorComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (saved) => {
+          this.confirmed.set(saved);
+          const queued = this.queued;
+          if (queued !== null) {
+            // This answer is already stale: the selection on screen is newer. Send that.
+            this.queued = null;
+            this.send(printId, queued);
+            return;
+          }
+          this.inFlight = false;
           this.saving.set(false);
           this.selected.set(saved);
           this.tagsChange.emit(saved);
@@ -223,8 +251,10 @@ export class PrintTagEditorComponent {
           });
         },
         error: (error) => {
+          this.inFlight = false;
+          this.queued = null;
           this.saving.set(false);
-          this.selected.set(previous);
+          this.selected.set(this.confirmed());
           this.toastr.error(
             'Could not save the print’s tags. Please try again.'
           );

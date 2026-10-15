@@ -26,9 +26,9 @@ export interface FileAttachmentItem {
   imports: [MatIconModule, MatButtonModule, MatProgressBarModule],
 })
 export class FileAttachmentListComponent {
-  files = input<FileAttachmentItem[]>([]);
-  editable = input(false);
-  canDownload = input(false);
+  readonly files = input<FileAttachmentItem[]>([]);
+  readonly editable = input(false);
+  readonly canDownload = input(false);
 
   download = output<FileAttachmentItem>();
   delete = output<FileAttachmentItem>();

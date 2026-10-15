@@ -7,7 +7,7 @@ group: integrations
 order: 42
 mode: explanation
 updated: 2026-10-14
-related: [printlog-bridge-install, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
+related: [printlog-bridge-install, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
 ---
 
 ## printlog-bridge
@@ -37,6 +37,7 @@ It runs either on the printer's own host or in a Docker container on another com
 - [Troubleshooting](/docs/printlog-bridge-troubleshooting): the `doctor` and `status` commands, logs, traces and common problems.
 - [Privacy and security](/docs/printlog-bridge-privacy): every connection the bridge makes, what it sends, and how it keeps your key.
 - [Switch from the Moonraker notifier](/docs/switch-from-notifier): move a printer from the notifier to the bridge, and how the two run side by side.
+- [Connect Klipper via Spoolman](/docs/klipper-spoolman): your 3D Print Log spools in the Mainsail, Fluidd and KlipperScreen spool pickers, with nothing to install.
 - [Moonraker notifier (legacy)](/docs/klipper): the older way to log Klipper prints, for printers that still use it.
 
 ---
@@ -80,6 +81,10 @@ Good to know:
 #### Printers with more than one tool {#multi-tool}
 
 On a toolchanger, an IDEX printer or a Snapmaker U1, each tool gets its own usage row, numbered from 0 the way Klipper numbers its extruders (`extruder` is T0, `extruder1` is T1). The bridge follows which extruder is active while Klipper's filament count grows, so the rows add up to the job's total. When the slicer listed a weight per filament (PrusaSlicer, OrcaSlicer, Snapmaker Orca), the print starts with an estimate on each tool's row.
+
+#### With Spoolman {#with-spoolman}
+
+If the printer's `[spoolman]` section points at 3D Print Log (the block from [Connect Spoolman](/docs/klipper-spoolman)), the bridge keeps Moonraker's active spool and the spools in 3D Print Log's slots in sync both ways. A spool picked on the printer is loaded into the active tool's slot. A spool loaded in the app, with `PRINTLOG_SET_SPOOL` or by the U1's RFID reader becomes Moonraker's active spool when that tool is active. The bridge also sets the active spool on each tool change. If `[spoolman]` points at another server, the bridge leaves it alone. While the bridge runs for a printer, the block's notifier is ignored, so prints aren't logged twice.
 
 Not covered yet:
 

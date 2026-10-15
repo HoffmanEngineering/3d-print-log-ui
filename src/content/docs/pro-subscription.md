@@ -6,7 +6,7 @@ navLabel: Pro Subscription
 group: start
 order: 20
 mode: explanation
-updated: 2026-08-29
+updated: 2026-10-14
 related: [about]
 ---
 
@@ -22,6 +22,7 @@ premium features across the entire application.
 - **Ad-free experience** — No advertisements anywhere in the application.
 - **More images per print** — Upload up to **20 images** per print (free tier: 5 images).
 - **File attachments** — Attach files to your prints, including G-code, STL, and 3MF files.
+- **Spoolman connections** — Show your spools in Mainsail, Fluidd and KlipperScreen on as many printers as you like: 1 printer on Free, unlimited on Pro, under [fair use](/docs/terms-of-service#spoolman-fair-use). See [Connect Klipper via Spoolman](/docs/klipper-spoolman).
 
 ---
 

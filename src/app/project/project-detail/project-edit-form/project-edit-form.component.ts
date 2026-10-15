@@ -53,8 +53,8 @@ import { CivilDateAdapter } from 'src/app/shared/date/civil-date-adapter';
 export class ProjectEditFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
-  project = input.required<ProjectDetailDto>();
-  isSaving = input(false);
+  readonly project = input.required<ProjectDetailDto>();
+  readonly isSaving = input(false);
 
   saved = output<ProjectEditFormValue>();
   cancelled = output<void>();

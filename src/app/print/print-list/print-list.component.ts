@@ -301,7 +301,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
   readonly displayedColumns = signal<string[]>([
     'image',
     'title',
-    'tags',
     'printer',
     'start-date',
     'status',
@@ -610,6 +609,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.titleService.setTitle('My Prints - 3D Print Log');
 
+    let firstParams = true;
     this.activatedRoute.queryParamMap.subscribe((params) => {
       if (params.has('searchText')) {
         this.searchText = params.get('searchText');
@@ -638,16 +638,25 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.filterByFilamentIds,
         params.getAll('filterByFilamentId')
       );
-      setIfChanged(this.filterByTagIds, params.getAll('filterByTagId'));
-    });
+      const tagsChanged = setIfChanged(
+        this.filterByTagIds,
+        params.getAll('filterByTagId')
+      );
 
-    this.subscriptions.add(
-      this.printTagService.list().subscribe({
-        next: (tags) => this.tags.set(tags),
-        // The list works without the filter, so a failed lookup only hides it.
-        error: (error) => this.loggingService.logException(error),
-      })
-    );
+      // The grouped feed takes no tag filter, so a tag filter always shows the list.
+      if (this.filterByTagIds().length > 0 && this._viewMode === 'grouped') {
+        this._viewMode = 'list';
+        localStorage.setItem(this.VIEW_MODE_KEY, 'list');
+      }
+
+      // A navigation to /prints from /prints reuses this component and never re-runs the
+      // resolver, so a tag filter arriving in the URL (back/forward, a link) has to be fetched
+      // here. updateFilter's own navigation writes the same tags back, which changes nothing.
+      if (tagsChanged && !firstParams) {
+        this.updateFilter();
+      }
+      firstParams = false;
+    });
 
     this.activatedRoute.data.subscribe((data) => {
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
@@ -705,14 +714,13 @@ export class PrintListComponent implements OnInit, OnDestroy {
       Array.isArray(columns) &&
       columns.every((entry) => typeof entry === 'string')
     ) {
-      this.displayedColumns.set(this.withTagsColumnOnce(columns));
+      this.displayedColumns.set(columns);
     } else {
       // Initialize with defaults for size;
       if (this.mobileQuery.matches) {
         this.displayedColumns.set([
           'image',
           'title',
-          'tags',
           'printer',
           'start-date',
           'status',
@@ -722,7 +730,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.displayedColumns.set([
           'image',
           'title',
-          'tags',
           'printer',
           'start-date',
           'status',
@@ -737,8 +744,6 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
         JSON.stringify(this.displayedColumns())
       );
-      // The defaults already decide about Tags, so a later removal must stick.
-      localStorage.setItem(this.TAGS_COLUMN_ADDED_KEY, 'true');
     }
 
     this.userSettingService
@@ -752,22 +757,37 @@ export class PrintListComponent implements OnInit, OnDestroy {
           );
         }
       });
+
+    // After the saved layout is read: a first tag adds the Tags column to that layout.
+    this.subscriptions.add(
+      this.printTagService.list().subscribe({
+        next: (tags) => {
+          this.tags.set(tags);
+          if (tags.length > 0) {
+            this.addTagsColumnOnce();
+          }
+        },
+        // The list works without the filter, so a failed lookup only hides it.
+        error: (error) => this.loggingService.logException(error),
+      })
+    );
   }
 
   /**
-   * A layout saved before tags existed (#7) gets the Tags column once, after the title, so
-   * nobody has to discover it in the layout dialog. The flag keeps a user who then removes it
-   * from having it put back.
+   * The Tags column (#7) joins the table once, after the title, the first time the user has a
+   * tag, whatever layout they saved. Not before: for someone who has never tagged a print it
+   * would be an empty column. The flag keeps a user who then removes it from having it put back.
    */
-  private withTagsColumnOnce(columns: string[]): string[] {
+  private addTagsColumnOnce(): void {
     if (localStorage.getItem(this.TAGS_COLUMN_ADDED_KEY) !== null) {
-      return columns;
+      return;
     }
     localStorage.setItem(this.TAGS_COLUMN_ADDED_KEY, 'true');
-    if (columns.includes('tags')) {
-      return columns;
-    }
 
+    const columns = this.displayedColumns();
+    if (columns.includes('tags')) {
+      return;
+    }
     const updated = [...columns];
     const titleIndex = updated.indexOf('title');
     updated.splice(
@@ -775,11 +795,37 @@ export class PrintListComponent implements OnInit, OnDestroy {
       0,
       'tags'
     );
+    this.displayedColumns.set(updated);
     localStorage.setItem(
       this.PRINT_TABLE_DISPLAYED_COLUMNS,
       JSON.stringify(updated)
     );
-    return updated;
+  }
+
+  /**
+   * Filters by one tag clicked in the list, keeping every other filter (#7). Replaces any tag
+   * filter rather than adding to it: the filter matches any of its tags, so adding would show
+   * more prints, not the ones with the tag that was clicked.
+   */
+  public filterByTag(tag: PrintTag): Promise<unknown> {
+    this.loggingService.logEvent('PrintList_TagClicked', {
+      hadTagFilter: this.filterByTagIds().length > 0,
+    });
+    return this.onTagFilterChanged([tag.id]);
+  }
+
+  /** The tag filter changed. The grouped feed cannot filter by tag, so it goes to the list. */
+  public onTagFilterChanged(tagIds: string[]): Promise<unknown> {
+    this.filterByTagIds.set(tagIds);
+    this.currentPage.set(1);
+    if (tagIds.length > 0) {
+      this.isFilterPanelOpen = true;
+      if (this._viewMode === 'grouped') {
+        this._viewMode = 'list';
+        localStorage.setItem(this.VIEW_MODE_KEY, 'list');
+      }
+    }
+    return this.updateFilter();
   }
 
   public pageChange(pageEvent: PageEvent) {

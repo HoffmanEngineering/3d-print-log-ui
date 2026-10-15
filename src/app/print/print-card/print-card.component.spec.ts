@@ -75,6 +75,31 @@ describe('PrintCardComponent', () => {
     expect(chips[0].textContent).toContain('Gifts');
   });
 
+  it('reports a tag click so the list can filter by it, without opening the print', () => {
+    const tag = { id: 't', name: 'Gifts', color: null };
+    fixture.componentRef.setInput('print', { ...mockPrint, tags: [tag] });
+    fixture.detectChanges();
+    const selected = jasmine.createSpy('tagSelected');
+    fixture.componentInstance.tagSelected.subscribe(selected);
+
+    fixture.nativeElement.querySelector('app-print-tag-chip button').click();
+
+    expect(selected).toHaveBeenCalledOnceWith(tag);
+  });
+
+  it('does not make tags clickable in selection mode', () => {
+    fixture.componentRef.setInput('print', {
+      ...mockPrint,
+      tags: [{ id: 't', name: 'Gifts', color: null }],
+    });
+    fixture.componentRef.setInput('selectionMode', true);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('app-print-tag-chip button')
+    ).toBeNull();
+  });
+
   it('shows no tag row for an untagged print', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.card-tags')).toBeNull();

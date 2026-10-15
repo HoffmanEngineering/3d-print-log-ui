@@ -8,7 +8,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import {
+  ActivatedRoute,
+  ParamMap,
+  Router,
+  convertToParamMap,
+} from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, of, throwError } from 'rxjs';
@@ -391,17 +396,110 @@ describe('PrintListComponent', () => {
       expect(cell.textContent).toContain('Gifts');
     });
 
-    it('includes the Tags column in the default layout', () => {
+    it('filters by a tag clicked in the list, keeping the other filters', async () => {
       fixture.detectChanges();
-      expect(component.displayedColumns()).toContain('tags');
+      const navigate = spyOn(
+        TestBed.inject(Router),
+        'navigate'
+      ).and.returnValue(Promise.resolve(true));
+      mockPrintService.getPrintSummaries.calls.reset();
+      component.filterByPrinterIds.set([3]);
+      component.currentPage.set(4);
+
+      await component.filterByTag(gifts);
+
+      expect(component.filterByTagIds()).toEqual(['g']);
+      expect(component.currentPage()).toBe(1);
+      const extras = navigate.calls.mostRecent().args[1]!;
+      expect(extras.queryParams!['filterByTagId']).toEqual(['g']);
+      expect(extras.queryParams!['filterByPrinterId']).toEqual([3]);
+      const args = mockPrintService.getPrintSummaries.calls.mostRecent().args;
+      expect(args[4]).toEqual([3]);
+      expect(args[11]).toEqual(['g']);
     });
 
-    it('adds the Tags column once to a layout saved before tags existed', () => {
+    it('refetches when the URL’s tag filter changes while the list is open', async () => {
+      const params = new Subject<ParamMap>();
+      (
+        TestBed.inject(ActivatedRoute) as { queryParamMap: unknown }
+      ).queryParamMap = params;
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+      fixture.detectChanges();
+      params.next(convertToParamMap({}));
+      mockPrintService.getPrintSummaries.calls.reset();
+
+      params.next(convertToParamMap({ filterByTagId: 'g' }));
+      await fixture.whenStable();
+
+      expect(component.filterByTagIds()).toEqual(['g']);
+      const args = mockPrintService.getPrintSummaries.calls.mostRecent().args;
+      expect(args[11]).toEqual(['g']);
+    });
+
+    it('does not refetch when the URL only echoes the filters it already has', async () => {
+      const params = new Subject<ParamMap>();
+      (
+        TestBed.inject(ActivatedRoute) as { queryParamMap: unknown }
+      ).queryParamMap = params;
+      fixture.detectChanges();
+      params.next(convertToParamMap({ filterByTagId: 'g' }));
+      mockPrintService.getPrintSummaries.calls.reset();
+
+      params.next(convertToParamMap({ filterByTagId: 'g', t: '2' }));
+      await fixture.whenStable();
+
+      expect(mockPrintService.getPrintSummaries).not.toHaveBeenCalled();
+    });
+
+    it('switches from Grouped by Project to the list, which can filter by tag', async () => {
+      fixture.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+      component.viewMode = 'grouped';
+
+      await component.filterByTag(gifts);
+      fixture.detectChanges();
+
+      expect(component.viewMode).toBe('list');
+      // And it cannot be switched back while the tag filter is on.
+      const grouped = fixture.nativeElement.querySelector(
+        '[data-cy="grouped-view-toggle"] button'
+      ) as HTMLButtonElement;
+      expect(grouped.disabled).toBeTrue();
+      localStorage.removeItem('print_list_view_mode');
+    });
+
+    it('opens on the list rather than the grouped view when the URL has a tag filter', () => {
+      localStorage.setItem('print_list_view_mode', 'grouped');
+      (
+        TestBed.inject(ActivatedRoute) as { queryParamMap: unknown }
+      ).queryParamMap = of(convertToParamMap({ filterByTagId: 'g' }));
+      fixture = TestBed.createComponent(PrintListComponent);
+
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.viewMode).toBe('list');
+      localStorage.removeItem('print_list_view_mode');
+    });
+
+    it('leaves the Tags column out of the default layout for a user with no tags', () => {
+      localStorage.removeItem('print_list_tags_column_added');
+      fixture.detectChanges();
+      expect(component.displayedColumns()).not.toContain('tags');
+      // Not settled yet: the column arrives with the user's first tag.
+      expect(localStorage.getItem('print_list_tags_column_added')).toBeNull();
+    });
+
+    it('adds the Tags column once, after the title, when the user has tags', () => {
       localStorage.removeItem('print_list_tags_column_added');
       localStorage.setItem(
         'print_table_displayed_columns',
         JSON.stringify(['image', 'title', 'status', 'more'])
       );
+      mockPrintTagService.list.and.returnValue(of([gifts]));
 
       fixture.detectChanges();
       expect(component.displayedColumns()).toEqual([
@@ -411,6 +509,9 @@ describe('PrintListComponent', () => {
         'status',
         'more',
       ]);
+      expect(
+        JSON.parse(localStorage.getItem('print_table_displayed_columns')!)
+      ).toContain('tags');
 
       // Removed by the user afterwards, it stays removed.
       localStorage.setItem(

@@ -1,17 +1,18 @@
-@if (linked()) {
-  <a
-    class="print-tag-chip print-tag-chip--link"
+@if (clickable()) {
+  <button
+    type="button"
+    class="print-tag-chip print-tag-chip--button"
     data-cy="print-tag-chip"
-    routerLink="/prints"
-    [queryParams]="{ filterByTagId: tag().id }"
-    (click)="$event.stopPropagation()"
-    ><span
+    [attr.aria-label]="'Show prints tagged ' + tag().name"
+    (click)="onClick($event)"
+  >
+    <span
       class="print-tag-dot"
       aria-hidden="true"
       [style.background-color]="tag().color"
     ></span
-    >{{ tag().name }}</a
-  >
+    >{{ tag().name }}
+  </button>
 } @else {
   <span class="print-tag-chip" data-cy="print-tag-chip"
     ><span

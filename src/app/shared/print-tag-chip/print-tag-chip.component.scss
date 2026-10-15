@@ -21,8 +21,9 @@
   border: 1px solid var(--mat-divider-color);
 }
 
-.print-tag-chip--link {
-  text-decoration: none;
+.print-tag-chip--button {
+  font: inherit;
+  font-size: 0.75rem;
   cursor: pointer;
 
   &:hover,

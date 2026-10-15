@@ -124,17 +124,15 @@
           </mat-select>
         </mat-form-field>
 
-        <!-- Only once the user has a tag to pick. The grouped view's feed takes no
-             tag filter, so it is offered in the flat list alone. -->
-        @if (tags().length > 0 && viewMode === 'list') {
+        <!-- Only once the user has a tag to pick. The grouped feed takes no tag
+             filter, so picking one switches to All Prints. -->
+        @if (tags().length > 0) {
           <mat-form-field class="filter-field" subscriptSizing="dynamic">
             <mat-label>Filter by Tags</mat-label>
             <mat-select
               data-cy="print-tag-filter"
               [ngModel]="filterByTagIds()"
-              (ngModelChange)="
-                filterByTagIds.set($event); currentPage.set(1); updateFilter()
-              "
+              (ngModelChange)="onTagFilterChanged($event)"
               multiple
             >
               @for (tag of tags(); track tag.id) {
@@ -190,7 +188,19 @@
   <div class="list-toolbar">
     <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
       <mat-button-toggle value="list">All Prints</mat-button-toggle>
-      <mat-button-toggle value="grouped">Grouped by Project</mat-button-toggle>
+      <!-- The grouped feed cannot filter by tag, so it is unavailable while a
+           tag filter is on, rather than offered and quietly ignoring it. -->
+      <mat-button-toggle
+        value="grouped"
+        data-cy="grouped-view-toggle"
+        [disabled]="filterByTagIds().length > 0"
+        [matTooltip]="
+          filterByTagIds().length > 0
+            ? 'Clear the tag filter to group by project'
+            : ''
+        "
+        >Grouped by Project</mat-button-toggle
+      >
     </mat-button-toggle-group>
 
     @if (viewMode === 'list') {
@@ -273,6 +283,7 @@
               (selectionToggled)="bulkActions.toggleSelection($event)"
               (deleted)="deletePrint($event)"
               (statusChanged)="changeStatus($event.id, $event.status)"
+              (tagSelected)="filterByTag($event)"
               [preferredUnit]="preferredFilamentUnit()"
             />
           }
@@ -403,7 +414,11 @@
             @if (print.tags?.length) {
               <div class="print-tags">
                 @for (tag of print.tags; track tag.id) {
-                  <app-print-tag-chip [tag]="tag" [linked]="true" />
+                  <app-print-tag-chip
+                    [tag]="tag"
+                    [clickable]="!bulkActions.hasSelection()"
+                    (clicked)="filterByTag($event)"
+                  />
                 }
               </div>
             }

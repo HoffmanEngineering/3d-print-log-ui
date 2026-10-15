@@ -12,6 +12,15 @@
                 · <span class="version">version {{ c.agentVersion }}</span>
               }
             </span>
+            @if (c.updateAvailable && c.latestAgentVersion) {
+              <a
+                class="update"
+                data-testid="connection-update"
+                routerLink="/docs/printlog-bridge"
+                fragment="update"
+                >printlog-bridge {{ c.latestAgentVersion }} is available</a
+              >
+            }
           </div>
           <div class="state">
             <span

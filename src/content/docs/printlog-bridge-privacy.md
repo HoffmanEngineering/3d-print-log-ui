@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 48
 mode: reference
-updated: 2026-10-14
+updated: 2026-10-15
 related: [printlog-bridge, printlog-bridge-troubleshooting, privacy-policy, api]
 ---
 
@@ -30,7 +30,7 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 | `GET /api/Users/me` | `doctor` | Nothing. Checks the key. |
 | `GET /api/Printers/{id}` | `doctor`; at start and every 5 minutes; when a print starts and ends | Nothing. Checks `printer_id`, and reads which spool is loaded in each slot. |
 | `GET /api/Users/me/user-settings` | The first print after a start | Nothing. Reads your default visibility and comment settings. |
-| `PUT /api/Connections/{instance}` | At start, then every 5 minutes | `kind` (`moonraker`), `displayName` (`printlog-bridge (name)`, with the printer's name from your config), `agentVersion`, `printerId` |
+| `PUT /api/Connections/{instance}` | At start, then every 5 minutes | `kind` (`moonraker`), `displayName` (`printlog-bridge (name)`, with the printer's name from your config), `agentVersion`, `printerId`. The answer carries `latestAgentVersion`, the newest bridge version, which is how the bridge hears about an [update](/docs/printlog-bridge#update) |
 | `POST /api/Prints` | A print starts | `printerId`; `title` (made from the file name); `fileName` (without its folders); `startDate`; `status`; `viewStatus` and `allowComments` (your account's defaults); `externalSource` (`moonraker`); `externalId` and `connectionInstanceId` (a random id the bridge made for the printer, plus Moonraker's job id); the slicer's estimated print time and filament (length and weight, and weight per tool on a multi-tool file), when the file has them; each tool's row linked to the spool loaded in its slot; and `notes` when the printer's RFID reader disagrees with a spool's material or color |
 | `GET /api/Prints/{id}` | A print ends | Nothing. Reads what you changed in the app. |
 | `POST /api/Prints/{id}/complete` | A print ends | `status` (the outcome), `endedAt`, `printTimeInSeconds`, and per tool (`slot`) the filament length Klipper fed, linked to the spool you chose, split into a row per spool when a tool's spool changed mid-print |
@@ -63,6 +63,8 @@ The bridge only makes outbound connections, to:
 1. **Moonraker**: its local socket in local mode, or the `url` you set in remote mode (HTTP and WebSocket, on your network). In remote mode it also downloads the thumbnail from Moonraker's file API, and the two parts of the G-code file that hold its header and settings (unless `slicer_settings = false`). It reads the server address in `[spoolman]` and the active spool, to see whether Spoolman points at 3D Print Log, and it sets the active spool on tool changes and when you load a spool in the app. The `[spoolman]` address contains the Spoolman secret. The bridge keeps only its host name, and never stores or sends the secret.
 2. **The webcam's snapshot URL**, as Mainsail or Fluidd have it set in Moonraker (usually the printer itself), when a print ends.
 3. **3D Print Log**, at `api_url` (`https://api.3dprintlog.com` by default), **over HTTPS only.** The config refuses a plain `http` address, except to the computer the bridge runs on (`localhost`, `127.0.0.1`, `::1`). With `allow_http_on_lan` set, it also accepts plain `http` to a private-network IP address, for a development API on your own network; the API key then travels unencrypted on that network.
+
+**It never checks for updates anywhere else.** The latest version comes back in the answer to its check-in. 3D Print Log reads it from the bridge's GitHub repository, so the bridge never contacts GitHub. `update_check = false` only stops the bridge from telling you: it sends the same thing either way.
 
 It **never listens on a port**, so nothing can connect to the bridge.
 

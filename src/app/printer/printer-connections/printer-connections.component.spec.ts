@@ -7,6 +7,7 @@ import {
 } from '@angular/common/http/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -29,6 +30,8 @@ describe('PrinterConnectionsComponent', () => {
     instanceId: 'voron-1',
     displayName: 'Voron in the garage',
     agentVersion: '0.1.0',
+    latestAgentVersion: '0.1.0',
+    updateAvailable: false,
     printerId: 3,
     createdDate: '2026-10-01T12:00:00+00:00',
     lastSeenAt: '2026-10-10T08:30:00+00:00',
@@ -63,6 +66,7 @@ describe('PrinterConnectionsComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
         { provide: MatDialog, useValue: dialog },
         { provide: ToastrService, useValue: toastr },
         { provide: LoggingService, useValue: logging },
@@ -110,6 +114,35 @@ describe('PrinterConnectionsComponent', () => {
     expect(row.querySelector('time')?.getAttribute('datetime')).toBe(
       '2026-10-10T08:30:00.000Z'
     );
+  });
+
+  // printlog-bridge#39: the API compares the agent's version with its latest release.
+  it('says when a newer bridge is available, and links to how to update', () => {
+    render([
+      connection({ latestAgentVersion: '0.2.0', updateAvailable: true }),
+    ]);
+
+    const notice = rows()[0].querySelector('[data-testid="connection-update"]');
+    expect(squash(notice)).toBe('printlog-bridge 0.2.0 is available');
+    expect(notice?.getAttribute('href')).toBe('/docs/printlog-bridge#update');
+  });
+
+  it('says nothing about updates for the latest bridge', () => {
+    render([connection()]);
+
+    expect(
+      rows()[0].querySelector('[data-testid="connection-update"]')
+    ).toBeNull();
+  });
+
+  // An API from before printlog-bridge#39 sends neither field.
+  it('says nothing about updates when the API does not know the latest version', () => {
+    const { latestAgentVersion, updateAvailable, ...older } = connection();
+    render([older]);
+
+    expect(
+      rows()[0].querySelector('[data-testid="connection-update"]')
+    ).toBeNull();
   });
 
   it('marks an online connection as online', () => {

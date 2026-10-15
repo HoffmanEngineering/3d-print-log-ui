@@ -6,7 +6,7 @@ navLabel: Log prints from Klipper
 group: integrations
 order: 42
 mode: explanation
-updated: 2026-10-14
+updated: 2026-10-15
 related: [printlog-bridge-install, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
 ---
 
@@ -131,3 +131,18 @@ If the printer still sends prints through the [Moonraker notifier](/docs/klipper
 ### Once it runs {#running}
 
 Once the bridge runs, the printer's **Edit Page** lists it under [Connections](/docs/printers#connections) as `printlog-bridge (voron)`, with the name you gave the printer in the bridge's config. It checks in every 5 minutes, and the app shows it as **Stale** after 15 minutes without hearing from it.
+
+### Update {#update}
+
+The bridge tells you when a newer version is out. 3D Print Log answers each check-in with the latest version, so the bridge asks nobody else. When yours is older:
+
+- the printer's [Connections](/docs/printers#connections) say **printlog-bridge 0.2.0 is available** (with the new version);
+- the bridge writes `printlog-bridge 0.2.0 is available (this is 0.1.0)` in its log, once for each new version;
+- `printlog-bridge status` shows an `Update:` line, and `printlog-bridge doctor` a warning.
+
+To update:
+
+- **In Docker:** in the folder with `docker-compose.yml`, run `docker compose pull`, then `docker compose up -d`. Your config and everything in `/data` stay as they are. See [Run it in Docker](/docs/printlog-bridge-docker#update).
+- **On the printer:** update **printlog-bridge** in the update panel of Mainsail or Fluidd, next to Klipper and Moonraker. See [Install it on the printer](/docs/printlog-bridge-install#update).
+
+To stop the notice in the bridge's log, `status` and `doctor`, set `update_check = false` in `[bridge]`. The bridge sends the same check-in either way.

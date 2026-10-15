@@ -6,13 +6,13 @@ navLabel: Privacy Policy
 group: about
 order: 30
 mode: reference
-updated: 2026-10-10
+updated: 2026-10-14
 related: [about, contact, terms-of-service]
 ---
 
 # Privacy Policy for 3D Print Log
 
-Last Updated: Oct 10, 2026
+Last Updated: Oct 14, 2026
 
 At 3D Print Log, accessible from https://www.3dprintlog.com, one of our main
 priorities is the privacy of our visitors. This Privacy Policy document describes
@@ -38,7 +38,8 @@ When you create an account and use 3D Print Log, we store:
   identifiers and whether your subscription is active. Your card details go to Stripe and never
   reach us.
 - **Devices and integrations:** push notification tokens for the Android app, API keys you create
-  (we store only a one-way hash of each key), and which AI assistants you have connected.
+  (we store only a one-way hash of each key), which AI assistants you have connected, and your
+  Spoolman connections, described [below](#spoolman).
 - **Feedback** you send us, including through an AI assistant.
 
 We use this information to provide the service: to show you your records, calculate material
@@ -80,6 +81,21 @@ it.
   [Settings](/settings), under **Connected AI Agents**. Disconnecting revokes their access
   immediately.
 
+## Spoolman Connections {#spoolman}
+
+When you [connect a printer through Spoolman](/docs/klipper-spoolman), we store which printer it is
+for, a one-way hash of its token, when it was made, and when the printer last connected.
+
+To detect an account being shared, each time a printer connects we also record which **network**
+it connected from, as a salted hash. We take the network part of the address (the first three
+parts of an IPv4 address, or the first 48 bits of an IPv6 address) and store only a keyed
+HMAC-SHA-256 hash of it. We never store the IP address itself, and the hash is used only to count
+how many different networks an account's printers connect from. Each record is deleted 30 days
+after that network was last seen, and all of them are deleted with your account.
+
+You can revoke a Spoolman connection at any time from the printer's page, or from
+[Settings](/settings) under **Spoolman Connections**.
+
 ## Keeping and Deleting Your Data {#retention}
 
 We keep your account data for as long as your account exists.
@@ -98,7 +114,7 @@ We keep your account data for as long as your account exists.
 - **Export** your prints as a CSV file from [Settings](/settings).
 - **Delete** individual records in the app, or your whole account as described above.
 - **Turn off email** by type in Settings or from any email.
-- **Disconnect** AI assistants and revoke API keys in Settings.
+- **Disconnect** AI assistants and revoke API keys and Spoolman connections in Settings.
 
 For anything else, including a copy of your data or a question about how it is used, email
 [hello@3dprintlog.com](mailto:hello@3dprintlog.com). Depending on where you live, you may have

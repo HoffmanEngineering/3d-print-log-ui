@@ -18,7 +18,7 @@ import {
   NotificationType,
 } from 'src/app/core/types/notification';
 import { PageInfo } from 'src/app/core/types/paging';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   actionUrlFragment,
   actionUrlPath,
@@ -169,15 +169,17 @@ export class NotificationsListComponent implements OnInit {
   }
 
   deleteAllNotifications(): void {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    dialogRef.componentInstance.title = 'Delete All Notifications?';
-    dialogRef.componentInstance.body =
-      'Are you sure you want to delete all notifications? This action cannot be undone.';
-    dialogRef.componentInstance.yesText = 'Delete All';
-    dialogRef.componentInstance.yesColor = 'warn';
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete All Notifications?',
+        body: 'Are you sure you want to delete all notifications? This action cannot be undone.',
+        yesText: 'Delete All',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
 
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {

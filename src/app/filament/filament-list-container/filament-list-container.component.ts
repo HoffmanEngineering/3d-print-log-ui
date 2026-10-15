@@ -19,7 +19,7 @@ import {
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   QrLabelDialogComponent,
   QrLabelDialogData,
@@ -277,16 +277,17 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   }
 
   public deleteFilament(filament: FilamentSummary) {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    (dialogRef.componentInstance as any).title = 'Delete?';
-    // eslint-disable-next-line max-len
-    (dialogRef.componentInstance as any).body =
-      `Are you sure you want to delete material "${filament.displayName}"? <br /> <br />  This action cannot be undone.`;
-    (dialogRef.componentInstance as any).yesText = 'Delete';
-    (dialogRef.componentInstance as any).yesColor = 'warn';
-    (dialogRef.componentInstance as any).noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete?',
+        body: `Are you sure you want to delete material "${filament.displayName}"? <br /> <br />  This action cannot be undone.`,
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
 
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {

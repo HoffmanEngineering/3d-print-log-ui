@@ -22,13 +22,13 @@ const DONUT =
 })
 export class FilamentSpoolIconComponent {
   // Existing input — kept for backward compat; used as fallback for Solid when colors[] is empty
-  color = input<string>('');
+  readonly color = input<string>('');
 
   // New inputs
-  colorPattern = input<ColorPatternType>(ColorPatternType.Solid);
-  colors = input<string[]>([]);
-  finishType = input<FilamentFinishType>(FilamentFinishType.Standard);
-  effects = input<FilamentEffect[]>([]);
+  readonly colorPattern = input<ColorPatternType>(ColorPatternType.Solid);
+  readonly colors = input<string[]>([]);
+  readonly finishType = input<FilamentFinishType>(FilamentFinishType.Standard);
+  readonly effects = input<FilamentEffect[]>([]);
 
   // Unique ID prefix — prevents SVG def ID collisions when multiple icons are on the same page
   protected readonly uid = `spool-${Math.random().toString(36).slice(2, 9)}`;
@@ -38,7 +38,7 @@ export class FilamentSpoolIconComponent {
   protected readonly FilamentFinishType = FilamentFinishType;
 
   // Resolved colors array — falls back to [color] for legacy callers
-  protected effectiveColors = computed((): string[] => {
+  protected readonly effectiveColors = computed((): string[] => {
     const c = this.colors();
     if (c.length > 0) return c;
     const legacy = this.color();
@@ -46,10 +46,12 @@ export class FilamentSpoolIconComponent {
   });
 
   // Single fill color — used only for Solid pattern
-  protected fillColor = computed((): string => `#${this.effectiveColors()[0]}`);
+  protected readonly fillColor = computed(
+    (): string => `#${this.effectiveColors()[0]}`
+  );
 
   // Clip segments for Multi pattern
-  protected clipSegments = computed(() => {
+  protected readonly clipSegments = computed(() => {
     if (this.colorPattern() !== ColorPatternType.Multi) return [];
     return this.effectiveColors().map((color, i, arr) => ({
       id: `${this.uid}-clip-${i}`,
@@ -60,7 +62,7 @@ export class FilamentSpoolIconComponent {
   });
 
   // Gradient stops for Gradient and Rainbow patterns
-  protected gradientStops = computed(() => {
+  protected readonly gradientStops = computed(() => {
     const p = this.colorPattern();
     if (p !== ColorPatternType.Gradient && p !== ColorPatternType.Rainbow)
       return [];
@@ -72,15 +74,15 @@ export class FilamentSpoolIconComponent {
     }));
   });
 
-  protected useGradient = computed(
+  protected readonly useGradient = computed(
     () =>
       this.colorPattern() === ColorPatternType.Gradient ||
       this.colorPattern() === ColorPatternType.Rainbow
   );
 
-  protected gradientId = computed(() => `${this.uid}-grad`);
+  protected readonly gradientId = computed(() => `${this.uid}-grad`);
 
-  protected fillOpacity = computed(() =>
+  protected readonly fillOpacity = computed(() =>
     this.effects().includes(FilamentEffect.Translucent) ? '0.45' : '1'
   );
 

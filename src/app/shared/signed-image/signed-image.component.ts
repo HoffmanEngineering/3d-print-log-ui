@@ -23,13 +23,13 @@ import { MatIconModule } from '@angular/material/icon';
   imports: [MatIconModule, MatButtonModule],
 })
 export class SignedImageComponent {
-  src = input.required<string>();
+  readonly src = input.required<string>();
 
   /**
    * Required, not defaulted: this is the only place the subject reaches the accessibility
    * tree, and a shared default would label every image on the page identically.
    */
-  alt = input.required<string>();
+  readonly alt = input.required<string>();
 
   /**
    * How the image fills its box. `contain` letterboxes and is right for the carousel,
@@ -40,9 +40,9 @@ export class SignedImageComponent {
    * `.signed-image img` rule ties on specificity with anything a parent can write through
    * ::ng-deep, so which one won came down to stylesheet order.
    */
-  fit = input<'contain' | 'cover'>('contain');
+  readonly fit = input<'contain' | 'cover'>('contain');
 
-  showDeleteOnHover = input(false);
+  readonly showDeleteOnHover = input(false);
 
   delete = output<void>();
 

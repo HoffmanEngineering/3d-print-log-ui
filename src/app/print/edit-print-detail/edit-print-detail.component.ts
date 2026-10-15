@@ -134,6 +134,11 @@ import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
 import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
+import { PrintTagEditorComponent } from '../../shared/print-tag-editor/print-tag-editor.component';
+import {
+  PrintTag,
+  PrintTagService,
+} from 'src/app/core/services/print-tag.service';
 
 export interface PrintImageValue {
   id?: number;
@@ -256,6 +261,7 @@ export interface PrintFormValue {
     DecimalPipe,
     TitleCasePipe,
     FilamentColorSwatchStylePipe,
+    PrintTagEditorComponent,
   ],
 })
 export class EditPrintDetailComponent
@@ -295,6 +301,12 @@ export class EditPrintDetailComponent
   public printDetail: PrintDetail | null = null;
 
   public pendingProjectSelection: ProjectSelection | null = null;
+
+  /**
+   * The tags the user picked (#7), or null while untouched. Saved by their own endpoint after
+   * the print, because the print's PATCH and POST do not carry them.
+   */
+  private pendingTags: PrintTag[] | null = null;
 
   /**
    * An existing print as the form read it on load, which a save diffs against so it sends only
@@ -423,6 +435,7 @@ export class EditPrintDetailComponent
   private readonly destroyRef = inject(DestroyRef);
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly projectService = inject(ProjectService);
+  private readonly printTagService = inject(PrintTagService);
 
   public readonly maxImages = this.subscriptionService.maxImagesPerPrint;
 
@@ -1718,7 +1731,8 @@ export class EditPrintDetailComponent
         mergeMap((print) => this.uploadImages(print.id, newImages)),
         mergeMap((print) => this.setDefaultImage(print.id, newDefaultImageId)),
         mergeMap((print) => this.deleteImages(print.id)),
-        mergeMap((print) => this.reorderImages(print.id))
+        mergeMap((print) => this.reorderImages(print.id)),
+        mergeMap((print) => this.saveTags(print.id))
       )
       .subscribe({
         next: () => this.handleSaveSuccess(newPrint),
@@ -1884,6 +1898,38 @@ export class EditPrintDetailComponent
 
   handleClose() {
     this.router.navigate(['/prints']);
+  }
+
+  onTagsChanged(tags: PrintTag[]): void {
+    this.pendingTags = tags;
+    this.printForm.markAsDirty();
+  }
+
+  /**
+   * Writes the tags once the print has an id. An existing print's tags are written only when
+   * the set changed; a new print takes whatever the form holds, which for a copy is the tags of
+   * the print it was copied from.
+   */
+  private saveTags(printId: number): Observable<{ id: number }> {
+    const onLoad = this.printDetail?.tags ?? [];
+    const isNew = this.printDetail?.id == null;
+    const wanted = this.pendingTags ?? (isNew ? onLoad : null);
+    if (wanted === null) {
+      return of({ id: printId });
+    }
+
+    const ids = wanted.map((t) => t.id);
+    const unchanged = isNew
+      ? ids.length === 0
+      : ids.length === onLoad.length &&
+        ids.every((id) => onLoad.some((t) => t.id === id));
+    if (unchanged) {
+      return of({ id: printId });
+    }
+
+    return this.printTagService
+      .setPrintTags(printId, ids)
+      .pipe(map(() => ({ id: printId })));
   }
 
   onProjectSelected(selection: ProjectSelection | null): void {

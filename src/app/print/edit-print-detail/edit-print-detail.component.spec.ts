@@ -2,6 +2,11 @@ import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
 import { AdComponent } from '../../shared/ad/ad.component';
 import { FileAttachmentSectionComponent } from '../../shared/file-attachment-section/file-attachment-section.component';
 import { ProjectSelectorComponent } from 'src/app/shared/project-selector/project-selector.component';
+import { PrintTagEditorComponent } from 'src/app/shared/print-tag-editor/print-tag-editor.component';
+import {
+  PrintTag,
+  PrintTagService,
+} from 'src/app/core/services/print-tag.service';
 import { PrinterAvatarComponent } from '../../shared/printer-avatar/printer-avatar.component';
 import { ImageThumbnailStripComponent } from '../../shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { PrintImageComponent } from '../../shared/print-image/print-image.component';
@@ -126,6 +131,11 @@ describe('EditPrintDetailComponent', () => {
       ['createProject']
     );
 
+    const mockPrintTagService = jasmine.createSpyObj<PrintTagService>(
+      'PrintTagService',
+      ['setPrintTags']
+    );
+
     TestBed.configureTestingModule({
       imports: [
         RouterTestingModule,
@@ -154,6 +164,7 @@ describe('EditPrintDetailComponent', () => {
         { provide: LoggingService, useValue: mockLogger },
         { provide: SubscriptionService, useValue: mockSubscriptionService },
         { provide: ProjectService, useValue: mockProjectService },
+        { provide: PrintTagService, useValue: mockPrintTagService },
         { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
         {
           provide: ActivatedRoute,
@@ -199,6 +210,7 @@ describe('EditPrintDetailComponent', () => {
             ImageThumbnailStripComponent,
             PrinterAvatarComponent,
             ProjectSelectorComponent,
+            PrintTagEditorComponent,
             FileAttachmentSectionComponent,
             AdComponent,
             SidebarAdComponent,
@@ -1059,6 +1071,114 @@ describe('EditPrintDetailComponent', () => {
       expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
         projectId: 'project-9',
       });
+    });
+  });
+
+  // Tags are saved by their own endpoint (#7), after the print, and only when they changed.
+  describe('Saving tags', () => {
+    const gifts: PrintTag = { id: 'g', name: 'Gifts', color: null };
+    const cosplay: PrintTag = { id: 'c', name: 'Cosplay', color: null };
+    let printService: jasmine.SpyObj<PrintService>;
+    let tagService: jasmine.SpyObj<PrintTagService>;
+    let editor: ComponentFixture<EditPrintDetailComponent> | undefined;
+
+    function openEditor(print: Partial<PrintDetail>): EditPrintDetailComponent {
+      const route = TestBed.inject(ActivatedRoute);
+      let resolved: Record<string, unknown>;
+      route.data.subscribe(
+        (data) => (resolved = data as Record<string, unknown>)
+      );
+      (route as { data: Observable<unknown> }).data = of({
+        ...resolved!,
+        print: { print },
+      });
+      editor = TestBed.createComponent(EditPrintDetailComponent);
+      editor.detectChanges();
+      return editor.componentInstance;
+    }
+
+    const saved = {
+      id: 5,
+      title: 'Benchy',
+      printerId: 1,
+      notes: '',
+      filamentUsage: [],
+      images: [],
+      comments: [],
+      status: PrintStatus.Success,
+      viewStatus: 3,
+      allowComments: true,
+      createdByUserId: 7,
+      tags: [gifts],
+    } as unknown as PrintDetail;
+
+    beforeEach(() => {
+      printService = TestBed.inject(
+        PrintService
+      ) as jasmine.SpyObj<PrintService>;
+      printService.patchPrint.and.returnValue(of({ id: 5 } as PrintDetail));
+      printService.addPrint.and.returnValue(of({ id: 11 }));
+      tagService = TestBed.inject(
+        PrintTagService
+      ) as jasmine.SpyObj<PrintTagService>;
+      tagService.setPrintTags.and.returnValue(of([]));
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+    });
+
+    afterEach(() => editor?.destroy());
+
+    it('saves the changed tags of an existing print', () => {
+      const form = openEditor(saved);
+      // An empty print gets a blank usage row the form then requires.
+      form.filamentUsage.clear();
+
+      form.onTagsChanged([gifts, cosplay]);
+      form.onSubmit();
+
+      expect(tagService.setPrintTags).toHaveBeenCalledOnceWith(5, ['g', 'c']);
+    });
+
+    it('marks the form dirty when the tags change', () => {
+      const form = openEditor(saved);
+
+      form.onTagsChanged([]);
+
+      expect(form.printForm.dirty).toBeTrue();
+    });
+
+    it('does not touch the tags when they did not change', () => {
+      const form = openEditor(saved);
+      // An empty print gets a blank usage row the form then requires.
+      form.filamentUsage.clear();
+
+      form.onTagsChanged([gifts]);
+      form.onSubmit();
+
+      expect(tagService.setPrintTags).not.toHaveBeenCalled();
+    });
+
+    it('tags a new print once the API has given it an id', () => {
+      const form = openEditor({ ...saved, id: null, tags: null });
+      form.printForm.controls.title.setValue('New print');
+      form.filamentUsage.clear();
+
+      form.onTagsChanged([cosplay]);
+      form.onSubmit();
+
+      expect(printService.addPrint).toHaveBeenCalledTimes(1);
+      expect(tagService.setPrintTags).toHaveBeenCalledOnceWith(11, ['c']);
+    });
+
+    it('keeps the tags of the print a new one was copied from', () => {
+      const form = openEditor({ ...saved, id: null, tags: [gifts] });
+      form.printForm.controls.title.setValue('Copy');
+      form.filamentUsage.clear();
+
+      form.onSubmit();
+
+      expect(tagService.setPrintTags).toHaveBeenCalledOnceWith(11, ['g']);
     });
   });
 

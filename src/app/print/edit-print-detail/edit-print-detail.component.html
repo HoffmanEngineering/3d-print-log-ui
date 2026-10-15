@@ -153,6 +153,15 @@
           [initialProjectName]="printDetail?.projectName ?? null"
           (projectSelected)="onProjectSelected($event)"
         />
+        <!-- Staged, never saved from here (no printId): the form's Save writes
+             them after the print, so leaving without saving discards them. -->
+        <app-print-tag-editor
+          fxFlex="grow"
+          fxFlexFill
+          class="print-tag-editor"
+          [tags]="printDetail?.tags ?? []"
+          (tagsChange)="onTagsChanged($event)"
+        />
         <div fxFlex="grow" fxFlexFill>
           <div
             class="input-row desktop-margin-offset"

@@ -14,15 +14,23 @@ import {
   FormControl,
   FormGroup,
   Validators,
+  FormsModule,
+  ReactiveFormsModule,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { parseDurationAsSeconds } from 'src/app/core/utils/duration';
 import { environment } from 'src/environments/environment';
 
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import {
+  CdkDragDrop,
+  moveItemInArray,
+  CdkDropList,
+  CdkDrag,
+  CdkDragHandle,
+} from '@angular/cdk/drag-drop';
 import { concat, forkJoin, Observable, of, Subscription } from 'rxjs';
 import { map, mergeMap, take, toArray } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -73,6 +81,57 @@ import {
   ProjectSelectorComponent,
   ProjectSelection,
 } from 'src/app/shared/project-selector/project-selector.component';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultLayoutGapDirective,
+  DefaultFlexDirective,
+  FlexFillDirective,
+  DefaultFlexOffsetDirective,
+} from '@ngbracket/ngx-layout/flex';
+import {
+  MatCard,
+  MatCardTitle,
+  MatCardContent,
+  MatCardActions,
+} from '@angular/material/card';
+import { MatIcon } from '@angular/material/icon';
+import { MatButton } from '@angular/material/button';
+import { ImageCarouselComponent } from '../../shared/image-carousel/image-carousel.component';
+import { PrintImageComponent } from '../../shared/print-image/print-image.component';
+import { ImageThumbnailStripComponent } from '../../shared/image-thumbnail-strip/image-thumbnail-strip.component';
+import {
+  MatFormField,
+  MatLabel,
+  MatError,
+  MatSuffix,
+  MatHint,
+} from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatSelect, MatOption } from '@angular/material/select';
+import { PrinterAvatarComponent } from '../../shared/printer-avatar/printer-avatar.component';
+import {
+  MatDatepickerInput,
+  MatDatepickerToggle,
+  MatDatepicker,
+} from '@angular/material/datepicker';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import {
+  DefaultGridColumnsDirective,
+  DefaultGridRowsDirective,
+  DefaultGridGapDirective,
+  DefaultGridColumnDirective,
+  DefaultGridRowDirective,
+} from '@ngbracket/ngx-layout/grid';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { FileAttachmentSectionComponent } from '../../shared/file-attachment-section/file-attachment-section.component';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
+import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
+import { DecimalPipe, TitleCasePipe } from '@angular/common';
+import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 export interface PrintImageValue {
   id?: number;
@@ -138,10 +197,63 @@ export interface PrintFormValue {
   selector: 'app-print-detail',
   templateUrl: './edit-print-detail.component.html',
   styleUrls: ['./edit-print-detail.component.scss'],
-  standalone: false,
   host: {
     '(window:beforeunload)': 'canDeactivate()',
   },
+  imports: [
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    DefaultLayoutGapDirective,
+    MatCard,
+    DefaultFlexDirective,
+    FormsModule,
+    ReactiveFormsModule,
+    MatCardTitle,
+    MatIcon,
+    MatButton,
+    ImageCarouselComponent,
+    PrintImageComponent,
+    ImageThumbnailStripComponent,
+    MatCardContent,
+    FlexFillDirective,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatSelect,
+    MatOption,
+    PrinterAvatarComponent,
+    ProjectSelectorComponent,
+    MatDatepickerInput,
+    MatDatepickerToggle,
+    MatSuffix,
+    MatDatepicker,
+    RouterLink,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
+    MatTooltip,
+    MatMenuTrigger,
+    MatMenu,
+    MatMenuItem,
+    DefaultGridColumnsDirective,
+    DefaultGridRowsDirective,
+    DefaultGridGapDirective,
+    DefaultGridColumnDirective,
+    DefaultGridRowDirective,
+    CdkTextareaAutosize,
+    MatHint,
+    MatCheckbox,
+    FileAttachmentSectionComponent,
+    MatCardActions,
+    DefaultFlexOffsetDirective,
+    AdComponent,
+    DefaultShowHideDirective,
+    SidebarAdComponent,
+    DecimalPipe,
+    TitleCasePipe,
+    FilamentColorSwatchStylePipe,
+  ],
 })
 export class EditPrintDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy

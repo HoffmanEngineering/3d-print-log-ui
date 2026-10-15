@@ -6,6 +6,13 @@ import {
   PLATFORM_ID,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
+import { LoadingBarModule } from '@ngx-loading-bar/core';
+import { AccountDeactivationBannerComponent } from './shared/account-deactivation-banner/account-deactivation-banner.component';
+import { AchievementBadgeDefsComponent } from './shared/achievements/achievement-badge-defs.component';
+import { EmailNoticeComponent } from './shared/email-notice/email-notice.component';
+import { NavbarComponent } from './shared/navbar/navbar.component';
+import { NotifierNoticeComponent } from './shared/notifier-notice/notifier-notice.component';
 import { EmailClickTrackerService } from './core/services/email-click-tracker.service';
 import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { AuthService } from './core/services/auth.service';
@@ -20,7 +27,15 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  standalone: false,
+  imports: [
+    RouterOutlet,
+    LoadingBarModule,
+    NavbarComponent,
+    AccountDeactivationBannerComponent,
+    EmailNoticeComponent,
+    NotifierNoticeComponent,
+    AchievementBadgeDefsComponent,
+  ],
 })
 export class AppComponent implements OnInit {
   /**

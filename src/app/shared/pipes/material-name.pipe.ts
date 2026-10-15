@@ -1,10 +1,7 @@
 import { Injectable, Pipe, PipeTransform } from '@angular/core';
 import { Material } from 'src/app/core/services/material.service';
 
-@Pipe({
-  name: 'materialName',
-  standalone: false,
-})
+@Pipe({ name: 'materialName' })
 export class MaterialNamePipe implements PipeTransform {
   transform(value: Material | null, ...args: unknown[]): string {
     if (!value) {

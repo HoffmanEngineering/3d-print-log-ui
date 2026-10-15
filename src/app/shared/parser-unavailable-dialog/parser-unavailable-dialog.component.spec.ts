@@ -21,7 +21,7 @@ describe('ParserUnavailableDialogComponent', () => {
     );
 
     await TestBed.configureTestingModule({
-      declarations: [ParserUnavailableDialogComponent],
+      imports: [ParserUnavailableDialogComponent],
       providers: [
         { provide: FeedbackService, useValue: mockFeedbackService },
         { provide: ToastrService, useValue: mockToastrService },

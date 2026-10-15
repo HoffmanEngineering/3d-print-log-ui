@@ -13,7 +13,6 @@ import { EntityImagesPanelComponent } from '../shared/entity-images-panel/entity
 import { FilamentTagUidsComponent } from './filament-detail/filament-tag-uids/filament-tag-uids.component';
 
 @NgModule({
-  declarations: [FilamentDetailComponent, FilamentListContainerComponent],
   imports: [
     SharedModule,
     FilamentRoutingModule,
@@ -23,6 +22,8 @@ import { FilamentTagUidsComponent } from './filament-detail/filament-tag-uids/fi
     FilamentPrintsPanelComponent,
     EntityImagesPanelComponent,
     FilamentTagUidsComponent,
+    FilamentDetailComponent,
+    FilamentListContainerComponent,
   ],
 })
 export class FilamentModule {}

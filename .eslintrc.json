@@ -36,7 +36,7 @@
         "@angular-eslint/prefer-output-emitter-ref": "error",
         "@angular-eslint/prefer-host-metadata-property": "error",
         "@angular-eslint/prefer-inject": "error",
-        "@angular-eslint/prefer-standalone": "off",
+        "@angular-eslint/prefer-standalone": "error",
         "@angular-eslint/prefer-on-push-component-change-detection": "error"
       }
     },
@@ -80,6 +80,16 @@
             "type": "element"
           }
         ]
+      }
+    },
+    {
+      "files": [
+        "src/app/documentation/generated/pages/*.ts",
+        "src/app/documentation/docs/docs-getting-started/docs-getting-started.component.ts",
+        "src/app/documentation/docs/docs-release-notes/docs-release-notes.component.ts"
+      ],
+      "rules": {
+        "@angular-eslint/prefer-standalone": "off"
       }
     }
   ]

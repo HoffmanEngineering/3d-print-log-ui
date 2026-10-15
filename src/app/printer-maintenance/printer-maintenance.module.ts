@@ -7,12 +7,12 @@ import { SharedModule } from '../shared/shared.module';
 import { PrinterAvatarComponent } from '../shared/printer-avatar/printer-avatar.component';
 
 @NgModule({
-  declarations: [PrinterMaintenanceComponent],
   imports: [
     CommonModule,
     PrinterMaintenanceRoutingModule,
     SharedModule,
     PrinterAvatarComponent,
+    PrinterMaintenanceComponent,
   ],
 })
 export class PrinterMaintenanceModule {}

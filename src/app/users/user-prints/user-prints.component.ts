@@ -23,13 +23,38 @@ import {
   PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
 import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
+import {
+  DefaultLayoutDirective,
+  DefaultFlexDirective,
+  DefaultLayoutGapDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatSelect, MatOption } from '@angular/material/select';
+import { PrintSummaryCardComponent } from '../../shared/print-summary-card/print-summary-card.component';
+import { MatButton } from '@angular/material/button';
+import { MatCard } from '@angular/material/card';
 
 @Component({
   selector: 'app-user-prints',
   templateUrl: './user-prints.component.html',
   styleUrls: ['./user-prints.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DefaultLayoutDirective,
+    DefaultFlexDirective,
+    DefaultLayoutGapDirective,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatSelect,
+    MatOption,
+    PrintSummaryCardComponent,
+    MatButton,
+    MatCard,
+  ],
 })
 export class UserPrintsComponent implements OnChanges, OnInit {
   private readonly printService = inject(PrintService);

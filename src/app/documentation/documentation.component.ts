@@ -1,4 +1,8 @@
-import { MatSidenav } from '@angular/material/sidenav';
+import {
+  MatSidenav,
+  MatSidenavContainer,
+  MatSidenavContent,
+} from '@angular/material/sidenav';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
@@ -18,7 +22,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
@@ -46,6 +50,18 @@ import {
   scrollPercentOf,
   slugFromDocsUrl,
 } from './docs-telemetry.service';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { DocSidebarComponent } from './doc-sidebar/doc-sidebar.component';
+import { DocTocComponent } from './doc-toc/doc-toc.component';
+import { DocRelatedComponent } from './doc-related/doc-related.component';
+import { DocPageNavComponent } from './doc-page-nav/doc-page-nav.component';
+import { DocFeedbackComponent } from './doc-feedback/doc-feedback.component';
+import { AdComponent } from '../shared/ad/ad.component';
+import { DocSiteFooterComponent } from './doc-site-footer/doc-site-footer.component';
+import { DocBackToTopComponent } from './doc-back-to-top/doc-back-to-top.component';
 
 /** How often scroll position is sampled, in ms. */
 const SCROLL_AUDIT_MS = 200;
@@ -56,12 +72,29 @@ let apiLoaded = false;
   selector: 'app-documentation',
   templateUrl: './documentation.component.html',
   styleUrls: ['./documentation.component.scss'],
-  standalone: false,
   host: {
     // Bound on the document, not the host element: the shortcut has to work
     // wherever focus happens to be inside the docs shell.
     '(document:keydown)': 'onDocumentKeydown($event)',
   },
+  imports: [
+    MatToolbar,
+    MatIconButton,
+    MatIcon,
+    MatTooltip,
+    MatSidenavContainer,
+    MatSidenav,
+    DocSidebarComponent,
+    MatSidenavContent,
+    DocTocComponent,
+    RouterOutlet,
+    DocRelatedComponent,
+    DocPageNavComponent,
+    DocFeedbackComponent,
+    AdComponent,
+    DocSiteFooterComponent,
+    DocBackToTopComponent,
+  ],
 })
 export class DocumentationComponent
   implements OnInit, OnDestroy, AfterViewInit

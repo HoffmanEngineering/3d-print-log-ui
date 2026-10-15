@@ -1,3 +1,11 @@
+import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { FileAttachmentSectionComponent } from '../../shared/file-attachment-section/file-attachment-section.component';
+import { ProjectSelectorComponent } from 'src/app/shared/project-selector/project-selector.component';
+import { PrinterAvatarComponent } from '../../shared/printer-avatar/printer-avatar.component';
+import { ImageThumbnailStripComponent } from '../../shared/image-thumbnail-strip/image-thumbnail-strip.component';
+import { PrintImageComponent } from '../../shared/print-image/print-image.component';
+import { ImageCarouselComponent } from '../../shared/image-carousel/image-carousel.component';
 import {
   ComponentFixture,
   TestBed,
@@ -119,7 +127,6 @@ describe('EditPrintDetailComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [EditPrintDetailComponent],
       imports: [
         RouterTestingModule,
         FormsModule,
@@ -131,6 +138,7 @@ describe('EditPrintDetailComponent', () => {
         MatCheckboxModule,
         MatDialogModule,
         FilamentColorSwatchStylePipe,
+        EditPrintDetailComponent,
       ],
       providers: [
         { provide: PrintService, useValue: mockPrintService },
@@ -182,7 +190,23 @@ describe('EditPrintDetailComponent', () => {
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    })
+      .overrideComponent(EditPrintDetailComponent, {
+        remove: {
+          imports: [
+            ImageCarouselComponent,
+            PrintImageComponent,
+            ImageThumbnailStripComponent,
+            PrinterAvatarComponent,
+            ProjectSelectorComponent,
+            FileAttachmentSectionComponent,
+            AdComponent,
+            SidebarAdComponent,
+          ],
+        },
+        add: { schemas: [NO_ERRORS_SCHEMA] },
+      })
+      .compileComponents();
   }));
 
   beforeEach(waitForAsync(() => {

@@ -1,3 +1,4 @@
+import { AdsenseModule } from 'ng2-adsense';
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -88,8 +89,8 @@ describe('FilamentDetailComponent', () => {
     ]);
 
     await TestBed.configureTestingModule({
-      declarations: [FilamentDetailComponent],
       imports: [
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule,
         FormsModule,
         ReactiveFormsModule,
@@ -102,6 +103,7 @@ describe('FilamentDetailComponent', () => {
         MatButtonToggleModule,
         MatChipsModule,
         FilamentTagUidsComponent,
+        FilamentDetailComponent,
       ],
       providers: [
         { provide: FilamentService, useValue: mockFilamentService },
@@ -375,8 +377,8 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
     ]);
 
     await TestBed.configureTestingModule({
-      declarations: [FilamentDetailComponent],
       imports: [
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule,
         FormsModule,
         ReactiveFormsModule,
@@ -391,6 +393,7 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
         FilamentTagUidsComponent,
         MatButtonModule,
         MatTooltipModule,
+        FilamentDetailComponent,
       ],
       providers: [
         { provide: FilamentService, useValue: mockFilamentService },
@@ -568,8 +571,8 @@ describe('FilamentDetailComponent - value serialization', () => {
     ]);
 
     await TestBed.configureTestingModule({
-      declarations: [FilamentDetailComponent],
       imports: [
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule,
         FormsModule,
         ReactiveFormsModule,
@@ -584,6 +587,7 @@ describe('FilamentDetailComponent - value serialization', () => {
         FilamentTagUidsComponent,
         MatButtonModule,
         MatTooltipModule,
+        FilamentDetailComponent,
       ],
       providers: [
         { provide: FilamentService, useValue: mockFilamentSvc },
@@ -911,8 +915,8 @@ describe('FilamentDetailComponent - usage panels', () => {
     mockPrintService.getPrintImage.and.returnValue(of(''));
 
     await TestBed.configureTestingModule({
-      declarations: [FilamentDetailComponent],
       imports: [
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule,
         FormsModule,
         ReactiveFormsModule,
@@ -929,6 +933,7 @@ describe('FilamentDetailComponent - usage panels', () => {
         MatTooltipModule,
         FilamentRemainingCardComponent,
         FilamentPrintsPanelComponent,
+        FilamentDetailComponent,
       ],
       providers: [
         { provide: FilamentService, useValue: mockFilamentService },

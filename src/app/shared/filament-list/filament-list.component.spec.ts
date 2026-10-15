@@ -37,7 +37,7 @@ describe('FilamentListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [FilamentListComponent],
+      imports: [FilamentListComponent],
       providers: [
         { provide: FilamentService, useValue: mockFilamentService },
         {

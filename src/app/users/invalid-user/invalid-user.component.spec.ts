@@ -8,7 +8,7 @@ describe('InvalidUserComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [InvalidUserComponent],
+      imports: [InvalidUserComponent],
     }).compileComponents();
   }));
 

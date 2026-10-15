@@ -1,12 +1,9 @@
+import { AdsenseModule } from 'ng2-adsense';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import {
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
@@ -144,8 +141,8 @@ describe('PrintListComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      declarations: [PrintListComponent],
       imports: [
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         DurationPipe,
         LocaleDatePipe,
         RouterTestingModule,
@@ -155,6 +152,7 @@ describe('PrintListComponent', () => {
         MatSortModule,
         MatTableModule,
         PrintEmptyStateComponent,
+        PrintListComponent,
       ],
       providers: [
         { provide: LoggingService, useValue: mockLogger },
@@ -756,7 +754,7 @@ describe('PrintListComponent', () => {
       spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
         Promise.resolve(true)
       );
-      spyOn(TestBed.inject(MatDialog), 'open').and.returnValue({
+      spyOn(component.dialog, 'open').and.returnValue({
         componentInstance: {},
         afterClosed: () => of(true),
       } as MatDialogRef<unknown>);

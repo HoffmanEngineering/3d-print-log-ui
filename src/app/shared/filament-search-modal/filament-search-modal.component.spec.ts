@@ -1,3 +1,5 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { FilamentListComponent } from '../filament-list/filament-list.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   MatDialogModule,
@@ -83,15 +85,19 @@ describe('FilamentSearchModalComponent', () => {
     >('MatDialogRef', ['close']);
 
     await TestBed.configureTestingModule({
-      declarations: [FilamentSearchModalComponent],
-      imports: [MatDialogModule],
+      imports: [MatDialogModule, FilamentSearchModalComponent],
       providers: [
         { provide: LoggingService, useValue: mockLogger },
         { provide: FilamentService, useValue: mockFilamentService },
         { provide: MatDialogRef, useValue: mockDialogRef },
         { provide: MAT_DIALOG_DATA, useValue: {} },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(FilamentSearchModalComponent, {
+        remove: { imports: [FilamentListComponent] },
+        add: { schemas: [NO_ERRORS_SCHEMA] },
+      })
+      .compileComponents();
   });
 
   beforeEach(() => {

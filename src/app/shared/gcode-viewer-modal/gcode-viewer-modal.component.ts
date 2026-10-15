@@ -8,7 +8,13 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+} from '@angular/material/dialog';
 import { lastValueFrom } from 'rxjs';
 import {
   createDefaultPrintDetail,
@@ -29,6 +35,10 @@ import {
   UserSettingService,
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatButton } from '@angular/material/button';
 
 export interface DialogData {
   gcode: string;
@@ -87,8 +97,16 @@ function extruderSlot(key: string): number | undefined {
   host: { '(window:message)': 'onMessage($event)' },
   templateUrl: './gcode-viewer-modal.component.html',
   styleUrls: ['./gcode-viewer-modal.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatIcon,
+    MatProgressBar,
+    MatDialogActions,
+    MatButton,
+  ],
 })
 export class GcodeViewerModalComponent implements AfterViewInit {
   readonly iframe = viewChild<ElementRef<HTMLIFrameElement>>('iframe');

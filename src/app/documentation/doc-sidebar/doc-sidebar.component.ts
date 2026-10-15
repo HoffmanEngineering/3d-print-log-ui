@@ -12,6 +12,8 @@ import {
   isApplePlatform,
   shortcutLabel,
 } from '../docs-search/keyboard-shortcut';
+import { MatIcon } from '@angular/material/icon';
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 
 /**
  * The docs sidebar, derived from the docs manifest: each page's `navLabel`,
@@ -24,8 +26,8 @@ import {
   selector: 'app-doc-sidebar',
   templateUrl: './doc-sidebar.component.html',
   styleUrls: ['./doc-sidebar.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [MatIcon, SidebarComponent],
 })
 export class DocSidebarComponent {
   public navItems: INavData[] = buildNavItems();

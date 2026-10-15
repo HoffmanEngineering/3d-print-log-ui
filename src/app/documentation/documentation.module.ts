@@ -23,8 +23,6 @@ import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
 
 @NgModule({
   declarations: [
-    DocumentationComponent,
-    DocSidebarComponent,
     // Pages compiled from src/content/docs/*.md. They are declared here rather
     // than made standalone so they keep this module's template scope —
     // RouterLink, MatIcon and <youtube-player> are all used by doc templates,
@@ -49,6 +47,8 @@ import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
     DocBackToTopComponent,
     DocRelatedComponent,
     DocSiteFooterComponent,
+    DocumentationComponent,
+    DocSidebarComponent,
     // Standalone, and imported here rather than by each page: a generated page
     // is declared by this module, so this module is its template scope.
     ...DOC_PRIMITIVES,

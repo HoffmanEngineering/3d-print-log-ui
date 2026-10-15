@@ -6,7 +6,7 @@ import { FeedComponent } from './feed.component';
 describe('FeedComponent', () => {
   it('hosts the feed list', () => {
     TestBed.configureTestingModule({
-      declarations: [FeedComponent],
+      imports: [FeedComponent],
       schemas: [NO_ERRORS_SCHEMA],
     });
 

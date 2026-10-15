@@ -1,8 +1,8 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { KeyValue } from '@angular/common';
+import { KeyValue, KeyValuePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { map } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
@@ -32,12 +32,57 @@ import {
   PushPreferencesService,
 } from '../core/services/push-preferences.service';
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultFlexDirective,
+  DefaultLayoutGapDirective,
+  FlexFillDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { MatCard } from '@angular/material/card';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { FormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import {
+  MatButtonToggleGroup,
+  MatButtonToggle,
+} from '@angular/material/button-toggle';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { EmailSettingsComponent } from './email-settings/email-settings.component';
+import { AchievementSettingsComponent } from './achievement-settings/achievement-settings.component';
+import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
+import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
 
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
-  standalone: false,
+  imports: [
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    MatCard,
+    DefaultFlexDirective,
+    DefaultLayoutGapDirective,
+    FlexFillDirective,
+    MatTooltip,
+    MatIcon,
+    FormsModule,
+    MatButton,
+    MatButtonToggleGroup,
+    MatButtonToggle,
+    MatSlideToggle,
+    EmailSettingsComponent,
+    AchievementSettingsComponent,
+    RouterLink,
+    ConnectedAgentsComponent,
+    SpoolmanConnectionsComponent,
+    MatCheckbox,
+    KeyValuePipe,
+    LocaleDatePipe,
+  ],
 })
 export class SettingsComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);

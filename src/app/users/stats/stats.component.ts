@@ -8,13 +8,28 @@ import {
   signal,
 } from '@angular/core';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
+import {
+  DefaultGridColumnsDirective,
+  DefaultGridRowsDirective,
+  DefaultGridGapDirective,
+  DefaultGridColumnDirective,
+  DefaultGridRowDirective,
+} from '@ngbracket/ngx-layout/grid';
+import { StatPanelComponent } from '../../shared/panels/stat-panel/stat-panel.component';
 
 @Component({
   selector: 'app-stats',
   templateUrl: './stats.component.html',
   styleUrls: ['./stats.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DefaultGridColumnsDirective,
+    DefaultGridRowsDirective,
+    DefaultGridGapDirective,
+    StatPanelComponent,
+    DefaultGridColumnDirective,
+    DefaultGridRowDirective,
+  ],
 })
 export class StatsComponent implements OnChanges {
   private readonly userPrintsService = inject(UsersPrintsStatsService);

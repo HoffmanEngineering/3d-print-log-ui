@@ -30,7 +30,7 @@ describe('ApikeysComponent', () => {
     apiKeys.getApiKeySummaryForUser.and.returnValue(summaries);
 
     TestBed.configureTestingModule({
-      declarations: [ApikeysComponent],
+      imports: [ApikeysComponent],
       providers: [
         { provide: ApiKeyService, useValue: apiKeys },
         {

@@ -8,10 +8,15 @@ import {
   signal,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { PageEvent } from '@angular/material/paginator';
-import { Sort } from '@angular/material/sort';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
+import { Sort, MatSort, MatSortHeader } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterLink,
+} from '@angular/router';
 import { debounce } from 'lodash-es';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
@@ -49,6 +54,54 @@ import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-mod
 import { PrintBulkActionsService } from '../services/print-bulk-actions.service';
 import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
 import { BLOCK_SCROLL_WHILE_MENU_OPEN } from 'src/app/shared/menu/menu-scroll.provider';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultFlexDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { MatButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatBadge } from '@angular/material/badge';
+import { MatSelect, MatOption } from '@angular/material/select';
+import { PrinterAvatarComponent } from '../../shared/printer-avatar/printer-avatar.component';
+import { MatChipSet, MatChip, MatChipRemove } from '@angular/material/chips';
+import { MatTooltip } from '@angular/material/tooltip';
+import { NextAchievementHintComponent } from './next-achievement-hint/next-achievement-hint.component';
+import {
+  MatButtonToggleGroup,
+  MatButtonToggle,
+} from '@angular/material/button-toggle';
+import { PrintBulkActionBarComponent } from './print-bulk-action-bar/print-bulk-action-bar.component';
+import { PrintGroupedViewComponent } from './print-grouped-view/print-grouped-view.component';
+import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.component';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { PrintListSkeletonComponent } from './print-list-skeleton/print-list-skeleton.component';
+import { PrintCardComponent } from '../print-card/print-card.component';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow,
+} from '@angular/material/table';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { PrintImageComponent } from '../../shared/print-image/print-image.component';
+import { ProjectChipComponent } from '../../shared/project-chip/project-chip.component';
+import { FilamentUsageSummaryComponent } from '../../shared/filament-usage-summary/filament-usage-summary.component';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { DecimalPipe } from '@angular/common';
+import { DurationPipe } from '../../shared/pipes/duration.pipe';
+import { LocaleDatePipe } from '../../shared/pipes/locale-date.pipe';
+import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 export interface ColumnDefinition {
   key: string;
@@ -60,8 +113,61 @@ export interface ColumnDefinition {
   selector: 'app-print-list',
   templateUrl: './print-list.component.html',
   styleUrls: ['./print-list.component.scss'],
-  standalone: false,
   providers: [PrintBulkActionsService, BLOCK_SCROLL_WHILE_MENU_OPEN],
+  imports: [
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    MatButton,
+    RouterLink,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatBadge,
+    MatSelect,
+    MatOption,
+    PrinterAvatarComponent,
+    MatChipSet,
+    MatChip,
+    MatTooltip,
+    MatChipRemove,
+    NextAchievementHintComponent,
+    MatButtonToggleGroup,
+    MatButtonToggle,
+    PrintBulkActionBarComponent,
+    PrintGroupedViewComponent,
+    PrintEmptyStateComponent,
+    MatProgressBar,
+    PrintListSkeletonComponent,
+    PrintCardComponent,
+    MatTable,
+    DefaultFlexDirective,
+    MatSort,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCheckbox,
+    MatCellDef,
+    MatCell,
+    PrintImageComponent,
+    MatSortHeader,
+    ProjectChipComponent,
+    FilamentUsageSummaryComponent,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    MatPaginator,
+    AdComponent,
+    DecimalPipe,
+    DurationPipe,
+    LocaleDatePipe,
+    FilamentColorSwatchStylePipe,
+  ],
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);

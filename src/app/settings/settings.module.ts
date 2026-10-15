@@ -9,7 +9,6 @@ import { ConnectedAgentsComponent } from './connected-agents/connected-agents.co
 import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
 
 @NgModule({
-  declarations: [SettingsComponent],
   imports: [
     SharedModule,
     SettingsRoutingModule,
@@ -17,6 +16,7 @@ import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-co
     SpoolmanConnectionsComponent,
     AchievementSettingsComponent,
     EmailSettingsComponent,
+    SettingsComponent,
   ],
 })
 export class SettingsModule {}

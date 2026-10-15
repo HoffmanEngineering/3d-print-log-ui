@@ -10,17 +10,15 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UsersRoutingModule } from './users-routing.module';
 
 @NgModule({
-  declarations: [
-    UserProfileComponent,
-    UserPrintsComponent,
-    StatsComponent,
-    InvalidUserComponent,
-  ],
   imports: [
     SharedModule,
     UsersRoutingModule,
     AdsenseModule,
     AchievementStripComponent,
+    UserProfileComponent,
+    UserPrintsComponent,
+    StatsComponent,
+    InvalidUserComponent,
   ],
 })
 export class UsersModule {}

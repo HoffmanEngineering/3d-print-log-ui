@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { PageEvent } from '@angular/material/paginator';
-import { Sort } from '@angular/material/sort';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
+import { Sort, MatSort, MatSortHeader } from '@angular/material/sort';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounce } from 'lodash';
@@ -19,12 +19,96 @@ import { PagedList } from '../core/types/paging';
 import { SortDirection } from '../core/types/sort-request';
 import { openSimpleDialog } from '../shared/simple-dialog/simple-dialog.component';
 import { toSortHeaderIds } from '../core/utils/sort-header-ids';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultFlexDirective,
+  DefaultLayoutGapDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import {
+  MatFormField,
+  MatLabel,
+  MatSuffix,
+  MatError,
+} from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatSelect, MatOption } from '@angular/material/select';
+import { PrinterAvatarComponent } from '../shared/printer-avatar/printer-avatar.component';
+import { DefaultStyleDirective } from '@ngbracket/ngx-layout/extended';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow,
+} from '@angular/material/table';
+import { MatCheckbox } from '@angular/material/checkbox';
+import {
+  MatDatepickerInput,
+  MatDatepickerToggle,
+  MatDatepicker,
+} from '@angular/material/datepicker';
+import {
+  MatAutocompleteTrigger,
+  MatAutocomplete,
+} from '@angular/material/autocomplete';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { AdComponent } from '../shared/ad/ad.component';
+import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
 
 @Component({
   selector: 'app-printer-maintenance',
   templateUrl: './printer-maintenance.component.html',
   styleUrls: ['./printer-maintenance.component.scss'],
-  standalone: false,
+  imports: [
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    DefaultFlexDirective,
+    DefaultLayoutGapDirective,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatSelect,
+    MatOption,
+    PrinterAvatarComponent,
+    DefaultStyleDirective,
+    MatTable,
+    MatSort,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCellDef,
+    MatCell,
+    MatCheckbox,
+    MatSortHeader,
+    MatDatepickerInput,
+    MatDatepickerToggle,
+    MatSuffix,
+    MatDatepicker,
+    MatError,
+    MatAutocompleteTrigger,
+    MatAutocomplete,
+    MatIconButton,
+    MatTooltip,
+    MatIcon,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    MatPaginator,
+    AdComponent,
+    LocaleDatePipe,
+  ],
 })
 export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);

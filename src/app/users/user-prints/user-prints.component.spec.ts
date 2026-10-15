@@ -40,7 +40,7 @@ describe('UserPrintsComponent', () => {
     queryParams = new BehaviorSubject(convertToParamMap({}));
 
     TestBed.configureTestingModule({
-      declarations: [UserPrintsComponent],
+      imports: [UserPrintsComponent],
       providers: [
         { provide: PrintService, useValue: printService },
         { provide: ActivatedRoute, useValue: { queryParamMap: queryParams } },

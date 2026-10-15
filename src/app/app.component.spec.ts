@@ -63,9 +63,7 @@ describe('AppComponent (ThemeService)', () => {
     );
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule],
-      declarations: [AppComponent],
-      schemas: [NO_ERRORS_SCHEMA],
+      imports: [RouterTestingModule, AppComponent],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         {
@@ -82,7 +80,13 @@ describe('AppComponent (ThemeService)', () => {
         { provide: PushRegistrationService, useValue: mockPushRegistration },
         { provide: NativeBridgeService, useValue: mockNativeBridge },
       ],
-    }).compileComponents();
+    })
+      // The shell's children each need their own services; these specs are about
+      // the shell, so its template renders them as inert elements.
+      .overrideComponent(AppComponent, {
+        set: { imports: [], schemas: [NO_ERRORS_SCHEMA] },
+      })
+      .compileComponents();
   }));
 
   // #254: signed-in users see the notifier notice wherever they land, not only on a printer page.

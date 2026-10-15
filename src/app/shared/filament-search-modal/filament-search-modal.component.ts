@@ -4,7 +4,13 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+} from '@angular/material/dialog';
 import {
   FilamentDetail,
   FilamentService,
@@ -13,6 +19,13 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { QrScanResult } from 'src/app/core/services/qr-scanner.service';
 import { filamentDetailToSummary } from 'src/app/core/utils/filament-summary';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { FilamentListComponent } from '../filament-list/filament-list.component';
+import { QrScannerComponent } from '../qr-scanner/qr-scanner.component';
 
 export interface DialogData {
   otherFilamentOption: any;
@@ -26,8 +39,20 @@ export type ViewMode = 'list' | 'scanner';
   selector: 'app-filament-search-modal',
   templateUrl: './filament-search-modal.component.html',
   styleUrls: ['./filament-search-modal.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MatDialogTitle,
+    MatIconButton,
+    MatTooltip,
+    MatIcon,
+    CdkScrollable,
+    MatDialogContent,
+    MatProgressSpinner,
+    FilamentListComponent,
+    MatButton,
+    QrScannerComponent,
+    MatDialogActions,
+  ],
 })
 export class FilamentSearchModalComponent {
   readonly dialogRef = inject(MatDialogRef<FilamentSearchModalComponent>);

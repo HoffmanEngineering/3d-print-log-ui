@@ -5,9 +5,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { lastValueFrom } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PagedList } from 'src/app/core/types/paging';
 import {
   PrinterService,
@@ -21,13 +21,80 @@ import { ToastrService } from 'ngx-toastr';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
+import { MatButton } from '@angular/material/button';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatCheckbox } from '@angular/material/checkbox';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow,
+} from '@angular/material/table';
+import { SignedImageComponent } from '../../shared/signed-image/signed-image.component';
+import {
+  DefaultGridColumnsDirective,
+  DefaultGridRowsDirective,
+  DefaultGridGapDirective,
+  DefaultGridColumnDirective,
+  DefaultGridRowDirective,
+} from '@ngbracket/ngx-layout/grid';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatChipListbox, MatChipOption } from '@angular/material/chips';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 @Component({
   selector: 'app-printer-list',
   templateUrl: './printer-list.component.html',
   styleUrls: ['./printer-list.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MatButton,
+    RouterLink,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatCheckbox,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCellDef,
+    MatCell,
+    SignedImageComponent,
+    DefaultGridColumnsDirective,
+    DefaultGridRowsDirective,
+    DefaultGridGapDirective,
+    DefaultGridColumnDirective,
+    DefaultGridRowDirective,
+    MatTooltip,
+    MatChipListbox,
+    MatChipOption,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    EmptyStateComponent,
+    MatPaginator,
+    AdComponent,
+    FilamentColorSwatchStylePipe,
+  ],
 })
 export class PrinterListComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);

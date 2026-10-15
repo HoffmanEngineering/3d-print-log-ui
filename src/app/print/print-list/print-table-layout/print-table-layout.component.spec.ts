@@ -22,7 +22,7 @@ describe('PrintTableLayoutComponent', () => {
     const changeEvent = new Subject<string[]>();
     changeEvent.subscribe((c) => changes.push(c));
     TestBed.configureTestingModule({
-      declarations: [PrintTableLayoutComponent],
+      imports: [PrintTableLayoutComponent],
       providers: [
         { provide: MatDialogRef, useValue: dialogRef },
         {

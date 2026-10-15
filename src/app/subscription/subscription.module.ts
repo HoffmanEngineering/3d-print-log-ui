@@ -6,11 +6,12 @@ import { SubscriptionSuccessComponent } from './success/subscription-success.com
 import { SubscriptionCanceledComponent } from './canceled/subscription-canceled.component';
 
 @NgModule({
-  declarations: [
+  imports: [
+    SharedModule,
+    SubscriptionRoutingModule,
     PricingComponent,
     SubscriptionSuccessComponent,
     SubscriptionCanceledComponent,
   ],
-  imports: [SharedModule, SubscriptionRoutingModule],
 })
 export class SubscriptionModule {}

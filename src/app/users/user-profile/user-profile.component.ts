@@ -18,13 +18,56 @@ import {
   UserDetailDto,
   UserService,
 } from 'src/app/core/services/user.service';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultFlexDirective,
+  DefaultLayoutGapDirective,
+  FlexFillDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { MatCard, MatCardHeader, MatCardContent } from '@angular/material/card';
+import { MatButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { MatFormField, MatLabel, MatHint } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { FormsModule } from '@angular/forms';
+import { StatsComponent } from '../stats/stats.component';
+import { AchievementStripComponent } from '../achievement-strip/achievement-strip.component';
+import { AdComponent } from '../../shared/ad/ad.component';
+import { UserPrintsComponent } from '../user-prints/user-prints.component';
 
 @Component({
   selector: 'app-user-profile',
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    MatCard,
+    DefaultFlexDirective,
+    DefaultLayoutGapDirective,
+    MatCardHeader,
+    MatButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    FlexFillDirective,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    CdkTextareaAutosize,
+    FormsModule,
+    MatHint,
+    StatsComponent,
+    AchievementStripComponent,
+    AdComponent,
+    MatCardContent,
+    UserPrintsComponent,
+  ],
 })
 export class UserProfileComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);

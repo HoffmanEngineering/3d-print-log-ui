@@ -9,8 +9,11 @@ describe('SubscriptionCanceledComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SubscriptionCanceledComponent],
-      imports: [SharedModule, RouterTestingModule],
+      imports: [
+        SharedModule,
+        RouterTestingModule,
+        SubscriptionCanceledComponent,
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SubscriptionCanceledComponent);

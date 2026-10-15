@@ -7,7 +7,14 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose,
+} from '@angular/material/dialog';
 import {
   PrintDetail,
   PrintService,
@@ -18,6 +25,17 @@ import { Clipboard } from '@angular/cdk/clipboard';
 
 import { ToastrService } from 'ngx-toastr';
 import { NavigatorShareService } from 'src/app/core/services/navigator-share.service';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect, MatOption } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import { MatInput } from '@angular/material/input';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 
 export interface DialogData {
   printId: number;
@@ -27,8 +45,24 @@ export interface DialogData {
   selector: 'app-print-share-dialog',
   templateUrl: './print-share-dialog.component.html',
   styleUrls: ['./print-share-dialog.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    FormsModule,
+    MatOption,
+    MatInput,
+    MatDialogActions,
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    MatButton,
+    MatIcon,
+    MatDialogClose,
+  ],
 })
 export class PrintShareDialogComponent implements OnInit {
   dialogRef = inject<MatDialogRef<PrintShareDialogComponent>>(MatDialogRef);

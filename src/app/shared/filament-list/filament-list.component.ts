@@ -8,8 +8,8 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
-import { Sort } from '@angular/material/sort';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
+import { Sort, MatSort, MatSortHeader } from '@angular/material/sort';
 import { debounce } from 'lodash-es';
 
 import {
@@ -27,13 +27,66 @@ import {
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatBadge } from '@angular/material/badge';
+import { MatIcon } from '@angular/material/icon';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatSelect, MatOption } from '@angular/material/select';
+import { MatChipListbox, MatChipOption } from '@angular/material/chips';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow,
+} from '@angular/material/table';
+import { MatTooltip } from '@angular/material/tooltip';
+import { DecimalPipe } from '@angular/common';
+import { FilamentColorSwatchStylePipe } from '../pipes/filament-color-swatch-style.pipe';
 
 @Component({
   selector: 'app-filament-list',
   templateUrl: './filament-list.component.html',
   styleUrls: ['./filament-list.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatButton,
+    MatBadge,
+    MatIcon,
+    MatCheckbox,
+    MatSelect,
+    MatOption,
+    MatChipListbox,
+    MatChipOption,
+    MatTable,
+    MatSort,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCellDef,
+    MatCell,
+    MatTooltip,
+    MatSortHeader,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    MatPaginator,
+    DecimalPipe,
+    FilamentColorSwatchStylePipe,
+  ],
 })
 export class FilamentListComponent implements OnInit {
   private filamentService = inject(FilamentService);

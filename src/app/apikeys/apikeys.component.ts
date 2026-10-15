@@ -13,6 +13,35 @@ import {
 } from '../core/services/api-key.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
+import {
+  DefaultLayoutDirective,
+  DefaultLayoutAlignDirective,
+  DefaultFlexDirective,
+  DefaultLayoutGapDirective,
+  FlexFillDirective,
+  DefaultFlexAlignDirective,
+} from '@ngbracket/ngx-layout/flex';
+import { MatCard, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { FormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatFormField, MatLabel, MatHint } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow,
+} from '@angular/material/table';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
 
 export interface UserApiKeySummaryWithKey extends UserApiKeySummary {
   privateKey?: string;
@@ -22,8 +51,38 @@ export interface UserApiKeySummaryWithKey extends UserApiKeySummary {
   selector: 'app-apikeys',
   templateUrl: './apikeys.component.html',
   styleUrls: ['./apikeys.component.scss'],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DefaultLayoutDirective,
+    DefaultLayoutAlignDirective,
+    MatCard,
+    DefaultFlexDirective,
+    FormsModule,
+    DefaultLayoutGapDirective,
+    MatCardTitle,
+    MatCardContent,
+    FlexFillDirective,
+    MatButton,
+    DefaultFlexAlignDirective,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    CdkTextareaAutosize,
+    MatHint,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCellDef,
+    MatCell,
+    MatTooltip,
+    MatIcon,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    LocaleDatePipe,
+  ],
 })
 export class ApikeysComponent implements OnInit {
   private readonly apiKeyService = inject(ApiKeyService);

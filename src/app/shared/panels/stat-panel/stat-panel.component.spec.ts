@@ -8,7 +8,7 @@ describe('StatPanelComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [StatPanelComponent],
+      imports: [StatPanelComponent],
     }).compileComponents();
   }));
 

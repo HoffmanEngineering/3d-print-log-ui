@@ -19,7 +19,7 @@ import {
 } from 'src/app/core/services/connection.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { externalSourceLabel } from 'src/app/shared/utils/external-source.utils';
 
 /**
@@ -41,7 +41,7 @@ export class PrinterConnectionsComponent {
   private readonly logging = inject(LoggingService);
   private readonly destroyRef = inject(DestroyRef);
 
-  printerId = input.required<number>();
+  readonly printerId = input.required<number>();
 
   protected readonly connections = signal<Connection[]>([]);
   protected readonly ConnectionStatus = ConnectionStatus;
@@ -66,18 +66,20 @@ export class PrinterConnectionsComponent {
   }
 
   protected confirmDelete(connection: Connection): void {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '400px',
-      data: {},
-    });
-    dialogRef.componentInstance.title = 'Remove this connection?';
-    // No display name in the body: it is set by the agent and the body is rendered as HTML.
-    dialogRef.componentInstance.body =
-      '<p>It stops logging prints for this printer.</p>' +
-      '<p>The prints it already logged are kept.</p>';
-    dialogRef.componentInstance.yesText = 'Remove';
-    dialogRef.componentInstance.yesColor = 'warn';
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Remove this connection?',
+        // No display name in the body: it is set by the agent and the body is rendered as HTML.
+        body:
+          '<p>It stops logging prints for this printer.</p>' +
+          '<p>The prints it already logged are kept.</p>',
+        yesText: 'Remove',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '400px' }
+    );
 
     dialogRef
       .afterClosed()

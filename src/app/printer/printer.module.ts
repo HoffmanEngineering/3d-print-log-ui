@@ -11,6 +11,7 @@ import { SignedImageComponent } from '../shared/signed-image/signed-image.compon
 import { PrinterRoutingModule } from './printer-routing.module';
 import { PrinterConnectionsComponent } from './printer-connections/printer-connections.component';
 import { PrinterSlotsComponent } from './printer-slots/printer-slots.component';
+import { PrinterSpoolmanComponent } from './printer-spoolman/printer-spoolman.component';
 
 @NgModule({
   declarations: [PrinterListComponent, PrinterDetailComponent],
@@ -25,6 +26,7 @@ import { PrinterSlotsComponent } from './printer-slots/printer-slots.component';
     SignedImageComponent,
     PrinterConnectionsComponent,
     PrinterSlotsComponent,
+    PrinterSpoolmanComponent,
   ],
 })
 export class PrinterModule {}

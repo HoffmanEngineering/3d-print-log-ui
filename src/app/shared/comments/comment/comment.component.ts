@@ -14,7 +14,7 @@ import { Comment } from 'src/app/core/services/comment.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommentComponent {
-  comment = input.required<Comment>();
-  showDelete = input<boolean>(false);
+  readonly comment = input.required<Comment>();
+  readonly showDelete = input<boolean>(false);
   delete = output<void>();
 }

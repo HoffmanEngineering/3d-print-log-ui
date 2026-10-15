@@ -6,6 +6,7 @@ import { SharedModule } from '../shared/shared.module';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
+import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
 
 @NgModule({
   declarations: [SettingsComponent],
@@ -13,6 +14,7 @@ import { ConnectedAgentsComponent } from './connected-agents/connected-agents.co
     SharedModule,
     SettingsRoutingModule,
     ConnectedAgentsComponent,
+    SpoolmanConnectionsComponent,
     AchievementSettingsComponent,
     EmailSettingsComponent,
   ],

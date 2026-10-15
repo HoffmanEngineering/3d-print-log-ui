@@ -1,0 +1,156 @@
+@if (enabled() && phase() !== 'idle') {
+  <section class="spoolman" aria-labelledby="spoolman-heading">
+    <h2 id="spoolman-heading">Spoolman</h2>
+    <p class="hint">
+      Show your 3D Print Log spools in the Mainsail, Fluidd and KlipperScreen
+      spool pickers and log every print, with nothing to install.
+      <a [routerLink]="docsLink">How it works</a>
+    </p>
+
+    @if (isSnapmakerU1()) {
+      <p class="note" data-testid="spoolman-u1-note">
+        <mat-icon inline aria-hidden="true">info</mat-icon>
+        <span>
+          Spoolman on the Snapmaker U1 is waiting on a test with a real U1. To
+          try it, put the U1 in Advanced Mode, which lets you edit its
+          <code>moonraker.conf</code>. With printlog-bridge running, the bridge
+          keeps each tool's spool in sync with Moonraker. The
+          <a routerLink="/docs/snapmaker-u1">Snapmaker U1 guide</a> has the
+          details.
+        </span>
+      </p>
+    }
+
+    @if (created(); as block) {
+      <div class="config" data-testid="spoolman-config">
+        <p class="warning" role="alert">
+          <mat-icon inline aria-hidden="true">warning</mat-icon>
+          <span
+            >Copy this now. It contains a secret, and it can't be shown
+            again.</span
+          >
+        </p>
+        <pre
+          data-testid="spoolman-config-block"
+        ><code>{{ block.configBlock }}</code></pre>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="spoolman-copy"
+          (click)="copy(block.configBlock)"
+        >
+          <mat-icon>content_copy</mat-icon>
+          Copy
+        </button>
+        <p class="note" data-testid="spoolman-notifier-note">
+          <mat-icon inline aria-hidden="true">info</mat-icon>
+          <span>
+            If your <code>moonraker.conf</code> already has a
+            <code>[notifier 3d_print_log]</code> section from an API-key setup,
+            delete it first. This block replaces it.
+          </span>
+        </p>
+        <ol class="steps">
+          <li>Open <code>moonraker.conf</code> in Mainsail or Fluidd.</li>
+          <li>Paste the block at the bottom of the file.</li>
+          <li>Choose <strong>Save &amp; Restart</strong>.</li>
+        </ol>
+        <p class="hint">
+          Then pick a spool in Mainsail or Fluidd.
+          <a [routerLink]="docsLink">Read the setup guide</a>
+        </p>
+        <p class="hint">
+          If printlog-bridge is running for this printer, the bridge logs this
+          printer's prints instead.
+        </p>
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          data-testid="spoolman-config-done"
+          (click)="dismissBlock()"
+        >
+          Done, I've copied it
+        </button>
+      </div>
+    }
+
+    @if (limit(); as l) {
+      <div class="limit" data-testid="spoolman-limit">
+        <p>
+          Free includes {{ l.limit }} Spoolman
+          {{ l.limit === 1 ? 'printer' : 'printers' }}, and another printer is
+          using it. Upgrade to Pro to connect this one too, or disconnect the
+          other printer first.
+        </p>
+        <a mat-raised-button color="accent" routerLink="/subscription"
+          >Upgrade to Pro</a
+        >
+      </div>
+    }
+
+    @if (phase() === 'error') {
+      <p class="hint">We couldn't load this printer's Spoolman connection.</p>
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="spoolman-retry"
+        (click)="reload()"
+      >
+        Retry
+      </button>
+    } @else if (current(); as c) {
+      <div class="connection">
+        <div class="identity">
+          <span class="name" data-testid="spoolman-name">{{
+            c.name ?? c.printerName
+          }}</span>
+          @if (c.state === 'disabled') {
+            <span class="meta paused" data-testid="spoolman-paused">
+              Paused: Free includes 1 Spoolman printer.
+              <a routerLink="/subscription">Upgrade to Pro</a> to resume it,
+              with no change on the printer.
+            </span>
+          } @else {
+            <span class="meta" data-testid="spoolman-status">{{
+              status()
+            }}</span>
+          }
+        </div>
+        <div class="actions">
+          @if (c.state !== 'disabled') {
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="spoolman-reconnect"
+              [disabled]="busy()"
+              (click)="connect()"
+            >
+              Reconnect
+            </button>
+          }
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            data-testid="spoolman-disconnect"
+            (click)="disconnect()"
+          >
+            Disconnect
+          </button>
+        </div>
+      </div>
+    } @else if (!limit()) {
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        data-testid="spoolman-connect"
+        [disabled]="busy()"
+        (click)="connect()"
+      >
+        Connect Spoolman
+      </button>
+    }
+  </section>
+}

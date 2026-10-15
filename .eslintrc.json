@@ -31,7 +31,7 @@
         ],
         "@angular-eslint/prefer-signals": [
           "error",
-          { "preferReadonlySignalProperties": false }
+          { "preferReadonlySignalProperties": true }
         ],
         "@angular-eslint/prefer-output-emitter-ref": "error",
         "@angular-eslint/prefer-host-metadata-property": "error",
@@ -68,17 +68,10 @@
         "src/app/shared/filament-list/filament-list.component.ts",
         "src/app/shared/filament-search-modal/filament-search-modal.component.ts",
         "src/app/shared/navbar/navbar.component.ts",
-        "src/app/shared/simple-dialog/simple-dialog.component.ts",
         "src/app/users/user-profile/user-profile.component.ts"
       ],
       "rules": {
         "@angular-eslint/prefer-on-push-component-change-detection": "off"
-      }
-    },
-    {
-      "files": ["src/app/shared/simple-dialog/simple-dialog.component.ts"],
-      "rules": {
-        "@angular-eslint/prefer-signals": "off"
       }
     },
     {

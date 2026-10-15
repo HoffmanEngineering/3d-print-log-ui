@@ -58,7 +58,6 @@ module.exports = tseslint.config(
       'src/app/filament/filament-list-container/filament-list-container.component.ts',
       'src/app/print/edit-print-detail/edit-print-detail.component.ts',
       'src/app/print/print-list/print-list.component.ts',
-      'src/app/settings/settings.component.ts',
     ],
     rules: {
       '@angular-eslint/prefer-on-push-component-change-detection': 'off',

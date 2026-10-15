@@ -19,10 +19,10 @@
         fxFlex="grow"
         fxFlexFill
         [class.mat-elevation-z5]="
-          profileViewStatus !== this.userDetailsOnLoad.viewStatus
+          profileViewStatus() !== userDetailsOnLoad().viewStatus
         "
         [class.editing-card]="
-          profileViewStatus !== this.userDetailsOnLoad.viewStatus
+          profileViewStatus() !== userDetailsOnLoad().viewStatus
         "
       >
         <div>
@@ -51,7 +51,7 @@
             </option>
           </select>
         </div>
-        @if (profileViewStatus !== this.userDetailsOnLoad.viewStatus) {
+        @if (profileViewStatus() !== userDetailsOnLoad().viewStatus) {
           <div>
             <div
               style="margin-top: 10px"
@@ -63,7 +63,7 @@
                 mat-raised-button
                 type="submit"
                 color="primary"
-                (click)="saveProfileVisibility(profileViewStatus)"
+                (click)="saveProfileVisibility(profileViewStatus())"
               >
                 Save Visibility
               </button>
@@ -71,7 +71,7 @@
                 mat-raised-button
                 type="button"
                 class="close"
-                (click)="profileViewStatus = this.userDetailsOnLoad.viewStatus"
+                (click)="profileViewStatus.set(userDetailsOnLoad().viewStatus)"
                 color="warn"
               >
                 Cancel
@@ -84,12 +84,12 @@
         fxFlex="grow"
         fxFlexFill
         [class.mat-elevation-z5]="
-          printViewStatus?.toString() !==
-          this.defaultPrintViewStatusSettingOnLoad?.value.toString()
+          printViewStatus()?.toString() !==
+          defaultPrintViewStatusSettingOnLoad()?.value.toString()
         "
         [class.editing-card]="
-          printViewStatus?.toString() !==
-          this.defaultPrintViewStatusSettingOnLoad?.value.toString()
+          printViewStatus()?.toString() !==
+          defaultPrintViewStatusSettingOnLoad()?.value.toString()
         "
       >
         <div>
@@ -118,8 +118,8 @@
           </select>
         </div>
         @if (
-          printViewStatus?.toString() !==
-          this.defaultPrintViewStatusSettingOnLoad?.value?.toString()
+          printViewStatus()?.toString() !==
+          defaultPrintViewStatusSettingOnLoad()?.value?.toString()
         ) {
           <div>
             <div
@@ -132,7 +132,7 @@
                 mat-raised-button
                 type="submit"
                 color="primary"
-                (click)="saveDefaultPrintViewStatus(printViewStatus)"
+                (click)="saveDefaultPrintViewStatus(printViewStatus())"
               >
                 Save Visibility
               </button>
@@ -153,12 +153,12 @@
         fxFlex="grow"
         fxFlexFill
         [class.mat-elevation-z5]="
-          preferredCurrency?.toString() !==
-          this.preferredCurrencyNameSettingOnLoad?.value.toString()
+          preferredCurrency()?.toString() !==
+          preferredCurrencyNameSettingOnLoad()?.value.toString()
         "
         [class.editing-card]="
-          preferredCurrency?.toString() !==
-          this.preferredCurrencyNameSettingOnLoad?.value.toString()
+          preferredCurrency()?.toString() !==
+          preferredCurrencyNameSettingOnLoad()?.value.toString()
         "
       >
         <div>
@@ -176,7 +176,7 @@
             [(ngModel)]="preferredCurrency"
           >
             @for (
-              currency of currencies | keyvalue: sortByName;
+              currency of currencies() | keyvalue: sortByName;
               track currency
             ) {
               <option [ngValue]="currency.key">
@@ -186,8 +186,8 @@
           </select>
         </div>
         @if (
-          preferredCurrency?.toString() !==
-          this.preferredCurrencyNameSettingOnLoad?.value?.toString()
+          preferredCurrency()?.toString() !==
+          preferredCurrencyNameSettingOnLoad()?.value?.toString()
         ) {
           <div>
             <div
@@ -200,7 +200,7 @@
                 mat-raised-button
                 type="submit"
                 color="primary"
-                (click)="savePreferredCurrency(preferredCurrency)"
+                (click)="savePreferredCurrency(preferredCurrency())"
               >
                 Save Preferred Currency
               </button>
@@ -221,12 +221,12 @@
         fxFlex="grow"
         fxFlexFill
         [class.mat-elevation-z5]="
-          defaultFilamentDiameterMm?.toString() !==
-          this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()
+          defaultFilamentDiameterMm()?.toString() !==
+          defaultFilamentDiameterMmSettingOnLoad()?.value.toString()
         "
         [class.editing-card]="
-          defaultFilamentDiameterMm?.toString() !==
-          this.defaultFilamentDiameterMmSettingOnLoad?.value.toString()
+          defaultFilamentDiameterMm()?.toString() !==
+          defaultFilamentDiameterMmSettingOnLoad()?.value.toString()
         "
       >
         <div>
@@ -247,8 +247,8 @@
           />
         </div>
         @if (
-          defaultFilamentDiameterMm?.toString() !==
-          this.defaultFilamentDiameterMmSettingOnLoad?.value?.toString()
+          defaultFilamentDiameterMm()?.toString() !==
+          defaultFilamentDiameterMmSettingOnLoad()?.value?.toString()
         ) {
           <div>
             <div
@@ -262,7 +262,7 @@
                 type="submit"
                 color="primary"
                 (click)="
-                  saveDefaultFilamentDiameterMm(defaultFilamentDiameterMm)
+                  saveDefaultFilamentDiameterMm(defaultFilamentDiameterMm())
                 "
               >
                 Save Default Filament Diameter
@@ -284,12 +284,12 @@
         fxFlex="grow"
         fxFlexFill
         [class.mat-elevation-z5]="
-          defaultFilamentPrice?.toString() !==
-          this.defaultFilamentPriceSettingOnLoad?.value.toString()
+          defaultFilamentPrice()?.toString() !==
+          defaultFilamentPriceSettingOnLoad()?.value.toString()
         "
         [class.editing-card]="
-          defaultFilamentPrice?.toString() !==
-          this.defaultFilamentPriceSettingOnLoad?.value.toString()
+          defaultFilamentPrice()?.toString() !==
+          defaultFilamentPriceSettingOnLoad()?.value.toString()
         "
       >
         <div>
@@ -301,9 +301,7 @@
           >
             Default Filament Price <mat-icon inline>info</mat-icon>:</label
           >
-          <span
-            >{{ this.currencies[this.preferredCurrency]?.symbol }}&nbsp;</span
-          >
+          <span>{{ currencies()[preferredCurrency()]?.symbol }}&nbsp;</span>
           <input
             id="default-filament-price"
             type="text"
@@ -312,8 +310,8 @@
           />
         </div>
         @if (
-          defaultFilamentPrice?.toString() !==
-          this.defaultFilamentPriceSettingOnLoad?.value?.toString()
+          defaultFilamentPrice()?.toString() !==
+          defaultFilamentPriceSettingOnLoad()?.value?.toString()
         ) {
           <div>
             <div
@@ -326,7 +324,7 @@
                 mat-raised-button
                 type="submit"
                 color="primary"
-                (click)="saveDefaultFilamentPrice(defaultFilamentPrice)"
+                (click)="saveDefaultFilamentPrice(defaultFilamentPrice())"
               >
                 Save Default Filament price
               </button>
@@ -347,12 +345,12 @@
         fxFlex="grow"
         fxFlexFill
         [class.mat-elevation-z5]="
-          preferredFilamentDisplayUnit?.toString() !==
-          this.preferredFilamentDisplayUnitSettingOnLoad?.value?.toString()
+          preferredFilamentDisplayUnit()?.toString() !==
+          preferredFilamentDisplayUnitSettingOnLoad()?.value?.toString()
         "
         [class.editing-card]="
-          preferredFilamentDisplayUnit?.toString() !==
-          this.preferredFilamentDisplayUnitSettingOnLoad?.value?.toString()
+          preferredFilamentDisplayUnit()?.toString() !==
+          preferredFilamentDisplayUnitSettingOnLoad()?.value?.toString()
         "
       >
         <div>
@@ -393,8 +391,8 @@
           </mat-button-toggle-group>
         </div>
         @if (
-          preferredFilamentDisplayUnit?.toString() !==
-          this.preferredFilamentDisplayUnitSettingOnLoad?.value?.toString()
+          preferredFilamentDisplayUnit()?.toString() !==
+          preferredFilamentDisplayUnitSettingOnLoad()?.value?.toString()
         ) {
           <div>
             <div
@@ -408,7 +406,9 @@
                 type="submit"
                 color="primary"
                 (click)="
-                  savePreferredFilamentDisplayUnit(preferredFilamentDisplayUnit)
+                  savePreferredFilamentDisplayUnit(
+                    preferredFilamentDisplayUnit()
+                  )
                 "
               >
                 Save Preferred Filament Display Unit
@@ -458,12 +458,12 @@
         fxFlex="grow"
         fxFlexFill
         [class.mat-elevation-z5]="
-          defaultElectricityKwhRate?.toString() !==
-          defaultElectricityKwhRateSettingOnLoad?.value?.toString()
+          defaultElectricityKwhRate()?.toString() !==
+          defaultElectricityKwhRateSettingOnLoad()?.value?.toString()
         "
         [class.editing-card]="
-          defaultElectricityKwhRate?.toString() !==
-          defaultElectricityKwhRateSettingOnLoad?.value?.toString()
+          defaultElectricityKwhRate()?.toString() !==
+          defaultElectricityKwhRateSettingOnLoad()?.value?.toString()
         "
       >
         <div>
@@ -474,7 +474,7 @@
             matTooltipPosition="right"
           >
             Electricity Rate ({{
-              currencies[preferredCurrency]?.symbol ?? '$'
+              currencies()[preferredCurrency()]?.symbol ?? '$'
             }}/kWh) <mat-icon inline>info</mat-icon>:</label
           >
           <input
@@ -487,8 +487,8 @@
           />
         </div>
         @if (
-          defaultElectricityKwhRate?.toString() !==
-          defaultElectricityKwhRateSettingOnLoad?.value?.toString()
+          defaultElectricityKwhRate()?.toString() !==
+          defaultElectricityKwhRateSettingOnLoad()?.value?.toString()
         ) {
           <div>
             <div
@@ -502,7 +502,7 @@
                 type="submit"
                 color="primary"
                 (click)="
-                  saveDefaultElectricityKwhRate(defaultElectricityKwhRate)
+                  saveDefaultElectricityKwhRate(defaultElectricityKwhRate())
                 "
               >
                 Save Electricity Rate
@@ -512,8 +512,9 @@
                 type="button"
                 class="close"
                 (click)="
-                  defaultElectricityKwhRate =
-                    defaultElectricityKwhRateSettingOnLoad?.value ?? null
+                  defaultElectricityKwhRate.set(
+                    defaultElectricityKwhRateSettingOnLoad()?.value ?? null
+                  )
                 "
                 color="warn"
               >
@@ -527,12 +528,12 @@
         fxFlex="grow"
         fxFlexFill
         [class.mat-elevation-z5]="
-          defaultElectricityWattageW?.toString() !==
-          defaultElectricityWattageSettingOnLoad?.value?.toString()
+          defaultElectricityWattageW()?.toString() !==
+          defaultElectricityWattageSettingOnLoad()?.value?.toString()
         "
         [class.editing-card]="
-          defaultElectricityWattageW?.toString() !==
-          defaultElectricityWattageSettingOnLoad?.value?.toString()
+          defaultElectricityWattageW()?.toString() !==
+          defaultElectricityWattageSettingOnLoad()?.value?.toString()
         "
       >
         <div>
@@ -555,8 +556,8 @@
           />
         </div>
         @if (
-          defaultElectricityWattageW?.toString() !==
-          defaultElectricityWattageSettingOnLoad?.value?.toString()
+          defaultElectricityWattageW()?.toString() !==
+          defaultElectricityWattageSettingOnLoad()?.value?.toString()
         ) {
           <div>
             <div
@@ -570,7 +571,7 @@
                 type="submit"
                 color="primary"
                 (click)="
-                  saveDefaultElectricityWattage(defaultElectricityWattageW)
+                  saveDefaultElectricityWattage(defaultElectricityWattageW())
                 "
               >
                 Save Default Wattage
@@ -580,8 +581,9 @@
                 type="button"
                 class="close"
                 (click)="
-                  defaultElectricityWattageW =
-                    defaultElectricityWattageSettingOnLoad?.value ?? null
+                  defaultElectricityWattageW.set(
+                    defaultElectricityWattageSettingOnLoad()?.value ?? null
+                  )
                 "
                 color="warn"
               >
@@ -591,13 +593,13 @@
           </div>
         }
       </div>
-      @if (pushAvailable) {
+      @if (pushAvailable()) {
         <hr />
         <div fxFlex="grow" fxFlexFill data-testid="push-notifications-section">
           <h2>Push notifications</h2>
           <p>Choose what your phone notifies you about.</p>
 
-          @if (!pushPermissionGranted) {
+          @if (!pushPermissionGranted()) {
             <p data-testid="push-permission-warning">
               Notifications are turned off for 3D Print Log on this device, so
               these settings have no effect yet.
@@ -719,8 +721,8 @@
           mat-raised-button
           color="accent"
           (click)="export()"
-          [class.spinner]="exportInProgress"
-          [disabled]="exportInProgress"
+          [class.spinner]="exportInProgress()"
+          [disabled]="exportInProgress()"
         >
           Export
         </button>
@@ -783,7 +785,7 @@
             color="warn"
             (click)="deactivateAccount()"
             [disabled]="
-              deactivateHasBeenClicked || !deactivationAgreementChecked
+              deactivateHasBeenClicked() || !deactivationAgreementChecked
             "
           >
             Deactivate Account

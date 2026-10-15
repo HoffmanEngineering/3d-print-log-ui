@@ -1,6 +1,13 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { KeyValue, KeyValuePipe } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -58,6 +65,7 @@ import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
 
 @Component({
   selector: 'app-settings',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
   imports: [
@@ -93,81 +101,92 @@ export class SettingsComponent implements OnInit {
   private readonly metaService = inject(MetaTagService);
   private readonly toastrService = inject(ToastrService);
 
-  userDetailsOnLoad: UserDetailDto;
-  public defaultPrintViewStatusSettingOnLoad: UserSetting | null = null;
+  readonly userDetailsOnLoad = signal<UserDetailDto | undefined>(undefined);
+  readonly defaultPrintViewStatusSettingOnLoad = signal<UserSetting | null>(
+    null
+  );
 
   public profileViewStatusTypes = ProfileViewStatus;
   public printViewStatusTypes = PrintViewStatus;
 
-  public preferredCurrencyNameSettingOnLoad: UserSetting | null = null;
+  readonly preferredCurrencyNameSettingOnLoad = signal<UserSetting | null>(
+    null
+  );
   public preferredCurrencySymbolSettingOnLoad: UserSetting | null = null;
 
-  public defaultFilamentDiameterMmSettingOnLoad: UserSetting | null = null;
-  public defaultFilamentPriceSettingOnLoad: UserSetting | null = null;
-  public defaultElectricityKwhRateSettingOnLoad: UserSetting | null = null;
-  public defaultElectricityWattageSettingOnLoad: UserSetting | null = null;
-  public preferredFilamentDisplayUnitSettingOnLoad: UserSetting | null = null;
-  public preferredFilamentDisplayUnit: PrintFilamentSourceMeasurement | null =
-    null;
+  readonly defaultFilamentDiameterMmSettingOnLoad = signal<UserSetting | null>(
+    null
+  );
+  readonly defaultFilamentPriceSettingOnLoad = signal<UserSetting | null>(null);
+  readonly defaultElectricityKwhRateSettingOnLoad = signal<UserSetting | null>(
+    null
+  );
+  readonly defaultElectricityWattageSettingOnLoad = signal<UserSetting | null>(
+    null
+  );
+  readonly preferredFilamentDisplayUnitSettingOnLoad =
+    signal<UserSetting | null>(null);
+  readonly preferredFilamentDisplayUnit =
+    signal<PrintFilamentSourceMeasurement | null>(null);
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
-  public deactivateHasBeenClicked = false;
+  readonly deactivateHasBeenClicked = signal(false);
 
   /**
    * NgModel for Profile View Status
    */
-  public profileViewStatus: ProfileViewStatus = null;
+  readonly profileViewStatus = signal<ProfileViewStatus | null>(null);
   /**
    * NgModel for Print View Status
    */
-  public printViewStatus: PrintViewStatus = null;
+  readonly printViewStatus = signal<PrintViewStatus | null>(null);
 
   /**
    * NgModel for Currency
    */
-  public preferredCurrency: string = null;
+  readonly preferredCurrency = signal<string | null>(null);
 
   /**
    * NgModel for Default Filament Diameter
    */
-  public defaultFilamentDiameterMm: number = null;
+  readonly defaultFilamentDiameterMm = signal<number | null>(null);
 
   /**
    * NgModel for Default Filament Price
    */
-  public defaultFilamentPrice: string = null;
+  readonly defaultFilamentPrice = signal<string | null>(null);
 
   /**
    * NgModel for Default Electricity kWh Rate
    */
-  public defaultElectricityKwhRate: string = null;
+  readonly defaultElectricityKwhRate = signal<string | null>(null);
 
   /**
    * NgModel for Default Electricity Wattage
    */
-  public defaultElectricityWattageW: string = null;
+  readonly defaultElectricityWattageW = signal<string | null>(null);
 
-  public exportInProgress = false;
+  readonly exportInProgress = signal(false);
 
   public deactivationAgreementChecked = false;
 
-  public currencies: Currencies = null;
+  readonly currencies = signal<Currencies | null>(null);
 
   /**
    * Whether the push section renders at all. Hidden in a normal browser: dead toggles that
    * cannot affect anything are worse than no toggles.
    */
-  public pushAvailable = false;
-  public printCompletedPush = true;
-  public printFailedPush = true;
-  public achievementPush = true;
+  readonly pushAvailable = signal(false);
+  readonly printCompletedPush = signal(true);
+  readonly printFailedPush = signal(true);
+  readonly achievementPush = signal(true);
 
   /**
    * The toggles write a preference, but a preference cannot make Android display anything.
    * When the OS permission is missing the toggles are honest but inert, so the section says
    * so and offers the request — this is the second chance for someone who declined earlier.
    */
-  public pushPermissionGranted = true;
+  readonly pushPermissionGranted = signal(true);
 
   /** Exposed so the template can name the setting types it writes. */
   public readonly userSettingTypes = UserSettingType;
@@ -193,21 +212,21 @@ export class SettingsComponent implements OnInit {
   );
 
   private async loadPushPreferences(): Promise<void> {
-    this.pushAvailable = this.nativeBridge.isAvailable();
-    if (!this.pushAvailable) {
+    this.pushAvailable.set(this.nativeBridge.isAvailable());
+    if (!this.pushAvailable()) {
       return;
     }
 
-    this.printCompletedPush = await this.pushPreferences.isEnabled(
-      UserSettingType.Push_PrintCompleted
+    this.printCompletedPush.set(
+      await this.pushPreferences.isEnabled(UserSettingType.Push_PrintCompleted)
     );
-    this.printFailedPush = await this.pushPreferences.isEnabled(
-      UserSettingType.Push_PrintFailed
+    this.printFailedPush.set(
+      await this.pushPreferences.isEnabled(UserSettingType.Push_PrintFailed)
     );
-    this.achievementPush = await this.pushPreferences.isEnabled(
-      UserSettingType.Push_Achievement
+    this.achievementPush.set(
+      await this.pushPreferences.isEnabled(UserSettingType.Push_Achievement)
     );
-    this.pushPermissionGranted = this.nativeBridge.permission === 'granted';
+    this.pushPermissionGranted.set(this.nativeBridge.permission === 'granted');
   }
 
   async onEnableNotificationsClicked(): Promise<void> {
@@ -217,7 +236,7 @@ export class SettingsComponent implements OnInit {
     const result = await this.pushPermissionPrompt.promptOnUserRequest(
       'Notifications are turned off for 3D Print Log on this device.'
     );
-    this.pushPermissionGranted = result.permission === 'granted';
+    this.pushPermissionGranted.set(result.permission === 'granted');
   }
 
   // One handler per toggle, with the type passed explicitly: a shared handler would have to
@@ -240,67 +259,85 @@ export class SettingsComponent implements OnInit {
     void this.loadPushPreferences();
 
     this.activatedRoute.data.subscribe((data) => {
-      this.currencies = data.currencies;
+      this.currencies.set(data.currencies);
 
-      this.userDetailsOnLoad = data.currentUser;
+      this.userDetailsOnLoad.set(data.currentUser);
 
-      this.defaultPrintViewStatusSettingOnLoad =
-        data.defaultPrintViewStatusSetting;
+      this.defaultPrintViewStatusSettingOnLoad.set(
+        data.defaultPrintViewStatusSetting
+      );
 
-      this.preferredCurrencyNameSettingOnLoad =
-        data.preferredCurrencyNameSetting;
+      this.preferredCurrencyNameSettingOnLoad.set(
+        data.preferredCurrencyNameSetting
+      );
       this.preferredCurrencySymbolSettingOnLoad =
         data.preferredCurrencySymbolSetting;
 
-      this.defaultFilamentDiameterMmSettingOnLoad =
-        data.defaultFilamentDiameterMmSetting;
-      this.defaultFilamentPriceSettingOnLoad = data.defaultFilamentPriceSetting;
+      this.defaultFilamentDiameterMmSettingOnLoad.set(
+        data.defaultFilamentDiameterMmSetting
+      );
+      this.defaultFilamentPriceSettingOnLoad.set(
+        data.defaultFilamentPriceSetting
+      );
 
       // Default all the ngModels
-      this.profileViewStatus = this.userDetailsOnLoad.viewStatus;
-      this.printViewStatus = this.defaultPrintViewStatusSettingOnLoad
-        ? +this.defaultPrintViewStatusSettingOnLoad.value
-        : null;
+      this.profileViewStatus.set(this.userDetailsOnLoad().viewStatus);
+      this.printViewStatus.set(
+        this.defaultPrintViewStatusSettingOnLoad()
+          ? +this.defaultPrintViewStatusSettingOnLoad().value
+          : null
+      );
 
-      this.preferredCurrency = this.preferredCurrencyNameSettingOnLoad
-        ? this.preferredCurrencyNameSettingOnLoad.value
-        : 'USD';
+      this.preferredCurrency.set(
+        this.preferredCurrencyNameSettingOnLoad()
+          ? this.preferredCurrencyNameSettingOnLoad().value
+          : 'USD'
+      );
 
-      this.defaultFilamentDiameterMm = this
-        .defaultFilamentDiameterMmSettingOnLoad
-        ? +this.defaultFilamentDiameterMmSettingOnLoad.value
-        : null;
+      this.defaultFilamentDiameterMm.set(
+        this.defaultFilamentDiameterMmSettingOnLoad()
+          ? +this.defaultFilamentDiameterMmSettingOnLoad().value
+          : null
+      );
 
-      this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
-        ? this.defaultFilamentPriceSettingOnLoad.value
-        : null;
+      this.defaultFilamentPrice.set(
+        this.defaultFilamentPriceSettingOnLoad()
+          ? this.defaultFilamentPriceSettingOnLoad().value
+          : null
+      );
 
-      this.defaultElectricityKwhRateSettingOnLoad =
-        data.defaultElectricityKwhRateSetting;
-      this.defaultElectricityWattageSettingOnLoad =
-        data.defaultElectricityWattageSetting;
-      this.defaultElectricityKwhRate =
-        this.defaultElectricityKwhRateSettingOnLoad?.value ?? null;
-      this.defaultElectricityWattageW =
-        this.defaultElectricityWattageSettingOnLoad?.value ?? null;
+      this.defaultElectricityKwhRateSettingOnLoad.set(
+        data.defaultElectricityKwhRateSetting
+      );
+      this.defaultElectricityWattageSettingOnLoad.set(
+        data.defaultElectricityWattageSetting
+      );
+      this.defaultElectricityKwhRate.set(
+        this.defaultElectricityKwhRateSettingOnLoad()?.value ?? null
+      );
+      this.defaultElectricityWattageW.set(
+        this.defaultElectricityWattageSettingOnLoad()?.value ?? null
+      );
 
-      this.preferredFilamentDisplayUnitSettingOnLoad =
-        data.preferredFilamentDisplayUnitSetting;
-      this.preferredFilamentDisplayUnit = this
-        .preferredFilamentDisplayUnitSettingOnLoad
-        ? (+this.preferredFilamentDisplayUnitSettingOnLoad
-            .value as PrintFilamentSourceMeasurement)
-        : null;
+      this.preferredFilamentDisplayUnitSettingOnLoad.set(
+        data.preferredFilamentDisplayUnitSetting
+      );
+      this.preferredFilamentDisplayUnit.set(
+        this.preferredFilamentDisplayUnitSettingOnLoad()
+          ? (+this.preferredFilamentDisplayUnitSettingOnLoad()
+              .value as PrintFilamentSourceMeasurement)
+          : null
+      );
     });
 
     this.authService.userProfile$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((user) => {
         if (user?.deactivationDateTime) {
-          this.deactivateHasBeenClicked = true;
+          this.deactivateHasBeenClicked.set(true);
         } else {
           // If the deactivate date time gets set back to null, then clear the click
-          this.deactivateHasBeenClicked = false;
+          this.deactivateHasBeenClicked.set(false);
         }
       });
   }
@@ -324,26 +361,26 @@ export class SettingsComponent implements OnInit {
 
   public saveProfileVisibility(newViewStatus: ProfileViewStatus) {
     const newUserDetail: UserDetailDto = {
-      ...this.userDetailsOnLoad,
+      ...this.userDetailsOnLoad(),
       viewStatus: newViewStatus,
     };
     this.userService
       .updateCurrentUserDetail(newUserDetail)
       .subscribe((user) => {
-        this.userDetailsOnLoad = user;
-        this.profileViewStatus = this.userDetailsOnLoad.viewStatus;
+        this.userDetailsOnLoad.set(user);
+        this.profileViewStatus.set(this.userDetailsOnLoad().viewStatus);
       });
   }
 
   saveDefaultPrintViewStatus(newViewStatus: PrintViewStatus) {
-    if (this.defaultPrintViewStatusSettingOnLoad) {
+    if (this.defaultPrintViewStatusSettingOnLoad()) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultPrintViewStatusSettingOnLoad.id,
+          this.defaultPrintViewStatusSettingOnLoad().id,
           newViewStatus.toString()
         )
         .subscribe((setting) => {
-          this.defaultPrintViewStatusSettingOnLoad = setting;
+          this.defaultPrintViewStatusSettingOnLoad.set(setting);
         });
     } else {
       this.userSettingService
@@ -352,36 +389,38 @@ export class SettingsComponent implements OnInit {
           newViewStatus.toString()
         )
         .subscribe((setting) => {
-          this.defaultPrintViewStatusSettingOnLoad = setting;
+          this.defaultPrintViewStatusSettingOnLoad.set(setting);
         });
     }
   }
 
   cancelDefaultPrintViewStatus() {
-    this.printViewStatus = this.defaultPrintViewStatusSettingOnLoad
-      ? +this.defaultPrintViewStatusSettingOnLoad.value
-      : null;
+    this.printViewStatus.set(
+      this.defaultPrintViewStatusSettingOnLoad()
+        ? +this.defaultPrintViewStatusSettingOnLoad().value
+        : null
+    );
   }
 
   savePreferredCurrency(newCurrency: string) {
-    if (this.preferredCurrencyNameSettingOnLoad) {
+    if (this.preferredCurrencyNameSettingOnLoad()) {
       this.userSettingService
         .updateUserSetting(
-          this.preferredCurrencyNameSettingOnLoad.id,
+          this.preferredCurrencyNameSettingOnLoad().id,
           newCurrency.toString()
         )
         .subscribe((setting) => {
-          this.preferredCurrencyNameSettingOnLoad = setting;
+          this.preferredCurrencyNameSettingOnLoad.set(setting);
         });
     } else {
       this.userSettingService
         .addUserSetting(UserSettingType.Currency_Name, newCurrency.toString())
         .subscribe((setting) => {
-          this.preferredCurrencyNameSettingOnLoad = setting;
+          this.preferredCurrencyNameSettingOnLoad.set(setting);
         });
     }
 
-    const symbol = this.currencies[newCurrency].symbol;
+    const symbol = this.currencies()[newCurrency].symbol;
 
     if (this.preferredCurrencySymbolSettingOnLoad) {
       this.userSettingService
@@ -399,20 +438,22 @@ export class SettingsComponent implements OnInit {
   }
 
   cancelPreferredCurrency() {
-    this.preferredCurrency = this.preferredCurrencyNameSettingOnLoad
-      ? this.preferredCurrencyNameSettingOnLoad.value
-      : 'USD';
+    this.preferredCurrency.set(
+      this.preferredCurrencyNameSettingOnLoad()
+        ? this.preferredCurrencyNameSettingOnLoad().value
+        : 'USD'
+    );
   }
 
   saveDefaultFilamentDiameterMm(newDiameterMm: number) {
-    if (this.defaultFilamentDiameterMmSettingOnLoad) {
+    if (this.defaultFilamentDiameterMmSettingOnLoad()) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultFilamentDiameterMmSettingOnLoad.id,
+          this.defaultFilamentDiameterMmSettingOnLoad().id,
           newDiameterMm.toString()
         )
         .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSettingOnLoad = setting;
+          this.defaultFilamentDiameterMmSettingOnLoad.set(setting);
         });
     } else {
       this.userSettingService
@@ -421,26 +462,28 @@ export class SettingsComponent implements OnInit {
           newDiameterMm.toString()
         )
         .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSettingOnLoad = setting;
+          this.defaultFilamentDiameterMmSettingOnLoad.set(setting);
         });
     }
   }
 
   cancelDefaultFilamentDiameterMm() {
-    this.defaultFilamentDiameterMm = this.defaultFilamentDiameterMmSettingOnLoad
-      ? +this.defaultFilamentDiameterMmSettingOnLoad.value
-      : null;
+    this.defaultFilamentDiameterMm.set(
+      this.defaultFilamentDiameterMmSettingOnLoad()
+        ? +this.defaultFilamentDiameterMmSettingOnLoad().value
+        : null
+    );
   }
 
   saveDefaultFilamentPrice(newPrice: string) {
-    if (this.defaultFilamentPriceSettingOnLoad) {
+    if (this.defaultFilamentPriceSettingOnLoad()) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultFilamentPriceSettingOnLoad.id,
+          this.defaultFilamentPriceSettingOnLoad().id,
           newPrice.toString()
         )
         .subscribe((setting) => {
-          this.defaultFilamentPriceSettingOnLoad = setting;
+          this.defaultFilamentPriceSettingOnLoad.set(setting);
         });
     } else {
       this.userSettingService
@@ -449,26 +492,28 @@ export class SettingsComponent implements OnInit {
           newPrice.toString()
         )
         .subscribe((setting) => {
-          this.defaultFilamentPriceSettingOnLoad = setting;
+          this.defaultFilamentPriceSettingOnLoad.set(setting);
         });
     }
   }
 
   cancelDefaultFilamentPrice() {
-    this.defaultFilamentPrice = this.defaultFilamentPriceSettingOnLoad
-      ? this.defaultFilamentPriceSettingOnLoad.value
-      : null;
+    this.defaultFilamentPrice.set(
+      this.defaultFilamentPriceSettingOnLoad()
+        ? this.defaultFilamentPriceSettingOnLoad().value
+        : null
+    );
   }
 
   savePreferredFilamentDisplayUnit(newUnit: PrintFilamentSourceMeasurement) {
-    if (this.preferredFilamentDisplayUnitSettingOnLoad) {
+    if (this.preferredFilamentDisplayUnitSettingOnLoad()) {
       this.userSettingService
         .updateUserSetting(
-          this.preferredFilamentDisplayUnitSettingOnLoad.id,
+          this.preferredFilamentDisplayUnitSettingOnLoad().id,
           newUnit.toString()
         )
         .subscribe((setting) => {
-          this.preferredFilamentDisplayUnitSettingOnLoad = setting;
+          this.preferredFilamentDisplayUnitSettingOnLoad.set(setting);
           this.loggingService.logEvent(
             'Settings_PreferredFilamentDisplayUnitChanged',
             { unit: newUnit }
@@ -481,7 +526,7 @@ export class SettingsComponent implements OnInit {
           newUnit.toString()
         )
         .subscribe((setting) => {
-          this.preferredFilamentDisplayUnitSettingOnLoad = setting;
+          this.preferredFilamentDisplayUnitSettingOnLoad.set(setting);
           this.loggingService.logEvent(
             'Settings_PreferredFilamentDisplayUnitChanged',
             { unit: newUnit }
@@ -491,29 +536,30 @@ export class SettingsComponent implements OnInit {
   }
 
   cancelPreferredFilamentDisplayUnit() {
-    this.preferredFilamentDisplayUnit = this
-      .preferredFilamentDisplayUnitSettingOnLoad
-      ? (+this.preferredFilamentDisplayUnitSettingOnLoad
-          .value as PrintFilamentSourceMeasurement)
-      : null;
+    this.preferredFilamentDisplayUnit.set(
+      this.preferredFilamentDisplayUnitSettingOnLoad()
+        ? (+this.preferredFilamentDisplayUnitSettingOnLoad()
+            .value as PrintFilamentSourceMeasurement)
+        : null
+    );
   }
 
   saveDefaultElectricityKwhRate(newRate: string) {
     const rateStr = newRate?.toString();
-    if (this.defaultElectricityKwhRateSettingOnLoad) {
+    if (this.defaultElectricityKwhRateSettingOnLoad()) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultElectricityKwhRateSettingOnLoad.id,
+          this.defaultElectricityKwhRateSettingOnLoad().id,
           rateStr
         )
         .subscribe((setting) => {
-          this.defaultElectricityKwhRateSettingOnLoad = setting;
+          this.defaultElectricityKwhRateSettingOnLoad.set(setting);
         });
     } else {
       this.userSettingService
         .addUserSetting(UserSettingType.Electricity_KwhRate, rateStr)
         .subscribe((setting) => {
-          this.defaultElectricityKwhRateSettingOnLoad = setting;
+          this.defaultElectricityKwhRateSettingOnLoad.set(setting);
         });
     }
     this.loggingService.logEvent('Settings_ElectricityKwhRateChanged');
@@ -521,20 +567,20 @@ export class SettingsComponent implements OnInit {
 
   saveDefaultElectricityWattage(newWattage: string) {
     const wattageStr = newWattage?.toString();
-    if (this.defaultElectricityWattageSettingOnLoad) {
+    if (this.defaultElectricityWattageSettingOnLoad()) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultElectricityWattageSettingOnLoad.id,
+          this.defaultElectricityWattageSettingOnLoad().id,
           wattageStr
         )
         .subscribe((setting) => {
-          this.defaultElectricityWattageSettingOnLoad = setting;
+          this.defaultElectricityWattageSettingOnLoad.set(setting);
         });
     } else {
       this.userSettingService
         .addUserSetting(UserSettingType.Electricity_DefaultWattageW, wattageStr)
         .subscribe((setting) => {
-          this.defaultElectricityWattageSettingOnLoad = setting;
+          this.defaultElectricityWattageSettingOnLoad.set(setting);
         });
     }
     this.loggingService.logEvent('Settings_ElectricityDefaultWattageChanged');
@@ -547,22 +593,22 @@ export class SettingsComponent implements OnInit {
   }
 
   public export() {
-    if (this.exportInProgress) {
+    if (this.exportInProgress()) {
       return; // prevent multiple exports;
     }
 
-    this.exportInProgress = true;
+    this.exportInProgress.set(true);
     this.printService.exportAllPrintsAsCsv().subscribe(
       (file) => {
         this.downloadBlob(file);
-        this.exportInProgress = false;
+        this.exportInProgress.set(false);
       },
       (err) => {
         this.toastrService.error(
           'An error has occurred while exporting data. Please try again in a few seconds.',
           'Error Exporting'
         );
-        this.exportInProgress = false;
+        this.exportInProgress.set(false);
       }
     );
   }
@@ -601,7 +647,7 @@ export class SettingsComponent implements OnInit {
   }
 
   public deactivateAccount() {
-    this.deactivateHasBeenClicked = true;
+    this.deactivateHasBeenClicked.set(true);
 
     this.userService.deactivateCurrentUser().subscribe((updatedUser) => {
       this.authService.updateCurrentUserDeactivationDate(

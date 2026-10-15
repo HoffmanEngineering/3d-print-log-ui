@@ -247,15 +247,16 @@ function stubApi(set: CaptureSet, unhandled: string[]) {
 }
 
 /**
- * Deterministic client state: theme plus the print-list view/columns/page size,
- * so a developer's saved grouped view, custom columns or page size cannot leak
- * into a committed image.
+ * Deterministic client state: theme, the print-list view/columns/page size and
+ * the materials table's columns, so a developer's saved grouped view, custom
+ * columns or page size cannot leak into a committed image.
  */
 function setClientState(win: Window, mode: 'light' | 'dark') {
   win.localStorage.setItem('theme-mode', mode);
   win.localStorage.setItem('print_list_view_mode', 'list');
   win.localStorage.removeItem('print_table_displayed_columns');
   win.localStorage.setItem('print_list_page_size', '25');
+  win.localStorage.removeItem('filament_table_displayed_columns');
   // Neutralize AdSense: make push a no-op so the ad slot (hidden in capture)
   // can't throw "No slot size for availableWidth=0" and fail the run.
   const w = win as unknown as { adsbygoogle: { push: () => void } };

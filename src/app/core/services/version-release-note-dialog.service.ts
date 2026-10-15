@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { environment } from 'src/environments/environment';
 import { LocalStorageService } from './local-storage.service';
 
@@ -2082,15 +2082,17 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
   }
 
   private showReleaseNote(releaseNote: ReleaseNote) {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '450px',
-    });
-    dialogRef.componentInstance.title = releaseNote.title;
-
-    dialogRef.componentInstance.body = releaseNote.body;
-    dialogRef.componentInstance.yesText = 'Ok';
-    dialogRef.componentInstance.yesColor = 'primary';
-    dialogRef.componentInstance.noText = '';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: releaseNote.title,
+        body: releaseNote.body,
+        yesText: 'Ok',
+        yesColor: 'primary',
+        noText: '',
+      },
+      { maxWidth: '450px' }
+    );
 
     return lastValueFrom(dialogRef.afterClosed());
   }

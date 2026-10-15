@@ -35,16 +35,16 @@ import {
 export class FilamentUsageSummaryComponent {
   private readonly printService = inject(PrintService);
 
-  filamentUsage = input<PrintFilamentSummaryDto[]>([]);
-  defaultFilamentPrice = input<string | null | undefined>(null);
-  currencySymbol = input<string>('$');
-  preferredUnit = input<PrintFilamentSourceMeasurement>(
+  readonly filamentUsage = input<PrintFilamentSummaryDto[]>([]);
+  readonly defaultFilamentPrice = input<string | null | undefined>(null);
+  readonly currencySymbol = input<string>('$');
+  readonly preferredUnit = input<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.Weight
   );
 
   /** Fail-closed: callers must opt in, so a missed call site cannot leak links. */
-  linkFilaments = input(false);
-  showPrices = input(false);
+  readonly linkFilaments = input(false);
+  readonly showPrices = input(false);
 
   /**
    * Ids of the visible legend entries that explain this row's `*`. Only the

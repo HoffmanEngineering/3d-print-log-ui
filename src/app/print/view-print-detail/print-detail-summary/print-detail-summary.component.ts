@@ -59,14 +59,14 @@ export class PrintDetailSummaryComponent {
   private readonly printService = inject(PrintService);
   private readonly projectService = inject(ProjectService);
 
-  print = input.required<PrintDetail>();
-  user = input<UserSummaryDto | null>(null);
-  isOwner = input(false);
-  currencySymbol = input('$');
-  defaultFilamentPrice = input<string | null>(null);
-  kwhRate = input<string | null>(null);
-  defaultWattage = input<string | null>(null);
-  preferredUnit = input<PrintFilamentSourceMeasurement>(
+  readonly print = input.required<PrintDetail>();
+  readonly user = input<UserSummaryDto | null>(null);
+  readonly isOwner = input(false);
+  readonly currencySymbol = input('$');
+  readonly defaultFilamentPrice = input<string | null>(null);
+  readonly kwhRate = input<string | null>(null);
+  readonly defaultWattage = input<string | null>(null);
+  readonly preferredUnit = input<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.AsRecorded
   );
 

@@ -221,12 +221,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
     }
   }
 
-  public filterByStatus = signal<PrintStatus | null>(null);
+  public readonly filterByStatus = signal<PrintStatus | null>(null);
 
-  public filterByPrinterIds = signal<number[]>([]);
+  public readonly filterByPrinterIds = signal<number[]>([]);
 
-  public filterByFilamentIds = signal<string[]>([]);
-  public filterByFilaments = signal<FilamentSummary[]>([]);
+  public readonly filterByFilamentIds = signal<string[]>([]);
+  public readonly filterByFilaments = signal<FilamentSummary[]>([]);
 
   public printStatusTypes = PrintStatus;
 
@@ -382,9 +382,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private readonly PRINT_TABLE_DISPLAYED_COLUMNS =
     'print_table_displayed_columns';
 
-  public preferredFilamentUnit = signal<PrintFilamentSourceMeasurement>(
-    PrintFilamentSourceMeasurement.AsRecorded
-  );
+  public readonly preferredFilamentUnit =
+    signal<PrintFilamentSourceMeasurement>(
+      PrintFilamentSourceMeasurement.AsRecorded
+    );
   private readonly userSettingService = inject(UserSettingService);
 
   public defaultFilamentPriceSetting: UserSetting | null = null;

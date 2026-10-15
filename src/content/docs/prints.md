@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-10-10
+updated: 2026-10-15
 related: [projects, materials]
 ---
 
@@ -27,7 +27,8 @@ Navigate to the [Prints](/prints) section to manage your list of 3D prints.
 By default, the list shows your last 10 prints, ordered by their Start Dates.
 Use the **Search** input at the top to filter the list by the print's **Title**
 and **Notes** fields. Use the **Status** dropdown to filter by a specific print
-status.
+status, and **Filter by Tags** to show only prints with any of the
+[tags](#tags) you pick.
 
 <doc-figure
   name="print-list-filters"
@@ -41,6 +42,7 @@ columns are:
 
 - **Image** - The default image for the print. The default image is the one shown in list views.
 - **Title** - The title of the Print.
+- **Tags** - Your [tags](#tags) on the print. Click one to list every print with that tag.
 - **Printer** - The Name (Make - Model) of the 3D printer used.
 - **Start Date** - The start date of the print.
 - **Status** - The current status of the print.
@@ -290,6 +292,36 @@ You can group related prints together using **Projects**. Assign a print to a
 project from the add/edit form. Project chips appear on each print in the list,
 and a **Grouped by Project** view lets you see all your builds at a glance.
 [Learn more about Projects.](/docs/projects)
+
+---
+
+### Tags {#tags}
+
+Tags are your own labels for prints, like "Gifts", "Cosplay" or "Spare parts".
+Where a print belongs to at most one [project](#projects), it can have up to 20
+tags, so use them for anything that cuts across projects.
+
+- **Tag a print** — On a print's page, type in the **Tags** field under its
+  status. Pick one of your tags from the list, or type a new name and press
+  Enter to create it. Click <mat-icon inline="true">cancel</mat-icon> on a tag to
+  remove it. Changes there save straight away. The same field is on the add and
+  edit form, where the tags save with the print.
+- **Filter by tag** — Click a tag in the print list, or open **Filters** and pick
+  one or more in **Filter by Tags** to see the prints with any of them. The
+  **Grouped by Project** view does not filter by tag.
+- **Totals per tag** — [Settings](/settings) lists every tag with how many prints
+  have it and their total print time, material and cost. Print time and material
+  use the actual values where recorded and the estimates otherwise. Cost is
+  material plus electricity, worked out the same way as on the
+  [Analytics](/docs/analytics) costs tab, and says how many of the prints it
+  covers when some could not be costed.
+- **Rename, recolour or delete** — Also in [Settings](/settings). A tag's colour
+  shows as a dot beside its name. Deleting a tag removes it from its prints and
+  keeps the prints.
+
+Tag names are up to 50 characters and must differ by more than letter case.
+Tags are private: they never show on a public print or profile, even on prints
+that are public.
 
 ---
 

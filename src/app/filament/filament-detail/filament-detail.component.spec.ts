@@ -966,7 +966,7 @@ describe('FilamentDetailComponent - usage panels', () => {
   });
 
   it('renders neither card in copy mode', async () => {
-    // CopyFilamentDetailResolverService nulls the id: the clone's remaining and
+    // copyFilamentDetailResolver nulls the id: the clone's remaining and
     // prints belong to the source spool, not to the copy.
     await setup({ id: null });
     expect(

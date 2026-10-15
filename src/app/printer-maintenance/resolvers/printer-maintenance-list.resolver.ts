@@ -1,0 +1,47 @@
+import { inject } from '@angular/core';
+import { ResolveFn } from '@angular/router';
+import {
+  PrinterMaintenanceDto,
+  PrinterMaintenanceService,
+  PrinterMaintenanceSortColumn,
+} from 'src/app/core/services/printer-maintenance.service';
+import { PagedList } from 'src/app/core/types/paging';
+import { SortDirection } from 'src/app/core/types/sort-request';
+
+/** The maintenance log page the URL's query describes. */
+export const printerMaintenanceListResolver: ResolveFn<
+  PagedList<PrinterMaintenanceDto>
+> = (route) => {
+  let defaultPageSize = 10;
+  const savedPageSize = localStorage.getItem(
+    'printer_maintenance_list_page_size'
+  );
+  if (savedPageSize) {
+    defaultPageSize = +savedPageSize;
+  }
+
+  const {
+    pageNumber = 1,
+    pageSize = defaultPageSize,
+    searchText = '',
+    includeDone = true,
+    includeNotDone = true,
+    sortDirection = SortDirection.Desc,
+    sortColumn = PrinterMaintenanceSortColumn.Date,
+  } = route.queryParams;
+
+  const printerIds = route.queryParamMap
+    .getAll('filterByPrinterId')
+    .map((id) => +id);
+
+  return inject(PrinterMaintenanceService).getCurrentUserPrinterMaintenance(
+    pageNumber,
+    pageSize,
+    searchText,
+    printerIds,
+    includeDone,
+    includeNotDone,
+    sortDirection,
+    sortColumn
+  );
+};

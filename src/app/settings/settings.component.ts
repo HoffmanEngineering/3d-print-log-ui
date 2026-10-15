@@ -22,10 +22,7 @@ import {
   UserDetailDto,
   UserService,
 } from '../core/services/user.service';
-import {
-  Currencies,
-  Currency,
-} from '../core/resolvers/currencies-resolver.service';
+import { Currencies, Currency } from '../core/resolvers/currencies.resolver';
 import { SubscriptionService } from '../core/services/subscription.service';
 import { ThemeService, ThemeMode } from '../core/services/theme.service';
 import { LoggingService } from '../core/services/logging.service';

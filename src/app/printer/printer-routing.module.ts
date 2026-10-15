@@ -4,10 +4,10 @@ import { AuthGuard } from '../core/guards/auth.guard';
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { PrinterDetailComponent } from './printer-detail/printer-detail.component';
 import { PrinterListComponent } from './printer-list/printer-list.component';
-import { PrinterDetailResolverService } from './resolvers/printer-detail-resolver.service';
-import { PrinterListResolverService } from './resolvers/printer-list-resolver.service';
-import { PrinterCategoryResolverService } from '../core/resolvers/printer-category-resolver.service';
-import { MaterialCategoryResolverService } from '../core/resolvers/material-category-resolver.service';
+import { printerDetailResolver } from './resolvers/printer-detail.resolver';
+import { printerListResolver } from './resolvers/printer-list.resolver';
+import { printerCategoriesResolver } from '../core/resolvers/printer-categories.resolver';
+import { materialCategoriesResolver } from '../core/resolvers/material-categories.resolver';
 
 export const printerRoutes: Routes = [
   {
@@ -17,16 +17,16 @@ export const printerRoutes: Routes = [
         path: '',
         component: PrinterListComponent,
         canActivate: [AuthGuard],
-        resolve: { printerList: PrinterListResolverService },
+        resolve: { printerList: printerListResolver },
       },
       {
         path: ':id',
         component: PrinterDetailComponent,
         canActivate: [AuthGuard],
         resolve: {
-          printer: PrinterDetailResolverService,
-          printerCategories: PrinterCategoryResolverService,
-          materialCategories: MaterialCategoryResolverService,
+          printer: printerDetailResolver,
+          printerCategories: printerCategoriesResolver,
+          materialCategories: materialCategoriesResolver,
         },
         canDeactivate: [PendingChangesGuard],
       },

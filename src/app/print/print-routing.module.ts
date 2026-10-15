@@ -3,23 +3,25 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '../core/guards/auth.guard';
 
 import { PendingChangesGuard } from '../core/guards/pending-changes.guard';
-import { CurrenciesResolverService } from '../core/resolvers/currencies-resolver.service';
-import { CurrencyNameResolverService } from '../core/resolvers/currency-name-resolver.service';
-import { CurrencySymbolResolverService } from '../core/resolvers/currency-symbol-resolver.service';
-import { CurrentUserPrinterSummaryResolverService } from '../core/resolvers/current-user-printer-summary-resolver.service';
-import { DefaultFilamentPriceSettingResolverService } from '../core/resolvers/default-filament-price-setting-resolver.service';
-import { DefaultElectricityKwhRateSettingResolverService } from '../core/resolvers/default-electricity-kwh-rate-setting-resolver.service';
-import { DefaultElectricityWattageSettingResolverService } from '../core/resolvers/default-electricity-wattage-setting-resolver.service';
-import { DefaultPrintViewStatusSettingResolverService } from '../core/resolvers/default-print-view-status-setting-resolver.service';
+import { currenciesResolver } from '../core/resolvers/currencies.resolver';
+import {
+  currencyNameSettingResolver,
+  currencySymbolSettingResolver,
+  defaultElectricityKwhRateSettingResolver,
+  defaultElectricityWattageSettingResolver,
+  defaultFilamentPriceSettingResolver,
+  defaultPrintViewStatusSettingResolver,
+  lastSelectedPrinterSettingResolver,
+} from '../core/resolvers/user-setting.resolvers';
+import { currentUserPrinterSummariesResolver } from '../core/resolvers/current-user-printer-summaries.resolver';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
 import { PrintListComponent } from './print-list/print-list.component';
-import { CopyPrintDetailResolverService } from './resolvers/copy-print-detail-resolver.service';
-import { LastFilamentMeasureSettingResolverService } from './resolvers/last-filament-measure-setting-resolver.service';
-import { LastSelectedPrinterSettingResolverService } from './resolvers/last-selected-printer-setting-resolver.service';
-import { PrintDetailResolverService } from './resolvers/print-detail-resolver.service';
-import { PrintListResolverService } from './resolvers/print-list-resolver.service';
+import { copyPrintDetailResolver } from './resolvers/copy-print-detail.resolver';
+import { lastFilamentMeasureSettingResolver } from './resolvers/last-filament-measure-setting.resolver';
+import { printDetailResolver } from './resolvers/print-detail.resolver';
+import { printListResolver } from './resolvers/print-list.resolver';
 import { ViewPrintDetailComponent } from './view-print-detail/view-print-detail.component';
-import { FilamentListResolverService } from './resolvers/filament-list-resolver.service';
+import { filamentFilterResolver } from './resolvers/filament-filter.resolver';
 
 export const printRoutes: Routes = [
   {
@@ -30,16 +32,15 @@ export const printRoutes: Routes = [
         component: PrintListComponent,
         canActivate: [AuthGuard],
         resolve: {
-          printList: PrintListResolverService,
-          printers: CurrentUserPrinterSummaryResolverService,
-          filaments: FilamentListResolverService,
-          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
-          defaultFilamentPriceSetting:
-            DefaultFilamentPriceSettingResolverService,
+          printList: printListResolver,
+          printers: currentUserPrinterSummariesResolver,
+          filaments: filamentFilterResolver,
+          preferredCurrencySymbolSetting: currencySymbolSettingResolver,
+          defaultFilamentPriceSetting: defaultFilamentPriceSettingResolver,
           defaultElectricityKwhRateSetting:
-            DefaultElectricityKwhRateSettingResolverService,
+            defaultElectricityKwhRateSettingResolver,
           defaultElectricityWattageSetting:
-            DefaultElectricityWattageSettingResolverService,
+            defaultElectricityWattageSettingResolver,
         },
       },
       {
@@ -47,22 +48,19 @@ export const printRoutes: Routes = [
         component: EditPrintDetailComponent,
         canActivate: [AuthGuard],
         resolve: {
-          print: CopyPrintDetailResolverService,
-          printers: CurrentUserPrinterSummaryResolverService,
-          lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
-          defaultPrintViewStatusSetting:
-            DefaultPrintViewStatusSettingResolverService,
-          defaultFilamentPriceSetting:
-            DefaultFilamentPriceSettingResolverService,
-          lastFilamentMeasureSettings:
-            LastFilamentMeasureSettingResolverService,
-          currencies: CurrenciesResolverService,
-          preferredCurrencyNameSetting: CurrencyNameResolverService,
-          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          print: copyPrintDetailResolver,
+          printers: currentUserPrinterSummariesResolver,
+          lastSelectedPrintSetting: lastSelectedPrinterSettingResolver,
+          defaultPrintViewStatusSetting: defaultPrintViewStatusSettingResolver,
+          defaultFilamentPriceSetting: defaultFilamentPriceSettingResolver,
+          lastFilamentMeasureSettings: lastFilamentMeasureSettingResolver,
+          currencies: currenciesResolver,
+          preferredCurrencyNameSetting: currencyNameSettingResolver,
+          preferredCurrencySymbolSetting: currencySymbolSettingResolver,
           defaultElectricityKwhRateSetting:
-            DefaultElectricityKwhRateSettingResolverService,
+            defaultElectricityKwhRateSettingResolver,
           defaultElectricityWattageSetting:
-            DefaultElectricityWattageSettingResolverService,
+            defaultElectricityWattageSettingResolver,
         },
         canDeactivate: [PendingChangesGuard],
       },
@@ -70,22 +68,19 @@ export const printRoutes: Routes = [
         path: ':id/edit',
         component: EditPrintDetailComponent,
         resolve: {
-          print: PrintDetailResolverService,
-          printers: CurrentUserPrinterSummaryResolverService,
-          lastSelectedPrintSetting: LastSelectedPrinterSettingResolverService,
-          defaultPrintViewStatusSetting:
-            DefaultPrintViewStatusSettingResolverService,
-          defaultFilamentPriceSetting:
-            DefaultFilamentPriceSettingResolverService,
-          lastMaterialMeasureSettings:
-            LastFilamentMeasureSettingResolverService,
-          currencies: CurrenciesResolverService,
-          preferredCurrencyNameSetting: CurrencyNameResolverService,
-          preferredCurrencySymbolSetting: CurrencySymbolResolverService,
+          print: printDetailResolver,
+          printers: currentUserPrinterSummariesResolver,
+          lastSelectedPrintSetting: lastSelectedPrinterSettingResolver,
+          defaultPrintViewStatusSetting: defaultPrintViewStatusSettingResolver,
+          defaultFilamentPriceSetting: defaultFilamentPriceSettingResolver,
+          lastMaterialMeasureSettings: lastFilamentMeasureSettingResolver,
+          currencies: currenciesResolver,
+          preferredCurrencyNameSetting: currencyNameSettingResolver,
+          preferredCurrencySymbolSetting: currencySymbolSettingResolver,
           defaultElectricityKwhRateSetting:
-            DefaultElectricityKwhRateSettingResolverService,
+            defaultElectricityKwhRateSettingResolver,
           defaultElectricityWattageSetting:
-            DefaultElectricityWattageSettingResolverService,
+            defaultElectricityWattageSettingResolver,
         },
         canActivate: [AuthGuard],
         canDeactivate: [PendingChangesGuard],

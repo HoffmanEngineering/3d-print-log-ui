@@ -359,7 +359,7 @@ export class FilamentDetailComponent
         ? (parsedUnit as PrintFilamentSourceMeasurement)
         : PrintFilamentSourceMeasurement.Weight;
 
-      // Copy mode nulls the id (CopyFilamentDetailResolverService), and add
+      // Copy mode nulls the id (copyFilamentDetailResolver), and add
       // mode has no filament at all, so the id alone rules out both: a clone's
       // remaining and prints belong to the source spool, not to the copy. This
       // is the same saved check canShowSpoolCalculator already uses.

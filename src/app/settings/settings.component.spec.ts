@@ -25,6 +25,7 @@ import { AchievementSettingsComponent } from './achievement-settings/achievement
 import { ConnectedAgentsService } from '../core/services/connected-agents.service';
 import { SpoolmanConnectionService } from '../core/services/spoolman-connection.service';
 import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
+import { PrintTagService } from '../core/services/print-tag.service';
 import { NativeBridgeService } from '../core/services/native-bridge.service';
 import { PushPreferencesService } from '../core/services/push-preferences.service';
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
@@ -177,6 +178,13 @@ describe('SettingsComponent', () => {
           useValue: {
             getConnections: () => of([]),
             revoke: () => of(undefined),
+          },
+        },
+        {
+          provide: PrintTagService,
+          useValue: {
+            stats: () =>
+              of({ currency: null, costUnavailable: false, tags: [] }),
           },
         },
         {

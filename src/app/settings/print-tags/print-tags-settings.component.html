@@ -1,0 +1,163 @@
+<h2>Print Tags</h2>
+<p>
+  Your own labels for prints, like "Gifts" or "Cosplay". A print can have
+  several. Add them on a print's page, then filter
+  <a routerLink="/prints">My Prints</a> by them. Only you can see your tags.
+</p>
+
+<ng-template #colorPicker let-form>
+  <span class="color-field">
+    <input
+      type="color"
+      class="color-input"
+      aria-label="Tag colour"
+      data-testid="print-tag-color"
+      [value]="form.controls.color.value ?? pickerDefault"
+      (input)="setColor(form, $any($event.target))"
+    />
+    @if (form.controls.color.value) {
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Remove colour"
+        (click)="clearColor(form)"
+      >
+        <mat-icon>format_color_reset</mat-icon>
+      </button>
+    }
+  </span>
+</ng-template>
+
+<form class="tag-form" [formGroup]="newTag" (ngSubmit)="create()">
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>New tag</mat-label>
+    <input
+      matInput
+      formControlName="name"
+      data-testid="print-tag-new-name"
+      [attr.maxlength]="maxNameLength"
+    />
+  </mat-form-field>
+  <ng-container
+    *ngTemplateOutlet="colorPicker; context: { $implicit: newTag }"
+  />
+  <button
+    mat-stroked-button
+    type="submit"
+    data-testid="print-tag-create"
+    [disabled]="busy()"
+  >
+    Add tag
+  </button>
+</form>
+
+@if (phase() === 'error') {
+  <p>We couldn't load your tags.</p>
+  <button
+    mat-stroked-button
+    type="button"
+    data-testid="print-tag-retry"
+    (click)="reload()"
+  >
+    Retry
+  </button>
+} @else if (phase() === 'ready' && stats(); as s) {
+  @if (s.tags.length === 0) {
+    <p>No tags yet.</p>
+  } @else {
+    @if (s.costUnavailable) {
+      <p class="meta">
+        You have too many tagged prints to add up their cost here.
+      </p>
+    }
+    <ul class="tag-list">
+      @for (tag of s.tags; track tag.id) {
+        <li data-testid="print-tag-row">
+          @if (editingId() === tag.id) {
+            <form
+              class="tag-form"
+              [formGroup]="editForm"
+              (ngSubmit)="save(tag)"
+            >
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Name</mat-label>
+                <input
+                  matInput
+                  formControlName="name"
+                  data-testid="print-tag-edit-name"
+                  [attr.maxlength]="maxNameLength"
+                />
+              </mat-form-field>
+              <ng-container
+                *ngTemplateOutlet="
+                  colorPicker;
+                  context: { $implicit: editForm }
+                "
+              />
+              <button
+                mat-stroked-button
+                type="submit"
+                data-testid="print-tag-save"
+                [disabled]="busy()"
+              >
+                Save
+              </button>
+              <button mat-button type="button" (click)="cancelEdit()">
+                Cancel
+              </button>
+            </form>
+          } @else {
+            <div class="identity">
+              <app-print-tag-chip [tag]="tag" />
+              <span class="meta">
+                <a
+                  routerLink="/prints"
+                  [queryParams]="{ filterByTagId: tag.id }"
+                  >{{ tag.printCount }}
+                  {{ tag.printCount === 1 ? 'print' : 'prints' }}</a
+                >
+                @if (tag.totalPrintTimeInSeconds > 0) {
+                  · {{ tag.totalPrintTimeInSeconds | duration }}
+                }
+                @if (tag.totalFilamentWeightMg > 0) {
+                  · {{ tag.totalFilamentWeightMg / 1000 | number: '1.0-1' }} g
+                }
+                @if (tag.totalCost !== null) {
+                  ·
+                  @if (s.currency) {
+                    {{ tag.totalCost | currency: s.currency }}
+                  } @else {
+                    {{ tag.totalCost | number: '1.2-2' }}
+                  }
+                  @if (tag.costedPrintCount < tag.printCount) {
+                    ({{ tag.costedPrintCount }} of {{ tag.printCount }} prints
+                    costed)
+                  }
+                }
+              </span>
+            </div>
+            <span class="actions">
+              <button
+                mat-stroked-button
+                type="button"
+                data-testid="print-tag-edit"
+                (click)="startEdit(tag)"
+              >
+                Edit
+              </button>
+              <button
+                mat-stroked-button
+                color="warn"
+                type="button"
+                data-testid="print-tag-delete"
+                (click)="confirmDelete(tag)"
+              >
+                Delete
+              </button>
+            </span>
+          }
+        </li>
+      }
+    </ul>
+  }
+}

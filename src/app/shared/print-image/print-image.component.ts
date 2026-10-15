@@ -26,7 +26,10 @@ export class PrintImageComponent implements OnInit, OnChanges {
   readonly imageId = input<number>();
   readonly imageData = model<string>(null);
   readonly showDeleteOnHover = input(false);
-  /** Meaningful alternative text; falls back to a generic description. */
+  /**
+   * Meaningful alternative text; falls back to a generic description when not
+   * bound. An empty string is kept, for an image its surroundings already name.
+   */
   readonly alt = input<string>();
 
   /**
@@ -51,6 +54,12 @@ export class PrintImageComponent implements OnInit, OnChanges {
       this.printService
         .getPrintImage(this.printId(), this.imageId())
         .subscribe((data) => {
+          // getPrintImage turns every error into ''. Shown as nothing, that
+          // was a blank box; say the image is unavailable instead.
+          if (!data) {
+            this.imageFailed.set(true);
+            return;
+          }
           this.imageData.set(data);
         });
     }

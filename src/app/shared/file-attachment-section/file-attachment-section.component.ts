@@ -42,10 +42,10 @@ type TrackedFileItem = FileAttachmentItem & { trackingId?: string };
   ],
 })
 export class FileAttachmentSectionComponent implements OnInit {
-  printId = input.required<number>();
-  editable = input(false);
-  allowFileDownloads = input(false);
-  isOwner = input(false);
+  readonly printId = input.required<number>();
+  readonly editable = input(false);
+  readonly allowFileDownloads = input(false);
+  readonly isOwner = input(false);
 
   allowFileDownloadsChange = output<boolean>();
 

@@ -22,6 +22,7 @@ import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/e
 import { PrinterDetailComponent } from './printer-detail.component';
 import { PrinterConnectionsComponent } from '../printer-connections/printer-connections.component';
 import { PrinterSlotsComponent } from '../printer-slots/printer-slots.component';
+import { PrinterSpoolmanComponent } from '../printer-spoolman/printer-spoolman.component';
 
 const fffCategory = {
   nickname: 'FFF',
@@ -98,6 +99,7 @@ describe('PrinterDetailComponent', () => {
         NoopAnimationsModule,
         PrinterConnectionsComponent,
         PrinterSlotsComponent,
+        PrinterSpoolmanComponent,
         // The template renders app-ad for real, which needs the Adsense config.
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         PrinterDetailComponent,
@@ -153,6 +155,29 @@ describe('PrinterDetailComponent', () => {
     expect(
       (panel.componentInstance as PrinterConnectionsComponent).printerId()
     ).toBe(42);
+  });
+
+  // #282: Spoolman sits next to the connections, told the saved category, make and model.
+  it('gives the Spoolman panel the saved printer', async () => {
+    await setUp(aPrinterDetail());
+
+    const panel = fixture.debugElement.query(
+      By.directive(PrinterSpoolmanComponent)
+    );
+    expect(panel).withContext('app-printer-spoolman').not.toBeNull();
+    const spoolman = panel.componentInstance as PrinterSpoolmanComponent;
+    expect(spoolman.printerId()).toBe(42);
+    expect(spoolman.category()?.nickname).toBe('FFF');
+    expect(spoolman.make()).toBe('Formbot');
+    expect(spoolman.model()).toBe('Voron 2.4 350');
+  });
+
+  it('shows no Spoolman panel before the printer is saved', async () => {
+    await setUp(null);
+
+    expect(
+      fixture.debugElement.query(By.directive(PrinterSpoolmanComponent))
+    ).toBeNull();
   });
 
   it('shows no connections panel before the printer is saved', async () => {

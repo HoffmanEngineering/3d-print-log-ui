@@ -102,5 +102,23 @@ describe('QrCodeService', () => {
       expect(url2).toContain('/materials/id-2');
       expect(url1).not.toEqual(url2);
     });
+
+    it('carries the spool number in a fragment that Fluidd can scan', () => {
+      const url = service.generateFilamentUrl('abc-123-def', 7);
+
+      expect(url).toBe(
+        `${window.location.origin}/materials/abc-123-def#/spool/show/7`
+      );
+      // Fluidd's QRReader pattern, matched against the whole scanned text.
+      expect(/\/spool\/show\/(\d+)\/?/i.exec(url)?.[1]).toBe('7');
+      // The path, which our own scanner and a phone camera use, is unchanged.
+      expect(new URL(url).pathname).toBe('/materials/abc-123-def');
+    });
+
+    it('leaves the fragment off when the spool has no number', () => {
+      expect(service.generateFilamentUrl('abc-123-def', null)).toBe(
+        `${window.location.origin}/materials/abc-123-def`
+      );
+    });
   });
 });

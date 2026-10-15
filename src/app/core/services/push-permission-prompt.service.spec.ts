@@ -1,3 +1,4 @@
+import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of, Subject } from 'rxjs';
@@ -10,7 +11,6 @@ describe('PushPermissionPromptService', () => {
   let bridge: jasmine.SpyObj<NativeBridgeService>;
   let dialog: jasmine.SpyObj<MatDialog>;
   let dialogRef: {
-    componentInstance: Record<string, string>;
     afterClosed: jasmine.Spy;
   };
 
@@ -36,7 +36,6 @@ describe('PushPermissionPromptService', () => {
     bridge.requestPushPermission.and.resolveTo('granted');
 
     dialogRef = {
-      componentInstance: {},
       afterClosed: jasmine.createSpy('afterClosed').and.returnValue(of(true)),
     };
     dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
@@ -78,7 +77,7 @@ describe('PushPermissionPromptService', () => {
     await service.promptInContext('You just connected a printer.');
 
     expect(dialog.open).toHaveBeenCalled();
-    expect(dialogRef.componentInstance['body']).toContain(
+    expect(lastSimpleDialogData(dialog).body).toContain(
       'You just connected a printer.'
     );
     expect(bridge.requestPushPermission).toHaveBeenCalled();

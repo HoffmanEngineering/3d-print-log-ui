@@ -78,10 +78,7 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "^21.2.26",
     "@angular-eslint/builder": "21.3.1",
-    "@angular-eslint/eslint-plugin": "21.3.1",
-    "@angular-eslint/eslint-plugin-template": "21.3.1",
     "@angular-eslint/schematics": "21.3.1",
-    "@angular-eslint/template-parser": "21.3.1",
     "@angular/cli": "^21.2.26",
     "@angular/compiler-cli": "^21.2.25",
     "@angular/language-service": "^21.2.25",
@@ -93,8 +90,7 @@
     "@types/jasminewd2": "^2.0.13",
     "@types/node": "^22.19.18",
     "@types/qrcode": "^1.5.5",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
+    "angular-eslint": "21.3.1",
     "axe-core": "^4.13.0",
     "baseline-browser-mapping": "^2.10.29",
     "cypress": "^13.17.0",
@@ -121,7 +117,8 @@
     "ts-node": "^10.9.2",
     "tslint-config-prettier": "^1.18.0",
     "turndown": "^7.2.4",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.71.2"
   },
   "lint-staged": {
     "*.{js,css,md,ts,scss}": "prettier --write"

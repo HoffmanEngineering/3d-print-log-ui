@@ -6,7 +6,7 @@ navLabel: Materials
 group: features
 order: 30
 mode: how-to
-updated: 2026-10-14
+updated: 2026-10-15
 related: [materials-reference, prints]
 aliases: [filaments]
 ---
@@ -36,6 +36,26 @@ by Name, Brand, or Color.
 
 The columns in this table, and every field behind them, are described in
 [Material fields](/docs/materials-reference#add-general).
+
+#### Choosing Table Columns {#columns}
+
+You can choose which columns the Materials table shows, and in what order. Click
+the <mat-icon inline>settings</mat-icon> icon at the right end of the table
+header and select **Change table layout**. In the dialog:
+
+- Check or uncheck a column to show or hide it.
+- Drag a column by its <mat-icon inline>drag_handle</mat-icon> handle, or use
+  the <mat-icon inline>keyboard_arrow_up</mat-icon> and
+  <mat-icon inline>keyboard_arrow_down</mat-icon> arrows, to change its position.
+- **Reset to Default** brings back the standard columns in their standard order.
+- **Save** keeps your changes, and **Close** undoes the changes you made since
+  opening the dialog.
+
+The table updates as you make changes. Your layout is saved in this browser, so
+other browsers and devices keep their own. The selection checkbox and the
+<mat-icon inline>more_horiz</mat-icon> menu are always shown. On a phone-sized
+screen the list shows cards instead of a table, so the layout does not apply
+there.
 
 #### Favorite Material
 

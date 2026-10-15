@@ -48,6 +48,7 @@ describe('DocSidebarComponent', () => {
       'printlog-bridge-troubleshooting',
       'printlog-bridge-privacy',
       'switch-from-notifier',
+      'klipper-spoolman',
     ]) {
       expect(urls).not.toContain(`/docs/${slug}`);
     }

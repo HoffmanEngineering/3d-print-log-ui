@@ -16,12 +16,17 @@ import { MatIconModule } from '@angular/material/icon';
   imports: [MatIconModule],
 })
 export class FileDropZoneComponent {
-  acceptExtensions = input<string[]>(['.gcode', '.stl', '.3mf', '.obj']);
-  disabled = input(false);
+  readonly acceptExtensions = input<string[]>([
+    '.gcode',
+    '.stl',
+    '.3mf',
+    '.obj',
+  ]);
+  readonly disabled = input(false);
 
   filesSelected = output<File[]>();
 
-  isDragOver = signal(false);
+  readonly isDragOver = signal(false);
 
   readonly acceptString = computed(() => this.acceptExtensions().join(','));
 

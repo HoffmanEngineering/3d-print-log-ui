@@ -6,6 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import currency from 'currency.js';
+import { of } from 'rxjs';
 import { PrintDetailSummaryComponent } from './print-detail-summary.component';
 import {
   EMPTY_GUID,
@@ -53,7 +54,11 @@ describe('PrintDetailSummaryComponent', () => {
       'calculateElectricityCost',
       'calculateTotalPrintCost',
       'calculatePrintCost',
+      'getSameFilePrints',
     ]);
+    printService.getSameFilePrints.and.returnValue(
+      of({ count: 4, prints: [] })
+    );
     printService.calculatePrintCost.and.returnValue({
       valid: true,
       price: currency(0.42),
@@ -132,6 +137,25 @@ describe('PrintDetailSummaryComponent', () => {
     expect(el.textContent).not.toContain('$1.84');
     expect(el.textContent).not.toContain('Electricity');
     expect(el.textContent).not.toContain('Material cost');
+  });
+
+  // UI #10. Owner-only: the endpoint is, and an anonymous visitor on this public route must not
+  // trigger a request that can only fail.
+  it('shows the owner how many times the file was printed', () => {
+    const el = renderAs(true);
+    expect(el.querySelector('app-print-same-file')).toBeTruthy();
+    expect(el.textContent).toContain('Printed 4 times');
+    expect(TestBed.inject(PrintService).getSameFilePrints).toHaveBeenCalledWith(
+      1
+    );
+  });
+
+  it('never asks about the file for a non-owner', () => {
+    const el = renderAs(false);
+    expect(el.querySelector('app-print-same-file')).toBeNull();
+    expect(
+      TestBed.inject(PrintService).getSameFilePrints
+    ).not.toHaveBeenCalled();
   });
 
   it('links the printer only for the owner', () => {

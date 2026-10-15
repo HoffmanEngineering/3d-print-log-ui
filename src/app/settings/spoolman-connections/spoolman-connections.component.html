@@ -1,0 +1,65 @@
+<h2>Spoolman Connections</h2>
+<p>
+  Klipper printers that show your spools in Mainsail, Fluidd and KlipperScreen.
+  Each one has a token in its <code>moonraker.conf</code>. Connect a printer
+  from its page under <a routerLink="/printers">Printers</a>, or read
+  <a routerLink="/docs/klipper-spoolman">how it works</a>.
+</p>
+
+@if (phase() === 'error') {
+  <p>We couldn't load your Spoolman connections.</p>
+  <button
+    mat-stroked-button
+    type="button"
+    data-testid="spoolman-retry"
+    (click)="reload()"
+  >
+    Retry
+  </button>
+} @else if (phase() === 'ready') {
+  @if (connections().length === 0) {
+    <p>No Spoolman connections.</p>
+  } @else {
+    <ul class="spoolman-list">
+      @for (c of connections(); track c.id) {
+        <li data-testid="spoolman-row">
+          <div class="identity">
+            @if (c.printerId !== null) {
+              <a class="name" [routerLink]="['/printers', c.printerId]">{{
+                c.printerName ?? c.name
+              }}</a>
+            } @else {
+              <span class="name">{{ c.name }}</span>
+              <span class="meta">(printer deleted)</span>
+            }
+            <span class="meta">
+              <span
+                class="state"
+                [class.paused]="c.state === 'disabled'"
+                data-testid="spoolman-state"
+                >{{ c.state === 'disabled' ? 'Paused' : 'Active' }}</span
+              >
+              · {{ lastSeen(c) }}
+            </span>
+          </div>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            data-testid="spoolman-revoke"
+            (click)="confirmRevoke(c)"
+          >
+            Revoke
+          </button>
+        </li>
+      }
+    </ul>
+    @if (anyPaused()) {
+      <p class="meta">
+        Paused connections are waiting on Pro: Free includes 1 Spoolman printer.
+        <a routerLink="/subscription">Upgrade to Pro</a> to resume them with no
+        change on the printer.
+      </p>
+    }
+  }
+}

@@ -7,8 +7,8 @@ nav: false
 group: integrations
 order: 50
 mode: how-to
-updated: 2026-10-13
-related: [printlog-bridge, switch-from-notifier, prints]
+updated: 2026-10-14
+related: [printlog-bridge, klipper-spoolman, switch-from-notifier, prints]
 ---
 
 ## Klipper/Moonraker Notifier
@@ -41,6 +41,24 @@ additional plugins are required, just a small configuration change.
     stay here for printers that already use it.
   </p>
 </doc-callout>
+
+---
+
+### Klipper integrations compared {#compare}
+
+There are three ways to connect a Klipper printer to 3D Print Log. They do different jobs, and you can combine them.
+
+| | Moonraker notifier (this page) | [printlog-bridge](/docs/printlog-bridge) | [Spoolman](/docs/klipper-spoolman) |
+| --- | --- | --- | --- |
+| What it does | Logs prints | Logs prints | Shows your spools on the printer |
+| Install | A section in `moonraker.conf` | A small program, on the printer or in Docker | A section in `moonraker.conf` |
+| Print outcome | Success or Failed | The real outcome, with Klipper's message | Not logged |
+| Filament used | The job's total | Per tool, linked to your spools | Not recorded yet |
+| Pictures | None | Slicer thumbnail and a webcam frame | None |
+| Spool pickers in Mainsail, Fluidd and KlipperScreen | No | No | Yes |
+| Plan | Free | Free | 1 printer on Free, unlimited on Pro |
+
+For a new printer, use printlog-bridge to log prints, and add Spoolman if you want to pick spools on the printer.
 
 ---
 

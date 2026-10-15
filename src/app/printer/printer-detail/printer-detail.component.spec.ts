@@ -1,6 +1,7 @@
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideZoneChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -9,7 +10,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 
 import { SharedModule } from 'src/app/shared/shared.module';
 import {
@@ -56,10 +57,19 @@ describe('PrinterDetailComponent', () => {
   let printerService: jasmine.SpyObj<PrinterService>;
   let router: jasmine.SpyObj<Router>;
 
+  let dialog: jasmine.SpyObj<MatDialog>;
+
   /**
    * `printer` is null for the create route, which the resolver models the same way.
+   *
+   * `zone` runs the component under zone change detection like the app, with startup
+   * settled first, so a view that is not repainted after a later response shows up
+   * as stale.
    */
-  const setUp = async (printer: PrinterDetail | null) => {
+  const setUp = async (
+    printer: PrinterDetail | null,
+    { zone = false, data = undefined as Observable<unknown> | undefined } = {}
+  ) => {
     printerService = jasmine.createSpyObj<PrinterService>('PrinterService', [
       'addPrinter',
       'updatePrinter',
@@ -89,7 +99,7 @@ describe('PrinterDetailComponent', () => {
       'error',
       'warning',
     ]);
-    const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -105,6 +115,7 @@ describe('PrinterDetailComponent', () => {
         PrinterDetailComponent,
       ],
       providers: [
+        ...(zone ? [provideZoneChangeDetection()] : []),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: PrinterService, useValue: printerService },
@@ -114,11 +125,13 @@ describe('PrinterDetailComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            data: of({
-              printer,
-              printerCategories: [fffCategory],
-              materialCategories: [],
-            }),
+            data:
+              data ??
+              of({
+                printer,
+                printerCategories: [fffCategory],
+                materialCategories: [],
+              }),
             // getRedirectUrl reads returnUrl off the snapshot, so the snapshot has to be
             // a real ParamMap rather than a bare object.
             snapshot: { queryParamMap: convertToParamMap({}) },
@@ -130,6 +143,10 @@ describe('PrinterDetailComponent', () => {
     fixture = TestBed.createComponent(PrinterDetailComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    if (zone) {
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
   };
 
   it('creates', async () => {
@@ -140,8 +157,8 @@ describe('PrinterDetailComponent', () => {
   it('builds the form from the resolved printer', async () => {
     await setUp(aPrinterDetail());
 
-    expect(component.printerForm.get('id')!.value).toBe(42);
-    expect(component.printerForm.get('name')!.value).toBe('Voron 2.4');
+    expect(component.printerForm().get('id')!.value).toBe(42);
+    expect(component.printerForm().get('name')!.value).toBe('Voron 2.4');
   });
 
   // #252: a saved printer lists the connections logging it.
@@ -191,7 +208,7 @@ describe('PrinterDetailComponent', () => {
   it('starts with a null id on the create route', async () => {
     await setUp(null);
 
-    expect(component.printerForm.get('id')!.value).toBeNull();
+    expect(component.printerForm().get('id')!.value).toBeNull();
   });
 
   it('enables only the fields the selected category declares', async () => {
@@ -199,8 +216,8 @@ describe('PrinterDetailComponent', () => {
 
     // FFF shows a nozzle diameter and no beam diameter, so the beam control is disabled
     // and its value is left out of the payload entirely.
-    expect(component.printerForm.get('nozzleDiameter')!.enabled).toBeTrue();
-    expect(component.printerForm.get('beamDiameter')!.disabled).toBeTrue();
+    expect(component.printerForm().get('nozzleDiameter')!.enabled).toBeTrue();
+    expect(component.printerForm().get('beamDiameter')!.disabled).toBeTrue();
   });
 
   it('blocks deactivation while the form is dirty', async () => {
@@ -208,7 +225,7 @@ describe('PrinterDetailComponent', () => {
 
     expect(component.canDeactivate()).toBeTrue();
 
-    component.printerForm.markAsDirty();
+    component.printerForm().markAsDirty();
     expect(component.canDeactivate()).toBeFalse();
   });
 
@@ -216,7 +233,7 @@ describe('PrinterDetailComponent', () => {
     await setUp(aPrinterDetail());
     expect(dispatchBeforeUnload().defaultPrevented).toBeFalse();
 
-    component.printerForm.markAsDirty();
+    component.printerForm().markAsDirty();
     expect(dispatchBeforeUnload().defaultPrevented).toBeTrue();
   });
 
@@ -231,7 +248,7 @@ describe('PrinterDetailComponent', () => {
 
   it('creates when the form has no id', async () => {
     await setUp(null);
-    component.printerForm.patchValue({ name: 'New', make: 'X', model: 'Y' });
+    component.printerForm().patchValue({ name: 'New', make: 'X', model: 'Y' });
 
     component.onSubmit();
 
@@ -254,12 +271,12 @@ describe('PrinterDetailComponent', () => {
     it('starts a new printer with one slot', async () => {
       await setUp(null);
 
-      expect(component.printerForm.get('slotCount')!.value).toBe(1);
+      expect(component.printerForm().get('slotCount')!.value).toBe(1);
     });
 
     it("saves the printer's slot count", async () => {
       await setUp(aPrinterDetail({ slotCount: 4 }));
-      component.printerForm.patchValue({ slotCount: 2 });
+      component.printerForm().patchValue({ slotCount: 2 });
 
       component.onSubmit();
 
@@ -270,7 +287,7 @@ describe('PrinterDetailComponent', () => {
 
     it('rejects a slot count below 1 or above 64', async () => {
       await setUp(aPrinterDetail());
-      const control = component.printerForm.get('slotCount')!;
+      const control = component.printerForm().get('slotCount')!;
 
       control.setValue(0);
       expect(control.valid).toBeFalse();
@@ -312,7 +329,7 @@ describe('PrinterDetailComponent', () => {
       ).loadedChange.emit([{ id: 'pf-1', filament: spool('a'), slot: 2 }]);
       fixture.detectChanges();
 
-      expect(component.printerForm.dirty).toBeFalse();
+      expect(component.printerForm().dirty).toBeFalse();
       component.onSubmit();
       const saved = printerService.updatePrinter.calls.mostRecent().args[0];
       expect(saved.loadedFilaments.map((pf) => pf.id)).toEqual(['pf-1']);
@@ -351,8 +368,8 @@ describe('PrinterDetailComponent', () => {
     };
 
     const fillCreateForm = () => {
-      component.printerForm.get('id')!.setValue(null);
-      component.printerForm.patchValue({
+      component.printerForm().get('id')!.setValue(null);
+      component.printerForm().patchValue({
         name: 'New',
         make: 'X',
         model: 'Y',
@@ -416,8 +433,8 @@ describe('PrinterDetailComponent', () => {
       await fixture.whenStable();
 
       expect(router.navigateByUrl).not.toHaveBeenCalled();
-      expect(component.printerForm.get('id')!.value).toBe(42);
-      expect(component.saving).toBeFalse();
+      expect(component.printerForm().get('id')!.value).toBe(42);
+      expect(component.saving()).toBeFalse();
     });
 
     it('updates rather than re-creating after a failed upload', async () => {
@@ -455,7 +472,7 @@ describe('PrinterDetailComponent', () => {
     it('blocks deactivation while images are staged', async () => {
       await setUp(aPrinterDetail());
       stubPanel(true);
-      component.printerForm.markAsPristine();
+      component.printerForm().markAsPristine();
 
       expect(component.canDeactivate()).toBeFalse();
     });
@@ -482,6 +499,64 @@ describe('PrinterDetailComponent', () => {
         replaceUrl: true,
       });
       expect(guardAnswer).toBeTrue();
+    });
+  });
+
+  describe('once a response arrives', () => {
+    const text = () => (fixture.nativeElement as HTMLElement).textContent;
+    const saveButton = () =>
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+        'button[type=submit]'
+      )!;
+
+    it('shows the printer the route resolves next', async () => {
+      const resolved = (printer: PrinterDetail | null) => ({
+        printer,
+        printerCategories: [fffCategory],
+        materialCategories: [],
+      });
+      const data = new BehaviorSubject<unknown>(resolved(null));
+      await setUp(null, { zone: true, data });
+      expect(text()).toContain('Add 3D Printer');
+
+      data.next(resolved(aPrinterDetail()));
+      fixture.detectChanges();
+
+      expect(text()).toContain('Edit 3D Printer');
+    });
+
+    it('re-enables Save when the save fails', async () => {
+      await setUp(aPrinterDetail(), { zone: true });
+      const saved = new Subject<PrinterDetail>();
+      printerService.updatePrinter.and.returnValue(saved);
+
+      component.onSubmit();
+      fixture.detectChanges();
+      expect(saveButton().disabled).withContext('while saving').toBeTrue();
+
+      saved.error(new Error('500'));
+      fixture.detectChanges();
+
+      expect(saveButton().disabled).toBeFalse();
+    });
+
+    it('lists a spool picked in the filament dialog', async () => {
+      await setUp(aPrinterDetail(), { zone: true });
+      const closed = new Subject<unknown>();
+      dialog.open.and.returnValue({
+        componentInstance: { dialogRef: { afterClosed: () => closed } },
+      } as never);
+
+      component.loadFilament();
+      closed.next({
+        id: 'spool-1',
+        displayName: 'Prusament Galaxy Black',
+        colorName: '',
+        materialType: 'PLA',
+      });
+      fixture.detectChanges();
+
+      expect(text()).toContain('Galaxy Black');
     });
   });
 });

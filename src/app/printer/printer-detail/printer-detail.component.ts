@@ -1,4 +1,6 @@
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit,
@@ -118,6 +120,7 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
     DecimalPipe,
     FilamentColorSwatchStylePipe,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrinterDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy
@@ -129,9 +132,13 @@ export class PrinterDetailComponent
   private toastr = inject(ToastrService);
   private titleService = inject(Title);
   dialog = inject(MatDialog);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
-  public printerForm: UntypedFormGroup;
-  public saving = false;
+  /** Rebuilt whenever the route resolves a printer, including after a create. */
+  readonly printerForm = signal<UntypedFormGroup>(
+    this.buildFormFromPrinterDetail(null)
+  );
+  readonly saving = signal(false);
 
   protected readonly imagesPanel = viewChild(EntityImagesPanelComponent);
 
@@ -204,10 +211,12 @@ export class PrinterDetailComponent
   public printerCategories: PrinterCategory[] = [];
 
   /** Printer Categories grouped by their material type name */
-  public groupedPrinterCategories: {
-    name: string;
-    categories: PrinterCategory[];
-  }[] = [];
+  readonly groupedPrinterCategories = signal<
+    {
+      name: string;
+      categories: PrinterCategory[];
+    }[]
+  >([]);
 
   public materialCategories: MaterialCategory[] = [];
 
@@ -221,7 +230,7 @@ export class PrinterDetailComponent
 
   // Help to get all printer loaded filament controls as form array.
   get loadedFilaments(): UntypedFormArray {
-    return this.printerForm.get('loadedFilaments') as UntypedFormArray;
+    return this.printerForm().get('loadedFilaments') as UntypedFormArray;
   }
 
   ngOnDestroy(): void {
@@ -236,7 +245,7 @@ export class PrinterDetailComponent
 
     // The form is blind to staged photos, so without the panel a user who has only picked
     // images would navigate away and silently lose them.
-    return !this.printerForm.dirty && !this.imagesPanel()?.hasStagedImages();
+    return !this.printerForm().dirty && !this.imagesPanel()?.hasStagedImages();
   }
 
   /**
@@ -265,14 +274,16 @@ export class PrinterDetailComponent
       this.groupPrinterCategoriesByMaterial();
 
       this.printerDetail.set(data.printer ?? null);
-      this.printerForm = this.buildFormFromPrinterDetail(data.printer);
-      this.formPrinterId.set(this.printerForm.get('id').value ?? null);
+      const form = this.buildFormFromPrinterDetail(data.printer);
+      this.printerForm.set(form);
+      this.formPrinterId.set(form.get('id').value ?? null);
 
       this.recalculateFormFieldsForSelectedPrinterCategory(
-        this.printerForm.get('type').value
+        form.get('type').value
       );
 
-      this.printerCategorySubscription = this.printerForm
+      this.printerCategorySubscription?.unsubscribe();
+      this.printerCategorySubscription = form
         .get('type')
         .valueChanges.subscribe((categoryNickname) => {
           this.recalculateFormFieldsForSelectedPrinterCategory(
@@ -280,12 +291,12 @@ export class PrinterDetailComponent
           );
         });
 
-      this.filteredMakes = this.printerForm.controls.make.valueChanges.pipe(
+      this.filteredMakes = form.controls.make.valueChanges.pipe(
         startWith(''),
         map((value) => this._filterMakes(value))
       );
 
-      this.filteredModels = this.printerForm.valueChanges.pipe(
+      this.filteredModels = form.valueChanges.pipe(
         startWith({ make: '', model: '' }),
 
         map((value) => this._filterModels(value))
@@ -297,8 +308,8 @@ export class PrinterDetailComponent
    * Group the printerCategories by their material category
    *  */
   private groupPrinterCategoriesByMaterial() {
-    this.groupedPrinterCategories = this.printerCategories.reduce(
-      (acc, curr) => {
+    const groups: { name: string; categories: PrinterCategory[] }[] =
+      this.printerCategories.reduce((acc, curr) => {
         const existingGroup = acc.find(
           (g) => g.name === curr.materialCategory.name
         );
@@ -313,12 +324,10 @@ export class PrinterDetailComponent
         }
 
         return acc;
-      },
-      []
-    );
+      }, []);
 
     // sort the grouped printer categories by their nickname
-    this.groupedPrinterCategories.forEach((g) => {
+    groups.forEach((g) => {
       g.categories = g.categories.sort((a, b) => {
         if (a.nickname < b.nickname) {
           return -1;
@@ -333,7 +342,7 @@ export class PrinterDetailComponent
     });
 
     // Sort the groups by their name
-    this.groupedPrinterCategories.sort((a, b) => {
+    groups.sort((a, b) => {
       if (a.name < b.name) {
         return -1;
       }
@@ -344,6 +353,8 @@ export class PrinterDetailComponent
 
       return 0;
     });
+
+    this.groupedPrinterCategories.set(groups);
   }
 
   /**
@@ -403,53 +414,54 @@ export class PrinterDetailComponent
 
     if (selectedPrinterCategory) {
       // Adjust the form fields to match the settings for the printer category
+      const form = this.printerForm();
 
       if (selectedPrinterCategory.showNozzleDiameter) {
-        this.printerForm.get('nozzleDiameter').enable();
+        form.get('nozzleDiameter').enable();
       } else {
-        this.printerForm.get('nozzleDiameter').disable();
+        form.get('nozzleDiameter').disable();
       }
 
       if (selectedPrinterCategory.showFilamentDiameter) {
-        this.printerForm.get('filamentDiameter').enable();
+        form.get('filamentDiameter').enable();
       } else {
-        this.printerForm.get('filamentDiameter').disable();
+        form.get('filamentDiameter').disable();
       }
 
       if (selectedPrinterCategory.showBeamDiameter) {
-        this.printerForm.get('beamDiameter').enable();
+        form.get('beamDiameter').enable();
       } else {
-        this.printerForm.get('beamDiameter').disable();
+        form.get('beamDiameter').disable();
       }
 
       if (selectedPrinterCategory.showBedSize) {
-        this.printerForm.get('bedWidthMm').enable();
-        this.printerForm.get('bedDepthMm').enable();
-        this.printerForm.get('bedHeightMm').enable();
+        form.get('bedWidthMm').enable();
+        form.get('bedDepthMm').enable();
+        form.get('bedHeightMm').enable();
       } else {
-        this.printerForm.get('bedWidthMm').disable();
-        this.printerForm.get('bedDepthMm').disable();
-        this.printerForm.get('bedHeightMm').disable();
+        form.get('bedWidthMm').disable();
+        form.get('bedDepthMm').disable();
+        form.get('bedHeightMm').disable();
       }
 
       if (selectedPrinterCategory.showScreenResolution) {
-        this.printerForm.get('screenResolutionXPixels').enable();
-        this.printerForm.get('screenResolutionYPixels').enable();
+        form.get('screenResolutionXPixels').enable();
+        form.get('screenResolutionYPixels').enable();
       } else {
-        this.printerForm.get('screenResolutionXPixels').disable();
-        this.printerForm.get('screenResolutionYPixels').disable();
+        form.get('screenResolutionXPixels').disable();
+        form.get('screenResolutionYPixels').disable();
       }
 
       if (selectedPrinterCategory.showHasHeatedBed) {
-        this.printerForm.get('hasHeatedBed').enable();
+        form.get('hasHeatedBed').enable();
       } else {
-        this.printerForm.get('hasHeatedBed').disable();
+        form.get('hasHeatedBed').disable();
       }
 
       if (selectedPrinterCategory.showHasHeatedChamber) {
-        this.printerForm.get('hasHeatedChamber').enable();
+        form.get('hasHeatedChamber').enable();
       } else {
-        this.printerForm.get('hasHeatedChamber').disable();
+        form.get('hasHeatedChamber').disable();
       }
     }
   }
@@ -578,6 +590,8 @@ export class PrinterDetailComponent
           );
 
           this.loadedFilaments.push(newFilament);
+          // The dialog closed outside this view, and a FormArray is not a signal.
+          this.changeDetector.markForCheck();
         }
       });
   }
@@ -601,7 +615,7 @@ export class PrinterDetailComponent
   }
 
   onSubmit() {
-    this.saving = true;
+    this.saving.set(true);
 
     const newPrinter: PrinterDetail = this.getPrinterFromForm();
 
@@ -616,12 +630,12 @@ export class PrinterDetailComponent
 
     savePrinter.subscribe(
       (printer) => {
-        this.printerForm.markAsPristine();
+        this.printerForm().markAsPristine();
 
         // The record is no longer new. Write the ID back BEFORE any upload, so a retry is
         // an update and never a second POST.
         if (wasNew && printer?.id) {
-          this.printerForm.get('id').setValue(printer.id);
+          this.printerForm().get('id').setValue(printer.id);
           this.formPrinterId.set(printer.id);
         }
 
@@ -635,7 +649,7 @@ export class PrinterDetailComponent
 
         panel.uploadStagedImages(printerId).subscribe((result) => {
           // Clear `saving` either way, or the retry button stays disabled forever.
-          this.saving = false;
+          this.saving.set(false);
 
           if (result.allSucceeded) {
             this.finishSave();
@@ -655,13 +669,13 @@ export class PrinterDetailComponent
         });
       },
       (err) => {
-        this.saving = false;
+        this.saving.set(false);
       }
     );
   }
 
   private finishSave(): void {
-    this.saving = false;
+    this.saving.set(false);
     this.router.navigateByUrl(this.getRedirectUrl()).then(() => {
       this.toastr.success('Save successful!');
     });
@@ -695,52 +709,50 @@ export class PrinterDetailComponent
       }
     );
 
+    const form = this.printerForm();
     const printer: PrinterDetail = {
-      id: this.printerForm.controls.id.value,
-      name: this.printerForm.controls.name.value,
-      make: this.printerForm.controls.make.value,
-      model: this.printerForm.controls.model.value,
-      description: this.printerForm.controls.description.value,
-      nozzleDiameter: this.printerForm.controls.nozzleDiameter.enabled
-        ? this.printerForm.controls.nozzleDiameter.value
+      id: form.controls.id.value,
+      name: form.controls.name.value,
+      make: form.controls.make.value,
+      model: form.controls.model.value,
+      description: form.controls.description.value,
+      nozzleDiameter: form.controls.nozzleDiameter.enabled
+        ? form.controls.nozzleDiameter.value
         : undefined,
-      filamentDiameter: this.printerForm.controls.filamentDiameter.enabled
-        ? this.printerForm.controls.filamentDiameter.value
+      filamentDiameter: form.controls.filamentDiameter.enabled
+        ? form.controls.filamentDiameter.value
         : undefined,
-      isActive: this.printerForm.controls.isActive.value,
+      isActive: form.controls.isActive.value,
       loadedFilaments: newLoadedFilament,
       category: this.printerCategories.find(
-        (catergory) =>
-          catergory.nickname === this.printerForm.controls.type.value
+        (catergory) => catergory.nickname === form.controls.type.value
       ),
-      beamDiameter: this.printerForm.controls.beamDiameter.enabled
-        ? this.printerForm.controls.beamDiameter.value
+      beamDiameter: form.controls.beamDiameter.enabled
+        ? form.controls.beamDiameter.value
         : undefined,
-      bedDepthMm: this.printerForm.controls.bedDepthMm.enabled
-        ? this.printerForm.controls.bedDepthMm.value
+      bedDepthMm: form.controls.bedDepthMm.enabled
+        ? form.controls.bedDepthMm.value
         : undefined,
-      bedHeightMm: this.printerForm.controls.bedHeightMm.enabled
-        ? this.printerForm.controls.bedHeightMm.value
+      bedHeightMm: form.controls.bedHeightMm.enabled
+        ? form.controls.bedHeightMm.value
         : undefined,
-      bedWidthMm: this.printerForm.controls.bedWidthMm.enabled
-        ? this.printerForm.controls.bedWidthMm.value
+      bedWidthMm: form.controls.bedWidthMm.enabled
+        ? form.controls.bedWidthMm.value
         : undefined,
-      screenResolutionXPixels: this.printerForm.controls.screenResolutionXPixels
-        .enabled
-        ? this.printerForm.controls.screenResolutionXPixels.value
+      screenResolutionXPixels: form.controls.screenResolutionXPixels.enabled
+        ? form.controls.screenResolutionXPixels.value
         : undefined,
-      screenResolutionYPixels: this.printerForm.controls.screenResolutionYPixels
-        .enabled
-        ? this.printerForm.controls.screenResolutionYPixels.value
+      screenResolutionYPixels: form.controls.screenResolutionYPixels.enabled
+        ? form.controls.screenResolutionYPixels.value
         : undefined,
-      hasHeatedBed: this.printerForm.controls.hasHeatedBed.enabled
-        ? this.printerForm.controls.hasHeatedBed.value
+      hasHeatedBed: form.controls.hasHeatedBed.enabled
+        ? form.controls.hasHeatedBed.value
         : undefined,
-      hasHeatedChamber: this.printerForm.controls.hasHeatedChamber.enabled
-        ? this.printerForm.controls.hasHeatedChamber.value
+      hasHeatedChamber: form.controls.hasHeatedChamber.enabled
+        ? form.controls.hasHeatedChamber.value
         : undefined,
-      wattageW: this.printerForm.controls.wattageW.value ?? undefined,
-      slotCount: this.printerForm.controls.slotCount.value ?? undefined,
+      wattageW: form.controls.wattageW.value ?? undefined,
+      slotCount: form.controls.slotCount.value ?? undefined,
     };
 
     return printer;

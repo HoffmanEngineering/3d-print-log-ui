@@ -1,7 +1,7 @@
 <div fxLayout="row" fxLayoutAlign="center start" fxLayoutGap="24px">
   <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
     <form
-      [formGroup]="printerForm"
+      [formGroup]="printerForm()"
       (ngSubmit)="onSubmit()"
       autocomplete="off"
       fxLayout="column"
@@ -9,7 +9,7 @@
       fxLayoutGap="10px"
     >
       <mat-card-title fxFlex="grow"
-        >{{ this.printerForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
+        >{{ printerForm().get('id').value !== null ? 'Edit' : 'Add' }} 3D
         Printer</mat-card-title
       >
       <mat-card-content
@@ -42,14 +42,14 @@
             required
             maxlength="100"
           />
-          @if (printerForm.controls['name'].hasError('required')) {
+          @if (printerForm().controls['name'].hasError('required')) {
             <mat-error> A Name is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Type</mat-label>
           <mat-select formControlName="type">
-            @for (group of groupedPrinterCategories; track group) {
+            @for (group of groupedPrinterCategories(); track group.name) {
               <mat-optgroup [label]="group.name">
                 @for (type of group.categories; track type) {
                   <mat-option
@@ -62,7 +62,7 @@
               </mat-optgroup>
             }
           </mat-select>
-          @if (printerForm.controls['type'].hasError('required')) {
+          @if (printerForm().controls['type'].hasError('required')) {
             <mat-error> A Type is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
@@ -84,10 +84,10 @@
             (focus)="makeHasFocus = true"
             (blur)="makeHasFocus = false"
           />
-          @if (printerForm.controls['make'].hasError('required')) {
+          @if (printerForm().controls['make'].hasError('required')) {
             <mat-error> A Make is <strong>required</strong> </mat-error>
           }
-          @if (this.printerForm.get('make').dirty && makeHasFocus) {
+          @if (printerForm().get('make').dirty && makeHasFocus) {
             <mat-hint>Not in the list? Don't worry, just type it.</mat-hint>
           }
         </mat-form-field>
@@ -114,10 +114,10 @@
             (focus)="modelHasFocus = true"
             (blur)="modelHasFocus = false"
           />
-          @if (printerForm.controls['model'].hasError('required')) {
+          @if (printerForm().controls['model'].hasError('required')) {
             <mat-error> A Model is <strong>required</strong> </mat-error>
           }
-          @if (this.printerForm.get('model').dirty && modelHasFocus) {
+          @if (printerForm().get('model').dirty && modelHasFocus) {
             <mat-hint>Not in the list? Don't worry, just type it.</mat-hint>
           }
         </mat-form-field>
@@ -141,7 +141,7 @@
           >Is Active</mat-checkbox
         >
         <h2>Machine Settings</h2>
-        @if (printerForm.get('filamentDiameter').enabled) {
+        @if (printerForm().get('filamentDiameter').enabled) {
           <mat-form-field fxFlex="grow" fxFlexFill>
             <mat-label>Filament Diameter (mm)</mat-label>
             <input
@@ -151,12 +151,12 @@
               min="0"
               formControlName="filamentDiameter"
             />
-            @if (printerForm.controls['filamentDiameter'].hasError('min')) {
+            @if (printerForm().controls['filamentDiameter'].hasError('min')) {
               <mat-error> Filament Diameter cannot be negative </mat-error>
             }
           </mat-form-field>
         }
-        @if (printerForm.get('nozzleDiameter').enabled) {
+        @if (printerForm().get('nozzleDiameter').enabled) {
           <mat-form-field fxFlex="grow" fxFlexFill>
             <mat-label>Nozzle Diameter (mm)</mat-label>
             <input
@@ -166,12 +166,12 @@
               min="0"
               formControlName="nozzleDiameter"
             />
-            @if (printerForm.controls['nozzleDiameter'].hasError('min')) {
+            @if (printerForm().controls['nozzleDiameter'].hasError('min')) {
               <mat-error> Nozzle Diameter cannot be negative </mat-error>
             }
           </mat-form-field>
         }
-        @if (printerForm.get('beamDiameter').enabled) {
+        @if (printerForm().get('beamDiameter').enabled) {
           <mat-form-field fxFlex="grow" fxFlexFill>
             <mat-label>Beam Diameter (mm)</mat-label>
             <input
@@ -180,12 +180,12 @@
               type="number"
               formControlName="beamDiameter"
             />
-            @if (printerForm.controls['beamDiameter'].hasError('min')) {
+            @if (printerForm().controls['beamDiameter'].hasError('min')) {
               <mat-error> Beam Diameter cannot be negative </mat-error>
             }
           </mat-form-field>
         }
-        @if (printerForm.get('bedWidthMm').enabled) {
+        @if (printerForm().get('bedWidthMm').enabled) {
           <mat-form-field fxFlex="grow" fxFlexFill>
             <mat-label>Bed X (Width) (mm)</mat-label>
             <input
@@ -194,12 +194,12 @@
               type="number"
               formControlName="bedWidthMm"
             />
-            @if (printerForm.controls['bedWidthMm'].hasError('min')) {
+            @if (printerForm().controls['bedWidthMm'].hasError('min')) {
               <mat-error> Bed X (Width) cannot be negative </mat-error>
             }
           </mat-form-field>
         }
-        @if (printerForm.get('bedDepthMm').enabled) {
+        @if (printerForm().get('bedDepthMm').enabled) {
           <mat-form-field fxFlex="grow" fxFlexFill>
             <mat-label>Bed Y (Depth) (mm)</mat-label>
             <input
@@ -208,12 +208,12 @@
               type="number"
               formControlName="bedDepthMm"
             />
-            @if (printerForm.controls['bedDepthMm'].hasError('min')) {
+            @if (printerForm().controls['bedDepthMm'].hasError('min')) {
               <mat-error> Bed Y (Depth) cannot be negative </mat-error>
             }
           </mat-form-field>
         }
-        @if (printerForm.get('bedHeightMm').enabled) {
+        @if (printerForm().get('bedHeightMm').enabled) {
           <mat-form-field fxFlex="grow" fxFlexFill>
             <mat-label>Bed Z (Height) (mm)</mat-label>
             <input
@@ -222,13 +222,13 @@
               type="number"
               formControlName="bedHeightMm"
             />
-            @if (printerForm.controls['bedHeightMm'].hasError('min')) {
+            @if (printerForm().controls['bedHeightMm'].hasError('min')) {
               <mat-error> Bed Z (Depth) cannot be negative </mat-error>
             }
           </mat-form-field>
         }
         <!-- Form for Screen Resolution-->
-        @if (printerForm.get('screenResolutionXPixels').enabled) {
+        @if (printerForm().get('screenResolutionXPixels').enabled) {
           <mat-form-field fxFlex="grow" fxFlexFill>
             <mat-label>Screen Resolution X (Pixels)</mat-label>
             <input
@@ -238,7 +238,7 @@
               formControlName="screenResolutionXPixels"
             />
             @if (
-              printerForm.controls['screenResolutionXPixels'].hasError('min')
+              printerForm().controls['screenResolutionXPixels'].hasError('min')
             ) {
               <mat-error>
                 Screen Resolution X (Pixels) cannot be negative
@@ -246,7 +246,7 @@
             }
           </mat-form-field>
         }
-        @if (printerForm.get('screenResolutionYPixels').enabled) {
+        @if (printerForm().get('screenResolutionYPixels').enabled) {
           <mat-form-field fxFlex="grow" fxFlexFill>
             <mat-label>Screen Resolution Y (Pixels)</mat-label>
             <input
@@ -256,7 +256,7 @@
               formControlName="screenResolutionYPixels"
             />
             @if (
-              printerForm.controls['screenResolutionYPixels'].hasError('min')
+              printerForm().controls['screenResolutionYPixels'].hasError('min')
             ) {
               <mat-error>
                 Screen Resolution Y (Pixels) cannot be negative
@@ -280,7 +280,7 @@
               >Leave blank to use your default wattage from Settings.</mat-hint
             >
           }
-          @if (printerForm.controls['wattageW'].hasError('min')) {
+          @if (printerForm().controls['wattageW'].hasError('min')) {
             <mat-error>Wattage cannot be negative</mat-error>
           }
         </mat-form-field>
@@ -297,15 +297,15 @@
           />
           <mat-hint>Tools or AMS slots. 1 for a single-tool printer.</mat-hint>
           @if (
-            printerForm.controls['slotCount'].hasError('min') ||
-            printerForm.controls['slotCount'].hasError('max') ||
-            printerForm.controls['slotCount'].hasError('required')
+            printerForm().controls['slotCount'].hasError('min') ||
+            printerForm().controls['slotCount'].hasError('max') ||
+            printerForm().controls['slotCount'].hasError('required')
           ) {
             <mat-error>Enter a number from 1 to 64</mat-error>
           }
         </mat-form-field>
         <!-- Checkboxes for hasHeatedBed and hasHeatedChamber-->
-        @if (printerForm.get('hasHeatedBed').enabled) {
+        @if (printerForm().get('hasHeatedBed').enabled) {
           <mat-checkbox
             fxFlex="grow"
             formControlName="hasHeatedBed"
@@ -313,7 +313,7 @@
             >Has Heated Bed</mat-checkbox
           >
         }
-        @if (printerForm.get('hasHeatedChamber').enabled) {
+        @if (printerForm().get('hasHeatedChamber').enabled) {
           <mat-checkbox
             fxFlex="grow"
             formControlName="hasHeatedChamber"
@@ -459,9 +459,9 @@
         <button
           mat-raised-button
           type="submit"
-          [disabled]="!printerForm.valid || saving"
+          [disabled]="!printerForm().valid || saving()"
           color="primary"
-          [class.spinner]="saving"
+          [class.spinner]="saving()"
           id="edit-printer-submit-btn"
         >
           Submit
@@ -474,7 +474,7 @@
           (click)="handleClose()"
           color="warn"
         >
-          {{ printerForm.dirty ? 'Cancel' : 'Close' }}
+          {{ printerForm().dirty ? 'Cancel' : 'Close' }}
         </button>
       </mat-card-actions>
     </form>

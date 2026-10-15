@@ -59,7 +59,6 @@ module.exports = tseslint.config(
       'src/app/print/edit-print-detail/edit-print-detail.component.ts',
       'src/app/print/print-list/print-list.component.ts',
       'src/app/printer/printer-detail/printer-detail.component.ts',
-      'src/app/printer-maintenance/printer-maintenance.component.ts',
       'src/app/settings/settings.component.ts',
     ],
     rules: {

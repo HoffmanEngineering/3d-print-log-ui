@@ -34,7 +34,7 @@ import {
   CdkDragHandle,
 } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, Observable, of, Subscription } from 'rxjs';
-import { map, mergeMap, take, toArray } from 'rxjs/operators';
+import { catchError, map, mergeMap, take, toArray } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
@@ -1927,9 +1927,16 @@ export class EditPrintDetailComponent
       return of({ id: printId });
     }
 
-    return this.printTagService
-      .setPrintTags(printId, ids)
-      .pipe(map(() => ({ id: printId })));
+    // Non-fatal: the print is saved by now. Failing the save here would leave a new print's form
+    // with no id, and saving again would create the print a second time.
+    return this.printTagService.setPrintTags(printId, ids).pipe(
+      map(() => ({ id: printId })),
+      catchError((error) => {
+        this.loggingService.logException(error);
+        this.toastr.warning('Print saved, but its tags couldn’t be saved.');
+        return of({ id: printId });
+      })
+    );
   }
 
   onProjectSelected(selection: ProjectSelection | null): void {

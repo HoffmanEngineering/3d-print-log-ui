@@ -30,7 +30,7 @@ import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
@@ -1169,6 +1169,31 @@ describe('EditPrintDetailComponent', () => {
 
       expect(printService.addPrint).toHaveBeenCalledTimes(1);
       expect(tagService.setPrintTags).toHaveBeenCalledOnceWith(11, ['c']);
+    });
+
+    it('still finishes the save, and says so, when only the tags fail', () => {
+      tagService.setPrintTags.and.returnValue(
+        throwError(() => new Error('tags failed'))
+      );
+      const toastr = TestBed.inject(
+        ToastrService
+      ) as jasmine.SpyObj<ToastrService>;
+      const form = openEditor({ ...saved, id: null, tags: null });
+      form.printForm.controls.title.setValue('New print');
+      form.filamentUsage.clear();
+
+      form.onTagsChanged([cosplay]);
+      form.onSubmit();
+
+      // The print exists now: treating this as a failed save would leave the form on a new
+      // print, and Save again would create it twice.
+      expect(printService.addPrint).toHaveBeenCalledTimes(1);
+      expect(form.saving()).toBeFalse();
+      expect(form.printForm.dirty).toBeFalse();
+      expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/prints']);
+      expect(toastr.warning).toHaveBeenCalledWith(
+        'Print saved, but its tags couldn’t be saved.'
+      );
     });
 
     it('keeps the tags of the print a new one was copied from', () => {

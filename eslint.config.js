@@ -26,7 +26,7 @@ module.exports = tseslint.config(
       ],
       '@angular-eslint/prefer-signals': [
         'error',
-        { preferReadonlySignalProperties: false },
+        { preferReadonlySignalProperties: true },
       ],
       '@angular-eslint/prefer-output-emitter-ref': 'error',
       '@angular-eslint/prefer-host-metadata-property': 'error',

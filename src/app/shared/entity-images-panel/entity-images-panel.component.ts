@@ -94,22 +94,22 @@ export class EntityImagesPanelComponent {
    * The entity these images belong to, and the gateway that talks to its endpoints. They
    * arrive as one object so an ID can never be paired with the wrong gateway.
    */
-  target = input.required<AnyEntityImageTarget>();
+  readonly target = input.required<AnyEntityImageTarget>();
 
-  images = input<EntityImageValue[]>([]);
+  readonly images = input<EntityImageValue[]>([]);
 
   /**
    * Defaults to the FREE cap. Callers bind SubscriptionService.maxImages; until that
    * loads, promising the Pro cap would let the user stage photos the API then rejects.
    */
-  maxImages = input(5);
+  readonly maxImages = input(5);
 
   /**
    * Alt text for the large image. The carousel shows one photo of one thing, so a single
    * label is right; callers name the subject ("Material photo", "Printer photo") because
    * this is where it reaches the accessibility tree.
    */
-  imageAlt = input('Photo');
+  readonly imageAlt = input('Photo');
 
   protected readonly items = signal<EntityImageValue[]>([]);
   protected readonly selectedIndex = signal(0);

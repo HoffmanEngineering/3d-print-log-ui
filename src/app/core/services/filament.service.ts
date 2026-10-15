@@ -50,6 +50,8 @@ export interface FilamentImage {
 
 export interface FilamentDetail {
   id: string;
+  /** The user's short number for the spool, which Spoolman clients use as its id. */
+  spoolNumber?: number | null;
   displayName: string;
   brand: string;
   materialCategoryNickname: string;
@@ -129,6 +131,8 @@ export interface FilamentDetail {
 
 export interface FilamentSummary {
   id: string;
+  /** The user's short number for the spool, which Spoolman clients use as its id. */
+  spoolNumber?: number | null;
   displayName: string;
   brand: string;
   materialCategoryNickname: string;
@@ -303,6 +307,11 @@ export class FilamentService {
 
   getFilamentDetail(id: string): Observable<FilamentDetail> {
     const url = `${this.baseApi}/api/Filaments/${id}`;
+    return this.http.get<FilamentDetail>(url);
+  }
+
+  getFilamentBySpoolNumber(spoolNumber: number): Observable<FilamentDetail> {
+    const url = `${this.baseApi}/api/Filaments/by-number/${spoolNumber}`;
     return this.http.get<FilamentDetail>(url);
   }
 

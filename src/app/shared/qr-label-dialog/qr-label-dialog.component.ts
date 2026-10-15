@@ -202,7 +202,10 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const labelPromises = this.data.filaments.map(async (filament) => {
-      const url = this.qrCodeService.generateFilamentUrl(filament.id);
+      const url = this.qrCodeService.generateFilamentUrl(
+        filament.id,
+        filament.spoolNumber
+      );
       const svgString = await this.qrCodeService.generateSvg(url, {
         width: 150,
         margin: 0,

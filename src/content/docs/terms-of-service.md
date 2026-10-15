@@ -6,13 +6,13 @@ navLabel: Terms of Service
 group: about
 order: 35
 mode: reference
-updated: 2026-10-10
+updated: 2026-10-14
 related: [privacy-policy, contact, pro-subscription]
 ---
 
 # Terms of Service for 3D Print Log
 
-Last Updated: Oct 10, 2026
+Last Updated: Oct 14, 2026
 
 These terms apply when you use 3D Print Log: the website at https://www.3dprintlog.com, the
 Android app, the API at https://api.3dprintlog.com, and the integrations and AI connectors that
@@ -86,6 +86,24 @@ assistants such as Claude and ChatGPT through our MCP connector.
   requires it.
 - We may change the price. A new price applies from your next renewal after we have told you
   about it, and you can cancel before then.
+
+## Spoolman Connections and Fair Use {#spoolman-fair-use}
+
+[Spoolman connections](/docs/klipper-spoolman) let your Klipper printers show your spools in
+Mainsail, Fluidd and KlipperScreen. The free plan includes one connected printer. Pro includes an
+unlimited number, under fair use.
+
+- **What fair use means:** connections are for printers you own or run yourself, whether that is
+  one printer at home or a print farm. Sharing one account so that other people's printers can
+  use it, or reselling access to it, is not fair use.
+- **How we notice:** we are alerted when an account has more than 20 connected printers, or when
+  its printers connect from more than 5 different networks in a week. The alert goes to a person.
+  Nothing is limited or blocked automatically.
+- **What happens next:** we contact the account holder before we cap anything, to understand the
+  setup. A large farm you run yourself is fine. We only limit connections when the use is not fair
+  use and we cannot resolve it with you.
+- **If you move from Pro to Free,** the first printer you connected keeps working and the others are
+  paused, not deleted. They resume when you subscribe again, with no change on the printers.
 
 ## Ads
 

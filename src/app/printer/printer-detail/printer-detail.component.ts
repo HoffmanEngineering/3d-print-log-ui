@@ -80,6 +80,20 @@ export class PrinterDetailComponent
   /** Only a saved printer can have connections; the create route has no id yet. */
   protected readonly savedPrinterId = computed(() => this.formPrinterId());
 
+  /**
+   * The category, make and model as saved, for the Spoolman panel: it offers a connection
+   * only to a saved FDM printer, and an unsaved edit to the form does not change that.
+   */
+  protected readonly savedCategory = computed(
+    () => this.printerDetail()?.category ?? null
+  );
+  protected readonly savedMake = computed(
+    () => this.printerDetail()?.make ?? null
+  );
+  protected readonly savedModel = computed(
+    () => this.printerDetail()?.model ?? null
+  );
+
   /** The slot count as saved. Slots are managed live, so they wait for the count to be saved. */
   private readonly savedSlotCount = computed(
     () => this.printerDetail()?.slotCount ?? 1

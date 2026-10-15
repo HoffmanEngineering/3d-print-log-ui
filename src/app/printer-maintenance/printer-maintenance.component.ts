@@ -17,7 +17,7 @@ import { PrinterSummary } from '../core/services/printer.service';
 import { UserSetting } from '../core/services/user-setting.service';
 import { PagedList } from '../core/types/paging';
 import { SortDirection } from '../core/types/sort-request';
-import { SimpleDialogComponent } from '../shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from '../shared/simple-dialog/simple-dialog.component';
 import { toSortHeaderIds } from '../core/utils/sort-header-ids';
 
 @Component({
@@ -445,16 +445,17 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
   }
 
   public tryDeleteEntry(entryId: string) {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    (dialogRef.componentInstance as any).title = 'Delete?';
-    // eslint-disable-next-line max-len
-    (dialogRef.componentInstance as any).body =
-      `Are you sure you want to delete maintenance entry? <br /> <br />  This action cannot be undone.`;
-    (dialogRef.componentInstance as any).yesText = 'Delete';
-    (dialogRef.componentInstance as any).yesColor = 'warn';
-    (dialogRef.componentInstance as any).noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete?',
+        body: `Are you sure you want to delete maintenance entry? <br /> <br />  This action cannot be undone.`,
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
 
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {

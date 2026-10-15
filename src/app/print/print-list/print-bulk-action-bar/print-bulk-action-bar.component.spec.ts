@@ -1,3 +1,4 @@
+import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -29,7 +30,6 @@ describe('PrintBulkActionBarComponent', () => {
   let toastr: jasmine.SpyObj<ToastrService>;
   let dialog: jasmine.SpyObj<MatDialog>;
   let dialogRef: {
-    componentInstance: Record<string, unknown>;
     afterClosed: jasmine.Spy;
   };
 
@@ -49,7 +49,6 @@ describe('PrintBulkActionBarComponent', () => {
       'error',
     ]);
     dialogRef = {
-      componentInstance: {},
       afterClosed: jasmine.createSpy('afterClosed').and.returnValue(of(true)),
     };
     dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
@@ -204,9 +203,9 @@ describe('PrintBulkActionBarComponent', () => {
       await component.deleteSelected();
 
       expect(dialog.open).toHaveBeenCalled();
-      expect(dialogRef.componentInstance['title']).toBe('Delete?');
-      expect(dialogRef.componentInstance['body']).toContain('2 prints');
-      expect(dialogRef.componentInstance['yesText']).toBe('Delete');
+      expect(lastSimpleDialogData(dialog).title).toBe('Delete?');
+      expect(lastSimpleDialogData(dialog).body).toContain('2 prints');
+      expect(lastSimpleDialogData(dialog).yesText).toBe('Delete');
       expect(printService.bulkDeletePrints).toHaveBeenCalledWith([
         printOne.id,
         printTwo.id,
@@ -221,7 +220,7 @@ describe('PrintBulkActionBarComponent', () => {
 
       await component.deleteSelected();
 
-      expect(dialogRef.componentInstance['body']).toContain('1 print?');
+      expect(lastSimpleDialogData(dialog).body).toContain('1 print?');
     });
 
     it('deletes nothing when the dialog is dismissed', async () => {

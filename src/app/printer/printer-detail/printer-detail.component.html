@@ -441,6 +441,14 @@
             fxFlexFill
             [printerId]="printerId"
           />
+          <app-printer-spoolman
+            fxFlex="grow"
+            fxFlexFill
+            [printerId]="printerId"
+            [category]="savedCategory()"
+            [make]="savedMake()"
+            [model]="savedModel()"
+          />
         }
       </mat-card-content>
       <mat-card-actions

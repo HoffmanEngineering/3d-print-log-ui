@@ -19,9 +19,9 @@ import { ProjectStatus } from 'src/app/core/services/project.service';
 export class ProjectChipComponent {
   private readonly router = inject(Router);
 
-  projectName = input.required<string>();
-  projectStatus = input.required<ProjectStatus>();
-  projectId = input<string | undefined>();
+  readonly projectName = input.required<string>();
+  readonly projectStatus = input.required<ProjectStatus>();
+  readonly projectId = input<string | undefined>();
   chipClicked = output<string>();
 
   readonly ProjectStatus = ProjectStatus;

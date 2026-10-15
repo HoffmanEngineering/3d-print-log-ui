@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-10-10
+updated: 2026-10-15
 related: [projects, materials]
 ---
 
@@ -33,6 +33,25 @@ status.
   name="print-list-filters"
   alt="The controls above the print list: an Add New Print button, a Search box, a Filters toggle, and an open filter row with Status and Filter by Printers dropdowns beside Filter by Material and Reset Filters buttons"
 ></doc-figure>
+
+#### Gallery View {#gallery}
+
+To browse your prints by picture instead, use the layout toggle next to **All
+Prints**: <mat-icon inline="true">view_list</mat-icon> **List view** shows the
+table, and <mat-icon inline="true">grid_view</mat-icon> **Gallery view** shows
+each print as a tile with its default image, title, status, start date and
+printer. Prints without an image show a camera placeholder. Select a tile to
+open the print.
+
+The gallery shows the same prints as the list. Your search, filters, sort order
+and page carry over when you switch, and the paging controls work the same
+way. 3D Print Log remembers the layout you picked in this browser, so the
+gallery is still there next time you open Prints.
+
+The gallery has no column headings, so it has its own **Sort by** control above
+the tiles. Pick **Start date**, **Title** or **Total material**, and use the
+<mat-icon inline="true">arrow_downward</mat-icon> arrow button beside it to
+switch between descending and ascending order.
 
 #### The Print List Table
 
@@ -82,7 +101,11 @@ not have to update them one at a time. Each row in the Print List table has a
 checkbox on the left, and the header checkbox selects every print on the current
 page.
 
-On a phone or tablet the list shows cards instead of a table, so there are no
+In the gallery, each tile has a checkbox in the corner of its image that works
+the same way, at any screen size, and **Select all on this page** above the
+tiles takes the place of the header checkbox.
+
+On a phone or tablet the list view shows cards instead of a table, so there are no
 checkboxes. **Press and hold any card** for half a second to select it. From
 then on a single tap adds or removes a card, and the card you are holding shows
 a <mat-icon inline="true">check_circle</mat-icon> badge on its thumbnail. Tap

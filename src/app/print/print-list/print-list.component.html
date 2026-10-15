@@ -172,6 +172,31 @@
     </mat-button-toggle-group>
 
     @if (viewMode === 'list') {
+      <!-- Layout of the same page of rows. Icon-only, so each toggle carries its
+           own name; the group's label says what the pair chooses between. -->
+      <mat-button-toggle-group
+        class="layout-toggle"
+        aria-label="Print layout"
+        hideSingleSelectionIndicator
+        [value]="listLayout()"
+        (change)="setListLayout($event.value)"
+      >
+        <mat-button-toggle
+          value="table"
+          aria-label="List view"
+          matTooltip="List view"
+        >
+          <mat-icon>view_list</mat-icon>
+        </mat-button-toggle>
+        <mat-button-toggle
+          value="grid"
+          aria-label="Gallery view"
+          matTooltip="Gallery view"
+        >
+          <mat-icon>grid_view</mat-icon>
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
       <!-- One instance for both views. On desktop it sits in this toolbar row; below
            the table's breakpoint its own stylesheet pins it to the bottom of the
            viewport, where a selection made by long-pressing a card can still reach it
@@ -223,7 +248,83 @@
       something a progress bar says without destroying anything. So the cards
       stay, dimmed and aria-busy, and the bar carries the message.
     -->
-    @if (isHandset()) {
+    @if (listLayout() === 'grid') {
+      <!-- Gallery: the same rows as thumbnails, at every width. Same two busy
+           states as the cards below: placeholders only on a first paint, and on
+           a refetch the tiles stay, dimmed and aria-busy, under a progress bar. -->
+      <div
+        class="gallery-view"
+        [class.gallery-view--selecting]="bulkActions.hasSelection()"
+        [class.refreshing]="showRefreshing()"
+        [attr.aria-busy]="showRefreshing() ? 'true' : null"
+      >
+        <!-- The gallery has no column headers, so select-all and the sort live
+             in a row of their own above the tiles. -->
+        <div class="gallery-toolbar">
+          <mat-checkbox
+            [checked]="bulkActions.isAllOnPageSelected(prints())"
+            [indeterminate]="bulkActions.isIndeterminate(prints())"
+            [disabled]="bulkActions.isRunning() || prints().length === 0"
+            (change)="bulkActions.toggleSelectAllOnPage(prints())"
+            data-cy-select-all-prints
+          >
+            Select all on this page
+          </mat-checkbox>
+          <span class="gallery-toolbar__spacer"></span>
+          <mat-form-field
+            class="gallery-sort"
+            appearance="outline"
+            subscriptSizing="dynamic"
+          >
+            <mat-label>Sort by</mat-label>
+            <mat-select
+              [value]="sortColumn"
+              (selectionChange)="setGallerySortColumn($event.value)"
+            >
+              @for (option of gallerySortOptions; track option.column) {
+                <mat-option [value]="option.column">{{
+                  option.label
+                }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button
+            mat-icon-button
+            type="button"
+            data-testid="gallery-sort-direction"
+            [attr.aria-label]="
+              activeSortDirection() === 'desc'
+                ? 'Sorted descending. Sort ascending'
+                : 'Sorted ascending. Sort descending'
+            "
+            (click)="toggleSortDirection()"
+          >
+            <mat-icon>{{
+              activeSortDirection() === 'desc'
+                ? 'arrow_downward'
+                : 'arrow_upward'
+            }}</mat-icon>
+          </button>
+        </div>
+        @if (showRefreshing()) {
+          <mat-progress-bar mode="indeterminate" class="refresh-bar" />
+        }
+        @if (showSkeleton()) {
+          <app-print-list-skeleton
+            class="app-skeleton-immediate"
+            variant="tile"
+            [count]="skeletonRowCount()"
+          />
+        } @else {
+          <app-print-gallery
+            [prints]="prints()"
+            [selectedIds]="selectedIds()"
+            [selectionDisabled]="bulkActions.isRunning()"
+            (selectionToggled)="bulkActions.toggleSelection($event)"
+          />
+        }
+      </div>
+    } @else if (isHandset()) {
       <div
         class="mobile-card-view"
         [class.mobile-card-view--selecting]="bulkActions.hasSelection()"
@@ -288,6 +389,8 @@
         mat-table
         [dataSource]="prints()"
         matSort
+        [matSortActive]="activeSortHeaderId()"
+        [matSortDirection]="activeSortDirection()"
         (matSortChange)="sortData($event)"
         [matSortDisableClear]="true"
       >

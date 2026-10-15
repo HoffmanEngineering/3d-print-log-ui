@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSortModule } from '@angular/material/sort';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -31,6 +31,7 @@ import {
 } from 'src/app/shared/skeleton/deferred-skeleton';
 import { PrintListComponent } from './print-list.component';
 import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.component';
+import { SortDirection } from 'src/app/core/types/sort-request';
 
 describe('PrintListComponent', () => {
   let component: PrintListComponent;
@@ -696,6 +697,513 @@ describe('PrintListComponent', () => {
 
     // Assert
     expect(routerSpy).toHaveBeenCalledWith(['printers', 'new']);
+  });
+
+  /**
+   * The gallery is a third rendering of the same page of rows, beside the table
+   * and the phone cards. It shares their filters, sort, paging, busy states and
+   * bulk selection, and the choice is remembered in this browser.
+   */
+  describe('gallery layout', () => {
+    const LAYOUT_KEY = 'print_list_layout';
+
+    const tilePrint = (id: number): PrintSummary =>
+      ({
+        id,
+        title: `Print ${id}`,
+        status: PrintStatus.Success,
+        startDate: new Date('2026-03-14T00:00:00Z'),
+        printer: { id: 1, name: '', make: 'Prusa', model: 'MK4' },
+        // No image, so the tile draws its placeholder and the mocked
+        // PrintService is never asked for one.
+        defaultPrintImageId: 0,
+        filamentUsage: [],
+        commentCount: 0,
+      }) as unknown as PrintSummary;
+
+    const withRows = (...ids: number[]) => {
+      TestBed.inject(ActivatedRoute).data = of({
+        printList: {
+          items: ids.map(tilePrint),
+          paging: {
+            currentPage: 1,
+            pageSize: 10,
+            totalCount: ids.length,
+            totalPages: 1,
+          },
+        } as PagedList<PrintSummary>,
+        printers: [],
+        filaments: [],
+      });
+    };
+
+    /** Rebuilds the component, so the constructor reads storage afresh. */
+    const rebuild = () => {
+      fixture.destroy();
+      fixture = TestBed.createComponent(PrintListComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    };
+
+    const gallery = () =>
+      fixture.debugElement.query(By.css('app-print-gallery'));
+    const table = () => fixture.debugElement.query(By.css('table'));
+    const cardView = () =>
+      fixture.debugElement.query(By.css('.mobile-card-view'));
+    const layoutToggle = (value: string) =>
+      fixture.debugElement.query(
+        By.css(`.layout-toggle mat-button-toggle[value="${value}"] button`)
+      );
+
+    beforeEach(() => localStorage.removeItem(LAYOUT_KEY));
+    afterEach(() => {
+      localStorage.removeItem(LAYOUT_KEY);
+      localStorage.removeItem('print_list_view_mode');
+    });
+
+    // The home and docs screenshots are captured from the default view, so the
+    // table has to stay the default for them to stay true.
+    it('defaults to the table', () => {
+      fixture.detectChanges();
+
+      expect(component.listLayout()).toBe('table');
+      expect(table()).toBeTruthy();
+      expect(gallery()).toBeNull();
+    });
+
+    it('renders the gallery in place of the table, with the same rows', () => {
+      withRows(1, 2, 3);
+      fixture.detectChanges();
+
+      component.setListLayout('grid');
+      fixture.detectChanges();
+
+      expect(table()).toBeNull();
+      expect(gallery()).toBeTruthy();
+      expect(
+        gallery()
+          .componentInstance.prints()
+          .map((p) => p.id)
+      ).toEqual([1, 2, 3]);
+    });
+
+    it('renders the gallery in place of the phone cards too', () => {
+      isHandsetViewport = true;
+      localStorage.setItem(LAYOUT_KEY, 'grid');
+      rebuild();
+
+      expect(cardView()).toBeNull();
+      expect(gallery()).toBeTruthy();
+    });
+
+    it('keeps the paginator, so paging works the same in either layout', () => {
+      withRows(1);
+      fixture.detectChanges();
+
+      component.setListLayout('grid');
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.css('mat-paginator'))).toBeTruthy();
+    });
+
+    // Same rows, same query: switching layout is a repaint, not a request.
+    it('does not refetch when the layout changes', () => {
+      fixture.detectChanges();
+      mockPrintService.getPrintSummaries.calls.reset();
+
+      // Rendered at each step, so the gallery and the table are both really
+      // built and torn down; either one fetching on init would show here.
+      component.setListLayout('grid');
+      fixture.detectChanges();
+      expect(gallery()).toBeTruthy();
+      component.setListLayout('table');
+      fixture.detectChanges();
+      expect(table()).toBeTruthy();
+
+      expect(mockPrintService.getPrintSummaries).not.toHaveBeenCalled();
+    });
+
+    it('switches from the toolbar toggle', () => {
+      fixture.detectChanges();
+
+      layoutToggle('grid').nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.listLayout()).toBe('grid');
+      expect(gallery()).toBeTruthy();
+    });
+
+    it('names the toggle buttons for assistive technology', () => {
+      fixture.detectChanges();
+
+      expect(
+        layoutToggle('table').nativeElement.getAttribute('aria-label')
+      ).toBe('List view');
+      expect(
+        layoutToggle('grid').nativeElement.getAttribute('aria-label')
+      ).toBe('Gallery view');
+    });
+
+    it('only offers the toggle for All Prints, not Grouped by Project', () => {
+      fixture.detectChanges();
+      expect(fixture.debugElement.query(By.css('.layout-toggle'))).toBeTruthy();
+
+      // Through the toggle, as a user would: viewMode is a plain accessor, so
+      // only the template event marks this OnPush view for a repaint.
+      fixture.debugElement
+        .query(By.css('.view-toggle mat-button-toggle[value="grouped"] button'))
+        .nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.viewMode).toBe('grouped');
+      expect(fixture.debugElement.query(By.css('.layout-toggle'))).toBeNull();
+    });
+
+    it('remembers the choice for the next visit', () => {
+      fixture.detectChanges();
+
+      component.setListLayout('grid');
+      rebuild();
+
+      expect(localStorage.getItem(LAYOUT_KEY)).toBe('grid');
+      expect(component.listLayout()).toBe('grid');
+      expect(gallery()).toBeTruthy();
+    });
+
+    it('ignores a stored value it does not recognise', () => {
+      localStorage.setItem(LAYOUT_KEY, 'carousel');
+      rebuild();
+
+      expect(component.listLayout()).toBe('table');
+    });
+
+    // Storage can throw for every key (blocked site data, some private
+    // modes). The layout, view mode, columns and page size are conveniences;
+    // losing them must not cost the page.
+    it('renders the table with defaults when storage cannot be read', () => {
+      spyOn(Storage.prototype, 'getItem').and.throwError(
+        new DOMException('denied', 'SecurityError')
+      );
+
+      expect(() => rebuild()).not.toThrow();
+      expect(component.listLayout()).toBe('table');
+      expect(component.viewMode).toBe('list');
+      expect(component.displayedColumns()).toContain('title');
+      expect(table()).toBeTruthy();
+    });
+
+    it('still switches and reloads when storage cannot be written', async () => {
+      fixture.detectChanges();
+      spyOn(Storage.prototype, 'setItem').and.throwError(
+        new DOMException('full', 'QuotaExceededError')
+      );
+
+      expect(() => component.setListLayout('grid')).not.toThrow();
+      expect(component.listLayout()).toBe('grid');
+      expect(() => (component.viewMode = 'grouped')).not.toThrow();
+      expect(component.viewMode).toBe('grouped');
+      component.viewMode = 'list';
+      mockPrintService.getPrintSummaries.calls.reset();
+      await expectAsync(component.updateFilter()).toBeResolved();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalled();
+    });
+
+    it('logs the change, and only an actual change', () => {
+      fixture.detectChanges();
+      const logger = TestBed.inject(
+        LoggingService
+      ) as jasmine.SpyObj<LoggingService>;
+      logger.logEvent.calls.reset();
+
+      component.setListLayout('grid');
+      component.setListLayout('grid');
+
+      expect(logger.logEvent).toHaveBeenCalledOnceWith(
+        'PrintList_LayoutChanged',
+        { layout: 'grid' }
+      );
+    });
+
+    describe('bulk selection', () => {
+      it('hands the gallery the current selection', () => {
+        withRows(1, 2);
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        component.bulkActions.toggleSelection(tilePrint(2));
+        fixture.detectChanges();
+
+        expect([...gallery().componentInstance.selectedIds()]).toEqual([2]);
+      });
+
+      it('toggles the selection from a tile checkbox', () => {
+        withRows(1, 2);
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        fixture.detectChanges();
+
+        const checkbox = fixture.debugElement.query(
+          By.css('[data-cy-select-print="2"] input')
+        ).nativeElement as HTMLInputElement;
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(component.bulkActions.isSelected(2)).toBeTrue();
+      });
+
+      // The selection belongs to the list, not to a layout, so a batch can be
+      // built in one layout and run from the other.
+      it('keeps the selection across a layout change', () => {
+        withRows(1);
+        fixture.detectChanges();
+        component.bulkActions.toggleSelection(tilePrint(1));
+
+        component.setListLayout('grid');
+        fixture.detectChanges();
+        expect(
+          fixture.debugElement.query(By.css('[data-cy-select-print="1"]'))
+            .componentInstance.checked
+        ).toBeTrue();
+
+        component.setListLayout('table');
+        fixture.detectChanges();
+
+        expect(component.bulkActions.isSelected(1)).toBeTrue();
+        expect(
+          fixture.debugElement.query(By.css('[data-cy-select-print="1"]'))
+            .componentInstance.checked
+        ).toBeTrue();
+      });
+    });
+
+    describe('sorting', () => {
+      const matSort = (): MatSort =>
+        fixture.debugElement.query(By.directive(MatSort)).injector.get(MatSort);
+      const sortSelect = () =>
+        fixture.debugElement.query(By.css('.gallery-view .gallery-sort'));
+      const directionButton = () =>
+        fixture.debugElement.query(
+          By.css('.gallery-view [data-testid="gallery-sort-direction"]')
+        ).nativeElement as HTMLButtonElement;
+
+      beforeEach(() => {
+        spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+          Promise.resolve(true)
+        );
+      });
+
+      // The table is rebuilt on every layout switch, and a MatSort that is not
+      // told otherwise starts with no active column: the arrow vanished.
+      it('keeps the table sort arrow across a layout round trip', () => {
+        fixture.detectChanges();
+        component.sortData({
+          active: String(PrintSummarySortColumn.Title),
+          direction: 'asc',
+        });
+
+        component.setListLayout('grid');
+        fixture.detectChanges();
+        component.setListLayout('table');
+        fixture.detectChanges();
+
+        expect(matSort().active).toBe(String(PrintSummarySortColumn.Title));
+        expect(matSort().direction).toBe('asc');
+      });
+
+      // Three start-date columns share one sort column, each under its own
+      // header id; the arrow goes on whichever of them is displayed.
+      it('puts a start date sort on the start date header that is shown', () => {
+        component.sortColumn = PrintSummarySortColumn.StartDate;
+        component.sortDirection = SortDirection.Desc;
+        fixture.detectChanges();
+        component.displayedColumns.set(['title', 'start-time', 'more']);
+        fixture.detectChanges();
+
+        expect(matSort().active).toBe(
+          component.startDateSortHeaderIds['start-time']
+        );
+        expect(matSort().direction).toBe('desc');
+      });
+
+      it('offers a sort control in the gallery only', () => {
+        fixture.detectChanges();
+        expect(sortSelect()).toBeNull();
+
+        component.setListLayout('grid');
+        fixture.detectChanges();
+
+        expect(sortSelect()).toBeTruthy();
+        expect(directionButton()).toBeTruthy();
+      });
+
+      it('sorts from the gallery control and goes back to page one', async () => {
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        component.currentPage.set(3);
+        fixture.detectChanges();
+        mockPrintService.getPrintSummaries.calls.reset();
+
+        component.setGallerySortColumn(PrintSummarySortColumn.Title);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(component.sortColumn).toBe(PrintSummarySortColumn.Title);
+        expect(component.currentPage()).toBe(1);
+        const args = mockPrintService.getPrintSummaries.calls.mostRecent().args;
+        expect(args[0]).toBe(1);
+        expect(args[7]).toBe(PrintSummarySortColumn.Title);
+      });
+
+      it('flips the direction from the gallery and says which way it sorts', async () => {
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        fixture.detectChanges();
+        expect(directionButton().getAttribute('aria-label')).toBe(
+          'Sorted descending. Sort ascending'
+        );
+        mockPrintService.getPrintSummaries.calls.reset();
+
+        directionButton().click();
+        fixture.detectChanges();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(component.sortDirection).toBe(SortDirection.Asc);
+        expect(
+          mockPrintService.getPrintSummaries.calls.mostRecent().args[6]
+        ).toBe(SortDirection.Asc);
+        expect(directionButton().getAttribute('aria-label')).toBe(
+          'Sorted ascending. Sort descending'
+        );
+      });
+
+      it('carries a gallery sort back to the table header', () => {
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        fixture.detectChanges();
+
+        component.setGallerySortColumn(PrintSummarySortColumn.FilamentUsage);
+        component.setListLayout('table');
+        fixture.detectChanges();
+
+        expect(matSort().active).toBe(
+          String(PrintSummarySortColumn.FilamentUsage)
+        );
+      });
+    });
+
+    describe('select all on this page', () => {
+      const selectAll = () =>
+        fixture.debugElement.query(
+          By.css('.gallery-view [data-cy-select-all-prints]')
+        );
+
+      it('selects every print on the page from above the grid', () => {
+        withRows(1, 2, 3);
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        fixture.detectChanges();
+
+        (
+          selectAll().query(By.css('input')).nativeElement as HTMLInputElement
+        ).click();
+        fixture.detectChanges();
+
+        expect(component.bulkActions.selectedCount()).toBe(3);
+        expect(selectAll().componentInstance.checked).toBeTrue();
+      });
+
+      it('shows a partial selection as indeterminate', () => {
+        withRows(1, 2, 3);
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        component.bulkActions.toggleSelection(tilePrint(2));
+        fixture.detectChanges();
+
+        expect(selectAll().componentInstance.indeterminate).toBeTrue();
+        expect(selectAll().componentInstance.checked).toBeFalse();
+      });
+
+      it('is disabled while a batch is running', () => {
+        withRows(1);
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        spyOn(component.bulkActions, 'isRunning').and.returnValue(true);
+        fixture.detectChanges();
+
+        expect(selectAll().componentInstance.disabled).toBeTrue();
+      });
+    });
+
+    describe('busy states', () => {
+      const container = () =>
+        fixture.debugElement.query(By.css('.gallery-view'))
+          .nativeElement as HTMLElement;
+
+      // In practice the resolver supplies the first page, but a load with
+      // nothing yet on screen still gets placeholders in the gallery's shape.
+      it('draws tile placeholders on a first paint', async () => {
+        TestBed.inject(ActivatedRoute).data = new Subject<any>();
+        localStorage.setItem(LAYOUT_KEY, 'grid');
+        rebuild();
+        component.pageSize.set(10);
+
+        const pending = new Subject<PagedList<PrintSummary>>();
+        mockPrintService.getPrintSummaries.and.returnValue(
+          pending.asObservable() as any
+        );
+        component.updateFilter();
+        await new Promise((resolve) =>
+          setTimeout(resolve, DEFERRED_SKELETON_DELAY_MS + 30)
+        );
+        fixture.detectChanges();
+
+        const skeleton = fixture.debugElement.query(
+          By.css('.gallery-view app-print-list-skeleton')
+        );
+        expect(skeleton).toBeTruthy();
+        expect(skeleton.componentInstance.variant()).toBe('tile');
+        // The list gates this in TypeScript already; without the class the
+        // skeleton's own CSS delay would stack on top of it.
+        expect(skeleton.nativeElement.classList).toContain(
+          'app-skeleton-immediate'
+        );
+        expect(gallery()).toBeNull();
+
+        pending.complete();
+      });
+
+      it('keeps the tiles and marks them busy on a refetch', async () => {
+        withRows(1, 2);
+        fixture.detectChanges();
+        component.setListLayout('grid');
+        fixture.detectChanges();
+
+        const pending = new Subject<PagedList<PrintSummary>>();
+        mockPrintService.getPrintSummaries.and.returnValue(
+          pending.asObservable() as any
+        );
+        component.updateFilter();
+        await new Promise((resolve) =>
+          setTimeout(resolve, DEFERRED_SKELETON_DELAY_MS + 30)
+        );
+        fixture.detectChanges();
+
+        expect(container().getAttribute('aria-busy')).toBe('true');
+        expect(container().classList).toContain('refreshing');
+        expect(
+          fixture.debugElement.queryAll(
+            By.css('[data-testid="print-gallery-tile"]')
+          ).length
+        ).toBe(2);
+        expect(
+          fixture.debugElement.query(By.css('.gallery-view mat-progress-bar'))
+        ).toBeTruthy();
+        expect(
+          fixture.debugElement.query(By.css('app-print-list-skeleton'))
+        ).toBeNull();
+
+        pending.complete();
+      });
+    });
   });
 
   describe('bulk selection', () => {

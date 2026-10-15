@@ -14,6 +14,25 @@
       </div>
     }
   </div>
+} @else if (variant() === 'tile') {
+  <div
+    class="skeleton-tiles"
+    data-testid="print-list-skeleton"
+    role="status"
+    aria-busy="true"
+  >
+    <span class="visually-hidden">{{ label() }}</span>
+    @for (tile of items(); track tile) {
+      <div class="skeleton-tile">
+        <app-skeleton class="skeleton-tile-photo" height="auto" radius="0" />
+        <div class="skeleton-tile-lines">
+          <app-skeleton width="80%" height="1rem" />
+          <app-skeleton width="40%" height="0.85rem" />
+          <app-skeleton width="60%" height="0.85rem" />
+        </div>
+      </div>
+    }
+  </div>
 } @else {
   <div
     class="skeleton-cards"

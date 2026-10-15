@@ -1,5 +1,6 @@
+import { provideZoneChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { FilamentListComponent } from './filament-list.component';
 import {
   ColorPatternType,
@@ -312,5 +313,93 @@ describe('FilamentListComponent thumbnail column', () => {
     const cell = fixture.nativeElement.querySelector('td .filament-thumbnail');
     expect(cell).toBeTruthy();
     expect(cell.querySelector('img')).toBeNull();
+  });
+});
+
+describe('FilamentListComponent once responses arrive', () => {
+  let fixture: ComponentFixture<FilamentListComponent>;
+  let summaries: Subject<unknown>;
+  let favorite: Subject<unknown>;
+
+  const blue = {
+    id: 'f1',
+    displayName: 'Blue PLA',
+    colors: ['0000ff'],
+    colorPattern: ColorPatternType.Solid,
+    materialType: 'PLA',
+    filamentRemaining: 500000,
+    isActive: true,
+    isFavorite: false,
+  } as unknown as FilamentSummary;
+  const host = () => fixture.nativeElement as HTMLElement;
+  const respond = (items: FilamentSummary[]) => {
+    summaries.next({
+      items,
+      paging: { currentPage: 1, pageSize: 10, totalCount: items.length },
+    });
+    fixture.detectChanges();
+  };
+
+  beforeEach(async () => {
+    summaries = new Subject();
+    favorite = new Subject();
+    const filamentService = jasmine.createSpyObj<FilamentService>(
+      'FilamentService',
+      ['getCurrentUserFilamentSummaries', 'changeFavorite']
+    );
+    filamentService.getCurrentUserFilamentSummaries.and.returnValue(
+      summaries as never
+    );
+    filamentService.changeFavorite.and.returnValue(favorite as never);
+    const materialCategoryService =
+      jasmine.createSpyObj<MaterialCategoryService>('MaterialCategoryService', [
+        'getMaterialCategories',
+      ]);
+    materialCategoryService.getMaterialCategories.and.returnValue(of([]));
+
+    await TestBed.configureTestingModule({
+      imports: [SharedModule, NoopAnimationsModule, RouterTestingModule],
+      providers: [
+        provideZoneChangeDetection(),
+        { provide: FilamentService, useValue: filamentService },
+        {
+          provide: MaterialCategoryService,
+          useValue: materialCategoryService,
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(FilamentListComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('shows the filaments that come back', () => {
+    respond([blue]);
+
+    expect(host().querySelectorAll('tr.mat-mdc-row').length).toBe(1);
+  });
+
+  it('says so when nothing matches', () => {
+    respond([]);
+
+    expect(host().textContent).toContain('No filaments found');
+  });
+
+  it('fills in the star once a favorite is saved', () => {
+    respond([blue]);
+    const star = () => host().querySelector('td [aria-label*="is favorite"]');
+    expect(star()).toBeNull();
+
+    host()
+      .querySelector<HTMLButtonElement>('td [aria-label*="is not a favorite"]')!
+      .click();
+    favorite.next(null);
+    fixture.detectChanges();
+
+    expect(star()).not.toBeNull();
   });
 });

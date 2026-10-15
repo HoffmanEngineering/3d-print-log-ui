@@ -167,7 +167,7 @@ An OnPush component that is not dirty is skipped on a zone tick, and so is every
 
 - The `prefer-on-push-component-change-detection` lint rule is an error everywhere except the exemption list in `.eslintrc.json`, which only shrinks. New components are OnPush.
 - `scripts/onpush-hosts.test.mjs` (run by `npm run test:scripts`) fails when an OnPush component renders a Default one or a `<router-outlet>`.
-- The zoneless TestBed throws NG0100 when a plain field changes in a `subscribe`, which makes a DOM assertion after an async response the natural failing test for a conversion. Signals fix it in both the test and the app.
+- The failing test for a conversion is a DOM assertion after a response that arrives once the component has rendered (a `Subject`, not `of`). The zoneless TestBed often reports the stale paint as NG0100, but not always: a Material form field calls `markForCheck()` during startup, which dirties every ancestor and hides the bug. When the test passes with the OnPush flag set and no signals, add `provideZoneChangeDetection()` to the providers and settle startup (`detectChanges()`, `await whenStable()`, `detectChanges()`) before emitting. Pattern: `filament-list.component.spec.ts`.
 
 ### A component input beats a `::ng-deep` override
 

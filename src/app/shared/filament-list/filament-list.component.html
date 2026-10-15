@@ -59,7 +59,7 @@
           >
             <mat-option value="">No Filter</mat-option>
             @for (
-              materialCategory of materialCategories;
+              materialCategory of materialCategories();
               track materialCategory
             ) {
               <mat-option [value]="materialCategory.nickname">{{
@@ -169,7 +169,7 @@
   <div class="scroll-area">
     <table
       mat-table
-      [dataSource]="filaments"
+      [dataSource]="filaments()"
       class="filament-table"
       matSort
       [matSortActive]="sortColumnId"
@@ -362,7 +362,7 @@
     </table>
     <!-- Mobile card list (shown < 600px via CSS, table hidden) -->
     <div class="filament-cards">
-      @for (filament of filaments; track filament.id) {
+      @for (filament of filaments(); track filament.id) {
         <div
           class="filament-card"
           tabindex="0"
@@ -458,15 +458,15 @@
         </div>
       }
     </div>
-    @if (totalCount === 0) {
+    @if (totalCount() === 0) {
       <div class="no-filament">
         No filaments found. Add a new filament or try a different search.
       </div>
     }
   </div>
   <mat-paginator
-    [length]="totalCount"
-    [pageSize]="pageSize"
+    [length]="totalCount()"
+    [pageSize]="pageSize()"
     [pageSizeOptions]="[5, 10, 25, 100]"
     (page)="pageChange($event)"
   >

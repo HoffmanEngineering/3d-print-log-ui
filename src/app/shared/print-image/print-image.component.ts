@@ -29,6 +29,15 @@ export class PrintImageComponent implements OnInit, OnChanges {
   /** Meaningful alternative text; falls back to a generic description. */
   readonly alt = input<string>();
 
+  /**
+   * How the image fills its box. `contain` letterboxes and is right for the
+   * carousel, where the whole photo matters; `cover` crops and is right for a
+   * fixed-size gallery tile, where a letterboxed portrait reads as a thin strip.
+   * An input for the same reason as `SignedImageComponent.fit`: a parent's
+   * ::ng-deep rule ties with this component's own `img` rule on specificity.
+   */
+  readonly fit = input<'contain' | 'cover'>('contain');
+
   readonly delete = output();
 
   protected readonly imageHovered = signal(false);

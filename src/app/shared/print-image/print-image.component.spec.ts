@@ -102,6 +102,26 @@ describe('PrintImageComponent', () => {
       ).toBe('Articulated dragon, image 2 of 3');
     });
 
+    // Letterboxing is right where the whole photo matters (the carousel), and
+    // stays the default; a fixed-size gallery tile needs a crop instead, or a
+    // portrait photo reads as a thin strip with bars either side.
+    it('letterboxes by default', () => {
+      const f = renderWith({ imageData: 'https://example.com/ok.png' });
+
+      const img: HTMLImageElement = f.nativeElement.querySelector('img');
+      expect(getComputedStyle(img).objectFit).toBe('contain');
+    });
+
+    it('crops to fill its box when asked to cover', () => {
+      const f = renderWith({
+        imageData: 'https://example.com/ok.png',
+        fit: 'cover',
+      });
+
+      const img: HTMLImageElement = f.nativeElement.querySelector('img');
+      expect(getComputedStyle(img).objectFit).toBe('cover');
+    });
+
     it('falls back to a generic alt when none is supplied', () => {
       const f = renderWith({ imageData: 'https://example.com/ok.png' });
 

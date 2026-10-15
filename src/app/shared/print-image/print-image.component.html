@@ -21,6 +21,7 @@
     <img
       [src]="imageData()"
       class="fade-in"
+      [style.object-fit]="fit()"
       [alt]="alt() || 'Image of 3D print'"
       (error)="onImageError()"
     />

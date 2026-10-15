@@ -1,4 +1,6 @@
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   OnDestroy,
@@ -195,6 +197,7 @@ export interface PrintFormValue {
 
 @Component({
   selector: 'app-print-detail',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-print-detail.component.html',
   styleUrls: ['./edit-print-detail.component.scss'],
   host: {
@@ -346,11 +349,11 @@ export class EditPrintDetailComponent
   /**
    * If the form is currently saving.
    */
-  public saving = false;
+  readonly saving = signal(false);
 
   public lastSelectedPrinterSetting: UserSetting | null = null;
 
-  public defaultPrintViewStatusSetting: UserSetting | null = null;
+  readonly defaultPrintViewStatusSetting = signal<UserSetting | null>(null);
 
   public lastAllowCommentsSetting: UserSetting | null = null;
 
@@ -410,6 +413,12 @@ export class EditPrintDetailComponent
   private readonly loggingService = inject(LoggingService);
   private readonly el = inject(ElementRef);
   public readonly dialog = inject(MatDialog);
+  /**
+   * The form and the photo list are not signals. Callbacks that change them
+   * outside a template event (an HTTP answer, a dialog result, a file read)
+   * mark the view for check themselves.
+   */
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly subscriptionService = inject(SubscriptionService);
@@ -462,7 +471,9 @@ export class EditPrintDetailComponent
       this.buildPrinterLabelCache();
 
       this.lastSelectedPrinterSetting = data.lastSelectedPrintSetting;
-      this.defaultPrintViewStatusSetting = data.defaultPrintViewStatusSetting;
+      this.defaultPrintViewStatusSetting.set(
+        data.defaultPrintViewStatusSetting
+      );
       this.lastAllowCommentsSetting = data.lastAllowCommentsSetting;
       this.lastMaterialMeasureSettings = data.lastMaterialMeasureSettings;
 
@@ -547,6 +558,9 @@ export class EditPrintDetailComponent
             }
 
             this.filamentUsage.markAsPristine();
+            // Reactive forms are not signals, and this lands outside any
+            // template event, so the view has to be told.
+            this.changeDetector.markForCheck();
           });
       }
 
@@ -769,6 +783,7 @@ export class EditPrintDetailComponent
                   this.filamentUsage.push(newFormGroup);
                 }
               }
+              this.changeDetector.markForCheck();
             });
         }
       });
@@ -884,14 +899,14 @@ export class EditPrintDetailComponent
     this.loggingService.logEvent('ChangedDefaultViewStatus', {
       status: newViewStatus,
     });
-    if (this.defaultPrintViewStatusSetting) {
+    if (this.defaultPrintViewStatusSetting()) {
       this.userSettingService
         .updateUserSetting(
-          this.defaultPrintViewStatusSetting.id,
+          this.defaultPrintViewStatusSetting().id,
           newViewStatus.toString()
         )
         .subscribe((setting) => {
-          this.defaultPrintViewStatusSetting = setting;
+          this.defaultPrintViewStatusSetting.set(setting);
         });
     } else {
       this.userSettingService
@@ -900,7 +915,7 @@ export class EditPrintDetailComponent
           newViewStatus.toString()
         )
         .subscribe((setting) => {
-          this.defaultPrintViewStatusSetting = setting;
+          this.defaultPrintViewStatusSetting.set(setting);
         });
     }
   }
@@ -1059,8 +1074,8 @@ export class EditPrintDetailComponent
       viewStatus: [
         print && print.viewStatus !== null
           ? print.viewStatus
-          : this.defaultPrintViewStatusSetting
-            ? +this.defaultPrintViewStatusSetting.value
+          : this.defaultPrintViewStatusSetting()
+            ? +this.defaultPrintViewStatusSetting().value
             : PrintViewStatus.Private,
       ],
       images: imageArray,
@@ -1312,6 +1327,7 @@ export class EditPrintDetailComponent
           if (!this.selectedImage) {
             this.selectedImage = newItem;
           }
+          this.changeDetector.markForCheck();
         };
         reader.readAsDataURL(file);
       }
@@ -1490,6 +1506,7 @@ export class EditPrintDetailComponent
         if (!this.selectedImage) {
           this.selectedImage = newItem;
         }
+        this.changeDetector.markForCheck();
       };
       reader.readAsDataURL(file);
     }
@@ -1673,12 +1690,12 @@ export class EditPrintDetailComponent
   }
 
   onSubmit() {
-    this.saving = true;
+    this.saving.set(true);
 
     // Validate form
     this.printForm.markAllAsTouched();
     if (!this.printForm.valid) {
-      this.saving = false;
+      this.saving.set(false);
       this.focusFirstInvalidControl();
       return;
     }
@@ -1831,7 +1848,7 @@ export class EditPrintDetailComponent
       );
     }
 
-    this.saving = false;
+    this.saving.set(false);
     this.printForm.markAsPristine();
     this.router.navigate(['/prints']).then(() => {
       this.toastr.success('Save successful!');
@@ -1845,7 +1862,7 @@ export class EditPrintDetailComponent
     err: any,
     newPrint: Omit<PrintDetail, 'comments'>
   ): void {
-    this.saving = false;
+    this.saving.set(false);
     // Log only an allowlisted, non-sensitive diagnostic summary. Never serialize
     // the full print object: fields like notes, title, url and fileName can contain
     // private user content and would otherwise leak into telemetry (#leak).
@@ -2049,6 +2066,7 @@ export class EditPrintDetailComponent
           } else {
             filamentControl.setValue(filament);
           }
+          this.changeDetector.markForCheck();
         }
       });
   }
@@ -2091,6 +2109,7 @@ export class EditPrintDetailComponent
       dialogRef.afterClosed().subscribe((shouldDelete) => {
         if (shouldDelete) {
           this.filamentUsage.removeAt(index);
+          this.changeDetector.markForCheck();
         }
       });
     } else {

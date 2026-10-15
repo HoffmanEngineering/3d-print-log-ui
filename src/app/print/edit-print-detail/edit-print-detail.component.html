@@ -1102,9 +1102,9 @@
           @if (
             this.printForm &&
             this.printForm.get('viewStatus').dirty &&
-            (this.defaultPrintViewStatusSetting === null ||
+            (defaultPrintViewStatusSetting() === null ||
               this.printForm.get('viewStatus').value.toString() !==
-                this.defaultPrintViewStatusSetting.value.toString())
+                defaultPrintViewStatusSetting().value.toString())
           ) {
             <button
               fxFlex
@@ -1162,10 +1162,10 @@
             <button
               id="edit-print-copy-btn"
               mat-stroked-button
-              [disabled]="printForm.dirty || saving"
+              [disabled]="printForm.dirty || saving()"
               type="button"
               title="{{
-                printForm.dirty || saving
+                printForm.dirty || saving()
                   ? 'Save changes before copying'
                   : 'Copy to a new print'
               }}"
@@ -1185,9 +1185,9 @@
             fxFlex
             mat-raised-button
             type="submit"
-            [disabled]="saving"
+            [disabled]="saving()"
             color="primary"
-            [class.spinner]="saving"
+            [class.spinner]="saving()"
           >
             Submit
           </button>

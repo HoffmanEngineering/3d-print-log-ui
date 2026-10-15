@@ -23,6 +23,8 @@ import { LoggingService } from '../core/services/logging.service';
 import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
 import { AchievementSettingsComponent } from './achievement-settings/achievement-settings.component';
 import { ConnectedAgentsService } from '../core/services/connected-agents.service';
+import { SpoolmanConnectionService } from '../core/services/spoolman-connection.service';
+import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
 import { NativeBridgeService } from '../core/services/native-bridge.service';
 import { PushPreferencesService } from '../core/services/push-preferences.service';
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
@@ -158,6 +160,7 @@ describe('SettingsComponent', () => {
         NoopAnimationsModule,
         RouterTestingModule,
         ConnectedAgentsComponent,
+        SpoolmanConnectionsComponent,
         AchievementSettingsComponent,
         SettingsComponent,
       ],
@@ -166,6 +169,13 @@ describe('SettingsComponent', () => {
           provide: ConnectedAgentsService,
           useValue: {
             getConnectedAgents: () => of([]),
+            revoke: () => of(undefined),
+          },
+        },
+        {
+          provide: SpoolmanConnectionService,
+          useValue: {
+            getConnections: () => of([]),
             revoke: () => of(undefined),
           },
         },

@@ -32,7 +32,7 @@ export function hasLegacyFilamentData(print: PrintDetail | null): boolean {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrintLegacyFilamentUsageComponent {
-  print = input.required<PrintDetail>();
+  readonly print = input.required<PrintDetail>();
 
   readonly hasLegacyData = computed(() => hasLegacyFilamentData(this.print()));
 

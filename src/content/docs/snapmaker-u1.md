@@ -62,9 +62,17 @@ To have a spool assigned:
 
 From then on, loading that spool into any slot assigns it there.
 
+**Changing a spool mid-print.** When you swap a tagged spool into a slot partway through a print, that tool's filament is split between the two spools: what was printed before goes to the old one, the rest to the new one, and the print gets a note such as `T0: Spool A → Spool B at 63% (layer 112)`. The U1's runout sensors (`e0_filament` to `e3_filament`, one per tool) tell the bridge which tool ran out. When a spool runs out and the new one has no tag the bridge knows, the console asks you to run `PRINTLOG_SET_SPOOL` for that tool. See [Changing spools mid-print](/docs/printlog-bridge-spools#mid-print).
+
 Only Snapmaker's own tags are read. A spool with no tag, or with a tag that isn't Snapmaker's, is left alone: load it in the app, or with the [spool macros](/docs/printlog-bridge-spools) where you can install them.
 
 **A spool check note.** When the tag in a slot isn't on any of your materials, and the material or color the tag reports doesn't match the spool loaded in that slot in 3D Print Log, the print gets a note saying so. It's logged all the same. Check which spool the print actually used, and fix it on the print if needed.
+
+### Spoolman {#spoolman}
+
+The U1 can use [Spoolman for Klipper](/docs/klipper-spoolman), which shows your 3D Print Log spools in its spool pickers and logs prints. It needs Advanced Mode on the U1, because you edit its `moonraker.conf` to add the block. This hasn't been confirmed on a real U1 yet.
+
+With the bridge running, picking a spool on a tool and the RFID reader stay in sync with Moonraker's active spool. A spool picked on the printer is loaded into the active tool's slot in 3D Print Log, and a spool assigned from an RFID tag or in the app becomes Moonraker's active spool when that tool is active. The bridge also sets the active spool on each tool change, so you need no macros. This works only when `[spoolman]` points at 3D Print Log.
 
 ### No webcam snapshot {#snapshot}
 

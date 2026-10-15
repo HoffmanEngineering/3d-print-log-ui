@@ -45,7 +45,7 @@ import { HumanizePipe } from '../../pipes/humanize.pipe';
   ],
 })
 export class CommentComponent {
-  comment = input.required<Comment>();
-  showDelete = input<boolean>(false);
+  readonly comment = input.required<Comment>();
+  readonly showDelete = input<boolean>(false);
   delete = output<void>();
 }

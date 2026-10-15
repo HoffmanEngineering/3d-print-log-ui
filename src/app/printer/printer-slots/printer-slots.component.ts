@@ -44,9 +44,9 @@ export class PrinterSlotsComponent {
   private readonly toastr = inject(ToastrService);
   private readonly logging = inject(LoggingService);
 
-  printerId = input.required<number>();
-  slotCount = input.required<number>();
-  loaded = input<PrinterFilamentSummaryDto[]>([]);
+  readonly printerId = input.required<number>();
+  readonly slotCount = input.required<number>();
+  readonly loaded = input<PrinterFilamentSummaryDto[]>([]);
 
   /** The printer's loaded filament after a load or unload, in slot order. */
   readonly loadedChange = output<PrinterFilamentSummaryDto[]>();

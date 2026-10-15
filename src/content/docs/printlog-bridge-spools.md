@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 45
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-14
 related: [printlog-bridge, printers, materials, snapmaker-u1]
 ---
 
@@ -84,7 +84,51 @@ A material is in one place at a time, so loading it into a slot takes it out of 
 
 ### When to assign spools {#timing}
 
-Assign spools before a print starts. A print keeps the spools it started with. If a print's spool was wrong, change it on the print in the app, while it prints or after. The bridge keeps your choice.
+Assign spools before a print starts: a print starts with the spools loaded in its slots. If you change a spool partway through, assign the new one while the print is paused, and the bridge splits that tool's filament between the two (see [Changing spools mid-print](#mid-print)).
+
+If a print's spool was wrong, change it on the print in the app, while it prints or after. The bridge keeps your choice.
+
+### Changing spools mid-print {#mid-print}
+
+When a spool runs out or you change color partway through a print, tell the bridge which spool you loaded: run `PRINTLOG_SET_SPOOL` for that tool while the print is paused, before you resume. It also works while the print is printing.
+
+The bridge splits that tool's filament where you changed spools:
+
+- What was printed before the change goes to the old spool, and the rest to the new one, as two usage rows on the same tool. The rows add up to the tool's total, and the slicer's estimate stays on the first row.
+- The print gets a note for each change, such as `T0: Spool A → Spool B at 63% (layer 112)`.
+- On a multi-tool printer, each tool is split on its own.
+- The new spool also stays loaded in that slot for the next print.
+- On a [Snapmaker U1](/docs/snapmaker-u1#rfid), putting a tagged spool in the slot does the same, with no macro.
+
+#### When a spool runs out {#runout}
+
+The bridge watches for a filament change while a print is paused:
+
+- a runout sensor (`[filament_switch_sensor]` or `[filament_motion_sensor]`) finding no filament, and the print pausing for it;
+- the extruder unloading 25 mm or more while the print is paused, as an `M600` macro does.
+
+When the print pauses for a runout, the console asks for the new spool:
+
+```
+// printlog-bridge: Spool ran out on T0. Run PRINTLOG_SET_SPOOL to log the new one.
+```
+
+The prompt needs `printlog.cfg` included (see [Set up the macros](#setup)). A sensor that empties without a pause, such as during an unload in your end G-code, is ignored.
+
+**The bridge never guesses a spool.** If the print resumes with no new spool assigned, all of that tool's filament stays on the spool it started with, and the print gets a note: `T0 was paused for a filament change; run PRINTLOG_SET_SPOOL during the pause to split usage`. You can still split it by hand on the print in the app.
+
+#### In your start G-code {#start-gcode}
+
+A `PRINTLOG_SET_SPOOL` before the tool has printed anything, such as in your start G-code or `PRINT_START` macro, isn't a change: it sets the spool the tool starts with, and that spool gets all of the tool's filament.
+
+If 3D Print Log already has the print with another spool on that tool (the macro ran after the print was logged), the tool's filament stays on that spool, and the print gets a note asking you to change the spool on the print by hand.
+
+#### Limits {#mid-print-limits}
+
+- **A restart while paused forgets the pause.** If the bridge restarts while the print is paused for a filament change, it no longer knows the pause was for one, so no hint note is added. A spool you assign during the pause still splits the print, and a split the bridge already made survives a restart.
+- **A purge line counts as printing.** A spool set before the tool has printed 1 mm is the one it starts with. A `PRINTLOG_SET_SPOOL` after a longer purge line is a real change, so the purge line's length goes to the old spool.
+- **A runout sensor far from the extruder may pause too late.** A runout counts only when the print pauses within 200 mm of filament after the sensor empties. With a longer `runout_distance`, such as a sensor far up a Bowden tube, the hint note is missing, but nothing is split wrongly.
+- **Two spools loaded for a while.** If 3D Print Log couldn't be reached until after a spool change, the print is created with the spool the tool started with. On a single-tool printer the app may then show both spools loaded until the next print starts.
 
 ### Tags {#tags}
 

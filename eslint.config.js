@@ -26,7 +26,7 @@ module.exports = tseslint.config(
       ],
       '@angular-eslint/prefer-signals': [
         'error',
-        { preferReadonlySignalProperties: false },
+        { preferReadonlySignalProperties: true },
       ],
       '@angular-eslint/prefer-output-emitter-ref': 'error',
       '@angular-eslint/prefer-host-metadata-property': 'error',
@@ -58,16 +58,9 @@ module.exports = tseslint.config(
       'src/app/filament/filament-list-container/filament-list-container.component.ts',
       'src/app/print/edit-print-detail/edit-print-detail.component.ts',
       'src/app/print/print-list/print-list.component.ts',
-      'src/app/shared/simple-dialog/simple-dialog.component.ts',
     ],
     rules: {
       '@angular-eslint/prefer-on-push-component-change-detection': 'off',
-    },
-  },
-  {
-    files: ['src/app/shared/simple-dialog/simple-dialog.component.ts'],
-    rules: {
-      '@angular-eslint/prefer-signals': 'off',
     },
   },
   {

@@ -258,6 +258,54 @@
         [class.refreshing]="showRefreshing()"
         [attr.aria-busy]="showRefreshing() ? 'true' : null"
       >
+        <!-- The gallery has no column headers, so select-all and the sort live
+             in a row of their own above the tiles. -->
+        <div class="gallery-toolbar">
+          <mat-checkbox
+            [checked]="bulkActions.isAllOnPageSelected(prints())"
+            [indeterminate]="bulkActions.isIndeterminate(prints())"
+            [disabled]="bulkActions.isRunning() || prints().length === 0"
+            (change)="bulkActions.toggleSelectAllOnPage(prints())"
+            data-cy-select-all-prints
+          >
+            Select all on this page
+          </mat-checkbox>
+          <span class="gallery-toolbar__spacer"></span>
+          <mat-form-field
+            class="gallery-sort"
+            appearance="outline"
+            subscriptSizing="dynamic"
+          >
+            <mat-label>Sort by</mat-label>
+            <mat-select
+              [value]="sortColumn"
+              (selectionChange)="setGallerySortColumn($event.value)"
+            >
+              @for (option of gallerySortOptions; track option.column) {
+                <mat-option [value]="option.column">{{
+                  option.label
+                }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button
+            mat-icon-button
+            type="button"
+            data-testid="gallery-sort-direction"
+            [attr.aria-label]="
+              activeSortDirection() === 'desc'
+                ? 'Sorted descending. Sort ascending'
+                : 'Sorted ascending. Sort descending'
+            "
+            (click)="toggleSortDirection()"
+          >
+            <mat-icon>{{
+              activeSortDirection() === 'desc'
+                ? 'arrow_downward'
+                : 'arrow_upward'
+            }}</mat-icon>
+          </button>
+        </div>
         @if (showRefreshing()) {
           <mat-progress-bar mode="indeterminate" class="refresh-bar" />
         }
@@ -341,6 +389,8 @@
         mat-table
         [dataSource]="prints()"
         matSort
+        [matSortActive]="activeSortHeaderId()"
+        [matSortDirection]="activeSortDirection()"
         (matSortChange)="sortData($event)"
         [matSortDisableClear]="true"
       >

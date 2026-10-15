@@ -283,6 +283,22 @@ table.refreshing tr[mat-row] {
     display: block;
   }
 
+  .gallery-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    margin-bottom: 12px;
+  }
+
+  .gallery-toolbar__spacer {
+    flex: 1 1 auto;
+  }
+
+  .gallery-sort {
+    width: 180px;
+  }
+
   // Below the table's breakpoint the bulk bar is fixed to the bottom of the
   // viewport, as for the cards; keep the last row of tiles reachable.
   @media (max-width: 959.98px) {

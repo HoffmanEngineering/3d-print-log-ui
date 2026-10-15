@@ -1,0 +1,24 @@
+@if (linked()) {
+  <a
+    class="print-tag-chip print-tag-chip--link"
+    data-cy="print-tag-chip"
+    routerLink="/prints"
+    [queryParams]="{ filterByTagId: tag().id }"
+    (click)="$event.stopPropagation()"
+    ><span
+      class="print-tag-dot"
+      aria-hidden="true"
+      [style.background-color]="tag().color"
+    ></span
+    >{{ tag().name }}</a
+  >
+} @else {
+  <span class="print-tag-chip" data-cy="print-tag-chip"
+    ><span
+      class="print-tag-dot"
+      aria-hidden="true"
+      [style.background-color]="tag().color"
+    ></span
+    >{{ tag().name }}</span
+  >
+}

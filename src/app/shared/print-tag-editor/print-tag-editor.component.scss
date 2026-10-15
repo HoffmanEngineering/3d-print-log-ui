@@ -1,0 +1,18 @@
+:host {
+  display: block;
+}
+
+.print-tag-field {
+  width: 100%;
+}
+
+.print-tag-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 50%;
+  vertical-align: middle;
+  background-color: var(--app-text-hint);
+}

@@ -1,0 +1,41 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.print-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  font-size: 0.75rem;
+  line-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--app-text-primary);
+  background-color: var(--app-surface-container);
+  border: 1px solid var(--mat-divider-color);
+}
+
+.print-tag-chip--link {
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--app-primary);
+  }
+}
+
+.print-tag-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  // A tag with no colour of its own still reads as a tag.
+  background-color: var(--app-text-hint);
+}

@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  DeferBlockBehavior,
+  DeferBlockState,
+  TestBed,
+} from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -44,6 +49,9 @@ describe('PrintGalleryComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      // Each tile's image is deferred until it scrolls into view. Manual
+      // stepping lets a spec see the block before and after that happens.
+      deferBlockBehavior: DeferBlockBehavior.Manual,
       imports: [PrintGalleryComponent],
       providers: [
         provideRouter([]),
@@ -86,7 +94,7 @@ describe('PrintGalleryComponent', () => {
     render([printFor({ title: 'Benchy' })]);
 
     // Without aria-labelledby the link's name would be computed from everything
-    // inside it: "Photo of Benchy Benchy Success 01/04/2026 Voron".
+    // inside it: "Benchy Success 01/04/2026 Voron".
     const link = tiles()[0].query(By.css('a'))
       .nativeElement as HTMLAnchorElement;
     const labelledBy = link.getAttribute('aria-labelledby');
@@ -122,16 +130,64 @@ describe('PrintGalleryComponent', () => {
     expect(tiles()[0].nativeElement.textContent).toContain('Prusa MK4');
   });
 
-  it('renders the default image with alt text naming the print', () => {
-    render([printFor({ id: 42, defaultPrintImageId: 7, title: 'Benchy' })]);
+  describe('a print with an image', () => {
+    // A page of 100 tiles used to fetch 100 full-size images at once. Until a
+    // tile reaches the viewport it holds a blank box of the same size, and
+    // nothing is requested.
+    it('waits for the tile to reach the viewport before fetching', () => {
+      render([printFor({ id: 42, defaultPrintImageId: 7 })]);
 
-    const image = tiles()[0].query(By.css('app-print-image'));
-    expect(image).toBeTruthy();
-    expect(image.componentInstance.alt()).toBe('Photo of Benchy');
-    expect(image.componentInstance.fit()).toBe('cover');
-    TestBed.inject(HttpTestingController).expectOne((request) =>
-      request.url.endsWith('/api/Prints/42/image/7')
-    );
+      const tile = tiles()[0];
+      expect(tile.query(By.css('app-print-image'))).toBeNull();
+      expect(
+        tile.query(By.css('[data-testid="print-gallery-pending"]'))
+      ).toBeTruthy();
+      // Not the "No photo" placeholder: this print has one, it is just not
+      // loaded yet.
+      expect(
+        tile.query(By.css('[data-testid="print-gallery-placeholder"]'))
+      ).toBeNull();
+      TestBed.inject(HttpTestingController).expectNone(() => true);
+    });
+
+    it('renders the default image once in view', async () => {
+      render([printFor({ id: 42, defaultPrintImageId: 7, title: 'Benchy' })]);
+
+      const [block] = await fixture.getDeferBlocks();
+      await block.render(DeferBlockState.Complete);
+
+      const image = tiles()[0].query(By.css('app-print-image'));
+      expect(image).toBeTruthy();
+      expect(image.componentInstance.fit()).toBe('cover');
+      TestBed.inject(HttpTestingController).expectOne((request) =>
+        request.url.endsWith('/api/Prints/42/image/7')
+      );
+    });
+
+    // The tile's title names it; an alt repeating it would be read twice.
+    it('marks the image decorative', async () => {
+      render([printFor({ defaultPrintImageId: 7 })]);
+
+      const [block] = await fixture.getDeferBlocks();
+      await block.render(DeferBlockState.Complete);
+
+      const image = tiles()[0].query(By.css('app-print-image'));
+      expect(image.componentInstance.alt()).toBe('');
+    });
+
+    it('defers each tile on its own', async () => {
+      render([
+        printFor({ id: 1, defaultPrintImageId: 7 }),
+        printFor({ id: 2, defaultPrintImageId: 8 }),
+      ]);
+
+      const blocks = await fixture.getDeferBlocks();
+      expect(blocks.length).toBe(2);
+      await blocks[1].render(DeferBlockState.Complete);
+
+      expect(tiles()[0].query(By.css('app-print-image'))).toBeNull();
+      expect(tiles()[1].query(By.css('app-print-image'))).toBeTruthy();
+    });
   });
 
   it('draws a placeholder instead of fetching when the print has no image', () => {
@@ -154,6 +210,18 @@ describe('PrintGalleryComponent', () => {
 
       expect(checkbox()).toBeTruthy();
       expect(checkbox().nativeElement.closest('a')).toBeNull();
+    });
+
+    // It sits over the image's top-left corner, so it comes first visually and
+    // must come first in the tab order too.
+    it('puts the checkbox before the link in the focus order', () => {
+      render([printFor()]);
+
+      const link = tiles()[0].query(By.css('a')).nativeElement as HTMLElement;
+      expect(
+        checkbox().nativeElement.compareDocumentPosition(link) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
     });
 
     it('labels each checkbox after its print', () => {

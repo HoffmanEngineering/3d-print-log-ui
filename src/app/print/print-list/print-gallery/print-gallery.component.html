@@ -5,9 +5,21 @@
       data-testid="print-gallery-tile"
       [class.print-gallery__tile--selected]="selectedIds().has(print.id)"
     >
+      <!-- A sibling of the link, never inside it: an interactive control nested
+           in an <a> is invalid, and a click on it would also navigate. Before
+           the link in the DOM because it sits over the image's top-left corner,
+           so the tab order follows what the eye sees first. -->
+      <mat-checkbox
+        class="print-gallery__select"
+        [checked]="selectedIds().has(print.id)"
+        [disabled]="selectionDisabled()"
+        (change)="selectionToggled.emit(print)"
+        [aria-label]="'Select print ' + print.title"
+        [attr.data-cy-select-print]="print.id"
+      />
       <!-- The link is named by the title alone. Left to compute its name from
-           its content it would read the alt text, the title, the status, the
-           date and the printer as one long label. -->
+           its content it would read the title, the status, the date and the
+           printer as one long label. -->
       <a
         class="print-gallery__link"
         [routerLink]="['/prints', print.id]"
@@ -15,12 +27,24 @@
       >
         <div class="print-gallery__thumb">
           @if (print.defaultPrintImageId > 0) {
-            <app-print-image
-              [printId]="print.id"
-              [imageId]="print.defaultPrintImageId"
-              [alt]="'Photo of ' + print.title"
-              fit="cover"
-            />
+            <!-- Fetched once the tile nears the viewport, so a page of 100
+                 tiles does not download 100 full-size images up front. Until
+                 then a blank box of the same size holds the layout; not the
+                 "No photo" placeholder, since this print has one. The alt is
+                 empty because the title beside it already names the tile. -->
+            @defer (on viewport) {
+              <app-print-image
+                [printId]="print.id"
+                [imageId]="print.defaultPrintImageId"
+                alt=""
+                fit="cover"
+              />
+            } @placeholder {
+              <div
+                class="print-gallery__pending"
+                data-testid="print-gallery-pending"
+              ></div>
+            }
           } @else {
             <div
               class="print-gallery__placeholder"
@@ -49,16 +73,6 @@
           </p>
         </div>
       </a>
-      <!-- A sibling of the link, never inside it: an interactive control nested
-           in an <a> is invalid, and a click on it would also navigate. -->
-      <mat-checkbox
-        class="print-gallery__select"
-        [checked]="selectedIds().has(print.id)"
-        [disabled]="selectionDisabled()"
-        (change)="selectionToggled.emit(print)"
-        [aria-label]="'Select print ' + print.title"
-        [attr.data-cy-select-print]="print.id"
-      />
     </li>
   }
 </ul>

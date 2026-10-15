@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-10-10
+updated: 2026-10-15
 related: [projects, materials]
 ---
 
@@ -272,6 +272,34 @@ following:
 - **Set the default image** — The default image is shown in the print list and on the public print view. It is marked with a <mat-icon inline="true">star</mat-icon> in the thumbnail strip. To change the default, hover over any other thumbnail and click the <mat-icon inline="true">star_border</mat-icon> icon that appears.
 - **Reorder images** — Drag and drop thumbnails in the strip to change the display order of your images.
 - **Delete an image** — Hover over a thumbnail and click the <mat-icon inline="true">close</mat-icon> icon to remove that image. Deletions take effect when you click <button mat-raised-button color="primary">Submit</button>.
+
+---
+
+### Prints of the same file {#same-file}
+
+Every time you print a file, it is logged as its own print, with its own
+material usage, time and result. When you have printed the same file more than
+once, your print page says so: a <mat-icon inline="true">repeat</mat-icon>
+**Printed 11 times** button appears next to the print's status. Click it to see
+your other prints of that file, newest first, and open any of them.
+
+Prints are matched by a fingerprint of the file, which two integrations record:
+
+- The [OctoPrint webhook](/docs/octoprint-webhook) records the file's SHA-1, a
+  hash of its contents. Renaming a file keeps it the same file, and re-slicing
+  it makes a new one.
+- The [printlog-bridge](/docs/printlog-bridge) records an identity made from
+  the file's size and modified time as Moonraker recorded them, without reading
+  the file ([what the bridge sends](/docs/printlog-bridge-privacy)). Re-slicing
+  the file, or uploading it to Moonraker again, starts a new count.
+
+The two fingerprints never match each other, so prints of one file logged
+through OctoPrint and through the bridge are counted separately. Prints from
+the Slic3r uploader, the Cura plugin or entered by hand have no fingerprint, so
+the count does not appear on them, unless the bridge later takes the print over
+while it runs.
+
+Only you see the count, even on a public print.
 
 ---
 

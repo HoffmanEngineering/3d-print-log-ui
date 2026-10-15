@@ -24,6 +24,11 @@
 
 <div class="chip-row">
   <app-print-status-badge [status]="print().status" />
+  <!-- Owner-only, and gated here rather than inside: an anonymous visitor on this public route
+       must not send a request the API can only refuse. -->
+  @if (isOwner()) {
+    <app-print-same-file [printId]="print().id" />
+  }
 </div>
 
 <section class="panel" aria-labelledby="at-a-glance-heading">

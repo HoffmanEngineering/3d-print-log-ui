@@ -364,6 +364,25 @@ export type ElectricityCostInvalid = {
 
 export type ElectricityCost = ElectricityCostValid | ElectricityCostInvalid;
 
+/** One of the owner's other prints of the same file (UI #10). */
+export interface SameFilePrint {
+  id: number;
+  title: string | null;
+  status: PrintStatus;
+  startDate: string | null;
+  createdDate: string;
+  defaultPrintImageId: number | null;
+}
+
+/**
+ * GET /api/Prints/{id}/same-file. `count` is every print of the file, this one included, or 0
+ * when the print has no file hash. `prints` is the newest of the others, capped by `limit`.
+ */
+export interface SameFilePrints {
+  count: number;
+  prints: SameFilePrint[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -440,6 +459,24 @@ export class PrintService {
     }
 
     return this.http.get<PagedList<PrintSummary>>(url, { params, headers });
+  }
+
+  /**
+   * The owner's other prints of the same file. Owner-only on the API, so this deliberately
+   * sends no `allow-anonymous-request` header: call it only for the signed-in owner.
+   */
+  getSameFilePrints(
+    printId: number,
+    limit: number = 10
+  ): Observable<SameFilePrints> {
+    const url = `${this.baseApi}/api/Prints/${printId}/same-file`;
+    const params = new HttpParams().set('limit', limit.toString(10));
+
+    return this.http
+      .get<SameFilePrints>(url, { params })
+      .pipe(
+        map((result) => ({ count: result.count, prints: result.prints ?? [] }))
+      );
   }
 
   getPrintDetail(id: number): Observable<PrintDetail> {

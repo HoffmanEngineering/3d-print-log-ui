@@ -13,6 +13,7 @@ import {
   PrintService,
   PrintStatus,
   PrintViewStatus,
+  SameFilePrints,
 } from './print.service';
 import { environment } from 'src/environments/environment';
 
@@ -184,6 +185,58 @@ describe('PrintService', () => {
   });
 
   // Scoped so httpMock.verify() applies only to the requests these specs make.
+  describe('getSameFilePrints', () => {
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => httpMock.verify());
+
+    it("asks for the print's other prints of the same file, authenticated", () => {
+      let actual: SameFilePrints | undefined;
+
+      service.getSameFilePrints(42).subscribe((r) => (actual = r));
+
+      const req = httpMock.expectOne(
+        (r) => r.url === `${environment.printLogApiUrl}/api/Prints/42/same-file`
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('limit')).toBe('10');
+      // Owner-only: the API answers 401 to an anonymous caller, so the request must never ask
+      // the interceptor to let an anonymous visitor through.
+      expect(req.request.headers.has('allow-anonymous-request')).toBeFalse();
+
+      req.flush({
+        count: 2,
+        prints: [
+          {
+            id: 7,
+            title: 'Benchy',
+            status: 3,
+            startDate: '2026-03-14T00:00:00Z',
+            createdDate: '2026-03-14T00:00:00Z',
+            defaultPrintImageId: null,
+          },
+        ],
+      });
+      expect(actual?.count).toBe(2);
+      expect(actual?.prints.map((p) => p.id)).toEqual([7]);
+    });
+
+    it('treats a missing list as empty', () => {
+      let actual: SameFilePrints | undefined;
+
+      service.getSameFilePrints(42).subscribe((r) => (actual = r));
+
+      httpMock
+        .expectOne((r) => r.url.endsWith('/api/Prints/42/same-file'))
+        .flush({ count: 0, prints: null });
+      expect(actual).toEqual({ count: 0, prints: [] });
+    });
+  });
+
   describe('bulk endpoints', () => {
     let httpMock: HttpTestingController;
 

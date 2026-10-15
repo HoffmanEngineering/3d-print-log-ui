@@ -12,36 +12,6 @@ import { NativeBridgeService } from './core/services/native-bridge.service';
 import { of } from 'rxjs';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 
-xdescribe('AppComponent', () => {
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [RouterTestingModule],
-      declarations: [AppComponent],
-    }).compileComponents();
-  }));
-
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it(`should have as title 'print-log-ui'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('print-log-ui');
-  });
-
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.debugElement.nativeElement;
-    expect(compiled.querySelector('.content span').textContent).toContain(
-      'print-log-ui app is running!'
-    );
-  });
-});
-
 describe('AppComponent (ThemeService)', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockGoogleAnalyticsService: jasmine.SpyObj<GoogleAnalyticsService>;

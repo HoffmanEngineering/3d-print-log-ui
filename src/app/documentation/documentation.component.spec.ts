@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { Subject } from 'rxjs';
@@ -23,27 +23,6 @@ const mobileMediaMatcher = {
 /** The shell injects the opener to run the Ctrl+K shortcut and toolbar button. */
 const searchOpener = () =>
   jasmine.createSpyObj<DocsSearchOpener>('DocsSearchOpener', ['open']);
-
-xdescribe('DocumentationComponent', () => {
-  let component: DocumentationComponent;
-  let fixture: ComponentFixture<DocumentationComponent>;
-
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [DocumentationComponent],
-    }).compileComponents();
-  }));
-
-  beforeEach(() => {
-    fixture = TestBed.createComponent(DocumentationComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
 
 describe('DocumentationComponent SEO lifecycle', () => {
   let events: Subject<RouterEvent>;

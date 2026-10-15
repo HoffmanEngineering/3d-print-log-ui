@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PrinterService } from 'src/app/core/services/printer.service';
 
@@ -9,16 +9,7 @@ import { PrinterService } from 'src/app/core/services/printer.service';
 export class PrinterRedirectPromptService {
   private printerService = inject(PrinterService);
 
-  /**
-   * We only want to show the prompt once per login.
-   */
-  private hasShownPromptBefore = false;
-
   shouldShowAddPrinterPrompt(): Observable<boolean> {
-    if (this.hasShownPromptBefore) {
-      return of(false);
-    }
-
     return this.printerService
       .getCurrentUserPrinterSummaries(1, 100, undefined, false)
       .pipe(

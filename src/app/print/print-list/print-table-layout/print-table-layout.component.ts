@@ -53,7 +53,8 @@ export class PrintTableLayoutComponent implements OnInit {
         (col) => col.key === this.selectedColumns[i]
       );
 
-      if (currentIndex == undefined) {
+      // A saved column the table no longer offers has nothing to move.
+      if (currentIndex === -1) {
         continue;
       }
 

@@ -131,6 +131,10 @@ On a Snapmaker U1, you don't need to run anything. After you add the tag in the 
 
 If the macro doesn't answer at all, see [What the console shows](/docs/printlog-bridge-spools#replies).
 
+#### A print has all its filament on one spool after a spool change {#spool-change}
+
+The bridge splits a tool's filament only when it knows the new spool. Run `PRINTLOG_SET_SPOOL` for the tool while the print is paused, before you resume. If you resumed without it, the print has a note saying so; split the usage by hand on the print in the app. See [Changing spools mid-print](/docs/printlog-bridge-spools#mid-print).
+
 #### The webcam snapshot was skipped {#snapshot}
 
 A picture never holds up logging a print. When the webcam doesn't answer properly, the print is logged without the frame, and the log has a line like:

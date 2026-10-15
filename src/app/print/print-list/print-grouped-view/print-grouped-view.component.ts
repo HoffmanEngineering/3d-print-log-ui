@@ -47,7 +47,7 @@ import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-ske
 import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { ProjectImageComponent } from 'src/app/shared/project-image/project-image.component';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 import { ColumnDefinition } from '../print-list.component';
 import { PrintListSkeletonComponent } from '../print-list-skeleton/print-list-skeleton.component';
@@ -98,29 +98,31 @@ export class PrintGroupedViewComponent implements OnInit {
     'grouped_table_displayed_columns';
 
   // ---- Inputs from PrintListComponent ----
-  searchText = input<string>('');
-  filterByStatus = input<PrintStatus | null>(null);
-  filterByPrinterIds = input<number[]>([]);
-  filterByFilamentIds = input<string[]>([]);
-  sortColumn = input<PrintSummarySortColumn>(PrintSummarySortColumn.StartDate);
-  sortDirection = input<SortDirection>(SortDirection.Desc);
-  displayedColumns = signal<string[]>(this.loadDisplayedColumns());
-  defaultFilamentPriceSetting = input<UserSetting | null>(null);
-  preferredCurrencySymbolSetting = input<UserSetting | null>(null);
-  defaultElectricityKwhRateSetting = input<UserSetting | null>(null);
-  defaultElectricityWattageSetting = input<UserSetting | null>(null);
-  preferredUnit = input<PrintFilamentSourceMeasurement>(
+  readonly searchText = input<string>('');
+  readonly filterByStatus = input<PrintStatus | null>(null);
+  readonly filterByPrinterIds = input<number[]>([]);
+  readonly filterByFilamentIds = input<string[]>([]);
+  readonly sortColumn = input<PrintSummarySortColumn>(
+    PrintSummarySortColumn.StartDate
+  );
+  readonly sortDirection = input<SortDirection>(SortDirection.Desc);
+  readonly displayedColumns = signal<string[]>(this.loadDisplayedColumns());
+  readonly defaultFilamentPriceSetting = input<UserSetting | null>(null);
+  readonly preferredCurrencySymbolSetting = input<UserSetting | null>(null);
+  readonly defaultElectricityKwhRateSetting = input<UserSetting | null>(null);
+  readonly defaultElectricityWattageSetting = input<UserSetting | null>(null);
+  readonly preferredUnit = input<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.Weight
   );
 
   // ---- Internal state ----
-  feed = signal<PagedList<GroupedFeedItemDto> | null>(null);
+  readonly feed = signal<PagedList<GroupedFeedItemDto> | null>(null);
 
   /**
    * Raw "a request is in flight". Not what the template renders — see
    * `showSkeleton` / `showRefreshing`.
    */
-  loading = signal(true);
+  readonly loading = signal(true);
 
   /** Whether rows have ever been painted. See PrintListComponent.hasLoadedOnce. */
   private readonly hasLoadedOnce = signal(false);
@@ -148,7 +150,7 @@ export class PrintGroupedViewComponent implements OnInit {
     () => this.loadingIndicator.visible() && this.hasLoadedOnce()
   );
 
-  pageNumber = signal(1);
+  readonly pageNumber = signal(1);
   pageSize = +(localStorage.getItem('print_list_page_size') ?? 10);
 
   /** Placeholder count while loading — see PrintListComponent.skeletonRowCount. */
@@ -156,9 +158,11 @@ export class PrintGroupedViewComponent implements OnInit {
     return Math.min(this.pageSize || 10, 10);
   }
 
-  expandedProjectPrints = signal<Map<string, PrintSummary[]>>(new Map());
+  readonly expandedProjectPrints = signal<Map<string, PrintSummary[]>>(
+    new Map()
+  );
 
-  flatRows = computed<GroupedRow[]>(() => {
+  readonly flatRows = computed<GroupedRow[]>(() => {
     const items = this.feed()?.items ?? [];
     return this.buildFlatRows(items);
   });
@@ -638,14 +642,17 @@ export class PrintGroupedViewComponent implements OnInit {
   }
 
   deletePrint(print: PrintSummary): void {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    dialogRef.componentInstance.title = 'Delete?';
-    dialogRef.componentInstance.body = `Are you sure you want to delete print "${print.title}"? <br /><br /> This action cannot be undone.`;
-    dialogRef.componentInstance.yesText = 'Delete';
-    dialogRef.componentInstance.yesColor = 'warn';
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete?',
+        body: `Are you sure you want to delete print "${print.title}"? <br /><br /> This action cannot be undone.`,
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
 
     dialogRef.afterClosed().subscribe((shouldDelete) => {
       if (shouldDelete) {

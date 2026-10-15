@@ -21,12 +21,12 @@ const BOTTLE_BODY =
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BottleIconComponent {
-  color = input<string>('');
+  readonly color = input<string>('');
 
-  colorPattern = input<ColorPatternType>(ColorPatternType.Solid);
-  colors = input<string[]>([]);
-  finishType = input<FilamentFinishType>(FilamentFinishType.Standard);
-  effects = input<FilamentEffect[]>([]);
+  readonly colorPattern = input<ColorPatternType>(ColorPatternType.Solid);
+  readonly colors = input<string[]>([]);
+  readonly finishType = input<FilamentFinishType>(FilamentFinishType.Standard);
+  readonly effects = input<FilamentEffect[]>([]);
 
   protected readonly uid = `bottle-${Math.random().toString(36).slice(2, 9)}`;
   protected readonly BOTTLE_BODY = BOTTLE_BODY;
@@ -34,17 +34,19 @@ export class BottleIconComponent {
   protected readonly FilamentEffect = FilamentEffect;
   protected readonly FilamentFinishType = FilamentFinishType;
 
-  protected effectiveColors = computed((): string[] => {
+  protected readonly effectiveColors = computed((): string[] => {
     const c = this.colors();
     if (c.length > 0) return c;
     const legacy = this.color();
     return HEX.test(legacy) ? [legacy] : ['000000'];
   });
 
-  protected fillColor = computed(() => `#${this.effectiveColors()[0]}`);
+  protected readonly fillColor = computed(
+    () => `#${this.effectiveColors()[0]}`
+  );
 
   // Bottle Multi: vertical strips (left-to-right)
-  protected clipSegments = computed(() => {
+  protected readonly clipSegments = computed(() => {
     if (this.colorPattern() !== ColorPatternType.Multi) return [];
     return this.effectiveColors().map((color, i, arr) => ({
       id: `${this.uid}-clip-${i}`,
@@ -55,7 +57,7 @@ export class BottleIconComponent {
   });
 
   // Gradient stops — vertical for bottle (y1=0% y2=100%)
-  protected gradientStops = computed(() => {
+  protected readonly gradientStops = computed(() => {
     const p = this.colorPattern();
     if (p !== ColorPatternType.Gradient && p !== ColorPatternType.Rainbow)
       return [];
@@ -67,15 +69,15 @@ export class BottleIconComponent {
     }));
   });
 
-  protected useGradient = computed(
+  protected readonly useGradient = computed(
     () =>
       this.colorPattern() === ColorPatternType.Gradient ||
       this.colorPattern() === ColorPatternType.Rainbow
   );
 
-  protected gradientId = computed(() => `${this.uid}-grad`);
+  protected readonly gradientId = computed(() => `${this.uid}-grad`);
 
-  protected fillOpacity = computed(() =>
+  protected readonly fillOpacity = computed(() =>
     this.effects().includes(FilamentEffect.Translucent) ? '0.45' : '1'
   );
 

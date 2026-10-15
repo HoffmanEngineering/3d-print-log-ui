@@ -59,6 +59,7 @@ import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { EmailSettingsComponent } from './email-settings/email-settings.component';
 import { AchievementSettingsComponent } from './achievement-settings/achievement-settings.component';
 import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
+import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
 
@@ -85,6 +86,7 @@ import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
     AchievementSettingsComponent,
     RouterLink,
     ConnectedAgentsComponent,
+    SpoolmanConnectionsComponent,
     MatCheckbox,
     KeyValuePipe,
     LocaleDatePipe,

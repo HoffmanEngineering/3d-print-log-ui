@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -16,6 +16,7 @@ import {
   maxLastmod,
   docLastmods,
   fetchPrintRows,
+  fetchOptionalJsonArray,
 } from './sitemap-lib.mjs';
 import {
   MARKETING_ROUTES,
@@ -279,10 +280,19 @@ test('fetchPrintRows falls back to bare ids when /public/sitemap never answers',
         )
       : bare(url);
 
-  assert.deepEqual(
-    await fetchPrintRows(impl, 'https://api', { timeoutMs: 10 }),
-    { rows: [1, 2], withLastmod: false }
-  );
+  // AbortSignal.timeout's timer is unref'd, and this stub holds no socket the
+  // way a real hung fetch does. Without a ref'd handle the event loop looks
+  // idle while the timeout is pending, and node:test cancels this test and
+  // every one after it ("Promise resolution is still pending").
+  const keepAlive = setInterval(() => {}, 1000);
+  try {
+    assert.deepEqual(
+      await fetchPrintRows(impl, 'https://api', { timeoutMs: 10 }),
+      { rows: [1, 2], withLastmod: false }
+    );
+  } finally {
+    clearInterval(keepAlive);
+  }
 });
 
 test('fetchPrintRows fails on a server error instead of falling back', async () => {
@@ -293,12 +303,44 @@ test('fetchPrintRows fails on a server error instead of falling back', async () 
   await assert.rejects(fetchPrintRows(impl, 'https://api'), /HTTP 500/);
 });
 
-// Runs the real generator script against a local stub API.
-async function generateAgainst(routes) {
+test('fetchOptionalJsonArray returns the array when the endpoint is deployed', async () => {
+  const { impl } = stubFetch({ 'https://api/api/Projects/public': ['a'] });
+  assert.deepEqual(
+    await fetchOptionalJsonArray(impl, 'https://api', '/api/Projects/public'),
+    ['a']
+  );
+});
+
+test('fetchOptionalJsonArray returns null on 400 or 404 from an API without the endpoint', async () => {
+  for (const status of [400, 404]) {
+    const { impl } = stubFetch({ 'https://api/api/Projects/public': status });
+    assert.equal(
+      await fetchOptionalJsonArray(impl, 'https://api', '/api/Projects/public'),
+      null,
+      String(status)
+    );
+  }
+});
+
+test('fetchOptionalJsonArray fails on a server error', async () => {
+  const { impl } = stubFetch({ 'https://api/api/Projects/public': 500 });
+  await assert.rejects(
+    fetchOptionalJsonArray(impl, 'https://api', '/api/Projects/public'),
+    /HTTP 500/
+  );
+});
+
+// Runs the real generator script against a local stub API. A numeric body is
+// answered as that bare status; an unknown path gets 404.
+async function runGenerator(routes) {
   const server = createServer((req, res) => {
     const body = routes[req.url];
     if (body === undefined) {
       res.writeHead(404).end();
+      return;
+    }
+    if (typeof body === 'number') {
+      res.writeHead(body).end();
       return;
     }
     res.writeHead(200, { 'content-type': 'application/json' });
@@ -320,19 +362,80 @@ async function generateAgainst(routes) {
       });
       child.on('exit', resolve);
     });
-    assert.equal(code, 0);
-    const read = (f) => readFileSync(join(out, f), 'utf8');
+    const read = (f) =>
+      existsSync(join(out, f)) ? readFileSync(join(out, f), 'utf8') : null;
     return {
+      code,
       index: read('sitemap.xml'),
       pages: read('sitemap-pages.xml'),
       prints: read('sitemap-prints-1.xml'),
       users: read('sitemap-users-1.xml'),
+      projects: read('sitemap-projects-1.xml'),
     };
   } finally {
     server.close();
     rmSync(out, { recursive: true, force: true });
   }
 }
+
+async function generateAgainst(routes) {
+  const result = await runGenerator(routes);
+  assert.equal(result.code, 0);
+  return result;
+}
+
+const PROJECT_A = '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
+const PROJECT_B = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
+
+test('generator lists public projects without lastmod', async () => {
+  const { index, projects } = await generateAgainst({
+    '/api/Prints/public/sitemap': [{ id: 1, lastModified: null }],
+    '/api/Users/public': [5],
+    '/api/Projects/public': [PROJECT_A, PROJECT_B],
+  });
+  assert.match(
+    projects,
+    literal(`<loc>https://x/projects/${PROJECT_A}</loc></url>`)
+  );
+  assert.match(
+    projects,
+    literal(`<loc>https://x/projects/${PROJECT_B}</loc></url>`)
+  );
+  assert.doesNotMatch(projects, /lastmod/);
+  assert.match(
+    index,
+    literal('<loc>https://x/sitemap-projects-1.xml</loc></sitemap>')
+  );
+});
+
+for (const [label, projectsRoute] of [
+  ['400 (binds "public" as an id)', 400],
+  ['404', undefined],
+  ['an empty list', []],
+]) {
+  test(`generator omits the project sitemap when /api/Projects/public answers ${label}`, async () => {
+    const routes = {
+      '/api/Prints/public/sitemap': [{ id: 1, lastModified: null }],
+      '/api/Users/public': [5],
+    };
+    if (projectsRoute !== undefined) {
+      routes['/api/Projects/public'] = projectsRoute;
+    }
+    const { index, projects, prints } = await generateAgainst(routes);
+    assert.equal(projects, null);
+    assert.doesNotMatch(index, /sitemap-projects/);
+    assert.match(prints, literal('<loc>https://x/prints/1</loc>'));
+  });
+}
+
+test('generator fails when /api/Projects/public has a server error', async () => {
+  const { code } = await runGenerator({
+    '/api/Prints/public/sitemap': [{ id: 1, lastModified: null }],
+    '/api/Users/public': [5],
+    '/api/Projects/public': 500,
+  });
+  assert.notEqual(code, 0);
+});
 
 test('generator writes print lastmods and indexes each child at the max of its entries', async () => {
   const { index, pages, prints, users } = await generateAgainst({

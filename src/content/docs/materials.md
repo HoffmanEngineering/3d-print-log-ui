@@ -6,7 +6,7 @@ navLabel: Materials
 group: features
 order: 30
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-14
 related: [materials-reference, prints]
 aliases: [filaments]
 ---
@@ -182,6 +182,8 @@ List unless **Include Inactive** is checked.
 3D Print Log can generate printable QR code labels for your material spools.
 Stick a label on your spool, then scan it with any phone camera or QR scanner
 app to quickly navigate to that material's detail page.
+
+Labels carry the spool number, so Fluidd's spool scanner selects the spool when you scan one. Labels printed before this change still open the material on a phone, but you need to reprint them for Fluidd's scanner. A spool without a number gets a label without it.
 
 #### Printing Labels {#qr-printing}
 

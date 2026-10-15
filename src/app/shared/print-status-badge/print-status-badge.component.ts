@@ -15,7 +15,7 @@ import { PrintStatus } from 'src/app/core/services/print.service';
   imports: [MatIconModule],
 })
 export class PrintStatusBadgeComponent {
-  status = input.required<PrintStatus>();
+  readonly status = input.required<PrintStatus>();
 
   protected readonly label = computed(() => {
     switch (this.status()) {

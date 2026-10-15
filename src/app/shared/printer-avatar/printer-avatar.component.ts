@@ -26,15 +26,15 @@ import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-sto
 export class PrinterAvatarComponent {
   private readonly store = inject(PrinterThumbnailStore);
 
-  printerId = input.required<number>();
+  readonly printerId = input.required<number>();
 
   /**
    * The only place the printer name reaches the accessibility tree, so every caller that
    * has a name passes it.
    */
-  printerName = input('');
+  readonly printerName = input('');
 
-  size = input<'sm' | 'md'>('sm');
+  readonly size = input<'sm' | 'md'>('sm');
 
   /**
    * The URL that failed, and the store generation it failed in.

@@ -23,7 +23,7 @@ import {
 } from 'src/app/core/services/print.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { BLOCK_SCROLL_WHILE_MENU_OPEN } from 'src/app/shared/menu/menu-scroll.provider';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import {
   BulkActionResult,
   PrintBulkActionsService,
@@ -272,16 +272,19 @@ export class PrintBulkActionBarComponent {
       return;
     }
 
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '350px',
-    });
-    dialogRef.componentInstance.title = 'Delete?';
-    dialogRef.componentInstance.body =
-      `Are you sure you want to delete ${attempted} ` +
-      `${attempted === 1 ? 'print' : 'prints'}? <br /> <br /> This action cannot be undone.`;
-    dialogRef.componentInstance.yesText = 'Delete';
-    dialogRef.componentInstance.yesColor = 'warn';
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete?',
+        body:
+          `Are you sure you want to delete ${attempted} ` +
+          `${attempted === 1 ? 'print' : 'prints'}? <br /> <br /> This action cannot be undone.`,
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '350px' }
+    );
 
     const shouldDelete = await firstValueFrom(dialogRef.afterClosed());
 

@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-10-10
+updated: 2026-10-15
 related: [projects, materials]
 ---
 
@@ -272,6 +272,24 @@ following:
 - **Set the default image** — The default image is shown in the print list and on the public print view. It is marked with a <mat-icon inline="true">star</mat-icon> in the thumbnail strip. To change the default, hover over any other thumbnail and click the <mat-icon inline="true">star_border</mat-icon> icon that appears.
 - **Reorder images** — Drag and drop thumbnails in the strip to change the display order of your images.
 - **Delete an image** — Hover over a thumbnail and click the <mat-icon inline="true">close</mat-icon> icon to remove that image. Deletions take effect when you click <button mat-raised-button color="primary">Submit</button>.
+
+---
+
+### Prints of the same file {#same-file}
+
+Every time you print a file, it is logged as its own print, with its own
+material usage, time and result. When you have printed the same file more than
+once, your print page says so: a <mat-icon inline="true">repeat</mat-icon>
+**Printed 11 times** button appears next to the print's status. Click it to see
+your other prints of that file, newest first, and open any of them.
+
+Prints are matched by the file's fingerprint, which the
+[OctoPrint webhook](/docs/octoprint-webhook) records when it logs a print.
+Prints logged another way have no fingerprint yet, so the count does not appear
+on them. With OctoPrint, renaming a file keeps it the same file, and re-slicing
+it makes a new one.
+
+Only you see the count, even on a public print.
 
 ---
 

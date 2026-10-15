@@ -36,6 +36,7 @@ import {
 } from '../print-legacy-filament-usage/print-legacy-filament-usage.component';
 import { environment } from 'src/environments/environment';
 import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
+import { PrintTagEditorComponent } from 'src/app/shared/print-tag-editor/print-tag-editor.component';
 
 @Component({
   selector: 'app-print-detail-summary',
@@ -53,6 +54,7 @@ import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-av
     FilamentUsageSummaryComponent,
     PrintStatusBadgeComponent,
     PrintLegacyFilamentUsageComponent,
+    PrintTagEditorComponent,
   ],
 })
 export class PrintDetailSummaryComponent {

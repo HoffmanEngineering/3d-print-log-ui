@@ -109,6 +109,10 @@ $muted-dark: rgba(255, 255, 255, 0.7);
   }
 }
 
+.tags {
+  margin-bottom: 16px;
+}
+
 :host-context(html.dark-theme) {
   .byline,
   .panel-heading,

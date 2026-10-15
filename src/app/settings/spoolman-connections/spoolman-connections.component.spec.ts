@@ -1,3 +1,4 @@
+import { SimpleDialogData } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -144,7 +145,9 @@ describe('SpoolmanConnectionsComponent', () => {
     fixture.detectChanges();
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
-    expect(dialogInstance.yesText).toBe('Revoke');
+    expect(
+      (dialog.open.calls.mostRecent().args[1]?.data as SimpleDialogData).yesText
+    ).toBe('Revoke');
     const del = httpMock.expectOne(`${listUrl}/c1`);
     expect(del.request.method).toBe('DELETE');
     del.flush(null, { status: 204, statusText: 'No Content' });

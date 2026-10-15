@@ -34,7 +34,7 @@ import {
   spoolmanConnectionLimit,
 } from 'src/app/core/services/spoolman-connection.service';
 import { HumanizePipe } from 'src/app/shared/pipes/humanize.pipe';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 
 /** The two printer categories that extrude filament, which is all Spoolman tracks. */
 const FDM_CATEGORIES = new Set(['FFF', 'FDM']);
@@ -72,10 +72,10 @@ export class PrinterSpoolmanComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly humanize = new HumanizePipe();
 
-  printerId = input.required<number>();
-  category = input<PrinterCategory | null>(null);
-  make = input<string | null>(null);
-  model = input<string | null>(null);
+  readonly printerId = input.required<number>();
+  readonly category = input<PrinterCategory | null>(null);
+  readonly make = input<string | null>(null);
+  readonly model = input<string | null>(null);
 
   protected readonly docsLink = '/docs/klipper-spoolman';
 
@@ -249,15 +249,11 @@ export class PrinterSpoolmanComponent {
     yesText: string,
     yesColor: string
   ): Observable<void> {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '400px',
-      data: {},
-    });
-    dialogRef.componentInstance.title = title;
-    dialogRef.componentInstance.body = body;
-    dialogRef.componentInstance.yesText = yesText;
-    dialogRef.componentInstance.yesColor = yesColor;
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      { title, body, yesText, yesColor, noText: 'Cancel' },
+      { maxWidth: '400px' }
+    );
     return dialogRef.afterClosed().pipe(
       filter((confirmed) => confirmed === true),
       map(() => undefined)

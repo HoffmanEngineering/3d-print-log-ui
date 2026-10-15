@@ -1,3 +1,4 @@
+import { provideZoneChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -6,7 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { SharedModule } from 'src/app/shared/shared.module';
 import { EmptyStateComponent } from 'src/app/shared/empty-state/empty-state.component';
@@ -54,14 +55,22 @@ describe('PrinterListComponent', () => {
   let fixture: ComponentFixture<PrinterListComponent>;
   let printerService: jasmine.SpyObj<PrinterService>;
 
-  const setUp = async (items: Partial<PrinterSummarySimple>[]) => {
+  /**
+   * `later` makes the service answer only when the test says so, the way HTTP
+   * does. Those tests run under zone change detection like the app, with startup
+   * settled first, so a view that is not repainted shows up as stale.
+   */
+  const setUp = async (
+    items: Partial<PrinterSummarySimple>[],
+    later?: Subject<PagedList<PrinterSummarySimple>>
+  ) => {
     printerService = jasmine.createSpyObj<PrinterService>('PrinterService', [
       'getCurrentUserPrinterSummaries',
       'unloadFilament',
       'deletePrinter',
     ]);
     printerService.getCurrentUserPrinterSummaries.and.returnValue(
-      of(page(items))
+      later ?? of(page(items))
     );
 
     const toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
@@ -83,6 +92,7 @@ describe('PrinterListComponent', () => {
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
       ],
       providers: [
+        ...(later ? [provideZoneChangeDetection()] : []),
         { provide: PrinterService, useValue: printerService },
         { provide: ToastrService, useValue: toastr },
         { provide: MatDialog, useValue: dialog },
@@ -96,6 +106,10 @@ describe('PrinterListComponent', () => {
     fixture = TestBed.createComponent(PrinterListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    if (later) {
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
   };
 
   it('creates', async () => {
@@ -106,7 +120,7 @@ describe('PrinterListComponent', () => {
   it('takes its first page from the resolver rather than fetching', async () => {
     await setUp([aPrinter()]);
 
-    expect(component.printers.length).toBe(1);
+    expect(component.printers().length).toBe(1);
     expect(
       printerService.getCurrentUserPrinterSummaries
     ).not.toHaveBeenCalled();
@@ -141,6 +155,44 @@ describe('PrinterListComponent', () => {
       await setUp([aPrinter({ defaultImageThumbnailUrl: null })]);
 
       expect(fixture.debugElement.query(By.css('app-signed-image'))).toBeNull();
+    });
+  });
+
+  describe('once a response arrives', () => {
+    const text = () => (fixture.nativeElement as HTMLElement).textContent;
+    let later: Subject<PagedList<PrinterSummarySimple>>;
+
+    beforeEach(async () => {
+      later = new Subject();
+      await setUp([aPrinter()], later);
+    });
+
+    it('shows the next page', () => {
+      component.pageChange({ pageIndex: 1, pageSize: 10 } as never);
+      fixture.detectChanges();
+
+      later.next(
+        page([
+          aPrinter({ id: 8, name: 'Prusa MK4', make: 'Prusa', model: 'MK4' }),
+        ])
+      );
+      fixture.detectChanges();
+
+      expect(text()).toContain('Prusa MK4');
+      expect(text()).not.toContain('Voron 2.4');
+    });
+
+    it('says so when a search matches nothing', async () => {
+      component.searchText = 'bambu';
+      const searched = component.updateFilter();
+      fixture.detectChanges();
+
+      later.next(page([]));
+      later.complete();
+      await searched;
+      fixture.detectChanges();
+
+      expect(text()).toContain('No printers match your search');
     });
   });
 });

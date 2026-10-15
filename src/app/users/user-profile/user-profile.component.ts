@@ -1,11 +1,16 @@
-import { Component, DestroyRef, OnInit, DOCUMENT, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  DOCUMENT,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import {
-  AuthService,
-  UserProfileInfo,
-} from 'src/app/core/services/auth.service';
+import { AuthService } from 'src/app/core/services/auth.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
@@ -19,6 +24,7 @@ import {
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserProfileComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);
@@ -30,61 +36,55 @@ export class UserProfileComponent implements OnInit {
   private readonly document = inject<Document>(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
 
-  public userDetail: UserDetailDto;
+  readonly userDetail = signal<UserDetailDto>(null);
 
-  public currentUser: UserProfileInfo;
+  readonly currentUser = toSignal(this.authService.userProfile$, {
+    initialValue: null,
+  });
 
   public profileViewStatusTypes = ProfileViewStatus;
 
-  public isEditingDescription = false;
+  readonly isEditingDescription = signal(false);
 
   /**
    * The ngModel used for updating the Bio.
    */
-  public bio = '';
+  readonly bio = signal('');
 
   /**
    * The ngModel used for updating the Profile View Status.
    */
-  public viewStatus: ProfileViewStatus = null;
+  readonly viewStatus = signal<ProfileViewStatus>(null);
 
   /**
    * The ngModel used for updating the user's Display name
    */
-  public displayName = '';
-  public isEditingDisplayName = false;
+  readonly displayName = signal('');
+  readonly isEditingDisplayName = signal(false);
 
   ngOnInit(): void {
     this.activatedRoute.data
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data) => {
-        this.userDetail = data.userDetail;
-        this.viewStatus = this.userDetail.viewStatus;
+        this.userDetail.set(data.userDetail);
+        this.viewStatus.set(data.userDetail.viewStatus);
 
         this.setMetaTags();
-      });
-
-    this.authService.userProfile$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => {
-        this.currentUser = user;
       });
   }
 
   setMetaTags() {
+    const userDetail = this.userDetail();
     this.metaTagService.setTitle(
-      `${this.userDetail.displayName} Profile - 3D Print Log`.trim()
+      `${userDetail.displayName} Profile - 3D Print Log`.trim()
     );
 
-    const url = `${this.document.location.origin}/users/${this.userDetail.id}`;
-    const title =
-      `${this.userDetail.displayName} Profile - 3D Print Log`.trim();
+    const url = `${this.document.location.origin}/users/${userDetail.id}`;
+    const title = `${userDetail.displayName} Profile - 3D Print Log`.trim();
     const description =
-      `View ${this.userDetail.displayName}'s 3D prints and projects on 3DPrintLog.com`.trim();
+      `View ${userDetail.displayName}'s 3D prints and projects on 3DPrintLog.com`.trim();
     const imageUrl =
-      this.userDetail.profilePicture !== ''
-        ? this.userDetail.profilePicture
-        : '';
+      userDetail.profilePicture !== '' ? userDetail.profilePicture : '';
 
     this.metaTagService.setSocialMediaTags(url, title, description, imageUrl);
   }
@@ -104,10 +104,10 @@ export class UserProfileComponent implements OnInit {
         this.userService
           .updateCurrentUserCoverPicture(file)
           .subscribe((newPictureUrl) => {
-            this.userDetail = {
-              ...this.userDetail,
+            this.userDetail.update((detail) => ({
+              ...detail,
               coverPicture: newPictureUrl,
-            };
+            }));
 
             this.authService.updateCurrentUserCoverPicture(newPictureUrl);
           });
@@ -130,10 +130,10 @@ export class UserProfileComponent implements OnInit {
         this.userService
           .updateCurrentUserProfilePicture(file)
           .subscribe((newPictureUrl) => {
-            this.userDetail = {
-              ...this.userDetail,
+            this.userDetail.update((detail) => ({
+              ...detail,
               profilePicture: newPictureUrl,
-            };
+            }));
 
             this.authService.updateCurrentUserProfilePicture(newPictureUrl);
           });
@@ -143,10 +143,10 @@ export class UserProfileComponent implements OnInit {
 
   public removeCoverPhoto() {
     this.userService.removeCurrentUserCoverPicture().subscribe(() => {
-      this.userDetail = {
-        ...this.userDetail,
+      this.userDetail.update((detail) => ({
+        ...detail,
         coverPicture: null,
-      };
+      }));
 
       this.loggingService.logEvent('CoverPhotoRemoved');
 
@@ -156,68 +156,68 @@ export class UserProfileComponent implements OnInit {
 
   public saveProfileVisibility(newViewStatus: ProfileViewStatus) {
     const newUserDetail: UserDetailDto = {
-      ...this.userDetail,
+      ...this.userDetail(),
       viewStatus: newViewStatus,
     };
     this.userService
       .updateCurrentUserDetail(newUserDetail)
       .subscribe((user) => {
-        this.userDetail = user;
-        this.viewStatus = this.userDetail.viewStatus;
+        this.userDetail.set(user);
+        this.viewStatus.set(user.viewStatus);
       });
   }
 
   public startEditingDescription() {
-    this.bio = this.userDetail.bio ?? '';
-    this.isEditingDescription = true;
+    this.bio.set(this.userDetail().bio ?? '');
+    this.isEditingDescription.set(true);
     this.loggingService.logEvent('UserProfileDescriptionEditStart');
   }
 
   public cancelEditingDescription() {
-    this.bio = this.userDetail.bio ?? '';
-    this.isEditingDescription = false;
+    this.bio.set(this.userDetail().bio ?? '');
+    this.isEditingDescription.set(false);
     this.loggingService.logEvent('UserProfileDescriptionEditCancelled');
   }
 
   public saveDescription() {
     const newUserDetail: UserDetailDto = {
-      ...this.userDetail,
-      bio: this.bio.trim(),
+      ...this.userDetail(),
+      bio: this.bio().trim(),
     };
     this.userService
       .updateCurrentUserDetail(newUserDetail)
       .subscribe((user) => {
-        this.userDetail = user;
+        this.userDetail.set(user);
 
-        this.bio = '';
-        this.isEditingDescription = false;
+        this.bio.set('');
+        this.isEditingDescription.set(false);
       });
   }
 
   public startEditingDisplayName() {
-    this.displayName = this.userDetail.displayName ?? '';
-    this.isEditingDisplayName = true;
+    this.displayName.set(this.userDetail().displayName ?? '');
+    this.isEditingDisplayName.set(true);
     this.loggingService.logEvent('DisplayNameEditingStart');
   }
 
   public cancelEditingDisplayName() {
-    this.displayName = this.userDetail.displayName ?? '';
-    this.isEditingDisplayName = false;
+    this.displayName.set(this.userDetail().displayName ?? '');
+    this.isEditingDisplayName.set(false);
     this.loggingService.logEvent('DisplayNameEditingCancelled');
   }
 
   public saveDisplayName() {
     const newUserDetail: UserDetailDto = {
-      ...this.userDetail,
-      displayName: this.displayName.trim(),
+      ...this.userDetail(),
+      displayName: this.displayName().trim(),
     };
     this.userService
       .updateCurrentUserDetail(newUserDetail)
       .subscribe((user) => {
-        this.userDetail = user;
+        this.userDetail.set(user);
 
-        this.displayName = '';
-        this.isEditingDisplayName = false;
+        this.displayName.set('');
+        this.isEditingDisplayName.set(false);
       });
   }
 }

@@ -48,8 +48,10 @@ and page carry over when you switch, and the paging controls work the same
 way. 3D Print Log remembers the layout you picked in this browser, so the
 gallery is still there next time you open Prints.
 
-To change the sort order while in the gallery, switch to the list, click a
-column heading, and switch back.
+The gallery has no column headings, so it has its own **Sort by** control above
+the tiles. Pick **Start date**, **Title** or **Total material**, and use the
+<mat-icon inline="true">arrow_downward</mat-icon> arrow button beside it to
+switch between descending and ascending order.
 
 #### The Print List Table
 
@@ -100,7 +102,8 @@ checkbox on the left, and the header checkbox selects every print on the current
 page.
 
 In the gallery, each tile has a checkbox in the corner of its image that works
-the same way, at any screen size.
+the same way, at any screen size, and **Select all on this page** above the
+tiles takes the place of the header checkbox.
 
 On a phone or tablet the list view shows cards instead of a table, so there are no
 checkboxes. **Press and hold any card** for half a second to select it. From

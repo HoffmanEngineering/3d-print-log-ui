@@ -41,7 +41,7 @@ export class PrinterConnectionsComponent {
   private readonly logging = inject(LoggingService);
   private readonly destroyRef = inject(DestroyRef);
 
-  printerId = input.required<number>();
+  readonly printerId = input.required<number>();
 
   protected readonly connections = signal<Connection[]>([]);
   protected readonly ConnectionStatus = ConnectionStatus;

@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 43
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-14
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, printlog-bridge-troubleshooting]
 ---
 
@@ -121,6 +121,7 @@ The installer writes `~/printer_data/config/printlog-bridge.cfg`, with one `[pri
 | `[bridge]` | `trace` | `false` | Record every Moonraker message, to [report a problem](/docs/printlog-bridge-troubleshooting#trace). |
 | `[bridge]` | `allow_http_on_lan` | `false` | Allow plain `http` to a development API on your network. See [the Docker page](/docs/printlog-bridge-docker#allow-http-on-lan). |
 | `[bridge]` | `api_key` | | Works, but use `store-key` instead. |
+| `[bridge]` | `slicer_settings` | `true` | `false` never reads the G-code file, so no [slicer settings](/docs/printlog-bridge#slicer-settings) are recorded. Can also go in a printer's section. |
 | `[printer <name>]` | `printer_id` | | The printer's number in 3D Print Log. Required. |
 | `[printer <name>]` | `socket` | `~/printer_data/comms/moonraker.sock` | Moonraker's socket, in local mode. |
 | `[printer <name>]` | `url` | | Moonraker's address, such as `http://192.168.1.50:7125`, in remote mode. Set `url` or `socket`, not both. |

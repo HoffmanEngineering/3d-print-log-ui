@@ -22,6 +22,13 @@ export interface Connection {
   instanceId: string;
   displayName: string;
   agentVersion: string | null;
+  /**
+   * The newest release of the agent (printlog-bridge for `moonraker`), when the API knows it.
+   * Optional: an API from before printlog-bridge#39 sends neither this nor `updateAvailable`.
+   */
+  latestAgentVersion?: string | null;
+  /** Computed by the API: `agentVersion` is older than `latestAgentVersion`. */
+  updateAvailable?: boolean;
   printerId: number | null;
   createdDate: Date;
   lastSeenAt: Date;

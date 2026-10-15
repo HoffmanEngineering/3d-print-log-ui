@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 43
 mode: how-to
-updated: 2026-10-14
+updated: 2026-10-15
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, printlog-bridge-troubleshooting]
 ---
 
@@ -133,7 +133,7 @@ The bridge looks for its config in this order: `--config` on the command line, t
 
 ### Update {#update}
 
-Updates show up as **printlog-bridge** in the update panel of Mainsail and Fluidd, next to Klipper and Moonraker.
+Updates show up as **printlog-bridge** in the update panel of Mainsail and Fluidd, next to Klipper and Moonraker. When a new version is out, the printer's Connections in 3D Print Log say so too. See [Update](/docs/printlog-bridge#update).
 
 ### Uninstall {#uninstall}
 

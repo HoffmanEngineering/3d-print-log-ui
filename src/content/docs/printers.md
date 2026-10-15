@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-10-12
+updated: 2026-10-15
 related: [prints]
 ---
 
@@ -139,6 +139,8 @@ connections, with:
   15 minutes without hearing from it. If it stays stale, check that the
   printer and the program are running and online.
 - **Last seen** — when it last checked in.
+- **A newer version**, when one is out: "printlog-bridge 0.2.0 is available",
+  linking to [how to update it](/docs/printlog-bridge#update).
 
 To remove a connection, click its <mat-icon inline="true">delete</mat-icon>
 button and confirm. The prints it already logged are kept. Only the link to the

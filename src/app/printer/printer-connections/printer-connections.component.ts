@@ -10,6 +10,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, filter, of, switchMap } from 'rxjs';
 import {
@@ -24,15 +25,16 @@ import { externalSourceLabel } from 'src/app/shared/utils/external-source.utils'
 
 /**
  * The connectors (the bridge, for now) logging prints for one printer (#252): what each one is,
- * whether it is still sending heartbeats, and a way to remove it. Renders nothing for a printer
- * with no connections, which is every printer until the bridge ships.
+ * whether it is still sending heartbeats, whether a newer release of it is out (printlog-bridge#39),
+ * and a way to remove it. Renders nothing for a printer with no connections, which is every
+ * printer until the bridge ships.
  */
 @Component({
   selector: 'app-printer-connections',
   templateUrl: './printer-connections.component.html',
   styleUrls: ['./printer-connections.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, LocaleDatePipe],
+  imports: [MatButtonModule, MatIconModule, RouterLink, LocaleDatePipe],
 })
 export class PrinterConnectionsComponent {
   private readonly connectionService = inject(ConnectionService);

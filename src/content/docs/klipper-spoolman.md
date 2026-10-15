@@ -49,6 +49,7 @@ Spool ids in 3D Print Log are your spool numbers: 1, 2, 3 and so on, in the orde
 - The spool pickers in Mainsail, Fluidd and KlipperScreen.
 - Each spool's remaining weight, colour, material and vendor.
 - Setting the active spool, from a picker or with `SET_ACTIVE_SPOOL`.
+- Fluidd's **Manage spools** button, which opens your materials in 3D Print Log. A link to one spool opens that spool's material.
 
 ### What doesn't work yet {#not-yet}
 

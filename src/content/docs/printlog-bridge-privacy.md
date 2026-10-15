@@ -37,7 +37,8 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 | `PATCH /api/Prints/{id}` | A print fails or is cut short, a spool changed mid-print, or a print was paused for a filament change with no spool assigned | `notes`: a line saying why, with Klipper's error message when there is one; which spools a tool changed between, and where; how to split a filament change's usage |
 | `POST /api/Prints/{id}/image` | A print starts, and when it ends | The slicer's thumbnail (at start) and one webcam frame (at the end, unless `snapshots = false`) |
 | `GET /api/Filaments/by-tag/{uid}` | `PRINTLOG_SET_SPOOL TAG=…`, or a Snapmaker U1 reads a spool's RFID tag | The tag's UID |
-| `PUT /api/Printers/{id}/slots/{slot}` | `PRINTLOG_SET_SPOOL`, or a U1 tag that matches one of your spools | `filamentId` (the spool), `slotLabel` (`T0`, `T1`…) |
+| `GET /api/Filaments/by-number/{n}` | A spool is picked on the printer, with Spoolman pointed at 3D Print Log | The spool number |
+| `PUT /api/Printers/{id}/slots/{slot}` | `PRINTLOG_SET_SPOOL`, a U1 tag that matches one of your spools, or a spool picked on the printer (Mainsail, Fluidd, KlipperScreen or `SET_ACTIVE_SPOOL`) when `[spoolman]` points at 3D Print Log | `filamentId` (the spool), `slotLabel` (`T0`, `T1`…) |
 | `DELETE /api/Printers/{id}/slots/{slot}` | `PRINTLOG_CLEAR_SPOOL` | Nothing |
 | `PUT /api/Printers/{id}` | A spool is assigned to a tool beyond the printer's slot count | The printer as 3D Print Log returned it, with only `slotCount` raised to the printer's tool count |
 
@@ -54,7 +55,7 @@ That is all. In particular:
 
 The bridge only makes outbound connections, to:
 
-1. **Moonraker**: its local socket in local mode, or the `url` you set in remote mode (HTTP and WebSocket, on your network). In remote mode it also downloads the thumbnail from Moonraker's file API.
+1. **Moonraker**: its local socket in local mode, or the `url` you set in remote mode (HTTP and WebSocket, on your network). In remote mode it also downloads the thumbnail from Moonraker's file API. It reads the server address in `[spoolman]` and the active spool, to see whether Spoolman points at 3D Print Log, and it sets the active spool on tool changes and when you load a spool in the app. The `[spoolman]` address contains the Spoolman secret. The bridge keeps only its host name, and never stores or sends the secret.
 2. **The webcam's snapshot URL**, as Mainsail or Fluidd have it set in Moonraker (usually the printer itself), when a print ends.
 3. **3D Print Log**, at `api_url` (`https://api.3dprintlog.com` by default), **over HTTPS only.** The config refuses a plain `http` address, except to the computer the bridge runs on (`localhost`, `127.0.0.1`, `::1`). With `allow_http_on_lan` set, it also accepts plain `http` to a private-network IP address, for a development API on your own network; the API key then travels unencrypted on that network.
 

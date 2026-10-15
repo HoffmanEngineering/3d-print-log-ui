@@ -68,6 +68,12 @@ Only Snapmaker's own tags are read. A spool with no tag, or with a tag that isn'
 
 **A spool check note.** When the tag in a slot isn't on any of your materials, and the material or color the tag reports doesn't match the spool loaded in that slot in 3D Print Log, the print gets a note saying so. It's logged all the same. Check which spool the print actually used, and fix it on the print if needed.
 
+### Spoolman {#spoolman}
+
+The U1 can use [Spoolman for Klipper](/docs/klipper-spoolman), which shows your 3D Print Log spools in its spool pickers and logs prints. It needs Advanced Mode on the U1, because you edit its `moonraker.conf` to add the block. This hasn't been confirmed on a real U1 yet.
+
+With the bridge running, picking a spool on a tool and the RFID reader stay in sync with Moonraker's active spool. A spool picked on the printer is loaded into the active tool's slot in 3D Print Log, and a spool assigned from an RFID tag or in the app becomes Moonraker's active spool when that tool is active. The bridge also sets the active spool on each tool change, so you need no macros. This works only when `[spoolman]` points at 3D Print Log.
+
 ### No webcam snapshot {#snapshot}
 
 The U1's Moonraker has no webcam configured, so the bridge has no frame to add when a print ends. Each print still gets the thumbnail from its file as its picture when it starts.

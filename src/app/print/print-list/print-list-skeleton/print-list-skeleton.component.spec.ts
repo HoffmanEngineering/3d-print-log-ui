@@ -31,6 +31,19 @@ describe('PrintListSkeletonComponent', () => {
     expect(rows[0].querySelectorAll('app-skeleton').length).toBe(6);
   });
 
+  // The gallery's first paint: a tile per item, each a photo box and two lines,
+  // so the real tiles land where the placeholders were.
+  it('draws a grid of tiles in the tile variant', async () => {
+    await create({ variant: 'tile', count: 4 });
+
+    const region = fixture.nativeElement.querySelector(
+      '[data-testid="print-list-skeleton"]'
+    );
+    expect(region.classList).toContain('skeleton-tiles');
+    expect(region.getAttribute('role')).toBe('status');
+    expect(region.querySelectorAll('.skeleton-tile').length).toBe(4);
+  });
+
   // Zero rows would render an invisible "loading" region that says nothing.
   it('always draws at least one placeholder', async () => {
     await create({ count: 0, columns: 0 });

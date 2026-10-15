@@ -18,7 +18,7 @@ import {
   SpoolmanConnectionService,
 } from 'src/app/core/services/spoolman-connection.service';
 import { HumanizePipe } from 'src/app/shared/pipes/humanize.pipe';
-import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 
 /** `idle` until the first answer, so nothing flashes; `error` offers a retry. */
 type Phase = 'idle' | 'ready' | 'error';
@@ -90,18 +90,20 @@ export class SpoolmanConnectionsComponent {
   }
 
   protected confirmRevoke(connection: SpoolmanConnection): void {
-    const dialogRef = this.dialog.open(SimpleDialogComponent, {
-      maxWidth: '400px',
-      data: {},
-    });
-    dialogRef.componentInstance.title = 'Revoke this Spoolman connection?';
-    // No printer name in the body: the body is rendered as HTML.
-    dialogRef.componentInstance.body =
-      '<p>Its token stops working at once, and the printer stops seeing your spools.</p>' +
-      '<p>This can’t be undone. Connect the printer again for a new token.</p>';
-    dialogRef.componentInstance.yesText = 'Revoke';
-    dialogRef.componentInstance.yesColor = 'warn';
-    dialogRef.componentInstance.noText = 'Cancel';
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Revoke this Spoolman connection?',
+        // No printer name in the body: the body is rendered as HTML.
+        body:
+          '<p>Its token stops working at once, and the printer stops seeing your spools.</p>' +
+          '<p>This can’t be undone. Connect the printer again for a new token.</p>',
+        yesText: 'Revoke',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '400px' }
+    );
 
     dialogRef
       .afterClosed()

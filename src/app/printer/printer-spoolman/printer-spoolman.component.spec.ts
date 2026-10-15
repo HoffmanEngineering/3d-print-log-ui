@@ -1,3 +1,4 @@
+import { SimpleDialogData } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -341,7 +342,9 @@ describe('PrinterSpoolmanComponent', () => {
     fixture.detectChanges();
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
-    expect(dialogInstance.yesText).toBe('Disconnect');
+    expect(
+      (dialog.open.calls.mostRecent().args[1]?.data as SimpleDialogData).yesText
+    ).toBe('Disconnect');
     const del = httpMock.expectOne(`${listUrl}/c1`);
     expect(del.request.method).toBe('DELETE');
     del.flush(null, { status: 204, statusText: 'No Content' });

@@ -1,20 +1,38 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import {
+  Component,
+  NO_ERRORS_SCHEMA,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of } from 'rxjs';
-import { AuthService } from 'src/app/core/services/auth.service';
+import { BehaviorSubject } from 'rxjs';
+import {
+  AuthService,
+  UserProfileInfo,
+} from 'src/app/core/services/auth.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { NavbarComponent } from './navbar.component';
+
+/** The real bell loads notifications and achievements; the navbar only places it. */
+@Component({ selector: 'app-notification-bell', template: '' })
+class NotificationBellStubComponent {}
 
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
+  let profile$: BehaviorSubject<UserProfileInfo | null>;
+  let loggedIn: WritableSignal<boolean | null>;
 
   beforeEach(waitForAsync(() => {
+    profile$ = new BehaviorSubject<UserProfileInfo | null>(null);
+    loggedIn = signal<boolean | null>(false);
     const mockAuthService: Partial<AuthService> = {
-      userProfile$: of(null),
+      userProfile$: profile$.asObservable(),
+      isLoggedIn: loggedIn,
     };
     const mockSubscriptionService = {
       isPro: signal(false),
@@ -26,7 +44,12 @@ describe('NavbarComponent', () => {
         { provide: SubscriptionService, useValue: mockSubscriptionService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    })
+      .overrideComponent(NavbarComponent, {
+        remove: { imports: [NotificationBellComponent] },
+        add: { imports: [NotificationBellStubComponent] },
+      })
+      .compileComponents();
   }));
 
   beforeEach(() => {
@@ -77,5 +100,41 @@ describe('NavbarComponent', () => {
 
     expect(styles.flexWrap).toBe('nowrap');
     expect(styles.justifyContent).toBe('flex-start');
+  });
+
+  describe('the account area', () => {
+    const host = () => fixture.nativeElement as HTMLElement;
+    const signIn = () => {
+      loggedIn.set(true);
+      profile$.next({
+        id: 3,
+        profilePicture: 'https://example.com/me.png',
+      } as UserProfileInfo);
+      fixture.detectChanges();
+    };
+
+    it('offers Log In to a signed-out visitor', () => {
+      expect(host().querySelector('#loginButton')).not.toBeNull();
+      expect(host().querySelector('img.profile-picture')).toBeNull();
+    });
+
+    it("swaps Log In for the user's picture once they sign in", () => {
+      signIn();
+
+      expect(host().querySelector('#loginButton')).toBeNull();
+      expect(
+        host().querySelector<HTMLImageElement>('img.profile-picture')!.src
+      ).toBe('https://example.com/me.png');
+    });
+
+    it('puts Log In back when the user signs out', () => {
+      signIn();
+
+      loggedIn.set(false);
+      profile$.next(null);
+      fixture.detectChanges();
+
+      expect(host().querySelector('#loginButton')).not.toBeNull();
+    });
   });
 });

@@ -4,6 +4,7 @@ import {
   Injector,
   NgZone,
   PLATFORM_ID,
+  signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
@@ -105,8 +106,16 @@ export class AuthService {
     null
   );
   userProfile$ = this.userProfileSubject$.asObservable();
-  // Create a local property for login status
-  loggedIn: boolean | null = null;
+  /** Login status: `null` until setup has run, then true or false. */
+  private readonly loggedInState = signal<boolean | null>(null);
+  readonly isLoggedIn = this.loggedInState.asReadonly();
+
+  get loggedIn(): boolean | null {
+    return this.loggedInState();
+  }
+  set loggedIn(value: boolean | null) {
+    this.loggedInState.set(value);
+  }
 
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly userSettingService = inject(UserSettingService);

@@ -51,6 +51,12 @@ describe('AuthService', () => {
       expect(service).toBeTruthy();
     });
 
+    it('does not know the login state before setup runs', () => {
+      const service = TestBed.inject(AuthService);
+
+      expect(service.isLoggedIn()).toBeNull();
+    });
+
     it('should emit mock user profile and set loggedIn=true when devAuthBypass is true', (done) => {
       const service = TestBed.inject(AuthService);
 
@@ -64,6 +70,7 @@ describe('AuthService', () => {
         .subscribe((profile) => {
           expect(profile).not.toBeNull();
           expect(service.loggedIn).toBeTrue();
+          expect(service.isLoggedIn()).toBeTrue();
           done();
         });
     });
@@ -78,6 +85,7 @@ describe('AuthService', () => {
       service.localAuthSetup();
 
       expect(service.loggedIn).toBeFalse();
+      expect(service.isLoggedIn()).toBeFalse();
       expect(latestProfile).toBeNull(); // BehaviorSubject initial null, never overwritten
 
       sessionStorage.removeItem('devUserId');

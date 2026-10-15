@@ -50,6 +50,8 @@ export const FIXTURE_ROUTES: FixtureRoute[] = [
   // no projects, and an empty list is the right state for a first-print figure:
   // the tutorial never mentions projects.
   { method: 'GET', url: '**/api/Projects?*', fixture: 'demo/projects.json' },
+  // The print list's tag filter and the print forms' tag editor read the user's tags (#7).
+  { method: 'GET', url: '**/api/Tags', fixture: 'demo/tags.json' },
   {
     method: 'GET',
     url: '**/api/Filaments/storage-locations*',

@@ -63,6 +63,23 @@ describe('PrintCardComponent', () => {
     expect(title.nativeElement.textContent.trim()).toBe('Benchy Test Print');
   });
 
+  it('shows the print’s tags (#7)', () => {
+    fixture.componentRef.setInput('print', {
+      ...mockPrint,
+      tags: [{ id: 't', name: 'Gifts', color: null }],
+    });
+    fixture.detectChanges();
+
+    const chips = fixture.nativeElement.querySelectorAll('app-print-tag-chip');
+    expect(chips.length).toBe(1);
+    expect(chips[0].textContent).toContain('Gifts');
+  });
+
+  it('shows no tag row for an untagged print', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.card-tags')).toBeNull();
+  });
+
   it('should render the printer label', () => {
     const content = fixture.nativeElement.textContent as string;
     expect(content).toContain('Voron - (Voron Design 2.4)');

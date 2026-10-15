@@ -97,6 +97,11 @@ import {
 import { MatCheckbox } from '@angular/material/checkbox';
 import { PrintImageComponent } from '../../shared/print-image/print-image.component';
 import { ProjectChipComponent } from '../../shared/project-chip/project-chip.component';
+import { PrintTagChipComponent } from '../../shared/print-tag-chip/print-tag-chip.component';
+import {
+  PrintTag,
+  PrintTagService,
+} from 'src/app/core/services/print-tag.service';
 import { FilamentUsageSummaryComponent } from '../../shared/filament-usage-summary/filament-usage-summary.component';
 import { AdComponent } from '../../shared/ad/ad.component';
 import { DecimalPipe } from '@angular/common';
@@ -169,6 +174,7 @@ export interface ColumnDefinition {
     DurationPipe,
     LocaleDatePipe,
     FilamentColorSwatchStylePipe,
+    PrintTagChipComponent,
   ],
 })
 export class PrintListComponent implements OnInit, OnDestroy {
@@ -180,6 +186,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   dialog = inject(MatDialog);
   private media = inject(MediaMatcher);
   private printService = inject(PrintService);
+  private readonly printTagService = inject(PrintTagService);
   private readonly loggingService = inject(LoggingService);
   private readonly gcodeParserService = inject(GcodeFileParserService);
   private readonly newPrintStoreService = inject(NewPrintStoreService);
@@ -211,6 +218,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
       key: 'title',
       displayName: 'Title',
       description: "The print's title.",
+    },
+    {
+      key: 'tags',
+      displayName: 'Tags',
+      description: 'Your tags on the print.',
     },
     {
       key: 'printer',
@@ -289,6 +301,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   readonly displayedColumns = signal<string[]>([
     'image',
     'title',
+    'tags',
     'printer',
     'start-date',
     'status',
@@ -347,6 +360,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   public readonly filterByFilamentIds = signal<string[]>([]);
   public readonly filterByFilaments = signal<FilamentSummary[]>([]);
+
+  /** Any of these tags (#7). Kept in the URL as repeated `filterByTagId`. */
+  public readonly filterByTagIds = signal<string[]>([]);
+
+  /** The user's tags, for the filter. Empty until loaded, and when the user has none. */
+  public readonly tags = signal<PrintTag[]>([]);
 
   public printStatusTypes = PrintStatus;
 
@@ -479,6 +498,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       count++;
     if (this.filterByPrinterIds().length > 0) count++;
     if (this.filterByFilamentIds().length > 0) count++;
+    if (this.filterByTagIds().length > 0) count++;
     return count;
   });
 
@@ -501,6 +521,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   private readonly PRINT_TABLE_DISPLAYED_COLUMNS =
     'print_table_displayed_columns';
+
+  private readonly TAGS_COLUMN_ADDED_KEY = 'print_list_tags_column_added';
 
   public readonly preferredFilamentUnit =
     signal<PrintFilamentSourceMeasurement>(
@@ -616,7 +638,16 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.filterByFilamentIds,
         params.getAll('filterByFilamentId')
       );
+      setIfChanged(this.filterByTagIds, params.getAll('filterByTagId'));
     });
+
+    this.subscriptions.add(
+      this.printTagService.list().subscribe({
+        next: (tags) => this.tags.set(tags),
+        // The list works without the filter, so a failed lookup only hides it.
+        error: (error) => this.loggingService.logException(error),
+      })
+    );
 
     this.activatedRoute.data.subscribe((data) => {
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
@@ -674,13 +705,14 @@ export class PrintListComponent implements OnInit, OnDestroy {
       Array.isArray(columns) &&
       columns.every((entry) => typeof entry === 'string')
     ) {
-      this.displayedColumns.set(columns);
+      this.displayedColumns.set(this.withTagsColumnOnce(columns));
     } else {
       // Initialize with defaults for size;
       if (this.mobileQuery.matches) {
         this.displayedColumns.set([
           'image',
           'title',
+          'tags',
           'printer',
           'start-date',
           'status',
@@ -690,6 +722,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.displayedColumns.set([
           'image',
           'title',
+          'tags',
           'printer',
           'start-date',
           'status',
@@ -704,6 +737,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
         JSON.stringify(this.displayedColumns())
       );
+      // The defaults already decide about Tags, so a later removal must stick.
+      localStorage.setItem(this.TAGS_COLUMN_ADDED_KEY, 'true');
     }
 
     this.userSettingService
@@ -717,6 +752,34 @@ export class PrintListComponent implements OnInit, OnDestroy {
           );
         }
       });
+  }
+
+  /**
+   * A layout saved before tags existed (#7) gets the Tags column once, after the title, so
+   * nobody has to discover it in the layout dialog. The flag keeps a user who then removes it
+   * from having it put back.
+   */
+  private withTagsColumnOnce(columns: string[]): string[] {
+    if (localStorage.getItem(this.TAGS_COLUMN_ADDED_KEY) !== null) {
+      return columns;
+    }
+    localStorage.setItem(this.TAGS_COLUMN_ADDED_KEY, 'true');
+    if (columns.includes('tags')) {
+      return columns;
+    }
+
+    const updated = [...columns];
+    const titleIndex = updated.indexOf('title');
+    updated.splice(
+      titleIndex === -1 ? updated.length : titleIndex + 1,
+      0,
+      'tags'
+    );
+    localStorage.setItem(
+      this.PRINT_TABLE_DISPLAYED_COLUMNS,
+      JSON.stringify(updated)
+    );
+    return updated;
   }
 
   public pageChange(pageEvent: PageEvent) {
@@ -834,6 +897,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.filterByPrinterIds.set([]);
     this.filterByFilamentIds.set([]);
     this.filterByFilaments.set([]);
+    this.filterByTagIds.set([]);
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrintSummarySortColumn.StartDate;
@@ -864,6 +928,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
           filterByStatus: this.filterByStatus(),
           filterByPrinterId: this.filterByPrinterIds(),
           filterByFilamentId: this.filterByFilamentIds(),
+          filterByTagId: this.filterByTagIds(),
           sortDirection: this.sortDirection,
           sortColumn: this.sortColumn,
           t: new Date().getTime(),
@@ -897,7 +962,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.filterByFilamentIds(),
             this.sortDirection,
             this.sortColumn,
-            undefined
+            undefined,
+            undefined,
+            undefined,
+            this.filterByTagIds()
           )
           // Only stop() moves into finalize. It is the refcounted one, and the
           // unsubscribe above CANCELS whatever was in flight — a cancelled

@@ -17,6 +17,7 @@ import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { LongPressDirective } from 'src/app/shared/long-press/long-press.directive';
+import { PrintTagChipComponent } from 'src/app/shared/print-tag-chip/print-tag-chip.component';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { PrintStatusBadgeComponent } from 'src/app/shared/print-status-badge/print-status-badge.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
@@ -38,6 +39,7 @@ import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-av
     ProjectChipComponent,
     PrintStatusBadgeComponent,
     PrinterAvatarComponent,
+    PrintTagChipComponent,
   ],
 })
 export class PrintCardComponent {

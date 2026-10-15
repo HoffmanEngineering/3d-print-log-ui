@@ -24,6 +24,10 @@ import { PagedList } from 'src/app/core/types/paging';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import {
+  PrintTag,
+  PrintTagService,
+} from 'src/app/core/services/print-tag.service';
 
 import {
   DEFERRED_SKELETON_DELAY_MS,
@@ -36,6 +40,8 @@ describe('PrintListComponent', () => {
   let component: PrintListComponent;
   let fixture: ComponentFixture<PrintListComponent>;
   let mockPrintService: jasmine.SpyObj<PrintService>;
+  let mockPrintTagService: jasmine.SpyObj<PrintTagService>;
+  const gifts: PrintTag = { id: 'g', name: 'Gifts', color: '#ff0000' };
 
   /**
    * The list renders either the table or the card view, never both, so the
@@ -133,6 +139,12 @@ describe('PrintListComponent', () => {
       of(mockPrintPagedResult)
     );
 
+    mockPrintTagService = jasmine.createSpyObj<PrintTagService>(
+      'PrintTagService',
+      ['list']
+    );
+    mockPrintTagService.list.and.returnValue(of([]));
+
     const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
       'UserSettingService',
       ['getCurrentUsersSettingByType']
@@ -166,6 +178,7 @@ describe('PrintListComponent', () => {
         { provide: Title, useValue: mockTitleService },
         { provide: ToastrService, useValue: mockToastrService },
         { provide: PrintService, useValue: mockPrintService },
+        { provide: PrintTagService, useValue: mockPrintTagService },
         { provide: UserSettingService, useValue: mockUserSettingService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -176,6 +189,9 @@ describe('PrintListComponent', () => {
     // The saved table layout outlives a spec otherwise, so a test that picks
     // its own columns would decide what every later test renders.
     localStorage.removeItem('print_table_displayed_columns');
+    // Specs that save a layout assert on exactly those columns; the one-time Tags column
+    // migration has its own spec, which clears this.
+    localStorage.setItem('print_list_tags_column_added', 'true');
 
     fixture = TestBed.createComponent(PrintListComponent);
     component = fixture.componentInstance;
@@ -280,6 +296,134 @@ describe('PrintListComponent', () => {
     const row = fixture.debugElement.query(By.css('tr[mat-row]'))
       .nativeElement as HTMLElement;
     expect(row.textContent).toContain('Benchy');
+  });
+
+  describe('tags (#7)', () => {
+    it('offers a tag filter only once the user has tags', () => {
+      fixture.detectChanges();
+      expect(
+        fixture.debugElement.query(By.css('[data-cy="print-tag-filter"]'))
+      ).toBeNull();
+
+      mockPrintTagService.list.and.returnValue(of([gifts]));
+      fixture = TestBed.createComponent(PrintListComponent);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.tags()).toEqual([gifts]);
+      expect(
+        fixture.debugElement.query(By.css('[data-cy="print-tag-filter"]'))
+      ).toBeTruthy();
+    });
+
+    it('loads no tags, and logs why, when the lookup fails', () => {
+      mockPrintTagService.list.and.returnValue(
+        throwError(() => new Error('nope'))
+      );
+
+      fixture.detectChanges();
+
+      expect(component.tags()).toEqual([]);
+      expect(TestBed.inject(LoggingService).logException).toHaveBeenCalled();
+    });
+
+    it('writes the tag filter to the URL and sends it to the API', async () => {
+      fixture.detectChanges();
+      const navigate = spyOn(
+        TestBed.inject(Router),
+        'navigate'
+      ).and.returnValue(Promise.resolve(true));
+      mockPrintService.getPrintSummaries.calls.reset();
+
+      component.filterByTagIds.set(['g']);
+      await component.updateFilter();
+
+      const extras = navigate.calls.mostRecent().args[1]!;
+      expect(extras.queryParams!['filterByTagId']).toEqual(['g']);
+      const args = mockPrintService.getPrintSummaries.calls.mostRecent().args;
+      expect(args[11]).toEqual(['g']);
+    });
+
+    it('counts the tag filter as an active filter and resets it', () => {
+      fixture.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+
+      component.filterByTagIds.set(['g']);
+      expect(component.activeFilterCount()).toBe(1);
+
+      component.resetFilters();
+      expect(component.filterByTagIds()).toEqual([]);
+    });
+
+    it('shows a print’s tags in the Tags column', () => {
+      const print = {
+        id: 1,
+        title: 'Benchy',
+        printer: { id: 1, make: 'Prusa', model: 'MK4' },
+        status: PrintStatus.Success,
+        filamentUsage: [],
+        totalFilamentWeightMg: 0,
+        tags: [gifts],
+      } as unknown as PrintSummary;
+      TestBed.inject(ActivatedRoute).data = of({
+        printList: {
+          items: [print],
+          paging: {
+            currentPage: 1,
+            pageSize: 10,
+            totalCount: 1,
+            totalPages: 1,
+          },
+        } as PagedList<PrintSummary>,
+        printers: [],
+        filaments: [],
+      });
+      localStorage.setItem(
+        'print_table_displayed_columns',
+        JSON.stringify(['title', 'tags', 'more'])
+      );
+
+      fixture.detectChanges();
+
+      const cell = fixture.debugElement.query(By.css('td.mat-column-tags'))
+        .nativeElement as HTMLElement;
+      expect(cell.textContent).toContain('Gifts');
+    });
+
+    it('includes the Tags column in the default layout', () => {
+      fixture.detectChanges();
+      expect(component.displayedColumns()).toContain('tags');
+    });
+
+    it('adds the Tags column once to a layout saved before tags existed', () => {
+      localStorage.removeItem('print_list_tags_column_added');
+      localStorage.setItem(
+        'print_table_displayed_columns',
+        JSON.stringify(['image', 'title', 'status', 'more'])
+      );
+
+      fixture.detectChanges();
+      expect(component.displayedColumns()).toEqual([
+        'image',
+        'title',
+        'tags',
+        'status',
+        'more',
+      ]);
+
+      // Removed by the user afterwards, it stays removed.
+      localStorage.setItem(
+        'print_table_displayed_columns',
+        JSON.stringify(['image', 'title', 'status', 'more'])
+      );
+      fixture = TestBed.createComponent(PrintListComponent);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.displayedColumns()).not.toContain(
+        'tags'
+      );
+      localStorage.removeItem('print_list_tags_column_added');
+    });
   });
 
   it('sorts by start date whichever of its three columns is clicked', () => {

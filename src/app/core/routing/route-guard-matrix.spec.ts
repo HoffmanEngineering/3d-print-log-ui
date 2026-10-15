@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from '../guards/auth.guard';
 
 // Import the route arrays under test (exported from their routing modules).
-import { appRoutes } from '../../app-routing.module';
+import { appRoutes } from '../../app.routes';
 import { printRoutes } from '../../print/print-routing.module';
 import { filamentRoutes } from '../../filament/filament-routing.module';
 import { printerRoutes } from '../../printer/printer-routing.module';

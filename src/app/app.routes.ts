@@ -1,5 +1,10 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { EnvironmentProviders } from '@angular/core';
+import {
+  provideRouter,
+  Routes,
+  withInMemoryScrolling,
+  withPreloading,
+} from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { authGuard } from './core/guards/auth.guard';
 import { homepageRedirectGuard } from './core/guards/homepage-redirect.guard';
@@ -222,9 +227,13 @@ export const appRoutes: Routes = [
   },
 ];
 
-@NgModule({
-  imports: [
-    RouterModule.forRoot(appRoutes, {
+/** The router as the app runs it; `routes` is only for tests. */
+export function provideAppRouter(
+  routes: Routes = appRoutes
+): EnvironmentProviders {
+  return provideRouter(
+    routes,
+    withInMemoryScrolling({
       scrollPositionRestoration: 'enabled',
       // Without this, scrollPositionRestoration scrolls a fragment navigation
       // back to the top: the router does not look at the `#anchor` at all, so
@@ -233,9 +242,7 @@ export const appRoutes: Routes = [
       // navigation carrying a fragment scrolls to that element instead of
       // being restored.
       anchorScrolling: 'enabled',
-      preloadingStrategy: SelectivePreloadStrategy,
     }),
-  ],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}
+    withPreloading(SelectivePreloadStrategy)
+  );
+}

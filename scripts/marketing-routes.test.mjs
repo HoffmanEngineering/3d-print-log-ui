@@ -28,8 +28,8 @@ test('the Klipper integration page is a marketing route', () => {
   assert.ok(MARKETING_ROUTES.includes('klipper'));
 });
 
-test('every marketing route has a client route in app-routing.module.ts', () => {
-  const routing = read('src/app/app-routing.module.ts');
+test('every marketing route has a client route in app.routes.ts', () => {
+  const routing = read('src/app/app.routes.ts');
   for (const route of MARKETING_ROUTES) {
     assert.match(
       routing,

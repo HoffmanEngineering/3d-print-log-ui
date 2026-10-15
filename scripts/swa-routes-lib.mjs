@@ -50,7 +50,7 @@ export function resolveSwaRedirect(config, path) {
 }
 
 /**
- * The top-level paths declared in `appRoutes` (app-routing.module.ts). Read
+ * The top-level paths declared in `appRoutes` (app.routes.ts). Read
  * from source because these scripts run on plain Node with no TS loader; the
  * file has no nested `path:` keys, so every match is a top-level route.
  */

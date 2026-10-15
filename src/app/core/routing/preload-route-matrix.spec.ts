@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { appRoutes } from '../../app-routing.module';
+import { appRoutes } from '../../app.routes';
 
 /**
  * Preloading is opt-in per route. This spec pins *which* routes opt in, so

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, DOCUMENT } from '@angular/core';
+import { Component, OnInit, DOCUMENT, inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {
   PrintDetail,
@@ -22,21 +22,19 @@ export interface DialogData {
   standalone: false,
 })
 export class PrintShareDialogComponent implements OnInit {
+  dialogRef = inject<MatDialogRef<PrintShareDialogComponent>>(MatDialogRef);
+  data = inject<DialogData>(MAT_DIALOG_DATA);
+  private printService = inject(PrintService);
+  private clipboard = inject(Clipboard);
+  private toastrService = inject(ToastrService);
+  navigatorShareService = inject(NavigatorShareService);
+  private readonly document = inject<Document>(DOCUMENT);
+
   print: PrintDetail;
 
   printLink = '';
 
   printViewStatusTypes = PrintViewStatus;
-
-  constructor(
-    public dialogRef: MatDialogRef<PrintShareDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData,
-    private printService: PrintService,
-    private clipboard: Clipboard,
-    private toastrService: ToastrService,
-    public navigatorShareService: NavigatorShareService,
-    @Inject(DOCUMENT) private readonly document: Document
-  ) {}
 
   ngOnInit(): void {
     this.printService.getPrintDetail(this.data.printId).subscribe((print) => {

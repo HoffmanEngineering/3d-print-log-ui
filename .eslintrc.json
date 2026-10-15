@@ -35,7 +35,7 @@
         ],
         "@angular-eslint/prefer-output-emitter-ref": "error",
         "@angular-eslint/prefer-host-metadata-property": "error",
-        "@angular-eslint/prefer-inject": "off",
+        "@angular-eslint/prefer-inject": "error",
         "@angular-eslint/prefer-standalone": "off"
       }
     },

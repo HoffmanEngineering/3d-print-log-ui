@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import {
@@ -18,14 +18,13 @@ export interface ParserUnavailableDialogData {
   standalone: false,
 })
 export class ParserUnavailableDialogComponent {
-  public slicerFeedback = '';
+  private readonly feedbackService = inject(FeedbackService);
+  private readonly dialogRef =
+    inject<MatDialogRef<ParserUnavailableDialogComponent>>(MatDialogRef);
+  data = inject<ParserUnavailableDialogData>(MAT_DIALOG_DATA);
+  private readonly toastrService = inject(ToastrService);
 
-  constructor(
-    private readonly feedbackService: FeedbackService,
-    private readonly dialogRef: MatDialogRef<ParserUnavailableDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: ParserUnavailableDialogData,
-    private readonly toastrService: ToastrService
-  ) {}
+  public slicerFeedback = '';
 
   sendFeedback(): void {
     const newFeedback: AddFeedback = {

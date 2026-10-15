@@ -46,6 +46,14 @@ import { MaterialCategory } from 'src/app/core/services/material-categories.serv
 export class PrinterDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy
 {
+  private activatedRoute = inject(ActivatedRoute);
+  private router = inject(Router);
+  private formBuilder = inject(UntypedFormBuilder);
+  private printerService = inject(PrinterService);
+  private toastr = inject(ToastrService);
+  private titleService = inject(Title);
+  dialog = inject(MatDialog);
+
   public printerForm: UntypedFormGroup;
   public saving = false;
 
@@ -139,16 +147,6 @@ export class PrinterDetailComponent
   get loadedFilaments(): UntypedFormArray {
     return this.printerForm.get('loadedFilaments') as UntypedFormArray;
   }
-
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private router: Router,
-    private formBuilder: UntypedFormBuilder,
-    private printerService: PrinterService,
-    private toastr: ToastrService,
-    private titleService: Title,
-    public dialog: MatDialog
-  ) {}
 
   ngOnDestroy(): void {
     this.printerCategorySubscription?.unsubscribe?.();

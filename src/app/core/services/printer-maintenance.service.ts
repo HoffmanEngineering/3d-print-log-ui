@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
@@ -55,9 +55,9 @@ export interface PrinterMaintenanceCategoriesDto {
   providedIn: 'root',
 })
 export class PrinterMaintenanceService {
-  private readonly baseApi = environment.printLogApiUrl;
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private readonly baseApi = environment.printLogApiUrl;
 
   getCurrentUserPrinterMaintenance(
     pageNumber: number = 1,

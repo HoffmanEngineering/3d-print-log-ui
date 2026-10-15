@@ -40,6 +40,14 @@ import { PushPermissionPromptService } from '../core/services/push-permission-pr
   standalone: false,
 })
 export class SettingsComponent implements OnInit {
+  private activatedRoute = inject(ActivatedRoute);
+  private userService = inject(UserService);
+  private authService = inject(AuthService);
+  private userSettingService = inject(UserSettingService);
+  private readonly printService = inject(PrintService);
+  private readonly metaService = inject(MetaTagService);
+  private readonly toastrService = inject(ToastrService);
+
   userDetailsOnLoad: UserDetailDto;
   public defaultPrintViewStatusSettingOnLoad: UserSetting | null = null;
 
@@ -118,16 +126,6 @@ export class SettingsComponent implements OnInit {
 
   /** Exposed so the template can name the setting types it writes. */
   public readonly userSettingTypes = UserSettingType;
-
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private userService: UserService,
-    private authService: AuthService,
-    private userSettingService: UserSettingService,
-    private readonly printService: PrintService,
-    private readonly metaService: MetaTagService,
-    private readonly toastrService: ToastrService
-  ) {}
 
   readonly subscriptionService = inject(SubscriptionService);
   readonly themeService = inject(ThemeService);

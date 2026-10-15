@@ -1,4 +1,11 @@
-import { Component, OnInit, output, input, linkedSignal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  output,
+  input,
+  linkedSignal,
+  inject,
+} from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { debounce } from 'lodash-es';
@@ -26,6 +33,9 @@ import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
   standalone: false,
 })
 export class FilamentListComponent implements OnInit {
+  private filamentService = inject(FilamentService);
+  private materialCategoryService = inject(MaterialCategoryService);
+
   public readonly multiSelect = input(false);
 
   public filaments: FilamentSummary[] = [];
@@ -108,10 +118,7 @@ export class FilamentListComponent implements OnInit {
 
   public readonly selectionChanged = output<FilamentSummary[]>();
 
-  constructor(
-    private filamentService: FilamentService,
-    private materialCategoryService: MaterialCategoryService
-  ) {
+  constructor() {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
   }
 

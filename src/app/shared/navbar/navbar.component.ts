@@ -26,6 +26,8 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
   ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+  auth = inject(AuthService);
+
   public versionNumber = environment.version;
   public profilePictureUrl: string | null = null;
   public userId: number | null = null;
@@ -36,8 +38,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   private readonly subscriptionService = inject(SubscriptionService);
   readonly isPro = this.subscriptionService.isPro;
-
-  constructor(public auth: AuthService) {}
 
   ngOnInit() {
     this.userProfileSubscription = this.auth.userProfile$.subscribe((user) => {

@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -220,8 +220,9 @@ export enum FilamentSortColumns {
   providedIn: 'root',
 })
 export class FilamentService {
+  private http = inject(HttpClient);
+
   private readonly baseApi = environment.printLogApiUrl;
-  constructor(private http: HttpClient) {}
 
   getCurrentUserFilamentSummaries(
     pageNumber: number = 1,

@@ -20,8 +20,6 @@ export interface IResizeImageOptions {
 })
 export class ImageResizerService {
   private readonly DEFAULT_IMAGE_QUALITY = 0.9;
-  constructor() {}
-
   public resizeImage(settings: IResizeImageOptions): Promise<Blob> {
     const file = settings.file;
     const maxSize = settings.maxSize;

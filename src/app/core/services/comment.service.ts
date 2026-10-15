@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { UserSummaryDto } from './user.service';
 
@@ -27,9 +27,9 @@ export interface AddCommentDto {
   providedIn: 'root',
 })
 export class CommentService {
-  private readonly baseApi = environment.printLogApiUrl;
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private readonly baseApi = environment.printLogApiUrl;
 
   editComment(id: number, body: string) {
     const url = `${this.baseApi}/api/Comments/${id}`;

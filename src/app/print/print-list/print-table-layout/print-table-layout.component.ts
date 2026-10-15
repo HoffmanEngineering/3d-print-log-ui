@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, DOCUMENT } from '@angular/core';
+import { Component, OnInit, DOCUMENT, inject } from '@angular/core';
 
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
@@ -21,19 +21,16 @@ export interface DialogData {
   standalone: false,
 })
 export class PrintTableLayoutComponent implements OnInit {
+  dialogRef = inject<MatDialogRef<PrintTableLayoutComponent>>(MatDialogRef);
+  data = inject<DialogData>(MAT_DIALOG_DATA);
+  private toastrService = inject(ToastrService);
+  private readonly document = inject<Document>(DOCUMENT);
+
   public selectedColumns: string[];
   public initialSelectedColumns: string[];
   public initialAllColumns: ColumnDefinition[];
   public allColumns: ColumnDefinition[];
   public changeEvent: Subject<string[]>;
-
-  constructor(
-    public dialogRef: MatDialogRef<PrintTableLayoutComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData,
-
-    private toastrService: ToastrService,
-    @Inject(DOCUMENT) private readonly document: Document
-  ) {}
 
   ngOnInit(): void {
     this.initialSelectedColumns = [...this.data.currentColumns];

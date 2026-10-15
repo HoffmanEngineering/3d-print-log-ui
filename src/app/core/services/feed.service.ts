@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { PrintStatus } from './print.service';
@@ -38,9 +38,9 @@ export interface PrintFeedSummary {
   providedIn: 'root',
 })
 export class FeedService {
-  private readonly baseApi = environment.printLogApiUrl;
+  private readonly http = inject(HttpClient);
 
-  constructor(private readonly http: HttpClient) {}
+  private readonly baseApi = environment.printLogApiUrl;
 
   public GetFeed(fromDateTime: Date) {
     const url = `${this.baseApi}/api/Feed`;

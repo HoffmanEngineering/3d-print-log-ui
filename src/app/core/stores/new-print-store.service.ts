@@ -10,8 +10,6 @@ import { PrintDetail } from '../services/print.service';
 export class NewPrintStoreService {
   private newPrint: PrintDetail | null = null;
 
-  constructor() {}
-
   public hasNewPrint(): boolean {
     return this.newPrint !== null;
   }

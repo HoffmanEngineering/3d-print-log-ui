@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { from, Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -77,14 +77,12 @@ export interface UserUrlDto {
   providedIn: 'root',
 })
 export class UserService {
+  private http = inject(HttpClient);
+  private imageResizer = inject(ImageResizerService);
+
   private readonly baseApiUrl = `${environment.printLogApiUrl}/api/Users`;
   private readonly PROFILE_IMAGE_MAX_SIZE_PX = 170;
   private readonly COVER_PHOTO_MAX_HEIGHT_PX = 300;
-
-  constructor(
-    private http: HttpClient,
-    private imageResizer: ImageResizerService
-  ) {}
 
   getUserSummary(id: number) {
     const url = `${this.baseApiUrl}/${id}/summary`;

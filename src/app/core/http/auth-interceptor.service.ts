@@ -4,7 +4,7 @@ import {
   HttpInterceptor,
   HttpRequest,
 } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -15,7 +15,7 @@ import { isDevAnonymous, resolveDevUserId } from '../utils/dev-user';
   providedIn: 'root',
 })
 export class AuthInterceptorService implements HttpInterceptor {
-  constructor(private auth: AuthService) {}
+  private auth = inject(AuthService);
 
   protected getLocationSearch(): string {
     return window.location.search;

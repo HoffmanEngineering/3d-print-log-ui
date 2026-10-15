@@ -1,7 +1,13 @@
+import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { Title } from '@angular/platform-browser';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { EMPTY } from 'rxjs';
+import { FilamentService } from 'src/app/core/services/filament.service';
 import { FilamentListContainerComponent } from './filament-list-container.component';
 
-// Isolated unit tests for pure methods — no TestBed needed
+// Isolated unit tests for pure methods — no component fixture needed
 describe('FilamentListContainerComponent (isolated)', () => {
   let component: FilamentListContainerComponent;
 
@@ -10,17 +16,21 @@ describe('FilamentListContainerComponent (isolated)', () => {
     events: EMPTY,
     navigate: (..._args: unknown[]) => Promise.resolve(true),
   };
-  const activatedRouteStub = {};
 
   beforeEach(() => {
     // Construct with minimal stubs — only testing pure methods
-    component = new FilamentListContainerComponent(
-      activatedRouteStub as any, // ActivatedRoute
-      null as any, // FilamentService
-      null as any, // Title
-      routerStub as any, // Router
-      null as any, // MatDialog
-      null as any // ToastrService
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ActivatedRoute, useValue: {} },
+        { provide: FilamentService, useValue: null },
+        { provide: Title, useValue: null },
+        { provide: Router, useValue: routerStub },
+        { provide: MatDialog, useValue: null },
+        { provide: ToastrService, useValue: null },
+      ],
+    });
+    component = TestBed.runInInjectionContext(
+      () => new FilamentListContainerComponent()
     );
   });
 

@@ -1,7 +1,6 @@
 import {
   Component,
   computed,
-  Inject,
   inject,
   OnInit,
   PLATFORM_ID,
@@ -24,6 +23,20 @@ import { VersionReleaseNoteDialogService } from './core/services/version-release
   standalone: false,
 })
 export class AppComponent implements OnInit {
+  /**
+   * Be careful when removing "unused" dependencies from here.
+   * Often the AppComponent is used to force services to load on startup.
+   */
+  private auth = inject(AuthService);
+  private googleAnalytics = inject(GoogleAnalyticsService);
+  private loggingService = inject(LoggingService);
+  private releaseNotesService = inject(VersionReleaseNoteDialogService);
+  private themeService = inject(ThemeService);
+  private adsenseLoader = inject(AdsenseLoaderService);
+  private pushRegistration = inject(PushRegistrationService);
+  private nativeBridge = inject(NativeBridgeService);
+  private platformId = inject(PLATFORM_ID);
+
   title = 'print-log-ui';
 
   private readonly emailClicks = inject(EmailClickTrackerService);
@@ -34,22 +47,6 @@ export class AppComponent implements OnInit {
   readonly loadingBarColor = computed(() =>
     this.themeService.isDark() ? '#283593' : '#3f51b5'
   );
-
-  /**
-   * Be careful when removing "unused" dependencies from here.
-   * Often the AppComponent is used to force services to load on startup.
-   */
-  constructor(
-    private auth: AuthService,
-    private googleAnalytics: GoogleAnalyticsService,
-    private loggingService: LoggingService,
-    private releaseNotesService: VersionReleaseNoteDialogService,
-    private themeService: ThemeService,
-    private adsenseLoader: AdsenseLoaderService,
-    private pushRegistration: PushRegistrationService,
-    private nativeBridge: NativeBridgeService,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {}
 
   ngOnInit() {
     this.themeService.initialize();

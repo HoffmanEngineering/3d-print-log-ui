@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
@@ -27,6 +27,13 @@ import { toSortHeaderIds } from '../core/utils/sort-header-ids';
   standalone: false,
 })
 export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
+  private activatedRoute = inject(ActivatedRoute);
+  private titleService = inject(Title);
+  private router = inject(Router);
+  private printerMaintenanceService = inject(PrinterMaintenanceService);
+  private readonly toastrService = inject(ToastrService);
+  dialog = inject(MatDialog);
+
   public editId: string | null = null;
 
   public entries: PrinterMaintenanceDto[] = [];
@@ -80,14 +87,7 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
 
   public emptyGuid = EMPTY_GUID;
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private titleService: Title,
-    private router: Router,
-    private printerMaintenanceService: PrinterMaintenanceService,
-    private readonly toastrService: ToastrService,
-    public dialog: MatDialog
-  ) {
+  constructor() {
     this.debouncedUpdateFilter = debounce(() => {
       this.isLoading = true;
       this.currentPage = 1;

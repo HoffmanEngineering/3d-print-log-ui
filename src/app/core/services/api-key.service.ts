@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -44,9 +44,9 @@ export interface NewUserApiKeyDto {
   providedIn: 'root',
 })
 export class ApiKeyService {
-  private readonly baseApi = environment.printLogApiUrl;
+  private readonly httpClient = inject(HttpClient);
 
-  constructor(private readonly httpClient: HttpClient) {}
+  private readonly baseApi = environment.printLogApiUrl;
 
   public getApiKeySummaryForUser(): Observable<UserApiKeySummary[]> {
     const url = `${this.baseApi}/api/UserApiKeys`;

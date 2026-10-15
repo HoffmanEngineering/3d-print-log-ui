@@ -4,6 +4,7 @@ import {
   OnInit,
   SimpleChanges,
   input,
+  inject,
 } from '@angular/core';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
 
@@ -14,6 +15,8 @@ import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stat
   standalone: false,
 })
 export class StatsComponent implements OnChanges {
+  private readonly userPrintsService = inject(UsersPrintsStatsService);
+
   readonly userId = input<number>();
 
   public printCountTotal = 0;
@@ -26,8 +29,6 @@ export class StatsComponent implements OnChanges {
   public totalFilamentUsageLast30DaysInG = '';
 
   public readonly MIN_DATE = new Date('1910-01-01');
-
-  constructor(private readonly userPrintsService: UsersPrintsStatsService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.userId) {

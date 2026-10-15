@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { FlexLayoutModule } from '@ngbracket/ngx-layout';
@@ -14,14 +14,12 @@ import { LocaleDatePipe } from '../pipes/locale-date.pipe';
   imports: [FlexLayoutModule, MatButtonModule, LocaleDatePipe],
 })
 export class AccountDeactivationBannerComponent implements OnInit, OnDestroy {
+  auth = inject(AuthService);
+  dialog = inject(MatDialog);
+  private readonly userService = inject(UserService);
+
   userProfileSubscription: Subscription;
   deactivationDate: Date | null = null;
-
-  constructor(
-    public auth: AuthService,
-    public dialog: MatDialog,
-    private readonly userService: UserService
-  ) {}
 
   ngOnInit(): void {
     this.userProfileSubscription = this.auth.userProfile$.subscribe((user) => {

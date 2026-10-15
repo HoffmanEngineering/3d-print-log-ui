@@ -9,6 +9,4 @@ import { INavData } from './types';
 })
 export class SidebarComponent {
   readonly navItems = input<INavData[]>();
-
-  constructor() {}
 }

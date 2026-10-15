@@ -52,7 +52,7 @@ export const filamentRoutes: Routes = [
       },
       {
         path: 'spool/:number',
-        canActivate: [AuthGuard, spoolNumberRedirectGuard],
+        canActivate: [authGuard, spoolNumberRedirectGuard],
         children: [],
       },
       {

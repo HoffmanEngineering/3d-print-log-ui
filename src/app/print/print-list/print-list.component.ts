@@ -1,9 +1,11 @@
 import { MediaMatcher } from '@angular/cdk/layout';
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   OnDestroy,
   OnInit,
+  PLATFORM_ID,
   computed,
   inject,
   signal,
@@ -82,6 +84,7 @@ import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { PrintListSkeletonComponent } from './print-list-skeleton/print-list-skeleton.component';
 import { PrintCardComponent } from '../print-card/print-card.component';
+import { PrintGalleryComponent } from './print-gallery/print-gallery.component';
 import {
   MatTable,
   MatColumnDef,
@@ -103,6 +106,12 @@ import { DecimalPipe } from '@angular/common';
 import { DurationPipe } from '../../shared/pipes/duration.pipe';
 import { LocaleDatePipe } from '../../shared/pipes/locale-date.pipe';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
+
+/**
+ * How All Prints lays out its page of rows: the table (cards on a phone), or
+ * the thumbnail gallery.
+ */
+export type PrintListLayout = 'table' | 'grid';
 
 export interface ColumnDefinition {
   key: string;
@@ -146,6 +155,7 @@ export interface ColumnDefinition {
     MatProgressBar,
     PrintListSkeletonComponent,
     PrintCardComponent,
+    PrintGalleryComponent,
     MatTable,
     DefaultFlexDirective,
     MatSort,
@@ -338,6 +348,62 @@ export class PrintListComponent implements OnInit, OnDestroy {
     // loads its own feed.
     if (previous !== value && value === 'list') {
       this.updateFilter();
+    }
+  }
+
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  private static readonly LAYOUT_KEY = 'print_list_layout';
+
+  /**
+   * Table or gallery. Read once, here, so the first render already picks the
+   * right branch. Remembered in this browser like the view mode and the table
+   * columns beside it; the table stays the default, which is also what the
+   * home and docs screenshots are captured from.
+   */
+  readonly listLayout = signal<PrintListLayout>(this.readStoredLayout());
+
+  /**
+   * The bulk selection as ids, for the gallery's checkboxes. Built here rather
+   * than by handing the gallery the service, so the gallery stays a plain
+   * presentational component.
+   */
+  readonly selectedIds = computed(
+    () => new Set(this.bulkActions.selectedPrints().map((print) => print.id))
+  );
+
+  /**
+   * Switching layout is a repaint of rows already on hand: the filters, sort,
+   * page and selection all carry over, and nothing is refetched.
+   */
+  public setListLayout(layout: PrintListLayout): void {
+    if (layout === this.listLayout()) {
+      return;
+    }
+
+    this.listLayout.set(layout);
+    this.loggingService.logEvent('PrintList_LayoutChanged', { layout });
+
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      localStorage.setItem(PrintListComponent.LAYOUT_KEY, layout);
+    } catch {
+      // Blocked or full storage only costs remembering the choice.
+    }
+  }
+
+  private readStoredLayout(): PrintListLayout {
+    if (!this.isBrowser) {
+      return 'table';
+    }
+    try {
+      return localStorage.getItem(PrintListComponent.LAYOUT_KEY) === 'grid'
+        ? 'grid'
+        : 'table';
+    } catch {
+      return 'table';
     }
   }
 

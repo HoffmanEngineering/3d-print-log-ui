@@ -117,8 +117,14 @@ table {
   padding: 8px 8px 0;
 }
 
-.view-toggle {
+.view-toggle,
+.layout-toggle {
   flex-shrink: 0;
+}
+
+// Icon-only, so tighter than the labelled view toggle beside it.
+.layout-toggle .mat-icon {
+  vertical-align: middle;
 }
 
 .filter-field {
@@ -224,6 +230,7 @@ table.loading tr[mat-row] {
 // mid-sentence when the debounced search fires. Rows stay clickable: they point
 // at real prints, and blocking them would make a fast refetch feel broken.
 .mobile-card-view.refreshing app-print-card,
+.gallery-view.refreshing app-print-gallery,
 table.refreshing tr[mat-row] {
   opacity: 0.55;
   transition: opacity 150ms linear;
@@ -231,6 +238,7 @@ table.refreshing tr[mat-row] {
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-card-view.refreshing app-print-card,
+  .gallery-view.refreshing app-print-gallery,
   table.refreshing tr[mat-row] {
     transition: none;
   }
@@ -265,6 +273,25 @@ table.refreshing tr[mat-row] {
 }
 
 // Mobile Card View Styles
+.gallery-view {
+  display: block;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+
+  app-print-gallery {
+    display: block;
+  }
+
+  // Below the table's breakpoint the bulk bar is fixed to the bottom of the
+  // viewport, as for the cards; keep the last row of tiles reachable.
+  @media (max-width: 959.98px) {
+    &--selecting {
+      padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    }
+  }
+}
+
 .mobile-card-view {
   display: flex;
   flex-direction: column;

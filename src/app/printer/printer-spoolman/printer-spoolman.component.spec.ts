@@ -425,9 +425,33 @@ url: jsons://x
     );
     expect(text).toContain('puts back its stock config when it restarts');
     expect(text).not.toContain('waiting on a test');
-    expect(text).not.toContain('printlog-bridge');
     const link = note!.querySelector('a')!;
     expect(link.getAttribute('href')).toBe('/docs/snapmaker-u1#spoolman');
+  });
+
+  it('tells a Snapmaker U1 owner that printlog-bridge logs its prints, since its Moonraker has no notifier', () => {
+    fixture.componentRef.setInput('make', 'Snapmaker');
+    fixture.componentRef.setInput('model', 'U1');
+    render([]);
+
+    const text = squash(q('spoolman-u1-note'));
+    expect(text).toContain("can't run Moonraker's notifier");
+    expect(text).toContain('so to log its prints, run printlog-bridge');
+  });
+
+  it("explains a U1's block without a notifier by the U1, not by a bridge it may not have", () => {
+    fixture.componentRef.setInput('make', 'Snapmaker');
+    fixture.componentRef.setInput('model', 'U1');
+    render([]);
+    clickConnect();
+    httpMock.expectOne(connectUrl).flush(created());
+    fixture.detectChanges();
+
+    const note = squash(q('spoolman-notifier-note'));
+    expect(note).toContain(
+      "The U1's Moonraker can't run the notifier, so this block has only [spoolman]."
+    );
+    expect(note).not.toContain("printlog-bridge logs this printer's prints");
   });
 
   it('shows no U1 note on another printer', () => {

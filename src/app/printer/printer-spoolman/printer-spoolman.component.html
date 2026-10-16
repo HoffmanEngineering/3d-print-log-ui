@@ -13,7 +13,8 @@
         <span>
           On the Snapmaker U1, turn on Advanced Mode (Settings → Maintenance →
           Advanced Mode) before you edit <code>moonraker.conf</code>. Without
-          it, the U1 puts back its stock config when it restarts.
+          it, the U1 puts back its stock config when it restarts. The U1 can't
+          run Moonraker's notifier, so to log its prints, run printlog-bridge.
           <a routerLink="/docs/snapmaker-u1" fragment="spoolman"
             >Spoolman on the U1</a
           >
@@ -49,6 +50,11 @@
               If your <code>moonraker.conf</code> already has a
               <code>[notifier 3d_print_log]</code> section from an API-key
               setup, delete it first. This block replaces it.
+            </span>
+          } @else if (isSnapmakerU1()) {
+            <span>
+              The U1's Moonraker can't run the notifier, so this block has only
+              <code>[spoolman]</code>. printlog-bridge logs the U1's prints.
             </span>
           } @else {
             <span>

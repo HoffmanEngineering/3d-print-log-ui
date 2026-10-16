@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 43
 mode: how-to
-updated: 2026-10-14
+updated: 2026-10-15
 related: [printlog-bridge, klipper, materials, printers]
 ---
 
@@ -45,7 +45,7 @@ body:
 
 The `[notifier 3d_print_log]` section logs each print on this printer when it starts, succeeds, fails or is cancelled. It uses the same secret as `[spoolman]`, so you need no API key and no printer id.
 
-If [printlog-bridge](/docs/printlog-bridge) is running for the printer, the bridge logs its prints and the notifier's events are ignored, so nothing is logged twice. A printer with printlog-bridge gets only the `[spoolman]` part of the block.
+If [printlog-bridge](/docs/printlog-bridge) is running for the printer, the bridge logs its prints and the notifier's events are ignored, so nothing is logged twice. A printer with printlog-bridge gets only the `[spoolman]` part of the block. So does a [Snapmaker U1](/docs/snapmaker-u1#spoolman), whose Moonraker can't run the notifier.
 
 Lost the block, or shared your `moonraker.log`? Choose **Change secret** on the printer's page. You get a new block, and the old one stops working at once, so the printer stops seeing your spools until you paste the new block. Moonraker writes the server address, secret included, to `moonraker.log`.
 
@@ -97,6 +97,8 @@ Fluidd's Spoolman card may show "Live updates from Spoolman aren't working". Tha
 **Mainsail or Fluidd says "Spoolman disconnected".** Check that the connection is still listed on the printer's page and hasn't been revoked. On Free, check that this is your one connected printer. After a move from Pro to Free, only the first printer you connected keeps working, and the others are paused until you upgrade again. They resume with no change on the printer.
 
 **Moonraker won't load its config after you pasted the block.** Look for a second `[notifier 3d_print_log]` section in `moonraker.conf`. Delete the old one from the API-key setup, keep the one from the new block, then choose **Save & Restart**.
+
+**Moonraker says "failed plugins: notifier", or `moonraker.log` shows `No module named 'apprise'`.** Moonraker's notifier needs the `apprise` Python package, and some printers' own Moonraker builds leave it out, such as the Snapmaker U1 and some older Creality Sonic Pads. Delete the `[notifier 3d_print_log]` section and choose **Save & Restart**. `[spoolman]` keeps working without it. To log that printer's prints, run [printlog-bridge](/docs/printlog-bridge), which installs nothing on the printer.
 
 **`moonraker.log` shows `401`.** The secret was revoked or mistyped. Choose **Change secret** on the printer's page and paste the new block.
 

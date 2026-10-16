@@ -105,7 +105,8 @@ export class PrinterSpoolmanComponent {
 
   /**
    * Whether the block carries a `[notifier` section. The API leaves it out for a printer
-   * with a printlog-bridge connection, so the note below the block follows the block itself.
+   * with a printlog-bridge connection and for a Snapmaker U1 (its Moonraker has no apprise),
+   * so the note below the block follows the block itself.
    */
   protected readonly hasNotifier = computed(
     () => this.created()?.configBlock.includes('[notifier') ?? false

@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 50
 mode: how-to
-updated: 2026-10-14
+updated: 2026-10-15
 related: [printlog-bridge, klipper-spoolman, switch-from-notifier, prints]
 ---
 
@@ -222,6 +222,14 @@ body:
 If the notifier does not seem to be working, you can check the logs in the
 moonraker.log file for **NotifyJSON**. That can point you in the right
 direction, if your Moonraker is having trouble reaching 3D Print Log.
+
+If Moonraker says "failed plugins: notifier", or `moonraker.log` shows
+`No module named 'apprise'`, your printer's Moonraker was built without the
+`apprise` package the notifier needs. The Snapmaker U1 and some older Creality
+Sonic Pads ship that way. Delete the `[notifier 3d_print_log]` section, restart
+Moonraker, and use [printlog-bridge](/docs/printlog-bridge) to log that
+printer's prints instead. It runs on another computer and installs nothing on
+the printer.
 
 If you need further help, please contact us through the [Feedback](/feedback)
 page and we'll be happy to help.

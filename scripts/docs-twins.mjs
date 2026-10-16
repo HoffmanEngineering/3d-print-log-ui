@@ -322,10 +322,13 @@ function routerLinkArray(value) {
 function linkTarget(node) {
   const href = node.getAttribute('href');
   if (href) return href;
+  const fragment = node.getAttribute('fragment');
+  const withFragment = (route) =>
+    route && fragment ? `${route}#${fragment}` : route;
   const routerLink = node.getAttribute('routerlink');
-  if (routerLink) return routerLink;
+  if (routerLink) return withFragment(routerLink);
   const bound = node.getAttribute('[routerlink]');
-  return bound ? routerLinkArray(bound) : null;
+  return bound ? withFragment(routerLinkArray(bound)) : null;
 }
 
 function fence(code) {

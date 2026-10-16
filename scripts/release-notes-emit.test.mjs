@@ -191,6 +191,13 @@ test('toInjectableHtml turns routerLink into a real href', () => {
   );
 });
 
+test('toInjectableHtml appends the fragment attribute to the href', () => {
+  assert.equal(
+    toInjectableHtml('<a routerLink="/docs/x" fragment="tags">T</a>'),
+    '<a href="/docs/x#tags">T</a>'
+  );
+});
+
 test('toInjectableHtml flattens the [routerLink] array binding into a path', () => {
   assert.equal(
     toInjectableHtml(`<a [routerLink]="['/docs', 'prints']">Prints</a>`),

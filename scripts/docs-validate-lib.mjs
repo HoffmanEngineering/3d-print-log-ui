@@ -872,35 +872,45 @@ function elementsOf(template) {
 function linksOf(template) {
   const hrefs = [];
 
-  for (const match of template.matchAll(
-    /\s(?:href|routerLink)=("[^"]*"|'[^']*')/g
-  )) {
-    const value = match[1].slice(1, -1);
-    if (value) hrefs.push(value);
-  }
+  // Work one opening tag at a time: `fragment="x"` is a separate attribute of
+  // the same tag, and it is part of where the link goes.
+  for (const tag of template.matchAll(/<[A-Za-z][^<>]*>/g)) {
+    const text = tag[0];
+    const fragment = /\sfragment=(?:"([^"]*)"|'([^']*)')/.exec(text);
+    const hash = fragment ? (fragment[1] ?? fragment[2]) : '';
+    const withHash = (route) => (hash ? `${route}#${hash}` : route);
 
-  // `[routerLink]="['/docs', 'prints']"` joins its segments into one path.
-  //
-  // Only an array of plain string literals can be resolved statically. A
-  // matrix-parameter object (`{ tab: 'details' }`) or a segment that is a class
-  // member is skipped rather than guessed at: harvesting every quoted substring
-  // turned the object's value into a path segment and reported a dead link to a
-  // page nobody had linked to.
-  for (const match of template.matchAll(
-    /\s\[routerLink\]=("\[[^\]]*\]"|'\[[^\]]*\]')/g
-  )) {
-    const inner = match[1].slice(2, -2).trim();
-    if (inner === '') continue;
+    for (const match of text.matchAll(
+      /\s(?:href|routerLink)=("[^"]*"|'[^']*')/g
+    )) {
+      const value = match[1].slice(1, -1);
+      if (value)
+        hrefs.push(match[0].includes('routerLink') ? withHash(value) : value);
+    }
 
-    const parts = inner.split(',').map((part) => part.trim());
-    const segments = parts.map((part) =>
-      /^'[^']*'$/.test(part) || /^"[^"]*"$/.test(part)
-        ? part.slice(1, -1)
-        : null
-    );
-    if (segments.some((segment) => segment === null)) continue;
+    // `[routerLink]="['/docs', 'prints']"` joins its segments into one path.
+    //
+    // Only an array of plain string literals can be resolved statically. A
+    // matrix-parameter object (`{ tab: 'details' }`) or a segment that is a class
+    // member is skipped rather than guessed at: harvesting every quoted substring
+    // turned the object's value into a path segment and reported a dead link to a
+    // page nobody had linked to.
+    for (const match of text.matchAll(
+      /\s\[routerLink\]=("\[[^\]]*\]"|'\[[^\]]*\]')/g
+    )) {
+      const inner = match[1].slice(2, -2).trim();
+      if (inner === '') continue;
 
-    hrefs.push(segments.join('/').replace(/\/{2,}/g, '/'));
+      const parts = inner.split(',').map((part) => part.trim());
+      const segments = parts.map((part) =>
+        /^'[^']*'$/.test(part) || /^"[^"]*"$/.test(part)
+          ? part.slice(1, -1)
+          : null
+      );
+      if (segments.some((segment) => segment === null)) continue;
+
+      hrefs.push(withHash(segments.join('/').replace(/\/{2,}/g, '/')));
+    }
   }
 
   return hrefs;

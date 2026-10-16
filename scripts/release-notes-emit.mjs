@@ -222,6 +222,15 @@ export function toInjectableHtml(template) {
     /\srouterLink="([^"]*)"/g,
     (_, route) => ` href="${route}"`
   );
+  // `fragment="x"` is the routerLink anchor input; fold it into the href.
+  html = html.replace(/<a\b[^>]*>/gi, (tag) => {
+    const fragment = /\sfragment="([^"]*)"/.exec(tag)?.[1];
+    if (fragment === undefined) return tag;
+    const bare = tag.replace(/\sfragment="[^"]*"/, '');
+    return fragment && /\shref="/.test(bare)
+      ? bare.replace(/\shref="([^"]*)"/, ` href="$1#${fragment}"`)
+      : bare;
+  });
 
   // MatIcon renders a ligature span; injected markup has to be that span already.
   html = html.replace(

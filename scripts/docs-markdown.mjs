@@ -504,6 +504,16 @@ function renderLink(label, href) {
   if (href.startsWith('#') || href.startsWith('mailto:')) {
     return `<a href="${href}">${label}</a>`;
   }
+  // `routerLink="/docs/x#y"` is read as one path and the # is encoded as %23,
+  // which 404s. The anchor goes in the `fragment` input instead.
+  const hash = href.indexOf('#');
+  if (hash !== -1) {
+    const path = href.slice(0, hash);
+    const fragment = href.slice(hash + 1);
+    return fragment
+      ? `<a routerLink="${path}" fragment="${fragment}">${label}</a>`
+      : `<a routerLink="${path}">${label}</a>`;
+  }
   return `<a routerLink="${href}">${label}</a>`;
 }
 

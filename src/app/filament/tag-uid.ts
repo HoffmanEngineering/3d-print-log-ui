@@ -78,3 +78,11 @@ export function readTagUidConflict(err: unknown): TagUidConflict | null {
         : 'another material',
   };
 }
+
+/** What to tell the user when a tag can't be added because another spool already has it. */
+export function tagUidConflictMessage(
+  uid: string,
+  conflict: TagUidConflict
+): string {
+  return `Tag ${uid} is already on ${conflict.filamentDisplayName}, so it wasn't added here.`;
+}

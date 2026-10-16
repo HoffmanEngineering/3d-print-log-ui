@@ -31,6 +31,7 @@ import {
 } from 'src/app/core/services/filament.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 import { PagedList } from 'src/app/core/types/paging';
+import { TagReading } from 'src/app/core/types/tag-reading';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -39,6 +40,7 @@ import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-mod
 import {
   ScanSpoolResult,
   ScanSpoolSheetComponent,
+  ScanSpoolSheetData,
 } from './scan-spool-sheet/scan-spool-sheet.component';
 import {
   QrLabelDialogComponent,
@@ -656,8 +658,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   openScanSpool(): void {
     this.loggingService.logEvent('MaterialsScan_Opened');
     this.bottomSheet
-      .open<ScanSpoolSheetComponent, unknown, ScanSpoolResult>(
-        ScanSpoolSheetComponent
+      .open<ScanSpoolSheetComponent, ScanSpoolSheetData, ScanSpoolResult>(
+        ScanSpoolSheetComponent,
+        // The sheet looks suggested spools up here first, so only the rest are fetched.
+        { data: { filaments: this.filaments() } }
       )
       .afterDismissed()
       .subscribe((result) => {
@@ -665,29 +669,37 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
         switch (result.kind) {
           case 'known':
+          case 'linked':
             void this.router.navigate(['/materials', result.id]);
             break;
           case 'new':
             void this.router.navigate(['/materials', 'new'], {
               // Navigation state, not the URL: page views must not carry the UID.
-              state: { scannedTagUid: result.uid },
+              state: {
+                scannedTagUid: result.uid,
+                scannedTagRead: {
+                  reading: result.reading,
+                  catalogMatch: result.catalogMatch,
+                },
+              },
             });
             break;
           case 'link':
-            this.linkScannedTag(result.uid);
+            this.linkScannedTag(result.uid, result.reading);
             break;
         }
       });
   }
 
   /** The picker, started on the tag: the spool picked is offered it, then opened. */
-  private linkScannedTag(uid: string): void {
+  private linkScannedTag(uid: string, reading: TagReading | null): void {
     this.dialog
       .open(FilamentSearchModalComponent, {
         data: {
           otherFilamentOption: null,
           filterByMaterialCategory: '',
           pendingTagUid: uid,
+          pendingTagReading: reading,
         },
         height: '90svh',
         width: '95vw',

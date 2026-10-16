@@ -10,6 +10,8 @@ import {
 } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { isObservable, Observable, of, Subject, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { TagReading } from 'src/app/core/types/tag-reading';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { NfcStatus, TagRead } from 'src/app/core/types/native-bridge';
 import { filamentDetailToSummary } from 'src/app/core/utils/filament-summary';
@@ -278,8 +280,22 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       'getCurrentUserFilamentSummaries',
       'getFilamentDetail',
       'getFilamentByTag',
+      'resolveTagRead',
       'addTagToFilament',
     ]);
+    // Most specs care only whether a spool has the tag: adapt their getFilamentByTag answers.
+    filaments.resolveTagRead.and.callFake((read) =>
+      filaments.getFilamentByTag(read.uid).pipe(
+        map((detail) => ({
+          status: detail ? ('linked' as const) : ('unknown' as const),
+          filament: detail,
+          reading: null,
+          catalogMatch: null,
+          suggestions: [],
+          hint: null,
+        }))
+      )
+    );
     dialogRef = jasmine.createSpyObj<
       MatDialogRef<FilamentSearchModalComponent>
     >('MatDialogRef', ['close']);
@@ -493,12 +509,56 @@ describe('FilamentSearchModalComponent NFC tags', () => {
     expect(lastDialogData().noText).toBe('Just select');
     expect(filaments.addTagToFilament).toHaveBeenCalledWith(
       'filament-1',
-      '04A23F11'
+      '04A23F11',
+      null
     );
     expect(dialogRef.close).toHaveBeenCalledWith(
       jasmine.objectContaining({ id: 'filament-1' })
     );
     expect(component.pendingTagUid()).toBeNull();
+  });
+
+  it('a tag read in the modal goes through tag-reads and links with its reading', async () => {
+    await setUp();
+    const reading: TagReading = { format: 'snapmaker', materialType: 'PLA' };
+    filaments.resolveTagRead.and.returnValue(
+      of({
+        status: 'unknown',
+        filament: null,
+        reading,
+        catalogMatch: null,
+        suggestions: [],
+        hint: null,
+      })
+    );
+    filaments.addTagToFilament.and.returnValue(of(spool()));
+    const read: TagRead = { uid: '04A23F11', tech: 'nfca', techs: ['NfcA'] };
+    tags.next(read);
+    dialogAnswers = [true];
+
+    component.handleFilamentSelected(filamentDetailToSummary(spool()));
+
+    expect(filaments.resolveTagRead).toHaveBeenCalledWith(read);
+    expect(filaments.addTagToFilament).toHaveBeenCalledWith(
+      'filament-1',
+      '04A23F11',
+      reading
+    );
+  });
+
+  it('a pending reading from the sheet is sent with the link', async () => {
+    const reading: TagReading = { format: 'snapmaker' };
+    await setUp({ pendingTagUid: '04A23F11', pendingTagReading: reading });
+    filaments.addTagToFilament.and.returnValue(of(spool()));
+    dialogAnswers = [true];
+
+    component.handleFilamentSelected(filamentDetailToSummary(spool()));
+
+    expect(filaments.addTagToFilament).toHaveBeenCalledWith(
+      'filament-1',
+      '04A23F11',
+      reading
+    );
   });
 
   it('unknown then a pick: Just select selects without linking', async () => {
@@ -623,7 +683,8 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       expect(filaments.getFilamentByTag).toHaveBeenCalledTimes(1);
       expect(filaments.addTagToFilament).toHaveBeenCalledOnceWith(
         'filament-1',
-        '04A23F11'
+        '04A23F11',
+        null
       );
       expect(component.pendingTagUid()).toBeNull();
       expect([...component.selectedIds()]).toEqual(['filament-1']);

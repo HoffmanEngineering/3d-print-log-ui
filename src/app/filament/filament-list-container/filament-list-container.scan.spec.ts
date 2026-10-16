@@ -85,8 +85,17 @@ describe('FilamentListContainerComponent Scan spool', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/materials', 'spool-1']);
   });
 
-  it('Link to an existing spool opens the picker with the tag, then that spool', () => {
-    sheetAnswers({ kind: 'link', uid: '04A23F11' });
+  it('a tag linked in the sheet opens that spool', () => {
+    sheetAnswers({ kind: 'linked', id: 'spool-3' });
+
+    component.openScanSpool();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/materials', 'spool-3']);
+  });
+
+  it('Search all materials opens the picker with the tag and its reading, then that spool', () => {
+    const reading = { format: 'snapmaker', materialType: 'PLA' };
+    sheetAnswers({ kind: 'link', uid: '04A23F11', reading });
     pickerAnswers({ id: 'spool-2' } as FilamentSummary);
 
     component.openScanSpool();
@@ -94,14 +103,17 @@ describe('FilamentListContainerComponent Scan spool', () => {
     expect(dialog.open).toHaveBeenCalledWith(
       FilamentSearchModalComponent,
       jasmine.objectContaining({
-        data: jasmine.objectContaining({ pendingTagUid: '04A23F11' }),
+        data: jasmine.objectContaining({
+          pendingTagUid: '04A23F11',
+          pendingTagReading: reading,
+        }),
       })
     );
     expect(router.navigate).toHaveBeenCalledWith(['/materials', 'spool-2']);
   });
 
   it('closing the picker without a spool stays on the list', () => {
-    sheetAnswers({ kind: 'link', uid: '04A23F11' });
+    sheetAnswers({ kind: 'link', uid: '04A23F11', reading: null });
     pickerAnswers(null);
 
     component.openScanSpool();
@@ -109,14 +121,27 @@ describe('FilamentListContainerComponent Scan spool', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('New material with this tag starts one with it', () => {
-    sheetAnswers({ kind: 'new', uid: '04A23F11' });
+  it('Create starts a material with the tag, its reading and the catalog match', () => {
+    const reading = { format: 'snapmaker', materialType: 'PLA' };
+    const catalogMatch = {
+      id: 'cat-1',
+      confidence: 0.9,
+      spoolWeightG: 140,
+      colorName: 'Pink',
+      name: 'SnapSpeed PLA',
+      manufacturer: 'Snapmaker',
+      source: 'SpoolmanDB' as const,
+    };
+    sheetAnswers({ kind: 'new', uid: '04A23F11', reading, catalogMatch });
 
     component.openScanSpool();
 
     // In navigation state, never the URL: page views must not carry the UID.
     expect(router.navigate).toHaveBeenCalledWith(['/materials', 'new'], {
-      state: { scannedTagUid: '04A23F11' },
+      state: {
+        scannedTagUid: '04A23F11',
+        scannedTagRead: { reading, catalogMatch },
+      },
     });
   });
 

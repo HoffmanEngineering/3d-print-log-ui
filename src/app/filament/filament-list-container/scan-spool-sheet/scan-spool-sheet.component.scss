@@ -46,3 +46,87 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+.scan-sheet__summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--app-text-primary);
+}
+
+.scan-sheet__swatch {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1px solid var(--mat-divider-color);
+  background: var(--swatch-color);
+}
+
+/* A see-through filament shows over a checkerboard so its transparency reads. */
+.scan-sheet__swatch--translucent {
+  background:
+    linear-gradient(var(--swatch-color), var(--swatch-color)),
+    repeating-conic-gradient(#bdbdbd 0% 25%, #ffffff 0% 50%) 0 0 / 8px 8px;
+}
+
+.scan-sheet__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scan-sheet__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--mat-divider-color);
+  border-radius: 8px;
+  background: var(--app-surface-container);
+  color: var(--app-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+}
+
+.scan-sheet__row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.scan-sheet__row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scan-sheet__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.scan-sheet__chip {
+  padding: 1px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--mat-divider-color);
+  font-size: 12px;
+  color: var(--app-text-secondary);
+}

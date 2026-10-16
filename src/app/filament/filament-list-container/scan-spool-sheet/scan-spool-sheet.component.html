@@ -4,23 +4,87 @@
     <p class="scan-sheet__title" role="status">
       Tag <code>{{ unknownUid() }}</code> isn't on any of your spools
     </p>
+    @if (summary(); as line) {
+      <p class="scan-sheet__summary" data-testid="scan-summary">
+        @if (swatch(); as s) {
+          <span
+            class="scan-sheet__swatch"
+            [class.scan-sheet__swatch--translucent]="s.translucent"
+            [style.--swatch-color]="s.color"
+            data-testid="scan-swatch"
+          ></span>
+        }
+        <span data-testid="scan-summary-text">{{ line }}</span>
+      </p>
+    }
+    @if (hint() === 'hold-still') {
+      <p class="scan-sheet__hint" data-testid="scan-hold-still">
+        Hold the phone still and tap again to read the spool's details
+      </p>
+    }
+    @if (showClassicHint()) {
+      <p class="scan-sheet__hint" data-testid="scan-classic-hint">
+        This phone can't read the data on Snapmaker or Bambu tags; the tag can
+        still be linked.
+      </p>
+    }
+    @if (rows().length > 0) {
+      <ul class="scan-sheet__rows" aria-label="Spools this tag may belong to">
+        @for (row of rows(); track row.filamentId) {
+          <li>
+            <button
+              type="button"
+              class="scan-sheet__row"
+              data-testid="scan-suggestion"
+              [disabled]="linkingId() !== null"
+              (click)="linkTo(row)"
+            >
+              @if (row.filament; as filament) {
+                <app-filament-color-swatch
+                  [filament]="filament"
+                  [decorative]="true"
+                />
+              }
+              <span class="scan-sheet__row-text">
+                <span class="scan-sheet__row-name">{{
+                  row.filament?.displayName ?? 'Material'
+                }}</span>
+                <span class="scan-sheet__chips">
+                  @for (reason of row.reasons; track reason) {
+                    <span class="scan-sheet__chip">{{ reason }}</span>
+                  }
+                </span>
+              </span>
+              @if (linkingId() === row.filamentId) {
+                <mat-spinner diameter="20" aria-label="Linking the tag" />
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    @if (linkError(); as message) {
+      <p class="scan-sheet__error" role="alert">{{ message }}</p>
+    }
     <div class="scan-sheet__actions">
       <button
         mat-flat-button
         color="primary"
         type="button"
         data-testid="scan-link"
+        [disabled]="linkingId() !== null"
         (click)="link()"
       >
-        Link to an existing spool
+        Search all materials
       </button>
       <button
         mat-stroked-button
         type="button"
         data-testid="scan-new"
+        [disabled]="linkingId() !== null"
         (click)="createNew()"
       >
-        New material with this tag
+        Create
       </button>
       <button
         mat-button
@@ -32,12 +96,22 @@
       </button>
     </div>
   } @else {
-    @if (phase() === 'looking') {
-      <mat-spinner diameter="40" aria-label="Looking up the tag"></mat-spinner>
+    @if (showSpinner()) {
+      <mat-spinner diameter="40" aria-label="Reading the tag"></mat-spinner>
     } @else {
       <mat-icon class="scan-sheet__icon" aria-hidden="true">nfc</mat-icon>
     }
-    <p class="scan-sheet__title">Hold your phone to a spool…</p>
+    @switch (phase()) {
+      @case ('reading') {
+        <p class="scan-sheet__title" role="status">Reading tag, hold still…</p>
+      }
+      @case ('resolving') {
+        <p class="scan-sheet__title" role="status">Looking up the tag…</p>
+      }
+      @default {
+        <p class="scan-sheet__title">Hold your phone to a spool…</p>
+      }
+    }
     @if (status() === 'off') {
       <p class="scan-sheet__hint">
         NFC is off ·
@@ -56,6 +130,17 @@
       <p class="scan-sheet__error" role="alert">{{ message }}</p>
     }
     <div class="scan-sheet__actions">
+      @if (phase() === 'error') {
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          data-testid="scan-retry"
+          (click)="retry()"
+        >
+          Retry
+        </button>
+      }
       <button
         mat-button
         type="button"

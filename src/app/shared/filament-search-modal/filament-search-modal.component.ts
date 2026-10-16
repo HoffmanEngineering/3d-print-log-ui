@@ -23,10 +23,14 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { TagRead } from 'src/app/core/types/native-bridge';
+import { TagReading } from 'src/app/core/types/tag-reading';
 import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { ToastrService } from 'ngx-toastr';
 import { Observable, finalize, map, of } from 'rxjs';
-import { readTagUidConflict } from 'src/app/filament/tag-uid';
+import {
+  readTagUidConflict,
+  tagUidConflictMessage,
+} from 'src/app/filament/tag-uid';
 import { openSimpleDialog } from '../simple-dialog/simple-dialog.component';
 import { QrScanResult } from 'src/app/core/services/qr-scanner.service';
 import { filamentDetailToSummary } from 'src/app/core/utils/filament-summary';
@@ -47,6 +51,8 @@ export interface DialogData {
    * pick is offered the tag. The Materials list's Scan spool sheet uses this.
    */
   pendingTagUid?: string;
+  /** What the pending tag says, saved to the spool it is linked to. */
+  pendingTagReading?: TagReading | null;
 }
 
 export type ViewMode = 'list' | 'scanner';
@@ -91,6 +97,10 @@ export class FilamentSearchModalComponent {
   readonly pendingTagUid = signal<string | null>(
     this.data.pendingTagUid ?? null
   );
+
+  /** What the pending tag says, if the read decoded. Sent with the link. */
+  private pendingTagReading: TagReading | null =
+    this.data.pendingTagReading ?? null;
 
   readonly viewMode = signal<ViewMode>('list');
   readonly scanError = signal<string | null>(null);
@@ -146,6 +156,7 @@ export class FilamentSearchModalComponent {
 
   dismissPendingTag() {
     this.pendingTagUid.set(null);
+    this.pendingTagReading = null;
   }
 
   openNfcSettings() {
@@ -164,17 +175,20 @@ export class FilamentSearchModalComponent {
     this.tagBusy.set(true);
     this.loading.set(true);
     this.filamentService
-      .getFilamentByTag(read.uid)
+      .resolveTagRead(read)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (detail) => {
+        next: (response) => {
           this.loading.set(false);
+          const detail =
+            response.status === 'linked' ? (response.filament ?? null) : null;
           this.loggingService.logEvent('TagReader_Lookup', {
             known: detail !== null,
           });
 
           if (detail === null) {
             this.tagBusy.set(false);
+            this.pendingTagReading = response.reading ?? null;
             this.pendingTagUid.set(read.uid);
             this.viewMode.set('list');
             return;
@@ -246,6 +260,7 @@ export class FilamentSearchModalComponent {
   /** The spool picked after an unknown tag: link the tag to it, or just select it. */
   private offerTag(filament: FilamentSummary) {
     const uid = this.pendingTagUid()!;
+    const reading = this.pendingTagReading;
     this.tagBusy.set(true);
 
     openSimpleDialog(
@@ -278,7 +293,7 @@ export class FilamentSearchModalComponent {
         // picker mid-save (Back, Escape, the backdrop) must not abort it. The closed guard
         // keeps a late result from changing the picker's answer.
         this.filamentService
-          .addTagToFilament(filament.id, uid)
+          .addTagToFilament(filament.id, uid, reading)
           .pipe(
             finalize(() => {
               this.loading.set(false);
@@ -302,7 +317,7 @@ export class FilamentSearchModalComponent {
               );
               this.toastr.warning(
                 conflict
-                  ? `Tag ${uid} is already on ${conflict.filamentDisplayName}, so it wasn't added here.`
+                  ? tagUidConflictMessage(uid, conflict)
                   : `The tag wasn't saved to ${filament.displayName}. Try linking it again from the material page.`
               );
               this.select(filament);

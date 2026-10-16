@@ -403,3 +403,86 @@ describe('FilamentListComponent once responses arrive', () => {
     expect(star()).not.toBeNull();
   });
 });
+
+/**
+ * Multi-select: the selection belongs to the caller (the picker), which also adds spools the
+ * list never saw clicked, from a QR scan or an NFC tag.
+ */
+describe('FilamentListComponent selection', () => {
+  let fixture: ComponentFixture<FilamentListComponent>;
+  const rows = [
+    {
+      id: 'f1',
+      displayName: 'Blue PLA',
+      colors: ['0000ff'],
+      colorPattern: ColorPatternType.Solid,
+      isActive: true,
+    },
+    {
+      id: 'f2',
+      displayName: 'Red PLA',
+      colors: ['ff0000'],
+      colorPattern: ColorPatternType.Solid,
+      isActive: true,
+    },
+  ] as unknown as FilamentSummary[];
+  const host = () => fixture.nativeElement as HTMLElement;
+  const checkbox = (n: number) =>
+    host().querySelectorAll<HTMLInputElement>(
+      'tr.mat-mdc-row input[type="checkbox"]'
+    )[n];
+
+  beforeEach(async () => {
+    const filamentService = jasmine.createSpyObj<FilamentService>(
+      'FilamentService',
+      ['getCurrentUserFilamentSummaries', 'changeFavorite']
+    );
+    filamentService.getCurrentUserFilamentSummaries.and.returnValue(
+      of({
+        items: rows,
+        paging: { currentPage: 1, pageSize: 10, totalCount: 2 },
+      } as any)
+    );
+    const materialCategoryService =
+      jasmine.createSpyObj<MaterialCategoryService>('MaterialCategoryService', [
+        'getMaterialCategories',
+      ]);
+    materialCategoryService.getMaterialCategories.and.returnValue(of([]));
+
+    await TestBed.configureTestingModule({
+      imports: [SharedModule, NoopAnimationsModule, RouterTestingModule],
+      providers: [
+        { provide: FilamentService, useValue: filamentService },
+        { provide: MaterialCategoryService, useValue: materialCategoryService },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(FilamentListComponent);
+    fixture.componentRef.setInput('multiSelect', true);
+  });
+
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('checks rows from the selectedIds input', () => {
+    fixture.componentRef.setInput('selectedIds', new Set(['f2']));
+    fixture.detectChanges();
+
+    expect(checkbox(0).checked).toBeFalse();
+    expect(checkbox(1).checked).toBeTrue();
+  });
+
+  it('emits selectionToggled for a row click instead of keeping its own selection', () => {
+    const toggled: string[] = [];
+    fixture.componentInstance.selectionToggled.subscribe((f) =>
+      toggled.push(f.id)
+    );
+    fixture.detectChanges();
+
+    host().querySelectorAll<HTMLElement>('tr.mat-mdc-row')[0].click();
+    fixture.detectChanges();
+
+    expect(toggled).toEqual(['f1']);
+    // Checked only once the caller says so.
+    expect(checkbox(0).checked).toBeFalse();
+  });
+});

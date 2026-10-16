@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -63,7 +64,11 @@ export class FilamentSearchModalComponent {
   readonly viewMode = signal<ViewMode>('list');
   readonly scanError = signal<string | null>(null);
   readonly loading = signal(false);
+  /** The one multi-select selection. The list renders it; QR and NFC picks add to it. */
   readonly selectedFilaments = signal<FilamentSummary[]>([]);
+  readonly selectedIds = computed(
+    () => new Set(this.selectedFilaments().map((f) => f.id))
+  );
 
   handleFilamentSelected(filament: FilamentSummary) {
     if (this.data.multiSelect) {
@@ -71,6 +76,15 @@ export class FilamentSearchModalComponent {
     }
     this.loggingService.logEvent('FilamentSearchModal_FilamentSelected');
     this.dialogRef.close(filament);
+  }
+
+  /** A multi-select row click: adds the spool, or removes it if it is already selected. */
+  toggleFilament(filament: FilamentSummary) {
+    this.selectedFilaments.update((current) =>
+      current.some((f) => f.id === filament.id)
+        ? current.filter((f) => f.id !== filament.id)
+        : [...current, filament]
+    );
   }
 
   confirmSelection() {

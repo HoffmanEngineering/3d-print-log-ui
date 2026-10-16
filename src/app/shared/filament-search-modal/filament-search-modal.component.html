@@ -12,37 +12,38 @@
   </button>
 </div>
 
-<mat-dialog-content>
+<mat-dialog-content class="picker-content">
+  <!--
+    The list stays mounted through lookups and the QR scanner, so its search text, page and
+    the selection it shows survive both.
+  -->
+  <app-filament-list
+    [hidden]="viewMode() !== 'list'"
+    (filamentSelected)="handleFilamentSelected($event)"
+    (selectionToggled)="toggleFilament($event)"
+    [selectedIds]="selectedIds()"
+    [filterByMaterialCategory]="data.filterByMaterialCategory"
+    [multiSelect]="data.multiSelect"
+  ></app-filament-list>
+  @if (viewMode() === 'scanner') {
+    @if (scanError()) {
+      <div class="scan-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ scanError() }}</span>
+        <button mat-button color="primary" (click)="retryScan()">
+          Try Again
+        </button>
+      </div>
+    }
+    @if (!scanError()) {
+      <app-qr-scanner (scanned)="handleQrScanned($event)"></app-qr-scanner>
+    }
+  }
   @if (loading()) {
-    <div class="loading-overlay">
+    <div class="loading-overlay" role="status">
       <mat-spinner diameter="48"></mat-spinner>
       <p>Looking up filament...</p>
     </div>
-  } @else {
-    @switch (viewMode()) {
-      @case ('list') {
-        <app-filament-list
-          (filamentSelected)="handleFilamentSelected($event)"
-          (selectionChanged)="selectedFilaments.set($event)"
-          [filterByMaterialCategory]="data.filterByMaterialCategory"
-          [multiSelect]="data.multiSelect"
-        ></app-filament-list>
-      }
-      @case ('scanner') {
-        @if (scanError()) {
-          <div class="scan-error">
-            <mat-icon>error_outline</mat-icon>
-            <span>{{ scanError() }}</span>
-            <button mat-button color="primary" (click)="retryScan()">
-              Try Again
-            </button>
-          </div>
-        }
-        @if (!scanError()) {
-          <app-qr-scanner (scanned)="handleQrScanned($event)"></app-qr-scanner>
-        }
-      }
-    }
   }
 </mat-dialog-content>
 

@@ -182,7 +182,7 @@
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let filament">
             <mat-checkbox
-              [checked]="selectedFilaments.has(filament.id)"
+              [checked]="selectedIds().has(filament.id)"
               (click)="$event.stopPropagation()"
               (change)="toggleSelection(filament)"
             ></mat-checkbox>
@@ -366,7 +366,7 @@
         <div
           class="filament-card"
           tabindex="0"
-          [class.filament-card--selected]="selectedFilaments.has(filament.id)"
+          [class.filament-card--selected]="selectedIds().has(filament.id)"
           (click)="
             multiSelect()
               ? toggleSelection(filament)
@@ -429,7 +429,7 @@
           <div class="card-actions">
             @if (multiSelect()) {
               <mat-checkbox
-                [checked]="selectedFilaments.has(filament.id)"
+                [checked]="selectedIds().has(filament.id)"
                 (click)="$event.stopPropagation()"
                 (change)="toggleSelection(filament)"
               ></mat-checkbox>

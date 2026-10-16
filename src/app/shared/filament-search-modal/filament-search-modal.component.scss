@@ -12,6 +12,13 @@ mat-dialog-content {
   max-height: unset;
   min-height: 0;
   overflow: hidden;
+  // The lookup overlay sits on top of the list rather than replacing it.
+  position: relative;
+}
+
+// A host's own display rule beats the hidden attribute's.
+app-filament-list[hidden] {
+  display: none !important;
 }
 
 .dialog-header {
@@ -30,12 +37,15 @@ mat-dialog-content {
 }
 
 .loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
   gap: 16px;
+  background: color-mix(in srgb, var(--app-surface-raised) 85%, transparent);
 
   p {
     margin: 0;

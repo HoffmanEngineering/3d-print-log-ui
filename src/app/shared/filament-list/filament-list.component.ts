@@ -95,7 +95,12 @@ export class FilamentListComponent implements OnInit {
   public readonly multiSelect = input(false);
 
   readonly filaments = signal<FilamentSummary[]>([]);
-  public selectedFilaments = new Map<string, FilamentSummary>();
+
+  /**
+   * The multi-select selection, owned by the caller. The picker also adds spools this list
+   * never saw clicked (a QR scan, an NFC tag), so a copy kept here would miss them.
+   */
+  public readonly selectedIds = input<ReadonlySet<string>>(new Set<string>());
 
   readonly pageSize = signal<number | undefined>(undefined);
   private currentPage: number | undefined;
@@ -172,7 +177,8 @@ export class FilamentListComponent implements OnInit {
 
   public readonly filamentSelected = output<FilamentSummary>();
 
-  public readonly selectionChanged = output<FilamentSummary[]>();
+  /** A row was clicked in multi-select; the caller adds or removes it. */
+  public readonly selectionToggled = output<FilamentSummary>();
 
   constructor() {
     this.debouncedUpdateFilter = debounce(() => this.updateFilter(), 400);
@@ -280,12 +286,7 @@ export class FilamentListComponent implements OnInit {
   }
 
   public toggleSelection(filament: FilamentSummary) {
-    if (this.selectedFilaments.has(filament.id)) {
-      this.selectedFilaments.delete(filament.id);
-    } else {
-      this.selectedFilaments.set(filament.id, filament);
-    }
-    this.selectionChanged.emit(Array.from(this.selectedFilaments.values()));
+    this.selectionToggled.emit(filament);
   }
 
   public toggleColorPattern(pattern: ColorPatternType): void {

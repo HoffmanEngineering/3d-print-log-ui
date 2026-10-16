@@ -14,6 +14,7 @@ import {
   FilamentFinishType,
   FilamentService,
   FilamentSourceMeasurement,
+  FilamentSummary,
 } from 'src/app/core/services/filament.service';
 
 import { FilamentSearchModalComponent } from './filament-search-modal.component';
@@ -151,5 +152,71 @@ describe('FilamentSearchModalComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'This QR code is not a 3D Print Log filament label'
     );
+  });
+
+  describe('owning the selection', () => {
+    const summary = (id: string) =>
+      ({ id, displayName: id }) as unknown as FilamentSummary;
+    const list = () =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        'app-filament-list'
+      ) as HTMLElement | null;
+
+    beforeEach(() => {
+      component.data.multiSelect = true;
+    });
+
+    it('a QR pick in multi-select is part of the selection the list shows', () => {
+      mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
+
+      component.handleQrScanned({
+        success: true,
+        filamentId: 'filament-1',
+        rawText: 'https://www.3dprintlog.com/materials/filament-1',
+      });
+
+      expect(component.selectedIds().has('filament-1')).toBeTrue();
+    });
+
+    it('a QR pick survives a later checkbox click on another row', () => {
+      mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
+      component.handleQrScanned({
+        success: true,
+        filamentId: 'filament-1',
+        rawText: 'https://www.3dprintlog.com/materials/filament-1',
+      });
+
+      component.toggleFilament(summary('filament-2'));
+
+      expect(component.selectedFilaments().map((f) => f.id)).toEqual([
+        'filament-1',
+        'filament-2',
+      ]);
+    });
+
+    it('a second toggle deselects', () => {
+      component.toggleFilament(summary('filament-2'));
+      component.toggleFilament(summary('filament-2'));
+
+      expect(component.selectedFilaments()).toEqual([]);
+    });
+
+    it('keeps the list mounted during a lookup', () => {
+      const before = list();
+      component.loading.set(true);
+      fixture.detectChanges();
+
+      expect(list()).not.toBeNull();
+      expect(list()).toBe(before);
+    });
+
+    it('keeps the list mounted, hidden, while the QR scanner is open', () => {
+      const before = list();
+      component.toggleViewMode();
+      fixture.detectChanges();
+
+      expect(list()).toBe(before);
+      expect(list()!.hidden).toBeTrue();
+    });
   });
 });

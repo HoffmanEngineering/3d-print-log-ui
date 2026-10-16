@@ -14,6 +14,7 @@ import {
   UserProfileInfo,
 } from 'src/app/core/services/auth.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { VersionReleaseNoteDialogService } from 'src/app/core/services/version-release-note-dialog.service';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { NavbarComponent } from './navbar.component';
 
@@ -26,6 +27,7 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
   let profile$: BehaviorSubject<UserProfileInfo | null>;
   let loggedIn: WritableSignal<boolean | null>;
+  let hasUnread: WritableSignal<boolean>;
 
   beforeEach(waitForAsync(() => {
     profile$ = new BehaviorSubject<UserProfileInfo | null>(null);
@@ -37,11 +39,20 @@ describe('NavbarComponent', () => {
     const mockSubscriptionService = {
       isPro: signal(false),
     };
+    hasUnread = signal(false);
+    const mockReleaseNotes: Partial<VersionReleaseNoteDialogService> = {
+      hasUnreadReleases: hasUnread,
+      firstUnreadAnchor: signal('v1.52.0'),
+    };
     TestBed.configureTestingModule({
       imports: [NavbarComponent, RouterTestingModule, MatMenuModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: SubscriptionService, useValue: mockSubscriptionService },
+        {
+          provide: VersionReleaseNoteDialogService,
+          useValue: mockReleaseNotes,
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -135,6 +146,43 @@ describe('NavbarComponent', () => {
       fixture.detectChanges();
 
       expect(host().querySelector('#loginButton')).not.toBeNull();
+    });
+  });
+
+  describe('unread release notes', () => {
+    const host = () => fixture.nativeElement as HTMLElement;
+    const aboutTrigger = () =>
+      Array.from(host().querySelectorAll('.nav-links button')).find((b) =>
+        b.textContent?.trim().startsWith('About')
+      )!;
+
+    it('marks the About and collapsed-nav triggers for a signed-in user', () => {
+      loggedIn.set(true);
+      hasUnread.set(true);
+      fixture.detectChanges();
+
+      expect(aboutTrigger().querySelector('.unread-dot')).not.toBeNull();
+      expect(aboutTrigger().textContent).toContain('(new release notes)');
+      expect(
+        host().querySelector('.nav-menu-trigger .unread-dot')
+      ).not.toBeNull();
+      expect(component.releaseNotesFragment()).toBe('v1.52.0');
+    });
+
+    it('shows nothing once the releases have been read', () => {
+      loggedIn.set(true);
+      fixture.detectChanges();
+
+      expect(host().querySelector('.unread-dot')).toBeNull();
+      expect(component.releaseNotesFragment()).toBeUndefined();
+    });
+
+    it('shows nothing to a signed-out visitor', () => {
+      hasUnread.set(true);
+      fixture.detectChanges();
+
+      expect(host().querySelector('.unread-dot')).toBeNull();
+      expect(component.releaseNotesFragment()).toBeUndefined();
     });
   });
 });

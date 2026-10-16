@@ -1,14 +1,24 @@
-import { Injectable, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import {
+  Injectable,
+  PLATFORM_ID,
+  computed,
+  inject,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { environment } from 'src/environments/environment';
 import { LocalStorageService } from './local-storage.service';
+import { LoggingService } from './logging.service';
 
+/**
+ * A release with no notes of its own, usually a patch. It is never shown; the
+ * target only records which release's notes cover it.
+ */
 export interface RedirectRelease {
-  /**
-   * Tells the version release notes to look and display another version's release notes
-   */
   redirect: string;
 }
 
@@ -21,14 +31,72 @@ export interface ReleaseNoteHistory {
   [x: string]: ReleaseNote | RedirectRelease;
 }
 
+/** A release with notes, as a user who has not seen it gets it. */
+export interface UnseenRelease {
+  version: string;
+  note: ReleaseNote;
+}
+
+/**
+ * How many missed releases the dialog shows in full. The rest are one link to
+ * the release notes page, so a user who skipped ten releases is not handed ten
+ * releases' worth of text in a modal.
+ */
+export const MAX_RELEASES_IN_DIALOG = 3;
+
+/**
+ * Where the "Support development" closing paragraphs start. Most notes end
+ * with them, and a dialog that rolls several notes up shows them once.
+ */
+const SUPPORT_FOOTER = /<p>\s*<strong>Support development[\s\S]*$/;
+
 @Injectable({
   providedIn: 'root',
 })
 export class VersionReleaseNoteDialogService {
   private readonly dialog = inject(MatDialog);
   private readonly localStorageService = inject(LocalStorageService);
+  private readonly loggingService = inject(LoggingService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
+  /** The newest version whose notes the dialog has shown in this browser. */
+  private readonly DIALOG_KEY = 'LastLoggedInVersion';
+  /** The newest version current when the user last opened the release notes page. */
+  private readonly PAGE_KEY = 'LastViewedReleaseNotesVersion';
+
+  /**
+   * Read once and then kept in step with every write, so the navbar indicator
+   * clears the moment the page marks a release viewed. Null when nothing is
+   * stored.
+   */
+  private readonly lastShownVersion = signal<string | null>(
+    this.read(this.DIALOG_KEY)
+  );
+  private readonly lastViewedVersion = signal<string | null>(
+    this.read(this.PAGE_KEY)
+  );
+
+  /**
+   * Releases with notes the user has not read on the release notes page,
+   * newest first. Deliberately not the dialog's list: the dialog runs on sign
+   * in and marks its releases shown at once, so an indicator tied to it would
+   * clear before anyone could see it. The dialog is the summary, and this is
+   * the pointer to everything.
+   */
+  readonly unreadReleases = computed(() =>
+    this.releasesSince(this.lastViewedVersion())
+  );
+
+  readonly hasUnreadReleases = computed(() => this.unreadReleases().length > 0);
+
+  /**
+   * The release notes page anchor for the oldest unread release, so the user
+   * lands on the first one they missed. Null when nothing is unread.
+   */
+  readonly firstUnreadAnchor = computed(() => {
+    const unread = this.unreadReleases();
+    return unread.length > 0 ? `v${unread[unread.length - 1].version}` : null;
+  });
 
   private releaseNotes: ReleaseNoteHistory = {
     '1.53.0': {
@@ -2034,94 +2102,199 @@ upcoming <strong>Octoprint Integration</strong> (coming soon).</p>
     },
   };
 
+  /**
+   * Shows every release the user missed since the dialog last ran, in one
+   * dialog. A first visit (nothing stored) shows nothing: a changelog means
+   * nothing to someone who has not used the app yet.
+   */
   public async checkLastLoggedInVersion() {
-    const version = this.localStorageService.getItem(this.LOCAL_STORAGE_KEY);
+    const lastShown = this.lastShownVersion();
+    const unseen = this.releasesSince(lastShown);
 
-    if (version === null || version !== environment.version) {
-      await this.displayReleaseNotes(environment.version, version);
+    // Browsers that stored a version before the page was tracked separately
+    // start the page from where the dialog was, so the indicator still covers
+    // the releases this visit brings.
+    if (this.lastViewedVersion() === null && lastShown !== null) {
+      this.write(this.lastViewedVersion, this.PAGE_KEY, lastShown);
     }
-  }
 
-  private setLastLoggedInVersion(version: string) {
-    this.localStorageService.setItem(this.LOCAL_STORAGE_KEY, version);
-  }
+    this.advance(this.lastShownVersion, this.DIALOG_KEY);
 
-  private async displayReleaseNotes(
-    newVersion: string,
-    // Null on a first visit, when nothing has been shown yet.
-    lastDisplayedVersion: string | null
-  ) {
-    const entry = this.releaseNotes[newVersion];
-
-    if (!entry) {
+    if (lastShown === null || unseen.length === 0) {
       return;
     }
 
-    // Account for redirected release notes
-    const release = this.isRedirect(entry)
-      ? this.getRedirectedReleaseNotes(entry, lastDisplayedVersion)
-      : entry;
+    await this.showReleaseNotes(unseen, lastShown);
+  }
 
-    this.setLastLoggedInVersion(newVersion);
-
-    if (release) {
-      await this.showReleaseNote(release);
+  /** Called by the release notes page: everything up to now has been read. */
+  public markReleaseNotesViewed() {
+    if (this.isBrowser) {
+      this.advance(this.lastViewedVersion, this.PAGE_KEY);
     }
   }
 
   /**
-   * Recursively loop through all redirects until you find one that is a release note
+   * Moves a stored version up to the running one. Never moves it backwards, so
+   * a rollback and redeploy does not show the same notes twice.
    */
-  getRedirectedReleaseNotes(
-    release: RedirectRelease | ReleaseNote,
-    lastDisplayedVersionKey: string | null
-  ): ReleaseNote | null {
-    if (this.isReleaseNote(release)) {
-      return release;
-    } else if (this.isRedirect(release)) {
-      const redirectedKey = release.redirect;
-      const redirectedNote = this.releaseNotes[redirectedKey];
+  private advance(version: WritableSignal<string | null>, key: string) {
+    const current = environment.version;
+    const stored = version();
 
-      // If we've already seen the release that was redirected, stop here
-      if (redirectedKey === lastDisplayedVersionKey) {
-        return null;
-      }
-
-      if (!redirectedNote) {
-        return null;
-      }
-
-      return this.getRedirectedReleaseNotes(
-        redirectedNote,
-        lastDisplayedVersionKey
-      );
+    if (
+      stored !== null &&
+      parseVersion(stored) !== null &&
+      compareVersions(stored, current) >= 0
+    ) {
+      return;
     }
 
-    // Neither a release note nor a redirect, so there is nothing to show.
-    return null;
+    this.write(version, key, current);
   }
 
-  private isReleaseNote(obj: any): obj is ReleaseNote {
-    return obj.title && obj.body;
+  private write(
+    version: WritableSignal<string | null>,
+    key: string,
+    value: string
+  ) {
+    version.set(value);
+    try {
+      this.localStorageService.setItem(key, value);
+    } catch {
+      // Storage blocked or full: the signal still holds for this visit, and
+      // the notes come back next time.
+    }
   }
 
-  private isRedirect(obj: any): obj is RedirectRelease {
-    return obj.redirect !== undefined;
+  private read(key: string): string | null {
+    // The navbar reads this while prerendering, where there is no storage.
+    if (!this.isBrowser) {
+      return null;
+    }
+    try {
+      return this.localStorageService.getItem(key);
+    } catch {
+      return null;
+    }
   }
 
-  private showReleaseNote(releaseNote: ReleaseNote) {
+  /**
+   * Releases with notes newer than `lastSeen`, up to the running version,
+   * newest first. Nothing when `lastSeen` is null or unreadable, which is
+   * treated as a first visit.
+   */
+  private releasesSince(lastSeen: string | null): UnseenRelease[] {
+    const current = environment.version;
+    if (
+      lastSeen === null ||
+      parseVersion(lastSeen) === null ||
+      parseVersion(current) === null
+    ) {
+      return [];
+    }
+
+    return Object.entries(this.releaseNotes)
+      .filter(
+        (entry): entry is [string, ReleaseNote] =>
+          this.isReleaseNote(entry[1]) &&
+          parseVersion(entry[0]) !== null &&
+          compareVersions(entry[0], lastSeen) > 0 &&
+          compareVersions(entry[0], current) <= 0
+      )
+      .map(([version, note]) => ({ version, note }))
+      .sort((a, b) => compareVersions(b.version, a.version));
+  }
+
+  private isReleaseNote(
+    obj: ReleaseNote | RedirectRelease
+  ): obj is ReleaseNote {
+    return 'title' in obj && !!obj.title && !!obj.body;
+  }
+
+  private showReleaseNotes(unseen: UnseenRelease[], lastSeen: string) {
+    const shown = unseen.slice(0, MAX_RELEASES_IN_DIALOG);
+
+    this.loggingService.logEvent('VersionReleaseNotes_Opened', {
+      version: environment.version,
+      lastSeenVersion: lastSeen,
+      unseenCount: unseen.length,
+      shownCount: shown.length,
+    });
+
     const dialogRef = openSimpleDialog(
       this.dialog,
-      {
-        title: releaseNote.title,
-        body: releaseNote.body,
-        yesText: 'Ok',
-        yesColor: 'primary',
-        noText: '',
-      },
+      unseen.length === 1
+        ? {
+            title: unseen[0].note.title,
+            body: unseen[0].note.body,
+            yesText: 'Ok',
+            yesColor: 'primary',
+            noText: '',
+          }
+        : {
+            title: "What's new since your last visit",
+            body: rollUpBody(unseen, shown),
+            yesText: 'Ok',
+            yesColor: 'primary',
+            noText: '',
+          },
       { maxWidth: '450px' }
     );
 
-    return lastValueFrom(dialogRef.afterClosed());
+    return lastValueFrom(dialogRef.afterClosed(), { defaultValue: undefined });
   }
+}
+
+/**
+ * One body for several releases: each shown release under its own heading
+ * with its support footer removed, a link for any that did not fit, and the
+ * newest footer once at the end.
+ */
+function rollUpBody(unseen: UnseenRelease[], shown: UnseenRelease[]): string {
+  let footer = '';
+  const sections = shown.map(({ note }) => {
+    const match = SUPPORT_FOOTER.exec(note.body);
+    if (match && !footer) {
+      footer = match[0];
+    }
+    const content = match ? note.body.slice(0, match.index) : note.body;
+    return `<h2>${escapeHtml(note.title)}</h2>\n${content.trim()}`;
+  });
+
+  const hidden = unseen.length - shown.length;
+  if (hidden > 0) {
+    const oldest = unseen[unseen.length - 1].version;
+    const updates = hidden === 1 ? 'update' : 'updates';
+    sections.push(
+      `<p>…and ${hidden} earlier ${updates}. <a href="/docs/release-notes#v${oldest}">Read every release you missed</a>.</p>`
+    );
+  }
+
+  return [...sections, footer].filter((part) => part !== '').join('\n');
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/** `1.52.0` as numbers, or null for anything that is not a plain x.y.z. */
+function parseVersion(version: string): number[] | null {
+  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version.trim());
+  return match ? match.slice(1).map(Number) : null;
+}
+
+/** Negative, zero or positive as `a` is older than, equal to or newer than `b`. */
+function compareVersions(a: string, b: string): number {
+  const left = parseVersion(a) ?? [0, 0, 0];
+  const right = parseVersion(b) ?? [0, 0, 0];
+  for (let i = 0; i < 3; i++) {
+    if (left[i] !== right[i]) {
+      return left[i] - right[i];
+    }
+  }
+  return 0;
 }

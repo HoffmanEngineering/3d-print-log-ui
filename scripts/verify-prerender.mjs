@@ -513,7 +513,9 @@ for (const entry of readdirSync(DIST, { recursive: true })) {
   const source = readFileSync(`${DIST}/${file}`, 'utf8');
   for (const marker of DEV_ONLY_MARKERS) {
     if (source.includes(marker)) {
-      errors.push(`${file}: development-only ${marker} reached the production bundle`);
+      errors.push(
+        `${file}: development-only ${marker} reached the production bundle`
+      );
     }
   }
 }

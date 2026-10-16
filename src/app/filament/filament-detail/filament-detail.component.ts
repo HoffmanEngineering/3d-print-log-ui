@@ -68,7 +68,11 @@ import {
   ProjectionResult,
   projectRemainingMg,
 } from './remaining-projection';
-import { TagUidConflict, readTagUidConflict } from '../tag-uid';
+import {
+  TagUidConflict,
+  normalizeTagUid,
+  readTagUidConflict,
+} from '../tag-uid';
 import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
 import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
@@ -436,6 +440,18 @@ export class FilamentDetailComponent
     input?.focus();
   }
 
+  private prefillScannedTag(): void {
+    const raw = this.activatedRoute.snapshot?.queryParamMap?.get('tag');
+    if (!raw) return;
+
+    const result = normalizeTagUid(raw);
+    if ('error' in result) return;
+
+    const control = this.filamentForm.get('tagUids');
+    control?.setValue([result.uid]);
+    control?.markAsDirty();
+  }
+
   ngOnInit() {
     this.titleService.setTitle('Filament Details - 3D Print Log');
 
@@ -456,6 +472,12 @@ export class FilamentDetailComponent
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
       this.tagUidsKnown = this.loadedFilament?.tagUids !== undefined;
+
+      // The Materials list's Scan spool sheet opens /materials/new?tag=<uid> for a tag no
+      // spool has yet. Only on a new material: an existing one keeps its own tags.
+      if (!this.loadedFilament) {
+        this.prefillScannedTag();
+      }
 
       // `AsRecorded` is 0, so `|| Weight` would silently coerce a valid
       // preference into the wrong unit. Test for null, not for falsiness.

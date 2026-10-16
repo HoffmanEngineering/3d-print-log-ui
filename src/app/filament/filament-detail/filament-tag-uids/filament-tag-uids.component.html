@@ -13,7 +13,7 @@
       @for (uid of tags(); track uid) {
         <mat-chip
           data-testid="tag-uid-chip"
-          [class.tag-uids__chip--conflict]="conflict()?.tagUid === uid"
+          [class.tag-uids__chip--conflict]="shownConflict()?.tagUid === uid"
           [disabled]="disabled()"
           (removed)="remove(uid)"
         >
@@ -33,7 +33,7 @@
       data-testid="tag-uid-input"
       autocomplete="off"
       spellcheck="false"
-      placeholder="04:A2:3F:11"
+      [placeholder]="scanning() ? 'Hold your phone to the tag…' : '04:A2:3F:11'"
       [value]="draft()"
       [disabled]="disabled() || atCap()"
       (input)="onInput($any($event.target).value)"
@@ -51,6 +51,21 @@
     >
       <mat-icon>add</mat-icon>
     </button>
+    @if (canScan() && !disabled() && !atCap()) {
+      <button
+        matSuffix
+        mat-icon-button
+        type="button"
+        data-testid="tag-scan"
+        [attr.aria-label]="scanning() ? 'Cancel scan' : 'Scan a tag'"
+        [attr.aria-pressed]="scanning()"
+        [class.tag-uids__scan--active]="scanning()"
+        (mousedown)="$event.preventDefault()"
+        (click)="toggleScan()"
+      >
+        <mat-icon>{{ scanning() ? 'close' : 'nfc' }}</mat-icon>
+      </button>
+    }
     @if (atCap()) {
       <mat-hint>A material can have up to {{ maxTags }} tags.</mat-hint>
     }
@@ -62,7 +77,13 @@
     </p>
   }
 
-  @if (conflict(); as c) {
+  @if (hint(); as message) {
+    <p class="tag-uids__hint" data-testid="tag-uid-hint" role="status">
+      {{ message }}
+    </p>
+  }
+
+  @if (shownConflict(); as c) {
     <p class="tag-uids__error" data-testid="tag-uid-conflict" role="alert">
       Tag <span class="tag-uids__uid">{{ c.tagUid }}</span> is already on
       <a [routerLink]="['/filament', c.filamentId]" target="_blank">{{

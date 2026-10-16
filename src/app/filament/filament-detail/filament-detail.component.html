@@ -468,6 +468,7 @@
           fxFlexFill
           formControlName="tagUids"
           [conflict]="tagUidConflict()"
+          [filamentId]="loadedFilament?.id ?? null"
         ></app-filament-tag-uids>
         <div fxFlex="grow" fxFlexFill>
           <h2 style="text-align: start">Weights</h2>

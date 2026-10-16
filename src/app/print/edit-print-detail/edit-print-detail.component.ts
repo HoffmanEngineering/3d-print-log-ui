@@ -273,6 +273,17 @@ export class EditPrintDetailComponent
     displayName: 'Other',
   } as const;
 
+  /**
+   * True for a row that points at one of the user's spools. False for no
+   * filament and for OTHER_FILAMENT_OPTION (a legacy print's converted usage),
+   * which has no materials page and no remaining amount.
+   */
+  protected hasRealSpool(
+    filament: Partial<FilamentSummary> | null | undefined
+  ): boolean {
+    return !!filament?.id && filament.id !== EMPTY_GUID;
+  }
+
   private static readonly MEASURE_TYPE_MAP: Record<
     string,
     PrintFilamentSourceMeasurement

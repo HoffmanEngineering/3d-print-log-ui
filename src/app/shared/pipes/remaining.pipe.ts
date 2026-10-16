@@ -21,6 +21,7 @@ export interface RemainingFormat {
 export function isRemainingTracked(
   value: number | null | undefined
 ): value is number {
+  // A missing (undefined) field, e.g. from an older API, also reads as untracked.
   return value !== null && value !== undefined;
 }
 

@@ -427,7 +427,9 @@
                         }
                       </div>
                       <div fxFlex class="filament-section filament-name">
-                        @if (printFilament.get('filament').value !== null) {
+                        @if (
+                          hasRealSpool(printFilament.get('filament').value)
+                        ) {
                           <a
                             [href]="
                               '/materials/' +
@@ -441,8 +443,7 @@
                               printFilament.get('filament').value?.displayName
                             }}
                           </a>
-                        }
-                        @if (printFilament.get('filament').value === null) {
+                        } @else {
                           <span>Other</span>
                         }
                       </div>
@@ -458,8 +459,9 @@
                       </div>
                       <!-- An untracked spool (no starting weight) has null
                            remaining: say "Not tracked" once, on the weight line,
-                           and leave out length and volume. -->
-                      @if (printFilament.get('filament').value !== null) {
+                           and leave out length and volume. "Other" is not a
+                           spool at all, so it gets no remaining line. -->
+                      @if (hasRealSpool(printFilament.get('filament').value)) {
                         <div fxFlex class="filament-section">
                           {{
                             printFilament.get('filament').value

@@ -151,6 +151,16 @@ describe('FilamentListContainerComponent (rendered)', () => {
       expect(weight!.textContent!.trim()).toBe('Not tracked');
     });
 
+    it('mutes Not tracked in the table and on the card', () => {
+      const muted = Array.from(
+        root().querySelectorAll(
+          'td.mat-column-filamentRemaining .remaining-not-tracked, .filament-card .card-weight .remaining-not-tracked'
+        )
+      );
+      expect(muted.length).toBe(2);
+      muted.forEach((el) => expect(el.textContent!.trim()).toBe('Not tracked'));
+    });
+
     it('offers no Mark As Empty in either menu', async () => {
       const triggers = Array.from(
         root().querySelectorAll<HTMLButtonElement>('[aria-haspopup="menu"]')

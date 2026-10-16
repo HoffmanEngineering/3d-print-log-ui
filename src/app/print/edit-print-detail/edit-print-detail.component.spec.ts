@@ -1080,6 +1080,19 @@ describe('EditPrintDetailComponent', () => {
         });
       });
 
+      it('shows the converted "Other" row as no spool: no remaining, no link', () => {
+        openEditor(legacyPrint);
+        editor!.detectChanges();
+        const host = editor!.nativeElement as HTMLElement;
+
+        expect(host.querySelector('.filament-name')!.textContent).toContain(
+          'Other'
+        );
+        expect(host.textContent).not.toContain('Not tracked');
+        expect(host.textContent).not.toContain('(g) remaining');
+        expect(host.querySelector('a.filament-link')).toBeNull();
+      });
+
       it('leaves the legacy usage alone when only another field changed', () => {
         const form = openEditor(legacyPrint);
 

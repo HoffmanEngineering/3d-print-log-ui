@@ -407,6 +407,19 @@ describe('FilamentListComponent once responses arrive', () => {
     expect(
       host().querySelector('.filament-card .card-weight')!.textContent!.trim()
     ).toBe('500g');
+    expect(host().querySelector('.remaining-not-tracked')).toBeNull();
+  });
+
+  it('mutes Not tracked so it scans apart from the numbers', () => {
+    respond([{ ...blue, filamentRemaining: null }]);
+
+    const muted = Array.from(
+      host().querySelectorAll(
+        'td.mat-column-filamentRemaining .remaining-not-tracked, .filament-card .card-weight .remaining-not-tracked'
+      )
+    );
+    expect(muted.length).toBe(2);
+    muted.forEach((el) => expect(el.textContent!.trim()).toBe('Not tracked'));
   });
 
   it('says so when nothing matches', () => {

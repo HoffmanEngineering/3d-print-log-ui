@@ -426,10 +426,15 @@
         Remaining (g)
       </th>
       <td mat-cell *matCellDef="let filament">
-        {{
-          filament.filamentRemaining
-            | remaining: { divisor: 1000, digitsInfo: '1.0-0' }
-        }}
+        <span
+          [class.remaining-not-tracked]="
+            !isRemainingTracked(filament.filamentRemaining)
+          "
+          >{{
+            filament.filamentRemaining
+              | remaining: { divisor: 1000, digitsInfo: '1.0-0' }
+          }}</span
+        >
       </td>
     </ng-container>
     <ng-container matColumnDef="loadedInPrinter">
@@ -569,10 +574,16 @@
             <span class="card-name">{{ filament.displayName }}</span>
             <span class="card-spacer"></span>
             <span class="card-weight">
-              {{
-                filament.filamentRemaining
-                  | remaining: { divisor: 1000, digitsInfo: '1.0-0', unit: 'g' }
-              }}
+              <span
+                [class.remaining-not-tracked]="
+                  !isRemainingTracked(filament.filamentRemaining)
+                "
+                >{{
+                  filament.filamentRemaining
+                    | remaining
+                      : { divisor: 1000, digitsInfo: '1.0-0', unit: 'g' }
+                }}</span
+              >
             </span>
           </div>
           <div class="card-row-material">

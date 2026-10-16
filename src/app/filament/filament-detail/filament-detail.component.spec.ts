@@ -1281,7 +1281,7 @@ describe('FilamentDetailComponent scanned tag', () => {
       expect(hintOf('edit-filament-diameter')).toBe('From tag');
     });
 
-    it('saves the reading and catalog entry even when every field was changed', async () => {
+    it('saves the reading but no catalog entry when every field was changed', async () => {
       await setup('805BEC3E', null, read());
       fixture.detectChanges();
       const root = fixture.nativeElement as HTMLElement;
@@ -1321,6 +1321,42 @@ describe('FilamentDetailComponent scanned tag', () => {
       expect(sent.brand).toBe('Other brand');
       expect(sent.colors).toEqual(['112233']);
       expect(sent.tagUids).toEqual(['805BEC3E']);
+      expect(sent.tagReadings).toEqual([
+        { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
+      ]);
+      // The name, brand and material were corrected: no vote for the entry they rejected.
+      expect(sent.catalogEntryId).toBeUndefined();
+    });
+
+    it('sends no catalog entry once one identity field was edited', async () => {
+      await setup('805BEC3E', null, read());
+      control('materialDensityGramPerCubicCm').setValue(1.24);
+      control('brand').setValue('Other brand');
+
+      fixture.componentInstance.onSubmit();
+
+      const sent = service.addFilament.calls.mostRecent().args[0];
+      expect(sent.tagReadings).toEqual([
+        { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
+      ]);
+      expect(sent.catalogEntryId).toBeUndefined();
+    });
+
+    it('still sends the catalog entry when only the spool weight was edited', async () => {
+      await setup('805BEC3E', null, read());
+      fixture.detectChanges();
+      const input = (fixture.nativeElement as HTMLElement).querySelector(
+        '#edit-filament-spool-weight'
+      ) as HTMLInputElement;
+      input.value = '200';
+      input.dispatchEvent(new Event('input'));
+      control('materialDensityGramPerCubicCm').setValue(1.24);
+      fixture.detectChanges();
+
+      fixture.componentInstance.onSubmit();
+
+      const sent = service.addFilament.calls.mostRecent().args[0];
+      expect(sent.spoolWeightMg).toBe(200000);
       expect(sent.tagReadings).toEqual([
         { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
       ]);

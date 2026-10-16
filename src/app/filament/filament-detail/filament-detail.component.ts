@@ -133,6 +133,10 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
+/** The fields that say which product a spool is. */
+const IDENTITY_CONTROLS = ['displayName', 'brand', 'materialType'] as const;
+type IdentityControl = (typeof IDENTITY_CONTROLS)[number];
+
 function gramsToMg(grams: number | null | undefined): number | null {
   return grams == null ? null : grams * 1000;
 }
@@ -273,6 +277,8 @@ export class FilamentDetailComponent
   /** The scanned tag, its reading and catalog match, sent along with the new spool. */
   private scannedTag: ({ uid: string } & ScannedTagRead) | null = null;
   private prefilledValues: Partial<Record<PrefillControl, unknown>> = {};
+  /** What the fields that say which product this is held once the scan filled the form. */
+  private scannedIdentity: Record<IdentityControl, unknown> | null = null;
   private tagSourcesSubscription: Subscription | undefined;
 
   protected readonly imagesPanel = viewChild(EntityImagesPanelComponent);
@@ -503,6 +509,32 @@ export class FilamentDetailComponent
     if (typeof values.materialType === 'string') {
       this.applyDefaultDensity(values.materialType);
     }
+    this.scannedIdentity = this.identityValues();
+  }
+
+  private identityValues(): Record<IdentityControl, unknown> {
+    const value = (name: IdentityControl) => {
+      const v: unknown = this.filamentForm.get(name)?.value;
+      return typeof v === 'string' ? v.trim() : (v ?? null);
+    };
+    return {
+      displayName: value('displayName'),
+      brand: value('brand'),
+      materialType: value('materialType'),
+    };
+  }
+
+  /**
+   * True while the user has kept the name, brand and material the scan gave. A correction to
+   * any of them means the catalog entry was the wrong product, so it must not get a vote.
+   */
+  private keptScannedIdentity(): boolean {
+    const scanned = this.scannedIdentity;
+    if (!scanned) return false;
+    const now = this.identityValues();
+    return IDENTITY_CONTROLS.every(
+      (name) => JSON.stringify(now[name]) === JSON.stringify(scanned[name])
+    );
   }
 
   /**
@@ -591,6 +623,7 @@ export class FilamentDetailComponent
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
       this.scannedTag = null;
       this.prefilledValues = {};
+      this.scannedIdentity = null;
       this.tagSources.set({});
       this.tagUidsKnown = this.loadedFilament?.tagUids !== undefined;
 
@@ -1130,14 +1163,15 @@ export class FilamentDetailComponent
     let saveFilament: Observable<FilamentDetail>;
     const wasNew = newFilament.id === null;
 
-    // The reading and catalog entry go with the new spool even if every pre-filled field
-    // was edited. The API applies a reading only to a UID that is in tagUids.
+    // The reading goes with the new spool even if every pre-filled field was edited; the API
+    // applies a reading only to a UID that is in tagUids. The catalog entry goes only while
+    // the name, brand and material are still the ones the scan gave.
     if (wasNew && this.scannedTag) {
       const { uid, reading, catalogMatch } = this.scannedTag;
       if (reading && newFilament.tagUids?.includes(uid)) {
         newFilament.tagReadings = [{ uid, reading }];
       }
-      if (catalogMatch) {
+      if (catalogMatch && this.keptScannedIdentity()) {
         newFilament.catalogEntryId = catalogMatch.id;
       }
     }

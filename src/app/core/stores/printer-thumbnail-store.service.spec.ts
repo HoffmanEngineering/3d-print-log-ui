@@ -192,9 +192,9 @@ describe('PrinterThumbnailStore', () => {
       { printerId: 2, thumbnailUrl: 'gone' },
     ]);
 
-    store.noteLoadFailure(1);
-    store.noteLoadFailure(2);
-    store.noteLoadFailure(1);
+    store.noteLoadFailure(1, 'gone');
+    store.noteLoadFailure(2, 'gone');
+    store.noteLoadFailure(1, 'gone');
 
     await Promise.resolve();
 
@@ -210,11 +210,129 @@ describe('PrinterThumbnailStore', () => {
     await letFetchStart();
     httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'a' }]);
 
-    store.noteLoadFailure(99);
+    store.noteLoadFailure(99, 'a');
 
     store.thumbnailFor(1);
     await letFetchStart();
     httpMock.expectNone(url);
+  });
+
+  it('ignores a late load failure for a url the map no longer holds', async () => {
+    setUp();
+
+    store.thumbnailFor(1);
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'new' }]);
+
+    store.noteLoadFailure(1, 'old');
+    await letFetchStart();
+
+    httpMock.expectNone(url);
+  });
+
+  // The production loop: the refresh returns the same bucketed url, the consumer retries
+  // it, and it fails again. That second report must not queue another request.
+  it('refreshes a failing url once, not again when it fails after the refresh', async () => {
+    setUp();
+
+    store.thumbnailFor(1);
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'dead' }]);
+
+    store.noteLoadFailure(1, 'dead');
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'dead' }]);
+
+    store.noteLoadFailure(1, 'dead');
+    store.thumbnailFor(1);
+    await letFetchStart();
+    httpMock.expectNone(url);
+  });
+
+  it('keeps the other photos while a failure refresh is in flight', async () => {
+    setUp();
+
+    store.thumbnailFor(1);
+    await letFetchStart();
+    httpMock.expectOne(url).flush([
+      { printerId: 1, thumbnailUrl: 'dead' },
+      { printerId: 2, thumbnailUrl: 'fine' },
+    ]);
+
+    store.noteLoadFailure(1, 'dead');
+    await letFetchStart();
+
+    expect(store.thumbnailFor(2)).toBe('fine');
+    httpMock.expectOne(url).flush([
+      { printerId: 1, thumbnailUrl: 'dead' },
+      { printerId: 2, thumbnailUrl: 'fine' },
+    ]);
+  });
+
+  // Failures land as separate image events. One that arrives while the refresh is in
+  // flight is answered by that refresh, and has used up its own.
+  it('folds a failure reported during the refresh into that refresh', async () => {
+    setUp();
+
+    store.thumbnailFor(1);
+    await letFetchStart();
+    httpMock.expectOne(url).flush([
+      { printerId: 1, thumbnailUrl: 'dead-1' },
+      { printerId: 2, thumbnailUrl: 'dead-2' },
+    ]);
+
+    store.noteLoadFailure(1, 'dead-1');
+    await letFetchStart();
+    store.noteLoadFailure(2, 'dead-2');
+    await letFetchStart();
+    httpMock.expectOne(url).flush([
+      { printerId: 1, thumbnailUrl: 'dead-1' },
+      { printerId: 2, thumbnailUrl: 'dead-2' },
+    ]);
+
+    store.noteLoadFailure(1, 'dead-1');
+    store.noteLoadFailure(2, 'dead-2');
+    await letFetchStart();
+    httpMock.expectNone(url);
+  });
+
+  // invalidate() follows a printer-image mutation, which is a new reason to believe the
+  // url may load, so it gives every url its refresh back.
+  it('allows a failure refresh again after invalidate', async () => {
+    setUp();
+
+    store.thumbnailFor(1);
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'dead' }]);
+    store.noteLoadFailure(1, 'dead');
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'dead' }]);
+
+    store.invalidate();
+    store.thumbnailFor(1);
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'dead' }]);
+
+    store.noteLoadFailure(1, 'dead');
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'dead' }]);
+  });
+
+  // A new signing bucket hands out a new url, which is a different blob reference and
+  // gets its own refresh.
+  it('gives a newly signed url its own refresh', async () => {
+    setUp();
+
+    store.thumbnailFor(1);
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'bucket-1' }]);
+    store.noteLoadFailure(1, 'bucket-1');
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'bucket-2' }]);
+
+    store.noteLoadFailure(1, 'bucket-2');
+    await letFetchStart();
+    httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'bucket-2' }]);
   });
 
   // Consumers suppress a url that failed to load, and re-signing inside the six-hour

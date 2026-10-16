@@ -76,7 +76,10 @@ describe('PrinterAvatarComponent', () => {
 
     img().triggerEventHandler('error', {});
 
-    expect(store.noteLoadFailure).toHaveBeenCalledWith(PRINTER_ID);
+    expect(store.noteLoadFailure).toHaveBeenCalledWith(
+      PRINTER_ID,
+      'https://blob/gone.webp?sig=x'
+    );
   });
 
   it('stops rendering the url that failed', () => {
@@ -194,5 +197,105 @@ describe('PrinterAvatarComponent with the real store', () => {
 
     httpMock.expectOne(url).flush([]);
     httpMock.verify();
+  });
+
+  describe('when an image fails to load', () => {
+    /**
+     * A real, loadable 1x1 GIF, so the browser never fires an error event of its own: the
+     * only failures in these tests are the ones a test triggers. The fragment makes it a
+     * distinct url without changing what loads.
+     */
+    const PHOTO =
+      'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
+    const img = () => fixture.debugElement.query(By.css('img'));
+
+    /** Lets every scheduled microtask and render pass run, several times over. */
+    const settle = async () => {
+      for (let i = 0; i < 3; i++) {
+        fixture.detectChanges();
+        await new Promise((resolve) => setTimeout(resolve));
+      }
+      fixture.detectChanges();
+    };
+
+    /** Answers every pending thumbnails request with `entries`; returns how many there were. */
+    const answerPending = (entries: unknown[]) => {
+      const pending = httpMock.match(url);
+      pending.forEach((req) => req.flush(entries));
+      return pending.length;
+    };
+
+    const loadFirstMap = async (thumbnailUrl: string) => {
+      await settle();
+      httpMock.expectOne(url).flush([{ printerId: 101, thumbnailUrl }]);
+      await settle();
+      expect(img()).withContext('first paint').toBeTruthy();
+    };
+
+    // The production bug: a deleted blob's url 404s, and every failure queued a refetch
+    // that came back with the same bucketed url, which failed again - one request a
+    // second, until the API's per-user rate limiter started returning 429s to the bridge
+    // as well. A dead url gets exactly one refresh, then stays hidden.
+    it('refetches once for a dead url, not once per failure', async () => {
+      const dead = `${PHOTO}#dead`;
+      await loadFirstMap(dead);
+
+      let refetches = 0;
+      // Play the browser: every time the avatar renders the dead url, it fails again.
+      for (let round = 0; round < 6; round++) {
+        if (img()) img().triggerEventHandler('error', {});
+        await settle();
+        refetches += answerPending([{ printerId: 101, thumbnailUrl: dead }]);
+        await settle();
+      }
+
+      expect(refetches).toBe(1);
+      expect(img()).withContext('a dead url stays hidden').toBeNull();
+      httpMock.verify();
+    });
+
+    it('shows the photo again when the url loads after the one refresh', async () => {
+      const flaky = `${PHOTO}#flaky`;
+      await loadFirstMap(flaky);
+
+      img().triggerEventHandler('error', {});
+      await settle();
+      expect(answerPending([{ printerId: 101, thumbnailUrl: flaky }])).toBe(1);
+      await settle();
+
+      // The same bucketed url, and this time it loads: no error event.
+      expect(img()).withContext('retried after the refresh').toBeTruthy();
+      expect((img().nativeElement as HTMLImageElement).src).toBe(flaky);
+      httpMock.verify();
+    });
+
+    // A printer-image mutation calls invalidate(). That has to fetch and show the new
+    // photo even after the old url used up its failure refresh.
+    it('still refetches on invalidate after a dead url was given up on', async () => {
+      const dead = `${PHOTO}#dead`;
+      await loadFirstMap(dead);
+      img().triggerEventHandler('error', {});
+      await settle();
+      answerPending([{ printerId: 101, thumbnailUrl: dead }]);
+      await settle();
+      img().triggerEventHandler('error', {});
+      await settle();
+      expect(answerPending([])).toBe(0);
+      expect(img()).toBeNull();
+
+      TestBed.inject(PrinterThumbnailStore).invalidate();
+      await settle();
+
+      const uploaded = `${PHOTO}#uploaded`;
+      httpMock
+        .expectOne(url)
+        .flush([{ printerId: 101, thumbnailUrl: uploaded }]);
+      await settle();
+
+      expect(img()).withContext('the new photo').toBeTruthy();
+      expect((img().nativeElement as HTMLImageElement).src).toBe(uploaded);
+      httpMock.verify();
+    });
   });
 });

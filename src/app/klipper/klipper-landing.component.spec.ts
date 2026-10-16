@@ -106,9 +106,10 @@ describe('KlipperLandingComponent', () => {
     );
   });
 
-  it('says there is no numbered release and points the CTA at the docs', () => {
+  it('sends readers to the guide for current steps and points the CTA at the docs', () => {
     const status = element.querySelector('[data-cy="klipper-status"]');
-    expect(status?.textContent).toMatch(/no numbered release/i);
+    expect(status?.textContent).toMatch(/always has\s+the current steps/i);
+    expect(status?.textContent).not.toMatch(/no numbered release|\bedge\b/i);
     const cta = element.querySelector('[data-cy="klipper-cta"]');
     expect(cta?.getAttribute('href')).toBe('/docs/printlog-bridge');
     // No version numbers anywhere: the CTA follows the docs, not a release.

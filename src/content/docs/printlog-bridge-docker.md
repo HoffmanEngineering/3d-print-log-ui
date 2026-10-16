@@ -28,16 +28,9 @@ The image is `ghcr.io/hoffmanengineering/printlog-bridge`, built for `linux/amd6
 | Tag | What it is |
 | --- | --- |
 | `edge` | The newest commit on the bridge's `main` branch |
-| `latest`, `1.2`, `1.2.3` | Releases, from the first release on |
+| `latest`, `1.2`, `1.2.3` | Releases |
 
-<doc-callout kind="warning" heading="Use the edge tag for now">
-  <p>
-    There is no release yet, so <code>latest</code> doesn't exist. An image name
-    without a tag means <code>latest</code>, so write
-    <code>ghcr.io/hoffmanengineering/printlog-bridge:edge</code> until the
-    first release.
-  </p>
-</doc-callout>
+Use `latest`, the newest release; the examples on this page do. `edge` gets each change as soon as it's merged, before it's released, so use it only to try a fix early.
 
 ### The data folder {#data}
 
@@ -89,7 +82,7 @@ A `docker-compose.yml` for the folder above:
 ```
 services:
   printlog-bridge:
-    image: ghcr.io/hoffmanengineering/printlog-bridge:edge
+    image: ghcr.io/hoffmanengineering/printlog-bridge:latest
     container_name: printlog-bridge
     restart: unless-stopped
     user: "1026:100"
@@ -109,7 +102,7 @@ Without Compose:
 docker run -d --name printlog-bridge --restart unless-stopped \
   --user 1026:100 -e TZ=America/New_York \
   -v /volume1/docker/printlog-bridge:/data \
-  ghcr.io/hoffmanengineering/printlog-bridge:edge
+  ghcr.io/hoffmanengineering/printlog-bridge:latest
 ```
 
 #### 5. Connect to your account {#connect}
@@ -121,7 +114,7 @@ Until one-step pairing arrives (it's planned), the bridge signs in with a [perso
   ```
   docker run --rm -it --user 1026:100 \
     -v /volume1/docker/printlog-bridge:/data \
-    ghcr.io/hoffmanengineering/printlog-bridge:edge store-key
+    ghcr.io/hoffmanengineering/printlog-bridge:latest store-key
   ```
 
   The key lands in `/data/state/api_key`. The image itself never holds a key.

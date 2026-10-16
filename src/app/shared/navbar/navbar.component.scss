@@ -110,6 +110,7 @@ app-notification-bell {
 // Hidden above the mobile breakpoint; the wide-screen link row serves instead.
 .nav-menu-trigger {
   display: none;
+  position: relative;
   flex: 0 0 auto;
   color: white;
 }
@@ -242,4 +243,47 @@ mat-toolbar-row {
     width: 16px;
     margin-right: 2px;
   }
+}
+
+// Unread release notes. A dot on the triggers that lead to the Version item,
+// and a chip on the item itself. The dot sits on the indigo toolbar, so it
+// borrows the upgrade link's gold; the chip sits on the menu surface.
+.unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background-color: #ffd740;
+  vertical-align: top;
+}
+
+.nav-menu-trigger .unread-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  margin-left: 0;
+}
+
+// Inside the mobile menu the About item is on the light surface, where gold
+// reads at ~1.5:1.
+.mat-mdc-menu-item .unread-dot {
+  background-color: var(--app-primary);
+  vertical-align: middle;
+}
+
+.new-chip {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background-color: var(--app-primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+// The dark theme's primary is a light indigo, which white text fails on.
+:host-context(html.dark-theme) .new-chip {
+  color: #000;
 }

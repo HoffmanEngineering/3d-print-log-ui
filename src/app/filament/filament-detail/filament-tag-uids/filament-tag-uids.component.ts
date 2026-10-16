@@ -28,7 +28,12 @@ import { LoggingService } from 'src/app/core/services/logging.service';
 import { FilamentTagDetail, TagReading } from 'src/app/core/types/tag-reading';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { formatLabel } from '../../tag-format-label';
-import { MAX_TAG_UIDS, TagUidConflict, normalizeTagUid } from '../../tag-uid';
+import {
+  MAX_TAG_UIDS,
+  TagUidConflict,
+  normalizeTagUid,
+  tagUidKey,
+} from '../../tag-uid';
 
 /**
  * Edits a spool's RFID/NFC tag UIDs as a form control whose value is the
@@ -107,11 +112,9 @@ export class FilamentTagUidsComponent
 
   /** One entry per listed UID whose tag has a decoded reading. Others show only the chip. */
   protected readonly readings = computed(() => {
-    const byUid = new Map(
-      this.tagDetails().map((d) => [normalizeUidKey(d.uid), d])
-    );
+    const byUid = new Map(this.tagDetails().map((d) => [tagUidKey(d.uid), d]));
     return this.tags().flatMap((uid) => {
-      const detail = byUid.get(normalizeUidKey(uid));
+      const detail = byUid.get(tagUidKey(uid));
       return detail?.reading
         ? [
             {
@@ -290,10 +293,6 @@ export class FilamentTagUidsComponent
   }
 }
 
-function normalizeUidKey(uid: string): string {
-  return (uid ?? '').replace(/[:\-._\s]/g, '').toUpperCase();
-}
-
 function range(min?: number, max?: number, single?: number): string | null {
   const lo = min ?? max ?? single;
   const hi = max ?? min ?? single;
@@ -304,7 +303,15 @@ function range(min?: number, max?: number, single?: number): string | null {
 /** An ISO date-only string as a local date, so the date pipe cannot shift it a day. */
 function localDate(iso: string): Date | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  if (!m) return null;
+  const [y, mo, d] = [+m[1], +m[2], +m[3]];
+  const date = new Date(y, mo - 1, d);
+  // Date rolls overflow forward (Feb 30 becomes Mar 2), so require a round trip.
+  return date.getFullYear() === y &&
+    date.getMonth() === mo - 1 &&
+    date.getDate() === d
+    ? date
+    : null;
 }
 
 function describeReading(r: TagReading) {

@@ -17,6 +17,11 @@ export type TagUidResult =
   | { ok: true; uid: string }
   | { ok: false; error: string };
 
+/** Strips separators and uppercases, so two spellings of one UID compare equal. */
+export function tagUidKey(raw: string): string {
+  return (raw ?? '').replace(/[:\-._\s]/g, '').toUpperCase();
+}
+
 /**
  * Mirrors the API's `TagUid.Normalize`, so a bad UID is caught here rather
  * than by a 400 on save: strips `:` `-` `.` `_` and whitespace, uppercases,
@@ -24,7 +29,7 @@ export type TagUidResult =
  * fails the hex check on purpose; the API rejects it rather than guessing.
  */
 export function normalizeTagUid(raw: string): TagUidResult {
-  const uid = (raw ?? '').replace(/[:\-._\s]/g, '').toUpperCase();
+  const uid = tagUidKey(raw);
 
   if (uid === '') {
     return { ok: false, error: 'Enter a tag UID.' };

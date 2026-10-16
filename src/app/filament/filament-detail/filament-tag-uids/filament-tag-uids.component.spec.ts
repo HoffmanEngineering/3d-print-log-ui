@@ -11,7 +11,7 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { NfcStatus, TagRead } from 'src/app/core/types/native-bridge';
-import { FilamentTagDetail } from 'src/app/core/types/tag-reading';
+import { FilamentTagDetail, TagReading } from 'src/app/core/types/tag-reading';
 import { TagUidConflict } from '../../tag-uid';
 import { FilamentTagUidsComponent } from './filament-tag-uids.component';
 
@@ -560,6 +560,46 @@ describe('FilamentTagUidsComponent tag details', () => {
     expect(links[0].textContent).toContain('Spool data: SpoolmanDB');
     expect(links[0].target).toBe('_blank');
     expect(links[0].rel).toContain('noopener');
+  });
+
+  for (const bad of ['2026-13-45', '2026-02-30', 'not-a-date']) {
+    it(`omits the Made line for ${bad} without an error`, () => {
+      host.details.set([
+        {
+          ...snapmaker,
+          reading: { ...snapmaker.reading!, manufacturedOn: bad },
+        },
+      ]);
+      fixture.detectChanges();
+
+      expect(details()[0]).toContain('SKU 900001');
+      expect(details()[0]).not.toContain('Made');
+    });
+  }
+
+  it('omits parts the API sent as explicit nulls', () => {
+    host.details.set([
+      {
+        ...snapmaker,
+        reading: {
+          format: 'snapmaker',
+          sku: null,
+          dryTempC: 55,
+          dryHours: null,
+          hotendMinC: 190,
+          hotendMaxC: 230,
+          bedMinC: null,
+        } as unknown as TagReading,
+      },
+    ]);
+    fixture.detectChanges();
+
+    const text = details()[0];
+    expect(text).not.toContain('SKU');
+    expect(text).toContain('Dry at 55 °C');
+    expect(text).not.toContain(' for ');
+    expect(text).toContain('Tag says 190–230 °C');
+    expect(text).not.toContain('bed');
   });
 
   it('shows no attribution without a catalog entry', () => {

@@ -12,6 +12,46 @@
   </button>
 </div>
 
+@if (pendingTagUid(); as uid) {
+  <div class="tag-banner" role="status" data-testid="tag-banner">
+    <mat-icon aria-hidden="true">nfc</mat-icon>
+    <span class="tag-banner__text"
+      >New tag <code>{{ uid }}</code
+      >. Pick the spool it belongs to.</span
+    >
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Don't link this tag"
+      data-testid="tag-banner-dismiss"
+      (click)="dismissPendingTag()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+} @else if (tagAvailable()) {
+  @if (nfcStatus() === 'ready') {
+    <p class="tag-hint">
+      <mat-icon aria-hidden="true">nfc</mat-icon>
+      Or hold your phone to a spool's tag
+    </p>
+  } @else if (nfcStatus() === 'off') {
+    <p class="tag-hint">
+      <mat-icon aria-hidden="true">nfc</mat-icon>
+      NFC is off ·
+      <button
+        mat-button
+        type="button"
+        class="tag-hint__action"
+        data-testid="nfc-turn-on"
+        (click)="openNfcSettings()"
+      >
+        Turn on
+      </button>
+    </p>
+  }
+}
+
 <mat-dialog-content class="picker-content">
   <!--
     The list stays mounted through lookups and the QR scanner, so its search text, page and

@@ -5,7 +5,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  MatDialog,
   MatDialogRef,
   MAT_DIALOG_DATA,
   MatDialogTitle,
@@ -18,6 +20,13 @@ import {
   FilamentSummary,
 } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { TagReaderService } from 'src/app/core/services/tag-reader.service';
+import { TagRead } from 'src/app/core/types/native-bridge';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
+import { ToastrService } from 'ngx-toastr';
+import { Observable, map, of } from 'rxjs';
+import { readTagUidConflict } from 'src/app/filament/tag-uid';
+import { openSimpleDialog } from '../simple-dialog/simple-dialog.component';
 import { QrScanResult } from 'src/app/core/services/qr-scanner.service';
 import { filamentDetailToSummary } from 'src/app/core/utils/filament-summary';
 import { MatIconButton, MatButton } from '@angular/material/button';
@@ -32,6 +41,11 @@ export interface DialogData {
   otherFilamentOption: any;
   filterByMaterialCategory: string;
   multiSelect?: boolean;
+  /**
+   * A tag the user wants linked: the picker opens in its unknown-tag state, and the spool they
+   * pick is offered the tag. The Materials list's Scan spool sheet uses this.
+   */
+  pendingTagUid?: string;
 }
 
 export type ViewMode = 'list' | 'scanner';
@@ -60,6 +74,21 @@ export class FilamentSearchModalComponent {
   readonly data = inject<DialogData>(MAT_DIALOG_DATA);
   private readonly loggingService = inject(LoggingService);
   private readonly filamentService = inject(FilamentService);
+  private readonly tagReader = inject(TagReaderService);
+  private readonly toastr = inject(ToastrService);
+  private readonly dialog = inject(MatDialog);
+
+  /** Whether this app shell can read tags; every NFC control hides without it. */
+  readonly tagAvailable = this.tagReader.available;
+  readonly nfcStatus = this.tagReader.status;
+
+  /**
+   * A tag no spool has yet. While set, the next spool picked is offered the tag. One tag links
+   * to one spool, so it clears after that pick either way.
+   */
+  readonly pendingTagUid = signal<string | null>(
+    this.data.pendingTagUid ?? null
+  );
 
   readonly viewMode = signal<ViewMode>('list');
   readonly scanError = signal<string | null>(null);
@@ -70,8 +99,21 @@ export class FilamentSearchModalComponent {
     () => new Set(this.selectedFilaments().map((f) => f.id))
   );
 
+  constructor() {
+    // Listening whenever the picker is open, in list and QR mode alike. On the web, and in an
+    // app shell that cannot read tags, this never emits.
+    this.tagReader
+      .listen()
+      .pipe(takeUntilDestroyed())
+      .subscribe((read) => this.handleTag(read));
+  }
+
   handleFilamentSelected(filament: FilamentSummary) {
     if (this.data.multiSelect) {
+      return;
+    }
+    if (this.pendingTagUid()) {
+      this.offerTag(filament);
       return;
     }
     this.loggingService.logEvent('FilamentSearchModal_FilamentSelected');
@@ -80,9 +122,161 @@ export class FilamentSearchModalComponent {
 
   /** A multi-select row click: adds the spool, or removes it if it is already selected. */
   toggleFilament(filament: FilamentSummary) {
+    if (this.selectedIds().has(filament.id)) {
+      this.selectedFilaments.update((current) =>
+        current.filter((f) => f.id !== filament.id)
+      );
+      return;
+    }
+    if (this.pendingTagUid()) {
+      this.offerTag(filament);
+      return;
+    }
+    this.addToSelection(filament);
+  }
+
+  dismissPendingTag() {
+    this.pendingTagUid.set(null);
+  }
+
+  openNfcSettings() {
+    void this.tagReader.openSettings();
+  }
+
+  /** A tag held to the phone: look up its spool, then pick it, or ask which spool it is on. */
+  handleTag(read: TagRead) {
+    // One lookup at a time; a second spool tapped meanwhile is dropped, not queued.
+    if (this.loading()) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.filamentService.getFilamentByTag(read.uid).subscribe({
+      next: (detail) => {
+        this.loading.set(false);
+        this.loggingService.logEvent('TagReader_Lookup', {
+          known: detail !== null,
+        });
+
+        if (detail === null) {
+          this.pendingTagUid.set(read.uid);
+          this.viewMode.set('list');
+          return;
+        }
+
+        this.confirmTagPick(detail).subscribe((pick) => {
+          if (pick) {
+            this.loggingService.logEvent('FilamentSearchModal_TagSelected');
+            this.select(filamentDetailToSummary(detail));
+          }
+        });
+      },
+      error: (err: { status?: number }) => {
+        this.loading.set(false);
+        this.loggingService.logEvent('TagReader_LookupFailed', {
+          status: err?.status ?? 0,
+        });
+        // A retry of the same tag right away must not be swallowed as a repeat.
+        this.tagReader.forget(read.uid);
+        this.toastr.error("Couldn't look up that tag. Check your connection.");
+      },
+    });
+  }
+
+  /**
+   * A tag's spool is picked without asking, unless the picker would not have shown it: another
+   * material category, or inactive (by-tag finds inactive spools; the list hides them).
+   */
+  private confirmTagPick(detail: FilamentDetail): Observable<boolean> {
+    const name = escapeHtml(detail.displayName ?? 'This material');
+    const filter = this.data.filterByMaterialCategory;
+    const otherCategory =
+      !!filter && detail.materialCategoryNickname !== filter;
+    const inactive = !detail.isActive;
+
+    if (!otherCategory && !inactive) {
+      return of(true);
+    }
+
+    const category = escapeHtml(detail.materialCategoryNickname ?? '');
+    const body =
+      otherCategory && inactive
+        ? `That's ${name}, a ${category}, and it is marked inactive. Pick it anyway?`
+        : otherCategory
+          ? `That's ${name}, a ${category}. Pick it anyway?`
+          : `${name} is marked inactive. Pick it anyway?`;
+
+    return openSimpleDialog(this.dialog, {
+      title: 'Pick this spool?',
+      body,
+      yesText: 'Pick it',
+      noText: 'Cancel',
+    })
+      .afterClosed()
+      .pipe(map((answer) => answer === true));
+  }
+
+  /** The spool picked after an unknown tag: link the tag to it, or just select it. */
+  private offerTag(filament: FilamentSummary) {
+    const uid = this.pendingTagUid()!;
+
+    openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Link this tag?',
+        body: `Add tag <code>${escapeHtml(uid)}</code> to ${escapeHtml(filament.displayName ?? 'this material')}?`,
+        yesText: 'Add tag and select',
+        noText: 'Just select',
+      },
+      // Only the two buttons answer, so "no answer" always means Just select.
+      { disableClose: true }
+    )
+      .afterClosed()
+      .subscribe((link) => {
+        this.pendingTagUid.set(null);
+
+        if (link !== true) {
+          this.loggingService.logEvent('FilamentSearchModal_TagLinkSkipped');
+          this.select(filament);
+          return;
+        }
+
+        this.loading.set(true);
+        this.filamentService.addTagToFilament(filament.id, uid).subscribe({
+          next: () => {
+            this.loading.set(false);
+            this.loggingService.logEvent('FilamentSearchModal_TagLinked');
+            this.select(filament);
+          },
+          error: (err) => {
+            this.loading.set(false);
+            // The pick still stands; only the link failed.
+            const conflict = readTagUidConflict(err);
+            this.toastr.warning(
+              conflict
+                ? `Tag ${uid} is already on ${conflict.filamentDisplayName}, so it wasn't added here.`
+                : `The tag wasn't saved to ${filament.displayName}. Try linking it again from the material page.`
+            );
+            this.select(filament);
+          },
+        });
+      });
+  }
+
+  /** Picks a spool: closes single-select, or adds it to the multi-select selection. */
+  private select(filament: FilamentSummary) {
+    if (this.data.multiSelect) {
+      this.addToSelection(filament);
+      this.viewMode.set('list');
+      return;
+    }
+    this.dialogRef.close(filament);
+  }
+
+  private addToSelection(filament: FilamentSummary) {
     this.selectedFilaments.update((current) =>
       current.some((f) => f.id === filament.id)
-        ? current.filter((f) => f.id !== filament.id)
+        ? current
         : [...current, filament]
     );
   }

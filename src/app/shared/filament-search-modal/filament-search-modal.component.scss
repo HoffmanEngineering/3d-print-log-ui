@@ -76,3 +76,44 @@ app-filament-list[hidden] {
     flex-shrink: 0;
   }
 }
+
+.tag-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 24px 0;
+  color: var(--app-text-secondary);
+  font-size: 13px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .tag-hint__action {
+    min-width: 0;
+    padding: 0 6px;
+    height: 28px;
+  }
+}
+
+.tag-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 24px 0;
+  padding: 4px 4px 4px 12px;
+  border-radius: 4px;
+  background: var(--app-surface-container);
+  color: var(--app-text-primary);
+
+  .tag-banner__text {
+    flex: 1;
+  }
+
+  code {
+    font-family: monospace;
+    font-weight: 500;
+  }
+}

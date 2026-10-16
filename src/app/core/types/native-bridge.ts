@@ -18,7 +18,7 @@ export interface TagRead {
     kind: 'classic' | 'type2' | 'nfcv';
     data: string;
     keyFormat?: string;
-    unreadable: number[];
+    unreadable?: number[];
   };
 }
 

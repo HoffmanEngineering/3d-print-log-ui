@@ -9,7 +9,7 @@ export interface TagReading {
   manufacturer?: string;
   materialType?: string;
   materialSubtype?: string;
-  materialSubtypeCode?: string;
+  materialSubtypeCode?: number;
   colors?: string[];
   alpha?: number;
   diameterMm?: number;

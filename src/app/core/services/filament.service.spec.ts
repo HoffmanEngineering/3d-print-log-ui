@@ -231,6 +231,15 @@ describe('FilamentServiceService', () => {
       req.flush({});
     });
 
+    it('resolveTagRead omits techs when not given', () => {
+      service.resolveTagRead({ uid: '04A23F11', tech: 'nfca' }).subscribe();
+
+      const req = httpMock.expectOne(`${base()}/tag-reads`);
+      expect('techs' in req.request.body).toBeFalse();
+      expect(req.request.body).toEqual({ uid: '04A23F11' });
+      req.flush({});
+    });
+
     it('getReaderConfig GETs the reader config', () => {
       let result: unknown;
       service.getReaderConfig().subscribe((r) => (result = r));

@@ -8,6 +8,13 @@ import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
+import { TagRead } from '../types/native-bridge';
+import {
+  FilamentTagDetail,
+  ReaderConfig,
+  TagReadResponse,
+  TagReading,
+} from '../types/tag-reading';
 import { SortDirection } from '../types/sort-request';
 import { EMPTY_GUID } from './print.service';
 import { PrinterSummary } from './printer.service';
@@ -103,6 +110,15 @@ export interface FilamentDetail {
    * API that predates tags.
    */
   tagUids?: string[];
+
+  /** The catalog entry (SpoolmanDB) this spool was created from, if any. */
+  catalogEntryId?: string | null;
+
+  /** Per-tag decoded details, ordered by UID. Read-only. */
+  tagDetails?: FilamentTagDetail[];
+
+  /** Request-only: applies each reading to a UID that is in `tagUids`. */
+  tagReadings?: { uid: string; reading: TagReading }[];
 
   /**
    * Server-computed remaining filament weight in mg (nominal − print usage +
@@ -474,15 +490,43 @@ export class FilamentService {
    */
   addTagToFilament(
     filamentId: string,
-    uid: string
+    uid: string,
+    reading?: TagReading | null
   ): Observable<FilamentDetail> {
     return this.getFilamentDetail(filamentId).pipe(
       map((filament) => {
         const tagUids = filament.tagUids ?? [];
         filament.tagUids = tagUids.includes(uid) ? tagUids : [...tagUids, uid];
+        if (reading) {
+          filament.tagReadings = [{ uid, reading }];
+        }
         return filament;
       }),
       mergeMap((filament) => this.updateFilament(filament))
+    );
+  }
+
+  /**
+   * Sends what the phone read from a tag to the API, which decodes it and answers with the
+   * linked spool or a reading plus suggestions. `memory` is left out of the body when absent.
+   */
+  resolveTagRead(read: TagRead): Observable<TagReadResponse> {
+    const url = `${this.baseApi}/api/Filaments/tag-reads`;
+    const body: { uid: string; techs?: string[]; memory?: TagRead['memory'] } =
+      { uid: read.uid };
+    if (read.techs !== undefined) {
+      body.techs = read.techs;
+    }
+    if (read.memory !== undefined) {
+      body.memory = read.memory;
+    }
+    return this.http.post<TagReadResponse>(url, body);
+  }
+
+  /** How the phone should read each tag format (key schemes and parameters). */
+  getReaderConfig(): Observable<ReaderConfig> {
+    return this.http.get<ReaderConfig>(
+      `${this.baseApi}/api/FilamentTags/reader-config`
     );
   }
 

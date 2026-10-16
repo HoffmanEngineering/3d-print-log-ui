@@ -10,6 +10,16 @@ export type TagTech = 'nfca' | 'nfcb' | 'nfcf' | 'nfcv';
 export interface TagRead {
   uid: string;
   tech: TagTech;
+  /** Every technology the tag reports. Absent from app builds that predate decoded reads. */
+  techs?: string[];
+  classicUnsupported?: boolean;
+  /** Raw memory for the API to decode. Absent from app builds that predate decoded reads. */
+  memory?: {
+    kind: 'classic' | 'type2' | 'nfcv';
+    data: string;
+    keyFormat?: string;
+    unreadable: number[];
+  };
 }
 
 export interface PendingTap {

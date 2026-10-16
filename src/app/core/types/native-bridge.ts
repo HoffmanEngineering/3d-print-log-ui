@@ -1,3 +1,5 @@
+import type { ReaderConfig } from './tag-reading';
+
 export type PushPermissionState = 'granted' | 'denied' | 'default';
 
 /** Whether the phone can read tags right now. */
@@ -57,13 +59,18 @@ export interface PrintLogNativeBridge {
   // presence of startTagReading is how the page tells. Delivery is signal-then-fetch, like taps.
 
   nfcStatus?(): Promise<NfcStatus>;
-  /** Opens a reading session; native reads tags until stopTagReading. */
-  startTagReading?(): Promise<NfcStatus>;
+  /**
+   * Opens a reading session; native reads tags until stopTagReading. The config tells native
+   * which tag formats to read; an app shell predating it ignores the argument.
+   */
+  startTagReading?(config?: ReaderConfig | null): Promise<NfcStatus>;
   stopTagReading?(): Promise<void>;
   /** The latest tag read, claimed once, or null. */
   consumeTag?(): Promise<TagRead | null>;
   openNfcSettings?(): Promise<void>;
   onTag?(listener: () => void): void;
+  /** Fires when a tag is detected, before its read finishes. */
+  onTagReading?(listener: () => void): void;
   onNfcStatus?(listener: () => void): void;
 }
 

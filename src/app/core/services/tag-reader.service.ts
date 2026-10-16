@@ -6,18 +6,35 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  catchError,
+  firstValueFrom,
+  of,
+  shareReplay,
+  timeout,
+} from 'rxjs';
 import { NfcStatus, TagRead, TagTech } from '../types/native-bridge';
+import { ReaderConfig } from '../types/tag-reading';
+import { FilamentService } from './filament.service';
 import { LoggingService } from './logging.service';
 import { NativeBridgeService } from './native-bridge.service';
 
 /** A phone resting on a spool must not pick it again and again. */
 const REPEAT_WINDOW_MS = 2000;
 
+/** Reading never waits longer than this for the reader config. */
+const CONFIG_WAIT_MS = 5000;
+
 declare global {
   interface Window {
     /** Development builds only: deliver a tag as if the phone had read it. */
-    __printlogFakeTag?: (uid: string, tech?: TagTech) => void;
+    __printlogFakeTag?: (
+      uid: string,
+      tech?: TagTech,
+      memory?: TagRead['memory']
+    ) => void;
     /** Development builds only: report an NFC status as if the phone had. */
     __printlogFakeNfc?: (status: NfcStatus) => void;
   }
@@ -35,6 +52,7 @@ declare global {
 export class TagReaderService {
   private readonly bridge = inject(NativeBridgeService);
   private readonly logging = inject(LoggingService);
+  private readonly filaments = inject(FilamentService);
 
   /** The app shell has the NFC half of the bridge. */
   private readonly bridgeReady = signal(false);
@@ -52,6 +70,12 @@ export class TagReaderService {
   readonly status = this._status.asReadonly();
 
   private readonly reads = new Subject<TagRead>();
+  private readonly _readingStarted = new Subject<void>();
+  /** Native reports a tag under the phone, before its read finishes. */
+  readonly readingStarted: Observable<void> =
+    this._readingStarted.asObservable();
+  /** Fetched once per app session; a failed fetch is not cached, so the next start retries. */
+  private config$: Observable<ReaderConfig> | null = null;
   private listeners = 0;
   private wired = false;
   private fake = false;
@@ -78,9 +102,17 @@ export class TagReaderService {
           this._status.set('ready');
         }
       };
-      window.__printlogFakeTag = (uid: string, tech: TagTech = 'nfca') => {
+      window.__printlogFakeTag = (
+        uid: string,
+        tech: TagTech = 'nfca',
+        memory?: TagRead['memory']
+      ) => {
         goFake();
-        this.accept({ uid: uid.toUpperCase(), tech });
+        this.accept({
+          uid: uid.toUpperCase(),
+          tech,
+          ...(memory ? { memory } : {}),
+        });
       };
       window.__printlogFakeNfc = (status: NfcStatus) => {
         goFake();
@@ -131,6 +163,7 @@ export class TagReaderService {
     if (!this.wired) {
       this.wired = true;
       this.bridge.onTag(() => void this.drain());
+      this.bridge.onTagReading(() => this._readingStarted.next());
       this.bridge.onNfcStatus(() => void this.refreshStatus());
     }
 
@@ -145,7 +178,25 @@ export class TagReaderService {
     if (this.fake) {
       return;
     }
-    this._status.set(await this.bridge.startTagReading());
+    const config = await this.loadConfig();
+    if (this.listeners === 0) {
+      // Everyone left while the config loaded; their stop() already ran.
+      return;
+    }
+    this._status.set(await this.bridge.startTagReading(config));
+  }
+
+  /** The reader config, or null when it cannot be had: reading must not depend on it. */
+  private loadConfig(): Promise<ReaderConfig | null> {
+    this.config$ ??= this.filaments
+      .getReaderConfig()
+      .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    return firstValueFrom(
+      this.config$.pipe(
+        timeout(CONFIG_WAIT_MS),
+        catchError(() => of(null))
+      )
+    );
   }
 
   private async stop(): Promise<void> {

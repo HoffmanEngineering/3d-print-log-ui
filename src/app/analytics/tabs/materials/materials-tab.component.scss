@@ -45,8 +45,8 @@
 
 .materials-tab__spools {
   inline-size: 100%;
-  // Below this the five columns wrap into unreadable slivers; the wrapper scrolls instead.
-  min-inline-size: 28rem;
+  // Below this the six columns wrap into unreadable slivers; the wrapper scrolls instead.
+  min-inline-size: 34rem;
   border-collapse: collapse;
 
   th,
@@ -120,4 +120,38 @@
 .materials-tab__actions {
   display: flex;
   justify-content: flex-end;
+}
+
+// Legend entry for the hatched Adjustments bar, in the consumption chart's header.
+.materials-tab__adjustments-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-block-size: 32px;
+  padding: 0 0.4rem;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--chart-axis-text);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: help;
+
+  &:focus-visible {
+    outline: 2px solid var(--chart-axis-text);
+    outline-offset: 1px;
+  }
+}
+
+// Same hatch as the bar it explains (bar-chart's signed series).
+.materials-tab__hatch {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border: 1px solid var(--chart-signed);
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--chart-signed) 0 2px,
+    var(--chart-signed-bg) 2px 4px
+  );
 }

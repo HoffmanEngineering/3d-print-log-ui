@@ -32,8 +32,8 @@
       [csv]="byTypeCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
-      ariaSummary="Grams of filament used per material type"
-      emptyMessage="No spool-tracked filament in this range yet."
+      ariaSummary="Net grams of filament used per material type: prints plus inventory adjustments, never below zero"
+      [emptyMessage]="emptyMessage()"
       (retry)="onRetry()"
     >
       <app-bar-chart
@@ -46,15 +46,26 @@
         <g appFilamentSvgDefs #typeDefs [swatches]="typeSwatches()"></g>
       </app-bar-chart>
 
-      <table chartDataTable>
+      <table chartDataTable data-testid="group-table-type">
         <caption>
-          Filament by material type
+          Filament by material type: prints, inventory adjustments (weigh-ins,
+          can be negative) and net
         </caption>
+        <thead>
+          <tr>
+            <th scope="col">Group</th>
+            <th scope="col">Printed</th>
+            <th scope="col">Adjustments</th>
+            <th scope="col">Net</th>
+          </tr>
+        </thead>
         <tbody>
           @for (group of data()?.byType ?? []; track group.key) {
             <tr>
               <th scope="row">{{ group.label }}</th>
               <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
+              <td>{{ signedGrams(group.adjustmentMg) }}</td>
+              <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
             </tr>
           }
         </tbody>
@@ -68,8 +79,8 @@
       [csv]="byBrandCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
-      ariaSummary="Grams of filament used per brand"
-      emptyMessage="No spool-tracked filament in this range yet."
+      ariaSummary="Net grams of filament used per brand: prints plus inventory adjustments, never below zero"
+      [emptyMessage]="emptyMessage()"
       (retry)="onRetry()"
     >
       <app-bar-chart
@@ -82,15 +93,26 @@
         <g appFilamentSvgDefs #brandDefs [swatches]="brandSwatches()"></g>
       </app-bar-chart>
 
-      <table chartDataTable>
+      <table chartDataTable data-testid="group-table-brand">
         <caption>
-          Filament by brand
+          Filament by brand: prints, inventory adjustments (weigh-ins, can be
+          negative) and net
         </caption>
+        <thead>
+          <tr>
+            <th scope="col">Group</th>
+            <th scope="col">Printed</th>
+            <th scope="col">Adjustments</th>
+            <th scope="col">Net</th>
+          </tr>
+        </thead>
         <tbody>
           @for (group of data()?.byBrand ?? []; track group.key) {
             <tr>
               <th scope="row">{{ group.label }}</th>
               <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
+              <td>{{ signedGrams(group.adjustmentMg) }}</td>
+              <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
             </tr>
           }
         </tbody>
@@ -104,8 +126,8 @@
       [csv]="byColorCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
-      ariaSummary="Grams of filament used per color"
-      emptyMessage="No spool-tracked filament in this range yet."
+      ariaSummary="Net grams of filament used per color: prints plus inventory adjustments, never below zero"
+      [emptyMessage]="emptyMessage()"
       (retry)="onRetry()"
     >
       <app-bar-chart
@@ -118,15 +140,26 @@
         <g appFilamentSvgDefs #colorDefs [swatches]="colorSwatches()"></g>
       </app-bar-chart>
 
-      <table chartDataTable>
+      <table chartDataTable data-testid="group-table-color">
         <caption>
-          Filament by color
+          Filament by color: prints, inventory adjustments (weigh-ins, can be
+          negative) and net
         </caption>
+        <thead>
+          <tr>
+            <th scope="col">Group</th>
+            <th scope="col">Printed</th>
+            <th scope="col">Adjustments</th>
+            <th scope="col">Net</th>
+          </tr>
+        </thead>
         <tbody>
           @for (group of data()?.byColor ?? []; track group.key) {
             <tr>
               <th scope="row">{{ group.label }}</th>
               <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
+              <td>{{ signedGrams(group.adjustmentMg) }}</td>
+              <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
             </tr>
           }
         </tbody>
@@ -140,10 +173,26 @@
       [csv]="consumptionCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
-      ariaSummary="Grams of filament used per period, stacked by material type"
-      emptyMessage="No spool-tracked filament in this range yet."
+      [ariaSummary]="consumptionAriaSummary()"
+      [emptyMessage]="emptyMessage()"
       (retry)="onRetry()"
     >
+      @if (hasAdjustments()) {
+        <!-- The legend entry for the one series that needs explaining. A button, so the
+             tooltip is reachable by keyboard; the note is also in the DOM for screen readers. -->
+        <button
+          chartActions
+          type="button"
+          class="materials-tab__adjustments-key"
+          data-testid="adjustments-note"
+          [matTooltip]="adjustmentsNote"
+        >
+          <span class="materials-tab__hatch" aria-hidden="true"></span>
+          Adjustments
+          <mat-icon inline aria-hidden="true">info_outline</mat-icon>
+          <span class="cdk-visually-hidden">{{ adjustmentsNote }}</span>
+        </button>
+      }
       <app-bar-chart
         [data]="consumptionData()"
         [series]="consumptionSeries()"
@@ -152,7 +201,8 @@
       />
       <table chartDataTable>
         <caption>
-          Grams per period by material type
+          Grams per period by material type, plus inventory adjustments
+          (weigh-ins), which can be negative
         </caption>
         <tbody>
           @for (row of consumptionData(); track row.fullLabel) {
@@ -175,11 +225,11 @@
     fit="natural"
     [state]="state()"
     [coverage]="data()?.coverage ?? null"
-    ariaSummary="Most-used spools with remaining stock"
-    emptyMessage="No spool-tracked filament in this range yet."
+    ariaSummary="Most-used spools: grams printed, inventory adjustments, remaining stock, and net consumption"
+    [emptyMessage]="emptyMessage()"
     (retry)="onRetry()"
   >
-    <!-- Five columns do not fit a phone. The overflow belongs to this box, so the tab (and
+    <!-- Six columns do not fit a phone. The overflow belongs to this box, so the tab (and
          with it the page) never grows a horizontal scrollbar of its own. -->
     <div class="materials-tab__table-scroll">
       <table class="materials-tab__spools">
@@ -189,10 +239,26 @@
         <thead>
           <tr>
             <th scope="col">Spool</th>
-            <th scope="col">Used</th>
+            <th scope="col">Printed</th>
+            <th
+              scope="col"
+              title="Inventory corrections such as weigh-ins. Negative when filament was added back."
+            >
+              Adjustments
+            </th>
             <th scope="col">Remaining</th>
-            <th scope="col">Consumed</th>
-            <th scope="col">Cost consumed</th>
+            <th
+              scope="col"
+              title="Share of the spool used by prints plus adjustments"
+            >
+              Net consumed
+            </th>
+            <th
+              scope="col"
+              title="Cost of the filament used by prints plus adjustments"
+            >
+              Net cost
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -225,6 +291,7 @@
                 </button>
               </th>
               <td>{{ grams(spool.usedMg) | number: '1.0-0' }} g</td>
+              <td>{{ signedGrams(spool.adjustmentMg) }}</td>
               <td>
                 {{
                   spool.remainingMg === null

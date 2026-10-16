@@ -207,6 +207,87 @@ describe('BarChartComponent', () => {
     expect(petg.fill).toBeNull();
   });
 
+  describe('signed series', () => {
+    const withSigned: BarSeries[] = [
+      ...series,
+      { key: 'Adj', label: 'Adjustments', seriesIndex: 6, signed: true },
+    ];
+
+    function renderSigned(adj: number[]): HTMLElement {
+      fixture.componentRef.setInput(
+        'data',
+        data.map((datum, index) => ({
+          ...datum,
+          values: { ...datum.values, Adj: adj[index] ?? 0 },
+        }))
+      );
+      fixture.componentRef.setInput('series', withSigned);
+      fixture.componentRef.setInput('width', 900);
+      fixture.componentRef.setInput('height', 300);
+      fixture.componentRef.setInput('orientation', 'vertical');
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    const segmentsOf = (key: string) =>
+      fixture.componentInstance.segments().filter((s) => s.seriesKey === key);
+
+    it('draws a signed series beside the stack, not on top of it', () => {
+      renderSigned([2, 0]);
+      const [success] = segmentsOf('Success');
+      const [adj] = segmentsOf('Adj');
+      const zeroY = fixture.componentInstance.zeroY();
+
+      // Its own bar in the same bucket, starting at zero rather than at the stack's top.
+      expect(adj.x).toBeGreaterThan(success.x);
+      expect(adj.y + adj.h).toBeCloseTo(zeroY, 5);
+    });
+
+    it('draws a negative value below the zero line, with a baseline and negative ticks', () => {
+      const el = renderSigned([-2, 0]);
+      const [adj] = segmentsOf('Adj');
+      const zeroY = fixture.componentInstance.zeroY();
+
+      expect(adj.y).toBeCloseTo(zeroY, 5);
+      expect(adj.h).toBeGreaterThan(1);
+      const baseline = el.querySelector('.bar-chart__zero-line');
+      expect(baseline).toBeTruthy();
+      expect(Number(baseline!.getAttribute('y1'))).toBeCloseTo(zeroY, 5);
+      const labels = Array.from(
+        el.querySelectorAll('.bar-chart__value-label')
+      ).map((label) => label.textContent?.trim());
+      expect(labels.some((label) => label?.startsWith('-'))).toBeTrue();
+    });
+
+    it('draws no baseline when nothing is negative', () => {
+      const el = renderSigned([2, 0]);
+      expect(el.querySelector('.bar-chart__zero-line')).toBeNull();
+    });
+
+    it('lists a negative signed value in the bucket tooltip', () => {
+      const el = renderSigned([-2, 0]);
+      el.querySelector<SVGRectElement>(
+        '.bar-chart__bucket-hitbox'
+      )!.dispatchEvent(new MouseEvent('mouseenter'));
+      fixture.detectChanges();
+
+      expect(
+        el.querySelector('[data-testid="bar-tooltip"]')?.textContent
+      ).toContain('Adjustments: -2');
+    });
+
+    it('hatches signed bars so they never read as one more stacked series', () => {
+      const el = renderSigned([-2, 0]);
+      const rect = el.querySelector('rect.bar-chart__segment--signed')!;
+
+      expect(rect).toBeTruthy();
+      expect(rect.getAttribute('fill')).toMatch(/^url\(#bar-hatch-\d+\)$/);
+      expect(
+        el.querySelector(`pattern#${rect.getAttribute('fill')!.slice(5, -1)}`)
+      ).toBeTruthy();
+    });
+  });
+
   it('projects swatch defs into its own svg', () => {
     // The defs must live INSIDE the chart's <svg>; a url(#id) fill cannot resolve otherwise.
     expect(fixture.nativeElement.querySelector('svg')).toBeTruthy();

@@ -30,6 +30,22 @@
     pointer-events: all;
   }
 
+  &__zero-line {
+    stroke: var(--chart-axis-text);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
+  }
+
+  &__hatch-bg {
+    fill: var(--chart-signed-bg);
+  }
+
+  &__hatch-line {
+    stroke: var(--chart-signed);
+    stroke-width: 2.5;
+  }
+
   &__crosshair {
     stroke: var(--chart-axis-text);
     stroke-width: 1;
@@ -99,4 +115,34 @@
   // theme. Every swatch-filled mark gets a theme-contrast outline (spec §10).
   stroke: var(--chart-swatch-outline);
   stroke-width: 1;
+}
+
+.bar-chart__segment--signed {
+  // The outline keeps a thin correction visible, and separates it from the hatch's own tint.
+  stroke: var(--chart-signed);
+  stroke-width: 1;
+}
+
+.bar-chart__tooltip .bar-chart__key--signed {
+  border: 1px solid var(--chart-signed);
+  background: repeating-linear-gradient(
+    45deg,
+    var(--chart-signed) 0 2px,
+    var(--chart-signed-bg) 2px 4px
+  );
+}
+
+// A swatch-filled bar (a gradient or pattern) has no single color to show, so its key is a
+// neutral outline rather than a series color that would contradict the bar beside it.
+.bar-chart__tooltip .bar-chart__key--swatch {
+  border: 1px solid var(--chart-swatch-outline);
+  background: transparent;
+}
+
+// The break across a clipped bar: drawn in the chart background so it reads as a gap.
+.bar-chart__break {
+  fill: none;
+  stroke: var(--chart-tooltip-bg);
+  stroke-width: 3;
+  pointer-events: none;
 }

@@ -6,7 +6,7 @@ navLabel: Analytics
 group: features
 order: 50
 mode: reference
-updated: 2026-08-29
+updated: 2026-10-16
 related: [prints]
 ---
 
@@ -150,12 +150,31 @@ enough data yet** instead of a number that would just be noise.
 
 ---
 
+### Filament adjustments
+
+When you correct a spool's remaining filament, for example by weighing it, the
+Materials tab counts that correction as an **adjustment**. Consumption over time
+shows adjustments as their own hatched bar beside the filament your prints used.
+An adjustment is negative when the correction added filament back, so that bar
+can dip below zero. A correction much larger than your printing that period,
+such as logging a spool you had already half used, is drawn shortened with a
+break mark so the other bars stay readable; hover it to see the real amount.
+
+The type, brand and color charts show each group's **net** use (prints plus
+adjustments, never below zero). If filament added back outweighs print use for
+every group in the range, the chart says so instead of drawing empty bars. The
+CSV exports list printed grams and adjustments separately, and a spool's net
+consumed share and net cost include its adjustments too.
+
+---
+
 ### Burn rate and runway
 
 **Burn rate** is how many grams a day you have been using from a spool over the
-last 90 days, and **runway** is roughly how long what is left will last at that
-rate. If a spool has not been used recently, or its remaining weight is unknown,
-no runway is shown. The estimate is never projected more than a year ahead.
+last 90 days, counting both prints and adjustments, and **runway** is roughly how
+long what is left will last at that rate. If a spool has not been used recently,
+or its remaining weight is unknown, no runway is shown. The estimate is never
+projected more than a year ahead.
 
 ---
 

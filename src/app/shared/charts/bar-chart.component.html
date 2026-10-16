@@ -9,6 +9,23 @@
          document fragments in some engines, and scoping them here keeps ids local. -->
     <ng-content select="[appFilamentSvgDefs]" />
 
+    @if (signedSeries().length > 0) {
+      <!-- Signed (unstacked) series are hatched so a correction never reads as one more
+           stacked series. Colors come from classes, so a theme switch needs no re-render. -->
+      <defs>
+        <pattern
+          [attr.id]="hatchId"
+          patternUnits="userSpaceOnUse"
+          width="6"
+          height="6"
+          patternTransform="rotate(45)"
+        >
+          <rect class="bar-chart__hatch-bg" width="6" height="6" />
+          <line class="bar-chart__hatch-line" x1="0" y1="0" x2="0" y2="6" />
+        </pattern>
+      </defs>
+    }
+
     @for (tick of valueTicks(); track tick.value) {
       <line
         class="bar-chart__grid-line"
@@ -54,6 +71,17 @@
       />
     }
 
+    @if (zeroLine(); as zero) {
+      <line
+        class="bar-chart__zero-line"
+        aria-hidden="true"
+        [attr.x1]="zero.x1"
+        [attr.x2]="zero.x2"
+        [attr.y1]="zero.y"
+        [attr.y2]="zero.y"
+      />
+    }
+
     @if (tooltip(); as tip) {
       <line
         class="bar-chart__crosshair"
@@ -68,9 +96,11 @@
     @for (segment of segments(); track segment.tooltip) {
       <rect
         [class]="
-          segment.fill
-            ? 'bar-chart__segment bar-chart__segment--swatch'
-            : 'bar-chart__segment chart-fill-' + segment.seriesIndex
+          segment.signed
+            ? 'bar-chart__segment bar-chart__segment--signed'
+            : segment.fill
+              ? 'bar-chart__segment bar-chart__segment--swatch'
+              : 'bar-chart__segment chart-fill-' + segment.seriesIndex
         "
         [attr.fill]="segment.fill"
         [attr.filter]="segment.filter"
@@ -90,6 +120,13 @@
       >
         <title>{{ segment.tooltip }}</title>
       </rect>
+      @if (segment.breakPath) {
+        <path
+          class="bar-chart__break"
+          aria-hidden="true"
+          [attr.d]="segment.breakPath"
+        />
+      }
     }
   </svg>
 
@@ -102,9 +139,17 @@
       [style.top.px]="tip.y"
     >
       <strong>{{ tip.title }}</strong>
-      @for (line of tip.lines; track line.label) {
+      @for (line of tip.lines; track line.key) {
         <span>
-          <i [class]="'chart-fill-' + line.seriesIndex"></i>
+          <i
+            [class]="
+              line.signed
+                ? 'bar-chart__key--signed'
+                : line.swatch
+                  ? 'bar-chart__key--swatch'
+                  : 'chart-bg-' + line.seriesIndex
+            "
+          ></i>
           {{ line.label }}: {{ line.value }}
         </span>
       }

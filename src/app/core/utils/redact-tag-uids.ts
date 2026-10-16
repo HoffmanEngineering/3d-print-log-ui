@@ -2,10 +2,11 @@
 const URL_FIELDS = ['uri', 'refUri', 'name', 'target', 'url'] as const;
 
 /** The by-tag lookup's path segment: GET /api/Filaments/by-tag/{uid}. */
-const BY_TAG_SEGMENT = /(\/by-tag\/)[^/?#\s]+/gi;
+// Up to the next path, query or fragment delimiter only: a UID may carry spaces as separators.
+const BY_TAG_SEGMENT = /(\/by-tag\/)[^/?#]+/gi;
 
 /** A tag query parameter, in case a URL ever carries one. */
-const TAG_PARAM = /([?&]tag=)[^&#\s]*/gi;
+const TAG_PARAM = /([?&]tag=)[^&#]*/gi;
 
 /**
  * Application Insights telemetry initializer that keeps spool tag UIDs out of telemetry.

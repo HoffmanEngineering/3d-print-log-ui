@@ -687,6 +687,52 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       expect(dialogRef.close).toHaveBeenCalledOnceWith(null);
     });
 
+    it('a confirmed link still saves when the picker is closed mid-save', async () => {
+      await setUp();
+      filaments.getFilamentByTag.and.returnValue(of(null));
+      const saving = new Subject<FilamentDetail>();
+      filaments.addTagToFilament.and.returnValue(saving);
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+      dialogAnswers = [true];
+
+      component.handleFilamentSelected(filamentDetailToSummary(spool()));
+      // Back, Escape or the backdrop closes the dialog and destroys the picker.
+      fixture.destroy();
+
+      expect(saving.observed).toBeTrue();
+      saving.next(spool());
+      saving.complete();
+      expect(logger.logEvent).toHaveBeenCalledWith(
+        'FilamentSearchModal_TagLinked'
+      );
+    });
+
+    it('a read dropped while busy does not use up the repeat window', async () => {
+      await setUp();
+      filaments.getFilamentByTag.and.returnValue(
+        of(spool({ isActive: false }))
+      );
+      const check = new Subject<boolean | undefined>();
+      dialogAnswers = [check];
+
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+      tags.next({ uid: '04B00000', tech: 'nfca' });
+
+      expect(reader.forget).toHaveBeenCalledWith('04B00000');
+    });
+
+    it('cancelling the pick check lets the same spool be tapped again at once', async () => {
+      await setUp();
+      filaments.getFilamentByTag.and.returnValue(
+        of(spool({ isActive: false }))
+      );
+      dialogAnswers = [undefined];
+
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+
+      expect(reader.forget).toHaveBeenCalledWith('04A23F11');
+    });
+
     it('Add N waits for a link that is saving', async () => {
       await setUp({ multiSelect: true });
       component.toggleFilament(

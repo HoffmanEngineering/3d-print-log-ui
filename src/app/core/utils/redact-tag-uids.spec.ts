@@ -17,6 +17,18 @@ describe('redactTagUids', () => {
     expect(data['name']).toBe('GET /api/Filaments/by-tag/REDACTED');
   });
 
+  it('redacts a UID with separators, escaped or not, in full', () => {
+    const data = redact({
+      target: 'https://api.3dprintlog.com/api/Filaments/by-tag/04%20A2%203F',
+      name: 'GET /api/Filaments/by-tag/04 A2 3F',
+    });
+
+    expect(data['target']).toBe(
+      'https://api.3dprintlog.com/api/Filaments/by-tag/REDACTED'
+    );
+    expect(data['name']).toBe('GET /api/Filaments/by-tag/REDACTED');
+  });
+
   it('redacts the tag query parameter on a new-material page view and keeps the rest', () => {
     const data = redact({
       uri: 'https://www.3dprintlog.com/materials/new?tag=04A23F11&x=1',

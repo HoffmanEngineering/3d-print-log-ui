@@ -156,6 +156,8 @@ export class FilamentSearchModalComponent {
   handleTag(read: TagRead) {
     // One tag at a time; a spool tapped meanwhile is dropped, not queued.
     if (this.closed || this.loading() || this.tagBusy()) {
+      // Dropped, so it must not hold the repeat window shut for the next tap.
+      this.tagReader.forget(read.uid);
       return;
     }
 
@@ -187,6 +189,9 @@ export class FilamentSearchModalComponent {
               if (pick) {
                 this.loggingService.logEvent('FilamentSearchModal_TagSelected');
                 this.select(filamentDetailToSummary(detail));
+              } else {
+                // Cancelled: tapping the same spool again right away must work.
+                this.tagReader.forget(read.uid);
               }
             });
         },
@@ -269,10 +274,12 @@ export class FilamentSearchModalComponent {
         }
 
         this.loading.set(true);
+        // Not tied to the picker's lifetime: the user confirmed this link, and closing the
+        // picker mid-save (Back, Escape, the backdrop) must not abort it. The closed guard
+        // keeps a late result from changing the picker's answer.
         this.filamentService
           .addTagToFilament(filament.id, uid)
           .pipe(
-            takeUntilDestroyed(this.destroyRef),
             finalize(() => {
               this.loading.set(false);
               this.tagBusy.set(false);

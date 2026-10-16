@@ -74,6 +74,8 @@ The U1 can use [Spoolman for Klipper](/docs/klipper-spoolman), which shows your 
 
 Turn on Advanced Mode before you edit `moonraker.conf`: on the U1's screen, go to **Settings → Maintenance → Advanced Mode**, check **Agree**, then tap **Open**. Without it, a boot script puts back the stock config when the printer restarts, and the `[spoolman]` block disappears. This was tested on firmware 2.0.0, where the block survives a full reboot with Advanced Mode on, and picking a spool on the printer updates the tool's slot.
 
+The U1's block has only `[spoolman]`. Moonraker logs prints with its notifier, which needs the `apprise` package, and the U1's Moonraker doesn't include it: a `[notifier]` section fails with "failed plugins: notifier". So printlog-bridge logs the U1's prints. With `[spoolman]` alone and no bridge, the U1's spool pickers show your 3D Print Log spools, but prints and filament use aren't logged.
+
 With the bridge running, picking a spool on a tool and the RFID reader stay in sync with Moonraker's active spool. A spool picked on the printer is loaded into the active tool's slot in 3D Print Log, and a spool assigned from an RFID tag or in the app becomes Moonraker's active spool when that tool is active. The bridge also sets the active spool on each tool change, so you need no macros. This works only when `[spoolman]` points at 3D Print Log.
 
 ### No webcam snapshot {#snapshot}

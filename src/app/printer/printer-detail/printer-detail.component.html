@@ -392,22 +392,31 @@
                             printFilament.get('filament').value?.materialType
                           }}
                         </div>
+                        <!-- An untracked spool (no starting weight) has null
+                             remaining: "Not tracked" on the weight line, no
+                             length line. -->
                         @if (printFilament.get('filament').value !== null) {
                           <div fxFlex="grow">
                             {{
                               printFilament.get('filament').value
-                                ?.filamentRemaining / 1000 | number
+                                ?.filamentRemaining
+                                | remaining
+                                  : { divisor: 1000, unit: ' (g) remaining' }
                             }}
-                            (g) remaining
                           </div>
                         }
-                        @if (printFilament.get('filament').value !== null) {
+                        @if (
+                          isRemainingTracked(
+                            printFilament.get('filament').value
+                              ?.filamentLengthRemainingInM
+                          )
+                        ) {
                           <div fxFlex="grow">
                             {{
                               printFilament.get('filament').value
-                                ?.filamentLengthRemainingInM | number
+                                ?.filamentLengthRemainingInM
+                                | remaining: { unit: ' (m) remaining' }
                             }}
-                            (m) remaining
                           </div>
                         }
                         <div

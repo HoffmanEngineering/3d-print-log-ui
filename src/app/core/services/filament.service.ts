@@ -1,7 +1,11 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpParams,
+} from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
 import { SortDirection } from '../types/sort-request';
@@ -315,6 +319,21 @@ export class FilamentService {
     return this.http.get<FilamentDetail>(url);
   }
 
+  /**
+   * The user's spool carrying this RFID/NFC tag UID (inactive spools included), or null when
+   * none does. Other errors are passed on: "no spool" and "couldn't look" read differently.
+   */
+  getFilamentByTag(uid: string): Observable<FilamentDetail | null> {
+    const url = `${this.baseApi}/api/Filaments/by-tag/${encodeURIComponent(uid)}`;
+    return this.http
+      .get<FilamentDetail>(url)
+      .pipe(
+        catchError((err: HttpErrorResponse) =>
+          err.status === 404 ? of(null) : throwError(() => err)
+        )
+      );
+  }
+
   addFilament(filament: FilamentDetail): Observable<FilamentDetail> {
     const url = `${this.baseApi}/api/Filaments/`;
     return this.http.post<FilamentDetail>(url, filament);
@@ -445,6 +464,25 @@ export class FilamentService {
       mergeMap((filament) => {
         return this.updateFilament(filament);
       })
+    );
+  }
+
+  /**
+   * Links a tag to a spool: loads it, appends the UID if it is not there yet, and saves it
+   * whole, the way adjustments and favorites are saved. A tag already on another spool fails
+   * with the API's 409 (see readTagUidConflict).
+   */
+  addTagToFilament(
+    filamentId: string,
+    uid: string
+  ): Observable<FilamentDetail> {
+    return this.getFilamentDetail(filamentId).pipe(
+      map((filament) => {
+        const tagUids = filament.tagUids ?? [];
+        filament.tagUids = tagUids.includes(uid) ? tagUids : [...tagUids, uid];
+        return filament;
+      }),
+      mergeMap((filament) => this.updateFilament(filament))
     );
   }
 

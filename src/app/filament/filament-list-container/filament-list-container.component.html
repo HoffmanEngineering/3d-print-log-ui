@@ -32,6 +32,17 @@
         >
           Add New Material
         </button>
+        @if (canScan()) {
+          <button
+            mat-raised-button
+            type="button"
+            data-testid="scan-spool"
+            (click)="openScanSpool()"
+          >
+            <mat-icon>nfc</mat-icon>
+            Scan spool
+          </button>
+        }
         <button
           mat-raised-button
           type="button"

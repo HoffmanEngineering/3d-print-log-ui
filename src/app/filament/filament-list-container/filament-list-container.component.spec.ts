@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { EMPTY } from 'rxjs';
 import { FilamentService } from 'src/app/core/services/filament.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { FilamentListContainerComponent } from './filament-list-container.component';
 
 // Isolated unit tests for pure methods — no component fixture needed
@@ -27,6 +30,9 @@ describe('FilamentListContainerComponent (isolated)', () => {
         { provide: Router, useValue: routerStub },
         { provide: MatDialog, useValue: null },
         { provide: ToastrService, useValue: null },
+        { provide: MatBottomSheet, useValue: null },
+        { provide: LoggingService, useValue: null },
+        { provide: TagReaderService, useValue: { available: () => false } },
       ],
     });
     component = TestBed.runInInjectionContext(

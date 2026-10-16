@@ -1,0 +1,69 @@
+<div class="scan-sheet">
+  @if (phase() === 'unknown') {
+    <mat-icon class="scan-sheet__icon" aria-hidden="true">nfc</mat-icon>
+    <p class="scan-sheet__title" role="status">
+      Tag <code>{{ unknownUid() }}</code> isn't on any of your spools
+    </p>
+    <div class="scan-sheet__actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        data-testid="scan-link"
+        (click)="link()"
+      >
+        Link to an existing spool
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="scan-new"
+        (click)="createNew()"
+      >
+        New material with this tag
+      </button>
+      <button
+        mat-button
+        type="button"
+        data-testid="scan-cancel"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+    </div>
+  } @else {
+    @if (phase() === 'looking') {
+      <mat-spinner diameter="40" aria-label="Looking up the tag"></mat-spinner>
+    } @else {
+      <mat-icon class="scan-sheet__icon" aria-hidden="true">nfc</mat-icon>
+    }
+    <p class="scan-sheet__title">Hold your phone to a spool…</p>
+    @if (status() === 'off') {
+      <p class="scan-sheet__hint">
+        NFC is off ·
+        <button
+          mat-button
+          type="button"
+          class="scan-sheet__inline"
+          data-testid="nfc-turn-on"
+          (click)="openNfcSettings()"
+        >
+          Turn on
+        </button>
+      </p>
+    }
+    @if (error(); as message) {
+      <p class="scan-sheet__error" role="alert">{{ message }}</p>
+    }
+    <div class="scan-sheet__actions">
+      <button
+        mat-button
+        type="button"
+        data-testid="scan-cancel"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+    </div>
+  }
+</div>

@@ -6,6 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { Sort, MatSort, MatSortHeader } from '@angular/material/sort';
@@ -32,6 +33,13 @@ import { MaterialCategory } from 'src/app/core/services/material-categories.serv
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import { TagReaderService } from 'src/app/core/services/tag-reader.service';
+import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
+import {
+  ScanSpoolResult,
+  ScanSpoolSheetComponent,
+} from './scan-spool-sheet/scan-spool-sheet.component';
 import {
   QrLabelDialogComponent,
   QrLabelDialogData,
@@ -118,6 +126,11 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly toastrService = inject(ToastrService);
+  private readonly bottomSheet = inject(MatBottomSheet);
+  private readonly loggingService = inject(LoggingService);
+
+  /** Scan spool shows only in an app shell that can read tags. */
+  readonly canScan = inject(TagReaderService).available;
 
   readonly filaments = signal<FilamentSummary[]>([]);
 
@@ -637,5 +650,53 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
 
   public navigateToFilament(id: string): void {
     this.router.navigate([id], { relativeTo: this.activatedRoute });
+  }
+
+  /** Find a spool by holding the phone to its tag; link or create one when the tag is new. */
+  openScanSpool(): void {
+    this.loggingService.logEvent('MaterialsScan_Opened');
+    this.bottomSheet
+      .open<ScanSpoolSheetComponent, unknown, ScanSpoolResult>(
+        ScanSpoolSheetComponent
+      )
+      .afterDismissed()
+      .subscribe((result) => {
+        if (!result) return;
+
+        switch (result.kind) {
+          case 'known':
+            void this.router.navigate(['/materials', result.id]);
+            break;
+          case 'new':
+            void this.router.navigate(['/materials', 'new'], {
+              queryParams: { tag: result.uid },
+            });
+            break;
+          case 'link':
+            this.linkScannedTag(result.uid);
+            break;
+        }
+      });
+  }
+
+  /** The picker, started on the tag: the spool picked is offered it, then opened. */
+  private linkScannedTag(uid: string): void {
+    this.dialog
+      .open(FilamentSearchModalComponent, {
+        data: {
+          otherFilamentOption: null,
+          filterByMaterialCategory: '',
+          pendingTagUid: uid,
+        },
+        height: '90svh',
+        width: '95vw',
+        maxWidth: '100vw',
+      })
+      .afterClosed()
+      .subscribe((filament: FilamentSummary | null | undefined) => {
+        if (filament?.id) {
+          void this.router.navigate(['/materials', filament.id]);
+        }
+      });
   }
 }

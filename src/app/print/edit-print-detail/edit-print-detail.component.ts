@@ -132,7 +132,11 @@ import { FileAttachmentSectionComponent } from '../../shared/file-attachment-sec
 import { AdComponent } from '../../shared/ad/ad.component';
 import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
-import { DecimalPipe, TitleCasePipe } from '@angular/common';
+import { TitleCasePipe } from '@angular/common';
+import {
+  isRemainingTracked,
+  RemainingPipe,
+} from 'src/app/shared/pipes/remaining.pipe';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 export interface PrintImageValue {
@@ -253,7 +257,7 @@ export interface PrintFormValue {
     AdComponent,
     DefaultShowHideDirective,
     SidebarAdComponent,
-    DecimalPipe,
+    RemainingPipe,
     TitleCasePipe,
     FilamentColorSwatchStylePipe,
   ],
@@ -261,6 +265,9 @@ export interface PrintFormValue {
 export class EditPrintDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy
 {
+  /** False for a spool with no starting weight, whose remaining is null. */
+  protected readonly isRemainingTracked = isRemainingTracked;
+
   public static OTHER_FILAMENT_OPTION: Partial<FilamentSummary> = {
     id: EMPTY_GUID,
     displayName: 'Other',

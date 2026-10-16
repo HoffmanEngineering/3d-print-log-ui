@@ -322,7 +322,10 @@
           Remaining (g)
         </th>
         <td mat-cell *matCellDef="let filament">
-          {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}
+          {{
+            filament.filamentRemaining
+              | remaining: { divisor: 1000, digitsInfo: '1.0-0' }
+          }}
         </td>
       </ng-container>
       <ng-container matColumnDef="isActive">
@@ -404,7 +407,11 @@
               <span class="card-name">{{ filament.displayName }}</span>
               <span class="card-spacer"></span>
               <span class="card-weight">
-                {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}g
+                {{
+                  filament.filamentRemaining
+                    | remaining
+                      : { divisor: 1000, digitsInfo: '1.0-0', unit: 'g' }
+                }}
               </span>
             </div>
             <div class="card-row-material">

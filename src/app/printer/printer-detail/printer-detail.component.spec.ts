@@ -540,6 +540,53 @@ describe('PrinterDetailComponent', () => {
       expect(saveButton().disabled).toBeFalse();
     });
 
+    const loadedWith = (remaining: {
+      filamentRemaining: number | null;
+      filamentLengthRemainingInM: number | null;
+    }) =>
+      aPrinterDetail({
+        loadedFilaments: [
+          {
+            id: 'pf-1',
+            filament: {
+              id: 'spool-1',
+              displayName: 'Prusament Galaxy Black',
+              colorName: '',
+              materialType: 'PLA',
+              ...remaining,
+            },
+          },
+        ] as never,
+      });
+
+    it('says Not tracked for a loaded spool with no starting weight', async () => {
+      await setUp(
+        loadedWith({
+          filamentRemaining: null,
+          filamentLengthRemainingInM: null,
+        }),
+        { zone: true }
+      );
+
+      expect(text()).toContain('Not tracked');
+      expect(text()).not.toContain('(g) remaining');
+      expect(text()).not.toContain('(m) remaining');
+    });
+
+    it('shows grams and meters remaining for a tracked loaded spool', async () => {
+      await setUp(
+        loadedWith({
+          filamentRemaining: 250_000,
+          filamentLengthRemainingInM: 84,
+        }),
+        { zone: true }
+      );
+
+      expect(text()).toContain('250 (g) remaining');
+      expect(text()).toContain('84 (m) remaining');
+      expect(text()).not.toContain('Not tracked');
+    });
+
     it('lists a spool picked in the filament dialog', async () => {
       await setUp(aPrinterDetail(), { zone: true });
       const closed = new Subject<unknown>();

@@ -383,6 +383,32 @@ describe('FilamentListComponent once responses arrive', () => {
     expect(host().querySelectorAll('tr.mat-mdc-row').length).toBe(1);
   });
 
+  it('says Not tracked for a spool with no starting weight, in table and card', () => {
+    respond([{ ...blue, filamentRemaining: null }]);
+
+    expect(
+      host()
+        .querySelector('td.mat-column-filamentRemaining')!
+        .textContent!.trim()
+    ).toBe('Not tracked');
+    expect(
+      host().querySelector('.filament-card .card-weight')!.textContent!.trim()
+    ).toBe('Not tracked');
+  });
+
+  it('shows grams for a tracked spool', () => {
+    respond([blue]);
+
+    expect(
+      host()
+        .querySelector('td.mat-column-filamentRemaining')!
+        .textContent!.trim()
+    ).toBe('500');
+    expect(
+      host().querySelector('.filament-card .card-weight')!.textContent!.trim()
+    ).toBe('500g');
+  });
+
   it('says so when nothing matches', () => {
     respond([]);
 

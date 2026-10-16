@@ -49,7 +49,7 @@ import {
   MatRow,
 } from '@angular/material/table';
 import { MatTooltip } from '@angular/material/tooltip';
-import { DecimalPipe } from '@angular/common';
+import { RemainingPipe } from 'src/app/shared/pipes/remaining.pipe';
 import { FilamentColorSwatchStylePipe } from '../pipes/filament-color-swatch-style.pipe';
 
 @Component({
@@ -84,7 +84,7 @@ import { FilamentColorSwatchStylePipe } from '../pipes/filament-color-swatch-sty
     MatRowDef,
     MatRow,
     MatPaginator,
-    DecimalPipe,
+    RemainingPipe,
     FilamentColorSwatchStylePipe,
   ],
 })

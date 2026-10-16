@@ -6,17 +6,25 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { firstValueFrom, isObservable, of } from 'rxjs';
+import { EMPTY, firstValueFrom, isObservable, of } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 import { AuthService } from '../services/auth.service';
 import { homepageRedirectGuard } from './homepage-redirect.guard';
 
 describe('homepageRedirectGuard', () => {
-  const redirectFor = async (loggedIn: boolean) => {
+  afterEach(() => {
+    (environment as { devAuthBypass?: boolean }).devAuthBypass = false;
+  });
+
+  const redirectFor = async (
+    loggedIn: boolean,
+    isAuthenticated$ = of(loggedIn)
+  ) => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: { isAuthenticated$: of(loggedIn) } },
+        { provide: AuthService, useValue: { isAuthenticated$ } },
       ],
     });
     const result = TestBed.runInInjectionContext(() =>
@@ -37,5 +45,12 @@ describe('homepageRedirectGuard', () => {
 
   it('sends a signed-out visitor to the home page', async () => {
     await expectAsync(redirectFor(false)).toBeResolvedTo('/home');
+  });
+
+  it('sends the dev auth bypass to prints even though auth never emits', async () => {
+    // With the bypass there is no Auth0 client, so isAuthenticated$ is EMPTY.
+    (environment as { devAuthBypass?: boolean }).devAuthBypass = true;
+
+    await expectAsync(redirectFor(false, EMPTY)).toBeResolvedTo('/prints');
   });
 });

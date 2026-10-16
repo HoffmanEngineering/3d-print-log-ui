@@ -179,6 +179,13 @@ test('htmlToMarkdown absolutizes routerLink into a site URL', () => {
   );
 });
 
+test('htmlToMarkdown keeps a routerLink fragment attribute', () => {
+  assert.equal(
+    htmlToMarkdown('<p>See <a routerLink="/docs/x" fragment="tags">X</a>.</p>'),
+    'See [X](https://www.3dprintlog.com/docs/x#tags).'
+  );
+});
+
 test('htmlToMarkdown absolutizes the [routerLink]="[\'/x\']" binding form', () => {
   assert.equal(
     htmlToMarkdown(`<p>Open <a [routerLink]="['/prints']">Prints</a>.</p>`),

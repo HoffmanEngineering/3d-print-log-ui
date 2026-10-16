@@ -250,8 +250,12 @@ export function htmlToMarkdown(html) {
     (_, route, text) => `[${collapse(text)}](${SITE_ORIGIN}${route.trim()})`
   );
   s = s.replace(
-    /<a\b[^>]*\brouterLink="([^"]*)"[^>]*>([\s\S]*?)<\/a\s*>/gi,
-    (_, route, text) => `[${collapse(text)}](${SITE_ORIGIN}${route.trim()})`
+    /<a\b([^>]*\brouterLink="([^"]*)"[^>]*)>([\s\S]*?)<\/a\s*>/gi,
+    (_, attrs, route, text) => {
+      const fragment = /\bfragment="([^"]*)"/.exec(attrs)?.[1];
+      const hash = fragment ? `#${fragment}` : '';
+      return `[${collapse(text)}](${SITE_ORIGIN}${route.trim()}${hash})`;
+    }
   );
   s = s.replace(
     /<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a\s*>/gi,

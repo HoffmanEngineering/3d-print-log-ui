@@ -117,6 +117,13 @@ test('routerLink in both forms becomes a Markdown link', () => {
   );
 });
 
+test('a routerLink fragment attribute comes back as #fragment', () => {
+  assert.equal(
+    md('<p><a routerLink="/docs/materials" fragment="tags">Tags</a></p>'),
+    `[Tags](${ORIGIN}/docs/materials#tags)`
+  );
+});
+
 test('an inline icon keeps its name; a decorative one is dropped', () => {
   assert.equal(
     md('<p>Click the <mat-icon inline>more_horiz</mat-icon> menu.</p>'),

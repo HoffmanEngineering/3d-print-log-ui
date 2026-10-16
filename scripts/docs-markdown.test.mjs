@@ -152,6 +152,25 @@ test('renders a root-relative link as a routerLink so in-app navigation survives
   );
 });
 
+test('splits a link anchor into the routerLink fragment input', () => {
+  // routerLink="/docs/x#y" encodes the # as %23 and 404s.
+  assert.equal(
+    render('[Tags](/docs/materials#tags)'),
+    '<p><a routerLink="/docs/materials" fragment="tags">Tags</a></p>'
+  );
+});
+
+test('drops an empty link fragment and splits at the first #', () => {
+  assert.equal(
+    render('[All](/docs/materials#)'),
+    '<p><a routerLink="/docs/materials">All</a></p>'
+  );
+  assert.equal(
+    render('[X](/docs/a?b=1#c#d)'),
+    '<p><a routerLink="/docs/a?b=1" fragment="c#d">X</a></p>'
+  );
+});
+
 test('renders an absolute link as an external href', () => {
   assert.equal(
     render('[Cura](https://ultimaker.com)'),

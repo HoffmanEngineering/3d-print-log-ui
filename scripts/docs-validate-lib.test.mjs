@@ -1157,6 +1157,17 @@ test('accepts an unlisted page linked from raw HTML on a listed page', () => {
   );
 });
 
+test('checks the anchor named by a routerLink fragment attribute', () => {
+  const page = (id) =>
+    unlistedPage({ body: `## Install\n\n### Step {#${id}}\n` });
+  const link =
+    '## Prints\n\n<p><a routerLink="/docs/printlog-bridge-install" fragment="x">Install</a></p>\n';
+  assert.deepEqual(run([source({ body: link }), page('x')]), []);
+  assert.deepEqual(run([source({ body: link }), page('y')]), [
+    'prints.md: link to /docs/printlog-bridge-install#x, but that page declares no id "x".',
+  ]);
+});
+
 test('reports an unlisted page that no listed page links to', () => {
   assert.deepEqual(run([source(), unlistedPage()]), [
     'printlog-bridge-install.md: nav: false hides this page from the sidebar, but no page in the sidebar links to it.',

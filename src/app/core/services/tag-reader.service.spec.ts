@@ -398,7 +398,8 @@ describe('TagReaderService', () => {
     let calls = 0;
     const source: Observable<ReaderConfig> = new Observable((s) => {
       calls++;
-      if (calls === 1) {
+      // The first call is the prefetch when the bridge appears, the second the first start.
+      if (calls <= 2) {
         s.error(new Error('offline'));
       } else {
         s.next(config);
@@ -411,6 +412,74 @@ describe('TagReaderService', () => {
     const first = service.listen().subscribe();
     await flush();
     first.unsubscribe();
+    service.listen().subscribe();
+    await flush();
+
+    expect(nfc.startTagReading.calls.allArgs()).toEqual([[null], [config]]);
+  });
+
+  it('fetches the config as soon as the bridge is ready, before anyone listens', async () => {
+    pretendCordova();
+    const nfc = new FakeNfcBridge();
+    installBridge(nfc);
+    const service = create();
+    await flush();
+    expect(filaments.getReaderConfig).toHaveBeenCalledTimes(1);
+
+    service.listen().subscribe();
+    await flush();
+    expect(filaments.getReaderConfig).toHaveBeenCalledTimes(1);
+    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(config);
+  });
+
+  it('fetches the config when the bridge appears late', async () => {
+    pretendCordova();
+    create();
+    expect(filaments.getReaderConfig).not.toHaveBeenCalled();
+
+    installBridge(new FakeNfcBridge());
+    window.dispatchEvent(new Event('printlog-native-ready'));
+    await flush();
+
+    expect(filaments.getReaderConfig).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not wait again once a config wait has timed out', async () => {
+    pretendCordova();
+    const nfc = new FakeNfcBridge();
+    installBridge(nfc);
+    filaments.getReaderConfig.and.returnValue(new Subject<ReaderConfig>());
+    jasmine.clock().install();
+    const service = create();
+    const first = service.listen().subscribe();
+    await flush();
+    jasmine.clock().tick(5001);
+    await flush();
+    first.unsubscribe();
+
+    service.listen().subscribe();
+    await flush();
+
+    expect(nfc.startTagReading.calls.allArgs()).toEqual([[null], [null]]);
+    expect(filaments.getReaderConfig).toHaveBeenCalledTimes(1);
+  });
+
+  it('a config that arrives after the wait timed out serves the next session', async () => {
+    pretendCordova();
+    const nfc = new FakeNfcBridge();
+    installBridge(nfc);
+    const pending = new Subject<ReaderConfig>();
+    filaments.getReaderConfig.and.returnValue(pending);
+    jasmine.clock().install();
+    const service = create();
+    const first = service.listen().subscribe();
+    await flush();
+    jasmine.clock().tick(5001);
+    await flush();
+    first.unsubscribe();
+
+    pending.next(config);
+    pending.complete();
     service.listen().subscribe();
     await flush();
 

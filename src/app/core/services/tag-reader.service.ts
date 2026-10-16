@@ -9,10 +9,12 @@ import {
 import {
   Observable,
   Subject,
+  TimeoutError,
   catchError,
   firstValueFrom,
   of,
   shareReplay,
+  tap,
   timeout,
 } from 'rxjs';
 import { NfcStatus, TagRead, TagTech } from '../types/native-bridge';
@@ -76,6 +78,12 @@ export class TagReaderService {
     this._readingStarted.asObservable();
   /** Fetched once per app session; a failed fetch is not cached, so the next start retries. */
   private config$: Observable<ReaderConfig> | null = null;
+  private config: ReaderConfig | null = null;
+  /**
+   * Set once a start has waited the full CONFIG_WAIT_MS. Later starts don't wait again; the
+   * fetch still in flight fills the cache for whichever start comes after it lands.
+   */
+  private configWaitTimedOut = false;
   /** Bumped by every start and stop, so a start that lost the race to a newer one stands down. */
   private session = 0;
   private listeners = 0;
@@ -163,6 +171,8 @@ export class TagReaderService {
     }
 
     this.bridgeReady.set(true);
+    // Fetched now, so the first scan usually finds it already here.
+    this.prefetchConfig();
     if (!this.wired) {
       this.wired = true;
       this.bridge.onTag(() => void this.drain());
@@ -190,15 +200,37 @@ export class TagReaderService {
     this._status.set(await this.bridge.startTagReading(config));
   }
 
+  private fetchConfig(): Observable<ReaderConfig> {
+    this.config$ ??= this.filaments.getReaderConfig().pipe(
+      tap((config) => (this.config = config)),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+    return this.config$;
+  }
+
+  /** Starts the fetch without waiting for it. A failure is retried by the next start. */
+  private prefetchConfig(): void {
+    this.fetchConfig().subscribe({ error: () => undefined });
+  }
+
   /** The reader config, or null when it cannot be had: reading must not depend on it. */
   private loadConfig(): Promise<ReaderConfig | null> {
-    this.config$ ??= this.filaments
-      .getReaderConfig()
-      .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    if (this.config) {
+      return Promise.resolve(this.config);
+    }
+    if (this.configWaitTimedOut) {
+      this.prefetchConfig();
+      return Promise.resolve(null);
+    }
     return firstValueFrom(
-      this.config$.pipe(
+      this.fetchConfig().pipe(
         timeout(CONFIG_WAIT_MS),
-        catchError(() => of(null))
+        catchError((err: unknown) => {
+          if (err instanceof TimeoutError) {
+            this.configWaitTimedOut = true;
+          }
+          return of(null);
+        })
       )
     );
   }

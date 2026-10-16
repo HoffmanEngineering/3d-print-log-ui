@@ -420,7 +420,9 @@ url: jsons://x
     const note = q('spoolman-u1-note');
     expect(note).not.toBeNull();
     const text = squash(note);
-    expect(text).toContain('turn on Advanced Mode (Maintenance)');
+    expect(text).toContain(
+      'turn on Advanced Mode (Settings → Maintenance → Advanced Mode)'
+    );
     expect(text).toContain('puts back its stock config when it restarts');
     expect(text).not.toContain('waiting on a test');
     expect(text).not.toContain('printlog-bridge');

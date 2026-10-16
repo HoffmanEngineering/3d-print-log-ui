@@ -6,7 +6,7 @@ navLabel: Projects
 group: features
 order: 20
 mode: how-to
-updated: 2026-09-02
+updated: 2026-10-15
 related: [prints]
 ---
 
@@ -25,6 +25,10 @@ before.
 A project is a named collection of prints. Each print can belong to at most one
 project. Projects have a status (In Progress, Complete, On Hold, or Cancelled)
 and a visibility setting (Public, Unlisted, or Private).
+
+To label prints across projects instead, for example everything you printed as
+a gift, use [tags](/docs/prints#tags). A print can have several tags as well as
+its project.
 
 ### Creating a Project
 

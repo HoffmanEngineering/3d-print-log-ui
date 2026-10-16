@@ -1,0 +1,60 @@
+.tag-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+
+.color-field {
+  display: inline-flex;
+  align-items: center;
+}
+
+.color-input {
+  width: 40px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--mat-divider-color);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.tag-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mat-divider-color);
+
+    .tag-form {
+      margin: 0;
+    }
+  }
+}
+
+.identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.meta {
+  color: var(--app-text-secondary);
+  font-size: 0.875rem;
+}
+
+.actions {
+  display: inline-flex;
+  gap: 8px;
+}

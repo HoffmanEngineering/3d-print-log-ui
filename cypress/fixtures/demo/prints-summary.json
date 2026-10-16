@@ -110,7 +110,14 @@
       "defaultPrintImageId": 1005,
       "commentCount": 2,
       "projectId": null,
-      "projectName": null
+      "projectName": null,
+      "tags": [
+        {
+          "id": "7a1c0f3e-0000-4000-8000-000000000002",
+          "name": "Cosplay",
+          "color": "#9c27b0"
+        }
+      ]
     },
     {
       "id": 1004,
@@ -271,7 +278,14 @@
       "defaultPrintImageId": 1004,
       "commentCount": 1,
       "projectId": null,
-      "projectName": null
+      "projectName": null,
+      "tags": [
+        {
+          "id": "7a1c0f3e-0000-4000-8000-000000000003",
+          "name": "Functional",
+          "color": "#2196f3"
+        }
+      ]
     },
     {
       "id": 1003,
@@ -378,7 +392,14 @@
       "defaultPrintImageId": 1003,
       "commentCount": 5,
       "projectId": null,
-      "projectName": null
+      "projectName": null,
+      "tags": [
+        {
+          "id": "7a1c0f3e-0000-4000-8000-000000000001",
+          "name": "Gifts",
+          "color": "#e91e63"
+        }
+      ]
     },
     {
       "id": 1002,
@@ -481,7 +502,19 @@
       "defaultPrintImageId": 1002,
       "commentCount": 0,
       "projectId": null,
-      "projectName": null
+      "projectName": null,
+      "tags": [
+        {
+          "id": "7a1c0f3e-0000-4000-8000-000000000001",
+          "name": "Gifts",
+          "color": "#e91e63"
+        },
+        {
+          "id": "7a1c0f3e-0000-4000-8000-000000000004",
+          "name": "Home decor",
+          "color": "#4caf50"
+        }
+      ]
     },
     {
       "id": 1001,
@@ -591,7 +624,14 @@
       "defaultPrintImageId": 1001,
       "commentCount": 3,
       "projectId": null,
-      "projectName": null
+      "projectName": null,
+      "tags": [
+        {
+          "id": "7a1c0f3e-0000-4000-8000-000000000001",
+          "name": "Gifts",
+          "color": "#e91e63"
+        }
+      ]
     }
   ]
 }

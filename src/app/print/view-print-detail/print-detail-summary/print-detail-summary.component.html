@@ -26,6 +26,14 @@
   <app-print-status-badge [status]="print().status" />
 </div>
 
+<!-- Tags are private (#7): the API sends them to the creator only, and the
+     editor is gated on ownership as well, so a public visitor sees neither. -->
+@if (isOwner() && print().id !== null && print().tags; as tags) {
+  <section class="tags" aria-label="Tags" data-cy="print-tags">
+    <app-print-tag-editor [printId]="print().id" [tags]="tags" />
+  </section>
+}
+
 <section class="panel" aria-labelledby="at-a-glance-heading">
   <h2 id="at-a-glance-heading" class="panel-heading">At a glance</h2>
   <dl class="glance">

@@ -13,6 +13,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { AddCommentDto, Comment } from './comment.service';
 import { FilamentSummary } from './filament.service';
+import { PrintTag } from './print-tag.service';
 import currency from 'currency.js';
 
 export enum PrintSummarySortColumn {
@@ -155,6 +156,12 @@ export interface PrintSummary {
   projectId?: string;
   projectName?: string;
   projectStatus?: import('./project.service').ProjectStatus;
+
+  /**
+   * The creator's tags, ordered by name (#7). The API sends them to the creator only, so on
+   * anyone else's prints this is null or absent.
+   */
+  tags?: PrintTag[] | null;
 }
 
 export interface PrintDetailDTO {
@@ -193,6 +200,8 @@ export interface PrintDetailDTO {
    * did or it has since been deleted. Creator-only, like the external pair.
    */
   connectionDisplayName?: string | null;
+  /** The creator's tags (#7). Creator-only, like the external pair. */
+  tags?: PrintTag[] | null;
 }
 
 /** A field `PatchPrintDTO.clear` can null out. */
@@ -298,6 +307,11 @@ export interface PrintDetail {
    * did or it has since been deleted. Creator-only, like the external pair.
    */
   connectionDisplayName?: string | null;
+  /**
+   * The print's tags, or null when the viewer is not its creator (the API sends none). Saved by
+   * its own endpoint (`PrintTagService.setPrintTags`), never through the print's PATCH or POST.
+   */
+  tags?: PrintTag[] | null;
 }
 
 /**
@@ -392,7 +406,9 @@ export class PrintService {
      * object rather than two more positional arguments: this signature already has ten, and the
      * pair is meaningless split apart.
      */
-    dateRange?: { fromDate: string; toDate: string }
+    dateRange?: { fromDate: string; toDate: string },
+    /** Any of these tags (#7). The API matches only the viewer's own tags. */
+    filterByTagIds: string[] = []
   ): Observable<PagedList<PrintSummary>> {
     const url = `${this.baseApi}/api/Prints/summary`;
     const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
@@ -421,6 +437,10 @@ export class PrintService {
       for (const id of filterByFilamentIds) {
         params = params.append('filterByFilamentIds', id);
       }
+    }
+
+    for (const id of filterByTagIds ?? []) {
+      params = params.append('filterByTagIds', id);
     }
 
     if (userId !== undefined) {
@@ -483,6 +503,7 @@ export class PrintService {
           externalSource: newPrint.externalSource ?? null,
           externalId: newPrint.externalId ?? null,
           connectionDisplayName: newPrint.connectionDisplayName ?? null,
+          tags: newPrint.tags ?? null,
         };
         return print;
       })

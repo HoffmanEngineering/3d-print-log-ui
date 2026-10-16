@@ -13,6 +13,7 @@ import {
   PrintStatus,
 } from 'src/app/core/services/print.service';
 import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
+import { ToastrService } from 'ngx-toastr';
 
 describe('PrintDetailSummaryComponent', () => {
   let fixture: ComponentFixture<PrintDetailSummaryComponent>;
@@ -101,6 +102,11 @@ describe('PrintDetailSummaryComponent', () => {
         // Stubbed rather than real: the store would issue its own authenticated fetch
         // and every test here would have to drain it.
         { provide: PrinterThumbnailStore, useValue: thumbnailStore },
+        // The owner's tag editor reports failures with a toast.
+        {
+          provide: ToastrService,
+          useValue: jasmine.createSpyObj('ToastrService', ['error']),
+        },
       ],
       // No NO_ERRORS_SCHEMA: the rail's children are real standalone
       // components pulled in via its own imports, so the schema would suppress
@@ -139,6 +145,35 @@ describe('PrintDetailSummaryComponent', () => {
     fixture = TestBed.createComponent(PrintDetailSummaryComponent);
     fixture.componentRef.setInput('print', print);
     expect(renderAs(false).querySelector('[data-cy-printer-link]')).toBeNull();
+  });
+
+  describe('tags (#7)', () => {
+    const tagged = {
+      ...print,
+      tags: [{ id: 't1', name: 'Gifts', color: '#ff0000' }],
+    };
+
+    it('lets the owner edit the print’s tags', () => {
+      fixture.componentRef.setInput('print', tagged);
+      const el = renderAs(true);
+
+      const editor = el.querySelector('app-print-tag-editor');
+      expect(editor).toBeTruthy();
+      expect(editor.textContent).toContain('Gifts');
+    });
+
+    it('lets the owner add the first tag to an untagged print', () => {
+      fixture.componentRef.setInput('print', { ...print, tags: [] });
+      expect(renderAs(true).querySelector('app-print-tag-editor')).toBeTruthy();
+    });
+
+    it('shows no tags section to anyone else, even if a payload carried tags', () => {
+      fixture.componentRef.setInput('print', tagged);
+      const el = renderAs(false);
+
+      expect(el.querySelector('app-print-tag-editor')).toBeNull();
+      expect(el.textContent).not.toContain('Gifts');
+    });
   });
 
   it('shows the printer make and model to everyone', () => {

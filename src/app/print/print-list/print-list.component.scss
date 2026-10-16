@@ -312,3 +312,10 @@ table.refreshing tr[mat-row] {
       0 1px 4px rgba(0, 0, 0, 0.4);
   }
 }
+
+.print-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 240px;
+}

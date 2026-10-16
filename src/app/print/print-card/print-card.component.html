@@ -41,6 +41,17 @@
             [projectId]="print().projectId"
           />
         }
+        @if (print().tags?.length) {
+          <div class="card-tags">
+            @for (tag of print().tags; track tag.id) {
+              <app-print-tag-chip
+                [tag]="tag"
+                [clickable]="!selectionMode()"
+                (clicked)="tagSelected.emit($event)"
+              />
+            }
+          </div>
+        }
 
         <div class="card-meta">
           <div class="meta-item">

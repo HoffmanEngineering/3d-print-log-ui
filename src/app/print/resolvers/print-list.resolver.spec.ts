@@ -56,4 +56,18 @@ describe('printListResolver', () => {
     const args = printService.getPrintSummaries.calls.mostRecent().args;
     expect(args[10]).toBeUndefined();
   });
+
+  it('forwards every filterByTagId from the URL as the tag filter', () => {
+    const route = {
+      queryParams: {},
+      queryParamMap: {
+        getAll: (key: string) => (key === 'filterByTagId' ? ['a', 'b'] : []),
+      },
+    } as unknown as ActivatedRouteSnapshot;
+
+    runResolver(printListResolver, route);
+
+    const args = printService.getPrintSummaries.calls.mostRecent().args;
+    expect(args[11]).toEqual(['a', 'b']);
+  });
 });

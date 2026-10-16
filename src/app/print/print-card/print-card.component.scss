@@ -184,3 +184,10 @@
     color: rgba(255, 255, 255, 0.6);
   }
 }
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}

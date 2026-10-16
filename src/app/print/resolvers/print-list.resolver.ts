@@ -40,6 +40,8 @@ export const printListResolver: ResolveFn<PagedList<PrintSummary>> = (
 
   const filamentIds = route.queryParamMap.getAll('filterByFilamentId');
 
+  const tagIds = route.queryParamMap.getAll('filterByTagId');
+
   return inject(PrintService).getPrintSummaries(
     pageNumber,
     pageSize,
@@ -51,6 +53,7 @@ export const printListResolver: ResolveFn<PagedList<PrintSummary>> = (
     sortColumn,
     undefined,
     undefined,
-    dateRange
+    dateRange,
+    tagIds
   );
 };

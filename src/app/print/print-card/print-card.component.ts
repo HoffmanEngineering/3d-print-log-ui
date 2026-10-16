@@ -17,6 +17,8 @@ import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { LongPressDirective } from 'src/app/shared/long-press/long-press.directive';
+import { PrintTag } from 'src/app/core/services/print-tag.service';
+import { PrintTagChipComponent } from 'src/app/shared/print-tag-chip/print-tag-chip.component';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { PrintStatusBadgeComponent } from 'src/app/shared/print-status-badge/print-status-badge.component';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
@@ -38,6 +40,7 @@ import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-av
     ProjectChipComponent,
     PrintStatusBadgeComponent,
     PrinterAvatarComponent,
+    PrintTagChipComponent,
   ],
 })
 export class PrintCardComponent {
@@ -47,6 +50,8 @@ export class PrintCardComponent {
   readonly print = input.required<PrintSummary>();
   readonly deleted = output<PrintSummary>();
   readonly statusChanged = output<{ id: number; status: PrintStatus }>();
+  /** A tag on the card was clicked: the list filters by it (#7). Not in selection mode. */
+  readonly tagSelected = output<PrintTag>();
 
   /**
    * True while the list is in bulk-selection mode, which turns a tap into a toggle

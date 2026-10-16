@@ -1,0 +1,54 @@
+<mat-form-field class="print-tag-field" subscriptSizing="dynamic">
+  <mat-label>Tags</mat-label>
+  <mat-chip-grid #chipGrid aria-label="Tags" data-cy="print-tag-editor">
+    @for (tag of selected(); track tag.id) {
+      <mat-chip-row (removed)="remove(tag)" data-cy="print-tag-editor-chip">
+        <span
+          class="print-tag-dot"
+          aria-hidden="true"
+          [style.background-color]="tag.color"
+        ></span>
+        {{ tag.name }}
+        <button matChipRemove [attr.aria-label]="'Remove tag ' + tag.name">
+          <mat-icon>cancel</mat-icon>
+        </button>
+      </mat-chip-row>
+    }
+    <input
+      #tagInput
+      data-cy="print-tag-input"
+      [placeholder]="atLimit() ? '' : 'Add a tag'"
+      [attr.maxlength]="maxNameLength"
+      [disabled]="atLimit()"
+      [matChipInputFor]="chipGrid"
+      [matAutocomplete]="auto"
+      (input)="query.set(tagInput.value)"
+      (matChipInputTokenEnd)="onTokenEnd($event)"
+    />
+  </mat-chip-grid>
+  <mat-autocomplete
+    #auto="matAutocomplete"
+    (optionSelected)="onOptionSelected($event, tagInput)"
+  >
+    @if (canCreate()) {
+      <mat-option [value]="createOption" data-cy="print-tag-create-option">
+        <mat-icon>add</mat-icon> Create tag "{{ createLabel() }}"
+      </mat-option>
+    }
+    @for (tag of suggestions(); track tag.id) {
+      <mat-option [value]="tag">
+        <span
+          class="print-tag-dot"
+          aria-hidden="true"
+          [style.background-color]="tag.color"
+        ></span>
+        {{ tag.name }}
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (atLimit()) {
+    <mat-hint>A print can have up to {{ maxTags }} tags.</mat-hint>
+  } @else {
+    <mat-hint>Pick a tag, or type a new name and press Enter.</mat-hint>
+  }
+</mat-form-field>

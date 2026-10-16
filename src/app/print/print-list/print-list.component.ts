@@ -97,6 +97,11 @@ import {
 import { MatCheckbox } from '@angular/material/checkbox';
 import { PrintImageComponent } from '../../shared/print-image/print-image.component';
 import { ProjectChipComponent } from '../../shared/project-chip/project-chip.component';
+import { PrintTagChipComponent } from '../../shared/print-tag-chip/print-tag-chip.component';
+import {
+  PrintTag,
+  PrintTagService,
+} from 'src/app/core/services/print-tag.service';
 import { FilamentUsageSummaryComponent } from '../../shared/filament-usage-summary/filament-usage-summary.component';
 import { AdComponent } from '../../shared/ad/ad.component';
 import { DecimalPipe } from '@angular/common';
@@ -169,6 +174,7 @@ export interface ColumnDefinition {
     DurationPipe,
     LocaleDatePipe,
     FilamentColorSwatchStylePipe,
+    PrintTagChipComponent,
   ],
 })
 export class PrintListComponent implements OnInit, OnDestroy {
@@ -180,6 +186,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   dialog = inject(MatDialog);
   private media = inject(MediaMatcher);
   private printService = inject(PrintService);
+  private readonly printTagService = inject(PrintTagService);
   private readonly loggingService = inject(LoggingService);
   private readonly gcodeParserService = inject(GcodeFileParserService);
   private readonly newPrintStoreService = inject(NewPrintStoreService);
@@ -211,6 +218,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
       key: 'title',
       displayName: 'Title',
       description: "The print's title.",
+    },
+    {
+      key: 'tags',
+      displayName: 'Tags',
+      description: 'Your tags on the print.',
     },
     {
       key: 'printer',
@@ -348,6 +360,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
   public readonly filterByFilamentIds = signal<string[]>([]);
   public readonly filterByFilaments = signal<FilamentSummary[]>([]);
 
+  /** Any of these tags (#7). Kept in the URL as repeated `filterByTagId`. */
+  public readonly filterByTagIds = signal<string[]>([]);
+
+  /** The user's tags, for the filter. Empty until loaded, and when the user has none. */
+  public readonly tags = signal<PrintTag[]>([]);
+
   public printStatusTypes = PrintStatus;
 
   public printSummarySortColumns = toSortHeaderIds(PrintSummarySortColumn);
@@ -479,6 +497,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       count++;
     if (this.filterByPrinterIds().length > 0) count++;
     if (this.filterByFilamentIds().length > 0) count++;
+    if (this.filterByTagIds().length > 0) count++;
     return count;
   });
 
@@ -501,6 +520,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
   private readonly PRINT_TABLE_DISPLAYED_COLUMNS =
     'print_table_displayed_columns';
+
+  private readonly TAGS_COLUMN_ADDED_KEY = 'print_list_tags_column_added';
 
   public readonly preferredFilamentUnit =
     signal<PrintFilamentSourceMeasurement>(
@@ -588,6 +609,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.titleService.setTitle('My Prints - 3D Print Log');
 
+    let firstParams = true;
     this.activatedRoute.queryParamMap.subscribe((params) => {
       if (params.has('searchText')) {
         this.searchText = params.get('searchText');
@@ -616,6 +638,24 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.filterByFilamentIds,
         params.getAll('filterByFilamentId')
       );
+      const tagsChanged = setIfChanged(
+        this.filterByTagIds,
+        params.getAll('filterByTagId')
+      );
+
+      // The grouped feed takes no tag filter, so a tag filter always shows the list.
+      if (this.filterByTagIds().length > 0 && this._viewMode === 'grouped') {
+        this._viewMode = 'list';
+        localStorage.setItem(this.VIEW_MODE_KEY, 'list');
+      }
+
+      // A navigation to /prints from /prints reuses this component and never re-runs the
+      // resolver, so a tag filter arriving in the URL (back/forward, a link) has to be fetched
+      // here. updateFilter's own navigation writes the same tags back, which changes nothing.
+      if (tagsChanged && !firstParams) {
+        this.updateFilter();
+      }
+      firstParams = false;
     });
 
     this.activatedRoute.data.subscribe((data) => {
@@ -717,6 +757,75 @@ export class PrintListComponent implements OnInit, OnDestroy {
           );
         }
       });
+
+    // After the saved layout is read: a first tag adds the Tags column to that layout.
+    this.subscriptions.add(
+      this.printTagService.list().subscribe({
+        next: (tags) => {
+          this.tags.set(tags);
+          if (tags.length > 0) {
+            this.addTagsColumnOnce();
+          }
+        },
+        // The list works without the filter, so a failed lookup only hides it.
+        error: (error) => this.loggingService.logException(error),
+      })
+    );
+  }
+
+  /**
+   * The Tags column (#7) joins the table once, after the title, the first time the user has a
+   * tag, whatever layout they saved. Not before: for someone who has never tagged a print it
+   * would be an empty column. The flag keeps a user who then removes it from having it put back.
+   */
+  private addTagsColumnOnce(): void {
+    if (localStorage.getItem(this.TAGS_COLUMN_ADDED_KEY) !== null) {
+      return;
+    }
+    localStorage.setItem(this.TAGS_COLUMN_ADDED_KEY, 'true');
+
+    const columns = this.displayedColumns();
+    if (columns.includes('tags')) {
+      return;
+    }
+    const updated = [...columns];
+    const titleIndex = updated.indexOf('title');
+    updated.splice(
+      titleIndex === -1 ? updated.length : titleIndex + 1,
+      0,
+      'tags'
+    );
+    this.displayedColumns.set(updated);
+    localStorage.setItem(
+      this.PRINT_TABLE_DISPLAYED_COLUMNS,
+      JSON.stringify(updated)
+    );
+  }
+
+  /**
+   * Filters by one tag clicked in the list, keeping every other filter (#7). Replaces any tag
+   * filter rather than adding to it: the filter matches any of its tags, so adding would show
+   * more prints, not the ones with the tag that was clicked.
+   */
+  public filterByTag(tag: PrintTag): Promise<unknown> {
+    this.loggingService.logEvent('PrintList_TagClicked', {
+      hadTagFilter: this.filterByTagIds().length > 0,
+    });
+    return this.onTagFilterChanged([tag.id]);
+  }
+
+  /** The tag filter changed. The grouped feed cannot filter by tag, so it goes to the list. */
+  public onTagFilterChanged(tagIds: string[]): Promise<unknown> {
+    this.filterByTagIds.set(tagIds);
+    this.currentPage.set(1);
+    if (tagIds.length > 0) {
+      this.isFilterPanelOpen = true;
+      if (this._viewMode === 'grouped') {
+        this._viewMode = 'list';
+        localStorage.setItem(this.VIEW_MODE_KEY, 'list');
+      }
+    }
+    return this.updateFilter();
   }
 
   public pageChange(pageEvent: PageEvent) {
@@ -834,6 +943,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.filterByPrinterIds.set([]);
     this.filterByFilamentIds.set([]);
     this.filterByFilaments.set([]);
+    this.filterByTagIds.set([]);
 
     this.sortDirection = SortDirection.Desc;
     this.sortColumn = PrintSummarySortColumn.StartDate;
@@ -864,6 +974,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
           filterByStatus: this.filterByStatus(),
           filterByPrinterId: this.filterByPrinterIds(),
           filterByFilamentId: this.filterByFilamentIds(),
+          filterByTagId: this.filterByTagIds(),
           sortDirection: this.sortDirection,
           sortColumn: this.sortColumn,
           t: new Date().getTime(),
@@ -897,7 +1008,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
             this.filterByFilamentIds(),
             this.sortDirection,
             this.sortColumn,
-            undefined
+            undefined,
+            undefined,
+            undefined,
+            this.filterByTagIds()
           )
           // Only stop() moves into finalize. It is the refcounted one, and the
           // unsubscribe above CANCELS whatever was in flight — a cancelled

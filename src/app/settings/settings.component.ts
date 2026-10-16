@@ -60,6 +60,7 @@ import { EmailSettingsComponent } from './email-settings/email-settings.componen
 import { AchievementSettingsComponent } from './achievement-settings/achievement-settings.component';
 import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
 import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
+import { PrintTagsSettingsComponent } from './print-tags/print-tags-settings.component';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
 
@@ -87,6 +88,7 @@ import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
     RouterLink,
     ConnectedAgentsComponent,
     SpoolmanConnectionsComponent,
+    PrintTagsSettingsComponent,
     MatCheckbox,
     KeyValuePipe,
     LocaleDatePipe,

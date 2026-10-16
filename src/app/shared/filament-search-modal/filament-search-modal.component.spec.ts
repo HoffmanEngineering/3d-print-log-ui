@@ -9,7 +9,7 @@ import {
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
-import { of, Subject, throwError } from 'rxjs';
+import { isObservable, Observable, of, Subject, throwError } from 'rxjs';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { NfcStatus, TagRead } from 'src/app/core/types/native-bridge';
 import { filamentDetailToSummary } from 'src/app/core/utils/filament-summary';
@@ -254,8 +254,8 @@ describe('FilamentSearchModalComponent NFC tags', () => {
     forget: jasmine.Spy;
     openSettings: jasmine.Spy;
   };
-  /** What the next confirm dialog answers: true = yes, undefined = no. */
-  let dialogAnswers: (boolean | undefined)[];
+  /** What the next confirm dialog answers: true = yes, undefined = no, a Subject = still open. */
+  let dialogAnswers: (boolean | undefined | Observable<boolean | undefined>)[];
 
   const spool = (overrides: Partial<FilamentDetail> = {}): FilamentDetail => ({
     ...buildDetail(),
@@ -288,7 +288,10 @@ describe('FilamentSearchModalComponent NFC tags', () => {
     dialog.open.and.callFake(
       () =>
         ({
-          afterClosed: () => of(dialogAnswers.shift()),
+          afterClosed: () => {
+            const answer = dialogAnswers.shift();
+            return isObservable(answer) ? answer : of(answer);
+          },
         }) as never
     );
     toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
@@ -534,6 +537,10 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
     expect(dialogRef.close).toHaveBeenCalled();
     expect(toastr.warning.calls.mostRecent().args[0]).toContain('Old Spool');
+    expect(logger.logEvent).toHaveBeenCalledWith(
+      'FilamentSearchModal_TagLinkFailed',
+      { status: 409, conflict: true }
+    );
   });
 
   it('multi-select: the confirm opens on an add, and a deselect does nothing', async () => {
@@ -593,6 +600,119 @@ describe('FilamentSearchModalComponent NFC tags', () => {
     tags.next({ uid: '04A23F12', tech: 'nfca' });
 
     expect(filaments.getFilamentByTag).toHaveBeenCalledTimes(1);
+  });
+
+  describe('one tag at a time', () => {
+    it('ignores a tag read while the link dialog is open', async () => {
+      await setUp({ multiSelect: true });
+      filaments.getFilamentByTag.and.returnValue(of(null));
+      filaments.addTagToFilament.and.returnValue(of(spool()));
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+      const linkAnswer = new Subject<boolean | undefined>();
+      dialogAnswers = [linkAnswer];
+
+      component.toggleFilament(filamentDetailToSummary(spool()));
+      // The spool is still near the phone, or a second one is tapped.
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+      tags.next({ uid: '04B00000', tech: 'nfca' });
+      linkAnswer.next(true);
+      linkAnswer.complete();
+
+      expect(filaments.getFilamentByTag).toHaveBeenCalledTimes(1);
+      expect(filaments.addTagToFilament).toHaveBeenCalledOnceWith(
+        'filament-1',
+        '04A23F11'
+      );
+      expect(component.pendingTagUid()).toBeNull();
+      expect([...component.selectedIds()]).toEqual(['filament-1']);
+    });
+
+    it('ignores a tag read while the link is saving, and keeps the overlay up', async () => {
+      await setUp({ multiSelect: true });
+      filaments.getFilamentByTag.and.returnValue(of(null));
+      const saving = new Subject<FilamentDetail>();
+      filaments.addTagToFilament.and.returnValue(saving);
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+      dialogAnswers = [true];
+
+      component.toggleFilament(filamentDetailToSummary(spool()));
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+
+      expect(filaments.getFilamentByTag).toHaveBeenCalledTimes(1);
+      expect(component.loading()).toBeTrue();
+      expect(component.pendingTagUid()).toBeNull();
+
+      saving.next(spool());
+      saving.complete();
+      expect(component.loading()).toBeFalse();
+      expect([...component.selectedIds()]).toEqual(['filament-1']);
+    });
+
+    it('ignores a tag read while the pick check is open', async () => {
+      await setUp();
+      filaments.getFilamentByTag.and.returnValues(
+        of(spool({ isActive: false })),
+        of(spool({ id: 'filament-2' }))
+      );
+      const check = new Subject<boolean | undefined>();
+      dialogAnswers = [check];
+
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+      tags.next({ uid: '04B00000', tech: 'nfca' });
+
+      expect(dialog.open).toHaveBeenCalledTimes(1);
+      expect(filaments.getFilamentByTag).toHaveBeenCalledTimes(1);
+
+      check.next(undefined);
+      check.complete();
+      tags.next({ uid: '04B00000', tech: 'nfca' });
+      expect(dialogRef.close).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ id: 'filament-2' })
+      );
+    });
+
+    it('a link that finishes after Close does not change the result', async () => {
+      await setUp();
+      filaments.getFilamentByTag.and.returnValue(of(null));
+      const saving = new Subject<FilamentDetail>();
+      filaments.addTagToFilament.and.returnValue(saving);
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+      dialogAnswers = [true];
+
+      component.handleFilamentSelected(filamentDetailToSummary(spool()));
+      component.closeSelected();
+      saving.next(spool());
+      saving.complete();
+
+      expect(dialogRef.close).toHaveBeenCalledOnceWith(null);
+    });
+
+    it('Add N waits for a link that is saving', async () => {
+      await setUp({ multiSelect: true });
+      component.toggleFilament(
+        filamentDetailToSummary(spool({ id: 'filament-2' }))
+      );
+      filaments.getFilamentByTag.and.returnValue(of(null));
+      const saving = new Subject<FilamentDetail>();
+      filaments.addTagToFilament.and.returnValue(saving);
+      tags.next({ uid: '04A23F11', tech: 'nfca' });
+      dialogAnswers = [true];
+      component.toggleFilament(filamentDetailToSummary(spool()));
+      fixture.detectChanges();
+
+      const addButton = () =>
+        Array.from(
+          (
+            fixture.nativeElement as HTMLElement
+          ).querySelectorAll<HTMLButtonElement>('mat-dialog-actions button')
+        ).find((b) => b.textContent?.includes('Add'))!;
+      expect(addButton().disabled).toBeTrue();
+
+      saving.next(spool());
+      saving.complete();
+      fixture.detectChanges();
+      expect(addButton().disabled).toBeFalse();
+    });
   });
 
   it('starts in the unknown-tag state with a pending tag', async () => {

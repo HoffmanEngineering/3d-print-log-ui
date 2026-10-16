@@ -96,7 +96,7 @@
     >
       <button
         mat-raised-button
-        [disabled]="this.data.otherFilamentOption === null"
+        [disabled]="this.data.otherFilamentOption === null || tagBusy()"
         (click)="selectOtherFilament()"
         color="basic"
       >
@@ -108,7 +108,7 @@
     <button
       mat-raised-button
       color="accent"
-      [disabled]="selectedFilaments().length === 0"
+      [disabled]="selectedFilaments().length === 0 || tagBusy()"
       (click)="confirmSelection()"
     >
       Add {{ selectedFilaments().length }}

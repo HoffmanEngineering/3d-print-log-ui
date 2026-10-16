@@ -337,6 +337,46 @@ describe('FilamentTagUidsComponent scanning', () => {
     });
   });
 
+  it('a conflict that answers after its chip was removed is not shown', () => {
+    const lookup = new Subject<FilamentDetail | null>();
+    filaments.getFilamentByTag.and.returnValue(lookup);
+
+    scan('04A23F11');
+    el.querySelector<HTMLElement>(
+      '[data-testid="tag-uid-chip"] button'
+    )!.click();
+    lookup.next({ id: 'other', displayName: 'Old Spool' } as FilamentDetail);
+    fixture.detectChanges();
+
+    expect(chipTexts()).toEqual([]);
+    expect(el.querySelector('[data-testid="tag-uid-conflict"]')).toBeNull();
+  });
+
+  it('loading another value clears a scan-time conflict', () => {
+    filaments.getFilamentByTag.and.returnValue(
+      of({ id: 'other', displayName: 'Old Spool' } as FilamentDetail)
+    );
+    scan('04A23F11');
+
+    host.control.setValue([]);
+    fixture.detectChanges();
+
+    expect(el.querySelector('[data-testid="tag-uid-conflict"]')).toBeNull();
+  });
+
+  it('disabling the control mid-scan stops the scan', () => {
+    scanButton()!.click();
+    fixture.detectChanges();
+    host.control.disable();
+    fixture.detectChanges();
+    tags.next({ uid: '04A23F11', tech: 'nfca' });
+    host.control.enable();
+    fixture.detectChanges();
+
+    expect(chipTexts()).toEqual([]);
+    expect(input().placeholder).toBe('04:A2:3F:11');
+  });
+
   it('this spool holding the tag is not a conflict', () => {
     filaments.getFilamentByTag.and.returnValue(
       of({ id: 'this-spool', displayName: 'Me' } as FilamentDetail)

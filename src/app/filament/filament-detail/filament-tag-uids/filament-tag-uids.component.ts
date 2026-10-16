@@ -105,6 +105,7 @@ export class FilamentTagUidsComponent
 
   writeValue(value: string[] | null): void {
     this.tags.set([...(value ?? [])]);
+    this.scanConflict.set(null);
   }
 
   registerOnChange(fn: (value: string[]) => void): void {
@@ -117,6 +118,9 @@ export class FilamentTagUidsComponent
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled.set(isDisabled);
+    if (isDisabled) {
+      this.stopScanning();
+    }
   }
 
   /**
@@ -214,7 +218,12 @@ export class FilamentTagUidsComponent
         this.loggingService.logEvent('TagReader_Lookup', {
           known: holder !== null,
         });
-        if (holder && holder.id !== this.filamentId()) {
+        // The chip may have been removed while the lookup was out.
+        if (
+          holder &&
+          holder.id !== this.filamentId() &&
+          this.tags().includes(uid)
+        ) {
           this.scanConflict.set({
             tagUid: uid,
             filamentId: holder.id,

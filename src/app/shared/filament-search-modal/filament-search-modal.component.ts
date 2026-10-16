@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   inject,
   signal,
@@ -24,7 +25,7 @@ import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { TagRead } from 'src/app/core/types/native-bridge';
 import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { ToastrService } from 'ngx-toastr';
-import { Observable, map, of } from 'rxjs';
+import { Observable, finalize, map, of } from 'rxjs';
 import { readTagUidConflict } from 'src/app/filament/tag-uid';
 import { openSimpleDialog } from '../simple-dialog/simple-dialog.component';
 import { QrScanResult } from 'src/app/core/services/qr-scanner.service';
@@ -77,6 +78,7 @@ export class FilamentSearchModalComponent {
   private readonly tagReader = inject(TagReaderService);
   private readonly toastr = inject(ToastrService);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Whether this app shell can read tags; every NFC control hides without it. */
   readonly tagAvailable = this.tagReader.available;
@@ -93,6 +95,13 @@ export class FilamentSearchModalComponent {
   readonly viewMode = signal<ViewMode>('list');
   readonly scanError = signal<string | null>(null);
   readonly loading = signal(false);
+  /**
+   * A tag is being handled: its lookup, the check or link dialog it opened, or the link save.
+   * Reads are dropped until it is done, so one tag never races another's dialog or save.
+   */
+  readonly tagBusy = signal(false);
+  /** Set once the picker has answered; nothing that finishes later may change the answer. */
+  private closed = false;
   /** The one multi-select selection. The list renders it; QR and NFC picks add to it. */
   readonly selectedFilaments = signal<FilamentSummary[]>([]);
   readonly selectedIds = computed(
@@ -117,7 +126,7 @@ export class FilamentSearchModalComponent {
       return;
     }
     this.loggingService.logEvent('FilamentSearchModal_FilamentSelected');
-    this.dialogRef.close(filament);
+    this.close(filament);
   }
 
   /** A multi-select row click: adds the spool, or removes it if it is already selected. */
@@ -145,42 +154,55 @@ export class FilamentSearchModalComponent {
 
   /** A tag held to the phone: look up its spool, then pick it, or ask which spool it is on. */
   handleTag(read: TagRead) {
-    // One lookup at a time; a second spool tapped meanwhile is dropped, not queued.
-    if (this.loading()) {
+    // One tag at a time; a spool tapped meanwhile is dropped, not queued.
+    if (this.closed || this.loading() || this.tagBusy()) {
       return;
     }
 
+    this.tagBusy.set(true);
     this.loading.set(true);
-    this.filamentService.getFilamentByTag(read.uid).subscribe({
-      next: (detail) => {
-        this.loading.set(false);
-        this.loggingService.logEvent('TagReader_Lookup', {
-          known: detail !== null,
-        });
+    this.filamentService
+      .getFilamentByTag(read.uid)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (detail) => {
+          this.loading.set(false);
+          this.loggingService.logEvent('TagReader_Lookup', {
+            known: detail !== null,
+          });
 
-        if (detail === null) {
-          this.pendingTagUid.set(read.uid);
-          this.viewMode.set('list');
-          return;
-        }
-
-        this.confirmTagPick(detail).subscribe((pick) => {
-          if (pick) {
-            this.loggingService.logEvent('FilamentSearchModal_TagSelected');
-            this.select(filamentDetailToSummary(detail));
+          if (detail === null) {
+            this.tagBusy.set(false);
+            this.pendingTagUid.set(read.uid);
+            this.viewMode.set('list');
+            return;
           }
-        });
-      },
-      error: (err: { status?: number }) => {
-        this.loading.set(false);
-        this.loggingService.logEvent('TagReader_LookupFailed', {
-          status: err?.status ?? 0,
-        });
-        // A retry of the same tag right away must not be swallowed as a repeat.
-        this.tagReader.forget(read.uid);
-        this.toastr.error("Couldn't look up that tag. Check your connection.");
-      },
-    });
+
+          this.confirmTagPick(detail)
+            .pipe(
+              takeUntilDestroyed(this.destroyRef),
+              finalize(() => this.tagBusy.set(false))
+            )
+            .subscribe((pick) => {
+              if (pick) {
+                this.loggingService.logEvent('FilamentSearchModal_TagSelected');
+                this.select(filamentDetailToSummary(detail));
+              }
+            });
+        },
+        error: (err: { status?: number }) => {
+          this.loading.set(false);
+          this.tagBusy.set(false);
+          this.loggingService.logEvent('TagReader_LookupFailed', {
+            status: err?.status ?? 0,
+          });
+          // A retry of the same tag right away must not be swallowed as a repeat.
+          this.tagReader.forget(read.uid);
+          this.toastr.error(
+            "Couldn't look up that tag. Check your connection."
+          );
+        },
+      });
   }
 
   /**
@@ -219,6 +241,7 @@ export class FilamentSearchModalComponent {
   /** The spool picked after an unknown tag: link the tag to it, or just select it. */
   private offerTag(filament: FilamentSummary) {
     const uid = this.pendingTagUid()!;
+    this.tagBusy.set(true);
 
     openSimpleDialog(
       this.dialog,
@@ -232,45 +255,75 @@ export class FilamentSearchModalComponent {
       { disableClose: true }
     )
       .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((link) => {
-        this.pendingTagUid.set(null);
+        if (this.pendingTagUid() === uid) {
+          this.pendingTagUid.set(null);
+        }
 
         if (link !== true) {
+          this.tagBusy.set(false);
           this.loggingService.logEvent('FilamentSearchModal_TagLinkSkipped');
           this.select(filament);
           return;
         }
 
         this.loading.set(true);
-        this.filamentService.addTagToFilament(filament.id, uid).subscribe({
-          next: () => {
-            this.loading.set(false);
-            this.loggingService.logEvent('FilamentSearchModal_TagLinked');
-            this.select(filament);
-          },
-          error: (err) => {
-            this.loading.set(false);
-            // The pick still stands; only the link failed.
-            const conflict = readTagUidConflict(err);
-            this.toastr.warning(
-              conflict
-                ? `Tag ${uid} is already on ${conflict.filamentDisplayName}, so it wasn't added here.`
-                : `The tag wasn't saved to ${filament.displayName}. Try linking it again from the material page.`
-            );
-            this.select(filament);
-          },
-        });
+        this.filamentService
+          .addTagToFilament(filament.id, uid)
+          .pipe(
+            takeUntilDestroyed(this.destroyRef),
+            finalize(() => {
+              this.loading.set(false);
+              this.tagBusy.set(false);
+            })
+          )
+          .subscribe({
+            next: () => {
+              this.loggingService.logEvent('FilamentSearchModal_TagLinked');
+              this.select(filament);
+            },
+            error: (err: { status?: number }) => {
+              // The pick still stands; only the link failed.
+              const conflict = readTagUidConflict(err);
+              this.loggingService.logEvent(
+                'FilamentSearchModal_TagLinkFailed',
+                {
+                  status: err?.status ?? 0,
+                  conflict: conflict !== null,
+                }
+              );
+              this.toastr.warning(
+                conflict
+                  ? `Tag ${uid} is already on ${conflict.filamentDisplayName}, so it wasn't added here.`
+                  : `The tag wasn't saved to ${filament.displayName}. Try linking it again from the material page.`
+              );
+              this.select(filament);
+            },
+          });
       });
   }
 
   /** Picks a spool: closes single-select, or adds it to the multi-select selection. */
   private select(filament: FilamentSummary) {
+    if (this.closed) {
+      return;
+    }
     if (this.data.multiSelect) {
       this.addToSelection(filament);
       this.viewMode.set('list');
       return;
     }
-    this.dialogRef.close(filament);
+    this.close(filament);
+  }
+
+  /** Answers the picker once; a later answer (a save landing after Close) is ignored. */
+  private close(result: unknown) {
+    if (this.closed) {
+      return;
+    }
+    this.closed = true;
+    this.dialogRef.close(result);
   }
 
   private addToSelection(filament: FilamentSummary) {
@@ -285,17 +338,17 @@ export class FilamentSearchModalComponent {
     this.loggingService.logEvent('FilamentSearchModal_MultiSelectConfirmed', {
       count: this.selectedFilaments().length,
     });
-    this.dialogRef.close(this.selectedFilaments());
+    this.close(this.selectedFilaments());
   }
 
   selectOtherFilament() {
     this.loggingService.logEvent('FilamentSearchModal_OtherSelected');
-    this.dialogRef.close(this.data.otherFilamentOption);
+    this.close(this.data.otherFilamentOption);
   }
 
   closeSelected() {
     this.loggingService.logEvent('FilamentSearchModal_CloseSelected');
-    this.dialogRef.close(null);
+    this.close(null);
   }
 
   toggleViewMode() {
@@ -366,7 +419,7 @@ export class FilamentSearchModalComponent {
           });
           this.viewMode.set('list');
         } else {
-          this.dialogRef.close(summary);
+          this.close(summary);
         }
       },
       error: (err) => {

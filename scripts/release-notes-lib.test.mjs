@@ -13,6 +13,7 @@ import {
   htmlToMarkdown,
   isVersion,
   normalizeVersion,
+  readDialogNoteSources,
   readReleaseSources,
 } from './release-notes-lib.mjs';
 import { renderMarkdown } from './docs-markdown.mjs';
@@ -369,4 +370,53 @@ test('every git tag except the known-missing v1.32.1 resolves to a release', (t)
     missing.filter((tag) => tag !== 'v1.32.1'),
     []
   );
+});
+
+// -- dialog notes ------------------------------------------------------------
+
+test('readDialogNoteSources reads an optional title, newest first', () => {
+  const notes = withReleases(
+    {
+      '1.9.0.md': '---\nversion: 1.9.0\n---\n\nOlder.\n',
+      '1.10.0.md':
+        "---\nversion: 1.10.0\ntitle: 'Dialog Title'\n---\n\nNewer.\n",
+    },
+    (dir) => readDialogNoteSources(dir)
+  );
+
+  assert.deepEqual(
+    notes.map((n) => [n.version, n.title, n.body.trim()]),
+    [
+      ['1.10.0', 'Dialog Title', 'Newer.'],
+      ['1.9.0', undefined, 'Older.'],
+    ]
+  );
+});
+
+test('readDialogNoteSources rejects a version that disagrees with its filename', () => {
+  assert.throws(
+    () =>
+      withReleases(
+        { '1.9.0.md': '---\nversion: 1.8.0\n---\n\nText.\n' },
+        (dir) => readDialogNoteSources(dir)
+      ),
+    /dialog\/1\.9\.0\.md declares version "1\.8\.0"/
+  );
+});
+
+test('readReleaseSources does not read the dialog notes', () => {
+  // They live in a subdirectory of the releases, and are not releases.
+  const versions = withReleases(
+    { '1.9.0.md': RELEASE('1.9.0', 'Title', 'Body.') },
+    (dir) => {
+      fs.mkdirSync(path.join(dir, 'dialog'));
+      fs.writeFileSync(
+        path.join(dir, 'dialog', '1.9.0.md'),
+        '---\nversion: 1.9.0\n---\n\nShort.\n'
+      );
+      return readReleaseSources(dir).map((r) => r.version);
+    }
+  );
+
+  assert.deepEqual(versions, ['1.9.0']);
 });

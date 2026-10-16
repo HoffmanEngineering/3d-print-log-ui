@@ -86,6 +86,7 @@ test('plans a component, a template, and the shared projections', () => {
     'pages/docs-prints.component.ts',
     // Emitted whether or not there are releases: the component imports it
     // unconditionally, so an absent module would be a build error.
+    'release-dialog-notes.ts',
     'release-notes-archive.ts',
     // Markdown twins (#211), copied to the site root by angular.json.
     'twins/docs/llms.txt',

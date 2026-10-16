@@ -133,53 +133,35 @@ keeps resolving either way.
 - Verify each PR is actually **merged** before linking it (`gh pr view [N] --json state`). Linking
   an open or closed PR in shipped notes points users at something that isn't in the release.
 
-#### 4.3 Update Version Dialog Service
+#### 4.3 Write the Dialog Note (Major or Minor releases)
 
-Update `src/app/core/services/version-release-note-dialog.service.ts`:
+The What's New dialog that signed-in users see shows a **shorter** take on the release, written
+in `src/content/release-notes/dialog/X.Y.Z.md`. The filename matches the release file.
 
-**For Patch releases:**
-Add a redirect entry at the beginning of the `releaseNotes` object.
+**Whether this file exists decides whether the release opens the dialog.** Write one for a major
+or minor release. Leave it out for a patch: the patch is still on the release notes page, lights
+the "New" indicator on About → Version, and is counted in the dialog's "…and N more releases"
+link, but it never interrupts anyone.
 
-**The `redirect` MUST point to the immediately-preceding published version** (the entry directly below the new one), NOT to an older version that has real notes. Redirects must form an unbroken step-down chain: `1.43.10 -> 1.43.9 -> 1.43.8 -> 1.43.7 -> ...`. Do NOT jump (e.g. `1.43.10 -> 1.43.7`).
+```markdown
+---
+version: X.Y.Z
+---
 
-```typescript
-'X.Y.Z': {
-  redirect: 'X.Y.(Z-1)',  // the version directly below this one in the list
-},
+**[Feature Name]** is here! [One or two sentences on why it matters, with a link to its page.]
+
+**[Second feature]** [its own sentence or paragraph.]
 ```
 
-**Why this matters:** `getRedirectedReleaseNotes()` walks the redirect chain and stops (shows no dialog) as soon as a `redirect` value equals the version the user last saw. A sequential chain means a user upgrading from the previous patch sees nothing (correct for a technical release), while a user coming from further back walks down to the most recent real feature note. A chain that jumps over versions breaks this guard and can re-show an old popup to users who already dismissed it. Note the component does no semver math — the version is only used as an object key and with `!==` equality — so multi-digit patches like `1.43.10` are fine as keys.
-
-**For Major or Minor releases:**
-Add a new release note entry at the beginning of the `releaseNotes` object:
-
-```typescript
-'X.X.0': {
-  title: 'X.X.0 - [Short Title]',
-  body: `<p>
-[Summary paragraph - keep it shorter than the full release notes]
-</p>
-<p>
-  <strong>Support development of 3D Print Log:</strong><br />
-  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
-  buy me a coffee by <a
-    href="https://paypal.me/hoffmanengineering"
-    rel="noreferrer noopener"
-    target="_blank"
-    >donating via PayPal</a
-  >, or by becoming a
-  <a
-    href="https://www.patreon.com/HoffmanEngineering"
-    rel="noreferrer noopener"
-    target="_blank"
-  >
-    Patron of Hoffman Engineering</a
-  >
-  on Patreon.com
-  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
-</p>`,
-},
-```
+- `title:` is optional. Leave it out to use the release file's title. Add it only when the dialog
+  should be headed differently (written without the version, as in the release file).
+- **Do not add the "Support development" paragraph.** The dialog adds it once, after every release
+  it shows, and Pro members get a thank-you instead. `validate-docs.mjs` fails on a note that
+  carries its own.
+- A user who missed several releases gets the newest three notes in one dialog, each under its own
+  heading, so each note must make sense on its own.
+- `npm run docs:generate` turns the newest three into `release-dialog-notes.ts`. Older notes stay
+  in the folder but are no longer bundled.
 
 #### 4.4 Preview the GitHub Release body
 
@@ -210,7 +192,7 @@ After making the changes, ask the user to review the release notes. Show them wh
    - `package.json`
    - `src/content/release-notes/X.Y.Z.md`
    - `src/content/docs-anchors.json`
-   - `src/app/core/services/version-release-note-dialog.service.ts`
+   - `src/content/release-notes/dialog/X.Y.Z.md` (major or minor releases)
 
 3. Commit with message: `feat: bump version to X.X.X`
 
@@ -250,10 +232,10 @@ Remind the user:
 - Reference a prior **version** (not a PR) when it explains user-visible history, e.g. "an issue introduced in 1.43.9" — that means something to a user in a way a PR number does not
 - The file is yours alone, so `prettier --write` on it is safe and reformats nothing else. That is the point of one file per release: the diff for a release is a single added file
 
-### Dialog Body (`version-release-note-dialog.service.ts`)
+### Dialog Note (`src/content/release-notes/dialog/X.Y.Z.md`)
 
 - **Tone**: Match the style of existing entries — enthusiastic and user-focused. Look at prior entries before writing.
-- **Lead with the feature name bolded**: e.g. `<strong>Feature Name</strong> is here! Description...` — not `This release adds a <strong>Feature Name</strong> setting...`
+- **Lead with the feature name bolded**: e.g. `**Feature Name** is here! Description...`, not `This release adds a **Feature Name** setting...`
 - **One feature per sentence or paragraph**: Do not chain multiple features with semicolons. If there are two notable features, give each its own sentence or paragraph.
-- **Keep it concise**: 1–2 short paragraphs max (excluding the support/donation paragraph)
-- **Title**: If the release has two or more notable features, reflect both in the title, e.g. `X.X.0 - Feature One & Feature Two`
+- **Keep it concise**: 1–2 short paragraphs max. The support paragraph is added by the dialog, never written here
+- **Title**: If the release has two or more notable features, reflect both in the release title (or the dialog note's `title:`), e.g. `Feature One & Feature Two`

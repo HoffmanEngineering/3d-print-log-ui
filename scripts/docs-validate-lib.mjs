@@ -101,12 +101,13 @@ const ELEMENT_ALLOWLIST = new Set([
 ]);
 
 /**
- * @param {{ sources: object[], releases?: object[], anchorBaseline?: Record<string, string[]>, captures?: Record<string, object> }} input
+ * @param {{ sources: object[], releases?: object[], dialogNotes?: object[], anchorBaseline?: Record<string, string[]>, captures?: Record<string, object> }} input
  * @returns {{ file: string, message: string }[]}
  */
 export function validateDocs({
   sources,
   releases = [],
+  dialogNotes = [],
   anchorBaseline = {},
   captures = {},
 }) {
@@ -115,6 +116,7 @@ export function validateDocs({
     problems.push({ file, message: `${file}: ${message}` });
 
   validateReleases(releases, add);
+  validateDialogNotes(dialogNotes, releases, add);
 
   // The release-notes page is checked as the whole history, not as the ten
   // releases that render into its template. Every rule below — the anchor
@@ -515,6 +517,57 @@ function validateReleases(releases, add) {
 
     if (!Array.isArray(release.highlights)) {
       add(file, 'frontmatter field "highlights" must be a sequence.');
+    }
+  }
+}
+
+/**
+ * Rules for src/content/release-notes/dialog/*.md, the What's New dialog's
+ * short take on a release.
+ *
+ * The support paragraph is the dialog's, not the note's: it is added once at the
+ * end however many releases the dialog rolls up, and differs for Pro members. A
+ * note that carries its own would print it twice.
+ */
+function validateDialogNotes(dialogNotes, releases, add) {
+  const versions = new Set(releases.map((release) => release.version));
+
+  for (const note of dialogNotes) {
+    const file = `release-notes/dialog/${note.sourceFile ?? `${note.version}.md`}`;
+
+    if (!versions.has(note.version)) {
+      add(
+        file,
+        `there is no release-notes/${note.version}.md for this dialog note to summarise.`
+      );
+    }
+
+    if (note.title !== undefined) {
+      if (typeof note.title !== 'string' || note.title.trim() === '') {
+        add(
+          file,
+          'frontmatter field "title" must be a non-empty string; leave it out to use the release title.'
+        );
+      } else if (CHARACTER_REFERENCE.test(note.title)) {
+        add(
+          file,
+          `title contains the character reference "${CHARACTER_REFERENCE.exec(note.title)[0]}"; write the character itself.`
+        );
+      }
+    }
+
+    if (note.body.trim() === '') {
+      add(
+        file,
+        'the dialog note is empty; delete the file to keep the release out of the dialog.'
+      );
+    }
+
+    if (/support development/i.test(note.body)) {
+      add(
+        file,
+        'remove the "Support development" paragraph. The dialog adds it once, after every release it shows.'
+      );
     }
   }
 }

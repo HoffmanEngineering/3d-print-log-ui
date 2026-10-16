@@ -60,6 +60,8 @@ The image sets `PRINTLOG_BRIDGE_CONFIG=/data/printlog-bridge.cfg` and `PRINTLOG_
 
 Make a folder for the bridge on the host, such as `/volume1/docker/printlog-bridge` on a Synology NAS or `/mnt/user/appdata/printlog-bridge` on Unraid.
 
+On a Synology NAS, give your own user write access to that folder. In File Station, right-click it, then choose **Properties**, **Permission** and **Create**. Pick your DSM user, allow **Read** and **Write**, apply it to this folder, child folders and child files, and choose **Save**. The `docker` share lets you write through the administrators group, but the container runs with only the user and group you give it in step 4, so without this entry the bridge can't create its `state` folder (`Permission denied: '/data/state'`).
+
 #### 2. Write the config {#setup-config}
 
 Save `printlog-bridge.cfg` in that folder, with a `[printer <name>]` section per printer. `printer_id` is the printer's number in 3D Print Log, the end of its page's address (`42` in `https://www.3dprintlog.com/printers/42`), and `url` is the printer's Moonraker:
@@ -92,20 +94,20 @@ services:
     restart: unless-stopped
     user: "1026:100"
     environment:
-      TZ: Europe/Berlin
+      TZ: America/New_York
     volumes:
       - /volume1/docker/printlog-bridge:/data
 ```
 
-`restart: unless-stopped` brings the bridge back after a crash and after the host restarts. `TZ` only sets the times in its log; `status` and 3D Print Log use UTC either way.
+`restart: unless-stopped` brings the bridge back after a crash and after the host restarts. `TZ` is optional: set it to your own time zone (a [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), such as `America/Chicago` or `Europe/London`) so the times in the bridge's log match your clock. Without it they're in UTC. It changes nothing else: `status` and 3D Print Log use UTC either way. Unraid sets it for you.
 
-On a Synology NAS, open **Container Manager**, then **Project**, then **Create**, with the folder as the project's path and this file as its Compose file.
+On a Synology NAS, open **Container Manager**, then **Project**, then **Create**, with the folder as the project's path and this file as its Compose file. If Container Manager isn't installed, install it from **Package Center**. When it asks you to configure the bridge network, keep the default (`172.17.0.1/16`) unless your home network itself uses `172.17.x.x` addresses. The commands below run over SSH, which you turn on in **Control Panel**, then **Terminal & SNMP**.
 
 Without Compose:
 
 ```
 docker run -d --name printlog-bridge --restart unless-stopped \
-  --user 1026:100 -e TZ=Europe/Berlin \
+  --user 1026:100 -e TZ=America/New_York \
   -v /volume1/docker/printlog-bridge:/data \
   ghcr.io/hoffmanengineering/printlog-bridge:edge
 ```

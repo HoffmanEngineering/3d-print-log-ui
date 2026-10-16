@@ -280,6 +280,7 @@ describe('MaterialsTabComponent', () => {
             costConsumed: 1.5,
           },
         ],
+        adjustmentCount: 4,
       });
 
     const csvRows = (csv: { columns: string[]; rows: unknown[][] }) =>
@@ -322,7 +323,9 @@ describe('MaterialsTabComponent', () => {
       expect(component.consumptionSeries().some((s) => s.signed)).toBeFalse();
     }));
 
-    it('treats a missing adjustmentMg as zero (an older API)', fakeAsync(() => {
+    // An API older than #231 sends none of the adjustment fields. Until it does, the tab and its
+    // CSVs must be exactly what they were: no 0 g columns, no "net" wording.
+    const legacyResponse = () => {
       const legacy = response() as unknown as Record<string, unknown[]>;
       const strip = (rows: unknown[]) =>
         rows.map((row) => {
@@ -339,17 +342,167 @@ describe('MaterialsTabComponent', () => {
       ]) {
         legacy[field] = strip(legacy[field]);
       }
-      analytics.getMaterials.and.returnValue(
-        of(legacy as unknown as MaterialsResponse)
-      );
-      setup();
+      return legacy as unknown as MaterialsResponse;
+    };
 
+    it('renders an older API response exactly as before adjustments existed', fakeAsync(() => {
+      analytics.getMaterials.and.returnValue(of(legacyResponse()));
+      setup();
+      const el = fixture.nativeElement as HTMLElement;
+
+      expect(component.supportsAdjustments()).toBeFalse();
       expect(component.consumptionSeries().some((s) => s.signed)).toBeFalse();
       expect(component.byTypeData()[0].values['value']).toBe(60);
-      expect(csvRows(component.byTypeCsv())[0]['Adjustments (g)']).toBe(0);
-      expect(csvRows(component.topSpoolsCsv())[0]['Adjustments (g)']).toBe(0);
-      expect(fixture.nativeElement.textContent).not.toContain('NaN');
+      expect(component.byTypeData()[0].fullLabel).toBe('PLA — 60 g');
+      expect(
+        Array.from(el.querySelectorAll('.materials-tab__spools thead th')).map(
+          (th) => th.textContent!.trim()
+        )
+      ).toEqual(['Spool', 'Used', 'Remaining', 'Consumed', 'Cost consumed']);
+      const typeTable = el.querySelector('[data-testid="group-table-type"]')!;
+      expect(typeTable.querySelector('caption')!.textContent!.trim()).toBe(
+        'Filament by material type'
+      );
+      expect(typeTable.querySelector('thead')).toBeNull();
+      expect(typeTable.querySelectorAll('tbody td').length).toBe(1);
+      const summaries = Array.from(
+        el.querySelectorAll('[data-testid="chart-content"]')
+      ).map((content) => content.getAttribute('aria-label'));
+      expect(summaries).toContain('Grams of filament used per material type');
+      expect(summaries).toContain('Most-used spools with remaining stock');
+      expect(el.textContent).not.toMatch(/adjustment|net consumed/i);
+      expect(el.textContent).not.toContain('NaN');
     }));
+
+    it('exports an older API response with the original CSV columns', fakeAsync(() => {
+      analytics.getMaterials.and.returnValue(of(legacyResponse()));
+      setup();
+
+      expect(component.byTypeCsv().columns).toEqual([
+        'Group',
+        'Prints',
+        'Filament (g)',
+      ]);
+      expect(component.byTypeCsv().rows).toEqual([['PLA', 3, 60]]);
+      expect(component.consumptionCsv().columns).toEqual([
+        'Period',
+        'Material type',
+        'Filament (g)',
+      ]);
+      expect(component.consumptionCsv().rows).toEqual([
+        ['2026-07-01', 'PLA', 40],
+        ['2026-07-02', 'PLA', 20],
+      ]);
+      expect(component.topSpoolsCsv().columns).toEqual([
+        'Spool',
+        'Used (g)',
+        'Remaining (g)',
+        'Consumed (%)',
+        'Cost',
+      ]);
+      expect(component.topSpoolsCsv().rows).toEqual([
+        ['Acme PLA Red', 60, 940, 6, null],
+      ]);
+    }));
+
+    it('shows "<1 g" for an adjustment under a gram, keeping its sign', fakeAsync(() => {
+      setup();
+
+      expect(component.signedGrams(400)).toBe('+<1 g');
+      expect(component.signedGrams(-400)).toBe('-<1 g');
+      expect(component.signedGrams(-999)).toBe('-<1 g');
+      expect(component.signedGrams(0)).toBe('0 g');
+      expect(component.signedGrams(1400)).toBe('+1 g');
+    }));
+
+    describe('when no group has net use to chart', () => {
+      const netNegative = () =>
+        response({
+          byType: [group('PLA', 3, 60000, -80000)],
+          byBrand: [group('Acme', 3, 60000, -80000)],
+          byColor: [group('Red', 3, 60000, -80000)],
+          adjustmentCount: 1,
+        });
+
+      it('says why in place of a blank chart', fakeAsync(() => {
+        analytics.getMaterials.and.returnValue(of(netNegative()));
+        setup();
+        const el = fixture.nativeElement as HTMLElement;
+
+        const messages = Array.from(
+          el.querySelectorAll('[data-testid="net-empty"]')
+        ).map((message) => message.textContent!.trim());
+        expect(messages.length).toBe(3);
+        expect(messages[0]).toMatch(/added back outweighs print use/i);
+        expect(messages[0]).toMatch(/CSV/);
+        // The consumption chart still draws.
+        expect(el.querySelectorAll('app-bar-chart').length).toBe(1);
+      }));
+
+      it('keeps the tab ready for a range that holds only adjustments', fakeAsync(() => {
+        analytics.getMaterials.and.returnValue(
+          of(
+            response({
+              byType: [],
+              byBrand: [],
+              byColor: [],
+              topSpools: [],
+              runway: [],
+              consumptionOverTime: [
+                {
+                  index: 0,
+                  localStart: '2026-07-01',
+                  materialMgByType: {},
+                  adjustmentMg: -15000,
+                },
+              ],
+              adjustmentCount: 1,
+            })
+          )
+        );
+        setup();
+        const el = fixture.nativeElement as HTMLElement;
+
+        expect(component.state()).toBe('ready');
+        expect(el.querySelector('[data-testid="chart-empty"]')).toBeNull();
+        expect(
+          component.consumptionData()[0].values[
+            component.consumptionSeries().find((s) => s.signed)!.key
+          ]
+        ).toBe(-15);
+        // No groups at all: the message has no CSV to point at.
+        expect(
+          el.querySelector('[data-testid="net-empty"]')!.textContent
+        ).not.toMatch(/CSV/);
+      }));
+
+      it('keeps the tab ready when only top spools have rows', fakeAsync(() => {
+        analytics.getMaterials.and.returnValue(
+          of(
+            response({
+              byType: [],
+              byBrand: [],
+              byColor: [],
+              consumptionOverTime: [],
+              adjustmentCount: 1,
+            })
+          )
+        );
+        setup();
+
+        expect(component.state()).toBe('ready');
+      }));
+
+      it('still reports an empty tab from an older API with no groups', fakeAsync(() => {
+        const legacy = legacyResponse();
+        analytics.getMaterials.and.returnValue(
+          of({ ...legacy, byType: [], byBrand: [], byColor: [] })
+        );
+        setup();
+
+        expect(component.state()).toBe('empty');
+      }));
+    });
 
     it('charts each group at its net, prints plus adjustments, never below zero', fakeAsync(() => {
       analytics.getMaterials.and.returnValue(of(adjusted()));
@@ -570,6 +723,8 @@ describe('MaterialsTabComponent', () => {
 
       expect(component.rowCapExceeded()).toBeTrue();
       expect(emptyMessages()[0]).toMatch(/too many/i);
+      // An older API knows nothing of adjustments, so the notice does not mention them.
+      expect(emptyMessages()[0]).not.toMatch(/adjustment/i);
     }));
 
     it('trusts rowCapExceeded: false over nothing else to go on', fakeAsync(() => {

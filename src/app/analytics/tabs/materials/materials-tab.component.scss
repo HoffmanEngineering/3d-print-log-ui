@@ -155,3 +155,15 @@
     var(--chart-signed-bg) 2px 4px
   );
 }
+
+// Stands in for a group chart with nothing to draw, centered in the space the chart would take.
+.materials-tab__net-empty {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--chart-empty-text);
+}

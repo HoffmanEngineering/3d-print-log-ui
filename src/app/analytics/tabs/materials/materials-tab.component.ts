@@ -48,6 +48,19 @@ const RUNNING_LOW_DAYS = 30;
  */
 const ADJUSTMENTS_KEY = '__adjustments';
 
+/**
+ * A range can hold adjustments but no group with net use (filament added back outweighs prints,
+ * or only weigh-ins): that is still data to show, not an empty tab. Only an API that counts
+ * adjustments can say so; for an older one the tab stays empty exactly as before.
+ */
+function hasAdjustmentOnlyData(response: MaterialsResponse): boolean {
+  if (response.adjustmentCount === undefined) return false;
+  return (
+    response.topSpools.length > 0 ||
+    response.consumptionOverTime.some((bucket) => adjustmentMgOf(bucket) !== 0)
+  );
+}
+
 @Component({
   selector: 'app-materials-tab',
   imports: [
@@ -80,11 +93,21 @@ export class MaterialsTabComponent {
   private readonly tab = createTabData<MaterialsResponse>(
     this.store.filter,
     (filter) => this.analytics.getMaterials(filter),
-    (response) => response.byType.length === 0
+    (response) =>
+      response.byType.length === 0 && !hasAdjustmentOnlyData(response)
   );
 
   readonly data = this.tab.data;
   readonly state = this.tab.state;
+
+  /**
+   * Whether the API counts adjustments at all (#231). An older one sends no adjustmentCount, and
+   * then the tab and its CSVs must look exactly as they did before: no 0 g Adjustments columns,
+   * and no "net" wording on percent and cost figures that are still prints-only.
+   */
+  readonly supportsAdjustments = computed(
+    () => this.data()?.adjustmentCount !== undefined
+  );
 
   /**
    * The server emptied the tab because the range holds more rows than it will chart. Read from
@@ -103,10 +126,38 @@ export class MaterialsTabComponent {
   });
 
   /** Without the row-cap wording, an emptied tab reads as "you have no materials". */
-  readonly emptyMessage = computed(() =>
-    this.rowCapExceeded()
+  readonly emptyMessage = computed(() => {
+    if (!this.rowCapExceeded()) {
+      return 'No spool-tracked filament in this range yet.';
+    }
+    return this.supportsAdjustments()
       ? 'Too many prints and adjustments in this range to chart. Try a shorter date range.'
-      : 'No spool-tracked filament in this range yet.'
+      : 'Too many prints in this range to chart. Try a shorter date range.';
+  });
+
+  /**
+   * Shown in place of a group chart whose groups all have a net of zero or less, which happens
+   * when filament added back outweighs print use. A blank box would read as a rendering fault.
+   */
+  netEmptyMessage(groups: readonly MaterialGroup[]): string {
+    const reason =
+      'Filament added back outweighs print use in this range, so nothing has net use to chart.';
+    return groups.length > 0
+      ? `${reason} The CSV export lists each group.`
+      : reason;
+  }
+
+  /** Screen-reader summary for a group chart; "net" only once adjustments are counted. */
+  groupAriaSummary(what: string): string {
+    return this.supportsAdjustments()
+      ? `Net grams of filament used per ${what}: prints plus inventory adjustments, never below zero`
+      : `Grams of filament used per ${what}`;
+  }
+
+  readonly topSpoolsAriaSummary = computed(() =>
+    this.supportsAdjustments()
+      ? 'Most-used spools: grams printed, inventory adjustments, remaining stock, and net consumption'
+      : 'Most-used spools with remaining stock'
   );
 
   private readonly typeDefs = viewChild<FilamentSvgDefsComponent>('typeDefs');
@@ -206,6 +257,17 @@ export class MaterialsTabComponent {
   });
 
   private groupCsv(name: string, groups: MaterialGroup[]): CsvExport {
+    if (!this.supportsAdjustments()) {
+      return {
+        filename: `analytics-materials-by-${name}.csv`,
+        columns: ['Group', 'Prints', 'Filament (g)'],
+        rows: groups.map((group) => [
+          group.label,
+          group.printCount,
+          group.materialMg / 1000,
+        ]),
+      };
+    }
     return {
       filename: `analytics-materials-by-${name}.csv`,
       columns: ['Group', 'Prints', 'Printed (g)', 'Adjustments (g)', 'Net (g)'],
@@ -231,31 +293,68 @@ export class MaterialsTabComponent {
     this.groupCsv('color', this.data()?.byColor ?? [])
   );
 
-  readonly consumptionCsv = computed<CsvExport>(() => ({
+  readonly consumptionCsv = computed<CsvExport>(() =>
+    this.supportsAdjustments()
+      ? this.consumptionCsvWithAdjustments()
+      : {
+          filename: 'analytics-materials-consumption.csv',
+          columns: ['Period', 'Material type', 'Filament (g)'],
+          rows: this.sortedBuckets().flatMap((bucket) =>
+            Object.entries(bucket.materialMgByType).map(([type, mg]) => [
+              bucket.localStart,
+              type,
+              mg / 1000,
+            ])
+          ),
+        }
+  );
+
+  private sortedBuckets() {
+    return [...(this.data()?.consumptionOverTime ?? [])].sort((left, right) =>
+      left.localStart.localeCompare(right.localStart)
+    );
+  }
+
+  private consumptionCsvWithAdjustments = (): CsvExport => ({
     filename: 'analytics-materials-consumption.csv',
     // Long format, one row per figure: an adjustment belongs to no material type, so it is its
     // own row, told apart by Source rather than squeezed into a type column.
     columns: ['Period', 'Material type', 'Filament (g)', 'Source'],
-    rows: [...(this.data()?.consumptionOverTime ?? [])]
-      .sort((left, right) => left.localStart.localeCompare(right.localStart))
-      .flatMap((bucket) => {
-        const rows: (string | number | null)[][] = Object.entries(
-          bucket.materialMgByType
-        ).map(([type, mg]) => [bucket.localStart, type, mg / 1000, 'Prints']);
-        const adjustment = adjustmentMgOf(bucket);
-        if (adjustment !== 0) {
-          rows.push([
-            bucket.localStart,
-            null,
-            adjustment / 1000,
-            'Adjustments',
-          ]);
-        }
-        return rows;
-      }),
-  }));
+    rows: this.sortedBuckets().flatMap((bucket) => {
+      const rows: (string | number | null)[][] = Object.entries(
+        bucket.materialMgByType
+      ).map(([type, mg]) => [bucket.localStart, type, mg / 1000, 'Prints']);
+      const adjustment = adjustmentMgOf(bucket);
+      if (adjustment !== 0) {
+        rows.push([bucket.localStart, null, adjustment / 1000, 'Adjustments']);
+      }
+      return rows;
+    }),
+  });
 
-  readonly topSpoolsCsv = computed<CsvExport>(() => ({
+  readonly topSpoolsCsv = computed<CsvExport>(() =>
+    this.supportsAdjustments()
+      ? this.topSpoolsCsvWithAdjustments()
+      : {
+          filename: 'analytics-materials-top-spools.csv',
+          columns: [
+            'Spool',
+            'Used (g)',
+            'Remaining (g)',
+            'Consumed (%)',
+            'Cost',
+          ],
+          rows: (this.data()?.topSpools ?? []).map((spool) => [
+            spool.label,
+            spool.usedMg / 1000,
+            spool.remainingMg === null ? null : spool.remainingMg / 1000,
+            spool.percentConsumed,
+            spool.costConsumed,
+          ]),
+        }
+  );
+
+  private topSpoolsCsvWithAdjustments = (): CsvExport => ({
     filename: 'analytics-materials-top-spools.csv',
     // The API computes percent and cost from max(0, printed + adjustments), hence "net".
     columns: [
@@ -274,7 +373,7 @@ export class MaterialsTabComponent {
       spool.percentConsumed,
       spool.costConsumed,
     ]),
-  }));
+  });
 
   readonly runningLow = computed(() =>
     (this.data()?.runway ?? [])
@@ -343,10 +442,17 @@ export class MaterialsTabComponent {
 
   /** "+12 g", "-5 g" or "0 g": an adjustment's sign is the point, so it is always shown. */
   signedGrams(mg: number | null | undefined): string {
-    const grams = Math.round((mg ?? 0) / 1000);
-    if (grams === 0) return '0 g';
-    const text = formatNumber(Math.abs(grams), this.locale, '1.0-0');
-    return `${grams > 0 ? '+' : '-'}${text} g`;
+    const exact = (mg ?? 0) / 1000;
+    if (exact === 0) return '0 g';
+    const sign = exact > 0 ? '+' : '-';
+    // A real correction under a gram is not "0 g": that would read as no adjustment at all.
+    if (Math.abs(exact) < 1) return `${sign}<1 g`;
+    const text = formatNumber(
+      Math.round(Math.abs(exact)),
+      this.locale,
+      '1.0-0'
+    );
+    return `${sign}${text} g`;
   }
 
   /** Prints plus adjustments, floored at zero: the most a group can have consumed is never negative. */
@@ -376,7 +482,7 @@ export class MaterialsTabComponent {
     defs: FilamentSvgDefsComponent | undefined
   ): BarDatum[] {
     return groups
-      .filter((group) => this.netMg(group) > 0)
+      .filter((group) => !this.supportsAdjustments() || this.netMg(group) > 0)
       .map((group) => ({
         label: group.label,
         fullLabel: this.groupLabel(group),

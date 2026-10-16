@@ -32,40 +32,54 @@
       [csv]="byTypeCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
-      ariaSummary="Net grams of filament used per material type: prints plus inventory adjustments, never below zero"
+      [ariaSummary]="groupAriaSummary('material type')"
       [emptyMessage]="emptyMessage()"
       (retry)="onRetry()"
     >
-      <app-bar-chart
-        [data]="byTypeData()"
-        [series]="singleSeries"
-        [width]="typeFrame.width()"
-        [height]="typeFrame.height()"
-        orientation="horizontal"
-      >
-        <g appFilamentSvgDefs #typeDefs [swatches]="typeSwatches()"></g>
-      </app-bar-chart>
+      @if (byTypeData().length > 0) {
+        <app-bar-chart
+          [data]="byTypeData()"
+          [series]="singleSeries"
+          [width]="typeFrame.width()"
+          [height]="typeFrame.height()"
+          orientation="horizontal"
+        >
+          <g appFilamentSvgDefs #typeDefs [swatches]="typeSwatches()"></g>
+        </app-bar-chart>
+      } @else {
+        <p class="materials-tab__net-empty" data-testid="net-empty">
+          {{ netEmptyMessage(data()?.byType ?? []) }}
+        </p>
+      }
 
       <table chartDataTable data-testid="group-table-type">
-        <caption>
-          Filament by material type: prints, inventory adjustments (weigh-ins,
-          can be negative) and net
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Group</th>
-            <th scope="col">Printed</th>
-            <th scope="col">Adjustments</th>
-            <th scope="col">Net</th>
-          </tr>
-        </thead>
+        @if (supportsAdjustments()) {
+          <caption>
+            Filament by material type: prints, inventory adjustments (weigh-ins,
+            can be negative) and net
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Group</th>
+              <th scope="col">Printed</th>
+              <th scope="col">Adjustments</th>
+              <th scope="col">Net</th>
+            </tr>
+          </thead>
+        } @else {
+          <caption>
+            Filament by material type
+          </caption>
+        }
         <tbody>
           @for (group of data()?.byType ?? []; track group.key) {
             <tr>
               <th scope="row">{{ group.label }}</th>
               <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
-              <td>{{ signedGrams(group.adjustmentMg) }}</td>
-              <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
+              @if (supportsAdjustments()) {
+                <td>{{ signedGrams(group.adjustmentMg) }}</td>
+                <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
+              }
             </tr>
           }
         </tbody>
@@ -79,40 +93,54 @@
       [csv]="byBrandCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
-      ariaSummary="Net grams of filament used per brand: prints plus inventory adjustments, never below zero"
+      [ariaSummary]="groupAriaSummary('brand')"
       [emptyMessage]="emptyMessage()"
       (retry)="onRetry()"
     >
-      <app-bar-chart
-        [data]="byBrandData()"
-        [series]="singleSeries"
-        [width]="brandFrame.width()"
-        [height]="brandFrame.height()"
-        orientation="horizontal"
-      >
-        <g appFilamentSvgDefs #brandDefs [swatches]="brandSwatches()"></g>
-      </app-bar-chart>
+      @if (byBrandData().length > 0) {
+        <app-bar-chart
+          [data]="byBrandData()"
+          [series]="singleSeries"
+          [width]="brandFrame.width()"
+          [height]="brandFrame.height()"
+          orientation="horizontal"
+        >
+          <g appFilamentSvgDefs #brandDefs [swatches]="brandSwatches()"></g>
+        </app-bar-chart>
+      } @else {
+        <p class="materials-tab__net-empty" data-testid="net-empty">
+          {{ netEmptyMessage(data()?.byBrand ?? []) }}
+        </p>
+      }
 
       <table chartDataTable data-testid="group-table-brand">
-        <caption>
-          Filament by brand: prints, inventory adjustments (weigh-ins, can be
-          negative) and net
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Group</th>
-            <th scope="col">Printed</th>
-            <th scope="col">Adjustments</th>
-            <th scope="col">Net</th>
-          </tr>
-        </thead>
+        @if (supportsAdjustments()) {
+          <caption>
+            Filament by brand: prints, inventory adjustments (weigh-ins, can be
+            negative) and net
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Group</th>
+              <th scope="col">Printed</th>
+              <th scope="col">Adjustments</th>
+              <th scope="col">Net</th>
+            </tr>
+          </thead>
+        } @else {
+          <caption>
+            Filament by brand
+          </caption>
+        }
         <tbody>
           @for (group of data()?.byBrand ?? []; track group.key) {
             <tr>
               <th scope="row">{{ group.label }}</th>
               <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
-              <td>{{ signedGrams(group.adjustmentMg) }}</td>
-              <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
+              @if (supportsAdjustments()) {
+                <td>{{ signedGrams(group.adjustmentMg) }}</td>
+                <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
+              }
             </tr>
           }
         </tbody>
@@ -126,40 +154,54 @@
       [csv]="byColorCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
-      ariaSummary="Net grams of filament used per color: prints plus inventory adjustments, never below zero"
+      [ariaSummary]="groupAriaSummary('color')"
       [emptyMessage]="emptyMessage()"
       (retry)="onRetry()"
     >
-      <app-bar-chart
-        [data]="byColorData()"
-        [series]="singleSeries"
-        [width]="colorFrame.width()"
-        [height]="colorFrame.height()"
-        orientation="horizontal"
-      >
-        <g appFilamentSvgDefs #colorDefs [swatches]="colorSwatches()"></g>
-      </app-bar-chart>
+      @if (byColorData().length > 0) {
+        <app-bar-chart
+          [data]="byColorData()"
+          [series]="singleSeries"
+          [width]="colorFrame.width()"
+          [height]="colorFrame.height()"
+          orientation="horizontal"
+        >
+          <g appFilamentSvgDefs #colorDefs [swatches]="colorSwatches()"></g>
+        </app-bar-chart>
+      } @else {
+        <p class="materials-tab__net-empty" data-testid="net-empty">
+          {{ netEmptyMessage(data()?.byColor ?? []) }}
+        </p>
+      }
 
       <table chartDataTable data-testid="group-table-color">
-        <caption>
-          Filament by color: prints, inventory adjustments (weigh-ins, can be
-          negative) and net
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Group</th>
-            <th scope="col">Printed</th>
-            <th scope="col">Adjustments</th>
-            <th scope="col">Net</th>
-          </tr>
-        </thead>
+        @if (supportsAdjustments()) {
+          <caption>
+            Filament by color: prints, inventory adjustments (weigh-ins, can be
+            negative) and net
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Group</th>
+              <th scope="col">Printed</th>
+              <th scope="col">Adjustments</th>
+              <th scope="col">Net</th>
+            </tr>
+          </thead>
+        } @else {
+          <caption>
+            Filament by color
+          </caption>
+        }
         <tbody>
           @for (group of data()?.byColor ?? []; track group.key) {
             <tr>
               <th scope="row">{{ group.label }}</th>
               <td>{{ grams(group.materialMg) | number: '1.0-0' }} g</td>
-              <td>{{ signedGrams(group.adjustmentMg) }}</td>
-              <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
+              @if (supportsAdjustments()) {
+                <td>{{ signedGrams(group.adjustmentMg) }}</td>
+                <td>{{ grams(netMg(group)) | number: '1.0-0' }} g</td>
+              }
             </tr>
           }
         </tbody>
@@ -193,17 +235,26 @@
           <span class="cdk-visually-hidden">{{ adjustmentsNote }}</span>
         </button>
       }
+      <!-- A correction past 2x the largest stack (at least 100 g) is drawn clipped, with a break
+           mark; its true value stays in the tooltip, the table below and the CSV. -->
       <app-bar-chart
         [data]="consumptionData()"
         [series]="consumptionSeries()"
         [width]="consumptionFrame.width()"
         [height]="consumptionFrame.height()"
+        [signedLimitFloor]="100"
       />
       <table chartDataTable>
-        <caption>
-          Grams per period by material type, plus inventory adjustments
-          (weigh-ins), which can be negative
-        </caption>
+        @if (supportsAdjustments()) {
+          <caption>
+            Grams per period by material type, plus inventory adjustments
+            (weigh-ins), which can be negative
+          </caption>
+        } @else {
+          <caption>
+            Grams per period by material type
+          </caption>
+        }
         <tbody>
           @for (row of consumptionData(); track row.fullLabel) {
             <tr>
@@ -225,11 +276,11 @@
     fit="natural"
     [state]="state()"
     [coverage]="data()?.coverage ?? null"
-    ariaSummary="Most-used spools: grams printed, inventory adjustments, remaining stock, and net consumption"
+    [ariaSummary]="topSpoolsAriaSummary()"
     [emptyMessage]="emptyMessage()"
     (retry)="onRetry()"
   >
-    <!-- Six columns do not fit a phone. The overflow belongs to this box, so the tab (and
+    <!-- Five or six columns do not fit a phone. The overflow belongs to this box, so the tab (and
          with it the page) never grows a horizontal scrollbar of its own. -->
     <div class="materials-tab__table-scroll">
       <table class="materials-tab__spools">
@@ -239,26 +290,33 @@
         <thead>
           <tr>
             <th scope="col">Spool</th>
-            <th scope="col">Printed</th>
-            <th
-              scope="col"
-              title="Inventory corrections such as weigh-ins. Negative when filament was added back."
-            >
-              Adjustments
-            </th>
-            <th scope="col">Remaining</th>
-            <th
-              scope="col"
-              title="Share of the spool used by prints plus adjustments"
-            >
-              Net consumed
-            </th>
-            <th
-              scope="col"
-              title="Cost of the filament used by prints plus adjustments"
-            >
-              Net cost
-            </th>
+            @if (supportsAdjustments()) {
+              <th scope="col">Printed</th>
+              <th
+                scope="col"
+                title="Inventory corrections such as weigh-ins. Negative when filament was added back."
+              >
+                Adjustments
+              </th>
+              <th scope="col">Remaining</th>
+              <th
+                scope="col"
+                title="Share of the spool used by prints plus adjustments"
+              >
+                Net consumed
+              </th>
+              <th
+                scope="col"
+                title="Cost of the filament used by prints plus adjustments"
+              >
+                Net cost
+              </th>
+            } @else {
+              <th scope="col">Used</th>
+              <th scope="col">Remaining</th>
+              <th scope="col">Consumed</th>
+              <th scope="col">Cost consumed</th>
+            }
           </tr>
         </thead>
         <tbody>
@@ -291,7 +349,9 @@
                 </button>
               </th>
               <td>{{ grams(spool.usedMg) | number: '1.0-0' }} g</td>
-              <td>{{ signedGrams(spool.adjustmentMg) }}</td>
+              @if (supportsAdjustments()) {
+                <td>{{ signedGrams(spool.adjustmentMg) }}</td>
+              }
               <td>
                 {{
                   spool.remainingMg === null

@@ -156,10 +156,15 @@ When you correct a spool's remaining filament, for example by weighing it, the
 Materials tab counts that correction as an **adjustment**. Consumption over time
 shows adjustments as their own hatched bar beside the filament your prints used.
 An adjustment is negative when the correction added filament back, so that bar
-can dip below zero. The type, brand and color charts show each group's **net**
-use (prints plus adjustments, never below zero), and the tables and CSV exports
-list printed grams and adjustments separately. A spool's net consumed share and
-net cost include its adjustments too.
+can dip below zero. A correction much larger than your printing that period,
+such as logging a spool you had already half used, is drawn shortened with a
+break mark so the other bars stay readable; hover it to see the real amount.
+
+The type, brand and color charts show each group's **net** use (prints plus
+adjustments, never below zero). If filament added back outweighs print use for
+every group in the range, the chart says so instead of drawing empty bars. The
+CSV exports list printed grams and adjustments separately, and a spool's net
+consumed share and net cost include its adjustments too.
 
 ---
 

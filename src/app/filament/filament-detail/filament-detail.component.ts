@@ -72,7 +72,9 @@ import {
   TagUidConflict,
   normalizeTagUid,
   readTagUidConflict,
+  tagUidKey,
 } from '../tag-uid';
+import type { TagReading } from 'src/app/core/types/tag-reading';
 import {
   PrefillControl,
   PrefillSource,
@@ -277,6 +279,8 @@ export class FilamentDetailComponent
   /** The scanned tag, its reading and catalog match, sent along with the new spool. */
   private scannedTag: ({ uid: string } & ScannedTagRead) | null = null;
   private prefilledValues: Partial<Record<PrefillControl, unknown>> = {};
+  /** What each tag scanned in the tag list says, from its lookup. */
+  private pageScanReadings: { uid: string; reading: TagReading }[] = [];
   /** What the fields that say which product this is held once the scan filled the form. */
   private scannedIdentity: Record<IdentityControl, unknown> | null = null;
   private tagSourcesSubscription: Subscription | undefined;
@@ -512,6 +516,41 @@ export class FilamentDetailComponent
     this.scannedIdentity = this.identityValues();
   }
 
+  /**
+   * What the tags this save adds say, one per UID: the tag a new material was scanned from
+   * (sent even if every pre-filled field was edited), then tags scanned in the tag list. The
+   * API applies a reading only to a UID in tagUids, and a tag the spool already had keeps
+   * the reading it has.
+   */
+  private tagReadingsToSend(
+    filament: FilamentDetail,
+    wasNew: boolean
+  ): { uid: string; reading: TagReading }[] {
+    const sent = new Map(
+      (filament.tagUids ?? []).map((uid) => [tagUidKey(uid), uid])
+    );
+    const had = new Set((this.loadedFilament?.tagUids ?? []).map(tagUidKey));
+    const readings = new Map<string, { uid: string; reading: TagReading }>();
+    const offer = (uid: string, reading: TagReading | null) => {
+      const key = tagUidKey(uid);
+      const listed = sent.get(key);
+      if (reading && listed && !had.has(key) && !readings.has(key)) {
+        readings.set(key, { uid: listed, reading });
+      }
+    };
+    if (wasNew && this.scannedTag) {
+      offer(this.scannedTag.uid, this.scannedTag.reading);
+    }
+    this.pageScanReadings.forEach((r) => offer(r.uid, r.reading));
+    return [...readings.values()];
+  }
+
+  protected onTagReadings(
+    readings: { uid: string; reading: TagReading }[]
+  ): void {
+    this.pageScanReadings = readings;
+  }
+
   private identityValues(): Record<IdentityControl, unknown> {
     const value = (name: IdentityControl) => {
       const v: unknown = this.filamentForm.get(name)?.value;
@@ -624,6 +663,7 @@ export class FilamentDetailComponent
       this.scannedTag = null;
       this.prefilledValues = {};
       this.scannedIdentity = null;
+      this.pageScanReadings = [];
       this.tagSources.set({});
       this.tagUidsKnown = this.loadedFilament?.tagUids !== undefined;
 
@@ -1163,17 +1203,14 @@ export class FilamentDetailComponent
     let saveFilament: Observable<FilamentDetail>;
     const wasNew = newFilament.id === null;
 
-    // The reading goes with the new spool even if every pre-filled field was edited; the API
-    // applies a reading only to a UID that is in tagUids. The catalog entry goes only while
-    // the name, brand and material are still the ones the scan gave.
-    if (wasNew && this.scannedTag) {
-      const { uid, reading, catalogMatch } = this.scannedTag;
-      if (reading && newFilament.tagUids?.includes(uid)) {
-        newFilament.tagReadings = [{ uid, reading }];
-      }
-      if (catalogMatch && this.keptScannedIdentity()) {
-        newFilament.catalogEntryId = catalogMatch.id;
-      }
+    const tagReadings = this.tagReadingsToSend(newFilament, wasNew);
+    if (tagReadings.length > 0) {
+      newFilament.tagReadings = tagReadings;
+    }
+    // The catalog entry goes only while the name, brand and material are still the ones the
+    // scan gave.
+    if (wasNew && this.scannedTag?.catalogMatch && this.keptScannedIdentity()) {
+      newFilament.catalogEntryId = this.scannedTag.catalogMatch.id;
     }
 
     if (newFilament.id === null) {

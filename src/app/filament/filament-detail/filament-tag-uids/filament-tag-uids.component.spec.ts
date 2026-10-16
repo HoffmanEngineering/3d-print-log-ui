@@ -11,7 +11,11 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { NfcStatus, TagRead } from 'src/app/core/types/native-bridge';
-import { FilamentTagDetail, TagReading } from 'src/app/core/types/tag-reading';
+import {
+  FilamentTagDetail,
+  TagReadResponse,
+  TagReading,
+} from 'src/app/core/types/tag-reading';
 import { TagUidConflict } from '../../tag-uid';
 import { FilamentTagUidsComponent } from './filament-tag-uids.component';
 
@@ -49,9 +53,7 @@ describe('FilamentTagUidsComponent', () => {
         },
         {
           provide: FilamentService,
-          useValue: jasmine.createSpyObj('FilamentService', [
-            'getFilamentByTag',
-          ]),
+          useValue: jasmine.createSpyObj('FilamentService', ['resolveTagRead']),
         },
         {
           provide: LoggingService,
@@ -201,11 +203,38 @@ describe('FilamentTagUidsComponent', () => {
   template: `<app-filament-tag-uids
     [formControl]="control"
     [filamentId]="filamentId"
+    (readingsChange)="readings = $event"
   />`,
 })
 class ScanHostComponent {
   readonly control = new FormControl<string[]>([], { nonNullable: true });
   filamentId: string | null = 'this-spool';
+  readings: { uid: string; reading: TagReading }[] = [];
+}
+
+const SCANNED_READING: TagReading = {
+  format: 'snapmaker',
+  decoderVersion: 1,
+  materialType: 'PLA',
+};
+
+function unknownTag(reading: TagReading | null = null): TagReadResponse {
+  return {
+    status: 'unknown',
+    filament: null,
+    reading,
+    catalogMatch: null,
+    suggestions: [],
+    hint: null,
+  };
+}
+
+function linkedTo(id: string, displayName: string): TagReadResponse {
+  return {
+    ...unknownTag(),
+    status: 'linked',
+    filament: { id, displayName } as FilamentDetail,
+  };
 }
 
 describe('FilamentTagUidsComponent scanning', () => {
@@ -233,9 +262,9 @@ describe('FilamentTagUidsComponent scanning', () => {
       openSettings: jasmine.createSpy('openSettings').and.resolveTo(),
     };
     filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getFilamentByTag',
+      'resolveTagRead',
     ]);
-    filaments.getFilamentByTag.and.returnValue(of(null));
+    filaments.resolveTagRead.and.returnValue(of(unknownTag()));
     logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logEvent',
     ]);
@@ -265,12 +294,68 @@ describe('FilamentTagUidsComponent scanning', () => {
       c.textContent!.replace('cancel', '').trim()
     );
 
-  function scan(uid: string) {
+  function scan(uid: string, extra: Partial<TagRead> = {}) {
     scanButton()!.click();
     fixture.detectChanges();
-    tags.next({ uid, tech: 'nfca' });
+    tags.next({ uid, tech: 'nfca', ...extra });
     fixture.detectChanges();
   }
+
+  it('looks the tag up with the whole read, memory included', () => {
+    const memory = { kind: 'classic' as const, data: 'AAAA' };
+
+    scan('805BEC3E', { techs: ['NfcA'], memory });
+
+    expect(filaments.resolveTagRead).toHaveBeenCalledOnceWith({
+      uid: '805BEC3E',
+      tech: 'nfca',
+      techs: ['NfcA'],
+      memory,
+    });
+  });
+
+  it('hands the parent what a new tag says, by UID', () => {
+    filaments.resolveTagRead.and.returnValue(of(unknownTag(SCANNED_READING)));
+
+    scan('805BEC3E', { memory: { kind: 'classic', data: 'AAAA' } });
+
+    expect(host.readings).toEqual([
+      { uid: '805BEC3E', reading: SCANNED_READING },
+    ]);
+  });
+
+  it('keeps one reading per UID across scans', () => {
+    const second: TagReading = { ...SCANNED_READING, materialType: 'PETG' };
+    filaments.resolveTagRead.and.returnValues(
+      of(unknownTag(SCANNED_READING)),
+      of(unknownTag(second))
+    );
+
+    scan('805BEC3E');
+    scan('04A23F11');
+
+    expect(host.readings).toEqual([
+      { uid: '805BEC3E', reading: SCANNED_READING },
+      { uid: '04A23F11', reading: second },
+    ]);
+  });
+
+  it('hands the parent nothing for a tag without a reading', () => {
+    scan('04A23F11');
+
+    expect(host.readings).toEqual([]);
+    expect(chipTexts()).toEqual(['04A23F11']);
+  });
+
+  it('keeps no reading for a tag another spool holds', () => {
+    filaments.resolveTagRead.and.returnValue(
+      of({ ...linkedTo('other', 'Old Spool'), reading: SCANNED_READING })
+    );
+
+    scan('805BEC3E');
+
+    expect(host.readings).toEqual([]);
+  });
 
   it('Scan adds the UID it reads without touching what was being typed', () => {
     input().value = '04:a2';
@@ -323,8 +408,8 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('shows a conflict at scan time when another spool holds the tag', () => {
-    filaments.getFilamentByTag.and.returnValue(
-      of({ id: 'other', displayName: 'Old Spool' } as FilamentDetail)
+    filaments.resolveTagRead.and.returnValue(
+      of(linkedTo('other', 'Old Spool'))
     );
 
     scan('04A23F11');
@@ -339,14 +424,14 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('a conflict that answers after its chip was removed is not shown', () => {
-    const lookup = new Subject<FilamentDetail | null>();
-    filaments.getFilamentByTag.and.returnValue(lookup);
+    const lookup = new Subject<TagReadResponse>();
+    filaments.resolveTagRead.and.returnValue(lookup);
 
     scan('04A23F11');
     el.querySelector<HTMLElement>(
       '[data-testid="tag-uid-chip"] button'
     )!.click();
-    lookup.next({ id: 'other', displayName: 'Old Spool' } as FilamentDetail);
+    lookup.next(linkedTo('other', 'Old Spool'));
     fixture.detectChanges();
 
     expect(chipTexts()).toEqual([]);
@@ -354,8 +439,8 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('loading another value clears a scan-time conflict', () => {
-    filaments.getFilamentByTag.and.returnValue(
-      of({ id: 'other', displayName: 'Old Spool' } as FilamentDetail)
+    filaments.resolveTagRead.and.returnValue(
+      of(linkedTo('other', 'Old Spool'))
     );
     scan('04A23F11');
 
@@ -379,9 +464,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('this spool holding the tag is not a conflict', () => {
-    filaments.getFilamentByTag.and.returnValue(
-      of({ id: 'this-spool', displayName: 'Me' } as FilamentDetail)
-    );
+    filaments.resolveTagRead.and.returnValue(of(linkedTo('this-spool', 'Me')));
 
     scan('04A23F11');
 
@@ -389,7 +472,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('a failed lookup still adds the tag and forgets the UID', () => {
-    filaments.getFilamentByTag.and.returnValue(
+    filaments.resolveTagRead.and.returnValue(
       throwError(() => new HttpErrorResponse({ status: 503 }))
     );
 
@@ -475,9 +558,7 @@ describe('FilamentTagUidsComponent tag details', () => {
         },
         {
           provide: FilamentService,
-          useValue: jasmine.createSpyObj('FilamentService', [
-            'getFilamentByTag',
-          ]),
+          useValue: jasmine.createSpyObj('FilamentService', ['resolveTagRead']),
         },
         {
           provide: LoggingService,

@@ -501,6 +501,7 @@
           [filamentId]="loadedFilament?.id ?? null"
           [tagDetails]="loadedFilament?.tagDetails ?? []"
           [catalogEntryId]="loadedFilament?.catalogEntryId ?? null"
+          (readingsChange)="onTagReadings($event)"
         ></app-filament-tag-uids>
         <div fxFlex="grow" fxFlexFill>
           <h2 style="text-align: start">Weights</h2>

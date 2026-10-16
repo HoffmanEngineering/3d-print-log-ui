@@ -32,7 +32,8 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
 
 import { FilamentDetailComponent } from './filament-detail.component';
-import type { CatalogMatch } from 'src/app/core/types/tag-reading';
+import type { CatalogMatch, TagReading } from 'src/app/core/types/tag-reading';
+import { By } from '@angular/platform-browser';
 import { SNAPMAKER_805BEC3E } from '../testing/tag-fixtures';
 import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
@@ -1400,6 +1401,79 @@ describe('FilamentDetailComponent scanned tag', () => {
       const sent = service.addFilament.calls.mostRecent().args[0];
       expect(sent.tagReadings).toBeUndefined();
       expect(sent.catalogEntryId).toBeUndefined();
+    });
+  });
+
+  describe('with tags scanned on the page', () => {
+    const PETG: TagReading = {
+      format: 'openspool',
+      decoderVersion: 1,
+      materialType: 'PETG',
+    };
+    const existing = {
+      id: 'filament-1',
+      displayName: 'Test',
+      materialType: 'PLA',
+      materialDensityGramPerCubicCm: 1.24,
+      filamentAdjustments: [],
+      colors: [],
+      tagUids: ['AABB'],
+    };
+    const tagList = () =>
+      fixture.debugElement.query(By.directive(FilamentTagUidsComponent))
+        .componentInstance as FilamentTagUidsComponent;
+    const scanned = (...readings: { uid: string; reading: TagReading }[]) =>
+      tagList().readingsChange.emit(readings);
+    const control = (name: string) =>
+      fixture.componentInstance.filamentForm.get(name)!;
+
+    it('sends what a newly added tag says, and nothing for a tag the spool had', async () => {
+      await setup(null, existing);
+      control('tagUids').setValue(['AABB', '805BEC3E']);
+      scanned(
+        { uid: 'AABB', reading: PETG },
+        { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E }
+      );
+
+      fixture.componentInstance.onSubmit();
+
+      const sent = service.updateFilament.calls.mostRecent().args[0];
+      expect(sent.tagReadings).toEqual([
+        { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
+      ]);
+    });
+
+    it('sends no reading for a scanned tag removed before Submit', async () => {
+      await setup(null, existing);
+      control('tagUids').setValue(['AABB', '805BEC3E']);
+      scanned({ uid: '805BEC3E', reading: SNAPMAKER_805BEC3E });
+      control('tagUids').setValue(['AABB']);
+
+      fixture.componentInstance.onSubmit();
+
+      const sent = service.updateFilament.calls.mostRecent().args[0];
+      expect(sent.tagReadings).toBeUndefined();
+    });
+
+    it('merges them with the tag a new material was scanned from, one per UID', async () => {
+      await setup('805BEC3E', null, {
+        reading: SNAPMAKER_805BEC3E,
+        catalogMatch: null,
+      });
+      control('materialDensityGramPerCubicCm').setValue(1.24);
+      control('tagUids').setValue(['805BEC3E', '04A23F11']);
+      scanned(
+        { uid: '805BEC3E', reading: PETG },
+        { uid: '04A23F11', reading: PETG }
+      );
+
+      fixture.componentInstance.onSubmit();
+
+      const sent = service.addFilament.calls.mostRecent().args[0];
+      expect(sent.tagReadings).toEqual([
+        { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
+        { uid: '04A23F11', reading: PETG },
+      ]);
     });
   });
 });

@@ -7,6 +7,7 @@ import {
   forwardRef,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
 import {
@@ -25,7 +26,12 @@ import { RouterLink } from '@angular/router';
 import { Subscription, take } from 'rxjs';
 import { FilamentService } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { FilamentTagDetail, TagReading } from 'src/app/core/types/tag-reading';
+import { TagRead } from 'src/app/core/types/native-bridge';
+import {
+  FilamentTagDetail,
+  TagReadResponse,
+  TagReading,
+} from 'src/app/core/types/tag-reading';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { formatLabel } from '../../tag-format-label';
 import {
@@ -82,6 +88,16 @@ export class FilamentTagUidsComponent
 
   /** Set when the material came from the SpoolmanDB catalog. */
   readonly catalogEntryId = input<string | null>(null);
+
+  /**
+   * What each tag scanned here says, one entry per UID, for the save to send along. Only tags
+   * no other spool holds, and only those the API could decode.
+   */
+  readonly readingsChange = output<{ uid: string; reading: TagReading }[]>();
+  private readonly scannedReadings = new Map<
+    string,
+    { uid: string; reading: TagReading }
+  >();
 
   private readonly tagReader = inject(TagReaderService);
   private readonly filamentService = inject(FilamentService);
@@ -234,7 +250,7 @@ export class FilamentTagUidsComponent
           this.hint.set('That tag is already on this spool');
           return;
         }
-        this.checkHolder(read.uid);
+        this.checkHolder(read);
       });
   }
 
@@ -244,18 +260,26 @@ export class FilamentTagUidsComponent
     this.scanning.set(false);
   }
 
-  private checkHolder(uid: string): void {
-    this.filamentService.getFilamentByTag(uid).subscribe({
-      next: (holder) => {
+  /** Finds who holds the tag, and what it says, from the whole read (memory included). */
+  private checkHolder(read: TagRead): void {
+    const uid = read.uid;
+    this.filamentService.resolveTagRead(read).subscribe({
+      next: (response: TagReadResponse) => {
+        const holder =
+          response.status === 'linked' ? (response.filament ?? null) : null;
         this.loggingService.logEvent('TagReader_Lookup', {
           known: holder !== null,
         });
+        const elsewhere = holder !== null && holder.id !== this.filamentId();
+        if (!elsewhere && response.reading) {
+          this.scannedReadings.set(tagUidKey(uid), {
+            uid,
+            reading: response.reading,
+          });
+          this.readingsChange.emit([...this.scannedReadings.values()]);
+        }
         // The chip may have been removed while the lookup was out.
-        if (
-          holder &&
-          holder.id !== this.filamentId() &&
-          this.tags().includes(uid)
-        ) {
+        if (elsewhere && this.tags().includes(uid)) {
           this.scanConflict.set({
             tagUid: uid,
             filamentId: holder.id,

@@ -137,10 +137,33 @@ describe('TagReaderService', () => {
     expect(create().available()).toBeFalse();
   });
 
-  it('is available on an app shell that can read tags', () => {
+  it('is available on an app shell that can read tags', async () => {
     pretendCordova();
     installBridge(new FakeNfcBridge());
-    expect(create().available()).toBeTrue();
+    const service = create();
+    await flush();
+    expect(service.available()).toBeTrue();
+  });
+
+  it('is unavailable on a phone without NFC, so no control shows that can never work', async () => {
+    pretendCordova();
+    const nfc = new FakeNfcBridge();
+    nfc.status = 'unsupported';
+    installBridge(nfc);
+    const service = create();
+    await flush();
+    expect(service.available()).toBeFalse();
+  });
+
+  it('is available with NFC turned off, so the screen can offer Turn on', async () => {
+    pretendCordova();
+    const nfc = new FakeNfcBridge();
+    nfc.status = 'off';
+    installBridge(nfc);
+    const service = create();
+    await flush();
+    expect(service.available()).toBeTrue();
+    expect(service.status()).toBe('off');
   });
 
   it('starts reading once for two listeners and stops after the last unsubscribes', async () => {
@@ -202,6 +225,33 @@ describe('TagReaderService', () => {
     await flush();
 
     expect(reads).toEqual(['04A23F11', '04B00000', '04A23F11']);
+  });
+
+  it('keeps dropping a UID that keeps coming back within 2 seconds of its last read', async () => {
+    pretendCordova();
+    const nfc = new FakeNfcBridge();
+    installBridge(nfc);
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date(2026, 9, 15, 12, 0, 0));
+    const reads: string[] = [];
+    create()
+      .listen()
+      .subscribe((r) => reads.push(r.uid));
+
+    // A spool resting at the edge of the field drops out and back in.
+    nfc.deliver('04A23F11');
+    await flush();
+    jasmine.clock().tick(1500);
+    nfc.deliver('04A23F11');
+    await flush();
+    jasmine.clock().tick(1500);
+    nfc.deliver('04A23F11');
+    await flush();
+    jasmine.clock().tick(2001);
+    nfc.deliver('04A23F11');
+    await flush();
+
+    expect(reads).toEqual(['04A23F11', '04A23F11']);
   });
 
   it('forget lets the same UID through immediately', async () => {

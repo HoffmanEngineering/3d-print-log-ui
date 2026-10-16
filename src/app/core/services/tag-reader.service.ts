@@ -1,5 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
+import {
+  Injectable,
+  PLATFORM_ID,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { NfcStatus, TagRead, TagTech } from '../types/native-bridge';
 import { LoggingService } from './logging.service';
@@ -30,15 +36,18 @@ export class TagReaderService {
   private readonly bridge = inject(NativeBridgeService);
   private readonly logging = inject(LoggingService);
 
-  private readonly _available = signal(false);
+  /** The app shell has the NFC half of the bridge. */
+  private readonly bridgeReady = signal(false);
   private readonly _status = signal<NfcStatus>('unsupported');
 
   /**
-   * True only in an app shell that can read tags. Every NFC control hides while this is
-   * false. It can turn true after startup: native injects the bridge once the page has
-   * loaded, which is often after Angular has booted.
+   * True only in an app shell that can read tags, on a phone that has NFC (on or off). Every
+   * NFC control hides while this is false. It can turn true after startup: native injects the
+   * bridge once the page has loaded, which is often after Angular has booted.
    */
-  readonly available = this._available.asReadonly();
+  readonly available = computed(
+    () => this.bridgeReady() && this._status() !== 'unsupported'
+  );
 
   readonly status = this._status.asReadonly();
 
@@ -56,10 +65,27 @@ export class TagReaderService {
     this.checkBridge();
     window.addEventListener('printlog-native-ready', () => this.checkBridge());
 
-    // Removed from production builds, where the CLI defines ngDevMode as false.
-    // scripts/verify-prerender.mjs fails the build if __printlogFakeTag survives.
+    // Development builds only: lets every flow be exercised and screenshotted in desktop
+    // Chrome with __printlogFakeNfc('off'), then __printlogFakeTag('04A23F11').
+    // Inline on purpose: the CLI defines ngDevMode as false in production and drops this
+    // block, but a method it calls would survive minification. verify-prerender.mjs fails
+    // the build if __printlogFakeTag reaches the bundle.
     if (typeof ngDevMode !== 'undefined' && ngDevMode) {
-      this.installDevFake();
+      const goFake = () => {
+        if (!this.fake) {
+          this.fake = true;
+          this.bridgeReady.set(true);
+          this._status.set('ready');
+        }
+      };
+      window.__printlogFakeTag = (uid: string, tech: TagTech = 'nfca') => {
+        goFake();
+        this.accept({ uid: uid.toUpperCase(), tech });
+      };
+      window.__printlogFakeNfc = (status: NfcStatus) => {
+        goFake();
+        this._status.set(status);
+      };
     }
   }
 
@@ -68,14 +94,14 @@ export class TagReaderService {
     return new Observable<TagRead>((subscriber) => {
       const subscription = this.reads.subscribe(subscriber);
       this.listeners++;
-      if (this.listeners === 1 && this.available()) {
+      if (this.listeners === 1 && this.bridgeReady()) {
         void this.start();
       }
 
       return () => {
         subscription.unsubscribe();
         this.listeners--;
-        if (this.listeners === 0 && this.available()) {
+        if (this.listeners === 0 && this.bridgeReady()) {
           void this.stop();
         }
       };
@@ -97,11 +123,11 @@ export class TagReaderService {
   }
 
   private checkBridge(): void {
-    if (this._available() || !this.bridge.canReadTags()) {
+    if (this.bridgeReady() || !this.bridge.canReadTags()) {
       return;
     }
 
-    this._available.set(true);
+    this.bridgeReady.set(true);
     if (!this.wired) {
       this.wired = true;
       this.bridge.onTag(() => void this.drain());
@@ -110,6 +136,8 @@ export class TagReaderService {
 
     if (this.listeners > 0) {
       void this.start();
+    } else {
+      void this.refreshStatus();
     }
   }
 
@@ -141,6 +169,8 @@ export class TagReaderService {
   private accept(tag: TagRead): void {
     const now = Date.now();
     if (this.last?.uid === tag.uid && now - this.last.at < REPEAT_WINDOW_MS) {
+      // Slide the window: a spool at the edge of the field drops out and back in.
+      this.last.at = now;
       return;
     }
     this.last = { uid: tag.uid, at: now };
@@ -148,28 +178,5 @@ export class TagReaderService {
     // Never the UID: analytics must not carry it.
     this.logging.logEvent('TagReader_Read', { tech: tag.tech });
     this.reads.next(tag);
-  }
-
-  /**
-   * Lets every flow be exercised and screenshotted in desktop Chrome:
-   * `__printlogFakeNfc('off')`, then `__printlogFakeTag('04A23F11')`.
-   */
-  private installDevFake(): void {
-    const goFake = () => {
-      if (!this.fake) {
-        this.fake = true;
-        this._available.set(true);
-        this._status.set('ready');
-      }
-    };
-
-    window.__printlogFakeTag = (uid: string, tech: TagTech = 'nfca') => {
-      goFake();
-      this.accept({ uid: uid.toUpperCase(), tech });
-    };
-    window.__printlogFakeNfc = (status: NfcStatus) => {
-      goFake();
-      this._status.set(status);
-    };
   }
 }

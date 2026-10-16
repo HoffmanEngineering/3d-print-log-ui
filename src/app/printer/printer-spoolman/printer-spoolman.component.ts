@@ -54,7 +54,7 @@ type Phase = 'idle' | 'ready' | 'error';
  *
  * The secret comes back once, from the POST, and lives only in {@link created}: nothing
  * stores it and the list endpoint never returns it. Once it is dismissed or the page is left
- * it is gone, and the only way to a new one is Reconnect, which revokes the old secret.
+ * it is gone, and the only way to a new one is Change secret, which revokes the old secret.
  */
 @Component({
   selector: 'app-printer-spoolman',
@@ -82,7 +82,7 @@ export class PrinterSpoolmanComponent {
   /** Only FDM printers: the panel renders nothing, and asks for nothing, otherwise. */
   protected readonly enabled = computed(() => isFdmCategory(this.category()));
 
-  /** Snapmaker's U1 waits on a hardware test, so it gets a note before the button. */
+  /** Snapmaker's U1 needs Advanced Mode to keep a `[spoolman]` block, so it gets a note first. */
   protected readonly isSnapmakerU1 = computed(
     () =>
       /snapmaker/i.test(this.make() ?? '') && /\bu1\b/i.test(this.model() ?? '')
@@ -102,6 +102,14 @@ export class PrinterSpoolmanComponent {
   /** The block from the last connect, shown until dismissed and never again. */
   protected readonly created = signal<SpoolmanConnectionCreated | null>(null);
   protected readonly limit = signal<SpoolmanConnectionLimit | null>(null);
+
+  /**
+   * Whether the block carries a `[notifier` section. The API leaves it out for a printer
+   * with a printlog-bridge connection, so the note below the block follows the block itself.
+   */
+  protected readonly hasNotifier = computed(
+    () => this.created()?.configBlock.includes('[notifier') ?? false
+  );
   protected readonly busy = signal(false);
 
   protected readonly status = computed(() => {
@@ -147,11 +155,12 @@ export class PrinterSpoolmanComponent {
       return;
     }
     this.confirm(
-      'Reconnect Spoolman?',
-      '<p>This makes a new <code>[spoolman]</code> block and the one on the printer stops ' +
-        'working. Paste the new block into <code>moonraker.conf</code> to reconnect.</p>',
-      'Reconnect',
-      'primary'
+      "Change this printer's Spoolman secret?",
+      '<p>Only do this if you lost the <code>[spoolman]</code> block or shared your ' +
+        '<code>moonraker.log</code>. The printer stops seeing your spools right away, ' +
+        'until you paste the new block into <code>moonraker.conf</code>.</p>',
+      'Change secret',
+      'warn'
     ).subscribe(() => this.submitConnect(true));
   }
 

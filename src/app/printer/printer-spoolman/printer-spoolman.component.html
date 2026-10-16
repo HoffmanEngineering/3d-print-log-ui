@@ -11,12 +11,12 @@
       <p class="note" data-testid="spoolman-u1-note">
         <mat-icon inline aria-hidden="true">info</mat-icon>
         <span>
-          Spoolman on the Snapmaker U1 is waiting on a test with a real U1. To
-          try it, put the U1 in Advanced Mode, which lets you edit its
-          <code>moonraker.conf</code>. With printlog-bridge running, the bridge
-          keeps each tool's spool in sync with Moonraker. The
-          <a routerLink="/docs/snapmaker-u1">Snapmaker U1 guide</a> has the
-          details.
+          On the Snapmaker U1, turn on Advanced Mode (Maintenance) before you
+          edit <code>moonraker.conf</code>. Without it, the U1 puts back its
+          stock config when it restarts.
+          <a routerLink="/docs/snapmaker-u1" fragment="spoolman"
+            >Spoolman on the U1</a
+          >
         </span>
       </p>
     }
@@ -44,11 +44,18 @@
         </button>
         <p class="note" data-testid="spoolman-notifier-note">
           <mat-icon inline aria-hidden="true">info</mat-icon>
-          <span>
-            If your <code>moonraker.conf</code> already has a
-            <code>[notifier 3d_print_log]</code> section from an API-key setup,
-            delete it first. This block replaces it.
-          </span>
+          @if (hasNotifier()) {
+            <span>
+              If your <code>moonraker.conf</code> already has a
+              <code>[notifier 3d_print_log]</code> section from an API-key
+              setup, delete it first. This block replaces it.
+            </span>
+          } @else {
+            <span>
+              printlog-bridge logs this printer's prints, so this block has only
+              <code>[spoolman]</code>.
+            </span>
+          }
         </p>
         <ol class="steps">
           <li>Open <code>moonraker.conf</code> in Mainsail or Fluidd.</li>
@@ -59,10 +66,12 @@
           Then pick a spool in Mainsail or Fluidd.
           <a [routerLink]="docsLink">Read the setup guide</a>
         </p>
-        <p class="hint">
-          If printlog-bridge is running for this printer, the bridge logs this
-          printer's prints instead.
-        </p>
+        @if (hasNotifier()) {
+          <p class="hint">
+            If printlog-bridge is running for this printer, the bridge logs this
+            printer's prints instead.
+          </p>
+        }
         <button
           mat-raised-button
           color="primary"
@@ -126,7 +135,7 @@
               [disabled]="busy()"
               (click)="connect()"
             >
-              Reconnect
+              Change secret
             </button>
           }
           <button

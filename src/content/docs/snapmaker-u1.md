@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 46
 mode: how-to
-updated: 2026-10-14
+updated: 2026-10-15
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, materials]
 ---
 
@@ -70,7 +70,9 @@ Only Snapmaker's own tags are read. A spool with no tag, or with a tag that isn'
 
 ### Spoolman {#spoolman}
 
-The U1 can use [Spoolman for Klipper](/docs/klipper-spoolman), which shows your 3D Print Log spools in its spool pickers and logs prints. It needs Advanced Mode on the U1, because you edit its `moonraker.conf` to add the block. This hasn't been confirmed on a real U1 yet.
+The U1 can use [Spoolman for Klipper](/docs/klipper-spoolman), which shows your 3D Print Log spools in its spool pickers and logs prints. It needs Advanced Mode on the U1, because you edit its `moonraker.conf` to add the block.
+
+Turn on Advanced Mode in the U1's Maintenance settings before you edit `moonraker.conf`. Without it, a boot script puts back the stock config when the printer restarts, and the `[spoolman]` block disappears. This was tested on firmware 2.0.0, where the block survives a full reboot with Advanced Mode on, and picking a spool on the printer updates the tool's slot.
 
 With the bridge running, picking a spool on a tool and the RFID reader stay in sync with Moonraker's active spool. A spool picked on the printer is loaded into the active tool's slot in 3D Print Log, and a spool assigned from an RFID tag or in the app becomes Moonraker's active spool when that tool is active. The bridge also sets the active spool on each tool change, so you need no macros. This works only when `[spoolman]` points at 3D Print Log.
 

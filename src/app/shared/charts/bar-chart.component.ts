@@ -393,7 +393,7 @@ export class BarChartComponent {
             tooltip: `${d.fullLabel} — ${s.label}: ${v}${clipped ? ' (bar shortened to fit)' : ''}`,
             clipped,
             breakPath: clipped
-              ? this.breakPath(x, signedW, drawn > 0 ? y + 6 : y + h - 6)
+              ? this.breakPath(x, signedW, drawn > 0 ? y + 12 : y + h - 18)
               : null,
             // Hatched, never swatch-filled: it must not read as one more stacked series.
             fill: `url(#${this.hatchId})`,
@@ -442,11 +442,11 @@ export class BarChartComponent {
 
   /** Two slanted strokes across a bar, the usual "axis break" mark. */
   private breakPath(x: number, w: number, y: number): string {
-    const rise = Math.min(4, w / 3);
-    return [0, 4]
+    const rise = Math.min(5, w / 2.5);
+    return [0, 6]
       .map(
         (offset) =>
-          `M${x - 1},${y + offset + rise} L${x + w + 1},${y + offset - rise}`
+          `M${x - 3},${y + offset + rise} L${x + w + 3},${y + offset - rise}`
       )
       .join(' ');
   }

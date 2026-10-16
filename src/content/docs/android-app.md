@@ -6,7 +6,7 @@ navLabel: Log prints from your phone
 group: integrations
 order: 10
 mode: how-to
-updated: 2026-09-02
+updated: 2026-10-16
 related: [getting-started]
 ---
 
@@ -26,6 +26,11 @@ Code scanning features.
 
 The Android App is always up to date with the website: any data you add in one
 is available in the other. So use whichever is most convenient for you.
+
+On a phone with NFC, the app (version 1.3.0 or later) can also read the RFID or
+NFC tag on a spool: hold the phone to it to pick that material, link the tag to
+a material, or find the spool from the Materials list. See
+[RFID / NFC tags in the Android app](/docs/materials#tags-android).
 
 <div fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px">
     <div fxFlex>

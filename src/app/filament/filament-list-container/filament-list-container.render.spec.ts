@@ -128,6 +128,68 @@ describe('FilamentListContainerComponent (rendered)', () => {
     expect(text()).not.toContain('Galaxy Black');
   });
 
+  describe('an untracked spool (no starting weight)', () => {
+    const root = () => harness.routeNativeElement as HTMLElement;
+
+    beforeEach(async () => {
+      const component = harness.routeDebugElement!
+        .componentInstance as FilamentListContainerComponent;
+      await component.pageChange({ pageIndex: 1, pageSize: 10 } as never);
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      listed.next(page([aSpool({ filamentRemaining: null })]));
+      harness.detectChanges();
+    });
+
+    it('says Not tracked in the table instead of 0', () => {
+      const cell = root().querySelector('td.mat-column-filamentRemaining');
+      expect(cell!.textContent!.trim()).toBe('Not tracked');
+    });
+
+    it('says Not tracked on the card instead of 0g', () => {
+      const weight = root().querySelector('.filament-card .card-weight');
+      expect(weight!.textContent!.trim()).toBe('Not tracked');
+    });
+
+    it('mutes Not tracked in the table and on the card', () => {
+      const muted = Array.from(
+        root().querySelectorAll(
+          'td.mat-column-filamentRemaining .remaining-not-tracked, .filament-card .card-weight .remaining-not-tracked'
+        )
+      );
+      expect(muted.length).toBe(2);
+      muted.forEach((el) => expect(el.textContent!.trim()).toBe('Not tracked'));
+    });
+
+    it('offers no Mark As Empty in either menu', async () => {
+      const triggers = Array.from(
+        root().querySelectorAll<HTMLButtonElement>('[aria-haspopup="menu"]')
+      );
+      expect(triggers.length).toBeGreaterThan(0);
+      for (const trigger of triggers) {
+        trigger.click();
+        harness.detectChanges();
+        await harness.fixture.whenStable();
+      }
+      const overlay = document.querySelector('.cdk-overlay-container');
+      expect(overlay!.textContent).toContain('Delete');
+      expect(overlay!.textContent).not.toContain('Mark As Empty');
+    });
+  });
+
+  it('still offers Mark As Empty for a tracked spool', async () => {
+    const trigger = (
+      harness.routeNativeElement as HTMLElement
+    ).querySelector<HTMLButtonElement>('[aria-haspopup="menu"]');
+    trigger!.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+
+    expect(
+      document.querySelector('.cdk-overlay-container')!.textContent
+    ).toContain('Mark As Empty');
+  });
+
   it('stars a favorite once the server confirms it', () => {
     const favorited = new Subject<unknown>();
     filamentService.changeFavorite.and.returnValue(favorited as never);

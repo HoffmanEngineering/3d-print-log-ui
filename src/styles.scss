@@ -80,6 +80,13 @@ app-navbar {
   border: none !important;
 }
 
+// "Not tracked" in place of a remaining amount (api#230), muted so it reads
+// apart from the numbers in a numeric column. The token is theme-aware.
+.remaining-not-tracked {
+  color: var(--app-text-secondary);
+  font-style: italic;
+}
+
 .visually-hidden {
   border: 0 !important;
   clip: rect(1px, 1px, 1px, 1px) !important; /* 1 */

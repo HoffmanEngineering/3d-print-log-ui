@@ -75,7 +75,11 @@ import { PrinterSpoolmanComponent } from '../printer-spoolman/printer-spoolman.c
 import { AdComponent } from '../../shared/ad/ad.component';
 import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
-import { AsyncPipe, DecimalPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
+import {
+  isRemainingTracked,
+  RemainingPipe,
+} from 'src/app/shared/pipes/remaining.pipe';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 @Component({
@@ -117,7 +121,7 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
     DefaultShowHideDirective,
     SidebarAdComponent,
     AsyncPipe,
-    DecimalPipe,
+    RemainingPipe,
     FilamentColorSwatchStylePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -125,6 +129,9 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
 export class PrinterDetailComponent
   implements OnInit, ComponentCanDeactivate, OnDestroy
 {
+  /** False for a spool with no starting weight, whose remaining is null. */
+  protected readonly isRemainingTracked = isRemainingTracked;
+
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
   private formBuilder = inject(UntypedFormBuilder);

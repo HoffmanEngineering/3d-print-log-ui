@@ -6,7 +6,7 @@ navLabel: Material fields
 group: reference
 order: 10
 mode: reference
-updated: 2026-09-02
+updated: 2026-10-16
 related:
   - materials
   - prints
@@ -173,7 +173,8 @@ Multiple effects can be combined.
 - **Name** - The Display Name of the Material.
 - **Brand** - The Brand of material.
 - **Color** - The name of the Color of the material.
-- **Remaining (g)** - The weight of material remaining.
+- **Remaining (g)** - The weight of material remaining, or **Not tracked** when
+  the material has no Initial Nominal Weight.
 ---
 
 ### Loaded Material {#loaded_filament}

@@ -6,7 +6,7 @@ navLabel: Materials
 group: features
 order: 30
 mode: how-to
-updated: 2026-10-14
+updated: 2026-10-16
 related: [materials-reference, prints]
 aliases: [filaments]
 ---
@@ -88,7 +88,9 @@ powders &mdash; have no diameter, so they show a Volume but no Length.
 If the card says **Not tracked**, the material has no Initial Nominal Weight
 yet, so there is nothing to count down from. Use the **Set nominal weight**
 button on the card to jump straight to the field, enter the weight of a full
-roll, and save.
+roll, and save. The materials list, and the loaded materials on printer
+and print pages, also show **Not tracked** for such a material instead of an
+amount, and its menu leaves out **Mark As Empty**.
 
 If the card shows a warning that the material is **over-used**, more material
 has been logged against it than the roll was ever supposed to hold. That usually

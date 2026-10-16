@@ -60,6 +60,8 @@ The image sets `PRINTLOG_BRIDGE_CONFIG=/data/printlog-bridge.cfg` and `PRINTLOG_
 
 Make a folder for the bridge on the host, such as `/volume1/docker/printlog-bridge` on a Synology NAS or `/mnt/user/appdata/printlog-bridge` on Unraid.
 
+On a Synology NAS, give your own user write access to that folder. In File Station, right-click it, then choose **Properties**, **Permission** and **Create**. Pick your DSM user, allow **Read** and **Write**, apply it to this folder, child folders and child files, and choose **Save**. The `docker` share lets you write through the administrators group, but the container runs with only the user and group you give it in step 4, so without this entry the bridge can't create its `state` folder (`Permission denied: '/data/state'`).
+
 #### 2. Write the config {#setup-config}
 
 Save `printlog-bridge.cfg` in that folder, with a `[printer <name>]` section per printer. `printer_id` is the printer's number in 3D Print Log, the end of its page's address (`42` in `https://www.3dprintlog.com/printers/42`), and `url` is the printer's Moonraker:

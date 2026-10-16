@@ -483,10 +483,12 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
     component.handleFilamentSelected(filamentDetailToSummary(spool()));
 
-    // The visible text; the UID is set in <code>.
-    expect(lastDialogData().body.replace(/<[^>]+>/g, '')).toContain(
-      'Add tag 04A23F11 to Test Filament?'
-    );
+    // The visible text, as the dialog renders it; the UID is set in <code>.
+    const visible = new DOMParser().parseFromString(
+      lastDialogData().body,
+      'text/html'
+    ).body.textContent;
+    expect(visible).toContain('Add tag 04A23F11 to Test Filament?');
     expect(lastDialogData().yesText).toBe('Add tag and select');
     expect(lastDialogData().noText).toBe('Just select');
     expect(filaments.addTagToFilament).toHaveBeenCalledWith(

@@ -1,5 +1,17 @@
 export type PushPermissionState = 'granted' | 'denied' | 'default';
 
+/** Whether the phone can read tags right now. */
+export type NfcStatus = 'unsupported' | 'off' | 'ready';
+
+/** The tag technology native read the UID with. */
+export type TagTech = 'nfca' | 'nfcb' | 'nfcf' | 'nfcv';
+
+/** A spool tag held to the phone: its UID (uppercase hex, no separators) and technology. */
+export interface TagRead {
+  uid: string;
+  tech: TagTech;
+}
+
 export interface PendingTap {
   notificationId: string;
   printId: number;
@@ -30,6 +42,19 @@ export interface PrintLogNativeBridge {
    * Optional because an older app shell may not expose it yet.
    */
   onPendingTap?(listener: () => void): void;
+
+  // NFC spool tags (app 1.3.0+). All optional: an older app shell has none of them, and the
+  // presence of startTagReading is how the page tells. Delivery is signal-then-fetch, like taps.
+
+  nfcStatus?(): Promise<NfcStatus>;
+  /** Opens a reading session; native reads tags until stopTagReading. */
+  startTagReading?(): Promise<NfcStatus>;
+  stopTagReading?(): Promise<void>;
+  /** The latest tag read, claimed once, or null. */
+  consumeTag?(): Promise<TagRead | null>;
+  openNfcSettings?(): Promise<void>;
+  onTag?(listener: () => void): void;
+  onNfcStatus?(listener: () => void): void;
 }
 
 declare global {

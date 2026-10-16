@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { isCordovaPlatform } from '../utils/platform';
 import {
+  NfcStatus,
   PendingTap,
   PrintLogNativeBridge,
   PushPermissionState,
+  TagRead,
 } from '../types/native-bridge';
 
 /**
@@ -71,6 +73,78 @@ export class NativeBridgeService {
 
     try {
       bridge.onPendingTap(listener);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** True only in an app shell whose bridge can read NFC tags (app 1.3.0+). */
+  canReadTags(): boolean {
+    return typeof this.bridge?.startTagReading === 'function';
+  }
+
+  async nfcStatus(): Promise<NfcStatus> {
+    try {
+      return (await this.bridge?.nfcStatus?.()) ?? 'unsupported';
+    } catch {
+      return 'unsupported';
+    }
+  }
+
+  async startTagReading(): Promise<NfcStatus> {
+    try {
+      return (await this.bridge?.startTagReading?.()) ?? 'unsupported';
+    } catch {
+      return 'unsupported';
+    }
+  }
+
+  async stopTagReading(): Promise<void> {
+    try {
+      await this.bridge?.stopTagReading?.();
+    } catch {
+      // Nothing to undo: native ends the session on the next page load anyway.
+    }
+  }
+
+  async consumeTag(): Promise<TagRead | null> {
+    try {
+      return (await this.bridge?.consumeTag?.()) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async openNfcSettings(): Promise<void> {
+    try {
+      await this.bridge?.openNfcSettings?.();
+    } catch {
+      // The user can still open Settings themselves.
+    }
+  }
+
+  /** @returns true if native will call the listener when a tag is read. */
+  onTag(listener: () => void): boolean {
+    return this.register(this.bridge?.onTag, listener);
+  }
+
+  /** @returns true if native will call the listener when NFC turns on or off. */
+  onNfcStatus(listener: () => void): boolean {
+    return this.register(this.bridge?.onNfcStatus, listener);
+  }
+
+  private register(
+    method: ((listener: () => void) => void) | undefined,
+    listener: () => void
+  ): boolean {
+    const bridge = this.bridge;
+    if (!bridge || typeof method !== 'function') {
+      return false;
+    }
+
+    try {
+      method.call(bridge, listener);
       return true;
     } catch {
       return false;

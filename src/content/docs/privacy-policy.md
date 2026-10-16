@@ -41,9 +41,11 @@ When you create an account and use 3D Print Log, we store:
   (we store only a one-way hash of each key), which AI assistants you have connected, and your
   Spoolman connections, described [below](#spoolman).
 - **Spool tag data:** when the Android app reads a spool's RFID or NFC tag, it sends the tag's
-  memory to 3D Print Log so we can decode it. What the tag says is stored with that tag on your
-  material. If we can't decode a tag, we keep its memory for up to 90 days, without tying it to
-  your account, to improve tag support.
+  UID and memory to 3D Print Log so we can decode it. What the tag says is stored with that tag
+  on your material, along with when it was last read. If we can't decode a tag, we keep its UID
+  and memory for up to 90 days, without tying them to your account, to improve tag support.
+  Which catalog product you matched a spool's tag code to may be shared with open filament
+  databases, without your identity.
 - **Feedback** you send us, including through an AI assistant.
 
 We use this information to provide the service: to show you your records, calculate material

@@ -293,22 +293,30 @@ Anycubic ACE or OpenSpool tag and the app reads those details and uses them to
 fill in the material.
 
 When the tag belongs to a spool that isn't on any of your materials yet, the
-app offers two choices:
+app shows what the tag says and offers:
 
-- **Link:** attach the tag to an existing material. The app suggests a likely
-  match, or you can search for one.
+- **Suggested materials:** materials this tag may belong to, each with why it
+  was suggested (no tag yet, close color, same brand, same material or same
+  weight). Tap one to attach the tag to it.
+- **Search all materials:** pick any of your materials to attach the tag to.
 - **Create:** make a new material that is already filled in from the tag.
   Fields that came from the tag say **From tag**, and fields that came from the
   filament database say **From SpoolmanDB**. Check them, change anything that
   is wrong, then save.
 
-A material's page shows what each of its tags says. Spool weights come from
+If the phone moved before the whole tag was read, the app asks you to hold it
+still and tap again.
+
+A material's page shows what each of its tags says. Material names, color
+names and empty spool weights come from
 [SpoolmanDB](https://github.com/Donkie/SpoolmanDB), an open filament database
 released under the MIT License.
 
-Snapmaker and Bambu Lab tags use MIFARE Classic, a type of tag that some
-phones can't read. On a phone that can't, the app links those tags by UID
-only, the same as any other tag, and doesn't show what they say.
+Snapmaker tags use MIFARE Classic, a type of tag that some phones can't read.
+On a phone that can't, the app links those tags by UID only, the same as any
+other tag, and doesn't show what they say. Bambu Lab tags also use MIFARE
+Classic. The app doesn't read what they say yet, so on every phone it links
+them by UID only.
 
 3D Print Log is not affiliated with Snapmaker, Anycubic or Bambu Lab.
 

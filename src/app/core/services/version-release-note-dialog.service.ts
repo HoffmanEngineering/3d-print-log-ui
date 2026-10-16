@@ -31,6 +31,34 @@ export class VersionReleaseNoteDialogService {
   private readonly LOCAL_STORAGE_KEY = 'LastLoggedInVersion';
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.53.0': {
+      title: '1.53.0 - Klipper Print Logging & Spoolman',
+      body: `<p>
+<strong>Klipper printers log every print on their own</strong> with <a href="/docs/printlog-bridge">printlog-bridge</a>, a free, open source companion. Each print is logged as it happens, with how it ended, the filament each tool used and the slicer's thumbnail. The bridge also reads the slicer settings from the G-code file and adds them to the print for you, the way the Slic3r uploader does. Run it on the printer or in Docker on a NAS, where one bridge watches all of your printers, the Snapmaker U1 included. See the new <a href="/klipper">Klipper page</a> to get started.
+</p>
+<p>
+<strong>3D Print Log can be your Spoolman server</strong>, too. Connect a printer from its page and your spools show up in the Mainsail, Fluidd and KlipperScreen spool pickers, with nothing to install. See <a href="/docs/klipper-spoolman">Spoolman for Klipper</a>.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.52.2': {
       redirect: '1.52.1',
     },

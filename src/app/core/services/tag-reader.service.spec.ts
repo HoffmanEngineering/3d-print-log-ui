@@ -362,6 +362,18 @@ describe('TagReaderService', () => {
     expect(service.status()).toBe('ready');
   });
 
+  it('starts reading with null when the config call throws', async () => {
+    pretendCordova();
+    const nfc = new FakeNfcBridge();
+    installBridge(nfc);
+    filaments.getReaderConfig.and.throwError(new Error('not wired'));
+    const service = create();
+    service.listen().subscribe();
+    await flush();
+    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(null);
+    expect(service.status()).toBe('ready');
+  });
+
   it('starts reading with null when the config never arrives', async () => {
     pretendCordova();
     const nfc = new FakeNfcBridge();

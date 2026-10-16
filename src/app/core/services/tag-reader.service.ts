@@ -11,6 +11,7 @@ import {
   Subject,
   TimeoutError,
   catchError,
+  defer,
   firstValueFrom,
   of,
   shareReplay,
@@ -201,7 +202,8 @@ export class TagReaderService {
   }
 
   private fetchConfig(): Observable<ReaderConfig> {
-    this.config$ ??= this.filaments.getReaderConfig().pipe(
+    // defer: a call that throws becomes an error the callers already treat as "no config".
+    this.config$ ??= defer(() => this.filaments.getReaderConfig()).pipe(
       tap((config) => (this.config = config)),
       shareReplay({ bufferSize: 1, refCount: false })
     );

@@ -1149,7 +1149,13 @@ describe('FilamentDetailComponent scanned tag', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            data: of({ filament, materials: [], materialCategories: [] }),
+            data: of({
+              filament,
+              materials: [],
+              materialCategories: [],
+              defaultFilamentDiameterMmSetting: null,
+              defaultFilamentPriceSetting: null,
+            }),
             snapshot: {
               // A UID in the query string is ignored: it belongs in navigation state.
               queryParamMap: convertToParamMap({ tag: 'AAAAAAAA' }),
@@ -1277,17 +1283,66 @@ describe('FilamentDetailComponent scanned tag', () => {
 
     it('saves the reading and catalog entry even when every field was changed', async () => {
       await setup('805BEC3E', null, read());
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+      const type = (id: string, value: string) => {
+        const input = root.querySelector(`#${id}`) as HTMLInputElement;
+        input.value = value;
+        input.dispatchEvent(new Event('input'));
+      };
+      type('edit-filament-brand', 'Other brand');
+      type('edit-filament-material-type', 'PETG');
+      type('edit-filament-name', 'My spool');
+      type('edit-filament-color', 'Red');
+      type('edit-filament-diameter', '2.85');
+      type('filament-inital-nominal-weight', '1000');
+      type('edit-filament-spool-weight', '200');
+      type('edit-filament-hotend-temp-range-start', '200');
+      type('edit-filament-hotend-temperature-range-end', '250');
+      type('edit-filament-recommended-hotend-temp', '240');
+      type('edit-filament-recommended-bed-temp', '70');
+      root
+        .querySelectorAll<HTMLInputElement>('input[type="color"]')
+        .forEach((input) => {
+          input.value = '#112233';
+          input.dispatchEvent(new Event('input'));
+        });
+      // Not rendered while the source is Weight, so there is no input to type in.
+      control('initialNominalLengthM').setValue(99);
       control('materialDensityGramPerCubicCm').setValue(1.24);
-      control('brand').setValue('Changed');
+      fixture.detectChanges();
+
+      expect(root.querySelectorAll('.tag-source-hint').length).toBe(0);
+      expect(root.querySelector('.tag-source-note')).toBeNull();
 
       fixture.componentInstance.onSubmit();
 
       const sent = service.addFilament.calls.mostRecent().args[0];
+      expect(sent.brand).toBe('Other brand');
+      expect(sent.colors).toEqual(['112233']);
       expect(sent.tagUids).toEqual(['805BEC3E']);
       expect(sent.tagReadings).toEqual([
         { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
       ]);
       expect(sent.catalogEntryId).toBe('cat-1');
+    });
+
+    it('sends no catalog entry for a match with an empty id', async () => {
+      await setup('805BEC3E', null, {
+        reading: SNAPMAKER_805BEC3E,
+        catalogMatch: { ...match, id: '' },
+      });
+      control('materialDensityGramPerCubicCm').setValue(1.24);
+      control('displayName').setValue('X');
+      control('materialType').setValue('PLA');
+
+      expect(control('colorName').value).toBe('');
+      expect(control('spoolWeightG').value).toBeNaN();
+
+      fixture.componentInstance.onSubmit();
+
+      const sent = service.addFilament.calls.mostRecent().args[0];
+      expect(sent.catalogEntryId).toBeUndefined();
     });
 
     it('ignores an implausible reading', async () => {

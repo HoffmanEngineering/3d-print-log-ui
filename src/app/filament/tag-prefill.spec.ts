@@ -1,4 +1,4 @@
-import type { CatalogMatch } from '../core/types/tag-reading';
+import type { CatalogMatch, TagReading } from '../core/types/tag-reading';
 import { SNAPMAKER_805BEC3E } from './testing/tag-fixtures';
 import { parseScannedTagRead, tagPrefill } from './tag-prefill';
 
@@ -117,5 +117,44 @@ describe('parseScannedTagRead', () => {
     expect(parseScannedTagRead([])).toBeNull();
     expect(parseScannedTagRead({ reading: 'x' })).toBeNull();
     expect(parseScannedTagRead({ catalogMatch: { id: 5 } })).toBeNull();
+    expect(parseScannedTagRead({ catalogMatch: { id: '' } })).toBeNull();
+    expect(parseScannedTagRead({ catalogMatch: { id: '  ' } })).toBeNull();
+    expect(parseScannedTagRead({ catalogMatch: { name: 'x' } })).toBeNull();
+  });
+});
+
+describe('tagPrefill with hostile input', () => {
+  const asReading = (v: unknown) => v as TagReading;
+
+  it('survives a reading that is an array', () => {
+    expect(tagPrefill(asReading([1, 2]), null)).toEqual({
+      values: {},
+      sources: {},
+    });
+  });
+
+  it('leaves colors out when they are not an array', () => {
+    const { values } = tagPrefill(asReading({ colors: '#080A0D' }), null);
+
+    expect(values).toEqual({});
+  });
+
+  it('leaves out numbers that arrive as strings', () => {
+    const { values } = tagPrefill(
+      asReading({ diameterMm: '1.75', netWeightG: '500', hotendC: null }),
+      null
+    );
+
+    expect(values).toEqual({});
+  });
+
+  it('never sets a value to null', () => {
+    const { values } = tagPrefill(
+      asReading({ brand: null, materialType: 7, colors: [null, 5] }),
+      null
+    );
+
+    expect(Object.values(values).includes(null)).toBeFalse();
+    expect(values).toEqual({});
   });
 });

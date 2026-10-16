@@ -121,7 +121,11 @@ export function parseScannedTagRead(raw: unknown): ScannedTagRead | null {
   if (reading != null && !isRecord(reading)) return null;
   if (
     catalogMatch != null &&
-    !(isRecord(catalogMatch) && typeof catalogMatch['id'] === 'string')
+    !(
+      isRecord(catalogMatch) &&
+      typeof catalogMatch['id'] === 'string' &&
+      catalogMatch['id'].trim() !== ''
+    )
   ) {
     return null;
   }

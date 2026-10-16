@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
+  isDevMode,
   output,
   signal,
 } from '@angular/core';
@@ -25,6 +27,11 @@ export interface BarSeries {
 const STACK_SHARE = 0.62;
 /** Gap between the stack and the signed bars, as a share of the band. */
 const SIGNED_GAP = 0.06;
+/**
+ * A signed bar is drawn at most this many times the largest stack, either way. Past that it is
+ * clipped and marked with a break, so one huge correction cannot squash every other bar flat.
+ */
+const SIGNED_CLAMP_RATIO = 2;
 
 let hatchCounter = 0;
 
@@ -57,6 +64,10 @@ interface Segment {
   filter: string | null;
   fillOpacity: number;
   signed: boolean;
+  /** Drawn shorter than its value (see SIGNED_CLAMP_RATIO); the tooltip keeps the real one. */
+  clipped: boolean;
+  /** Path of the break mark across a clipped bar's far end, or null. */
+  breakPath: string | null;
 }
 
 interface BucketHitbox {
@@ -71,10 +82,13 @@ interface BucketHitbox {
 interface ChartTooltip {
   title: string;
   lines: {
+    key: string;
     label: string;
     value: number;
     seriesIndex: number;
     signed: boolean;
+    /** The mark is swatch-filled, so a series color key would name the wrong color. */
+    swatch: boolean;
   }[];
   x: number;
   y: number;
@@ -98,6 +112,11 @@ export class BarChartComponent {
   readonly width = input(0);
   readonly height = input(0);
   readonly orientation = input<'auto' | 'vertical' | 'horizontal'>('auto');
+  /**
+   * Signed bars are clipped past SIGNED_CLAMP_RATIO times the largest stack, but never below this
+   * value, so a quiet week with a tiny stack does not clip an ordinary correction.
+   */
+  readonly signedLimitFloor = input(0);
 
   readonly barSelect = output<{ label: string; seriesKey: string | null }>();
 
@@ -139,17 +158,50 @@ export class BarChartComponent {
       : []
   );
 
-  private readonly maxValue = computed(
+  constructor() {
+    effect(() => {
+      if (
+        isDevMode() &&
+        this.resolvedOrientation() === 'horizontal' &&
+        this.series().some((item) => item.signed)
+      ) {
+        console.warn(
+          'app-bar-chart: a signed series is only drawn on a vertical chart; it is ignored here.'
+        );
+      }
+    });
+  }
+
+  private readonly stackMax = computed(
     () =>
       d3.max(this.data(), (datum) =>
-        Math.max(
-          d3.sum(this.stackSeries(), (item) =>
-            Math.max(0, datum.values[item.key] ?? 0)
-          ),
-          d3.max(this.signedSeries(), (item) => datum.values[item.key] ?? 0) ??
-            0
+        d3.sum(this.stackSeries(), (item) =>
+          Math.max(0, datum.values[item.key] ?? 0)
         )
       ) ?? 0
+  );
+
+  /** How far a signed bar may reach either way. Unlimited when there is no stack to dwarf. */
+  private readonly signedLimit = computed(() => {
+    const stack = this.stackMax();
+    if (stack <= 0) return Infinity;
+    return Math.max(stack * SIGNED_CLAMP_RATIO, this.signedLimitFloor());
+  });
+
+  private drawnSigned(value: number): number {
+    const limit = this.signedLimit();
+    return Math.max(-limit, Math.min(limit, value));
+  }
+
+  private readonly maxValue = computed(() =>
+    Math.max(
+      this.stackMax(),
+      d3.max(this.data(), (datum) =>
+        d3.max(this.signedSeries(), (item) =>
+          this.drawnSigned(datum.values[item.key] ?? 0)
+        )
+      ) ?? 0
+    )
   );
 
   /** Only a signed series can take the axis below zero. */
@@ -157,7 +209,9 @@ export class BarChartComponent {
     Math.min(
       0,
       d3.min(this.data(), (datum) =>
-        d3.min(this.signedSeries(), (item) => datum.values[item.key] ?? 0)
+        d3.min(this.signedSeries(), (item) =>
+          this.drawnSigned(datum.values[item.key] ?? 0)
+        )
       ) ?? 0
     )
   );
@@ -312,6 +366,8 @@ export class BarChartComponent {
             filter: d.filter ?? null,
             fillOpacity: d.fillOpacity ?? 1,
             signed: false,
+            clipped: false,
+            breakPath: null,
           });
           cursor += v;
         }
@@ -319,17 +375,26 @@ export class BarChartComponent {
         signed.forEach((s, index) => {
           const v = d.values[s.key] ?? 0;
           if (v === 0) return;
-          const top = value(Math.max(0, v));
-          const bottom = value(Math.min(0, v));
+          const drawn = this.drawnSigned(v);
+          const clipped = drawn !== v;
+          const top = value(Math.max(0, drawn));
+          const bottom = value(Math.min(0, drawn));
+          const x = bandX + stackW + bw * SIGNED_GAP + index * signedW;
+          const y = this.margin().top + top;
+          const h = Math.max(1, bottom - top);
           out.push({
-            x: bandX + stackW + bw * SIGNED_GAP + index * signedW,
-            y: this.margin().top + top,
+            x,
+            y,
             w: signedW,
-            h: Math.max(1, bottom - top),
+            h,
             seriesIndex: s.seriesIndex,
             seriesKey: s.key,
             label: d.label,
-            tooltip: `${d.fullLabel} — ${s.label}: ${v}`,
+            tooltip: `${d.fullLabel} — ${s.label}: ${v}${clipped ? ' (bar shortened to fit)' : ''}`,
+            clipped,
+            breakPath: clipped
+              ? this.breakPath(x, signedW, drawn > 0 ? y + 6 : y + h - 6)
+              : null,
             // Hatched, never swatch-filled: it must not read as one more stacked series.
             fill: `url(#${this.hatchId})`,
             filter: null,
@@ -364,6 +429,8 @@ export class BarChartComponent {
             filter: d.filter ?? null,
             fillOpacity: d.fillOpacity ?? 1,
             signed: false,
+            clipped: false,
+            breakPath: null,
           });
           cursor += v;
         }
@@ -372,6 +439,17 @@ export class BarChartComponent {
 
     return out;
   });
+
+  /** Two slanted strokes across a bar, the usual "axis break" mark. */
+  private breakPath(x: number, w: number, y: number): string {
+    const rise = Math.min(4, w / 3);
+    return [0, 4]
+      .map(
+        (offset) =>
+          `M${x - 1},${y + offset + rise} L${x + w + 1},${y + offset - rise}`
+      )
+      .join(' ');
+  }
 
   readonly axisLabels = computed(() => {
     const data = this.data();
@@ -422,10 +500,12 @@ export class BarChartComponent {
       title: bucket.datum.fullLabel,
       lines: [...this.stackSeries(), ...this.signedSeries()]
         .map((item) => ({
+          key: item.key,
           label: item.label,
           value: bucket.datum.values[item.key] ?? 0,
           seriesIndex: item.seriesIndex,
           signed: item.signed === true,
+          swatch: !item.signed && !!bucket.datum.fill,
         }))
         // A signed value is worth listing whenever it is nonzero, negative included.
         .filter((line) => (line.signed ? line.value !== 0 : line.value > 0)),
@@ -442,10 +522,12 @@ export class BarChartComponent {
       title: datum?.fullLabel ?? segment.label,
       lines: [
         {
+          key: segment.seriesKey,
           label: series?.label ?? segment.seriesKey,
           value: datum?.values[segment.seriesKey] ?? 0,
           seriesIndex: segment.seriesIndex,
           signed: segment.signed,
+          swatch: !segment.signed && segment.fill !== null,
         },
       ],
       x: segment.x + segment.w / 2,

@@ -120,6 +120,13 @@
       >
         <title>{{ segment.tooltip }}</title>
       </rect>
+      @if (segment.breakPath) {
+        <path
+          class="bar-chart__break"
+          aria-hidden="true"
+          [attr.d]="segment.breakPath"
+        />
+      }
     }
   </svg>
 
@@ -132,13 +139,15 @@
       [style.top.px]="tip.y"
     >
       <strong>{{ tip.title }}</strong>
-      @for (line of tip.lines; track line.label) {
+      @for (line of tip.lines; track line.key) {
         <span>
           <i
             [class]="
               line.signed
                 ? 'bar-chart__key--signed'
-                : 'chart-bg-' + line.seriesIndex
+                : line.swatch
+                  ? 'bar-chart__key--swatch'
+                  : 'chart-bg-' + line.seriesIndex
             "
           ></i>
           {{ line.label }}: {{ line.value }}

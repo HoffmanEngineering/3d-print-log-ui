@@ -131,3 +131,18 @@
     var(--chart-signed-bg) 2px 4px
   );
 }
+
+// A swatch-filled bar (a gradient or pattern) has no single color to show, so its key is a
+// neutral outline rather than a series color that would contradict the bar beside it.
+.bar-chart__tooltip .bar-chart__key--swatch {
+  border: 1px solid var(--chart-swatch-outline);
+  background: transparent;
+}
+
+// The break across a clipped bar: drawn in the chart background so it reads as a gap.
+.bar-chart__break {
+  fill: none;
+  stroke: var(--chart-tooltip-bg);
+  stroke-width: 2;
+  pointer-events: none;
+}

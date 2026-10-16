@@ -11,6 +11,7 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { NfcStatus, TagRead } from 'src/app/core/types/native-bridge';
+import { FilamentTagDetail } from 'src/app/core/types/tag-reading';
 import { TagUidConflict } from '../../tag-uid';
 import { FilamentTagUidsComponent } from './filament-tag-uids.component';
 
@@ -422,5 +423,147 @@ describe('FilamentTagUidsComponent scanning', () => {
     );
     fixture.detectChanges();
     expect(scanButton()).toBeNull();
+  });
+});
+
+@Component({
+  imports: [FilamentTagUidsComponent, ReactiveFormsModule],
+  template: `<app-filament-tag-uids
+    [formControl]="control"
+    [tagDetails]="details()"
+    [catalogEntryId]="catalogEntryId()"
+  />`,
+})
+class DetailsHostComponent {
+  readonly control = new FormControl<string[]>(['805BEC3E', 'DEADBEEF'], {
+    nonNullable: true,
+  });
+  readonly details = signal<FilamentTagDetail[]>([]);
+  readonly catalogEntryId = signal<string | null>(null);
+}
+
+describe('FilamentTagUidsComponent tag details', () => {
+  let fixture: ComponentFixture<DetailsHostComponent>;
+  let host: DetailsHostComponent;
+  let el: HTMLElement;
+
+  const snapmaker: FilamentTagDetail = {
+    uid: '805BEC3E',
+    format: 'snapmaker',
+    lastReadAt: null,
+    reading: {
+      format: 'snapmaker',
+      sku: '900001',
+      manufacturedOn: '2026-03-12',
+      dryTempC: 55,
+      dryHours: 6,
+      hotendMinC: 190,
+      hotendMaxC: 230,
+      bedMinC: 60,
+      bedMaxC: 60,
+    },
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DetailsHostComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: TagReaderService,
+          useValue: { available: signal(false), status: signal('unsupported') },
+        },
+        {
+          provide: FilamentService,
+          useValue: jasmine.createSpyObj('FilamentService', [
+            'getFilamentByTag',
+          ]),
+        },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+        },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(DetailsHostComponent);
+    host = fixture.componentInstance;
+    el = fixture.nativeElement;
+  });
+
+  const details = () =>
+    Array.from(el.querySelectorAll('[data-testid="tag-uid-detail"]')).map((d) =>
+      d.textContent!.replace(/\s+/g, ' ').trim()
+    );
+
+  it('shows what a Snapmaker tag says under its UID', () => {
+    host.details.set([snapmaker]);
+    fixture.detectChanges();
+
+    const text = details();
+    expect(text.length).toBe(1);
+    expect(text[0]).toContain('805BEC3E');
+    expect(text[0]).toContain('Snapmaker tag');
+    expect(text[0]).toContain('SKU 900001');
+    expect(text[0]).toContain('Made 2026-03-12');
+    expect(text[0]).toContain('Dry at 55 °C for 6 h');
+    expect(text[0]).toContain('Tag says 190\u2013230 °C, bed 60 °C');
+  });
+
+  it('matches a detail to its row by normalized UID, whatever the order', () => {
+    host.control.setValue(['DEADBEEF', '80:5b:ec:3e']);
+    host.details.set([snapmaker]);
+    fixture.detectChanges();
+
+    expect(details().length).toBe(1);
+    expect(details()[0]).toContain('SKU 900001');
+  });
+
+  it('leaves out fields the reading does not carry', () => {
+    host.details.set([
+      {
+        uid: '805BEC3E',
+        format: 'openspool',
+        lastReadAt: null,
+        reading: { format: 'openspool', hotendC: 210 },
+      },
+    ]);
+    fixture.detectChanges();
+
+    const text = details()[0];
+    expect(text).toContain('OpenSpool tag');
+    expect(text).toContain('Tag says 210 °C');
+    expect(text).not.toContain('SKU');
+    expect(text).not.toContain('Made');
+    expect(text).not.toContain('Dry');
+    expect(text).not.toContain('bed');
+  });
+
+  it('a tag without a reading renders only its UID', () => {
+    host.details.set([
+      { uid: '805BEC3E', format: null, reading: null, lastReadAt: null },
+    ]);
+    fixture.detectChanges();
+
+    expect(details()).toEqual([]);
+    expect(el.querySelectorAll('[data-testid="tag-uid-chip"]').length).toBe(2);
+  });
+
+  it('credits SpoolmanDB once when the material came from the catalog', () => {
+    host.details.set([snapmaker]);
+    host.catalogEntryId.set('cat-1');
+    fixture.detectChanges();
+
+    const links = el.querySelectorAll<HTMLAnchorElement>(
+      'a[href="https://github.com/Donkie/SpoolmanDB"]'
+    );
+    expect(links.length).toBe(1);
+    expect(links[0].textContent).toContain('Spool data: SpoolmanDB');
+    expect(links[0].target).toBe('_blank');
+    expect(links[0].rel).toContain('noopener');
+  });
+
+  it('shows no attribution without a catalog entry', () => {
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('SpoolmanDB');
   });
 });

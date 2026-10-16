@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -24,7 +25,9 @@ import { RouterLink } from '@angular/router';
 import { Subscription, take } from 'rxjs';
 import { FilamentService } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { FilamentTagDetail, TagReading } from 'src/app/core/types/tag-reading';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
+import { formatLabel } from '../../tag-format-label';
 import { MAX_TAG_UIDS, TagUidConflict, normalizeTagUid } from '../../tag-uid';
 
 /**
@@ -39,6 +42,7 @@ import { MAX_TAG_UIDS, TagUidConflict, normalizeTagUid } from '../../tag-uid';
   styleUrls: ['./filament-tag-uids.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DatePipe,
     MatButtonModule,
     MatChipsModule,
     MatFormFieldModule,
@@ -68,6 +72,12 @@ export class FilamentTagUidsComponent
   /** This spool's id, so a scanned tag it already holds is not reported as a conflict. */
   readonly filamentId = input<string | null>(null);
 
+  /** What each tag says, from the API. Matched to the rows by normalized UID. */
+  readonly tagDetails = input<FilamentTagDetail[]>([]);
+
+  /** Set when the material came from the SpoolmanDB catalog. */
+  readonly catalogEntryId = input<string | null>(null);
+
   private readonly tagReader = inject(TagReaderService);
   private readonly filamentService = inject(FilamentService);
   private readonly loggingService = inject(LoggingService);
@@ -94,6 +104,25 @@ export class FilamentTagUidsComponent
   protected readonly error = signal<string | null>(null);
   protected readonly disabled = signal(false);
   protected readonly atCap = computed(() => this.tags().length >= MAX_TAG_UIDS);
+
+  /** One entry per listed UID whose tag has a decoded reading. Others show only the chip. */
+  protected readonly readings = computed(() => {
+    const byUid = new Map(
+      this.tagDetails().map((d) => [normalizeUidKey(d.uid), d])
+    );
+    return this.tags().flatMap((uid) => {
+      const detail = byUid.get(normalizeUidKey(uid));
+      return detail?.reading
+        ? [
+            {
+              uid,
+              format: formatLabel(detail.format ?? detail.reading.format),
+              ...describeReading(detail.reading),
+            },
+          ]
+        : [];
+    });
+  });
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.stopScanning());
@@ -259,4 +288,38 @@ export class FilamentTagUidsComponent
     this.onChange(tags);
     this.onTouched();
   }
+}
+
+function normalizeUidKey(uid: string): string {
+  return (uid ?? '').replace(/[:\-._\s]/g, '').toUpperCase();
+}
+
+function range(min?: number, max?: number, single?: number): string | null {
+  const lo = min ?? max ?? single;
+  const hi = max ?? min ?? single;
+  if (lo == null || hi == null) return null;
+  return lo === hi ? `${lo} °C` : `${lo}–${hi} °C`;
+}
+
+/** An ISO date-only string as a local date, so the date pipe cannot shift it a day. */
+function localDate(iso: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+
+function describeReading(r: TagReading) {
+  const hotend = range(r.hotendMinC, r.hotendMaxC, r.hotendC);
+  const bed = range(r.bedMinC, r.bedMaxC);
+  return {
+    sku: r.sku || null,
+    made: r.manufacturedOn ? localDate(r.manufacturedOn) : null,
+    drying:
+      r.dryTempC != null
+        ? `Dry at ${r.dryTempC} °C${r.dryHours != null ? ` for ${r.dryHours} h` : ''}`
+        : null,
+    temps:
+      hotend || bed
+        ? `Tag says ${[hotend, bed ? `bed ${bed}` : null].filter(Boolean).join(', ')}`
+        : null,
+  };
 }

@@ -49,3 +49,31 @@
 .tag-uids__scan--active {
   color: var(--app-primary);
 }
+
+.tag-uids__details {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  color: var(--app-text-secondary);
+}
+
+.tag-uids__detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-bottom: 4px;
+}
+
+.tag-uids__format {
+  color: var(--app-text-primary);
+}
+
+.tag-uids__attribution {
+  margin: 0 0 8px;
+  font-size: 0.85em;
+  color: var(--app-text-tertiary);
+
+  a {
+    color: inherit;
+  }
+}

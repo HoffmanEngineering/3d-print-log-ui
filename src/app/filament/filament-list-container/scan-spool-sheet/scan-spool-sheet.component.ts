@@ -77,6 +77,13 @@ const REASON_LABELS: Record<TagSuggestionReason, string> = {
 const CLASSIC_HINT_KEY = 'printlog.tagHint.classicUnsupported';
 
 /**
+ * How long "Reading tag" may stand with no tag after it. Native can report a tag under the
+ * phone and then deliver nothing (a repeat it drops, a read cut short), so the sheet must not
+ * wait forever.
+ */
+const READING_WATCHDOG_MS = 4000;
+
+/**
  * The Materials list's "Scan spool": waits for one tag, resolves it through the API, then
  * opens its spool, or for a tag no spool has yet shows what the tag says and offers spools to
  * link it to, a search of all materials, or a new material.
@@ -165,13 +172,12 @@ export class ScanSpoolSheetComponent {
     .listen()
     .subscribe((read) => this.handleTag(read));
   private startedSubscription: Subscription | null =
-    this.tagReader.readingStarted.subscribe(() => {
-      if (this.phase() === 'waiting' || this.phase() === 'error') {
-        this.error.set(null);
-        this.setPhase('reading');
-      }
-    });
+    this.tagReader.readingStarted.subscribe(() => this.readingStarted());
   private resolution: Subscription | null = null;
+
+  /** Where "Reading tag" came from, so the watchdog can go back there. */
+  private readingFrom: { phase: Phase; error: string | null } | null = null;
+  private watchdog: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
@@ -247,15 +253,69 @@ export class ScanSpoolSheetComponent {
     void this.tagReader.openSettings();
   }
 
+  /** True while the sheet shows an unknown tag and asks for it to be read again. */
+  private awaitingReread(): boolean {
+    return (
+      this.phase() === 'unknown' &&
+      this.hint() === 'hold-still' &&
+      this.linkingId() === null
+    );
+  }
+
+  private readingStarted(): void {
+    const phase = this.phase();
+    if (phase === 'reading') {
+      this.armWatchdog();
+      return;
+    }
+    if (phase !== 'waiting' && phase !== 'error' && !this.awaitingReread()) {
+      return;
+    }
+    this.readingFrom = { phase, error: this.error() };
+    this.error.set(null);
+    this.setPhase('reading');
+    this.armWatchdog();
+  }
+
+  private armWatchdog(): void {
+    this.clearWatchdog();
+    this.watchdog = setTimeout(() => {
+      this.watchdog = null;
+      const from = this.readingFrom;
+      if (this.phase() !== 'reading' || !from) {
+        return;
+      }
+      this.readingFrom = null;
+      this.error.set(from.error);
+      this.setPhase(from.phase);
+    }, READING_WATCHDOG_MS);
+  }
+
+  private clearWatchdog(): void {
+    if (this.watchdog !== null) {
+      clearTimeout(this.watchdog);
+      this.watchdog = null;
+    }
+  }
+
   private handleTag(read: TagRead): void {
     const phase = this.phase();
-    if (phase !== 'waiting' && phase !== 'reading' && phase !== 'error') {
+    if (
+      phase !== 'waiting' &&
+      phase !== 'reading' &&
+      phase !== 'error' &&
+      !this.awaitingReread()
+    ) {
+      // Dropped, so a later tap of this tag must not be swallowed as a repeat.
+      this.tagReader.forget(read.uid);
       return;
     }
     this.resolve(read);
   }
 
   private resolve(read: TagRead): void {
+    this.clearWatchdog();
+    this.readingFrom = null;
     this.lastRead.set(read);
     this.error.set(null);
     this.setPhase('resolving');
@@ -285,12 +345,19 @@ export class ScanSpoolSheetComponent {
     }
 
     this.loggingService.logEvent('MaterialsScan_Unknown');
-    // The sheet stops at the first unknown tag. Letting go of the reader here also leaves it
-    // to the picker that "Search all materials" opens next.
-    this.stopListening();
+    const holdStill = response.hint === 'hold-still';
+    if (holdStill) {
+      // The read was cut short: keep listening for the same tag again. A phone still resting
+      // on it keeps sliding the reader's repeat window, so let the next read through now.
+      this.tagReader.forget(read.uid);
+    } else {
+      // The sheet stops at the first unknown tag. Letting go of the reader here also leaves it
+      // to the picker that "Search all materials" opens next.
+      this.stopListening();
+    }
     this.reading.set(response.reading ?? null);
     this.catalogMatch.set(response.catalogMatch ?? null);
-    this.hint.set(response.hint === 'hold-still' ? 'hold-still' : null);
+    this.hint.set(holdStill ? 'hold-still' : null);
     this.showClassicHint.set(
       read.classicUnsupported === true && this.firstClassicHint()
     );
@@ -367,6 +434,8 @@ export class ScanSpoolSheetComponent {
   }
 
   private stopListening(): void {
+    this.clearWatchdog();
+    this.readingFrom = null;
     this.subscription?.unsubscribe();
     this.subscription = null;
     this.startedSubscription?.unsubscribe();

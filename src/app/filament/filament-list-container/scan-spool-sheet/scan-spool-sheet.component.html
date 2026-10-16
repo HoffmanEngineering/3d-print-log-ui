@@ -90,6 +90,7 @@
         mat-button
         type="button"
         data-testid="scan-cancel"
+        [disabled]="linkingId() !== null"
         (click)="cancel()"
       >
         Cancel

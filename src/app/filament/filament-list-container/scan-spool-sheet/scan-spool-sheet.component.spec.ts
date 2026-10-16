@@ -1,6 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { WritableSignal, signal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  flush,
+  tick,
+} from '@angular/core/testing';
 import {
   MAT_BOTTOM_SHEET_DATA,
   MatBottomSheetRef,
@@ -148,6 +154,104 @@ describe('ScanSpoolSheetComponent', () => {
     fixture.detectChanges();
 
     expect(el.textContent).toContain('Reading tag, hold still…');
+  });
+
+  describe('when no tag follows Reading tag', () => {
+    beforeEach(async () => {
+      await setUp();
+    });
+
+    function startReading(): void {
+      started.next();
+      fixture.detectChanges();
+    }
+
+    it('goes back to waiting after 4 seconds', fakeAsync(() => {
+      startReading();
+
+      tick(3999);
+      fixture.detectChanges();
+      expect(el.textContent).toContain('Reading tag, hold still…');
+
+      tick(1);
+      fixture.detectChanges();
+      expect(el.textContent).toContain('Hold your phone to a spool');
+      expect(el.querySelector('mat-spinner')).toBeNull();
+      flush();
+    }));
+
+    it('goes back to the error with Retry when reading started from it', fakeAsync(() => {
+      filaments.resolveTagRead.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 0 }))
+      );
+      read('04A23F11');
+      startReading();
+      expect(el.textContent).not.toContain("Couldn't look up that tag");
+
+      tick(4000);
+      fixture.detectChanges();
+
+      expect(el.textContent).toContain(
+        "Couldn't look up that tag. Check your connection."
+      );
+      expect(button('scan-retry')).toBeTruthy();
+      flush();
+    }));
+
+    it('restarts the 4 seconds on another readingStarted', fakeAsync(() => {
+      startReading();
+      tick(3000);
+      startReading();
+
+      tick(3000);
+      fixture.detectChanges();
+      expect(el.textContent).toContain('Reading tag, hold still…');
+
+      tick(1000);
+      fixture.detectChanges();
+      expect(el.textContent).toContain('Hold your phone to a spool');
+      flush();
+    }));
+
+    it('does nothing once a tag arrives', fakeAsync(() => {
+      filaments.resolveTagRead.and.returnValue(new Subject<TagReadResponse>());
+      startReading();
+      read('04A23F11');
+
+      tick(4000);
+      fixture.detectChanges();
+
+      expect(el.textContent).toContain('Looking up the tag…');
+      flush();
+    }));
+
+    it('goes back to the hold-still sheet when reading started from it', fakeAsync(() => {
+      filaments.resolveTagRead.and.returnValue(
+        unknown({ reading: null, hint: 'hold-still' })
+      );
+      read('805BEC3E');
+      startReading();
+      expect(el.textContent).toContain('Reading tag, hold still…');
+
+      tick(4000);
+      fixture.detectChanges();
+
+      expect(el.textContent).toContain(
+        "Hold the phone still and tap again to read the spool's details"
+      );
+      flush();
+    }));
+  });
+
+  it('forgets a tap it drops while a lookup is running', async () => {
+    await setUp();
+    filaments.resolveTagRead.and.returnValue(new Subject<TagReadResponse>());
+    read('04A23F11');
+
+    read('04B00000');
+
+    expect(filaments.resolveTagRead).toHaveBeenCalledTimes(1);
+    expect(reader.forget).toHaveBeenCalledWith('04B00000');
   });
 
   it('a linked tag dismisses with that spool', async () => {
@@ -406,6 +510,84 @@ describe('ScanSpoolSheetComponent', () => {
       expect(button('scan-new')).toBeTruthy();
     });
 
+    describe('with the hold-still hint', () => {
+      const holdStill = () =>
+        unknown({
+          reading: null,
+          hint: 'hold-still',
+          suggestions: [],
+        });
+
+      it('keeps listening and forgets the UID so the same tag can be read again', async () => {
+        await setUp();
+        filaments.resolveTagRead.and.returnValue(holdStill());
+
+        read('805BEC3E');
+
+        expect(tags.observed).toBeTrue();
+        expect(reader.forget).toHaveBeenCalledWith('805BEC3E');
+      });
+
+      it('a second read of the same UID shows what the tag says', async () => {
+        await setUp();
+        filaments.resolveTagRead.and.returnValues(holdStill(), unknown());
+        read('805BEC3E');
+        expect(el.querySelector('[data-testid="scan-summary"]')).toBeNull();
+
+        read('805BEC3E', { memory: { kind: 'classic', data: 'AAAA' } });
+
+        expect(filaments.resolveTagRead).toHaveBeenCalledTimes(2);
+        expect(text('scan-summary-text')).toBe(
+          'Snapmaker tag · SnapSpeed PLA · 500 g · 1.75 mm'
+        );
+        expect(el.querySelector('[data-testid="scan-hold-still"]')).toBeNull();
+        // Decoded: the sheet stops at this tag now.
+        expect(tags.observed).toBeFalse();
+      });
+
+      it('a read of a different tag is a new scan', async () => {
+        await setUp();
+        filaments.resolveTagRead.and.returnValues(
+          holdStill(),
+          of({
+            status: 'linked',
+            filament: { id: 'spool-2' } as FilamentDetail,
+            reading: null,
+            catalogMatch: null,
+            suggestions: [],
+            hint: null,
+          })
+        );
+        read('805BEC3E');
+
+        read('04A23F11');
+
+        expect(filaments.resolveTagRead.calls.argsFor(1)[0].uid).toBe(
+          '04A23F11'
+        );
+        expect(sheetRef.dismiss).toHaveBeenCalledWith({
+          kind: 'known',
+          id: 'spool-2',
+        });
+      });
+    });
+
+    it('disables Cancel while a suggestion is being linked', async () => {
+      await setUp({ filaments: [summary('a', 'Alpha PLA')] });
+      filaments.resolveTagRead.and.returnValue(
+        unknown({
+          suggestions: [{ filamentId: 'a', score: 1, reasons: ['untagged'] }],
+        })
+      );
+      filaments.addTagToFilament.and.returnValue(new Subject<FilamentDetail>());
+      read('805BEC3E');
+
+      button('scan-suggestion').click();
+      fixture.detectChanges();
+
+      expect(button('scan-cancel').disabled).toBeTrue();
+    });
+
     it('an app without memory (no reading) shows Link and Create and no summary', async () => {
       await setUp({ filaments: [summary('a', 'Alpha PLA')] });
       filaments.resolveTagRead.and.returnValue(
@@ -508,9 +690,11 @@ describe('ScanSpoolSheetComponent', () => {
       button('scan-retry').click();
 
       expect(filaments.resolveTagRead).toHaveBeenCalledTimes(2);
-      expect(filaments.resolveTagRead.calls.argsFor(1)[0]).toEqual(
-        filaments.resolveTagRead.calls.argsFor(0)[0]
-      );
+      expect(filaments.resolveTagRead.calls.argsFor(1)[0]).toEqual({
+        uid: '805BEC3E',
+        tech: 'nfca',
+        memory: { kind: 'classic', data: 'AAAA' },
+      });
       expect(sheetRef.dismiss).toHaveBeenCalledWith({
         kind: 'known',
         id: 'spool-1',

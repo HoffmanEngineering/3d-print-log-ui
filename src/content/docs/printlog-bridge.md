@@ -20,9 +20,7 @@ It runs either on the printer's own host or in a Docker container on another com
 
 <doc-callout kind="note" heading="The bridge is new">
   <p>
-    printlog-bridge has no numbered release yet. You install it from its GitHub
-    repository, and the Docker image is published under the
-    <code>edge</code> tag. If something doesn't work the way this page says,
+    If something doesn't work the way this page says,
     <a routerLink="/docs/printlog-bridge-troubleshooting">troubleshooting</a>
     explains how to send a report.
   </p>

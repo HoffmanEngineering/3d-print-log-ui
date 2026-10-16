@@ -45,9 +45,9 @@ body:
 
 The `[notifier 3d_print_log]` section logs each print on this printer when it starts, succeeds, fails or is cancelled. It uses the same secret as `[spoolman]`, so you need no API key and no printer id.
 
-If [printlog-bridge](/docs/printlog-bridge) is running for the printer, the bridge logs its prints and the notifier's events are ignored, so nothing is logged twice.
+If [printlog-bridge](/docs/printlog-bridge) is running for the printer, the bridge logs its prints and the notifier's events are ignored, so nothing is logged twice. A printer with printlog-bridge gets only the `[spoolman]` part of the block.
 
-Lost the block? Choose **Reconnect** on the printer's page. You get a new block, and the old one stops working.
+Lost the block, or shared your `moonraker.log`? Choose **Change secret** on the printer's page. You get a new block, and the old one stops working at once, so the printer stops seeing your spools until you paste the new block. Moonraker writes the server address, secret included, to `moonraker.log`.
 
 ### Already running your own Spoolman? {#own-spoolman}
 
@@ -90,7 +90,7 @@ Fluidd's Spoolman card may show "Live updates from Spoolman aren't working". Tha
 
 - **Both the `server` line and the notifier `url` line contain the secret.** Anyone who can open Mainsail or Fluidd on your printer can read `moonraker.conf`, and the secret with it.
 - The secret reaches your spools and logs prints for this printer, through this printer's connection, and nothing else. You can revoke it at any time: choose **Disconnect** on the printer's page, or **Revoke** under **Spoolman Connections** in [Settings](/settings), where every connected printer is listed.
-- **Moonraker writes both addresses, secret included, into `moonraker.log`.** Remove the secret from both lines before you share `moonraker.conf` or that log, or revoke and reconnect the printer afterwards.
+- **Moonraker writes both addresses, secret included, into `moonraker.log`.** Remove the secret from both lines before you share `moonraker.conf` or that log, or choose **Change secret** on the printer's page afterwards.
 
 ### Troubleshooting {#troubleshooting}
 
@@ -98,7 +98,7 @@ Fluidd's Spoolman card may show "Live updates from Spoolman aren't working". Tha
 
 **Moonraker won't load its config after you pasted the block.** Look for a second `[notifier 3d_print_log]` section in `moonraker.conf`. Delete the old one from the API-key setup, keep the one from the new block, then choose **Save & Restart**.
 
-**`moonraker.log` shows `401`.** The secret was revoked or mistyped. Choose **Reconnect** on the printer's page and paste the new block.
+**`moonraker.log` shows `401`.** The secret was revoked or mistyped. Choose **Change secret** on the printer's page and paste the new block.
 
 ### Compared with the other Klipper integrations {#compare}
 

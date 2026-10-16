@@ -136,15 +136,56 @@ describe('PrinterSpoolmanComponent', () => {
     expect(intro).toContain('log every print');
   });
 
-  it('tells the reader to delete an old [notifier 3d_print_log] section before pasting', () => {
+  it('tells the reader to delete an old [notifier 3d_print_log] section when the block has one', () => {
+    render([]);
+    clickConnect();
+    httpMock.expectOne(connectUrl).flush(
+      created({
+        configBlock: `${block}
+[notifier 3d_print_log]
+url: jsons://x
+`,
+      })
+    );
+    fixture.detectChanges();
+
+    const note = squash(q('spoolman-notifier-note'));
+    expect(note).toContain('[notifier 3d_print_log]');
+    expect(note).toContain('delete');
+    expect(squash(q('spoolman-config'))).not.toContain('only has [spoolman]');
+  });
+
+  it('says the block has only [spoolman] when printlog-bridge logs the prints', () => {
     render([]);
     clickConnect();
     httpMock.expectOne(connectUrl).flush(created());
     fixture.detectChanges();
 
     const note = squash(q('spoolman-notifier-note'));
-    expect(note).toContain('[notifier 3d_print_log]');
-    expect(note).toContain('delete');
+    expect(note).toContain(
+      "printlog-bridge logs this printer's prints, so this block has only [spoolman]."
+    );
+    expect(note).not.toContain('delete');
+    expect(squash(q('spoolman-config'))).not.toContain(
+      'If printlog-bridge is running for this printer'
+    );
+  });
+
+  it('keeps the printlog-bridge hint when the block has a notifier section', () => {
+    render([]);
+    clickConnect();
+    httpMock.expectOne(connectUrl).flush(
+      created({
+        configBlock: `${block}
+[notifier 3d_print_log]
+`,
+      })
+    );
+    fixture.detectChanges();
+
+    expect(squash(q('spoolman-config'))).toContain(
+      'If printlog-bridge is running for this printer'
+    );
   });
 
   it('ignores another printer’s connection and a revoked one', () => {
@@ -275,6 +316,7 @@ describe('PrinterSpoolmanComponent', () => {
     );
     expect(q('spoolman-connect')).toBeNull();
     expect(q('spoolman-reconnect')).not.toBeNull();
+    expect(squash(q('spoolman-reconnect'))).toBe('Change secret');
     expect(q('spoolman-disconnect')).not.toBeNull();
   });
 
@@ -302,13 +344,22 @@ describe('PrinterSpoolmanComponent', () => {
     expect(q('spoolman-disconnect')).not.toBeNull();
   });
 
-  it('reconnects after a confirmation and shows the new block', () => {
+  it('changes the secret after a confirmation and shows the new block', () => {
     render([connection()]);
 
     q('spoolman-reconnect')!.click();
     fixture.detectChanges();
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
+    const data = dialog.open.calls.mostRecent().args[1]
+      ?.data as SimpleDialogData;
+    expect(data.title).toBe("Change this printer's Spoolman secret?");
+    expect(data.body).toContain('Only do this if you lost the');
+    expect(data.body).toContain('moonraker.log');
+    expect(data.body).toContain('until you paste the new block');
+    expect(data.yesText).toBe('Change secret');
+    expect(data.yesColor).toBe('warn');
+    expect(data.noText).toBe('Cancel');
     httpMock
       .expectOne(connectUrl)
       .flush(created({ configBlock: block.replace('AbC', 'New') }));
@@ -361,15 +412,22 @@ describe('PrinterSpoolmanComponent', () => {
     );
   });
 
-  it('puts a Snapmaker U1 behind a note pointing at its guide and Advanced Mode', () => {
+  it('tells a Snapmaker U1 owner to turn on Advanced Mode, with a link to the guide section', () => {
     fixture.componentRef.setInput('make', 'Snapmaker');
     fixture.componentRef.setInput('model', 'U1');
     render([]);
 
     const note = q('spoolman-u1-note');
     expect(note).not.toBeNull();
-    expect(squash(note)).toContain('Advanced Mode');
-    expect(note!.querySelector('a[href="/docs/snapmaker-u1"]')).not.toBeNull();
+    const text = squash(note);
+    expect(text).toContain(
+      'turn on Advanced Mode (Settings → Maintenance → Advanced Mode)'
+    );
+    expect(text).toContain('puts back its stock config when it restarts');
+    expect(text).not.toContain('waiting on a test');
+    expect(text).not.toContain('printlog-bridge');
+    const link = note!.querySelector('a')!;
+    expect(link.getAttribute('href')).toBe('/docs/snapmaker-u1#spoolman');
   });
 
   it('shows no U1 note on another printer', () => {

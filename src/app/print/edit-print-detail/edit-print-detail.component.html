@@ -427,7 +427,9 @@
                         }
                       </div>
                       <div fxFlex class="filament-section filament-name">
-                        @if (printFilament.get('filament').value !== null) {
+                        @if (
+                          hasRealSpool(printFilament.get('filament').value)
+                        ) {
                           <a
                             [href]="
                               '/materials/' +
@@ -441,8 +443,7 @@
                               printFilament.get('filament').value?.displayName
                             }}
                           </a>
-                        }
-                        @if (printFilament.get('filament').value === null) {
+                        } @else {
                           <span>Other</span>
                         }
                       </div>
@@ -456,31 +457,46 @@
                       <div fxFlex class="filament-section">
                         {{ printFilament.get('filament').value?.materialType }}
                       </div>
-                      @if (printFilament.get('filament').value !== null) {
+                      <!-- An untracked spool (no starting weight) has null
+                           remaining: say "Not tracked" once, on the weight line,
+                           and leave out length and volume. "Other" is not a
+                           spool at all, so it gets no remaining line. -->
+                      @if (hasRealSpool(printFilament.get('filament').value)) {
                         <div fxFlex class="filament-section">
                           {{
                             printFilament.get('filament').value
-                              ?.filamentRemaining / 1000 | number
+                              ?.filamentRemaining
+                              | remaining
+                                : { divisor: 1000, unit: ' (g) remaining' }
                           }}
-                          (g) remaining
                         </div>
                       }
-                      @if (printFilament.get('filament').value !== null) {
+                      @if (
+                        isRemainingTracked(
+                          printFilament.get('filament').value
+                            ?.filamentLengthRemainingInM
+                        )
+                      ) {
                         <div fxFlex class="filament-section">
                           {{
                             printFilament.get('filament').value
-                              ?.filamentLengthRemainingInM | number
+                              ?.filamentLengthRemainingInM
+                              | remaining: { unit: ' (m) remaining' }
                           }}
-                          (m) remaining
                         </div>
                       }
-                      @if (printFilament.get('filament').value !== null) {
+                      @if (
+                        isRemainingTracked(
+                          printFilament.get('filament').value
+                            ?.filamentVolumeRemainingInMl
+                        )
+                      ) {
                         <div fxFlex class="filament-section">
                           {{
                             printFilament.get('filament').value
-                              ?.filamentVolumeRemainingInMl | number
+                              ?.filamentVolumeRemainingInMl
+                              | remaining: { unit: ' (ml) remaining' }
                           }}
-                          (ml) remaining
                         </div>
                       }
                       @if (

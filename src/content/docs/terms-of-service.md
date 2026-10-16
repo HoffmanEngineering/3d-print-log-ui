@@ -6,13 +6,13 @@ navLabel: Terms of Service
 group: about
 order: 35
 mode: reference
-updated: 2026-10-14
+updated: 2026-10-16
 related: [privacy-policy, contact, pro-subscription]
 ---
 
 # Terms of Service for 3D Print Log
 
-Last Updated: Oct 14, 2026
+Last Updated: Oct 16, 2026
 
 These terms apply when you use 3D Print Log: the website at https://www.3dprintlog.com, the
 Android app, the API at https://api.3dprintlog.com, and the integrations and AI connectors that
@@ -42,6 +42,10 @@ photos, files, notes and comments.
   mark a print, project or profile as public, you also permit us to show it to anyone, including
   in search results. This permission ends when you delete the content or your account, except for
   content other users have already been shown and copies kept as described in the Privacy Policy.
+- **Catalog information you contribute is shared under the MIT License.** This covers information
+  that helps identify filament, such as which catalog product a spool's tag code belongs to, or
+  the measured empty weight of a spool. You license it under the MIT License so that it can be
+  shared with open filament databases.
 - **You are responsible for what you upload.** Only upload files, models and images you have the
   right to share, and respect the licences of models you print.
 

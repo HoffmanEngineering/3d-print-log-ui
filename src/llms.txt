@@ -56,6 +56,7 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [OctoPrint webhook](https://www.3dprintlog.com/docs/octoprint-webhook): Record prints from OctoPrint.
 - [printlog-bridge for Klipper](https://www.3dprintlog.com/docs/printlog-bridge): Log every Klipper/Moonraker print automatically, with filament per tool, pictures and spools.
 - [Connect Klipper via Spoolman](https://www.3dprintlog.com/docs/klipper-spoolman): Your 3D Print Log spools in the Mainsail, Fluidd and KlipperScreen spool pickers, through Moonraker's built-in Spoolman support. 1 printer on Free, unlimited on Pro.
+- [Home Assistant via Spoolman](https://www.3dprintlog.com/docs/home-assistant-spoolman): Your spools as Home Assistant sensors (remaining weight, color, low filament) through the community Spoolman integration. Read-only.
 - [Install printlog-bridge on the printer](https://www.3dprintlog.com/docs/printlog-bridge-install): Local mode, as a systemd service, and connecting it with an API key.
 - [Run printlog-bridge in Docker](https://www.3dprintlog.com/docs/printlog-bridge-docker): Remote mode on a NAS, home server or Pi.
 - [printlog-bridge spool macros](https://www.3dprintlog.com/docs/printlog-bridge-spools): PRINTLOG_SET_SPOOL and PRINTLOG_CLEAR_SPOOL, by spool id or tag.

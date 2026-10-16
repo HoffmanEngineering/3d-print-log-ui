@@ -76,6 +76,8 @@ export class TagReaderService {
     this._readingStarted.asObservable();
   /** Fetched once per app session; a failed fetch is not cached, so the next start retries. */
   private config$: Observable<ReaderConfig> | null = null;
+  /** Bumped by every start and stop, so a start that lost the race to a newer one stands down. */
+  private session = 0;
   private listeners = 0;
   private wired = false;
   private fake = false;
@@ -108,6 +110,7 @@ export class TagReaderService {
         memory?: TagRead['memory']
       ) => {
         goFake();
+        this._readingStarted.next();
         this.accept({
           uid: uid.toUpperCase(),
           tech,
@@ -178,9 +181,10 @@ export class TagReaderService {
     if (this.fake) {
       return;
     }
+    const session = ++this.session;
     const config = await this.loadConfig();
-    if (this.listeners === 0) {
-      // Everyone left while the config loaded; their stop() already ran.
+    if (session !== this.session || this.listeners === 0) {
+      // A stop or a newer start came in while the config loaded; it owns native now.
       return;
     }
     this._status.set(await this.bridge.startTagReading(config));
@@ -203,6 +207,7 @@ export class TagReaderService {
     if (this.fake) {
       return;
     }
+    this.session++;
     await this.bridge.stopTagReading();
   }
 

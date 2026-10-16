@@ -483,6 +483,52 @@ describe('TagReaderService', () => {
     expect(service.status()).toBe('ready');
   });
 
+  it('starts native once when a listener leaves and returns while the config loads', async () => {
+    pretendCordova();
+    const nfc = new FakeNfcBridge();
+    installBridge(nfc);
+    const pending = new Subject<ReaderConfig>();
+    filaments.getReaderConfig.and.returnValue(pending);
+    const service = create();
+
+    service.listen().subscribe().unsubscribe();
+    service.listen().subscribe();
+    pending.next(config);
+    pending.complete();
+    await flush();
+
+    expect(nfc.stopTagReading).toHaveBeenCalledTimes(1);
+    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(config);
+  });
+
+  it('starts native once when the bridge appears while a start is in flight', async () => {
+    pretendCordova();
+    const service = create();
+    const pending = new Subject<ReaderConfig>();
+    filaments.getReaderConfig.and.returnValue(pending);
+    service.listen().subscribe();
+
+    const nfc = new FakeNfcBridge();
+    installBridge(nfc);
+    window.dispatchEvent(new Event('printlog-native-ready'));
+    window.dispatchEvent(new Event('printlog-native-ready'));
+    service.listen().subscribe().unsubscribe();
+    pending.next(config);
+    pending.complete();
+    await flush();
+
+    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(config);
+  });
+
+  it('the dev fake tag signals readingStarted before it delivers the read', () => {
+    const service = create();
+    const order: string[] = [];
+    service.readingStarted.subscribe(() => order.push('started'));
+    service.listen().subscribe(() => order.push('read'));
+    window.__printlogFakeTag?.('04a23f11');
+    expect(order).toEqual(['started', 'read']);
+  });
+
   it('openSettings asks the bridge', async () => {
     pretendCordova();
     const nfc = new FakeNfcBridge();

@@ -114,8 +114,9 @@ describe('FilamentListContainerComponent Scan spool', () => {
 
     component.openScanSpool();
 
+    // In navigation state, never the URL: page views must not carry the UID.
     expect(router.navigate).toHaveBeenCalledWith(['/materials', 'new'], {
-      queryParams: { tag: '04A23F11' },
+      state: { scannedTagUid: '04A23F11' },
     });
   });
 

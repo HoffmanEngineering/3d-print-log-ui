@@ -669,7 +669,8 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
             break;
           case 'new':
             void this.router.navigate(['/materials', 'new'], {
-              queryParams: { tag: result.uid },
+              // Navigation state, not the URL: page views must not carry the UID.
+              state: { scannedTagUid: result.uid },
             });
             break;
           case 'link':

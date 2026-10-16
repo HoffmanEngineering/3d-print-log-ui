@@ -1080,11 +1080,17 @@ describe('FilamentDetailComponent - usage panels', () => {
   });
 });
 
-/** Scan spool's "New material with this tag" opens /materials/new?tag=<uid>. */
-describe('FilamentDetailComponent ?tag=', () => {
+/**
+ * Scan spool's "New material with this tag" opens /materials/new with the UID in navigation
+ * state, never in the URL, so it can't reach page-view telemetry.
+ */
+describe('FilamentDetailComponent scanned tag', () => {
   let fixture: ComponentFixture<FilamentDetailComponent>;
 
+  afterEach(() => history.replaceState(null, ''));
+
   async function setup(tag: string | null, filament: unknown = null) {
+    history.replaceState(tag === null ? null : { scannedTagUid: tag }, '');
     const mockFilamentService = jasmine.createSpyObj<FilamentService>(
       'FilamentService',
       {
@@ -1129,7 +1135,8 @@ describe('FilamentDetailComponent ?tag=', () => {
           useValue: {
             data: of({ filament, materials: [], materialCategories: [] }),
             snapshot: {
-              queryParamMap: convertToParamMap(tag === null ? {} : { tag }),
+              // A UID in the query string is ignored: it belongs in navigation state.
+              queryParamMap: convertToParamMap({ tag: 'AAAAAAAA' }),
             },
           },
         },
@@ -1155,7 +1162,12 @@ describe('FilamentDetailComponent ?tag=', () => {
     expect(tagUids()).toEqual([]);
   });
 
-  it('ignores the parameter on an existing material', async () => {
+  it('ignores a tag in the query string', async () => {
+    await setup(null);
+    expect(tagUids()).toEqual([]);
+  });
+
+  it('ignores the scanned tag on an existing material', async () => {
     await setup('04A23F11', {
       id: 'filament-1',
       displayName: 'Test',

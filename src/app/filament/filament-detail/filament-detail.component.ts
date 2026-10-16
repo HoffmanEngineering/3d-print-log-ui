@@ -441,8 +441,14 @@ export class FilamentDetailComponent
   }
 
   private prefillScannedTag(): void {
-    const raw = this.activatedRoute.snapshot?.queryParamMap?.get('tag');
-    if (!raw) return;
+    // Navigation state, never the URL, so the UID can't reach page-view telemetry.
+    const state: unknown =
+      typeof history === 'undefined' ? null : history.state;
+    const raw =
+      state && typeof state === 'object' && 'scannedTagUid' in state
+        ? state.scannedTagUid
+        : null;
+    if (typeof raw !== 'string' || !raw) return;
 
     const result = normalizeTagUid(raw);
     if ('error' in result) return;
@@ -473,7 +479,7 @@ export class FilamentDetailComponent
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
       this.tagUidsKnown = this.loadedFilament?.tagUids !== undefined;
 
-      // The Materials list's Scan spool sheet opens /materials/new?tag=<uid> for a tag no
+      // The Materials list's Scan spool sheet opens /materials/new with a tag no
       // spool has yet. Only on a new material: an existing one keeps its own tags.
       if (!this.loadedFilament) {
         this.prefillScannedTag();

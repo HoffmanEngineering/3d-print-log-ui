@@ -43,8 +43,10 @@ export class PrinterAvatarComponent {
    * component would never read the refreshed map. But not the URL alone either - signing
    * is bucketed to six hours server-side, so a refetch inside the bucket returns the SAME
    * URL, and matching on the URL would keep a transiently-failed photo hidden forever.
-   * Pairing it with the generation gives every completed refetch exactly one fresh attempt,
-   * while a genuinely dead blob simply fails again and re-suppresses.
+   * Pairing it with the generation gives every completed refetch exactly one fresh attempt.
+   * A genuinely dead blob fails that attempt and re-suppresses, and it stays suppressed:
+   * the store refreshes each URL at most once, so the second failure queues nothing and
+   * the generation holds until the TTL refetch or an `invalidate()`.
    */
   private readonly failed = signal<{ url: string; generation: number } | null>(
     null
@@ -61,11 +63,9 @@ export class PrinterAvatarComponent {
     return suppressed ? null : url;
   });
 
-  protected onError(): void {
-    const url = this.store.thumbnailFor(this.printerId());
-    if (url) {
-      this.failed.set({ url, generation: this.store.generation() });
-    }
-    this.store.noteLoadFailure(this.printerId());
+  /** `url` is the one the failing `<img>` rendered, not a fresh read of the store. */
+  protected onError(url: string): void {
+    this.failed.set({ url, generation: this.store.generation() });
+    this.store.noteLoadFailure(this.printerId(), url);
   }
 }

@@ -58,8 +58,23 @@ export class PrinterThumbnailStore {
   /** The single in-flight request, shared by every caller that arrives during it. */
   private inFlight: Observable<PrinterThumbnail[]> | null = null;
 
-  /** Debounces `noteLoadFailure` so a dead blob cannot become a refetch loop. */
+  /** Collapses the failures reported in one turn into a single refresh. */
   private failureRefreshQueued = false;
+
+  /**
+   * URLs that have already had their one failure-driven refresh.
+   *
+   * This is what stops a dead blob from becoming a refetch loop. The refresh comes back
+   * with the same bucketed URL, the consumer retries it once (the generation moved), and
+   * when that fails too the report lands here and is dropped. Without it every retry
+   * queued another refresh: about one request a second for as long as the page was open,
+   * until the API's per-user rate limiter answered 429 - to the user's printlog-bridge as
+   * well, which shares that budget.
+   *
+   * Cleared by `invalidate()`, so a printer-image mutation starts fresh, and pruned to the
+   * current map on every completed fetch, so a URL the API stops handing out is forgotten.
+   */
+  private readonly failureRefreshed = new Set<string>();
 
   /** Collapses the many reads of one render pass into a single deferred check. */
   private ensureQueued = false;
@@ -88,22 +103,44 @@ export class PrinterThumbnailStore {
     this.phase.set('idle');
     this.fetchedAt = 0;
     this.inFlight = null;
+    this.failureRefreshed.clear();
   }
 
   /**
-   * Reports that a URL from this map failed to load - usually a blob deleted elsewhere.
-   * At most one refresh is queued per turn, so a page full of broken avatars produces one
-   * request rather than one per image.
+   * Reports that `url`, handed out for `printerId`, failed to load - usually a blob
+   * deleted or replaced elsewhere. Each URL gets at most one refresh: a URL that fails
+   * again after it queues nothing until an `invalidate()`. The TTL refetch still bumps
+   * the generation, so a consumer gets one more attempt at it then, at no extra cost.
+   *
+   * The refresh keeps the current map rather than clearing it, so the other avatars on
+   * the page keep their photos, and their own failures, which arrive as separate events,
+   * still match the map and are marked as covered by the same request. Failures in one
+   * turn share one refresh, and a failure while a fetch is in flight is answered by that
+   * fetch, so a page full of broken avatars produces one request rather than one per
+   * image.
    */
-  noteLoadFailure(printerId: number): void {
-    if (this.failureRefreshQueued) return;
-    if (!this.map().has(printerId)) return;
+  noteLoadFailure(printerId: number, url: string): void {
+    // A late report for a URL the map no longer holds, such as one from before an
+    // invalidate(), says nothing about the URL it holds now.
+    if (this.map().get(printerId) !== url) return;
+    if (this.failureRefreshed.has(url)) return;
+    this.failureRefreshed.add(url);
 
+    if (this.failureRefreshQueued) return;
     this.failureRefreshQueued = true;
+    // Scheduled rather than started inline, so a write never lands inside a computed
+    // (NG0600) whoever the caller is.
     queueMicrotask(() => {
       this.failureRefreshQueued = false;
-      this.invalidate();
+      this.refreshAfterFailure();
     });
+  }
+
+  private refreshAfterFailure(): void {
+    if (!this.authService.loggedIn) return;
+    // A fetch already in flight is the refresh: it completes with a new generation.
+    if (this.phase() === 'loading') return;
+    this.fetch();
   }
 
   private scheduleEnsureLoaded(): void {
@@ -133,16 +170,23 @@ export class PrinterThumbnailStore {
     if (phase !== 'idle' && Date.now() - this.fetchedAt < THUMBNAIL_TTL_MS)
       return;
 
+    this.fetch();
+  }
+
+  private fetch(): void {
     this.phase.set('loading');
     this.inFlight = this.http.get<PrinterThumbnail[]>(this.url).pipe(
       tap((entries) => {
-        this.map.set(
-          new Map(
-            entries
-              .filter((e) => !!e.thumbnailUrl)
-              .map((e) => [e.printerId, e.thumbnailUrl as string])
-          )
+        const map = new Map(
+          entries
+            .filter((e) => !!e.thumbnailUrl)
+            .map((e) => [e.printerId, e.thumbnailUrl as string])
         );
+        const handedOut = new Set(map.values());
+        for (const url of this.failureRefreshed) {
+          if (!handedOut.has(url)) this.failureRefreshed.delete(url);
+        }
+        this.map.set(map);
         this.phase.set('loaded');
         this.fetchedAt = Date.now();
         this.generation.update((n) => n + 1);

@@ -147,3 +147,14 @@ mat-card-title {
     display: block;
   }
 }
+
+// A pre-filled field says where its value came from, even when it is not focused.
+.mat-mdc-form-field:not(.mat-focused) .mat-mdc-form-field-hint.tag-source-hint {
+  display: block;
+}
+
+.tag-source-note {
+  margin: 0 10px 12px;
+  font-size: 12px;
+  color: var(--app-text-hint);
+}

@@ -88,7 +88,16 @@
           @if (filamentForm.controls['displayName'].hasError('required')) {
             <mat-error> A Name is <strong>required</strong> </mat-error>
           }
-          @if (this.filamentForm.get('displayName').dirty) {
+          @if (tagSources()['displayName'] === 'catalog') {
+            <mat-hint class="tag-source-hint"
+              >From
+              <a [href]="spoolmanDbUrl" target="_blank" rel="noopener"
+                >SpoolmanDB</a
+              ></mat-hint
+            >
+          } @else if (tagSources()['displayName']) {
+            <mat-hint class="tag-source-hint">From tag</mat-hint>
+          } @else if (this.filamentForm.get('displayName').dirty) {
             <mat-hint>
               {{ 255 - this.filamentForm.get('displayName').value.length }}
               characters remaining.</mat-hint
@@ -134,7 +143,9 @@
               A Material Type is <strong>required</strong>
             </mat-error>
           }
-          @if (this.filamentForm.get('materialType').dirty) {
+          @if (tagSources()['materialType']) {
+            <mat-hint class="tag-source-hint">From tag</mat-hint>
+          } @else if (this.filamentForm.get('materialType').dirty) {
             <mat-hint>
               {{ 255 - this.filamentForm.get('materialType').value.length }}
               characters remaining.</mat-hint
@@ -274,6 +285,10 @@
           }
         </div>
 
+        @if (tagSources()['colors']) {
+          <p class="tag-source-note">From tag</p>
+        }
+
         <!-- Finish type -->
         <div fxFlex="grow" fxFlexFill>
           <h3 style="margin-bottom: 8px">Finish</h3>
@@ -350,6 +365,16 @@
             type="text"
             formControlName="colorName"
           />
+          @if (tagSources()['colorName'] === 'catalog') {
+            <mat-hint class="tag-source-hint"
+              >From
+              <a [href]="spoolmanDbUrl" target="_blank" rel="noopener"
+                >SpoolmanDB</a
+              ></mat-hint
+            >
+          } @else if (tagSources()['colorName']) {
+            <mat-hint class="tag-source-hint">From tag</mat-hint>
+          }
         </mat-form-field>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Brand</mat-label>
@@ -368,7 +393,9 @@
               </mat-option>
             }
           </mat-autocomplete>
-          @if (this.filamentForm.get('brand').dirty) {
+          @if (tagSources()['brand']) {
+            <mat-hint class="tag-source-hint">From tag</mat-hint>
+          } @else if (this.filamentForm.get('brand').dirty) {
             <mat-hint>
               {{ 255 - this.filamentForm.get('brand').value.length }} characters
               remaining.</mat-hint
@@ -386,6 +413,9 @@
                 formControlName="diameterMm"
                 step="0.25"
               />
+              @if (tagSources()['diameterMm']) {
+                <mat-hint class="tag-source-hint">From tag</mat-hint>
+              }
             </mat-form-field>
             @if (
               this.filamentForm &&
@@ -518,9 +548,13 @@
               ) {
                 <mat-error> Numbers (up to 3-decimal places) only. </mat-error>
               }
-              <mat-hint
-                >The nominal, or expected, weight of the material.</mat-hint
-              >
+              @if (tagSources()['initialNominalWeightG']) {
+                <mat-hint class="tag-source-hint">From tag</mat-hint>
+              } @else {
+                <mat-hint
+                  >The nominal, or expected, weight of the material.</mat-hint
+                >
+              }
             </mat-form-field>
           }
           @if (
@@ -547,7 +581,13 @@
                   Initial Nominal Length must be a positive number.
                 </mat-error>
               }
-              <mat-hint>The nominal, or expected, length of material</mat-hint>
+              @if (tagSources()['initialNominalLengthM']) {
+                <mat-hint class="tag-source-hint">From tag</mat-hint>
+              } @else {
+                <mat-hint
+                  >The nominal, or expected, length of material</mat-hint
+                >
+              }
             </mat-form-field>
           }
           @if (
@@ -615,6 +655,16 @@
             type="number"
             formControlName="spoolWeightG"
           />
+          @if (tagSources()['spoolWeightG'] === 'catalog') {
+            <mat-hint class="tag-source-hint"
+              >From
+              <a [href]="spoolmanDbUrl" target="_blank" rel="noopener"
+                >SpoolmanDB</a
+              ></mat-hint
+            >
+          } @else if (tagSources()['spoolWeightG']) {
+            <mat-hint class="tag-source-hint">From tag</mat-hint>
+          }
         </mat-form-field>
         <div fxFlex="grow" fxFlexFill>
           <h3 style="margin-block-end: 5px">
@@ -825,6 +875,9 @@
               type="number"
               formControlName="tempRangeStart"
             />
+            @if (tagSources()['tempRangeStart']) {
+              <mat-hint class="tag-source-hint">From tag</mat-hint>
+            }
           </mat-form-field>
         }
         @if (this.filamentForm.get('tempRangeEnd').enabled) {
@@ -836,6 +889,9 @@
               type="number"
               formControlName="tempRangeEnd"
             />
+            @if (tagSources()['tempRangeEnd']) {
+              <mat-hint class="tag-source-hint">From tag</mat-hint>
+            }
           </mat-form-field>
         }
         @if (this.filamentForm.get('recommendedTemp').enabled) {
@@ -847,6 +903,9 @@
               type="number"
               formControlName="recommendedTemp"
             />
+            @if (tagSources()['recommendedTemp']) {
+              <mat-hint class="tag-source-hint">From tag</mat-hint>
+            }
           </mat-form-field>
         }
         @if (this.filamentForm.get('recommendedBedTemp').enabled) {
@@ -858,6 +917,9 @@
               type="number"
               formControlName="recommendedBedTemp"
             />
+            @if (tagSources()['recommendedBedTemp']) {
+              <mat-hint class="tag-source-hint">From tag</mat-hint>
+            }
           </mat-form-field>
         }
         @if (this.filamentForm.get('meltingTemperature').enabled) {

@@ -32,6 +32,8 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
 
 import { FilamentDetailComponent } from './filament-detail.component';
+import type { CatalogMatch } from 'src/app/core/types/tag-reading';
+import { SNAPMAKER_805BEC3E } from '../testing/tag-fixtures';
 import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
 import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
@@ -1086,11 +1088,24 @@ describe('FilamentDetailComponent - usage panels', () => {
  */
 describe('FilamentDetailComponent scanned tag', () => {
   let fixture: ComponentFixture<FilamentDetailComponent>;
+  let service: jasmine.SpyObj<FilamentService>;
 
   afterEach(() => history.replaceState(null, ''));
 
-  async function setup(tag: string | null, filament: unknown = null) {
-    history.replaceState(tag === null ? null : { scannedTagUid: tag }, '');
+  async function setup(
+    tag: string | null,
+    filament: unknown = null,
+    read?: unknown
+  ) {
+    history.replaceState(
+      tag === null
+        ? null
+        : {
+            scannedTagUid: tag,
+            ...(read === undefined ? {} : { scannedTagRead: read }),
+          },
+      ''
+    );
     const mockFilamentService = jasmine.createSpyObj<FilamentService>(
       'FilamentService',
       {
@@ -1102,6 +1117,7 @@ describe('FilamentDetailComponent scanned tag', () => {
       }
     );
     stubImageTarget(mockFilamentService);
+    service = mockFilamentService;
 
     await TestBed.configureTestingModule({
       imports: [
@@ -1178,5 +1194,121 @@ describe('FilamentDetailComponent scanned tag', () => {
       tagUids: ['AABB'],
     });
     expect(tagUids()).toEqual(['AABB']);
+  });
+
+  describe('with a tag reading', () => {
+    const match: CatalogMatch = {
+      id: 'cat-1',
+      confidence: 0.9,
+      spoolWeightG: 140,
+      colorName: 'Black',
+      name: '',
+      manufacturer: 'Polymaker',
+      source: 'SpoolmanDB',
+    };
+    const read = () => ({
+      reading: SNAPMAKER_805BEC3E,
+      catalogMatch: match,
+    });
+    const control = (name: string) =>
+      fixture.componentInstance.filamentForm.get(name)!;
+    const field = (id: string) =>
+      (fixture.nativeElement as HTMLElement)
+        .querySelector(`#${id}`)!
+        .closest('mat-form-field')!;
+    const hintOf = (id: string) =>
+      field(id)
+        .querySelector('mat-hint')
+        ?.textContent?.replace(/\s+/g, ' ')
+        .trim();
+
+    it('pre-fills the form from the reading and the catalog match', async () => {
+      await setup('805BEC3E', null, read());
+
+      expect(tagUids()).toEqual(['805BEC3E']);
+      expect(control('brand').value).toBe('Snapmaker');
+      expect(control('materialType').value).toBe('PLA');
+      expect(control('displayName').value).toBe('SnapSpeed PLA');
+      expect(control('colorName').value).toBe('Black');
+      expect(control('colorHex').value).toBe('#080a0d');
+      expect(control('colors').value).toEqual(['#080a0d']);
+      expect(control('diameterMm').value).toBe(1.75);
+      expect(control('initialNominalWeightG').value).toBe(500);
+      expect(control('spoolWeightG').value).toBe(140);
+      expect(control('tempRangeStart').value).toBe(190);
+      expect(control('tempRangeEnd').value).toBe(230);
+      expect(control('recommendedTemp').value).toBe(220);
+      expect(control('recommendedBedTemp').value).toBe(60);
+    });
+
+    it('marks each pre-filled field with where it came from', async () => {
+      await setup('805BEC3E', null, read());
+      fixture.detectChanges();
+
+      expect(hintOf('edit-filament-brand')).toBe('From tag');
+      expect(hintOf('edit-filament-name')).toBe('From tag');
+      expect(hintOf('edit-filament-diameter')).toBe('From tag');
+      expect(hintOf('edit-filament-spool-weight')).toBe('From SpoolmanDB');
+      expect(hintOf('edit-filament-color')).toBe('From SpoolmanDB');
+      const link = field('edit-filament-spool-weight').querySelector(
+        'mat-hint a'
+      )!;
+      expect(link.getAttribute('href')).toBe(
+        'https://github.com/Donkie/SpoolmanDB'
+      );
+      expect(link.getAttribute('rel')).toContain('noopener');
+      expect(link.getAttribute('target')).toBe('_blank');
+    });
+
+    it('removes a hint once the user edits that field', async () => {
+      await setup('805BEC3E', null, read());
+      fixture.detectChanges();
+
+      const input = (fixture.nativeElement as HTMLElement).querySelector(
+        '#edit-filament-brand'
+      ) as HTMLInputElement;
+      input.value = 'Other';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      expect(hintOf('edit-filament-brand')).not.toBe('From tag');
+      expect(hintOf('edit-filament-diameter')).toBe('From tag');
+    });
+
+    it('saves the reading and catalog entry even when every field was changed', async () => {
+      await setup('805BEC3E', null, read());
+      control('materialDensityGramPerCubicCm').setValue(1.24);
+      control('brand').setValue('Changed');
+
+      fixture.componentInstance.onSubmit();
+
+      const sent = service.addFilament.calls.mostRecent().args[0];
+      expect(sent.tagUids).toEqual(['805BEC3E']);
+      expect(sent.tagReadings).toEqual([
+        { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
+      ]);
+      expect(sent.catalogEntryId).toBe('cat-1');
+    });
+
+    it('ignores an implausible reading', async () => {
+      await setup('805BEC3E', null, 'nonsense');
+
+      expect(tagUids()).toEqual(['805BEC3E']);
+      expect(control('brand').value).toBe('');
+      expect(field('edit-filament-brand').querySelector('mat-hint')).toBeNull();
+    });
+
+    it('sends no reading or catalog entry without a scanned reading', async () => {
+      await setup('805BEC3E');
+      control('materialDensityGramPerCubicCm').setValue(1.24);
+      control('displayName').setValue('X');
+      control('materialType').setValue('PLA');
+
+      fixture.componentInstance.onSubmit();
+
+      const sent = service.addFilament.calls.mostRecent().args[0];
+      expect(sent.tagReadings).toBeUndefined();
+      expect(sent.catalogEntryId).toBeUndefined();
+    });
   });
 });

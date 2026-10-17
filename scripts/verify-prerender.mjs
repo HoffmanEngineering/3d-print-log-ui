@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { skillDigest } from './discovery-lib.mjs';
 import { docBodyProblems } from './prerender-body-lib.mjs';
 import {
@@ -503,6 +503,23 @@ if (existsSync(`${DIST}/sitemap.xml`)) {
   }
 }
 
+// Development-only hooks must be compiled out of production. TagReaderService installs its
+// NFC fake inside an ngDevMode branch, which the CLI defines as false here; this checks that the
+// branch really went, rather than assuming it.
+const DEV_ONLY_MARKERS = ['__printlogFakeTag', '__printlogFakeNfc'];
+for (const entry of readdirSync(DIST, { recursive: true })) {
+  const file = String(entry);
+  if (!file.endsWith('.js')) continue;
+  const source = readFileSync(`${DIST}/${file}`, 'utf8');
+  for (const marker of DEV_ONLY_MARKERS) {
+    if (source.includes(marker)) {
+      errors.push(
+        `${file}: development-only ${marker} reached the production bundle`
+      );
+    }
+  }
+}
+
 if (errors.length) {
   console.error(
     'Prerender verification FAILED:\n' + errors.map((e) => ' - ' + e).join('\n')
@@ -510,5 +527,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files, agent skills, Markdown twins, docs bodies.`
+  `Prerender verification passed: ${routes.length + DOC_ROUTES.length} routes (${routes.length} marketing + ${DOC_ROUTES.length} docs); unique titles+descriptions, OG/Twitter, canonicals, JSON-LD structured data, fork hooks + hub links, homepage link graph, crawl files, discovery files, agent skills, Markdown twins, docs bodies, no dev-only hooks.`
 );

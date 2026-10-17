@@ -230,6 +230,10 @@ can scan a QR code label instead of searching manually:
 5. Use the camera dropdown to switch between cameras if your device has multiple cameras.
 6. Click the <mat-icon inline>list</mat-icon> icon to return to the search list view.
 
+In the Android app on a phone with NFC, you can also hold the phone to a
+spool's RFID or NFC tag while the dialog is open. See
+[In the Android app](#tags-android).
+
 ---
 
 ### RFID / NFC Tags {#tags}
@@ -253,6 +257,35 @@ materials. If you add a tag that is already on another material, the save is
 refused and the page names that material with a link to it. Remove the tag
 from one of the two, then save again. Like photos, tags are not carried over
 when you copy a material.
+
+#### In the Android app {#tags-android}
+
+On a phone with NFC, the [Android app](/docs/android-app) (version 1.3.0 or
+later) reads a tag's UID when you hold the phone to the spool, so you don't
+have to type it. Hold the back of the phone, near the camera, flat against the
+tag for a second; the phone buzzes when it has read it.
+
+- **Add a tag to a material:** edit the material and tap the
+  <mat-icon inline>nfc</mat-icon> icon beside **Tag UID**, then hold the phone
+  to the tag. If the tag is already on another of your materials, the page says
+  so right away.
+- **Pick a material by tapping its spool:** whenever the app asks you to select
+  a material (on a print, or for a printer's **Loaded In** slots), just hold the
+  phone to the spool. If the tag isn't on any of your materials yet, pick the
+  material from the list and choose **Add tag and select** to link it as you go.
+- **Find a spool:** on the **Materials** list, tap **Scan spool** and hold the
+  phone to a spool to open its material. For a tag that isn't on any material
+  yet, choose **Link to an existing spool** or **New material with this tag**.
+
+The app reads only the tag's UID, not the data stored on it, so it works with
+most spool tags the phone can read: Bambu Lab, Creality and Snapmaker spools, and
+NFC stickers you add yourself. A tag linked from the phone also works with
+printers and tools that read tags, and the other way round. Payment cards and
+phones are ignored.
+
+If NFC is off, the app offers a **Turn on** link to the phone's NFC settings.
+While a screen is listening for tags, tap-to-pay is paused; it comes back as
+soon as you leave that screen.
 
 ---
 

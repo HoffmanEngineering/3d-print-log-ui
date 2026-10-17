@@ -92,4 +92,42 @@ describe('NativeBridgeService', () => {
     );
     expect(registerForPush).not.toHaveBeenCalled();
   });
+
+  describe('NFC tags', () => {
+    it('cannot read tags without startTagReading on the bridge', () => {
+      pretendCordova();
+      window.PrintLogNative = {
+        consumePendingTap: () => Promise.resolve(null),
+      } as unknown as PrintLogNativeBridge;
+      expect(service.canReadTags()).toBeFalse();
+    });
+
+    it('can read tags when the bridge has startTagReading', () => {
+      pretendCordova();
+      window.PrintLogNative = {
+        startTagReading: () => Promise.resolve('ready'),
+      } as unknown as PrintLogNativeBridge;
+      expect(service.canReadTags()).toBeTrue();
+    });
+
+    it('resolves unsupported when startTagReading throws', async () => {
+      pretendCordova();
+      window.PrintLogNative = {
+        startTagReading: () => Promise.reject(new Error('native')),
+      } as unknown as PrintLogNativeBridge;
+      await expectAsync(service.startTagReading()).toBeResolvedTo(
+        'unsupported'
+      );
+    });
+
+    it('resolves null from consumeTag in an ordinary browser', async () => {
+      await expectAsync(service.consumeTag()).toBeResolvedTo(null);
+    });
+
+    it('reports that onTag is not wired on an older shell', () => {
+      pretendCordova();
+      window.PrintLogNative = {} as PrintLogNativeBridge;
+      expect(service.onTag(() => {})).toBeFalse();
+    });
+  });
 });

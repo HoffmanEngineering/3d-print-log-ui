@@ -10,7 +10,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, of, throwError } from 'rxjs';
@@ -1077,5 +1077,106 @@ describe('FilamentDetailComponent - usage panels', () => {
       612000,
       0
     );
+  });
+});
+
+/**
+ * Scan spool's "New material with this tag" opens /materials/new with the UID in navigation
+ * state, never in the URL, so it can't reach page-view telemetry.
+ */
+describe('FilamentDetailComponent scanned tag', () => {
+  let fixture: ComponentFixture<FilamentDetailComponent>;
+
+  afterEach(() => history.replaceState(null, ''));
+
+  async function setup(tag: string | null, filament: unknown = null) {
+    history.replaceState(tag === null ? null : { scannedTagUid: tag }, '');
+    const mockFilamentService = jasmine.createSpyObj<FilamentService>(
+      'FilamentService',
+      {
+        getFilamentBrands: of({ brands: [] }),
+        getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
+        getFilamentStorageLocations: of({ storageLocations: [] }),
+        addFilament: of({} as FilamentDetail),
+        updateFilament: of({} as FilamentDetail),
+      }
+    );
+    stubImageTarget(mockFilamentService);
+
+    await TestBed.configureTestingModule({
+      imports: [
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
+        RouterTestingModule,
+        MatNativeDateModule,
+        FilamentDetailComponent,
+      ],
+      providers: [
+        { provide: FilamentService, useValue: mockFilamentService },
+        {
+          provide: ToastrService,
+          useValue: jasmine.createSpyObj('ToastrService', ['success']),
+        },
+        {
+          provide: UserSettingService,
+          useValue: jasmine.createSpyObj('UserSettingService', [
+            'updateUserSetting',
+          ]),
+        },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', [
+            'logException',
+            'logEvent',
+          ]),
+        },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({ filament, materials: [], materialCategories: [] }),
+            snapshot: {
+              // A UID in the query string is ignored: it belongs in navigation state.
+              queryParamMap: convertToParamMap({ tag: 'AAAAAAAA' }),
+            },
+          },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(FilamentDetailComponent);
+    fixture.detectChanges();
+  }
+
+  const tagUids = () =>
+    fixture.componentInstance.filamentForm.get('tagUids')!.value as string[];
+
+  it('starts a new material with the scanned tag', async () => {
+    await setup('04:a2:3f:11');
+
+    expect(tagUids()).toEqual(['04A23F11']);
+    expect(fixture.componentInstance.filamentForm.dirty).toBeTrue();
+  });
+
+  it('ignores a malformed tag', async () => {
+    await setup('not-hex');
+    expect(tagUids()).toEqual([]);
+  });
+
+  it('ignores a tag in the query string', async () => {
+    await setup(null);
+    expect(tagUids()).toEqual([]);
+  });
+
+  it('ignores the scanned tag on an existing material', async () => {
+    await setup('04A23F11', {
+      id: 'filament-1',
+      displayName: 'Test',
+      materialType: 'PLA',
+      materialDensityGramPerCubicCm: 1.24,
+      filamentAdjustments: [],
+      colors: [],
+      tagUids: ['AABB'],
+    });
+    expect(tagUids()).toEqual(['AABB']);
   });
 });

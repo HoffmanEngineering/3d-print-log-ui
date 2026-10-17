@@ -2,6 +2,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from 'src/environments/environment';
 import { redactEmailTokens } from '../utils/redact-email-tokens';
+import { redactTagUids } from '../utils/redact-tag-uids';
 
 /** The subset of the App Insights API that LoggingService depends on. */
 interface TelemetrySink {
@@ -127,6 +128,7 @@ export class LoggingService {
       // /email-preferences that URL still holds the token fragment.
       appInsights.addTelemetryInitializer((item) => {
         redactEmailTokens(item);
+        redactTagUids(item);
       });
       appInsights.loadAppInsights();
       appInsights.context.application.ver = environment.version;

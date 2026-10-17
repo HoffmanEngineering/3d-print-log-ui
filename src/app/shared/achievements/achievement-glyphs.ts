@@ -255,6 +255,19 @@ export const ACHIEVEMENT_GLYPHS: Readonly<
     path('M30 6c-9 1-16 9-16 18s7 17 16 18c-12 3-24-6-24-18S18 3 30 6z'),
     stroked('M27 22h6a5 5 0 010 10h-6M31 27h-4M38 17a5 5 0 017 5', 3.2),
   ],
+  // A spool tag: a luggage tag with a punched hole, its NFC waves cut out of it.
+  'nfc-tag': [
+    path('M15 5h18a4 4 0 014 4v24L24 44 11 33V9a4 4 0 014-4z'),
+    circle(24, 12, 3, cut),
+    circle(18, 26, 2, cut),
+    {
+      kind: 'path',
+      d: 'M22 21.5a6 6 0 010 9M26 18.5a10.5 10.5 0 010 15M30 15.5a15 15 0 010 21',
+      fill: 'none',
+      stroke: 'cut',
+      strokeWidth: 2.4,
+    },
+  ],
 
   // Community and care.
   globe: [
@@ -343,6 +356,7 @@ export const REQUIRED_GLYPHS: readonly string[] = [
   'octopus',
   'moon-link',
   'robot',
+  'nfc-tag',
   'globe',
   'chat',
   'wrench',

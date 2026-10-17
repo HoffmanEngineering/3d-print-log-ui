@@ -12,6 +12,13 @@ mat-dialog-content {
   max-height: unset;
   min-height: 0;
   overflow: hidden;
+  // The lookup overlay sits on top of the list rather than replacing it.
+  position: relative;
+}
+
+// A host's own display rule beats the hidden attribute's.
+app-filament-list[hidden] {
+  display: none !important;
 }
 
 .dialog-header {
@@ -30,12 +37,15 @@ mat-dialog-content {
 }
 
 .loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
   gap: 16px;
+  background: color-mix(in srgb, var(--app-surface-raised) 85%, transparent);
 
   p {
     margin: 0;
@@ -64,5 +74,46 @@ mat-dialog-content {
 
   button {
     flex-shrink: 0;
+  }
+}
+
+.tag-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 24px 0;
+  color: var(--app-text-secondary);
+  font-size: 13px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .tag-hint__action {
+    min-width: 0;
+    padding: 0 6px;
+    height: 28px;
+  }
+}
+
+.tag-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 24px 0;
+  padding: 4px 4px 4px 12px;
+  border-radius: 4px;
+  background: var(--app-surface-container);
+  color: var(--app-text-primary);
+
+  .tag-banner__text {
+    flex: 1;
+  }
+
+  code {
+    font-family: monospace;
+    font-weight: 500;
   }
 }

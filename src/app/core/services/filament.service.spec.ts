@@ -85,4 +85,86 @@ describe('FilamentServiceService', () => {
     expect(req.request.body).toEqual({});
     req.flush(null);
   });
+
+  describe('tags', () => {
+    const base = () => `${environment.printLogApiUrl}/api/Filaments`;
+
+    it('getFilamentByTag returns the spool', () => {
+      let result: unknown;
+      service.getFilamentByTag('04A23F11').subscribe((r) => (result = r));
+
+      httpMock
+        .expectOne(`${base()}/by-tag/04A23F11`)
+        .flush({ id: 'f1', displayName: 'Galaxy Black' });
+
+      expect(result).toEqual(
+        jasmine.objectContaining({ id: 'f1', displayName: 'Galaxy Black' })
+      );
+    });
+
+    it('getFilamentByTag returns null on 404', () => {
+      let result: unknown = 'unset';
+      service.getFilamentByTag('04A23F11').subscribe((r) => (result = r));
+
+      httpMock
+        .expectOne(`${base()}/by-tag/04A23F11`)
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      expect(result).toBeNull();
+    });
+
+    it('getFilamentByTag rethrows other errors', () => {
+      let status = 0;
+      service.getFilamentByTag('04A23F11').subscribe({
+        error: (e) => (status = e.status),
+      });
+
+      httpMock
+        .expectOne(`${base()}/by-tag/04A23F11`)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      expect(status).toBe(500);
+    });
+
+    it('addTagToFilament PUTs the loaded spool with the UID appended', () => {
+      service.addTagToFilament('f1', '04A23F11').subscribe();
+
+      httpMock
+        .expectOne(`${base()}/f1`)
+        .flush({ id: 'f1', notes: 'keep', tagUids: ['AABB'] });
+      const put = httpMock.expectOne(`${base()}/f1`);
+
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual(
+        jasmine.objectContaining({
+          id: 'f1',
+          notes: 'keep',
+          tagUids: ['AABB', '04A23F11'],
+        })
+      );
+      put.flush({});
+    });
+
+    it('addTagToFilament does not duplicate a UID already present', () => {
+      service.addTagToFilament('f1', '04A23F11').subscribe();
+
+      httpMock
+        .expectOne(`${base()}/f1`)
+        .flush({ id: 'f1', tagUids: ['04A23F11'] });
+      const put = httpMock.expectOne(`${base()}/f1`);
+
+      expect(put.request.body.tagUids).toEqual(['04A23F11']);
+      put.flush({});
+    });
+
+    it('addTagToFilament starts a list for a spool without tags', () => {
+      service.addTagToFilament('f1', '04A23F11').subscribe();
+
+      httpMock.expectOne(`${base()}/f1`).flush({ id: 'f1' });
+      const put = httpMock.expectOne(`${base()}/f1`);
+
+      expect(put.request.body.tagUids).toEqual(['04A23F11']);
+      put.flush({});
+    });
+  });
 });

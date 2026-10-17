@@ -40,3 +40,12 @@
   color: var(--app-error-text);
   overflow-wrap: anywhere;
 }
+
+.tag-uids__hint {
+  margin: 4px 0 0;
+  color: var(--app-text-secondary);
+}
+
+.tag-uids__scan--active {
+  color: var(--app-primary);
+}

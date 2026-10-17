@@ -166,5 +166,90 @@ describe('FilamentServiceService', () => {
       expect(put.request.body.tagUids).toEqual(['04A23F11']);
       put.flush({});
     });
+
+    it('addTagToFilament sends the reading for the UID once', () => {
+      const reading = { format: 'snapmaker', brand: 'Snapmaker' };
+      service.addTagToFilament('f1', '04A23F11', reading).subscribe();
+
+      httpMock.expectOne(`${base()}/f1`).flush({ id: 'f1' });
+      const put = httpMock.expectOne(`${base()}/f1`);
+
+      expect(put.request.body.tagReadings).toEqual([
+        { uid: '04A23F11', reading },
+      ]);
+      expect(
+        put.request.body.tagUids.filter((u: string) => u === '04A23F11')
+      ).toHaveSize(1);
+      put.flush({});
+    });
+
+    it('addTagToFilament sends no tagReadings key without a reading', () => {
+      service.addTagToFilament('f1', '04A23F11').subscribe();
+
+      httpMock.expectOne(`${base()}/f1`).flush({ id: 'f1' });
+      const put = httpMock.expectOne(`${base()}/f1`);
+
+      expect('tagReadings' in put.request.body).toBeFalse();
+      put.flush({});
+    });
+
+    it('resolveTagRead posts uid, techs and memory', () => {
+      const memory = {
+        kind: 'type2' as const,
+        data: 'AAEC',
+        unreadable: [] as number[],
+      };
+      let result: unknown;
+      service
+        .resolveTagRead({
+          uid: '04A23F11',
+          tech: 'nfca',
+          techs: ['nfca'],
+          memory,
+        })
+        .subscribe((r) => (result = r));
+
+      const req = httpMock.expectOne(`${base()}/tag-reads`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        uid: '04A23F11',
+        techs: ['nfca'],
+        memory,
+      });
+      req.flush({ status: 'unknown', suggestions: [] });
+      expect(result).toEqual(jasmine.objectContaining({ status: 'unknown' }));
+    });
+
+    it('resolveTagRead omits memory when not given', () => {
+      service
+        .resolveTagRead({ uid: '04A23F11', tech: 'nfca', techs: ['nfca'] })
+        .subscribe();
+
+      const req = httpMock.expectOne(`${base()}/tag-reads`);
+      expect('memory' in req.request.body).toBeFalse();
+      expect(req.request.body).toEqual({ uid: '04A23F11', techs: ['nfca'] });
+      req.flush({});
+    });
+
+    it('resolveTagRead omits techs when not given', () => {
+      service.resolveTagRead({ uid: '04A23F11', tech: 'nfca' }).subscribe();
+
+      const req = httpMock.expectOne(`${base()}/tag-reads`);
+      expect('techs' in req.request.body).toBeFalse();
+      expect(req.request.body).toEqual({ uid: '04A23F11' });
+      req.flush({});
+    });
+
+    it('getReaderConfig GETs the reader config', () => {
+      let result: unknown;
+      service.getReaderConfig().subscribe((r) => (result = r));
+
+      const req = httpMock.expectOne(
+        `${environment.printLogApiUrl}/api/FilamentTags/reader-config`
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush({ formats: [] });
+      expect(result).toEqual({ formats: [] });
+    });
   });
 });

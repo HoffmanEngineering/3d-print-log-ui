@@ -11,8 +11,15 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { NfcStatus, TagRead } from 'src/app/core/types/native-bridge';
+import {
+  FilamentTagDetail,
+  TagReadResponse,
+  TagReading,
+} from 'src/app/core/types/tag-reading';
 import { TagUidConflict } from '../../tag-uid';
 import { FilamentTagUidsComponent } from './filament-tag-uids.component';
+
+const FORMAT_HINT = 'Any format, like 04:A2:3F:11 or 04A23F11';
 
 @Component({
   imports: [FilamentTagUidsComponent, ReactiveFormsModule],
@@ -48,9 +55,7 @@ describe('FilamentTagUidsComponent', () => {
         },
         {
           provide: FilamentService,
-          useValue: jasmine.createSpyObj('FilamentService', [
-            'getFilamentByTag',
-          ]),
+          useValue: jasmine.createSpyObj('FilamentService', ['resolveTagRead']),
         },
         {
           provide: LoggingService,
@@ -200,11 +205,38 @@ describe('FilamentTagUidsComponent', () => {
   template: `<app-filament-tag-uids
     [formControl]="control"
     [filamentId]="filamentId"
+    (readingsChange)="readings = $event"
   />`,
 })
 class ScanHostComponent {
   readonly control = new FormControl<string[]>([], { nonNullable: true });
   filamentId: string | null = 'this-spool';
+  readings: { uid: string; reading: TagReading }[] = [];
+}
+
+const SCANNED_READING: TagReading = {
+  format: 'snapmaker',
+  decoderVersion: 1,
+  materialType: 'PLA',
+};
+
+function unknownTag(reading: TagReading | null = null): TagReadResponse {
+  return {
+    status: 'unknown',
+    filament: null,
+    reading,
+    catalogMatch: null,
+    suggestions: [],
+    hint: null,
+  };
+}
+
+function linkedTo(id: string, displayName: string): TagReadResponse {
+  return {
+    ...unknownTag(),
+    status: 'linked',
+    filament: { id, displayName } as FilamentDetail,
+  };
 }
 
 describe('FilamentTagUidsComponent scanning', () => {
@@ -232,9 +264,9 @@ describe('FilamentTagUidsComponent scanning', () => {
       openSettings: jasmine.createSpy('openSettings').and.resolveTo(),
     };
     filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getFilamentByTag',
+      'resolveTagRead',
     ]);
-    filaments.getFilamentByTag.and.returnValue(of(null));
+    filaments.resolveTagRead.and.returnValue(of(unknownTag()));
     logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logEvent',
     ]);
@@ -259,17 +291,74 @@ describe('FilamentTagUidsComponent scanning', () => {
     el.querySelector<HTMLButtonElement>('[data-testid="tag-scan"]');
   const input = () =>
     el.querySelector<HTMLInputElement>('input[data-testid="tag-uid-input"]')!;
+  const hint = () => el.querySelector('mat-hint')?.textContent?.trim();
   const chipTexts = () =>
     Array.from(el.querySelectorAll('[data-testid="tag-uid-chip"]')).map((c) =>
       c.textContent!.replace('cancel', '').trim()
     );
 
-  function scan(uid: string) {
+  function scan(uid: string, extra: Partial<TagRead> = {}) {
     scanButton()!.click();
     fixture.detectChanges();
-    tags.next({ uid, tech: 'nfca' });
+    tags.next({ uid, tech: 'nfca', ...extra });
     fixture.detectChanges();
   }
+
+  it('looks the tag up with the whole read, memory included', () => {
+    const memory = { kind: 'classic' as const, data: 'AAAA' };
+
+    scan('805BEC3E', { techs: ['NfcA'], memory });
+
+    expect(filaments.resolveTagRead).toHaveBeenCalledOnceWith({
+      uid: '805BEC3E',
+      tech: 'nfca',
+      techs: ['NfcA'],
+      memory,
+    });
+  });
+
+  it('hands the parent what a new tag says, by UID', () => {
+    filaments.resolveTagRead.and.returnValue(of(unknownTag(SCANNED_READING)));
+
+    scan('805BEC3E', { memory: { kind: 'classic', data: 'AAAA' } });
+
+    expect(host.readings).toEqual([
+      { uid: '805BEC3E', reading: SCANNED_READING },
+    ]);
+  });
+
+  it('keeps one reading per UID across scans', () => {
+    const second: TagReading = { ...SCANNED_READING, materialType: 'PETG' };
+    filaments.resolveTagRead.and.returnValues(
+      of(unknownTag(SCANNED_READING)),
+      of(unknownTag(second))
+    );
+
+    scan('805BEC3E');
+    scan('04A23F11');
+
+    expect(host.readings).toEqual([
+      { uid: '805BEC3E', reading: SCANNED_READING },
+      { uid: '04A23F11', reading: second },
+    ]);
+  });
+
+  it('hands the parent nothing for a tag without a reading', () => {
+    scan('04A23F11');
+
+    expect(host.readings).toEqual([]);
+    expect(chipTexts()).toEqual(['04A23F11']);
+  });
+
+  it('keeps no reading for a tag another spool holds', () => {
+    filaments.resolveTagRead.and.returnValue(
+      of({ ...linkedTo('other', 'Old Spool'), reading: SCANNED_READING })
+    );
+
+    scan('805BEC3E');
+
+    expect(host.readings).toEqual([]);
+  });
 
   it('Scan adds the UID it reads without touching what was being typed', () => {
     input().value = '04:a2';
@@ -284,11 +373,17 @@ describe('FilamentTagUidsComponent scanning', () => {
     expect(logger.logEvent).toHaveBeenCalledWith('FilamentTagUids_Scanned');
   });
 
+  it('explains the format in a hint, not a placeholder that looks like a value', () => {
+    expect(input().placeholder).toBe('');
+    expect(hint()).toBe(FORMAT_HINT);
+  });
+
   it('says so while it is waiting for a tag', () => {
     scanButton()!.click();
     fixture.detectChanges();
 
-    expect(input().placeholder).toBe('Hold your phone to the tag…');
+    expect(hint()).toBe('Hold your phone to the tag…');
+    expect(input().placeholder).toBe('');
   });
 
   it('reads one tag per press', () => {
@@ -308,7 +403,7 @@ describe('FilamentTagUidsComponent scanning', () => {
     fixture.detectChanges();
 
     expect(chipTexts()).toEqual([]);
-    expect(input().placeholder).toBe('04:A2:3F:11');
+    expect(hint()).toBe(FORMAT_HINT);
   });
 
   it('a tag already on the spool gets a hint, not silence', () => {
@@ -322,8 +417,8 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('shows a conflict at scan time when another spool holds the tag', () => {
-    filaments.getFilamentByTag.and.returnValue(
-      of({ id: 'other', displayName: 'Old Spool' } as FilamentDetail)
+    filaments.resolveTagRead.and.returnValue(
+      of(linkedTo('other', 'Old Spool'))
     );
 
     scan('04A23F11');
@@ -338,14 +433,14 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('a conflict that answers after its chip was removed is not shown', () => {
-    const lookup = new Subject<FilamentDetail | null>();
-    filaments.getFilamentByTag.and.returnValue(lookup);
+    const lookup = new Subject<TagReadResponse>();
+    filaments.resolveTagRead.and.returnValue(lookup);
 
     scan('04A23F11');
     el.querySelector<HTMLElement>(
       '[data-testid="tag-uid-chip"] button'
     )!.click();
-    lookup.next({ id: 'other', displayName: 'Old Spool' } as FilamentDetail);
+    lookup.next(linkedTo('other', 'Old Spool'));
     fixture.detectChanges();
 
     expect(chipTexts()).toEqual([]);
@@ -353,8 +448,8 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('loading another value clears a scan-time conflict', () => {
-    filaments.getFilamentByTag.and.returnValue(
-      of({ id: 'other', displayName: 'Old Spool' } as FilamentDetail)
+    filaments.resolveTagRead.and.returnValue(
+      of(linkedTo('other', 'Old Spool'))
     );
     scan('04A23F11');
 
@@ -374,13 +469,11 @@ describe('FilamentTagUidsComponent scanning', () => {
     fixture.detectChanges();
 
     expect(chipTexts()).toEqual([]);
-    expect(input().placeholder).toBe('04:A2:3F:11');
+    expect(hint()).toBe(FORMAT_HINT);
   });
 
   it('this spool holding the tag is not a conflict', () => {
-    filaments.getFilamentByTag.and.returnValue(
-      of({ id: 'this-spool', displayName: 'Me' } as FilamentDetail)
-    );
+    filaments.resolveTagRead.and.returnValue(of(linkedTo('this-spool', 'Me')));
 
     scan('04A23F11');
 
@@ -388,7 +481,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('a failed lookup still adds the tag and forgets the UID', () => {
-    filaments.getFilamentByTag.and.returnValue(
+    filaments.resolveTagRead.and.returnValue(
       throwError(() => new HttpErrorResponse({ status: 503 }))
     );
 
@@ -422,5 +515,185 @@ describe('FilamentTagUidsComponent scanning', () => {
     );
     fixture.detectChanges();
     expect(scanButton()).toBeNull();
+  });
+});
+
+@Component({
+  imports: [FilamentTagUidsComponent, ReactiveFormsModule],
+  template: `<app-filament-tag-uids
+    [formControl]="control"
+    [tagDetails]="details()"
+    [catalogEntryId]="catalogEntryId()"
+  />`,
+})
+class DetailsHostComponent {
+  readonly control = new FormControl<string[]>(['805BEC3E', 'DEADBEEF'], {
+    nonNullable: true,
+  });
+  readonly details = signal<FilamentTagDetail[]>([]);
+  readonly catalogEntryId = signal<string | null>(null);
+}
+
+describe('FilamentTagUidsComponent tag details', () => {
+  let fixture: ComponentFixture<DetailsHostComponent>;
+  let host: DetailsHostComponent;
+  let el: HTMLElement;
+
+  const snapmaker: FilamentTagDetail = {
+    uid: '805BEC3E',
+    format: 'snapmaker',
+    lastReadAt: null,
+    reading: {
+      format: 'snapmaker',
+      sku: '900001',
+      manufacturedOn: '2026-03-12',
+      dryTempC: 55,
+      dryHours: 6,
+      hotendMinC: 190,
+      hotendMaxC: 230,
+      bedMinC: 60,
+      bedMaxC: 60,
+    },
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DetailsHostComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: TagReaderService,
+          useValue: { available: signal(false), status: signal('unsupported') },
+        },
+        {
+          provide: FilamentService,
+          useValue: jasmine.createSpyObj('FilamentService', ['resolveTagRead']),
+        },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+        },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(DetailsHostComponent);
+    host = fixture.componentInstance;
+    el = fixture.nativeElement;
+  });
+
+  const details = () =>
+    Array.from(el.querySelectorAll('[data-testid="tag-uid-detail"]')).map((d) =>
+      d.textContent!.replace(/\s+/g, ' ').trim()
+    );
+
+  it('shows what a Snapmaker tag says under its UID', () => {
+    host.details.set([snapmaker]);
+    fixture.detectChanges();
+
+    const text = details();
+    expect(text.length).toBe(1);
+    expect(text[0]).toContain('805BEC3E');
+    expect(text[0]).toContain('Snapmaker tag');
+    expect(text[0]).toContain('SKU 900001');
+    expect(text[0]).toContain('Made 2026-03-12');
+    expect(text[0]).toContain('Dry at 55 °C for 6 h');
+    expect(text[0]).toContain('Tag says 190\u2013230 °C, bed 60 °C');
+  });
+
+  it('matches a detail to its row by normalized UID, whatever the order', () => {
+    host.control.setValue(['DEADBEEF', '80:5b:ec:3e']);
+    host.details.set([snapmaker]);
+    fixture.detectChanges();
+
+    expect(details().length).toBe(1);
+    expect(details()[0]).toContain('SKU 900001');
+  });
+
+  it('leaves out fields the reading does not carry', () => {
+    host.details.set([
+      {
+        uid: '805BEC3E',
+        format: 'openspool',
+        lastReadAt: null,
+        reading: { format: 'openspool', hotendC: 210 },
+      },
+    ]);
+    fixture.detectChanges();
+
+    const text = details()[0];
+    expect(text).toContain('OpenSpool tag');
+    expect(text).toContain('Tag says 210 °C');
+    expect(text).not.toContain('SKU');
+    expect(text).not.toContain('Made');
+    expect(text).not.toContain('Dry');
+    expect(text).not.toContain('bed');
+  });
+
+  it('a tag without a reading renders only its UID', () => {
+    host.details.set([
+      { uid: '805BEC3E', format: null, reading: null, lastReadAt: null },
+    ]);
+    fixture.detectChanges();
+
+    expect(details()).toEqual([]);
+    expect(el.querySelectorAll('[data-testid="tag-uid-chip"]').length).toBe(2);
+  });
+
+  it('credits SpoolmanDB once when the material came from the catalog', () => {
+    host.details.set([snapmaker]);
+    host.catalogEntryId.set('cat-1');
+    fixture.detectChanges();
+
+    const links = el.querySelectorAll<HTMLAnchorElement>(
+      'a[href="https://github.com/Donkie/SpoolmanDB"]'
+    );
+    expect(links.length).toBe(1);
+    expect(links[0].textContent).toContain('Spool data: SpoolmanDB');
+    expect(links[0].target).toBe('_blank');
+    expect(links[0].rel).toContain('noopener');
+  });
+
+  for (const bad of ['2026-13-45', '2026-02-30', 'not-a-date']) {
+    it(`omits the Made line for ${bad} without an error`, () => {
+      host.details.set([
+        {
+          ...snapmaker,
+          reading: { ...snapmaker.reading!, manufacturedOn: bad },
+        },
+      ]);
+      fixture.detectChanges();
+
+      expect(details()[0]).toContain('SKU 900001');
+      expect(details()[0]).not.toContain('Made');
+    });
+  }
+
+  it('omits parts the API sent as explicit nulls', () => {
+    host.details.set([
+      {
+        ...snapmaker,
+        reading: {
+          format: 'snapmaker',
+          sku: null,
+          dryTempC: 55,
+          dryHours: null,
+          hotendMinC: 190,
+          hotendMaxC: 230,
+          bedMinC: null,
+        } as unknown as TagReading,
+      },
+    ]);
+    fixture.detectChanges();
+
+    const text = details()[0];
+    expect(text).not.toContain('SKU');
+    expect(text).toContain('Dry at 55 °C');
+    expect(text).not.toContain(' for ');
+    expect(text).toContain('Tag says 190–230 °C');
+    expect(text).not.toContain('bed');
+  });
+
+  it('shows no attribution without a catalog entry', () => {
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('SpoolmanDB');
   });
 });

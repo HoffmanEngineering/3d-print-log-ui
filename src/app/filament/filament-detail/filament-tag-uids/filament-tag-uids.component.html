@@ -2,7 +2,7 @@
   <h3 id="tag-uids-heading">RFID / NFC tags</h3>
   <p class="tag-uids__help">
     Link the tags on this spool so a printer or reader that scans one picks this
-    material. Paste the UID in any format, such as 04:A2:3F:11.
+    material.
   </p>
 
   @if (tags().length > 0) {
@@ -26,6 +26,40 @@
     </mat-chip-set>
   }
 
+  @if (readings().length > 0) {
+    <ul class="tag-uids__details" aria-label="What each tag says">
+      @for (r of readings(); track r.uid) {
+        <li class="tag-uids__detail" data-testid="tag-uid-detail">
+          <span class="tag-uids__uid">{{ r.uid }}</span>
+          <span class="tag-uids__format">{{ r.format }}</span>
+          @if (r.sku) {
+            <span>SKU {{ r.sku }}</span>
+          }
+          @if (r.made) {
+            <span>Made {{ r.made | date: 'yyyy-MM-dd' }}</span>
+          }
+          @if (r.drying) {
+            <span>{{ r.drying }}</span>
+          }
+          @if (r.temps) {
+            <span>{{ r.temps }}</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (catalogEntryId()) {
+    <p class="tag-uids__attribution" data-testid="tag-uid-attribution">
+      <a
+        href="https://github.com/Donkie/SpoolmanDB"
+        target="_blank"
+        rel="noopener"
+        >Spool data: SpoolmanDB</a
+      >
+    </p>
+  }
+
   <mat-form-field class="tag-uids__field" subscriptSizing="dynamic">
     <mat-label>Tag UID</mat-label>
     <input
@@ -33,7 +67,6 @@
       data-testid="tag-uid-input"
       autocomplete="off"
       spellcheck="false"
-      [placeholder]="scanning() ? 'Hold your phone to the tag…' : '04:A2:3F:11'"
       [value]="draft()"
       [disabled]="disabled() || atCap()"
       (input)="onInput($any($event.target).value)"
@@ -66,8 +99,13 @@
         <mat-icon>{{ scanning() ? 'close' : 'nfc' }}</mat-icon>
       </button>
     }
+    <!-- A hint, never a placeholder: a sample UID in the input reads as a value already entered. -->
     @if (atCap()) {
       <mat-hint>A material can have up to {{ maxTags }} tags.</mat-hint>
+    } @else if (scanning()) {
+      <mat-hint>Hold your phone to the tag…</mat-hint>
+    } @else {
+      <mat-hint>Any format, like 04:A2:3F:11 or 04A23F11</mat-hint>
     }
   </mat-form-field>
 

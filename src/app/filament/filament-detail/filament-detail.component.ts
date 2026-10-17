@@ -72,7 +72,17 @@ import {
   TagUidConflict,
   normalizeTagUid,
   readTagUidConflict,
+  tagUidKey,
 } from '../tag-uid';
+import type { TagReading } from 'src/app/core/types/tag-reading';
+import {
+  PrefillControl,
+  PrefillSource,
+  knownMaterialFor,
+  ScannedTagRead,
+  parseScannedTagRead,
+  tagPrefill,
+} from '../tag-prefill';
 import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
 import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-prints-panel.component';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
@@ -125,6 +135,10 @@ import { MaterialNamePipe as MaterialNamePipe_1 } from '../../shared/pipes/mater
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
+
+/** The fields that say which product a spool is. */
+const IDENTITY_CONTROLS = ['displayName', 'brand', 'materialType'] as const;
+type IdentityControl = (typeof IDENTITY_CONTROLS)[number];
 
 function gramsToMg(grams: number | null | undefined): number | null {
   return grams == null ? null : grams * 1000;
@@ -253,6 +267,24 @@ export class FilamentDetailComponent
    * may be sent to clear it. Set on load, and after any save that sent tags.
    */
   private tagUidsKnown = false;
+
+  /**
+   * Where each pre-filled field came from, for its hint. A control leaves the map on its first
+   * user edit. Only a new material scanned from a tag has any.
+   */
+  protected readonly tagSources = signal<
+    Partial<Record<PrefillControl, PrefillSource>>
+  >({});
+  protected readonly spoolmanDbUrl = 'https://github.com/Donkie/SpoolmanDB';
+
+  /** The scanned tag, its reading and catalog match, sent along with the new spool. */
+  private scannedTag: ({ uid: string } & ScannedTagRead) | null = null;
+  private prefilledValues: Partial<Record<PrefillControl, unknown>> = {};
+  /** What each tag scanned in the tag list says, from its lookup. */
+  private pageScanReadings: { uid: string; reading: TagReading }[] = [];
+  /** What the fields that say which product this is held once the scan filled the form. */
+  private scannedIdentity: Record<IdentityControl, unknown> | null = null;
+  private tagSourcesSubscription: Subscription | undefined;
 
   protected readonly imagesPanel = viewChild(EntityImagesPanelComponent);
 
@@ -456,6 +488,169 @@ export class FilamentDetailComponent
     const control = this.filamentForm.get('tagUids');
     control?.setValue([result.uid]);
     control?.markAsDirty();
+
+    // history.state is untrusted: an implausible read is ignored, as if there were none.
+    const read = parseScannedTagRead(
+      (state as Record<string, unknown>)['scannedTagRead']
+    );
+    if (!read) return;
+
+    this.scannedTag = { uid: result.uid, ...read };
+    const { values, sources } = tagPrefill(read.reading, read.catalogMatch);
+    if (typeof values.materialType === 'string') {
+      // Name it as the list does, so it gets the list's density when the catalog has none.
+      const known = knownMaterialFor(
+        values.materialType,
+        this.materials,
+        this.filamentForm.get('materialCategoryNickname')?.value ?? null
+      );
+      if (known) {
+        values.materialType = this.materialNamePipe.transform(known);
+      }
+    }
+    this.prefilledValues = values;
+    this.tagSources.set(sources);
+
+    for (const [name, value] of Object.entries(values)) {
+      if (name === 'colors') {
+        const colors = this.colorsFormArray;
+        colors.clear({ emitEvent: false });
+        (value as string[]).forEach((c) =>
+          colors.push(this.formBuilder.control(c), { emitEvent: false })
+        );
+      } else {
+        this.filamentForm.get(name)?.setValue(value, { emitEvent: false });
+      }
+    }
+    if (typeof values.materialType === 'string') {
+      this.applyDefaultDensity(values.materialType);
+    }
+    this.scannedIdentity = this.identityValues();
+  }
+
+  /**
+   * What the tags this save adds say, one per UID: the tag a new material was scanned from
+   * (sent even if every pre-filled field was edited), then tags scanned in the tag list. The
+   * API applies a reading only to a UID in tagUids, and a tag the spool already had keeps
+   * the reading it has.
+   */
+  private tagReadingsToSend(
+    filament: FilamentDetail,
+    wasNew: boolean
+  ): { uid: string; reading: TagReading }[] {
+    const sent = new Map(
+      (filament.tagUids ?? []).map((uid) => [tagUidKey(uid), uid])
+    );
+    const had = new Set((this.loadedFilament?.tagUids ?? []).map(tagUidKey));
+    const readings = new Map<string, { uid: string; reading: TagReading }>();
+    const offer = (uid: string, reading: TagReading | null) => {
+      const key = tagUidKey(uid);
+      const listed = sent.get(key);
+      if (reading && listed && !had.has(key) && !readings.has(key)) {
+        readings.set(key, { uid: listed, reading });
+      }
+    };
+    if (wasNew && this.scannedTag) {
+      offer(this.scannedTag.uid, this.scannedTag.reading);
+    }
+    this.pageScanReadings.forEach((r) => offer(r.uid, r.reading));
+    return [...readings.values()];
+  }
+
+  protected onTagReadings(
+    readings: { uid: string; reading: TagReading }[]
+  ): void {
+    this.pageScanReadings = readings;
+  }
+
+  private identityValues(): Record<IdentityControl, unknown> {
+    const value = (name: IdentityControl) => {
+      const v: unknown = this.filamentForm.get(name)?.value;
+      return typeof v === 'string' ? v.trim() : (v ?? null);
+    };
+    return {
+      displayName: value('displayName'),
+      brand: value('brand'),
+      materialType: value('materialType'),
+    };
+  }
+
+  /**
+   * True while the user has kept the name, brand and material the scan gave. A correction to
+   * any of them means the catalog entry was the wrong product, so it must not get a vote.
+   */
+  private keptScannedIdentity(): boolean {
+    const scanned = this.scannedIdentity;
+    if (!scanned) return false;
+    const now = this.identityValues();
+    return IDENTITY_CONTROLS.every(
+      (name) => JSON.stringify(now[name]) === JSON.stringify(scanned[name])
+    );
+  }
+
+  /**
+   * Drops a field's hint on its first edit. Called once the form is settled: enabling or
+   * disabling controls for the category emits too, so a change counts only when the value
+   * differs from what the tag filled in.
+   */
+  private watchPrefilledFields(): void {
+    this.tagSourcesSubscription?.unsubscribe();
+    const subscription = new Subscription();
+    const drop = (...names: PrefillControl[]) =>
+      this.tagSources.update((sources) => {
+        const rest = { ...sources };
+        names.forEach((n) => delete rest[n]);
+        return rest;
+      });
+
+    for (const name of Object.keys(this.prefilledValues) as PrefillControl[]) {
+      const control = this.filamentForm.get(name);
+      if (!control || name === 'colorHex') continue;
+      subscription.add(
+        control.valueChanges.subscribe((value) => {
+          if (
+            JSON.stringify(value) !== JSON.stringify(this.prefilledValues[name])
+          ) {
+            drop(
+              ...(name === 'colors'
+                ? ['colors' as const, 'colorHex' as const]
+                : [name])
+            );
+          }
+        })
+      );
+    }
+    this.tagSourcesSubscription = subscription;
+  }
+
+  /** A material picked by name brings its density, unless one is already set. */
+  private applyDefaultDensity(value: string): void {
+    if (
+      value === '' ||
+      +this.filamentForm.get('materialDensityGramPerCubicCm').value > 0
+    ) {
+      return;
+    }
+
+    const selectedMaterial = this.materials.find((m) => {
+      return this.materialNamePipe.transform(m) === value;
+    });
+
+    const materialCategory = this.filamentForm.get(
+      'materialCategoryNickname'
+    ).value;
+
+    const isMaterialCategoryMatch =
+      materialCategory === '' ||
+      materialCategory == null ||
+      selectedMaterial?.materialCategoryNickname === materialCategory;
+
+    if (selectedMaterial && isMaterialCategoryMatch) {
+      // This means a user selected a default materials
+      this.filamentForm
+        .get('materialDensityGramPerCubicCm')
+        .setValue(selectedMaterial.densityGramPerCubicCm);
+    }
   }
 
   ngOnInit() {
@@ -477,6 +672,11 @@ export class FilamentDetailComponent
 
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
+      this.scannedTag = null;
+      this.prefilledValues = {};
+      this.scannedIdentity = null;
+      this.pageScanReadings = [];
+      this.tagSources.set({});
       this.tagUidsKnown = this.loadedFilament?.tagUids !== undefined;
 
       // The Materials list's Scan spool sheet opens /materials/new with a tag no
@@ -537,38 +737,13 @@ export class FilamentDetailComponent
           this.filamentForm.get('materialType').enable();
         });
 
+      this.watchPrefilledFields();
+
       this.filteredMaterials = this.filamentForm
         .get('materialType')
         .valueChanges.pipe(
           startWith(''),
-          tap((value: string) => {
-            if (
-              value === '' ||
-              +this.filamentForm.get('materialDensityGramPerCubicCm').value > 0
-            ) {
-              return;
-            }
-
-            const selectedMaterial = this.materials.find((m) => {
-              return this.materialNamePipe.transform(m) === value;
-            });
-
-            const materialCategory = this.filamentForm.get(
-              'materialCategoryNickname'
-            ).value;
-
-            const isMaterialCategoryMatch =
-              materialCategory === '' ||
-              materialCategory == null ||
-              selectedMaterial?.materialCategoryNickname === materialCategory;
-
-            if (selectedMaterial && isMaterialCategoryMatch) {
-              // This means a user selected a default materials
-              this.filamentForm
-                .get('materialDensityGramPerCubicCm')
-                .setValue(selectedMaterial.densityGramPerCubicCm);
-            }
-          }),
+          tap((value: string) => this.applyDefaultDensity(value)),
           map((value) => this._filter(value))
         );
 
@@ -676,6 +851,7 @@ export class FilamentDetailComponent
     this.colorsSubscription?.unsubscribe();
     this.formValueSubscription?.unsubscribe();
     this.tagUidsSubscription?.unsubscribe();
+    this.tagSourcesSubscription?.unsubscribe();
   }
 
   private computeNormalizedColors(): string[] {
@@ -1038,6 +1214,16 @@ export class FilamentDetailComponent
 
     let saveFilament: Observable<FilamentDetail>;
     const wasNew = newFilament.id === null;
+
+    const tagReadings = this.tagReadingsToSend(newFilament, wasNew);
+    if (tagReadings.length > 0) {
+      newFilament.tagReadings = tagReadings;
+    }
+    // The catalog entry goes only while the name, brand and material are still the ones the
+    // scan gave.
+    if (wasNew && this.scannedTag?.catalogMatch && this.keptScannedIdentity()) {
+      newFilament.catalogEntryId = this.scannedTag.catalogMatch.id;
+    }
 
     if (newFilament.id === null) {
       saveFilament = this.filamentService.addFilament(newFilament);

@@ -6,13 +6,13 @@ navLabel: Privacy Policy
 group: about
 order: 30
 mode: reference
-updated: 2026-10-14
+updated: 2026-10-16
 related: [about, contact, terms-of-service]
 ---
 
 # Privacy Policy for 3D Print Log
 
-Last Updated: Oct 14, 2026
+Last Updated: Oct 16, 2026
 
 At 3D Print Log, accessible from https://www.3dprintlog.com, one of our main
 priorities is the privacy of our visitors. This Privacy Policy document describes
@@ -40,6 +40,12 @@ When you create an account and use 3D Print Log, we store:
 - **Devices and integrations:** push notification tokens for the Android app, API keys you create
   (we store only a one-way hash of each key), which AI assistants you have connected, and your
   Spoolman connections, described [below](#spoolman).
+- **Spool tag data:** when the Android app reads a spool's RFID or NFC tag, it sends the tag's
+  UID and memory to 3D Print Log so we can decode it. What the tag says is stored with that tag
+  on your material, along with when it was last read. If we can't decode a tag, we keep its UID
+  and memory for up to 90 days, without tying them to your account, to improve tag support.
+  Which catalog product you matched a spool's tag code to may be shared with open filament
+  databases, without your identity.
 - **Feedback** you send us, including through an AI assistant.
 
 We use this information to provide the service: to show you your records, calculate material

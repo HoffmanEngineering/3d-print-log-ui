@@ -7,6 +7,7 @@ import {
   PushPermissionState,
   TagRead,
 } from '../types/native-bridge';
+import { ReaderConfig } from '../types/tag-reading';
 
 /**
  * Thin wrapper over the Cordova app's injected bridge. Every method degrades to a safe
@@ -92,9 +93,9 @@ export class NativeBridgeService {
     }
   }
 
-  async startTagReading(): Promise<NfcStatus> {
+  async startTagReading(config: ReaderConfig | null): Promise<NfcStatus> {
     try {
-      return (await this.bridge?.startTagReading?.()) ?? 'unsupported';
+      return (await this.bridge?.startTagReading?.(config)) ?? 'unsupported';
     } catch {
       return 'unsupported';
     }
@@ -127,6 +128,14 @@ export class NativeBridgeService {
   /** @returns true if native will call the listener when a tag is read. */
   onTag(listener: () => void): boolean {
     return this.register(this.bridge?.onTag, listener);
+  }
+
+  /**
+   * @returns true if native will call the listener when a tag is detected, before its read
+   *          finishes. False on an app shell predating the callback.
+   */
+  onTagReading(listener: () => void): boolean {
+    return this.register(this.bridge?.onTagReading, listener);
   }
 
   /** @returns true if native will call the listener when NFC turns on or off. */

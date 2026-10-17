@@ -115,9 +115,39 @@ describe('NativeBridgeService', () => {
       window.PrintLogNative = {
         startTagReading: () => Promise.reject(new Error('native')),
       } as unknown as PrintLogNativeBridge;
-      await expectAsync(service.startTagReading()).toBeResolvedTo(
+      await expectAsync(service.startTagReading(null)).toBeResolvedTo(
         'unsupported'
       );
+    });
+
+    it('passes the reader config to startTagReading', async () => {
+      pretendCordova();
+      const start = jasmine.createSpy('start').and.resolveTo('ready');
+      window.PrintLogNative = {
+        startTagReading: start,
+      } as unknown as PrintLogNativeBridge;
+      const config = {
+        formats: [{ id: 'snapmaker', scheme: 's', params: {} }],
+      };
+      await service.startTagReading(config);
+      expect(start).toHaveBeenCalledWith(config);
+    });
+
+    it('reports that onTagReading is not wired on an older shell', () => {
+      pretendCordova();
+      window.PrintLogNative = {} as PrintLogNativeBridge;
+      expect(service.onTagReading(() => {})).toBeFalse();
+    });
+
+    it('wires onTagReading when the bridge has it', () => {
+      pretendCordova();
+      const onTagReading = jasmine.createSpy('onTagReading');
+      window.PrintLogNative = {
+        onTagReading,
+      } as unknown as PrintLogNativeBridge;
+      const listener = () => {};
+      expect(service.onTagReading(listener)).toBeTrue();
+      expect(onTagReading).toHaveBeenCalledWith(listener);
     });
 
     it('resolves null from consumeTag in an ordinary browser', async () => {

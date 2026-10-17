@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +7,7 @@ import {
   forwardRef,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
 import {
@@ -24,8 +26,20 @@ import { RouterLink } from '@angular/router';
 import { Subscription, take } from 'rxjs';
 import { FilamentService } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { TagRead } from 'src/app/core/types/native-bridge';
+import {
+  FilamentTagDetail,
+  TagReadResponse,
+  TagReading,
+} from 'src/app/core/types/tag-reading';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
-import { MAX_TAG_UIDS, TagUidConflict, normalizeTagUid } from '../../tag-uid';
+import { formatLabel } from '../../tag-format-label';
+import {
+  MAX_TAG_UIDS,
+  TagUidConflict,
+  normalizeTagUid,
+  tagUidKey,
+} from '../../tag-uid';
 
 /**
  * Edits a spool's RFID/NFC tag UIDs as a form control whose value is the
@@ -39,6 +53,7 @@ import { MAX_TAG_UIDS, TagUidConflict, normalizeTagUid } from '../../tag-uid';
   styleUrls: ['./filament-tag-uids.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DatePipe,
     MatButtonModule,
     MatChipsModule,
     MatFormFieldModule,
@@ -68,6 +83,22 @@ export class FilamentTagUidsComponent
   /** This spool's id, so a scanned tag it already holds is not reported as a conflict. */
   readonly filamentId = input<string | null>(null);
 
+  /** What each tag says, from the API. Matched to the rows by normalized UID. */
+  readonly tagDetails = input<FilamentTagDetail[]>([]);
+
+  /** Set when the material came from the SpoolmanDB catalog. */
+  readonly catalogEntryId = input<string | null>(null);
+
+  /**
+   * What each tag scanned here says, one entry per UID, for the save to send along. Only tags
+   * no other spool holds, and only those the API could decode.
+   */
+  readonly readingsChange = output<{ uid: string; reading: TagReading }[]>();
+  private readonly scannedReadings = new Map<
+    string,
+    { uid: string; reading: TagReading }
+  >();
+
   private readonly tagReader = inject(TagReaderService);
   private readonly filamentService = inject(FilamentService);
   private readonly loggingService = inject(LoggingService);
@@ -94,6 +125,23 @@ export class FilamentTagUidsComponent
   protected readonly error = signal<string | null>(null);
   protected readonly disabled = signal(false);
   protected readonly atCap = computed(() => this.tags().length >= MAX_TAG_UIDS);
+
+  /** One entry per listed UID whose tag has a decoded reading. Others show only the chip. */
+  protected readonly readings = computed(() => {
+    const byUid = new Map(this.tagDetails().map((d) => [tagUidKey(d.uid), d]));
+    return this.tags().flatMap((uid) => {
+      const detail = byUid.get(tagUidKey(uid));
+      return detail?.reading
+        ? [
+            {
+              uid,
+              format: formatLabel(detail.format ?? detail.reading.format),
+              ...describeReading(detail.reading),
+            },
+          ]
+        : [];
+    });
+  });
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.stopScanning());
@@ -202,7 +250,7 @@ export class FilamentTagUidsComponent
           this.hint.set('That tag is already on this spool');
           return;
         }
-        this.checkHolder(read.uid);
+        this.checkHolder(read);
       });
   }
 
@@ -212,18 +260,26 @@ export class FilamentTagUidsComponent
     this.scanning.set(false);
   }
 
-  private checkHolder(uid: string): void {
-    this.filamentService.getFilamentByTag(uid).subscribe({
-      next: (holder) => {
+  /** Finds who holds the tag, and what it says, from the whole read (memory included). */
+  private checkHolder(read: TagRead): void {
+    const uid = read.uid;
+    this.filamentService.resolveTagRead(read).subscribe({
+      next: (response: TagReadResponse) => {
+        const holder =
+          response.status === 'linked' ? (response.filament ?? null) : null;
         this.loggingService.logEvent('TagReader_Lookup', {
           known: holder !== null,
         });
+        const elsewhere = holder !== null && holder.id !== this.filamentId();
+        if (!elsewhere && response.reading) {
+          this.scannedReadings.set(tagUidKey(uid), {
+            uid,
+            reading: response.reading,
+          });
+          this.readingsChange.emit([...this.scannedReadings.values()]);
+        }
         // The chip may have been removed while the lookup was out.
-        if (
-          holder &&
-          holder.id !== this.filamentId() &&
-          this.tags().includes(uid)
-        ) {
+        if (elsewhere && this.tags().includes(uid)) {
           this.scanConflict.set({
             tagUid: uid,
             filamentId: holder.id,
@@ -259,4 +315,42 @@ export class FilamentTagUidsComponent
     this.onChange(tags);
     this.onTouched();
   }
+}
+
+function range(min?: number, max?: number, single?: number): string | null {
+  const lo = min ?? max ?? single;
+  const hi = max ?? min ?? single;
+  if (lo == null || hi == null) return null;
+  return lo === hi ? `${lo} °C` : `${lo}–${hi} °C`;
+}
+
+/** An ISO date-only string as a local date, so the date pipe cannot shift it a day. */
+function localDate(iso: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return null;
+  const [y, mo, d] = [+m[1], +m[2], +m[3]];
+  const date = new Date(y, mo - 1, d);
+  // Date rolls overflow forward (Feb 30 becomes Mar 2), so require a round trip.
+  return date.getFullYear() === y &&
+    date.getMonth() === mo - 1 &&
+    date.getDate() === d
+    ? date
+    : null;
+}
+
+function describeReading(r: TagReading) {
+  const hotend = range(r.hotendMinC, r.hotendMaxC, r.hotendC);
+  const bed = range(r.bedMinC, r.bedMaxC);
+  return {
+    sku: r.sku || null,
+    made: r.manufacturedOn ? localDate(r.manufacturedOn) : null,
+    drying:
+      r.dryTempC != null
+        ? `Dry at ${r.dryTempC} °C${r.dryHours != null ? ` for ${r.dryHours} h` : ''}`
+        : null,
+    temps:
+      hotend || bed
+        ? `Tag says ${[hotend, bed ? `bed ${bed}` : null].filter(Boolean).join(', ')}`
+        : null,
+  };
 }

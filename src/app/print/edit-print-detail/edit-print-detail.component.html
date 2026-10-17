@@ -4,7 +4,26 @@
   fxLayoutGap="24px"
   data-cy="capture-print-form"
 >
-  <mat-card appearance="outlined" fxFlex="800px" fxFlex.lt-md="100%">
+  @if (savedInOrca()) {
+    <mat-card
+      appearance="outlined"
+      fxFlex="800px"
+      fxFlex.lt-md="100%"
+      data-testid="orca-saved"
+    >
+      <mat-card-title>Print saved</mat-card-title>
+      <mat-card-content>
+        <p>Your print is saved to 3D Print Log. You can close this window.</p>
+        <app-back-to-orca-slicer label="Done, back to OrcaSlicer" />
+      </mat-card-content>
+    </mat-card>
+  }
+  <mat-card
+    appearance="outlined"
+    fxFlex="800px"
+    fxFlex.lt-md="100%"
+    [style.display]="savedInOrca() ? 'none' : null"
+  >
     <form
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"

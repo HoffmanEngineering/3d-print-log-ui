@@ -452,6 +452,9 @@ export class EditPrintDetailComponent
    * A print opened from a slicer upload (`/prints/new/cura?...&settingId=`).
    * Inside OrcaSlicer's webview it offers a way back to the plugin's page.
    */
+  /** True after a save inside OrcaSlicer: the page shows "saved" and a way back. */
+  readonly savedInOrca = signal(false);
+
   readonly fromSlicerUpload =
     this.activatedRoute.snapshot?.queryParamMap?.has('settingId') ?? false;
 
@@ -1881,10 +1884,14 @@ export class EditPrintDetailComponent
 
     this.saving.set(false);
     this.printForm.markAsPristine();
-    // Inside OrcaSlicer, replace this page so the print list's "Back to
-    // OrcaSlicer" returns to the plugin rather than to this saved form.
-    const replaceUrl = this.fromSlicerUpload && this.orcaSlicerHost !== null;
-    this.router.navigate(['/prints'], { replaceUrl }).then(() => {
+    // Inside OrcaSlicer (its own window), stay here and show the saved state
+    // with a button that closes the window.
+    if (this.fromSlicerUpload && this.orcaSlicerHost !== null) {
+      this.savedInOrca.set(true);
+      this.toastr.success('Save successful!');
+      return;
+    }
+    this.router.navigate(['/prints']).then(() => {
       this.toastr.success('Save successful!');
     });
   }

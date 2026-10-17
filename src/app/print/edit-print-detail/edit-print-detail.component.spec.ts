@@ -797,19 +797,30 @@ describe('EditPrintDetailComponent', () => {
 
       component['handleSaveSuccess']({ id: 1 } as any);
 
-      expect(navigate).toHaveBeenCalledWith(['/prints'], { replaceUrl: false });
+      expect(navigate).toHaveBeenCalledWith(['/prints']);
+      expect(component.savedInOrca()).toBeFalse();
     });
 
-    it('replaces the slicer upload form after a save inside OrcaSlicer', () => {
+    it('shows the saved state instead of navigating after a save inside OrcaSlicer', () => {
       const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(
         true
       );
       (component as any).fromSlicerUpload = true;
-      (component as any).orcaSlicerHost = { history: { back: () => {} } };
+      (component as any).orcaSlicerHost = {
+        history: { back: () => {} },
+        orca: {},
+      };
 
       component['handleSaveSuccess']({ id: 1 } as any);
 
-      expect(navigate).toHaveBeenCalledWith(['/prints'], { replaceUrl: true });
+      expect(navigate).not.toHaveBeenCalled();
+      expect(component.savedInOrca()).toBeTrue();
+      fixture.detectChanges();
+      const saved = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="orca-saved"]'
+      );
+      expect(saved?.textContent).toContain('Print saved');
+      expect(saved?.querySelector('app-back-to-orca-slicer')).not.toBeNull();
     });
   });
 

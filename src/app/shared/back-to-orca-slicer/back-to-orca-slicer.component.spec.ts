@@ -52,4 +52,38 @@ describe('BackToOrcaSlicerComponent', () => {
     el!.click();
     expect(back).toHaveBeenCalledTimes(1);
   });
+
+  it('closes the OrcaSlicer window when window.orca.close exists', () => {
+    const back = jasmine.createSpy('back');
+    const close = jasmine.createSpy('close');
+    const fixture = setup({ history: { back }, orca: { close } });
+
+    button(fixture)!.click();
+
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(back).not.toHaveBeenCalled();
+  });
+
+  it('falls back to history.back when window.orca has no close', () => {
+    const back = jasmine.createSpy('back');
+    const fixture = setup({ history: { back }, orca: {} });
+
+    button(fixture)!.click();
+
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses a custom label', () => {
+    TestBed.configureTestingModule({
+      imports: [BackToOrcaSlicerComponent],
+      providers: [
+        { provide: ORCA_SLICER_HOST, useValue: { history: { back() {} } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(BackToOrcaSlicerComponent);
+    fixture.componentRef.setInput('label', 'Done, back to OrcaSlicer');
+    fixture.detectChanges();
+
+    expect(button(fixture)?.textContent).toContain('Done, back to OrcaSlicer');
+  });
 });

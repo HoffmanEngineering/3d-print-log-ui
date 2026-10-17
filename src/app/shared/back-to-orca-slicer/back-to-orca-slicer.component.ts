@@ -4,6 +4,7 @@ import {
   InjectionToken,
   PLATFORM_ID,
   inject,
+  input,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { MatButton } from '@angular/material/button';
@@ -12,6 +13,8 @@ import { MatIcon } from '@angular/material/icon';
 /** The parts of `window` the OrcaSlicer integration uses. */
 export interface OrcaSlicerHost {
   history: Pick<History, 'back'>;
+  /** The webview bridge. Newer plugins open this page in their own window, where `close()` closes it. */
+  orca?: { close?: () => void };
 }
 
 /**
@@ -40,8 +43,8 @@ export const ORCA_SLICER_HOST = new InjectionToken<OrcaSlicerHost | null>(
 );
 
 /**
- * "Back to OrcaSlicer": the plugin's own page is the previous history entry,
- * and that webview has no back button of its own. Renders nothing outside
+ * "Back to OrcaSlicer": closes the plugin's window, or (older in-tab webview)
+ * goes back to the plugin's page, which has no back button of its own. Renders nothing outside
  * OrcaSlicer.
  */
 @Component({
@@ -56,7 +59,7 @@ export const ORCA_SLICER_HOST = new InjectionToken<OrcaSlicerHost | null>(
         (click)="back()"
       >
         <mat-icon aria-hidden="true">arrow_back</mat-icon>
-        Back to OrcaSlicer
+        {{ label() }}
       </button>
     }
   `,
@@ -64,8 +67,18 @@ export const ORCA_SLICER_HOST = new InjectionToken<OrcaSlicerHost | null>(
 })
 export class BackToOrcaSlicerComponent {
   readonly host = inject(ORCA_SLICER_HOST);
+  readonly label = input('Back to OrcaSlicer');
 
+  /**
+   * Closes the plugin's separate window when `window.orca.close()` exists,
+   * otherwise goes back in history (the older in-tab webview).
+   */
   back(): void {
+    const orca = this.host?.orca;
+    if (typeof orca?.close === 'function') {
+      orca.close();
+      return;
+    }
     this.host?.history.back();
   }
 }

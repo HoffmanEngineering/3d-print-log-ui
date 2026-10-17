@@ -168,7 +168,8 @@ export interface FilamentSummary {
   isActive: boolean;
   notes: string;
   isFavorite: boolean;
-  createdDate: string;
+  /** Absent on a summary built from a detail (see filamentDetailToSummary). */
+  createdDate?: string;
   filamentRemaining: number | null;
   filamentLengthRemainingInM: number | null;
   filamentVolumeRemainingInMl: number | null;

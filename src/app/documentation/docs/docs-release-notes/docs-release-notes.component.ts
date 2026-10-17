@@ -13,6 +13,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 
+import { VersionReleaseNoteDialogService } from 'src/app/core/services/version-release-note-dialog.service';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import { DOC_RELEASES } from '../../generated/docs-manifest';
 import type { ArchivedRelease } from '../../generated/release-notes-archive';
@@ -59,6 +60,10 @@ export class DocsReleaseNotesComponent {
       .subscribe((fragment) => this.honorFragment(fragment));
 
     inject(DestroyRef).onDestroy(() => this.skeleton.destroy());
+
+    // Reaching this page by any route (the About menu, the dialog's link, a
+    // search result) clears the navbar's unread indicator.
+    inject(VersionReleaseNoteDialogService).markReleaseNotesViewed();
   }
 
   /**

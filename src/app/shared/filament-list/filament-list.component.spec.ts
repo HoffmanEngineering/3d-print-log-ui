@@ -383,6 +383,45 @@ describe('FilamentListComponent once responses arrive', () => {
     expect(host().querySelectorAll('tr.mat-mdc-row').length).toBe(1);
   });
 
+  it('says Not tracked for a spool with no starting weight, in table and card', () => {
+    respond([{ ...blue, filamentRemaining: null }]);
+
+    expect(
+      host()
+        .querySelector('td.mat-column-filamentRemaining')!
+        .textContent!.trim()
+    ).toBe('Not tracked');
+    expect(
+      host().querySelector('.filament-card .card-weight')!.textContent!.trim()
+    ).toBe('Not tracked');
+  });
+
+  it('shows grams for a tracked spool', () => {
+    respond([blue]);
+
+    expect(
+      host()
+        .querySelector('td.mat-column-filamentRemaining')!
+        .textContent!.trim()
+    ).toBe('500');
+    expect(
+      host().querySelector('.filament-card .card-weight')!.textContent!.trim()
+    ).toBe('500g');
+    expect(host().querySelector('.remaining-not-tracked')).toBeNull();
+  });
+
+  it('mutes Not tracked so it scans apart from the numbers', () => {
+    respond([{ ...blue, filamentRemaining: null }]);
+
+    const muted = Array.from(
+      host().querySelectorAll(
+        'td.mat-column-filamentRemaining .remaining-not-tracked, .filament-card .card-weight .remaining-not-tracked'
+      )
+    );
+    expect(muted.length).toBe(2);
+    muted.forEach((el) => expect(el.textContent!.trim()).toBe('Not tracked'));
+  });
+
   it('says so when nothing matches', () => {
     respond([]);
 

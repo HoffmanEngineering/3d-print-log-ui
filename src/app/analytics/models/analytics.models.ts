@@ -211,21 +211,48 @@ export interface MaterialGroup {
   key: string;
   label: string;
   printCount: number;
+  /** Print consumption only. A group only ever weighed in has 0 here and 0 prints. */
   materialMg: number;
   swatch: SwatchDto;
+  /**
+   * Net filament adjustments (inventory corrections such as weigh-ins) for this group, in CONSUMPTION
+   * terms: positive means filament was removed, negative means it was added back, so it can be
+   * below zero. Note this is the opposite sign of the spool weight calculator's adjustment.
+   * Optional: an API older than #231 does not send it, and the UI may deploy first. Read it
+   * through `adjustmentMgOf`, which treats a missing value as 0.
+   */
+  adjustmentMg?: number;
 }
 
 export interface MaterialSeriesBucket {
   index: number;
   localStart: string;
+  /** Print consumption only; adjustments are the separate {@link adjustmentMg}. */
   materialMgByType: Record<string, number>;
+  /**
+   * Net filament adjustments (inventory corrections such as weigh-ins) logged in this period, in CONSUMPTION
+   * terms: positive means filament was removed, negative means it was added back, so it can be
+   * below zero. Note this is the opposite sign of the spool weight calculator's adjustment.
+   * Optional: an API older than #231 does not send it, and the UI may deploy first. Read it
+   * through `adjustmentMgOf`, which treats a missing value as 0.
+   */
+  adjustmentMg?: number;
 }
 
 export interface SpoolRow {
   filamentId: string;
   label: string;
   swatch: SwatchDto;
+  /** Print consumption only. percentConsumed and costConsumed describe max(0, used + adjusted). */
   usedMg: number;
+  /**
+   * Net filament adjustments (inventory corrections such as weigh-ins) on this spool in the window, in CONSUMPTION
+   * terms: positive means filament was removed, negative means it was added back, so it can be
+   * below zero. Note this is the opposite sign of the spool weight calculator's adjustment.
+   * Optional: an API older than #231 does not send it, and the UI may deploy first. Read it
+   * through `adjustmentMgOf`, which treats a missing value as 0.
+   */
+  adjustmentMg?: number;
   /** May be NEGATIVE — usage logged beyond the spool's initial weight. Show it, don't clamp it. */
   remainingMg: number | null;
   initialMg: number | null;
@@ -256,7 +283,18 @@ export interface MaterialsResponse {
   runway: RunwayRow[];
   wasteGrams: Metric;
   wasteCost: MoneyMetric;
+  /** Counts prints only; adjustments are counted by {@link adjustmentCount}. */
   coverage: Coverage;
+  /**
+   * Adjustment rows the figures include (#231). Optional: an older API does not send it.
+   */
+  adjustmentCount?: number;
+  /**
+   * True whenever the server emptied the tab because usage plus adjustment rows passed its row
+   * cap. Coverage cannot say so when the window holds no prints. Optional: an older API does not
+   * send it, and then the RowCapExceeded coverage exclusion is the only signal.
+   */
+  rowCapExceeded?: boolean;
 }
 
 export interface CostSeriesBucket {
@@ -347,4 +385,9 @@ export interface AccuracyResponse {
   biasTrend: AccuracyTrendBucket[];
   callouts: AccuracyCallout[];
   coverage: Coverage;
+}
+
+/** A row's adjustment, or 0 from an API that predates the field (#231). */
+export function adjustmentMgOf(row: { adjustmentMg?: number | null }): number {
+  return row.adjustmentMg ?? 0;
 }

@@ -7,6 +7,8 @@ export function formatLabel(format: string | null | undefined): string {
       return 'Anycubic ACE tag';
     case 'openspool':
       return 'OpenSpool tag';
+    case 'bambu':
+      return 'Bambu Lab tag';
     default:
       return 'Spool tag';
   }

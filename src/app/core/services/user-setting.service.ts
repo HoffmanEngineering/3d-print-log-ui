@@ -53,6 +53,10 @@ export enum UserSettingType {
   Email_PrinterSilent = 25,
   /** When the one-time in-app email notice was dismissed, as an ISO timestamp. */
   Email_NoticeSeenAt = 26,
+  /** The newest version whose notes the What's New dialog has shown. */
+  ReleaseNotes_LastShownVersion = 27,
+  /** The version current when the release notes page was last opened. */
+  ReleaseNotes_LastViewedVersion = 28,
 }
 
 export interface UserSetting {

@@ -16,7 +16,7 @@ import path from 'node:path';
 
 import { parseFrontmatter } from './docs-frontmatter.mjs';
 import { renderMarkdown } from './docs-markdown.mjs';
-import { RELEASE_NOTES_DIR } from './docs-paths.mjs';
+import { RELEASE_DIALOG_DIR, RELEASE_NOTES_DIR } from './docs-paths.mjs';
 
 export const SITE_ORIGIN = 'https://www.3dprintlog.com';
 
@@ -99,6 +99,50 @@ export function readReleaseSources(dir = RELEASE_NOTES_DIR) {
       title: parsed.data.title ?? '',
       highlights: parsed.data.highlights ?? [],
       anchor: anchorFor(expected),
+      body: parsed.body,
+      sourceFile: name,
+    };
+  });
+
+  return sources.sort((a, b) => compareVersionsDesc(a.version, b.version));
+}
+
+/**
+ * The What's New dialog's notes, `release-notes/dialog/<version>.md`. Each one
+ * is the short version of the release with the same filename: frontmatter
+ * `version` (matching the filename, as for a release) and an optional `title`
+ * when the dialog should be headed differently from the page.
+ *
+ * @param {string} [dir]
+ * @returns {{ version: string, title: unknown, body: string, sourceFile: string }[]}
+ *   newest first. `title` is undefined when the release's own title is used.
+ */
+export function readDialogNoteSources(dir = RELEASE_DIALOG_DIR) {
+  if (!fs.existsSync(dir)) return [];
+
+  const names = fs.readdirSync(dir).filter((name) => name.endsWith('.md'));
+
+  const sources = names.map((name) => {
+    const raw = fs.readFileSync(path.join(dir, name), 'utf8');
+    let parsed;
+    try {
+      parsed = parseFrontmatter(raw);
+    } catch (error) {
+      throw new Error(`dialog/${name}: ${error.message}`);
+    }
+
+    const expected = name.replace(/\.md$/, '');
+    if (String(parsed.data.version) !== expected) {
+      throw new Error(
+        `dialog/${name} declares version "${parsed.data.version}" but must match its filename ("${expected}").`
+      );
+    }
+
+    // Passed through untyped, as readReleaseSources does, so the validator's
+    // type check is the one that reports a bad title.
+    return {
+      version: expected,
+      title: parsed.data.title ?? undefined,
       body: parsed.body,
       sourceFile: name,
     };

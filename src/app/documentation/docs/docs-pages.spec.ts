@@ -36,7 +36,10 @@ describe('/docs pages', () => {
         // docs-getting-started is auth-aware on a public route; docs-release-notes
         // reads the route fragment to decide whether to expand its archive. The
         // rest of the pages inject nothing at all.
-        { provide: AuthService, useValue: { login: () => undefined } },
+        {
+          provide: AuthService,
+          useValue: { login: () => undefined, isLoggedIn: () => false },
+        },
         { provide: Router, useValue: { url: '/docs/getting-started' } },
         { provide: ActivatedRoute, useValue: { fragment: of(null) } },
       ],

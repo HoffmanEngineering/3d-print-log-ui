@@ -41,6 +41,7 @@ import { renderMarkdown, withHeadingIds } from './docs-markdown.mjs';
 import { planTwins } from './docs-twins.mjs';
 import {
   emitArchiveTs,
+  emitDialogNotesTs,
   renderArchiveHost,
   renderRecentReleases,
   renderRelease,
@@ -123,8 +124,9 @@ export function readDocCaptures(file = DOC_CAPTURES_JSON) {
  * @param {object[]} sources from readDocSources
  * @param {object[]} [releases] from readReleaseSources, newest first
  * @param {Record<string, object>} [captures] from readDocCaptures
- * @param {{ llmsTxt?: string | null }} [options] `llmsTxt` is the site-wide
- *   src/llms.txt, republished as `/llms.md`
+ * @param {{ llmsTxt?: string | null, dialogNotes?: object[] }} [options]
+ *   `llmsTxt` is the site-wide src/llms.txt, republished as `/llms.md`;
+ *   `dialogNotes` are from readDialogNoteSources, newest first
  * @returns {{ files: Map<string, string>, manifest: object, templates: Record<string, string> }}
  */
 export function planOutputs(
@@ -192,6 +194,10 @@ export function planOutputs(
   files.set('docs-captures.ts', emitCapturesTs(captures));
   files.set('docs-outline.ts', emitOutlineTs(manifest, templates));
   files.set('release-notes-archive.ts', emitArchiveTs(releases));
+  files.set(
+    'release-dialog-notes.ts',
+    emitDialogNotesTs(releases, options.dialogNotes ?? [])
+  );
   files.set('docs-declarations.ts', emitDeclarationsTs(manifest));
   files.set('docs-manifest.ts', emitManifestTs());
   files.set('docs.routes.ts', emitRoutesTs(manifest));

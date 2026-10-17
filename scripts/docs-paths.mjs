@@ -24,6 +24,16 @@ export const RELEASE_NOTES_DIR = path.join(
   'release-notes'
 );
 
+/**
+ * The What's New dialog's shorter take on a release, named `<version>.md` like
+ * the release it summarises. Optional: a release without one (usually a patch)
+ * is on the page and lights the unread indicator, but never opens the dialog.
+ *
+ * A subdirectory, so readReleaseSources (which reads only the `.md` files
+ * directly in RELEASE_NOTES_DIR) never mistakes one for a release.
+ */
+export const RELEASE_DIALOG_DIR = path.join(RELEASE_NOTES_DIR, 'dialog');
+
 /** Generated Angular sources and data artifacts. Gitignored. */
 export const GENERATED_DIR = path.join(
   REPO_ROOT,

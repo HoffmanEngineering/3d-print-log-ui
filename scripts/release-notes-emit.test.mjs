@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  DIALOG_NOTE_LIMIT,
   RECENT_RELEASE_COUNT,
   emitArchiveTs,
+  emitDialogNotesTs,
   formatDate,
   renderArchiveHost,
   renderRecentReleases,
@@ -11,7 +13,10 @@ import {
   toInjectableHtml,
   toReleaseManifest,
 } from './release-notes-emit.mjs';
-import { readReleaseSources } from './release-notes-lib.mjs';
+import {
+  readDialogNoteSources,
+  readReleaseSources,
+} from './release-notes-lib.mjs';
 import { RELEASE_NOTES_DIR } from './docs-paths.mjs';
 
 const release = (version, extra = {}) => ({
@@ -283,4 +288,75 @@ test('no archived release carries markup that is inert once injected', () => {
     'routerLink cannot navigate from innerHTML'
   );
   assert.ok(!/style=/.test(source), 'the sanitizer strips style attributes');
+});
+
+// -- the What's New dialog's data --------------------------------------------
+
+const dialogNote = (version, extra = {}) => ({
+  version,
+  title: undefined,
+  body: `**${version}** is here! See [the docs](/docs/prints).`,
+  sourceFile: `${version}.md`,
+  ...extra,
+});
+
+test('emitDialogNotesTs lists every release, patches included, newest first', () => {
+  const ts = emitDialogNotesTs(
+    [release('1.3.1'), release('1.3.0'), release('1.2.0')],
+    []
+  );
+
+  assert.match(
+    ts,
+    /RELEASE_VERSIONS: readonly string\[\] = \[\n {2}'1\.3\.1',\n {2}'1\.3\.0',\n {2}'1\.2\.0',\n\];/
+  );
+});
+
+test('emitDialogNotesTs ships only the newest DIALOG_NOTE_LIMIT notes', () => {
+  const versions = ['1.5.0', '1.4.0', '1.3.0', '1.2.0'];
+  const ts = emitDialogNotesTs(
+    versions.map((v) => release(v)),
+    versions.map((v) => dialogNote(v))
+  );
+
+  assert.equal(DIALOG_NOTE_LIMIT, 3);
+  assert.match(ts, /export const DIALOG_NOTE_LIMIT = 3;/);
+  assert.match(ts, /version: '1\.3\.0'/);
+  assert.doesNotMatch(ts, /version: '1\.2\.0'/);
+});
+
+test('emitDialogNotesTs titles a note from its release unless it has its own', () => {
+  const ts = emitDialogNotesTs(
+    [release('1.4.0', { title: "Page's Title" }), release('1.3.0')],
+    [dialogNote('1.4.0'), dialogNote('1.3.0', { title: 'Dialog Title' })]
+  );
+
+  assert.match(ts, /title: '1\.4\.0 - Page\\'s Title'/);
+  assert.match(ts, /title: '1\.3\.0 - Dialog Title'/);
+});
+
+test('emitDialogNotesTs renders notes as injectable HTML', () => {
+  const ts = emitDialogNotesTs([release('1.4.0')], [dialogNote('1.4.0')]);
+
+  // [innerHTML] would leave a routerLink inert.
+  const html = ts.split('\n').find((line) => line.startsWith('    html: '));
+  assert.match(html, /<a href="\/docs\/prints">the docs<\/a>/);
+  assert.doesNotMatch(html, /routerLink/);
+});
+
+test('emitDialogNotesTs refuses a note with no release', () => {
+  assert.throws(
+    () => emitDialogNotesTs([release('1.3.0')], [dialogNote('1.4.0')]),
+    /dialog\/1\.4\.0\.md has no release/
+  );
+});
+
+test('the real dialog notes all generate', () => {
+  const ts = emitDialogNotesTs(
+    readReleaseSources(RELEASE_NOTES_DIR),
+    readDialogNoteSources()
+  );
+
+  assert.match(ts, /DIALOG_RELEASE_NOTES/);
+  assert.doesNotMatch(ts, /Support development/);
 });

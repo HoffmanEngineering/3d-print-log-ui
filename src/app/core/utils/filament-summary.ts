@@ -6,8 +6,10 @@ import { FilamentDetail, FilamentSummary } from '../services/filament.service';
  * a detail — QR scans, id-based resolvers — feed the same UI.
  *
  * `createdDate`, `loadedInPrinter`, and `materialCategory` are not part of the
- * detail payload, so they come back empty; the server-computed remaining
- * values are carried through.
+ * detail payload. `createdDate` is left out rather than empty: a print save
+ * sends this object back, and the API cannot bind `""` as a date, which fails
+ * the whole save with a 400. The other two come back null; the server-computed
+ * remaining values are carried through.
  */
 export function filamentDetailToSummary(
   detail: FilamentDetail
@@ -29,7 +31,6 @@ export function filamentDetailToSummary(
     isActive: detail.isActive,
     notes: detail.notes,
     isFavorite: detail.isFavorite,
-    createdDate: '',
     filamentRemaining: detail.filamentRemaining ?? null,
     filamentLengthRemainingInM: detail.filamentLengthRemainingInM ?? null,
     filamentVolumeRemainingInMl: detail.filamentVolumeRemainingInMl ?? null,

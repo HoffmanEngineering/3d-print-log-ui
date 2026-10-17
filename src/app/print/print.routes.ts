@@ -20,6 +20,7 @@ import {
 } from '../core/resolvers/user-setting.resolvers';
 import { currentUserPrinterSummariesResolver } from '../core/resolvers/current-user-printer-summaries.resolver';
 import { EditPrintDetailComponent } from './edit-print-detail/edit-print-detail.component';
+import { OrcaPendingUploadsComponent } from './orca-pending-uploads/orca-pending-uploads.component';
 import { PrintListComponent } from './print-list/print-list.component';
 import { copyPrintDetailResolver } from './resolvers/copy-print-detail.resolver';
 import { lastFilamentMeasureSettingResolver } from './resolvers/last-filament-measure-setting.resolver';
@@ -103,6 +104,13 @@ export const PRINT_ROUTES: Routes = [
         path: 'new/cura',
 
         redirectTo: 'new/edit',
+      },
+      {
+        // The OrcaSlicer plugin's "Open in browser": the prints one install
+        // uploaded, each opening `new/cura` with its setting id.
+        path: 'new/orca',
+        component: OrcaPendingUploadsComponent,
+        canActivate: [authGuard],
       },
       {
         // Deliberately resolves NOTHING. A resolver keeps the previous page on

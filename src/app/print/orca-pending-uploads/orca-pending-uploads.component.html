@@ -1,0 +1,157 @@
+<div class="orca-uploads">
+  <header class="orca-uploads__header">
+    <app-back-to-orca-slicer class="orca-uploads__back" />
+    <h1>Prints from OrcaSlicer</h1>
+    <p class="orca-uploads__lead">
+      Prints you sliced in OrcaSlicer in the last 7 days. Pick one to log it.
+    </p>
+  </header>
+
+  @switch (state().phase) {
+    @case ('invalid') {
+      <app-empty-state
+        data-testid="orca-uploads-invalid"
+        icon="link_off"
+        heading="This link can't be used"
+        message="This link is missing the OrcaSlicer install id. Open it from the 3D Print Log tab in OrcaSlicer."
+      />
+    }
+    @case ('error') {
+      <app-empty-state
+        data-testid="orca-uploads-error"
+        icon="cloud_off"
+        heading="Couldn't load your prints"
+        [message]="
+          state().rateLimited
+            ? 'Too many requests in the last minute. Wait a minute and try again.'
+            : 'Something went wrong loading the prints from this OrcaSlicer. Check your connection and try again.'
+        "
+      >
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          data-testid="orca-uploads-retry"
+          (click)="retry()"
+        >
+          Try again
+        </button>
+      </app-empty-state>
+    }
+    @case ('ready') {
+      @if (state().uploads.length === 0) {
+        <app-empty-state
+          data-testid="orca-uploads-empty"
+          icon="inbox"
+          heading="No prints to log"
+          message="No prints from this OrcaSlicer in the last 7 days. Slice a model and click Log in the 3D Print Log tab."
+        />
+      } @else {
+        <ul class="orca-uploads__list" data-testid="orca-uploads-list">
+          @for (upload of state().uploads; track upload.settingId) {
+            <li class="orca-upload" data-testid="orca-upload">
+              <div class="orca-upload__body">
+                <h2 class="orca-upload__name" data-testid="orca-upload-name">
+                  {{ displayName(upload) }}
+                </h2>
+                <div class="orca-upload__meta">
+                  <span class="orca-upload__fact">
+                    <mat-icon aria-hidden="true">schedule</mat-icon>
+                    <span>
+                      Sliced
+                      <time
+                        [attr.datetime]="upload.createdDate"
+                        [attr.title]="
+                          upload.createdDate | localeDate: 'datetime'
+                        "
+                        data-testid="orca-upload-relative"
+                        >{{ upload.createdDate | humanize }}</time
+                      >
+                      <span class="orca-upload__absolute">
+                        ({{ upload.createdDate | localeDate: 'short' }})</span
+                      >
+                    </span>
+                  </span>
+                  @if (upload.estimatedPrintTimeSeconds) {
+                    <span
+                      class="orca-upload__fact"
+                      data-testid="orca-upload-estimate"
+                    >
+                      <mat-icon aria-hidden="true">timer</mat-icon>
+                      <span
+                        >Estimated
+                        {{ upload.estimatedPrintTimeSeconds | duration }}</span
+                      >
+                    </span>
+                  }
+                  @if (versionLabel(upload); as version) {
+                    <span
+                      class="orca-upload__fact orca-upload__version"
+                      data-testid="orca-upload-version"
+                      >{{ version }}</span
+                    >
+                  }
+                  @if (upload.claimed) {
+                    <span
+                      class="orca-upload__claimed"
+                      data-testid="orca-upload-claimed"
+                      >Already opened</span
+                    >
+                  }
+                </div>
+              </div>
+              @if (upload.claimed) {
+                <a
+                  mat-stroked-button
+                  color="primary"
+                  class="orca-upload__action"
+                  data-testid="orca-upload-open"
+                  routerLink="/prints/new/cura"
+                  [queryParams]="queryParams(upload)"
+                  (click)="onOpen(upload)"
+                  >Log this print</a
+                >
+              } @else {
+                <a
+                  mat-raised-button
+                  color="primary"
+                  class="orca-upload__action"
+                  data-testid="orca-upload-open"
+                  routerLink="/prints/new/cura"
+                  [queryParams]="queryParams(upload)"
+                  (click)="onOpen(upload)"
+                  >Log this print</a
+                >
+              }
+            </li>
+          }
+        </ul>
+      }
+    }
+    @case ('loading') {
+      <div
+        class="app-skeleton-immediate"
+        aria-busy="true"
+        data-testid="orca-uploads-skeleton"
+      >
+        <span class="cdk-visually-hidden" role="status"
+          >Loading your prints from OrcaSlicer</span
+        >
+        <ul class="orca-uploads__list" aria-hidden="true">
+          @for (row of skeletonRows; track row) {
+            <li class="orca-upload">
+              <div class="orca-upload__body">
+                <app-skeleton width="45%" height="1.25rem" />
+                <app-skeleton width="70%" height="0.875rem" />
+              </div>
+              <app-skeleton width="8.5rem" height="36px" />
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    @case ('redirecting') {
+      <p class="orca-uploads__status" role="status">Opening your print…</p>
+    }
+  }
+</div>

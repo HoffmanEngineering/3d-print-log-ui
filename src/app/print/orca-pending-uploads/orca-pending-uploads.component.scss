@@ -1,0 +1,116 @@
+.orca-uploads {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 16px;
+
+  @media (max-width: 450px) {
+    padding: 16px;
+  }
+}
+
+.orca-uploads__header {
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    font-weight: 500;
+  }
+}
+
+.orca-uploads__back:not(:empty) {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.orca-uploads__lead {
+  margin: 0;
+  color: var(--app-text-secondary);
+}
+
+.orca-uploads__status {
+  color: var(--app-text-secondary);
+}
+
+.orca-uploads__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--mat-divider-color);
+  border-radius: 8px;
+}
+
+.orca-upload {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+
+  & + & {
+    border-top: 1px solid var(--mat-divider-color);
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.orca-upload__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.orca-upload__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--app-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.orca-upload__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  font-size: 14px;
+  color: var(--app-text-secondary);
+}
+
+.orca-upload__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+}
+
+.orca-upload__absolute {
+  color: var(--app-text-tertiary);
+}
+
+.orca-upload__version {
+  color: var(--app-text-tertiary);
+}
+
+.orca-upload__claimed {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--app-surface-container);
+  color: var(--app-text-secondary);
+}
+
+.orca-upload__action {
+  flex-shrink: 0;
+}

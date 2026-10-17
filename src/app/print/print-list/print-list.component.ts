@@ -1,3 +1,4 @@
+import { BackToOrcaSlicerComponent } from 'src/app/shared/back-to-orca-slicer/back-to-orca-slicer.component';
 import { MediaMatcher } from '@angular/cdk/layout';
 import {
   ChangeDetectionStrategy,
@@ -117,6 +118,7 @@ export interface ColumnDefinition {
   styleUrls: ['./print-list.component.scss'],
   providers: [PrintBulkActionsService, BLOCK_SCROLL_WHILE_MENU_OPEN],
   imports: [
+    BackToOrcaSlicerComponent,
     DefaultLayoutDirective,
     DefaultLayoutAlignDirective,
     MatButton,

@@ -8,6 +8,10 @@
   --chart-series-4: #d62728;
   --chart-series-5: #9467bd;
   --chart-series-6: #8c8c8c;
+  // Signed, unstacked series (inventory adjustments): hatched slate, outside the categorical
+  // palette so it never collides with a stacked series' color.
+  --chart-signed: #37474f;
+  --chart-signed-bg: rgba(55, 71, 79, 0.18);
 
   --chart-grid: rgba(0, 0, 0, 0.12);
   --chart-axis-text: rgba(0, 0, 0, 0.68);
@@ -33,6 +37,8 @@ html.dark-theme {
   --chart-series-4: #ef5350;
   --chart-series-5: #b39ddb;
   --chart-series-6: #bdbdbd;
+  --chart-signed: #cfd8dc;
+  --chart-signed-bg: rgba(207, 216, 220, 0.2);
 
   --chart-grid: rgba(255, 255, 255, 0.16);
   --chart-axis-text: rgba(255, 255, 255, 0.72);

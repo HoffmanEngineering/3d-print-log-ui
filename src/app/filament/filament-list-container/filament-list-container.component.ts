@@ -74,7 +74,10 @@ import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MaterialIconComponent } from '../../shared/material-icon/material-icon.component';
 import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 import { AdComponent } from '../../shared/ad/ad.component';
-import { DecimalPipe } from '@angular/common';
+import {
+  isRemainingTracked,
+  RemainingPipe,
+} from 'src/app/shared/pipes/remaining.pipe';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
 
 @Component({
@@ -116,12 +119,15 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
     EmptyStateComponent,
     MatPaginator,
     AdComponent,
-    DecimalPipe,
+    RemainingPipe,
     FilamentColorSwatchStylePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilamentListContainerComponent implements OnInit, OnDestroy {
+  /** False for a spool with no starting weight, whose remaining is null. */
+  protected readonly isRemainingTracked = isRemainingTracked;
+
   private activatedRoute = inject(ActivatedRoute);
   private filamentService = inject(FilamentService);
   private titleService = inject(Title);

@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
+import { VersionReleaseNoteDialogService } from 'src/app/core/services/version-release-note-dialog.service';
 import { DOC_RELEASES } from '../../generated/docs-manifest';
 import { DocsReleaseNotesComponent } from './docs-release-notes.component';
 
@@ -18,9 +19,14 @@ describe('DocsReleaseNotesComponent', () => {
 
   /** The router's fragment stream, so a test can navigate in place. */
   let fragment$: BehaviorSubject<string | null>;
+  let releaseNotes: jasmine.SpyObj<VersionReleaseNoteDialogService>;
 
   async function setup(fragment: string | null) {
     fragment$ = new BehaviorSubject<string | null>(fragment);
+    releaseNotes = jasmine.createSpyObj<VersionReleaseNoteDialogService>(
+      'VersionReleaseNoteDialogService',
+      ['markReleaseNotesViewed']
+    );
 
     await TestBed.configureTestingModule({
       declarations: [DocsReleaseNotesComponent],
@@ -29,6 +35,7 @@ describe('DocsReleaseNotesComponent', () => {
           provide: ActivatedRoute,
           useValue: { fragment: fragment$.asObservable() },
         },
+        { provide: VersionReleaseNoteDialogService, useValue: releaseNotes },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -72,6 +79,15 @@ describe('DocsReleaseNotesComponent', () => {
   const settleArchive = (
     fixture: ComponentFixture<DocsReleaseNotesComponent>
   ) => settleUntil(fixture, () => fixture.componentInstance.expanded());
+
+  // Every way onto this page clears the navbar's unread indicator, including
+  // the dialog's "read every release you missed" link.
+  it('marks the release notes read', waitForAsync(async () => {
+    const fixture = await setup(null);
+    await tick(fixture);
+
+    expect(releaseNotes.markReleaseNotesViewed).toHaveBeenCalledTimes(1);
+  }));
 
   it('starts with the archive closed', waitForAsync(async () => {
     const fixture = await setup(null);

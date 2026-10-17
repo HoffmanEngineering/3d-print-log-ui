@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { NOT_TRACKED } from 'src/app/shared/pipes/remaining.pipe';
 
 /**
  * Read-only summary of how much filament a spool has left.
@@ -46,6 +47,9 @@ export class FilamentRemainingCardComponent {
   readonly focusNominalWeight = output<void>();
 
   protected readonly isTracked = computed(() => this.remainingMg() !== null);
+
+  /** Shared with the lists and printer pages, so every surface says the same thing. */
+  protected readonly notTrackedLabel = NOT_TRACKED;
 
   /** The projection when one applies, otherwise the server's own figure. */
   protected readonly displayMg = computed(() =>

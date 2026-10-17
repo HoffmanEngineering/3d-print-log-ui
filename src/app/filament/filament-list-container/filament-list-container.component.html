@@ -437,7 +437,15 @@
         Remaining (g)
       </th>
       <td mat-cell *matCellDef="let filament">
-        {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}
+        <span
+          [class.remaining-not-tracked]="
+            !isRemainingTracked(filament.filamentRemaining)
+          "
+          >{{
+            filament.filamentRemaining
+              | remaining: { divisor: 1000, digitsInfo: '1.0-0' }
+          }}</span
+        >
       </td>
     </ng-container>
     <ng-container matColumnDef="loadedInPrinter">
@@ -505,14 +513,19 @@
             >
           }
           <hr />
-          <button
-            type="button"
-            mat-menu-item
-            attr.aria-label="Mark Material {{ filament.displayName }} as empty."
-            (click)="markAsEmpty(filament)"
-          >
-            <mat-icon>hide_source</mat-icon>Mark As Empty
-          </button>
+          <!-- An untracked spool has no amount to zero out. -->
+          @if (isRemainingTracked(filament.filamentRemaining)) {
+            <button
+              type="button"
+              mat-menu-item
+              attr.aria-label="Mark Material {{
+                filament.displayName
+              }} as empty."
+              (click)="markAsEmpty(filament)"
+            >
+              <mat-icon>hide_source</mat-icon>Mark As Empty
+            </button>
+          }
           <button
             type="button"
             attr.aria-label="Delete Material {{ filament.displayName }}"
@@ -572,7 +585,16 @@
             <span class="card-name">{{ filament.displayName }}</span>
             <span class="card-spacer"></span>
             <span class="card-weight">
-              {{ filament.filamentRemaining / 1000 | number: '1.0-0' }}g
+              <span
+                [class.remaining-not-tracked]="
+                  !isRemainingTracked(filament.filamentRemaining)
+                "
+                >{{
+                  filament.filamentRemaining
+                    | remaining
+                      : { divisor: 1000, digitsInfo: '1.0-0', unit: 'g' }
+                }}</span
+              >
             </span>
           </div>
           <div class="card-row-material">
@@ -659,16 +681,19 @@
               </a>
             }
             <hr />
-            <button
-              type="button"
-              mat-menu-item
-              [attr.aria-label]="
-                'Mark Material ' + filament.displayName + ' as empty.'
-              "
-              (click)="markAsEmpty(filament)"
-            >
-              <mat-icon>hide_source</mat-icon>Mark As Empty
-            </button>
+            <!-- An untracked spool has no amount to zero out. -->
+            @if (isRemainingTracked(filament.filamentRemaining)) {
+              <button
+                type="button"
+                mat-menu-item
+                [attr.aria-label]="
+                  'Mark Material ' + filament.displayName + ' as empty.'
+                "
+                (click)="markAsEmpty(filament)"
+              >
+                <mat-icon>hide_source</mat-icon>Mark As Empty
+              </button>
+            }
             <button
               type="button"
               mat-menu-item

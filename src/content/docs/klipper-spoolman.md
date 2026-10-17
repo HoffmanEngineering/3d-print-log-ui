@@ -7,8 +7,8 @@ nav: false
 group: integrations
 order: 43
 mode: how-to
-updated: 2026-10-15
-related: [printlog-bridge, klipper, materials, printers]
+updated: 2026-10-16
+related: [printlog-bridge, klipper, home-assistant-spoolman, materials, printers]
 ---
 
 ## Connect Klipper via Spoolman
@@ -20,6 +20,8 @@ Part of the [Log prints from Klipper](/docs/printlog-bridge) guide.
 Moonraker has built-in support for [Spoolman](https://github.com/Donkie/Spoolman), a spool inventory server. 3D Print Log can stand in for that server, so your 3D Print Log spools show up in the Mainsail, Fluidd and KlipperScreen spool pickers. The same block also logs each print on the printer, and charges the filament it used to the spool that was active. There is nothing to install: you paste a few lines into `moonraker.conf`.
 
 Free includes one Spoolman printer. [Pro](/docs/pro-subscription) includes unlimited printers, under the fair-use terms in the [Terms of Service](/docs/terms-of-service#spoolman-fair-use).
+
+The same `server` address also shows your spools in Home Assistant. See [Home Assistant via Spoolman](/docs/home-assistant-spoolman).
 
 ### Set it up {#setup}
 
@@ -60,12 +62,12 @@ Spool ids in 3D Print Log are your spool numbers: 1, 2, 3 and so on, in the orde
 ### What works today {#works}
 
 - The spool pickers in Mainsail, Fluidd and KlipperScreen.
-- Each spool's remaining weight, colour, material and vendor.
+- Each spool's remaining weight, color, material and vendor.
 - Setting the active spool, from a picker or with `SET_ACTIVE_SPOOL`.
 - Logging prints with the `[notifier 3d_print_log]` section: each print is logged when it starts and when it succeeds, fails or is cancelled.
 - Filament used, charged per spool to the spool that was active in Moonraker while printing, however you picked it (Mainsail, Fluidd, KlipperScreen or `SET_ACTIVE_SPOOL`). On a printer with one tool, that spool is also loaded on the printer in 3D Print Log.
 - With [printlog-bridge](/docs/printlog-bridge), spools stay in sync both ways. A spool picked on the printer is loaded into the active tool's slot in 3D Print Log, and a spool loaded in the app, with `PRINTLOG_SET_SPOOL` or by the Snapmaker U1's RFID reader becomes Moonraker's active spool when that tool is active.
-- Fluidd's spool scanner, which recognises 3D Print Log's QR labels and selects that spool. See [QR Code Labels](/docs/materials#qr-labels).
+- Fluidd's spool scanner, which recognizes 3D Print Log's QR labels and selects that spool. See [QR Code Labels](/docs/materials#qr-labels).
 - Fluidd's **Manage spools** button, which opens your materials in 3D Print Log. A link to one spool opens that spool's material.
 
 ### What doesn't work yet {#not-yet}

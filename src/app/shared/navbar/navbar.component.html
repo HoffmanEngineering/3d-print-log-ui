@@ -13,6 +13,9 @@
       aria-label="Open navigation menu"
     >
       <mat-icon>menu</mat-icon>
+      @if (hasUnreadReleases()) {
+        <span class="unread-dot" aria-hidden="true"></span>
+      }
     </button>
 
     <div class="brand-img">
@@ -59,6 +62,10 @@
       }
       <button mat-button class="link" [matMenuTriggerFor]="aboutMenu">
         About
+        @if (hasUnreadReleases()) {
+          <span class="unread-dot" aria-hidden="true"></span>
+          <span class="visually-hidden">(new release notes)</span>
+        }
       </button>
     </div>
 
@@ -159,7 +166,13 @@ single instance of each submenu is enough. -->
       >Analytics</a
     >
   }
-  <button mat-menu-item [matMenuTriggerFor]="aboutMenu">About</button>
+  <button mat-menu-item [matMenuTriggerFor]="aboutMenu">
+    About
+    @if (hasUnreadReleases()) {
+      <span class="unread-dot" aria-hidden="true"></span>
+      <span class="visually-hidden">(new release notes)</span>
+    }
+  </button>
 </mat-menu>
 
 <mat-menu #printerMenu="matMenu">
@@ -200,9 +213,13 @@ single instance of each submenu is enough. -->
     class="menu-link"
     mat-menu-item
     routerLink="/docs/release-notes"
+    [fragment]="releaseNotesFragment()"
     routerLinkActive="active"
-    >Version v{{ versionNumber }}</a
-  >
+    >Version v{{ versionNumber }}
+    @if (hasUnreadReleases()) {
+      <span class="new-chip">New</span>
+    }
+  </a>
 </mat-menu>
 
 <mat-menu #profileMenu="matMenu">

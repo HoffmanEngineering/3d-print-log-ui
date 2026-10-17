@@ -865,6 +865,68 @@ describe('EditPrintDetailComponent', () => {
         'Prusament Galaxy Black'
       );
     });
+
+    describe('remaining amounts of a loaded spool', () => {
+      const showLoaded = (remaining: Record<string, number | null>) => {
+        const loaded = new Subject<unknown>();
+        (
+          TestBed.inject(PrinterService) as jasmine.SpyObj<PrinterService>
+        ).getLoadedFilamentForPrinter.and.returnValue(loaded as never);
+        const settings = TestBed.inject(
+          UserSettingService
+        ) as unknown as Record<string, unknown>;
+        settings['addUserSetting'] = jasmine
+          .createSpy('addUserSetting')
+          .and.returnValue(of({}));
+        settings['updateUserSetting'] = jasmine
+          .createSpy('updateUserSetting')
+          .and.returnValue(of({}));
+        component.printForm.get('id')!.setValue(null);
+        component.printForm.get('printerId')!.setValue(2);
+        fixture.detectChanges();
+
+        loaded.next([
+          {
+            id: 'pf-1',
+            filament: {
+              id: 'spool-1',
+              displayName: 'Prusament Galaxy Black',
+              colorName: '',
+              materialType: 'PLA',
+              ...remaining,
+            },
+          },
+        ]);
+        fixture.detectChanges();
+        return (fixture.nativeElement as HTMLElement).textContent!;
+      };
+
+      it('says Not tracked once, not 0, for a spool with no starting weight', () => {
+        const text = showLoaded({
+          filamentRemaining: null,
+          filamentLengthRemainingInM: null,
+          filamentVolumeRemainingInMl: null,
+        });
+
+        expect(text.match(/Not tracked/g)?.length).toBe(1);
+        expect(text).not.toContain('(g) remaining');
+        expect(text).not.toContain('(m) remaining');
+        expect(text).not.toContain('(ml) remaining');
+      });
+
+      it('shows grams, meters and milliliters for a tracked spool', () => {
+        const text = showLoaded({
+          filamentRemaining: 250_000,
+          filamentLengthRemainingInM: 84,
+          filamentVolumeRemainingInMl: 201,
+        });
+
+        expect(text).toContain('250 (g) remaining');
+        expect(text).toContain('84 (m) remaining');
+        expect(text).toContain('201 (ml) remaining');
+        expect(text).not.toContain('Not tracked');
+      });
+    });
   });
 
   // #263: an existing print saves with PATCH, sending only what the user changed, so a form opened
@@ -1034,6 +1096,19 @@ describe('EditPrintDetailComponent', () => {
         expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
           filamentUsage: [],
         });
+      });
+
+      it('shows the converted "Other" row as no spool: no remaining, no link', () => {
+        openEditor(legacyPrint);
+        editor!.detectChanges();
+        const host = editor!.nativeElement as HTMLElement;
+
+        expect(host.querySelector('.filament-name')!.textContent).toContain(
+          'Other'
+        );
+        expect(host.textContent).not.toContain('Not tracked');
+        expect(host.textContent).not.toContain('(g) remaining');
+        expect(host.querySelector('a.filament-link')).toBeNull();
       });
 
       it('leaves the legacy usage alone when only another field changed', () => {

@@ -96,6 +96,9 @@ first. Reference: <https://www.3dprintlog.com/docs/api> and <https://www.3dprint
 everything logged against it. Logging the print already subtracted its usage, so do **not** follow
 `create_print` with `adjust_material_remaining` for the same filament: that subtracts it twice.
 
+**A null `remainingGrams` means "not tracked".** A spool with no starting amount reports null in
+every tool. Tell the user its remaining amount isn't tracked, never that it is empty or has 0 g.
+
 ## Check material before a print
 
 Call `find_material(material, color, requiredGrams)`. Matching is by whole word, so `PLA` also finds
@@ -106,6 +109,7 @@ PLA+ and Silk PLA. For each group of matching spools:
   filament change mid-print. Offer it as a suggestion to confirm, not a guarantee: spools in a group
   can differ in brand and diameter. `combinationForRequirement` names the spools.
 - If `candidatesTruncated` is true and the answer is null, the answer is unknown, not no.
+- Spools with no starting amount are left out, because how much they hold is unknown.
 
 ## Correct a spool's remaining amount
 
@@ -121,8 +125,12 @@ used material that no logged print accounts for.
 - It is not idempotent. A retry applies the delta again, so after an error or timeout, read
   `get_material` before retrying.
 - Changing the size of a spool (a new starting amount) is `update_material(materialId, source, initialAmount)`,
-  not an adjustment. `remainingGrams` is also 0 for a spool with no tracked capacity: check
-  `hasNominalCapacity` before saying a spool is empty.
+  not an adjustment. A spool with no starting amount (`hasNominalCapacity` false, `remainingGrams`
+  null) can't be adjusted until it has one. `initialAmount` is the spool's original size, and logged
+  usage is subtracted from it. If the user only knows what is on the spool now ("I weighed it, 600 g
+  left"), set `initialAmount` to the original size (ask, or use the nominal size such as 1000 g),
+  then read `get_material` and `adjust_material_remaining` by the difference. Setting `initialAmount`
+  to 600 would subtract the logged usage again.
 
 ## Printer statistics and summaries
 

@@ -1881,6 +1881,11 @@ export class EditPrintDetailComponent
     newPrint: Omit<PrintDetail, 'comments'>
   ): void {
     this.saving.set(false);
+    // Without this a rejected save only stopped the spinner, and looked like nothing happened.
+    this.toastr.error(
+      "Your print wasn't saved. Check the form and try again.",
+      'Save failed'
+    );
     // Log only an allowlisted, non-sensitive diagnostic summary. Never serialize
     // the full print object: fields like notes, title, url and fileName can contain
     // private user content and would otherwise leak into telemetry (#leak).

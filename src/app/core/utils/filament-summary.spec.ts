@@ -86,6 +86,16 @@ describe('filamentDetailToSummary', () => {
     expect(summary.purchasePriceValue).toBe('20.00');
   });
 
+  it('leaves the created date out, so a print saved with it still binds', () => {
+    // The API binds the usage row's filament as FilamentSummaryDto, whose CreatedDate is a
+    // non-nullable DateTime: "" fails the whole request with a 400, an absent field does not.
+    const body = JSON.parse(
+      JSON.stringify(filamentDetailToSummary(buildDetail()))
+    );
+
+    expect('createdDate' in body).toBeFalse();
+  });
+
   it('defaults the diameter when the detail has none', () => {
     const summary = filamentDetailToSummary(buildDetail({ diameterMm: null }));
 

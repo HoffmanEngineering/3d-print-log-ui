@@ -811,6 +811,24 @@ describe('EditPrintDetailComponent', () => {
       expect(submit().disabled).toBeFalse();
     });
 
+    it('tells the user when the save fails, not just stops the spinner', () => {
+      const toastr = TestBed.inject(
+        ToastrService
+      ) as jasmine.SpyObj<ToastrService>;
+      const logger = TestBed.inject(LoggingService) as unknown as Record<
+        string,
+        unknown
+      >;
+      logger['logTrace'] = jasmine.createSpy('logTrace');
+
+      component['handleSaveError'](new Error('400'), { id: null } as never);
+
+      expect(toastr.error).toHaveBeenCalledWith(
+        "Your print wasn't saved. Check the form and try again.",
+        'Save failed'
+      );
+    });
+
     it('lists the material loaded in a newly chosen printer', () => {
       const loaded = new Subject<unknown>();
       (

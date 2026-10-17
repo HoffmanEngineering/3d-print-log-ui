@@ -18,6 +18,11 @@
   }
 }
 
+.orca-uploads__back:not(:empty) {
+  display: block;
+  margin-bottom: 12px;
+}
+
 .orca-uploads__lead {
   margin: 0;
   color: var(--app-text-secondary);

@@ -13,6 +13,9 @@
       fxLayoutAlign="start center"
       fxLayoutGap="10px"
     >
+      @if (fromSlicerUpload) {
+        <app-back-to-orca-slicer class="back-to-orca-slicer" />
+      }
       <mat-card-title fxFlex="grow"
         >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
         Print</mat-card-title

@@ -24,6 +24,7 @@ import {
   SlicerUploadService,
   isValidSlicerInstallId,
 } from 'src/app/core/services/slicer-upload.service';
+import { BackToOrcaSlicerComponent } from 'src/app/shared/back-to-orca-slicer/back-to-orca-slicer.component';
 import { EmptyStateComponent } from 'src/app/shared/empty-state/empty-state.component';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { HumanizePipe } from 'src/app/shared/pipes/humanize.pipe';
@@ -127,6 +128,7 @@ export function uploadToAutoOpen(
   styleUrls: ['./orca-pending-uploads.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    BackToOrcaSlicerComponent,
     RouterLink,
     MatButton,
     MatIcon,

@@ -788,6 +788,29 @@ describe('EditPrintDetailComponent', () => {
 
       expect(component.saving()).toBe(false);
     });
+
+    it('pushes the print list after a save in an ordinary browser', () => {
+      const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(
+        true
+      );
+      (component as any).fromSlicerUpload = true;
+
+      component['handleSaveSuccess']({ id: 1 } as any);
+
+      expect(navigate).toHaveBeenCalledWith(['/prints'], { replaceUrl: false });
+    });
+
+    it('replaces the slicer upload form after a save inside OrcaSlicer', () => {
+      const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(
+        true
+      );
+      (component as any).fromSlicerUpload = true;
+      (component as any).orcaSlicerHost = { history: { back: () => {} } };
+
+      component['handleSaveSuccess']({ id: 1 } as any);
+
+      expect(navigate).toHaveBeenCalledWith(['/prints'], { replaceUrl: true });
+    });
   });
 
   describe('once a response arrives', () => {

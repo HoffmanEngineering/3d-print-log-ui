@@ -18,6 +18,7 @@ import {
   PendingSlicerUploadDto,
   SlicerUploadService,
 } from 'src/app/core/services/slicer-upload.service';
+import { ORCA_SLICER_HOST } from 'src/app/shared/back-to-orca-slicer/back-to-orca-slicer.component';
 import { environment } from 'src/environments/environment';
 import {
   AUTO_OPEN_MAX_AGE_MS,
@@ -115,6 +116,21 @@ describe('OrcaPendingUploadsComponent', () => {
     await setup(INSTALL_ID);
 
     expect(serviceSpy.getPendingUploads).toHaveBeenCalledOnceWith(INSTALL_ID);
+  });
+
+  it('hides "Back to OrcaSlicer" in an ordinary browser', async () => {
+    await setup(INSTALL_ID);
+
+    expect(query('back-to-orca-slicer')).toBeNull();
+  });
+
+  it('shows "Back to OrcaSlicer" inside OrcaSlicer', async () => {
+    TestBed.overrideProvider(ORCA_SLICER_HOST, {
+      useValue: { history: { back: () => undefined } },
+    });
+    await setup(INSTALL_ID);
+
+    expect(text('back-to-orca-slicer')).toContain('Back to OrcaSlicer');
   });
 
   it('lists the uploads with name, time sliced, estimate and an open link', async () => {

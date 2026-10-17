@@ -99,6 +99,34 @@ export class VersionReleaseNoteDialogService {
   });
 
   private releaseNotes: ReleaseNoteHistory = {
+    '1.54.0': {
+      title: '1.54.0 - NFC Spool Tags & Home Assistant',
+      body: `<p>
+<strong>Tap your phone to a spool</strong> in the <a href="/docs/android-app">Android app</a> to add its tag to a material, pick it on a print or open it with <strong>Scan spool</strong>. Bambu Lab, Snapmaker, Anycubic ACE and OpenSpool tags even fill in a new material for you. See <a href="/docs/materials#tags-android">RFID / NFC Tags</a>.
+</p>
+<p>
+<strong>Home Assistant</strong> can show your spools, their remaining weight and a low-filament sensor through the Spoolman integration. See <a href="/docs/home-assistant-spoolman">Home Assistant</a>.
+</p>
+<p>
+  <strong>Support development of 3D Print Log:</strong><br />
+  <a href="/subscription">Subscribe to Pro</a> for an ad-free experience and extra cloud storage,
+  buy me a coffee by <a
+    href="https://paypal.me/hoffmanengineering"
+    rel="noreferrer noopener"
+    target="_blank"
+    >donating via PayPal</a
+  >, or by becoming a
+  <a
+    href="https://www.patreon.com/HoffmanEngineering"
+    rel="noreferrer noopener"
+    target="_blank"
+  >
+    Patron of Hoffman Engineering</a
+  >
+  on Patreon.com
+  </p><p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
+</p>`,
+    },
     '1.53.0': {
       title: '1.53.0 - Klipper Print Logging & Spoolman',
       body: `<p>

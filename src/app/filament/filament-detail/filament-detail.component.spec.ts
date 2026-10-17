@@ -32,6 +32,7 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
 
 import { FilamentDetailComponent } from './filament-detail.component';
+import type { Material } from 'src/app/core/services/material.service';
 import type { CatalogMatch, TagReading } from 'src/app/core/types/tag-reading';
 import { By } from '@angular/platform-browser';
 import { SNAPMAKER_805BEC3E } from '../testing/tag-fixtures';
@@ -1096,7 +1097,8 @@ describe('FilamentDetailComponent scanned tag', () => {
   async function setup(
     tag: string | null,
     filament: unknown = null,
-    read?: unknown
+    read?: unknown,
+    materials: Material[] = []
   ) {
     history.replaceState(
       tag === null
@@ -1152,7 +1154,7 @@ describe('FilamentDetailComponent scanned tag', () => {
           useValue: {
             data: of({
               filament,
-              materials: [],
+              materials,
               materialCategories: [],
               defaultFilamentDiameterMmSetting: null,
               defaultFilamentPriceSetting: null,
@@ -1380,6 +1382,63 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       const sent = service.addFilament.calls.mostRecent().args[0];
       expect(sent.catalogEntryId).toBeUndefined();
+    });
+
+    describe('density', () => {
+      const PLA: Material = {
+        id: 'pla',
+        acronym: 'PLA',
+        name: 'Polylactic Acid',
+        materialCategoryNickname: 'filament',
+        densityGramPerCubicCm: 1.24,
+      };
+      const density = () => control('materialDensityGramPerCubicCm').value;
+
+      it('fills the density from the SpoolmanDB match and says so', async () => {
+        await setup(
+          '805BEC3E',
+          null,
+          {
+            reading: SNAPMAKER_805BEC3E,
+            catalogMatch: { ...match, densityGramPerCubicCm: 1.27 },
+          },
+          [PLA]
+        );
+        fixture.detectChanges();
+
+        // The product's own density beats the generic one for its material.
+        expect(density()).toBe(1.27);
+        expect(hintOf('edit-filament-density')).toBe('From SpoolmanDB');
+      });
+
+      it('names the material as the list does and takes its density without a catalog density', async () => {
+        await setup('805BEC3E', null, read(), [PLA]);
+        fixture.detectChanges();
+
+        expect(control('materialType').value).toBe('PLA (Polylactic Acid)');
+        expect(hintOf('edit-filament-material-type')).toBe('From tag');
+        expect(density()).toBe(1.24);
+        expect(hintOf('edit-filament-density')).toBeUndefined();
+      });
+
+      it('still sends the catalog entry after naming the material as the list does', async () => {
+        await setup('805BEC3E', null, read(), [PLA]);
+
+        fixture.componentInstance.onSubmit();
+
+        const sent = service.addFilament.calls.mostRecent().args[0];
+        expect(sent.materialType).toBe('PLA (Polylactic Acid)');
+        expect(sent.catalogEntryId).toBe('cat-1');
+      });
+
+      it('keeps the tag material and leaves the density empty when nothing knows it', async () => {
+        await setup('805BEC3E', null, read(), [
+          { ...PLA, acronym: 'PETG', name: 'PETG' },
+        ]);
+
+        expect(control('materialType').value).toBe('PLA');
+        expect(density()).toBeFalsy();
+      });
     });
 
     it('ignores an implausible reading', async () => {

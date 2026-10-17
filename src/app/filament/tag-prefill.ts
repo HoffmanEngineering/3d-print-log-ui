@@ -1,9 +1,11 @@
+import type { Material } from '../core/services/material.service';
 import type { CatalogMatch, TagReading } from '../core/types/tag-reading';
 
 /** The new-material form controls a tag or catalog entry can pre-fill. */
 export type PrefillControl =
   | 'brand'
   | 'materialType'
+  | 'materialDensityGramPerCubicCm'
   | 'displayName'
   | 'colors'
   | 'colorHex'
@@ -102,9 +104,42 @@ export function tagPrefill(
   if (match) {
     set('colorName', text(match.colorName), 'catalog');
     set('spoolWeightG', num(match.spoolWeightG), 'catalog');
+    const density = num(match.densityGramPerCubicCm);
+    if (density !== undefined && density > 0) {
+      set('materialDensityGramPerCubicCm', density, 'catalog');
+    }
   }
 
   return { values, sources };
+}
+
+/**
+ * The materials list entry a tag's material type names ("PLA" for "PLA (Polylactic Acid)"), so
+ * a scanned spool gets the same material, and its density, as one picked from the list. Matches
+ * the acronym, the name or the full display name, ignoring case, within the form's category.
+ */
+export function knownMaterialFor(
+  materialType: string,
+  materials: Material[],
+  category: string | null
+): Material | undefined {
+  const wanted = materialType.trim().toLowerCase();
+  if (!wanted) return undefined;
+
+  const names = (m: Material) =>
+    [
+      m.acronym,
+      m.name,
+      m.acronym && m.name ? `${m.acronym} (${m.name})` : null,
+    ].map((n) => n?.trim().toLowerCase());
+
+  return materials.find(
+    (m) =>
+      (!category ||
+        !m.materialCategoryNickname ||
+        m.materialCategoryNickname === category) &&
+      names(m).includes(wanted)
+  );
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>

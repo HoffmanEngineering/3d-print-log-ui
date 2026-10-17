@@ -78,6 +78,7 @@ import type { TagReading } from 'src/app/core/types/tag-reading';
 import {
   PrefillControl,
   PrefillSource,
+  knownMaterialFor,
   ScannedTagRead,
   parseScannedTagRead,
   tagPrefill,
@@ -496,6 +497,17 @@ export class FilamentDetailComponent
 
     this.scannedTag = { uid: result.uid, ...read };
     const { values, sources } = tagPrefill(read.reading, read.catalogMatch);
+    if (typeof values.materialType === 'string') {
+      // Name it as the list does, so it gets the list's density when the catalog has none.
+      const known = knownMaterialFor(
+        values.materialType,
+        this.materials,
+        this.filamentForm.get('materialCategoryNickname')?.value ?? null
+      );
+      if (known) {
+        values.materialType = this.materialNamePipe.transform(known);
+      }
+    }
     this.prefilledValues = values;
     this.tagSources.set(sources);
 

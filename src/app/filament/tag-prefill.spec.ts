@@ -1,6 +1,11 @@
+import type { Material } from '../core/services/material.service';
 import type { CatalogMatch, TagReading } from '../core/types/tag-reading';
 import { SNAPMAKER_805BEC3E } from './testing/tag-fixtures';
-import { parseScannedTagRead, tagPrefill } from './tag-prefill';
+import {
+  knownMaterialFor,
+  parseScannedTagRead,
+  tagPrefill,
+} from './tag-prefill';
 
 const match: CatalogMatch = {
   id: 'cat-1',
@@ -94,6 +99,65 @@ describe('tagPrefill', () => {
     );
 
     expect(values.colors).toEqual(['#a1b2c3']);
+  });
+
+  it('takes the density from the catalog match', () => {
+    const { values, sources } = tagPrefill(null, {
+      ...match,
+      densityGramPerCubicCm: 1.27,
+    });
+
+    expect(values.materialDensityGramPerCubicCm).toBe(1.27);
+    expect(sources.materialDensityGramPerCubicCm).toBe('catalog');
+  });
+
+  it('ignores a catalog density that is missing, zero or negative', () => {
+    for (const densityGramPerCubicCm of [undefined, null, 0, -1]) {
+      const { values } = tagPrefill(null, { ...match, densityGramPerCubicCm });
+
+      expect(values.materialDensityGramPerCubicCm).toBeUndefined();
+    }
+  });
+});
+
+describe('knownMaterialFor', () => {
+  const material = (
+    acronym: string | null,
+    name: string | null,
+    materialCategoryNickname: string | null = 'filament'
+  ): Material => ({
+    id: `${acronym}-${name}`,
+    acronym,
+    name,
+    materialCategoryNickname,
+    densityGramPerCubicCm: 1,
+  });
+  const pla = material('PLA', 'Polylactic Acid');
+  const petg = material('PETG', 'Polyethylene Terephthalate Glycol');
+  const resin = material('PLA', 'Plant-based resin', 'resin');
+  const nylon = material(null, 'Nylon');
+
+  it('finds a material by its acronym, in any case', () => {
+    expect(knownMaterialFor('PLA', [petg, pla], 'filament')).toBe(pla);
+    expect(knownMaterialFor(' petg ', [petg, pla], 'filament')).toBe(petg);
+  });
+
+  it('finds a material by its name or its full display name', () => {
+    expect(knownMaterialFor('nylon', [nylon], 'filament')).toBe(nylon);
+    expect(
+      knownMaterialFor('PLA (Polylactic Acid)', [petg, pla], 'filament')
+    ).toBe(pla);
+  });
+
+  it('only finds materials of the form category, or with none', () => {
+    expect(knownMaterialFor('PLA', [resin, pla], 'filament')).toBe(pla);
+    expect(knownMaterialFor('PLA', [resin], 'filament')).toBeUndefined();
+    expect(knownMaterialFor('PLA', [resin], null)).toBe(resin);
+  });
+
+  it('finds nothing for a type it does not know', () => {
+    expect(knownMaterialFor('PLA-CF', [pla], 'filament')).toBeUndefined();
+    expect(knownMaterialFor('', [pla], 'filament')).toBeUndefined();
   });
 });
 

@@ -37,6 +37,8 @@ export interface CatalogMatch {
   colorName: string | null;
   name: string;
   manufacturer: string;
+  /** g/cm³. Absent from an API older than the density field. */
+  densityGramPerCubicCm?: number | null;
   source: 'SpoolmanDB';
 }
 

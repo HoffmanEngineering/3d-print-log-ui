@@ -168,6 +168,14 @@
             formControlName="materialDensityGramPerCubicCm"
             required
           />
+          @if (tagSources()['materialDensityGramPerCubicCm'] === 'catalog') {
+            <mat-hint class="tag-source-hint"
+              >From
+              <a [href]="spoolmanDbUrl" target="_blank" rel="noopener"
+                >SpoolmanDB</a
+              ></mat-hint
+            >
+          }
         </mat-form-field>
         <!-- Color pattern selector -->
         <div fxFlex="grow" fxFlexFill>

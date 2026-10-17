@@ -301,14 +301,16 @@ app shows what the tag says and offers:
 - **Search all materials:** pick any of your materials to attach the tag to.
 - **Create:** make a new material that is already filled in from the tag.
   Fields that came from the tag say **From tag**, and fields that came from the
-  filament database say **From SpoolmanDB**. Check them, change anything that
-  is wrong, then save.
+  filament database say **From SpoolmanDB**. The material density comes from
+  SpoolmanDB when it knows the spool, otherwise from the material type, as when
+  you pick one from the list. Check them, change anything that is wrong, then
+  save.
 
 If the phone moved before the whole tag was read, the app asks you to hold it
 still and tap again.
 
 A material's page shows what each of its tags says. Material names, color
-names and empty spool weights come from
+names, densities and empty spool weights come from
 [SpoolmanDB](https://github.com/Donkie/SpoolmanDB), an open filament database
 released under the MIT License.
 

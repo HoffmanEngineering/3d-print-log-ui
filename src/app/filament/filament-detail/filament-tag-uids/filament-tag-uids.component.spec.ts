@@ -19,6 +19,8 @@ import {
 import { TagUidConflict } from '../../tag-uid';
 import { FilamentTagUidsComponent } from './filament-tag-uids.component';
 
+const FORMAT_HINT = 'Any format, like 04:A2:3F:11 or 04A23F11';
+
 @Component({
   imports: [FilamentTagUidsComponent, ReactiveFormsModule],
   template: `<app-filament-tag-uids
@@ -289,6 +291,7 @@ describe('FilamentTagUidsComponent scanning', () => {
     el.querySelector<HTMLButtonElement>('[data-testid="tag-scan"]');
   const input = () =>
     el.querySelector<HTMLInputElement>('input[data-testid="tag-uid-input"]')!;
+  const hint = () => el.querySelector('mat-hint')?.textContent?.trim();
   const chipTexts = () =>
     Array.from(el.querySelectorAll('[data-testid="tag-uid-chip"]')).map((c) =>
       c.textContent!.replace('cancel', '').trim()
@@ -370,11 +373,17 @@ describe('FilamentTagUidsComponent scanning', () => {
     expect(logger.logEvent).toHaveBeenCalledWith('FilamentTagUids_Scanned');
   });
 
+  it('explains the format in a hint, not a placeholder that looks like a value', () => {
+    expect(input().placeholder).toBe('');
+    expect(hint()).toBe(FORMAT_HINT);
+  });
+
   it('says so while it is waiting for a tag', () => {
     scanButton()!.click();
     fixture.detectChanges();
 
-    expect(input().placeholder).toBe('Hold your phone to the tag…');
+    expect(hint()).toBe('Hold your phone to the tag…');
+    expect(input().placeholder).toBe('');
   });
 
   it('reads one tag per press', () => {
@@ -394,7 +403,7 @@ describe('FilamentTagUidsComponent scanning', () => {
     fixture.detectChanges();
 
     expect(chipTexts()).toEqual([]);
-    expect(input().placeholder).toBe('04:A2:3F:11');
+    expect(hint()).toBe(FORMAT_HINT);
   });
 
   it('a tag already on the spool gets a hint, not silence', () => {
@@ -460,7 +469,7 @@ describe('FilamentTagUidsComponent scanning', () => {
     fixture.detectChanges();
 
     expect(chipTexts()).toEqual([]);
-    expect(input().placeholder).toBe('04:A2:3F:11');
+    expect(hint()).toBe(FORMAT_HINT);
   });
 
   it('this spool holding the tag is not a conflict', () => {

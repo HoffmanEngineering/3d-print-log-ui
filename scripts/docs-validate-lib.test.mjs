@@ -1237,3 +1237,57 @@ test('reports an unlisted default doc page', () => {
     `expected an unlisted-default problem, got ${JSON.stringify(problems)}`
   );
 });
+
+// -- dialog notes ------------------------------------------------------------
+
+const dialogMessages = (note, releases = [release()]) =>
+  validateDocs({
+    sources: [landingPage()],
+    releases,
+    dialogNotes: [
+      {
+        version: '1.49.1',
+        title: undefined,
+        body: '**Notifications** open the print.',
+        sourceFile: '1.49.1.md',
+        ...note,
+      },
+    ],
+  })
+    .filter((p) => p.file.startsWith('release-notes/dialog/'))
+    .map((p) => p.message);
+
+test('a dialog note for a published release passes', () => {
+  assert.deepEqual(dialogMessages({}), []);
+});
+
+test('a dialog note needs a release to summarise', () => {
+  assert.match(
+    dialogMessages({ version: '9.9.9', sourceFile: '9.9.9.md' }).join('\n'),
+    /there is no release-notes\/9\.9\.9\.md/
+  );
+});
+
+test('a dialog note may not carry its own support paragraph', () => {
+  assert.match(
+    dialogMessages({
+      body: 'New things.\n\n**Support development of 3D Print Log:** subscribe.',
+    }).join('\n'),
+    /The dialog adds it once/
+  );
+});
+
+test('a dialog note title must be a non-empty string', () => {
+  assert.match(
+    dialogMessages({ title: 141 }).join('\n'),
+    /must be a non-empty string/
+  );
+  assert.match(
+    dialogMessages({ title: 'A &amp; B' }).join('\n'),
+    /character reference/
+  );
+});
+
+test('an empty dialog note is refused', () => {
+  assert.match(dialogMessages({ body: '\n' }).join('\n'), /delete the file/);
+});

@@ -30,7 +30,10 @@ import {
   LLMS_TXT,
   RELEASE_NOTES_DIR,
 } from './docs-paths.mjs';
-import { readReleaseSources } from './release-notes-lib.mjs';
+import {
+  readDialogNoteSources,
+  readReleaseSources,
+} from './release-notes-lib.mjs';
 
 const argv = process.argv.slice(2);
 const thenAt = argv.indexOf('--then');
@@ -49,6 +52,7 @@ function generate() {
     : null;
   const { files } = planOutputs(sources, releases, readDocCaptures(), {
     llmsTxt,
+    dialogNotes: readDialogNoteSources(),
   });
   return syncOutputs(GENERATED_DIR, files, { check });
 }

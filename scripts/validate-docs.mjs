@@ -19,7 +19,10 @@ import {
   captureAssetProblems,
   homeCaptureProblems,
 } from './process-captures.lib.mjs';
-import { readReleaseSources } from './release-notes-lib.mjs';
+import {
+  readDialogNoteSources,
+  readReleaseSources,
+} from './release-notes-lib.mjs';
 
 /**
  * `/assets/docs/captures/x.webp` -> the bytes committed at `src/assets/...`.
@@ -49,6 +52,7 @@ const readAsset = (publicPath) => {
 try {
   const sources = readDocSources(CONTENT_DIR);
   const releases = readReleaseSources(RELEASE_NOTES_DIR);
+  const dialogNotes = readDialogNoteSources();
   const anchorBaseline = fs.existsSync(ANCHORS_JSON)
     ? JSON.parse(fs.readFileSync(ANCHORS_JSON, 'utf8'))
     : {};
@@ -59,6 +63,7 @@ try {
     ...validateDocs({
       sources,
       releases,
+      dialogNotes,
       anchorBaseline,
       captures,
     }),
@@ -86,7 +91,7 @@ try {
   }
 
   console.log(
-    `Doc validation passed: ${sources.length} pages, ${releases.length} releases.`
+    `Doc validation passed: ${sources.length} pages, ${releases.length} releases, ${dialogNotes.length} dialog notes.`
   );
 } catch (error) {
   console.error(`validate-docs failed — ${error.message}`);

@@ -207,6 +207,83 @@ export function emitArchiveTs(sources, recent = RECENT_RELEASE_COUNT) {
 }
 
 /**
+ * How many dialog notes the What's New dialog shows in full. Defined here, not
+ * in the service, because it also decides how many notes ship at all: the
+ * dialog only ever shows the newest unseen notes, so anything past this many is
+ * never read and stays out of the main bundle.
+ */
+export const DIALOG_NOTE_LIMIT = 3;
+
+/**
+ * The What's New dialog's data, for VersionReleaseNoteDialogService.
+ *
+ * Two lists, because the dialog and the unread indicator count different things:
+ *
+ *   RELEASE_VERSIONS      every release on the page, newest first. The indicator
+ *                         and the dialog's "N more releases" line count these,
+ *                         patches included.
+ *   DIALOG_RELEASE_NOTES  the newest DIALOG_NOTE_LIMIT dialog notes, as
+ *                         [innerHTML]-safe markup. Only a release with one opens
+ *                         the dialog.
+ *
+ * This module is imported eagerly by a root service, so it is kept small on
+ * purpose: version strings, and three short notes.
+ *
+ * @param {object[]} releases from readReleaseSources, newest first
+ * @param {object[]} dialogNotes from readDialogNoteSources, newest first
+ * @param {number} [limit]
+ */
+export function emitDialogNotesTs(
+  releases,
+  dialogNotes,
+  limit = DIALOG_NOTE_LIMIT
+) {
+  const titles = new Map(releases.map((r) => [r.version, r.title]));
+
+  const entries = dialogNotes.slice(0, limit).map((note) => {
+    if (!titles.has(note.version)) {
+      throw new Error(
+        `dialog/${note.sourceFile} has no release: add release-notes/${note.version}.md first.`
+      );
+    }
+    const title = note.title ?? titles.get(note.version);
+    return [
+      '  {',
+      `    version: '${escapeSingle(note.version)}',`,
+      `    title: '${escapeSingle(headingFor(note.version, title))}',`,
+      `    html: '${escapeSingle(toInjectableHtml(renderMarkdown(note.body)))}',`,
+      '  },',
+    ].join('\n');
+  });
+
+  return [
+    BANNER,
+    '',
+    `export const DIALOG_NOTE_LIMIT = ${limit};`,
+    '',
+    '/** Every release on /docs/release-notes, newest first. */',
+    'export const RELEASE_VERSIONS: readonly string[] = [',
+    ...releases.map((r) => `  '${escapeSingle(r.version)}',`),
+    '];',
+    '',
+    "/** A release as the What's New dialog shows it. */",
+    'export interface DialogReleaseNote {',
+    '  readonly version: string;',
+    '  /** Plain text, version included: `1.53.0 - Klipper Print Logging`. */',
+    '  readonly title: string;',
+    '  /** Sanitizer-safe HTML: no routerLink, no Angular components, no styles. */',
+    '  readonly html: string;',
+    '}',
+    '',
+    '/** The newest dialog notes, newest first. */',
+    'export const DIALOG_RELEASE_NOTES: readonly DialogReleaseNote[] = [',
+    ...entries,
+    '];',
+    '',
+  ].join('\n');
+}
+
+/**
  * Rewrites a rendered release into markup that behaves correctly once it is
  * assigned to [innerHTML]. See the note at the top of this file.
  */

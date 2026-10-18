@@ -22,7 +22,7 @@ import {
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By, Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { Observable, of, Subject } from 'rxjs';
@@ -32,7 +32,10 @@ import {
   PrintService,
   PrintStatus,
 } from 'src/app/core/services/print.service';
-import { UserSettingService } from 'src/app/core/services/user-setting.service';
+import {
+  UserSettingService,
+  UserSettingType,
+} from 'src/app/core/services/user-setting.service';
 import { EditPrintDetailComponent } from './edit-print-detail.component';
 
 import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
@@ -46,7 +49,8 @@ import {
   PrinterSummary,
   PrinterService,
 } from 'src/app/core/services/printer.service';
-import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import { AchievementService } from 'src/app/core/services/achievement.service';
+import { OnboardingService } from 'src/app/onboarding/onboarding.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
@@ -86,13 +90,22 @@ describe('EditPrintDetailComponent', () => {
       Promise.resolve(null)
     );
 
-    const mockPrinterPromptService =
-      jasmine.createSpyObj<PrinterRedirectPromptService>(
-        'PrinterRedirectPromptService',
-        {
-          shouldShowAddPrinterPrompt: of(false),
-        }
-      );
+    const mockOnboardingService = jasmine.createSpyObj<OnboardingService>(
+      'OnboardingService',
+      {
+        status: Promise.resolve({
+          onboardingEligible: false,
+          createdDate: null,
+          emailVerified: true,
+        }),
+        markWelcomeFinished: Promise.resolve(),
+      }
+    );
+
+    const mockAchievementService = jasmine.createSpyObj<AchievementService>(
+      'AchievementService',
+      { me: of({ families: [] } as never) }
+    );
 
     const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logException',
@@ -101,12 +114,15 @@ describe('EditPrintDetailComponent', () => {
 
     const mockPrinterService = jasmine.createSpyObj<PrinterService>(
       'PrinterService',
-      { getLoadedFilamentForPrinter: of([]) }
+      {
+        getLoadedFilamentForPrinter: of([]),
+        getCurrentUserPrinterSummaries: of({ paging: {}, items: [] } as never),
+      }
     );
 
     const mockTrackingService = jasmine.createSpyObj<GoogleAnalyticsService>(
       'GoogleAnalyticsService',
-      ['emitConversion']
+      ['emitConversion', 'eventEmitter']
     );
 
     const mockSubscriptionService = jasmine.createSpyObj<SubscriptionService>(
@@ -147,10 +163,8 @@ describe('EditPrintDetailComponent', () => {
         { provide: ToastrService, useValue: mockToastrService },
         { provide: Title, useValue: mockTitleService },
         { provide: UserSettingService, useValue: mockUserSettingService },
-        {
-          provide: PrinterRedirectPromptService,
-          useValue: mockPrinterPromptService,
-        },
+        { provide: OnboardingService, useValue: mockOnboardingService },
+        { provide: AchievementService, useValue: mockAchievementService },
         { provide: LoggingService, useValue: mockLogger },
         { provide: SubscriptionService, useValue: mockSubscriptionService },
         { provide: ProjectService, useValue: mockProjectService },
@@ -158,6 +172,7 @@ describe('EditPrintDetailComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
             data: of({
               printers: [],
               lastSelectedPrinterSetting: null,
@@ -1207,4 +1222,464 @@ describe('EditPrintDetailComponent', () => {
 
     picker.destroy();
   }));
+
+  describe('onboarding', () => {
+    let editor: ComponentFixture<EditPrintDetailComponent> | undefined;
+    let settings: Record<string, jasmine.Spy>;
+    let printerService: jasmine.SpyObj<PrinterService>;
+    let onboarding: jasmine.SpyObj<OnboardingService>;
+    let achievements: jasmine.SpyObj<AchievementService>;
+    let analytics: jasmine.SpyObj<GoogleAnalyticsService>;
+
+    const printer = (id: number, name: string): PrinterSummary =>
+      ({
+        id,
+        name,
+        make: 'Prusa',
+        model: 'MK4',
+        isActive: true,
+      }) as PrinterSummary;
+
+    // A print handed off from Cura: no id yet, but the slicer filled the title, the note and a
+    // usage row with a resolved spool.
+    const curaPrint = {
+      id: null,
+      title: 'Benchy from Cura',
+      printerId: null,
+      startDate: null,
+      estimatedPrintTimeInSeconds: 3725,
+      printTimeInSeconds: null,
+      estimatedFilamentUsageMg: null,
+      filamentUsageMg: null,
+      filamentType: null,
+      filamentUsage: [
+        {
+          id: null,
+          filament: {
+            id: 'spool-1',
+            displayName: 'Prusament Galaxy Black',
+            materialType: 'PLA',
+          },
+          slot: null,
+          estimatedAmountMg: 12_000,
+          estimatedSource: PrintFilamentSourceMeasurement.Weight,
+          amountMg: null,
+          source: PrintFilamentSourceMeasurement.Weight,
+          notes: '',
+        },
+      ],
+      notes: 'Sliced at 0.2mm',
+      url: null,
+      fileName: 'benchy.gcode',
+      status: PrintStatus.Printing,
+      viewStatus: 3,
+      allowComments: true,
+      allowFileDownloads: false,
+      images: [],
+      comments: [],
+      curaSettingId: 'cura-1',
+    } as unknown as PrintDetail;
+
+    const flushPromises = () => new Promise((r) => setTimeout(r));
+
+    function openEditor(options: {
+      print?: PrintDetail | null;
+      printers?: PrinterSummary[];
+      lastSelectedPrinterId?: number;
+      query?: Record<string, string>;
+    }): EditPrintDetailComponent {
+      const route = TestBed.inject(ActivatedRoute) as unknown as {
+        data: Observable<Record<string, unknown>>;
+        snapshot: unknown;
+      };
+      let resolved: Record<string, unknown>;
+      route.data.subscribe((data) => (resolved = data));
+      route.data = of({
+        ...resolved!,
+        printers: options.printers ?? [],
+        lastSelectedPrintSetting:
+          options.lastSelectedPrinterId === undefined
+            ? null
+            : { id: 3, value: `${options.lastSelectedPrinterId}` },
+        print: { print: options.print ?? null },
+      });
+      route.snapshot = {
+        queryParamMap: convertToParamMap(options.query ?? {}),
+      };
+
+      editor = TestBed.createComponent(EditPrintDetailComponent);
+      editor.detectChanges();
+      return editor.componentInstance;
+    }
+
+    function stubDialog(form: EditPrintDetailComponent) {
+      const closed = new Subject<unknown>();
+      const open = spyOn(form.dialog, 'open').and.returnValue({
+        afterClosed: () => closed,
+      } as never);
+      return { open, closed };
+    }
+
+    function writtenPrinterIds(): string[] {
+      return [
+        ...settings['addUserSetting'].calls
+          .all()
+          .filter(
+            (c) => c.args[0] === UserSettingType.Prints_LastSelectedPrinterId
+          )
+          .map((c) => c.args[1] as string),
+        ...settings['updateUserSetting'].calls
+          .all()
+          .map((c) => c.args[1] as string),
+      ];
+    }
+
+    beforeEach(() => {
+      settings = TestBed.inject(UserSettingService) as unknown as Record<
+        string,
+        jasmine.Spy
+      >;
+      settings['addUserSetting'] = jasmine
+        .createSpy('addUserSetting')
+        .and.returnValue(of({ id: 3, value: '' }));
+      settings['updateUserSetting'].and.returnValue(of({ id: 3, value: '' }));
+      printerService = TestBed.inject(
+        PrinterService
+      ) as jasmine.SpyObj<PrinterService>;
+      onboarding = TestBed.inject(
+        OnboardingService
+      ) as jasmine.SpyObj<OnboardingService>;
+      achievements = TestBed.inject(
+        AchievementService
+      ) as jasmine.SpyObj<AchievementService>;
+      analytics = TestBed.inject(
+        GoogleAnalyticsService
+      ) as jasmine.SpyObj<GoogleAnalyticsService>;
+      achievements.me.calls.reset();
+      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+        Promise.resolve(true)
+      );
+    });
+
+    afterEach(() => editor?.destroy());
+
+    describe('adding a printer from the printer select', () => {
+      it('offers "+ Add a printer" after the printers', fakeAsync(() => {
+        openEditor({ printers: [printer(7, 'Mini')] });
+
+        (
+          editor!.debugElement.query(
+            By.css('#edit-print-printer .mat-mdc-select-trigger')
+          ).nativeElement as HTMLElement
+        ).click();
+        editor!.detectChanges();
+        flush();
+
+        const options = Array.from(document.querySelectorAll('mat-option'));
+        expect(options[options.length - 1].textContent).toContain(
+          '+ Add a printer'
+        );
+        expect(
+          options[options.length - 1].classList.contains('add-printer-option')
+        ).toBeTrue();
+      }));
+
+      // Review Focus 1: a slicer hand-off must keep every field it filled.
+      it('keeps the Cura fields and selects the new printer', async () => {
+        const form = openEditor({
+          print: curaPrint,
+          printers: [printer(7, 'Mini')],
+          lastSelectedPrinterId: 7,
+        });
+        const { open, closed } = stubDialog(form);
+        const usageBefore = JSON.stringify(form.filamentUsage.getRawValue());
+        printerService.getCurrentUserPrinterSummaries.and.returnValue(
+          of({
+            paging: {},
+            items: [printer(7, 'Mini'), printer(42, 'Core One')],
+          } as never)
+        );
+
+        form.printForm.controls.printerId.setValue(-1);
+        expect(form.printForm.controls.printerId.value)
+          .withContext('restored while the dialog is open')
+          .toBe(7);
+        await flushPromises();
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(open.calls.mostRecent().args[1]!.data).toEqual({
+          source: 'print-form',
+          showEmailNotice: false,
+        });
+
+        closed.next({ id: 42 });
+        closed.complete();
+        editor!.detectChanges();
+        await editor!.whenStable();
+        editor!.detectChanges();
+
+        expect(
+          printerService.getCurrentUserPrinterSummaries
+        ).toHaveBeenCalledWith(1, 100, undefined, false);
+        expect(form.printers.map((p) => p.id)).toEqual([7, 42]);
+        expect(form.printForm.controls.printerId.value).toBe(42);
+        expect(form.printForm.controls.title.value).toBe('Benchy from Cura');
+        expect(form.printForm.controls.notes.value).toBe('Sliced at 0.2mm');
+        expect(JSON.stringify(form.filamentUsage.getRawValue())).toBe(
+          usageBefore
+        );
+        expect(form.getPrintFromForm().curaSettingId).toBe('cura-1');
+        expect(writtenPrinterIds()).not.toContain('-1');
+        expect(writtenPrinterIds()).toContain('42');
+        expect(
+          printerService.getLoadedFilamentForPrinter
+        ).not.toHaveBeenCalledWith(-1);
+        expect(
+          (editor!.nativeElement as HTMLElement).querySelector(
+            '#edit-print-printer'
+          )!.textContent
+        ).toContain('Core One');
+      });
+
+      it('restores the previous printer when the dialog is canceled', async () => {
+        const form = openEditor({
+          printers: [printer(7, 'Mini')],
+          lastSelectedPrinterId: 7,
+        });
+        const { open, closed } = stubDialog(form);
+
+        form.printForm.controls.printerId.setValue(-1);
+        await flushPromises();
+        closed.next(undefined);
+        closed.complete();
+
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(form.printForm.controls.printerId.value).toBe(7);
+        expect(
+          printerService.getCurrentUserPrinterSummaries
+        ).not.toHaveBeenCalled();
+        expect(writtenPrinterIds()).toEqual([]);
+      });
+
+      it('tells the dialog to show the email notice to an eligible user', async () => {
+        onboarding.status.and.resolveTo({
+          onboardingEligible: true,
+          createdDate: '2026-10-18',
+          emailVerified: false,
+        });
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+        const { open } = stubDialog(form);
+
+        form.printForm.controls.printerId.setValue(-1);
+        await flushPromises();
+
+        expect(open.calls.mostRecent().args[1]!.data).toEqual({
+          source: 'print-form',
+          showEmailNotice: true,
+        });
+      });
+    });
+
+    describe('with no printers', () => {
+      it('shows an inline block instead of the select, which opens the dialog', async () => {
+        const form = openEditor({ printers: [] });
+        const { open } = stubDialog(form);
+        const host = editor!.nativeElement as HTMLElement;
+
+        expect(host.querySelector('#edit-print-printer')).toBeNull();
+        const block = host.querySelector('.add-first-printer')!;
+        expect(block.textContent).toContain(
+          'Add the printer you printed this on'
+        );
+
+        (block.querySelector('button') as HTMLButtonElement).click();
+        await flushPromises();
+
+        expect(open).toHaveBeenCalledTimes(1);
+      });
+
+      it('shows the select once the first printer is added', async () => {
+        const form = openEditor({ printers: [] });
+        const { closed } = stubDialog(form);
+        printerService.getCurrentUserPrinterSummaries.and.returnValue(
+          of({ paging: {}, items: [printer(42, 'Core One')] } as never)
+        );
+
+        await form.openAddPrinter();
+        closed.next({ id: 42 });
+        editor!.detectChanges();
+
+        const host = editor!.nativeElement as HTMLElement;
+        expect(host.querySelector('.add-first-printer')).toBeNull();
+        expect(host.querySelector('#edit-print-printer')).not.toBeNull();
+        expect(form.printForm.controls.printerId.value).toBe(42);
+      });
+
+      it('shows no toast', async () => {
+        openEditor({ printers: [] });
+        await flushPromises();
+
+        const toastr = TestBed.inject(
+          ToastrService
+        ) as jasmine.SpyObj<ToastrService>;
+        expect(toastr.info).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('onboarding=1', () => {
+      it('pre-fills the title and the newest printer, and shows the strip', () => {
+        const form = openEditor({
+          printers: [
+            printer(7, 'Mini'),
+            printer(42, 'Core One'),
+            printer(9, 'XL'),
+          ],
+          lastSelectedPrinterId: 7,
+          query: { onboarding: '1' },
+        });
+        const host = editor!.nativeElement as HTMLElement;
+
+        expect(form.onboardingMode()).toBeTrue();
+        expect(form.printForm.controls.title.value).toBe('My first print');
+        expect(form.printForm.controls.printerId.value).toBe(42);
+        const strip = host.querySelector('.onboarding-strip')!;
+        expect(strip.textContent).toContain(
+          'Getting started · Log your first print'
+        );
+        const back = strip.querySelector('a')!;
+        expect(back.textContent).toContain('Back');
+        expect(back.getAttribute('href')).toBe('/welcome?step=3');
+      });
+
+      it('keeps a title that is already there', () => {
+        const form = openEditor({
+          print: curaPrint,
+          printers: [printer(7, 'Mini')],
+          query: { onboarding: '1' },
+        });
+
+        expect(form.printForm.controls.title.value).toBe('Benchy from Cura');
+      });
+
+      it('shows no strip and an empty title without the param', () => {
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+        const host = editor!.nativeElement as HTMLElement;
+
+        expect(form.onboardingMode()).toBeFalse();
+        expect(form.printForm.controls.title.value).toBe('');
+        expect(host.querySelector('.onboarding-strip')).toBeNull();
+      });
+    });
+
+    describe('saving a new print', () => {
+      const earned = (keys: string[]) =>
+        of({
+          families: keys.map((key) => ({ key, tiers: [{ tier: 1 }] })),
+        } as never);
+
+      function saveNewPrint(form: EditPrintDetailComponent) {
+        form['handleSaveSuccess']({ id: null } as never);
+      }
+
+      it('does not fire the conversion when the first print was already earned', () => {
+        achievements.me.and.returnValue(earned(['first-print']));
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+
+        saveNewPrint(form);
+
+        expect(achievements.me).toHaveBeenCalledTimes(1);
+        expect(analytics.emitConversion).not.toHaveBeenCalled();
+      });
+
+      it('fires the conversion for a first print', () => {
+        achievements.me.and.returnValue(earned(['first-printer']));
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+
+        saveNewPrint(form);
+
+        expect(analytics.emitConversion).toHaveBeenCalledTimes(1);
+      });
+
+      it('fires the conversion when the achievements could not be read', () => {
+        achievements.me.and.returnValue(
+          new Observable((s) => s.error(new Error('500')))
+        );
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+
+        saveNewPrint(form);
+
+        expect(analytics.emitConversion).toHaveBeenCalledTimes(1);
+      });
+
+      it('does not look up achievements for an existing print', () => {
+        openEditor({
+          print: { ...curaPrint, id: 5 } as PrintDetail,
+          printers: [printer(7, 'Mini')],
+        });
+
+        expect(achievements.me).not.toHaveBeenCalled();
+      });
+
+      it('sends tutorial_complete for an eligible user on their first print', async () => {
+        onboarding.status.and.resolveTo({
+          onboardingEligible: true,
+          createdDate: '2026-10-18',
+          emailVerified: true,
+        });
+        achievements.me.and.returnValue(earned([]));
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+
+        saveNewPrint(form);
+        await flushPromises();
+
+        expect(analytics.eventEmitter).toHaveBeenCalledOnceWith(
+          'tutorial_complete',
+          'engagement',
+          'tutorial_complete'
+        );
+      });
+
+      it('does not send tutorial_complete to an ineligible user', async () => {
+        achievements.me.and.returnValue(earned([]));
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+
+        saveNewPrint(form);
+        await flushPromises();
+
+        expect(analytics.eventEmitter).not.toHaveBeenCalled();
+      });
+
+      it('does not send tutorial_complete when the first print is unknown or earned', async () => {
+        onboarding.status.and.resolveTo({
+          onboardingEligible: true,
+          createdDate: '2026-10-18',
+          emailVerified: true,
+        });
+        achievements.me.and.returnValue(earned(['first-print']));
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+        saveNewPrint(form);
+        form.hadFirstPrint = null;
+        saveNewPrint(form);
+        await flushPromises();
+
+        expect(analytics.eventEmitter).not.toHaveBeenCalled();
+      });
+
+      it('marks the welcome finished', () => {
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+
+        saveNewPrint(form);
+
+        expect(onboarding.markWelcomeFinished).toHaveBeenCalledTimes(1);
+      });
+
+      it('does not mark the welcome finished when an existing print is saved', () => {
+        const form = openEditor({ printers: [printer(7, 'Mini')] });
+
+        form['handleSaveSuccess']({ id: 5 } as never);
+
+        expect(onboarding.markWelcomeFinished).not.toHaveBeenCalled();
+        expect(analytics.emitConversion).not.toHaveBeenCalled();
+      });
+    });
+  });
 });

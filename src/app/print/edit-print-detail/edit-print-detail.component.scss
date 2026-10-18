@@ -352,3 +352,34 @@ form > div {
     }
   }
 }
+
+// Shown when the form is opened from the welcome flow (?onboarding=1).
+.onboarding-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--app-surface-container);
+  color: var(--app-text-secondary);
+  border-bottom: 1px solid var(--mat-divider-color);
+}
+
+// Replaces the printer select when the user has no printers yet.
+.add-first-printer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 10px 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--app-surface-container);
+  color: var(--app-text-primary);
+
+  @media (max-width: 959px) {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

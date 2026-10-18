@@ -15,6 +15,26 @@ import { apiUrl } from '../../support/api-url';
  */
 const ACHIEVEMENTS_CELEBRATIONS = 18; // UserSettingType.Achievements_Celebrations
 
+// Shaped like PrinterModel in printer-catalog.service.ts (not imported: it pulls Angular into the Cypress build).
+const p1s = {
+  id: 'bambu-lab-p1s',
+  make: 'Bambu Lab',
+  model: 'P1S',
+  technology: 'FDM',
+  bedWidthMm: 256,
+  bedDepthMm: 256,
+  bedHeightMm: 256,
+  nozzleOptionsMm: [0.4],
+  defaultNozzleMm: 0.4,
+  filamentDiameterMm: 1.75,
+  hasHeatedBed: true,
+  hasHeatedChamber: true,
+  extruderCount: 1,
+  defaultSlotCount: 4,
+  kinematics: 'corexy',
+  retired: false,
+};
+
 describe('New-user onboarding', () => {
   let devUserId: string;
 
@@ -41,6 +61,25 @@ describe('New-user onboarding', () => {
         emailVerified: true,
       },
     }).as('onboardingStatus');
+
+    // The catalog and the printer create are stubbed, so the test does not
+    // depend on a seeded catalog or on the API's printer rules.
+    cy.intercept('GET', '**/api/PrinterModels/popular*', {
+      body: [p1s],
+    }).as('popularModels');
+    cy.intercept('GET', '**/api/PrinterModels?*', { body: [p1s] });
+    cy.intercept('GET', '**/api/PrinterModels/match*', { statusCode: 204 });
+    cy.intercept('GET', '**/api/PrinterModels/bambu-lab-p1s', { body: p1s });
+    cy.intercept('POST', '**/api/Printers*', (req) => {
+      req.reply({
+        statusCode: 201,
+        body: {
+          ...req.body,
+          printerId: 9001,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    }).as('createPrinter');
   });
 
   it('takes a new user from /welcome to their first print', () => {
@@ -50,16 +89,19 @@ describe('New-user onboarding', () => {
       'be.visible'
     );
 
-    // Step 1: free text that isn't in the catalog is split on blur into make
-    // ("Prusa") and model ("i3 MK3S"), and the name follows the model.
-    cy.intercept('POST', '**/api/Printers*').as('createPrinter');
+    // Step 1: a popular chip fills the specs from the catalog, and the saved
+    // printer carries them with the catalog model id.
     cy.get('[data-testid="quick-add-printer"]').within(() => {
-      cy.findByLabelText('Printer make and model').type('Prusa i3 MK3S').blur();
-      cy.findByLabelText('Name').should('have.value', 'i3 MK3S');
+      cy.get('[data-testid="popular-printer-bambu-lab-p1s"]').click();
+      cy.get('[data-testid="spec-summary"]').should('contain.text', '256');
       cy.get('[data-testid="quick-add-save"]').should('be.enabled').click();
     });
-    cy.wait('@createPrinter').its('response.statusCode').should('be.lt', 300);
-    cy.get('[data-testid="printer-chips"]').should('contain.text', 'i3 MK3S');
+    cy.wait('@createPrinter').then(({ request, response }) => {
+      expect(response?.statusCode).to.be.lessThan(300);
+      expect(request.body).to.have.property('bedWidthMm', 256);
+      expect(request.body).to.have.property('catalogModelId', 'bambu-lab-p1s');
+    });
+    cy.get('[data-testid="printer-chips"]').should('contain.text', 'P1S');
 
     cy.get('[data-testid="step1-continue"]').should('be.enabled').click();
 
@@ -72,7 +114,7 @@ describe('New-user onboarding', () => {
     cy.location('pathname').should('eq', '/prints/new/edit');
     cy.location('search').should('include', 'onboarding=1');
     cy.get('#edit-print-title').should('have.value', 'My first print');
-    cy.get('#edit-print-printer').should('contain.text', 'i3 MK3S');
+    cy.get('#edit-print-printer').should('contain.text', 'P1S');
 
     cy.intercept('POST', '**/api/Prints*').as('createPrint');
     cy.get('#edit-print-submit-btn').click();
@@ -90,5 +132,24 @@ describe('New-user onboarding', () => {
     // The welcome flow acknowledged the email notice inline, so the global
     // banner must not come back on /prints.
     cy.get('[data-testid="email-notice"]').should('not.exist');
+  });
+
+  it('saves free text that is not in the catalog', () => {
+    cy.intercept('GET', '**/api/PrinterModels/popular*', { body: [] });
+    cy.intercept('GET', '**/api/PrinterModels?*', { body: [] });
+
+    cy.visit(`/welcome?devUserId=${devUserId}`);
+
+    // The make is split from the model on blur, and the name follows the model.
+    cy.get('[data-testid="quick-add-printer"]').within(() => {
+      cy.findByLabelText('Printer make and model').type('Prusa i3 MK3S').blur();
+      cy.findByLabelText('Name').should('have.value', 'i3 MK3S');
+      cy.get('[data-testid="quick-add-save"]').should('be.enabled').click();
+    });
+    cy.wait('@createPrinter').then(({ request, response }) => {
+      expect(response?.statusCode).to.be.lessThan(300);
+      expect(request.body.catalogModelId ?? null).to.equal(null);
+    });
+    cy.get('[data-testid="printer-chips"]').should('contain.text', 'i3 MK3S');
   });
 });

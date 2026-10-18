@@ -6,7 +6,7 @@ navLabel: About
 group: about
 order: 20
 mode: explanation
-updated: 2026-10-06
+updated: 2026-10-18
 related: [getting-started, contact, privacy-policy]
 ---
 
@@ -97,3 +97,12 @@ Gcode Parsing based on <a target="_blank"
 href="https://github.com/hudbrog/gCodeViewer" >hudbrog's gCodeViewer</a >, which
 you can find at <a target="_blank" href="https://gcode.ws/">gcode.ws</a>. Thank
 you for providing the community an awesome tool for visualizing gcode.
+
+Printer catalog: the printer specs we suggest, such as bed size, nozzle diameter
+and filament diameter, come from the open-source printer definitions of
+<a target="_blank" href="https://github.com/Ultimaker/Cura">Ultimaker Cura</a>
+(LGPL-3.0) and
+<a target="_blank" href="https://github.com/SoftFever/OrcaSlicer">OrcaSlicer</a>
+(AGPL-3.0). We keep only the facts, like the numbers above, and we don't
+redistribute any profile files. Thank you to both communities for keeping that
+data open.

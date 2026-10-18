@@ -29,6 +29,27 @@ const PRINTER_NAME_KEYS = [
 ] as const;
 
 /**
+ * The same keys as whole header lines, in either separator style, for a file whose parser
+ * indexes the other style: the Creality Print parser reads ";key:value", so a spaced
+ * "; printer_model = X" line never reaches its index.
+ */
+const PRINTER_NAME_LINES: readonly RegExp[] = PRINTER_NAME_KEYS.map(
+  (key) =>
+    new RegExp(
+      `^\\s*;\\s*${key.replace('.', '\\.')}\\s*[=:]\\s*(.*?)\\s*$`,
+      'im'
+    )
+);
+
+/** `"Original Prusa MK4S"` -> `Original Prusa MK4S`; one surrounding pair only. */
+function unquote(value: string): string {
+  const trimmed = value.trim();
+  return trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')
+    ? trimmed.slice(1, -1).trim()
+    : trimmed;
+}
+
+/**
  * A single-pass index of the "; key = value" comment lines in a gcode file, so
  * each setting lookup is a map hit instead of a regex over the whole file.
  * Keys are case-insensitive; when a key repeats, the first non-empty value wins
@@ -41,12 +62,25 @@ export class GcodeSettings {
    * The printer a file was sliced for, in the order the slicers write it (spec section 8.1):
    * Orca and Prusa families' `printer_model`, then their `printer_settings_id` (the profile
    * name), then Cura's `TARGET_MACHINE.NAME`. Null when none is present.
+   * When the index holds none of them and the raw gcode is given, the header lines are read
+   * directly, in the same order.
    */
-  static detectedPrinterName(settings: GcodeSettings): string | null {
+  static detectedPrinterName(
+    settings: GcodeSettings,
+    gcode?: string
+  ): string | null {
     for (const key of PRINTER_NAME_KEYS) {
-      const value = settings.get(key).trim();
+      const value = unquote(settings.get(key));
       if (value !== '') {
         return value;
+      }
+    }
+    if (gcode) {
+      for (const line of PRINTER_NAME_LINES) {
+        const value = unquote(gcode.match(line)?.[1] ?? '');
+        if (value !== '') {
+          return value;
+        }
       }
     }
     return null;

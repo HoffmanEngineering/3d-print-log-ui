@@ -120,4 +120,17 @@ describe('printDetailResolver', () => {
     });
     expect(store.clear).toHaveBeenCalled();
   });
+
+  it('resolves a manual new print with no detected printer', () => {
+    store.hasNewPrint.and.returnValue(false);
+
+    const value = runResolver(printDetailResolver, routeFor('new')) as any;
+
+    expect(value).toEqual({
+      print: null,
+      user: null,
+      detectedPrinterName: null,
+    });
+    expect(store.getNewPrintMeta).not.toHaveBeenCalled();
+  });
 });

@@ -82,4 +82,11 @@ Adaptive Layers:0`);
       });
     });
   });
+
+  it('reports a spaced printer_model line beside the print', async () => {
+    const { detectedPrinterName } = await service.parseWithMeta(
+      ';Creality Print GCode\n;FLAVOR:Marlin\n;TIME:100\n; printer_model = Creality K1 Max\n'
+    );
+    expect(detectedPrinterName).toBe('Creality K1 Max');
+  });
 });

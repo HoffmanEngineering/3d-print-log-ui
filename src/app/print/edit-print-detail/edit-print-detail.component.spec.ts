@@ -39,6 +39,8 @@ import {
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
 import { EditPrintDetailComponent } from './edit-print-detail.component';
+import { OTHER_FILAMENT } from 'src/app/core/services/file-parsers/core/print-detail-defaults';
+import { FilamentSummary } from 'src/app/core/services/filament.service';
 
 import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -1678,6 +1680,14 @@ describe('EditPrintDetailComponent', () => {
         model: 'X1 Carbon',
         technology: 'FDM',
       } as PrinterModel;
+      const spoolA = {
+        id: 'spool-a',
+        displayName: 'Spool A',
+      } as FilamentSummary;
+      const spoolB = {
+        id: 'spool-b',
+        displayName: 'Spool B',
+      } as FilamentSummary;
       const catalogPrinter = (
         id: number,
         catalogModelId: string | null,
@@ -1749,6 +1759,9 @@ describe('EditPrintDetailComponent', () => {
         });
 
         it('leaves the other fields alone', () => {
+          printerService.getLoadedFilamentForPrinter.and.callFake(
+            (id) => of(id === 9 ? [{ filament: spoolB }] : []) as never
+          );
           const form = openEditor({
             print: curaPrint,
             printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
@@ -1759,7 +1772,103 @@ describe('EditPrintDetailComponent', () => {
           expect(form.printForm.controls.title.value).toBe('Benchy from Cura');
           expect(form.printForm.controls.notes.value).toBe('Sliced at 0.2mm');
           expect(form.getPrintFromForm().curaSettingId).toBe('cura-1');
+          const row = form.filamentUsage.at(0).getRawValue();
+          expect(row.filament).toEqual(spoolB);
+          expect(
+            form.getPrintFromForm().filamentUsage[0].estimatedAmountMg
+          ).toBe(12_000);
           expect(form.printForm.dirty).toBeFalse();
+        });
+
+        describe('the usage rows', () => {
+          const slicerPrint = {
+            ...curaPrint,
+            curaSettingId: null,
+            filamentUsage: [
+              {
+                ...curaPrint.filamentUsage[0],
+                filament: OTHER_FILAMENT,
+              },
+            ],
+          } as unknown as PrintDetail;
+
+          it('refill from the detected printer, as a manual change does', () => {
+            printerService.getLoadedFilamentForPrinter.and.callFake(
+              (id) =>
+                of(
+                  id === 7
+                    ? [{ filament: spoolA }]
+                    : id === 9
+                      ? [{ filament: spoolB }]
+                      : []
+                ) as never
+            );
+            const form = openEditor({
+              print: slicerPrint,
+              printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
+              lastSelectedPrinterId: 7,
+              detectedPrinterName: 'X1C',
+            });
+
+            expect(form.printForm.controls.printerId.value).toBe(9);
+            expect(
+              printerService.getLoadedFilamentForPrinter
+            ).toHaveBeenCalledWith(9);
+            expect(form.filamentUsage.at(0).get('filament')!.value).toEqual(
+              spoolB
+            );
+            expect(form.filamentUsage.length).toBe(1);
+            expect(writtenPrinterIds()).toEqual([]);
+          });
+
+          it('keep rows the user touched while the match was pending', () => {
+            const match = new Subject<{ id: string; confidence: string }>();
+            catalog.match.and.returnValue(match);
+            printerService.getLoadedFilamentForPrinter.and.callFake(
+              (id) => of(id === 9 ? [{ filament: spoolB }] : []) as never
+            );
+            const form = openEditor({
+              print: slicerPrint,
+              printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
+              lastSelectedPrinterId: 7,
+              detectedPrinterName: 'X1C',
+            });
+
+            const filament = form.filamentUsage.at(0).get('filament')!;
+            filament.setValue(spoolA);
+            filament.markAsDirty();
+            match.next({ id: X1C, confidence: 'exact' });
+
+            expect(form.printForm.controls.printerId.value).toBe(9);
+            expect(filament.value).toEqual(spoolA);
+            expect(
+              printerService.getLoadedFilamentForPrinter
+            ).not.toHaveBeenCalledWith(9);
+            expect(writtenPrinterIds()).toEqual([]);
+          });
+
+          it("drop the last-selected printer's spool when it lands after detection", () => {
+            const printer7Spools = new Subject<unknown[]>();
+            printerService.getLoadedFilamentForPrinter.and.callFake(
+              (id) =>
+                (id === 7
+                  ? printer7Spools
+                  : of(id === 9 ? [{ filament: spoolB }] : [])) as never
+            );
+            const form = openEditor({
+              print: slicerPrint,
+              printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
+              lastSelectedPrinterId: 7,
+              detectedPrinterName: 'X1C',
+            });
+
+            printer7Spools.next([{ filament: spoolA }]);
+
+            expect(form.printForm.controls.printerId.value).toBe(9);
+            expect(form.filamentUsage.at(0).get('filament')!.value).toEqual(
+              spoolB
+            );
+          });
         });
 
         it('never overrides a printer the user already chose', () => {
@@ -1867,7 +1976,7 @@ describe('EditPrintDetailComponent', () => {
             initialModelId: X1C,
           });
 
-          closed.next({ id: 42 });
+          closed.next({ id: 42, catalogModelId: X1C });
           closed.complete();
           editor!.detectChanges();
           await editor!.whenStable();
@@ -1884,6 +1993,68 @@ describe('EditPrintDetailComponent', () => {
             'PrintForm_DetectedPrinterAdded'
           );
           expect(hint()).toBeNull();
+        });
+
+        it('logs no add when the user adds a different model', async () => {
+          const form = openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'X1C',
+          });
+          editor!.detectChanges();
+          const { closed } = stubDialog(form);
+          printerService.getCurrentUserPrinterSummaries.and.returnValue(
+            of({
+              paging: {},
+              items: [
+                catalogPrinter(7, null),
+                catalogPrinter(42, 'prusa-mk4s'),
+              ],
+            } as never)
+          );
+
+          (hint()!.querySelector('button') as HTMLButtonElement).click();
+          await flushPromises();
+          closed.next({ id: 42, catalogModelId: 'prusa-mk4s' });
+          editor!.detectChanges();
+
+          expect(form.printForm.controls.printerId.value).toBe(42);
+          expect(hint()).not.toBeNull();
+          expect(logger.logEvent).not.toHaveBeenCalledWith(
+            'PrintForm_DetectedPrinterAdded'
+          );
+        });
+
+        it('clears the hint when "+ Add a printer" adds that model', async () => {
+          const form = openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'X1C',
+          });
+          editor!.detectChanges();
+          const { open, closed } = stubDialog(form);
+          printerService.getCurrentUserPrinterSummaries.and.returnValue(
+            of({
+              paging: {},
+              items: [catalogPrinter(7, null), catalogPrinter(42, X1C)],
+            } as never)
+          );
+
+          choosePrinter(form, -1);
+          await flushPromises();
+          expect(open.calls.mostRecent().args[1]!.data).toEqual({
+            source: 'print-form',
+            showEmailNotice: false,
+          });
+          closed.next({ id: 42, catalogModelId: X1C });
+          editor!.detectChanges();
+
+          expect(hint()).toBeNull();
+          expect(logger.logEvent).toHaveBeenCalledWith(
+            'PrintForm_DetectedPrinterAdded'
+          );
         });
 
         it('keeps the hint when quick add is canceled', async () => {
@@ -1973,6 +2144,30 @@ describe('EditPrintDetailComponent', () => {
           expect(form.printForm.controls.printerId.value).toBe(9);
           flush();
         }));
+      });
+
+      it('does nothing once the form is gone', () => {
+        const match = new Subject<{ id: string; confidence: string }>();
+        catalog.match.and.returnValue(match);
+        const form = openEditor({
+          print: curaPrint,
+          printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
+          lastSelectedPrinterId: 7,
+          detectedPrinterName: 'X1C',
+        });
+
+        editor!.destroy();
+        expect(match.observed).toBeFalse();
+        expect(() =>
+          match.next({ id: X1C, confidence: 'exact' })
+        ).not.toThrow();
+
+        expect(form.printForm.controls.printerId.value).toBe(7);
+        expect(detectedEvents()).toEqual([]);
+        expect(
+          printerService.getLoadedFilamentForPrinter
+        ).not.toHaveBeenCalledWith(9);
+        editor = undefined;
       });
 
       it('does not run when editing an existing print', () => {

@@ -141,6 +141,32 @@ describe('GcodeSettings', () => {
       expect(GcodeSettings.detectedPrinterName(s)).toBe('Creality Ender-3');
     });
 
+    it('strips one pair of surrounding quotes', () => {
+      const s = GcodeSettings.parse(
+        '; printer_settings_id = "Original Prusa MK4S"',
+        SPACED_EQUALS
+      );
+      expect(GcodeSettings.detectedPrinterName(s)).toBe('Original Prusa MK4S');
+    });
+
+    it('falls back to the raw lines when the index style missed them', () => {
+      const gcode =
+        ';Creality Print GCode\n;FLAVOR:Marlin\n; printer_model = Creality K1 Max';
+      const s = GcodeSettings.parse(gcode, UNSPACED_COLON);
+      expect(GcodeSettings.detectedPrinterName(s)).toBeNull();
+      expect(GcodeSettings.detectedPrinterName(s, gcode)).toBe(
+        'Creality K1 Max'
+      );
+    });
+
+    it('keeps the key order in the raw-line fallback', () => {
+      const gcode =
+        '; printer_settings_id = My K1 profile\n; printer_model = Creality K1';
+      expect(
+        GcodeSettings.detectedPrinterName(GcodeSettings.empty(), gcode)
+      ).toBe('Creality K1');
+    });
+
     it('is null when no header names the printer', () => {
       const s = GcodeSettings.parse('; layer_height = 0.2', SPACED_EQUALS);
       expect(GcodeSettings.detectedPrinterName(s)).toBeNull();

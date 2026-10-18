@@ -590,13 +590,18 @@ export class EditPrintDetailComponent
       );
 
       if (printIsNew && filamentIsEmpty && printerHasBeenSelected) {
+        const printerIdOnLoad = this.printForm.get('printerId').value;
         this.printerService
-          .getLoadedFilamentForPrinter(this.printForm.get('printerId').value)
+          .getLoadedFilamentForPrinter(printerIdOnLoad)
+          .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((loadedFilament) => {
+            // Slicer detection may have switched the printer while this was in flight; that
+            // printer's own refill owns the rows then.
+            if (this.printForm.get('printerId').value !== printerIdOnLoad) {
+              return;
+            }
             const defaultMeasureType =
-              this.getDefaultMeasureTypeForSelectedPrinter(
-                this.printForm.get('printerId').value
-              );
+              this.getDefaultMeasureTypeForSelectedPrinter(printerIdOnLoad);
 
             for (let i = 1; i <= loadedFilament.length; i++) {
               // If there is a filament usage with OTHER in this index, just update the filament
@@ -802,50 +807,57 @@ export class EditPrintDetailComponent
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((newPrinterId: number | null) => {
-        const isFilamentPristine = this.filamentUsage.pristine;
-        const isPrintNew = this.printForm.get('id')?.value === null;
-
-        if (isPrintNew && isFilamentPristine) {
-          this.printerService
-            .getLoadedFilamentForPrinter(newPrinterId)
-            .subscribe((loadedFilament) => {
-              // Add a new filament usage for the currently loaded filament for that printer.
-
-              const defaultMeasureType =
-                this.getDefaultMeasureTypeForSelectedPrinter(newPrinterId);
-
-              for (let i = 1; i <= loadedFilament.length; i++) {
-                // If there is a filament usage with OTHER in this index, just update the filament
-                const filament = loadedFilament[i - 1].filament;
-
-                if (this.filamentUsage.length >= i) {
-                  this.filamentUsage
-                    .at(i - 1)
-                    .get('filament')
-                    .setValue(filament);
-                }
-                // Else, add a new control:
-                else {
-                  const newFormGroup = this.GetNewFilamentUsageForm(
-                    EMPTY_GUID,
-                    0,
-                    0,
-                    0,
-                    defaultMeasureType,
-                    0,
-                    0,
-                    0,
-                    defaultMeasureType,
-                    filament,
-                    ''
-                  );
-
-                  this.filamentUsage.push(newFormGroup);
-                }
-              }
-              this.changeDetector.markForCheck();
-            });
+        if (this.canRefillUsageFromPrinter()) {
+          this.refillUsageFromLoadedFilament(newPrinterId);
         }
+      });
+  }
+
+  /** A new print whose usage rows the user has not touched takes the printer's loaded spools. */
+  private canRefillUsageFromPrinter(): boolean {
+    return (
+      this.printForm.get('id')?.value === null && this.filamentUsage.pristine
+    );
+  }
+
+  /** Puts the printer's loaded filament into the usage rows, adding a row per extra spool. */
+  private refillUsageFromLoadedFilament(printerId: number | null): void {
+    this.printerService
+      .getLoadedFilamentForPrinter(printerId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((loadedFilament) => {
+        const defaultMeasureType =
+          this.getDefaultMeasureTypeForSelectedPrinter(printerId);
+
+        for (let i = 1; i <= loadedFilament.length; i++) {
+          const filament = loadedFilament[i - 1].filament;
+
+          if (this.filamentUsage.length >= i) {
+            this.filamentUsage
+              .at(i - 1)
+              .get('filament')
+              .setValue(filament);
+          }
+          // Else, add a new control:
+          else {
+            const newFormGroup = this.GetNewFilamentUsageForm(
+              EMPTY_GUID,
+              0,
+              0,
+              0,
+              defaultMeasureType,
+              0,
+              0,
+              0,
+              defaultMeasureType,
+              filament,
+              ''
+            );
+
+            this.filamentUsage.push(newFormGroup);
+          }
+        }
+        this.changeDetector.markForCheck();
       });
   }
   public HandleFilamentMeasureTypeChange(
@@ -1966,7 +1978,8 @@ export class EditPrintDetailComponent
         .subscribe((printer) => {
           this.addPrinterDialogOpen = false;
           if (printer) {
-            if (initialModelId) {
+            const detected = this.detectedPrinterHint();
+            if (detected && printer.catalogModelId === detected.id) {
               this.loggingService.logEvent('PrintForm_DetectedPrinterAdded');
               this.detectedPrinterHint.set(null);
             }
@@ -1992,9 +2005,10 @@ export class EditPrintDetailComponent
   /**
    * A new print from a slicer file that names its printer (spec section 8.2): asks the catalog
    * which model that is, then preselects the user's newest active printer of that model, or
-   * offers to add one. Silent on no match, an error or a timeout. It only ever sets the printer,
-   * leaves a printer the user picked in the meantime alone, and does not save the choice as the
-   * last selected printer.
+   * offers to add one. Silent on no match, an error or a timeout. A preselect sets the printer
+   * and, while the usage rows are untouched, refills them from that printer's loaded filament,
+   * as a manual printer change does. Nothing else changes: it leaves a printer the user picked
+   * in the meantime alone and does not save the choice as the last selected printer.
    */
   private detectSlicerPrinter(
     name: string | null | undefined,
@@ -2031,6 +2045,9 @@ export class EditPrintDetailComponent
           control.setValue(detected.owned.id, { emitEvent: false });
           this.previousPrinterId = detected.owned.id;
           this.setMaterialCategoryNameForPrinterId(detected.owned.id);
+          if (this.canRefillUsageFromPrinter()) {
+            this.refillUsageFromLoadedFilament(detected.owned.id);
+          }
           this.changeDetector.markForCheck();
         } else {
           this.detectedPrinterHint.set(detected.model);
@@ -2084,6 +2101,10 @@ export class EditPrintDetailComponent
         next: (page) => {
           this.printers = page.items;
           this.buildPrinterLabelCache();
+          const detected = this.detectedPrinterHint();
+          if (detected && this.newestActivePrinterOfModel(detected.id)) {
+            this.detectedPrinterHint.set(null);
+          }
           select();
         },
         // The printer was saved; select it even though the list could not be refreshed.

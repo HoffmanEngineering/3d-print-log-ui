@@ -146,4 +146,13 @@ Printer Config: Original Prusa MK4S MMU3`);
     );
     expect(detectedPrinterName).toBe('Original Prusa MK4S MMU3');
   });
+
+  it('prefers printer_model when the file has both', async () => {
+    const gcode = PRUSA_MMU_TWO_SLOTS_GCODE.replace(
+      '; printer_settings_id = Original Prusa MK4S MMU3',
+      '; printer_model = MK4SMMU3\n; printer_settings_id = Original Prusa MK4S MMU3'
+    );
+    const { detectedPrinterName } = await service.parseWithMeta(gcode);
+    expect(detectedPrinterName).toBe('MK4SMMU3');
+  });
 });

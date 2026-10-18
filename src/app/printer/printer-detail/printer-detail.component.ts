@@ -487,9 +487,10 @@ export class PrinterDetailComponent
   }
 
   /**
-   * A pick links the printer to the model. A new printer also takes the model's make, model
-   * and specs, except in controls the user has changed. An existing printer keeps every
-   * value: the fill card offers the model's specs for the empty ones.
+   * A pick links the printer to the model and takes its make and model, so the link never
+   * disagrees with the name on screen. A new printer also takes the model's specs, except in
+   * controls the user has changed. An existing printer keeps its name and every spec: the
+   * fill card offers the model's specs for the empty ones.
    */
   selectCatalogModel(m: PrinterModel): void {
     const form = this.printerForm();
@@ -504,6 +505,8 @@ export class PrinterDetailComponent
     link.setValue(m.id);
     link.markAsDirty();
 
+    // A programmatic patch fires no input event, so onMakeOrModelInput keeps the pick.
+    form.patchValue({ make: m.make, model: m.model });
     if (form.get('id').value === null) {
       this.applyCatalogDefaults(m);
     }
@@ -518,7 +521,6 @@ export class PrinterDetailComponent
         c.setValue(value);
       }
     };
-    form.patchValue({ make: m.make, model: m.model });
     fill('name', m.model);
     const nickname = m.technology === 'Resin' ? 'MSLA' : 'FFF';
     if (this.printerCategories.some((c) => c.nickname === nickname)) {

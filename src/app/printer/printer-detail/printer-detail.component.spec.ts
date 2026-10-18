@@ -2,7 +2,13 @@ import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-befor
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideZoneChangeDetection } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  flushMicrotasks,
+  tick,
+} from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -684,15 +690,17 @@ describe('PrinterDetailComponent', () => {
       localStorage.removeItem('pl_fill_specs_dismissed_42');
     });
 
-    it('feeds the make-and-model search from catalog.search', async () => {
-      await setUp(null);
+    it('feeds the make-and-model search from catalog.search after a 150 ms debounce', fakeAsync(() => {
+      void setUp(null);
+      flushMicrotasks();
 
       typeInto('edit-printer-catalog-search', 'P1');
+      tick(149);
       expect(catalog.search).not.toHaveBeenCalled();
-      await new Promise((r) => setTimeout(r, 200));
+      tick(1);
 
       expect(catalog.search).toHaveBeenCalledOnceWith('P1');
-    });
+    }));
 
     it('has no bundled make list: make and model are plain free-text inputs', async () => {
       await setUp(null);
@@ -787,21 +795,49 @@ describe('PrinterDetailComponent', () => {
         });
 
       // Review Focus 2: no stored spec changes until the user presses Fill.
-      it('picking a different model changes no spec control, only the link', async () => {
+      it('picking a different model sets make, model and the link, and changes no spec control', async () => {
         await setUp(fullySpecified({ catalogModelId: 'voron-2-4-350' }), {
           linked: null,
         });
-        const before = specValues();
+        const { make, model, ...specsBefore } = specValues();
+        const nameBefore = control('name').value;
 
         component.selectCatalogModel(P1S);
         fixture.detectChanges();
 
-        expect(specValues()).toEqual(before);
+        const {
+          make: makeAfter,
+          model: modelAfter,
+          ...specsAfter
+        } = specValues();
+        expect(makeAfter).toBe('Bambu Lab');
+        expect(modelAfter).toBe('P1S');
+        expect(specsAfter).toEqual(specsBefore);
+        expect(control('name').value).toBe(nameBefore);
         expect(component.printerForm().dirty).toBeTrue();
         component.onSubmit();
-        expect(savedPayload().catalogModelId).toBe('bambu-lab-p1s');
-        expect(savedPayload().bedWidthMm).toBe(350);
-        expect(savedPayload().make).toBe('Formbot');
+        expect(savedPayload()).toEqual(
+          jasmine.objectContaining({
+            catalogModelId: 'bambu-lab-p1s',
+            make: 'Bambu Lab',
+            model: 'P1S',
+            bedWidthMm: 350,
+          })
+        );
+      });
+
+      it('a hand edit of make after picking a new model drops the new link', async () => {
+        await setUp(fullySpecified({ catalogModelId: 'voron-2-4-350' }), {
+          linked: null,
+        });
+        component.selectCatalogModel(P1S);
+        fixture.detectChanges();
+
+        typeInto('edit-printer-make', 'Bambu');
+        component.onSubmit();
+
+        expect(savedPayload().make).toBe('Bambu');
+        expect(savedPayload().catalogModelId).toBeNull();
       });
 
       it('picking a model on a printer with empty specs fills nothing until Fill', async () => {

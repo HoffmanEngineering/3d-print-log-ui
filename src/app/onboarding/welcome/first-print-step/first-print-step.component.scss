@@ -1,0 +1,49 @@
+.paths {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
+}
+
+.path--primary {
+  border-color: var(--app-primary);
+}
+
+.path__select {
+  width: 100%;
+}
+
+.path__lines {
+  margin: 12px 0 8px;
+  padding-left: 20px;
+  color: var(--app-text-secondary);
+}
+
+.path__line {
+  margin: 12px 0 0;
+  color: var(--app-text-secondary);
+}
+
+.path__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 12px 0 0;
+}
+
+a {
+  color: var(--app-primary);
+}
+
+.confirm-email {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  color: var(--app-text-secondary);
+}
+
+.confirm-email__result {
+  color: var(--app-text-primary);
+}

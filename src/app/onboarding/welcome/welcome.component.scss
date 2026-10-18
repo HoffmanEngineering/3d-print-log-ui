@@ -1,0 +1,48 @@
+.welcome {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 32px;
+}
+
+.welcome__header {
+  margin-bottom: 8px;
+
+  h1 {
+    margin: 0 0 4px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--app-text-secondary);
+  }
+}
+
+mat-chip-set {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.welcome__saved {
+  margin: 0;
+  color: var(--app-text-primary);
+}
+
+.welcome__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--mat-divider-color);
+}

@@ -11,6 +11,8 @@ import {
   TestBed,
   fakeAsync,
   flush,
+  flushMicrotasks,
+  tick,
   waitForAsync,
 } from '@angular/core/testing';
 
@@ -1320,6 +1322,14 @@ describe('EditPrintDetailComponent', () => {
       return { open, closed };
     }
 
+    /** The user picks an option from the open panel, as MatSelect reports it. */
+    function choosePrinter(form: EditPrintDetailComponent, value: number) {
+      const control = form.printForm.controls.printerId;
+      form.onPrinterSelectOpenedChange(true);
+      control.markAsDirty();
+      control.setValue(value);
+    }
+
     function writtenPrinterIds(): string[] {
       return [
         ...settings['addUserSetting'].calls
@@ -1400,7 +1410,7 @@ describe('EditPrintDetailComponent', () => {
           } as never)
         );
 
-        form.printForm.controls.printerId.setValue(-1);
+        choosePrinter(form, -1);
         expect(form.printForm.controls.printerId.value)
           .withContext('restored while the dialog is open')
           .toBe(7);
@@ -1447,7 +1457,7 @@ describe('EditPrintDetailComponent', () => {
         });
         const { open, closed } = stubDialog(form);
 
-        form.printForm.controls.printerId.setValue(-1);
+        choosePrinter(form, -1);
         await flushPromises();
         closed.next(undefined);
         closed.complete();
@@ -1469,13 +1479,130 @@ describe('EditPrintDetailComponent', () => {
         const form = openEditor({ printers: [printer(7, 'Mini')] });
         const { open } = stubDialog(form);
 
-        form.printForm.controls.printerId.setValue(-1);
+        choosePrinter(form, -1);
         await flushPromises();
 
         expect(open.calls.mostRecent().args[1]!.data).toEqual({
           source: 'print-form',
           showEmailNotice: true,
         });
+      });
+    });
+
+    describe('canceling "+ Add a printer"', () => {
+      it('leaves a pristine form pristine', async () => {
+        const form = openEditor({
+          printers: [printer(7, 'Mini')],
+          lastSelectedPrinterId: 7,
+        });
+        const { open, closed } = stubDialog(form);
+        expect(form.printForm.dirty).toBeFalse();
+
+        choosePrinter(form, -1);
+        form.onPrinterSelectOpenedChange(false);
+        await flushPromises();
+        closed.next(undefined);
+        closed.complete();
+
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(form.printForm.controls.printerId.value).toBe(7);
+        expect(form.printForm.dirty).toBeFalse();
+        expect(form.canDeactivate()).toBeTrue();
+      });
+
+      it('keeps a form dirty that was already dirty', async () => {
+        const form = openEditor({
+          printers: [printer(7, 'Mini'), printer(8, 'Core One')],
+          lastSelectedPrinterId: 7,
+        });
+        const { closed } = stubDialog(form);
+
+        choosePrinter(form, 8);
+        form.onPrinterSelectOpenedChange(false);
+        choosePrinter(form, -1);
+        await flushPromises();
+        closed.next(undefined);
+
+        expect(form.printForm.controls.printerId.value).toBe(8);
+        expect(form.printForm.dirty).toBeTrue();
+      });
+
+      it('opens no dialog when arrow keys reach it on the closed select', async () => {
+        const form = openEditor({
+          printers: [printer(7, 'Mini')],
+          lastSelectedPrinterId: 7,
+        });
+        const { open } = stubDialog(form);
+        editor!.detectChanges();
+        const select = editor!.debugElement.query(By.css('#edit-print-printer'))
+          .nativeElement as HTMLElement;
+
+        select.focus();
+        // MatSelect reads keyCode, which a KeyboardEvent init dict cannot set.
+        const arrowDown = new KeyboardEvent('keydown', {
+          key: 'ArrowDown',
+          bubbles: true,
+        });
+        Object.defineProperty(arrowDown, 'keyCode', { get: () => 40 });
+        const seen: (number | null)[] = [];
+        form.printForm.controls.printerId.valueChanges.subscribe((v) =>
+          seen.push(v)
+        );
+        // The first press activates the current printer, the second moves onto the sentinel.
+        select.dispatchEvent(arrowDown);
+        editor!.detectChanges();
+        select.dispatchEvent(arrowDown);
+        editor!.detectChanges();
+        await flushPromises();
+
+        expect(seen)
+          .withContext('the arrow key reached the sentinel')
+          .toContain(-1);
+
+        expect(open).not.toHaveBeenCalled();
+        expect(form.printForm.controls.printerId.value).toBe(7);
+        expect(writtenPrinterIds()).not.toContain('-1');
+        // The form's dirty state is not checked here: the first press re-selects the current
+        // printer, and MatSelect reports that as a user change (as it did before this branch).
+      });
+    });
+
+    describe('the onboarding status lookup', () => {
+      it('is prefetched when a new print opens', () => {
+        onboarding.status.calls.reset();
+        openEditor({ printers: [printer(7, 'Mini')] });
+
+        expect(onboarding.status).toHaveBeenCalled();
+      });
+
+      it('opens the dialog without the notice when the lookup hangs past 3 s', fakeAsync(() => {
+        onboarding.status.and.returnValue(new Promise(() => {}));
+        const form = openEditor({ printers: [] });
+        const { open } = stubDialog(form);
+
+        void form.openAddPrinter();
+        tick(2999);
+        expect(open).not.toHaveBeenCalled();
+        tick(1);
+        flushMicrotasks();
+
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(open.calls.mostRecent().args[1]!.data).toEqual({
+          source: 'print-form',
+          showEmailNotice: false,
+        });
+        flush();
+      }));
+
+      it('can open the dialog again after dialog.open throws', async () => {
+        const form = openEditor({ printers: [] });
+        const open = spyOn(form.dialog, 'open').and.throwError('boom');
+
+        await form.openAddPrinter();
+        open.and.returnValue({ afterClosed: () => new Subject() } as never);
+        await form.openAddPrinter();
+
+        expect(open).toHaveBeenCalledTimes(2);
       });
     });
 

@@ -64,8 +64,15 @@ import {
   PrintViewStatus,
 } from '../../core/services/print.service';
 import { AchievementService } from 'src/app/core/services/achievement.service';
-import { OnboardingService } from 'src/app/onboarding/onboarding.service';
-import { GETTING_STARTED_KEYS } from 'src/app/onboarding/onboarding-api.service';
+import {
+  ONBOARDING_LOOKUP_TIMEOUT_MS,
+  OnboardingService,
+} from 'src/app/onboarding/onboarding.service';
+import {
+  GETTING_STARTED_KEYS,
+  INELIGIBLE_STATUS,
+} from 'src/app/onboarding/onboarding-api.service';
+import { withTimeout } from 'src/app/core/utils/with-timeout';
 import { openQuickAddPrinterDialog } from 'src/app/onboarding/quick-add-printer/quick-add-printer-dialog.component';
 import { convertFilamentValue } from 'src/app/shared/utils/filament-display.utils';
 import { ThumbnailImage } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
@@ -391,6 +398,10 @@ export class EditPrintDetailComponent
   private previousPrinterId: number | null = null;
 
   private addPrinterDialogOpen = false;
+  /** Whether the printer select's panel is open: only a pick from it can mean "+ Add a printer". */
+  private printerSelectOpen = false;
+  /** The printer control's pristine state before the latest pick, restored with the value. */
+  private printerPristineBeforePick = true;
 
   /** Opened from the welcome flow (`?onboarding=1`): pre-fills a first print. */
   readonly onboardingMode = signal(false);
@@ -538,6 +549,8 @@ export class EditPrintDetailComponent
       if (printIsNew) {
         this.applyOnboardingDefaults(data.print.print);
         this.loadHadFirstPrint();
+        // Warms the cache, so "+ Add a printer" opens its dialog without waiting on it.
+        void this.onboardingService.status();
       }
       const filamentIsEmpty =
         this.filamentUsage.length === 0 ||
@@ -848,21 +861,28 @@ export class EditPrintDetailComponent
   }
 
   private SaveSettingWhenSelectedPrinterIdChanges() {
-    this.previousPrinterId = this.printForm.get('printerId').value;
-    this.printForm
-      .get('printerId')
-      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+    const printerControl = this.printForm.get('printerId');
+    this.previousPrinterId = printerControl.value;
+    this.printerPristineBeforePick = printerControl.pristine;
+    printerControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((newPrinterId: number | null) => {
-        // "+ Add a printer" is an action, not a value: put the old printer back and open the
-        // dialog, so the sentinel never reaches the saved setting or the form.
+        // "+ Add a printer" is an action, not a value: put the old printer back (and its
+        // pristine state, which the pick just cleared), so the sentinel never reaches the saved
+        // setting, the form or the leave prompt. Only a pick from the open panel opens the
+        // dialog; arrow keys on the closed select step over it.
         if (newPrinterId === ADD_PRINTER_SENTINEL) {
-          this.printForm
-            .get('printerId')
-            .setValue(this.previousPrinterId, { emitEvent: false });
-          void this.openAddPrinter();
+          printerControl.setValue(this.previousPrinterId, { emitEvent: false });
+          if (this.printerPristineBeforePick) {
+            printerControl.markAsPristine();
+          }
+          if (this.printerSelectOpen) {
+            void this.openAddPrinter();
+          }
           return;
         }
         this.previousPrinterId = newPrinterId;
+        this.printerPristineBeforePick = printerControl.pristine;
 
         // Save the name of the selected printer's material category. Defaults to 'material' is none is selected
         this.setMaterialCategoryNameForPrinterId(newPrinterId);
@@ -1880,27 +1900,48 @@ export class EditPrintDetailComponent
     });
   }
 
+  /** Bound to the printer select's `openedChange`. */
+  onPrinterSelectOpenedChange(open: boolean): void {
+    this.printerSelectOpen = open;
+    if (open) {
+      this.printerPristineBeforePick = this.printForm.get('printerId').pristine;
+    }
+  }
+
   /**
    * Opens the quick-add printer dialog. A saved printer joins the select and becomes the
    * selected one; nothing else on the form changes, so a slicer hand-off keeps its fields.
+   * The onboarding status (prefetched for a new print) is waited on for at most
+   * ONBOARDING_LOOKUP_TIMEOUT_MS; past that the dialog opens without the email notice.
    */
   async openAddPrinter(): Promise<void> {
     if (this.addPrinterDialogOpen) {
       return;
     }
     this.addPrinterDialogOpen = true;
-    const status = await this.onboardingService.status();
-    openQuickAddPrinterDialog(this.dialog, {
-      source: 'print-form',
-      showEmailNotice: status.onboardingEligible,
-    })
-      .afterClosed()
-      .subscribe((printer) => {
-        this.addPrinterDialogOpen = false;
-        if (printer) {
-          this.selectAddedPrinter(printer.id);
-        }
-      });
+    try {
+      const status = await withTimeout(
+        this.onboardingService.status(),
+        INELIGIBLE_STATUS,
+        ONBOARDING_LOOKUP_TIMEOUT_MS
+      );
+      openQuickAddPrinterDialog(this.dialog, {
+        source: 'print-form',
+        showEmailNotice: status.onboardingEligible,
+      })
+        .afterClosed()
+        .subscribe((printer) => {
+          this.addPrinterDialogOpen = false;
+          if (printer) {
+            this.selectAddedPrinter(printer.id);
+          }
+        });
+    } catch (error) {
+      this.addPrinterDialogOpen = false;
+      this.loggingService.logException(
+        error instanceof Error ? error : new Error(String(error))
+      );
+    }
   }
 
   private selectAddedPrinter(printerId: number): void {

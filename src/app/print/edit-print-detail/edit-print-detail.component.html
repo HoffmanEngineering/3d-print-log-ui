@@ -146,6 +146,7 @@
               formControlName="printerId"
               required
               id="edit-print-printer"
+              (openedChange)="onPrinterSelectOpenedChange($event)"
             >
               @for (printer of printers; track printer) {
                 <mat-option [value]="printer.id">

@@ -14,6 +14,12 @@ interface TelemetrySink {
   ): void;
   trackException(v: { exception: Error; severityLevel?: number }): void;
   trackTrace(v: { message: string }, properties?: { [key: string]: any }): void;
+  setAuthenticatedUserContext(
+    authenticatedUserId: string,
+    accountId?: string,
+    storeInCookie?: boolean
+  ): void;
+  clearAuthenticatedUserContext(): void;
 }
 
 const MAX_BUFFER = 50;
@@ -35,6 +41,8 @@ export class LoggingService {
   private buffer: Array<(sink: TelemetrySink) => void> = [];
   private dropped = 0;
   private loadPromise: Promise<void> | null = null;
+  /** Authenticated user id waiting for the SDK to load; null when none is pending. */
+  private pendingUserId: number | null = null;
 
   constructor() {
     if (this.isTelemetryEnabled()) {
@@ -71,6 +79,23 @@ export class LoggingService {
 
   logTrace(message: string, properties?: { [key: string]: any }) {
     this.dispatch((s) => s.trackTrace({ message }, properties));
+  }
+
+  /** Stamps every later telemetry item with the account's numeric id (never PII). */
+  setAuthenticatedUser(id: number): void {
+    if (!this.loaded) {
+      this.pendingUserId = id;
+      return;
+    }
+    this.sink.setAuthenticatedUserContext(String(id), undefined, true);
+  }
+
+  clearAuthenticatedUser(): void {
+    if (!this.loaded) {
+      this.pendingUserId = null;
+      return;
+    }
+    this.sink.clearAuthenticatedUserContext();
   }
 
   protected isTelemetryEnabled(): boolean {
@@ -118,7 +143,8 @@ export class LoggingService {
           disableFetchTracking: false,
           disableCorrelationHeaders: false,
           enableCorsCorrelation: true,
-          distributedTracingMode: mod.DistributedTracingModes.AI,
+          distributedTracingMode: mod.DistributedTracingModes.AI_AND_W3C,
+          correlationHeaderDomains: [new URL(environment.printLogApiUrl).host],
           correlationHeaderExcludedDomains: ['*.auth0.com'],
           enableRequestHeaderTracking: false,
           enableResponseHeaderTracking: true,
@@ -147,6 +173,14 @@ export class LoggingService {
   private activate(sink: TelemetrySink) {
     this.sink = sink;
     this.loaded = true;
+    if (this.pendingUserId !== null) {
+      sink.setAuthenticatedUserContext(
+        String(this.pendingUserId),
+        undefined,
+        true
+      );
+      this.pendingUserId = null;
+    }
     for (const fn of this.buffer) {
       fn(sink);
     }
@@ -179,6 +213,8 @@ export class LoggingService {
       trackMetric: () => {},
       trackException: (v) => console.error(v.exception),
       trackTrace: (v, properties) => console.log(v.message, { properties }),
+      setAuthenticatedUserContext: () => {},
+      clearAuthenticatedUserContext: () => {},
     };
   }
 
@@ -190,6 +226,8 @@ export class LoggingService {
       trackMetric: () => {},
       trackException: () => {},
       trackTrace: () => {},
+      setAuthenticatedUserContext: () => {},
+      clearAuthenticatedUserContext: () => {},
     };
   }
 }

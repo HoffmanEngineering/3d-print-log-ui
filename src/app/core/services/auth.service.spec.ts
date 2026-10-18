@@ -7,6 +7,8 @@ import { AuthService } from './auth.service';
 import { UserService } from './user.service';
 import { NotificationService } from './notification.service';
 import { SubscriptionService } from './subscription.service';
+import { LoggingService } from './logging.service';
+import { OnboardingService } from '../../onboarding/onboarding.service';
 import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
 
 describe('AuthService', () => {
@@ -55,6 +57,16 @@ describe('AuthService', () => {
       const service = TestBed.inject(AuthService);
 
       expect(service.isLoggedIn()).toBeNull();
+    });
+
+    it('sets the telemetry user to the dev id', () => {
+      const logging = TestBed.inject(LoggingService);
+      const setUser = spyOn(logging, 'setAuthenticatedUser');
+      const service = TestBed.inject(AuthService);
+
+      service.localAuthSetup();
+
+      expect(setUser).toHaveBeenCalledWith(1);
     });
 
     it('should emit mock user profile and set loggedIn=true when devAuthBypass is true', (done) => {
@@ -137,6 +149,19 @@ describe('AuthService', () => {
       expect(invalidate).toHaveBeenCalled();
     });
 
+    it('clears the telemetry user and onboarding state on logout', async () => {
+      const service = TestBed.inject(AuthService);
+      trackAuth0Logout(service, []);
+      const logging = TestBed.inject(LoggingService);
+      const clearUser = spyOn(logging, 'clearAuthenticatedUser');
+      const clearOnboarding = spyOn(TestBed.inject(OnboardingService), 'clear');
+
+      await service.logout();
+
+      expect(clearUser).toHaveBeenCalled();
+      expect(clearOnboarding).toHaveBeenCalled();
+    });
+
     it('still logs the user out when the teardown hook throws', async () => {
       const service = TestBed.inject(AuthService);
       const order: string[] = [];
@@ -162,6 +187,51 @@ describe('AuthService', () => {
 
       expect(service.pushTeardown).not.toHaveBeenCalled();
       expect(order).toEqual(['auth0-logout']);
+    });
+  });
+
+  describe('telemetry user', () => {
+    function stubClient(service: AuthService) {
+      (service as unknown as { auth0Client$: unknown }).auth0Client$ = of({
+        getUser: () => Promise.resolve({ nickname: 'nick', picture: 'p' }),
+      });
+    }
+
+    it('sets the telemetry user when the profile loads', (done) => {
+      const service = TestBed.inject(AuthService);
+      const setUser = spyOn(
+        TestBed.inject(LoggingService),
+        'setAuthenticatedUser'
+      );
+      stubClient(service);
+      mockUserService.getCurrentUserDetail.and.returnValue(
+        of({ id: 77, displayName: 'Named' } as any)
+      );
+
+      service.getUser$().subscribe(() => {
+        expect(setUser).toHaveBeenCalledWith(77);
+        done();
+      });
+    });
+
+    it('sets the telemetry user after the first-login displayName update', (done) => {
+      const service = TestBed.inject(AuthService);
+      const setUser = spyOn(
+        TestBed.inject(LoggingService),
+        'setAuthenticatedUser'
+      );
+      stubClient(service);
+      mockUserService.getCurrentUserDetail.and.returnValue(
+        of({ id: 78, displayName: null } as any)
+      );
+      (mockUserService as any).updateCurrentUserDetail = jasmine
+        .createSpy()
+        .and.returnValue(of({ id: 78, displayName: 'nick' }));
+
+      service.getUser$().subscribe(() => {
+        expect(setUser).toHaveBeenCalledWith(78);
+        done();
+      });
     });
   });
 

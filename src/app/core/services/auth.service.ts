@@ -24,6 +24,8 @@ import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
+import { LoggingService } from './logging.service';
+import { OnboardingService } from '../../onboarding/onboarding.service';
 import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
 import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
@@ -139,6 +141,13 @@ export class AuthService {
     }
   }
 
+  /** Resolved lazily: LoggingService must not become a constructor dependency of this root service. */
+  private setTelemetryUser(id: number | undefined): void {
+    if (id != null) {
+      this.injector.get(LoggingService).setAuthenticatedUser(id);
+    }
+  }
+
   // When calling, options can be passed if desired
   // https://auth0.github.io/auth0-spa-js/classes/auth0client.html#getuser
   getUser$(): Observable<any> {
@@ -162,9 +171,11 @@ export class AuthService {
               .subscribe((updatedUser) => {
                 // TODO: Save this updated user back to the userProfile$ object.
                 this.userProfileSubject$.next(updatedUser);
+                this.setTelemetryUser(updatedUser.id);
               });
           } else {
             this.userProfileSubject$.next(currentUser);
+            this.setTelemetryUser(currentUser.id);
           }
         });
       })
@@ -252,6 +263,7 @@ export class AuthService {
       }
       this.loggedIn = true;
       this.userProfileSubject$.next(this.devMockProfile);
+      this.setTelemetryUser(this.devMockProfile.id);
       return;
     }
 
@@ -341,6 +353,8 @@ export class AuthService {
     // store's own next read means the previous user's printer photos cannot survive on
     // screen in a session that outlives the Auth0 redirect.
     this.injector.get(PrinterThumbnailStore).invalidate();
+    this.injector.get(LoggingService).clearAuthenticatedUser();
+    this.injector.get(OnboardingService).clear();
 
     await this.runPushTeardown();
 

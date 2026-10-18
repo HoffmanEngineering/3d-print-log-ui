@@ -11,29 +11,43 @@
     (selectionChange)="onStepChange($event.selectedIndex)"
   >
     <mat-step label="Add your printer">
-      @if (hasPrinter()) {
-        <mat-chip-set aria-label="Your printers" data-testid="printer-chips">
-          @for (printer of printers(); track printer.id) {
-            <mat-chip>{{ printer.name }}</mat-chip>
-          }
-        </mat-chip-set>
-      }
+      @if (step1Ready()) {
+        @if (hasPrinter()) {
+          <mat-chip-set aria-label="Your printers" data-testid="printer-chips">
+            @for (printer of printers(); track printer.id) {
+              <mat-chip>{{ printer.name }}</mat-chip>
+            }
+          </mat-chip-set>
+        }
 
-      @if (showPrinterForm()) {
-        <app-quick-add-printer
-          source="welcome"
-          [showEmailNotice]="false"
-          (saved)="onPrinterSaved($event)"
-        />
+        @if (showPrinterForm()) {
+          <app-quick-add-printer
+            source="welcome"
+            [showEmailNotice]="false"
+            (saved)="onPrinterSaved($event)"
+          />
+        } @else {
+          <button
+            type="button"
+            mat-stroked-button
+            data-testid="add-another-printer"
+            (click)="addAnotherPrinter()"
+          >
+            Add another printer
+          </button>
+        }
       } @else {
-        <button
-          type="button"
-          mat-stroked-button
-          data-testid="add-another-printer"
-          (click)="addAnotherPrinter()"
+        <div
+          class="welcome__loading app-skeleton-immediate"
+          aria-busy="true"
+          data-testid="printers-loading"
         >
-          Add another printer
-        </button>
+          @if (showPrintersSkeleton()) {
+            <span class="cdk-visually-hidden">Loading your printers</span>
+            <app-skeleton width="6rem" height="2rem" radius="16px" />
+            <app-skeleton width="12rem" height="2.25rem" />
+          }
+        </div>
       }
 
       <div class="welcome__actions">

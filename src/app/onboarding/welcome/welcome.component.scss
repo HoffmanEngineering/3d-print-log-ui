@@ -17,6 +17,13 @@
   }
 }
 
+.welcome__loading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 5rem;
+}
+
 mat-chip-set {
   display: block;
   margin-bottom: 16px;

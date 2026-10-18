@@ -2,7 +2,23 @@
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-  align-items: start;
+  // Cards in a row share a height; each card's actions sit at its bottom.
+  align-items: stretch;
+}
+
+.path {
+  display: flex;
+  flex-direction: column;
+
+  mat-card-content {
+    flex: 1 1 auto;
+  }
+
+  // Line the buttons up with the card text instead of Material's 8px-narrower inset.
+  mat-card-actions {
+    margin-top: auto;
+    padding: 0 16px 16px;
+  }
 }
 
 .path--primary {
@@ -11,6 +27,14 @@
 
 .path__select {
   width: 100%;
+}
+
+.path__lines code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--app-surface-container);
+  color: var(--app-text-primary);
+  font-size: 0.9em;
 }
 
 .path__lines {

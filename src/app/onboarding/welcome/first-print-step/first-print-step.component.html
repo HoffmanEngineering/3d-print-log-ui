@@ -45,7 +45,15 @@
         @if (slicer(); as chosenSlicer) {
           <ol class="path__lines">
             @for (line of chosenSlicer.lines; track line) {
-              <li data-testid="install-line">{{ line }}</li>
+              <li data-testid="install-line">
+                @for (part of lineParts(line); track $index) {
+                  @if (part.code) {
+                    <code>{{ part.text }}</code>
+                  } @else {
+                    <span>{{ part.text }}</span>
+                  }
+                }
+              </li>
             }
           </ol>
           <a [routerLink]="chosenSlicer.doc" data-testid="slicer-doc-link">
@@ -128,14 +136,12 @@
     >
       Resend
     </button>
-    @if (resendMessage(); as message) {
-      <span
-        class="confirm-email__result"
-        role="status"
-        data-testid="resend-result"
-      >
-        {{ message }}
-      </span>
-    }
+    <!-- Always rendered, so screen readers announce the text when it changes. -->
+    <span
+      class="confirm-email__result"
+      role="status"
+      data-testid="resend-result"
+      >{{ resendMessage() }}</span
+    >
   </p>
 }

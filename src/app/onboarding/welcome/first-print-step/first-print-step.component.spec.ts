@@ -156,6 +156,23 @@ describe('FirstPrintStepComponent', () => {
     }
   });
 
+  it('renders --default in the manual setup as code', async () => {
+    configure();
+    await render();
+
+    component.selectSlicer('prusaslicer');
+    await settle();
+
+    const code = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '[data-testid="install-line"] code'
+      ),
+      (c) => c.textContent
+    );
+    expect(code).toEqual(['--default']);
+    expect(installText()).toContain('followed by --default in the');
+  });
+
   it('links every Slic3r-family slicer to the uploader doc', async () => {
     configure();
     await render();
@@ -257,6 +274,23 @@ describe('FirstPrintStepComponent', () => {
         );
       });
     }
+
+    it('keeps the status live region rendered before any resend, so the result is announced', async () => {
+      configure();
+      await render();
+
+      const region = el('resend-result')!;
+      expect(region).not.toBeNull();
+      expect(region.getAttribute('role')).toBe('status');
+      expect(region.textContent!.trim()).toBe('');
+
+      api.resendVerificationEmail.and.returnValue(of('sent'));
+      el('resend')!.click();
+      await settle();
+
+      expect(el('resend-result')).toBe(region);
+      expect(region.textContent!.trim()).toBe('Sent. Check your inbox.');
+    });
 
     it('hides the line when the address is already verified', async () => {
       configure();

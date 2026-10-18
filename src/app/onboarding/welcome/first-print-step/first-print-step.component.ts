@@ -56,9 +56,22 @@ const WIZARD_LINES = [
 /** Slicers the wizard does not detect are set up by hand ("Manual setup" in the doc). */
 const MANUAL_LINES = [
   DOWNLOAD_LINE,
-  "In your slicer's process settings, enter the full path to the uploader followed by --default in the Post-processing scripts field.",
+  "In your slicer's process settings, enter the full path to the uploader followed by `--default` in the Post-processing scripts field.",
   'Save the preset, and every export made with it opens a pre-filled print.',
 ];
+
+export interface LinePart {
+  text: string;
+  code: boolean;
+}
+
+/** Splits a setup line at backticks: the odd parts are rendered as `<code>`. */
+export function lineParts(line: string): LinePart[] {
+  return line
+    .split('`')
+    .map((text, index) => ({ text, code: index % 2 === 1 }))
+    .filter((part) => part.text !== '');
+}
 
 function uploader(key: string, label: string, lines: string[]): PathOption {
   return { key, label, doc: '/docs/slic3r-uploader', lines };
@@ -134,6 +147,7 @@ export class FirstPrintStepComponent implements OnInit {
   /** The Cordova app only offers the manual path. */
   readonly showConnections = !inject(IS_CORDOVA);
   readonly slicers = SLICERS;
+  readonly lineParts = lineParts;
   readonly integrations = INTEGRATIONS;
 
   readonly slicerKey = signal<string | null>(null);

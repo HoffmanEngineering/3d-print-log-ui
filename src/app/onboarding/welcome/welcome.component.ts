@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   OnInit,
   signal,
@@ -17,7 +18,8 @@ import {
   Router,
   RouterLink,
 } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { take } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FilamentDetail } from '../../core/services/filament.service';
 import { GoogleAnalyticsService } from '../../core/services/google-analytics.service';
 import { LoggingService } from '../../core/services/logging.service';
@@ -25,6 +27,8 @@ import {
   PrinterDetail,
   PrinterService,
 } from '../../core/services/printer.service';
+import { DeferredSkeletonController } from '../../shared/skeleton/deferred-skeleton';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { InlineEmailNoticeComponent } from '../inline-email-notice/inline-email-notice.component';
 import { OnboardingService } from '../onboarding.service';
 import { QuickAddMaterialComponent } from '../quick-add-material/quick-add-material.component';
@@ -61,6 +65,7 @@ const PRINTER_PAGE_SIZE = 50;
     QuickAddMaterialComponent,
     InlineEmailNoticeComponent,
     FirstPrintStepComponent,
+    SkeletonComponent,
   ],
   templateUrl: './welcome.component.html',
   styleUrl: './welcome.component.scss',
@@ -73,6 +78,7 @@ export class WelcomeComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly document = inject(DOCUMENT);
+  private readonly printersSkeleton = new DeferredSkeletonController();
 
   /**
    * Read once: switching orientation re-renders the steps, which would throw away a
@@ -89,6 +95,16 @@ export class WelcomeComponent implements OnInit {
   readonly showPrinterForm = signal(true);
   readonly savedMaterial = signal<string | null>(null);
   readonly finishing = signal(false);
+  /**
+   * False until the first printer summary settles. Before that, step 1 must not render the
+   * empty quick-add form and a disabled Continue: for a user who already has a printer that
+   * reads as "none yet", and a slow summary left exactly that on screen.
+   */
+  private readonly printersLoaded = signal(false);
+  readonly step1Ready = computed(
+    () => this.printersLoaded() && !this.printersSkeleton.visible()
+  );
+  readonly showPrintersSkeleton = this.printersSkeleton.visible;
 
   readonly hasPrinter = computed(() => this.printers().length > 0);
   /** With exactly one printer, the new spool goes straight into it. */
@@ -97,6 +113,12 @@ export class WelcomeComponent implements OnInit {
     return list.length === 1 ? list[0].id : null;
   });
 
+  private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.printersSkeleton.destroy());
+  }
+
   ngOnInit(): void {
     this.logging.logEvent('Welcome_Shown', { entry: this.entry() });
     this.analytics.eventEmitter(
@@ -104,21 +126,31 @@ export class WelcomeComponent implements OnInit {
       'engagement',
       'tutorial_begin'
     );
-    firstValueFrom(
-      this.printerService.getCurrentUserPrinterSummaries(
-        1,
-        PRINTER_PAGE_SIZE,
-        '',
-        false
-      )
-    )
-      .then((page) => {
-        if (page.items.length > 0) {
-          this.addPrinters(page.items.map((p) => ({ id: p.id, name: p.name })));
-          this.showPrinterForm.set(false);
-        }
-      })
-      .catch((error) => this.logging.logException(error));
+    this.printersSkeleton.start();
+    this.printerService
+      .getCurrentUserPrinterSummaries(1, PRINTER_PAGE_SIZE, '', false)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => {
+          if (page.items.length > 0) {
+            this.addPrinters(
+              page.items.map((p) => ({ id: p.id, name: p.name }))
+            );
+            this.showPrinterForm.set(false);
+          }
+          this.printersSettled();
+        },
+        // A failed lookup still shows the form: onboarding never blocks the user.
+        error: (error) => {
+          this.logging.logException(error);
+          this.printersSettled();
+        },
+      });
+  }
+
+  private printersSettled(): void {
+    this.printersSkeleton.stop();
+    this.printersLoaded.set(true);
   }
 
   onStepChange(index: number): void {

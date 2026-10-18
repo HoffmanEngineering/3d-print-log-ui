@@ -10,7 +10,7 @@ import {
   provideRouter,
   Router,
 } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { GoogleAnalyticsService } from '../../core/services/google-analytics.service';
 import { LoggingService } from '../../core/services/logging.service';
 import {
@@ -211,6 +211,59 @@ describe('WelcomeComponent', () => {
 
     expect(next().disabled).toBeFalse();
     expect(el('printer-chips')!.textContent).toContain('Voron');
+  });
+
+  it('shows the existing printer when the summary resolves after the first render', async () => {
+    configure();
+    const response = new Subject<PagedList<PrinterSummarySimple>>();
+    printers.getCurrentUserPrinterSummaries.and.returnValue(response);
+    await render();
+
+    // While the summary is out, step 1 must not look like "no printers yet".
+    expect(
+      fixture.debugElement.query(By.directive(StubQuickAddPrinterComponent))
+    )
+      .withContext('no empty quick-add form before the summary lands')
+      .toBeNull();
+    expect(el('printer-chips')).toBeNull();
+
+    response.next(page([summary(3, 'MK4S')]));
+    response.complete();
+    await settle();
+
+    expect(el('printer-chips')!.textContent).toContain('MK4S');
+    expect((el('step1-continue') as HTMLButtonElement).disabled).toBeFalse();
+    expect(
+      fixture.debugElement.query(By.directive(StubQuickAddPrinterComponent))
+    ).toBeNull();
+    expect(el('add-another-printer')).not.toBeNull();
+  });
+
+  it('shows the quick-add form once an empty summary resolves', async () => {
+    configure();
+    const response = new Subject<PagedList<PrinterSummarySimple>>();
+    printers.getCurrentUserPrinterSummaries.and.returnValue(response);
+    await render();
+
+    response.next(page([]));
+    response.complete();
+    await settle();
+
+    expect(printerForm()).toBeTruthy();
+    expect((el('step1-continue') as HTMLButtonElement).disabled).toBeTrue();
+  });
+
+  it('falls back to the quick-add form when the summary fails', async () => {
+    configure();
+    const response = new Subject<PagedList<PrinterSummarySimple>>();
+    printers.getCurrentUserPrinterSummaries.and.returnValue(response);
+    await render();
+
+    response.error(new Error('offline'));
+    await settle();
+
+    expect(printerForm()).toBeTruthy();
+    expect(logging.logException).toHaveBeenCalled();
   });
 
   it('enables Continue for a printer that already exists', async () => {

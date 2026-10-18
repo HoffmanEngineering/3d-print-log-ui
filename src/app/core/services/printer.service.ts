@@ -165,6 +165,8 @@ export interface AddPrinterDetailDto {
   hasHeatedBed?: boolean;
   hasHeatedChamber?: boolean;
   wattageW?: number | null;
+  /** The catalog model the printer is linked to. Null keeps the current link. */
+  catalogModelId?: string | null;
   /** Omitted keeps the printer's current count. */
   slotCount?: number;
 }
@@ -313,6 +315,7 @@ export class PrinterService {
       hasHeatedBed: printer.hasHeatedBed,
       hasHeatedChamber: printer.hasHeatedChamber,
       wattageW: printer.wattageW,
+      catalogModelId: printer.catalogModelId ?? null,
       slotCount: printer.slotCount,
     };
 

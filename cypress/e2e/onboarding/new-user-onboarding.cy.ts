@@ -62,24 +62,15 @@ describe('New-user onboarding', () => {
       },
     }).as('onboardingStatus');
 
-    // The catalog and the printer create are stubbed, so the test does not
-    // depend on a seeded catalog or on the API's printer rules.
+    // The catalog is stubbed, so the test does not depend on a seeded catalog.
     cy.intercept('GET', '**/api/PrinterModels/popular*', {
       body: [p1s],
-    }).as('popularModels');
-    cy.intercept('GET', '**/api/PrinterModels?*', { body: [p1s] });
+    });
+    cy.intercept('GET', '**/api/PrinterModels?search=*', { body: [p1s] });
     cy.intercept('GET', '**/api/PrinterModels/match*', { statusCode: 204 });
     cy.intercept('GET', '**/api/PrinterModels/bambu-lab-p1s', { body: p1s });
-    cy.intercept('POST', '**/api/Printers*', (req) => {
-      req.reply({
-        statusCode: 201,
-        body: {
-          ...req.body,
-          printerId: 9001,
-          createdAt: new Date().toISOString(),
-        },
-      });
-    }).as('createPrinter');
+    // A pass-through spy: the API creates the printer for real.
+    cy.intercept('POST', '**/api/Printers*').as('createPrinter');
   });
 
   it('takes a new user from /welcome to their first print', () => {
@@ -136,7 +127,7 @@ describe('New-user onboarding', () => {
 
   it('saves free text that is not in the catalog', () => {
     cy.intercept('GET', '**/api/PrinterModels/popular*', { body: [] });
-    cy.intercept('GET', '**/api/PrinterModels?*', { body: [] });
+    cy.intercept('GET', '**/api/PrinterModels?search=*', { body: [] });
 
     cy.visit(`/welcome?devUserId=${devUserId}`);
 

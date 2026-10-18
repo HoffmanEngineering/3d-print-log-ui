@@ -18,6 +18,42 @@
         fxLayout="column"
         fxLayoutAlign="space-evenly center"
       >
+        @if (showFillCard()) {
+          <section
+            class="fill-specs"
+            data-testid="fill-specs-card"
+            aria-labelledby="fill-specs-text"
+            fxFlex="grow"
+            fxFlexFill
+          >
+            <p id="fill-specs-text" class="fill-specs__text">
+              {{ fillCardText() }}
+            </p>
+            <p class="fill-specs__source">
+              From the catalog: {{ fillModelLabel() }}. Review the values, then
+              save.
+            </p>
+            <div class="fill-specs__actions">
+              <button
+                type="button"
+                mat-flat-button
+                color="primary"
+                data-testid="fill-specs-fill"
+                (click)="fillMissingSpecs()"
+              >
+                Fill
+              </button>
+              <button
+                type="button"
+                mat-button
+                data-testid="fill-specs-dismiss"
+                (click)="dismissFillCard()"
+              >
+                Dismiss
+              </button>
+            </div>
+          </section>
+        }
         <div fxFlex="grow" fxFlexFill>
           <h2 style="text-align: start">Photos</h2>
         </div>
@@ -66,66 +102,62 @@
             <mat-error> A Type is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field
-          fxFlex="grow"
-          fxFlexFill
-          matTooltip="Type your own or select a pre-defined Printer."
-          matTooltipPosition="above"
+        <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-label>Find your printer</mat-label>
+          <input
+            id="edit-printer-catalog-search"
+            matInput
+            type="text"
+            [formControl]="catalogSearch"
+            [matAutocomplete]="catalogAuto"
+            placeholder="Search, e.g. Bambu X1"
+            autocomplete="off"
+          />
+          <mat-hint
+            >Not listed? Type the make and model below instead.</mat-hint
+          >
+        </mat-form-field>
+        <mat-autocomplete
+          #catalogAuto="matAutocomplete"
+          [displayWith]="displayOption"
+          (optionSelected)="selectCatalogModel($event.option.value)"
         >
+          @for (option of suggestions(); track option.id) {
+            <mat-option [value]="option"
+              >{{ option.make }} {{ option.model }}</mat-option
+            >
+          }
+        </mat-autocomplete>
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Make</mat-label>
           <input
             id="edit-printer-make"
             matInput
             type="text"
             formControlName="make"
-            [matAutocomplete]="autoMake"
             required
             maxlength="50"
-            (focus)="makeHasFocus = true"
-            (blur)="makeHasFocus = false"
+            (input)="onMakeOrModelInput()"
           />
           @if (printerForm().controls['make'].hasError('required')) {
             <mat-error> A Make is <strong>required</strong> </mat-error>
           }
-          @if (printerForm().get('make').dirty && makeHasFocus) {
-            <mat-hint>Not in the list? Don't worry, just type it.</mat-hint>
-          }
         </mat-form-field>
-        <mat-autocomplete #autoMake="matAutocomplete">
-          @for (option of filteredMakes | async; track option) {
-            <mat-option [value]="option">{{ option }}</mat-option>
-          }
-        </mat-autocomplete>
-        <mat-form-field
-          fxFlex="grow"
-          fxFlexFill
-          matTooltip="Type your own or select a pre-defined Printer."
-          matTooltipPosition="above"
-        >
+        <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Model</mat-label>
           <input
             id="edit-printer-model"
             matInput
             type="text"
             formControlName="model"
-            [matAutocomplete]="autoModel"
             required
             maxlength="50"
-            (focus)="modelHasFocus = true"
-            (blur)="modelHasFocus = false"
+            (input)="onMakeOrModelInput()"
           />
           @if (printerForm().controls['model'].hasError('required')) {
             <mat-error> A Model is <strong>required</strong> </mat-error>
           }
-          @if (printerForm().get('model').dirty && modelHasFocus) {
-            <mat-hint>Not in the list? Don't worry, just type it.</mat-hint>
-          }
         </mat-form-field>
-        <mat-autocomplete #autoModel="matAutocomplete">
-          @for (option of filteredModels | async; track option) {
-            <mat-option [value]="option">{{ option }}</mat-option>
-          }
-        </mat-autocomplete>
         <mat-form-field fxFlex="grow" fxFlexFill>
           <mat-label>Description</mat-label>
           <textarea
@@ -457,6 +489,7 @@
             [category]="savedCategory()"
             [make]="savedMake()"
             [model]="savedModel()"
+            [catalogModelId]="savedCatalogModelId()"
           />
         }
       </mat-card-content>

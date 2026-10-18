@@ -4,13 +4,16 @@ import {
   Component,
   OnDestroy,
   OnInit,
+  PLATFORM_ID,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  AbstractControl,
+  FormControl,
   UntypedFormArray,
   UntypedFormBuilder,
   UntypedFormGroup,
@@ -21,13 +24,22 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { uniq } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
-import { Observable, Subscription } from 'rxjs';
-import { map, startWith, tap } from 'rxjs/operators';
+import { Observable, Subscription, of } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  switchMap,
+} from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { EMPTY_GUID } from 'src/app/core/services/print.service';
+import {
+  PrinterCatalogService,
+  PrinterModel,
+} from 'src/app/core/services/printer-catalog.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
@@ -36,7 +48,6 @@ import {
   PrinterFilamentSummaryDto,
   PrinterService,
 } from '../../core/services/printer.service';
-import defaultPrinters from './cura-exported-printers';
 import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
 import {
@@ -75,12 +86,60 @@ import { PrinterSpoolmanComponent } from '../printer-spoolman/printer-spoolman.c
 import { AdComponent } from '../../shared/ad/ad.component';
 import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
-import { AsyncPipe } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import {
   isRemainingTracked,
   RemainingPipe,
 } from 'src/app/shared/pipes/remaining.pipe';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
+
+const SEARCH_DEBOUNCE_MS = 150;
+const FILL_DISMISSED_KEY_PREFIX = 'pl_fill_specs_dismissed_';
+
+/**
+ * The numeric spec controls a catalog model can fill on an existing printer. The heated bed
+ * and chamber are left out: the form shows an unknown one as off, so "empty" can't be told
+ * from a real "no".
+ */
+const FILLABLE_SPECS = [
+  'nozzleDiameter',
+  'filamentDiameter',
+  'bedWidthMm',
+  'bedDepthMm',
+  'bedHeightMm',
+] as const;
+type FillableSpec = (typeof FILLABLE_SPECS)[number];
+
+/** How the fill card names the fields it would set, in the order it lists them. */
+const FILL_GROUPS: { label: string; fields: FillableSpec[] }[] = [
+  { label: 'bed size', fields: ['bedWidthMm', 'bedDepthMm', 'bedHeightMm'] },
+  { label: 'nozzle', fields: ['nozzleDiameter'] },
+  { label: 'filament diameter', fields: ['filamentDiameter'] },
+];
+
+/** The form control each catalog spec maps to, the same mapping quick add uses. */
+function catalogSpecs(m: PrinterModel) {
+  return {
+    nozzleDiameter: m.defaultNozzleMm ?? null,
+    filamentDiameter: m.filamentDiameterMm ?? null,
+    bedWidthMm: m.bedWidthMm ?? null,
+    bedDepthMm: m.bedDepthMm ?? null,
+    bedHeightMm: m.bedHeightMm ?? null,
+    hasHeatedBed: m.hasHeatedBed ?? null,
+    hasHeatedChamber: m.hasHeatedChamber ?? null,
+  };
+}
+
+function label(m: PrinterModel): string {
+  return `${m.make} ${m.model}`;
+}
+
+/** "a", "a and b", "a, b and c". */
+function listInProse(items: string[]): string {
+  return items.length < 2
+    ? (items[0] ?? '')
+    : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
 
 @Component({
   selector: 'app-printer-detail',
@@ -120,7 +179,6 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
     AdComponent,
     DefaultShowHideDirective,
     SidebarAdComponent,
-    AsyncPipe,
     RemainingPipe,
     FilamentColorSwatchStylePipe,
   ],
@@ -140,6 +198,9 @@ export class PrinterDetailComponent
   private titleService = inject(Title);
   dialog = inject(MatDialog);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly catalog = inject(PrinterCatalogService);
+  private readonly logging = inject(LoggingService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /** Rebuilt whenever the route resolves a printer, including after a create. */
   readonly printerForm = signal<UntypedFormGroup>(
@@ -183,6 +244,9 @@ export class PrinterDetailComponent
   protected readonly savedModel = computed(
     () => this.printerDetail()?.model ?? null
   );
+  protected readonly savedCatalogModelId = computed(
+    () => this.printerDetail()?.catalogModelId ?? null
+  );
 
   /** The slot count as saved. Slots are managed live, so they wait for the count to be saved. */
   private readonly savedSlotCount = computed(
@@ -207,13 +271,77 @@ export class PrinterDetailComponent
   /** See `canDeactivate`: suppresses the guard for app-initiated navigation. */
   private isSelfNavigating = false;
 
-  // public referencePrinter = defaultPrinters;
+  /**
+   * Finds a printer in the catalog. It only picks a model: make and model stay their own
+   * free-text inputs, so a printer the catalog lacks is typed as before.
+   */
+  readonly catalogSearch = new FormControl<string | PrinterModel>('', {
+    nonNullable: true,
+  });
+  readonly suggestions = signal<PrinterModel[]>([]);
+  /** The label the last pick wrote into the search, which is not a new query. */
+  private lastPickLabel = '';
 
-  public autocompleteMakes: string[] = [];
+  /** The model picked on this page, until a hand edit of make or model drops it. */
+  private readonly pickedModel = signal<PrinterModel | null>(null);
+  /** The model the saved printer links to, loaded by id. */
+  private readonly linkedModel = signal<PrinterModel | null>(null);
+  private linkedModelSubscription?: Subscription;
+  private formChangesSubscription?: Subscription;
 
-  filteredMakes: Observable<string[]>;
+  /** Bumped on every form change, so computeds that read the form recompute. */
+  private readonly formVersion = signal(0);
 
-  filteredModels: Observable<string[]>;
+  /** Filled, or dismissed for this printer; a new pick opens it again. */
+  private readonly fillCardClosed = signal(false);
+  private fillShownLogged = false;
+
+  /** The model the fill card offers: a fresh pick, otherwise the saved link. */
+  private readonly fillModel = computed(
+    () => this.pickedModel() ?? this.linkedModel()
+  );
+
+  /** The empty spec controls the fill card's model has values for. */
+  protected readonly fillableSpecs = computed((): FillableSpec[] => {
+    this.formVersion();
+    const m = this.fillModel();
+    if (!m) {
+      return [];
+    }
+    const specs = catalogSpecs(m);
+    const form = this.printerForm();
+    return FILLABLE_SPECS.filter((key) => {
+      const c = form.get(key);
+      const v = c.value;
+      return (
+        specs[key] != null &&
+        c.enabled &&
+        !c.dirty &&
+        (v === null || v === undefined || v === '' || v === 0)
+      );
+    });
+  });
+
+  /** Only on a saved printer: a new one takes the pick's specs straight away. */
+  protected readonly showFillCard = computed(
+    () =>
+      this.printerDetail()?.id != null &&
+      !this.fillCardClosed() &&
+      this.fillableSpecs().length > 0
+  );
+
+  protected readonly fillCardText = computed(() => {
+    const fields = this.fillableSpecs();
+    const groups = FILL_GROUPS.filter((g) =>
+      g.fields.some((f) => fields.includes(f))
+    ).map((g) => g.label);
+    return `We know this printer's specs: fill ${listInProse(groups)}?`;
+  });
+
+  protected readonly fillModelLabel = computed(() => {
+    const m = this.fillModel();
+    return m ? label(m) : '';
+  });
 
   public printerCategories: PrinterCategory[] = [];
 
@@ -229,11 +357,40 @@ export class PrinterDetailComponent
 
   public printerCategorySubscription: Subscription;
 
-  public makeHasFocus = false;
-
-  public modelHasFocus = false;
-
   public wattageHasFocus = false;
+
+  constructor() {
+    this.catalogSearch.valueChanges
+      .pipe(
+        map((v) => (typeof v === 'string' ? v.trim() : '')),
+        debounceTime(SEARCH_DEBOUNCE_MS),
+        distinctUntilChanged(),
+        switchMap((q) =>
+          !q || q === this.lastPickLabel
+            ? of([] as PrinterModel[])
+            : this.catalog.search(q)
+        ),
+        takeUntilDestroyed()
+      )
+      .subscribe((list) => this.suggestions.set(list));
+
+    effect(() => {
+      const m = this.fillModel();
+      if (!this.showFillCard() || this.fillShownLogged || !m) {
+        return;
+      }
+      this.fillShownLogged = true;
+      this.logging.logEvent('PrinterSpecs_FillShown', {
+        printerId: this.printerDetail()?.id,
+        catalogModelId: m.id,
+        fields: this.fillableSpecs(),
+      });
+    });
+  }
+
+  /** The input shows the model's name, never the option object. */
+  readonly displayOption = (v: string | PrinterModel | null): string =>
+    typeof v === 'string' ? v : v ? label(v) : '';
 
   // Help to get all printer loaded filament controls as form array.
   get loadedFilaments(): UntypedFormArray {
@@ -242,6 +399,8 @@ export class PrinterDetailComponent
 
   ngOnDestroy(): void {
     this.printerCategorySubscription?.unsubscribe?.();
+    this.linkedModelSubscription?.unsubscribe();
+    this.formChangesSubscription?.unsubscribe();
   }
 
   canDeactivate(): boolean {
@@ -272,8 +431,6 @@ export class PrinterDetailComponent
   ngOnInit() {
     this.titleService.setTitle('Printer Details - 3D Print Log');
 
-    this.getReferencePrinterMakes();
-
     this.activatedRoute.data.subscribe((data) => {
       this.printerCategories = data.printerCategories;
       this.materialCategories = data.materialCategories;
@@ -298,17 +455,159 @@ export class PrinterDetailComponent
           );
         });
 
-      this.filteredMakes = form.controls.make.valueChanges.pipe(
-        startWith(''),
-        map((value) => this._filterMakes(value))
+      this.formChangesSubscription?.unsubscribe();
+      this.formChangesSubscription = form.valueChanges.subscribe(() =>
+        this.formVersion.update((n) => n + 1)
       );
 
-      this.filteredModels = form.valueChanges.pipe(
-        startWith({ make: '', model: '' }),
-
-        map((value) => this._filterModels(value))
-      );
+      this.resetCatalogState(data.printer ?? null);
     });
+  }
+
+  /** A newly resolved printer starts with no pick, its own link and its own dismissal. */
+  private resetCatalogState(printer: PrinterDetail | null): void {
+    this.pickedModel.set(null);
+    this.linkedModel.set(null);
+    this.lastPickLabel = '';
+    this.catalogSearch.setValue('', { emitEvent: false });
+    this.suggestions.set([]);
+    this.fillShownLogged = false;
+    this.fillCardClosed.set(
+      printer?.id != null && this.isFillDismissed(printer.id)
+    );
+
+    this.linkedModelSubscription?.unsubscribe();
+    const linkedId = printer?.catalogModelId;
+    if (linkedId) {
+      // Fails soft: a retired or unknown id gives null, and the printer still saves.
+      this.linkedModelSubscription = this.catalog
+        .get(linkedId)
+        .subscribe((m) => this.linkedModel.set(m));
+    }
+  }
+
+  /**
+   * A pick links the printer to the model. A new printer also takes the model's make, model
+   * and specs, except in controls the user has changed. An existing printer keeps every
+   * value: the fill card offers the model's specs for the empty ones.
+   */
+  selectCatalogModel(m: PrinterModel): void {
+    const form = this.printerForm();
+    this.lastPickLabel = label(m);
+    this.catalogSearch.setValue(label(m));
+    this.suggestions.set([]);
+    this.pickedModel.set(m);
+    this.fillCardClosed.set(false);
+    this.fillShownLogged = false;
+
+    const link = form.get('catalogModelId');
+    link.setValue(m.id);
+    link.markAsDirty();
+
+    if (form.get('id').value === null) {
+      this.applyCatalogDefaults(m);
+    }
+    this.changeDetector.markForCheck();
+  }
+
+  private applyCatalogDefaults(m: PrinterModel): void {
+    const form = this.printerForm();
+    const fill = (name: string, value: unknown) => {
+      const c = form.get(name);
+      if (value !== null && value !== undefined && !c.dirty) {
+        c.setValue(value);
+      }
+    };
+    form.patchValue({ make: m.make, model: m.model });
+    fill('name', m.model);
+    const nickname = m.technology === 'Resin' ? 'MSLA' : 'FFF';
+    if (this.printerCategories.some((c) => c.nickname === nickname)) {
+      // Before the specs: the type decides which spec controls are enabled.
+      fill('type', nickname);
+    }
+    fill('slotCount', m.defaultSlotCount);
+    const specs = catalogSpecs(m);
+    for (const key of Object.keys(specs) as (keyof typeof specs)[]) {
+      fill(key, specs[key]);
+    }
+  }
+
+  /**
+   * A hand edit of make or model means the printer is no longer the picked model, so the
+   * pick's link is dropped. Values it filled stay. A saved link is kept: the API keeps it
+   * when the save sends no id.
+   */
+  onMakeOrModelInput(): void {
+    if (!this.pickedModel()) {
+      return;
+    }
+    this.pickedModel.set(null);
+    this.printerForm()
+      .get('catalogModelId')
+      .setValue(this.savedCatalogModelId());
+  }
+
+  /** Sets only the empty controls, marked dirty. The user saves as usual. */
+  fillMissingSpecs(): void {
+    const m = this.fillModel();
+    const fields = this.fillableSpecs();
+    if (!m || fields.length === 0) {
+      return;
+    }
+    const specs = catalogSpecs(m);
+    const form = this.printerForm();
+    for (const key of fields) {
+      const c = form.get(key);
+      c.setValue(specs[key]);
+      c.markAsDirty();
+    }
+    this.fillCardClosed.set(true);
+    this.logging.logEvent('PrinterSpecs_Filled', { fields });
+    this.changeDetector.markForCheck();
+  }
+
+  dismissFillCard(): void {
+    const printerId = this.printerDetail()?.id;
+    this.fillCardClosed.set(true);
+    if (printerId != null) {
+      this.writeFillDismissed(printerId);
+    }
+    this.logging.logEvent('PrinterSpecs_FillDismissed', {
+      printerId,
+      catalogModelId: this.fillModel()?.id,
+    });
+  }
+
+  /*
+   * localStorage throws in private browsing and when site data is blocked, and does not
+   * exist during prerender. Failing to read shows the card; failing to write only means it
+   * comes back next visit.
+   */
+  private isFillDismissed(printerId: number): boolean {
+    if (!this.isBrowser) {
+      return false;
+    }
+    try {
+      return (
+        localStorage.getItem(FILL_DISMISSED_KEY_PREFIX + printerId) !== null
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  private writeFillDismissed(printerId: number): void {
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      localStorage.setItem(
+        FILL_DISMISSED_KEY_PREFIX + printerId,
+        new Date().toISOString()
+      );
+    } catch {
+      // Nothing to do: the card shows again next visit.
+    }
   }
 
   /**
@@ -362,53 +661,6 @@ export class PrinterDetailComponent
     });
 
     this.groupedPrinterCategories.set(groups);
-  }
-
-  /**
-   * Get the uniq list of printer makes.
-   */
-  getReferencePrinterMakes() {
-    this.autocompleteMakes = uniq(defaultPrinters.printers.map((p) => p.make));
-  }
-
-  /**
-   * Filter the makes based on the user's input for use in autocomplete
-   */
-  private _filterMakes(value: string): string[] {
-    const filterValue = value.toLowerCase();
-
-    return this.autocompleteMakes.filter((option) =>
-      option.toLowerCase().includes(filterValue.toLowerCase())
-    );
-  }
-
-  /**
-   * Filter the models based on the supplied inputs to the form for use in autocomplete
-   */
-  private _filterModels({
-    make,
-    model,
-  }: {
-    make: string;
-    model: string;
-  }): string[] {
-    const models = this.findModelsForMake(make);
-
-    return models.filter((option) =>
-      option.toLowerCase().includes(model.toLowerCase())
-    );
-  }
-
-  /**
-   * Finds the models for the supplied make from the list of default printers.
-   */
-  private findModelsForMake(make: string) {
-    const modelsForMake = defaultPrinters.printers
-      .filter((printer) => printer.make.toLowerCase() === make.toLowerCase())
-      .map((printer) => printer.model);
-    const uniqueModels = uniq(modelsForMake);
-
-    return uniqueModels;
   }
 
   /**
@@ -562,6 +814,8 @@ export class PrinterDetailComponent
         printer?.slotCount ?? 1,
         [Validators.required, Validators.min(1), Validators.max(64)],
       ],
+      /** Hidden: the catalog model the printer links to, set by a pick. */
+      catalogModelId: [printer?.catalogModelId ?? null],
     });
 
     return form;
@@ -704,6 +958,13 @@ export class PrinterDetailComponent
     this.router.navigate(['/printers']);
   }
 
+  private changedCatalogModelId(): string | null {
+    const id = this.printerForm().controls.catalogModelId.value as
+      | string
+      | null;
+    return id && id !== this.savedCatalogModelId() ? id : null;
+  }
+
   private getPrinterFromForm(): PrinterDetail {
     const newLoadedFilament = this.loadedFilaments.controls.map(
       (printerFilament) => {
@@ -760,6 +1021,8 @@ export class PrinterDetailComponent
         : undefined,
       wattageW: form.controls.wattageW.value ?? undefined,
       slotCount: form.controls.slotCount.value ?? undefined,
+      // Only a new link is sent. Null keeps the saved one, even a model since retired.
+      catalogModelId: this.changedCatalogModelId(),
     };
 
     return printer;

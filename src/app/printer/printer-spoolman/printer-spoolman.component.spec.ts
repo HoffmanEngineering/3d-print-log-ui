@@ -454,6 +454,24 @@ url: jsons://x
     expect(note).not.toContain("printlog-bridge logs this printer's prints");
   });
 
+  it('treats a printer linked to the U1 catalog model as a U1, whatever it is called', () => {
+    fixture.componentRef.setInput('make', 'Workshop');
+    fixture.componentRef.setInput('model', 'Big one');
+    fixture.componentRef.setInput('catalogModelId', 'snapmaker-u1');
+    render([]);
+
+    expect(q('spoolman-u1-note')).not.toBeNull();
+  });
+
+  it('shows no U1 note for another catalog model', () => {
+    fixture.componentRef.setInput('make', 'Voron');
+    fixture.componentRef.setInput('model', '2.4');
+    fixture.componentRef.setInput('catalogModelId', 'voron-2-4-350');
+    render([]);
+
+    expect(q('spoolman-u1-note')).toBeNull();
+  });
+
   it('shows no U1 note on another printer', () => {
     fixture.componentRef.setInput('make', 'Voron');
     fixture.componentRef.setInput('model', '2.4');

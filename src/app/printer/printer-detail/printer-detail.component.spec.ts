@@ -19,6 +19,11 @@ import {
 } from 'src/app/core/services/printer.service';
 import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import {
+  PrinterCatalogService,
+  PrinterModel,
+} from 'src/app/core/services/printer-catalog.service';
 import { EntityImagesPanelComponent } from 'src/app/shared/entity-images-panel/entity-images-panel.component';
 import { PrinterDetailComponent } from './printer-detail.component';
 import { PrinterConnectionsComponent } from '../printer-connections/printer-connections.component';
@@ -51,10 +56,28 @@ const aPrinterDetail = (overrides: Partial<PrinterDetail> = {}) =>
     ...overrides,
   }) as PrinterDetail;
 
+const P1S: PrinterModel = {
+  id: 'bambu-lab-p1s',
+  make: 'Bambu Lab',
+  model: 'P1S',
+  technology: 'FFF',
+  bedWidthMm: 256,
+  bedDepthMm: 256,
+  bedHeightMm: 256,
+  nozzleOptionsMm: [0.2, 0.4, 0.6, 0.8],
+  defaultNozzleMm: 0.4,
+  filamentDiameterMm: 1.75,
+  hasHeatedBed: true,
+  hasHeatedChamber: false,
+  defaultSlotCount: 1,
+};
+
 describe('PrinterDetailComponent', () => {
   let component: PrinterDetailComponent;
   let fixture: ComponentFixture<PrinterDetailComponent>;
   let printerService: jasmine.SpyObj<PrinterService>;
+  let catalog: jasmine.SpyObj<PrinterCatalogService>;
+  let logging: jasmine.SpyObj<LoggingService>;
   let router: jasmine.SpyObj<Router>;
 
   let dialog: jasmine.SpyObj<MatDialog>;
@@ -68,8 +91,25 @@ describe('PrinterDetailComponent', () => {
    */
   const setUp = async (
     printer: PrinterDetail | null,
-    { zone = false, data = undefined as Observable<unknown> | undefined } = {}
+    {
+      zone = false,
+      data = undefined as Observable<unknown> | undefined,
+      linked = null as PrinterModel | null,
+    } = {}
   ) => {
+    catalog = jasmine.createSpyObj<PrinterCatalogService>(
+      'PrinterCatalogService',
+      ['search', 'popular', 'get', 'match']
+    );
+    catalog.search.and.returnValue(of([]));
+    catalog.popular.and.returnValue(of([]));
+    catalog.get.and.returnValue(of(linked));
+    catalog.match.and.returnValue(of(null));
+    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logEvent',
+      'logException',
+    ]);
+
     printerService = jasmine.createSpyObj<PrinterService>('PrinterService', [
       'addPrinter',
       'updatePrinter',
@@ -119,6 +159,8 @@ describe('PrinterDetailComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: PrinterService, useValue: printerService },
+        { provide: PrinterCatalogService, useValue: catalog },
+        { provide: LoggingService, useValue: logging },
         { provide: Router, useValue: router },
         { provide: ToastrService, useValue: toastr },
         { provide: MatDialog, useValue: dialog },
@@ -604,6 +646,307 @@ describe('PrinterDetailComponent', () => {
       fixture.detectChanges();
 
       expect(text()).toContain('Galaxy Black');
+    });
+  });
+
+  describe('printer catalog', () => {
+    const el = () => fixture.nativeElement as HTMLElement;
+    const byTestId = <T extends HTMLElement = HTMLElement>(id: string) =>
+      el().querySelector<T>(`[data-testid="${id}"]`);
+    const card = () => byTestId('fill-specs-card');
+    const control = (name: string) => component.printerForm().get(name)!;
+    const typeInto = (id: string, value: string) => {
+      const input = el().querySelector<HTMLInputElement>(`#${id}`)!;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+    const specValues = () => {
+      const v = component.printerForm().getRawValue();
+      return {
+        make: v.make,
+        model: v.model,
+        nozzleDiameter: v.nozzleDiameter,
+        filamentDiameter: v.filamentDiameter,
+        bedWidthMm: v.bedWidthMm,
+        bedDepthMm: v.bedDepthMm,
+        bedHeightMm: v.bedHeightMm,
+        hasHeatedBed: v.hasHeatedBed,
+        hasHeatedChamber: v.hasHeatedChamber,
+        slotCount: v.slotCount,
+        type: v.type,
+      };
+    };
+    const savedPayload = () =>
+      printerService.updatePrinter.calls.mostRecent().args[0];
+
+    afterEach(() => {
+      localStorage.removeItem('pl_fill_specs_dismissed_42');
+    });
+
+    it('feeds the make-and-model search from catalog.search', async () => {
+      await setUp(null);
+
+      typeInto('edit-printer-catalog-search', 'P1');
+      expect(catalog.search).not.toHaveBeenCalled();
+      await new Promise((r) => setTimeout(r, 200));
+
+      expect(catalog.search).toHaveBeenCalledOnceWith('P1');
+    });
+
+    it('has no bundled make list: make and model are plain free-text inputs', async () => {
+      await setUp(null);
+
+      typeInto('edit-printer-make', 'My Own');
+      typeInto('edit-printer-model', 'Printer 9000');
+
+      expect(control('make').value).toBe('My Own');
+      expect(control('model').value).toBe('Printer 9000');
+      expect(
+        el()
+          .querySelector('#edit-printer-make')!
+          .hasAttribute('aria-autocomplete')
+      )
+        .withContext('make has no autocomplete')
+        .toBeFalse();
+    });
+
+    describe('on a new printer', () => {
+      it('a pick fills make, model, bed and diameters, and links the model', async () => {
+        await setUp(null);
+
+        component.selectCatalogModel(P1S);
+        fixture.detectChanges();
+
+        expect(specValues()).toEqual(
+          jasmine.objectContaining({
+            make: 'Bambu Lab',
+            model: 'P1S',
+            nozzleDiameter: 0.4,
+            filamentDiameter: 1.75,
+            bedWidthMm: 256,
+            bedDepthMm: 256,
+            bedHeightMm: 256,
+            hasHeatedBed: true,
+            type: 'FFF',
+          })
+        );
+        expect(control('name').value).toBe('P1S');
+        component.onSubmit();
+        expect(
+          printerService.addPrinter.calls.mostRecent().args[0].catalogModelId
+        ).toBe('bambu-lab-p1s');
+      });
+
+      it('a pick keeps a field the user already typed', async () => {
+        await setUp(null);
+        typeInto('edit-printer-nozzle-diameter', '0.6');
+        typeInto('edit-printer-name', 'Garage printer');
+
+        component.selectCatalogModel(P1S);
+        fixture.detectChanges();
+
+        expect(control('nozzleDiameter').value).toBe(0.6);
+        expect(control('name').value).toBe('Garage printer');
+        expect(control('bedWidthMm').value).toBe(256);
+      });
+
+      it('a hand edit of make after a pick drops the id from the payload', async () => {
+        await setUp(null);
+        component.selectCatalogModel(P1S);
+        fixture.detectChanges();
+
+        typeInto('edit-printer-make', 'Bambu');
+        component.onSubmit();
+
+        const saved = printerService.addPrinter.calls.mostRecent().args[0];
+        expect(saved.catalogModelId).toBeNull();
+        expect(saved.bedWidthMm).toBe(256);
+      });
+
+      it('shows no fill card: the pick already filled the form', async () => {
+        await setUp(null);
+        component.selectCatalogModel(P1S);
+        fixture.detectChanges();
+
+        expect(card()).toBeNull();
+      });
+    });
+
+    describe('on an existing printer', () => {
+      const fullySpecified = (overrides: Partial<PrinterDetail> = {}) =>
+        aPrinterDetail({
+          nozzleDiameter: 0.6,
+          filamentDiameter: 2.85,
+          bedWidthMm: 350,
+          bedDepthMm: 350,
+          bedHeightMm: 340,
+          hasHeatedBed: true,
+          hasHeatedChamber: true,
+          ...overrides,
+        });
+
+      // Review Focus 2: no stored spec changes until the user presses Fill.
+      it('picking a different model changes no spec control, only the link', async () => {
+        await setUp(fullySpecified({ catalogModelId: 'voron-2-4-350' }), {
+          linked: null,
+        });
+        const before = specValues();
+
+        component.selectCatalogModel(P1S);
+        fixture.detectChanges();
+
+        expect(specValues()).toEqual(before);
+        expect(component.printerForm().dirty).toBeTrue();
+        component.onSubmit();
+        expect(savedPayload().catalogModelId).toBe('bambu-lab-p1s');
+        expect(savedPayload().bedWidthMm).toBe(350);
+        expect(savedPayload().make).toBe('Formbot');
+      });
+
+      it('picking a model on a printer with empty specs fills nothing until Fill', async () => {
+        await setUp(aPrinterDetail());
+
+        component.selectCatalogModel(P1S);
+        fixture.detectChanges();
+
+        expect(control('bedWidthMm').value).toBe(0);
+        expect(control('nozzleDiameter').value).toBe(0);
+        expect(card()).not.toBeNull();
+      });
+
+      it('loads the linked model and shows the card when it knows empty fields', async () => {
+        await setUp(aPrinterDetail({ catalogModelId: 'bambu-lab-p1s' }), {
+          linked: P1S,
+        });
+
+        expect(catalog.get).toHaveBeenCalledWith('bambu-lab-p1s');
+        expect(card()).not.toBeNull();
+        expect(card()!.textContent).toContain(
+          "We know this printer's specs: fill bed size, nozzle and filament diameter?"
+        );
+        expect(logging.logEvent).toHaveBeenCalledWith(
+          'PrinterSpecs_FillShown',
+          jasmine.objectContaining({ catalogModelId: 'bambu-lab-p1s' })
+        );
+      });
+
+      it('names only the fields Fill would set', async () => {
+        await setUp(
+          fullySpecified({
+            catalogModelId: 'bambu-lab-p1s',
+            nozzleDiameter: undefined,
+          }),
+          { linked: P1S }
+        );
+
+        expect(card()!.textContent).toContain(
+          "We know this printer's specs: fill nozzle?"
+        );
+      });
+
+      it('Fill sets only the empty controls, marks them dirty, and does not save', async () => {
+        await setUp(
+          aPrinterDetail({
+            catalogModelId: 'bambu-lab-p1s',
+            nozzleDiameter: 0.6,
+          }),
+          { linked: P1S }
+        );
+
+        byTestId<HTMLButtonElement>('fill-specs-fill')!.click();
+        fixture.detectChanges();
+
+        expect(control('nozzleDiameter').value).toBe(0.6);
+        expect(control('nozzleDiameter').dirty).toBeFalse();
+        expect(control('bedWidthMm').value).toBe(256);
+        expect(control('bedWidthMm').dirty).toBeTrue();
+        expect(control('filamentDiameter').value).toBe(1.75);
+        // A heated bed the form shows as off may be unknown or a real "no": Fill leaves it.
+        expect(control('hasHeatedBed').value).toBeFalse();
+        expect(component.printerForm().dirty).toBeTrue();
+        expect(printerService.updatePrinter).not.toHaveBeenCalled();
+        expect(card()).toBeNull();
+        expect(logging.logEvent).toHaveBeenCalledWith('PrinterSpecs_Filled', {
+          fields: [
+            'filamentDiameter',
+            'bedWidthMm',
+            'bedDepthMm',
+            'bedHeightMm',
+          ],
+        });
+      });
+
+      it('Dismiss hides the card, and it stays hidden when the page is opened again', async () => {
+        await setUp(aPrinterDetail({ catalogModelId: 'bambu-lab-p1s' }), {
+          linked: P1S,
+        });
+
+        byTestId<HTMLButtonElement>('fill-specs-dismiss')!.click();
+        fixture.detectChanges();
+
+        expect(card()).toBeNull();
+        expect(
+          localStorage.getItem('pl_fill_specs_dismissed_42')
+        ).not.toBeNull();
+        expect(logging.logEvent).toHaveBeenCalledWith(
+          'PrinterSpecs_FillDismissed',
+          jasmine.anything()
+        );
+
+        fixture.destroy();
+        fixture = TestBed.createComponent(PrinterDetailComponent);
+        fixture.detectChanges();
+        expect(card()).toBeNull();
+      });
+
+      it('shows no card for a printer with every field set', async () => {
+        await setUp(fullySpecified({ catalogModelId: 'bambu-lab-p1s' }), {
+          linked: P1S,
+        });
+
+        expect(card()).toBeNull();
+        expect(logging.logEvent).not.toHaveBeenCalledWith(
+          'PrinterSpecs_FillShown',
+          jasmine.anything()
+        );
+      });
+
+      it('shows no card for a printer with no catalogModelId', async () => {
+        await setUp(aPrinterDetail(), { linked: P1S });
+
+        expect(catalog.get).not.toHaveBeenCalled();
+        expect(card()).toBeNull();
+      });
+
+      it('saves a printer whose linked model no longer resolves', async () => {
+        await setUp(aPrinterDetail({ catalogModelId: 'gone-model' }), {
+          linked: null,
+        });
+
+        expect(card()).toBeNull();
+        component.onSubmit();
+        expect(printerService.updatePrinter).toHaveBeenCalled();
+      });
+
+      it('does not resend an unchanged link, so the API keeps it', async () => {
+        await setUp(aPrinterDetail({ catalogModelId: 'bambu-lab-p1s' }), {
+          linked: P1S,
+        });
+
+        component.onSubmit();
+
+        expect(savedPayload().catalogModelId).toBeNull();
+      });
+
+      it('gives the Spoolman panel the saved catalog model id', async () => {
+        await setUp(aPrinterDetail({ catalogModelId: 'snapmaker-u1' }));
+
+        const spoolman = fixture.debugElement.query(
+          By.directive(PrinterSpoolmanComponent)
+        ).componentInstance as PrinterSpoolmanComponent;
+        expect(spoolman.catalogModelId()).toBe('snapmaker-u1');
+      });
     });
   });
 });

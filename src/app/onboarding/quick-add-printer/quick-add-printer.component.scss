@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.quick-add {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quick-add__field {
+  width: 100%;
+}
+
+.quick-add__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .quick-add__field {
+    flex: 1 1 10rem;
+    width: auto;
+  }
+}
+
+.quick-add__manual-toggle {
+  align-self: flex-start;
+}
+
+.quick-add__type {
+  align-self: flex-start;
+}
+
+.quick-add__error {
+  margin: 0;
+  color: var(--app-error-text);
+}

@@ -1,0 +1,130 @@
+<form
+  class="quick-add"
+  [formGroup]="form"
+  (ngSubmit)="save()"
+  data-testid="quick-add-printer"
+>
+  <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+    <mat-label>Printer make and model</mat-label>
+    <input
+      matInput
+      formControlName="search"
+      autocomplete="off"
+      placeholder="Search, e.g. Bambu X1"
+      [matAutocomplete]="catalogAuto"
+      (blur)="commitFreeText()"
+    />
+    <mat-autocomplete
+      #catalogAuto="matAutocomplete"
+      [displayWith]="displayOption"
+      (optionSelected)="selectCatalogPrinter($event.option.value)"
+    >
+      @for (option of suggestions(); track option.make + option.model) {
+        <mat-option [value]="option">
+          {{ option.make }} {{ option.model }}
+        </mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+
+  <button
+    type="button"
+    mat-button
+    class="quick-add__manual-toggle"
+    [attr.aria-expanded]="showManual()"
+    (click)="showManual.set(!showManual())"
+  >
+    Not listed?
+  </button>
+  @if (showManual()) {
+    <div class="quick-add__row">
+      <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+        <mat-label>Make</mat-label>
+        <input
+          matInput
+          formControlName="make"
+          autocomplete="off"
+          (input)="onManualInput()"
+        />
+      </mat-form-field>
+      <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+        <mat-label>Model</mat-label>
+        <input
+          matInput
+          formControlName="model"
+          autocomplete="off"
+          (input)="onManualInput()"
+        />
+      </mat-form-field>
+    </div>
+  }
+
+  <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+    <mat-label>Name</mat-label>
+    <input
+      matInput
+      formControlName="name"
+      autocomplete="off"
+      (input)="onNameInput()"
+    />
+  </mat-form-field>
+
+  <mat-button-toggle-group
+    class="quick-add__type"
+    formControlName="type"
+    aria-label="Printer type"
+  >
+    <mat-button-toggle value="FFF">FFF</mat-button-toggle>
+    <mat-button-toggle value="MSLA">Resin</mat-button-toggle>
+    <mat-button-toggle value="Other">Other</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  @if (isOther()) {
+    <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+      <mat-label>Type</mat-label>
+      <mat-select formControlName="otherCategory">
+        @for (category of otherCategories(); track category.nickname) {
+          <mat-option [value]="category.nickname">
+            {{ category.name }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+
+  <mat-slide-toggle formControlName="multiMaterial">
+    Multi-material (AMS, toolchanger)
+  </mat-slide-toggle>
+  @if (isMultiMaterial()) {
+    <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+      <mat-label>Filament slots</mat-label>
+      <input
+        matInput
+        type="number"
+        min="2"
+        max="64"
+        formControlName="slotCount"
+      />
+      <mat-hint>2 to 64</mat-hint>
+    </mat-form-field>
+  }
+
+  @if (showEmailNotice()) {
+    <app-inline-email-notice />
+  }
+
+  @if (errorMessage(); as message) {
+    <p class="quick-add__error" role="alert" data-testid="quick-add-error">
+      {{ message }}
+    </p>
+  }
+
+  <button
+    type="submit"
+    mat-flat-button
+    data-testid="quick-add-save"
+    [disabled]="saving() || form.invalid"
+  >
+    Save printer
+  </button>
+</form>

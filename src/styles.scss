@@ -351,3 +351,8 @@ html.dark-theme .app-loading-shell {
     animation: none;
   }
 }
+
+/* Full-screen dialog on phones (see the onboarding quick-add printer dialog). */
+.app-fullscreen-dialog .mat-mdc-dialog-surface {
+  border-radius: 0;
+}

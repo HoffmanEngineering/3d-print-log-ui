@@ -144,6 +144,38 @@ describe('QuickAddPrinterComponent', () => {
     expect(printers.addPrinter.calls.mostRecent().args[0].slotCount).toBe(1);
   });
 
+  it('keeps Save enabled after an invalid slot count is toggled off', async () => {
+    await setup();
+    component.selectCatalogPrinter({ make: 'Prusa', model: 'MK4' });
+    const host = fixture.nativeElement as HTMLElement;
+    const toggle = host.querySelector(
+      'mat-slide-toggle button'
+    ) as HTMLButtonElement;
+
+    toggle.click();
+    fixture.detectChanges();
+    component.form.controls.slotCount.setValue(1);
+    fixture.detectChanges();
+    toggle.click();
+    fixture.detectChanges();
+
+    const save = host.querySelector(
+      '[data-testid="quick-add-save"]'
+    ) as HTMLButtonElement;
+    expect(save.disabled).toBeFalse();
+  });
+
+  it('rejects a non-integer slot count while multi-material is on', async () => {
+    await setup();
+    component.form.controls.multiMaterial.setValue(true);
+
+    component.form.controls.slotCount.setValue(2.5);
+    expect(component.form.controls.slotCount.invalid).toBeTrue();
+
+    component.form.controls.slotCount.setValue(3);
+    expect(component.form.controls.slotCount.invalid).toBeFalse();
+  });
+
   it('sends the slot count when multi-material is on', async () => {
     await setup();
     component.selectCatalogPrinter({ make: 'Prusa', model: 'MK4' });

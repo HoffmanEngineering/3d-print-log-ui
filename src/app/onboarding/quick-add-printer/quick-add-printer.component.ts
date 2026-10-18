@@ -83,7 +83,12 @@ export class QuickAddPrinterComponent implements OnInit {
     multiMaterial: [false],
     slotCount: [
       DEFAULT_SLOT_COUNT,
-      [Validators.required, Validators.min(2), Validators.max(64)],
+      [
+        Validators.required,
+        Validators.min(2),
+        Validators.max(64),
+        Validators.pattern(/^\d+$/),
+      ],
     ],
   });
 
@@ -122,6 +127,17 @@ export class QuickAddPrinterComponent implements OnInit {
   private fromCatalog = false;
 
   constructor() {
+    // A hidden slot count must not block Save, so it only validates while it is shown.
+    this.form.controls.slotCount.disable();
+    this.form.controls.multiMaterial.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((on) => {
+        if (on) {
+          this.form.controls.slotCount.enable();
+        } else {
+          this.form.controls.slotCount.disable();
+        }
+      });
     this.form.controls.model.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((model) => {

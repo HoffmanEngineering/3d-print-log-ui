@@ -16,9 +16,12 @@ import { apiUrl } from '../../support/api-url';
 const ACHIEVEMENTS_CELEBRATIONS = 18; // UserSettingType.Achievements_Celebrations
 
 describe('New-user onboarding', () => {
-  const devUserId = String((Date.now() % 1e6) + 900000);
+  let devUserId: string;
 
   beforeEach(() => {
+    // Fresh per test (and per retry), well above the seeded dev users. The API's dev bypass
+    // takes any id ("dev|<id>"); this one stays inside a 32-bit int all the same.
+    devUserId = String(900_000 + (Date.now() % 1e9));
     cy.login();
 
     // cy.login() turns celebrations off for dev user 1 only. Without this the
@@ -80,7 +83,12 @@ describe('New-user onboarding', () => {
     // The first-print badge is earned, so the checklist gives way to the
     // next-achievement hint. Waiting for the hint first means the slot has
     // decided, so the absence check below is not satisfied by an empty slot.
-    cy.get('app-next-achievement-hint').should('exist');
+    cy.contains('app-next-achievement-hint', 'Next achievement:').should(
+      'be.visible'
+    );
     cy.get('app-getting-started-checklist').should('not.exist');
+    // The welcome flow acknowledged the email notice inline, so the global
+    // banner must not come back on /prints.
+    cy.get('[data-testid="email-notice"]').should('not.exist');
   });
 });

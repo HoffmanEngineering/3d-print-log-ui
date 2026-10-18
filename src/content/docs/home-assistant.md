@@ -34,9 +34,10 @@ This integration creates no per-spool entities, so the two can run side by side 
 
 ### Install it {#install}
 
-1. In HACS, open the menu and choose **Custom repositories**.
-2. Add `https://github.com/HoffmanEngineering/3d-print-log-homeassistant` with the category **Integration**.
-3. Download **3D Print Log** and restart Home Assistant.
+1. In HACS, open the menu (top right) and choose **Custom repositories**.
+2. Enter `https://github.com/HoffmanEngineering/3d-print-log-homeassistant`, choose the type **Integration**, click **Add** and close the dialog. This only adds the repository to HACS. Nothing is installed yet.
+3. Search HACS for **3D Print Log** and open it. Click **Download** (bottom right), then **Download** again in the dialog.
+4. Restart Home Assistant (**Settings > System**, then the power button at the top right). The integration can be added only after the restart.
 
 ### Create an API key {#api-key}
 
@@ -126,6 +127,7 @@ The diagnostics you can download from the integration's page redact the API key,
 
 ### Troubleshooting {#troubleshooting}
 
+- **3D Print Log isn't listed under Add integration.** Adding the custom repository doesn't install it. Open 3D Print Log in HACS, click **Download**, then restart Home Assistant. See [Install it](#install).
 - **Home Assistant says the key was rejected.** The key was revoked or mistyped. Create a new key as described in [Create an API key](#api-key), then follow the reauthentication prompt.
 - **Some entities are missing.** The extended entities need API v1.18.0 or later. If you run your own API, update it and they appear on their own.
 - **A print didn't fire an event.** Events come from comparing updates, so very short prints and prints that finish together can be missed. See [Events](#events).

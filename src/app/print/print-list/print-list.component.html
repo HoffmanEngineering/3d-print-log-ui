@@ -160,7 +160,10 @@
   </div>
 
   <!-- One card: the getting-started checklist for a new user, else the next badge within reach. -->
-  <app-print-list-hint-slot (checklistActive)="setOnboardingActive($event)" />
+  <app-print-list-hint-slot
+    (checklistActive)="setOnboardingActive($event)"
+    (printerAdded)="onPrinterAdded()"
+  />
 
   <!-- Toolbar: view toggle plus the contextual bulk-action controls. The row is
        always rendered, so a selection reveals its controls in place instead of

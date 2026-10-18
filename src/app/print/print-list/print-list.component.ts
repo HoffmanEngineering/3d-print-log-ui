@@ -809,6 +809,15 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.syncAddPrinterPrompt();
   }
 
+  /**
+   * A printer saved from the checklist's quick-add, in place: the list now has one, so the
+   * empty state moves on to logging a first print.
+   */
+  onPrinterAdded(): void {
+    this.hasPrinters.set(true);
+    this.syncAddPrinterPrompt();
+  }
+
   private showAddPrinterToast(): void {
     if (this.printerRedirectToast || addPrinterToastShown) {
       return;

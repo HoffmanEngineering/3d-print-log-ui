@@ -162,6 +162,17 @@ describe('PrintListHintSlotComponent', () => {
     expect(active).toEqual([true, false]);
   });
 
+  it('tells the list when the checklist adds a printer', async () => {
+    configure(() => of(achievementsWith([])), true);
+    await render();
+    const added = jasmine.createSpy('printerAdded');
+    fixture.componentInstance.printerAdded.subscribe(added);
+
+    checklist().componentInstance.printerAdded.emit();
+
+    expect(added).toHaveBeenCalledTimes(1);
+  });
+
   it('re-fetches me() after a printer is added', async () => {
     const before = achievementsWith([]);
     const after = achievementsWith(['first-printer']);
@@ -260,6 +271,7 @@ describe('PrintListHintSlotComponent with the real services', () => {
     // The hint reuses the slot's me(): no second /achievements/me request.
     http.match((r) => r.url.endsWith('/achievements/catalog'));
     http.expectNone((r) => r.url.endsWith('/achievements/me'));
+    http.verify();
   });
 
   it('renders the real checklist for an eligible user without throwing', async () => {
@@ -305,5 +317,6 @@ describe('PrintListHintSlotComponent with the real services', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('1 of 2 done');
+    http.verify();
   });
 });

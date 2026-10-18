@@ -53,6 +53,8 @@ export class PrintListHintSlotComponent implements OnInit {
 
   /** True while the checklist shows; the list holds its no-printer toast back meanwhile. */
   readonly checklistActive = output<boolean>();
+  /** The checklist's quick-add saved a printer without leaving the list. */
+  readonly printerAdded = output<void>();
 
   protected readonly card = signal<SlotCard>('none');
   /** Null when the lookup failed; the hint then makes its own request and handles the error. */
@@ -74,6 +76,7 @@ export class PrintListHintSlotComponent implements OnInit {
   }
 
   protected onPrinterAdded(): void {
+    this.printerAdded.emit();
     const read = () => this.achievements.me().pipe(catchError(() => of(null)));
     read()
       .pipe(

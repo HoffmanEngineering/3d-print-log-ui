@@ -39,6 +39,7 @@ import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.
 @Component({ selector: 'app-print-list-hint-slot', template: '' })
 class StubHintSlotComponent {
   readonly checklistActive = output<boolean>();
+  readonly printerAdded = output<void>();
 }
 
 /** The printer lookup the list makes: one row, and only the total matters. */
@@ -762,6 +763,31 @@ describe('PrintListComponent', () => {
 
       expect(mockToastrService.remove).toHaveBeenCalledWith(1);
       expect(component.printerRedirectToast).toBeNull();
+    });
+
+    it('swaps the add-printer empty state for the first-print one after a quick add', () => {
+      withNoPrinters();
+      fixture.detectChanges();
+      hintSlot().checklistActive.emit(true);
+      fixture.detectChanges();
+      expect(
+        fixture.debugElement.query(
+          By.css('[data-cy="empty-state-add-printer"]')
+        )
+      ).toBeTruthy();
+
+      hintSlot().printerAdded.emit();
+      fixture.detectChanges();
+
+      expect(component.hasPrinters()).toBeTrue();
+      expect(
+        fixture.debugElement.query(
+          By.css('[data-cy="empty-state-add-printer"]')
+        )
+      ).toBeNull();
+      expect(
+        fixture.debugElement.query(By.css('[data-cy="empty-state-add-print"]'))
+      ).toBeTruthy();
     });
 
     it('shows the toast when the slot reports the checklist inactive', () => {

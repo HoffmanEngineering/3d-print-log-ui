@@ -18,15 +18,6 @@ The 3D Print Log integration for Home Assistant brings your printers, prints, lo
 
 Home Assistant only makes outgoing requests to your 3D Print Log account, so it works on a LAN-only setup with nothing exposed to the internet. Live printer state (temperatures, progress, camera) stays with your printer's own integration, such as Moonraker, OctoPrint, Bambu Lab or PrusaLink. This integration adds the records in 3D Print Log.
 
-<doc-callout kind="note" heading="Coming soon">
-  <p>
-    The integration isn't released yet. It needs API features that are still
-    being finished, and the first version (0.1.0) hasn't been published. These
-    steps describe how it will work. Until then, you can see your spools in
-    Home Assistant with <a routerLink="/docs/home-assistant-spoolman">Home Assistant via Spoolman</a>.
-  </p>
-</doc-callout>
-
 ### This or the Spoolman integration? {#which}
 
 - **One sensor per spool** (weight, length, location): use the community Spoolman integration, as described in [Home Assistant via Spoolman](/docs/home-assistant-spoolman).
@@ -39,7 +30,7 @@ This integration creates no per-spool entities, so the two can run side by side 
 - Home Assistant 2026.10 or newer.
 - A 3D Print Log account.
 - [HACS](https://hacs.xyz).
-- The next 3D Print Log API release for the extended entities (print time, last maintenance, maintenance due, "not enough filament"). On an older API the integration still works and creates fewer entities. The missing ones appear on their own once the API is updated.
+- 3D Print Log API v1.18.0 or later for the extended entities (print time, last maintenance, maintenance due, "not enough filament"). On an older API the integration still works and creates fewer entities. The missing ones appear on their own once the API is updated.
 
 ### Install it {#install}
 
@@ -94,8 +85,8 @@ The integration fires an event when a print starts and when it ends. It detects 
 
 Each event carries the printer, the print's title and status, its start and finish times, and a link to it. This automation sends a notification when a print finishes on one printer:
 
-```yaml
-triggers:
+```angular-html
+<pre><code>triggers:
   - trigger: event
     event_type: printlog_print_finished
     event_data:
@@ -103,7 +94,7 @@ triggers:
 actions:
   - action: notify.mobile_app_phone
     data:
-      message: "{{ trigger.event.data.title }} is done"
+      message: "&#123;<span>&#123;</span> trigger.event.data.title &#125;&#125; is done"</code></pre>
 ```
 
 Each printer's **Print** event entity fires at the same time, if you prefer a state trigger. The README has the full payload and an example for it.
@@ -136,7 +127,7 @@ The diagnostics you can download from the integration's page redact the API key,
 ### Troubleshooting {#troubleshooting}
 
 - **Home Assistant says the key was rejected.** The key was revoked or mistyped. Create a new key as described in [Create an API key](#api-key), then follow the reauthentication prompt.
-- **Some entities are missing.** The extended entities need the next API release. They appear on their own once the API is updated.
+- **Some entities are missing.** The extended entities need API v1.18.0 or later. If you run your own API, update it and they appear on their own.
 - **A print didn't fire an event.** Events come from comparing updates, so very short prints and prints that finish together can be missed. See [Events](#events).
 - **An automation on the Print event entity fires when you reload.** Add `not_from: [unavailable, unknown]` to the state trigger, as the README's example does.
 - **Something else is wrong.** Download the diagnostics from the integration's page and report the problem at [github.com/HoffmanEngineering/3d-print-log-homeassistant/issues](https://github.com/HoffmanEngineering/3d-print-log-homeassistant/issues). The diagnostics contain no API key, names, titles or notes.

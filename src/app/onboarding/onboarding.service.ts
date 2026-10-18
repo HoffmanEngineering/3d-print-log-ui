@@ -14,6 +14,9 @@ import {
   OnboardingStatus,
 } from './onboarding-api.service';
 
+/** How long navigation or a dialog waits on an onboarding lookup before going on without it. */
+export const ONBOARDING_LOOKUP_TIMEOUT_MS = 3000;
+
 /**
  * Decides whether a new user is shown the welcome flow and the getting-started checklist,
  * and records when they finish. Nothing here may block the app: every failed lookup reads as

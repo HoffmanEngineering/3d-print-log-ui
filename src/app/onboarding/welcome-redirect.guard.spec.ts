@@ -1,4 +1,9 @@
-import { TestBed } from '@angular/core/testing';
+import {
+  fakeAsync,
+  flushMicrotasks,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import {
   ActivatedRouteSnapshot,
   RedirectCommand,
@@ -56,4 +61,17 @@ describe('welcomeRedirectGuard', () => {
 
     expect(await run()).toBeTrue();
   });
+
+  it('allows navigation when the lookup is still pending after 3 s', fakeAsync(() => {
+    onboarding.shouldShowWelcome.and.returnValue(new Promise(() => {}));
+    let result: boolean | RedirectCommand | undefined;
+    void run().then((r) => (result = r));
+
+    tick(2999);
+    flushMicrotasks();
+    expect(result).toBeUndefined();
+    tick(1);
+    flushMicrotasks();
+    expect(result).toBeTrue();
+  }));
 });

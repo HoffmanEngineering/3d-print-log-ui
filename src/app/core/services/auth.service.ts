@@ -33,7 +33,11 @@ import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
 import { GoogleAnalyticsService } from './google-analytics.service';
 import { LoggingService } from './logging.service';
-import { OnboardingService } from '../../onboarding/onboarding.service';
+import {
+  ONBOARDING_LOOKUP_TIMEOUT_MS,
+  OnboardingService,
+} from '../../onboarding/onboarding.service';
+import { withTimeout } from '../utils/with-timeout';
 import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
 import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
@@ -46,8 +50,6 @@ const cordovaCallbackUri =
 const SIGNUP_WINDOW_MS = 10 * 60 * 1000;
 /** Per-account flag that this browser already logged the sign-up. */
 const SIGNUP_LOGGED_KEY_PREFIX = 'pl_signup_logged_';
-/** How long the callback waits on onboarding lookups before going to the target anyway. */
-const CALLBACK_LOOKUP_TIMEOUT_MS = 3000;
 /** How long background sign-up logging waits on the profile, then on the status lookup. */
 const SIGNUP_LOG_TIMEOUT_MS = 10000;
 
@@ -368,7 +370,7 @@ export class AuthService {
   /**
    * Logs a new sign-up (in the background) and sends a new user to /welcome instead of the
    * target. Onboarding never blocks the app: a failed welcome lookup falls back to the
-   * target, and so does one still pending after CALLBACK_LOOKUP_TIMEOUT_MS. Navigation never
+   * target, and so does one still pending after ONBOARDING_LOOKUP_TIMEOUT_MS. Navigation never
    * waits on the sign-up logging, which needs the profile (and, for a new user, its PUT).
    */
   private async navigateAfterCallback(
@@ -377,10 +379,10 @@ export class AuthService {
   ): Promise<void> {
     void this.logSignupIfNewOnceProfileLoads(source, target);
 
-    const showWelcome = await this.withTimeout(
+    const showWelcome = await withTimeout(
       this.injector.get(OnboardingService).shouldShowWelcome(target),
       false,
-      CALLBACK_LOOKUP_TIMEOUT_MS
+      ONBOARDING_LOOKUP_TIMEOUT_MS
     ).catch(() => false);
 
     if (showWelcome) {
@@ -405,7 +407,7 @@ export class AuthService {
           timeout(SIGNUP_LOG_TIMEOUT_MS)
         )
       );
-      await this.withTimeout(
+      await withTimeout(
         this.logSignupIfNew(profile.id, source, target),
         undefined,
         SIGNUP_LOG_TIMEOUT_MS
@@ -458,19 +460,6 @@ export class AuthService {
     } catch {
       // Storage unavailable; nothing else to do.
     }
-  }
-
-  /** Resolves to `fallback` if `work` has not settled within `ms`. */
-  private withTimeout<T>(
-    work: Promise<T>,
-    fallback: T,
-    ms: number
-  ): Promise<T> {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const expired = new Promise<T>((resolve) => {
-      timer = setTimeout(() => resolve(fallback), ms);
-    });
-    return Promise.race([work, expired]).finally(() => clearTimeout(timer));
   }
 
   /** Resolved lazily, like setTelemetryUser. */

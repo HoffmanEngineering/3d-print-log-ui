@@ -704,7 +704,106 @@ describe('QuickAddPrinterComponent', () => {
       );
     });
 
-    it('typing over a selection clears the model and resets the specs', async () => {
+    it('a hand edit of make after a pick drops only the catalog id', async () => {
+      await setup();
+      component.selectCatalogPrinter(P1S);
+      component.showManual.set(true);
+      fixture.detectChanges();
+
+      const make = host().querySelector(
+        'input[formcontrolname="make"]'
+      ) as HTMLInputElement;
+      make.value = 'Bambu';
+      make.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      // The specs stay visible and editable.
+      expect(byTestId('spec-summary')!.textContent).toContain('256 × 256');
+      expect(
+        byTestId<HTMLButtonElement>('nozzle-0.4')!.getAttribute('aria-pressed')
+      ).toBe('true');
+      byTestId<HTMLButtonElement>('nozzle-0.6')!.click();
+      fixture.detectChanges();
+      await component.save();
+
+      expect(sent().catalogModelId).toBeNull();
+      // The search box still reads "Bambu Lab P1S"; it must not overwrite the hand edit.
+      expect(sent().make).toBe('Bambu');
+      expect(sent().model).toBe('P1S');
+      expect(sent().bedWidthMm).toBe(256);
+      expect(sent().nozzleDiameter).toBe(0.6);
+      expect(sent().slotCount).toBe(4);
+      expect(logging.logEvent).not.toHaveBeenCalledWith(
+        'QuickAddPrinter_NotListed',
+        jasmine.anything()
+      );
+    });
+
+    it('typing over a pick keeps a type the user changed', async () => {
+      await setup();
+      component.selectCatalogPrinter(P1S);
+      component.form.controls.type.setValue('MSLA');
+
+      typeInSearch('Voron 2.4');
+      await component.save();
+
+      expect(sent().category.nickname).toBe('MSLA');
+      expect(sent().bedWidthMm).toBeUndefined();
+    });
+
+    it('typing over a pick keeps a slot count the user changed', async () => {
+      await setup();
+      component.selectCatalogPrinter(P1S);
+      component.form.controls.slotCount.setValue(8);
+
+      typeInSearch('Voron 2.4');
+
+      expect(component.form.controls.multiMaterial.value).toBeTrue();
+      expect(component.form.controls.slotCount.value).toBe(8);
+      await component.save();
+      expect(sent().slotCount).toBe(8);
+    });
+
+    it('typing over a pick keeps an edited spec and resets the rest', async () => {
+      await setup();
+      component.selectCatalogPrinter(P1S);
+      component.form.controls.bedWidthMm.setValue(300);
+      fixture.detectChanges();
+
+      typeInSearch('Voron 2.4');
+      fixture.detectChanges();
+
+      // The kept value stays reachable, so nothing is sent unseen.
+      byTestId<HTMLButtonElement>('edit-specs')!.click();
+      fixture.detectChanges();
+      expect(
+        (
+          host().querySelector(
+            'input[formcontrolname="bedWidthMm"]'
+          ) as HTMLInputElement
+        ).value
+      ).toBe('300');
+      await component.save();
+      expect(sent().catalogModelId).toBeNull();
+      expect(sent().bedWidthMm).toBe(300);
+      expect(sent().bedDepthMm).toBeUndefined();
+      expect(sent().nozzleDiameter).toBeNull();
+    });
+
+    it('does not log NotListed after a catalog pick in this session', async () => {
+      await setup();
+      component.selectCatalogPrinter(P1S);
+      typeInSearch('Voron 2.4');
+
+      await component.save();
+
+      expect(logging.logEvent).not.toHaveBeenCalledWith(
+        'QuickAddPrinter_NotListed',
+        jasmine.anything()
+      );
+    });
+
+    it('typing over an unedited pick resets every field the catalog set', async () => {
       await setup();
       component.selectCatalogPrinter(P1S);
       fixture.detectChanges();

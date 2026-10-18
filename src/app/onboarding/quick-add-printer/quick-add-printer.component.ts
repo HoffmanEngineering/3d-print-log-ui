@@ -91,6 +91,23 @@ function specsFrom(m: PrinterModel): SpecValues {
   };
 }
 
+/** Everything a catalog pick patches besides make and model. */
+interface CatalogPatch extends SpecValues {
+  type: string;
+  multiMaterial: boolean;
+  slotCount: number;
+}
+
+/** What the form holds before any catalog pick. */
+const FREE_TEXT_DEFAULTS: CatalogPatch = {
+  type: 'FFF',
+  multiMaterial: false,
+  slotCount: DEFAULT_SLOT_COUNT,
+  ...EMPTY_SPECS,
+};
+
+const NO_MODEL: PrinterModel = { id: '', make: '', model: '', technology: '' };
+
 function label(m: PrinterModel): string {
   return `${m.make} ${m.model}`;
 }
@@ -170,8 +187,10 @@ export class QuickAddPrinterComponent implements OnInit {
     this.categories().filter((c) => !TOGGLE_NICKNAMES.includes(c.nickname))
   );
 
-  /** The catalog model the form was filled from, or null for free text. */
+  /** The catalog model the printer links to, or null for free text. */
   readonly catalogModel = signal<PrinterModel | null>(null);
+  /** The last model picked. Its nozzle options stay after the link is dropped. */
+  private readonly pickedModel = signal<PrinterModel | null>(null);
   readonly popular = signal<PrinterModel[]>([]);
   readonly suggestions = signal<PrinterModel[]>([]);
 
@@ -203,8 +222,16 @@ export class QuickAddPrinterComponent implements OnInit {
       !this.catalogModel() &&
       !this.searchText().trim()
   );
+  /** Specs show while a model is linked or any spec field holds a value. */
+  readonly hasSpecs = computed(() => {
+    if (this.catalogModel()) {
+      return true;
+    }
+    const v = this.formValue();
+    return SPEC_KEYS.some((key) => v[key] !== null);
+  });
   readonly nozzleOptions = computed(() => {
-    const m = this.catalogModel();
+    const m = this.pickedModel();
     if (!m) {
       return [];
     }
@@ -216,10 +243,10 @@ export class QuickAddPrinterComponent implements OnInit {
   readonly selectedNozzle = computed(() => this.formValue().nozzleDiameter);
   /** The summary follows the user's edits, so it describes what will be saved. */
   readonly specSummary = computed(() => {
-    const m = this.catalogModel();
-    if (!m) {
+    if (!this.hasSpecs()) {
       return '';
     }
+    const m = this.pickedModel() ?? NO_MODEL;
     const v = this.formValue();
     return PrinterCatalogService.specSummary(
       {
@@ -239,8 +266,12 @@ export class QuickAddPrinterComponent implements OnInit {
 
   private nameTouched = false;
   private fromPopularChip = false;
-  /** The spec values the catalog filled in, to tell whether the user edited them. */
-  private catalogSpecs: SpecValues | null = null;
+  /** Set by any catalog pick, so a later free-text save is not "not listed". */
+  private pickedThisSession = false;
+  /** The search text last turned into make and model, so a hand edit is not overwritten. */
+  private committedSearch = '';
+  /** What the last pick patched, to tell which fields the user has changed since. */
+  private catalogPatch: CatalogPatch | null = null;
 
   constructor() {
     // A hidden slot count must not block Save, so it only validates while it is shown.
@@ -267,7 +298,8 @@ export class QuickAddPrinterComponent implements OnInit {
       .subscribe((v) => {
         const m = this.catalogModel();
         if (typeof v === 'string' && m && v !== label(m)) {
-          this.clearSelection();
+          this.unlinkCatalogModel();
+          this.resetCatalogDefaults();
         }
       });
     this.form.controls.search.valueChanges
@@ -319,20 +351,21 @@ export class QuickAddPrinterComponent implements OnInit {
 
   selectCatalogPrinter(m: PrinterModel): void {
     this.catalogModel.set(m);
+    this.pickedModel.set(m);
+    this.pickedThisSession = true;
     this.fromPopularChip = false;
     this.specsOpen.set(false);
+    this.committedSearch = label(m);
     this.form.controls.search.setValue(label(m));
     const slots = m.defaultSlotCount ?? 1;
-    const specs = specsFrom(m);
-    this.catalogSpecs = specs;
-    this.form.patchValue({
-      make: m.make,
-      model: m.model,
+    const patch: CatalogPatch = {
       type: m.technology === 'Resin' ? 'MSLA' : 'FFF',
       multiMaterial: slots > 1,
       slotCount: slots > 1 ? slots : DEFAULT_SLOT_COUNT,
-      ...specs,
-    });
+      ...specsFrom(m),
+    };
+    this.catalogPatch = patch;
+    this.form.patchValue({ make: m.make, model: m.model, ...patch });
   }
 
   selectNozzle(mm: number): void {
@@ -342,21 +375,22 @@ export class QuickAddPrinterComponent implements OnInit {
   /** On blur with no catalog pick: the first word is the make, the rest the model. */
   commitFreeText(): void {
     const text = this.form.controls.search.value.trim();
-    const current = `${this.form.controls.make.value} ${this.form.controls.model.value}`;
-    if (!text || (this.catalogModel() && text === current)) {
+    if (!text || text === this.committedSearch) {
       return;
     }
+    this.committedSearch = text;
     const space = text.indexOf(' ');
     const make = space === -1 ? text : text.slice(0, space);
     const model = space === -1 ? text : text.slice(space + 1).trim();
     this.form.patchValue({ make, model });
   }
 
-  /** Editing make or model by hand means the printer no longer comes from the catalog. */
+  /**
+   * Editing make or model by hand means the printer no longer links to the catalog model,
+   * but the specs it filled in are still the user's to keep.
+   */
   onManualInput(): void {
-    if (this.catalogModel()) {
-      this.clearSelection();
-    }
+    this.unlinkCatalogModel();
   }
 
   onNameInput(): void {
@@ -384,7 +418,7 @@ export class QuickAddPrinterComponent implements OnInit {
         await this.onboarding.acknowledgeEmailNotice();
       }
       const m = this.catalogModel();
-      if (!m) {
+      if (!m && !this.pickedThisSession) {
         this.logging.logEvent('QuickAddPrinter_NotListed', {
           query: this.notListedQuery(),
         });
@@ -406,22 +440,47 @@ export class QuickAddPrinterComponent implements OnInit {
     }
   }
 
-  /** Back to free text: no model, and the catalog's defaults are undone. */
-  private clearSelection(): void {
+  /** The printer no longer links to a catalog model. The form values stay. */
+  private unlinkCatalogModel(): void {
     this.catalogModel.set(null);
-    this.catalogSpecs = null;
     this.fromPopularChip = false;
-    this.specsOpen.set(false);
-    this.form.patchValue({
-      type: 'FFF',
-      multiMaterial: false,
-      slotCount: DEFAULT_SLOT_COUNT,
-      ...EMPTY_SPECS,
-    });
+  }
+
+  /**
+   * Undoes the last pick's defaults field by field, where the value is still the one the
+   * catalog set. Anything the user changed since stays. Multi-material and the slot count
+   * go together: a changed slot count keeps multi-material on.
+   */
+  private resetCatalogDefaults(): void {
+    const patch = this.catalogPatch;
+    if (!patch) {
+      return;
+    }
+    this.catalogPatch = null;
+    const value = this.form.getRawValue();
+    const unchanged = (key: keyof CatalogPatch) => value[key] === patch[key];
+    const reset: Partial<CatalogPatch> = {};
+    if (unchanged('type')) {
+      reset.type = FREE_TEXT_DEFAULTS.type;
+    }
+    if (unchanged('multiMaterial') && unchanged('slotCount')) {
+      reset.multiMaterial = FREE_TEXT_DEFAULTS.multiMaterial;
+      reset.slotCount = FREE_TEXT_DEFAULTS.slotCount;
+    }
+    const keptSpecs = SPEC_KEYS.filter((key) => !unchanged(key));
+    for (const key of SPEC_KEYS) {
+      if (!keptSpecs.includes(key)) {
+        Object.assign(reset, { [key]: null });
+      }
+    }
+    if (keptSpecs.length === 0) {
+      this.specsOpen.set(false);
+    }
+    this.form.patchValue(reset);
   }
 
   private specsEdited(): boolean {
-    const defaults = this.catalogSpecs;
+    const defaults = this.catalogPatch;
     if (!defaults || !this.catalogModel()) {
       return false;
     }

@@ -49,7 +49,7 @@
     </section>
   }
 
-  @if (catalogModel(); as model) {
+  @if (hasSpecs()) {
     <section class="quick-add__specs" aria-label="Printer specs">
       @if (specSummary(); as summary) {
         <p class="quick-add__summary" data-testid="spec-summary">

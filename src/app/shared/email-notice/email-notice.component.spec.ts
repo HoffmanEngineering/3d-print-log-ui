@@ -21,7 +21,8 @@ describe('EmailNoticeComponent', () => {
   let seenAt: string | undefined;
 
   async function render(
-    platform: 'browser' | 'server' = 'browser'
+    platform: 'browser' | 'server' = 'browser',
+    url = '/prints'
   ): Promise<HTMLElement> {
     settings = jasmine.createSpyObj<UserSettingService>('UserSettingService', [
       'getCurrentUsersSettingByType',
@@ -41,13 +42,14 @@ describe('EmailNoticeComponent', () => {
     await TestBed.configureTestingModule({
       imports: [EmailNoticeComponent, NoopAnimationsModule],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', children: [] }]),
         { provide: PLATFORM_ID, useValue: platform },
         { provide: AuthService, useValue: { userProfile$: user$ } },
         { provide: UserSettingService, useValue: settings },
         { provide: LoggingService, useValue: logging },
       ],
     }).compileComponents();
+    await TestBed.inject(Router).navigateByUrl(url);
     fixture = TestBed.createComponent(EmailNoticeComponent);
     fixture.detectChanges();
     await settle();
@@ -78,6 +80,20 @@ describe('EmailNoticeComponent', () => {
     expect(banner()?.textContent).toContain(
       "We'll occasionally email you about your prints"
     );
+  });
+
+  it('stays hidden on /welcome, where the inline notice takes over', async () => {
+    await render('browser', '/welcome');
+
+    expect(banner()).toBeNull();
+  });
+
+  it('appears once the user leaves /welcome', async () => {
+    await render('browser', '/welcome');
+    await TestBed.inject(Router).navigateByUrl('/prints');
+    await settle();
+
+    expect(banner()).not.toBeNull();
   });
 
   it('stays hidden once seen', async () => {

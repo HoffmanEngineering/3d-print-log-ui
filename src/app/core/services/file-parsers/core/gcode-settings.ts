@@ -35,8 +35,9 @@ const PRINTER_NAME_KEYS = [
  */
 const PRINTER_NAME_LINES: readonly RegExp[] = PRINTER_NAME_KEYS.map(
   (key) =>
+    // [ \t]*, not \s*: \s spans a newline and would take the next line as an empty key's value.
     new RegExp(
-      `^\\s*;\\s*${key.replace('.', '\\.')}\\s*[=:]\\s*(.*?)\\s*$`,
+      `^[ \\t]*;[ \\t]*${key.replace('.', '\\.')}[ \\t]*[=:][ \\t]*(.*?)[ \\t]*$`,
       'im'
     )
 );

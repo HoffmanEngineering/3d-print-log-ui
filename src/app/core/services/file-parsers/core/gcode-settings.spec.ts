@@ -167,6 +167,22 @@ describe('GcodeSettings', () => {
       ).toBe('Creality K1');
     });
 
+    it('never reads the next line as an empty key value in the fallback', () => {
+      const empty = GcodeSettings.empty();
+      expect(
+        GcodeSettings.detectedPrinterName(
+          empty,
+          '; printer_model =\n; layer_height = 0.2\n; printer_settings_id = Creality K1 profile'
+        )
+      ).toBe('Creality K1 profile');
+      expect(
+        GcodeSettings.detectedPrinterName(
+          empty,
+          '; printer_model =\n; layer_height = 0.2'
+        )
+      ).toBeNull();
+    });
+
     it('is null when no header names the printer', () => {
       const s = GcodeSettings.parse('; layer_height = 0.2', SPACED_EQUALS);
       expect(GcodeSettings.detectedPrinterName(s)).toBeNull();

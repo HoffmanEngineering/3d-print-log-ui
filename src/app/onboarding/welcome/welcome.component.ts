@@ -18,7 +18,7 @@ import {
   Router,
   RouterLink,
 } from '@angular/router';
-import { take } from 'rxjs';
+import { take, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FilamentDetail } from '../../core/services/filament.service';
 import { GoogleAnalyticsService } from '../../core/services/google-analytics.service';
@@ -30,7 +30,10 @@ import {
 import { DeferredSkeletonController } from '../../shared/skeleton/deferred-skeleton';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { InlineEmailNoticeComponent } from '../inline-email-notice/inline-email-notice.component';
-import { OnboardingService } from '../onboarding.service';
+import {
+  ONBOARDING_LOOKUP_TIMEOUT_MS,
+  OnboardingService,
+} from '../onboarding.service';
 import { QuickAddMaterialComponent } from '../quick-add-material/quick-add-material.component';
 import { QuickAddPrinterComponent } from '../quick-add-printer/quick-add-printer.component';
 import {
@@ -129,7 +132,12 @@ export class WelcomeComponent implements OnInit {
     this.printersSkeleton.start();
     this.printerService
       .getCurrentUserPrinterSummaries(1, PRINTER_PAGE_SIZE, '', false)
-      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        take(1),
+        // A summary still pending after the cap is treated as a failed lookup.
+        timeout({ first: ONBOARDING_LOOKUP_TIMEOUT_MS }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: (page) => {
           if (page.items.length > 0) {

@@ -1,6 +1,12 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, input, output } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  fakeAsync,
+  flush,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatStepper } from '@angular/material/stepper';
@@ -265,6 +271,23 @@ describe('WelcomeComponent', () => {
     expect(printerForm()).toBeTruthy();
     expect(logging.logException).toHaveBeenCalled();
   });
+
+  it('shows the quick-add form when the summary never settles within 3 s', fakeAsync(() => {
+    configure();
+    printers.getCurrentUserPrinterSummaries.and.returnValue(
+      new Subject<PagedList<PrinterSummarySimple>>()
+    );
+    fixture = TestBed.createComponent(WelcomeComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    tick(3000);
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+
+    expect(printerForm()).toBeTruthy();
+    expect(component.step1Ready()).toBeTrue();
+  }));
 
   it('enables Continue for a printer that already exists', async () => {
     configure([summary(3, 'Prusa MK4')]);

@@ -6,7 +6,7 @@ navLabel: Home Assistant
 group: integrations
 order: 55
 mode: how-to
-updated: 2026-10-16
+updated: 2026-10-17
 related: [klipper-spoolman, materials, printers]
 ---
 
@@ -63,7 +63,7 @@ The integration asks 3D Print Log for your spools every 15 minutes by default. Y
 ### Sensors that behave differently than you might expect {#quirks}
 
 - **Flow rate and Estimated run out** treat any drop in remaining weight since the last update as filament burned. A weigh-in in 3D Print Log that lowers a spool's weight shows up as a burst of flow, and the run-out estimate jumps with it. A real Spoolman server does the same.
-- **Low Filament** compares the spool's remaining percentage against the integration's **warning** threshold, which defaults to 75. So a spool with 75% left already reads "Problem". Lower the warning threshold in the integration's options, to 10 or 20 for example, so the sensor turns on when a spool is actually running low.
+- **Low Filament** compares the spool's remaining percentage against the integration's **warning** threshold, which defaults to 75. So a spool with 75% left already reads "Problem". Lower the warning threshold in the integration's options, to 10 or 20 for example, so the sensor turns on when a spool is actually running low. The same setting also drives the integration's `spoolman_spool_threshold_exceeded` events, which count percent _used_, so after this change the "warning" event fires once a spool is only 10–20% used. If you alert on those events, use the **critical** level (95% used by default) for a nearly empty spool.
 - **Multi-color spools get no color sensor.** The integration reads only a spool's single color, and a multi-color material in 3D Print Log has several.
 
 ### After you change the secret {#rotate}

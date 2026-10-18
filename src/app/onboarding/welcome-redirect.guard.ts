@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, RedirectCommand, Router } from '@angular/router';
 import { OnboardingService } from './onboarding.service';
 
 /**
@@ -12,7 +12,9 @@ export const welcomeRedirectGuard: CanActivateFn = async (_route, state) => {
   const router = inject(Router);
   try {
     return (await onboarding.shouldShowWelcome(state.url))
-      ? router.createUrlTree(['/welcome'])
+      ? new RedirectCommand(router.createUrlTree(['/welcome']), {
+          state: { entry: 'guard' },
+        })
       : true;
   } catch {
     return true;

@@ -1,3 +1,4 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -69,11 +70,18 @@ describe('WelcomeComponent', () => {
   let analytics: jasmine.SpyObj<GoogleAnalyticsService>;
   let router: Router;
   let navigate: jasmine.Spy;
+  let breakpoints: jasmine.SpyObj<BreakpointObserver>;
 
   function configure(
     existing: PrinterSummarySimple[] = [],
-    query: Record<string, string> = {}
+    query: Record<string, string> = {},
+    narrow = false
   ) {
+    breakpoints = jasmine.createSpyObj<BreakpointObserver>(
+      'BreakpointObserver',
+      ['isMatched', 'observe']
+    );
+    breakpoints.isMatched.and.returnValue(narrow);
     onboarding = jasmine.createSpyObj<OnboardingService>('OnboardingService', [
       'status',
       'markWelcomeFinished',
@@ -117,6 +125,7 @@ describe('WelcomeComponent', () => {
           ]),
         },
         { provide: IS_CORDOVA, useValue: false },
+        { provide: BreakpointObserver, useValue: breakpoints },
       ],
     });
     TestBed.overrideComponent(WelcomeComponent, {
@@ -360,6 +369,49 @@ describe('WelcomeComponent', () => {
       target: 'cura',
     });
     expect(navigate).toHaveBeenCalledWith(['/prints']);
+  });
+
+  it('logs the entry passed as navigation state', async () => {
+    configure();
+    const previous = history.state;
+    history.replaceState({ entry: 'callback' }, '');
+    try {
+      await render();
+    } finally {
+      history.replaceState(previous, '');
+    }
+
+    expect(logging.logEvent).toHaveBeenCalledWith('Welcome_Shown', {
+      entry: 'callback',
+    });
+  });
+
+  it('picks a vertical stepper once, below 600px, without watching for changes', async () => {
+    configure([], {}, true);
+    await render();
+
+    expect(breakpoints.isMatched).toHaveBeenCalledWith('(max-width: 599.98px)');
+    expect(breakpoints.observe).not.toHaveBeenCalled();
+    expect(stepper().orientation).toBe('vertical');
+  });
+
+  it('picks a horizontal stepper at 600px and above', async () => {
+    configure([], {}, false);
+    await render();
+
+    expect(stepper().orientation).toBe('horizontal');
+  });
+
+  it('logs a failed navigation instead of rejecting', async () => {
+    configure();
+    const failure = new Error('navigation failed');
+    navigate.and.rejectWith(failure);
+    await render();
+
+    await expectAsync(component.skipSetup()).toBeResolved();
+
+    expect(logging.logException).toHaveBeenCalledWith(failure);
+    expect((el('skip-setup') as HTMLButtonElement).disabled).toBeFalse();
   });
 
   it('shows the email notice in the footer', async () => {

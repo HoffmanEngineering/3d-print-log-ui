@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import {
   ActivatedRouteSnapshot,
+  RedirectCommand,
   Router,
   RouterStateSnapshot,
   UrlTree,
@@ -28,16 +29,20 @@ describe('welcomeRedirectGuard', () => {
         {} as ActivatedRouteSnapshot,
         { url: '/prints?x=1' } as RouterStateSnapshot
       )
-    ) as Promise<boolean | UrlTree>;
+    ) as Promise<boolean | RedirectCommand>;
 
-  it('redirects to /welcome when the welcome flow should show', async () => {
+  it('redirects to /welcome with entry "guard" when the welcome flow should show', async () => {
     onboarding.shouldShowWelcome.and.resolveTo(true);
 
     const result = await run();
 
     expect(onboarding.shouldShowWelcome).toHaveBeenCalledWith('/prints?x=1');
-    expect(result instanceof UrlTree).toBeTrue();
-    expect(router.serializeUrl(result as UrlTree)).toBe('/welcome');
+    expect(result instanceof RedirectCommand).toBeTrue();
+    const command = result as RedirectCommand;
+    expect(router.serializeUrl(command.redirectTo as UrlTree)).toBe('/welcome');
+    expect(command.navigationBehaviorOptions?.state).toEqual({
+      entry: 'guard',
+    });
   });
 
   it('allows navigation when the welcome flow should not show', async () => {

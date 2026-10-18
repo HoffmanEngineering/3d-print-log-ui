@@ -8,7 +8,6 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatStepperModule } from '@angular/material/stepper';
@@ -18,7 +17,7 @@ import {
   Router,
   RouterLink,
 } from '@angular/router';
-import { firstValueFrom, map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { FilamentDetail } from '../../core/services/filament.service';
 import { GoogleAnalyticsService } from '../../core/services/google-analytics.service';
 import { LoggingService } from '../../core/services/logging.service';
@@ -75,12 +74,15 @@ export class WelcomeComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly document = inject(DOCUMENT);
 
-  readonly orientation = toSignal(
-    inject(BreakpointObserver)
-      .observe('(max-width: 599.98px)')
-      .pipe(map((r) => (r.matches ? 'vertical' : 'horizontal'))),
-    { initialValue: 'horizontal' as const }
-  );
+  /**
+   * Read once: switching orientation re-renders the steps, which would throw away a
+   * half-filled form when a phone rotates. BreakpointObserver never matches on the server.
+   */
+  readonly orientation: 'vertical' | 'horizontal' = inject(
+    BreakpointObserver
+  ).isMatched('(max-width: 599.98px)')
+    ? 'vertical'
+    : 'horizontal';
 
   readonly selectedIndex = signal(this.initialStep());
   readonly printers = signal<SavedPrinter[]>([]);
@@ -197,6 +199,10 @@ export class WelcomeComponent implements OnInit {
       await (extras
         ? this.router.navigate(commands, extras)
         : this.router.navigate(commands));
+    } catch (error) {
+      this.logging.logException(
+        error instanceof Error ? error : new Error(String(error))
+      );
     } finally {
       this.finishing.set(false);
     }

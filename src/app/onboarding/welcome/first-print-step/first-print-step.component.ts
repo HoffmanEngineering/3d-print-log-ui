@@ -43,26 +43,38 @@ const CURA_LINES = [
   'When you save G-code, Cura offers to send the print to 3D Print Log.',
 ];
 
-const UPLOADER_LINES = [
-  'Download the 3D Print Log uploader for your computer.',
-  'Run its setup wizard once. Every G-code you export then opens a pre-filled print.',
+const DOWNLOAD_LINE =
+  'Download the 3D Print Log uploader and save it somewhere permanent.';
+
+/** The uploader's setup wizard covers only these (see the slic3r-uploader doc). */
+const WIZARD_LINES = [
+  DOWNLOAD_LINE,
+  'Run it once (on Windows, double-click it). Its setup wizard adds a "- 3DPrintLog" preset for each process profile in your slicer.',
+  'Pick a "- 3DPrintLog" process preset when you slice, and each export opens a pre-filled print.',
 ];
 
-function uploader(key: string, label: string): PathOption {
-  return { key, label, doc: '/docs/slic3r-uploader', lines: UPLOADER_LINES };
+/** Slicers the wizard does not detect are set up by hand ("Manual setup" in the doc). */
+const MANUAL_LINES = [
+  DOWNLOAD_LINE,
+  "In your slicer's process settings, enter the full path to the uploader followed by --default in the Post-processing scripts field.",
+  'Save the preset, and every export made with it opens a pre-filled print.',
+];
+
+function uploader(key: string, label: string, lines: string[]): PathOption {
+  return { key, label, doc: '/docs/slic3r-uploader', lines };
 }
 
 export const SLICERS: PathOption[] = [
   { key: 'cura', label: 'Cura', doc: '/docs/cura-plugin', lines: CURA_LINES },
-  uploader('prusaslicer', 'PrusaSlicer'),
-  uploader('orcaslicer', 'OrcaSlicer'),
-  uploader('bambu-studio', 'Bambu Studio'),
-  uploader('creality-print', 'Creality Print'),
-  uploader('snapmaker-orca', 'Snapmaker Orca'),
-  uploader('anycubic', 'Anycubic'),
-  uploader('elegoo', 'Elegoo'),
-  uploader('qidi', 'QIDI'),
-  uploader('orca-flashforge', 'Orca Flashforge'),
+  uploader('prusaslicer', 'PrusaSlicer', MANUAL_LINES),
+  uploader('orcaslicer', 'OrcaSlicer', WIZARD_LINES),
+  uploader('bambu-studio', 'Bambu Studio', MANUAL_LINES),
+  uploader('creality-print', 'Creality Print', MANUAL_LINES),
+  uploader('snapmaker-orca', 'Snapmaker Orca', WIZARD_LINES),
+  uploader('anycubic', 'Anycubic', WIZARD_LINES),
+  uploader('elegoo', 'Elegoo', MANUAL_LINES),
+  uploader('qidi', 'QIDI', MANUAL_LINES),
+  uploader('orca-flashforge', 'Orca Flashforge', MANUAL_LINES),
 ];
 
 export const INTEGRATIONS: PathOption[] = [

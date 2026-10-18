@@ -116,6 +116,46 @@ describe('FirstPrintStepComponent', () => {
     ).toBe(2);
   });
 
+  function installText(): string {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="install-line"]'),
+      (li: Element) => li.textContent ?? ''
+    ).join(' ');
+  }
+
+  it('tells wizard slicers to run the setup wizard', async () => {
+    configure();
+    await render();
+
+    for (const key of ['orcaslicer', 'snapmaker-orca', 'anycubic']) {
+      component.selectSlicer(key);
+      await settle();
+      expect(installText()).withContext(key).toContain('setup wizard');
+    }
+  });
+
+  it('gives slicers the wizard does not cover the manual post-processing setup', async () => {
+    configure();
+    await render();
+
+    for (const key of [
+      'prusaslicer',
+      'bambu-studio',
+      'creality-print',
+      'elegoo',
+      'qidi',
+      'orca-flashforge',
+    ]) {
+      component.selectSlicer(key);
+      await settle();
+      const text = installText();
+      expect(text)
+        .withContext(key)
+        .not.toMatch(/wizard/i);
+      expect(text).withContext(key).toContain('Post-processing scripts');
+    }
+  });
+
   it('links every Slic3r-family slicer to the uploader doc', async () => {
     configure();
     await render();

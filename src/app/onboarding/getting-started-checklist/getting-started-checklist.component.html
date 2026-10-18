@@ -88,4 +88,8 @@
     <mat-icon aria-hidden="true">bolt</mat-icon>
     Send prints automatically
   </a>
+
+  @if (showEmailNotice()) {
+    <app-inline-email-notice class="checklist__notice" />
+  }
 </section>

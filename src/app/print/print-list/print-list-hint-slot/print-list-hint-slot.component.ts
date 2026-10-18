@@ -63,7 +63,10 @@ export class PrintListHintSlotComponent implements OnInit {
   private destroyed = false;
 
   constructor() {
-    this.destroyRef.onDestroy(() => (this.destroyed = true));
+    this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
+      this.onboarding.checklistShowing.set(false);
+    });
   }
 
   ngOnInit(): void {
@@ -72,6 +75,7 @@ export class PrintListHintSlotComponent implements OnInit {
 
   protected onDismissed(): void {
     this.card.set('hint');
+    this.onboarding.checklistShowing.set(false);
     this.checklistActive.emit(false);
   }
 
@@ -111,6 +115,8 @@ export class PrintListHintSlotComponent implements OnInit {
     }
     this.me.set(me);
     this.card.set(visible ? 'checklist' : 'hint');
+    // The global email banner hides while the checklist carries its own inline notice.
+    this.onboarding.checklistShowing.set(visible);
     this.checklistActive.emit(visible);
   }
 

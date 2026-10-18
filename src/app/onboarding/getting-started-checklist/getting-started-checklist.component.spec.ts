@@ -1,3 +1,4 @@
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MatDialog } from '@angular/material/dialog';
@@ -32,6 +33,21 @@ describe('GettingStartedChecklistComponent', () => {
   let logging: jasmine.SpyObj<LoggingService>;
   let dialog: jasmine.SpyObj<MatDialog>;
   let closed: Subject<PrinterDetail | undefined>;
+  let noticeAcknowledged: WritableSignal<boolean>;
+  let noticePending: boolean;
+
+  async function renderSettled(earned: string[]): Promise<HTMLElement> {
+    const el = render(earned);
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    return el;
+  }
+
+  const notice = () =>
+    (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="inline-email-notice"]'
+    );
 
   function render(earned: string[]): HTMLElement {
     fixture = TestBed.createComponent(GettingStartedChecklistComponent);
@@ -44,10 +60,18 @@ describe('GettingStartedChecklistComponent', () => {
     fixture.debugElement.query(By.css(`[data-cy="getting-started-${key}"]`));
 
   beforeEach(() => {
-    onboarding = jasmine.createSpyObj<OnboardingService>('OnboardingService', [
-      'dismissChecklist',
-    ]);
+    noticeAcknowledged = signal(false);
+    noticePending = true;
+    onboarding = jasmine.createSpyObj<OnboardingService>(
+      'OnboardingService',
+      ['dismissChecklist', 'acknowledgeEmailNotice', 'emailNoticePending'],
+      { noticeAcknowledged }
+    );
     onboarding.dismissChecklist.and.resolveTo();
+    onboarding.acknowledgeEmailNotice.and.callFake(async () => {
+      noticeAcknowledged.set(true);
+    });
+    onboarding.emailNoticePending.and.callFake(async () => noticePending);
     logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logEvent',
       'logException',
@@ -177,5 +201,74 @@ describe('GettingStartedChecklistComponent', () => {
       doneCount: 1,
     });
     expect(dismissed).toHaveBeenCalled();
+  });
+
+  describe('inline email notice', () => {
+    it('shows the compact notice while setting 26 is unset', async () => {
+      await renderSettled([]);
+      expect(notice()).not.toBeNull();
+    });
+
+    it('hides the notice when setting 26 is already set', async () => {
+      noticePending = false;
+      await renderSettled([]);
+      expect(notice()).toBeNull();
+    });
+
+    const actions: [string, () => void][] = [
+      [
+        'the printer item',
+        () => (item('printer').nativeElement as HTMLElement).click(),
+      ],
+      [
+        'the material link',
+        () => (item('material').nativeElement as HTMLElement).click(),
+      ],
+      [
+        'the print link',
+        () => (item('print').nativeElement as HTMLElement).click(),
+      ],
+      [
+        'the automatic link',
+        () => (item('automatic').nativeElement as HTMLElement).click(),
+      ],
+      [
+        'dismiss',
+        () =>
+          (
+            fixture.debugElement.query(
+              By.css('button[aria-label="Dismiss getting started"]')
+            ).nativeElement as HTMLButtonElement
+          ).click(),
+      ],
+    ];
+    for (const [name, act] of actions) {
+      it(`acknowledges the notice on ${name}`, async () => {
+        await renderSettled([]);
+        act();
+        expect(onboarding.acknowledgeEmailNotice).toHaveBeenCalledTimes(1);
+      });
+    }
+
+    it('hides the notice once acknowledged', async () => {
+      await renderSettled([]);
+      (item('material').nativeElement as HTMLElement).click();
+      fixture.detectChanges();
+      expect(notice()).toBeNull();
+    });
+
+    it('does not repeat the notice in the dialog once it was acknowledged', async () => {
+      await renderSettled([]);
+      noticeAcknowledged.set(true);
+      fixture.detectChanges();
+      (item('printer').nativeElement as HTMLButtonElement).click();
+
+      expect(dialog.open).toHaveBeenCalledWith(
+        QuickAddPrinterDialogComponent,
+        jasmine.objectContaining({
+          data: { source: 'checklist', showEmailNotice: false },
+        })
+      );
+    });
   });
 });

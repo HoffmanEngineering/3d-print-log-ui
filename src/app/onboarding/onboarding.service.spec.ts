@@ -348,6 +348,86 @@ describe('OnboardingService', () => {
     });
   }
 
+  describe('session flags', () => {
+    it('noticeAcknowledged turns true as soon as acknowledgeEmailNotice is called', () => {
+      expect(service.noticeAcknowledged()).toBeFalse();
+      void service.acknowledgeEmailNotice();
+      expect(service.noticeAcknowledged()).toBeTrue();
+    });
+
+    it('noticeAcknowledged stays true when the write fails', async () => {
+      settings.addOrUpdateSetting.and.rejectWith(new Error('500'));
+      await service.acknowledgeEmailNotice();
+      expect(service.noticeAcknowledged()).toBeTrue();
+    });
+
+    it('noticeAcknowledged is true even for an ineligible user, whose write is skipped', async () => {
+      api.getStatus.and.returnValue(
+        of({ ...ELIGIBLE, onboardingEligible: false })
+      );
+      await service.acknowledgeEmailNotice();
+      expect(service.noticeAcknowledged()).toBeTrue();
+    });
+
+    it('shouldShowWelcome is false after markWelcomeFinished, even when the write fails', async () => {
+      settings.addOrUpdateSetting.and.rejectWith(new Error('500'));
+      await service.markWelcomeFinished();
+      expect(
+        store.has(UserSettingType.Onboarding_WelcomeFinishedAt)
+      ).toBeFalse();
+      expect(await service.shouldShowWelcome('/prints')).toBeFalse();
+    });
+
+    it('shouldShowWelcome is false while the finish write is still pending', async () => {
+      settings.addOrUpdateSetting.and.returnValue(new Promise(() => {}));
+      void service.markWelcomeFinished();
+      expect(await service.shouldShowWelcome('/prints')).toBeFalse();
+      expect(printers.getCurrentUserPrinterSummaries).not.toHaveBeenCalled();
+    });
+
+    it('checklistShowing starts false and is writable by the slot', () => {
+      expect(service.checklistShowing()).toBeFalse();
+      service.checklistShowing.set(true);
+      expect(service.checklistShowing()).toBeTrue();
+    });
+
+    it('clear resets the session flags', async () => {
+      await service.acknowledgeEmailNotice();
+      await service.markWelcomeFinished();
+      service.checklistShowing.set(true);
+      service.clear();
+      store.clear();
+      expect(service.noticeAcknowledged()).toBeFalse();
+      expect(service.checklistShowing()).toBeFalse();
+      expect(await service.shouldShowWelcome('/prints')).toBeTrue();
+    });
+  });
+
+  describe('emailNoticePending', () => {
+    it('is true when setting 26 is unset and nothing acknowledged it', async () => {
+      expect(await service.emailNoticePending()).toBeTrue();
+    });
+
+    it('is false once setting 26 is set', async () => {
+      store.set(
+        UserSettingType.Email_NoticeSeenAt,
+        setting(UserSettingType.Email_NoticeSeenAt)
+      );
+      expect(await service.emailNoticePending()).toBeFalse();
+    });
+
+    it('is false after an acknowledgment this session', async () => {
+      settings.addOrUpdateSetting.and.rejectWith(new Error('500'));
+      await service.acknowledgeEmailNotice();
+      expect(await service.emailNoticePending()).toBeFalse();
+    });
+
+    it('is false when the lookup fails', async () => {
+      settings.getCurrentUsersSettingByType.and.rejectWith(new Error('boom'));
+      expect(await service.emailNoticePending()).toBeFalse();
+    });
+  });
+
   describe('hasEarned', () => {
     it('is true only for a family with tiers', () => {
       const me = achievements(['first-printer']);

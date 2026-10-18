@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { LoggingService } from '../core/services/logging.service';
 import { PrinterService } from '../core/services/printer.service';
@@ -31,6 +31,19 @@ export class OnboardingService {
   private statusPromise: Promise<OnboardingStatus> | null = null;
   private readonly pendingWrites = new Map<UserSettingType, Promise<void>>();
 
+  private readonly acknowledged = signal(false);
+  /**
+   * True once anything this session acknowledged the email notice, whether or not setting 26
+   * was written. The global banner reads it, so it never comes back after an inline notice.
+   */
+  readonly noticeAcknowledged = this.acknowledged.asReadonly();
+
+  /** Set by the print list's hint slot while the getting-started checklist is on screen. */
+  readonly checklistShowing = signal(false);
+
+  /** Set when the welcome flow ends this page load, whatever happened to setting 29. */
+  private welcomeFinished = false;
+
   /** Cached per page load. A failed lookup is not cached, so the next call retries. */
   status(force = false): Promise<OnboardingStatus> {
     if (force || !this.statusPromise) {
@@ -48,6 +61,9 @@ export class OnboardingService {
   /** Eligible, welcome not yet finished, no printers, and heading to the print list or home. */
   async shouldShowWelcome(targetUrl: string): Promise<boolean> {
     try {
+      if (this.welcomeFinished) {
+        return false;
+      }
       if (!OnboardingService.isWelcomeTarget(targetUrl)) {
         return false;
       }
@@ -70,12 +86,30 @@ export class OnboardingService {
     }
   }
 
+  /** A failed write (or another tab's 400) must not send the user back to /welcome. */
   markWelcomeFinished(): Promise<void> {
+    this.welcomeFinished = true;
     return this.writeOnce(UserSettingType.Onboarding_WelcomeFinishedAt);
   }
 
   acknowledgeEmailNotice(): Promise<void> {
+    this.acknowledged.set(true);
     return this.writeOnce(UserSettingType.Email_NoticeSeenAt);
+  }
+
+  /** True while setting 26 is unset and nothing acknowledged the notice. A failed lookup is false. */
+  async emailNoticePending(): Promise<boolean> {
+    if (this.acknowledged()) {
+      return false;
+    }
+    try {
+      const seen = await this.settings.getCurrentUsersSettingByType(
+        UserSettingType.Email_NoticeSeenAt
+      );
+      return !seen?.value && !this.acknowledged();
+    } catch {
+      return false;
+    }
   }
 
   async dismissChecklist(): Promise<void> {
@@ -115,9 +149,12 @@ export class OnboardingService {
     return (family?.tiers.length ?? 0) > 0;
   }
 
-  /** Drops the cached status; called on logout. */
+  /** Drops the cached status and the session flags; called on logout. */
   clear(): void {
     this.statusPromise = null;
+    this.welcomeFinished = false;
+    this.acknowledged.set(false);
+    this.checklistShowing.set(false);
   }
 
   private async fetchStatus(): Promise<OnboardingStatus> {

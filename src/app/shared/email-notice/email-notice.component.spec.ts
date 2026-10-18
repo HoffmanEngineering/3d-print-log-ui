@@ -1,4 +1,4 @@
-import { PLATFORM_ID } from '@angular/core';
+import { PLATFORM_ID, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
@@ -11,6 +11,7 @@ import {
   UserSettingService,
   UserSettingType,
 } from '../../core/services/user-setting.service';
+import { OnboardingService } from '../../onboarding/onboarding.service';
 import { EmailNoticeComponent } from './email-notice.component';
 
 describe('EmailNoticeComponent', () => {
@@ -19,6 +20,8 @@ describe('EmailNoticeComponent', () => {
   let settings: jasmine.SpyObj<UserSettingService>;
   let logging: jasmine.SpyObj<LoggingService>;
   let seenAt: string | undefined;
+  let noticeAcknowledged: WritableSignal<boolean>;
+  let checklistShowing: WritableSignal<boolean>;
 
   async function render(
     platform: 'browser' | 'server' = 'browser',
@@ -47,6 +50,10 @@ describe('EmailNoticeComponent', () => {
         { provide: AuthService, useValue: { userProfile$: user$ } },
         { provide: UserSettingService, useValue: settings },
         { provide: LoggingService, useValue: logging },
+        {
+          provide: OnboardingService,
+          useValue: { noticeAcknowledged, checklistShowing },
+        },
       ],
     }).compileComponents();
     await TestBed.inject(Router).navigateByUrl(url);
@@ -71,6 +78,8 @@ describe('EmailNoticeComponent', () => {
   beforeEach(() => {
     user$ = new BehaviorSubject<unknown>({ id: 1 });
     seenAt = undefined;
+    noticeAcknowledged = signal(false);
+    checklistShowing = signal(false);
   });
 
   it('shows for a signed-in user who has not seen it', async () => {
@@ -88,11 +97,54 @@ describe('EmailNoticeComponent', () => {
     expect(banner()).toBeNull();
   });
 
-  it('appears once the user leaves /welcome', async () => {
+  it('stays hidden after leaving /welcome once the welcome acknowledged the notice', async () => {
     await render('browser', '/welcome');
+    // Skip setup / Done call acknowledgeEmailNotice() before navigating.
+    noticeAcknowledged.set(true);
     await TestBed.inject(Router).navigateByUrl('/prints');
     await settle();
 
+    expect(banner()).toBeNull();
+  });
+
+  it('appears when the user leaves /welcome without acknowledging (navbar link)', async () => {
+    await render('browser', '/welcome');
+    await TestBed.inject(Router).navigateByUrl('/printers');
+    await settle();
+
+    expect(banner()).not.toBeNull();
+  });
+
+  it('hides as soon as the notice is acknowledged inline elsewhere', async () => {
+    await render();
+    expect(banner()).not.toBeNull();
+
+    noticeAcknowledged.set(true);
+    fixture.detectChanges();
+
+    expect(banner()).toBeNull();
+  });
+
+  it('stays hidden while the getting-started checklist shows', async () => {
+    await render();
+    checklistShowing.set(true);
+    fixture.detectChanges();
+    expect(banner()).toBeNull();
+
+    checklistShowing.set(false);
+    fixture.detectChanges();
+    expect(banner()).not.toBeNull();
+  });
+
+  for (const url of ['/welcome?step=3', '/welcome#top', '/welcome/x']) {
+    it(`treats ${url} as the welcome page`, async () => {
+      await render('browser', url);
+      expect(banner()).toBeNull();
+    });
+  }
+
+  it('does not treat /welcomeX as the welcome page', async () => {
+    await render('browser', '/welcomeX');
     expect(banner()).not.toBeNull();
   });
 

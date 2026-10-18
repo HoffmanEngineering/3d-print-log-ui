@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import {
   ComponentFixture,
   TestBed,
@@ -65,10 +65,11 @@ describe('PrintListHintSlotComponent', () => {
       me: jasmine.createSpy('me').and.callFake(me),
       catalog: jasmine.createSpy('catalog'),
     };
-    onboarding = jasmine.createSpyObj<OnboardingService>('OnboardingService', [
-      'checklistVisible',
-      'dismissChecklist',
-    ]);
+    onboarding = jasmine.createSpyObj<OnboardingService>(
+      'OnboardingService',
+      ['checklistVisible', 'dismissChecklist'],
+      { checklistShowing: signal(false) }
+    );
     onboarding.checklistVisible.and.callFake(
       async (m) => m !== null && visible
     );
@@ -148,6 +149,28 @@ describe('PrintListHintSlotComponent', () => {
     expect(checklist()).toBeNull();
     expect(hint()).toBeNull();
     expect(active).toEqual([]);
+  });
+
+  it('reports checklistShowing to the onboarding service', async () => {
+    configure(() => of(achievementsWith([])), true);
+    await render();
+    expect(onboarding.checklistShowing()).toBeTrue();
+
+    checklist().componentInstance.dismissed.emit();
+    expect(onboarding.checklistShowing()).toBeFalse();
+  });
+
+  it('leaves checklistShowing false when the hint shows', async () => {
+    configure(() => of(achievementsWith([])), false);
+    await render();
+    expect(onboarding.checklistShowing()).toBeFalse();
+  });
+
+  it('clears checklistShowing when destroyed', async () => {
+    configure(() => of(achievementsWith([])), true);
+    await render();
+    fixture.destroy();
+    expect(onboarding.checklistShowing()).toBeFalse();
   });
 
   it('swaps to the hint when the checklist is dismissed', async () => {
@@ -315,8 +338,26 @@ describe('PrintListHintSlotComponent with the real services', () => {
     await settle();
     expect(() => fixture.detectChanges()).not.toThrow();
 
+    await settle();
+    fixture.detectChanges();
+
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('1 of 2 done');
+    // Setting 26 is unset: the card carries the inline notice, and the global banner hides.
+    expect(
+      el.querySelector('[data-testid="inline-email-notice"]')
+    ).not.toBeNull();
+    const onboarding = TestBed.inject(OnboardingService);
+    expect(onboarding.checklistShowing()).toBeTrue();
+    expect(onboarding.noticeAcknowledged()).toBeFalse();
+
+    (
+      el.querySelector(
+        'button[aria-label="Dismiss getting started"]'
+      ) as HTMLButtonElement
+    ).click();
+    expect(onboarding.noticeAcknowledged()).toBeTrue();
+    http.match(() => true);
     http.verify();
   });
 });

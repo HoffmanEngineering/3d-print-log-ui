@@ -20,6 +20,7 @@ import {
   UserSettingService,
   UserSettingType,
 } from '../../core/services/user-setting.service';
+import { OnboardingService } from '../../onboarding/onboarding.service';
 
 type DismissAction = 'got-it' | 'settings';
 
@@ -40,6 +41,7 @@ export class EmailNoticeComponent implements OnInit {
   private readonly settings = inject(UserSettingService);
   private readonly logging = inject(LoggingService);
   private readonly router = inject(Router);
+  private readonly onboarding = inject(OnboardingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -53,9 +55,17 @@ export class EmailNoticeComponent implements OnInit {
     { initialValue: this.router.url }
   );
 
-  /** The welcome page shows its own inline notice, so the banner would only repeat it. */
+  /**
+   * The welcome page and the getting-started checklist show their own inline notice, so the
+   * banner would only repeat it. Once either acknowledges it (setting 26 written or not), the
+   * banner stays gone for the session.
+   */
   readonly showBanner = computed(
-    () => this.visible() && !this.url().startsWith('/welcome')
+    () =>
+      this.visible() &&
+      !isWelcomeUrl(this.url()) &&
+      !this.onboarding.noticeAcknowledged() &&
+      !this.onboarding.checklistShowing()
   );
 
   ngOnInit(): void {
@@ -106,4 +116,9 @@ export class EmailNoticeComponent implements OnInit {
       this.visible.set(false);
     }
   }
+}
+
+/** `/welcome` itself, or followed by `/`, `?` or `#`; not `/welcomeX`. */
+function isWelcomeUrl(url: string): boolean {
+  return /^\/welcome(?:[/?#]|$)/.test(url);
 }

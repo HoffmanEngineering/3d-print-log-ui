@@ -1,5 +1,6 @@
 .checklist {
-  margin: 8px 0 12px;
+  // The same 8px gutter as the filter row above, so the card reads as a card, not a band.
+  margin: 8px 8px 12px;
   padding: 12px 12px 10px 16px;
   border-radius: 12px;
   border: 1px solid var(--mat-divider-color);
@@ -109,4 +110,11 @@
     color: var(--app-primary);
     text-decoration: underline;
   }
+}
+
+.checklist__notice {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--mat-divider-color);
 }

@@ -25,7 +25,7 @@ describe('EmailNoticeComponent', () => {
 
   async function render(
     platform: 'browser' | 'server' = 'browser',
-    url = '/prints'
+    url: string | null = '/prints'
   ): Promise<HTMLElement> {
     settings = jasmine.createSpyObj<UserSettingService>('UserSettingService', [
       'getCurrentUsersSettingByType',
@@ -56,7 +56,9 @@ describe('EmailNoticeComponent', () => {
         },
       ],
     }).compileComponents();
-    await TestBed.inject(Router).navigateByUrl(url);
+    if (url !== null) {
+      await TestBed.inject(Router).navigateByUrl(url);
+    }
     fixture = TestBed.createComponent(EmailNoticeComponent);
     fixture.detectChanges();
     await settle();
@@ -142,6 +144,15 @@ describe('EmailNoticeComponent', () => {
       expect(banner()).toBeNull();
     });
   }
+
+  it('waits for the first navigation, so a hard load of /welcome never flashes the banner', async () => {
+    await render('browser', null);
+    expect(banner()).toBeNull();
+
+    await TestBed.inject(Router).navigateByUrl('/welcome?step=3');
+    await settle();
+    expect(banner()).toBeNull();
+  });
 
   it('does not treat /welcomeX as the welcome page', async () => {
     await render('browser', '/welcomeX');

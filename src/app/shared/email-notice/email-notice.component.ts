@@ -52,7 +52,9 @@ export class EmailNoticeComponent implements OnInit {
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
       map((e) => e.urlAfterRedirects)
     ),
-    { initialValue: this.router.url }
+    // Null until the first navigation lands: before that router.url is "/", which would let
+    // the banner flash on a hard load of /welcome.
+    { initialValue: this.router.navigated ? this.router.url : null }
   );
 
   /**
@@ -60,13 +62,16 @@ export class EmailNoticeComponent implements OnInit {
    * banner would only repeat it. Once either acknowledges it (setting 26 written or not), the
    * banner stays gone for the session.
    */
-  readonly showBanner = computed(
-    () =>
+  readonly showBanner = computed(() => {
+    const url = this.url();
+    return (
       this.visible() &&
-      !isWelcomeUrl(this.url()) &&
+      url !== null &&
+      !isWelcomeUrl(url) &&
       !this.onboarding.noticeAcknowledged() &&
       !this.onboarding.checklistShowing()
-  );
+    );
+  });
 
   ngOnInit(): void {
     if (!this.isBrowser) {

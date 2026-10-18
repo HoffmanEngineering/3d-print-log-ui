@@ -1,11 +1,12 @@
 import {
   HttpClient,
+  HttpErrorResponse,
   HttpHeaders,
   HttpParams,
   HttpResponse,
 } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, Observable, of, shareReplay } from 'rxjs';
+import { catchError, map, Observable, of, shareReplay, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -72,8 +73,9 @@ export class PrinterCatalogService {
           params: new HttpParams().set('limit', limit),
         })
         .pipe(
-          catchError(() => of([] as PrinterModel[])),
-          shareReplay({ bufferSize: 1, refCount: false })
+          // shareReplay drops its cache when the source errors, so a failure is retried.
+          shareReplay({ bufferSize: 1, refCount: false }),
+          catchError(() => of([] as PrinterModel[]))
         );
     }
     return this.popular$;
@@ -88,8 +90,12 @@ export class PrinterCatalogService {
           headers: this.anonymousHeaders,
         })
         .pipe(
-          catchError(() => of(null)),
-          shareReplay({ bufferSize: 1, refCount: false })
+          // A 404 is a real answer and stays cached; any other failure is retried.
+          catchError((e: HttpErrorResponse) =>
+            e.status === 404 ? of(null) : throwError(() => e)
+          ),
+          shareReplay({ bufferSize: 1, refCount: false }),
+          catchError(() => of(null))
         );
       this.byId.set(id, cached);
     }
@@ -139,8 +145,8 @@ export class PrinterCatalogService {
       parts.push('heated chamber');
     }
     const slots = slotCount ?? m.defaultSlotCount;
-    if (slots) {
-      parts.push(`${slots} ${slots === 1 ? 'slot' : 'slots'}`);
+    if (slots && slots > 1) {
+      parts.push(`${slots} slots`);
     }
     return parts.join(' · ');
   }

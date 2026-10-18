@@ -14,7 +14,7 @@ const fullModel: PrinterModel = {
   id: 'bambu-lab-x1c',
   make: 'Bambu Lab',
   model: 'X1C',
-  technology: 'fdm',
+  technology: 'FFF',
   bedWidthMm: 256,
   bedDepthMm: 256,
   bedHeightMm: 256,
@@ -155,7 +155,55 @@ describe('PrinterCatalogService', () => {
     expect(result).toBeNull();
   });
 
+  it('popular refetches after a failure, then caches a success', () => {
+    const results: PrinterModel[][] = [];
+    service.popular().subscribe((r) => results.push(r));
+    http
+      .expectOne((r) => r.url === `${base}/popular`)
+      .flush('boom', { status: 500, statusText: 'Server Error' });
+    service.popular().subscribe((r) => results.push(r));
+    http.expectOne((r) => r.url === `${base}/popular`).flush([fullModel]);
+    service.popular().subscribe((r) => results.push(r));
+    http.expectNone((r) => r.url === `${base}/popular`);
+    expect(results).toEqual([[], [fullModel], [fullModel]]);
+  });
+
+  it('get refetches after a 500', () => {
+    const results: (PrinterModel | null)[] = [];
+    service.get('x').subscribe((r) => results.push(r));
+    http
+      .expectOne(`${base}/x`)
+      .flush('boom', { status: 500, statusText: 'Server Error' });
+    service.get('x').subscribe((r) => results.push(r));
+    http.expectOne(`${base}/x`).flush(fullModel);
+    expect(results).toEqual([null, fullModel]);
+  });
+
+  it('get caches a 404 as null', () => {
+    const results: (PrinterModel | null)[] = [];
+    service.get('nope').subscribe((r) => results.push(r));
+    http
+      .expectOne(`${base}/nope`)
+      .flush({}, { status: 404, statusText: 'Not Found' });
+    service.get('nope').subscribe((r) => results.push(r));
+    http.expectNone(`${base}/nope`);
+    expect(results).toEqual([null, null]);
+  });
+
   describe('specSummary', () => {
+    it('omits the slot part for a single slot', () => {
+      const m: PrinterModel = { ...fullModel, defaultSlotCount: 1 };
+      expect(PrinterCatalogService.specSummary(m)).toBe(
+        '256 × 256 × 256 mm · 0.4 mm nozzle · 1.75 mm · heated bed'
+      );
+    });
+
+    it('an explicit slot count of 1 overrides a default of 4', () => {
+      expect(PrinterCatalogService.specSummary(fullModel, undefined, 1)).toBe(
+        '256 × 256 × 256 mm · 0.4 mm nozzle · 1.75 mm · heated bed'
+      );
+    });
+
     it('describes a full model', () => {
       expect(PrinterCatalogService.specSummary(fullModel)).toBe(
         '256 × 256 × 256 mm · 0.4 mm nozzle · 1.75 mm · heated bed · 4 slots'
@@ -173,7 +221,7 @@ describe('PrinterCatalogService', () => {
         id: 'x',
         make: 'A',
         model: 'B',
-        technology: 'fdm',
+        technology: 'FFF',
         defaultNozzleMm: 0.4,
         hasHeatedBed: true,
       };
@@ -187,7 +235,7 @@ describe('PrinterCatalogService', () => {
         id: 'elegoo-saturn-4',
         make: 'Elegoo',
         model: 'Saturn 4',
-        technology: 'resin',
+        technology: 'Resin',
         bedWidthMm: 218.88,
         bedDepthMm: 122.88,
         bedHeightMm: 220,
@@ -203,7 +251,7 @@ describe('PrinterCatalogService', () => {
           id: 'x',
           make: 'A',
           model: 'B',
-          technology: 'fdm',
+          technology: 'FFF',
         })
       ).toBe('');
     });
@@ -214,7 +262,7 @@ describe('PrinterCatalogService', () => {
           id: 'x',
           make: 'A',
           model: 'B',
-          technology: 'fdm',
+          technology: 'FFF',
           hasHeatedChamber: true,
         })
       ).toBe('heated chamber');

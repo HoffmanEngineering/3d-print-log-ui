@@ -356,3 +356,9 @@ html.dark-theme .app-loading-shell {
 .app-fullscreen-dialog .mat-mdc-dialog-surface {
   border-radius: 0;
 }
+
+/* On a phone the dialog fills the screen: the content scrolls and the actions sit at the bottom. */
+.app-fullscreen-dialog .mat-mdc-dialog-content {
+  flex: 1 1 auto;
+  max-height: none;
+}

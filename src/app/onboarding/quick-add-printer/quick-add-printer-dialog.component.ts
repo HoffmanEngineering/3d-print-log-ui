@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
   MatDialog,
@@ -18,7 +19,7 @@ const PHONE_QUERY = '(max-width: 599.98px)';
 @Component({
   selector: 'app-quick-add-printer-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatDialogModule, QuickAddPrinterComponent],
+  imports: [MatButtonModule, MatDialogModule, QuickAddPrinterComponent],
   template: `
     <h2 mat-dialog-title>Add a printer</h2>
     <mat-dialog-content>

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   MAT_DIALOG_DATA,
@@ -212,7 +213,16 @@ describe('QuickAddPrinterComponent', () => {
     });
   });
 
-  it('maps Resin to MSLA and Other to the chosen category', async () => {
+  it('is a primary flat button labeled "Save printer"', async () => {
+    await setup();
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="quick-add-save"]'
+    ) as HTMLButtonElement;
+    expect(button.textContent!.trim()).toBe('Save printer');
+    expect(button.classList).toContain('mat-primary');
+  });
+
+  it('maps Resin to MSLA', async () => {
     await setup();
     component.selectCatalogPrinter({ make: 'Elegoo', model: 'Mars' });
     component.form.controls.type.setValue('MSLA');
@@ -220,7 +230,11 @@ describe('QuickAddPrinterComponent', () => {
     expect(
       printers.addPrinter.calls.mostRecent().args[0].category.nickname
     ).toBe('MSLA');
+  });
 
+  it('maps Other to the chosen category', async () => {
+    await setup();
+    component.selectCatalogPrinter({ make: 'Formlabs', model: 'Fuse 1' });
     component.form.controls.type.setValue('Other');
     component.form.controls.otherCategory.setValue('SLS');
     await component.save();
@@ -263,7 +277,13 @@ describe('QuickAddPrinterComponent', () => {
   it('shows the API message on error and does not emit', async () => {
     await setup();
     printers.addPrinter.and.returnValue(
-      throwError(() => ({ error: { message: 'Printer limit reached' } }))
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 400,
+            error: { message: 'Printer limit reached' },
+          })
+      )
     );
     component.selectCatalogPrinter({ make: 'Prusa', model: 'MK4' });
 
@@ -275,6 +295,116 @@ describe('QuickAddPrinterComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'Printer limit reached'
     );
+  });
+
+  it('shows the generic copy for an HTML 502 body', async () => {
+    await setup();
+    printers.addPrinter.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 502,
+            url: 'https://api.3dprintlog.com/api/Printers/',
+            error: '<html><body><h1>502 Bad Gateway</h1></body></html>',
+          })
+      )
+    );
+    component.selectCatalogPrinter({ make: 'Prusa', model: 'MK4' });
+
+    await component.save();
+    fixture.detectChanges();
+
+    const error = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="quick-add-error"]'
+    )!;
+    expect(error.textContent!.trim()).toBe(
+      'We could not save the printer. Try again.'
+    );
+  });
+
+  it('keeps Save disabled after a successful save, so a second click creates nothing', async () => {
+    await setup();
+    component.selectCatalogPrinter({ make: 'Prusa', model: 'MK4' });
+    fixture.detectChanges();
+    const button = () =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="quick-add-save"]'
+      ) as HTMLButtonElement;
+
+    button().click();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    expect(saved.length).toBe(1);
+
+    button().click();
+    await component.save();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(printers.addPrinter).toHaveBeenCalledTimes(1);
+    expect(button().disabled).toBeTrue();
+  });
+
+  it('saves typed text without a blur: Save is enabled and one click saves once', async () => {
+    await setup();
+    const host = fixture.nativeElement as HTMLElement;
+    const search = host.querySelector(
+      'input[formcontrolname="search"]'
+    ) as HTMLInputElement;
+    search.value = 'Voron 2.4';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const button = host.querySelector(
+      '[data-testid="quick-add-save"]'
+    ) as HTMLButtonElement;
+    expect(button.disabled).toBeFalse();
+    button.click();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r));
+
+    expect(printers.addPrinter).toHaveBeenCalledTimes(1);
+    const sent = printers.addPrinter.calls.mostRecent().args[0];
+    expect(sent.make).toBe('Voron');
+    expect(sent.model).toBe('2.4');
+    expect(sent.name).toBe('2.4');
+  });
+
+  it('submits on Enter (form submit) with typed text', async () => {
+    await setup();
+    const host = fixture.nativeElement as HTMLElement;
+    const search = host.querySelector(
+      'input[formcontrolname="search"]'
+    ) as HTMLInputElement;
+    search.value = 'Ender 3';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    (host.querySelector('form') as HTMLFormElement).requestSubmit();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r));
+
+    expect(printers.addPrinter).toHaveBeenCalledTimes(1);
+  });
+
+  it('marks the fields touched and explains an empty Save instead of disabling it', async () => {
+    await setup();
+    const host = fixture.nativeElement as HTMLElement;
+    const button = host.querySelector(
+      '[data-testid="quick-add-save"]'
+    ) as HTMLButtonElement;
+    expect(button.disabled).toBeFalse();
+
+    button.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(printers.addPrinter).not.toHaveBeenCalled();
+    expect(component.form.controls.name.touched).toBeTrue();
+    expect(
+      host.querySelector('[data-testid="quick-add-error"]')!.textContent
+    ).toContain('Search for your printer, or type its make and model.');
   });
 });
 
@@ -321,6 +451,14 @@ describe('openQuickAddPrinterDialog', () => {
       QuickAddPrinterDialogComponent
     );
     const printer = { id: 3 } as PrinterDetail;
+
+    dialogFixture.detectChanges();
+
+    const cancel = (dialogFixture.nativeElement as HTMLElement).querySelector(
+      'mat-dialog-actions button'
+    ) as HTMLButtonElement;
+    // A styled Material button, not a bare native one.
+    expect(cancel.classList).toContain('mat-mdc-button');
 
     dialogFixture.componentInstance.onSaved(printer);
 

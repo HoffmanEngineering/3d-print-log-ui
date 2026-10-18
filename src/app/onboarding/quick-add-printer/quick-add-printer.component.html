@@ -122,8 +122,9 @@
   <button
     type="submit"
     mat-flat-button
+    color="primary"
     data-testid="quick-add-save"
-    [disabled]="saving() || form.invalid"
+    [disabled]="saving() || done()"
   >
     Save printer
   </button>

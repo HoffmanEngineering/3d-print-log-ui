@@ -28,11 +28,13 @@ import {
   MaterialService,
 } from '../../core/services/material.service';
 import { PrinterService } from '../../core/services/printer.service';
+import { quickAddErrorText } from '../quick-add-error';
 
 const DEFAULT_TYPE = 'PLA';
 const DEFAULT_COLOR = '#ffffff';
 const SPOOL_WEIGHT_MG = 1_000_000;
 const DIAMETER_MM = 1.75;
+const SAVE_FAILED = 'We could not save the material. Try again.';
 
 /** The short label for a material: its acronym, falling back to its name. */
 function materialLabel(material: Material | undefined): string {
@@ -76,6 +78,8 @@ export class QuickAddMaterialComponent implements OnInit {
   });
 
   readonly saving = signal(false);
+  /** Set once the spool exists: Save stays off while the step moves on. */
+  readonly done = signal(false);
   readonly errorMessage = signal<string | null>(null);
   /** Filament types only, so the dropdown shows PETG and the rest below the PLA default. */
   readonly materials = signal<Material[]>([]);
@@ -133,7 +137,7 @@ export class QuickAddMaterialComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    if (this.saving()) {
+    if (this.saving() || this.done()) {
       return;
     }
     const material = this.selected();
@@ -164,9 +168,10 @@ export class QuickAddMaterialComponent implements OnInit {
         materialType: materialLabel(material),
         loadedIntoPrinter: loaded,
       });
+      this.done.set(true);
       this.saved.emit(filament);
     } catch (error) {
-      this.errorMessage.set(errorText(error));
+      this.errorMessage.set(quickAddErrorText(error, SAVE_FAILED));
     } finally {
       this.saving.set(false);
     }
@@ -176,15 +181,21 @@ export class QuickAddMaterialComponent implements OnInit {
     if (this.nameTouched) {
       return;
     }
+    this.form.controls.displayName.setValue(this.generatedName(), {
+      emitEvent: false,
+    });
+  }
+
+  /** Brand, type and color, e.g. "Hatchbox PLA Black". */
+  private generatedName(): string {
     const value = this.form.getRawValue();
-    const name = [
+    return [
       value.brand.trim(),
       materialLabel(this.selected()),
       value.colorName.trim(),
     ]
       .filter(Boolean)
       .join(' ');
-    this.form.controls.displayName.setValue(name, { emitEvent: false });
   }
 
   private buildFilament(material: Material): FilamentDetail {
@@ -192,7 +203,8 @@ export class QuickAddMaterialComponent implements OnInit {
     const hex = (value.colorHex || DEFAULT_COLOR).replace(/^#/, '');
     return {
       id: '',
-      displayName: value.displayName.trim(),
+      // A name cleared by hand falls back to the generated one.
+      displayName: value.displayName.trim() || this.generatedName(),
       brand: value.brand.trim(),
       materialCategoryNickname: 'filament',
       materialType: materialLabel(material),
@@ -231,22 +243,4 @@ export class QuickAddMaterialComponent implements OnInit {
       filamentAdjustments: [],
     };
   }
-}
-
-function errorText(error: unknown): string {
-  const e = error as {
-    error?: { message?: string; detail?: string; title?: string } | string;
-    message?: string;
-  };
-  if (typeof e?.error === 'string' && e.error) {
-    return e.error;
-  }
-  const body = typeof e?.error === 'object' ? e.error : undefined;
-  return (
-    body?.message ??
-    body?.detail ??
-    body?.title ??
-    e?.message ??
-    'We could not save the material. Try again.'
-  );
 }

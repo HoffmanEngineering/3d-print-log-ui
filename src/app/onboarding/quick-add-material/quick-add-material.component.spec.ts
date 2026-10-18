@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
@@ -202,7 +203,9 @@ describe('QuickAddMaterialComponent', () => {
 
   it('shows an error and does not emit when the filament save fails', async () => {
     filaments.addFilament.and.returnValue(
-      throwError(() => ({ error: { message: 'Nope' } }))
+      throwError(
+        () => new HttpErrorResponse({ status: 400, error: { message: 'Nope' } })
+      )
     );
     await setup();
 
@@ -221,5 +224,78 @@ describe('QuickAddMaterialComponent', () => {
     await Promise.all([first, second]);
 
     expect(filaments.addFilament).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the generic copy for an HTML 502 body, never the URL', async () => {
+    filaments.addFilament.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 502,
+            url: 'https://api.3dprintlog.com/api/Filaments',
+            error: '<html><body><h1>502 Bad Gateway</h1></body></html>',
+          })
+      )
+    );
+    await setup();
+
+    await component.save();
+
+    expect(component.errorMessage()).toBe(
+      'We could not save the material. Try again.'
+    );
+  });
+
+  it('keeps Save disabled after a successful save, so a second click creates nothing', async () => {
+    await setup();
+    const button = () =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="quick-add-save"]'
+      ) as HTMLButtonElement;
+
+    button().click();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    expect(saved.length).toBe(1);
+
+    button().click();
+    await component.save();
+    fixture.detectChanges();
+
+    expect(filaments.addFilament).toHaveBeenCalledTimes(1);
+    expect(button().disabled).toBeTrue();
+  });
+
+  it('falls back to the generated name when the name is blank', async () => {
+    await setup();
+    component.form.controls.brand.setValue('Hatchbox');
+    component.form.controls.colorName.setValue('Black');
+    component.onNameInput();
+    component.form.controls.displayName.setValue('   ');
+
+    await component.save();
+
+    expect(filaments.addFilament.calls.mostRecent().args[0].displayName).toBe(
+      'Hatchbox PLA Black'
+    );
+  });
+
+  it('is a primary flat button labeled "Save material"', async () => {
+    await setup();
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="quick-add-save"]'
+    ) as HTMLButtonElement;
+    expect(button.textContent!.trim()).toBe('Save material');
+    expect(button.classList).toContain('mat-primary');
+  });
+
+  it('labels the color field "Color name" so it fits beside the swatch', async () => {
+    await setup();
+    const labels = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('mat-label'),
+      (l) => l.textContent!.trim()
+    );
+    expect(labels).toContain('Color name');
   });
 });

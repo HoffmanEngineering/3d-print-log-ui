@@ -28,7 +28,7 @@
 
   <div class="quick-add__row">
     <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
-      <mat-label>Color name (optional)</mat-label>
+      <mat-label>Color name</mat-label>
       <input matInput formControlName="colorName" autocomplete="off" />
     </mat-form-field>
     <label class="quick-add__swatch">
@@ -61,8 +61,9 @@
   <button
     type="submit"
     mat-flat-button
+    color="primary"
     data-testid="quick-add-save"
-    [disabled]="saving() || form.invalid"
+    [disabled]="saving() || done() || form.invalid"
   >
     Save material
   </button>

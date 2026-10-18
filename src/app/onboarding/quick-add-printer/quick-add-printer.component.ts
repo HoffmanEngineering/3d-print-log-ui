@@ -29,6 +29,7 @@ import {
 } from '../../core/services/printer.service';
 import { InlineEmailNoticeComponent } from '../inline-email-notice/inline-email-notice.component';
 import { OnboardingService } from '../onboarding.service';
+import { quickAddErrorText } from '../quick-add-error';
 import {
   CatalogPrinter,
   loadPrinterCatalog,
@@ -38,6 +39,8 @@ import {
 export type QuickAddSource = 'welcome' | 'print-form' | 'checklist';
 
 const DEFAULT_SLOT_COUNT = 4;
+const SAVE_FAILED = 'We could not save the printer. Try again.';
+const PRINTER_MISSING = 'Search for your printer, or type its make and model.';
 /** Types that have their own toggle button; "Other" offers the rest. */
 const TOGGLE_NICKNAMES = ['FFF', 'MSLA'];
 
@@ -93,6 +96,8 @@ export class QuickAddPrinterComponent implements OnInit {
   });
 
   readonly saving = signal(false);
+  /** Set once the printer exists: Save stays off while a dialog closes or a step moves on. */
+  readonly done = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly showManual = signal(false);
   readonly categories = signal<PrinterCategory[]>([]);
@@ -190,12 +195,16 @@ export class QuickAddPrinterComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    if (this.saving()) {
+    if (this.saving() || this.done()) {
       return;
     }
     this.commitFreeText();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      const { make, model } = this.form.controls;
+      this.errorMessage.set(
+        make.invalid || model.invalid ? PRINTER_MISSING : null
+      );
       return;
     }
     this.saving.set(true);
@@ -210,9 +219,10 @@ export class QuickAddPrinterComponent implements OnInit {
         fromCatalog: this.fromCatalog,
         multiSlot: this.form.controls.multiMaterial.value,
       });
+      this.done.set(true);
       this.saved.emit(printer);
     } catch (error) {
-      this.errorMessage.set(errorText(error));
+      this.errorMessage.set(quickAddErrorText(error, SAVE_FAILED));
     } finally {
       this.saving.set(false);
     }
@@ -247,22 +257,4 @@ export class QuickAddPrinterComponent implements OnInit {
       })
     );
   }
-}
-
-function errorText(error: unknown): string {
-  const e = error as {
-    error?: { message?: string; detail?: string; title?: string } | string;
-    message?: string;
-  };
-  if (typeof e?.error === 'string' && e.error) {
-    return e.error;
-  }
-  const body = typeof e?.error === 'object' ? e.error : undefined;
-  return (
-    body?.message ??
-    body?.detail ??
-    body?.title ??
-    e?.message ??
-    'We could not save the printer. Try again.'
-  );
 }

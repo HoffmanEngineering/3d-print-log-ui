@@ -1,0 +1,69 @@
+<form
+  class="quick-add"
+  [formGroup]="form"
+  (ngSubmit)="save()"
+  data-testid="quick-add-material"
+>
+  <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+    <mat-label>Material type</mat-label>
+    <mat-select formControlName="materialId">
+      @for (material of materials(); track material.id) {
+        <mat-option [value]="material.id">
+          {{ label(material) }}
+          @if (material.name && material.name !== label(material)) {
+            ({{ material.name }})
+          }
+        </mat-option>
+      }
+    </mat-select>
+    @if (density(); as d) {
+      <mat-hint>Density {{ d }} g/cm³</mat-hint>
+    }
+  </mat-form-field>
+
+  <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+    <mat-label>Brand (optional)</mat-label>
+    <input matInput formControlName="brand" autocomplete="off" />
+  </mat-form-field>
+
+  <div class="quick-add__row">
+    <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+      <mat-label>Color name (optional)</mat-label>
+      <input matInput formControlName="colorName" autocomplete="off" />
+    </mat-form-field>
+    <label class="quick-add__swatch">
+      <span class="quick-add__swatch-label">Color</span>
+      <input
+        type="color"
+        formControlName="colorHex"
+        aria-label="Color"
+        data-testid="quick-add-color"
+      />
+    </label>
+  </div>
+
+  <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+    <mat-label>Name</mat-label>
+    <input
+      matInput
+      formControlName="displayName"
+      autocomplete="off"
+      (input)="onNameInput()"
+    />
+  </mat-form-field>
+
+  @if (errorMessage(); as message) {
+    <p class="quick-add__error" role="alert" data-testid="quick-add-error">
+      {{ message }}
+    </p>
+  }
+
+  <button
+    type="submit"
+    mat-flat-button
+    data-testid="quick-add-save"
+    [disabled]="saving() || form.invalid"
+  >
+    Save material
+  </button>
+</form>

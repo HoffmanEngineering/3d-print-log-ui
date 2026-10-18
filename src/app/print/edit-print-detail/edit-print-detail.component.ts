@@ -34,7 +34,16 @@ import {
   CdkDragHandle,
 } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, Observable, of, Subscription } from 'rxjs';
-import { filter, map, mergeMap, take, toArray } from 'rxjs/operators';
+import {
+  catchError,
+  filter,
+  map,
+  mergeMap,
+  switchMap,
+  take,
+  timeout,
+  toArray,
+} from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
@@ -74,6 +83,11 @@ import {
 } from 'src/app/onboarding/onboarding-api.service';
 import { withTimeout } from 'src/app/core/utils/with-timeout';
 import { openQuickAddPrinterDialog } from 'src/app/onboarding/quick-add-printer/quick-add-printer-dialog.component';
+import {
+  PrinterCatalogService,
+  PrinterModel,
+  PrinterModelMatch,
+} from 'src/app/core/services/printer-catalog.service';
 import { convertFilamentValue } from 'src/app/shared/utils/filament-display.utils';
 import { ThumbnailImage } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import {
@@ -151,6 +165,9 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
 
 /** The printer select's "+ Add a printer" option. Never a real printer id. */
 export const ADD_PRINTER_SENTINEL = -1;
+
+/** How long the form waits for the catalog to name a slicer file's printer before giving up. */
+export const PRINTER_DETECTION_TIMEOUT_MS = 3000;
 
 export interface PrintImageValue {
   id?: number;
@@ -407,6 +424,12 @@ export class EditPrintDetailComponent
   readonly onboardingMode = signal(false);
 
   /**
+   * The catalog model a slicer file named, when the user owns no printer of it. The printer field
+   * then offers to add one.
+   */
+  readonly detectedPrinterHint = signal<PrinterModel | null>(null);
+
+  /**
    * Whether the user had earned the first-print badge before this new print. Null while unknown
    * or when the lookup failed, which keeps the conversion firing as it did before.
    */
@@ -471,6 +494,7 @@ export class EditPrintDetailComponent
   private readonly destroyRef = inject(DestroyRef);
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly projectService = inject(ProjectService);
+  private readonly printerCatalog = inject(PrinterCatalogService);
 
   public readonly maxImages = this.subscriptionService.maxImagesPerPrint;
 
@@ -620,6 +644,13 @@ export class EditPrintDetailComponent
       this.onChanges();
       this.getEstimatedCompletedDate();
       this.getActualCompletedDate();
+
+      if (printIsNew) {
+        this.detectSlicerPrinter(
+          data.print.detectedPrinterName,
+          data.print.print
+        );
+      }
     });
 
     this.userSettingService
@@ -1914,11 +1945,12 @@ export class EditPrintDetailComponent
    * The onboarding status (prefetched for a new print) is waited on for at most
    * ONBOARDING_LOOKUP_TIMEOUT_MS; past that the dialog opens without the email notice.
    */
-  async openAddPrinter(): Promise<void> {
+  async openAddPrinter(options?: { initialModelId?: string }): Promise<void> {
     if (this.addPrinterDialogOpen) {
       return;
     }
     this.addPrinterDialogOpen = true;
+    const initialModelId = options?.initialModelId;
     try {
       const status = await withTimeout(
         this.onboardingService.status(),
@@ -1928,11 +1960,16 @@ export class EditPrintDetailComponent
       openQuickAddPrinterDialog(this.dialog, {
         source: 'print-form',
         showEmailNotice: status.onboardingEligible,
+        ...(initialModelId ? { initialModelId } : {}),
       })
         .afterClosed()
         .subscribe((printer) => {
           this.addPrinterDialogOpen = false;
           if (printer) {
+            if (initialModelId) {
+              this.loggingService.logEvent('PrintForm_DetectedPrinterAdded');
+              this.detectedPrinterHint.set(null);
+            }
             this.selectAddedPrinter(printer.id);
           }
         });
@@ -1942,6 +1979,98 @@ export class EditPrintDetailComponent
         error instanceof Error ? error : new Error(String(error))
       );
     }
+  }
+
+  /** The hint's "Add it": quick add with the detected model preselected. */
+  addDetectedPrinter(): void {
+    const model = this.detectedPrinterHint();
+    if (model) {
+      void this.openAddPrinter({ initialModelId: model.id });
+    }
+  }
+
+  /**
+   * A new print from a slicer file that names its printer (spec section 8.2): asks the catalog
+   * which model that is, then preselects the user's newest active printer of that model, or
+   * offers to add one. Silent on no match, an error or a timeout. It only ever sets the printer,
+   * leaves a printer the user picked in the meantime alone, and does not save the choice as the
+   * last selected printer.
+   */
+  private detectSlicerPrinter(
+    name: string | null | undefined,
+    print: PrintDetail | null
+  ): void {
+    if (!name || print?.printerId != null) {
+      return;
+    }
+    const control = this.printForm.controls.printerId;
+    const printerIdBefore = control.value;
+
+    this.printerCatalog
+      .match(name)
+      .pipe(
+        switchMap((match) => this.resolveDetectedPrinter(match)),
+        take(1),
+        timeout({ first: PRINTER_DETECTION_TIMEOUT_MS }),
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((detected) => {
+        if (!detected) {
+          return;
+        }
+        if (detected.owned) {
+          const userChosePrinter =
+            control.dirty ||
+            this.addPrinterDialogOpen ||
+            control.value !== printerIdBefore;
+          if (userChosePrinter) {
+            return;
+          }
+          // No event: the valueChanges handlers would save this as the last selected printer.
+          control.setValue(detected.owned.id, { emitEvent: false });
+          this.previousPrinterId = detected.owned.id;
+          this.setMaterialCategoryNameForPrinterId(detected.owned.id);
+          this.changeDetector.markForCheck();
+        } else {
+          this.detectedPrinterHint.set(detected.model);
+        }
+        this.loggingService.logEvent('PrintForm_PrinterDetected', {
+          confidence: detected.match.confidence,
+          owned: detected.owned !== null,
+        });
+      });
+  }
+
+  private resolveDetectedPrinter(match: PrinterModelMatch | null): Observable<{
+    match: PrinterModelMatch;
+    owned: PrinterSummary | null;
+    model: PrinterModel | null;
+  } | null> {
+    if (!match) {
+      return of(null);
+    }
+    const owned = this.newestActivePrinterOfModel(match.id);
+    if (owned) {
+      return of({ match, owned, model: null });
+    }
+    return this.printerCatalog
+      .get(match.id)
+      .pipe(map((model) => (model ? { match, owned: null, model } : null)));
+  }
+
+  /**
+   * Printer summaries carry no timestamp, so "most recently updated" falls back to the highest
+   * id, the most recently created.
+   */
+  private newestActivePrinterOfModel(modelId: string): PrinterSummary | null {
+    const candidates = this.printers.filter(
+      (p) => p.isActive && p.catalogModelId === modelId
+    );
+    if (candidates.length === 0) {
+      return null;
+    }
+    return candidates.reduce((a, b) => (b.id > a.id ? b : a));
   }
 
   private selectAddedPrinter(printerId: number): void {

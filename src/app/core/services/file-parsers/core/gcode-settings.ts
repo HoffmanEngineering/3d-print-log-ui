@@ -21,6 +21,13 @@ export const UNSPACED_COLON: GcodeSettingsOptions = {
   spaced: false,
 };
 
+/** Header keys that name the printer, in priority order. */
+const PRINTER_NAME_KEYS = [
+  'printer_model',
+  'printer_settings_id',
+  'TARGET_MACHINE.NAME',
+] as const;
+
 /**
  * A single-pass index of the "; key = value" comment lines in a gcode file, so
  * each setting lookup is a map hit instead of a regex over the whole file.
@@ -29,6 +36,21 @@ export const UNSPACED_COLON: GcodeSettingsOptions = {
  */
 export class GcodeSettings {
   private constructor(private readonly values: Map<string, string>) {}
+
+  /**
+   * The printer a file was sliced for, in the order the slicers write it (spec section 8.1):
+   * Orca and Prusa families' `printer_model`, then their `printer_settings_id` (the profile
+   * name), then Cura's `TARGET_MACHINE.NAME`. Null when none is present.
+   */
+  static detectedPrinterName(settings: GcodeSettings): string | null {
+    for (const key of PRINTER_NAME_KEYS) {
+      const value = settings.get(key).trim();
+      if (value !== '') {
+        return value;
+      }
+    }
+    return null;
+  }
 
   static empty(): GcodeSettings {
     return new GcodeSettings(new Map());

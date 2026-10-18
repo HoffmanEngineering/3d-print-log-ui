@@ -4,10 +4,14 @@ import { ToastrService } from 'ngx-toastr';
 import { PrintDetail } from 'src/app/core/services/print.service';
 import { GcodeViewerModalComponent } from 'src/app/shared/gcode-viewer-modal/gcode-viewer-modal.component';
 import { ParserUnavailableDialogComponent } from 'src/app/shared/parser-unavailable-dialog/parser-unavailable-dialog.component';
+import { ParsedNewPrint } from './file-parsers/core/gcode-new-print-parser';
 import { SlicerRegistry } from './file-parsers/core/slicer-registry';
 import { LoggingService } from './logging.service';
 
-export type { GcodeNewPrintParser } from './file-parsers/core/gcode-new-print-parser';
+export type {
+  GcodeNewPrintParser,
+  ParsedNewPrint,
+} from './file-parsers/core/gcode-new-print-parser';
 
 /**
  * Front door for "Add Print From Gcode": picks a slicer parser through the
@@ -32,6 +36,17 @@ export class GcodeFileParserService {
     gcode: string,
     fileName?: string
   ): Promise<PrintDetail | null> {
+    return (await this.parseWithMeta(gcode, fileName))?.print ?? null;
+  }
+
+  /**
+   * As parse, plus the printer name from the file's header. A file opened in the generic viewer
+   * names no printer.
+   */
+  public async parseWithMeta(
+    gcode: string,
+    fileName?: string
+  ): Promise<ParsedNewPrint | null> {
     const { parser, confidence, score } = this.registry.resolve(gcode);
 
     this.loggingService.logEvent('GcodeAnalyzed', {
@@ -42,9 +57,8 @@ export class GcodeFileParserService {
 
     try {
       if (!parser) {
-        return (
-          (await this.showGenericGcodeViewerModal(gcode, fileName)) || null
-        );
+        const print = await this.showGenericGcodeViewerModal(gcode, fileName);
+        return print ? { print, detectedPrinterName: null } : null;
       }
 
       if (confidence === 'heuristic') {
@@ -53,7 +67,7 @@ export class GcodeFileParserService {
         );
       }
 
-      return await parser.parse(gcode, fileName);
+      return await parser.parseWithMeta(gcode, fileName);
     } catch (e: unknown) {
       this.loggingService.logException(e as Error);
       this.toastrService.error(

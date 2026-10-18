@@ -1335,10 +1335,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
         const reader = new FileReader();
         reader.onload = (e: any) => {
           this.gcodeParserService
-            .parse(e.target.result, fileName)
-            .then((newPrint) => {
-              if (newPrint) {
-                this.newPrintStoreService.setNewPrint(newPrint);
+            .parseWithMeta(e.target.result, fileName)
+            .then((parsed) => {
+              if (parsed) {
+                this.newPrintStoreService.setNewPrint(parsed.print, {
+                  detectedPrinterName: parsed.detectedPrinterName,
+                });
                 this.router
                   .navigate(['new', 'edit'], {
                     relativeTo: this.activatedRoute,

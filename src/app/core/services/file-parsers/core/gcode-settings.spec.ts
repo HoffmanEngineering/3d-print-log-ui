@@ -115,4 +115,35 @@ describe('GcodeSettings', () => {
       expect(GcodeSettings.empty().has('a')).toBeFalse();
     });
   });
+
+  describe('detectedPrinterName', () => {
+    it('prefers printer_model over printer_settings_id', () => {
+      const s = GcodeSettings.parse(
+        '; printer_settings_id = My X1C profile\n; printer_model = Bambu Lab X1 Carbon',
+        SPACED_EQUALS
+      );
+      expect(GcodeSettings.detectedPrinterName(s)).toBe('Bambu Lab X1 Carbon');
+    });
+
+    it('falls back to printer_settings_id', () => {
+      const s = GcodeSettings.parse(
+        '; printer_settings_id = Original Prusa MK4S',
+        SPACED_EQUALS
+      );
+      expect(GcodeSettings.detectedPrinterName(s)).toBe('Original Prusa MK4S');
+    });
+
+    it("reads Cura's TARGET_MACHINE.NAME", () => {
+      const s = GcodeSettings.parse(
+        ';FLAVOR:Marlin\n;TARGET_MACHINE.NAME:Creality Ender-3',
+        UNSPACED_COLON
+      );
+      expect(GcodeSettings.detectedPrinterName(s)).toBe('Creality Ender-3');
+    });
+
+    it('is null when no header names the printer', () => {
+      const s = GcodeSettings.parse('; layer_height = 0.2', SPACED_EQUALS);
+      expect(GcodeSettings.detectedPrinterName(s)).toBeNull();
+    });
+  });
 });

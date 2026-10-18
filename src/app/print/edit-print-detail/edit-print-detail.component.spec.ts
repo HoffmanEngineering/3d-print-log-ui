@@ -27,7 +27,7 @@ import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
@@ -56,6 +56,10 @@ import { OnboardingService } from 'src/app/onboarding/onboarding.service';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
+import {
+  PrinterCatalogService,
+  PrinterModel,
+} from 'src/app/core/services/printer-catalog.service';
 import {
   ProjectService,
   ProjectStatus,
@@ -139,6 +143,11 @@ describe('EditPrintDetailComponent', () => {
       }
     );
 
+    const mockCatalog = jasmine.createSpyObj<PrinterCatalogService>(
+      'PrinterCatalogService',
+      { match: of(null), get: of(null) }
+    );
+
     const mockProjectService = jasmine.createSpyObj<ProjectService>(
       'ProjectService',
       ['createProject']
@@ -170,6 +179,7 @@ describe('EditPrintDetailComponent', () => {
         { provide: LoggingService, useValue: mockLogger },
         { provide: SubscriptionService, useValue: mockSubscriptionService },
         { provide: ProjectService, useValue: mockProjectService },
+        { provide: PrinterCatalogService, useValue: mockCatalog },
         { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
         {
           provide: ActivatedRoute,
@@ -1289,6 +1299,7 @@ describe('EditPrintDetailComponent', () => {
       printers?: PrinterSummary[];
       lastSelectedPrinterId?: number;
       query?: Record<string, string>;
+      detectedPrinterName?: string | null;
     }): EditPrintDetailComponent {
       const route = TestBed.inject(ActivatedRoute) as unknown as {
         data: Observable<Record<string, unknown>>;
@@ -1303,7 +1314,11 @@ describe('EditPrintDetailComponent', () => {
           options.lastSelectedPrinterId === undefined
             ? null
             : { id: 3, value: `${options.lastSelectedPrinterId}` },
-        print: { print: options.print ?? null },
+        print: {
+          print: options.print ?? null,
+          user: null,
+          detectedPrinterName: options.detectedPrinterName ?? null,
+        },
       });
       route.snapshot = {
         queryParamMap: convertToParamMap(options.query ?? {}),
@@ -1649,6 +1664,333 @@ describe('EditPrintDetailComponent', () => {
           ToastrService
         ) as jasmine.SpyObj<ToastrService>;
         expect(toastr.info).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('detecting the slicer printer', () => {
+      let catalog: jasmine.SpyObj<PrinterCatalogService>;
+      let logger: jasmine.SpyObj<LoggingService>;
+
+      const X1C = 'bambu-lab-x1-carbon';
+      const x1cModel = {
+        id: X1C,
+        make: 'Bambu Lab',
+        model: 'X1 Carbon',
+        technology: 'FDM',
+      } as PrinterModel;
+      const catalogPrinter = (
+        id: number,
+        catalogModelId: string | null,
+        isActive = true
+      ): PrinterSummary => ({
+        ...printer(id, `Printer ${id}`),
+        catalogModelId,
+        isActive,
+      });
+      const detectedEvents = () =>
+        logger.logEvent.calls
+          .all()
+          .filter((c) => c.args[0] === 'PrintForm_PrinterDetected')
+          .map((c) => c.args[1]);
+      const hint = () =>
+        (editor!.nativeElement as HTMLElement).querySelector(
+          '[data-testid="detected-printer-hint"]'
+        );
+
+      beforeEach(() => {
+        catalog = TestBed.inject(
+          PrinterCatalogService
+        ) as jasmine.SpyObj<PrinterCatalogService>;
+        logger = TestBed.inject(
+          LoggingService
+        ) as jasmine.SpyObj<LoggingService>;
+        catalog.match.calls.reset();
+        catalog.get.calls.reset();
+      });
+
+      describe('a model the user owns', () => {
+        beforeEach(() =>
+          catalog.match.and.returnValue(of({ id: X1C, confidence: 'exact' }))
+        );
+
+        it('preselects that printer without saving it as the last selected', () => {
+          const form = openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'Bambu Lab X1 Carbon 0.4 nozzle',
+          });
+
+          expect(catalog.match).toHaveBeenCalledOnceWith(
+            'Bambu Lab X1 Carbon 0.4 nozzle'
+          );
+          expect(form.printForm.controls.printerId.value).toBe(9);
+          expect(writtenPrinterIds()).toEqual([]);
+          expect(hint()).toBeNull();
+          expect(detectedEvents()).toEqual([
+            { confidence: 'exact', owned: true },
+          ]);
+        });
+
+        it('picks the newest active printer when several have that model', () => {
+          const form = openEditor({
+            print: curaPrint,
+            printers: [
+              catalogPrinter(9, X1C),
+              catalogPrinter(12, X1C),
+              catalogPrinter(15, X1C, false),
+              catalogPrinter(20, null),
+            ],
+            lastSelectedPrinterId: 20,
+            detectedPrinterName: 'X1C',
+          });
+
+          expect(form.printForm.controls.printerId.value).toBe(12);
+        });
+
+        it('leaves the other fields alone', () => {
+          const form = openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'X1C',
+          });
+
+          expect(form.printForm.controls.title.value).toBe('Benchy from Cura');
+          expect(form.printForm.controls.notes.value).toBe('Sliced at 0.2mm');
+          expect(form.getPrintFromForm().curaSettingId).toBe('cura-1');
+          expect(form.printForm.dirty).toBeFalse();
+        });
+
+        it('never overrides a printer the user already chose', () => {
+          const match = new Subject<{ id: string; confidence: string }>();
+          catalog.match.and.returnValue(match);
+          const form = openEditor({
+            print: curaPrint,
+            printers: [
+              catalogPrinter(7, null),
+              catalogPrinter(8, null),
+              catalogPrinter(9, X1C),
+            ],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'X1C',
+          });
+
+          choosePrinter(form, 8);
+          match.next({ id: X1C, confidence: 'exact' });
+          match.complete();
+
+          expect(form.printForm.controls.printerId.value).toBe(8);
+        });
+      });
+
+      describe('a model the user does not own', () => {
+        beforeEach(() => {
+          catalog.match.and.returnValue(of({ id: X1C, confidence: 'alias' }));
+          catalog.get.and.returnValue(of(x1cModel));
+        });
+
+        it('shows the hint and keeps the printer', () => {
+          const form = openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'Bambu Lab X1 Carbon 0.4 nozzle',
+          });
+          editor!.detectChanges();
+
+          expect(catalog.get).toHaveBeenCalledWith(X1C);
+          expect(hint()!.textContent).toContain(
+            'Detected: Bambu Lab X1 Carbon'
+          );
+          expect(form.printForm.controls.printerId.value).toBe(7);
+          expect(detectedEvents()).toEqual([
+            { confidence: 'alias', owned: false },
+          ]);
+        });
+
+        it('paints the hint when the model arrives after the first render', () => {
+          const model = new Subject<PrinterModel | null>();
+          catalog.get.and.returnValue(model);
+          openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'X1C',
+          });
+          expect(hint()).toBeNull();
+
+          model.next(x1cModel);
+          editor!.detectChanges();
+
+          expect(hint()!.textContent).toContain(
+            'Detected: Bambu Lab X1 Carbon'
+          );
+        });
+
+        it('shows the hint to a user with no printers', () => {
+          openEditor({
+            print: curaPrint,
+            printers: [],
+            detectedPrinterName: 'X1C',
+          });
+          editor!.detectChanges();
+
+          expect(hint()).not.toBeNull();
+        });
+
+        // Review Focus 1.
+        it('"Add it" opens quick add on that model and selects the new printer, keeping the slicer fields', async () => {
+          const form = openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'X1C',
+          });
+          editor!.detectChanges();
+          const { open, closed } = stubDialog(form);
+          const usageBefore = JSON.stringify(form.filamentUsage.getRawValue());
+          printerService.getCurrentUserPrinterSummaries.and.returnValue(
+            of({
+              paging: {},
+              items: [catalogPrinter(7, null), catalogPrinter(42, X1C)],
+            } as never)
+          );
+
+          (hint()!.querySelector('button') as HTMLButtonElement).click();
+          await flushPromises();
+
+          expect(open).toHaveBeenCalledTimes(1);
+          expect(open.calls.mostRecent().args[1]!.data).toEqual({
+            source: 'print-form',
+            showEmailNotice: false,
+            initialModelId: X1C,
+          });
+
+          closed.next({ id: 42 });
+          closed.complete();
+          editor!.detectChanges();
+          await editor!.whenStable();
+          editor!.detectChanges();
+
+          expect(form.printForm.controls.printerId.value).toBe(42);
+          expect(form.printForm.controls.title.value).toBe('Benchy from Cura');
+          expect(form.printForm.controls.notes.value).toBe('Sliced at 0.2mm');
+          expect(JSON.stringify(form.filamentUsage.getRawValue())).toBe(
+            usageBefore
+          );
+          expect(form.getPrintFromForm().curaSettingId).toBe('cura-1');
+          expect(logger.logEvent).toHaveBeenCalledWith(
+            'PrintForm_DetectedPrinterAdded'
+          );
+          expect(hint()).toBeNull();
+        });
+
+        it('keeps the hint when quick add is canceled', async () => {
+          const form = openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'X1C',
+          });
+          editor!.detectChanges();
+          const { closed } = stubDialog(form);
+
+          (hint()!.querySelector('button') as HTMLButtonElement).click();
+          await flushPromises();
+          closed.next(undefined);
+          closed.complete();
+          editor!.detectChanges();
+
+          expect(form.printForm.controls.printerId.value).toBe(7);
+          expect(hint()).not.toBeNull();
+          expect(logger.logEvent).not.toHaveBeenCalledWith(
+            'PrintForm_DetectedPrinterAdded'
+          );
+        });
+      });
+
+      // Review Focus 3: the catalog never blocks, and detection is silent.
+      describe('when detection finds nothing', () => {
+        function expectNothingChanged(form: EditPrintDetailComponent) {
+          editor!.detectChanges();
+          expect(hint()).toBeNull();
+          expect(form.printForm.controls.printerId.value).toBe(7);
+          expect(form.printForm.controls.title.value).toBe('Benchy from Cura');
+          expect(form.printForm.dirty).toBeFalse();
+          expect(detectedEvents()).toEqual([]);
+          expect(writtenPrinterIds()).toEqual([]);
+        }
+
+        const open = () =>
+          openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterName: 'Mystery Printer 3000',
+          });
+
+        it('changes nothing on no match', () => {
+          catalog.match.and.returnValue(of(null));
+          const form = open();
+          expect(catalog.get).not.toHaveBeenCalled();
+          expectNothingChanged(form);
+        });
+
+        it('changes nothing when the match errors', () => {
+          catalog.match.and.returnValue(throwError(() => new Error('500')));
+          expectNothingChanged(open());
+        });
+
+        it('changes nothing when the model lookup finds nothing', () => {
+          catalog.match.and.returnValue(
+            of({ id: 'gone', confidence: 'exact' })
+          );
+          catalog.get.and.returnValue(of(null));
+          expectNothingChanged(open());
+        });
+
+        it('gives up after 3000 ms', fakeAsync(() => {
+          const match = new Subject<{ id: string; confidence: string }>();
+          catalog.match.and.returnValue(match);
+          const form = open();
+
+          tick(3000);
+          match.next({ id: X1C, confidence: 'exact' });
+
+          expectNothingChanged(form);
+          flush();
+        }));
+
+        it('still applies a match that lands just inside 3000 ms', fakeAsync(() => {
+          const match = new Subject<{ id: string; confidence: string }>();
+          catalog.match.and.returnValue(match);
+          const form = open();
+
+          tick(2999);
+          match.next({ id: X1C, confidence: 'exact' });
+
+          expect(form.printForm.controls.printerId.value).toBe(9);
+          flush();
+        }));
+      });
+
+      it('does not run when editing an existing print', () => {
+        openEditor({
+          print: { ...curaPrint, id: 5, printerId: 7 } as PrintDetail,
+          printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
+          detectedPrinterName: 'X1C',
+        });
+        expect(catalog.match).not.toHaveBeenCalled();
+      });
+
+      it('does not run without a detected name', () => {
+        openEditor({
+          print: curaPrint,
+          printers: [catalogPrinter(7, null)],
+          lastSelectedPrinterId: 7,
+        });
+        expect(catalog.match).not.toHaveBeenCalled();
       });
     });
 

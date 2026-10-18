@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   input,
   OnInit,
@@ -13,16 +14,29 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { firstValueFrom, map, startWith } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  firstValueFrom,
+  map,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { LoggingService } from '../../core/services/logging.service';
 import {
   PrinterCategory,
   PrinterCategoryService,
 } from '../../core/services/printer-categories.service';
+import {
+  PrinterCatalogService,
+  PrinterModel,
+} from '../../core/services/printer-catalog.service';
 import {
   PrinterDetail,
   PrinterService,
@@ -30,23 +44,61 @@ import {
 import { InlineEmailNoticeComponent } from '../inline-email-notice/inline-email-notice.component';
 import { OnboardingService } from '../onboarding.service';
 import { quickAddErrorText } from '../quick-add-error';
-import {
-  CatalogPrinter,
-  loadPrinterCatalog,
-  searchCatalog,
-} from './printer-catalog';
 
 export type QuickAddSource = 'welcome' | 'print-form' | 'checklist';
 
 const DEFAULT_SLOT_COUNT = 4;
+const POPULAR_COUNT = 8;
+const SEARCH_DEBOUNCE_MS = 150;
+const NOT_LISTED_QUERY_MAX = 40;
 const SAVE_FAILED = 'We could not save the printer. Try again.';
 const PRINTER_MISSING = 'Search for your printer, or type its make and model.';
 /** Types that have their own toggle button; "Other" offers the rest. */
 const TOGGLE_NICKNAMES = ['FFF', 'MSLA'];
 
+/** The spec fields a catalog model prefills and the user may edit. */
+interface SpecValues {
+  nozzleDiameter: number | null;
+  filamentDiameter: number | null;
+  bedWidthMm: number | null;
+  bedDepthMm: number | null;
+  bedHeightMm: number | null;
+  hasHeatedBed: boolean | null;
+  hasHeatedChamber: boolean | null;
+}
+
+const EMPTY_SPECS: SpecValues = {
+  nozzleDiameter: null,
+  filamentDiameter: null,
+  bedWidthMm: null,
+  bedDepthMm: null,
+  bedHeightMm: null,
+  hasHeatedBed: null,
+  hasHeatedChamber: null,
+};
+
+const SPEC_KEYS = Object.keys(EMPTY_SPECS) as (keyof SpecValues)[];
+
+function specsFrom(m: PrinterModel): SpecValues {
+  return {
+    nozzleDiameter: m.defaultNozzleMm ?? null,
+    filamentDiameter: m.filamentDiameterMm ?? null,
+    bedWidthMm: m.bedWidthMm ?? null,
+    bedDepthMm: m.bedDepthMm ?? null,
+    bedHeightMm: m.bedHeightMm ?? null,
+    hasHeatedBed: m.hasHeatedBed ?? null,
+    hasHeatedChamber: m.hasHeatedChamber ?? null,
+  };
+}
+
+function label(m: PrinterModel): string {
+  return `${m.make} ${m.model}`;
+}
+
 /**
  * A short form that creates a printer from the catalog (or free text), a type and an optional
- * slot count. Used on the welcome page and, inside a dialog, from the print form and checklist.
+ * slot count. A catalog pick also prefills the printer's specs, which the user can edit.
+ * Used on the welcome page and, inside a dialog, from the print form and checklist.
  */
 @Component({
   selector: 'app-quick-add-printer',
@@ -56,6 +108,7 @@ const TOGGLE_NICKNAMES = ['FFF', 'MSLA'];
     MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -68,12 +121,16 @@ const TOGGLE_NICKNAMES = ['FFF', 'MSLA'];
 export class QuickAddPrinterComponent implements OnInit {
   private readonly printerService = inject(PrinterService);
   private readonly categoryService = inject(PrinterCategoryService);
+  private readonly catalog = inject(PrinterCatalogService);
   private readonly onboarding = inject(OnboardingService);
   private readonly logging = inject(LoggingService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder).nonNullable;
 
   readonly source = input.required<QuickAddSource>();
   readonly showEmailNotice = input(false);
+  /** A catalog model to preselect, such as one detected from a slicer file. */
+  readonly initialModelId = input<string | null>(null);
   readonly saved = output<PrinterDetail>();
 
   readonly form = this.fb.group({
@@ -93,6 +150,13 @@ export class QuickAddPrinterComponent implements OnInit {
         Validators.pattern(/^\d+$/),
       ],
     ],
+    nozzleDiameter: this.fb.control<number | null>(null),
+    filamentDiameter: this.fb.control<number | null>(null, Validators.min(0)),
+    bedWidthMm: this.fb.control<number | null>(null, Validators.min(0)),
+    bedDepthMm: this.fb.control<number | null>(null, Validators.min(0)),
+    bedHeightMm: this.fb.control<number | null>(null, Validators.min(0)),
+    hasHeatedBed: this.fb.control<boolean | null>(null),
+    hasHeatedChamber: this.fb.control<boolean | null>(null),
   });
 
   readonly saving = signal(false);
@@ -100,12 +164,17 @@ export class QuickAddPrinterComponent implements OnInit {
   readonly done = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly showManual = signal(false);
+  readonly specsOpen = signal(false);
   readonly categories = signal<PrinterCategory[]>([]);
   readonly otherCategories = computed(() =>
     this.categories().filter((c) => !TOGGLE_NICKNAMES.includes(c.nickname))
   );
 
-  private readonly catalog = signal<CatalogPrinter[]>([]);
+  /** The catalog model the form was filled from, or null for free text. */
+  readonly catalogModel = signal<PrinterModel | null>(null);
+  readonly popular = signal<PrinterModel[]>([]);
+  readonly suggestions = signal<PrinterModel[]>([]);
+
   private readonly searchText = toSignal(
     this.form.controls.search.valueChanges.pipe(
       startWith(''),
@@ -121,15 +190,57 @@ export class QuickAddPrinterComponent implements OnInit {
     this.form.controls.multiMaterial.valueChanges.pipe(startWith(false)),
     { initialValue: false }
   );
-
-  readonly suggestions = computed(() =>
-    searchCatalog(this.catalog(), this.searchText())
+  private readonly formValue = toSignal(
+    this.form.valueChanges.pipe(map(() => this.form.getRawValue())),
+    { initialValue: this.form.getRawValue() }
   );
+
   readonly isOther = computed(() => this.typeValue() === 'Other');
   readonly isMultiMaterial = computed(() => this.multiValue());
+  readonly showPopular = computed(
+    () =>
+      this.popular().length > 0 &&
+      !this.catalogModel() &&
+      !this.searchText().trim()
+  );
+  readonly nozzleOptions = computed(() => {
+    const m = this.catalogModel();
+    if (!m) {
+      return [];
+    }
+    if (m.nozzleOptionsMm?.length) {
+      return m.nozzleOptionsMm;
+    }
+    return m.defaultNozzleMm ? [m.defaultNozzleMm] : [];
+  });
+  readonly selectedNozzle = computed(() => this.formValue().nozzleDiameter);
+  /** The summary follows the user's edits, so it describes what will be saved. */
+  readonly specSummary = computed(() => {
+    const m = this.catalogModel();
+    if (!m) {
+      return '';
+    }
+    const v = this.formValue();
+    return PrinterCatalogService.specSummary(
+      {
+        ...m,
+        bedWidthMm: v.bedWidthMm,
+        bedDepthMm: v.bedDepthMm,
+        bedHeightMm: v.bedHeightMm,
+        filamentDiameterMm: v.filamentDiameter,
+        hasHeatedBed: v.hasHeatedBed,
+        hasHeatedChamber: v.hasHeatedChamber,
+        defaultNozzleMm: v.nozzleDiameter,
+      },
+      v.nozzleDiameter ?? undefined,
+      v.multiMaterial ? v.slotCount : 1
+    );
+  });
 
   private nameTouched = false;
-  private fromCatalog = false;
+  private fromPopularChip = false;
+  /** The spec values the catalog filled in, to tell whether the user edited them. */
+  private catalogSpecs: SpecValues | null = null;
 
   constructor() {
     // A hidden slot count must not block Save, so it only validates while it is shown.
@@ -150,13 +261,48 @@ export class QuickAddPrinterComponent implements OnInit {
           this.form.controls.name.setValue(model);
         }
       });
+    // Typing over a selection means the printer no longer comes from the catalog.
+    this.form.controls.search.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((v) => {
+        const m = this.catalogModel();
+        if (typeof v === 'string' && m && v !== label(m)) {
+          this.clearSelection();
+        }
+      });
+    this.form.controls.search.valueChanges
+      .pipe(
+        map((v) => (typeof v === 'string' ? v.trim() : '')),
+        debounceTime(SEARCH_DEBOUNCE_MS),
+        distinctUntilChanged(),
+        switchMap((q) => {
+          const m = this.catalogModel();
+          return !q || (m && q === label(m))
+            ? of([] as PrinterModel[])
+            : this.catalog.search(q);
+        }),
+        takeUntilDestroyed()
+      )
+      .subscribe((list) => this.suggestions.set(list));
   }
 
   ngOnInit(): void {
     this.logging.logEvent('QuickAddPrinter_Opened', { source: this.source() });
-    loadPrinterCatalog()
-      .then((list) => this.catalog.set(list))
-      .catch(() => this.catalog.set([]));
+    this.catalog
+      .popular(POPULAR_COUNT)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((list) => this.popular.set(list));
+    const initialId = this.initialModelId();
+    if (initialId) {
+      this.catalog
+        .get(initialId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((m) => {
+          if (m && !this.catalogModel() && !this.form.controls.search.value) {
+            this.selectCatalogPrinter(m);
+          }
+        });
+    }
     firstValueFrom(this.categoryService.getPrinterCategories())
       .then((list) => this.categories.set(list))
       .catch(() => this.categories.set([]));
@@ -165,20 +311,41 @@ export class QuickAddPrinterComponent implements OnInit {
   /** The input shows what the user typed or picked, never the option object. */
   readonly displayOption = (): string => this.form.controls.search.value;
 
-  selectCatalogPrinter(printer: CatalogPrinter): void {
-    this.fromCatalog = true;
-    this.form.controls.search.setValue(`${printer.make} ${printer.model}`);
-    this.form.patchValue({ make: printer.make, model: printer.model });
+  selectPopular(m: PrinterModel): void {
+    this.logging.logEvent('QuickAddPrinter_PopularChipClicked', { id: m.id });
+    this.selectCatalogPrinter(m);
+    this.fromPopularChip = true;
+  }
+
+  selectCatalogPrinter(m: PrinterModel): void {
+    this.catalogModel.set(m);
+    this.fromPopularChip = false;
+    this.specsOpen.set(false);
+    this.form.controls.search.setValue(label(m));
+    const slots = m.defaultSlotCount ?? 1;
+    const specs = specsFrom(m);
+    this.catalogSpecs = specs;
+    this.form.patchValue({
+      make: m.make,
+      model: m.model,
+      type: m.technology === 'Resin' ? 'MSLA' : 'FFF',
+      multiMaterial: slots > 1,
+      slotCount: slots > 1 ? slots : DEFAULT_SLOT_COUNT,
+      ...specs,
+    });
+  }
+
+  selectNozzle(mm: number): void {
+    this.form.controls.nozzleDiameter.setValue(mm);
   }
 
   /** On blur with no catalog pick: the first word is the make, the rest the model. */
   commitFreeText(): void {
     const text = this.form.controls.search.value.trim();
     const current = `${this.form.controls.make.value} ${this.form.controls.model.value}`;
-    if (!text || (this.fromCatalog && text === current)) {
+    if (!text || (this.catalogModel() && text === current)) {
       return;
     }
-    this.fromCatalog = false;
     const space = text.indexOf(' ');
     const make = space === -1 ? text : text.slice(0, space);
     const model = space === -1 ? text : text.slice(space + 1).trim();
@@ -187,7 +354,9 @@ export class QuickAddPrinterComponent implements OnInit {
 
   /** Editing make or model by hand means the printer no longer comes from the catalog. */
   onManualInput(): void {
-    this.fromCatalog = false;
+    if (this.catalogModel()) {
+      this.clearSelection();
+    }
   }
 
   onNameInput(): void {
@@ -214,10 +383,19 @@ export class QuickAddPrinterComponent implements OnInit {
       if (this.showEmailNotice()) {
         await this.onboarding.acknowledgeEmailNotice();
       }
+      const m = this.catalogModel();
+      if (!m) {
+        this.logging.logEvent('QuickAddPrinter_NotListed', {
+          query: this.notListedQuery(),
+        });
+      }
       this.logging.logEvent('QuickAddPrinter_Saved', {
         source: this.source(),
-        fromCatalog: this.fromCatalog,
+        fromCatalog: m !== null,
         multiSlot: this.form.controls.multiMaterial.value,
+        catalogModelId: m?.id ?? null,
+        popularChip: m !== null && this.fromPopularChip,
+        specsEdited: this.specsEdited(),
       });
       this.done.set(true);
       this.saved.emit(printer);
@@ -226,6 +404,35 @@ export class QuickAddPrinterComponent implements OnInit {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  /** Back to free text: no model, and the catalog's defaults are undone. */
+  private clearSelection(): void {
+    this.catalogModel.set(null);
+    this.catalogSpecs = null;
+    this.fromPopularChip = false;
+    this.specsOpen.set(false);
+    this.form.patchValue({
+      type: 'FFF',
+      multiMaterial: false,
+      slotCount: DEFAULT_SLOT_COUNT,
+      ...EMPTY_SPECS,
+    });
+  }
+
+  private specsEdited(): boolean {
+    const defaults = this.catalogSpecs;
+    if (!defaults || !this.catalogModel()) {
+      return false;
+    }
+    const value = this.form.getRawValue();
+    return SPEC_KEYS.some((key) => value[key] !== defaults[key]);
+  }
+
+  private notListedQuery(): string {
+    const { search, make, model } = this.form.getRawValue();
+    const text = search.trim() || `${make} ${model}`.trim();
+    return text.slice(0, NOT_LISTED_QUERY_MAX);
   }
 
   private async createPrinter(): Promise<PrinterDetail> {
@@ -240,6 +447,7 @@ export class QuickAddPrinterComponent implements OnInit {
     if (!category) {
       throw new Error('Choose a printer type.');
     }
+    // The user's values are sent as they stand; the API fills only what is still empty.
     return firstValueFrom(
       this.printerService.addPrinter({
         id: null,
@@ -247,13 +455,19 @@ export class QuickAddPrinterComponent implements OnInit {
         make: value.make.trim(),
         model: value.model.trim(),
         description: '',
-        nozzleDiameter: null,
-        filamentDiameter: null,
+        nozzleDiameter: value.nozzleDiameter,
+        filamentDiameter: value.filamentDiameter,
         beamDiameter: null,
         isActive: true,
         loadedFilaments: [],
         category,
         slotCount: value.multiMaterial ? value.slotCount : 1,
+        catalogModelId: this.catalogModel()?.id ?? null,
+        bedWidthMm: value.bedWidthMm ?? undefined,
+        bedDepthMm: value.bedDepthMm ?? undefined,
+        bedHeightMm: value.bedHeightMm ?? undefined,
+        hasHeatedBed: value.hasHeatedBed ?? undefined,
+        hasHeatedChamber: value.hasHeatedChamber ?? undefined,
       })
     );
   }

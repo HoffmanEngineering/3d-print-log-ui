@@ -19,13 +19,128 @@
       [displayWith]="displayOption"
       (optionSelected)="selectCatalogPrinter($event.option.value)"
     >
-      @for (option of suggestions(); track option.make + option.model) {
+      @for (option of suggestions(); track option.id) {
         <mat-option [value]="option">
           {{ option.make }} {{ option.model }}
         </mat-option>
       }
     </mat-autocomplete>
   </mat-form-field>
+
+  @if (showPopular()) {
+    <section class="quick-add__popular" aria-labelledby="quick-add-popular">
+      <h3 id="quick-add-popular" class="quick-add__heading">
+        Popular printers
+      </h3>
+      <div class="quick-add__chips" data-testid="popular-printers">
+        @for (printer of popular(); track printer.id) {
+          <button
+            type="button"
+            class="quick-add__chip"
+            [attr.data-testid]="'popular-printer-' + printer.id"
+            [attr.aria-label]="printer.make + ' ' + printer.model"
+            (click)="selectPopular(printer)"
+          >
+            <span class="quick-add__chip-make">{{ printer.make }}</span>
+            <span class="quick-add__chip-model">{{ printer.model }}</span>
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  @if (catalogModel(); as model) {
+    <section class="quick-add__specs" aria-label="Printer specs">
+      @if (specSummary(); as summary) {
+        <p class="quick-add__summary" data-testid="spec-summary">
+          {{ summary }}
+        </p>
+      }
+      <p class="quick-add__note">
+        Specs from
+        <a href="/docs/about" target="_blank" rel="noopener"
+          >Cura and OrcaSlicer printer profiles</a
+        >
+      </p>
+
+      @if (nozzleOptions().length > 0) {
+        <div class="quick-add__nozzles" role="group" aria-label="Nozzle size">
+          @for (mm of nozzleOptions(); track mm) {
+            <button
+              type="button"
+              class="quick-add__nozzle"
+              [class.quick-add__nozzle--selected]="selectedNozzle() === mm"
+              [attr.data-testid]="'nozzle-' + mm"
+              [attr.aria-pressed]="selectedNozzle() === mm"
+              [attr.aria-label]="mm + ' mm nozzle'"
+              (click)="selectNozzle(mm)"
+            >
+              {{ mm }} mm
+            </button>
+          }
+        </div>
+      }
+
+      <button
+        type="button"
+        mat-button
+        class="quick-add__edit-specs"
+        data-testid="edit-specs"
+        aria-controls="quick-add-spec-fields"
+        [attr.aria-expanded]="specsOpen()"
+        (click)="specsOpen.set(!specsOpen())"
+      >
+        Edit specs
+      </button>
+      @if (specsOpen()) {
+        <div id="quick-add-spec-fields" class="quick-add__spec-fields">
+          <div class="quick-add__row quick-add__row--bed">
+            <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+              <mat-label>Bed width (mm)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                formControlName="bedWidthMm"
+              />
+            </mat-form-field>
+            <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+              <mat-label>Bed depth (mm)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                formControlName="bedDepthMm"
+              />
+            </mat-form-field>
+            <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+              <mat-label>Build height (mm)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                formControlName="bedHeightMm"
+              />
+            </mat-form-field>
+          </div>
+          <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+            <mat-label>Filament diameter (mm)</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              step="0.05"
+              formControlName="filamentDiameter"
+            />
+          </mat-form-field>
+          <mat-checkbox formControlName="hasHeatedBed">Heated bed</mat-checkbox>
+          <mat-checkbox formControlName="hasHeatedChamber">
+            Heated chamber
+          </mat-checkbox>
+        </div>
+      }
+    </section>
+  }
 
   <button
     type="button"

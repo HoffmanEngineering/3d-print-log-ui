@@ -24,6 +24,8 @@ export interface PrinterSummary {
   printTimeInSeconds?: number | null;
   /** Signed thumbnail of the default photo, or null when the printer has none. */
   defaultImageThumbnailUrl?: string | null;
+  /** The catalog model this printer was created from, if any. */
+  catalogModelId?: string | null;
   category: PrinterCategory;
 }
 
@@ -109,6 +111,9 @@ export interface PrinterDetail {
   hasHeatedBed?: boolean;
   hasHeatedChamber?: boolean;
   wattageW?: number | null;
+
+  /** The catalog model this printer was created from, if any. */
+  catalogModelId?: string | null;
 
   /** Filament positions (tools, AMS slots). 1 for a single-tool printer. */
   slotCount?: number;

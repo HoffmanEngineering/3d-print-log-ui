@@ -1,5 +1,12 @@
-import { TestBed } from '@angular/core/testing';
+import {
+  fakeAsync,
+  flushMicrotasks,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { GoogleAnalyticsService } from './google-analytics.service';
 import { defer, of } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -271,6 +278,254 @@ describe('AuthService', () => {
         appState: { target: string };
       };
       expect(params.appState.target).toBe('/prints');
+    });
+
+    it('carries the sign-up source through appState', () => {
+      service.login('/prints', { signup: true, source: 'home' });
+
+      const params = client.loginWithRedirect.calls.mostRecent().args[0] as {
+        appState: { target: string; source?: string };
+      };
+      expect(params.appState).toEqual({ target: '/prints', source: 'home' });
+    });
+  });
+
+  describe('new-user display name', () => {
+    function stubClient(service: AuthService, user: unknown) {
+      (service as unknown as { auth0Client$: unknown }).auth0Client$ = of({
+        getUser: () => Promise.resolve(user),
+      });
+    }
+
+    let update: jasmine.Spy;
+
+    beforeEach(() => {
+      mockUserService.getCurrentUserDetail.and.returnValue(
+        of({ id: 90, displayName: null } as any)
+      );
+      update = jasmine
+        .createSpy('updateCurrentUserDetail')
+        .and.returnValue(of({ id: 90, displayName: 'x' }));
+      (mockUserService as any).updateCurrentUserDetail = update;
+    });
+
+    it('leaves the name null when Auth0 has no nickname', fakeAsync(() => {
+      const service = TestBed.inject(AuthService);
+      stubClient(service, { picture: 'p' });
+
+      service.getUser$().subscribe();
+      flushMicrotasks();
+
+      expect(update).toHaveBeenCalledWith(
+        jasmine.objectContaining({ displayName: null, profilePicture: 'p' })
+      );
+    }));
+
+    it('truncates a long nickname to 29 characters', fakeAsync(() => {
+      const service = TestBed.inject(AuthService);
+      stubClient(service, { nickname: 'n'.repeat(40), picture: 'p' });
+
+      service.getUser$().subscribe();
+      flushMicrotasks();
+
+      expect(update).toHaveBeenCalledWith(
+        jasmine.objectContaining({ displayName: 'n'.repeat(29) })
+      );
+    }));
+
+    it('sends the PUT once per page load when getUser$ runs twice', fakeAsync(() => {
+      const service = TestBed.inject(AuthService);
+      stubClient(service, { nickname: 'nick', picture: 'p' });
+
+      service.getUser$().subscribe();
+      service.getUser$().subscribe();
+      flushMicrotasks();
+
+      expect(update).toHaveBeenCalledTimes(1);
+    }));
+  });
+
+  describe('auth callback', () => {
+    const PROFILE_ID = 4242;
+    const SIGNUP_KEY = `pl_signup_logged_${PROFILE_ID}`;
+    const MINUTE = 60 * 1000;
+
+    let service: AuthService;
+    let onboarding: OnboardingService;
+    let status: jasmine.Spy;
+    let shouldShowWelcome: jasmine.Spy;
+    let logEvent: jasmine.Spy;
+    let gaEvent: jasmine.Spy;
+    let navigate: jasmine.Spy;
+
+    function statusCreated(msAgo: number | null) {
+      status.and.resolveTo({
+        onboardingEligible: true,
+        createdDate:
+          msAgo === null ? null : new Date(Date.now() - msAgo).toISOString(),
+        emailVerified: true,
+      });
+    }
+
+    function runCallback(appState: { target?: string; source?: string }) {
+      const fields = service as unknown as Record<string, unknown>;
+      fields['handleRedirectCallback$'] = of({ appState });
+      fields['isAuthenticated$'] = of(true);
+      fields['auth0Client$'] = of({
+        getUser: () => Promise.resolve({ nickname: 'nick', picture: 'p' }),
+      });
+      service.handleAuthCallback();
+      flushMicrotasks();
+    }
+
+    function signupLogs() {
+      return logEvent.calls
+        .allArgs()
+        .filter(([name]) => name === 'Auth_SignedUp');
+    }
+
+    beforeEach(() => {
+      localStorage.removeItem(SIGNUP_KEY);
+      mockUserService.getCurrentUserDetail.and.returnValue(
+        of({ id: PROFILE_ID, displayName: 'Named' } as any)
+      );
+      service = TestBed.inject(AuthService);
+      onboarding = TestBed.inject(OnboardingService);
+      status = spyOn(onboarding, 'status');
+      statusCreated(1 * MINUTE);
+      shouldShowWelcome = spyOn(onboarding, 'shouldShowWelcome').and.resolveTo(
+        false
+      );
+      logEvent = spyOn(TestBed.inject(LoggingService), 'logEvent');
+      spyOn(TestBed.inject(LoggingService), 'setAuthenticatedUser');
+      gaEvent = spyOn(TestBed.inject(GoogleAnalyticsService), 'eventEmitter');
+      navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(
+        true
+      );
+    });
+
+    afterEach(() => {
+      localStorage.removeItem(SIGNUP_KEY);
+    });
+
+    describe('sign-up logging', () => {
+      it('logs Auth_SignedUp once for a new account and sets the key', fakeAsync(() => {
+        runCallback({ target: '/prints', source: 'home' });
+
+        expect(signupLogs()).toEqual([['Auth_SignedUp', { source: 'home' }]]);
+        expect(gaEvent).toHaveBeenCalledOnceWith(
+          'sign_up',
+          'engagement',
+          'sign_up',
+          'home'
+        );
+        expect(localStorage.getItem(SIGNUP_KEY)).not.toBeNull();
+      }));
+
+      it('does not log twice for the same account', fakeAsync(() => {
+        runCallback({ target: '/prints', source: 'home' });
+        runCallback({ target: '/prints', source: 'home' });
+
+        expect(signupLogs().length).toBe(1);
+      }));
+
+      it('does not log when createdDate is older than 10 minutes', fakeAsync(() => {
+        statusCreated(11 * MINUTE);
+
+        runCallback({ target: '/prints', source: 'home' });
+
+        expect(signupLogs()).toEqual([]);
+        expect(gaEvent).not.toHaveBeenCalled();
+      }));
+
+      it('does not log when createdDate is unknown', fakeAsync(() => {
+        statusCreated(null);
+
+        runCallback({ target: '/prints' });
+
+        expect(signupLogs()).toEqual([]);
+      }));
+
+      it('does not log when the key already exists', fakeAsync(() => {
+        localStorage.setItem(SIGNUP_KEY, '1');
+
+        runCallback({ target: '/prints', source: 'home' });
+
+        expect(signupLogs()).toEqual([]);
+        expect(gaEvent).not.toHaveBeenCalled();
+      }));
+
+      it('uses the source from appState', fakeAsync(() => {
+        runCallback({ target: '/prints/new/cura?x=1', source: 'home' });
+
+        expect(signupLogs()).toEqual([['Auth_SignedUp', { source: 'home' }]]);
+      }));
+
+      it('uses slicer for a Cura hand-off target with no source', fakeAsync(() => {
+        runCallback({ target: '/prints/new/cura?gcode=abc' });
+
+        expect(signupLogs()).toEqual([['Auth_SignedUp', { source: 'slicer' }]]);
+      }));
+
+      it('uses direct otherwise', fakeAsync(() => {
+        runCallback({ target: '/settings' });
+
+        expect(signupLogs()).toEqual([['Auth_SignedUp', { source: 'direct' }]]);
+      }));
+    });
+
+    describe('welcome redirect', () => {
+      it('navigates to /welcome when shouldShowWelcome is true', fakeAsync(() => {
+        shouldShowWelcome.and.resolveTo(true);
+
+        runCallback({ target: '/prints' });
+
+        expect(shouldShowWelcome).toHaveBeenCalledWith('/prints');
+        expect(navigate).toHaveBeenCalledOnceWith('/welcome', {
+          state: { entry: 'callback' },
+        });
+      }));
+
+      it('navigates to the target when shouldShowWelcome is false', fakeAsync(() => {
+        runCallback({ target: '/prints' });
+
+        expect(navigate).toHaveBeenCalledOnceWith('/prints');
+      }));
+
+      it('navigates to the target when shouldShowWelcome rejects', fakeAsync(() => {
+        shouldShowWelcome.and.rejectWith(new Error('boom'));
+
+        runCallback({ target: '/prints' });
+
+        expect(navigate).toHaveBeenCalledOnceWith('/prints');
+      }));
+
+      it('defaults the target to / when appState has none', fakeAsync(() => {
+        runCallback({});
+
+        expect(navigate).toHaveBeenCalledOnceWith('/');
+      }));
+
+      it('falls back to the target after 3 s when the lookups hang', fakeAsync(() => {
+        shouldShowWelcome.and.returnValue(new Promise<boolean>(() => {}));
+        status.and.returnValue(new Promise(() => {}));
+
+        runCallback({ target: '/prints' });
+        expect(navigate).not.toHaveBeenCalled();
+
+        tick(3000);
+
+        expect(navigate).toHaveBeenCalledOnceWith('/prints');
+      }));
+
+      it('still navigates when the sign-up check rejects', fakeAsync(() => {
+        status.and.rejectWith(new Error('down'));
+
+        runCallback({ target: '/prints' });
+
+        expect(navigate).toHaveBeenCalledOnceWith('/prints');
+        expect(signupLogs()).toEqual([]);
+      }));
     });
   });
 });

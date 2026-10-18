@@ -69,6 +69,6 @@ export class HomeComponent implements OnInit {
    */
   signUp(placement: 'hero' | 'closing') {
     this.logging.logEvent('Home_SignupClicked', { placement });
-    this.auth.login('/prints', { signup: true });
+    this.auth.login('/prints', { signup: true, source: 'home' });
   }
 }

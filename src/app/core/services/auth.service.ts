@@ -20,10 +20,17 @@ import {
   of,
   throwError,
 } from 'rxjs';
-import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
+import {
+  catchError,
+  concatMap,
+  filter,
+  shareReplay,
+  tap,
+} from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
+import { GoogleAnalyticsService } from './google-analytics.service';
 import { LoggingService } from './logging.service';
 import { OnboardingService } from '../../onboarding/onboarding.service';
 import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
@@ -33,6 +40,13 @@ import { UserSettingService } from './user-setting.service';
 import { isDevAnonymous } from '../utils/dev-user';
 const cordovaCallbackUri =
   'com.hoffmanengineering.printlog://cordova/com.hoffmanengineering.printlog/callback';
+
+/** An account created this recently counts as a new sign-up on its first callback. */
+const SIGNUP_WINDOW_MS = 10 * 60 * 1000;
+/** Per-account flag that this browser already logged the sign-up. */
+const SIGNUP_LOGGED_KEY_PREFIX = 'pl_signup_logged_';
+/** How long the callback waits on onboarding lookups before going to the target anyway. */
+const CALLBACK_LOOKUP_TIMEOUT_MS = 3000;
 
 export interface UserProfileInfo {
   id: number;
@@ -126,6 +140,8 @@ export class AuthService {
    * service, so a direct dependency here would be a cycle.
    */
   private readonly injector = inject(Injector);
+  /** Set once the first-login display-name PUT has been sent; never reset (one per page load). */
+  private newUserPutStarted = false;
 
   constructor() {
     if (isCordova) {
@@ -157,13 +173,17 @@ export class AuthService {
         this.subscriptionService.loadSubscription();
         this.userService.getCurrentUserDetail().subscribe((currentUser) => {
           if (currentUser.displayName === null) {
+            // localAuthSetup and handleAuthCallback can both run getUser$ on one page load;
+            // the first-login PUT goes out once, and its response emits the profile.
+            if (this.newUserPutStarted) {
+              return;
+            }
+            this.newUserPutStarted = true;
             const userInfo: UserDetailDto = {
               ...currentUser,
-              displayName:
-                user.nickname.length > 30
-                  ? user.nickname.substring(0, 29)
-                  : user.nickname,
-              profilePicture: user.picture,
+              // Some identity providers send no nickname: leave the name unset, don't throw.
+              displayName: (user?.nickname ?? '').slice(0, 29) || null,
+              profilePicture: user?.picture,
             };
 
             this.userService
@@ -285,7 +305,10 @@ export class AuthService {
     });
   }
 
-  login(redirectPath: string = '/', options?: { signup?: boolean }) {
+  login(
+    redirectPath: string = '/',
+    options?: { signup?: boolean; source?: string }
+  ) {
     if (environment.devAuthBypass) {
       return;
     }
@@ -295,7 +318,10 @@ export class AuthService {
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log in
       client.loginWithRedirect({
-        appState: { target: redirectPath },
+        appState: {
+          target: redirectPath,
+          ...(options?.source && { source: options.source }),
+        },
         authorizationParams: {
           redirect_uri: isCordova
             ? cordovaCallbackUri
@@ -313,13 +339,14 @@ export class AuthService {
   handleAuthCallback() {
     // Only the callback component should call this method
     // Call when app reloads after user logs in with Auth0
-    let targetRoute: string; // Path to redirect to after login processsed
+    let targetRoute: string; // Path to redirect to after login processed
+    let source: string | undefined; // Where a sign-up started, from login()
     const authComplete$ = this.handleRedirectCallback$.pipe(
       // Have client, now call method to handle auth callback redirect
       tap((cbRes) => {
         // Get and set target redirect route from callback results
-        targetRoute =
-          cbRes.appState && cbRes.appState.target ? cbRes.appState.target : '/';
+        targetRoute = cbRes.appState?.target ?? '/';
+        source = cbRes.appState?.source;
       }),
       concatMap(() => {
         // Redirect callback complete; get user and login status
@@ -328,10 +355,101 @@ export class AuthService {
     );
     // Subscribe to authentication completion observable
     // Response will be an array of user and login status
-    authComplete$.subscribe(([user, loggedIn]) => {
-      // Redirect to target route after callback processing
-      this.router.navigateByUrl(targetRoute);
+    authComplete$.subscribe(() => {
+      void this.navigateAfterCallback(targetRoute, source);
     });
+  }
+
+  /**
+   * Logs a new sign-up and sends a new user to /welcome instead of the target. Onboarding
+   * never blocks the app: a failed lookup falls back to the target, and so does one still
+   * pending after CALLBACK_LOOKUP_TIMEOUT_MS.
+   */
+  private async navigateAfterCallback(
+    target: string,
+    source: string | undefined
+  ): Promise<void> {
+    const showWelcome = await this.withTimeout(
+      Promise.all([
+        this.logSignupIfNewOnceProfileLoads(source, target),
+        this.injector.get(OnboardingService).shouldShowWelcome(target),
+      ]).then(([, welcome]) => welcome),
+      false
+    ).catch(() => false);
+
+    if (showWelcome) {
+      this.router.navigateByUrl('/welcome', { state: { entry: 'callback' } });
+    } else {
+      this.router.navigateByUrl(target);
+    }
+  }
+
+  /** The profile id comes from the first profile getUser$ emits after the callback. */
+  private async logSignupIfNewOnceProfileLoads(
+    source: string | undefined,
+    target: string
+  ): Promise<void> {
+    try {
+      const profile = await firstValueFrom(
+        this.userProfile$.pipe(filter((p) => p !== null))
+      );
+      await this.logSignupIfNew(profile.id, source, target);
+    } catch {
+      // Sign-up logging is best-effort and must not change where the user lands.
+    }
+  }
+
+  /**
+   * Logs Auth_SignedUp (and GA4 sign_up) once per account, for an account created in the
+   * last ten minutes. The localStorage key keeps a second callback on this browser from
+   * counting the same sign-up again.
+   */
+  private async logSignupIfNew(
+    profileId: number,
+    source: string | undefined,
+    target: string
+  ): Promise<void> {
+    if (!this.isBrowser) {
+      return;
+    }
+    const status = await this.injector.get(OnboardingService).status();
+    const created = status.createdDate ? Date.parse(status.createdDate) : NaN;
+    if (Number.isNaN(created) || Date.now() - created > SIGNUP_WINDOW_MS) {
+      return;
+    }
+
+    const key = `${SIGNUP_LOGGED_KEY_PREFIX}${profileId}`;
+    try {
+      if (localStorage.getItem(key) !== null) {
+        return;
+      }
+    } catch {
+      // Storage unavailable: log anyway; a rare double count beats a missed sign-up.
+    }
+
+    const signupSource =
+      source ?? (target.startsWith('/prints/new/cura') ? 'slicer' : 'direct');
+    this.injector
+      .get(LoggingService)
+      .logEvent('Auth_SignedUp', { source: signupSource });
+    this.injector
+      .get(GoogleAnalyticsService)
+      .eventEmitter('sign_up', 'engagement', 'sign_up', signupSource);
+
+    try {
+      localStorage.setItem(key, new Date().toISOString());
+    } catch {
+      // Storage unavailable; nothing else to do.
+    }
+  }
+
+  /** Resolves to `fallback` if `work` has not settled within CALLBACK_LOOKUP_TIMEOUT_MS. */
+  private withTimeout<T>(work: Promise<T>, fallback: T): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<T>((resolve) => {
+      timer = setTimeout(() => resolve(fallback), CALLBACK_LOOKUP_TIMEOUT_MS);
+    });
+    return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
   }
 
   /**

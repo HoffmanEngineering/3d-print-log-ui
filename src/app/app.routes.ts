@@ -129,6 +129,13 @@ export const appRoutes: Routes = [
     canActivate: [authGuard],
   },
   {
+    // Not preloaded: only new users with no printers ever land here.
+    path: 'welcome',
+    loadChildren: () =>
+      import('./onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
+    canActivate: [authGuard],
+  },
+  {
     path: 'notifications',
     loadChildren: () =>
       import('./notifications/notifications.routes').then(

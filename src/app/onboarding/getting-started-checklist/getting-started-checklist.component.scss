@@ -1,0 +1,112 @@
+.checklist {
+  margin: 8px 0 12px;
+  padding: 12px 12px 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--mat-divider-color);
+  background: var(--app-surface-container);
+  color: var(--app-text-primary);
+}
+
+.checklist__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.checklist__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding-top: 6px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.checklist__progress {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+}
+
+.checklist__dismiss {
+  flex: none;
+  margin: -4px -4px 0 0;
+}
+
+.checklist__items {
+  list-style: none;
+  margin: 6px 0 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-primary);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: color-mix(in srgb, var(--app-primary) 10%, transparent);
+  }
+
+  &.done {
+    color: var(--app-text-secondary);
+    cursor: default;
+
+    &:hover {
+      background: transparent;
+    }
+
+    .item__label {
+      text-decoration: line-through;
+    }
+  }
+}
+
+.item__icon {
+  flex: none;
+}
+
+.checklist__secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  text-decoration: none;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: var(--app-primary);
+    text-decoration: underline;
+  }
+}

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { Router, UrlTree, provideRouter } from '@angular/router';
 import { LoggingService } from 'src/app/core/services/logging.service';
 
 import { PrintEmptyStateComponent } from './print-empty-state.component';
@@ -135,6 +135,22 @@ describe('PrintEmptyStateComponent', () => {
 
       expect(mockLogger.logEvent).toHaveBeenCalledWith(
         'PrintEmptyState_AddPrinter'
+      );
+    });
+
+    it('should send the user to add a printer and back to /prints', () => {
+      const router = TestBed.inject(Router);
+      const navigate = spyOn(router, 'navigateByUrl').and.resolveTo(true);
+
+      (
+        fixture.debugElement.query(
+          By.css('[data-cy="empty-state-add-printer"]')
+        ).nativeElement as HTMLButtonElement
+      ).click();
+
+      const target = navigate.calls.mostRecent().args[0] as UrlTree;
+      expect(router.serializeUrl(target)).toBe(
+        '/printers/new?returnUrl=%2Fprints'
       );
     });
 

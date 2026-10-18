@@ -1,6 +1,6 @@
 import { AdsenseModule } from 'ng2-adsense';
 import { MediaMatcher } from '@angular/cdk/layout';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { Component, NO_ERRORS_SCHEMA, output } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -23,14 +23,27 @@ import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
-import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import { PrinterService } from 'src/app/core/services/printer.service';
 
 import {
   DEFERRED_SKELETON_DELAY_MS,
   DEFERRED_SKELETON_MIN_VISIBLE_MS,
 } from 'src/app/shared/skeleton/deferred-skeleton';
-import { PrintListComponent } from './print-list.component';
+import {
+  PrintListComponent,
+  resetAddPrinterToastShown,
+} from './print-list.component';
+import { PrintListHintSlotComponent } from './print-list-hint-slot/print-list-hint-slot.component';
 import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.component';
+
+@Component({ selector: 'app-print-list-hint-slot', template: '' })
+class StubHintSlotComponent {
+  readonly checklistActive = output<boolean>();
+}
+
+/** The printer lookup the list makes: one row, and only the total matters. */
+const printerCount = (totalCount: number) =>
+  of({ items: [], paging: { totalCount } } as never);
 
 describe('PrintListComponent', () => {
   let component: PrintListComponent;
@@ -89,13 +102,13 @@ describe('PrintListComponent', () => {
       'logEvent',
     ]);
 
-    const mockPrinterRedirectPromptService =
-      jasmine.createSpyObj<PrinterRedirectPromptService>(
-        'PrinterRedirectPromptService',
-        {
-          shouldShowAddPrinterPrompt: of(false),
-        }
-      );
+    const mockPrinterService = jasmine.createSpyObj<PrinterService>(
+      'PrinterService',
+      ['getCurrentUserPrinterSummaries']
+    );
+    mockPrinterService.getCurrentUserPrinterSummaries.and.returnValue(
+      printerCount(1)
+    );
 
     const mockPrintPagedResult: PagedList<PrintSummary> = {
       items: [],
@@ -158,10 +171,7 @@ describe('PrintListComponent', () => {
       providers: [
         { provide: LoggingService, useValue: mockLogger },
         { provide: MediaMatcher, useValue: mockMediaMatcher },
-        {
-          provide: PrinterRedirectPromptService,
-          useValue: mockPrinterRedirectPromptService,
-        },
+        { provide: PrinterService, useValue: mockPrinterService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: Title, useValue: mockTitleService },
         { provide: ToastrService, useValue: mockToastrService },
@@ -169,13 +179,20 @@ describe('PrintListComponent', () => {
         { provide: UserSettingService, useValue: mockUserSettingService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    })
+      .overrideComponent(PrintListComponent, {
+        remove: { imports: [PrintListHintSlotComponent] },
+        add: { imports: [StubHintSlotComponent] },
+      })
+      .compileComponents();
   }));
 
   beforeEach(() => {
     // The saved table layout outlives a spec otherwise, so a test that picks
     // its own columns would decide what every later test renders.
     localStorage.removeItem('print_table_displayed_columns');
+    // The toast shows at most once per page load, so each spec starts a fresh "session".
+    resetAddPrinterToastShown();
 
     fixture = TestBed.createComponent(PrintListComponent);
     component = fixture.componentInstance;
@@ -462,11 +479,11 @@ describe('PrintListComponent', () => {
 
   /** Puts the component in the "user owns no printers" state. */
   const withNoPrinters = () => {
-    const mockPrinterRedirectPromptService = TestBed.inject(
-      PrinterRedirectPromptService
-    ) as jasmine.SpyObj<PrinterRedirectPromptService>;
-    mockPrinterRedirectPromptService.shouldShowAddPrinterPrompt.and.returnValue(
-      of(true)
+    const mockPrinterService = TestBed.inject(
+      PrinterService
+    ) as jasmine.SpyObj<PrinterService>;
+    mockPrinterService.getCurrentUserPrinterSummaries.and.returnValue(
+      printerCount(0)
     );
 
     const mockToastrService = TestBed.inject(
@@ -608,10 +625,10 @@ describe('PrintListComponent', () => {
 
   it('should fall back to the add print state when the printer lookup fails', () => {
     // Arrange
-    const mockPrinterRedirectPromptService = TestBed.inject(
-      PrinterRedirectPromptService
-    ) as jasmine.SpyObj<PrinterRedirectPromptService>;
-    mockPrinterRedirectPromptService.shouldShowAddPrinterPrompt.and.returnValue(
+    const mockPrinterService = TestBed.inject(
+      PrinterService
+    ) as jasmine.SpyObj<PrinterService>;
+    mockPrinterService.getCurrentUserPrinterSummaries.and.returnValue(
       throwError(() => new Error('printer lookup failed'))
     );
 
@@ -674,11 +691,11 @@ describe('PrintListComponent', () => {
     const router = TestBed.inject(Router);
     const routerSpy = spyOn(router, 'navigate');
 
-    const mockPrinterRedirectPromptService = TestBed.inject(
-      PrinterRedirectPromptService
-    ) as jasmine.SpyObj<PrinterRedirectPromptService>;
-    mockPrinterRedirectPromptService.shouldShowAddPrinterPrompt.and.returnValue(
-      of(true)
+    const mockPrinterService = TestBed.inject(
+      PrinterService
+    ) as jasmine.SpyObj<PrinterService>;
+    mockPrinterService.getCurrentUserPrinterSummaries.and.returnValue(
+      printerCount(0)
     );
 
     const mockToastrService = TestBed.inject(
@@ -695,7 +712,82 @@ describe('PrintListComponent', () => {
     fixture.detectChanges();
 
     // Assert
-    expect(routerSpy).toHaveBeenCalledWith(['printers', 'new']);
+    expect(routerSpy).toHaveBeenCalledWith(['printers', 'new'], {
+      queryParams: { returnUrl: '/prints' },
+    });
+  });
+
+  it('should look up printers with a one-row page', () => {
+    const mockPrinterService = TestBed.inject(
+      PrinterService
+    ) as jasmine.SpyObj<PrinterService>;
+
+    fixture.detectChanges();
+
+    expect(
+      mockPrinterService.getCurrentUserPrinterSummaries
+    ).toHaveBeenCalledWith(1, 1, '', false);
+  });
+
+  describe('while onboarding is active', () => {
+    const hintSlot = () =>
+      fixture.debugElement.query(By.directive(StubHintSlotComponent))
+        .componentInstance as StubHintSlotComponent;
+
+    it('does not show the toast while the checklist is active', () => {
+      const mockToastrService = withNoPrinters();
+      withExistingPrints(3);
+      // The slot answers before the printer lookup lands.
+      const lookup = new Subject<never>();
+      (
+        TestBed.inject(PrinterService) as jasmine.SpyObj<PrinterService>
+      ).getCurrentUserPrinterSummaries.and.returnValue(lookup);
+      fixture.detectChanges();
+
+      hintSlot().checklistActive.emit(true);
+      lookup.next({ items: [], paging: { totalCount: 0 } } as never);
+
+      expect(component.onboardingActive()).toBeTrue();
+      expect(mockToastrService.info).not.toHaveBeenCalled();
+      expect(component.printerRedirectToast).toBeNull();
+    });
+
+    it('dismisses a toast already showing when the checklist becomes active', () => {
+      const mockToastrService = withNoPrinters();
+      withExistingPrints(3);
+      fixture.detectChanges();
+      expect(component.printerRedirectToast).not.toBeNull();
+
+      hintSlot().checklistActive.emit(true);
+
+      expect(mockToastrService.remove).toHaveBeenCalledWith(1);
+      expect(component.printerRedirectToast).toBeNull();
+    });
+
+    it('shows the toast when the slot reports the checklist inactive', () => {
+      const mockToastrService = withNoPrinters();
+      withExistingPrints(3);
+      fixture.detectChanges();
+
+      hintSlot().checklistActive.emit(false);
+
+      expect(mockToastrService.info).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('shows the toast at most once per session', async () => {
+    const mockToastrService = withNoPrinters();
+    withExistingPrints(3);
+    fixture.detectChanges();
+    expect(mockToastrService.info).toHaveBeenCalledTimes(1);
+
+    // A second visit to /prints in the same page load.
+    fixture.destroy();
+    const second = TestBed.createComponent(PrintListComponent);
+    second.detectChanges();
+
+    expect(mockToastrService.info).toHaveBeenCalledTimes(1);
+    expect(second.componentInstance.printerRedirectToast).toBeNull();
   });
 
   describe('bulk selection', () => {

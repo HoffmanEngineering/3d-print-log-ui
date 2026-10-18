@@ -21,12 +21,15 @@ import {
 import { debounce } from 'lodash-es';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
-import { filter, finalize, take } from 'rxjs/operators';
+import { filter, finalize, map, take } from 'rxjs/operators';
 import { setIfChanged } from 'src/app/core/utils/set-if-changed';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { PrinterSummary } from 'src/app/core/services/printer.service';
+import {
+  PrinterService,
+  PrinterSummary,
+} from 'src/app/core/services/printer.service';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import {
   UserSetting,
@@ -49,7 +52,6 @@ import {
   PrintSummarySortColumn,
 } from '../../core/services/print.service';
 import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
-import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
 import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import { PrintBulkActionsService } from '../services/print-bulk-actions.service';
@@ -71,7 +73,7 @@ import { MatSelect, MatOption } from '@angular/material/select';
 import { PrinterAvatarComponent } from '../../shared/printer-avatar/printer-avatar.component';
 import { MatChipSet, MatChip, MatChipRemove } from '@angular/material/chips';
 import { MatTooltip } from '@angular/material/tooltip';
-import { NextAchievementHintComponent } from './next-achievement-hint/next-achievement-hint.component';
+import { PrintListHintSlotComponent } from './print-list-hint-slot/print-list-hint-slot.component';
 import {
   MatButtonToggleGroup,
   MatButtonToggle,
@@ -110,6 +112,17 @@ export interface ColumnDefinition {
   description: string;
 }
 
+/**
+ * The no-printer toast shows at most once per page load, however many times the list is
+ * visited. Module state rather than a field, so it outlives this component.
+ */
+let addPrinterToastShown = false;
+
+/** Lets each spec start a fresh session. */
+export function resetAddPrinterToastShown(): void {
+  addPrinterToastShown = false;
+}
+
 @Component({
   selector: 'app-print-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -137,7 +150,7 @@ export interface ColumnDefinition {
     MatChip,
     MatTooltip,
     MatChipRemove,
-    NextAchievementHintComponent,
+    PrintListHintSlotComponent,
     MatButtonToggleGroup,
     MatButtonToggle,
     PrintBulkActionBarComponent,
@@ -173,7 +186,7 @@ export interface ColumnDefinition {
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
-  private printerRedirectPromptService = inject(PrinterRedirectPromptService);
+  private printerService = inject(PrinterService);
   private toastrService = inject(ToastrService);
   private titleService = inject(Title);
   private router = inject(Router);
@@ -383,6 +396,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
    * already drives the "No Active Printers" prompt resolves.
    */
   public readonly hasPrinters = signal<boolean | null>(null);
+  /** True while the getting-started checklist shows; it replaces the no-printer toast. */
+  readonly onboardingActive = signal(false);
 
   /**
    * The toast decision depends on the print count, so it must wait for the
@@ -647,19 +662,22 @@ export class PrintListComponent implements OnInit, OnDestroy {
      * Show the Add Printer prompt if needed.
      */
     this.subscriptions.add(
-      this.printerRedirectPromptService.shouldShowAddPrinterPrompt().subscribe({
-        next: (shouldShowPrompt) => {
-          this.hasPrinters.set(!shouldShowPrompt);
-          this.syncAddPrinterPrompt();
-        },
-        error: (error) => {
-          // A failed lookup must not leave the first-run user staring at a
-          // blank page, so assume they have printers and offer Add print.
-          this.loggingService.logException(error);
-          this.hasPrinters.set(true);
-          this.syncAddPrinterPrompt();
-        },
-      })
+      this.printerService
+        .getCurrentUserPrinterSummaries(1, 1, '', false)
+        .pipe(map((page) => page.paging.totalCount === 0))
+        .subscribe({
+          next: (shouldShowPrompt) => {
+            this.hasPrinters.set(!shouldShowPrompt);
+            this.syncAddPrinterPrompt();
+          },
+          error: (error) => {
+            // A failed lookup must not leave the first-run user staring at a
+            // blank page, so assume they have printers and offer Add print.
+            this.loggingService.logException(error);
+            this.hasPrinters.set(true);
+            this.syncAddPrinterPrompt();
+          },
+        })
     );
 
     this.mobileQuery = this.media.matchMedia('(max-width: 800px)');
@@ -767,6 +785,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.onboardingActive()) {
+      this.dismissAddPrinterToast();
+      return;
+    }
+
     if (this.hasPrinters() !== false) {
       this.dismissAddPrinterToast();
       return;
@@ -780,10 +803,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.showAddPrinterToast();
   }
 
+  /** Set from the hint slot's `checklistActive`; the toast waits while the checklist shows. */
+  setOnboardingActive(active: boolean): void {
+    this.onboardingActive.set(active);
+    this.syncAddPrinterPrompt();
+  }
+
   private showAddPrinterToast(): void {
-    if (this.printerRedirectToast) {
+    if (this.printerRedirectToast || addPrinterToastShown) {
       return;
     }
+    addPrinterToastShown = true;
 
     this.printerRedirectToast = this.toastrService.info(
       'Click here to add a new 3D Printer before logging prints.',
@@ -796,7 +826,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.printerRedirectSubscription =
       this.printerRedirectToast.onTap.subscribe(() => {
         this.loggingService.logEvent('NoActivePrinterPromptClicked');
-        this.router.navigate(['printers', 'new']);
+        this.router.navigate(['printers', 'new'], {
+          queryParams: { returnUrl: '/prints' },
+        });
         this.printerRedirectSubscription?.unsubscribe?.();
         this.printerRedirectSubscription = null;
       });

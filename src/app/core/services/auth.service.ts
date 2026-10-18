@@ -26,6 +26,7 @@ import {
   filter,
   shareReplay,
   tap,
+  timeout,
 } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { isCordova } from '../utils/platform';
@@ -47,6 +48,8 @@ const SIGNUP_WINDOW_MS = 10 * 60 * 1000;
 const SIGNUP_LOGGED_KEY_PREFIX = 'pl_signup_logged_';
 /** How long the callback waits on onboarding lookups before going to the target anyway. */
 const CALLBACK_LOOKUP_TIMEOUT_MS = 3000;
+/** How long background sign-up logging waits on the profile, then on the status lookup. */
+const SIGNUP_LOG_TIMEOUT_MS = 10000;
 
 export interface UserProfileInfo {
   id: number;
@@ -186,13 +189,15 @@ export class AuthService {
               profilePicture: user?.picture,
             };
 
-            this.userService
-              .updateCurrentUserDetail(userInfo)
-              .subscribe((updatedUser) => {
+            this.userService.updateCurrentUserDetail(userInfo).subscribe({
+              next: (updatedUser) => {
                 // TODO: Save this updated user back to the userProfile$ object.
                 this.userProfileSubject$.next(updatedUser);
                 this.setTelemetryUser(updatedUser.id);
-              });
+              },
+              // A rejected PUT used to surface as an unhandled error; record it instead.
+              error: (error) => this.logException(error),
+            });
           } else {
             this.userProfileSubject$.next(currentUser);
             this.setTelemetryUser(currentUser.id);
@@ -361,20 +366,21 @@ export class AuthService {
   }
 
   /**
-   * Logs a new sign-up and sends a new user to /welcome instead of the target. Onboarding
-   * never blocks the app: a failed lookup falls back to the target, and so does one still
-   * pending after CALLBACK_LOOKUP_TIMEOUT_MS.
+   * Logs a new sign-up (in the background) and sends a new user to /welcome instead of the
+   * target. Onboarding never blocks the app: a failed welcome lookup falls back to the
+   * target, and so does one still pending after CALLBACK_LOOKUP_TIMEOUT_MS. Navigation never
+   * waits on the sign-up logging, which needs the profile (and, for a new user, its PUT).
    */
   private async navigateAfterCallback(
     target: string,
     source: string | undefined
   ): Promise<void> {
+    void this.logSignupIfNewOnceProfileLoads(source, target);
+
     const showWelcome = await this.withTimeout(
-      Promise.all([
-        this.logSignupIfNewOnceProfileLoads(source, target),
-        this.injector.get(OnboardingService).shouldShowWelcome(target),
-      ]).then(([, welcome]) => welcome),
-      false
+      this.injector.get(OnboardingService).shouldShowWelcome(target),
+      false,
+      CALLBACK_LOOKUP_TIMEOUT_MS
     ).catch(() => false);
 
     if (showWelcome) {
@@ -384,18 +390,29 @@ export class AuthService {
     }
   }
 
-  /** The profile id comes from the first profile getUser$ emits after the callback. */
+  /**
+   * The profile id comes from the first profile getUser$ emits after the callback. Never
+   * rejects, and gives up after SIGNUP_LOG_TIMEOUT_MS at each step so nothing waits forever.
+   */
   private async logSignupIfNewOnceProfileLoads(
     source: string | undefined,
     target: string
   ): Promise<void> {
     try {
       const profile = await firstValueFrom(
-        this.userProfile$.pipe(filter((p) => p !== null))
+        this.userProfile$.pipe(
+          filter((p) => p !== null),
+          timeout(SIGNUP_LOG_TIMEOUT_MS)
+        )
       );
-      await this.logSignupIfNew(profile.id, source, target);
-    } catch {
-      // Sign-up logging is best-effort and must not change where the user lands.
+      await this.withTimeout(
+        this.logSignupIfNew(profile.id, source, target),
+        undefined,
+        SIGNUP_LOG_TIMEOUT_MS
+      );
+    } catch (error) {
+      // Best-effort: a missed sign-up event must not change where the user lands.
+      this.logException(error);
     }
   }
 
@@ -443,13 +460,24 @@ export class AuthService {
     }
   }
 
-  /** Resolves to `fallback` if `work` has not settled within CALLBACK_LOOKUP_TIMEOUT_MS. */
-  private withTimeout<T>(work: Promise<T>, fallback: T): Promise<T> {
+  /** Resolves to `fallback` if `work` has not settled within `ms`. */
+  private withTimeout<T>(
+    work: Promise<T>,
+    fallback: T,
+    ms: number
+  ): Promise<T> {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<T>((resolve) => {
-      timer = setTimeout(() => resolve(fallback), CALLBACK_LOOKUP_TIMEOUT_MS);
+    const expired = new Promise<T>((resolve) => {
+      timer = setTimeout(() => resolve(fallback), ms);
     });
-    return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
+    return Promise.race([work, expired]).finally(() => clearTimeout(timer));
+  }
+
+  /** Resolved lazily, like setTelemetryUser. */
+  private logException(error: unknown): void {
+    this.injector
+      .get(LoggingService)
+      .logException(error instanceof Error ? error : new Error(String(error)));
   }
 
   /**

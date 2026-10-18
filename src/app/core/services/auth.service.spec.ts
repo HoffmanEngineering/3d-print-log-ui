@@ -1,5 +1,6 @@
 import {
   fakeAsync,
+  flush,
   flushMicrotasks,
   TestBed,
   tick,
@@ -7,7 +8,7 @@ import {
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { GoogleAnalyticsService } from './google-analytics.service';
-import { defer, of } from 'rxjs';
+import { defer, NEVER, of, throwError } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AuthService } from './auth.service';
@@ -355,6 +356,7 @@ describe('AuthService', () => {
     let status: jasmine.Spy;
     let shouldShowWelcome: jasmine.Spy;
     let logEvent: jasmine.Spy;
+    let logException: jasmine.Spy;
     let gaEvent: jasmine.Spy;
     let navigate: jasmine.Spy;
 
@@ -398,6 +400,7 @@ describe('AuthService', () => {
       );
       logEvent = spyOn(TestBed.inject(LoggingService), 'logEvent');
       spyOn(TestBed.inject(LoggingService), 'setAuthenticatedUser');
+      logException = spyOn(TestBed.inject(LoggingService), 'logException');
       gaEvent = spyOn(TestBed.inject(GoogleAnalyticsService), 'eventEmitter');
       navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(
         true
@@ -516,6 +519,7 @@ describe('AuthService', () => {
         tick(3000);
 
         expect(navigate).toHaveBeenCalledOnceWith('/prints');
+        flush(); // the sign-up logging gives up on its own, later
       }));
 
       it('still navigates when the sign-up check rejects', fakeAsync(() => {
@@ -525,6 +529,50 @@ describe('AuthService', () => {
 
         expect(navigate).toHaveBeenCalledOnceWith('/prints');
         expect(signupLogs()).toEqual([]);
+      }));
+
+      it('goes to /welcome without waiting for a profile that never loads', fakeAsync(() => {
+        shouldShowWelcome.and.resolveTo(true);
+        mockUserService.getCurrentUserDetail.and.returnValue(NEVER);
+
+        runCallback({ target: '/prints' });
+
+        expect(navigate).toHaveBeenCalledOnceWith('/welcome', {
+          state: { entry: 'callback' },
+        });
+        tick(10000); // the background sign-up logging gives up on the profile
+        expect(signupLogs()).toEqual([]);
+        expect(logException).toHaveBeenCalled();
+      }));
+
+      it('goes to /welcome when the new-user PUT fails', fakeAsync(() => {
+        shouldShowWelcome.and.resolveTo(true);
+        mockUserService.getCurrentUserDetail.and.returnValue(
+          of({ id: PROFILE_ID, displayName: null } as any)
+        );
+        (mockUserService as any).updateCurrentUserDetail = jasmine
+          .createSpy('updateCurrentUserDetail')
+          .and.returnValue(throwError(() => new Error('400')));
+
+        runCallback({ target: '/prints' });
+
+        expect(navigate).toHaveBeenCalledOnceWith('/welcome', {
+          state: { entry: 'callback' },
+        });
+        tick(10000); // the background sign-up logging gives up on the profile
+        expect(logException).toHaveBeenCalled();
+      }));
+
+      it('goes to /welcome while the sign-up status lookup hangs', fakeAsync(() => {
+        shouldShowWelcome.and.resolveTo(true);
+        status.and.returnValue(new Promise(() => {}));
+
+        runCallback({ target: '/prints' });
+
+        expect(navigate).toHaveBeenCalledOnceWith('/welcome', {
+          state: { entry: 'callback' },
+        });
+        flush();
       }));
     });
   });

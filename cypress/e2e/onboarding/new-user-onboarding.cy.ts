@@ -81,11 +81,22 @@ describe('New-user onboarding', () => {
     );
 
     // Step 1: a popular chip fills the specs from the catalog, and the saved
-    // printer carries them with the catalog model id.
+    // printer carries them with the catalog model id. "Add printer and
+    // continue" saves and moves on to step 2.
+    cy.findByRole('heading', { name: 'Which printer do you have?' }).should(
+      'be.visible'
+    );
     cy.get('[data-testid="quick-add-printer"]').within(() => {
       cy.get('[data-testid="popular-printer-bambu-lab-p1s"]').click();
+      cy.get('[data-testid="picked-printer-name"]').should(
+        'have.text',
+        'Bambu Lab P1S'
+      );
       cy.get('[data-testid="spec-summary"]').should('contain.text', '256');
-      cy.get('[data-testid="quick-add-save"]').should('be.enabled').click();
+      cy.get('[data-testid="quick-add-save"]')
+        .should('be.enabled')
+        .and('contain.text', 'Add printer and continue')
+        .click();
     });
     cy.wait('@createPrinter').then(({ request, response }) => {
       expect(response?.statusCode).to.be.lessThan(300);
@@ -95,8 +106,6 @@ describe('New-user onboarding', () => {
       expect(response?.body?.catalogModelId).to.equal('bambu-lab-p1s');
     });
     cy.get('[data-testid="printer-chips"]').should('contain.text', 'P1S');
-
-    cy.get('[data-testid="step1-continue"]').should('be.enabled').click();
 
     // Step 2 is optional.
     cy.get('[data-testid="step2-skip"]').should('be.visible').click();
@@ -133,16 +142,31 @@ describe('New-user onboarding', () => {
 
     cy.visit(`/welcome?devUserId=${devUserId}`);
 
-    // The make is split from the model on blur, and the name follows the model.
+    // The manual path: make and model by hand, and the nickname follows the model.
+    // "Save and add another" saves and brings back an empty form.
     cy.get('[data-testid="quick-add-printer"]').within(() => {
-      cy.findByLabelText('Printer make and model').type('Prusa i3 MK3S').blur();
-      cy.findByLabelText('Name').should('have.value', 'i3 MK3S');
-      cy.get('[data-testid="quick-add-save"]').should('be.enabled').click();
+      cy.get('[data-testid="manual-toggle"]')
+        .should('contain.text', "Can't find yours? Enter it manually")
+        .click();
+      cy.findByLabelText('Make').type('Prusa');
+      cy.findByLabelText('Model').type('i3 MK3S');
+      cy.findByLabelText('Nickname').should('have.value', 'i3 MK3S');
+      cy.get('[data-testid="quick-add-save-another"]')
+        .should('be.enabled')
+        .click();
     });
     cy.wait('@createPrinter').then(({ request, response }) => {
       expect(response?.statusCode).to.be.lessThan(300);
       expect(request.body.catalogModelId ?? null).to.equal(null);
     });
     cy.get('[data-testid="printer-chips"]').should('contain.text', 'i3 MK3S');
+    // Nothing new is entered, so the primary only continues.
+    cy.get('[data-testid="printer-search"]').should('have.value', '');
+    cy.get('[data-testid="quick-add-save-another"]').should('not.exist');
+    cy.get('[data-testid="quick-add-save"]')
+      .should('contain.text', 'Continue')
+      .and('not.contain.text', 'Add printer')
+      .click();
+    cy.get('[data-testid="step2-skip"]').should('be.visible');
   });
 });

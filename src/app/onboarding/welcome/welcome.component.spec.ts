@@ -30,6 +30,7 @@ import { OnboardingApiService } from '../onboarding-api.service';
 import { OnboardingService } from '../onboarding.service';
 import { QuickAddMaterialComponent } from '../quick-add-material/quick-add-material.component';
 import {
+  QuickAddMode,
   QuickAddPrinterComponent,
   QuickAddSource,
 } from '../quick-add-printer/quick-add-printer.component';
@@ -39,7 +40,10 @@ import { WelcomeComponent } from './welcome.component';
 class StubQuickAddPrinterComponent {
   readonly source = input.required<QuickAddSource>();
   readonly showEmailNotice = input(false);
+  readonly mode = input<QuickAddMode>('dialog');
+  readonly hasSavedPrinters = input(false);
   readonly saved = output<PrinterDetail>();
+  readonly continued = output<void>();
 }
 
 @Component({ selector: 'app-quick-add-material', template: '' })
@@ -203,20 +207,46 @@ describe('WelcomeComponent', () => {
     await render();
 
     expect(printerForm().source()).toBe('welcome');
+    expect(printerForm().mode()).toBe('welcome');
     expect(printerForm().showEmailNotice()).toBeFalse();
   });
 
-  it('disables Continue with no printers and enables it after a save', async () => {
+  it('leads step 1 with "Step 1 of 3" and the printer question', async () => {
     configure();
     await render();
-    const next = () => el('step1-continue') as HTMLButtonElement;
-    expect(next().disabled).toBeTrue();
 
-    printerForm().saved.emit({ id: 7, name: 'Voron' } as PrinterDetail);
+    const header = fixture.nativeElement.querySelector(
+      '.welcome__step-header'
+    ) as HTMLElement;
+    expect(header.querySelector('p')!.textContent!.trim()).toBe('Step 1 of 3');
+    expect(header.querySelector('h2')!.textContent!.trim()).toBe(
+      'Which printer do you have?'
+    );
+    expect(el('step1-continue')).toBeNull();
+  });
+
+  it('adds a check chip under "Added" after a save and keeps the same form', async () => {
+    configure();
+    await render();
+    const form = printerForm();
+    expect(form.hasSavedPrinters()).toBeFalse();
+    expect(el('printer-chips')).toBeNull();
+
+    form.saved.emit({ id: 7, name: 'Voron' } as PrinterDetail);
     await settle();
 
-    expect(next().disabled).toBeFalse();
-    expect(el('printer-chips')!.textContent).toContain('Voron');
+    const chips = el('printer-chips')!;
+    expect(chips.textContent).toContain('Voron');
+    expect(chips.querySelector('mat-icon')!.textContent!.trim()).toBe('check');
+    expect(
+      fixture.nativeElement.querySelector('.welcome__added').textContent
+    ).toContain('Added');
+    expect(printerForm()).toBe(form);
+    expect(form.hasSavedPrinters()).toBeTrue();
+
+    form.saved.emit({ id: 8, name: 'MK4' } as PrinterDetail);
+    await settle();
+    expect(el('printer-chips')!.querySelectorAll('mat-chip').length).toBe(2);
   });
 
   it('shows the existing printer when the summary resolves after the first render', async () => {
@@ -238,11 +268,7 @@ describe('WelcomeComponent', () => {
     await settle();
 
     expect(el('printer-chips')!.textContent).toContain('MK4S');
-    expect((el('step1-continue') as HTMLButtonElement).disabled).toBeFalse();
-    expect(
-      fixture.debugElement.query(By.directive(StubQuickAddPrinterComponent))
-    ).toBeNull();
-    expect(el('add-another-printer')).not.toBeNull();
+    expect(printerForm().hasSavedPrinters()).toBeTrue();
   });
 
   it('shows the quick-add form once an empty summary resolves', async () => {
@@ -256,7 +282,7 @@ describe('WelcomeComponent', () => {
     await settle();
 
     expect(printerForm()).toBeTruthy();
-    expect((el('step1-continue') as HTMLButtonElement).disabled).toBeTrue();
+    expect(printerForm().hasSavedPrinters()).toBeFalse();
   });
 
   it('falls back to the quick-add form when the summary fails', async () => {
@@ -289,28 +315,12 @@ describe('WelcomeComponent', () => {
     expect(component.step1Ready()).toBeTrue();
   }));
 
-  it('enables Continue for a printer that already exists', async () => {
+  it('tells the form about a printer that already exists', async () => {
     configure([summary(3, 'Prusa MK4')]);
     await render();
 
-    expect((el('step1-continue') as HTMLButtonElement).disabled).toBeFalse();
+    expect(printerForm().hasSavedPrinters()).toBeTrue();
     expect(el('printer-chips')!.textContent).toContain('Prusa MK4');
-  });
-
-  it('"Add another printer" shows a fresh form after a save', async () => {
-    configure();
-    await render();
-    const first = printerForm();
-    first.saved.emit({ id: 7, name: 'Voron' } as PrinterDetail);
-    await settle();
-    expect(
-      fixture.debugElement.query(By.directive(StubQuickAddPrinterComponent))
-    ).toBeNull();
-
-    el('add-another-printer')!.click();
-    await settle();
-
-    expect(printerForm()).not.toBe(first);
   });
 
   it('links to the full printer form with a return URL', async () => {
@@ -323,11 +333,11 @@ describe('WelcomeComponent', () => {
     );
   });
 
-  it('logs Welcome_StepCompleted and moves on when Continue is clicked', async () => {
+  it('logs Welcome_StepCompleted and moves on when the form continues', async () => {
     configure([summary(3, 'Prusa MK4')]);
     await render();
 
-    el('step1-continue')!.click();
+    printerForm().continued.emit();
     await settle();
 
     expect(logging.logEvent).toHaveBeenCalledWith('Welcome_StepCompleted', {

@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { MatStepperModule } from '@angular/material/stepper';
 import {
   ActivatedRoute,
@@ -63,6 +64,7 @@ const PRINTER_PAGE_SIZE = 50;
     RouterLink,
     MatButtonModule,
     MatChipsModule,
+    MatIconModule,
     MatStepperModule,
     QuickAddPrinterComponent,
     QuickAddMaterialComponent,
@@ -95,13 +97,12 @@ export class WelcomeComponent implements OnInit {
 
   readonly selectedIndex = signal(this.initialStep());
   readonly printers = signal<SavedPrinter[]>([]);
-  readonly showPrinterForm = signal(true);
   readonly savedMaterial = signal<string | null>(null);
   readonly finishing = signal(false);
   /**
    * False until the first printer summary settles. Before that, step 1 must not render the
-   * empty quick-add form and a disabled Continue: for a user who already has a printer that
-   * reads as "none yet", and a slow summary left exactly that on screen.
+   * quick-add form without the user's printers: for a user who already has one that reads
+   * as "none yet", and a slow summary left exactly that on screen.
    */
   private readonly printersLoaded = signal(false);
   readonly step1Ready = computed(
@@ -144,7 +145,6 @@ export class WelcomeComponent implements OnInit {
             this.addPrinters(
               page.items.map((p) => ({ id: p.id, name: p.name }))
             );
-            this.showPrinterForm.set(false);
           }
           this.printersSettled();
         },
@@ -169,12 +169,6 @@ export class WelcomeComponent implements OnInit {
     if (printer.id !== null) {
       this.addPrinters([{ id: printer.id, name: printer.name }]);
     }
-    this.showPrinterForm.set(false);
-  }
-
-  /** A new form instance is a reset one. */
-  addAnotherPrinter(): void {
-    this.showPrinterForm.set(true);
   }
 
   onMaterialSaved(filament: FilamentDetail): void {

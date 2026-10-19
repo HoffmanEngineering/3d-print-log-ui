@@ -30,7 +30,10 @@ import {
   openQuickAddPrinterDialog,
   QuickAddPrinterDialogComponent,
 } from './quick-add-printer-dialog.component';
-import { QuickAddPrinterComponent } from './quick-add-printer.component';
+import {
+  QuickAddMode,
+  QuickAddPrinterComponent,
+} from './quick-add-printer.component';
 
 function category(nickname: string): PrinterCategory {
   return { nickname, name: nickname } as PrinterCategory;
@@ -82,20 +85,27 @@ describe('QuickAddPrinterComponent', () => {
   let onboarding: jasmine.SpyObj<OnboardingService>;
   let catalog: jasmine.SpyObj<PrinterCatalogService>;
   let saved: PrinterDetail[];
+  let continued: number;
 
   async function setup(
     showEmailNotice = false,
-    initialModelId: string | null = null
+    initialModelId: string | null = null,
+    mode: QuickAddMode = 'dialog',
+    hasSavedPrinters = false
   ) {
     fixture = TestBed.createComponent(QuickAddPrinterComponent);
     fixture.componentRef.setInput('source', 'welcome');
     fixture.componentRef.setInput('showEmailNotice', showEmailNotice);
+    fixture.componentRef.setInput('mode', mode);
+    fixture.componentRef.setInput('hasSavedPrinters', hasSavedPrinters);
     if (initialModelId) {
       fixture.componentRef.setInput('initialModelId', initialModelId);
     }
     component = fixture.componentInstance;
     saved = [];
+    continued = 0;
     component.saved.subscribe((p) => saved.push(p));
+    component.continued.subscribe(() => continued++);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -120,6 +130,23 @@ describe('QuickAddPrinterComponent', () => {
     search.value = text;
     search.dispatchEvent(new Event('input'));
     fixture.detectChanges();
+  }
+
+  /** After a pick the search box is hidden, so a type-over goes through the control. */
+  function typeOverPick(text: string): void {
+    component.form.controls.search.setValue(text);
+    fixture.detectChanges();
+  }
+
+  function openSpecs(): void {
+    byTestId<HTMLButtonElement>('edit-specs')!.click();
+    fixture.detectChanges();
+  }
+
+  function buttonLabels(): string[] {
+    return Array.from(
+      host().querySelectorAll<HTMLButtonElement>('.quick-add__actions button')
+    ).map((b) => b.textContent!.trim());
   }
 
   beforeEach(() => {
@@ -234,8 +261,8 @@ describe('QuickAddPrinterComponent', () => {
     component.selectCatalogPrinter(MK4);
     fixture.detectChanges();
     const toggle = host().querySelector(
-      'mat-slide-toggle button'
-    ) as HTMLButtonElement;
+      '[data-testid="multi-material"] input'
+    ) as HTMLInputElement;
 
     toggle.click();
     fixture.detectChanges();
@@ -297,11 +324,16 @@ describe('QuickAddPrinterComponent', () => {
     });
   });
 
-  it('is a primary flat button labeled "Save printer"', async () => {
+  it('dialog mode shows only a primary "Add printer"', async () => {
     await setup();
+    component.selectCatalogPrinter(MK4);
+    fixture.detectChanges();
+
     const button = byTestId<HTMLButtonElement>('quick-add-save')!;
-    expect(button.textContent!.trim()).toBe('Save printer');
+    expect(button.textContent!.trim()).toBe('Add printer');
     expect(button.classList).toContain('mat-primary');
+    expect(buttonLabels()).toEqual(['Add printer']);
+    expect(byTestId('quick-add-save-another')).toBeNull();
   });
 
   it('maps a Resin catalog model to MSLA', async () => {
@@ -605,6 +637,7 @@ describe('QuickAddPrinterComponent', () => {
 
       component.selectCatalogPrinter(P1S);
       fixture.detectChanges();
+      openSpecs();
 
       expect(component.form.controls.type.value).toBe('FFF');
       expect(component.form.controls.multiMaterial.value).toBeTrue();
@@ -618,19 +651,24 @@ describe('QuickAddPrinterComponent', () => {
       expect(byTestId('spec-summary')!.textContent!.trim()).toBe(
         '256 × 256 × 256 mm · 0.4 mm nozzle · 1.75 mm · heated bed · 4 slots'
       );
-      const link = host().querySelector(
-        'a[href="/docs/about"]'
-      ) as HTMLAnchorElement;
-      expect(link).not.toBeNull();
-      expect(link.closest('p')!.textContent!.trim()).toBe(
-        'Specs from Cura and OrcaSlicer printer profiles'
-      );
+    });
+
+    it('drops the slicer-profile attribution line from quick add', async () => {
+      await setup();
+      component.selectCatalogPrinter(P1S);
+      fixture.detectChanges();
+      openSpecs();
+
+      expect(host().querySelector('a[href="/docs/about"]')).toBeNull();
+      expect(host().textContent).not.toContain('Cura and OrcaSlicer');
+      expect(host().textContent).not.toContain('Specs from');
     });
 
     it('sends the catalog id and specs, with the chosen nozzle', async () => {
       await setup();
       component.selectCatalogPrinter(P1S);
       fixture.detectChanges();
+      openSpecs();
 
       byTestId<HTMLButtonElement>('nozzle-0.6')!.click();
       fixture.detectChanges();
@@ -691,7 +729,7 @@ describe('QuickAddPrinterComponent', () => {
       );
     });
 
-    it('hides the spec fields until Edit specs is pressed', async () => {
+    it('hides the nozzle and spec fields until Adjust specs is pressed', async () => {
       await setup();
       component.selectCatalogPrinter(P1S);
       fixture.detectChanges();
@@ -699,9 +737,13 @@ describe('QuickAddPrinterComponent', () => {
       expect(
         host().querySelector('input[formcontrolname="bedWidthMm"]')
       ).toBeNull();
-      expect(byTestId('edit-specs')!.getAttribute('aria-expanded')).toBe(
-        'false'
-      );
+      expect(byTestId('nozzle-0.4')).toBeNull();
+      const adjust = byTestId<HTMLButtonElement>('edit-specs')!;
+      expect(adjust.textContent!.trim()).toBe('Adjust specs');
+      expect(adjust.getAttribute('aria-expanded')).toBe('false');
+
+      openSpecs();
+      expect(byTestId('nozzle-0.4')).not.toBeNull();
     });
 
     it('a hand edit of make after a pick drops only the catalog id', async () => {
@@ -710,15 +752,14 @@ describe('QuickAddPrinterComponent', () => {
       component.showManual.set(true);
       fixture.detectChanges();
 
-      const make = host().querySelector(
-        'input[formcontrolname="make"]'
-      ) as HTMLInputElement;
-      make.value = 'Bambu';
-      make.dispatchEvent(new Event('input'));
+      // The make field only shows on the manual path, so the edit goes through the handler.
+      component.form.controls.make.setValue('Bambu');
+      component.onManualInput();
       fixture.detectChanges();
 
       // The specs stay visible and editable.
       expect(byTestId('spec-summary')!.textContent).toContain('256 × 256');
+      openSpecs();
       expect(
         byTestId<HTMLButtonElement>('nozzle-0.4')!.getAttribute('aria-pressed')
       ).toBe('true');
@@ -744,7 +785,7 @@ describe('QuickAddPrinterComponent', () => {
       component.selectCatalogPrinter(P1S);
       component.form.controls.type.setValue('MSLA');
 
-      typeInSearch('Voron 2.4');
+      typeOverPick('Voron 2.4');
       await component.save();
 
       expect(sent().category.nickname).toBe('MSLA');
@@ -756,7 +797,7 @@ describe('QuickAddPrinterComponent', () => {
       component.selectCatalogPrinter(P1S);
       component.form.controls.slotCount.setValue(8);
 
-      typeInSearch('Voron 2.4');
+      typeOverPick('Voron 2.4');
 
       expect(component.form.controls.multiMaterial.value).toBeTrue();
       expect(component.form.controls.slotCount.value).toBe(8);
@@ -770,7 +811,7 @@ describe('QuickAddPrinterComponent', () => {
       component.form.controls.bedWidthMm.setValue(300);
       fixture.detectChanges();
 
-      typeInSearch('Voron 2.4');
+      typeOverPick('Voron 2.4');
       fixture.detectChanges();
 
       // The kept value stays reachable, so nothing is sent unseen.
@@ -793,7 +834,7 @@ describe('QuickAddPrinterComponent', () => {
     it('does not log NotListed after a catalog pick in this session', async () => {
       await setup();
       component.selectCatalogPrinter(P1S);
-      typeInSearch('Voron 2.4');
+      typeOverPick('Voron 2.4');
 
       await component.save();
 
@@ -808,7 +849,7 @@ describe('QuickAddPrinterComponent', () => {
       component.selectCatalogPrinter(P1S);
       fixture.detectChanges();
 
-      typeInSearch('Bambu Lab P1');
+      typeOverPick('Bambu Lab P1');
       expect(byTestId('spec-summary')).toBeNull();
       expect(byTestId('nozzle-0.4')).toBeNull();
       expect(component.form.controls.multiMaterial.value).toBeFalse();
@@ -855,6 +896,331 @@ describe('QuickAddPrinterComponent', () => {
         'QuickAddPrinter_NotListed',
         jasmine.anything()
       );
+    });
+  });
+
+  describe('simplified step', () => {
+    let popular: Subject<PrinterModel[]>;
+
+    beforeEach(() => {
+      popular = new Subject<PrinterModel[]>();
+      catalog.popular.and.returnValue(popular);
+    });
+
+    function typeToggle(): HTMLElement | null {
+      return host().querySelector('mat-button-toggle-group');
+    }
+
+    function input(name: string): HTMLInputElement | null {
+      return host().querySelector(`input[formcontrolname="${name}"]`);
+    }
+
+    it('leads with the popular grid, then an outlined search, then the manual link', async () => {
+      await setup();
+      popular.next([P1S, MK4]);
+      fixture.detectChanges();
+
+      const grid = byTestId('popular-printers')!;
+      const search = byTestId<HTMLInputElement>('printer-search')!;
+      const manual = byTestId<HTMLButtonElement>('manual-toggle')!;
+      const order = (a: Node, b: Node) =>
+        a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
+      expect(order(grid, search)).toBeTruthy();
+      expect(order(search, manual)).toBeTruthy();
+
+      const field = search.closest('mat-form-field')!;
+      expect(field.classList).toContain('mat-form-field-appearance-outline');
+      expect(field.textContent).toContain('Search 900+ printers');
+      expect(field.querySelector('mat-icon')!.textContent!.trim()).toBe(
+        'search'
+      );
+      expect(search.placeholder).toBe('e.g. Bambu Lab X1C');
+      expect(manual.textContent!.trim()).toBe(
+        "Can't find yours? Enter it manually"
+      );
+      expect(host().textContent).not.toContain('Not listed?');
+    });
+
+    it('shows no make, model, type or nickname before a pick', async () => {
+      await setup();
+
+      expect(input('make')).toBeNull();
+      expect(input('model')).toBeNull();
+      expect(input('name')).toBeNull();
+      expect(typeToggle()).toBeNull();
+    });
+
+    it('a pick hides the grid, search and type toggle and shows one confirmation card', async () => {
+      await setup();
+      popular.next([P1S, MK4]);
+      fixture.detectChanges();
+
+      byTestId<HTMLButtonElement>('popular-printer-bambu-lab-p1s')!.click();
+      fixture.detectChanges();
+
+      expect(byTestId('popular-printers')).toBeNull();
+      expect(byTestId('printer-search')).toBeNull();
+      expect(byTestId('manual-toggle')).toBeNull();
+      expect(typeToggle()).toBeNull();
+      const card = byTestId('picked-printer')!;
+      expect(card.querySelector('strong')!.textContent!.trim()).toBe(
+        'Bambu Lab P1S'
+      );
+      expect(card.querySelector('mat-icon')!.textContent!.trim()).toBe(
+        'check_circle'
+      );
+      expect(byTestId('change-printer')!.textContent!.trim()).toBe('Change');
+      expect(card.querySelector('[data-testid="spec-summary"]')).not.toBeNull();
+    });
+
+    it('shows the type toggle and make/model only on the manual path', async () => {
+      await setup();
+
+      byTestId<HTMLButtonElement>('manual-toggle')!.click();
+      fixture.detectChanges();
+
+      expect(typeToggle()).not.toBeNull();
+      expect(input('make')).not.toBeNull();
+      expect(input('model')).not.toBeNull();
+      expect(byTestId('printer-search')).toBeNull();
+    });
+
+    it('shows the nickname on the manual path once make or model has text', async () => {
+      await setup();
+      byTestId<HTMLButtonElement>('manual-toggle')!.click();
+      fixture.detectChanges();
+      expect(input('name')).toBeNull();
+
+      const model = input('model')!;
+      model.value = 'Trident';
+      model.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      expect(input('name')!.value).toBe('Trident');
+    });
+
+    it('labels the name "Nickname" with a hint, prefilled with the model', async () => {
+      await setup();
+      component.selectCatalogPrinter(P1S);
+      fixture.detectChanges();
+
+      const field = input('name')!.closest('mat-form-field')!;
+      expect(field.querySelector('mat-label')!.textContent!.trim()).toBe(
+        'Nickname'
+      );
+      expect(field.querySelector('mat-hint')!.textContent!.trim()).toBe(
+        'What it\'s called in your log, e.g. "Garage P1S".'
+      );
+      expect(input('name')!.value).toBe('P1S');
+    });
+
+    it('starts the AMS checkbox checked for a multi-slot model and shows the slot count', async () => {
+      await setup();
+      component.selectCatalogPrinter(P1S);
+      fixture.detectChanges();
+
+      const box = host().querySelector(
+        '[data-testid="multi-material"] input'
+      ) as HTMLInputElement;
+      expect(byTestId('multi-material')!.textContent!.trim()).toBe(
+        'I use an AMS / multi-material unit'
+      );
+      expect(box.checked).toBeTrue();
+      expect(input('slotCount')!.value).toBe('4');
+
+      box.click();
+      fixture.detectChanges();
+      expect(input('slotCount')).toBeNull();
+    });
+
+    it('leaves the AMS checkbox off for a single-slot model', async () => {
+      await setup();
+      component.selectCatalogPrinter(MK4);
+      fixture.detectChanges();
+
+      const box = host().querySelector(
+        '[data-testid="multi-material"] input'
+      ) as HTMLInputElement;
+      expect(box.checked).toBeFalse();
+      expect(input('slotCount')).toBeNull();
+    });
+
+    it('Change clears the pick and restores the grid and search', async () => {
+      await setup();
+      popular.next([P1S, MK4]);
+      fixture.detectChanges();
+      byTestId<HTMLButtonElement>('popular-printer-bambu-lab-p1s')!.click();
+      fixture.detectChanges();
+
+      byTestId<HTMLButtonElement>('change-printer')!.click();
+      fixture.detectChanges();
+
+      expect(component.catalogModel()).toBeNull();
+      expect(byTestId('picked-printer')).toBeNull();
+      expect(byTestId('popular-printer-bambu-lab-p1s')).not.toBeNull();
+      expect(byTestId<HTMLInputElement>('printer-search')!.value).toBe('');
+      expect(byTestId('spec-summary')).toBeNull();
+      expect(component.form.controls.make.value).toBe('');
+      expect(component.form.controls.multiMaterial.value).toBeFalse();
+      expect(logging.logEvent).toHaveBeenCalledWith(
+        'QuickAddPrinter_PickChanged',
+        { id: 'bambu-lab-p1s' }
+      );
+    });
+
+    it('shows no validation message until a save is attempted', async () => {
+      await setup(false, null, 'welcome');
+      typeInSearch('Vor');
+      typeInSearch('');
+
+      expect(byTestId('quick-add-error')).toBeNull();
+    });
+  });
+
+  describe('welcome mode', () => {
+    let popular: Subject<PrinterModel[]>;
+
+    beforeEach(() => {
+      popular = new Subject<PrinterModel[]>();
+      catalog.popular.and.returnValue(popular);
+    });
+
+    async function settleSave(): Promise<void> {
+      await fixture.whenStable();
+      await new Promise((r) => setTimeout(r));
+      fixture.detectChanges();
+    }
+
+    it('offers "Add printer and continue" and "Save and add another"', async () => {
+      await setup(false, null, 'welcome');
+
+      expect(buttonLabels()).toEqual([
+        'Save and add another',
+        'Add printer and continue',
+      ]);
+      expect(
+        byTestId<HTMLButtonElement>('quick-add-save')!.classList
+      ).toContain('mat-primary');
+    });
+
+    it('"Add printer and continue" saves, then asks to continue, then resets', async () => {
+      await setup(false, null, 'welcome');
+      component.selectCatalogPrinter(MK4);
+      fixture.detectChanges();
+
+      byTestId<HTMLButtonElement>('quick-add-save')!.click();
+      await settleSave();
+
+      expect(printers.addPrinter).toHaveBeenCalledTimes(1);
+      expect(saved.length).toBe(1);
+      expect(continued).toBe(1);
+      expect(component.catalogModel()).toBeNull();
+      expect(
+        byTestId<HTMLButtonElement>('quick-add-save')!.disabled
+      ).toBeFalse();
+    });
+
+    it('"Save and add another" saves, resets to the grid and does not continue', async () => {
+      await setup(false, null, 'welcome');
+      popular.next([P1S, MK4]);
+      fixture.detectChanges();
+      byTestId<HTMLButtonElement>('popular-printer-bambu-lab-p1s')!.click();
+      fixture.detectChanges();
+      component.onNameInput();
+      component.form.controls.name.setValue('Garage P1S');
+
+      byTestId<HTMLButtonElement>('quick-add-save-another')!.click();
+      await settleSave();
+
+      expect(sent().name).toBe('Garage P1S');
+      expect(sent().catalogModelId).toBe('bambu-lab-p1s');
+      expect(saved.length).toBe(1);
+      expect(continued).toBe(0);
+      expect(logging.logEvent).toHaveBeenCalledWith(
+        'QuickAddPrinter_SaveAndAddAnother',
+        { source: 'welcome' }
+      );
+      // Back to the start: grid, empty search, a name that follows the model again.
+      expect(byTestId('picked-printer')).toBeNull();
+      expect(byTestId('popular-printer-bambu-lab-p1s')).not.toBeNull();
+      expect(byTestId<HTMLInputElement>('printer-search')!.value).toBe('');
+      expect(component.form.controls.multiMaterial.value).toBeFalse();
+      expect(component.form.controls.nozzleDiameter.value).toBeNull();
+      component.selectCatalogPrinter(MK4);
+      expect(component.form.controls.name.value).toBe('MK4');
+    });
+
+    it('a second printer saves after "Save and add another"', async () => {
+      await setup(false, null, 'welcome');
+      component.selectCatalogPrinter(P1S);
+      await component.saveAndAddAnother();
+      fixture.detectChanges();
+
+      component.selectCatalogPrinter(MK4);
+      await component.saveAndAddAnother();
+
+      expect(printers.addPrinter).toHaveBeenCalledTimes(2);
+      expect(sent().catalogModelId).toBe('prusa-mk4');
+    });
+
+    it('reads "Continue" with a saved printer and nothing new, and only continues', async () => {
+      await setup(false, null, 'welcome', true);
+
+      expect(buttonLabels()).toEqual(['Continue']);
+      expect(byTestId('quick-add-save-another')).toBeNull();
+
+      byTestId<HTMLButtonElement>('quick-add-save')!.click();
+      await settleSave();
+
+      expect(continued).toBe(1);
+      expect(printers.addPrinter).not.toHaveBeenCalled();
+      expect(byTestId('quick-add-error')).toBeNull();
+    });
+
+    it('switches back to saving once something is typed or picked', async () => {
+      await setup(false, null, 'welcome', true);
+
+      typeInSearch('Voron 2.4');
+      expect(buttonLabels()).toEqual([
+        'Save and add another',
+        'Add printer and continue',
+      ]);
+
+      typeInSearch('');
+      expect(buttonLabels()).toEqual(['Continue']);
+
+      component.selectCatalogPrinter(MK4);
+      fixture.detectChanges();
+      expect(buttonLabels()).toEqual([
+        'Save and add another',
+        'Add printer and continue',
+      ]);
+    });
+
+    it('explains an empty save when there is no printer yet', async () => {
+      await setup(false, null, 'welcome');
+
+      byTestId<HTMLButtonElement>('quick-add-save')!.click();
+      await settleSave();
+
+      expect(printers.addPrinter).not.toHaveBeenCalled();
+      expect(continued).toBe(0);
+      expect(byTestId('quick-add-error')!.textContent).toContain(
+        'Search for your printer, or type its make and model.'
+      );
+    });
+
+    it('keeps the pick and does not continue when the save fails', async () => {
+      await setup(false, null, 'welcome');
+      printers.addPrinter.and.returnValue(throwError(() => new Error('down')));
+      component.selectCatalogPrinter(MK4);
+
+      await component.submit();
+      fixture.detectChanges();
+
+      expect(continued).toBe(0);
+      expect(component.catalogModel()).toBe(MK4);
+      expect(byTestId('quick-add-error')).not.toBeNull();
     });
   });
 

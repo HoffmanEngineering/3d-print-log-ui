@@ -11,31 +11,37 @@
     (selectionChange)="onStepChange($event.selectedIndex)"
   >
     <mat-step label="Add your printer">
+      <header class="welcome__step-header">
+        <p class="welcome__step-count">Step 1 of 3</p>
+        <h2 class="welcome__step-title">Which printer do you have?</h2>
+      </header>
+
       @if (step1Ready()) {
         @if (hasPrinter()) {
-          <mat-chip-set aria-label="Your printers" data-testid="printer-chips">
-            @for (printer of printers(); track printer.id) {
-              <mat-chip>{{ printer.name }}</mat-chip>
-            }
-          </mat-chip-set>
+          <div class="welcome__added">
+            <span class="welcome__added-label" id="welcome-added">Added</span>
+            <mat-chip-set
+              aria-labelledby="welcome-added"
+              data-testid="printer-chips"
+            >
+              @for (printer of printers(); track printer.id) {
+                <mat-chip>
+                  <mat-icon matChipAvatar aria-hidden="true">check</mat-icon>
+                  {{ printer.name }}
+                </mat-chip>
+              }
+            </mat-chip-set>
+          </div>
         }
 
-        @if (showPrinterForm()) {
-          <app-quick-add-printer
-            source="welcome"
-            [showEmailNotice]="false"
-            (saved)="onPrinterSaved($event)"
-          />
-        } @else {
-          <button
-            type="button"
-            mat-stroked-button
-            data-testid="add-another-printer"
-            (click)="addAnotherPrinter()"
-          >
-            Add another printer
-          </button>
-        }
+        <app-quick-add-printer
+          source="welcome"
+          mode="welcome"
+          [showEmailNotice]="false"
+          [hasSavedPrinters]="hasPrinter()"
+          (saved)="onPrinterSaved($event)"
+          (continued)="continueFrom(1)"
+        />
       } @else {
         <div
           class="welcome__loading app-skeleton-immediate"
@@ -59,16 +65,6 @@
         >
           Use the full printer form
         </a>
-        <button
-          type="button"
-          mat-flat-button
-          color="primary"
-          data-testid="step1-continue"
-          [disabled]="!hasPrinter()"
-          (click)="continueFrom(1)"
-        >
-          Continue
-        </button>
       </div>
     </mat-step>
 

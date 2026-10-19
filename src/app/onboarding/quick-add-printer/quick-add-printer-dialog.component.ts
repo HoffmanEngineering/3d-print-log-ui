@@ -28,6 +28,7 @@ const PHONE_QUERY = '(max-width: 599.98px)';
       <app-quick-add-printer
         [source]="data.source"
         [showEmailNotice]="data.showEmailNotice"
+        mode="dialog"
         [initialModelId]="data.initialModelId ?? null"
         (saved)="onSaved($event)"
       />

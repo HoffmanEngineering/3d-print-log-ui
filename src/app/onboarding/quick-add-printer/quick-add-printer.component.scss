@@ -98,14 +98,45 @@
   color: var(--app-text-primary);
 }
 
-.quick-add__note {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--app-text-secondary);
+.quick-add__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--app-surface-container);
+  border: 1px solid var(--mat-divider-color);
+  border-radius: 0.75rem;
+}
 
-  a {
-    color: inherit;
-  }
+.quick-add__card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-add__check {
+  flex: none;
+  color: var(--app-primary);
+}
+
+.quick-add__card-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 1.125rem;
+  color: var(--app-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.quick-add__change {
+  flex: none;
+}
+
+.quick-add__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .quick-add__nozzles {

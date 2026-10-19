@@ -9,6 +9,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -16,9 +17,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -46,6 +47,10 @@ import { OnboardingService } from '../onboarding.service';
 import { quickAddErrorText } from '../quick-add-error';
 
 export type QuickAddSource = 'welcome' | 'print-form' | 'checklist';
+/** 'welcome' adds Save and add another and a step Continue; 'dialog' has one Add printer. */
+export type QuickAddMode = 'welcome' | 'dialog';
+/** What happens after a successful save. */
+type AfterSave = 'done' | 'continue' | 'another';
 
 const DEFAULT_SLOT_COUNT = 4;
 const POPULAR_COUNT = 8;
@@ -127,9 +132,10 @@ function label(m: PrinterModel): string {
     MatButtonToggleModule,
     MatCheckboxModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatSelectModule,
-    MatSlideToggleModule,
+    NgTemplateOutlet,
     InlineEmailNoticeComponent,
   ],
   templateUrl: './quick-add-printer.component.html',
@@ -148,7 +154,12 @@ export class QuickAddPrinterComponent implements OnInit {
   readonly showEmailNotice = input(false);
   /** A catalog model to preselect, such as one detected from a slicer file. */
   readonly initialModelId = input<string | null>(null);
+  readonly mode = input<QuickAddMode>('dialog');
+  /** Welcome mode: the user already has a printer, so an untouched form can just continue. */
+  readonly hasSavedPrinters = input(false);
   readonly saved = output<PrinterDetail>();
+  /** Welcome mode: move on to the next step, after a save or without one. */
+  readonly continued = output<void>();
 
   readonly form = this.fb.group({
     search: [''],
@@ -214,6 +225,33 @@ export class QuickAddPrinterComponent implements OnInit {
     { initialValue: this.form.getRawValue() }
   );
 
+  /** Something is picked or typed, so the primary button saves it. */
+  readonly inProgress = computed(() => {
+    if (this.catalogModel()) {
+      return true;
+    }
+    const v = this.formValue();
+    return [v.search, v.make, v.model].some((text) => text.trim() !== '');
+  });
+  /** Welcome mode with a saved printer and nothing new: the primary only moves on. */
+  readonly continueOnly = computed(
+    () =>
+      this.mode() === 'welcome' && this.hasSavedPrinters() && !this.inProgress()
+  );
+  readonly primaryLabel = computed(() => {
+    if (this.mode() === 'dialog') {
+      return 'Add printer';
+    }
+    return this.continueOnly() ? 'Continue' : 'Add printer and continue';
+  });
+  /** Nickname shows after a pick, or on the manual path once make or model has text. */
+  readonly showName = computed(() => {
+    if (this.catalogModel()) {
+      return true;
+    }
+    const v = this.formValue();
+    return this.showManual() && (v.make.trim() !== '' || v.model.trim() !== '');
+  });
   readonly isOther = computed(() => this.typeValue() === 'Other');
   readonly isMultiMaterial = computed(() => this.multiValue());
   readonly showPopular = computed(
@@ -397,7 +435,44 @@ export class QuickAddPrinterComponent implements OnInit {
     this.nameTouched = true;
   }
 
-  async save(): Promise<void> {
+  /**
+   * Clears the catalog pick and brings back the grid and search. Defaults the pick set are
+   * undone; a value the user changed since stays, as when typing over a pick.
+   */
+  changePick(): void {
+    const m = this.catalogModel();
+    if (!m) {
+      return;
+    }
+    this.logging.logEvent('QuickAddPrinter_PickChanged', { id: m.id });
+    this.unlinkCatalogModel();
+    this.resetCatalogDefaults();
+    this.committedSearch = '';
+    this.form.patchValue({ search: '', make: '', model: '' });
+    this.suggestions.set([]);
+    this.specsOpen.set(false);
+  }
+
+  /** The submit button: Continue in welcome mode when nothing new is entered, else save. */
+  async submit(): Promise<void> {
+    if (this.mode() === 'dialog') {
+      await this.save();
+    } else if (this.continueOnly()) {
+      this.continued.emit();
+    } else {
+      await this.save('continue');
+    }
+  }
+
+  async saveAndAddAnother(): Promise<void> {
+    await this.save('another');
+  }
+
+  /**
+   * Saves the printer. In a dialog the form then stays disabled while it closes; on the
+   * welcome page it resets, so the next printer (or a return to this step) starts clean.
+   */
+  async save(then: AfterSave = 'done'): Promise<void> {
     if (this.saving() || this.done()) {
       return;
     }
@@ -431,13 +506,41 @@ export class QuickAddPrinterComponent implements OnInit {
         popularChip: m !== null && this.fromPopularChip,
         specsEdited: this.specsEdited(),
       });
-      this.done.set(true);
+      if (then === 'another') {
+        this.logging.logEvent('QuickAddPrinter_SaveAndAddAnother', {
+          source: this.source(),
+        });
+      }
+      if (then === 'done') {
+        this.done.set(true);
+      } else {
+        this.resetToStart();
+      }
       this.saved.emit(printer);
+      if (then === 'continue') {
+        this.continued.emit();
+      }
     } catch (error) {
       this.errorMessage.set(quickAddErrorText(error, SAVE_FAILED));
     } finally {
       this.saving.set(false);
     }
+  }
+
+  /** Back to the form as it first opened: grid, empty search, a name that follows the model. */
+  private resetToStart(): void {
+    this.catalogModel.set(null);
+    this.pickedModel.set(null);
+    this.catalogPatch = null;
+    this.committedSearch = '';
+    this.nameTouched = false;
+    this.fromPopularChip = false;
+    this.pickedThisSession = false;
+    this.form.reset();
+    this.suggestions.set([]);
+    this.showManual.set(false);
+    this.specsOpen.set(false);
+    this.errorMessage.set(null);
   }
 
   /** The printer no longer links to a catalog model. The form values stay. */

@@ -103,12 +103,12 @@ describe('printDetailResolver', () => {
     expect(loggingService.logException).toHaveBeenCalled();
   });
 
-  it('hands a stored new print to the form with its detected printer name', () => {
+  it('hands a stored new print to the form with its detected printer names', () => {
     const print = { id: null, title: 'Cube' } as any;
     store.hasNewPrint.and.returnValue(true);
     store.getNewPrint.and.returnValue(print);
     store.getNewPrintMeta.and.returnValue({
-      detectedPrinterName: 'Bambu Lab X1 Carbon',
+      detectedPrinterNames: ['X1C', 'Bambu Lab X1 Carbon'],
     });
 
     const value = runResolver(printDetailResolver, routeFor('new')) as any;
@@ -116,7 +116,7 @@ describe('printDetailResolver', () => {
     expect(value).toEqual({
       print,
       user: null,
-      detectedPrinterName: 'Bambu Lab X1 Carbon',
+      detectedPrinterNames: ['X1C', 'Bambu Lab X1 Carbon'],
     });
     expect(store.clear).toHaveBeenCalled();
   });
@@ -129,7 +129,7 @@ describe('printDetailResolver', () => {
     expect(value).toEqual({
       print: null,
       user: null,
-      detectedPrinterName: null,
+      detectedPrinterNames: [],
     });
     expect(store.getNewPrintMeta).not.toHaveBeenCalled();
   });

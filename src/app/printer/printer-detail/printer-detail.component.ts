@@ -482,8 +482,25 @@ export class PrinterDetailComponent
       // Fails soft: a retired or unknown id gives null, and the printer still saves.
       this.linkedModelSubscription = this.catalog
         .get(linkedId)
-        .subscribe((m) => this.linkedModel.set(m));
+        .subscribe((m) => {
+          this.linkedModel.set(m);
+          this.showLinkedModelInSearch(m);
+        });
     }
+  }
+
+  /**
+   * The search names the model the printer already links to. It writes no event, so no search
+   * runs, and the search control is not part of the printer form, so the form stays pristine.
+   * Text the user typed meanwhile wins.
+   */
+  private showLinkedModelInSearch(m: PrinterModel | null): void {
+    if (!m || this.catalogSearch.value !== '') {
+      return;
+    }
+    this.lastPickLabel = label(m);
+    this.catalogSearch.setValue(label(m), { emitEvent: false });
+    this.changeDetector.markForCheck();
   }
 
   /**

@@ -40,7 +40,7 @@ export class GcodeFileParserService {
   }
 
   /**
-   * As parse, plus the printer name from the file's header. A file opened in the generic viewer
+   * As parse, plus the printer names from the file's header. A file opened in the generic viewer
    * names no printer.
    */
   public async parseWithMeta(
@@ -58,7 +58,7 @@ export class GcodeFileParserService {
     try {
       if (!parser) {
         const print = await this.showGenericGcodeViewerModal(gcode, fileName);
-        return print ? { print, detectedPrinterName: null } : null;
+        return print ? { print, detectedPrinterNames: [] } : null;
       }
 
       if (confidence === 'heuristic') {

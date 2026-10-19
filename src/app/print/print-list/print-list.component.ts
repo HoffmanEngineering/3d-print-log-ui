@@ -1339,7 +1339,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
             .then((parsed) => {
               if (parsed) {
                 this.newPrintStoreService.setNewPrint(parsed.print, {
-                  detectedPrinterName: parsed.detectedPrinterName,
+                  detectedPrinterNames: parsed.detectedPrinterNames,
                 });
                 this.router
                   .navigate(['new', 'edit'], {

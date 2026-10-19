@@ -49,7 +49,7 @@ export abstract class GcodeParserBase implements GcodeNewPrintParser {
     const settings = GcodeSettings.parse(windowed, this.settingsOptions);
     return {
       print: this.buildPrint(windowed, settings, fileName),
-      detectedPrinterName: GcodeSettings.detectedPrinterName(
+      detectedPrinterNames: GcodeSettings.detectedPrinterNames(
         settings,
         windowed
       ),

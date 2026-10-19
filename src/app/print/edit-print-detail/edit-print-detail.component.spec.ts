@@ -1301,7 +1301,7 @@ describe('EditPrintDetailComponent', () => {
       printers?: PrinterSummary[];
       lastSelectedPrinterId?: number;
       query?: Record<string, string>;
-      detectedPrinterName?: string | null;
+      detectedPrinterNames?: string[];
     }): EditPrintDetailComponent {
       const route = TestBed.inject(ActivatedRoute) as unknown as {
         data: Observable<Record<string, unknown>>;
@@ -1319,7 +1319,7 @@ describe('EditPrintDetailComponent', () => {
         print: {
           print: options.print ?? null,
           user: null,
-          detectedPrinterName: options.detectedPrinterName ?? null,
+          detectedPrinterNames: options.detectedPrinterNames ?? [],
         },
       });
       route.snapshot = {
@@ -1728,7 +1728,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'Bambu Lab X1 Carbon 0.4 nozzle',
+            detectedPrinterNames: ['Bambu Lab X1 Carbon 0.4 nozzle'],
           });
 
           expect(catalog.match).toHaveBeenCalledOnceWith(
@@ -1738,7 +1738,7 @@ describe('EditPrintDetailComponent', () => {
           expect(writtenPrinterIds()).toEqual([]);
           expect(hint()).toBeNull();
           expect(detectedEvents()).toEqual([
-            { confidence: 'exact', owned: true },
+            { confidence: 'exact', owned: true, candidate: 0 },
           ]);
         });
 
@@ -1752,7 +1752,7 @@ describe('EditPrintDetailComponent', () => {
               catalogPrinter(20, null),
             ],
             lastSelectedPrinterId: 20,
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
 
           expect(form.printForm.controls.printerId.value).toBe(12);
@@ -1766,7 +1766,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
 
           expect(form.printForm.controls.title.value).toBe('Benchy from Cura');
@@ -1807,7 +1807,7 @@ describe('EditPrintDetailComponent', () => {
               print: slicerPrint,
               printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
               lastSelectedPrinterId: 7,
-              detectedPrinterName: 'X1C',
+              detectedPrinterNames: ['X1C'],
             });
 
             expect(form.printForm.controls.printerId.value).toBe(9);
@@ -1831,7 +1831,7 @@ describe('EditPrintDetailComponent', () => {
               print: slicerPrint,
               printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
               lastSelectedPrinterId: 7,
-              detectedPrinterName: 'X1C',
+              detectedPrinterNames: ['X1C'],
             });
 
             const filament = form.filamentUsage.at(0).get('filament')!;
@@ -1859,7 +1859,7 @@ describe('EditPrintDetailComponent', () => {
               print: slicerPrint,
               printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
               lastSelectedPrinterId: 7,
-              detectedPrinterName: 'X1C',
+              detectedPrinterNames: ['X1C'],
             });
 
             printer7Spools.next([{ filament: spoolA }]);
@@ -1882,7 +1882,7 @@ describe('EditPrintDetailComponent', () => {
               catalogPrinter(9, X1C),
             ],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
 
           choosePrinter(form, 8);
@@ -1904,7 +1904,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'Bambu Lab X1 Carbon 0.4 nozzle',
+            detectedPrinterNames: ['Bambu Lab X1 Carbon 0.4 nozzle'],
           });
           editor!.detectChanges();
 
@@ -1914,7 +1914,7 @@ describe('EditPrintDetailComponent', () => {
           );
           expect(form.printForm.controls.printerId.value).toBe(7);
           expect(detectedEvents()).toEqual([
-            { confidence: 'alias', owned: false },
+            { confidence: 'alias', owned: false, candidate: 0 },
           ]);
         });
 
@@ -1925,7 +1925,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
           expect(hint()).toBeNull();
 
@@ -1941,7 +1941,7 @@ describe('EditPrintDetailComponent', () => {
           openEditor({
             print: curaPrint,
             printers: [],
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
           editor!.detectChanges();
 
@@ -1954,7 +1954,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
           editor!.detectChanges();
           const { open, closed } = stubDialog(form);
@@ -2000,7 +2000,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
           editor!.detectChanges();
           const { closed } = stubDialog(form);
@@ -2031,7 +2031,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
           editor!.detectChanges();
           const { open, closed } = stubDialog(form);
@@ -2062,7 +2062,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'X1C',
+            detectedPrinterNames: ['X1C'],
           });
           editor!.detectChanges();
           const { closed } = stubDialog(form);
@@ -2098,7 +2098,7 @@ describe('EditPrintDetailComponent', () => {
             print: curaPrint,
             printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
             lastSelectedPrinterId: 7,
-            detectedPrinterName: 'Mystery Printer 3000',
+            detectedPrinterNames: ['Mystery Printer 3000'],
           });
 
         it('changes nothing on no match', () => {
@@ -2146,6 +2146,99 @@ describe('EditPrintDetailComponent', () => {
         }));
       });
 
+      // PrusaSlicer writes a vendor code as printer_model ("COREONE") and the readable profile
+      // name as printer_settings_id, so the second candidate is the one that matches.
+      describe('with several candidate names', () => {
+        const prusaNames = ['COREONE', 'Prusa CORE One HF0.4 nozzle'];
+        const CORE_ONE = 'prusa-core-one';
+        const open = () =>
+          openEditor({
+            print: curaPrint,
+            printers: [catalogPrinter(7, null), catalogPrinter(9, CORE_ONE)],
+            lastSelectedPrinterId: 7,
+            detectedPrinterNames: prusaNames,
+          });
+
+        it('tries them in order and uses the first that matches', () => {
+          catalog.match.and.callFake((name: string) =>
+            of(
+              name === 'COREONE' ? null : { id: CORE_ONE, confidence: 'alias' }
+            )
+          );
+          const form = open();
+
+          expect(catalog.match.calls.allArgs()).toEqual([
+            ['COREONE'],
+            ['Prusa CORE One HF0.4 nozzle'],
+          ]);
+          expect(form.printForm.controls.printerId.value).toBe(9);
+          expect(detectedEvents()).toEqual([
+            { confidence: 'alias', owned: true, candidate: 1 },
+          ]);
+        });
+
+        it('moves past a candidate whose match errors', () => {
+          catalog.match.and.callFake((name: string) =>
+            name === 'COREONE'
+              ? throwError(() => new Error('500'))
+              : of({ id: CORE_ONE, confidence: 'alias' })
+          );
+          const form = open();
+
+          expect(catalog.match).toHaveBeenCalledTimes(2);
+          expect(form.printForm.controls.printerId.value).toBe(9);
+        });
+
+        it('never asks about the next name once one matches', () => {
+          catalog.match.and.returnValue(
+            of({ id: CORE_ONE, confidence: 'exact' })
+          );
+          const form = open();
+
+          expect(catalog.match).toHaveBeenCalledOnceWith('COREONE');
+          expect(form.printForm.controls.printerId.value).toBe(9);
+          expect(detectedEvents()).toEqual([
+            { confidence: 'exact', owned: true, candidate: 0 },
+          ]);
+        });
+
+        it('changes nothing when no candidate matches', () => {
+          catalog.match.and.returnValue(of(null));
+          const form = open();
+          editor!.detectChanges();
+
+          expect(catalog.match).toHaveBeenCalledTimes(2);
+          expect(catalog.get).not.toHaveBeenCalled();
+          expect(form.printForm.controls.printerId.value).toBe(7);
+          expect(hint()).toBeNull();
+          expect(detectedEvents()).toEqual([]);
+          expect(writtenPrinterIds()).toEqual([]);
+        });
+
+        it('spends one 3000 ms budget on the whole sequence', fakeAsync(() => {
+          const first = new Subject<{
+            id: string;
+            confidence: string;
+          } | null>();
+          catalog.match.and.callFake((name: string) =>
+            name === 'COREONE'
+              ? first
+              : of({ id: CORE_ONE, confidence: 'exact' })
+          );
+          const form = open();
+
+          tick(3000);
+          first.next(null);
+          editor!.detectChanges();
+
+          expect(catalog.match).toHaveBeenCalledOnceWith('COREONE');
+          expect(form.printForm.controls.printerId.value).toBe(7);
+          expect(hint()).toBeNull();
+          expect(detectedEvents()).toEqual([]);
+          flush();
+        }));
+      });
+
       it('does nothing once the form is gone', () => {
         const match = new Subject<{ id: string; confidence: string }>();
         catalog.match.and.returnValue(match);
@@ -2153,7 +2246,7 @@ describe('EditPrintDetailComponent', () => {
           print: curaPrint,
           printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
           lastSelectedPrinterId: 7,
-          detectedPrinterName: 'X1C',
+          detectedPrinterNames: ['X1C'],
         });
 
         editor!.destroy();
@@ -2174,7 +2267,7 @@ describe('EditPrintDetailComponent', () => {
         openEditor({
           print: { ...curaPrint, id: 5, printerId: 7 } as PrintDetail,
           printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
-          detectedPrinterName: 'X1C',
+          detectedPrinterNames: ['X1C'],
         });
         expect(catalog.match).not.toHaveBeenCalled();
       });

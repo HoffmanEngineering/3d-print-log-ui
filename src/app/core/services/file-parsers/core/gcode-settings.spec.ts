@@ -116,21 +116,37 @@ describe('GcodeSettings', () => {
     });
   });
 
-  describe('detectedPrinterName', () => {
-    it('prefers printer_model over printer_settings_id', () => {
+  describe('detectedPrinterNames', () => {
+    it('lists printer_model, then printer_settings_id', () => {
       const s = GcodeSettings.parse(
         '; printer_settings_id = My X1C profile\n; printer_model = Bambu Lab X1 Carbon',
         SPACED_EQUALS
       );
-      expect(GcodeSettings.detectedPrinterName(s)).toBe('Bambu Lab X1 Carbon');
+      expect(GcodeSettings.detectedPrinterNames(s)).toEqual([
+        'Bambu Lab X1 Carbon',
+        'My X1C profile',
+      ]);
     });
 
-    it('falls back to printer_settings_id', () => {
+    it("lists PrusaSlicer's vendor code before its readable profile name", () => {
+      const s = GcodeSettings.parse(
+        '; printer_model = COREONE\n; printer_settings_id = Prusa CORE One HF0.4 nozzle',
+        SPACED_EQUALS
+      );
+      expect(GcodeSettings.detectedPrinterNames(s)).toEqual([
+        'COREONE',
+        'Prusa CORE One HF0.4 nozzle',
+      ]);
+    });
+
+    it('has just printer_settings_id when that is all there is', () => {
       const s = GcodeSettings.parse(
         '; printer_settings_id = Original Prusa MK4S',
         SPACED_EQUALS
       );
-      expect(GcodeSettings.detectedPrinterName(s)).toBe('Original Prusa MK4S');
+      expect(GcodeSettings.detectedPrinterNames(s)).toEqual([
+        'Original Prusa MK4S',
+      ]);
     });
 
     it("reads Cura's TARGET_MACHINE.NAME", () => {
@@ -138,7 +154,9 @@ describe('GcodeSettings', () => {
         ';FLAVOR:Marlin\n;TARGET_MACHINE.NAME:Creality Ender-3',
         UNSPACED_COLON
       );
-      expect(GcodeSettings.detectedPrinterName(s)).toBe('Creality Ender-3');
+      expect(GcodeSettings.detectedPrinterNames(s)).toEqual([
+        'Creality Ender-3',
+      ]);
     });
 
     it('strips one pair of surrounding quotes', () => {
@@ -146,46 +164,65 @@ describe('GcodeSettings', () => {
         '; printer_settings_id = "Original Prusa MK4S"',
         SPACED_EQUALS
       );
-      expect(GcodeSettings.detectedPrinterName(s)).toBe('Original Prusa MK4S');
+      expect(GcodeSettings.detectedPrinterNames(s)).toEqual([
+        'Original Prusa MK4S',
+      ]);
+    });
+
+    it('drops a repeated name and an empty one', () => {
+      const repeated = GcodeSettings.parse(
+        '; printer_model = Creality K1\n; printer_settings_id = "Creality K1"',
+        SPACED_EQUALS
+      );
+      expect(GcodeSettings.detectedPrinterNames(repeated)).toEqual([
+        'Creality K1',
+      ]);
+      const empty = GcodeSettings.parse(
+        '; printer_model = ""\n; printer_settings_id = Creality K1 profile',
+        SPACED_EQUALS
+      );
+      expect(GcodeSettings.detectedPrinterNames(empty)).toEqual([
+        'Creality K1 profile',
+      ]);
     });
 
     it('falls back to the raw lines when the index style missed them', () => {
       const gcode =
         ';Creality Print GCode\n;FLAVOR:Marlin\n; printer_model = Creality K1 Max';
       const s = GcodeSettings.parse(gcode, UNSPACED_COLON);
-      expect(GcodeSettings.detectedPrinterName(s)).toBeNull();
-      expect(GcodeSettings.detectedPrinterName(s, gcode)).toBe(
-        'Creality K1 Max'
-      );
+      expect(GcodeSettings.detectedPrinterNames(s)).toEqual([]);
+      expect(GcodeSettings.detectedPrinterNames(s, gcode)).toEqual([
+        'Creality K1 Max',
+      ]);
     });
 
     it('keeps the key order in the raw-line fallback', () => {
       const gcode =
         '; printer_settings_id = My K1 profile\n; printer_model = Creality K1';
       expect(
-        GcodeSettings.detectedPrinterName(GcodeSettings.empty(), gcode)
-      ).toBe('Creality K1');
+        GcodeSettings.detectedPrinterNames(GcodeSettings.empty(), gcode)
+      ).toEqual(['Creality K1', 'My K1 profile']);
     });
 
     it('never reads the next line as an empty key value in the fallback', () => {
       const empty = GcodeSettings.empty();
       expect(
-        GcodeSettings.detectedPrinterName(
+        GcodeSettings.detectedPrinterNames(
           empty,
           '; printer_model =\n; layer_height = 0.2\n; printer_settings_id = Creality K1 profile'
         )
-      ).toBe('Creality K1 profile');
+      ).toEqual(['Creality K1 profile']);
       expect(
-        GcodeSettings.detectedPrinterName(
+        GcodeSettings.detectedPrinterNames(
           empty,
           '; printer_model =\n; layer_height = 0.2'
         )
-      ).toBeNull();
+      ).toEqual([]);
     });
 
-    it('is null when no header names the printer', () => {
+    it('is empty when no header names the printer', () => {
       const s = GcodeSettings.parse('; layer_height = 0.2', SPACED_EQUALS);
-      expect(GcodeSettings.detectedPrinterName(s)).toBeNull();
+      expect(GcodeSettings.detectedPrinterNames(s)).toEqual([]);
     });
   });
 });

@@ -15,24 +15,26 @@ describe('NewPrintStoreService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('keeps the detected printer name beside the print until cleared', () => {
+  it('keeps the detected printer names beside the print until cleared', () => {
     const print = { title: 'Cube' } as PrintDetail;
-    service.setNewPrint(print, { detectedPrinterName: 'Prusa MK4S' });
+    service.setNewPrint(print, {
+      detectedPrinterNames: ['MK4S', 'Original Prusa MK4S'],
+    });
 
     expect(service.getNewPrint()).toBe(print);
     expect(service.getNewPrintMeta()).toEqual({
-      detectedPrinterName: 'Prusa MK4S',
+      detectedPrinterNames: ['MK4S', 'Original Prusa MK4S'],
     });
 
     service.clear();
-    expect(service.getNewPrintMeta()).toEqual({ detectedPrinterName: null });
+    expect(service.getNewPrintMeta()).toEqual({ detectedPrinterNames: [] });
   });
 
   it('has no detected printer when none is given', () => {
     service.setNewPrint({ title: 'Cube' } as PrintDetail, {
-      detectedPrinterName: 'Old',
+      detectedPrinterNames: ['Old'],
     });
     service.setNewPrint({ title: 'Other' } as PrintDetail);
-    expect(service.getNewPrintMeta()).toEqual({ detectedPrinterName: null });
+    expect(service.getNewPrintMeta()).toEqual({ detectedPrinterNames: [] });
   });
 });

@@ -109,7 +109,10 @@ G1 X10 Y10 E5 F1200`);
 
     const result = registry.resolve(gcode);
     expect(result.parser?.slicerName).toBe('Orca Slicer');
-    const { detectedPrinterName } = await result.parser!.parseWithMeta(gcode);
-    expect(detectedPrinterName).toBe('Creality K1C');
+    const { detectedPrinterNames } = await result.parser!.parseWithMeta(gcode);
+    expect(detectedPrinterNames).toEqual([
+      'Creality K1C',
+      'Creality K1C 0.4 nozzle',
+    ]);
   });
 });

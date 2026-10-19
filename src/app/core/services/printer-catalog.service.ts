@@ -1,11 +1,13 @@
 import {
   HttpClient,
+  HttpContext,
   HttpErrorResponse,
   HttpHeaders,
   HttpParams,
   HttpResponse,
 } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { NGX_LOADING_BAR_IGNORED } from '@ngx-loading-bar/http-client';
 import { catchError, map, Observable, of, shareReplay, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -52,6 +54,11 @@ export class PrinterCatalogService {
     'true'
   );
 
+  /** A new context per request: catalog calls run in the background, off the loading bar. */
+  private backgroundContext(): HttpContext {
+    return new HttpContext().set(NGX_LOADING_BAR_IGNORED, true);
+  }
+
   private popular$?: Observable<PrinterModel[]>;
   private popularLimit?: number;
   private readonly byId = new Map<string, Observable<PrinterModel | null>>();
@@ -59,7 +66,11 @@ export class PrinterCatalogService {
   search(q: string, limit = 20): Observable<PrinterModel[]> {
     const params = new HttpParams().set('search', q).set('limit', limit);
     return this.http
-      .get<PrinterModel[]>(this.url, { headers: this.anonymousHeaders, params })
+      .get<PrinterModel[]>(this.url, {
+        headers: this.anonymousHeaders,
+        params,
+        context: this.backgroundContext(),
+      })
       .pipe(catchError(() => of([] as PrinterModel[])));
   }
 
@@ -71,6 +82,7 @@ export class PrinterCatalogService {
         .get<PrinterModel[]>(`${this.url}/popular`, {
           headers: this.anonymousHeaders,
           params: new HttpParams().set('limit', limit),
+          context: this.backgroundContext(),
         })
         .pipe(
           // shareReplay drops its cache when the source errors, so a failure is retried.
@@ -88,6 +100,7 @@ export class PrinterCatalogService {
       cached = this.http
         .get<PrinterModel>(`${this.url}/${encodeURIComponent(id)}`, {
           headers: this.anonymousHeaders,
+          context: this.backgroundContext(),
         })
         .pipe(
           // A 404 is a real answer and stays cached; any other failure is retried.
@@ -109,6 +122,7 @@ export class PrinterCatalogService {
         headers: this.anonymousHeaders,
         params: new HttpParams().set('name', name),
         observe: 'response',
+        context: this.backgroundContext(),
       })
       .pipe(
         map((res: HttpResponse<PrinterModelMatch>) =>

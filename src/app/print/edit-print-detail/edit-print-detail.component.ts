@@ -36,6 +36,7 @@ import {
 import { concat, forkJoin, Observable, of, Subscription } from 'rxjs';
 import {
   catchError,
+  defaultIfEmpty,
   filter,
   map,
   mergeMap,
@@ -652,7 +653,7 @@ export class EditPrintDetailComponent
 
       if (printIsNew) {
         this.detectSlicerPrinter(
-          data.print.detectedPrinterName,
+          data.print.detectedPrinterNames ?? [],
           data.print.print
         );
       }
@@ -2004,26 +2005,26 @@ export class EditPrintDetailComponent
 
   /**
    * A new print from a slicer file that names its printer (spec section 8.2): asks the catalog
-   * which model that is, then preselects the user's newest active printer of that model, or
-   * offers to add one. Silent on no match, an error or a timeout. A preselect sets the printer
+   * which model each of the file's names is, in order, until one matches, then preselects the
+   * user's newest active printer of that model, or offers to add one. One 3000 ms budget covers
+   * the whole sequence. Silent on no match, an error or a timeout. A preselect sets the printer
    * and, while the usage rows are untouched, refills them from that printer's loaded filament,
    * as a manual printer change does. Nothing else changes: it leaves a printer the user picked
    * in the meantime alone and does not save the choice as the last selected printer.
    */
   private detectSlicerPrinter(
-    name: string | null | undefined,
+    names: string[],
     print: PrintDetail | null
   ): void {
-    if (!name || print?.printerId != null) {
+    if (names.length === 0 || print?.printerId != null) {
       return;
     }
     const control = this.printForm.controls.printerId;
     const printerIdBefore = control.value;
 
-    this.printerCatalog
-      .match(name)
+    this.firstCatalogMatch(names, 0)
       .pipe(
-        switchMap((match) => this.resolveDetectedPrinter(match)),
+        switchMap((found) => this.resolveDetectedPrinter(found)),
         take(1),
         timeout({ first: PRINTER_DETECTION_TIMEOUT_MS }),
         catchError(() => of(null)),
@@ -2055,25 +2056,57 @@ export class EditPrintDetailComponent
         this.loggingService.logEvent('PrintForm_PrinterDetected', {
           confidence: detected.match.confidence,
           owned: detected.owned !== null,
+          candidate: detected.candidate,
         });
       });
   }
 
-  private resolveDetectedPrinter(match: PrinterModelMatch | null): Observable<{
+  /**
+   * The catalog match for the first of `names` (from `index` on) that has one, with that name's
+   * index. A no match or a failed request moves on to the next name; null when none match.
+   */
+  private firstCatalogMatch(
+    names: string[],
+    index: number
+  ): Observable<{ match: PrinterModelMatch; candidate: number } | null> {
+    if (index >= names.length) {
+      return of(null);
+    }
+    return this.printerCatalog.match(names[index]).pipe(
+      take(1),
+      defaultIfEmpty(null),
+      catchError(() => of(null)),
+      switchMap((match) =>
+        match
+          ? of({ match, candidate: index })
+          : this.firstCatalogMatch(names, index + 1)
+      )
+    );
+  }
+
+  private resolveDetectedPrinter(
+    found: { match: PrinterModelMatch; candidate: number } | null
+  ): Observable<{
     match: PrinterModelMatch;
+    candidate: number;
     owned: PrinterSummary | null;
     model: PrinterModel | null;
   } | null> {
-    if (!match) {
+    if (!found) {
       return of(null);
     }
+    const { match, candidate } = found;
     const owned = this.newestActivePrinterOfModel(match.id);
     if (owned) {
-      return of({ match, owned, model: null });
+      return of({ match, candidate, owned, model: null });
     }
     return this.printerCatalog
       .get(match.id)
-      .pipe(map((model) => (model ? { match, owned: null, model } : null)));
+      .pipe(
+        map((model) =>
+          model ? { match, candidate, owned: null, model } : null
+        )
+      );
   }
 
   /**

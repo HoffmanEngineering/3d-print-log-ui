@@ -20,7 +20,7 @@ const p1s = {
   id: 'bambu-lab-p1s',
   make: 'Bambu Lab',
   model: 'P1S',
-  technology: 'FDM',
+  technology: 'FFF',
   bedWidthMm: 256,
   bedDepthMm: 256,
   bedHeightMm: 256,
@@ -91,6 +91,8 @@ describe('New-user onboarding', () => {
       expect(response?.statusCode).to.be.lessThan(300);
       expect(request.body).to.have.property('bedWidthMm', 256);
       expect(request.body).to.have.property('catalogModelId', 'bambu-lab-p1s');
+      // The API kept the link, not just the request.
+      expect(response?.body?.catalogModelId).to.equal('bambu-lab-p1s');
     });
     cy.get('[data-testid="printer-chips"]').should('contain.text', 'P1S');
 

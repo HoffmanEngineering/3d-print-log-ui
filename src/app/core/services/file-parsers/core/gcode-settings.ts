@@ -50,6 +50,11 @@ function unquote(value: string): string {
     : trimmed;
 }
 
+/** Unquoted, without empties or repeats, in their original order. */
+function distinctNames(values: string[]): string[] {
+  return [...new Set(values.map(unquote).filter((v) => v !== ''))];
+}
+
 /**
  * A single-pass index of the "; key = value" comment lines in a gcode file, so
  * each setting lookup is a map hit instead of a regex over the whole file.
@@ -60,31 +65,28 @@ export class GcodeSettings {
   private constructor(private readonly values: Map<string, string>) {}
 
   /**
-   * The printer a file was sliced for, in the order the slicers write it (spec section 8.1):
-   * Orca and Prusa families' `printer_model`, then their `printer_settings_id` (the profile
-   * name), then Cura's `TARGET_MACHINE.NAME`. Null when none is present.
+   * The names a file gives for the printer it was sliced for, as candidates to try in order
+   * (spec section 8.1): Orca and Prusa families' `printer_model`, then their
+   * `printer_settings_id` (the profile name), then Cura's `TARGET_MACHINE.NAME`. All are kept
+   * because PrusaSlicer's `printer_model` is a vendor code ("COREONE") the catalog can't match,
+   * while its profile name ("Prusa CORE One HF0.4 nozzle") can. Empty and repeated names are
+   * dropped; empty when the file names no printer.
    * When the index holds none of them and the raw gcode is given, the header lines are read
    * directly, in the same order.
    */
-  static detectedPrinterName(
+  static detectedPrinterNames(
     settings: GcodeSettings,
     gcode?: string
-  ): string | null {
-    for (const key of PRINTER_NAME_KEYS) {
-      const value = unquote(settings.get(key));
-      if (value !== '') {
-        return value;
-      }
+  ): string[] {
+    const indexed = distinctNames(
+      PRINTER_NAME_KEYS.map((key) => settings.get(key))
+    );
+    if (indexed.length > 0 || !gcode) {
+      return indexed;
     }
-    if (gcode) {
-      for (const line of PRINTER_NAME_LINES) {
-        const value = unquote(gcode.match(line)?.[1] ?? '');
-        if (value !== '') {
-          return value;
-        }
-      }
-    }
-    return null;
+    return distinctNames(
+      PRINTER_NAME_LINES.map((line) => gcode.match(line)?.[1] ?? '')
+    );
   }
 
   static empty(): GcodeSettings {

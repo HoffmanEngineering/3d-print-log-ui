@@ -1,13 +1,16 @@
 import { PrintDetail } from '../../print.service';
 
 /**
- * A parsed print plus what the file says beside it. The detected printer name rides here, not on
+ * A parsed print plus what the file says beside it. The detected printer names ride here, not on
  * PrintDetail, because PrintDetail is also the save payload.
  */
 export interface ParsedNewPrint {
   print: PrintDetail;
-  /** The printer the file was sliced for, from its header, or null. */
-  detectedPrinterName: string | null;
+  /**
+   * The names the file's header gives for the printer it was sliced for, in the order to try
+   * them against the catalog. Empty when it names none.
+   */
+  detectedPrinterNames: string[];
 }
 
 /**

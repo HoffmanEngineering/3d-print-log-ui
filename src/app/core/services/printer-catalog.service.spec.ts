@@ -4,6 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { NGX_LOADING_BAR_IGNORED } from '@ngx-loading-bar/http-client';
 
 import { environment } from '../../../environments/environment';
 import { PrinterCatalogService, PrinterModel } from './printer-catalog.service';
@@ -188,6 +189,27 @@ describe('PrinterCatalogService', () => {
     service.get('nope').subscribe((r) => results.push(r));
     http.expectNone(`${base}/nope`);
     expect(results).toEqual([null, null]);
+  });
+
+  // Catalog calls run in the background, so they must not flash the global loading bar.
+  it('keeps every request off the loading bar', () => {
+    service.search('ender').subscribe();
+    service.popular().subscribe();
+    service.get('bambu-lab-x1c').subscribe();
+    service.match('X1C').subscribe();
+
+    const requests = [
+      http.expectOne((r) => r.url === base),
+      http.expectOne(`${base}/popular?limit=8`),
+      http.expectOne(`${base}/bambu-lab-x1c`),
+      http.expectOne((r) => r.url === `${base}/match`),
+    ];
+    for (const req of requests) {
+      expect(req.request.context.get(NGX_LOADING_BAR_IGNORED))
+        .withContext(req.request.urlWithParams)
+        .toBeTrue();
+      req.flush(null);
+    }
   });
 
   describe('specSummary', () => {

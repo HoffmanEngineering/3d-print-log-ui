@@ -8,9 +8,9 @@ import {
   PrintDetailWithUser,
 } from '../services/print-detail-loader.service';
 
-/** The resolved print, plus the printer a slicer file named, for the form's detection. */
+/** The resolved print, plus the names a slicer file gave its printer, for the form's detection. */
 export interface PrintDetailForEdit extends PrintDetailWithUser {
-  detectedPrinterName?: string | null;
+  detectedPrinterNames?: string[];
 }
 
 /**
@@ -28,13 +28,13 @@ export const printDetailResolver: ResolveFn<PrintDetailForEdit> = (route) => {
   }
 
   let defaultPrint: PrintDetail | null = null;
-  let detectedPrinterName: string | null = null;
+  let detectedPrinterNames: string[] = [];
 
   // Check if there is a new print in the store. If so, use that:
   const newPrintStore = inject(NewPrintStoreService);
   if (newPrintStore.hasNewPrint()) {
     defaultPrint = newPrintStore.getNewPrint();
-    detectedPrinterName = newPrintStore.getNewPrintMeta().detectedPrinterName;
+    detectedPrinterNames = newPrintStore.getNewPrintMeta().detectedPrinterNames;
     newPrintStore.clear();
   }
 
@@ -54,7 +54,7 @@ export const printDetailResolver: ResolveFn<PrintDetailForEdit> = (route) => {
   const emptyPrintDetail: PrintDetailForEdit = {
     print: defaultPrint,
     user: null,
-    detectedPrinterName,
+    detectedPrinterNames,
   };
 
   return emptyPrintDetail;

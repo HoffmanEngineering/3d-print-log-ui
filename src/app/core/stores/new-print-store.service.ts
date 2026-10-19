@@ -3,7 +3,8 @@ import { PrintDetail } from '../services/print.service';
 
 /** What a parse found beside the print, kept off PrintDetail because that is the save payload. */
 export interface NewPrintMeta {
-  detectedPrinterName: string | null;
+  /** The slicer's names for the printer, in the order to try them; empty when none. */
+  detectedPrinterNames: string[];
 }
 
 /**
@@ -14,7 +15,7 @@ export interface NewPrintMeta {
 })
 export class NewPrintStoreService {
   private newPrint: PrintDetail | null = null;
-  private meta: NewPrintMeta = { detectedPrinterName: null };
+  private meta: NewPrintMeta = { detectedPrinterNames: [] };
 
   public hasNewPrint(): boolean {
     return this.newPrint !== null;
@@ -30,14 +31,14 @@ export class NewPrintStoreService {
 
   public setNewPrint(
     newPrint: PrintDetail,
-    meta?: { detectedPrinterName?: string | null }
+    meta?: { detectedPrinterNames?: string[] }
   ) {
     this.newPrint = newPrint;
-    this.meta = { detectedPrinterName: meta?.detectedPrinterName ?? null };
+    this.meta = { detectedPrinterNames: meta?.detectedPrinterNames ?? [] };
   }
 
   public clear() {
     this.newPrint = null;
-    this.meta = { detectedPrinterName: null };
+    this.meta = { detectedPrinterNames: [] };
   }
 }

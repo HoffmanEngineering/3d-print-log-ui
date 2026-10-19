@@ -141,18 +141,23 @@ Printer Config: Original Prusa MK4S MMU3`);
   });
 
   it('reports the printer the file was sliced for beside the print', async () => {
-    const { detectedPrinterName } = await service.parseWithMeta(
+    const { detectedPrinterNames } = await service.parseWithMeta(
       PRUSA_MMU_TWO_SLOTS_GCODE
     );
-    expect(detectedPrinterName).toBe('Original Prusa MK4S MMU3');
+    expect(detectedPrinterNames).toEqual(['Original Prusa MK4S MMU3']);
   });
 
-  it('prefers printer_model when the file has both', async () => {
+  // PrusaSlicer's printer_model is a vendor code the catalog can't match, so the readable
+  // profile name has to follow it as the next candidate.
+  it('lists printer_model, then printer_settings_id, when the file has both', async () => {
     const gcode = PRUSA_MMU_TWO_SLOTS_GCODE.replace(
       '; printer_settings_id = Original Prusa MK4S MMU3',
       '; printer_model = MK4SMMU3\n; printer_settings_id = Original Prusa MK4S MMU3'
     );
-    const { detectedPrinterName } = await service.parseWithMeta(gcode);
-    expect(detectedPrinterName).toBe('MK4SMMU3');
+    const { detectedPrinterNames } = await service.parseWithMeta(gcode);
+    expect(detectedPrinterNames).toEqual([
+      'MK4SMMU3',
+      'Original Prusa MK4S MMU3',
+    ]);
   });
 });

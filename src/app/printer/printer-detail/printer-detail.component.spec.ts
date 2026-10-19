@@ -867,6 +867,33 @@ describe('PrinterDetailComponent', () => {
         );
       });
 
+      it('shows the linked model in the search without searching or dirtying the form', async () => {
+        await setUp(aPrinterDetail({ catalogModelId: 'bambu-lab-p1s' }), {
+          linked: P1S,
+        });
+        // Past the search debounce, so a search the label set off would have run.
+        await new Promise((r) => setTimeout(r, 200));
+        fixture.detectChanges();
+
+        const input = el().querySelector<HTMLInputElement>(
+          '#edit-printer-catalog-search'
+        )!;
+        expect(input.value).toBe('Bambu Lab P1S');
+        expect(catalog.search).not.toHaveBeenCalled();
+        expect(component.printerForm().pristine).toBeTrue();
+      });
+
+      it('leaves the search empty when the linked model is unknown', async () => {
+        await setUp(aPrinterDetail({ catalogModelId: 'gone' }), {
+          linked: null,
+        });
+
+        expect(
+          el().querySelector<HTMLInputElement>('#edit-printer-catalog-search')!
+            .value
+        ).toBe('');
+      });
+
       it('names only the fields Fill would set', async () => {
         await setUp(
           fullySpecified({

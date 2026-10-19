@@ -100,11 +100,11 @@ Support: No Supports`);
   });
 
   it('reports the printer the file was sliced for beside the print', async () => {
-    const { print, detectedPrinterName } = await service.parseWithMeta(
+    const { print, detectedPrinterNames } = await service.parseWithMeta(
       ORCA_TWO_FILAMENT_GCODE,
       'cube.gcode'
     );
-    expect(detectedPrinterName).toBe('Bambu Lab X1 Carbon 0.4 nozzle');
+    expect(detectedPrinterNames).toEqual(['Bambu Lab X1 Carbon 0.4 nozzle']);
     // The print is the one parse() returns; startDate is "now", so compare without it.
     const plain = await service.parse(ORCA_TWO_FILAMENT_GCODE, 'cube.gcode');
     expect({ ...print, startDate: null }).toEqual({

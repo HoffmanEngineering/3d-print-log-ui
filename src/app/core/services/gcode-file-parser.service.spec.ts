@@ -43,7 +43,7 @@ describe('GcodeFileParserService', () => {
     );
     parser.parseWithMeta.and.resolveTo({
       print: { ...createDefaultPrintDetail(), title: 'Parsed' },
-      detectedPrinterName: 'Bambu Lab X1 Carbon',
+      detectedPrinterNames: ['Bambu Lab X1 Carbon'],
     });
 
     TestBed.configureTestingModule({
@@ -119,12 +119,12 @@ describe('GcodeFileParserService', () => {
   });
 
   describe('parseWithMeta', () => {
-    it("returns the parser's print and detected printer name", async () => {
+    it("returns the parser's print and detected printer names", async () => {
       resolveAs({ confidence: 'detected' });
       const result = await service.parseWithMeta('gcode', 'file.gcode');
       expect(parser.parseWithMeta).toHaveBeenCalledWith('gcode', 'file.gcode');
       expect(result?.print.title).toBe('Parsed');
-      expect(result?.detectedPrinterName).toBe('Bambu Lab X1 Carbon');
+      expect(result?.detectedPrinterNames).toEqual(['Bambu Lab X1 Carbon']);
     });
 
     it('detects no printer from the generic viewer', async () => {
@@ -132,7 +132,7 @@ describe('GcodeFileParserService', () => {
       const fromModal = { ...createDefaultPrintDetail(), title: 'Modal' };
       dialog.open.and.returnValue({ afterClosed: () => of(fromModal) } as any);
       const result = await service.parseWithMeta('G28', 'raw.gcode');
-      expect(result).toEqual({ print: fromModal, detectedPrinterName: null });
+      expect(result).toEqual({ print: fromModal, detectedPrinterNames: [] });
     });
 
     it('is null when the viewer is canceled', async () => {

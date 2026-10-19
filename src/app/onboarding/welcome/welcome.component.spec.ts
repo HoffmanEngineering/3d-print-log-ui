@@ -477,41 +477,69 @@ describe('WelcomeComponent', () => {
       expect(materialForm().submitLabel()).toBe('Add spool and continue');
     });
 
-    it('asks about resin for a resin printer, the first one when all are resin', async () => {
+    function noMaterialForm(): boolean {
+      return (
+        fixture.debugElement.query(
+          By.directive(StubQuickAddMaterialComponent)
+        ) === null
+      );
+    }
+
+    it('shows no material form for a resin printer, only a Continue that advances', async () => {
       configure([resin(3, 'Saturn 4'), resin(4, 'Mars 5')]);
       await render();
       await goToStep(1);
 
-      expect(materialForm().loadIntoPrinterId()).toBe(3);
       expect(text('step2-heading')).toBe(
         'What resin is in your Saturn 4 right now?'
       );
       expect(text('step2-helper')).toBe(
-        "Just the one you're printing with. You can add the rest later in Materials."
+        "Resin tracking lives in Materials. Add your resin there when you're ready."
       );
       const link = el('step2-helper')!.querySelector('a')!;
+      expect(link.textContent!.trim()).toBe('Materials');
       expect(link.getAttribute('href')).toBe('/materials');
       expect(link.getAttribute('target')).toBe('_blank');
-      expect(materialForm().submitLabel()).toBe('Add resin and continue');
+      expect(noMaterialForm()).toBeTrue();
+      expect(el('step2-skip')).toBeNull();
+
+      const next = el('step2-resin-continue') as HTMLButtonElement;
+      expect(next.textContent!.trim()).toBe('Continue');
+      expect(next.classList).toContain('mat-primary');
+      next.click();
+      await settle();
+
+      expect(stepper().selectedIndex).toBe(2);
+      expect(logging.logEvent).toHaveBeenCalledWith('Welcome_StepSkipped', {
+        step: 2,
+        reason: 'resin',
+      });
     });
 
-    it('switching "Loaded in" updates the copy live', async () => {
+    it('switching "Loaded in" between resin and FFF swaps the form and copy live', async () => {
       configure([resin(3, 'Saturn 4'), summary(4, 'P1S')]);
       await render();
       await goToStep(1);
+      expect(noMaterialForm()).toBeFalse();
 
       await chooseLoadedIn('Saturn 4');
       expect(text('step2-heading')).toBe(
         'What resin is in your Saturn 4 right now?'
       );
-      expect(materialForm().submitLabel()).toBe('Add resin and continue');
+      expect(noMaterialForm()).toBeTrue();
+      expect(el('step2-resin-continue')).not.toBeNull();
+      // The select stays, so the user can switch back.
+      expect(el('loaded-in-select')).not.toBeNull();
 
       await chooseLoadedIn('P1S');
       expect(text('step2-heading')).toBe(
         "What's loaded in your P1S right now?"
       );
       expect(text('step2-helper')).toContain('Just the one on the printer.');
+      expect(noMaterialForm()).toBeFalse();
       expect(materialForm().submitLabel()).toBe('Add spool and continue');
+      expect(materialForm().loadIntoPrinterId()).toBe(4);
+      expect(el('step2-resin-continue')).toBeNull();
     });
 
     it('puts "Skip for now" in the material form\'s button row', async () => {

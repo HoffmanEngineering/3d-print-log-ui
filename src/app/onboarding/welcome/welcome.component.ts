@@ -136,9 +136,6 @@ export class WelcomeComponent implements OnInit {
     );
   });
   readonly isResin = computed(() => this.targetPrinter()?.type === RESIN_TYPE);
-  readonly materialSubmitLabel = computed(() =>
-    this.isResin() ? 'Add resin and continue' : 'Add spool and continue'
-  );
   readonly loadIntoPrinterId = computed(() => this.targetPrinter()?.id ?? null);
   readonly hasAms = computed(() => (this.targetPrinter()?.slotCount ?? 1) > 1);
   readonly materialHeading = computed(() => {
@@ -236,6 +233,12 @@ export class WelcomeComponent implements OnInit {
 
   skipMaterial(): void {
     this.logging.logEvent('Welcome_StepSkipped', { step: 2 });
+    this.selectedIndex.set(2);
+  }
+
+  /** A resin printer gets no filament form; resin is added in Materials instead. */
+  continuePastResin(): void {
+    this.logging.logEvent('Welcome_StepSkipped', { step: 2, reason: 'resin' });
     this.selectedIndex.set(2);
   }
 

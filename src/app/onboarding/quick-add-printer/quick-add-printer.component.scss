@@ -36,7 +36,7 @@
 
 .quick-add__chips {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(9rem, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(8rem, 100%), 1fr));
   gap: 0.5rem;
 }
 

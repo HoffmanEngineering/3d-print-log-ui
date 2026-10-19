@@ -63,6 +63,8 @@ export interface PrinterFilamentForSummary {
  */
 export interface PrinterSummarySimple extends PrinterSummary {
   loadedFilaments: PrinterFilamentForSummary[];
+  /** Filament positions (tools, AMS slots). 1 for a single-tool printer. */
+  slotCount?: number;
 }
 
 /** One photo attached to a printer. */

@@ -41,6 +41,20 @@
   color: var(--app-text-primary);
 }
 
+.welcome__step-helper {
+  margin: 8px 0 0;
+  color: var(--app-text-secondary);
+
+  a {
+    color: var(--app-primary);
+  }
+}
+
+.welcome__loaded-in {
+  width: min(100%, 20rem);
+  margin-bottom: 16px;
+}
+
 .welcome__added {
   display: flex;
   flex-wrap: wrap;

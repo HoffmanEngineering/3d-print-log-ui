@@ -290,6 +290,19 @@ describe('QuickAddMaterialComponent', () => {
     expect(button.classList).toContain('mat-primary');
   });
 
+  it('takes its button label from submitLabel', async () => {
+    fixture = TestBed.createComponent(QuickAddMaterialComponent);
+    fixture.componentRef.setInput('submitLabel', 'Add spool and continue');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="quick-add-save"]'
+    ) as HTMLButtonElement;
+    expect(button.textContent!.trim()).toBe('Add spool and continue');
+  });
+
   it('labels the color field "Color name" so it fits beside the swatch', async () => {
     await setup();
     const labels = Array.from(

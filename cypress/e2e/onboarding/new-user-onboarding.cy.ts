@@ -107,7 +107,10 @@ describe('New-user onboarding', () => {
     });
     cy.get('[data-testid="printer-chips"]').should('contain.text', 'P1S');
 
-    // Step 2 is optional.
+    // Step 2 asks only for the spool loaded now, and is optional.
+    cy.findByRole('heading', {
+      name: "What's loaded in your P1S's AMS right now?",
+    }).should('be.visible');
     cy.get('[data-testid="step2-skip"]').should('be.visible').click();
 
     // Step 3: the manual path opens the print form in onboarding mode.

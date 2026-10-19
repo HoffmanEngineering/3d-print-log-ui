@@ -11,7 +11,9 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { MatStepperModule } from '@angular/material/stepper';
 import {
   ActivatedRoute,
@@ -45,6 +47,7 @@ import {
 interface SavedPrinter {
   id: number;
   name: string;
+  slotCount: number;
 }
 
 const ENTRIES = ['callback', 'guard', 'link'];
@@ -64,7 +67,9 @@ const PRINTER_PAGE_SIZE = 50;
     RouterLink,
     MatButtonModule,
     MatChipsModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatSelectModule,
     MatStepperModule,
     QuickAddPrinterComponent,
     QuickAddMaterialComponent,
@@ -111,10 +116,25 @@ export class WelcomeComponent implements OnInit {
   readonly showPrintersSkeleton = this.printersSkeleton.visible;
 
   readonly hasPrinter = computed(() => this.printers().length > 0);
-  /** With exactly one printer, the new spool goes straight into it. */
-  readonly loadIntoPrinterId = computed(() => {
+  /** The printer picked in step 2's "Loaded in" select; null means the first one. */
+  readonly selectedPrinterId = signal<number | null>(null);
+  /** The printer the step-2 spool goes into: the chosen one, else the first added. */
+  readonly targetPrinter = computed(() => {
     const list = this.printers();
-    return list.length === 1 ? list[0].id : null;
+    return (
+      list.find((p) => p.id === this.selectedPrinterId()) ?? list[0] ?? null
+    );
+  });
+  readonly loadIntoPrinterId = computed(() => this.targetPrinter()?.id ?? null);
+  readonly hasAms = computed(() => (this.targetPrinter()?.slotCount ?? 1) > 1);
+  readonly materialHeading = computed(() => {
+    const printer = this.targetPrinter();
+    if (!printer) {
+      return 'What filament are you printing with?';
+    }
+    return this.hasAms()
+      ? `What's loaded in your ${printer.name}'s AMS right now?`
+      : `What's loaded in your ${printer.name} right now?`;
   });
 
   private readonly destroyRef = inject(DestroyRef);
@@ -143,7 +163,11 @@ export class WelcomeComponent implements OnInit {
         next: (page) => {
           if (page.items.length > 0) {
             this.addPrinters(
-              page.items.map((p) => ({ id: p.id, name: p.name }))
+              page.items.map((p) => ({
+                id: p.id,
+                name: p.name,
+                slotCount: p.slotCount ?? 1,
+              }))
             );
           }
           this.printersSettled();
@@ -167,12 +191,20 @@ export class WelcomeComponent implements OnInit {
 
   onPrinterSaved(printer: PrinterDetail): void {
     if (printer.id !== null) {
-      this.addPrinters([{ id: printer.id, name: printer.name }]);
+      this.addPrinters([
+        {
+          id: printer.id,
+          name: printer.name,
+          slotCount: printer.slotCount ?? 1,
+        },
+      ]);
     }
   }
 
+  /** "Add spool and continue": the save itself moves on to step 3. */
   onMaterialSaved(filament: FilamentDetail): void {
     this.savedMaterial.set(filament.displayName || filament.materialType);
+    this.continueFrom(2);
   }
 
   continueFrom(step: number): void {

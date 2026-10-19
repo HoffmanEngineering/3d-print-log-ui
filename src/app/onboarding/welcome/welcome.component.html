@@ -70,36 +70,75 @@
 
     <mat-step label="Add a material" [optional]="true">
       <ng-template matStepContent>
+        <header class="welcome__step-header">
+          <p class="welcome__step-count" data-testid="step2-count">
+            Step 2 of 3
+          </p>
+          <h2 class="welcome__step-title" data-testid="step2-heading">
+            {{ materialHeading() }}
+          </h2>
+          <p class="welcome__step-helper" data-testid="step2-helper">
+            @if (hasAms()) {
+              Just one for now.
+            } @else {
+              Just the one on the printer.
+            }
+            You can add the rest of your spools later in
+            <a href="/materials" target="_blank" rel="noopener">Materials</a>.
+          </p>
+        </header>
+
         @if (savedMaterial(); as material) {
           <p class="welcome__saved" data-testid="material-saved">
             Added {{ material }} to your materials.
           </p>
+          <div class="welcome__actions">
+            <button
+              type="button"
+              mat-flat-button
+              color="primary"
+              data-testid="step2-continue"
+              (click)="continueFrom(2)"
+            >
+              Continue
+            </button>
+          </div>
         } @else {
+          @if (printers().length > 1) {
+            <mat-form-field
+              class="welcome__loaded-in"
+              subscriptSizing="dynamic"
+              data-testid="loaded-in-select"
+            >
+              <mat-label>Loaded in</mat-label>
+              <mat-select
+                [value]="loadIntoPrinterId()"
+                (selectionChange)="selectedPrinterId.set($event.value)"
+              >
+                @for (printer of printers(); track printer.id) {
+                  <mat-option [value]="printer.id">{{
+                    printer.name
+                  }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
           <app-quick-add-material
+            submitLabel="Add spool and continue"
             [loadIntoPrinterId]="loadIntoPrinterId()"
             (saved)="onMaterialSaved($event)"
           />
+          <div class="welcome__actions">
+            <button
+              type="button"
+              mat-button
+              data-testid="step2-skip"
+              (click)="skipMaterial()"
+            >
+              Skip for now
+            </button>
+          </div>
         }
-        <div class="welcome__actions">
-          <button
-            type="button"
-            mat-button
-            data-testid="step2-skip"
-            (click)="skipMaterial()"
-          >
-            Skip for now
-          </button>
-          <button
-            type="button"
-            mat-flat-button
-            color="primary"
-            data-testid="step2-continue"
-            [disabled]="!savedMaterial()"
-            (click)="continueFrom(2)"
-          >
-            Continue
-          </button>
-        </div>
       </ng-template>
     </mat-step>
 

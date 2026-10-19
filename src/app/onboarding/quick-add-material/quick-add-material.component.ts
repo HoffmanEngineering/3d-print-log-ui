@@ -67,6 +67,7 @@ export class QuickAddMaterialComponent implements OnInit {
   private readonly fb = inject(FormBuilder).nonNullable;
 
   readonly loadIntoPrinterId = input<number | null>(null);
+  readonly submitLabel = input('Save material');
   readonly saved = output<FilamentDetail>();
 
   readonly form = this.fb.group({

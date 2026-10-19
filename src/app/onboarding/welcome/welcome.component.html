@@ -78,12 +78,14 @@
             {{ materialHeading() }}
           </h2>
           <p class="welcome__step-helper" data-testid="step2-helper">
-            @if (hasAms()) {
-              Just one for now.
+            @if (isResin()) {
+              Just the one you're printing with. You can add the rest later in
+            } @else if (hasAms()) {
+              Just one for now. You can add the rest of your spools later in
             } @else {
-              Just the one on the printer.
+              Just the one on the printer. You can add the rest of your spools
+              later in
             }
-            You can add the rest of your spools later in
             <a href="/materials" target="_blank" rel="noopener">Materials</a>.
           </p>
         </header>
@@ -124,20 +126,20 @@
             </mat-form-field>
           }
           <app-quick-add-material
-            submitLabel="Add spool and continue"
+            [submitLabel]="materialSubmitLabel()"
             [loadIntoPrinterId]="loadIntoPrinterId()"
             (saved)="onMaterialSaved($event)"
-          />
-          <div class="welcome__actions">
+          >
             <button
               type="button"
               mat-button
+              quickAddSecondary
               data-testid="step2-skip"
               (click)="skipMaterial()"
             >
               Skip for now
             </button>
-          </div>
+          </app-quick-add-material>
         }
       </ng-template>
     </mat-step>

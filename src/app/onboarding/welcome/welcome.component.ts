@@ -48,7 +48,11 @@ interface SavedPrinter {
   id: number;
   name: string;
   slotCount: number;
+  /** The printer category nickname, e.g. FFF or MSLA. */
+  type: string;
 }
+
+const RESIN_TYPE = 'MSLA';
 
 const ENTRIES = ['callback', 'guard', 'link'];
 const STEP_COUNT = 3;
@@ -118,19 +122,32 @@ export class WelcomeComponent implements OnInit {
   readonly hasPrinter = computed(() => this.printers().length > 0);
   /** The printer picked in step 2's "Loaded in" select; null means the first one. */
   readonly selectedPrinterId = signal<number | null>(null);
-  /** The printer the step-2 spool goes into: the chosen one, else the first added. */
+  /**
+   * The printer the step-2 spool goes into: the chosen one, else the first added that is
+   * not resin (the form makes filament), else the first.
+   */
   readonly targetPrinter = computed(() => {
     const list = this.printers();
     return (
-      list.find((p) => p.id === this.selectedPrinterId()) ?? list[0] ?? null
+      list.find((p) => p.id === this.selectedPrinterId()) ??
+      list.find((p) => p.type !== RESIN_TYPE) ??
+      list[0] ??
+      null
     );
   });
+  readonly isResin = computed(() => this.targetPrinter()?.type === RESIN_TYPE);
+  readonly materialSubmitLabel = computed(() =>
+    this.isResin() ? 'Add resin and continue' : 'Add spool and continue'
+  );
   readonly loadIntoPrinterId = computed(() => this.targetPrinter()?.id ?? null);
   readonly hasAms = computed(() => (this.targetPrinter()?.slotCount ?? 1) > 1);
   readonly materialHeading = computed(() => {
     const printer = this.targetPrinter();
     if (!printer) {
       return 'What filament are you printing with?';
+    }
+    if (this.isResin()) {
+      return `What resin is in your ${printer.name} right now?`;
     }
     return this.hasAms()
       ? `What's loaded in your ${printer.name}'s AMS right now?`
@@ -167,6 +184,7 @@ export class WelcomeComponent implements OnInit {
                 id: p.id,
                 name: p.name,
                 slotCount: p.slotCount ?? 1,
+                type: p.category?.nickname ?? '',
               }))
             );
           }
@@ -196,6 +214,7 @@ export class WelcomeComponent implements OnInit {
           id: printer.id,
           name: printer.name,
           slotCount: printer.slotCount ?? 1,
+          type: printer.category?.nickname ?? '',
         },
       ]);
     }

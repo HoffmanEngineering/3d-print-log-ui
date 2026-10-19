@@ -47,7 +47,10 @@ class StubQuickAddPrinterComponent {
   readonly continued = output<void>();
 }
 
-@Component({ selector: 'app-quick-add-material', template: '' })
+@Component({
+  selector: 'app-quick-add-material',
+  template: '<ng-content select="[quickAddSecondary]" />',
+})
 class StubQuickAddMaterialComponent {
   readonly loadIntoPrinterId = input<number | null>(null);
   readonly submitLabel = input('Save material');
@@ -63,6 +66,13 @@ function summary(id: number, name: string): PrinterSummarySimple {
     isActive: true,
     category: { id: 1, name: 'FFF', nickname: 'FFF' },
     loadedFilaments: [],
+  } as unknown as PrinterSummarySimple;
+}
+
+function resin(id: number, name: string): PrinterSummarySimple {
+  return {
+    ...summary(id, name),
+    category: { id: 2, name: 'MSLA', nickname: 'MSLA' },
   } as unknown as PrinterSummarySimple;
 }
 
@@ -453,6 +463,65 @@ describe('WelcomeComponent', () => {
       expect(text('step2-heading')).toBe(
         "What's loaded in your Voron right now?"
       );
+    });
+
+    it('"Loaded in" defaults to the first printer that is not resin', async () => {
+      configure([resin(3, 'Saturn 4'), summary(4, 'P1S')]);
+      await render();
+      await goToStep(1);
+
+      expect(materialForm().loadIntoPrinterId()).toBe(4);
+      expect(text('step2-heading')).toBe(
+        "What's loaded in your P1S right now?"
+      );
+      expect(materialForm().submitLabel()).toBe('Add spool and continue');
+    });
+
+    it('asks about resin for a resin printer, the first one when all are resin', async () => {
+      configure([resin(3, 'Saturn 4'), resin(4, 'Mars 5')]);
+      await render();
+      await goToStep(1);
+
+      expect(materialForm().loadIntoPrinterId()).toBe(3);
+      expect(text('step2-heading')).toBe(
+        'What resin is in your Saturn 4 right now?'
+      );
+      expect(text('step2-helper')).toBe(
+        "Just the one you're printing with. You can add the rest later in Materials."
+      );
+      const link = el('step2-helper')!.querySelector('a')!;
+      expect(link.getAttribute('href')).toBe('/materials');
+      expect(link.getAttribute('target')).toBe('_blank');
+      expect(materialForm().submitLabel()).toBe('Add resin and continue');
+    });
+
+    it('switching "Loaded in" updates the copy live', async () => {
+      configure([resin(3, 'Saturn 4'), summary(4, 'P1S')]);
+      await render();
+      await goToStep(1);
+
+      await chooseLoadedIn('Saturn 4');
+      expect(text('step2-heading')).toBe(
+        'What resin is in your Saturn 4 right now?'
+      );
+      expect(materialForm().submitLabel()).toBe('Add resin and continue');
+
+      await chooseLoadedIn('P1S');
+      expect(text('step2-heading')).toBe(
+        "What's loaded in your P1S right now?"
+      );
+      expect(text('step2-helper')).toContain('Just the one on the printer.');
+      expect(materialForm().submitLabel()).toBe('Add spool and continue');
+    });
+
+    it('puts "Skip for now" in the material form\'s button row', async () => {
+      configure([summary(3, 'Prusa MK4')]);
+      await render();
+      await goToStep(1);
+
+      const skip = el('step2-skip')!;
+      expect(skip.closest('app-quick-add-material')).not.toBeNull();
+      expect(skip.hasAttribute('quickaddsecondary')).toBeTrue();
     });
 
     it('"Add spool and continue" saves and advances in one click', async () => {

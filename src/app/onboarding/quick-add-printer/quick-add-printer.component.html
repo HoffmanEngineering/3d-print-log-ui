@@ -172,6 +172,12 @@
     <app-inline-email-notice />
   }
 
+  @if (hint(); as text) {
+    <p class="quick-add__hint" role="status" data-testid="quick-add-hint">
+      {{ text }}
+    </p>
+  }
+
   @if (errorMessage(); as message) {
     <p class="quick-add__error" role="alert" data-testid="quick-add-error">
       {{ message }}

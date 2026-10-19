@@ -58,6 +58,7 @@ const SEARCH_DEBOUNCE_MS = 150;
 const NOT_LISTED_QUERY_MAX = 40;
 const SAVE_FAILED = 'We could not save the printer. Try again.';
 const PRINTER_MISSING = 'Search for your printer, or type its make and model.';
+const CONFIRM_UNLISTED = 'Check the make, model and type, then save.';
 /** Types that have their own toggle button; "Other" offers the rest. */
 const TOGGLE_NICKNAMES = ['FFF', 'MSLA'];
 
@@ -191,6 +192,8 @@ export class QuickAddPrinterComponent implements OnInit {
   /** Set once the printer exists: Save stays off while a dialog closes or a step moves on. */
   readonly done = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  /** A non-error prompt, such as asking to confirm an unlisted printer. */
+  readonly hint = signal<string | null>(null);
   readonly showManual = signal(false);
   readonly specsOpen = signal(false);
   readonly categories = signal<PrinterCategory[]>([]);
@@ -477,6 +480,17 @@ export class QuickAddPrinterComponent implements OnInit {
       return;
     }
     this.commitFreeText();
+    // Free text skipped the type toggle, so show make, model and type once before saving.
+    if (
+      !this.catalogModel() &&
+      !this.showManual() &&
+      this.form.controls.search.value.trim()
+    ) {
+      this.showManual.set(true);
+      this.errorMessage.set(null);
+      this.hint.set(CONFIRM_UNLISTED);
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       const { make, model } = this.form.controls;
@@ -487,6 +501,7 @@ export class QuickAddPrinterComponent implements OnInit {
     }
     this.saving.set(true);
     this.errorMessage.set(null);
+    this.hint.set(null);
     try {
       const printer = await this.createPrinter();
       if (this.showEmailNotice()) {
@@ -541,6 +556,7 @@ export class QuickAddPrinterComponent implements OnInit {
     this.showManual.set(false);
     this.specsOpen.set(false);
     this.errorMessage.set(null);
+    this.hint.set(null);
   }
 
   /** The printer no longer links to a catalog model. The form values stay. */

@@ -138,6 +138,13 @@ describe('QuickAddPrinterComponent', () => {
     fixture.detectChanges();
   }
 
+  /** Free text stops once to confirm make, model and type; the second save goes through. */
+  async function saveFreeText(): Promise<void> {
+    await component.save();
+    fixture.detectChanges();
+    await component.save();
+  }
+
   function openSpecs(): void {
     byTestId<HTMLButtonElement>('edit-specs')!.click();
     fixture.detectChanges();
@@ -447,12 +454,17 @@ describe('QuickAddPrinterComponent', () => {
     expect(button().disabled).toBeTrue();
   });
 
-  it('saves typed text without a blur: Save is enabled and one click saves once', async () => {
+  it('saves typed text without a blur: one click confirms, the next saves once', async () => {
     await setup();
     typeInSearch('Voron 2.4');
 
     const button = byTestId<HTMLButtonElement>('quick-add-save')!;
     expect(button.disabled).toBeFalse();
+    button.click();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    expect(printers.addPrinter).not.toHaveBeenCalled();
     button.click();
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r));
@@ -466,8 +478,14 @@ describe('QuickAddPrinterComponent', () => {
   it('submits on Enter (form submit) with typed text', async () => {
     await setup();
     typeInSearch('Ender 3');
+    const form = host().querySelector('form') as HTMLFormElement;
 
-    (host().querySelector('form') as HTMLFormElement).requestSubmit();
+    // The first Enter opens make, model and type to confirm; the second saves.
+    form.requestSubmit();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    form.requestSubmit();
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r));
 
@@ -564,7 +582,7 @@ describe('QuickAddPrinterComponent', () => {
       expect(host().textContent).not.toContain('Popular printers');
 
       typeInSearch('Voron 2.4');
-      await component.save();
+      await saveFreeText();
 
       expect(sent().make).toBe('Voron');
       expect(sent().catalogModelId).toBeNull();
@@ -786,7 +804,7 @@ describe('QuickAddPrinterComponent', () => {
       component.form.controls.type.setValue('MSLA');
 
       typeOverPick('Voron 2.4');
-      await component.save();
+      await saveFreeText();
 
       expect(sent().category.nickname).toBe('MSLA');
       expect(sent().bedWidthMm).toBeUndefined();
@@ -801,7 +819,7 @@ describe('QuickAddPrinterComponent', () => {
 
       expect(component.form.controls.multiMaterial.value).toBeTrue();
       expect(component.form.controls.slotCount.value).toBe(8);
-      await component.save();
+      await saveFreeText();
       expect(sent().slotCount).toBe(8);
     });
 
@@ -824,7 +842,7 @@ describe('QuickAddPrinterComponent', () => {
           ) as HTMLInputElement
         ).value
       ).toBe('300');
-      await component.save();
+      await saveFreeText();
       expect(sent().catalogModelId).toBeNull();
       expect(sent().bedWidthMm).toBe(300);
       expect(sent().bedDepthMm).toBeUndefined();
@@ -836,7 +854,7 @@ describe('QuickAddPrinterComponent', () => {
       component.selectCatalogPrinter(P1S);
       typeOverPick('Voron 2.4');
 
-      await component.save();
+      await saveFreeText();
 
       expect(logging.logEvent).not.toHaveBeenCalledWith(
         'QuickAddPrinter_NotListed',
@@ -854,7 +872,7 @@ describe('QuickAddPrinterComponent', () => {
       expect(byTestId('nozzle-0.4')).toBeNull();
       expect(component.form.controls.multiMaterial.value).toBeFalse();
       typeInSearch('Voron 2.4');
-      await component.save();
+      await saveFreeText();
 
       expect(sent().catalogModelId).toBeNull();
       expect(sent().nozzleDiameter).toBeNull();
@@ -869,7 +887,7 @@ describe('QuickAddPrinterComponent', () => {
       await setup();
       typeInSearch(`  ${'x'.repeat(50)}  `);
 
-      await component.save();
+      await saveFreeText();
 
       expect(logging.logEvent).toHaveBeenCalledWith(
         'QuickAddPrinter_NotListed',
@@ -1074,6 +1092,71 @@ describe('QuickAddPrinterComponent', () => {
       typeInSearch('');
 
       expect(byTestId('quick-add-error')).toBeNull();
+    });
+  });
+
+  describe('confirming an unlisted printer', () => {
+    async function clickPrimary(): Promise<void> {
+      byTestId<HTMLButtonElement>('quick-add-save')!.click();
+      await fixture.whenStable();
+      await new Promise((r) => setTimeout(r));
+      fixture.detectChanges();
+    }
+
+    function field(name: string): HTMLInputElement | null {
+      return host().querySelector(`input[formcontrolname="${name}"]`);
+    }
+
+    it('opens the manual section prefilled instead of saving free text on the first click', async () => {
+      await setup();
+      typeInSearch('Elegoo Saturn 4');
+
+      await clickPrimary();
+
+      expect(printers.addPrinter).not.toHaveBeenCalled();
+      expect(field('make')!.value).toBe('Elegoo');
+      expect(field('model')!.value).toBe('Saturn 4');
+      expect(host().querySelector('mat-button-toggle-group')).not.toBeNull();
+      expect(byTestId('quick-add-hint')!.textContent!.trim()).toBe(
+        'Check the make, model and type, then save.'
+      );
+      expect(byTestId('quick-add-error')).toBeNull();
+
+      const resin = Array.from(
+        host().querySelectorAll<HTMLButtonElement>('mat-button-toggle button')
+      ).find((b) => b.textContent!.trim() === 'Resin')!;
+      resin.click();
+      fixture.detectChanges();
+      await clickPrimary();
+
+      expect(printers.addPrinter).toHaveBeenCalledTimes(1);
+      expect(sent().make).toBe('Elegoo');
+      expect(sent().model).toBe('Saturn 4');
+      expect(sent().category.nickname).toBe('MSLA');
+    });
+
+    it('saves on the first click when the manual section is already open', async () => {
+      await setup();
+      byTestId<HTMLButtonElement>('manual-toggle')!.click();
+      fixture.detectChanges();
+      component.form.patchValue({ make: 'Voron', model: 'Trident' });
+      fixture.detectChanges();
+
+      await clickPrimary();
+
+      expect(printers.addPrinter).toHaveBeenCalledTimes(1);
+    });
+
+    it('welcome mode: "Save and add another" also stops to confirm free text', async () => {
+      await setup(false, null, 'welcome');
+      typeInSearch('Elegoo Saturn 4');
+
+      await component.saveAndAddAnother();
+      fixture.detectChanges();
+
+      expect(printers.addPrinter).not.toHaveBeenCalled();
+      expect(component.showManual()).toBeTrue();
+      expect(continued).toBe(0);
     });
   });
 

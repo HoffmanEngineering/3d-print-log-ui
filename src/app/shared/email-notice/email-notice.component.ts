@@ -2,16 +2,17 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   OnInit,
   PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { Router } from '@angular/router';
-import { distinctUntilChanged, map } from 'rxjs';
+import { NavigationEnd, Router } from '@angular/router';
+import { distinctUntilChanged, filter, map } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { LoggingService } from '../../core/services/logging.service';
@@ -19,6 +20,7 @@ import {
   UserSettingService,
   UserSettingType,
 } from '../../core/services/user-setting.service';
+import { OnboardingService } from '../../onboarding/onboarding.service';
 
 type DismissAction = 'got-it' | 'settings';
 
@@ -39,10 +41,37 @@ export class EmailNoticeComponent implements OnInit {
   private readonly settings = inject(UserSettingService);
   private readonly logging = inject(LoggingService);
   private readonly router = inject(Router);
+  private readonly onboarding = inject(OnboardingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly visible = signal(false);
+
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects)
+    ),
+    // Null until the first navigation lands: before that router.url is "/", which would let
+    // the banner flash on a hard load of /welcome.
+    { initialValue: this.router.navigated ? this.router.url : null }
+  );
+
+  /**
+   * The welcome page and the getting-started checklist show their own inline notice, so the
+   * banner would only repeat it. Once either acknowledges it (setting 26 written or not), the
+   * banner stays gone for the session.
+   */
+  readonly showBanner = computed(() => {
+    const url = this.url();
+    return (
+      this.visible() &&
+      url !== null &&
+      !isWelcomeUrl(url) &&
+      !this.onboarding.noticeAcknowledged() &&
+      !this.onboarding.checklistShowing()
+    );
+  });
 
   ngOnInit(): void {
     if (!this.isBrowser) {
@@ -92,4 +121,9 @@ export class EmailNoticeComponent implements OnInit {
       this.visible.set(false);
     }
   }
+}
+
+/** `/welcome` itself, or followed by `/`, `?` or `#`; not `/welcomeX`. */
+function isWelcomeUrl(url: string): boolean {
+  return /^\/welcome(?:[/?#]|$)/.test(url);
 }

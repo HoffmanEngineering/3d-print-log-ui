@@ -1,0 +1,147 @@
+<div class="paths">
+  <mat-card
+    class="path path--primary"
+    appearance="outlined"
+    data-testid="path-manual"
+  >
+    <mat-card-header>
+      <mat-card-title>Log a print now</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Fill in the print form yourself. It takes about a minute.</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        type="button"
+        mat-flat-button
+        color="primary"
+        data-testid="path-manual-action"
+        [disabled]="busy()"
+        (click)="choose('manual')"
+      >
+        Log a print now
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  @if (showConnections) {
+    <mat-card class="path" appearance="outlined" data-testid="path-slicer">
+      <mat-card-header>
+        <mat-card-title>Send prints from my slicer</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-form-field class="path__select" subscriptSizing="dynamic">
+          <mat-label>Slicer</mat-label>
+          <mat-select
+            data-testid="slicer-select"
+            [value]="slicerKey()"
+            (selectionChange)="selectSlicer($event.value)"
+          >
+            @for (option of slicers; track option.key) {
+              <mat-option [value]="option.key">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (slicer(); as chosenSlicer) {
+          <ol class="path__lines">
+            @for (line of chosenSlicer.lines; track line) {
+              <li data-testid="install-line">
+                @for (part of lineParts(line); track $index) {
+                  @if (part.code) {
+                    <code>{{ part.text }}</code>
+                  } @else {
+                    <span>{{ part.text }}</span>
+                  }
+                }
+              </li>
+            }
+          </ol>
+          <a [routerLink]="chosenSlicer.doc" data-testid="slicer-doc-link">
+            Read the {{ chosenSlicer.label }} setup guide
+          </a>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button
+          type="button"
+          mat-stroked-button
+          data-testid="slicer-done"
+          [disabled]="busy()"
+          (click)="choose('slicer', slicerKey())"
+        >
+          Done
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="path" appearance="outlined" data-testid="path-integration">
+      <mat-card-header>
+        <mat-card-title
+          >Log prints automatically from my printer</mat-card-title
+        >
+      </mat-card-header>
+      <mat-card-content>
+        <mat-button-toggle-group
+          aria-label="Printer software"
+          [value]="integrationKey()"
+          (change)="selectIntegration($event.value)"
+        >
+          @for (option of integrations; track option.key) {
+            <mat-button-toggle [value]="option.key">
+              {{ option.label }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        @if (integration(); as chosenIntegration) {
+          @for (line of chosenIntegration.lines; track line) {
+            <p class="path__line">{{ line }}</p>
+          }
+          <p class="path__links">
+            <a routerLink="/api-keys" data-testid="api-keys-link">
+              Create an API key
+            </a>
+            <a
+              [routerLink]="chosenIntegration.doc"
+              data-testid="integration-doc-link"
+            >
+              Read the {{ chosenIntegration.label }} setup guide
+            </a>
+          </p>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button
+          type="button"
+          mat-stroked-button
+          data-testid="integration-done"
+          [disabled]="busy()"
+          (click)="choose('integration', integrationKey())"
+        >
+          Done
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  }
+</div>
+
+@if (emailUnverified()) {
+  <p class="confirm-email" data-testid="confirm-email">
+    <span>Check your inbox to confirm your email so we can send you tips.</span>
+    <button
+      type="button"
+      mat-button
+      data-testid="resend"
+      [disabled]="resending()"
+      (click)="resend()"
+    >
+      Resend
+    </button>
+    <!-- Always rendered, so screen readers announce the text when it changes. -->
+    <span
+      class="confirm-email__result"
+      role="status"
+      data-testid="resend-result"
+      >{{ resendMessage() }}</span
+    >
+  </p>
+}

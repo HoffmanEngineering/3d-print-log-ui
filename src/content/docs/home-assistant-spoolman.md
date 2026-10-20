@@ -7,7 +7,7 @@ group: integrations
 order: 55
 mode: how-to
 updated: 2026-10-17
-related: [klipper-spoolman, materials, printers]
+related: [home-assistant, klipper-spoolman, materials, printers]
 ---
 
 ## Home Assistant via Spoolman

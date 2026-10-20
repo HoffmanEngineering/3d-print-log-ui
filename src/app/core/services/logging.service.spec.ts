@@ -11,6 +11,12 @@ function makeFakeAi() {
     addTelemetryInitializer: jasmine.createSpy('addTelemetryInitializer'),
     loadAppInsights: jasmine.createSpy('loadAppInsights'),
     context: { application: { ver: '' } },
+    setAuthenticatedUserContext: jasmine.createSpy(
+      'setAuthenticatedUserContext'
+    ),
+    clearAuthenticatedUserContext: jasmine.createSpy(
+      'clearAuthenticatedUserContext'
+    ),
     trackPageView: jasmine.createSpy('trackPageView'),
     trackEvent: jasmine.createSpy('trackEvent'),
     trackMetric: jasmine.createSpy('trackMetric'),
@@ -32,7 +38,7 @@ function makeFakeModule(
       fakeAi.capturedConfig = cfg;
       return fakeAi;
     },
-    DistributedTracingModes: { AI: 1 },
+    DistributedTracingModes: { AI: 1, AI_AND_W3C: 2 },
   };
 }
 
@@ -102,6 +108,8 @@ describe('LoggingService', () => {
     expect(() => service.logMetric('M', 1)).not.toThrow();
     expect(() => service.logTrace('T')).not.toThrow();
     expect(() => service.logPageView('P')).not.toThrow();
+    expect(() => service.setAuthenticatedUser(1)).not.toThrow();
+    expect(() => service.clearAuthenticatedUser()).not.toThrow();
     service.logException(err);
 
     expect(consoleSpy).toHaveBeenCalledWith(err);
@@ -160,12 +168,58 @@ describe('LoggingService', () => {
       expect(cfg.disableFetchTracking).toBeFalse();
       expect(cfg.disableCorrelationHeaders).toBeFalse();
       expect(cfg.enableCorsCorrelation).toBeTrue();
-      expect(cfg.distributedTracingMode).toBe(1); // DistributedTracingModes.AI
+      expect(cfg.distributedTracingMode).toBe(2); // DistributedTracingModes.AI_AND_W3C
+      expect(cfg.correlationHeaderDomains).toEqual([
+        new URL(environment.printLogApiUrl).host,
+      ]);
       expect(cfg.correlationHeaderExcludedDomains).toEqual(['*.auth0.com']);
       expect(cfg.enableRequestHeaderTracking).toBeFalse();
       expect(cfg.enableResponseHeaderTracking).toBeTrue();
       expect(fakeAi.loadAppInsights).toHaveBeenCalledTimes(1);
       expect(fakeAi.context.application.ver).toBe(environment.version);
+    });
+
+    it('applies a user id set before load once the SDK activates', async () => {
+      const fakeAi = makeFakeAi();
+      service.importResult = Promise.resolve(makeFakeModule(fakeAi));
+
+      service.setAuthenticatedUser(42);
+      expect(fakeAi.setAuthenticatedUserContext).not.toHaveBeenCalled();
+
+      await service.runInitialize();
+
+      expect(fakeAi.setAuthenticatedUserContext).toHaveBeenCalledOnceWith(
+        '42',
+        undefined,
+        true
+      );
+    });
+
+    it('does not apply a user id that was cleared before load', async () => {
+      const fakeAi = makeFakeAi();
+      service.importResult = Promise.resolve(makeFakeModule(fakeAi));
+
+      service.setAuthenticatedUser(42);
+      service.clearAuthenticatedUser();
+      await service.runInitialize();
+
+      expect(fakeAi.setAuthenticatedUserContext).not.toHaveBeenCalled();
+    });
+
+    it('sets and clears the user context directly once active', async () => {
+      const fakeAi = makeFakeAi();
+      service.importResult = Promise.resolve(makeFakeModule(fakeAi));
+      await service.runInitialize();
+
+      service.setAuthenticatedUser(7);
+      expect(fakeAi.setAuthenticatedUserContext).toHaveBeenCalledOnceWith(
+        '7',
+        undefined,
+        true
+      );
+
+      service.clearAuthenticatedUser();
+      expect(fakeAi.clearAuthenticatedUserContext).toHaveBeenCalledTimes(1);
     });
 
     it('logException console.errors immediately before load and uploads after flush', async () => {

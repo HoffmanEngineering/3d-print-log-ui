@@ -1,11 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  OnInit,
   computed,
   inject,
+  input,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -13,7 +16,11 @@ import { catchError, combineLatest, map, of } from 'rxjs';
 
 import { AchievementService } from '../../../core/services/achievement.service';
 import { LoggingService } from '../../../core/services/logging.service';
-import { AchievementFamily, NextHint } from '../../../core/types/achievement';
+import {
+  AchievementFamily,
+  MyAchievements,
+  NextHint,
+} from '../../../core/types/achievement';
 import { AchievementBadgeComponent } from '../../../shared/achievements/achievement-badge.component';
 
 interface Hint {
@@ -24,7 +31,8 @@ interface Hint {
 /**
  * A nudge above the prints list: the one badge closest to hand, with a button that goes where it
  * is earned. Renders nothing while loading, on any error, when there is no hint, or once
- * dismissed.
+ * dismissed. A host that already holds the user's achievements passes them in as `me`, which
+ * saves a second request; without it the hint fetches its own.
  */
 @Component({
   selector: 'app-next-achievement-hint',
@@ -93,26 +101,37 @@ interface Hint {
     }
   `,
 })
-export class NextAchievementHintComponent {
+export class NextAchievementHintComponent implements OnInit {
   private readonly achievements = inject(AchievementService);
   private readonly logging = inject(LoggingService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Read once, on init. */
+  readonly me = input<MyAchievements | undefined>(undefined);
 
   private readonly dismissed = signal(false);
+  private readonly loaded = signal<Hint | null>(null);
 
-  private readonly loaded = toSignal(
-    combineLatest([this.achievements.me(), this.achievements.catalog()]).pipe(
-      map(([me, catalog]): Hint | null => {
-        const hint = me.nextHint;
-        if (!hint) return null;
-        const family = [...catalog.families, ...me.revealedHidden].find(
-          (f) => f.key === hint.key
-        );
-        return family ? { hint, family } : null;
-      }),
-      catchError(() => of(null))
-    ),
-    { initialValue: null }
-  );
+  ngOnInit(): void {
+    const given = this.me();
+    combineLatest([
+      given ? of(given) : this.achievements.me(),
+      this.achievements.catalog(),
+    ])
+      .pipe(
+        map(([me, catalog]): Hint | null => {
+          const hint = me.nextHint;
+          if (!hint) return null;
+          const family = [...catalog.families, ...me.revealedHidden].find(
+            (f) => f.key === hint.key
+          );
+          return family ? { hint, family } : null;
+        }),
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((hint) => this.loaded.set(hint));
+  }
 
   protected readonly visible = computed(() =>
     this.dismissed() ? null : this.loaded()

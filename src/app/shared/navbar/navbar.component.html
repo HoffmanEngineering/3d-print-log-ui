@@ -223,7 +223,7 @@ single instance of each submenu is enough. -->
 </mat-menu>
 
 <mat-menu #profileMenu="matMenu">
-  @if (auth.isLoggedIn() && isUserProfileFeatureEnabled) {
+  @if (auth.isLoggedIn() && isUserProfileFeatureEnabled && userId() !== null) {
     <a
       class="menu-link"
       mat-menu-item

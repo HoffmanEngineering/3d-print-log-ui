@@ -32,6 +32,7 @@
       color="accent"
       type="button"
       routerLink="/printers/new"
+      [queryParams]="{ returnUrl: '/prints' }"
       data-cy="empty-state-add-printer"
       (click)="onAddPrinter()"
     >

@@ -5,6 +5,12 @@
   data-cy="capture-print-form"
 >
   <mat-card appearance="outlined" fxFlex="800px" fxFlex.lt-md="100%">
+    @if (onboardingMode() && printForm.get('id').value === null) {
+      <div class="onboarding-strip">
+        <span>Getting started · Log your first print</span>
+        <a mat-button routerLink="/welcome" [queryParams]="{ step: 3 }">Back</a>
+      </div>
+    }
     <form
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"
@@ -126,26 +132,41 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
-          <mat-label> Printer</mat-label>
-          <mat-select
-            formControlName="printerId"
-            required
-            id="edit-print-printer"
-          >
-            @for (printer of printers; track printer) {
-              <mat-option [value]="printer.id">
-                <app-printer-avatar
-                  [printerId]="printer.id"
-                  [printerName]="printer.name"
-                />{{ getPrinterLabel(printer) }}
-              </mat-option>
+        @if (printers.length === 0) {
+          <div class="add-first-printer" fxFlex="grow" fxFlexFill>
+            <span>Add the printer you printed this on</span>
+            <button type="button" mat-stroked-button (click)="openAddPrinter()">
+              Add printer
+            </button>
+          </div>
+        } @else {
+          <mat-form-field fxFlex="grow" fxFlexFill>
+            <mat-label> Printer</mat-label>
+            <mat-select
+              formControlName="printerId"
+              required
+              id="edit-print-printer"
+              (openedChange)="onPrinterSelectOpenedChange($event)"
+            >
+              @for (printer of printers; track printer) {
+                <mat-option [value]="printer.id">
+                  <app-printer-avatar
+                    [printerId]="printer.id"
+                    [printerName]="printer.name"
+                  />{{ getPrinterLabel(printer) }}
+                </mat-option>
+              }
+              <mat-option
+                [value]="ADD_PRINTER_SENTINEL"
+                class="add-printer-option"
+                >+ Add a printer</mat-option
+              >
+            </mat-select>
+            @if (printForm.controls['printerId'].hasError('required')) {
+              <mat-error> A Printer is <strong>required</strong> </mat-error>
             }
-          </mat-select>
-          @if (printForm.controls['printerId'].hasError('required')) {
-            <mat-error> A Printer is <strong>required</strong> </mat-error>
-          }
-        </mat-form-field>
+          </mat-form-field>
+        }
         <app-project-selector
           fxFlex="grow"
           fxFlexFill

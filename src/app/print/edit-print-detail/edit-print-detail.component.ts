@@ -20,7 +20,7 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ActiveToast, ToastrService } from 'ngx-toastr';
+import { ToastrService } from 'ngx-toastr';
 import { parseDurationAsSeconds } from 'src/app/core/utils/duration';
 import { environment } from 'src/environments/environment';
 
@@ -34,7 +34,7 @@ import {
   CdkDragHandle,
 } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, Observable, of, Subscription } from 'rxjs';
-import { map, mergeMap, take, toArray } from 'rxjs/operators';
+import { filter, map, mergeMap, take, toArray } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
@@ -63,7 +63,17 @@ import {
   PrintStatus,
   PrintViewStatus,
 } from '../../core/services/print.service';
-import { PrinterRedirectPromptService } from '../services/printer-redirect-prompt.service';
+import { AchievementService } from 'src/app/core/services/achievement.service';
+import {
+  ONBOARDING_LOOKUP_TIMEOUT_MS,
+  OnboardingService,
+} from 'src/app/onboarding/onboarding.service';
+import {
+  GETTING_STARTED_KEYS,
+  INELIGIBLE_STATUS,
+} from 'src/app/onboarding/onboarding-api.service';
+import { withTimeout } from 'src/app/core/utils/with-timeout';
+import { openQuickAddPrinterDialog } from 'src/app/onboarding/quick-add-printer/quick-add-printer-dialog.component';
 import { convertFilamentValue } from 'src/app/shared/utils/filament-display.utils';
 import { ThumbnailImage } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import {
@@ -138,6 +148,9 @@ import {
   RemainingPipe,
 } from 'src/app/shared/pipes/remaining.pipe';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
+
+/** The printer select's "+ Add a printer" option. Never a real printer id. */
+export const ADD_PRINTER_SENTINEL = -1;
 
 export interface PrintImageValue {
   id?: number;
@@ -379,9 +392,27 @@ export class EditPrintDetailComponent
     [materialCategoryNickname: string]: UserSetting | null;
   } = {};
 
-  printerRedirectPromptSubscription: Subscription | undefined;
-  printerRedirectToast: ActiveToast<any> | undefined;
-  printerRedirectSubscription: Subscription | undefined;
+  protected readonly ADD_PRINTER_SENTINEL = ADD_PRINTER_SENTINEL;
+
+  /** The printer selected before "+ Add a printer", restored while the dialog is open. */
+  private previousPrinterId: number | null = null;
+
+  private addPrinterDialogOpen = false;
+  /** Whether the printer select's panel is open: only a pick from it can mean "+ Add a printer". */
+  private printerSelectOpen = false;
+  /** The printer control's pristine state before the latest pick, restored with the value. */
+  private printerPristineBeforePick = true;
+
+  /** Opened from the welcome flow (`?onboarding=1`): pre-fills a first print. */
+  readonly onboardingMode = signal(false);
+
+  /**
+   * Whether the user had earned the first-print badge before this new print. Null while unknown
+   * or when the lookup failed, which keeps the conversion firing as it did before.
+   */
+  public hadFirstPrint: boolean | null = null;
+
+  private firstPrintLookupStarted = false;
 
   /** The estimated datetime of completion. Used just as display, based on the startDate and EstimatedPrintTimeInSeconds controls. */
   public estimatedCompletedDate: Date | null = null;
@@ -425,9 +456,8 @@ export class EditPrintDetailComponent
   private readonly toastr = inject(ToastrService);
   private readonly titleService = inject(Title);
   private readonly userSettingService = inject(UserSettingService);
-  private readonly printerRedirectPromptService = inject(
-    PrinterRedirectPromptService
-  );
+  private readonly onboardingService = inject(OnboardingService);
+  private readonly achievementService = inject(AchievementService);
   private readonly loggingService = inject(LoggingService);
   private readonly el = inject(ElementRef);
   public readonly dialog = inject(MatDialog);
@@ -459,10 +489,6 @@ export class EditPrintDetailComponent
   }
 
   ngOnDestroy(): void {
-    this.printerRedirectPromptSubscription?.unsubscribe?.();
-
-    this.printerRedirectSubscription?.unsubscribe?.();
-
     this.estimatedCompletedDateSubscription?.unsubscribe?.();
 
     this.actualCompletedDateSubscription?.unsubscribe?.();
@@ -474,6 +500,9 @@ export class EditPrintDetailComponent
 
   async ngOnInit() {
     this.titleService.setTitle('Print Details - 3D Print Log');
+    this.onboardingMode.set(
+      this.activatedRoute.snapshot.queryParamMap.get('onboarding') === '1'
+    );
 
     this.activatedRoute.data.subscribe((data) => {
       this.preferredCurrencyNameSetting = data.preferredCurrencyNameSetting;
@@ -517,6 +546,12 @@ export class EditPrintDetailComponent
 
       // update print form with the last loaded filament
       const printIsNew = this.printForm.get('id').value === null;
+      if (printIsNew) {
+        this.applyOnboardingDefaults(data.print.print);
+        this.loadHadFirstPrint();
+        // Warms the cache, so "+ Add a printer" opens its dialog without waiting on it.
+        void this.onboardingService.status();
+      }
       const filamentIsEmpty =
         this.filamentUsage.length === 0 ||
         this.filamentUsage.at(0)?.get('filament')?.value ===
@@ -596,33 +631,6 @@ export class EditPrintDetailComponent
           this.preferredFilamentUnit.set(
             +setting.value as PrintFilamentSourceMeasurement
           );
-        }
-      });
-
-    /**
-     * Show the Add Printer prompt if needed.
-     */
-    this.printerRedirectPromptSubscription = this.printerRedirectPromptService
-      .shouldShowAddPrinterPrompt()
-      .subscribe((shouldShowPrompt) => {
-        if (shouldShowPrompt) {
-          this.printerRedirectToast = this.toastr.info(
-            'Click here to add a new 3D Printer before logging prints.',
-            'No Active Printers',
-            {
-              disableTimeOut: true,
-            }
-          );
-
-          this.printerRedirectSubscription =
-            this.printerRedirectToast.onTap.subscribe(() => {
-              this.router.navigate(['printers', 'new'], {
-                queryParams: {
-                  returnUrl: this.activatedRoute.snapshot['_routerState'].url,
-                },
-              });
-              this.printerRedirectSubscription.unsubscribe();
-            });
         }
       });
   }
@@ -758,7 +766,10 @@ export class EditPrintDetailComponent
   loadLoadedFilamentOnPrinterChange() {
     this.printForm
       .get('printerId')
-      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .valueChanges.pipe(
+        filter((printerId) => printerId !== ADD_PRINTER_SENTINEL),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((newPrinterId: number | null) => {
         const isFilamentPristine = this.filamentUsage.pristine;
         const isPrintNew = this.printForm.get('id')?.value === null;
@@ -850,10 +861,29 @@ export class EditPrintDetailComponent
   }
 
   private SaveSettingWhenSelectedPrinterIdChanges() {
-    this.printForm
-      .get('printerId')
-      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+    const printerControl = this.printForm.get('printerId');
+    this.previousPrinterId = printerControl.value;
+    this.printerPristineBeforePick = printerControl.pristine;
+    printerControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((newPrinterId: number | null) => {
+        // "+ Add a printer" is an action, not a value: put the old printer back (and its
+        // pristine state, which the pick just cleared), so the sentinel never reaches the saved
+        // setting, the form or the leave prompt. Only a pick from the open panel opens the
+        // dialog; arrow keys on the closed select step over it.
+        if (newPrinterId === ADD_PRINTER_SENTINEL) {
+          printerControl.setValue(this.previousPrinterId, { emitEvent: false });
+          if (this.printerPristineBeforePick) {
+            printerControl.markAsPristine();
+          }
+          if (this.printerSelectOpen) {
+            void this.openAddPrinter();
+          }
+          return;
+        }
+        this.previousPrinterId = newPrinterId;
+        this.printerPristineBeforePick = printerControl.pristine;
+
         // Save the name of the selected printer's material category. Defaults to 'material' is none is selected
         this.setMaterialCategoryNameForPrinterId(newPrinterId);
 
@@ -1859,11 +1889,8 @@ export class EditPrintDetailComponent
    * Handle successful save
    */
   private handleSaveSuccess(newPrint: Omit<PrintDetail, 'comments'>): void {
-    // Only emit conversion for new prints
     if (newPrint.id === null) {
-      this.analyticsService.emitConversion(
-        environment.googleAds.trafficSearchConversion
-      );
+      this.afterNewPrintSaved();
     }
 
     this.saving.set(false);
@@ -1871,6 +1898,132 @@ export class EditPrintDetailComponent
     this.router.navigate(['/prints']).then(() => {
       this.toastr.success('Save successful!');
     });
+  }
+
+  /** Bound to the printer select's `openedChange`. */
+  onPrinterSelectOpenedChange(open: boolean): void {
+    this.printerSelectOpen = open;
+    if (open) {
+      this.printerPristineBeforePick = this.printForm.get('printerId').pristine;
+    }
+  }
+
+  /**
+   * Opens the quick-add printer dialog. A saved printer joins the select and becomes the
+   * selected one; nothing else on the form changes, so a slicer hand-off keeps its fields.
+   * The onboarding status (prefetched for a new print) is waited on for at most
+   * ONBOARDING_LOOKUP_TIMEOUT_MS; past that the dialog opens without the email notice.
+   */
+  async openAddPrinter(): Promise<void> {
+    if (this.addPrinterDialogOpen) {
+      return;
+    }
+    this.addPrinterDialogOpen = true;
+    try {
+      const status = await withTimeout(
+        this.onboardingService.status(),
+        INELIGIBLE_STATUS,
+        ONBOARDING_LOOKUP_TIMEOUT_MS
+      );
+      openQuickAddPrinterDialog(this.dialog, {
+        source: 'print-form',
+        showEmailNotice: status.onboardingEligible,
+      })
+        .afterClosed()
+        .subscribe((printer) => {
+          this.addPrinterDialogOpen = false;
+          if (printer) {
+            this.selectAddedPrinter(printer.id);
+          }
+        });
+    } catch (error) {
+      this.addPrinterDialogOpen = false;
+      this.loggingService.logException(
+        error instanceof Error ? error : new Error(String(error))
+      );
+    }
+  }
+
+  private selectAddedPrinter(printerId: number): void {
+    const select = () => {
+      this.printForm.get('printerId').setValue(printerId);
+      this.changeDetector.markForCheck();
+    };
+    this.printerService
+      .getCurrentUserPrinterSummaries(1, 100, undefined, false)
+      .subscribe({
+        next: (page) => {
+          this.printers = page.items;
+          this.buildPrinterLabelCache();
+          select();
+        },
+        // The printer was saved; select it even though the list could not be refreshed.
+        error: (error) => {
+          this.loggingService.logException(error);
+          select();
+        },
+      });
+  }
+
+  /** `?onboarding=1` on a new print: a starter title and the printer just added (the newest). */
+  private applyOnboardingDefaults(print: PrintDetail | null): void {
+    if (!this.onboardingMode()) {
+      return;
+    }
+    const title = this.printForm.get('title');
+    if (!title.value) {
+      title.setValue('My first print');
+    }
+    if (print?.printerId == null && this.printers.length > 0) {
+      const newest = Math.max(...this.printers.map((p) => p.id));
+      this.printForm.get('printerId').setValue(newest);
+    }
+  }
+
+  /** Reads once whether this user already had a first print, for the conversion on save. */
+  private loadHadFirstPrint(): void {
+    if (this.firstPrintLookupStarted) {
+      return;
+    }
+    this.firstPrintLookupStarted = true;
+    this.achievementService
+      .me()
+      .pipe(take(1))
+      .subscribe({
+        next: (me) => {
+          this.hadFirstPrint = OnboardingService.hasEarned(
+            me,
+            GETTING_STARTED_KEYS.print
+          );
+        },
+        error: () => {
+          this.hadFirstPrint = null;
+        },
+      });
+  }
+
+  /** Conversion, tutorial_complete and the welcome flow's finish, after a new print saves. */
+  private afterNewPrintSaved(): void {
+    const hadFirstPrint = this.hadFirstPrint;
+    // Unknown (null) keeps firing, as before this lookup existed.
+    if (hadFirstPrint !== true) {
+      this.analyticsService.emitConversion(
+        environment.googleAds.trafficSearchConversion
+      );
+    }
+    if (hadFirstPrint === false) {
+      void this.onboardingService.status().then((status) => {
+        if (status.onboardingEligible) {
+          this.analyticsService.eventEmitter(
+            'tutorial_complete',
+            'engagement',
+            'tutorial_complete'
+          );
+        }
+      });
+    }
+    // A no-op for ineligible users; failures are logged and swallowed by the service.
+    void this.onboardingService.markWelcomeFinished();
   }
 
   /**

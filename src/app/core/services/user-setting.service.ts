@@ -57,6 +57,10 @@ export enum UserSettingType {
   ReleaseNotes_LastShownVersion = 27,
   /** The version current when the release notes page was last opened. */
   ReleaseNotes_LastViewedVersion = 28,
+  /** When the new-user welcome flow was finished or skipped, as an ISO timestamp. */
+  Onboarding_WelcomeFinishedAt = 29,
+  /** When the getting-started checklist was dismissed, as an ISO timestamp. */
+  Onboarding_ChecklistDismissedAt = 30,
 }
 
 export interface UserSetting {

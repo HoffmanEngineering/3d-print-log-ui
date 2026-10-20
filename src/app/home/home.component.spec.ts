@@ -95,7 +95,10 @@ describe('HomeComponent', () => {
     );
     cta.click();
 
-    expect(auth.login).toHaveBeenCalledWith('/prints', { signup: true });
+    expect(auth.login).toHaveBeenCalledWith('/prints', {
+      signup: true,
+      source: 'home',
+    });
     expect(logging.logEvent).toHaveBeenCalledWith('Home_SignupClicked', {
       placement: 'hero',
     });
@@ -132,7 +135,10 @@ describe('HomeComponent', () => {
     );
     cta.click();
 
-    expect(auth.login).toHaveBeenCalledWith('/prints', { signup: true });
+    expect(auth.login).toHaveBeenCalledWith('/prints', {
+      signup: true,
+      source: 'home',
+    });
     expect(logging.logEvent).toHaveBeenCalledWith('Home_SignupClicked', {
       placement: 'closing',
     });

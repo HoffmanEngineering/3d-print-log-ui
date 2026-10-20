@@ -1,0 +1,132 @@
+<section class="welcome">
+  <header class="welcome__header">
+    <h1>Welcome to 3D Print Log</h1>
+    <p>Three quick steps and you're ready to log your first print.</p>
+  </header>
+
+  <mat-stepper
+    [linear]="false"
+    [orientation]="orientation"
+    [selectedIndex]="selectedIndex()"
+    (selectionChange)="onStepChange($event.selectedIndex)"
+  >
+    <mat-step label="Add your printer">
+      @if (step1Ready()) {
+        @if (hasPrinter()) {
+          <mat-chip-set aria-label="Your printers" data-testid="printer-chips">
+            @for (printer of printers(); track printer.id) {
+              <mat-chip>{{ printer.name }}</mat-chip>
+            }
+          </mat-chip-set>
+        }
+
+        @if (showPrinterForm()) {
+          <app-quick-add-printer
+            source="welcome"
+            [showEmailNotice]="false"
+            (saved)="onPrinterSaved($event)"
+          />
+        } @else {
+          <button
+            type="button"
+            mat-stroked-button
+            data-testid="add-another-printer"
+            (click)="addAnotherPrinter()"
+          >
+            Add another printer
+          </button>
+        }
+      } @else {
+        <div
+          class="welcome__loading app-skeleton-immediate"
+          aria-busy="true"
+          data-testid="printers-loading"
+        >
+          @if (showPrintersSkeleton()) {
+            <span class="cdk-visually-hidden">Loading your printers</span>
+            <app-skeleton width="6rem" height="2rem" radius="16px" />
+            <app-skeleton width="12rem" height="2.25rem" />
+          }
+        </div>
+      }
+
+      <div class="welcome__actions">
+        <a
+          mat-button
+          routerLink="/printers/new"
+          [queryParams]="{ returnUrl: '/welcome' }"
+          data-testid="full-printer-form"
+        >
+          Use the full printer form
+        </a>
+        <button
+          type="button"
+          mat-flat-button
+          color="primary"
+          data-testid="step1-continue"
+          [disabled]="!hasPrinter()"
+          (click)="continueFrom(1)"
+        >
+          Continue
+        </button>
+      </div>
+    </mat-step>
+
+    <mat-step label="Add a material" [optional]="true">
+      <ng-template matStepContent>
+        @if (savedMaterial(); as material) {
+          <p class="welcome__saved" data-testid="material-saved">
+            Added {{ material }} to your materials.
+          </p>
+        } @else {
+          <app-quick-add-material
+            [loadIntoPrinterId]="loadIntoPrinterId()"
+            (saved)="onMaterialSaved($event)"
+          />
+        }
+        <div class="welcome__actions">
+          <button
+            type="button"
+            mat-button
+            data-testid="step2-skip"
+            (click)="skipMaterial()"
+          >
+            Skip for now
+          </button>
+          <button
+            type="button"
+            mat-flat-button
+            color="primary"
+            data-testid="step2-continue"
+            [disabled]="!savedMaterial()"
+            (click)="continueFrom(2)"
+          >
+            Continue
+          </button>
+        </div>
+      </ng-template>
+    </mat-step>
+
+    <mat-step label="Log your first print">
+      <ng-template matStepContent>
+        <app-first-print-step
+          [busy]="finishing()"
+          (chosen)="choosePath($event)"
+        />
+      </ng-template>
+    </mat-step>
+  </mat-stepper>
+
+  <footer class="welcome__footer">
+    <app-inline-email-notice />
+    <button
+      type="button"
+      mat-button
+      data-testid="skip-setup"
+      [disabled]="finishing()"
+      (click)="skipSetup()"
+    >
+      Skip setup
+    </button>
+  </footer>
+</section>

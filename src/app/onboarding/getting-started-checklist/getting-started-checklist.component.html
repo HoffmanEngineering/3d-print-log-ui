@@ -1,0 +1,95 @@
+<section class="checklist" aria-labelledby="getting-started-title">
+  <header class="checklist__header">
+    <div class="checklist__title">
+      <h2 id="getting-started-title">Getting started</h2>
+      <span class="checklist__progress">{{ doneCount() }} of 2 done</span>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="checklist__dismiss"
+      aria-label="Dismiss getting started"
+      (click)="dismiss()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <ul class="checklist__items">
+    <li>
+      @if (printerDone()) {
+        <span class="item done" data-cy="getting-started-printer">
+          <mat-icon class="item__icon" aria-hidden="true"
+            >check_circle</mat-icon
+          >
+          <span class="item__label">Add a printer</span>
+          <span class="cdk-visually-hidden">(done)</span>
+        </span>
+      } @else {
+        <button
+          type="button"
+          class="item"
+          data-cy="getting-started-printer"
+          (click)="addPrinter()"
+        >
+          <mat-icon class="item__icon" aria-hidden="true"
+            >radio_button_unchecked</mat-icon
+          >
+          <span class="item__label">Add a printer</span>
+        </button>
+      }
+    </li>
+    <li>
+      @if (materialDone()) {
+        <span class="item done" data-cy="getting-started-material">
+          <mat-icon class="item__icon" aria-hidden="true"
+            >check_circle</mat-icon
+          >
+          <span class="item__label">Add a material (optional)</span>
+          <span class="cdk-visually-hidden">(done)</span>
+        </span>
+      } @else {
+        <a
+          class="item"
+          routerLink="/materials/new"
+          data-cy="getting-started-material"
+          (click)="clicked('material')"
+        >
+          <mat-icon class="item__icon" aria-hidden="true"
+            >radio_button_unchecked</mat-icon
+          >
+          <span class="item__label">Add a material (optional)</span>
+        </a>
+      }
+    </li>
+    <li>
+      <a
+        class="item"
+        routerLink="/prints/new/edit"
+        [queryParams]="{ onboarding: 1 }"
+        data-cy="getting-started-print"
+        (click)="clicked('print')"
+      >
+        <mat-icon class="item__icon" aria-hidden="true"
+          >radio_button_unchecked</mat-icon
+        >
+        <span class="item__label">Log your first print</span>
+      </a>
+    </li>
+  </ul>
+
+  <a
+    class="checklist__secondary"
+    routerLink="/welcome"
+    [queryParams]="{ step: 3 }"
+    data-cy="getting-started-automatic"
+    (click)="clicked('automatic')"
+  >
+    <mat-icon aria-hidden="true">bolt</mat-icon>
+    Send prints automatically
+  </a>
+
+  @if (showEmailNotice()) {
+    <app-inline-email-notice class="checklist__notice" />
+  }
+</section>

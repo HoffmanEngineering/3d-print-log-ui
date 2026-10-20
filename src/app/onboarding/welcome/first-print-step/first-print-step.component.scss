@@ -1,0 +1,73 @@
+.paths {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  // Cards in a row share a height; each card's actions sit at its bottom.
+  align-items: stretch;
+}
+
+.path {
+  display: flex;
+  flex-direction: column;
+
+  mat-card-content {
+    flex: 1 1 auto;
+  }
+
+  // Line the buttons up with the card text instead of Material's 8px-narrower inset.
+  mat-card-actions {
+    margin-top: auto;
+    padding: 8px 16px 16px;
+  }
+}
+
+.path--primary {
+  border-color: var(--app-primary);
+}
+
+.path__select {
+  width: 100%;
+}
+
+.path__lines code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--app-surface-container);
+  color: var(--app-text-primary);
+  font-size: 0.9em;
+}
+
+.path__lines {
+  margin: 12px 0 8px;
+  padding-left: 20px;
+  color: var(--app-text-secondary);
+}
+
+.path__line {
+  margin: 12px 0 0;
+  color: var(--app-text-secondary);
+}
+
+.path__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 12px 0 0;
+}
+
+a {
+  color: var(--app-primary);
+}
+
+.confirm-email {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  color: var(--app-text-secondary);
+}
+
+.confirm-email__result {
+  color: var(--app-text-primary);
+}

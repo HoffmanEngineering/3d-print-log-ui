@@ -89,4 +89,30 @@ describe('NextAchievementHintComponent', () => {
       tier: 1,
     });
   });
+
+  it('uses a me passed in instead of fetching its own', () => {
+    const me = jasmine.createSpy('me').and.returnValue(of(ME));
+    TestBed.configureTestingModule({
+      imports: [NextAchievementHintComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+        },
+        {
+          provide: AchievementService,
+          useValue: { me, catalog: () => of(TEST_CATALOG) },
+        },
+      ],
+    });
+    const passed = TestBed.createComponent(NextAchievementHintComponent);
+    passed.componentRef.setInput('me', ME);
+    passed.detectChanges();
+
+    expect(me).not.toHaveBeenCalled();
+    expect((passed.nativeElement as HTMLElement).textContent).toContain(
+      'Next achievement: First Layer'
+    );
+  });
 });

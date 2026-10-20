@@ -20,10 +20,24 @@ import {
   of,
   throwError,
 } from 'rxjs';
-import { catchError, concatMap, shareReplay, tap } from 'rxjs/operators';
+import {
+  catchError,
+  concatMap,
+  filter,
+  shareReplay,
+  tap,
+  timeout,
+} from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { isCordova } from '../utils/platform';
 import { NotificationService } from './notification.service';
+import { GoogleAnalyticsService } from './google-analytics.service';
+import { LoggingService } from './logging.service';
+import {
+  ONBOARDING_LOOKUP_TIMEOUT_MS,
+  OnboardingService,
+} from '../../onboarding/onboarding.service';
+import { withTimeout } from '../utils/with-timeout';
 import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
 import { SubscriptionService } from './subscription.service';
 import { ProfileViewStatus, UserDetailDto, UserService } from './user.service';
@@ -31,6 +45,13 @@ import { UserSettingService } from './user-setting.service';
 import { isDevAnonymous } from '../utils/dev-user';
 const cordovaCallbackUri =
   'com.hoffmanengineering.printlog://cordova/com.hoffmanengineering.printlog/callback';
+
+/** An account created this recently counts as a new sign-up on its first callback. */
+const SIGNUP_WINDOW_MS = 10 * 60 * 1000;
+/** Per-account flag that this browser already logged the sign-up. */
+const SIGNUP_LOGGED_KEY_PREFIX = 'pl_signup_logged_';
+/** How long background sign-up logging waits on the profile, then on the status lookup. */
+const SIGNUP_LOG_TIMEOUT_MS = 10000;
 
 export interface UserProfileInfo {
   id: number;
@@ -124,6 +145,8 @@ export class AuthService {
    * service, so a direct dependency here would be a cycle.
    */
   private readonly injector = inject(Injector);
+  /** Set once the first-login display-name PUT has been sent; never reset (one per page load). */
+  private newUserPutStarted = false;
 
   constructor() {
     if (isCordova) {
@@ -139,6 +162,13 @@ export class AuthService {
     }
   }
 
+  /** Resolved lazily: LoggingService must not become a constructor dependency of this root service. */
+  private setTelemetryUser(id: number | undefined): void {
+    if (id != null) {
+      this.injector.get(LoggingService).setAuthenticatedUser(id);
+    }
+  }
+
   // When calling, options can be passed if desired
   // https://auth0.github.io/auth0-spa-js/classes/auth0client.html#getuser
   getUser$(): Observable<any> {
@@ -148,23 +178,31 @@ export class AuthService {
         this.subscriptionService.loadSubscription();
         this.userService.getCurrentUserDetail().subscribe((currentUser) => {
           if (currentUser.displayName === null) {
+            // localAuthSetup and handleAuthCallback can both run getUser$ on one page load;
+            // the first-login PUT goes out once, and its response emits the profile.
+            if (this.newUserPutStarted) {
+              return;
+            }
+            this.newUserPutStarted = true;
             const userInfo: UserDetailDto = {
               ...currentUser,
-              displayName:
-                user.nickname.length > 30
-                  ? user.nickname.substring(0, 29)
-                  : user.nickname,
-              profilePicture: user.picture,
+              // Some identity providers send no nickname: leave the name unset, don't throw.
+              displayName: (user?.nickname ?? '').slice(0, 29) || null,
+              profilePicture: user?.picture,
             };
 
-            this.userService
-              .updateCurrentUserDetail(userInfo)
-              .subscribe((updatedUser) => {
+            this.userService.updateCurrentUserDetail(userInfo).subscribe({
+              next: (updatedUser) => {
                 // TODO: Save this updated user back to the userProfile$ object.
                 this.userProfileSubject$.next(updatedUser);
-              });
+                this.setTelemetryUser(updatedUser.id);
+              },
+              // A rejected PUT used to surface as an unhandled error; record it instead.
+              error: (error) => this.logException(error),
+            });
           } else {
             this.userProfileSubject$.next(currentUser);
+            this.setTelemetryUser(currentUser.id);
           }
         });
       })
@@ -252,6 +290,7 @@ export class AuthService {
       }
       this.loggedIn = true;
       this.userProfileSubject$.next(this.devMockProfile);
+      this.setTelemetryUser(this.devMockProfile.id);
       return;
     }
 
@@ -273,7 +312,10 @@ export class AuthService {
     });
   }
 
-  login(redirectPath: string = '/', options?: { signup?: boolean }) {
+  login(
+    redirectPath: string = '/',
+    options?: { signup?: boolean; source?: string }
+  ) {
     if (environment.devAuthBypass) {
       return;
     }
@@ -283,7 +325,10 @@ export class AuthService {
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log in
       client.loginWithRedirect({
-        appState: { target: redirectPath },
+        appState: {
+          target: redirectPath,
+          ...(options?.source && { source: options.source }),
+        },
         authorizationParams: {
           redirect_uri: isCordova
             ? cordovaCallbackUri
@@ -301,13 +346,14 @@ export class AuthService {
   handleAuthCallback() {
     // Only the callback component should call this method
     // Call when app reloads after user logs in with Auth0
-    let targetRoute: string; // Path to redirect to after login processsed
+    let targetRoute: string; // Path to redirect to after login processed
+    let source: string | undefined; // Where a sign-up started, from login()
     const authComplete$ = this.handleRedirectCallback$.pipe(
       // Have client, now call method to handle auth callback redirect
       tap((cbRes) => {
         // Get and set target redirect route from callback results
-        targetRoute =
-          cbRes.appState && cbRes.appState.target ? cbRes.appState.target : '/';
+        targetRoute = cbRes.appState?.target ?? '/';
+        source = cbRes.appState?.source;
       }),
       concatMap(() => {
         // Redirect callback complete; get user and login status
@@ -316,10 +362,111 @@ export class AuthService {
     );
     // Subscribe to authentication completion observable
     // Response will be an array of user and login status
-    authComplete$.subscribe(([user, loggedIn]) => {
-      // Redirect to target route after callback processing
-      this.router.navigateByUrl(targetRoute);
+    authComplete$.subscribe(() => {
+      void this.navigateAfterCallback(targetRoute, source);
     });
+  }
+
+  /**
+   * Logs a new sign-up (in the background) and sends a new user to /welcome instead of the
+   * target. Onboarding never blocks the app: a failed welcome lookup falls back to the
+   * target, and so does one still pending after ONBOARDING_LOOKUP_TIMEOUT_MS. Navigation never
+   * waits on the sign-up logging, which needs the profile (and, for a new user, its PUT).
+   */
+  private async navigateAfterCallback(
+    target: string,
+    source: string | undefined
+  ): Promise<void> {
+    void this.logSignupIfNewOnceProfileLoads(source, target);
+
+    const showWelcome = await withTimeout(
+      this.injector.get(OnboardingService).shouldShowWelcome(target),
+      false,
+      ONBOARDING_LOOKUP_TIMEOUT_MS
+    ).catch(() => false);
+
+    if (showWelcome) {
+      this.router.navigateByUrl('/welcome', { state: { entry: 'callback' } });
+    } else {
+      this.router.navigateByUrl(target);
+    }
+  }
+
+  /**
+   * The profile id comes from the first profile getUser$ emits after the callback. Never
+   * rejects, and gives up after SIGNUP_LOG_TIMEOUT_MS at each step so nothing waits forever.
+   */
+  private async logSignupIfNewOnceProfileLoads(
+    source: string | undefined,
+    target: string
+  ): Promise<void> {
+    try {
+      const profile = await firstValueFrom(
+        this.userProfile$.pipe(
+          filter((p) => p !== null),
+          timeout(SIGNUP_LOG_TIMEOUT_MS)
+        )
+      );
+      await withTimeout(
+        this.logSignupIfNew(profile.id, source, target),
+        undefined,
+        SIGNUP_LOG_TIMEOUT_MS
+      );
+    } catch (error) {
+      // Best-effort: a missed sign-up event must not change where the user lands.
+      this.logException(error);
+    }
+  }
+
+  /**
+   * Logs Auth_SignedUp (and GA4 sign_up) once per account, for an account created in the
+   * last ten minutes. The localStorage key keeps a second callback on this browser from
+   * counting the same sign-up again.
+   */
+  private async logSignupIfNew(
+    profileId: number,
+    source: string | undefined,
+    target: string
+  ): Promise<void> {
+    if (!this.isBrowser) {
+      return;
+    }
+    const status = await this.injector.get(OnboardingService).status();
+    const created = status.createdDate ? Date.parse(status.createdDate) : NaN;
+    if (Number.isNaN(created) || Date.now() - created > SIGNUP_WINDOW_MS) {
+      return;
+    }
+
+    const key = `${SIGNUP_LOGGED_KEY_PREFIX}${profileId}`;
+    try {
+      if (localStorage.getItem(key) !== null) {
+        return;
+      }
+    } catch {
+      // Storage unavailable: log anyway; a rare double count beats a missed sign-up.
+    }
+
+    const signupSource =
+      source ?? (target.startsWith('/prints/new/cura') ? 'slicer' : 'direct');
+    this.injector
+      .get(LoggingService)
+      .logEvent('Auth_SignedUp', { source: signupSource });
+    this.injector
+      .get(GoogleAnalyticsService)
+      .eventEmitter('sign_up', 'engagement', 'sign_up', signupSource);
+
+    try {
+      localStorage.setItem(key, new Date().toISOString());
+    } catch {
+      // Storage unavailable; nothing else to do.
+    }
+  }
+
+  /** Resolved lazily, like setTelemetryUser. */
+  private logException(error: unknown): void {
+    this.injector
+      .get(LoggingService)
+      .logException(error instanceof Error ? error : new Error(String(error)));
   }
 
   /**
@@ -341,6 +488,8 @@ export class AuthService {
     // store's own next read means the previous user's printer photos cannot survive on
     // screen in a session that outlives the Auth0 redirect.
     this.injector.get(PrinterThumbnailStore).invalidate();
+    this.injector.get(LoggingService).clearAuthenticatedUser();
+    this.injector.get(OnboardingService).clear();
 
     await this.runPushTeardown();
 

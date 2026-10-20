@@ -157,7 +157,10 @@ starts one. File a print under it with `create_print(projectId)` or `update_prin
 
 ## Add a printer or material
 
-- `create_printer(make, model, name, categoryNickname)` adds a printer, active by default.
+- `create_printer(make, model, name, categoryNickname, catalogModelId)` adds a printer, active by default.
+  An optional `catalogModelId` fills any bed, nozzle, filament-diameter, heated-bed and slot specs you
+  leave out from the printer catalog. Values you pass are never overwritten. If you can call the REST
+  API, find an id with `GET /api/PrinterModels?search=<name>`; otherwise omit it.
 - `create_material(displayName, materialType, materialCategoryNickname, densityGramPerCubicCm, source, initialAmount)`
   adds a spool. The category must be one the user already has. A category that tracks diameter
   (filament) needs `diameterMm`.

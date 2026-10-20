@@ -7,6 +7,7 @@ import { CuraParserV1pt1pt0Service } from './services/integration/cura/cura-pars
 import { CuraParserV1pt2pt0Service } from './services/integration/cura/cura-parser-v1-2-0.service';
 import { authGuard } from '../core/guards/auth.guard';
 
+import { welcomeRedirectGuard } from '../onboarding/welcome-redirect.guard';
 import { pendingChangesGuard } from '../core/guards/pending-changes.guard';
 import { currenciesResolver } from '../core/resolvers/currencies.resolver';
 import {
@@ -44,7 +45,7 @@ export const PRINT_ROUTES: Routes = [
       {
         path: '',
         component: PrintListComponent,
-        canActivate: [authGuard],
+        canActivate: [authGuard, welcomeRedirectGuard],
         resolve: {
           printList: printListResolver,
           printers: currentUserPrinterSummariesResolver,

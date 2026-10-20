@@ -1,3 +1,5 @@
+import { InjectionToken } from '@angular/core';
+
 /**
  * The user agent the Cordova app pins via config.xml's OverrideUserAgent. Kept as a named
  * constant so the app repo's CI guard can assert the two still match — a silent drift here
@@ -17,3 +19,9 @@ export function isCordovaPlatform(): boolean {
 }
 
 export const isCordova = isCordovaPlatform();
+
+/** Whether this is the Cordova app, as an injectable value so specs can override it. */
+export const IS_CORDOVA = new InjectionToken<boolean>('IS_CORDOVA', {
+  providedIn: 'root',
+  factory: () => isCordovaPlatform(),
+});

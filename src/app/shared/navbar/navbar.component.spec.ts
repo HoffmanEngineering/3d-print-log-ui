@@ -138,6 +138,41 @@ describe('NavbarComponent', () => {
       ).toBe('https://example.com/me.png');
     });
 
+    describe('the My Profile link', () => {
+      const openProfileMenu = async () => {
+        component.isUserProfileFeatureEnabled = true;
+        fixture.detectChanges();
+        host().querySelector<HTMLButtonElement>('button.transparent')!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+      };
+      const profileLink = () =>
+        Array.from(
+          document.querySelectorAll<HTMLAnchorElement>('a.menu-link')
+        ).find((a) => a.textContent?.trim() === 'My Profile');
+
+      it('points at the user even when they have no profile picture', async () => {
+        loggedIn.set(true);
+        profile$.next({ id: 5 } as UserProfileInfo);
+        fixture.detectChanges();
+
+        await openProfileMenu();
+
+        expect(profileLink()?.getAttribute('href')).toBe('/users/5');
+      });
+
+      it('is absent while the profile has not loaded', async () => {
+        loggedIn.set(true);
+        profile$.next(null);
+        fixture.detectChanges();
+
+        await openProfileMenu();
+
+        expect(profileLink()).toBeUndefined();
+      });
+    });
+
     it('puts Log In back when the user signs out', () => {
       signIn();
 

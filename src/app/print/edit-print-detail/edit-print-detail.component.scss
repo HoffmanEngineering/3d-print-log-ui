@@ -366,7 +366,8 @@ form > div {
 }
 
 // Replaces the printer select when the user has no printers yet.
-.add-first-printer {
+.add-first-printer,
+.detected-printer-hint {
   display: flex;
   align-items: center;
   justify-content: space-between;

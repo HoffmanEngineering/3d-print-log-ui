@@ -167,6 +167,23 @@
             }
           </mat-form-field>
         }
+        @if (detectedPrinterHint(); as detected) {
+          <div
+            class="detected-printer-hint"
+            data-testid="detected-printer-hint"
+            fxFlex="grow"
+            fxFlexFill
+          >
+            <span>Detected: {{ detected.make }} {{ detected.model }}</span>
+            <button
+              type="button"
+              mat-stroked-button
+              (click)="addDetectedPrinter()"
+            >
+              Add it
+            </button>
+          </div>
+        }
         <app-project-selector
           fxFlex="grow"
           fxFlexFill

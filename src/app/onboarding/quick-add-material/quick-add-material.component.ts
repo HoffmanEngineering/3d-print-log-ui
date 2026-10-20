@@ -44,7 +44,8 @@ function materialLabel(material: Material | undefined): string {
 /**
  * A short form that creates a 1 kg spool of filament: a type (PLA pre-selected), an optional
  * brand and color, and a name that follows them until edited. Optionally loads the new spool
- * into slot 0 of a printer.
+ * into slot 0 of a printer. Content marked `quickAddSecondary` (such as a Skip button) is
+ * placed in the button row, before Save.
  */
 @Component({
   selector: 'app-quick-add-material',
@@ -67,6 +68,7 @@ export class QuickAddMaterialComponent implements OnInit {
   private readonly fb = inject(FormBuilder).nonNullable;
 
   readonly loadIntoPrinterId = input<number | null>(null);
+  readonly submitLabel = input('Save material');
   readonly saved = output<FilamentDetail>();
 
   readonly form = this.fb.group({

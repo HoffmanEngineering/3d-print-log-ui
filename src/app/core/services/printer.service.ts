@@ -24,6 +24,8 @@ export interface PrinterSummary {
   printTimeInSeconds?: number | null;
   /** Signed thumbnail of the default photo, or null when the printer has none. */
   defaultImageThumbnailUrl?: string | null;
+  /** The catalog model this printer was created from, if any. */
+  catalogModelId?: string | null;
   category: PrinterCategory;
 }
 
@@ -61,6 +63,8 @@ export interface PrinterFilamentForSummary {
  */
 export interface PrinterSummarySimple extends PrinterSummary {
   loadedFilaments: PrinterFilamentForSummary[];
+  /** Filament positions (tools, AMS slots). 1 for a single-tool printer. */
+  slotCount?: number;
 }
 
 /** One photo attached to a printer. */
@@ -109,6 +113,9 @@ export interface PrinterDetail {
   hasHeatedBed?: boolean;
   hasHeatedChamber?: boolean;
   wattageW?: number | null;
+
+  /** The catalog model this printer was created from, if any. */
+  catalogModelId?: string | null;
 
   /** Filament positions (tools, AMS slots). 1 for a single-tool printer. */
   slotCount?: number;
@@ -160,6 +167,8 @@ export interface AddPrinterDetailDto {
   hasHeatedBed?: boolean;
   hasHeatedChamber?: boolean;
   wattageW?: number | null;
+  /** The catalog model the printer is linked to. Null keeps the current link. */
+  catalogModelId?: string | null;
   /** Omitted keeps the printer's current count. */
   slotCount?: number;
 }
@@ -308,6 +317,7 @@ export class PrinterService {
       hasHeatedBed: printer.hasHeatedBed,
       hasHeatedChamber: printer.hasHeatedChamber,
       wattageW: printer.wattageW,
+      catalogModelId: printer.catalogModelId ?? null,
       slotCount: printer.slotCount,
     };
 

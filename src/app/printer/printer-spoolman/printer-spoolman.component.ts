@@ -39,6 +39,9 @@ import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.com
 /** The two printer categories that extrude filament, which is all Spoolman tracks. */
 const FDM_CATEGORIES = new Set(['FFF', 'FDM']);
 
+/** The U1's id in the printer catalog (spec §6.6). Catalog ids never change once published. */
+const SNAPMAKER_U1_CATALOG_ID = 'snapmaker-u1';
+
 export function isFdmCategory(
   category: PrinterCategory | null | undefined
 ): boolean {
@@ -76,16 +79,23 @@ export class PrinterSpoolmanComponent {
   readonly category = input<PrinterCategory | null>(null);
   readonly make = input<string | null>(null);
   readonly model = input<string | null>(null);
+  /** The saved printer's catalog model, which identifies a U1 whatever the printer is called. */
+  readonly catalogModelId = input<string | null>(null);
 
   protected readonly docsLink = '/docs/klipper-spoolman';
 
   /** Only FDM printers: the panel renders nothing, and asks for nothing, otherwise. */
   protected readonly enabled = computed(() => isFdmCategory(this.category()));
 
-  /** Snapmaker's U1 needs Advanced Mode to keep a `[spoolman]` block, so it gets a note first. */
+  /**
+   * Snapmaker's U1 needs Advanced Mode to keep a `[spoolman]` block, so it gets a note first.
+   * A printer linked to the catalog's U1 is one; an unlinked printer is judged by its name.
+   */
   protected readonly isSnapmakerU1 = computed(
     () =>
-      /snapmaker/i.test(this.make() ?? '') && /\bu1\b/i.test(this.model() ?? '')
+      this.catalogModelId() === SNAPMAKER_U1_CATALOG_ID ||
+      (/snapmaker/i.test(this.make() ?? '') &&
+        /\bu1\b/i.test(this.model() ?? ''))
   );
 
   protected readonly phase = signal<Phase>('idle');

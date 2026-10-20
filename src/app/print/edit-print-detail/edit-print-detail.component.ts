@@ -34,7 +34,17 @@ import {
   CdkDragHandle,
 } from '@angular/cdk/drag-drop';
 import { concat, forkJoin, Observable, of, Subscription } from 'rxjs';
-import { filter, map, mergeMap, take, toArray } from 'rxjs/operators';
+import {
+  catchError,
+  defaultIfEmpty,
+  filter,
+  map,
+  mergeMap,
+  switchMap,
+  take,
+  timeout,
+  toArray,
+} from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
@@ -74,6 +84,11 @@ import {
 } from 'src/app/onboarding/onboarding-api.service';
 import { withTimeout } from 'src/app/core/utils/with-timeout';
 import { openQuickAddPrinterDialog } from 'src/app/onboarding/quick-add-printer/quick-add-printer-dialog.component';
+import {
+  PrinterCatalogService,
+  PrinterModel,
+  PrinterModelMatch,
+} from 'src/app/core/services/printer-catalog.service';
 import { convertFilamentValue } from 'src/app/shared/utils/filament-display.utils';
 import { ThumbnailImage } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import {
@@ -151,6 +166,9 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
 
 /** The printer select's "+ Add a printer" option. Never a real printer id. */
 export const ADD_PRINTER_SENTINEL = -1;
+
+/** How long the form waits for the catalog to name a slicer file's printer before giving up. */
+export const PRINTER_DETECTION_TIMEOUT_MS = 3000;
 
 export interface PrintImageValue {
   id?: number;
@@ -407,6 +425,12 @@ export class EditPrintDetailComponent
   readonly onboardingMode = signal(false);
 
   /**
+   * The catalog model a slicer file named, when the user owns no printer of it. The printer field
+   * then offers to add one.
+   */
+  readonly detectedPrinterHint = signal<PrinterModel | null>(null);
+
+  /**
    * Whether the user had earned the first-print badge before this new print. Null while unknown
    * or when the lookup failed, which keeps the conversion firing as it did before.
    */
@@ -471,6 +495,7 @@ export class EditPrintDetailComponent
   private readonly destroyRef = inject(DestroyRef);
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly projectService = inject(ProjectService);
+  private readonly printerCatalog = inject(PrinterCatalogService);
 
   public readonly maxImages = this.subscriptionService.maxImagesPerPrint;
 
@@ -566,13 +591,18 @@ export class EditPrintDetailComponent
       );
 
       if (printIsNew && filamentIsEmpty && printerHasBeenSelected) {
+        const printerIdOnLoad = this.printForm.get('printerId').value;
         this.printerService
-          .getLoadedFilamentForPrinter(this.printForm.get('printerId').value)
+          .getLoadedFilamentForPrinter(printerIdOnLoad)
+          .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((loadedFilament) => {
+            // Slicer detection may have switched the printer while this was in flight; that
+            // printer's own refill owns the rows then.
+            if (this.printForm.get('printerId').value !== printerIdOnLoad) {
+              return;
+            }
             const defaultMeasureType =
-              this.getDefaultMeasureTypeForSelectedPrinter(
-                this.printForm.get('printerId').value
-              );
+              this.getDefaultMeasureTypeForSelectedPrinter(printerIdOnLoad);
 
             for (let i = 1; i <= loadedFilament.length; i++) {
               // If there is a filament usage with OTHER in this index, just update the filament
@@ -620,6 +650,13 @@ export class EditPrintDetailComponent
       this.onChanges();
       this.getEstimatedCompletedDate();
       this.getActualCompletedDate();
+
+      if (printIsNew) {
+        this.detectSlicerPrinter(
+          data.print.detectedPrinterNames ?? [],
+          data.print.print
+        );
+      }
     });
 
     this.userSettingService
@@ -771,50 +808,57 @@ export class EditPrintDetailComponent
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((newPrinterId: number | null) => {
-        const isFilamentPristine = this.filamentUsage.pristine;
-        const isPrintNew = this.printForm.get('id')?.value === null;
-
-        if (isPrintNew && isFilamentPristine) {
-          this.printerService
-            .getLoadedFilamentForPrinter(newPrinterId)
-            .subscribe((loadedFilament) => {
-              // Add a new filament usage for the currently loaded filament for that printer.
-
-              const defaultMeasureType =
-                this.getDefaultMeasureTypeForSelectedPrinter(newPrinterId);
-
-              for (let i = 1; i <= loadedFilament.length; i++) {
-                // If there is a filament usage with OTHER in this index, just update the filament
-                const filament = loadedFilament[i - 1].filament;
-
-                if (this.filamentUsage.length >= i) {
-                  this.filamentUsage
-                    .at(i - 1)
-                    .get('filament')
-                    .setValue(filament);
-                }
-                // Else, add a new control:
-                else {
-                  const newFormGroup = this.GetNewFilamentUsageForm(
-                    EMPTY_GUID,
-                    0,
-                    0,
-                    0,
-                    defaultMeasureType,
-                    0,
-                    0,
-                    0,
-                    defaultMeasureType,
-                    filament,
-                    ''
-                  );
-
-                  this.filamentUsage.push(newFormGroup);
-                }
-              }
-              this.changeDetector.markForCheck();
-            });
+        if (this.canRefillUsageFromPrinter()) {
+          this.refillUsageFromLoadedFilament(newPrinterId);
         }
+      });
+  }
+
+  /** A new print whose usage rows the user has not touched takes the printer's loaded spools. */
+  private canRefillUsageFromPrinter(): boolean {
+    return (
+      this.printForm.get('id')?.value === null && this.filamentUsage.pristine
+    );
+  }
+
+  /** Puts the printer's loaded filament into the usage rows, adding a row per extra spool. */
+  private refillUsageFromLoadedFilament(printerId: number | null): void {
+    this.printerService
+      .getLoadedFilamentForPrinter(printerId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((loadedFilament) => {
+        const defaultMeasureType =
+          this.getDefaultMeasureTypeForSelectedPrinter(printerId);
+
+        for (let i = 1; i <= loadedFilament.length; i++) {
+          const filament = loadedFilament[i - 1].filament;
+
+          if (this.filamentUsage.length >= i) {
+            this.filamentUsage
+              .at(i - 1)
+              .get('filament')
+              .setValue(filament);
+          }
+          // Else, add a new control:
+          else {
+            const newFormGroup = this.GetNewFilamentUsageForm(
+              EMPTY_GUID,
+              0,
+              0,
+              0,
+              defaultMeasureType,
+              0,
+              0,
+              0,
+              defaultMeasureType,
+              filament,
+              ''
+            );
+
+            this.filamentUsage.push(newFormGroup);
+          }
+        }
+        this.changeDetector.markForCheck();
       });
   }
   public HandleFilamentMeasureTypeChange(
@@ -1914,11 +1958,12 @@ export class EditPrintDetailComponent
    * The onboarding status (prefetched for a new print) is waited on for at most
    * ONBOARDING_LOOKUP_TIMEOUT_MS; past that the dialog opens without the email notice.
    */
-  async openAddPrinter(): Promise<void> {
+  async openAddPrinter(options?: { initialModelId?: string }): Promise<void> {
     if (this.addPrinterDialogOpen) {
       return;
     }
     this.addPrinterDialogOpen = true;
+    const initialModelId = options?.initialModelId;
     try {
       const status = await withTimeout(
         this.onboardingService.status(),
@@ -1928,11 +1973,17 @@ export class EditPrintDetailComponent
       openQuickAddPrinterDialog(this.dialog, {
         source: 'print-form',
         showEmailNotice: status.onboardingEligible,
+        ...(initialModelId ? { initialModelId } : {}),
       })
         .afterClosed()
         .subscribe((printer) => {
           this.addPrinterDialogOpen = false;
           if (printer) {
+            const detected = this.detectedPrinterHint();
+            if (detected && printer.catalogModelId === detected.id) {
+              this.loggingService.logEvent('PrintForm_DetectedPrinterAdded');
+              this.detectedPrinterHint.set(null);
+            }
             this.selectAddedPrinter(printer.id);
           }
         });
@@ -1942,6 +1993,134 @@ export class EditPrintDetailComponent
         error instanceof Error ? error : new Error(String(error))
       );
     }
+  }
+
+  /** The hint's "Add it": quick add with the detected model preselected. */
+  addDetectedPrinter(): void {
+    const model = this.detectedPrinterHint();
+    if (model) {
+      void this.openAddPrinter({ initialModelId: model.id });
+    }
+  }
+
+  /**
+   * A new print from a slicer file that names its printer (spec section 8.2): asks the catalog
+   * which model each of the file's names is, in order, until one matches, then preselects the
+   * user's newest active printer of that model, or offers to add one. One 3000 ms budget covers
+   * the whole sequence. Silent on no match, an error or a timeout. A preselect sets the printer
+   * and, while the usage rows are untouched, refills them from that printer's loaded filament,
+   * as a manual printer change does. Nothing else changes: it leaves a printer the user picked
+   * in the meantime alone and does not save the choice as the last selected printer.
+   */
+  private detectSlicerPrinter(
+    names: string[],
+    print: PrintDetail | null
+  ): void {
+    if (names.length === 0 || print?.printerId != null) {
+      return;
+    }
+    const control = this.printForm.controls.printerId;
+    const printerIdBefore = control.value;
+
+    this.firstCatalogMatch(names, 0)
+      .pipe(
+        switchMap((found) => this.resolveDetectedPrinter(found)),
+        take(1),
+        timeout({ first: PRINTER_DETECTION_TIMEOUT_MS }),
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((detected) => {
+        if (!detected) {
+          return;
+        }
+        if (detected.owned) {
+          const userChosePrinter =
+            control.dirty ||
+            this.addPrinterDialogOpen ||
+            control.value !== printerIdBefore;
+          if (userChosePrinter) {
+            return;
+          }
+          // No event: the valueChanges handlers would save this as the last selected printer.
+          control.setValue(detected.owned.id, { emitEvent: false });
+          this.previousPrinterId = detected.owned.id;
+          this.setMaterialCategoryNameForPrinterId(detected.owned.id);
+          if (this.canRefillUsageFromPrinter()) {
+            this.refillUsageFromLoadedFilament(detected.owned.id);
+          }
+          this.changeDetector.markForCheck();
+        } else {
+          this.detectedPrinterHint.set(detected.model);
+        }
+        this.loggingService.logEvent('PrintForm_PrinterDetected', {
+          confidence: detected.match.confidence,
+          owned: detected.owned !== null,
+          candidate: detected.candidate,
+        });
+      });
+  }
+
+  /**
+   * The catalog match for the first of `names` (from `index` on) that has one, with that name's
+   * index. A no match or a failed request moves on to the next name; null when none match.
+   */
+  private firstCatalogMatch(
+    names: string[],
+    index: number
+  ): Observable<{ match: PrinterModelMatch; candidate: number } | null> {
+    if (index >= names.length) {
+      return of(null);
+    }
+    return this.printerCatalog.match(names[index]).pipe(
+      take(1),
+      defaultIfEmpty(null),
+      catchError(() => of(null)),
+      switchMap((match) =>
+        match
+          ? of({ match, candidate: index })
+          : this.firstCatalogMatch(names, index + 1)
+      )
+    );
+  }
+
+  private resolveDetectedPrinter(
+    found: { match: PrinterModelMatch; candidate: number } | null
+  ): Observable<{
+    match: PrinterModelMatch;
+    candidate: number;
+    owned: PrinterSummary | null;
+    model: PrinterModel | null;
+  } | null> {
+    if (!found) {
+      return of(null);
+    }
+    const { match, candidate } = found;
+    const owned = this.newestActivePrinterOfModel(match.id);
+    if (owned) {
+      return of({ match, candidate, owned, model: null });
+    }
+    return this.printerCatalog
+      .get(match.id)
+      .pipe(
+        map((model) =>
+          model ? { match, candidate, owned: null, model } : null
+        )
+      );
+  }
+
+  /**
+   * Printer summaries carry no timestamp, so "most recently updated" falls back to the highest
+   * id, the most recently created.
+   */
+  private newestActivePrinterOfModel(modelId: string): PrinterSummary | null {
+    const candidates = this.printers.filter(
+      (p) => p.isActive && p.catalogModelId === modelId
+    );
+    if (candidates.length === 0) {
+      return null;
+    }
+    return candidates.reduce((a, b) => (b.id > a.id ? b : a));
   }
 
   private selectAddedPrinter(printerId: number): void {
@@ -1955,6 +2134,10 @@ export class EditPrintDetailComponent
         next: (page) => {
           this.printers = page.items;
           this.buildPrinterLabelCache();
+          const detected = this.detectedPrinterHint();
+          if (detected && this.newestActivePrinterOfModel(detected.id)) {
+            this.detectedPrinterHint.set(null);
+          }
           select();
         },
         // The printer was saved; select it even though the list could not be refreshed.

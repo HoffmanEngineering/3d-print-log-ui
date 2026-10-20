@@ -24,9 +24,49 @@
   min-height: 5rem;
 }
 
-mat-chip-set {
-  display: block;
+.welcome__step-header {
+  margin: 8px 0 16px;
+}
+
+.welcome__step-count {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+.welcome__step-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--app-text-primary);
+}
+
+.welcome__step-helper {
+  margin: 8px 0 0;
+  color: var(--app-text-secondary);
+
+  a {
+    color: var(--app-primary);
+  }
+}
+
+.welcome__loaded-in {
+  width: min(100%, 20rem);
   margin-bottom: 16px;
+}
+
+.welcome__added {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.welcome__added-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--app-text-secondary);
 }
 
 .welcome__actions {

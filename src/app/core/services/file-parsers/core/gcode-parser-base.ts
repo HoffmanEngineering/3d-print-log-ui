@@ -5,7 +5,7 @@ import {
   PrintFilamentSummaryDto,
   PrintImage,
 } from '../../print.service';
-import { GcodeNewPrintParser } from './gcode-new-print-parser';
+import { GcodeNewPrintParser, ParsedNewPrint } from './gcode-new-print-parser';
 import { GcodeSettings, GcodeSettingsOptions } from './gcode-settings';
 import { trimGcodeWindow } from './gcode-window';
 import { densityForMaterialType } from './material-densities';
@@ -38,9 +38,29 @@ export abstract class GcodeParserBase implements GcodeNewPrintParser {
   protected readonly filamentWeightKey: string = 'filament used [g]';
 
   async parse(gcode: string, fileName?: string): Promise<PrintDetail> {
+    return (await this.parseWithMeta(gcode, fileName)).print;
+  }
+
+  async parseWithMeta(
+    gcode: string,
+    fileName?: string
+  ): Promise<ParsedNewPrint> {
     const windowed = trimGcodeWindow(gcode);
     const settings = GcodeSettings.parse(windowed, this.settingsOptions);
+    return {
+      print: this.buildPrint(windowed, settings, fileName),
+      detectedPrinterNames: GcodeSettings.detectedPrinterNames(
+        settings,
+        windowed
+      ),
+    };
+  }
 
+  private buildPrint(
+    windowed: string,
+    settings: GcodeSettings,
+    fileName?: string
+  ): PrintDetail {
     const print = createDefaultPrintDetail();
     print.estimatedPrintTimeInSeconds = this.parseEstimatedPrintTime(
       windowed,

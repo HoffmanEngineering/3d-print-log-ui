@@ -58,13 +58,16 @@
     </p>
   }
 
-  <button
-    type="submit"
-    mat-flat-button
-    color="primary"
-    data-testid="quick-add-save"
-    [disabled]="saving() || done() || form.invalid"
-  >
-    Save material
-  </button>
+  <div class="quick-add__actions">
+    <ng-content select="[quickAddSecondary]" />
+    <button
+      type="submit"
+      mat-flat-button
+      color="primary"
+      data-testid="quick-add-save"
+      [disabled]="saving() || done() || form.invalid"
+    >
+      {{ submitLabel() }}
+    </button>
+  </div>
 </form>

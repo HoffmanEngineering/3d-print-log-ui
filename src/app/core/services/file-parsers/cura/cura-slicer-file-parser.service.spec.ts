@@ -71,4 +71,18 @@ describe('CuraSlicerFileParserService', () => {
       1.2, 0.5,
     ]);
   });
+
+  it('reports the TARGET_MACHINE.NAME printer beside the print', async () => {
+    const gcode =
+      ';TARGET_MACHINE.NAME:Creality Ender-3\n' + singleExtruderTestFile.data;
+    const { detectedPrinterNames } = await service.parseWithMeta(gcode);
+    expect(detectedPrinterNames).toEqual(['Creality Ender-3']);
+  });
+
+  it('reports no printer when the header has no machine name', async () => {
+    const { detectedPrinterNames } = await service.parseWithMeta(
+      singleExtruderTestFile.data
+    );
+    expect(detectedPrinterNames).toEqual([]);
+  });
 });

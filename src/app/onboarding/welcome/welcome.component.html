@@ -11,31 +11,37 @@
     (selectionChange)="onStepChange($event.selectedIndex)"
   >
     <mat-step label="Add your printer">
+      <header class="welcome__step-header">
+        <p class="welcome__step-count">Step 1 of 3</p>
+        <h2 class="welcome__step-title">Which printer do you have?</h2>
+      </header>
+
       @if (step1Ready()) {
         @if (hasPrinter()) {
-          <mat-chip-set aria-label="Your printers" data-testid="printer-chips">
-            @for (printer of printers(); track printer.id) {
-              <mat-chip>{{ printer.name }}</mat-chip>
-            }
-          </mat-chip-set>
+          <div class="welcome__added">
+            <span class="welcome__added-label" id="welcome-added">Added</span>
+            <mat-chip-set
+              aria-labelledby="welcome-added"
+              data-testid="printer-chips"
+            >
+              @for (printer of printers(); track printer.id) {
+                <mat-chip>
+                  <mat-icon matChipAvatar aria-hidden="true">check</mat-icon>
+                  {{ printer.name }}
+                </mat-chip>
+              }
+            </mat-chip-set>
+          </div>
         }
 
-        @if (showPrinterForm()) {
-          <app-quick-add-printer
-            source="welcome"
-            [showEmailNotice]="false"
-            (saved)="onPrinterSaved($event)"
-          />
-        } @else {
-          <button
-            type="button"
-            mat-stroked-button
-            data-testid="add-another-printer"
-            (click)="addAnotherPrinter()"
-          >
-            Add another printer
-          </button>
-        }
+        <app-quick-add-printer
+          source="welcome"
+          mode="welcome"
+          [showEmailNotice]="false"
+          [hasSavedPrinters]="hasPrinter()"
+          (saved)="onPrinterSaved($event)"
+          (continued)="continueFrom(1)"
+        />
       } @else {
         <div
           class="welcome__loading app-skeleton-immediate"
@@ -59,51 +65,100 @@
         >
           Use the full printer form
         </a>
-        <button
-          type="button"
-          mat-flat-button
-          color="primary"
-          data-testid="step1-continue"
-          [disabled]="!hasPrinter()"
-          (click)="continueFrom(1)"
-        >
-          Continue
-        </button>
       </div>
     </mat-step>
 
     <mat-step label="Add a material" [optional]="true">
       <ng-template matStepContent>
+        <header class="welcome__step-header">
+          <p class="welcome__step-count" data-testid="step2-count">
+            Step 2 of 3
+          </p>
+          <h2 class="welcome__step-title" data-testid="step2-heading">
+            {{ materialHeading() }}
+          </h2>
+          <p class="welcome__step-helper" data-testid="step2-helper">
+            @if (isResin()) {
+              Resin tracking lives in
+              <a href="/materials" target="_blank" rel="noopener">Materials</a>.
+              Add your resin there when you're ready.
+            } @else {
+              @if (hasAms()) {
+                Just one for now. You can add the rest of your spools later in
+              } @else {
+                Just the one on the printer. You can add the rest of your spools
+                later in
+              }
+              <a href="/materials" target="_blank" rel="noopener">Materials</a>.
+            }
+          </p>
+        </header>
+
         @if (savedMaterial(); as material) {
           <p class="welcome__saved" data-testid="material-saved">
             Added {{ material }} to your materials.
           </p>
+          <div class="welcome__actions">
+            <button
+              type="button"
+              mat-flat-button
+              color="primary"
+              data-testid="step2-continue"
+              (click)="continueFrom(2)"
+            >
+              Continue
+            </button>
+          </div>
         } @else {
-          <app-quick-add-material
-            [loadIntoPrinterId]="loadIntoPrinterId()"
-            (saved)="onMaterialSaved($event)"
-          />
+          @if (printers().length > 1) {
+            <mat-form-field
+              class="welcome__loaded-in"
+              subscriptSizing="dynamic"
+              data-testid="loaded-in-select"
+            >
+              <mat-label>Loaded in</mat-label>
+              <mat-select
+                [value]="loadIntoPrinterId()"
+                (selectionChange)="selectedPrinterId.set($event.value)"
+              >
+                @for (printer of printers(); track printer.id) {
+                  <mat-option [value]="printer.id">{{
+                    printer.name
+                  }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+          @if (isResin()) {
+            <div class="welcome__actions">
+              <button
+                type="button"
+                mat-flat-button
+                color="primary"
+                data-testid="step2-resin-continue"
+                (click)="continuePastResin()"
+              >
+                Continue
+              </button>
+            </div>
+          } @else {
+            <app-quick-add-material
+              submitLabel="Add spool and continue"
+              [loadIntoPrinterId]="loadIntoPrinterId()"
+              (saved)="onMaterialSaved($event)"
+            >
+              <button
+                type="button"
+                mat-button
+                quickAddSecondary
+                data-testid="step2-skip"
+                (click)="skipMaterial()"
+              >
+                Skip for now
+              </button>
+            </app-quick-add-material>
+          }
         }
-        <div class="welcome__actions">
-          <button
-            type="button"
-            mat-button
-            data-testid="step2-skip"
-            (click)="skipMaterial()"
-          >
-            Skip for now
-          </button>
-          <button
-            type="button"
-            mat-flat-button
-            color="primary"
-            data-testid="step2-continue"
-            [disabled]="!savedMaterial()"
-            (click)="continueFrom(2)"
-          >
-            Continue
-          </button>
-        </div>
       </ng-template>
     </mat-step>
 

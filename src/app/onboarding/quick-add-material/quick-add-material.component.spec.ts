@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
@@ -47,6 +48,16 @@ const MATERIALS: Material[] = [
     densityGramPerCubicCm: 1.1,
   },
 ];
+
+@Component({
+  imports: [QuickAddMaterialComponent],
+  template: `<app-quick-add-material>
+    <button type="button" quickAddSecondary data-testid="secondary">
+      Skip
+    </button>
+  </app-quick-add-material>`,
+})
+class SecondaryActionHostComponent {}
 
 describe('QuickAddMaterialComponent', () => {
   let fixture: ComponentFixture<QuickAddMaterialComponent>;
@@ -288,6 +299,34 @@ describe('QuickAddMaterialComponent', () => {
     ) as HTMLButtonElement;
     expect(button.textContent!.trim()).toBe('Save material');
     expect(button.classList).toContain('mat-primary');
+  });
+
+  it('places a projected secondary action before Save in one button row', async () => {
+    const host = TestBed.createComponent(SecondaryActionHostComponent);
+    host.detectChanges();
+    await host.whenStable();
+    host.detectChanges();
+
+    const row = (host.nativeElement as HTMLElement).querySelector(
+      '.quick-add__actions'
+    )!;
+    const buttons = Array.from(row.querySelectorAll('button')).map((b) =>
+      b.getAttribute('data-testid')
+    );
+    expect(buttons).toEqual(['secondary', 'quick-add-save']);
+  });
+
+  it('takes its button label from submitLabel', async () => {
+    fixture = TestBed.createComponent(QuickAddMaterialComponent);
+    fixture.componentRef.setInput('submitLabel', 'Add spool and continue');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="quick-add-save"]'
+    ) as HTMLButtonElement;
+    expect(button.textContent!.trim()).toBe('Add spool and continue');
   });
 
   it('labels the color field "Color name" so it fits beside the swatch', async () => {

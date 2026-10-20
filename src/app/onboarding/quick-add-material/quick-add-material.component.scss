@@ -40,6 +40,15 @@
   }
 }
 
+/* One right-aligned row: a projected secondary action, then Save. Wraps on a phone. */
+.quick-add__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .quick-add__error {
   margin: 0;
   color: var(--app-error-text);

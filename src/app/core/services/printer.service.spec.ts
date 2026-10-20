@@ -83,4 +83,54 @@ describe('PrinterService', () => {
     expect(request.request.body.slotCount).toBe(4);
     request.flush({});
   });
+  describe('catalog link', () => {
+    const printer = (extra: object = {}) =>
+      ({
+        id: 3,
+        make: 'Bambu Lab',
+        model: 'P1S',
+        name: 'P1S',
+        description: '',
+        nozzleDiameter: 0.4,
+        filamentDiameter: 1.75,
+        beamDiameter: null,
+        isActive: true,
+        loadedFilaments: [],
+        category: { nickname: 'FFF' },
+        ...extra,
+      }) as unknown as PrinterDetail;
+
+    it('sends catalogModelId and the specs on create', () => {
+      service
+        .addPrinter(
+          printer({ catalogModelId: 'bambu-lab-p1s', bedWidthMm: 256 })
+        )
+        .subscribe();
+
+      const request = httpMock.expectOne(`${base}/`);
+      expect(request.request.method).toBe('POST');
+      expect(request.request.body.catalogModelId).toBe('bambu-lab-p1s');
+      expect(request.request.body.bedWidthMm).toBe(256);
+      request.flush({});
+    });
+
+    it('sends catalogModelId on update', () => {
+      service
+        .updatePrinter(printer({ catalogModelId: 'bambu-lab-p1s' }))
+        .subscribe();
+
+      const request = httpMock.expectOne(`${base}/3`);
+      expect(request.request.method).toBe('PUT');
+      expect(request.request.body.catalogModelId).toBe('bambu-lab-p1s');
+      request.flush({});
+    });
+
+    it('sends null when the printer has no catalog model', () => {
+      service.updatePrinter(printer()).subscribe();
+
+      const request = httpMock.expectOne(`${base}/3`);
+      expect(request.request.body.catalogModelId).toBeNull();
+      request.flush({});
+    });
+  });
 });

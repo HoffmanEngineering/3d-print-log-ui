@@ -1,42 +1,39 @@
 <form
   class="quick-add"
   [formGroup]="form"
-  (ngSubmit)="save()"
+  (ngSubmit)="submit()"
   data-testid="quick-add-printer"
 >
-  <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
-    <mat-label>Printer make and model</mat-label>
-    <input
-      matInput
-      formControlName="search"
-      autocomplete="off"
-      placeholder="Search, e.g. Bambu X1"
-      [matAutocomplete]="catalogAuto"
-      (blur)="commitFreeText()"
-    />
-    <mat-autocomplete
-      #catalogAuto="matAutocomplete"
-      [displayWith]="displayOption"
-      (optionSelected)="selectCatalogPrinter($event.option.value)"
+  @if (catalogModel(); as picked) {
+    <section
+      class="quick-add__card"
+      aria-label="Your printer"
+      data-testid="picked-printer"
     >
-      @for (option of suggestions(); track option.make + option.model) {
-        <mat-option [value]="option">
-          {{ option.make }} {{ option.model }}
-        </mat-option>
-      }
-    </mat-autocomplete>
-  </mat-form-field>
+      <div class="quick-add__card-head">
+        <mat-icon class="quick-add__check" aria-hidden="true"
+          >check_circle</mat-icon
+        >
+        <strong class="quick-add__card-name" data-testid="picked-printer-name"
+          >{{ picked.make }} {{ picked.model }}</strong
+        >
+        <button
+          type="button"
+          mat-button
+          class="quick-add__change"
+          data-testid="change-printer"
+          (click)="changePick()"
+        >
+          Change
+        </button>
+      </div>
 
-  <button
-    type="button"
-    mat-button
-    class="quick-add__manual-toggle"
-    [attr.aria-expanded]="showManual()"
-    (click)="showManual.set(!showManual())"
-  >
-    Not listed?
-  </button>
-  @if (showManual()) {
+      <ng-container *ngTemplateOutlet="summary" />
+      <ng-container *ngTemplateOutlet="multiMaterial" />
+      <ng-container *ngTemplateOutlet="nickname" />
+      <ng-container *ngTemplateOutlet="adjustSpecs" />
+    </section>
+  } @else if (showManual()) {
     <div class="quick-add__row">
       <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
         <mat-label>Make</mat-label>
@@ -57,60 +54,128 @@
         />
       </mat-form-field>
     </div>
-  }
 
-  <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
-    <mat-label>Name</mat-label>
-    <input
-      matInput
-      formControlName="name"
-      autocomplete="off"
-      (input)="onNameInput()"
-    />
-  </mat-form-field>
+    <mat-button-toggle-group
+      class="quick-add__type"
+      formControlName="type"
+      aria-label="Printer type"
+      data-testid="printer-type"
+    >
+      <mat-button-toggle value="FFF">FFF</mat-button-toggle>
+      <mat-button-toggle value="MSLA">Resin</mat-button-toggle>
+      <mat-button-toggle value="Other">Other</mat-button-toggle>
+    </mat-button-toggle-group>
 
-  <mat-button-toggle-group
-    class="quick-add__type"
-    formControlName="type"
-    aria-label="Printer type"
-  >
-    <mat-button-toggle value="FFF">FFF</mat-button-toggle>
-    <mat-button-toggle value="MSLA">Resin</mat-button-toggle>
-    <mat-button-toggle value="Other">Other</mat-button-toggle>
-  </mat-button-toggle-group>
+    @if (isOther()) {
+      <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="otherCategory">
+          @for (category of otherCategories(); track category.nickname) {
+            <mat-option [value]="category.nickname">
+              {{ category.name }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
 
-  @if (isOther()) {
-    <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
-      <mat-label>Type</mat-label>
-      <mat-select formControlName="otherCategory">
-        @for (category of otherCategories(); track category.nickname) {
-          <mat-option [value]="category.nickname">
-            {{ category.name }}
-          </mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-  }
+    <ng-container *ngTemplateOutlet="multiMaterial" />
+    @if (showName()) {
+      <ng-container *ngTemplateOutlet="nickname" />
+    }
+    @if (hasSpecs()) {
+      <ng-container *ngTemplateOutlet="summary" />
+      <ng-container *ngTemplateOutlet="adjustSpecs" />
+    }
 
-  <mat-slide-toggle formControlName="multiMaterial">
-    Multi-material (AMS, toolchanger)
-  </mat-slide-toggle>
-  @if (isMultiMaterial()) {
-    <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
-      <mat-label>Filament slots</mat-label>
+    <button
+      type="button"
+      mat-button
+      class="quick-add__manual-toggle"
+      data-testid="manual-toggle"
+      [attr.aria-expanded]="true"
+      (click)="showManual.set(false)"
+    >
+      Search the catalog instead
+    </button>
+  } @else {
+    @if (showPopular()) {
+      <section class="quick-add__popular" aria-labelledby="quick-add-popular">
+        <h3 id="quick-add-popular" class="quick-add__heading">
+          Popular printers
+        </h3>
+        <div class="quick-add__chips" data-testid="popular-printers">
+          @for (printer of popular(); track printer.id) {
+            <button
+              type="button"
+              class="quick-add__chip"
+              [attr.data-testid]="'popular-printer-' + printer.id"
+              [attr.aria-label]="printer.make + ' ' + printer.model"
+              (click)="selectPopular(printer)"
+            >
+              <span class="quick-add__chip-make">{{ printer.make }}</span>
+              <span class="quick-add__chip-model">{{ printer.model }}</span>
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    <mat-form-field
+      class="quick-add__field"
+      appearance="outline"
+      subscriptSizing="dynamic"
+    >
+      <mat-label>Search 900+ printers</mat-label>
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
       <input
         matInput
-        type="number"
-        min="2"
-        max="64"
-        formControlName="slotCount"
+        type="search"
+        formControlName="search"
+        autocomplete="off"
+        placeholder="e.g. Bambu Lab X1C"
+        data-testid="printer-search"
+        [matAutocomplete]="catalogAuto"
+        (blur)="commitFreeText()"
       />
-      <mat-hint>2 to 64</mat-hint>
+      <mat-autocomplete
+        #catalogAuto="matAutocomplete"
+        [displayWith]="displayOption"
+        (optionSelected)="selectCatalogPrinter($event.option.value)"
+      >
+        @for (option of suggestions(); track option.id) {
+          <mat-option [value]="option">
+            {{ option.make }} {{ option.model }}
+          </mat-option>
+        }
+      </mat-autocomplete>
     </mat-form-field>
+
+    @if (hasSpecs()) {
+      <ng-container *ngTemplateOutlet="summary" />
+      <ng-container *ngTemplateOutlet="adjustSpecs" />
+    }
+
+    <button
+      type="button"
+      mat-button
+      class="quick-add__manual-toggle"
+      data-testid="manual-toggle"
+      [attr.aria-expanded]="false"
+      (click)="showManual.set(true)"
+    >
+      Can't find yours? Enter it manually
+    </button>
   }
 
   @if (showEmailNotice()) {
     <app-inline-email-notice />
+  }
+
+  @if (hint(); as text) {
+    <p class="quick-add__hint" role="status" data-testid="quick-add-hint">
+      {{ text }}
+    </p>
   }
 
   @if (errorMessage(); as message) {
@@ -119,13 +184,150 @@
     </p>
   }
 
-  <button
-    type="submit"
-    mat-flat-button
-    color="primary"
-    data-testid="quick-add-save"
-    [disabled]="saving() || done()"
-  >
-    Save printer
-  </button>
+  <div class="quick-add__actions">
+    @if (mode() === 'welcome' && !continueOnly()) {
+      <button
+        type="button"
+        mat-button
+        data-testid="quick-add-save-another"
+        [disabled]="saving() || done()"
+        (click)="saveAndAddAnother()"
+      >
+        Save and add another
+      </button>
+    }
+    <button
+      type="submit"
+      mat-flat-button
+      color="primary"
+      data-testid="quick-add-save"
+      [disabled]="saving() || done()"
+    >
+      {{ primaryLabel() }}
+    </button>
+  </div>
+
+  <ng-template #summary>
+    @if (specSummary(); as text) {
+      <p class="quick-add__summary" data-testid="spec-summary">
+        {{ text }}
+      </p>
+    }
+  </ng-template>
+
+  <ng-template #nickname>
+    <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+      <mat-label>Nickname</mat-label>
+      <input
+        matInput
+        formControlName="name"
+        autocomplete="off"
+        (input)="onNameInput()"
+      />
+      <mat-hint>What it's called in your log, e.g. "Garage P1S".</mat-hint>
+    </mat-form-field>
+  </ng-template>
+
+  <ng-template #adjustSpecs>
+    <section class="quick-add__specs" aria-label="Printer specs">
+      <button
+        type="button"
+        mat-button
+        class="quick-add__edit-specs"
+        data-testid="edit-specs"
+        aria-controls="quick-add-spec-fields"
+        [attr.aria-expanded]="specsOpen()"
+        (click)="specsOpen.set(!specsOpen())"
+      >
+        Adjust specs
+      </button>
+      @if (specsOpen()) {
+        <div id="quick-add-spec-fields" class="quick-add__spec-fields">
+          @if (nozzleOptions().length > 0) {
+            <div
+              class="quick-add__nozzles"
+              role="group"
+              aria-label="Nozzle size"
+            >
+              @for (mm of nozzleOptions(); track mm) {
+                <button
+                  type="button"
+                  class="quick-add__nozzle"
+                  [class.quick-add__nozzle--selected]="selectedNozzle() === mm"
+                  [attr.data-testid]="'nozzle-' + mm"
+                  [attr.aria-pressed]="selectedNozzle() === mm"
+                  [attr.aria-label]="mm + ' mm nozzle'"
+                  (click)="selectNozzle(mm)"
+                >
+                  {{ mm }} mm
+                </button>
+              }
+            </div>
+          }
+          <div class="quick-add__row quick-add__row--bed">
+            <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+              <mat-label>Bed width (mm)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                formControlName="bedWidthMm"
+              />
+            </mat-form-field>
+            <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+              <mat-label>Bed depth (mm)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                formControlName="bedDepthMm"
+              />
+            </mat-form-field>
+            <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+              <mat-label>Build height (mm)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                formControlName="bedHeightMm"
+              />
+            </mat-form-field>
+          </div>
+          <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+            <mat-label>Filament diameter (mm)</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              step="0.05"
+              formControlName="filamentDiameter"
+            />
+          </mat-form-field>
+          <mat-checkbox formControlName="hasHeatedBed">Heated bed</mat-checkbox>
+          <mat-checkbox formControlName="hasHeatedChamber">
+            Heated chamber
+          </mat-checkbox>
+        </div>
+      }
+    </section>
+  </ng-template>
+
+  <ng-template #multiMaterial>
+    <mat-checkbox formControlName="multiMaterial" data-testid="multi-material">
+      I use an AMS / multi-material unit
+    </mat-checkbox>
+    @if (isMultiMaterial()) {
+      <mat-form-field class="quick-add__field" subscriptSizing="dynamic">
+        <mat-label>Filament slots</mat-label>
+        <input
+          matInput
+          type="number"
+          min="2"
+          max="64"
+          formControlName="slotCount"
+        />
+        <mat-hint>2 to 64</mat-hint>
+      </mat-form-field>
+    }
+  </ng-template>
 </form>

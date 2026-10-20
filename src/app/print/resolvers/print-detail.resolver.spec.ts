@@ -13,6 +13,7 @@ describe('printDetailResolver', () => {
   let printService: jasmine.SpyObj<PrintService>;
   let userService: jasmine.SpyObj<UserService>;
   let loggingService: jasmine.SpyObj<LoggingService>;
+  let store: jasmine.SpyObj<NewPrintStoreService>;
 
   const routeFor = (id: string) =>
     ({
@@ -27,10 +28,12 @@ describe('printDetailResolver', () => {
     userService = jasmine.createSpyObj<UserService>('UserService', [
       'getUserSummary',
     ]);
-    const store = jasmine.createSpyObj<NewPrintStoreService>(
-      'NewPrintStoreService',
-      ['hasNewPrint', 'getNewPrint', 'clear']
-    );
+    store = jasmine.createSpyObj<NewPrintStoreService>('NewPrintStoreService', [
+      'hasNewPrint',
+      'getNewPrint',
+      'getNewPrintMeta',
+      'clear',
+    ]);
     store.hasNewPrint.and.returnValue(false);
     loggingService = jasmine.createSpyObj<LoggingService>('LoggingService', [
       'logException',
@@ -98,5 +101,36 @@ describe('printDetailResolver', () => {
     // but the cause is reported rather than swallowed.
     expect((value as any).print).toBeNull();
     expect(loggingService.logException).toHaveBeenCalled();
+  });
+
+  it('hands a stored new print to the form with its detected printer names', () => {
+    const print = { id: null, title: 'Cube' } as any;
+    store.hasNewPrint.and.returnValue(true);
+    store.getNewPrint.and.returnValue(print);
+    store.getNewPrintMeta.and.returnValue({
+      detectedPrinterNames: ['X1C', 'Bambu Lab X1 Carbon'],
+    });
+
+    const value = runResolver(printDetailResolver, routeFor('new')) as any;
+
+    expect(value).toEqual({
+      print,
+      user: null,
+      detectedPrinterNames: ['X1C', 'Bambu Lab X1 Carbon'],
+    });
+    expect(store.clear).toHaveBeenCalled();
+  });
+
+  it('resolves a manual new print with no detected printer', () => {
+    store.hasNewPrint.and.returnValue(false);
+
+    const value = runResolver(printDetailResolver, routeFor('new')) as any;
+
+    expect(value).toEqual({
+      print: null,
+      user: null,
+      detectedPrinterNames: [],
+    });
+    expect(store.getNewPrintMeta).not.toHaveBeenCalled();
   });
 });

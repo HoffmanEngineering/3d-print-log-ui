@@ -17,6 +17,7 @@ import {
   Router,
 } from '@angular/router';
 import { of, Subject } from 'rxjs';
+import { FilamentDetail } from '../../core/services/filament.service';
 import { GoogleAnalyticsService } from '../../core/services/google-analytics.service';
 import { LoggingService } from '../../core/services/logging.service';
 import {
@@ -30,6 +31,7 @@ import { OnboardingApiService } from '../onboarding-api.service';
 import { OnboardingService } from '../onboarding.service';
 import { QuickAddMaterialComponent } from '../quick-add-material/quick-add-material.component';
 import {
+  QuickAddMode,
   QuickAddPrinterComponent,
   QuickAddSource,
 } from '../quick-add-printer/quick-add-printer.component';
@@ -39,12 +41,19 @@ import { WelcomeComponent } from './welcome.component';
 class StubQuickAddPrinterComponent {
   readonly source = input.required<QuickAddSource>();
   readonly showEmailNotice = input(false);
+  readonly mode = input<QuickAddMode>('dialog');
+  readonly hasSavedPrinters = input(false);
   readonly saved = output<PrinterDetail>();
+  readonly continued = output<void>();
 }
 
-@Component({ selector: 'app-quick-add-material', template: '' })
+@Component({
+  selector: 'app-quick-add-material',
+  template: '<ng-content select="[quickAddSecondary]" />',
+})
 class StubQuickAddMaterialComponent {
   readonly loadIntoPrinterId = input<number | null>(null);
+  readonly submitLabel = input('Save material');
   readonly saved = output<unknown>();
 }
 
@@ -57,6 +66,13 @@ function summary(id: number, name: string): PrinterSummarySimple {
     isActive: true,
     category: { id: 1, name: 'FFF', nickname: 'FFF' },
     loadedFilaments: [],
+  } as unknown as PrinterSummarySimple;
+}
+
+function resin(id: number, name: string): PrinterSummarySimple {
+  return {
+    ...summary(id, name),
+    category: { id: 2, name: 'MSLA', nickname: 'MSLA' },
   } as unknown as PrinterSummarySimple;
 }
 
@@ -203,20 +219,46 @@ describe('WelcomeComponent', () => {
     await render();
 
     expect(printerForm().source()).toBe('welcome');
+    expect(printerForm().mode()).toBe('welcome');
     expect(printerForm().showEmailNotice()).toBeFalse();
   });
 
-  it('disables Continue with no printers and enables it after a save', async () => {
+  it('leads step 1 with "Step 1 of 3" and the printer question', async () => {
     configure();
     await render();
-    const next = () => el('step1-continue') as HTMLButtonElement;
-    expect(next().disabled).toBeTrue();
 
-    printerForm().saved.emit({ id: 7, name: 'Voron' } as PrinterDetail);
+    const header = fixture.nativeElement.querySelector(
+      '.welcome__step-header'
+    ) as HTMLElement;
+    expect(header.querySelector('p')!.textContent!.trim()).toBe('Step 1 of 3');
+    expect(header.querySelector('h2')!.textContent!.trim()).toBe(
+      'Which printer do you have?'
+    );
+    expect(el('step1-continue')).toBeNull();
+  });
+
+  it('adds a check chip under "Added" after a save and keeps the same form', async () => {
+    configure();
+    await render();
+    const form = printerForm();
+    expect(form.hasSavedPrinters()).toBeFalse();
+    expect(el('printer-chips')).toBeNull();
+
+    form.saved.emit({ id: 7, name: 'Voron' } as PrinterDetail);
     await settle();
 
-    expect(next().disabled).toBeFalse();
-    expect(el('printer-chips')!.textContent).toContain('Voron');
+    const chips = el('printer-chips')!;
+    expect(chips.textContent).toContain('Voron');
+    expect(chips.querySelector('mat-icon')!.textContent!.trim()).toBe('check');
+    expect(
+      fixture.nativeElement.querySelector('.welcome__added').textContent
+    ).toContain('Added');
+    expect(printerForm()).toBe(form);
+    expect(form.hasSavedPrinters()).toBeTrue();
+
+    form.saved.emit({ id: 8, name: 'MK4' } as PrinterDetail);
+    await settle();
+    expect(el('printer-chips')!.querySelectorAll('mat-chip').length).toBe(2);
   });
 
   it('shows the existing printer when the summary resolves after the first render', async () => {
@@ -238,11 +280,7 @@ describe('WelcomeComponent', () => {
     await settle();
 
     expect(el('printer-chips')!.textContent).toContain('MK4S');
-    expect((el('step1-continue') as HTMLButtonElement).disabled).toBeFalse();
-    expect(
-      fixture.debugElement.query(By.directive(StubQuickAddPrinterComponent))
-    ).toBeNull();
-    expect(el('add-another-printer')).not.toBeNull();
+    expect(printerForm().hasSavedPrinters()).toBeTrue();
   });
 
   it('shows the quick-add form once an empty summary resolves', async () => {
@@ -256,7 +294,7 @@ describe('WelcomeComponent', () => {
     await settle();
 
     expect(printerForm()).toBeTruthy();
-    expect((el('step1-continue') as HTMLButtonElement).disabled).toBeTrue();
+    expect(printerForm().hasSavedPrinters()).toBeFalse();
   });
 
   it('falls back to the quick-add form when the summary fails', async () => {
@@ -289,28 +327,12 @@ describe('WelcomeComponent', () => {
     expect(component.step1Ready()).toBeTrue();
   }));
 
-  it('enables Continue for a printer that already exists', async () => {
+  it('tells the form about a printer that already exists', async () => {
     configure([summary(3, 'Prusa MK4')]);
     await render();
 
-    expect((el('step1-continue') as HTMLButtonElement).disabled).toBeFalse();
+    expect(printerForm().hasSavedPrinters()).toBeTrue();
     expect(el('printer-chips')!.textContent).toContain('Prusa MK4');
-  });
-
-  it('"Add another printer" shows a fresh form after a save', async () => {
-    configure();
-    await render();
-    const first = printerForm();
-    first.saved.emit({ id: 7, name: 'Voron' } as PrinterDetail);
-    await settle();
-    expect(
-      fixture.debugElement.query(By.directive(StubQuickAddPrinterComponent))
-    ).toBeNull();
-
-    el('add-another-printer')!.click();
-    await settle();
-
-    expect(printerForm()).not.toBe(first);
   });
 
   it('links to the full printer form with a return URL', async () => {
@@ -323,11 +345,11 @@ describe('WelcomeComponent', () => {
     );
   });
 
-  it('logs Welcome_StepCompleted and moves on when Continue is clicked', async () => {
+  it('logs Welcome_StepCompleted and moves on when the form continues', async () => {
     configure([summary(3, 'Prusa MK4')]);
     await render();
 
-    el('step1-continue')!.click();
+    printerForm().continued.emit();
     await settle();
 
     expect(logging.logEvent).toHaveBeenCalledWith('Welcome_StepCompleted', {
@@ -345,12 +367,232 @@ describe('WelcomeComponent', () => {
     expect(materialForm().loadIntoPrinterId()).toBe(3);
   });
 
-  it('does not pick a printer for the material when there are two', async () => {
-    configure([summary(3, 'Prusa MK4'), summary(4, 'Voron')]);
-    await render();
-    await goToStep(1);
+  describe('step 2: the spool loaded right now', () => {
+    function text(testId: string): string {
+      return el(testId)!.textContent!.replace(/\s+/g, ' ').trim();
+    }
 
-    expect(materialForm().loadIntoPrinterId()).toBeNull();
+    function spool(name: string): FilamentDetail {
+      return { displayName: name, materialType: 'PLA' } as FilamentDetail;
+    }
+
+    async function chooseLoadedIn(name: string): Promise<void> {
+      const trigger = el('loaded-in-select')!.querySelector(
+        '.mat-mdc-select-trigger'
+      ) as HTMLElement;
+      trigger.click();
+      await settle();
+      const option = Array.from(
+        document.querySelectorAll<HTMLElement>('mat-option')
+      ).find((o) => o.textContent!.trim() === name)!;
+      option.click();
+      await settle();
+    }
+
+    it('leads with "Step 2 of 3" and asks what is loaded in the printer', async () => {
+      configure([summary(3, 'Prusa MK4')]);
+      await render();
+      await goToStep(1);
+
+      expect(text('step2-count')).toBe('Step 2 of 3');
+      expect(text('step2-heading')).toBe(
+        "What's loaded in your Prusa MK4 right now?"
+      );
+      expect(text('step2-helper')).toBe(
+        'Just the one on the printer. You can add the rest of your spools later in Materials.'
+      );
+      const link = el('step2-helper')!.querySelector('a')!;
+      expect(link.textContent!.trim()).toBe('Materials');
+      expect(link.getAttribute('href')).toBe('/materials');
+      expect(link.getAttribute('target')).toBe('_blank');
+    });
+
+    it('asks about the AMS for a printer with more than one slot', async () => {
+      configure();
+      await render();
+      printerForm().saved.emit({
+        id: 7,
+        name: 'P1S',
+        slotCount: 4,
+      } as PrinterDetail);
+      await settle();
+      await goToStep(1);
+
+      expect(text('step2-heading')).toBe(
+        "What's loaded in your P1S's AMS right now?"
+      );
+      expect(text('step2-helper')).toBe(
+        'Just one for now. You can add the rest of your spools later in Materials.'
+      );
+    });
+
+    it('asks which filament with no printer', async () => {
+      configure();
+      await render();
+      await goToStep(1);
+
+      expect(text('step2-heading')).toBe(
+        'What filament are you printing with?'
+      );
+      expect(materialForm().loadIntoPrinterId()).toBeNull();
+      expect(el('loaded-in-select')).toBeNull();
+    });
+
+    it('shows no "Loaded in" select with one printer', async () => {
+      configure([summary(3, 'Prusa MK4')]);
+      await render();
+      await goToStep(1);
+
+      expect(el('loaded-in-select')).toBeNull();
+      expect(materialForm().loadIntoPrinterId()).toBe(3);
+    });
+
+    it('with two printers, "Loaded in" defaults to the first and drives the target', async () => {
+      configure([summary(3, 'Prusa MK4'), summary(4, 'Voron')]);
+      await render();
+      await goToStep(1);
+
+      expect(el('loaded-in-select')).not.toBeNull();
+      expect(el('loaded-in-select')!.textContent).toContain('Loaded in');
+      expect(materialForm().loadIntoPrinterId()).toBe(3);
+      expect(text('step2-heading')).toContain('Prusa MK4');
+
+      await chooseLoadedIn('Voron');
+
+      expect(materialForm().loadIntoPrinterId()).toBe(4);
+      expect(text('step2-heading')).toBe(
+        "What's loaded in your Voron right now?"
+      );
+    });
+
+    it('"Loaded in" defaults to the first printer that is not resin', async () => {
+      configure([resin(3, 'Saturn 4'), summary(4, 'P1S')]);
+      await render();
+      await goToStep(1);
+
+      expect(materialForm().loadIntoPrinterId()).toBe(4);
+      expect(text('step2-heading')).toBe(
+        "What's loaded in your P1S right now?"
+      );
+      expect(materialForm().submitLabel()).toBe('Add spool and continue');
+    });
+
+    function noMaterialForm(): boolean {
+      return (
+        fixture.debugElement.query(
+          By.directive(StubQuickAddMaterialComponent)
+        ) === null
+      );
+    }
+
+    it('shows no material form for a resin printer, only a Continue that advances', async () => {
+      configure([resin(3, 'Saturn 4'), resin(4, 'Mars 5')]);
+      await render();
+      await goToStep(1);
+
+      expect(text('step2-heading')).toBe(
+        'What resin is in your Saturn 4 right now?'
+      );
+      expect(text('step2-helper')).toBe(
+        "Resin tracking lives in Materials. Add your resin there when you're ready."
+      );
+      const link = el('step2-helper')!.querySelector('a')!;
+      expect(link.textContent!.trim()).toBe('Materials');
+      expect(link.getAttribute('href')).toBe('/materials');
+      expect(link.getAttribute('target')).toBe('_blank');
+      expect(noMaterialForm()).toBeTrue();
+      expect(el('step2-skip')).toBeNull();
+
+      const next = el('step2-resin-continue') as HTMLButtonElement;
+      expect(next.textContent!.trim()).toBe('Continue');
+      expect(next.classList).toContain('mat-primary');
+      next.click();
+      await settle();
+
+      expect(stepper().selectedIndex).toBe(2);
+      expect(logging.logEvent).toHaveBeenCalledWith('Welcome_StepSkipped', {
+        step: 2,
+        reason: 'resin',
+      });
+    });
+
+    it('switching "Loaded in" between resin and FFF swaps the form and copy live', async () => {
+      configure([resin(3, 'Saturn 4'), summary(4, 'P1S')]);
+      await render();
+      await goToStep(1);
+      expect(noMaterialForm()).toBeFalse();
+
+      await chooseLoadedIn('Saturn 4');
+      expect(text('step2-heading')).toBe(
+        'What resin is in your Saturn 4 right now?'
+      );
+      expect(noMaterialForm()).toBeTrue();
+      expect(el('step2-resin-continue')).not.toBeNull();
+      // The select stays, so the user can switch back.
+      expect(el('loaded-in-select')).not.toBeNull();
+
+      await chooseLoadedIn('P1S');
+      expect(text('step2-heading')).toBe(
+        "What's loaded in your P1S right now?"
+      );
+      expect(text('step2-helper')).toContain('Just the one on the printer.');
+      expect(noMaterialForm()).toBeFalse();
+      expect(materialForm().submitLabel()).toBe('Add spool and continue');
+      expect(materialForm().loadIntoPrinterId()).toBe(4);
+      expect(el('step2-resin-continue')).toBeNull();
+    });
+
+    it('puts "Skip for now" in the material form\'s button row', async () => {
+      configure([summary(3, 'Prusa MK4')]);
+      await render();
+      await goToStep(1);
+
+      const skip = el('step2-skip')!;
+      expect(skip.closest('app-quick-add-material')).not.toBeNull();
+      expect(skip.hasAttribute('quickaddsecondary')).toBeTrue();
+    });
+
+    it('"Add spool and continue" saves and advances in one click', async () => {
+      configure([summary(3, 'Prusa MK4')]);
+      await render();
+      await goToStep(1);
+
+      expect(materialForm().submitLabel()).toBe('Add spool and continue');
+      expect(el('step2-continue')).toBeNull();
+      expect(text('step2-skip')).toBe('Skip for now');
+
+      materialForm().saved.emit(spool('PLA Black'));
+      await settle();
+
+      expect(stepper().selectedIndex).toBe(2);
+      expect(logging.logEvent).toHaveBeenCalledWith('Welcome_StepCompleted', {
+        step: 2,
+        printerCount: 1,
+      });
+    });
+
+    it('after a save, going back shows only the saved spool and Continue', async () => {
+      configure([summary(3, 'Prusa MK4')]);
+      await render();
+      await goToStep(1);
+      materialForm().saved.emit(spool('PLA Black'));
+      await settle();
+
+      await goToStep(1);
+
+      expect(text('material-saved')).toBe('Added PLA Black to your materials.');
+      expect(
+        fixture.debugElement.query(By.directive(StubQuickAddMaterialComponent))
+      ).toBeNull();
+      expect(el('step2-skip')).toBeNull();
+      const next = el('step2-continue') as HTMLButtonElement;
+      expect(next.textContent!.trim()).toBe('Continue');
+      expect(next.classList).toContain('mat-primary');
+
+      next.click();
+      await settle();
+      expect(stepper().selectedIndex).toBe(2);
+    });
   });
 
   it('"Skip for now" logs Welcome_StepSkipped and goes to step 3', async () => {

@@ -33,12 +33,17 @@ describe('GcodeFileParserService', () => {
       'logEvent',
       'logException',
     ]);
-    parser = jasmine.createSpyObj<GcodeParserBase>('Parser', ['parse'], {
-      slicerName: 'Orca Slicer',
-    });
-    parser.parse.and.resolveTo({
-      ...createDefaultPrintDetail(),
-      title: 'Parsed',
+    // parse() goes through parseWithMeta, so the parser's own parse() is never called.
+    parser = jasmine.createSpyObj<GcodeParserBase>(
+      'Parser',
+      ['parseWithMeta'],
+      {
+        slicerName: 'Orca Slicer',
+      }
+    );
+    parser.parseWithMeta.and.resolveTo({
+      print: { ...createDefaultPrintDetail(), title: 'Parsed' },
+      detectedPrinterNames: ['Bambu Lab X1 Carbon'],
     });
 
     TestBed.configureTestingModule({
@@ -64,7 +69,7 @@ describe('GcodeFileParserService', () => {
   it('parses with the detected parser without a toast or dialog', async () => {
     resolveAs({ confidence: 'detected' });
     const print = await service.parse('gcode', 'file.gcode');
-    expect(parser.parse).toHaveBeenCalledWith('gcode', 'file.gcode');
+    expect(parser.parseWithMeta).toHaveBeenCalledWith('gcode', 'file.gcode');
     expect(print?.title).toBe('Parsed');
     expect(toastr.info).not.toHaveBeenCalled();
     expect(dialog.open).not.toHaveBeenCalled();
@@ -78,7 +83,7 @@ describe('GcodeFileParserService', () => {
   it('parses with the closest parser and tells the user on a heuristic match', async () => {
     resolveAs({ confidence: 'heuristic', score: 0.9 });
     await service.parse('gcode');
-    expect(parser.parse).toHaveBeenCalled();
+    expect(parser.parseWithMeta).toHaveBeenCalled();
     expect(toastr.info).toHaveBeenCalledWith(
       'Slicer not recognized — parsed as Orca Slicer. Some settings may be missing.'
     );
@@ -101,7 +106,7 @@ describe('GcodeFileParserService', () => {
 
   it('returns null and toasts an error when the parser throws', async () => {
     resolveAs({});
-    parser.parse.and.rejectWith(new Error('boom'));
+    parser.parseWithMeta.and.rejectWith(new Error('boom'));
     const print = await service.parse('gcode');
     expect(print).toBeNull();
     expect(toastr.error).toHaveBeenCalled();
@@ -111,5 +116,36 @@ describe('GcodeFileParserService', () => {
   it('lists supported slicers from the registry', () => {
     registry.getSupportedSlicerNames.and.returnValue(['Orca Slicer', 'Cura']);
     expect(service.getSupportedSlicers()).toEqual(['Orca Slicer', 'Cura']);
+  });
+
+  describe('parseWithMeta', () => {
+    it("returns the parser's print and detected printer names", async () => {
+      resolveAs({ confidence: 'detected' });
+      const result = await service.parseWithMeta('gcode', 'file.gcode');
+      expect(parser.parseWithMeta).toHaveBeenCalledWith('gcode', 'file.gcode');
+      expect(result?.print.title).toBe('Parsed');
+      expect(result?.detectedPrinterNames).toEqual(['Bambu Lab X1 Carbon']);
+    });
+
+    it('detects no printer from the generic viewer', async () => {
+      resolveAs({ parser: null, confidence: 'none', score: 0 });
+      const fromModal = { ...createDefaultPrintDetail(), title: 'Modal' };
+      dialog.open.and.returnValue({ afterClosed: () => of(fromModal) } as any);
+      const result = await service.parseWithMeta('G28', 'raw.gcode');
+      expect(result).toEqual({ print: fromModal, detectedPrinterNames: [] });
+    });
+
+    it('is null when the viewer is canceled', async () => {
+      resolveAs({ parser: null, confidence: 'none', score: 0 });
+      dialog.open.and.returnValue({ afterClosed: () => of(undefined) } as any);
+      expect(await service.parseWithMeta('G28')).toBeNull();
+    });
+
+    it('is null and toasts an error when the parser throws', async () => {
+      resolveAs({});
+      parser.parseWithMeta.and.rejectWith(new Error('boom'));
+      expect(await service.parseWithMeta('gcode')).toBeNull();
+      expect(toastr.error).toHaveBeenCalled();
+    });
   });
 });

@@ -2,7 +2,14 @@ import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { inject, Injectable, Injector } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { firstValueFrom } from 'rxjs';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationSkipped,
+  Router,
+} from '@angular/router';
+import { filter, firstValueFrom } from 'rxjs';
 
 import {
   CelebrationItem,
@@ -18,6 +25,7 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
   private readonly overlay = inject(Overlay);
   private readonly matDialog = inject(MatDialog);
   private readonly injector = inject(Injector);
+  private readonly router = inject(Router);
   private toastRef: OverlayRef | null = null;
 
   async toast(
@@ -59,6 +67,7 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
 
   async dialog(item: CelebrationItem): Promise<void> {
     await this.whenNoDialogOpen();
+    await this.whenNavigationSettled();
     const { AchievementCelebrationDialogComponent } = await import(
       './achievement-celebration-dialog.component'
     );
@@ -79,6 +88,29 @@ export class LazyCelebrationPresenter extends CelebrationPresenter {
   private async whenNoDialogOpen(): Promise<void> {
     while (this.matDialog.openDialogs.length > 0) {
       await firstValueFrom(this.matDialog.afterAllClosed);
+    }
+  }
+
+  /**
+   * Waits for a navigation in progress to end. Saving a print navigates to /prints while the
+   * save's response starts the celebration, and a dialog opened mid-navigation blocks scroll at
+   * the old page's offset: the new, shorter page then sat above the viewport until it closed.
+   * The extra macrotask lets the router's scroll restoration run first.
+   */
+  private async whenNavigationSettled(): Promise<void> {
+    while (this.router.currentNavigation()) {
+      await firstValueFrom(
+        this.router.events.pipe(
+          filter(
+            (e) =>
+              e instanceof NavigationEnd ||
+              e instanceof NavigationCancel ||
+              e instanceof NavigationError ||
+              e instanceof NavigationSkipped
+          )
+        )
+      );
+      await new Promise<void>((resolve) => setTimeout(resolve));
     }
   }
 }

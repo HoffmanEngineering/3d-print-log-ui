@@ -352,3 +352,9 @@ form > div {
     }
   }
 }
+
+// Only rendered inside OrcaSlicer's webview.
+.back-to-orca-slicer {
+  align-self: flex-start;
+  margin: 16px 0 0 16px;
+}

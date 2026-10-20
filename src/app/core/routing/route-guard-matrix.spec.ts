@@ -37,6 +37,9 @@ describe('route guard matrix', () => {
     expect(guarded(find(printChildren, 'copy/:id')))
       .withContext('print copy')
       .toBe(true);
+    expect(guarded(find(printChildren, 'new/orca')))
+      .withContext('OrcaSlicer pending uploads')
+      .toBe(true);
     expect(guarded(find(printChildren, ':id')))
       .withContext('print view is public')
       .toBe(false);

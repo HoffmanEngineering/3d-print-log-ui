@@ -19,6 +19,10 @@ import {
   FormsModule,
   ReactiveFormsModule,
 } from '@angular/forms';
+import {
+  BackToOrcaSlicerComponent,
+  ORCA_SLICER_HOST,
+} from 'src/app/shared/back-to-orca-slicer/back-to-orca-slicer.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { parseDurationAsSeconds } from 'src/app/core/utils/duration';
@@ -208,6 +212,7 @@ export interface PrintFormValue {
     '(window:beforeunload)': 'canDeactivate()',
   },
   imports: [
+    BackToOrcaSlicerComponent,
     DefaultLayoutDirective,
     DefaultLayoutAlignDirective,
     DefaultLayoutGapDirective,
@@ -441,6 +446,17 @@ export class EditPrintDetailComponent
   private readonly destroyRef = inject(DestroyRef);
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly projectService = inject(ProjectService);
+  private readonly orcaSlicerHost = inject(ORCA_SLICER_HOST);
+
+  /**
+   * A print opened from a slicer upload (`/prints/new/cura?...&settingId=`).
+   * Inside OrcaSlicer's webview it offers a way back to the plugin's page.
+   */
+  /** True after a save inside OrcaSlicer: the page shows "saved" and a way back. */
+  readonly savedInOrca = signal(false);
+
+  readonly fromSlicerUpload =
+    this.activatedRoute.snapshot?.queryParamMap?.has('settingId') ?? false;
 
   public readonly maxImages = this.subscriptionService.maxImagesPerPrint;
 
@@ -1868,6 +1884,13 @@ export class EditPrintDetailComponent
 
     this.saving.set(false);
     this.printForm.markAsPristine();
+    // Inside OrcaSlicer (its own window), stay here and show the saved state
+    // with a button that closes the window.
+    if (this.fromSlicerUpload && this.orcaSlicerHost !== null) {
+      this.savedInOrca.set(true);
+      this.toastr.success('Save successful!');
+      return;
+    }
     this.router.navigate(['/prints']).then(() => {
       this.toastr.success('Save successful!');
     });

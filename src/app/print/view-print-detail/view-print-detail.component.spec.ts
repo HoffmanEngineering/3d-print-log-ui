@@ -126,7 +126,12 @@ describe('ViewPrintDetailComponent', () => {
       'calculateElectricityCost',
       'calculateTotalPrintCost',
       'calculatePrintCost',
+      'getSameFilePrints',
     ]);
+    // The rail asks the owner's same-file count; one print of its file renders nothing.
+    printService.getSameFilePrints.and.returnValue(
+      of({ count: 1, prints: [] })
+    );
     printService.calculatePrintCost.and.returnValue({
       valid: true,
       price: currency(0.42),

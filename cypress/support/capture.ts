@@ -247,13 +247,14 @@ function stubApi(set: CaptureSet, unhandled: string[]) {
 }
 
 /**
- * Deterministic client state: theme plus the print-list view/columns/page size,
- * so a developer's saved grouped view, custom columns or page size cannot leak
- * into a committed image.
+ * Deterministic client state: theme plus the print-list view/layout/columns/page
+ * size, so a developer's saved grouped view, gallery layout, custom columns or
+ * page size cannot leak into a committed image.
  */
 function setClientState(win: Window, mode: 'light' | 'dark') {
   win.localStorage.setItem('theme-mode', mode);
   win.localStorage.setItem('print_list_view_mode', 'list');
+  win.localStorage.setItem('print_list_layout', 'table');
   win.localStorage.removeItem('print_table_displayed_columns');
   win.localStorage.setItem('print_list_page_size', '25');
   // Neutralize AdSense: make push a no-op so the ad slot (hidden in capture)

@@ -9,8 +9,9 @@ import { SkeletonComponent } from 'src/app/shared/skeleton/skeleton.component';
 /**
  * Loading placeholder for a list of prints.
  *
- * Both the print list and the grouped-by-project view show the same two
- * shapes — a stack of cards on a phone, a grid of rows on a desktop table — so
+ * Both the print list and the grouped-by-project view show the same shapes — a
+ * stack of cards on a phone, a grid of rows on a desktop table, and on the list
+ * a grid of gallery tiles — so
  * they share one component rather than each hand-rolling a pile of grey boxes.
  *
  * The whole block is one live region: the individual blocks are aria-hidden, so
@@ -25,7 +26,11 @@ import { SkeletonComponent } from 'src/app/shared/skeleton/skeleton.component';
   imports: [SkeletonComponent],
 })
 export class PrintListSkeletonComponent {
-  readonly variant = input<'card' | 'row'>('card');
+  /**
+   * `card` for the phone card list, `row` for the desktop table and `tile` for
+   * the thumbnail gallery.
+   */
+  readonly variant = input<'card' | 'row' | 'tile'>('card');
 
   /** How many placeholder cards or rows to draw. */
   readonly count = input(5);

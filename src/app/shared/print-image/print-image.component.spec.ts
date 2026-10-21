@@ -49,6 +49,24 @@ describe('PrintImageComponent', () => {
     expect(img.getAttribute('src')).toBe('data:image/png;base64,AA');
   });
 
+  // getPrintImage maps every HTTP error to an empty string, so an empty
+  // result is a failed fetch. Treated as "nothing yet" it left a blank box in
+  // the table and a blank tile in the gallery.
+  it('shows the fallback when the fetch comes back empty', () => {
+    const printService = TestBed.inject(
+      PrintService
+    ) as jasmine.SpyObj<PrintService>;
+    printService.getPrintImage.and.returnValue(of(''));
+    const f = TestBed.createComponent(PrintImageComponent);
+    f.componentRef.setInput('printId', 3);
+    f.componentRef.setInput('imageId', 9);
+
+    f.detectChanges();
+
+    expect(f.nativeElement.querySelector('img')).toBeNull();
+    expect(f.nativeElement.textContent).toContain('Image unavailable');
+  });
+
   describe('with an image bound', () => {
     // A fresh fixture: the outer beforeEach already ran change detection with
     // no image, and flipping the @if branch afterwards trips NG0100.
@@ -100,6 +118,39 @@ describe('PrintImageComponent', () => {
       expect(
         f.nativeElement.querySelector('img.fade-in').getAttribute('alt')
       ).toBe('Articulated dragon, image 2 of 3');
+    });
+
+    // Letterboxing is right where the whole photo matters (the carousel), and
+    // stays the default; a fixed-size gallery tile needs a crop instead, or a
+    // portrait photo reads as a thin strip with bars either side.
+    it('letterboxes by default', () => {
+      const f = renderWith({ imageData: 'https://example.com/ok.png' });
+
+      const img: HTMLImageElement = f.nativeElement.querySelector('img');
+      expect(getComputedStyle(img).objectFit).toBe('contain');
+    });
+
+    it('crops to fill its box when asked to cover', () => {
+      const f = renderWith({
+        imageData: 'https://example.com/ok.png',
+        fit: 'cover',
+      });
+
+      const img: HTMLImageElement = f.nativeElement.querySelector('img');
+      expect(getComputedStyle(img).objectFit).toBe('cover');
+    });
+
+    // A caller whose surrounding text already names the image (a gallery
+    // tile's title) marks it decorative with an empty alt.
+    it('keeps an empty alt rather than replacing it with the generic one', () => {
+      const f = renderWith({
+        imageData: 'https://example.com/ok.png',
+        alt: '',
+      });
+
+      expect(
+        f.nativeElement.querySelector('img.fade-in').getAttribute('alt')
+      ).toBe('');
     });
 
     it('falls back to a generic alt when none is supplied', () => {

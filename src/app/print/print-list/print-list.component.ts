@@ -1,9 +1,11 @@
 import { MediaMatcher } from '@angular/cdk/layout';
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   OnDestroy,
   OnInit,
+  PLATFORM_ID,
   computed,
   inject,
   signal,
@@ -62,7 +64,7 @@ import {
   DefaultLayoutAlignDirective,
   DefaultFlexDirective,
 } from '@ngbracket/ngx-layout/flex';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
@@ -84,6 +86,7 @@ import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { PrintListSkeletonComponent } from './print-list-skeleton/print-list-skeleton.component';
 import { PrintCardComponent } from '../print-card/print-card.component';
+import { PrintGalleryComponent } from './print-gallery/print-gallery.component';
 import {
   MatTable,
   MatColumnDef,
@@ -105,6 +108,12 @@ import { DecimalPipe } from '@angular/common';
 import { DurationPipe } from '../../shared/pipes/duration.pipe';
 import { LocaleDatePipe } from '../../shared/pipes/locale-date.pipe';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
+
+/**
+ * How All Prints lays out its page of rows: the table (cards on a phone), or
+ * the thumbnail gallery.
+ */
+export type PrintListLayout = 'table' | 'grid';
 
 export interface ColumnDefinition {
   key: string;
@@ -133,6 +142,7 @@ export function resetAddPrinterToastShown(): void {
     DefaultLayoutDirective,
     DefaultLayoutAlignDirective,
     MatButton,
+    MatIconButton,
     RouterLink,
     MatMenuTrigger,
     MatIcon,
@@ -159,6 +169,7 @@ export function resetAddPrinterToastShown(): void {
     MatProgressBar,
     PrintListSkeletonComponent,
     PrintCardComponent,
+    PrintGalleryComponent,
     MatTable,
     DefaultFlexDirective,
     MatSort,
@@ -196,6 +207,12 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private readonly loggingService = inject(LoggingService);
   private readonly gcodeParserService = inject(GcodeFileParserService);
   private readonly newPrintStoreService = inject(NewPrintStoreService);
+
+  /**
+   * Declared ahead of every field initializer that reads storage through
+   * readStorage(), since field initializers run in declaration order.
+   */
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly prints = signal<PrintSummary[]>([]);
   readonly printers = signal<PrinterSummary[]>([]);
@@ -332,8 +349,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private readonly VIEW_MODE_KEY = 'print_list_view_mode';
 
   private _viewMode: 'list' | 'grouped' =
-    (localStorage.getItem('print_list_view_mode') as 'list' | 'grouped') ??
-    'list';
+    this.readStorage(this.VIEW_MODE_KEY) === 'grouped' ? 'grouped' : 'list';
 
   get viewMode(): 'list' | 'grouped' {
     return this._viewMode;
@@ -342,7 +358,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   set viewMode(value: 'list' | 'grouped') {
     const previous = this._viewMode;
     this._viewMode = value;
-    localStorage.setItem(this.VIEW_MODE_KEY, value);
+    this.writeStorage(this.VIEW_MODE_KEY, value);
 
     // updateFilter() skips the flat fetch while grouped is selected, so the
     // rows still on hand are whatever the last list-view load produced — stale
@@ -352,6 +368,126 @@ export class PrintListComponent implements OnInit, OnDestroy {
     if (previous !== value && value === 'list') {
       this.updateFilter();
     }
+  }
+
+  private static readonly LAYOUT_KEY = 'print_list_layout';
+
+  /**
+   * Table or gallery. Read once, here, so the first render already picks the
+   * right branch. Remembered in this browser like the view mode and the table
+   * columns beside it; the table stays the default, which is also what the
+   * home and docs screenshots are captured from.
+   */
+  readonly listLayout = signal<PrintListLayout>(this.readStoredLayout());
+
+  /**
+   * The bulk selection as ids, for the gallery's checkboxes. Built here rather
+   * than by handing the gallery the service, so the gallery stays a plain
+   * presentational component.
+   */
+  readonly selectedIds = computed(
+    () => new Set(this.bulkActions.selectedPrints().map((print) => print.id))
+  );
+
+  /**
+   * Switching layout is a repaint of rows already on hand: the filters, sort,
+   * page and selection all carry over, and nothing is refetched.
+   */
+  public setListLayout(layout: PrintListLayout): void {
+    if (layout === this.listLayout()) {
+      return;
+    }
+
+    this.listLayout.set(layout);
+    this.loggingService.logEvent('PrintList_LayoutChanged', { layout });
+    this.writeStorage(PrintListComponent.LAYOUT_KEY, layout);
+  }
+
+  private readStoredLayout(): PrintListLayout {
+    return this.readStorage(PrintListComponent.LAYOUT_KEY) === 'grid'
+      ? 'grid'
+      : 'table';
+  }
+
+  /**
+   * Every browser-storage access on this page goes through these two. The
+   * values here (layout, view mode, columns, page size) are conveniences, so
+   * prerender, blocked site data or a full quota cost only the remembered
+   * choice, never the page.
+   */
+  private readStorage(key: string): string | null {
+    if (!this.isBrowser) {
+      return null;
+    }
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private writeStorage(key: string, value: string): void {
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // Not remembered this time; nothing else depends on it.
+    }
+  }
+
+  /** The sortable fields the gallery's sort control offers. */
+  public readonly gallerySortOptions: ReadonlyArray<{
+    column: PrintSummarySortColumn;
+    label: string;
+  }> = [
+    { column: PrintSummarySortColumn.StartDate, label: 'Start date' },
+    { column: PrintSummarySortColumn.Title, label: 'Title' },
+    { column: PrintSummarySortColumn.FilamentUsage, label: 'Total material' },
+  ];
+
+  /**
+   * The header id MatSort should show as active. The table is rebuilt on every
+   * layout switch (and across the handset breakpoint), and a MatSort that is
+   * not told otherwise starts with no active column, losing the arrow. Start
+   * Date has three headers, so the arrow goes on whichever one is displayed.
+   */
+  public activeSortHeaderId(): string {
+    if (this.sortColumn !== PrintSummarySortColumn.StartDate) {
+      return String(this.sortColumn);
+    }
+    const shown = Object.keys(this.startDateSortHeaderIds).find((key) =>
+      this.displayedColumns().includes(key)
+    );
+    return this.startDateSortHeaderIds[shown ?? 'start-date'];
+  }
+
+  public activeSortDirection(): 'asc' | 'desc' {
+    return this.sortDirection === SortDirection.Asc ? 'asc' : 'desc';
+  }
+
+  /** The gallery has no column headers, so it sorts from its own control. */
+  public setGallerySortColumn(column: PrintSummarySortColumn): void {
+    this.sortColumn = column;
+    this.applyGallerySort();
+  }
+
+  public toggleSortDirection(): void {
+    this.sortDirection =
+      this.sortDirection === SortDirection.Asc
+        ? SortDirection.Desc
+        : SortDirection.Asc;
+    this.applyGallerySort();
+  }
+
+  private applyGallerySort(): void {
+    this.loggingService.logEvent('PrintList_GallerySortChanged', {
+      sortColumn: this.sortColumn,
+      sortDirection: this.sortDirection,
+    });
+    this.currentPage.set(1);
+    this.updateFilter();
   }
 
   public readonly filterByStatus = signal<PrintStatus | null>(null);
@@ -682,10 +818,15 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     this.mobileQuery = this.media.matchMedia('(max-width: 800px)');
 
-    // Load display'd columns.
-    const columns = JSON.parse(
-      localStorage.getItem(this.PRINT_TABLE_DISPLAYED_COLUMNS)
-    );
+    // Load display'd columns. Unparseable JSON falls through to the defaults.
+    let columns: unknown = null;
+    try {
+      columns = JSON.parse(
+        this.readStorage(this.PRINT_TABLE_DISPLAYED_COLUMNS) ?? 'null'
+      );
+    } catch {
+      columns = null;
+    }
 
     // Error correction
     if (
@@ -718,7 +859,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         ]);
       }
 
-      localStorage.setItem(
+      this.writeStorage(
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
         JSON.stringify(this.displayedColumns())
       );
@@ -894,7 +1035,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.loadingIndicator.start();
 
-    localStorage.setItem('print_list_page_size', this.pageSize().toString(10));
+    this.writeStorage('print_list_page_size', this.pageSize().toString(10));
 
     return this.router
       .navigate(['.'], {
@@ -1038,7 +1179,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
         'more',
       ]);
 
-      localStorage.setItem(
+      this.writeStorage(
         this.PRINT_TABLE_DISPLAYED_COLUMNS,
         JSON.stringify(this.displayedColumns())
       );

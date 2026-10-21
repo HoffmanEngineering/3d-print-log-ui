@@ -29,6 +29,37 @@
   min-width: 0;
 }
 
+// Same track sizing and photo box as PrintGalleryComponent, so the real tiles
+// land exactly where these were.
+.skeleton-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
+  gap: 16px;
+
+  @media (min-width: 600px) {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+.skeleton-tile {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--mat-divider-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.skeleton-tile-photo {
+  aspect-ratio: 4 / 3;
+}
+
+.skeleton-tile-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
 .skeleton-table {
   display: flex;
   flex-direction: column;

@@ -6,7 +6,7 @@ navLabel: Home Assistant integration
 group: integrations
 order: 56
 mode: how-to
-updated: 2026-10-18
+updated: 2026-10-25
 related: [home-assistant-spoolman, klipper-spoolman, printlog-bridge, printers, api]
 ---
 
@@ -14,7 +14,7 @@ related: [home-assistant-spoolman, klipper-spoolman, printlog-bridge, printers, 
 
 ---
 
-The 3D Print Log integration for Home Assistant brings your printers, prints, loaded filament, maintenance and account totals into Home Assistant, so you can build dashboards and automations on them. You install it through [HACS](https://hacs.xyz), the Home Assistant Community Store. The source is on GitHub: [HoffmanEngineering/3d-print-log-homeassistant](https://github.com/HoffmanEngineering/3d-print-log-homeassistant).
+The 3D Print Log integration for Home Assistant brings your printers, prints, loaded filament, maintenance and account totals into Home Assistant, so you can build dashboards and automations on them. It's in the default [HACS](https://hacs.xyz) (Home Assistant Community Store) list, so you install it from there. The source is on GitHub: [HoffmanEngineering/3d-print-log-homeassistant](https://github.com/HoffmanEngineering/3d-print-log-homeassistant).
 
 Home Assistant only makes outgoing requests to your 3D Print Log account, so it works on a LAN-only setup with nothing exposed to the internet. Live printer state (temperatures, progress, camera) stays with your printer's own integration, such as Moonraker, OctoPrint, Bambu Lab or PrusaLink. This integration adds the records in 3D Print Log.
 
@@ -34,10 +34,15 @@ This integration creates no per-spool entities, so the two can run side by side 
 
 ### Install it {#install}
 
+1. In HACS, search for **3D Print Log** and open it. Or [open it in HACS directly](https://my.home-assistant.io/redirect/hacs_repository/?owner=HoffmanEngineering&repository=3d-print-log-homeassistant&category=integration) from your Home Assistant.
+2. Click **Download** (bottom right), then **Download** again in the dialog.
+3. Restart Home Assistant (**Settings > System**, then the power button at the top right). The integration can be added only after the restart.
+
+If the search doesn't find it (an older HACS, or a list that hasn't refreshed yet), add the repository by hand first:
+
 1. In HACS, open the menu (top right) and choose **Custom repositories**.
 2. Enter `https://github.com/HoffmanEngineering/3d-print-log-homeassistant`, choose the type **Integration**, click **Add** and close the dialog. This only adds the repository to HACS. Nothing is installed yet.
-3. Search HACS for **3D Print Log** and open it. Click **Download** (bottom right), then **Download** again in the dialog.
-4. Restart Home Assistant (**Settings > System**, then the power button at the top right). The integration can be added only after the restart.
+3. Continue with the search and download steps above.
 
 ### Create an API key {#api-key}
 
@@ -127,7 +132,7 @@ The diagnostics you can download from the integration's page redact the API key,
 
 ### Troubleshooting {#troubleshooting}
 
-- **3D Print Log isn't listed under Add integration.** Adding the custom repository doesn't install it. Open 3D Print Log in HACS, click **Download**, then restart Home Assistant. See [Install it](#install).
+- **3D Print Log isn't listed under Add integration.** Finding it in HACS doesn't install it. Open 3D Print Log in HACS, click **Download**, then restart Home Assistant. See [Install it](#install).
 - **Home Assistant says the key was rejected.** The key was revoked or mistyped. Create a new key as described in [Create an API key](#api-key), then follow the reauthentication prompt.
 - **Some entities are missing.** The extended entities need API v1.18.0 or later. If you run your own API, update it and they appear on their own.
 - **A print didn't fire an event.** Events come from comparing updates, so very short prints and prints that finish together can be missed. See [Events](#events).

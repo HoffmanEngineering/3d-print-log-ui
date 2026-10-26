@@ -96,7 +96,7 @@ import {
   Currency,
 } from 'src/app/core/resolvers/currencies.resolver';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
-import { isCordova } from 'src/app/core/utils/platform';
+import { isCordovaAndroid } from 'src/app/core/utils/platform';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import {
   ProjectService,
@@ -334,7 +334,11 @@ export class EditPrintDetailComponent
     wire: UserSettingType.Prints_LastSelectedWireMeasureType,
   };
 
-  public isCordova = isCordova;
+  /**
+   * Whether the upload buttons open the capture input. Android app only: there it is what
+   * adds Camera to the chooser, while on iOS capture drops the photo library.
+   */
+  public useCaptureInput = isCordovaAndroid;
 
   public readonly preferredFilamentUnit =
     signal<PrintFilamentSourceMeasurement>(

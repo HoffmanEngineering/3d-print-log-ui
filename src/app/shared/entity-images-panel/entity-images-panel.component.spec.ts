@@ -144,8 +144,9 @@ describe('EntityImagesPanelComponent', () => {
         .componentInstance.addClicked.emit();
     };
 
-    const setCordova = (value: boolean) => {
-      (component as unknown as { isCordova: boolean }).isCordova = value;
+    const setCaptureInput = (value: boolean) => {
+      (component as unknown as { useCaptureInput: boolean }).useCaptureInput =
+        value;
       fixture.detectChanges();
     };
 
@@ -156,8 +157,8 @@ describe('EntityImagesPanelComponent', () => {
       expect(camera.getAttribute('capture')).toBe('environment');
     });
 
-    it('opens the gallery input from both add affordances in the browser', () => {
-      setCordova(false);
+    it('opens the gallery input from both add affordances in the browser and the iOS app', () => {
+      setCaptureInput(false);
       const [gallery, camera] = fileInputs();
       spyOn(gallery, 'click');
       spyOn(camera, 'click');
@@ -169,8 +170,8 @@ describe('EntityImagesPanelComponent', () => {
       expect(camera.click).not.toHaveBeenCalled();
     });
 
-    it('opens the capture input from both add affordances inside the app', () => {
-      setCordova(true);
+    it('opens the capture input from both add affordances inside the Android app', () => {
+      setCaptureInput(true);
       const [gallery, camera] = fileInputs();
       spyOn(gallery, 'click');
       spyOn(camera, 'click');

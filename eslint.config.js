@@ -4,7 +4,8 @@ const angular = require('angular-eslint');
 
 module.exports = tseslint.config(
   {
-    ignores: ['projects/**/*'],
+    // cloudflare/ holds the SEO Worker, a separate package with its own tsconfig and tests.
+    ignores: ['projects/**/*', 'cloudflare/**'],
   },
   {
     // `max-len` is not enabled, but older code still carries disable comments

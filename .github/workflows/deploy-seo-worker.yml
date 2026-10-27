@@ -1,0 +1,92 @@
+name: Deploy SEO Worker
+
+# Deploys cloudflare/seo-worker to Cloudflare. Manual only: the Worker sits in front of
+# every public print, project and profile page, so a deploy is a deliberate act, not a side
+# effect of a merge or a UI release tag.
+#
+# NOT WORKING YET, on purpose. It needs, all added by hand (see cloudflare/seo-worker/README.md,
+# "Manual setup checklist"):
+#   - the 3dprintlog.com zone on Cloudflare,
+#   - secret CLOUDFLARE_API_TOKEN on the `production` environment: a token limited to
+#     "Workers Scripts: Edit" on the account (plus "Workers Routes: Edit" on the zone only
+#     if routes are ever moved into wrangler.jsonc),
+#   - variable CLOUDFLARE_ACCOUNT_ID (repository or `production` environment variable; an
+#     account id is not a secret).
+# Until then the deploy job fails at the wrangler step with an authentication error.
+#
+# Deploying uploads the Worker but does not route traffic to it: routes are managed in the
+# Cloudflare dashboard (see the README), so the first deploy is safe to run before them.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never two deploys at once; a second one waits instead of cancelling a half-finished upload.
+concurrency:
+  group: deploy-seo-worker
+  cancel-in-progress: false
+
+env:
+  WRANGLER_SEND_METRICS: 'false'
+
+jobs:
+  # Ungated, like the UI's build job: the tests run immediately, and the approval is
+  # requested only with a green build in hand.
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare/seo-worker
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: cloudflare/seo-worker/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test (in the Workers runtime)
+        run: npm test
+
+  # The only gated job. `environment: production` carries the required-reviewer rule, the
+  # same gate the UI's Static Web Apps deploy uses, and scopes the Cloudflare token to it.
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: cloudflare/seo-worker
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: cloudflare/seo-worker/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Uses the wrangler pinned in package-lock.json, so the deploy runs the same version
+      # the tests did.
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # A variable is enough (the id is not secret); a secret of the same name also works.
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy

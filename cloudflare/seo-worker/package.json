@@ -1,0 +1,25 @@
+{
+  "name": "printlog-seo-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker that writes per-page SEO metadata into the app shell for public print, project and profile pages.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8790 --var ORIGIN_URL:https://www.3dprintlog.com",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "fixture:shell": "node scripts/copy-shell-fixture.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.0",
+    "@cloudflare/workers-types": "5.20261010.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3",
+    "wrangler": "4.149.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

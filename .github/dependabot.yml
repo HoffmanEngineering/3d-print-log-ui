@@ -79,6 +79,23 @@ updates:
           - minor
           - patch
 
+  # The Cloudflare SEO Worker (cloudflare/seo-worker) has its own package.json and lockfile.
+  # Dev dependencies only, and every one of them is test or deploy tooling, so one grouped PR
+  # a week: CI runs the Worker suite in workerd, which is the whole check. Wrangler, the
+  # Vitest plugin and workers-types release almost daily, hence the group. No `run-e2e`:
+  # nothing here reaches the Angular app.
+  - package-ecosystem: npm
+    directory: '/cloudflare/seo-worker'
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 2
+    groups:
+      seo-worker:
+        patterns:
+          - '*'
+
   - package-ecosystem: github-actions
     directory: '/'
     schedule:

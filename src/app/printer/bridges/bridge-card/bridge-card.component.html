@@ -1,0 +1,409 @@
+<article class="bridge" [attr.aria-labelledby]="'bridge-' + bridge().id">
+  <header class="head">
+    <mat-icon class="bridge-icon" aria-hidden="true">router</mat-icon>
+    @if (!editing()) {
+      <div class="title">
+        <h2 [id]="'bridge-' + bridge().id" data-testid="bridge-name">
+          {{ name() }}
+        </h2>
+        @if (bridge().location) {
+          <span class="location" data-testid="bridge-location">{{
+            bridge().location
+          }}</span>
+        }
+      </div>
+      <span
+        class="status"
+        [class.stale]="stale()"
+        data-testid="bridge-status"
+        >{{ stale() ? 'Stale' : 'Online' }}</span
+      >
+      <button
+        mat-icon-button
+        type="button"
+        data-testid="bridge-edit"
+        [attr.aria-label]="'Rename ' + name()"
+        (click)="startEdit()"
+      >
+        <mat-icon>edit</mat-icon>
+      </button>
+    } @else {
+      <form
+        class="edit"
+        [formGroup]="form"
+        (ngSubmit)="saveEdit()"
+        data-testid="bridge-edit-form"
+      >
+        <h2 class="cdk-visually-hidden" [id]="'bridge-' + bridge().id">
+          {{ name() }}
+        </h2>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Name</mat-label>
+          <input
+            matInput
+            formControlName="name"
+            maxlength="100"
+            [placeholder]="bridge().deviceName ?? ''"
+            data-testid="bridge-edit-name"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Location</mat-label>
+          <input
+            matInput
+            formControlName="location"
+            maxlength="100"
+            placeholder="Workshop"
+            data-testid="bridge-edit-location"
+          />
+        </mat-form-field>
+        <div class="edit-actions">
+          <button mat-button type="button" (click)="editing.set(false)">
+            Cancel
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            data-testid="bridge-edit-save"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    }
+  </header>
+
+  @if (stale()) {
+    <p class="notice" data-testid="bridge-stale">
+      It hasn't checked in since
+      {{ bridge().lastSeenAt | localeDate: 'datetime' }}. Is it running?
+      <a routerLink="/docs/printlog-bridge-troubleshooting">Troubleshooting</a>
+    </p>
+  }
+
+  <dl class="facts">
+    <div>
+      <dt>Version</dt>
+      <dd data-testid="bridge-version">
+        {{ bridge().agentVersion || 'Unknown' }}
+        @if (bridge().updateAvailable && bridge().latestAgentVersion) {
+          <a
+            class="update"
+            data-testid="bridge-update"
+            routerLink="/docs/printlog-bridge"
+            fragment="update"
+            >{{ bridge().latestAgentVersion }} is available</a
+          >
+        }
+      </dd>
+    </div>
+    @if (bridge().mode || bridge().hostName) {
+      <div>
+        <dt>Runs</dt>
+        <dd>
+          {{ modeLabel() }}
+          @if (bridge().hostName) {
+            @if (bridge().mode) {
+              ·
+            }
+            on <span class="mono">{{ bridge().hostName }}</span>
+          }
+        </dd>
+      </div>
+    }
+    @if (bridge().networks?.length) {
+      <div>
+        <dt>Networks</dt>
+        <dd class="mono" data-testid="bridge-networks">
+          {{ bridge().networks!.join(', ') }}
+        </dd>
+      </div>
+    }
+    <div>
+      <dt>Last seen</dt>
+      <dd>
+        <time
+          [attr.datetime]="bridge().lastSeenAt"
+          [attr.title]="bridge().lastSeenAt | localeDate: 'datetime'"
+          >{{ bridge().lastSeenAt | humanize }}</time
+        >
+      </dd>
+    </div>
+    <div>
+      <dt>Printers</dt>
+      <dd data-testid="bridge-counts">
+        Watching {{ bridge().connectionCount }} ·
+        {{ bridge().printerCount }} connected here · found
+        {{ bridge().discoveredCount }}
+      </dd>
+    </div>
+  </dl>
+
+  @if (loadFailed()) {
+    <p class="notice" data-testid="bridge-load-failed">
+      We couldn't load this bridge's printers.
+      <button mat-button type="button" (click)="retry.emit()">Retry</button>
+    </p>
+  } @else {
+    <section class="group" aria-label="Connected in the app">
+      <h3>Connected in the app</h3>
+      @if (connected().length === 0) {
+        <p class="empty">
+          None yet. Connect a printer it found below, or add one by address.
+        </p>
+      } @else {
+        <ul class="rows">
+          @for (row of connected(); track row.entry.id) {
+            <li data-testid="bridge-connected-row">
+              <div class="row">
+                <mat-icon class="row-icon" aria-hidden="true"
+                  >check_circle</mat-icon
+                >
+                <div class="identity">
+                  <a
+                    class="name"
+                    [routerLink]="['/printers', row.entry.printerId]"
+                    >{{
+                      row.entry.printerName || 'Printer ' + row.entry.printerId
+                    }}</a
+                  >
+                  <span class="meta">
+                    {{ kindLabel(row.entry.kind) }} ·
+                    <span class="mono">{{ row.address }}</span>
+                    @if (row.found?.name) {
+                      · {{ row.found!.name }}
+                    }
+                    · app printer {{ row.entry.id }}
+                  </span>
+                  @if (row.inConfigToo) {
+                    <span class="meta warn" data-testid="bridge-config-wins">
+                      Its config file has this printer too, and the file wins.
+                    </span>
+                  }
+                </div>
+                <div class="actions">
+                  @if (row.snippet) {
+                    <button
+                      mat-button
+                      type="button"
+                      data-testid="bridge-snippet-toggle"
+                      [attr.aria-expanded]="openSnippet() === row.entry.id"
+                      (click)="toggleSnippet(row.entry.id)"
+                    >
+                      {{
+                        row.entry.kind === 'bambu' ? 'Access code' : 'Password'
+                      }}
+                    </button>
+                  }
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    data-testid="bridge-disconnect"
+                    [attr.aria-label]="
+                      'Disconnect ' + (row.entry.printerName || 'printer')
+                    "
+                    (click)="disconnect.emit(row.entry)"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              </div>
+              @if (row.snippet && openSnippet() === row.entry.id) {
+                <div class="snippet" data-testid="bridge-snippet">
+                  <p>
+                    Until the app can send it, add the printer's
+                    {{
+                      row.entry.kind === 'bambu' ? 'access code' : 'password'
+                    }}
+                    to the bridge's <code>printlog-bridge.cfg</code>:
+                  </p>
+                  <pre><code>{{ row.snippet }}</code></pre>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="group" aria-label="Found on your network">
+      <div class="group-head">
+        <h3>Found on your network</h3>
+        <div class="group-actions">
+          @if (scanning()) {
+            <span class="scanning" data-testid="bridge-scanning" role="status">
+              <mat-spinner diameter="16" aria-hidden="true" />
+              Scanning…
+            </span>
+          } @else {
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="bridge-scan"
+              [disabled]="stale()"
+              (click)="scan.emit()"
+            >
+              <mat-icon>radar</mat-icon>
+              Scan now
+            </button>
+          }
+          <button
+            mat-button
+            type="button"
+            data-testid="bridge-add-by-address"
+            (click)="connect.emit(null)"
+          >
+            <mat-icon>add</mat-icon>
+            Add by address
+          </button>
+        </div>
+      </div>
+      @if (newOnes().length === 0) {
+        <p class="empty" data-testid="bridge-nothing-new">
+          Nothing new. The bridge looks for printers every few minutes; Scan now
+          also checks every address on its networks.
+          <a routerLink="/docs/printlog-bridge-bridges" fragment="discovery"
+            >Not seeing a printer?</a
+          >
+        </p>
+      } @else {
+        <ul class="rows">
+          @for (row of newOnes(); track row.printer.id) {
+            <li class="row" data-testid="bridge-new-row">
+              <mat-icon class="row-icon new" aria-hidden="true"
+                >fiber_new</mat-icon
+              >
+              <div class="identity">
+                <span class="name">{{ row.title }}</span>
+                <span class="meta">
+                  {{ kindLabel(row.printer.kind) }}
+                  @if (row.printer.model && row.printer.name) {
+                    · {{ row.printer.model }}
+                  }
+                  · <span class="mono">{{ row.address }}</span>
+                </span>
+                @if (!row.connectable) {
+                  <span class="meta"
+                    >The bridge can't log this kind of printer yet.</span
+                  >
+                }
+              </div>
+              <div class="actions">
+                <button
+                  mat-button
+                  type="button"
+                  data-testid="bridge-ignore"
+                  [attr.aria-label]="'Ignore ' + row.title"
+                  (click)="ignore.emit(row.printer)"
+                >
+                  Ignore
+                </button>
+                @if (row.connectable) {
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    type="button"
+                    data-testid="bridge-connect"
+                    [attr.aria-label]="'Connect ' + row.title"
+                    (click)="connect.emit(row.printer)"
+                  >
+                    Connect
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if (configured().length) {
+      <section class="group" aria-label="In the bridge's config file">
+        <h3>In its config file</h3>
+        <p class="empty">
+          The bridge watches these from <code>printlog-bridge.cfg</code>. Change
+          them there.
+        </p>
+        <ul class="rows">
+          @for (row of configured(); track row.printer.id) {
+            <li class="row" data-testid="bridge-configured-row">
+              <mat-icon class="row-icon" aria-hidden="true"
+                >description</mat-icon
+              >
+              <div class="identity">
+                <span class="name">{{ row.title }}</span>
+                <span class="meta">
+                  {{ kindLabel(row.printer.kind) }} ·
+                  <span class="mono">{{ row.address }}</span> · Managed by the
+                  config file
+                </span>
+                @if (row.entry) {
+                  <span class="meta warn">
+                    Also connected in the app as app printer {{ row.entry.id }};
+                    the config file wins.
+                  </span>
+                }
+              </div>
+              @if (row.entry) {
+                <div class="actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    data-testid="bridge-remove-app-entry"
+                    (click)="disconnect.emit(row.entry)"
+                  >
+                    Remove the app's entry
+                  </button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (ignored().length) {
+      <details class="group ignored" data-testid="bridge-ignored">
+        <summary>Ignored ({{ ignored().length }})</summary>
+        <ul class="rows">
+          @for (row of ignored(); track row.printer.id) {
+            <li class="row" data-testid="bridge-ignored-row">
+              <mat-icon class="row-icon" aria-hidden="true"
+                >visibility_off</mat-icon
+              >
+              <div class="identity">
+                <span class="name">{{ row.title }}</span>
+                <span class="meta">
+                  {{ kindLabel(row.printer.kind) }} ·
+                  <span class="mono">{{ row.address }}</span>
+                </span>
+              </div>
+              <div class="actions">
+                <button
+                  mat-button
+                  type="button"
+                  data-testid="bridge-unignore"
+                  [attr.aria-label]="'Unignore ' + row.title"
+                  (click)="unignore.emit(row.printer)"
+                >
+                  Unignore
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      </details>
+    }
+  }
+
+  <p class="foot">
+    Paired {{ bridge().createdAt | localeDate }}. To unpair it, revoke it under
+    <a
+      routerLink="/settings"
+      fragment="paired-devices"
+      data-testid="bridge-revoke-link"
+      >Paired devices</a
+    >.
+  </p>
+</article>

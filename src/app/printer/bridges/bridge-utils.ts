@@ -136,3 +136,13 @@ export function formatAddress(host: string, port: number | null): string {
   }
   return host.includes(':') ? `[${host}]:${port}` : `${host}:${port}`;
 }
+
+/** What a bridge is called on screen. */
+export function bridgeLabel(bridge: Bridge): string {
+  return (
+    bridge.displayName?.trim() ||
+    bridge.deviceName?.trim() ||
+    bridge.hostName?.trim() ||
+    'printlog-bridge'
+  );
+}

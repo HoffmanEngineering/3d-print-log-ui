@@ -48,6 +48,7 @@ import {
   appPrinterSnippet,
   bridgeErrorCode,
   bridgeErrorMessage,
+  bridgeLabel,
   credentialName,
   formatAddress,
 } from '../bridge-utils';
@@ -345,16 +346,6 @@ export class BridgeConnectDialogComponent {
     const bridge = this.data.bridges.find((b) => b.id === bridgeId);
     return bridge ? bridgeLabel(bridge) : null;
   }
-}
-
-/** What a bridge is called on screen. */
-export function bridgeLabel(bridge: Bridge): string {
-  return (
-    bridge.displayName?.trim() ||
-    bridge.deviceName?.trim() ||
-    bridge.hostName?.trim() ||
-    'printlog-bridge'
-  );
 }
 
 const PHONE_QUERY = '(max-width: 599.98px)';

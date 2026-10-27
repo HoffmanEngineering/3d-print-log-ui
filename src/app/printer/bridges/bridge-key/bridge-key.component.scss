@@ -74,6 +74,10 @@ p {
     border-color: var(--app-error-text);
   }
 
+  .full + p {
+    margin-top: 12px;
+  }
+
   h3 {
     display: flex;
     align-items: center;

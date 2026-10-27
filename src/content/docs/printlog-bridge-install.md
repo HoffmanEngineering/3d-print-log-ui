@@ -24,7 +24,7 @@ In local mode, [printlog-bridge](/docs/printlog-bridge) runs on the printer's ow
 - **Python 3.9 or newer** on the printer's host. Raspberry Pi OS Bullseye and later have it.
 - **SSH access as the user Klipper runs as**, such as `pi`. The installer refuses to run as root, and uses `sudo` to install the service.
 - **The printer's number in 3D Print Log.** Open the printer from the [Printers](/printers) page. Its number is the end of the address: `42` in `https://www.3dprintlog.com/printers/42`.
-- **A personal API key**, from the [Personal API Keys](/api-keys) page. See [Connect to your account](#connect).
+- **Your phone, or a browser signed in to 3D Print Log**, to approve the bridge when you pair it. Or a personal API key from the [Personal API Keys](/api-keys) page. See [Connect to your account](#connect).
 
 ### Install {#install}
 
@@ -35,10 +35,10 @@ cd ~ && git clone https://github.com/HoffmanEngineering/printlog-bridge.git
 ./printlog-bridge/install.sh
 ```
 
-The installer asks for the API key (what you paste isn't shown) and the printer's number. Press Enter at either one to fill it in later. It then:
+The installer asks for an API key (what you paste isn't shown) and the printer's number. Press Enter at both to [pair the bridge](#connect) afterwards instead. It then:
 
 - makes a virtualenv in `~/printlog-bridge-env` and installs the bridge into it;
-- stores the API key in `~/.local/share/printlog-bridge/api_key`, readable only by you;
+- stores the API key, if you gave one, in `~/.local/share/printlog-bridge/api_key`, readable only by you;
 - writes `~/printer_data/config/printlog-bridge.cfg`, next to `printer.cfg`, unless you already have one;
 - installs and starts a `printlog-bridge` systemd service;
 - adds `printlog-bridge` to `~/printer_data/moonraker.asvc`, so Mainsail and Fluidd can restart it;
@@ -62,7 +62,24 @@ Running `install.sh` again is safe. Its options:
 
 ### Connect to your account {#connect}
 
-Until one-step pairing arrives (it's planned), the bridge signs in with a [personal API key](/docs/api#api-keys) and needs to know which printer in 3D Print Log its prints belong to.
+The bridge needs to sign in to your account and to know which printer in 3D Print Log its prints belong to. Pairing does both.
+
+1. Pair it, as yourself rather than with `sudo`:
+
+  ```
+  ~/printlog-bridge-env/bin/printlog-bridge pair
+  ```
+
+  It shows a QR code, an address and a short code. Scan the QR code with your phone (or open the address and type the code), sign in to 3D Print Log and approve the bridge. The bridge stores its device token in `~/.local/share/printlog-bridge/device_token`, readable only by you.
+
+2. For a printer without a `printer_id` in `printlog-bridge.cfg`, `pair` then lists your printers. Pick one, or create a new one filled in from the printer (its host name, kinematics and extruder count), and `pair` writes its number into the config. `--name` sets the name 3D Print Log shows for the bridge (`printlog-bridge on <host name>` by default).
+3. Restart printlog-bridge from the services menu in Mainsail or Fluidd, or run `sudo systemctl restart printlog-bridge`.
+
+The bridge then shows up under **Paired devices** in [Settings](/settings), where you can revoke it. [Signing in](/docs/printlog-bridge#account) says what its token can do and what revoking does. To pair it again, run `pair` again.
+
+#### With an API key instead {#api-key}
+
+For a scripted install, or when `pair` says pairing isn't available, the bridge signs in with a [personal API key](/docs/api#api-keys):
 
 1. Create a key on the [Personal API Keys](/api-keys) page and copy it. Give each bridge its own key, so you can revoke one without stopping the others.
 2. If you skipped the key during the install, store it now, and paste it when asked:
@@ -83,7 +100,7 @@ Until one-step pairing arrives (it's planned), the bridge signs in with a [perso
 
 4. Restart printlog-bridge from the services menu in Mainsail or Fluidd, or run `sudo systemctl restart printlog-bridge`.
 
-While its config needs fixing (no key, no `printer_id`), the service stops and waits for you rather than restarting itself.
+While its config needs fixing (no device token or key, no `printer_id`), the service stops and waits for you rather than restarting itself.
 
 <doc-callout kind="warning" heading="Keep the key out of printlog-bridge.cfg">
   <p>
@@ -95,18 +112,18 @@ While its config needs fixing (no key, no `printer_id`), the service stops and w
   </p>
 </doc-callout>
 
-The bridge looks for the key in this order: the `PRINTLOG_API_KEY` environment variable, then the key file, then `api_key` in the `[bridge]` section.
+The bridge looks for the key in this order: the `PRINTLOG_API_KEY` environment variable, then the key file, then `api_key` in the `[bridge]` section. Once the bridge is paired, its device token wins over any key: it never sends both.
 
 ### Check it {#check}
 
-When both the key and the printer's number were given, the installer checks the setup with `doctor` before it finishes. Run the same check any time:
+When both a key and the printer's number were given, the installer checks the setup with `doctor` before it finishes. Run the same check any time:
 
 ```
 ~/printlog-bridge-env/bin/printlog-bridge doctor
 ~/printlog-bridge-env/bin/printlog-bridge status
 ```
 
-`doctor` checks the config, the API key, the computer's clock and the printer, and says what to fix. `status` shows what the running bridge is doing. [Troubleshooting](/docs/printlog-bridge-troubleshooting#doctor) explains both.
+`doctor` checks the config, the device token or API key, the computer's clock and the printer, and says what to fix. `status` shows what the running bridge is doing. [Troubleshooting](/docs/printlog-bridge-troubleshooting#doctor) explains both.
 
 In 3D Print Log, the printer's **Edit Page** now lists the bridge under [Connections](/docs/printers#connections). Start a print and it shows up on your [Print List](/prints) as **Printing**.
 

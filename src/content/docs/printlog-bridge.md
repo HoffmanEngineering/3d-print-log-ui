@@ -126,13 +126,17 @@ Moonraker accepts one bridge per printer, so pick one mode for each printer. A s
 
 - A printer running Klipper and Moonraker, with Moonraker's job history (`[history]` in `moonraker.conf`). Most installs have it already, and the bridge tells you when it's missing.
 - A 3D Print Log account, with the printer added on the [Printers](/printers) page.
-- A [personal API key](/docs/api#api-keys) for the bridge to sign in with.
+- A way for the bridge to sign in: [pairing it](#account) with your phone, or a [personal API key](/docs/api#api-keys).
 - **Local mode:** Python 3.9 or newer on the printer's host (Raspberry Pi OS Bullseye or later), and a user that can use `sudo` to install the service.
 - **Remote mode:** Docker on a computer that is always on. The image is built for `linux/amd64`, `linux/arm64` and `linux/arm/v7`.
 
 #### Signing in {#account}
 
-The bridge signs in with a personal API key, which you create on the [Personal API Keys](/api-keys) page and store on the computer the bridge runs on. Each install page has a **Connect to your account** section with the steps. One-step pairing, where you confirm the printer in 3D Print Log instead of copying a key, is planned.
+Pair the bridge with your account: run `printlog-bridge pair` on the computer it runs on. In Docker, a container started without a key pairs by itself, in its log. The bridge shows a QR code, an address and a short code. Scan the QR code with your phone, or open the address and type the code, then sign in to 3D Print Log and approve the bridge. There's nothing to copy: the bridge keeps its own device token, which works only for what the bridge does (logging prints, its printers' spools and its heartbeat), not for the rest of your account. For each printer in its config without a `printer_id`, `pair` also lets you pick the printer in 3D Print Log, or create it.
+
+Each paired bridge is listed under **Paired devices** in the **Connected Agents** section of [Settings](/settings), with when it was paired, when it was last used and what it may do. **Revoke** one you no longer use, or one you've lost track of: it stops logging prints at once. Prints it finishes after that wait on the bridge, which says `re-pair needed` in its log, `status` and `doctor`. Run `printlog-bridge pair` again and it logs them and carries on. Pairing the same bridge again replaces its token instead of adding a second entry.
+
+Instead of pairing, the bridge can sign in with a [personal API key](/docs/api#api-keys), which you create on the [Personal API Keys](/api-keys) page and store with `printlog-bridge store-key`. Use one for a scripted install, or when `pair` says pairing isn't available. Each install page's **Connect to your account** section has the steps for both.
 
 #### Already using the Moonraker notifier? {#notifier}
 

@@ -24,6 +24,11 @@ import { PrintService } from '../../core/services/print.service';
 export class PrintImageComponent implements OnInit, OnChanges {
   readonly printId = input<number>();
   readonly imageId = input<number>();
+  /**
+   * The DTO's thumbnail path (relative to the API base), for a small slot. Absent or null
+   * (an API older than #281, or a print without an image) fetches the full image.
+   */
+  readonly thumbnailUrl = input<string | null | undefined>();
   readonly imageData = model<string>(null);
   readonly showDeleteOnHover = input(false);
   /** Meaningful alternative text; falls back to a generic description. */
@@ -39,11 +44,17 @@ export class PrintImageComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     if (this.imageData() === null && this.printId() > 0 && this.imageId() > 0) {
-      this.printService
-        .getPrintImage(this.printId(), this.imageId())
-        .subscribe((data) => {
-          this.imageData.set(data);
-        });
+      const thumbnail = this.thumbnailUrl();
+      const request = thumbnail
+        ? this.printService.getPrintImage(
+            this.printId(),
+            this.imageId(),
+            thumbnail
+          )
+        : this.printService.getPrintImage(this.printId(), this.imageId());
+      request.subscribe((data) => {
+        this.imageData.set(data);
+      });
     }
   }
 

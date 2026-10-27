@@ -20,6 +20,13 @@ import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
+import { Title } from '@angular/platform-browser';
+import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import {
+  SeoLookup,
+  SeoMetadata,
+  SeoService,
+} from 'src/app/core/services/seo.service';
 
 const mockProject: ProjectDetailDto = {
   id: 'abc-123',
@@ -629,5 +636,135 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       ['/projects', 'new-guid-123'],
       { replaceUrl: true }
     );
+  });
+});
+
+describe('ProjectDetailComponent — metadata from /seo', () => {
+  let fixture: ComponentFixture<ProjectDetailComponent>;
+  let metaTags: jasmine.SpyObj<MetaTagService>;
+  let seoService: jasmine.SpyObj<SeoService>;
+  let title: jasmine.SpyObj<Title>;
+
+  const projectSeo: SeoMetadata = {
+    type: 'project',
+    title: 'Voron 2.4 | 3D Print Log',
+    description: 'A printer, printed',
+    canonicalUrl: 'https://www.3dprintlog.com/projects/abc-123',
+    image: null,
+    author: null,
+    publishedAt: null,
+    updatedAt: null,
+    facts: [],
+  };
+
+  const create = async (
+    seo: () => ReturnType<SeoService['forProject']>,
+    id = 'abc-123'
+  ) => {
+    const projectService = jasmine.createSpyObj<ProjectService>(
+      'ProjectService',
+      ['getProjectById']
+    );
+    projectService.getProjectById.and.returnValue(of(mockProject));
+    const printService = jasmine.createSpyObj('PrintService', [
+      'getPrintSummaries',
+    ]);
+    printService.getPrintSummaries.and.returnValue(
+      of({
+        items: [],
+        paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
+      })
+    );
+    metaTags = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
+      'applySeoMetadata',
+      'preventIndexing',
+      'restoreShellRobots',
+    ]);
+    seoService = jasmine.createSpyObj<SeoService>('SeoService', ['forProject']);
+    seoService.forProject.and.callFake(seo);
+    title = jasmine.createSpyObj<Title>('Title', ['setTitle', 'getTitle']);
+
+    await TestBed.configureTestingModule({
+      imports: [ProjectDetailComponent, NoopAnimationsModule],
+      providers: [
+        { provide: ProjectService, useValue: projectService },
+        { provide: PrintService, useValue: printService },
+        { provide: AuthService, useValue: { userProfile$: of(null) } },
+        { provide: MetaTagService, useValue: metaTags },
+        { provide: SeoService, useValue: seoService },
+        { provide: Title, useValue: title },
+        { provide: ActivatedRoute, useValue: { snapshot: { params: { id } } } },
+        {
+          provide: MatDialog,
+          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+        },
+        {
+          provide: Router,
+          useValue: jasmine.createSpyObj('Router', ['navigate']),
+        },
+        {
+          provide: ADSENSE_TOKEN,
+          useValue: { adClient: 'ca-pub-0', adSlot: 0 },
+        },
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProjectDetailComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  it('asks the API for the project on the route', async () => {
+    await create(() => of<SeoLookup>({ kind: 'unavailable' }));
+    expect(seoService.forProject).toHaveBeenCalledWith('abc-123');
+  });
+
+  it('applies the /seo answer for a public project', async () => {
+    await create(() => of<SeoLookup>({ kind: 'ok', seo: projectSeo }));
+    expect(metaTags.applySeoMetadata).toHaveBeenCalledWith(projectSeo);
+  });
+
+  // The project's own title is set when it loads; the /seo answer must still win, whichever
+  // arrives first.
+  it('applies /seo after the project title when /seo answers first', async () => {
+    await create(() => of<SeoLookup>({ kind: 'ok', seo: projectSeo }));
+    expect(title.setTitle).toHaveBeenCalledWith(
+      'Test Voron Build | 3D Print Log'
+    );
+    expect(title.setTitle).toHaveBeenCalledBefore(metaTags.applySeoMetadata);
+    expect(metaTags.applySeoMetadata.calls.count()).toBeGreaterThan(0);
+  });
+
+  it('keeps the client-side title and marks the page noindex for a project that is not public', async () => {
+    await create(() => of<SeoLookup>({ kind: 'not-public' }));
+    expect(metaTags.preventIndexing).toHaveBeenCalled();
+    expect(metaTags.applySeoMetadata).not.toHaveBeenCalled();
+    expect(title.setTitle).toHaveBeenCalledWith(
+      'Test Voron Build | 3D Print Log'
+    );
+  });
+
+  it('keeps the client-side title, without noindex, when /seo is unavailable', async () => {
+    await create(() => of<SeoLookup>({ kind: 'unavailable' }));
+    expect(metaTags.preventIndexing).not.toHaveBeenCalled();
+    expect(metaTags.applySeoMetadata).not.toHaveBeenCalled();
+    expect(title.setTitle).toHaveBeenCalledWith(
+      'Test Voron Build | 3D Print Log'
+    );
+  });
+
+  it('does not ask for metadata while creating a project', async () => {
+    await create(() => of<SeoLookup>({ kind: 'unavailable' }), 'new');
+    expect(seoService.forProject).not.toHaveBeenCalled();
+  });
+
+  it("restores the shell's robots tags when the page is left", async () => {
+    await create(() => of<SeoLookup>({ kind: 'ok', seo: projectSeo }));
+    metaTags.restoreShellRobots.calls.reset();
+    fixture.destroy();
+    expect(metaTags.restoreShellRobots).toHaveBeenCalled();
   });
 });

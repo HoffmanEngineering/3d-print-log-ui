@@ -61,6 +61,26 @@ describe('ProjectImageComponent', () => {
     expect(mockProjectService.getProjectImage).toHaveBeenCalledWith('abc', 7);
   });
 
+  it('asks for the thumbnail when one is bound', async () => {
+    mockProjectService.getProjectImage.and.returnValue(
+      of('data:image/webp;base64,abc123')
+    );
+    fixture.componentRef.setInput('projectId', 'abc');
+    fixture.componentRef.setInput('imageId', 7);
+    fixture.componentRef.setInput(
+      'thumbnailUrl',
+      '/api/Projects/abc/images/7/thumbnail'
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(mockProjectService.getProjectImage).toHaveBeenCalledWith(
+      'abc',
+      7,
+      '/api/Projects/abc/images/7/thumbnail'
+    );
+  });
+
   it('shows folder icon when image fetch returns empty string', async () => {
     mockProjectService.getProjectImage.and.returnValue(of(''));
     fixture.componentRef.setInput('projectId', 'abc');

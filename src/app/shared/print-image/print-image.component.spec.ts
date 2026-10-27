@@ -49,6 +49,42 @@ describe('PrintImageComponent', () => {
     expect(img.getAttribute('src')).toBe('data:image/png;base64,AA');
   });
 
+  // List views pass the DTO's thumbnail path; an API older than #281 sends none, and the
+  // component then asks for the full image exactly as before.
+  it('asks for the thumbnail when one is bound', () => {
+    const printService = TestBed.inject(
+      PrintService
+    ) as jasmine.SpyObj<PrintService>;
+    printService.getPrintImage.and.returnValue(of('data:image/webp;base64,AA'));
+    const f = TestBed.createComponent(PrintImageComponent);
+    f.componentRef.setInput('printId', 3);
+    f.componentRef.setInput('imageId', 9);
+    f.componentRef.setInput('thumbnailUrl', '/api/Prints/3/image/9/thumbnail');
+
+    f.detectChanges();
+
+    expect(printService.getPrintImage).toHaveBeenCalledWith(
+      3,
+      9,
+      '/api/Prints/3/image/9/thumbnail'
+    );
+  });
+
+  it('asks for the full image when the thumbnail is null', () => {
+    const printService = TestBed.inject(
+      PrintService
+    ) as jasmine.SpyObj<PrintService>;
+    printService.getPrintImage.calls.reset();
+    const f = TestBed.createComponent(PrintImageComponent);
+    f.componentRef.setInput('printId', 3);
+    f.componentRef.setInput('imageId', 9);
+    f.componentRef.setInput('thumbnailUrl', null);
+
+    f.detectChanges();
+
+    expect(printService.getPrintImage).toHaveBeenCalledWith(3, 9);
+  });
+
   describe('with an image bound', () => {
     // A fresh fixture: the outer beforeEach already ran change detection with
     // no image, and flipping the @if branch afterwards trips NG0100.

@@ -153,4 +153,28 @@ describe('FilamentPrintRowComponent', () => {
     const el = render(printWith([usage(12_000)], { defaultPrintImageId: 0 }));
     expect(el.querySelector('.thumb-placeholder')).toBeTruthy();
   });
+
+  it('loads the thumbnail when the API reports one', () => {
+    render(
+      printWith([usage(12_000)], {
+        defaultPrintImageThumbnailUrl: '/api/Prints/7/image/3/thumbnail',
+      })
+    );
+    const printService = TestBed.inject(
+      PrintService
+    ) as jasmine.SpyObj<PrintService>;
+    expect(printService.getPrintImage).toHaveBeenCalledWith(
+      7,
+      3,
+      '/api/Prints/7/image/3/thumbnail'
+    );
+  });
+
+  it('loads the full image from an API without thumbnails', () => {
+    render(printWith([usage(12_000)]));
+    const printService = TestBed.inject(
+      PrintService
+    ) as jasmine.SpyObj<PrintService>;
+    expect(printService.getPrintImage).toHaveBeenCalledWith(7, 3);
+  });
 });

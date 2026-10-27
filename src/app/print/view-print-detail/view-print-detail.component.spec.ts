@@ -20,6 +20,11 @@ import { PrintService, PrintStatus } from 'src/app/core/services/print.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
+  SeoLookup,
+  SeoMetadata,
+  SeoService,
+} from 'src/app/core/services/seo.service';
+import {
   UserSetting,
   UserSettingService,
   UserSettingType,
@@ -44,6 +49,7 @@ describe('ViewPrintDetailComponent', () => {
   let printServiceSpy: jasmine.SpyObj<PrintService>;
   let loaderSpy: jasmine.SpyObj<PrintDetailLoaderService>;
   let userSettingServiceSpy: jasmine.SpyObj<UserSettingService>;
+  let seoServiceSpy: jasmine.SpyObj<SeoService>;
 
   const OWNER_ID = 7;
 
@@ -103,6 +109,8 @@ describe('ViewPrintDetailComponent', () => {
     /** Overrides the default "resolve immediately with `print`" loader. */
     load?: (printId: number) => Observable<PrintDetailWithUser>;
     settings?: (type: UserSettingType) => Promise<UserSetting | null>;
+    /** The /seo answer per print id. Defaults to `unavailable` (an API without /seo). */
+    seo?: (printId: number) => Observable<SeoLookup>;
   }
 
   const setup = async (options: SetupOptions): Promise<void> => {
@@ -114,6 +122,7 @@ describe('ViewPrintDetailComponent', () => {
       load = () =>
         of({ print, user: print ? ({ id: OWNER_ID } as any) : null }),
       settings = () => Promise.resolve(null),
+      seo = () => of<SeoLookup>({ kind: 'unavailable' }),
     } = options;
 
     TestBed.resetTestingModule();
@@ -146,7 +155,14 @@ describe('ViewPrintDetailComponent', () => {
     metaService = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
       'setTitle',
       'setSocialMediaTags',
+      'applySeoMetadata',
+      'preventIndexing',
+      'restoreShellRobots',
     ]);
+    seoServiceSpy = jasmine.createSpyObj<SeoService>('SeoService', [
+      'forPrint',
+    ]);
+    seoServiceSpy.forPrint.and.callFake(seo);
     userSettingServiceSpy = jasmine.createSpyObj<UserSettingService>(
       'UserSettingService',
       ['getCurrentUsersSettingByType']
@@ -199,6 +215,7 @@ describe('ViewPrintDetailComponent', () => {
           ]),
         },
         { provide: MetaTagService, useValue: metaService },
+        { provide: SeoService, useValue: seoServiceSpy },
         { provide: UserSettingService, useValue: userSettingServiceSpy },
         {
           provide: AuthService,
@@ -569,6 +586,120 @@ describe('ViewPrintDetailComponent', () => {
     expect(imageUrl).toContain('/image/2');
   });
 
+  it('describes the client-side fallback as an article', async () => {
+    await setup({ viewerId: null });
+    const options = metaService.setSocialMediaTags.calls.mostRecent().args[4];
+    expect(options?.type).toBe('article');
+  });
+
+  describe('metadata from /seo', () => {
+    const seoFor = (id: number): SeoMetadata => ({
+      type: 'print',
+      title: `Print ${id} | 3D Print Log`,
+      description: 'From the API',
+      canonicalUrl: `https://www.3dprintlog.com/prints/${id}`,
+      image: null,
+      author: null,
+      publishedAt: null,
+      updatedAt: null,
+      facts: [],
+    });
+
+    it('asks the API for the print on the route', async () => {
+      await setup({ viewerId: null });
+      expect(seoServiceSpy.forPrint).toHaveBeenCalledWith(1);
+    });
+
+    it('applies the /seo answer for a public print instead of the client-side tags', async () => {
+      await setup({
+        viewerId: null,
+        seo: (id) => of<SeoLookup>({ kind: 'ok', seo: seoFor(id) }),
+      });
+      expect(metaService.applySeoMetadata).toHaveBeenCalledWith(seoFor(1));
+      expect(metaService.setSocialMediaTags).not.toHaveBeenCalled();
+      expect(metaService.preventIndexing).not.toHaveBeenCalled();
+    });
+
+    // The /seo answer usually lands after the print: the client-side tags go up first, then
+    // the API's replace them, and a later print emission must not put the client's back.
+    it('replaces the client-side tags when /seo answers after the print', async () => {
+      const seo$ = new Subject<SeoLookup>();
+      await setup({ viewerId: null, seo: () => seo$ });
+      expect(metaService.setSocialMediaTags).toHaveBeenCalled();
+
+      metaService.setSocialMediaTags.calls.reset();
+      seo$.next({ kind: 'ok', seo: seoFor(1) });
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(metaService.applySeoMetadata).toHaveBeenCalledWith(seoFor(1));
+      expect(metaService.setSocialMediaTags).not.toHaveBeenCalled();
+    });
+
+    it('does not hold the page back while /seo is pending', async () => {
+      await setup({ viewerId: null, seo: () => new Subject<SeoLookup>() });
+      expect(component.print()).toEqual(basePrint);
+      expect(metaService.setTitle).toHaveBeenCalledWith(
+        'Test Print - 3D Print Log'
+      );
+    });
+
+    // An owner viewing their own private print: the API's 404 means "not public".
+    it('keeps the client-side tags and marks the page noindex on a not-public 404', async () => {
+      await setup({
+        viewerId: OWNER_ID,
+        seo: () => of<SeoLookup>({ kind: 'not-public' }),
+      });
+      expect(metaService.preventIndexing).toHaveBeenCalled();
+      expect(metaService.setSocialMediaTags).toHaveBeenCalled();
+      expect(metaService.applySeoMetadata).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the client-side tags, without noindex, when /seo is unavailable', async () => {
+      await setup({
+        viewerId: null,
+        seo: () => of<SeoLookup>({ kind: 'unavailable' }),
+      });
+      expect(metaService.setSocialMediaTags).toHaveBeenCalled();
+      expect(metaService.applySeoMetadata).not.toHaveBeenCalled();
+      expect(metaService.preventIndexing).not.toHaveBeenCalled();
+    });
+
+    it('follows the route to the next print', async () => {
+      const params$ = new BehaviorSubject<ParamMap>(paramMapFor(1));
+      await setup({
+        viewerId: null,
+        paramMap$: params$,
+        load: (printId) =>
+          of({ print: { ...basePrint, id: printId }, user: null }),
+        seo: (id) =>
+          of<SeoLookup>(
+            id === 1 ? { kind: 'ok', seo: seoFor(1) } : { kind: 'not-public' }
+          ),
+      });
+      expect(metaService.applySeoMetadata).toHaveBeenCalledWith(seoFor(1));
+
+      params$.next(paramMapFor(2));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(seoServiceSpy.forPrint).toHaveBeenCalledWith(2);
+      expect(metaService.preventIndexing).toHaveBeenCalled();
+      expect(metaService.setSocialMediaTags).toHaveBeenCalled();
+    });
+
+    // Leaving a public page for an app page must not leave that page indexable.
+    it("restores the shell's robots tags when the page is left", async () => {
+      await setup({
+        viewerId: null,
+        seo: (id) => of<SeoLookup>({ kind: 'ok', seo: seoFor(id) }),
+      });
+      metaService.restoreShellRobots.calls.reset();
+      fixture.destroy();
+      expect(metaService.restoreShellRobots).toHaveBeenCalled();
+    });
+  });
+
   // This component is OnPush and the POST response lands in its own tick with
   // nothing marked dirty, so mutating the fetched array did not repaint.
   it('renders a comment that arrives after the initial render', async () => {
@@ -603,6 +734,32 @@ describe('ViewPrintDetailComponent', () => {
       },
     });
     expect(component.printImages().map((i) => i.id)).toEqual([1, 2, 3]);
+  });
+
+  // The thumbnail strip prefers thumbnailUrl; the carousel keeps the full image.
+  it('gives the strip absolute thumbnail URLs when the API reports them', async () => {
+    await setup({
+      viewerId: null,
+      print: {
+        ...basePrint,
+        images: [
+          {
+            id: 1,
+            isDefault: true,
+            displayOrder: 0,
+            thumbnailUrl: '/api/Prints/1/image/1/thumbnail',
+          },
+          { id: 2, isDefault: false, displayOrder: 1 },
+        ],
+      },
+    });
+    const [withThumb, withoutThumb] = component.printImages();
+    expect(withThumb.url).toMatch(/\/api\/Prints\/1\/image\/1$/);
+    expect(withThumb.thumbnailUrl).toMatch(
+      /^https?:\/\/.+\/api\/Prints\/1\/image\/1\/thumbnail$/
+    );
+    // An older API: no thumbnail, so the strip uses the full image as before.
+    expect(withoutThumb.thumbnailUrl).toBeUndefined();
   });
 
   // These four settings used to be route resolvers. The component now loads

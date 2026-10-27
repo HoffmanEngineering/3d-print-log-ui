@@ -16,6 +16,11 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
+  SeoLookup,
+  SeoMetadata,
+  SeoService,
+} from 'src/app/core/services/seo.service';
+import {
   ProfileViewStatus,
   UserDetailDto,
   UserService,
@@ -30,6 +35,7 @@ describe('UserProfileComponent', () => {
   let userService: jasmine.SpyObj<UserService>;
   let authService: jasmine.SpyObj<AuthService>;
   let metaTags: jasmine.SpyObj<MetaTagService>;
+  let seoService: jasmine.SpyObj<SeoService>;
   let toastr: jasmine.SpyObj<ToastrService>;
 
   const user = {
@@ -40,6 +46,30 @@ describe('UserProfileComponent', () => {
     coverPicture: 'https://img/cover.png',
     viewStatus: ProfileViewStatus.Public,
   } as UserDetailDto;
+
+  const profileSeo: SeoMetadata = {
+    type: 'profile',
+    title: 'Ada | 3D Print Log',
+    description: 'Prints things',
+    canonicalUrl: 'https://www.3dprintlog.com/users/12',
+    image: null,
+    author: { name: 'Ada', url: 'https://www.3dprintlog.com/users/12' },
+    publishedAt: null,
+    updatedAt: null,
+    facts: [],
+  };
+
+  /** Creates the component; `seo` is the /seo answer (default: an API without /seo). */
+  const create = (
+    seo: () => ReturnType<SeoService['forUser']> = () =>
+      of<SeoLookup>({ kind: 'unavailable' })
+  ) => {
+    seoService.forUser.and.callFake(seo);
+    TestBed.overrideTemplate(UserProfileComponent, '');
+    fixture = TestBed.createComponent(UserProfileComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
 
   beforeEach(() => {
     userService = jasmine.createSpyObj<UserService>('UserService', [
@@ -58,7 +88,11 @@ describe('UserProfileComponent', () => {
     metaTags = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
       'setTitle',
       'setSocialMediaTags',
+      'applySeoMetadata',
+      'preventIndexing',
+      'restoreShellRobots',
     ]);
+    seoService = jasmine.createSpyObj<SeoService>('SeoService', ['forUser']);
     toastr = jasmine.createSpyObj<ToastrService>('ToastrService', ['error']);
 
     TestBed.configureTestingModule({
@@ -72,87 +106,134 @@ describe('UserProfileComponent', () => {
         { provide: UserService, useValue: userService },
         { provide: ToastrService, useValue: toastr },
         { provide: MetaTagService, useValue: metaTags },
+        { provide: SeoService, useValue: seoService },
         {
           provide: LoggingService,
           useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
         },
       ],
     });
-    TestBed.overrideTemplate(UserProfileComponent, '');
-    fixture = TestBed.createComponent(UserProfileComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
-  it('titles the page and its share card after the user', () => {
-    expect(metaTags.setTitle).toHaveBeenCalledWith(
-      'Ada Profile - 3D Print Log'
-    );
-    expect(metaTags.setSocialMediaTags).toHaveBeenCalledWith(
-      `${location.origin}/users/12`,
-      'Ada Profile - 3D Print Log',
-      "View Ada's 3D prints and projects on 3DPrintLog.com",
-      'https://img/ada.png'
-    );
-  });
+  describe('with the default setup', () => {
+    beforeEach(() => create());
 
-  it('saves a new profile visibility', () => {
-    component.saveProfileVisibility(ProfileViewStatus.Private);
-
-    expect(userService.updateCurrentUserDetail).toHaveBeenCalledOnceWith({
-      ...user,
-      viewStatus: ProfileViewStatus.Private,
+    it('titles the page and its share card after the user', () => {
+      expect(metaTags.setTitle).toHaveBeenCalledWith(
+        'Ada Profile - 3D Print Log'
+      );
+      expect(metaTags.setSocialMediaTags).toHaveBeenCalledWith(
+        `${location.origin}/users/12`,
+        'Ada Profile - 3D Print Log',
+        "View Ada's 3D prints and projects on 3DPrintLog.com",
+        'https://img/ada.png',
+        { type: 'profile' }
+      );
     });
-    expect(component.viewStatus()).toBe(ProfileViewStatus.Private);
+
+    it('saves a new profile visibility', () => {
+      component.saveProfileVisibility(ProfileViewStatus.Private);
+
+      expect(userService.updateCurrentUserDetail).toHaveBeenCalledOnceWith({
+        ...user,
+        viewStatus: ProfileViewStatus.Private,
+      });
+      expect(component.viewStatus()).toBe(ProfileViewStatus.Private);
+    });
+
+    it('saves a trimmed bio and leaves edit mode', () => {
+      component.startEditingDescription();
+      component.bio.set('  New bio  ');
+
+      component.saveDescription();
+
+      expect(
+        userService.updateCurrentUserDetail.calls.mostRecent().args[0].bio
+      ).toBe('New bio');
+      expect(component.userDetail().bio).toBe('New bio');
+      expect(component.isEditingDescription()).toBeFalse();
+    });
+
+    it('restores the saved bio when editing is cancelled', () => {
+      component.startEditingDescription();
+      component.bio.set('Draft');
+
+      component.cancelEditingDescription();
+
+      expect(component.bio()).toBe('Prints things');
+      expect(component.isEditingDescription()).toBeFalse();
+    });
+
+    it('refuses a cover photo that is not an image', () => {
+      const file = new File(['x'], 'notes.txt', { type: 'text/plain' });
+
+      component.addCoverPhoto({ target: { files: [file] } });
+
+      expect(toastr.error).toHaveBeenCalled();
+      expect(userService.updateCurrentUserCoverPicture).not.toHaveBeenCalled();
+    });
+
+    it('removes the cover photo everywhere it is shown', () => {
+      userService.removeCurrentUserCoverPicture.and.returnValue(of(undefined));
+
+      component.removeCoverPhoto();
+
+      expect(component.userDetail().coverPicture).toBeNull();
+      expect(
+        authService.updateCurrentUserCoverPicture
+      ).toHaveBeenCalledOnceWith(null);
+    });
+
+    it('stops listening to the signed-in user once destroyed', () => {
+      fixture.destroy();
+
+      expect(userProfile$.observed).toBeFalse();
+    });
   });
 
-  it('saves a trimmed bio and leaves edit mode', () => {
-    component.startEditingDescription();
-    component.bio.set('  New bio  ');
+  describe('metadata from /seo', () => {
+    it("asks the API for the profile's metadata", () => {
+      create();
+      expect(seoService.forUser).toHaveBeenCalledWith(12);
+    });
 
-    component.saveDescription();
+    it('applies the /seo answer for a public profile', () => {
+      create(() => of<SeoLookup>({ kind: 'ok', seo: profileSeo }));
+      expect(metaTags.applySeoMetadata).toHaveBeenCalledWith(profileSeo);
+      expect(metaTags.setSocialMediaTags).not.toHaveBeenCalled();
+    });
 
-    expect(
-      userService.updateCurrentUserDetail.calls.mostRecent().args[0].bio
-    ).toBe('New bio');
-    expect(component.userDetail().bio).toBe('New bio');
-    expect(component.isEditingDescription()).toBeFalse();
-  });
+    it('replaces the client-side tags when /seo answers later', () => {
+      const seo$ = new Subject<SeoLookup>();
+      create(() => seo$);
+      expect(metaTags.setSocialMediaTags).toHaveBeenCalled();
 
-  it('restores the saved bio when editing is cancelled', () => {
-    component.startEditingDescription();
-    component.bio.set('Draft');
+      seo$.next({ kind: 'ok', seo: profileSeo });
+      fixture.detectChanges();
 
-    component.cancelEditingDescription();
+      expect(metaTags.applySeoMetadata).toHaveBeenCalledWith(profileSeo);
+    });
 
-    expect(component.bio()).toBe('Prints things');
-    expect(component.isEditingDescription()).toBeFalse();
-  });
+    it('keeps the client-side tags and marks the page noindex for a profile that is not public', () => {
+      create(() => of<SeoLookup>({ kind: 'not-public' }));
+      expect(metaTags.preventIndexing).toHaveBeenCalled();
+      expect(metaTags.setSocialMediaTags).toHaveBeenCalled();
+      expect(metaTags.applySeoMetadata).not.toHaveBeenCalled();
+    });
 
-  it('refuses a cover photo that is not an image', () => {
-    const file = new File(['x'], 'notes.txt', { type: 'text/plain' });
+    it('falls back to the client-side tags when /seo is unavailable', () => {
+      create(() => of<SeoLookup>({ kind: 'unavailable' }));
+      expect(metaTags.setSocialMediaTags).toHaveBeenCalled();
+      expect(metaTags.preventIndexing).not.toHaveBeenCalled();
+      expect(metaTags.applySeoMetadata).not.toHaveBeenCalled();
+    });
 
-    component.addCoverPhoto({ target: { files: [file] } });
-
-    expect(toastr.error).toHaveBeenCalled();
-    expect(userService.updateCurrentUserCoverPicture).not.toHaveBeenCalled();
-  });
-
-  it('removes the cover photo everywhere it is shown', () => {
-    userService.removeCurrentUserCoverPicture.and.returnValue(of(undefined));
-
-    component.removeCoverPhoto();
-
-    expect(component.userDetail().coverPicture).toBeNull();
-    expect(authService.updateCurrentUserCoverPicture).toHaveBeenCalledOnceWith(
-      null
-    );
-  });
-
-  it('stops listening to the signed-in user once destroyed', () => {
-    fixture.destroy();
-
-    expect(userProfile$.observed).toBeFalse();
+    it("restores the shell's robots tags when the page is left", () => {
+      create(() => of<SeoLookup>({ kind: 'ok', seo: profileSeo }));
+      metaTags.restoreShellRobots.calls.reset();
+      fixture.destroy();
+      expect(metaTags.restoreShellRobots).toHaveBeenCalled();
+    });
   });
 });
 
@@ -204,7 +285,14 @@ describe('UserProfileComponent rendering', () => {
           useValue: jasmine.createSpyObj('MetaTagService', [
             'setTitle',
             'setSocialMediaTags',
+            'applySeoMetadata',
+            'preventIndexing',
+            'restoreShellRobots',
           ]),
+        },
+        {
+          provide: SeoService,
+          useValue: { forUser: () => of({ kind: 'unavailable' }) },
         },
         {
           provide: LoggingService,

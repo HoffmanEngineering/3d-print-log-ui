@@ -5,8 +5,10 @@ import {
   ElementRef,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -54,6 +56,12 @@ import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { environment } from 'src/environments/environment';
+import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import {
+  SEO_PENDING,
+  SeoLookupState,
+  SeoService,
+} from 'src/app/core/services/seo.service';
 
 /**
  * The message to show for a failed project save.
@@ -98,6 +106,8 @@ export class ProjectDetailComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly titleService = inject(Title);
+  private readonly metaTagService = inject(MetaTagService);
+  private readonly seoService = inject(SeoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly loggingService = inject(LoggingService);
   private readonly http = inject(HttpClient);
@@ -127,6 +137,36 @@ export class ProjectDetailComponent implements OnInit {
   private defaultImageIdOnLoad: number | null = null;
 
   private readonly currentUserId = signal<number | null>(null);
+
+  /** The API's `/seo` answer for this project; never waited on. */
+  private readonly seoLookup = signal<SeoLookupState>(SEO_PENDING);
+
+  /**
+   * Flips once, when the project first loads, which is when its own title goes up. The /seo
+   * answer is applied again then, so it wins whichever of the two arrives first; later saves
+   * (which also set the project) leave the tags alone.
+   */
+  private readonly projectLoaded = computed(() => !!this.project()?.id);
+
+  constructor() {
+    effect(() => {
+      const seo = this.seoLookup();
+      this.projectLoaded();
+      untracked(() => {
+        if (seo.kind === 'ok') {
+          this.metaTagService.applySeoMetadata(seo.seo);
+        } else if (seo.kind === 'not-public') {
+          // Private, unlisted or missing: an owner viewing their own private project.
+          this.metaTagService.preventIndexing();
+        } else {
+          this.metaTagService.restoreShellRobots();
+        }
+      });
+    });
+
+    // A public project lifts the shell's noindex; the next page, reached in-app, gets it back.
+    this.destroyRef.onDestroy(() => this.metaTagService.restoreShellRobots());
+  }
 
   readonly isOwner = computed(() => {
     const p = this.project();
@@ -211,6 +251,11 @@ export class ProjectDetailComponent implements OnInit {
       this.loading.set(false);
       this.isEditing.set(true);
     } else {
+      this.seoService
+        .forProject(id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((lookup) => this.seoLookup.set(lookup));
+
       this.projectService
         .getProjectById(id)
         .pipe(takeUntilDestroyed(this.destroyRef))

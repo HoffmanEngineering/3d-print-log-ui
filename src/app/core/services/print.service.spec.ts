@@ -367,4 +367,56 @@ describe('PrintService', () => {
       expect(saved?.id).toBe(9);
     });
   });
+
+  describe('getPrintImage', () => {
+    let httpMock: HttpTestingController;
+    const api = environment.printLogApiUrl;
+    const png = () => new Blob(['x'], { type: 'image/png' });
+
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => httpMock.verify());
+
+    const read = (source: ReturnType<PrintService['getPrintImage']>) =>
+      new Promise<string>((resolve) => source.subscribe(resolve));
+
+    it('fetches the full image when no thumbnail is given', async () => {
+      const result = read(service.getPrintImage(3, 9));
+      const req = httpMock.expectOne(`${api}/api/Prints/3/image/9`);
+      expect(req.request.headers.get('allow-anonymous-request')).toBe('true');
+      req.flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+
+    it('fetches the thumbnail when the API reported one', async () => {
+      const result = read(
+        service.getPrintImage(3, 9, '/api/Prints/3/image/9/thumbnail')
+      );
+      const req = httpMock.expectOne(`${api}/api/Prints/3/image/9/thumbnail`);
+      expect(req.request.headers.get('allow-anonymous-request')).toBe('true');
+      req.flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+
+    it('falls back to the full image when the thumbnail fails', async () => {
+      const result = read(
+        service.getPrintImage(3, 9, '/api/Prints/3/image/9/thumbnail')
+      );
+      httpMock
+        .expectOne(`${api}/api/Prints/3/image/9/thumbnail`)
+        .flush(null, { status: 404, statusText: 'Not Found' });
+      httpMock.expectOne(`${api}/api/Prints/3/image/9`).flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+
+    it('yields an empty string when the image cannot be loaded', async () => {
+      const result = read(service.getPrintImage(3, 9));
+      httpMock
+        .expectOne(`${api}/api/Prints/3/image/9`)
+        .flush(null, { status: 404, statusText: 'Not Found' });
+      expect(await result).toBe('');
+    });
+  });
 });

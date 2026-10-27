@@ -195,6 +195,7 @@ export interface PrintFilamentUsageFormValue {
   filament: FilamentSummary | null;
   notes: string | null;
   slot: number | null;
+  actualIsEstimate: boolean;
 }
 
 export type FilamentUsageFormGroup = FormGroup<{
@@ -210,6 +211,7 @@ export type FilamentUsageFormGroup = FormGroup<{
   filament: FormControl<FilamentSummary | null>;
   notes: FormControl<string | null>;
   slot: FormControl<number | null>;
+  actualIsEstimate: FormControl<boolean>;
 }>;
 
 export interface PrintFormValue {
@@ -1095,7 +1097,8 @@ export class EditPrintDetailComponent
           pf.estimatedSource,
           pf.filament,
           pf.notes,
-          pf.slot ?? null
+          pf.slot ?? null,
+          pf.actualIsEstimate === true
         );
 
         printFilamentUsageArray.push(newFormGroup);
@@ -1215,7 +1218,10 @@ export class EditPrintDetailComponent
     filament: FilamentSummary | null,
     notes: string | null,
     // Not editable here; carried so a save does not drop the tool a connector recorded.
-    slot: number | null = null
+    slot: number | null = null,
+    // Not editable either; carried so a save does not turn a connector's estimate into a
+    // measurement (api#282). buildPrintPatch clears it when the actual figure is edited.
+    actualIsEstimate = false
   ): FilamentUsageFormGroup {
     return this.formBuilder.group({
       id: this.formBuilder.control(id, { nonNullable: true }),
@@ -1238,7 +1244,27 @@ export class EditPrintDetailComponent
       filament: this.formBuilder.control<FilamentSummary | null>(filament),
       notes: this.formBuilder.control<string | null>(notes),
       slot: this.formBuilder.control<number | null>(slot),
+      actualIsEstimate: this.formBuilder.control(actualIsEstimate, {
+        nonNullable: true,
+      }),
     });
+  }
+
+  /**
+   * A connector logged this row's actual figure as the slicer's estimate (api#282), and the user
+   * has not typed over it yet. Once they do, the save sends it as a measurement.
+   */
+  public showsEstimateHint(
+    printFilamentGroup: FilamentUsageFormGroup
+  ): boolean {
+    const controls = printFilamentGroup.controls;
+    return (
+      controls.actualIsEstimate.value === true &&
+      controls.amountG.pristine &&
+      controls.lengthInM.pristine &&
+      controls.volumeMl.pristine &&
+      controls.source.pristine
+    );
   }
 
   public getEstimatedPrice(printFilamentGroup: FilamentUsageFormGroup): string {
@@ -2312,6 +2338,7 @@ export class EditPrintDetailComponent
         source: printFilament.get('source').value,
         notes: printFilament.get('notes').value,
         slot: printFilament.get('slot')?.value ?? null,
+        actualIsEstimate: printFilament.get('actualIsEstimate')?.value === true,
       };
 
       return newPf;

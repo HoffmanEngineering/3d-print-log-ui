@@ -1083,6 +1083,59 @@ describe('EditPrintDetailComponent', () => {
       expect(patch.filamentUsage![0].estimatedAmountMg).toBe(20_000);
     });
 
+    // api#282: PATCH resets actualIsEstimate on every row unless the client sends it back.
+    describe('a row a bridge logged as an estimate', () => {
+      const bridgePrint = {
+        ...existingPrint,
+        filamentUsage: [
+          { ...usageRow, amountMg: 18_000, slot: 1, actualIsEstimate: true },
+          {
+            ...usageRow,
+            id: 'a3f1c2d4-0000-4000-8000-000000000002',
+            amountMg: 4_000,
+            slot: 2,
+            actualIsEstimate: true,
+          },
+        ],
+      } as unknown as PrintDetail;
+
+      it('keeps the flag on the rows the user did not change', () => {
+        const form = openEditor(bridgePrint);
+
+        form.filamentUsage.at(1).get('notes')!.setValue('tray B1');
+        form.onSubmit();
+
+        const [, patch] = printService.patchPrint.calls.mostRecent().args;
+        expect(patch.filamentUsage!.map((r) => r.actualIsEstimate)).toEqual([
+          true,
+          true,
+        ]);
+      });
+
+      it('sends the row whose actual amount the user typed as measured', () => {
+        const form = openEditor(bridgePrint);
+
+        form.filamentUsage.at(0).get('amountG')!.setValue(17.25);
+        form.onSubmit();
+
+        const [, patch] = printService.patchPrint.calls.mostRecent().args;
+        expect(patch.filamentUsage!.map((r) => r.actualIsEstimate)).toEqual([
+          false,
+          true,
+        ]);
+      });
+
+      it('says the actual amount is an estimate', () => {
+        openEditor(bridgePrint);
+
+        const hints = (editor!.nativeElement as HTMLElement).querySelectorAll(
+          '[data-testid="usage-estimate-hint"]'
+        );
+        expect(hints.length).toBe(2);
+        expect(hints[0].textContent).toContain('estimate');
+      });
+    });
+
     // A print from before usage rows: the form shows its legacy fields as one row. Sending
     // filamentUsage (the rows, or [] once the row is deleted) is what makes the API clear the
     // legacy fields, so the view does not show both and a deleted row does not come back.

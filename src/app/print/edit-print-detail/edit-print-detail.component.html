@@ -966,6 +966,15 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
+                      @if (showsEstimateHint($any(printFilament))) {
+                        <span
+                          class="preferred-unit-hint"
+                          data-testid="usage-estimate-hint"
+                          >This amount is the slicer's estimate, logged by
+                          printlog-bridge. Enter what you weighed or measured to
+                          replace it.</span
+                        >
+                      }
                       @if (
                         getPreferredUnitSecondaryDisplay(
                           $any(printFilament),

@@ -1,6 +1,6 @@
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
-import { CORDOVA_USER_AGENT } from '../utils/platform';
+import { CORDOVA_IOS_USER_AGENT, CORDOVA_USER_AGENT } from '../utils/platform';
 import {
   NfcStatus,
   PrintLogNativeBridge,
@@ -616,5 +616,110 @@ describe('TagReaderService', () => {
     installBridge(nfc);
     await create().openSettings();
     expect(nfc.openNfcSettings).toHaveBeenCalled();
+  });
+
+  describe('in session mode (iOS)', () => {
+    let scanTag: jasmine.Spy;
+
+    /** The Android bridge plus what the iOS shell adds: session mode and scanTag. */
+    function installSessionBridge(nfc: FakeNfcBridge): void {
+      Object.defineProperty(navigator, 'userAgent', {
+        value: CORDOVA_IOS_USER_AGENT,
+        configurable: true,
+      });
+      installBridge(nfc);
+      scanTag = jasmine.createSpy('scanTag').and.resolveTo('ready');
+      Object.assign(window.PrintLogNative!, {
+        platform: 'ios',
+        tagReadingMode: 'session',
+        scanTag,
+      });
+    }
+
+    it('reads on demand only on a session-mode shell', async () => {
+      pretendCordova();
+      installBridge(new FakeNfcBridge());
+      const passive = create();
+      await flush();
+      expect(passive.scansOnDemand()).toBeFalse();
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: LoggingService, useValue: logging },
+          { provide: FilamentService, useValue: filaments },
+        ],
+      });
+      installSessionBridge(new FakeNfcBridge());
+      const session = create();
+      await flush();
+      expect(session.scansOnDemand()).toBeTrue();
+    });
+
+    it('opens the scan sheet only after native has its session, however long the config takes', async () => {
+      const nfc = new FakeNfcBridge();
+      installSessionBridge(nfc);
+      const config$ = new Subject<ReaderConfig>();
+      filaments.getReaderConfig.and.returnValue(config$);
+      const service = create();
+      await flush();
+
+      const subscription = service.listen().subscribe();
+      const scanned = service.scan();
+      await flush();
+      // Tapped while the config was still loading: native has no session yet.
+      expect(nfc.startTagReading).not.toHaveBeenCalled();
+      expect(scanTag).not.toHaveBeenCalled();
+
+      config$.next(config);
+      config$.complete();
+      await scanned;
+
+      expect(nfc.startTagReading).toHaveBeenCalledBefore(scanTag);
+      expect(scanTag).toHaveBeenCalledTimes(1);
+      subscription.unsubscribe();
+    });
+
+    it('does not scan with no screen listening', async () => {
+      installSessionBridge(new FakeNfcBridge());
+      const service = create();
+      await flush();
+
+      await service.scan();
+
+      expect(scanTag).not.toHaveBeenCalled();
+    });
+
+    it('never asks a passive shell to scan', async () => {
+      pretendCordova();
+      const nfc = new FakeNfcBridge();
+      installBridge(nfc);
+      const scan = jasmine.createSpy('scanTag').and.resolveTo('ready');
+      Object.assign(window.PrintLogNative!, { scanTag: scan });
+      const service = create();
+      await flush();
+      const subscription = service.listen().subscribe();
+
+      await service.scan();
+
+      expect(scan).not.toHaveBeenCalled();
+      subscription.unsubscribe();
+    });
+
+    it('delivers the scanned tag through listen() as usual', async () => {
+      const nfc = new FakeNfcBridge();
+      installSessionBridge(nfc);
+      const service = create();
+      await flush();
+      const reads: TagRead[] = [];
+      const subscription = service.listen().subscribe((r) => reads.push(r));
+      await service.scan();
+
+      nfc.deliver('04A23F11223344');
+      await flush();
+
+      expect(reads.map((r) => r.uid)).toEqual(['04A23F11223344']);
+      subscription.unsubscribe();
+    });
   });
 });

@@ -255,6 +255,8 @@ describe('FilamentSearchModalComponent NFC tags', () => {
     listen: () => Subject<TagRead>;
     forget: jasmine.Spy;
     openSettings: jasmine.Spy;
+    scan: jasmine.Spy;
+    scansOnDemand: WritableSignal<boolean>;
   };
   /** What the next confirm dialog answers: true = yes, undefined = no, a Subject = still open. */
   let dialogAnswers: (boolean | undefined | Observable<boolean | undefined>)[];
@@ -275,6 +277,8 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       listen: () => tags,
       forget: jasmine.createSpy('forget'),
       openSettings: jasmine.createSpy('openSettings').and.resolveTo(),
+      scan: jasmine.createSpy('scan').and.resolveTo(),
+      scansOnDemand: signal(false),
     };
     filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
       'getCurrentUserFilamentSummaries',
@@ -355,6 +359,27 @@ describe('FilamentSearchModalComponent NFC tags', () => {
   it('shows the hint while NFC is ready', async () => {
     await setUp();
     expect(text()).toContain("Or hold your phone to a spool's tag");
+  });
+
+  it('offers a Scan button instead of the hold hint on a shell that reads on demand (iOS)', async () => {
+    await setUp();
+    reader.scansOnDemand.set(true);
+    fixture.detectChanges();
+
+    expect(text()).not.toContain('hold your phone');
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="tag-scan-on-demand"]')!
+      .click();
+    expect(reader.scan).toHaveBeenCalled();
+  });
+
+  it('offers no Scan button where tags are read passively', async () => {
+    await setUp();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="tag-scan-on-demand"]'
+      )
+    ).toBeNull();
   });
 
   it('offers Turn on while NFC is off', async () => {

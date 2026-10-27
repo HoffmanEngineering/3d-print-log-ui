@@ -122,6 +122,8 @@ export class ScanSpoolSheetComponent {
   protected readonly showSpinner = this.busy.visible;
 
   protected readonly status = this.tagReader.status;
+  /** iOS: nothing is read until a scan() opens the phone's sheet. */
+  protected readonly scansOnDemand = this.tagReader.scansOnDemand;
   protected readonly phase = signal<Phase>('waiting');
   protected readonly error = signal<string | null>(null);
 
@@ -180,11 +182,18 @@ export class ScanSpoolSheetComponent {
   private watchdog: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
+    // The sheet opens from a tap, so on iOS that tap also opens the phone's scan sheet.
+    // Elsewhere this does nothing: the listener above reads on its own.
+    void this.tagReader.scan();
     inject(DestroyRef).onDestroy(() => {
       this.stopListening();
       this.resolution?.unsubscribe();
       this.busy.destroy();
     });
+  }
+
+  protected scanAgain(): void {
+    void this.tagReader.scan();
   }
 
   protected linkTo(row: SuggestionRow): void {

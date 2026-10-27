@@ -76,6 +76,8 @@ describe('ScanSpoolSheetComponent', () => {
     readingStarted: Subject<void>;
     forget: jasmine.Spy;
     openSettings: jasmine.Spy;
+    scan: jasmine.Spy;
+    scansOnDemand: WritableSignal<boolean>;
   };
   let filaments: jasmine.SpyObj<FilamentService>;
   let sheetRef: jasmine.SpyObj<MatBottomSheetRef<ScanSpoolSheetComponent>>;
@@ -91,6 +93,8 @@ describe('ScanSpoolSheetComponent', () => {
       readingStarted: started,
       forget: jasmine.createSpy('forget'),
       openSettings: jasmine.createSpy('openSettings').and.resolveTo(),
+      scan: jasmine.createSpy('scan').and.resolveTo(),
+      scansOnDemand: signal(false),
     };
     filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
       'resolveTagRead',
@@ -733,6 +737,27 @@ describe('ScanSpoolSheetComponent', () => {
     expect(el.textContent).toContain('NFC is off');
     button('nfc-turn-on').click();
     expect(reader.openSettings).toHaveBeenCalled();
+  });
+
+  it('asks for a scan as it opens, which opens the phone sheet on iOS', async () => {
+    await setUp();
+    expect(reader.scan).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers Scan while waiting, and Scan another for an unknown tag, on a shell that reads on demand', async () => {
+    await setUp();
+    reader.scansOnDemand.set(true);
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('Hold your phone to a spool');
+    button('scan-on-demand').click();
+    expect(reader.scan).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the hold prompt and no Scan button where tags are read passively', async () => {
+    await setUp();
+    expect(el.textContent).toContain('Hold your phone to a spool');
+    expect(el.querySelector('[data-testid="scan-on-demand"]')).toBeNull();
   });
 
   it('Cancel dismisses with nothing', async () => {

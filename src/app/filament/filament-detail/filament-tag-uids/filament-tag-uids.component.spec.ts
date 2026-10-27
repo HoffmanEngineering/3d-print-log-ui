@@ -51,6 +51,8 @@ describe('FilamentTagUidsComponent', () => {
             listen: () => new Subject<TagRead>(),
             forget: () => {},
             openSettings: () => Promise.resolve(),
+            scan: () => Promise.resolve(),
+            scansOnDemand: signal(false),
           },
         },
         {
@@ -250,6 +252,8 @@ describe('FilamentTagUidsComponent scanning', () => {
     listen: () => Subject<TagRead>;
     forget: jasmine.Spy;
     openSettings: jasmine.Spy;
+    scan: jasmine.Spy;
+    scansOnDemand: WritableSignal<boolean>;
   };
   let filaments: jasmine.SpyObj<FilamentService>;
   let logger: jasmine.SpyObj<LoggingService>;
@@ -262,6 +266,8 @@ describe('FilamentTagUidsComponent scanning', () => {
       listen: () => tags,
       forget: jasmine.createSpy('forget'),
       openSettings: jasmine.createSpy('openSettings').and.resolveTo(),
+      scan: jasmine.createSpy('scan').and.resolveTo(),
+      scansOnDemand: signal(false),
     };
     filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
       'resolveTagRead',
@@ -296,6 +302,11 @@ describe('FilamentTagUidsComponent scanning', () => {
     Array.from(el.querySelectorAll('[data-testid="tag-uid-chip"]')).map((c) =>
       c.textContent!.replace('cancel', '').trim()
     );
+
+  it('asks for a scan when the Scan button starts listening, which opens the sheet on iOS', () => {
+    scanButton()!.click();
+    expect(reader.scan).toHaveBeenCalledTimes(1);
+  });
 
   function scan(uid: string, extra: Partial<TagRead> = {}) {
     scanButton()!.click();

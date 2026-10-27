@@ -30,7 +30,22 @@
     </button>
   </div>
 } @else if (tagAvailable()) {
-  @if (nfcStatus() === 'ready') {
+  @if (nfcStatus() === 'ready' && scansOnDemand()) {
+    <!-- iOS reads only when asked: holding the phone to a spool does nothing on its own. -->
+    <p class="tag-hint">
+      <mat-icon aria-hidden="true">nfc</mat-icon>
+      Or
+      <button
+        mat-button
+        type="button"
+        class="tag-hint__action"
+        data-testid="tag-scan-on-demand"
+        (click)="scanTag()"
+      >
+        scan a spool's tag
+      </button>
+    </p>
+  } @else if (nfcStatus() === 'ready') {
     <p class="tag-hint">
       <mat-icon aria-hidden="true">nfc</mat-icon>
       Or hold your phone to a spool's tag

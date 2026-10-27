@@ -19,7 +19,11 @@
     }
     @if (hint() === 'hold-still') {
       <p class="scan-sheet__hint" data-testid="scan-hold-still">
-        Hold the phone still and tap again to read the spool's details
+        @if (scansOnDemand()) {
+          Scan again and hold the phone still to read the spool's details
+        } @else {
+          Hold the phone still and tap again to read the spool's details
+        }
       </p>
     }
     @if (showClassicHint()) {
@@ -86,6 +90,17 @@
       >
         Create
       </button>
+      @if (scansOnDemand()) {
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="scan-another"
+          [disabled]="linkingId() !== null"
+          (click)="scanAgain()"
+        >
+          Scan another
+        </button>
+      }
       <button
         mat-button
         type="button"
@@ -110,7 +125,20 @@
         <p class="scan-sheet__title" role="status">Looking up the tag…</p>
       }
       @default {
-        <p class="scan-sheet__title">Hold your phone to a spool…</p>
+        @if (scansOnDemand()) {
+          <p class="scan-sheet__title">Scan a spool's tag</p>
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            data-testid="scan-on-demand"
+            (click)="scanAgain()"
+          >
+            Scan
+          </button>
+        } @else {
+          <p class="scan-sheet__title">Hold your phone to a spool…</p>
+        }
       }
     }
     @if (status() === 'off') {

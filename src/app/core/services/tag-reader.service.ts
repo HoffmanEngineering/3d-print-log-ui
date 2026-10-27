@@ -18,7 +18,12 @@ import {
   tap,
   timeout,
 } from 'rxjs';
-import { NfcStatus, TagRead, TagTech } from '../types/native-bridge';
+import {
+  NfcStatus,
+  TagRead,
+  TagReadingMode,
+  TagTech,
+} from '../types/native-bridge';
 import { ReaderConfig } from '../types/tag-reading';
 import { FilamentService } from './filament.service';
 import { LoggingService } from './logging.service';
@@ -44,7 +49,7 @@ declare global {
 }
 
 /**
- * Reads spool tags through the Android app's NFC bridge. The only UI code that touches the NFC
+ * Reads spool tags through the app's NFC bridge: passively on Android, from a scan() on iOS. The only UI code that touches the NFC
  * half of the bridge.
  *
  * Screens call `listen()`; the first subscriber opens native's reading session and the last
@@ -72,6 +77,16 @@ export class TagReaderService {
 
   readonly status = this._status.asReadonly();
 
+  private readonly mode = signal<TagReadingMode>('passive');
+
+  /**
+   * The app shell reads only when asked (iOS): a screen must offer a Scan button that calls
+   * scan(), because tags held to the phone are not picked up on their own.
+   */
+  readonly scansOnDemand = computed(
+    () => this.available() && this.mode() === 'session'
+  );
+
   private readonly reads = new Subject<TagRead>();
   private readonly _readingStarted = new Subject<void>();
   /** Native reports a tag under the phone, before its read finishes. */
@@ -87,6 +102,8 @@ export class TagReaderService {
   private configWaitTimedOut = false;
   /** Bumped by every start and stop, so a start that lost the race to a newer one stands down. */
   private session = 0;
+  /** The latest start, so a scan waits for native to have its session open. */
+  private starting: Promise<void> = Promise.resolve();
   private listeners = 0;
   private wired = false;
   private fake = false;
@@ -139,7 +156,7 @@ export class TagReaderService {
       const subscription = this.reads.subscribe(subscriber);
       this.listeners++;
       if (this.listeners === 1 && this.bridgeReady()) {
-        void this.start();
+        this.starting = this.start();
       }
 
       return () => {
@@ -162,6 +179,25 @@ export class TagReaderService {
     }
   }
 
+  /**
+   * Session mode: shows the phone's scan sheet for one read. Call it from a user tap while
+   * listening; the tag arrives through listen() as usual. Does nothing in passive mode, where
+   * tags arrive on their own.
+   */
+  async scan(): Promise<void> {
+    if (this.fake || !this.scansOnDemand()) {
+      return;
+    }
+    // start() waits for the reader config before opening native's session, and native opens
+    // no sheet without one. A tap during that wait would otherwise do nothing.
+    await this.starting;
+    if (this.listeners === 0) {
+      return;
+    }
+    this.logging.logEvent('TagReader_ScanRequested');
+    this._status.set(await this.bridge.scanTag());
+  }
+
   openSettings(): Promise<void> {
     return this.fake ? Promise.resolve() : this.bridge.openNfcSettings();
   }
@@ -172,6 +208,7 @@ export class TagReaderService {
     }
 
     this.bridgeReady.set(true);
+    this.mode.set(this.bridge.tagReadingMode());
     // Fetched now, so the first scan usually finds it already here.
     this.prefetchConfig();
     if (!this.wired) {
@@ -182,7 +219,7 @@ export class TagReaderService {
     }
 
     if (this.listeners > 0) {
-      void this.start();
+      this.starting = this.start();
     } else {
       void this.refreshStatus();
     }

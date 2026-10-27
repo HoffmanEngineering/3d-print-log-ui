@@ -36,12 +36,13 @@ It runs either on the printer's own host or in a Docker container on another com
 
 The Bambu and PrusaLink adapters are new: they're built from the printers' documented protocols and haven't been checked on real printers yet. Neither printer measures the filament it feeds, so their usage is the slicer's estimate, marked with a `*` on the print and left out of the accuracy stats. Elegoo printers (SDCP), OctoPrint and others are planned.
 
-The printer's **Edit Page** in 3D Print Log shows the steps and a config section for its type under **Connections**, with its number filled in.
+A paired bridge also finds the printers on its network and lists them on the [Bridges](/printers/bridges) screen, where you connect them to 3D Print Log with no config file to edit: see [Bridges and printers found on your network](/docs/printlog-bridge-bridges). It never logs a printer you haven't connected. To set a printer up in the config file instead, the printer's **Edit Page** shows the steps and a config section for its type under **Connections**, with its number filled in.
 
 ### In this guide {#pages}
 
 - [Install on the printer (local mode)](/docs/printlog-bridge-install): run the bridge as a service on the printer's own host and connect it to your account.
 - [Run it in Docker (remote mode)](/docs/printlog-bridge-docker): one container on a NAS, home server or Pi watches your printers over the network.
+- [Bridges and printers found on your network](/docs/printlog-bridge-bridges): see each bridge's health, connect the printers it found in the app, and add others by address.
 - [Bambu Lab printers](/docs/printlog-bridge-bambu): log an X1, P1, A1 or H2 over its LAN connection, with grams per AMS tray.
 - [Prusa printers (PrusaLink)](/docs/printlog-bridge-prusalink): log an MK4, MK3.5, Core One, MINI or XL through PrusaLink, with the slicer's estimate per tool.
 - [Assign spools with PRINTLOG_SET_SPOOL](/docs/printlog-bridge-spools): tell 3D Print Log which spool is in each tool from Klipper's console or a macro.

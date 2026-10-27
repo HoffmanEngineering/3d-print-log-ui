@@ -47,3 +47,12 @@ export function suggestionRows(
     })
   );
 }
+
+/** What each label-match reason reads as on a row's chip. */
+export const LABEL_REASON_LABELS: Record<string, string> = {
+  'same-barcode': 'Same barcode',
+  'same-color-name': 'Same color',
+  'same-brand': 'Same brand',
+  'same-material': 'Same material',
+  'same-weight': 'Same weight',
+};

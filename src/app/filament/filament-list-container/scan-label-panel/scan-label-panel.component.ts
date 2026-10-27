@@ -28,7 +28,11 @@ import {
   LabelScannerComponent,
 } from 'src/app/shared/label-scanner/label-scanner.component';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
-import { SuggestionRow, suggestionRows } from '../suggestion-rows';
+import {
+  LABEL_REASON_LABELS,
+  SuggestionRow,
+  suggestionRows,
+} from '../suggestion-rows';
 
 /** What a label scan ends in: an existing spool, or a new one to fill from the read. */
 export type LabelScanOutcome =
@@ -36,14 +40,6 @@ export type LabelScanOutcome =
   | { kind: 'label-new'; read: ScannedLabelRead };
 
 type LabelPhase = 'scanning' | 'resolving' | 'need-photo' | 'own' | 'error';
-
-const REASON_LABELS: Record<string, string> = {
-  'same-barcode': 'Same barcode',
-  'same-color-name': 'Same color',
-  'same-brand': 'Same brand',
-  'same-material': 'Same material',
-  'same-weight': 'Same weight',
-};
 
 /**
  * The camera half of the Materials list's "Scan spool". A barcode a spool of yours already has
@@ -178,7 +174,7 @@ export class ScanLabelPanelComponent {
         sameBarcode,
         this.filaments(),
         this.filamentService,
-        REASON_LABELS
+        LABEL_REASON_LABELS
       ).subscribe((rows) => {
         this.rows.set(rows);
         this.setPhase('own');

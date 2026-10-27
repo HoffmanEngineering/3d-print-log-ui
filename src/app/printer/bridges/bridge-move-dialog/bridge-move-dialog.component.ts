@@ -31,7 +31,9 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatInputModule } from '@angular/material/input';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -61,7 +63,7 @@ import {
   SealingKeyState,
   sealingKeyState,
 } from '../bridge-credentials/bridge-credentials.component';
-import { Sighting } from '../bridge-grouping';
+import { Sighting, stableIdentity } from '../bridge-grouping';
 import { BridgeKeyChangedComponent } from '../bridge-key-changed/bridge-key-changed.component';
 import {
   bridgeErrorCode,
@@ -91,6 +93,16 @@ export interface BridgeMoveDialogData {
   discovered?: DiscoveredPrinter | null;
 }
 
+/**
+ * A printer the target found that may be this one: `same` when both have the same serial,
+ * mainboard id or MAC; `unconfirmed` when either is known only by its address, so the user has to
+ * say it is the same printer before the move takes its address and identity.
+ */
+interface Candidate {
+  printer: DiscoveredPrinter;
+  match: 'same' | 'unconfirmed';
+}
+
 /** A bridge to move to, for the select. */
 interface Target {
   id: number;
@@ -118,7 +130,9 @@ interface Target {
     MatDialogTitle,
     MatFormFieldModule,
     MatIconModule,
+    MatCheckboxModule,
     MatInputModule,
+    MatRadioModule,
     MatSelectModule,
     RouterLink,
     LocaleDatePipe,
@@ -190,25 +204,66 @@ export class BridgeMoveDialogComponent {
   protected readonly targetStale = computed(
     () => this.target()?.status === ConnectionStatus.Stale
   );
-  /** What the target found for this printer: the move then uses its address and identity. */
-  protected readonly found = computed<DiscoveredPrinter | null>(() => {
+  /** Targets whose found printer the API refused (another kind, or gone): use an address. */
+  private readonly refused = signal<ReadonlySet<number>>(new Set());
+  /**
+   * What the target found that may be this printer. Only the same kind, and never one with
+   * another stable identity: `printer_connected_elsewhere` is keyed on the 3D Print Log printer
+   * picked, so the printer a connect found can be a different machine, and taking its address
+   * would stop the real one being logged.
+   */
+  protected readonly candidate = computed<Candidate | null>(() => {
     const id = this.toBridgeId();
-    if (id === null) {
+    if (id === null || this.refused().has(id)) {
       return null;
     }
+    const options: DiscoveredPrinter[] = [];
     if (id === this.data.toBridgeId && this.data.discovered) {
-      return this.data.discovered;
+      options.push(this.data.discovered);
     }
-    return (
-      this.data.sightings.find(
-        (s) => s.bridgeId === id && s.printer.kind === this.entry.kind
-      )?.printer ?? null
-    );
+    for (const s of this.data.sightings) {
+      if (s.bridgeId === id) {
+        options.push(s.printer);
+      }
+    }
+    for (const printer of options) {
+      const match = this.matchOf(printer);
+      if (match) {
+        return { printer, match };
+      }
+    }
+    return null;
   });
-  protected readonly foundAddress = computed(() => {
-    const f = this.found();
-    return f ? formatAddress(f.address, f.port) : null;
+  protected readonly candidateAddress = computed(() => {
+    const c = this.candidate();
+    return c ? formatAddress(c.printer.address, c.printer.port) : null;
   });
+  /** The user's choice between the found address and the current one; null for the default. */
+  private readonly choice = signal<'found' | 'keep' | null>(null);
+  protected readonly where = computed<'found' | 'keep'>(() => {
+    const c = this.candidate();
+    if (!c) {
+      return 'keep';
+    }
+    return this.choice() ?? (c.match === 'same' ? 'found' : 'keep');
+  });
+  /** "This is the same printer", for a found printer known only by its address. */
+  protected readonly confirmedSame = signal(false);
+  /** The found printer the move uses, if any. */
+  private readonly found = computed<DiscoveredPrinter | null>(() => {
+    const c = this.candidate();
+    if (!c || this.where() !== 'found') {
+      return null;
+    }
+    return c.match === 'same' || this.confirmedSame() ? c.printer : null;
+  });
+  /** The found address is picked but not yet confirmed as this printer. */
+  private readonly unconfirmedPick = computed(
+    () =>
+      this.where() === 'found' &&
+      this.candidate()?.match === 'unconfirmed' &&
+      !this.confirmedSame()
+  );
 
   /** Fields the API said the move needs, on top of the ones that were set. */
   private readonly askedFor = signal<string[]>([]);
@@ -222,6 +277,18 @@ export class BridgeMoveDialogComponent {
   );
   protected readonly carriesCredentials = computed(
     () => this.plan().fields.length > 0
+  );
+  /**
+   * The target's key is needed only for a credential the printer can't connect without. Optional
+   * ones (a PrusaLink user name) can be left behind, and are then reported as dropped.
+   */
+  protected readonly requiresKey = computed(
+    () => this.plan().groups.length > 0
+  );
+  protected readonly optionalNouns = computed(() =>
+    this.plan()
+      .fields.map((f) => credentialNoun(f.field))
+      .join(' and the ')
   );
 
   protected readonly keyState = toSignal(
@@ -280,6 +347,8 @@ export class BridgeMoveDialogComponent {
   /** Set once moved, when there is something left to say (dropped or stale credentials). */
   protected readonly result = signal<{
     moved: MovedBridgePrinter;
+    /** The bridge it moved to, as it was when the move was sent. */
+    targetName: string;
     dropped: string;
     stale: string | null;
   } | null>(null);
@@ -288,12 +357,20 @@ export class BridgeMoveDialogComponent {
     () =>
       !this.busy() &&
       this.target() !== null &&
-      (!this.carriesCredentials() || (!!this.key() && !this.keyChanged()))
+      !this.unconfirmedPick() &&
+      (!this.requiresKey() || (!!this.key() && !this.keyChanged()))
   );
 
   private readonly controls = new Map<string, FormControl<string>>();
 
   constructor() {
+    // Another target: its own found printer, default choice and confirmation.
+    this.form.controls.toBridgeId.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.choice.set(null);
+        this.confirmedSame.set(false);
+      });
     this.logging.logEvent('BridgeMove_Opened', {
       kind: this.entry.kind,
       source: this.data.discovered ? 'conflict' : 'row',
@@ -309,6 +386,22 @@ export class BridgeMoveDialogComponent {
       this.controls.set(field, control);
     }
     return control;
+  }
+
+  protected setWhere(value: 'found' | 'keep'): void {
+    this.choice.set(value);
+  }
+
+  private matchOf(printer: DiscoveredPrinter): Candidate['match'] | null {
+    if (printer.kind !== this.entry.kind) {
+      return null;
+    }
+    const mine = stableIdentity(this.entry.identityKey);
+    const theirs = stableIdentity(printer.identityKey);
+    if (mine && theirs) {
+      return mine === theirs ? 'same' : null;
+    }
+    return 'unconfirmed';
   }
 
   protected inputId(field: string): string {
@@ -386,13 +479,21 @@ export class BridgeMoveDialogComponent {
       this.error.set(missing);
       return;
     }
+    const key = this.key();
+    if (plaintexts.size > 0 && (!key || this.keyChanged())) {
+      // Only reachable for optional fields typed before the key went away: never send them.
+      this.error.set(
+        `${bridgeLabel(target)} can't take credentials right now. Leave them empty to move without them.`
+      );
+      return;
+    }
     for (const control of this.controls.values()) {
       control.reset('');
     }
 
-    const key = this.key();
     const pinBefore = this.pins.pinned(target.id);
-    this.busy.set(true);
+    const sentCredentials = plaintexts.size > 0;
+    this.setBusy(true);
     const sealAll = async () => {
       if (plaintexts.size === 0 || !key) {
         return body;
@@ -421,14 +522,26 @@ export class BridgeMoveDialogComponent {
       )
       .subscribe({
         next: ({ moved, request }) => {
-          this.busy.set(false);
+          this.setBusy(false);
           this.done(target, moved, request, pinBefore);
         },
         error: (error: unknown) => {
-          this.busy.set(false);
-          this.failed(target, error);
+          this.setBusy(false);
+          this.failed(target, error, sentCredentials);
         },
       });
+  }
+
+  /** While moving: the target can't change, and the dialog can't be closed. */
+  private setBusy(busy: boolean): void {
+    this.busy.set(busy);
+    this.dialogRef.disableClose = busy;
+    const control = this.form.controls.toBridgeId;
+    if (busy) {
+      control.disable({ emitEvent: false });
+    } else {
+      control.enable({ emitEvent: false });
+    }
   }
 
   private done(
@@ -468,6 +581,7 @@ export class BridgeMoveDialogComponent {
     }
     this.result.set({
       moved,
+      targetName: name,
       dropped: dropped.map(credentialNoun).join(' and the '),
       stale: staleFields.length
         ? `${name}'s encryption key changed during the move, so it can't use the ${staleFields.map(credentialNoun).join(' and the ')}. Check its key on its card, then enter it again there.`
@@ -475,23 +589,47 @@ export class BridgeMoveDialogComponent {
     });
   }
 
-  private failed(target: Bridge, error: unknown): void {
+  private failed(
+    target: Bridge,
+    error: unknown,
+    sentCredentials: boolean
+  ): void {
+    const message = this.failureMessage(target, error);
+    // What was typed isn't kept once it was sealed: say so, rather than an empty form.
+    this.error.set(
+      sentCredentials && message
+        ? `${message} Enter the credentials again: they aren't kept.`
+        : message
+    );
+  }
+
+  private failureMessage(target: Bridge, error: unknown): string {
     const code = bridgeErrorCode(error);
+    const name = bridgeLabel(target);
     this.logging.logEvent('BridgeMove_Failed', {
       code:
         code ??
         (error instanceof CredentialSealingError ? error.reason : 'unknown'),
     });
     if (error instanceof CredentialSealingError) {
-      this.error.set(
-        error.reason === 'unavailable'
-          ? "This browser can't encrypt credentials. Use an up-to-date browser over https."
-          : `${bridgeLabel(target)}'s encryption key isn't valid, so nothing was sent.`
-      );
-      return;
+      return error.reason === 'unavailable'
+        ? "This browser can't encrypt credentials. Use an up-to-date browser over https."
+        : `${name}'s encryption key isn't valid, so nothing was sent.`;
     }
-    if (code === 'secrets_required') {
-      this.askedFor.set(problemFields(error));
+    switch (code) {
+      case 'secrets_required':
+        this.askedFor.set(problemFields(error));
+        break;
+      case 'invalid_kind':
+      case 'discovered_printer_not_found':
+        // Stop offering what the target found; the address fields take its place.
+        this.refused.update((ids) => new Set([...ids, target.id]));
+        this.choice.set(null);
+        return code === 'invalid_kind'
+          ? `${name} found a different kind of printer there, so the move keeps the printer's own address. Check the address below, then move it again.`
+          : `${name} no longer sees the printer it found. Check the address below, then move it again.`;
+      case 'discovered_printer_already_connected':
+        return `${name} already watches a printer at that address. Disconnect that one on ${name}'s card first, or enter another address.`;
     }
     const nameOf = (id: number) => {
       const b = this.bridges().find((x) => x.id === id);
@@ -500,11 +638,10 @@ export class BridgeMoveDialogComponent {
     const message = bridgeErrorMessage(error, nameOf);
     if (isKeyErrorCode(code)) {
       // Never retry with anything from the answer: read the bridge again and ask again.
-      this.error.set(`${bridgeLabel(target)}: ${message}`);
       this.reload(target.id);
-      return;
+      return `${name}: ${message}`;
     }
-    this.error.set(message);
+    return message;
   }
 
   private reload(id: number): void {
@@ -541,7 +678,9 @@ export function openBridgeMoveDialog(
     width: phone ? '100vw' : 'min(34rem, 100vw - 2rem)',
     height: phone ? '100svh' : undefined,
     maxWidth: '100vw',
-    autoFocus: 'first-tabbable',
+    // The dialog itself: focus moved to the select after the open animation could take keys
+    // typed into a credential field right away.
+    autoFocus: 'dialog',
     panelClass: phone ? 'app-fullscreen-dialog' : undefined,
   });
 }

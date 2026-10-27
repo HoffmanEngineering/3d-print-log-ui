@@ -314,7 +314,7 @@ export class BridgesPageComponent {
       .subscribe((result) => {
         // A conflict offered to move the printer here from the bridge that watches it.
         if (isConnectMoveRequest(result)) {
-          const from = this.entryFor(result.printerId, result.moveFrom);
+          const from = this.movable(result.printerId, result.moveFrom);
           if (from) {
             this.move(from.bridge, from.entry, {
               toBridgeId: bridge.id,
@@ -322,9 +322,6 @@ export class BridgesPageComponent {
             });
             return;
           }
-          this.toastr.error(
-            "That printer isn't connected in the app on the other bridge: it may be in that bridge's config file. Remove it there first."
-          );
         }
         this.load();
       });
@@ -357,21 +354,73 @@ export class BridgesPageComponent {
       .subscribe(() => this.load());
   }
 
-  /** The app entry for a 3D Print Log printer, on one bridge or any. */
+  /**
+   * Where a printer is connected in the app, on one bridge or any: its entry, `unknown` when a
+   * bridge that could have it failed to load its printers, or null.
+   */
   private entryFor(
     printerId: number,
     bridgeId?: number
-  ): { bridge: Bridge; entry: BridgePrinter } | null {
+  ):
+    | { bridge: Bridge; entry: BridgePrinter; state: BridgeState }
+    | 'unknown'
+    | null {
+    let unknown = false;
     for (const s of this.states()) {
       if (bridgeId !== undefined && s.bridge.id !== bridgeId) {
         continue;
       }
-      const entry = (s.printers ?? []).find((p) => p.printerId === printerId);
+      if (s.printers === null) {
+        unknown = true;
+        continue;
+      }
+      const entry = s.printers.find((p) => p.printerId === printerId);
       if (entry) {
-        return { bridge: s.bridge, entry };
+        return { bridge: s.bridge, entry, state: s };
       }
     }
-    return null;
+    return unknown ? 'unknown' : null;
+  }
+
+  /**
+   * The entry to move for a printer, or null after telling the user why not (with `retry`, a
+   * failed load keeps the request for the next refresh).
+   */
+  private movable(
+    printerId: number,
+    bridgeId?: number,
+    retry = false
+  ): { bridge: Bridge; entry: BridgePrinter } | null {
+    const found = this.entryFor(printerId, bridgeId);
+    if (found === 'unknown') {
+      if (retry) {
+        this.pendingMove = printerId;
+      }
+      this.toastr.error(
+        retry
+          ? "We couldn't load a bridge's printers, so the move can't open yet. It opens once they load: choose Retry on that bridge's card."
+          : "We couldn't load the other bridge's printers, so the move can't open. Choose Retry on its card, then try again."
+      );
+      return null;
+    }
+    if (!found) {
+      this.toastr.error(
+        "That printer isn't connected to a bridge in the app, so it can't be moved from here. A printer in a bridge's config file moves by editing that file."
+      );
+      return null;
+    }
+    const inConfigToo = (found.state.discovered ?? []).some(
+      (d) =>
+        d.printerEntryId === found.entry.id &&
+        d.state === DiscoveredPrinterState.Configured
+    );
+    if (inConfigToo) {
+      this.toastr.error(
+        `${bridgeLabel(found.bridge)} also has that printer in its config file, which wins over the app. Remove it from that file first (or remove the app's entry), then move it.`
+      );
+      return null;
+    }
+    return found;
   }
 
   private openPendingMove(): void {
@@ -380,26 +429,29 @@ export class BridgesPageComponent {
       return;
     }
     this.pendingMove = null;
+    if (!this.canMove()) {
+      this.dropMoveParam();
+      this.toastr.error(
+        'You have one bridge. Pair another one first, then move the printer to it.'
+      );
+      return;
+    }
+    const found = this.movable(printerId, undefined, true);
+    if (this.pendingMove === null) {
+      this.dropMoveParam();
+    }
+    if (found) {
+      this.move(found.bridge, found.entry);
+    }
+  }
+
+  private dropMoveParam(): void {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { move: null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
-    const found = this.entryFor(printerId);
-    if (!found) {
-      this.toastr.error(
-        "That printer isn't connected to a bridge in the app, so it can't be moved from here. A printer in a bridge's config file moves by editing that file."
-      );
-      return;
-    }
-    if (!this.canMove()) {
-      this.toastr.error(
-        'You have one bridge. Pair another one first, then move the printer to it.'
-      );
-      return;
-    }
-    this.move(found.bridge, found.entry);
   }
 
   protected ignore(bridge: Bridge, found: DiscoveredPrinter): void {

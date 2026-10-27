@@ -114,3 +114,18 @@ app-bridge-key-changed {
 .error-text {
   color: var(--app-error-text);
 }
+
+.where {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.confirm {
+  margin-bottom: 12px;
+
+  p {
+    margin: 0 0 4px;
+  }
+}

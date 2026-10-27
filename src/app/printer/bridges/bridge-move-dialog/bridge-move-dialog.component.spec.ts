@@ -199,6 +199,12 @@ describe('BridgeMoveDialogComponent', () => {
     return byTestId('move-submit') as HTMLButtonElement;
   }
 
+  /** Clicks a radio button by its test id. */
+  function choose(id: string): void {
+    (byTestId(id)!.querySelector('input') as HTMLInputElement).click();
+    fixture.detectChanges();
+  }
+
   function pickTarget(id: number): void {
     fixture.componentInstance.form.controls.toBridgeId.setValue(id);
     fixture.detectChanges();
@@ -434,5 +440,197 @@ describe('BridgeMoveDialogComponent', () => {
       bridges: [garage, { ...attic, status: ConnectionStatus.Stale }, old],
     });
     expect(byTestId('move-target-stale')).not.toBeNull();
+  });
+
+  describe('where the new bridge reaches the printer', () => {
+    const moonraker = bridgePrinter({
+      id: 8,
+      kind: 'moonraker',
+      printerName: 'Voron',
+      host: '192.168.1.50',
+      port: 7125,
+      serial: null,
+      identityKey: 'moonraker:ip:192.168.1.50:7125',
+      secretFields: ['moonraker_api_key'],
+      secrets: [],
+    });
+
+    it('ignores what a connect conflict found when it is another printer (another serial)', async () => {
+      const bare = bridgePrinter({ id: 7, secrets: [] });
+      await create({
+        entry: bare,
+        toBridgeId: 9,
+        sightings: [],
+        discovered: discovered({
+          id: 300,
+          serial: '01P00A999999999',
+          identityKey: 'bambu:sn:01P00A999999999',
+        }),
+      });
+      expect(byTestId('move-found')).toBeNull();
+      expect(byTestId('move-address')).not.toBeNull();
+      moveButton().click();
+      await until(() => service.move.calls.count() === 1);
+      expect(service.move.calls.mostRecent().args[2]).toEqual({
+        toBridgeId: 9,
+      });
+    });
+
+    it('ignores a found printer of another kind', async () => {
+      await create({
+        entry: moonraker,
+        toBridgeId: 9,
+        sightings: [],
+        discovered: discovered({ id: 300 }),
+      });
+      expect(byTestId('move-found')).toBeNull();
+    });
+
+    it('asks to confirm a printer known only by its address before using it', async () => {
+      await create({
+        entry: moonraker,
+        toBridgeId: 9,
+        sightings: [],
+        discovered: discovered({
+          id: 301,
+          kind: 'moonraker',
+          address: '192.168.2.50',
+          port: 7125,
+          serial: null,
+          identityKey: 'moonraker:ip:192.168.2.50:7125',
+        }),
+      });
+      // Both addresses are shown; the current one is the default.
+      expect(byTestId('move-found')!.textContent).toContain('192.168.2.50');
+      expect(byTestId('move-keep')!.textContent).toContain('192.168.1.50');
+      choose('move-choice-found');
+      expect(moveButton().disabled).toBeTrue();
+      (
+        byTestId('move-same-printer')!.querySelector(
+          'input'
+        ) as HTMLInputElement
+      ).click();
+      fixture.detectChanges();
+      expect(moveButton().disabled).toBeFalse();
+      moveButton().click();
+      await until(() => service.move.calls.count() === 1);
+      expect(service.move.calls.mostRecent().args[2]).toEqual({
+        toBridgeId: 9,
+        discoveredPrinterId: 301,
+      });
+    });
+
+    it('can keep the current address instead of the one the bridge found', async () => {
+      const bare = bridgePrinter({ id: 7, secrets: [] });
+      await create({ entry: bare });
+      expect(byTestId('move-found')).not.toBeNull();
+      choose('move-choice-keep');
+      moveButton().click();
+      await until(() => service.move.calls.count() === 1);
+      expect(service.move.calls.mostRecent().args[2]).toEqual({
+        toBridgeId: 9,
+      });
+    });
+
+    for (const code of ['invalid_kind', 'discovered_printer_not_found']) {
+      it(`falls back to the address fields on ${code}`, async () => {
+        const bare = bridgePrinter({ id: 7, secrets: [] });
+        service.move.and.returnValues(
+          throwError(() => problem(400, code)),
+          of(moved())
+        );
+        await create({ entry: bare });
+        moveButton().click();
+        await until(() => !!byTestId('move-error'));
+        expect(byTestId('move-error')!.textContent).toContain('Attic Pi');
+        expect(byTestId('move-error')!.textContent).not.toContain(
+          'Pick the kind'
+        );
+        expect(byTestId('move-found')).toBeNull();
+        expect(byTestId('move-address')).not.toBeNull();
+        moveButton().click();
+        await until(() => service.move.calls.count() === 2);
+        expect(service.move.calls.mostRecent().args[2]).toEqual({
+          toBridgeId: 9,
+        });
+      });
+    }
+
+    it('names the new bridge for discovered_printer_already_connected', async () => {
+      const bare = bridgePrinter({ id: 7, secrets: [] });
+      service.move.and.returnValue(
+        throwError(() => problem(409, 'discovered_printer_already_connected'))
+      );
+      await create({ entry: bare });
+      moveButton().click();
+      await until(() => !!byTestId('move-error'));
+      expect(byTestId('move-error')!.textContent).toContain('Attic Pi');
+    });
+  });
+
+  it('says the credentials have to be entered again after a failed move', async () => {
+    service.move.and.returnValue(
+      throwError(() => problem(409, 'bridge_printer_limit'))
+    );
+    await create();
+    await keyReady();
+    type('access_code', '12345678');
+    moveButton().click();
+    await until(() => !!byTestId('move-error'));
+    expect(byTestId('move-error')!.textContent).toContain('again');
+    expect(input('access_code').value).toBe('');
+  });
+
+  it('locks the target, Cancel and Esc while moving, and names the bridge it moved to afterwards', async () => {
+    const answer = new Subject<MovedBridgePrinter>();
+    service.move.and.returnValue(answer);
+    const prusa = bridgePrinter({
+      id: 11,
+      kind: 'prusalink',
+      secretFields: ['password', 'username', 'api_key'],
+      secrets: [],
+    });
+    await create({ entry: prusa });
+    moveButton().click();
+    await until(() => service.move.calls.count() === 1);
+    expect(fixture.componentInstance.form.controls.toBridgeId.disabled).toBe(
+      true
+    );
+    expect((byTestId('move-cancel') as HTMLButtonElement).disabled).toBeTrue();
+    expect(dialogRef.disableClose).toBeTrue();
+
+    answer.next(moved({ droppedSecretFields: ['username'] }));
+    answer.complete();
+    await until(() => !!byTestId('move-dropped'));
+    expect(dialogRef.disableClose).toBeFalse();
+    expect(el().querySelector('h2')!.textContent).toContain('Attic Pi');
+  });
+
+  it('moves a printer whose only credential is optional to a bridge without a key, and drops it', async () => {
+    const prusa = bridgePrinter({
+      id: 11,
+      kind: 'prusalink',
+      secretFields: ['password', 'username', 'api_key'],
+      secrets: [
+        {
+          field: 'username',
+          keyFingerprint: OTHER_BRIDGE_KEY.fingerprint,
+          updatedAt: '2026-10-27T18:00:00Z',
+          stale: false,
+        },
+      ],
+    });
+    service.move.and.returnValue(
+      of(moved({ printer: prusa, droppedSecretFields: ['username'] }))
+    );
+    await create({ entry: prusa, sightings: [] });
+    pickTarget(5);
+    await until(() => !!byTestId('move-optional-dropped'));
+    expect(moveButton().disabled).toBeFalse();
+    moveButton().click();
+    await until(() => !!byTestId('move-dropped'));
+    expect(service.move.calls.mostRecent().args[2]).toEqual({
+      toBridgeId: 5,
+    });
   });
 });

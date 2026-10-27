@@ -570,6 +570,72 @@ describe('BridgesPageComponent', () => {
       expect(toastr.error).toHaveBeenCalled();
     });
 
+    it("keeps ?move when a bridge's printers couldn't load, and opens it once they do", async () => {
+      queryMove = '3';
+      service.printers.and.callFake((id: number) =>
+        id === 9 ? throwError(() => httpError(500)) : of([])
+      );
+      await configure();
+      spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      dialogAnswer = undefined;
+      fixture = TestBed.createComponent(BridgesPageComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(dialog.open).not.toHaveBeenCalled();
+      expect(toastr.error.calls.mostRecent().args[0]).toContain(
+        "couldn't load"
+      );
+
+      atticWatchesTheX1c();
+      (
+        one('bridge-load-failed')!.querySelector('button') as HTMLElement
+      ).click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(lastOpened().component).toBe(BridgeMoveDialogComponent);
+    });
+
+    it("doesn't move a printer its bridge's config file also has, and says why", async () => {
+      queryMove = '3';
+      atticWatchesTheX1c();
+      service.discovered.and.callFake((id: number) =>
+        of(
+          id === 9
+            ? [
+                discovered({
+                  id: 50,
+                  state: DiscoveredPrinterState.Configured,
+                  printerEntryId: 7,
+                }),
+              ]
+            : []
+        )
+      );
+      await configure();
+      spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      fixture = TestBed.createComponent(BridgesPageComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(dialog.open).not.toHaveBeenCalled();
+      expect(toastr.error.calls.mostRecent().args[0]).toContain('config file');
+    });
+
+    it("doesn't open the move from a connect conflict when the other bridge's printers couldn't load", async () => {
+      service.printers.and.callFake((id: number) =>
+        id === 9 ? throwError(() => httpError(500)) : of([])
+      );
+      service.discovered.and.callFake((id: number) =>
+        of(id === 42 ? [discovered({ id: 12, identityKey: null })] : [])
+      );
+      await create();
+      dialogAnswer = { moveFrom: 9, printerId: 3 };
+      one('bridge-connect')!.click();
+      expect(lastOpened().component).toBe(BridgeConnectDialogComponent);
+      expect(toastr.error.calls.mostRecent().args[0]).toContain(
+        "couldn't load"
+      );
+    });
+
     it('warns on the bridge that recently reported jobs for a printer another bridge watches', async () => {
       const recent = new Date(Date.now() - 2 * 86_400_000).toISOString();
       service.list.and.returnValue(

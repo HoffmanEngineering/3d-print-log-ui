@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NativeBridgeService } from './native-bridge.service';
-import { CORDOVA_USER_AGENT } from '../utils/platform';
+import { CORDOVA_IOS_USER_AGENT, CORDOVA_USER_AGENT } from '../utils/platform';
 import { PrintLogNativeBridge } from '../types/native-bridge';
 
 describe('NativeBridgeService', () => {
@@ -11,9 +11,9 @@ describe('NativeBridgeService', () => {
    * The platform check reads navigator.userAgent, so the app shell has to be simulated at
    * the source rather than by stubbing the check — that is the very thing under test.
    */
-  function pretendCordova(): void {
+  function pretendCordova(userAgent = CORDOVA_USER_AGENT): void {
     Object.defineProperty(navigator, 'userAgent', {
-      value: CORDOVA_USER_AGENT,
+      value: userAgent,
       configurable: true,
     });
   }
@@ -47,6 +47,21 @@ describe('NativeBridgeService', () => {
   it('reports unavailable in the app shell before native finishes injecting', () => {
     pretendCordova();
     expect(service.isAvailable()).toBeFalse();
+  });
+
+  it('delegates to the bridge in the iOS app shell too', async () => {
+    pretendCordova(CORDOVA_IOS_USER_AGENT);
+    const registerForPush = jasmine
+      .createSpy('registerForPush')
+      .and.resolveTo({ ok: true });
+    window.PrintLogNative = {
+      registerForPush,
+    } as unknown as PrintLogNativeBridge;
+
+    expect(service.isAvailable()).toBeTrue();
+    await expectAsync(service.registerForPush('bearer-abc')).toBeResolvedTo(
+      true
+    );
   });
 
   it('returns null from consumePendingTap when unavailable', async () => {

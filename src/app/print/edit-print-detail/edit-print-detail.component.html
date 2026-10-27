@@ -56,7 +56,7 @@
             </div>
           }
           @if (images.length < 1) {
-            @if (isCordova) {
+            @if (useCaptureInput) {
               <button
                 type="button"
                 mat-stroked-button
@@ -103,7 +103,7 @@
           (imageDeleted)="onImageDeleted($event)"
           (defaultChanged)="onDefaultChanged($event)"
           (imagesReordered)="onImagesReordered($event)"
-          (addClicked)="(isCordova ? cameraInput : imgFileInput).click()"
+          (addClicked)="(useCaptureInput ? cameraInput : imgFileInput).click()"
         />
       </div>
       <mat-card-content

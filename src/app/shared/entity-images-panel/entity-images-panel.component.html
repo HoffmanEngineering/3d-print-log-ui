@@ -7,8 +7,10 @@
     multiple
     (change)="onFilesSelected($event)"
   />
-  <!-- Inside the Cordova app the OS only offers the gallery unless the input
-       asks to capture, so the camera gets its own input. -->
+  <!-- Inside the Android app the OS only offers the gallery unless the input
+       asks to capture, so the camera gets its own input. iOS does the opposite:
+       capture opens the camera with no library, so it uses the gallery input,
+       whose system sheet already offers Take Photo. -->
   <input
     #cameraInput
     type="file"
@@ -37,7 +39,7 @@
       <button
         type="button"
         mat-stroked-button
-        (click)="(isCordova ? cameraInput : imgFileInput).click()"
+        (click)="(useCaptureInput ? cameraInput : imgFileInput).click()"
       >
         <mat-icon>add_a_photo</mat-icon>
         Add Photo
@@ -73,7 +75,7 @@
     (imageDeleted)="onImageDeleted($event)"
     (defaultChanged)="onDefaultChanged($event)"
     (imagesReordered)="onImagesReordered($event)"
-    (addClicked)="(isCordova ? cameraInput : imgFileInput).click()"
+    (addClicked)="(useCaptureInput ? cameraInput : imgFileInput).click()"
   />
 
   @if (busy()) {

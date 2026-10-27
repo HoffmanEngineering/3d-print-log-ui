@@ -23,7 +23,7 @@ import {
   tap,
   toArray,
 } from 'rxjs/operators';
-import { isCordova } from 'src/app/core/utils/platform';
+import { isCordovaAndroid } from 'src/app/core/utils/platform';
 import { SignedImageComponent } from 'src/app/shared/signed-image/signed-image.component';
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
@@ -86,8 +86,11 @@ let nextStagedKey = 1;
   ],
 })
 export class EntityImagesPanelComponent {
-  /** Picks which hidden file input the add affordances open. */
-  protected readonly isCordova = isCordova;
+  /**
+   * Picks which hidden file input the add affordances open. Android app only: there the
+   * capture input is what adds Camera to the chooser, while on iOS it drops the library.
+   */
+  protected readonly useCaptureInput = isCordovaAndroid;
   private readonly destroyRef = inject(DestroyRef);
 
   /**

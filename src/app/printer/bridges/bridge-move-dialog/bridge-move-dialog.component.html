@@ -80,13 +80,21 @@
           [value]="where()"
           (change)="setWhere($event.value)"
         >
-          <mat-radio-button value="found" data-testid="move-choice-found">
+          <mat-radio-button
+            color="primary"
+            value="found"
+            data-testid="move-choice-found"
+          >
             <span data-testid="move-found">
               Where {{ targetName() }} found it:
               <span class="mono">{{ candidateAddress() }}</span>
             </span>
           </mat-radio-button>
-          <mat-radio-button value="keep" data-testid="move-choice-keep">
+          <mat-radio-button
+            color="primary"
+            value="keep"
+            data-testid="move-choice-keep"
+          >
             <span data-testid="move-keep">
               Keep its current address:
               <span class="mono">{{ currentAddress }}</span>
@@ -103,6 +111,7 @@
                 would log another printer instead.
               </p>
               <mat-checkbox
+                color="primary"
                 data-testid="move-same-printer"
                 [checked]="confirmedSame()"
                 (change)="confirmedSame.set($event.checked)"

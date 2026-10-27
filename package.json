@@ -89,7 +89,7 @@
     "@types/qrcode": "^1.5.5",
     "angular-eslint": "21.3.1",
     "axe-core": "^4.13.0",
-    "baseline-browser-mapping": "^2.10.29",
+    "baseline-browser-mapping": "^2.11.30",
     "cypress": "^13.17.0",
     "cypress-axe": "^1.7.0",
     "esbuild": "0.27.3",

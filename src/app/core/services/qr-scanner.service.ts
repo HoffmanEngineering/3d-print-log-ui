@@ -86,7 +86,7 @@ export class QrScannerService {
 
     const { Html5Qrcode, Html5QrcodeSupportedFormats: F } =
       await this.loadHtml5Qrcode();
-    this.html5QrCode = new Html5Qrcode(elementId, {
+    const scanner = new Html5Qrcode(elementId, {
       verbose: false,
       formatsToSupport: [
         F.QR_CODE,
@@ -100,9 +100,10 @@ export class QrScannerService {
       useBarCodeDetectorIfSupported: true,
       experimentalFeatures: { useBarCodeDetectorIfSupported: true },
     });
+    this.html5QrCode = scanner;
     this.labelElementId = elementId;
 
-    await this.html5QrCode.start(
+    await scanner.start(
       { facingMode: 'environment' },
       { fps: 10 },
       (text, result) =>
@@ -111,6 +112,10 @@ export class QrScannerService {
         // Expected on every frame without a code.
       }
     );
+    // Stopped (or replaced) while the camera was starting: nothing else holds this stream.
+    if (this.html5QrCode !== scanner) {
+      await scanner.stop().catch(() => undefined);
+    }
   }
 
   /** The camera's current frame at full resolution, or null when no label scan is running. */
@@ -134,17 +139,17 @@ export class QrScannerService {
    * Stops the current scanning session.
    */
   async stopScanning(): Promise<void> {
-    if (this.html5QrCode) {
-      try {
-        const state = this.html5QrCode.getState();
-        if (state === 2) {
-          // Html5QrcodeScannerState.SCANNING
-          await this.html5QrCode.stop();
-        }
-      } catch {
-        // Ignore errors when stopping - scanner may already be stopped
+    // Let go of it before awaiting, so a scan started meanwhile is never the one cleared.
+    const scanner = this.html5QrCode;
+    if (!scanner) return;
+    this.html5QrCode = null;
+    try {
+      // Html5QrcodeScannerState.SCANNING; one still starting stops itself once it has.
+      if (scanner.getState() === 2) {
+        await scanner.stop();
       }
-      this.html5QrCode = null;
+    } catch {
+      // Ignore errors when stopping - scanner may already be stopped
     }
   }
 

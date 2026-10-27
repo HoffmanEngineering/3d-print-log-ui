@@ -157,4 +157,66 @@ describe('QrScannerService', () => {
       await expectAsync(service.stopScanning()).toBeResolved();
     });
   });
+
+  describe('a label scan stopped while it starts', () => {
+    class FakeScanner {
+      static instances: FakeScanner[] = [];
+      state = 1;
+      resolveStart: () => void = () => undefined;
+      readonly stop = jasmine
+        .createSpy('stop')
+        .and.callFake(async () => void (this.state = 1));
+      constructor() {
+        FakeScanner.instances.push(this);
+      }
+      start(): Promise<void> {
+        return new Promise((resolve) => {
+          this.resolveStart = () => {
+            this.state = 2;
+            resolve();
+          };
+        });
+      }
+      getState() {
+        return this.state;
+      }
+    }
+    const flush = () => new Promise((r) => setTimeout(r));
+
+    beforeEach(() => {
+      FakeScanner.instances = [];
+      (service as unknown as { html5QrcodeModule: unknown }).html5QrcodeModule =
+        Promise.resolve({
+          Html5Qrcode: FakeScanner,
+          Html5QrcodeSupportedFormats: {},
+        });
+    });
+
+    it('stops the camera once it has started', async () => {
+      const started = service.startLabelScanning('reader', () => undefined);
+      await flush();
+
+      await service.stopScanning();
+      FakeScanner.instances[0].resolveStart();
+      await started;
+
+      expect(FakeScanner.instances[0].stop).toHaveBeenCalled();
+    });
+
+    it('does not lose a newer scan to an older stop', async () => {
+      const first = service.startLabelScanning('a', () => undefined);
+      await flush();
+      FakeScanner.instances[0].resolveStart();
+      await first;
+
+      const stopping = service.stopScanning();
+      const second = service.startLabelScanning('b', () => undefined);
+      await flush();
+      FakeScanner.instances[1].resolveStart();
+      await Promise.all([stopping, second]);
+      await service.stopScanning();
+
+      expect(FakeScanner.instances[1].stop).toHaveBeenCalled();
+    });
+  });
 });

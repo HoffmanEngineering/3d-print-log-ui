@@ -323,6 +323,31 @@ describe('BridgeConnectDialogComponent', () => {
     expect(logging.logEvent).toHaveBeenCalledWith('BridgeConnect_Failed', {
       code: 'printer_connected_elsewhere',
     });
+
+    // Offer to move it here instead: the page opens the move with this bridge as the target.
+    const printerId = component().form.controls.printerId.value;
+    expect(byTestId('connect-move')!.textContent).toContain('Garage NAS');
+    byTestId('connect-move')!.click();
+    expect(dialogRef.close).toHaveBeenCalledWith({
+      moveFrom: 9,
+      printerId: printerId!,
+    });
+  });
+
+  it('offers no move for a conflict that names no other bridge', async () => {
+    bridges.connect.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: { code: 'printer_configured_on_bridge', bridgeId: 9 },
+          })
+      )
+    );
+    await create();
+    submit();
+    expect(byTestId('connect-error')).not.toBeNull();
+    expect(byTestId('connect-move')).toBeNull();
   });
 
   it('adds a Bambu Lab printer by address only with its serial', async () => {

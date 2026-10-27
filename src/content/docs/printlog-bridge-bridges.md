@@ -28,7 +28,7 @@ Each bridge you paired shows up after it first checks in, which it does every fe
 - **Online or Stale.** A bridge is stale after 15 minutes without checking in. [Troubleshooting](/docs/printlog-bridge-troubleshooting) helps when it doesn't come back.
 - **Its version**, with a link when a newer one is out ([how to update](/docs/printlog-bridge#update)), whether it runs in local mode (on a Klipper printer) or remote mode (in Docker), the computer it runs on, and the networks it can see.
 - **Its encryption key**, which [credentials you enter](#credentials) are encrypted to, or a **New encryption key** to [confirm](#new-key).
-- **Connected in the app**: the printers you connected to it, each with the 3D Print Log printer its prints go to and whether its credentials are set.
+- **Connected in the app**: the printers you connected to it, each with the 3D Print Log printer its prints go to and whether its credentials are set. With more than one bridge, **Move** hands a printer to [another bridge](#move).
 - **Found on your network**: printers it found that you haven't connected or ignored.
 - **In its config file**: printers it watches from `printlog-bridge.cfg`.
 - **Ignored**: printers you asked not to see again.
@@ -62,7 +62,7 @@ Choose **Connect** next to a printer under **Found on your network**, then pick 
 - **One you already have.** Printers no bridge watches are listed first. When the bridge reported the model and you have exactly one free printer of that model, it's already picked.
 - **A new one.** **New printer** opens the quick add with the model and name the printer reported filled in, from the printer catalog when it knows the model.
 
-Then choose **Connect**. A printer can be watched by one bridge at a time; if another of your bridges already watches it, the screen says which one.
+Then choose **Connect**. A printer can be watched by one bridge at a time; if another of your bridges already watches it, the screen says which one and offers **Move it to** this bridge instead (see [Move a printer to another bridge](#move)).
 
 #### A printer it can't find: add it by address {#by-address}
 
@@ -127,8 +127,40 @@ Printers you set up in `printlog-bridge.cfg` keep working, and show as **managed
 
 **Ignore** hides a printer you'll never log, such as a neighbor's. **Unignore** brings it back under **Found on your network**.
 
-### More than one bridge {#several}
+### Running more than one bridge {#several}
 
-Each bridge has its own card, with what it found on its own network: a second house, a workshop, or a printer VLAN the first bridge can't reach. A printer's page says which bridge watches it under **Connections**.
+One bridge can watch every printer it can reach. A second one helps when it can't: a second house or a workshop, a printer VLAN the first bridge can't see, or a makerspace next to your home setup. Pair each one as usual. Each gets its own card, with its own networks and what it found there, and its own [encryption key](#encryption-key). Name them and give them a location ("Workshop"), so you can tell them apart.
 
-A printer can have one bridge at a time, so two bridges never log the same print twice. To move a printer to another bridge, disconnect it from the first, then connect it on the second. A one-step move is planned.
+A printer is watched by **one bridge at a time**, so two bridges don't log the same print twice. A printer's page says which bridge watches it under **Connections**.
+
+#### A printer two bridges found {#found-twice}
+
+When two bridges find the same printer (the same serial number, mainboard or network card), it's listed once:
+
+- **If one of your bridges already watches it**, it stays under that bridge, which says **Also found by** the other one. The other bridge's card says the printer is listed elsewhere.
+- **Otherwise** it's listed under the bridge best placed to watch it: one that is online, then one with the printer's address on its own network, then the one that saw it last. **Connect** uses that bridge, and **With** another bridge's name connects it through that one instead.
+
+A printer the bridges know only by its address (some Klipper printers) isn't grouped: the same address in two houses is two printers, so each bridge lists what it found.
+
+#### Move a printer to another bridge {#move}
+
+Choose **Move** next to a connected printer, or **Move to another bridge** under **Connections** on the printer's page. Pick the bridge to move it to:
+
+- **If that bridge found the printer**, it watches it at the address it found.
+- **If not**, keep the address when both bridges are on the same network, or enter the address the new bridge reaches it at.
+
+**Its access code, password or API key moves with it, in the same step.** What you entered was encrypted to the old bridge's key, which the new bridge can't read, so the move asks for it again and encrypts it in your browser to the **new** bridge's key. Compare that key's fingerprint with `printlog-bridge status` on the new bridge first, as for [any credential](#credentials). A credential you leave empty that the printer doesn't need, such as a PrusaLink user name, isn't moved, and the app says so afterwards; enter it on the new bridge's card if the printer needs it.
+
+The old bridge stops watching the printer within a minute, and the new one starts. Prints already logged keep their source. A printer in a bridge's config file can't be moved from the app: edit the file instead.
+
+The new bridge needs an encryption key you've confirmed to take credentials. If it has none yet, or a new key waiting for you, the move says so: [confirm it](#new-key) or update that bridge first.
+
+#### A print left Printing after a move {#print-left-printing}
+
+A print that was running when you moved the printer is usually finished by the new bridge. If it can't recognize the job (a PrusaLink print that was paused, or a Bambu Lab printer that doesn't report when the job started), the new bridge logs it as a new print and the old one stays **Printing**. Open that print, choose **Edit**, set its **Status** to how it ended, and save. Delete the duplicate if there is one.
+
+#### "Some prints may be logged twice" {#logged-twice}
+
+A bridge's card shows this when, in the last 7 days, it reported prints of a printer another of your bridges watches. Both bridges logged those prints, so some may be duplicates. It usually means the printer is still in that bridge's config file, `printlog-bridge.cfg`, after you connected it on another bridge in the app.
+
+Remove the printer's section from that bridge's config file; the bridge stops watching it within a few seconds. Then check the print list and delete any duplicates. The warning goes away a week after the last such print.

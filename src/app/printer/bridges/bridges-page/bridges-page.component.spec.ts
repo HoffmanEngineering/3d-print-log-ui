@@ -22,6 +22,15 @@ import {
 } from 'src/app/core/services/bridge-key-pins.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { By } from '@angular/platform-browser';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import {
+  BridgeConnectDialogComponent,
+  BridgeConnectDialogData,
+} from '../bridge-connect-dialog/bridge-connect-dialog.component';
+import {
+  BridgeMoveDialogComponent,
+  BridgeMoveDialogData,
+} from '../bridge-move-dialog/bridge-move-dialog.component';
 import { BridgeCardComponent } from '../bridge-card/bridge-card.component';
 import {
   OTHER_BRIDGE_KEY,
@@ -59,7 +68,10 @@ describe('BridgesPageComponent', () => {
     });
   }
 
-  afterEach(() => localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY));
+  afterEach(() => {
+    localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY);
+    queryMove = null;
+  });
 
   beforeEach(() => {
     localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY);
@@ -79,7 +91,17 @@ describe('BridgesPageComponent', () => {
       of(id === 42 ? [discovered()] : [])
     );
     service.printers.and.callFake((id: number) =>
-      of(id === 9 ? [bridgePrinter({ printerId: 3 })] : [])
+      of(
+        id === 9
+          ? [
+              bridgePrinter({
+                printerId: 3,
+                serial: 'OTHER',
+                identityKey: 'bambu:sn:OTHER',
+              }),
+            ]
+          : []
+      )
     );
     dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
     dialogAnswer = true;
@@ -96,9 +118,23 @@ describe('BridgesPageComponent', () => {
     ]);
   });
 
+  let queryMove: string | null = null;
+
   async function configure(
     polling: BridgesPolling = { idleMs: 0, scanningMs: 0 }
   ) {
+    const extra = queryMove
+      ? [
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              snapshot: {
+                queryParamMap: convertToParamMap({ move: queryMove }),
+              },
+            },
+          },
+        ]
+      : [];
     await TestBed.configureTestingModule({
       imports: [BridgesPageComponent, NoopAnimationsModule],
       providers: [
@@ -108,6 +144,7 @@ describe('BridgesPageComponent', () => {
         { provide: ToastrService, useValue: toastr },
         { provide: LoggingService, useValue: logging },
         { provide: BRIDGES_POLLING, useValue: polling },
+        ...extra,
       ],
     }).compileComponents();
   }
@@ -421,5 +458,135 @@ describe('BridgesPageComponent', () => {
     await until(() => toastr.error.calls.count() === 1);
     fixture.detectChanges();
     expect(card().keyMismatch()).toBeTrue();
+  });
+
+  describe('several bridges', () => {
+    /** Attic watches the X1C Garage found too (same serial). */
+    function atticWatchesTheX1c(): void {
+      service.printers.and.callFake((id: number) =>
+        of(id === 9 ? [bridgePrinter({ printerId: 3 })] : [])
+      );
+    }
+
+    function lastOpened(): {
+      component: unknown;
+      data: BridgeMoveDialogData & BridgeConnectDialogData;
+    } {
+      const args = dialog.open.calls.mostRecent().args;
+      return {
+        component: args[0],
+        data: (
+          args[1] as { data: BridgeMoveDialogData & BridgeConnectDialogData }
+        ).data,
+      };
+    }
+
+    it('lists a printer another bridge watches only under that bridge, and offers to move it', async () => {
+      atticWatchesTheX1c();
+      await create();
+      expect(all('bridge-new-row').length).toBe(0);
+      expect(one('bridge-listed-elsewhere')!.textContent).toContain(
+        'printlog-bridge on attic'
+      );
+      expect(one('bridge-also-found')!.textContent).toContain('Garage NAS');
+
+      dialogAnswer = undefined;
+      one('bridge-move')!.click();
+      const opened = lastOpened();
+      expect(opened.component).toBe(BridgeMoveDialogComponent);
+      expect(opened.data.entry.id).toBe(7);
+      expect(opened.data.from.id).toBe(9);
+      expect(opened.data.bridges.length).toBe(2);
+      expect(opened.data.sightings[0].bridgeId).toBe(42);
+      expect(service.list).toHaveBeenCalledTimes(2);
+    });
+
+    it('offers no Move with a single bridge', async () => {
+      service.list.and.returnValue(of([attic]));
+      await create();
+      expect(one('bridge-move')).toBeNull();
+    });
+
+    it('connects with another bridge that found the printer too', async () => {
+      service.discovered.and.callFake((id: number) =>
+        of(
+          id === 42
+            ? [discovered({ id: 12 })]
+            : [discovered({ id: 118, address: '192.168.2.61' })]
+        )
+      );
+      await create();
+      // Garage (online, the address on its network) lists it; Attic is the alternative.
+      expect(all('bridge-new-row').length).toBe(1);
+      one('bridge-connect-via')!.click();
+      const opened = lastOpened();
+      expect(opened.component).toBe(BridgeConnectDialogComponent);
+      expect(opened.data.bridge.id).toBe(9);
+      expect(opened.data.discovered!.id).toBe(118);
+    });
+
+    it('opens the move from a connect conflict, to the bridge the user was connecting', async () => {
+      atticWatchesTheX1c();
+      service.discovered.and.callFake((id: number) =>
+        of(id === 42 ? [discovered({ id: 12, identityKey: null })] : [])
+      );
+      await create();
+      dialogAnswer = { moveFrom: 9, printerId: 3 };
+      one('bridge-connect')!.click();
+      const opened = lastOpened();
+      expect(opened.component).toBe(BridgeMoveDialogComponent);
+      expect(opened.data.entry.id).toBe(7);
+      expect(opened.data.toBridgeId).toBe(42);
+      expect(opened.data.discovered!.id).toBe(12);
+    });
+
+    it('opens the move for ?move=<printer id>, then drops the parameter', async () => {
+      queryMove = '3';
+      await configure();
+      const router = TestBed.inject(Router);
+      spyOn(router, 'navigate').and.resolveTo(true);
+      dialogAnswer = undefined;
+      fixture = TestBed.createComponent(BridgesPageComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const opened = lastOpened();
+      expect(opened.component).toBe(BridgeMoveDialogComponent);
+      expect(opened.data.entry.printerId).toBe(3);
+      expect(router.navigate).toHaveBeenCalledWith(
+        [],
+        jasmine.objectContaining({ queryParams: { move: null } })
+      );
+    });
+
+    it('says when ?move names a printer no app entry has', async () => {
+      queryMove = '999';
+      await configure();
+      spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      fixture = TestBed.createComponent(BridgesPageComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(dialog.open).not.toHaveBeenCalled();
+      expect(toastr.error).toHaveBeenCalled();
+    });
+
+    it('warns on the bridge that recently reported jobs for a printer another bridge watches', async () => {
+      const recent = new Date(Date.now() - 2 * 86_400_000).toISOString();
+      service.list.and.returnValue(
+        of([
+          {
+            ...garage,
+            sharedJobCount: 2,
+            lastSharedJobAt: recent,
+            lastSharedJobPrinterId: 3,
+          },
+          attic,
+        ])
+      );
+      await create();
+      const notice = one('bridge-shared-jobs')!;
+      expect(notice.textContent).toContain('X1C');
+      expect(notice.textContent).toContain('printlog-bridge on attic');
+    });
   });
 });

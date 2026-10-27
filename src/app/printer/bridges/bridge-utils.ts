@@ -49,8 +49,21 @@ export function bridgeErrorMessage(
   switch (bridgeErrorCode(error)) {
     case 'printer_connected_elsewhere':
       return other
-        ? `That printer is already watched by “${other}”. A printer can have one bridge at a time: disconnect it there first.`
-        : 'That printer is already watched by another of your bridges. A printer can have one bridge at a time: disconnect it there first.';
+        ? `That printer is already watched by “${other}”. A printer can have one bridge at a time: Move it to this bridge instead.`
+        : 'That printer is already watched by another of your bridges. A printer can have one bridge at a time: Move it to this bridge from its row there.';
+    case 'printer_moved':
+      return other
+        ? `That printer was just moved to “${other}”. Refresh the page to see where it is now.`
+        : 'That printer was just moved to another bridge. Refresh the page to see where it is now.';
+    case 'invalid_target_bridge':
+      return 'Pick another of your bridges to move it to.';
+    case 'secrets_required': {
+      const fields = problemFields(error);
+      const nouns = fields.length
+        ? fields.map(credentialNoun).join(' and the ')
+        : 'credentials';
+      return `Enter the ${nouns}: the new bridge needs it to watch the printer.`;
+    }
     case 'printer_configured_on_bridge':
       return other
         ? `“${other}” already watches this printer from its config file. Remove it from that file first, or leave it there.`
@@ -113,6 +126,89 @@ export function isKeyErrorCode(code: string | null): boolean {
     code === 'bridge_key_unconfirmed' ||
     code === 'bridge_key_missing'
   );
+}
+
+/** The `fields` of an API problem (`secrets_required`), or none. */
+export function problemFields(error: unknown): string[] {
+  if (!(error instanceof HttpErrorResponse)) {
+    return [];
+  }
+  const fields = (error.error as { fields?: unknown } | null)?.fields;
+  return Array.isArray(fields)
+    ? fields.filter((f): f is string => typeof f === 'string')
+    : [];
+}
+
+/**
+ * The credentials a move must carry when one of them was set, as groups of which one value is
+ * enough (the API's `SealedCredentials.CarriedGroups`): what the printer can't connect without,
+ * and a Moonraker API key (set only for a Moonraker with `[authorization]`).
+ */
+const CARRIED_GROUPS: Readonly<Record<string, readonly string[][]>> = {
+  bambu: [['access_code']],
+  prusalink: [['password', 'api_key']],
+  octoprint: [['api_key']],
+  moonraker: [['moonraker_api_key']],
+};
+
+/** One credential to type again for a move. */
+export interface MoveField {
+  field: string;
+  label: string;
+  hint: string | null;
+  /** The only value of a group the printer needs. */
+  required: boolean;
+}
+
+/** What a move asks for: the fields that were set, and the groups that need one value each. */
+export interface MoveCredentialPlan {
+  fields: MoveField[];
+  groups: string[][];
+}
+
+/**
+ * The credentials to ask for when moving an entry: each field that was set on the old bridge
+ * (the browser can't read those values, and the new bridge can't open them), plus any field the
+ * API said it needs. A field outside the required groups (a PrusaLink user name) is optional;
+ * left empty, it is dropped.
+ */
+export function moveCredentialPlan(
+  kind: string,
+  secretFields: readonly string[] | null | undefined,
+  setFields: readonly string[],
+  askedFor: readonly string[] = []
+): MoveCredentialPlan {
+  const set = new Set([...setFields, ...askedFor]);
+  const order = [...(secretFields ?? [])];
+  for (const field of set) {
+    if (!order.includes(field)) {
+      order.push(field);
+    }
+  }
+  const groups = (CARRIED_GROUPS[kind] ?? [])
+    .map((group) => group.filter((f) => set.has(f)))
+    .filter((group) => group.length > 0);
+  const fields = order
+    .filter((field) => set.has(field))
+    .map((field) => ({
+      field,
+      label: credentialFieldLabel(field),
+      hint: credentialFieldHint(kind, field),
+      required: groups.some((g) => g.length === 1 && g[0] === field),
+    }));
+  return { fields, groups };
+}
+
+/** Why the values typed for a move aren't enough, or null. */
+export function missingMoveCredential(
+  plan: MoveCredentialPlan,
+  filled: ReadonlySet<string>
+): string | null {
+  const missing = plan.groups.find((g) => !g.some((f) => filled.has(f)));
+  if (!missing) {
+    return null;
+  }
+  return `Enter the ${missing.map(credentialNoun).join(' or the ')}: the new bridge needs it to watch the printer.`;
 }
 
 /** A credential field's label, as a heading or form label. */

@@ -19,6 +19,7 @@ import {
 } from '../testing/bridge-fixtures';
 import { By } from '@angular/platform-browser';
 import { BridgeCredentialsComponent } from '../bridge-credentials/bridge-credentials.component';
+import { CrossBridge, Sighting } from '../bridge-grouping';
 import { BridgeCardComponent } from './bridge-card.component';
 
 describe('BridgeCardComponent', () => {
@@ -292,5 +293,107 @@ describe('BridgeCardComponent', () => {
       By.directive(BridgeCredentialsComponent)
     ).componentInstance as BridgeCredentialsComponent;
     expect(editor.keyWarningAbove()).toBeTrue();
+  });
+
+  describe('with other bridges', () => {
+    const attic: Sighting = {
+      bridgeId: 9,
+      bridgeName: 'Attic Pi',
+      printer: discovered({ id: 118, address: '192.168.2.61' }),
+      onOwnNetwork: true,
+    };
+
+    function cross(parts: Partial<CrossBridge> = {}): CrossBridge {
+      return {
+        alsoFoundBy: new Map(),
+        listedElsewhere: new Map(),
+        entrySightings: new Map(),
+        ...parts,
+      };
+    }
+
+    async function createWith(
+      c: CrossBridge,
+      canMove = true,
+      d: DiscoveredPrinter[] = found
+    ) {
+      await create(bridge(), d, entries);
+      fixture.componentRef.setInput('cross', c);
+      fixture.componentRef.setInput('canMove', canMove);
+      fixture.detectChanges();
+    }
+
+    it('offers Move on a connected printer, and says who else found it', async () => {
+      await createWith(cross({ entrySightings: new Map([[7, [attic]]]) }));
+      let moved: BridgePrinter | undefined;
+      fixture.componentInstance.move.subscribe((e) => (moved = e));
+      expect(one('bridge-also-found')!.textContent).toContain('Attic Pi');
+      one('bridge-move')!.click();
+      expect(moved?.id).toBe(7);
+    });
+
+    it('offers no Move with a single bridge, or when the config file has the printer', async () => {
+      await createWith(cross(), false);
+      expect(one('bridge-move')).toBeNull();
+
+      TestBed.resetTestingModule();
+      await createWith(cross(), true, [
+        discovered({
+          id: 3,
+          kind: 'prusalink',
+          state: DiscoveredPrinterState.Configured,
+          printerEntryId: 7,
+        }),
+      ]);
+      expect(one('bridge-config-wins')).not.toBeNull();
+      expect(one('bridge-move')).toBeNull();
+    });
+
+    it('lists a printer found by two bridges once, with a Connect for the other bridge', async () => {
+      await createWith(cross({ alsoFoundBy: new Map([[1, [attic]]]) }));
+      let via: Sighting | undefined;
+      fixture.componentInstance.connectVia.subscribe((s) => (via = s));
+      const row = all('bridge-new-row').find((r) =>
+        r.textContent!.includes('Workshop X1C')
+      )!;
+      expect(row.textContent).toContain('Also found by Attic Pi');
+      (
+        row.querySelector('[data-testid="bridge-connect-via"]') as HTMLElement
+      ).click();
+      expect(via).toBe(attic);
+    });
+
+    it('leaves out a printer another bridge lists or watches, and says where it is', async () => {
+      await createWith(
+        cross({
+          listedElsewhere: new Map([
+            [1, { bridgeId: 9, bridgeName: 'Attic Pi', watched: true }],
+          ]),
+        })
+      );
+      expect(
+        all('bridge-new-row').some((r) =>
+          r.textContent!.includes('Workshop X1C')
+        )
+      ).toBeFalse();
+      expect(one('bridge-listed-elsewhere')!.textContent).toContain('Attic Pi');
+    });
+
+    it('warns when another bridge also reported jobs for a printer', async () => {
+      await createWith(cross());
+      fixture.componentRef.setInput('sharedJob', {
+        printerId: 5,
+        printerName: 'X1C',
+        watcherName: 'Attic Pi',
+        count: 3,
+        lastAt: '2026-10-27T10:00:00Z',
+      });
+      fixture.detectChanges();
+      const notice = one('bridge-shared-jobs')!;
+      expect(notice.textContent).toContain('X1C');
+      expect(notice.textContent).toContain('Attic Pi');
+      expect(notice.textContent).toContain('config file');
+      expect(notice.querySelector('a[href="/printers/5"]')).not.toBeNull();
+    });
   });
 });

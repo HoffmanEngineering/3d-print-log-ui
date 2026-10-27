@@ -462,6 +462,32 @@ describe('PrinterConnectionsComponent', () => {
       expect(via?.getAttribute('href')).toBe('/printers/bridges');
     });
 
+    it('offers to move it when the user has another bridge', () => {
+      render([connection({ bridgeId: 42 })]);
+      httpMock.expectOne(bridges).flush([
+        { id: 42, displayName: 'Garage NAS', deviceName: 'nas' },
+        { id: 9, displayName: 'Attic Pi', deviceName: 'attic' },
+      ]);
+      fixture.detectChanges();
+
+      const move = rows()[0].querySelector('[data-testid="connection-move"]');
+      expect(squash(move)).toContain('Move to another bridge');
+      expect(move?.getAttribute('href')).toBe(
+        `/printers/bridges?move=${fixture.componentInstance.printerId()}`
+      );
+    });
+
+    it('offers no move with a single bridge', () => {
+      render([connection({ bridgeId: 42 })]);
+      httpMock
+        .expectOne(bridges)
+        .flush([{ id: 42, displayName: 'Garage NAS', deviceName: 'nas' }]);
+      fixture.detectChanges();
+      expect(
+        rows()[0].querySelector('[data-testid="connection-move"]')
+      ).toBeNull();
+    });
+
     it('says "a bridge" when the bridges cannot be loaded', () => {
       render([connection({ bridgeId: 42 })]);
       httpMock

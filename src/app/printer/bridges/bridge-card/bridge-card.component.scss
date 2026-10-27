@@ -99,6 +99,26 @@ $dark-stale-fg: #ffcdd2;
   background: var(--app-surface-container);
 }
 
+.notice.shared {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+
+  mat-icon {
+    flex: none;
+    color: var(--app-error-text);
+  }
+
+  p {
+    margin: 0 0 4px;
+  }
+
+  .hint {
+    font-size: 0.875rem;
+    color: var(--app-text-secondary);
+  }
+}
+
 .facts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));

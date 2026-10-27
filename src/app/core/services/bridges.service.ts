@@ -65,6 +65,16 @@ export interface Bridge {
    * (it stops replacing it) until the UTC day ends.
    */
   keyChangesThrottled?: boolean;
+  /**
+   * Distinct jobs this bridge reported for a printer another of the user's bridges watches
+   * (api#290). They were logged, so some may be duplicates. Never reset: read it with
+   * `lastSharedJobAt`. Missing from an API older than api#290.
+   */
+  sharedJobCount?: number;
+  /** When the last such job was reported. */
+  lastSharedJobAt?: string | null;
+  /** The 3D Print Log printer of the last such job. */
+  lastSharedJobPrinterId?: number | null;
 }
 
 /** Where a printer a bridge found stands (`DiscoveredPrinterState`). */
@@ -165,6 +175,35 @@ export interface ConnectBridgePrinter {
   serial?: string | null;
 }
 
+/**
+ * The body of a move (api#290). Where the new bridge finds the printer: `discoveredPrinterId`
+ * (what it found, same kind), else `host`/`port`, else the printer keeps its address.
+ */
+export interface MoveBridgePrinter {
+  toBridgeId: number;
+  discoveredPrinterId?: number;
+  host?: string;
+  port?: number | null;
+  /**
+   * The credentials for the new bridge by field, each sealed in the browser to the new bridge's
+   * current key with AD `printlog-credential:v1:{toBridgeId}:{entryId}:{field}`. Fields that
+   * were set and aren't sent are dropped.
+   */
+  secrets?: Record<string, string>;
+  /** The fingerprint the app computed for the new bridge's key. Required with `secrets`. */
+  keyFingerprint?: string;
+}
+
+/** The answer to a move. */
+export interface MovedBridgePrinter {
+  /** The entry as the new bridge has it; its id is unchanged. */
+  printer: BridgePrinter;
+  fromBridgeId: number;
+  toBridgeId: number;
+  /** Credentials that were set and are gone because the move didn't carry them. */
+  droppedSecretFields: string[] | null;
+}
+
 /** Null keeps a field; an empty string clears it. */
 export interface UpdateBridge {
   name?: string | null;
@@ -218,6 +257,21 @@ export class BridgesService {
   disconnect(id: number, entryId: number): Observable<void> {
     return this.http.delete<void>(
       `${this.url(id)}/printers/${encodeURIComponent(entryId)}`
+    );
+  }
+
+  /**
+   * Moves a connected printer to another of the user's bridges, with its credentials re-sealed to
+   * the new bridge's key, in one step. The entry keeps its id.
+   */
+  move(
+    id: number,
+    entryId: number,
+    body: MoveBridgePrinter
+  ): Observable<MovedBridgePrinter> {
+    return this.http.post<MovedBridgePrinter>(
+      `${this.url(id)}/printers/${encodeURIComponent(entryId)}/move`,
+      body
     );
   }
 

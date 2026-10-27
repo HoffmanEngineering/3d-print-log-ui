@@ -1,0 +1,116 @@
+// The theme is Material 2: colors come from the --app-* tokens and --mat-divider-color.
+
+mat-form-field {
+  width: 100%;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+h3 {
+  margin: 16px 0 4px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.now,
+.hint,
+.option-note {
+  color: var(--app-text-secondary);
+}
+
+.now,
+.hint {
+  font-size: 0.875rem;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.label {
+  margin: 4px 0 8px;
+  font-weight: 500;
+}
+
+.address-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+
+  .port {
+    flex: 0 0 7rem;
+    width: 7rem;
+  }
+}
+
+.found,
+.warn,
+.key {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--app-surface-container);
+
+  mat-icon {
+    flex: none;
+    color: var(--app-text-secondary);
+  }
+}
+
+.warn mat-icon {
+  color: var(--app-error-text);
+}
+
+.key {
+  margin-bottom: 12px;
+
+  p:last-of-type {
+    margin-bottom: 4px;
+  }
+
+  .key-icon {
+    color: var(--app-primary);
+  }
+}
+
+.fingerprint {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.full {
+  font-size: 0.875rem;
+
+  summary {
+    cursor: pointer;
+    color: var(--app-text-secondary);
+  }
+
+  .fingerprint {
+    display: block;
+    margin-top: 4px;
+    font-weight: 400;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+app-bridge-key-changed {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.error-text {
+  color: var(--app-error-text);
+}

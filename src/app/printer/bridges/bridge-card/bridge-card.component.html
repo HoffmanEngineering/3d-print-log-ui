@@ -140,6 +140,42 @@
     </div>
   </dl>
 
+  @if (sharedJob(); as job) {
+    <div class="notice shared" role="note" data-testid="bridge-shared-jobs">
+      <mat-icon aria-hidden="true">content_copy</mat-icon>
+      <div>
+        <p>
+          <strong>Some prints may be logged twice.</strong>
+          {{ name() }} also reported prints of
+          <a [routerLink]="['/printers', job.printerId]">{{
+            job.printerName || 'printer ' + job.printerId
+          }}</a
+          >, last
+          <time
+            [attr.datetime]="job.lastAt"
+            [attr.title]="job.lastAt | localeDate: 'datetime'"
+            >{{ job.lastAt | humanize }}</time
+          >, while
+          @if (job.watcherName) {
+            “{{ job.watcherName }}”
+          } @else {
+            another of your bridges
+          }
+          watches it.
+        </p>
+        <p class="hint">
+          It probably still has the printer in its config file,
+          <code>printlog-bridge.cfg</code>. Remove that section and the bridge
+          stops within a few seconds. Delete any duplicate print in the print
+          list.
+          <a routerLink="/docs/printlog-bridge-bridges" fragment="logged-twice"
+            >More</a
+          >
+        </p>
+      </div>
+    </div>
+  }
+
   <app-bridge-key
     [bridge]="bridge()"
     [busy]="confirming()"
@@ -197,6 +233,11 @@
                       Its config file has this printer too, and the file wins.
                     </span>
                   }
+                  @if (row.alsoFoundBy.length) {
+                    <span class="meta" data-testid="bridge-also-found">
+                      Also found by {{ names(row.alsoFoundBy) }}
+                    </span>
+                  }
                 </div>
                 <div class="actions">
                   @if (row.fields.length || row.snippet) {
@@ -209,6 +250,22 @@
                     >
                       <mat-icon>key</mat-icon>
                       {{ row.credentialsLabel }}
+                    </button>
+                  }
+                  @if (canMove() && !row.inConfigToo) {
+                    <button
+                      mat-button
+                      type="button"
+                      data-testid="bridge-move"
+                      [attr.aria-label]="
+                        'Move ' +
+                        (row.entry.printerName || 'printer') +
+                        ' to another bridge'
+                      "
+                      (click)="move.emit(row.entry)"
+                    >
+                      <mat-icon>swap_horiz</mat-icon>
+                      Move
                     </button>
                   }
                   <button
@@ -286,6 +343,20 @@
           </button>
         </div>
       </div>
+      @if (listedElsewhere(); as elsewhere) {
+        <p class="empty" data-testid="bridge-listed-elsewhere">
+          {{
+            elsewhere.count === 1
+              ? 'One printer it found is'
+              : elsewhere.count + ' printers it found are'
+          }}
+          listed under {{ elsewhere.names }}, which found or watches
+          {{ elsewhere.count === 1 ? 'it' : 'them' }} too.
+          <a routerLink="/docs/printlog-bridge-bridges" fragment="found-twice"
+            >Why?</a
+          >
+        </p>
+      }
       @if (newOnes().length === 0) {
         <p class="empty" data-testid="bridge-nothing-new">
           Nothing new. The bridge looks for printers every few minutes; Scan now
@@ -315,6 +386,12 @@
                     >The bridge can't log this kind of printer yet.</span
                   >
                 }
+                @if (row.alternatives.length) {
+                  <span class="meta" data-testid="bridge-alternatives">
+                    Also found by {{ names(row.alternatives) }}. Connect watches
+                    it from {{ name() }}.
+                  </span>
+                }
               </div>
               <div class="actions">
                 <button
@@ -337,6 +414,19 @@
                   >
                     Connect
                   </button>
+                  @for (s of row.alternatives; track s.bridgeId) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      data-testid="bridge-connect-via"
+                      [attr.aria-label]="
+                        'Connect ' + row.title + ' with ' + s.bridgeName
+                      "
+                      (click)="connectVia.emit(s)"
+                    >
+                      With {{ s.bridgeName }}
+                    </button>
+                  }
                 }
               </div>
             </li>

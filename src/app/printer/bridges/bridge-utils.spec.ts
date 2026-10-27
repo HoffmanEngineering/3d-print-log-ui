@@ -10,6 +10,9 @@ import {
   formatAddress,
   isKeyErrorCode,
   isScanning,
+  moveCredentialPlan,
+  missingMoveCredential,
+  problemFields,
 } from './bridge-utils';
 
 describe('bridge-utils', () => {
@@ -33,6 +36,26 @@ describe('bridge-utils', () => {
       );
       expect(message).toContain('Workshop Pi');
       expect(message).toContain('already');
+      expect(message).toContain('Move');
+    });
+
+    it('names where the printer went for printer_moved', () => {
+      const message = bridgeErrorMessage(
+        problem(409, 'printer_moved', { bridgeId: 9 }),
+        nameOf
+      );
+      expect(message).toContain('Workshop Pi');
+      expect(
+        bridgeErrorMessage(problem(409, 'printer_moved'), nameOf)
+      ).toContain('another bridge');
+    });
+
+    it('lists the credentials a move needs for secrets_required', () => {
+      const message = bridgeErrorMessage(
+        problem(400, 'secrets_required', { fields: ['access_code'] }),
+        nameOf
+      );
+      expect(message).toContain('access code');
     });
 
     it('falls back to "another bridge" when the bridge is unknown', () => {
@@ -65,6 +88,7 @@ describe('bridge-utils', () => {
       'invalid_serial',
       'serial_required',
       'invalid_request',
+      'invalid_target_bridge',
     ]) {
       it(`has its own message for ${code}`, () => {
         const message = bridgeErrorMessage(problem(400, code), nameOf);
@@ -290,6 +314,73 @@ describe('bridge-utils', () => {
           secrets: [secret('username'), secret('password')],
         })!.text
       ).toBe('Password and username set, encrypted to the bridge.');
+    });
+  });
+
+  describe('moveCredentialPlan', () => {
+    it('asks for each credential that was set, in the kind order, marking what is required', () => {
+      const plan = moveCredentialPlan(
+        'prusalink',
+        ['password', 'username', 'api_key'],
+        ['username', 'password']
+      );
+      expect(plan.fields.map((f) => [f.field, f.required])).toEqual([
+        ['password', true],
+        ['username', false],
+      ]);
+      expect(plan.groups).toEqual([['password']]);
+    });
+
+    it('needs one of a PrusaLink password or API key when both were set', () => {
+      const plan = moveCredentialPlan(
+        'prusalink',
+        ['password', 'username', 'api_key'],
+        ['api_key', 'password']
+      );
+      expect(plan.fields.map((f) => [f.field, f.required])).toEqual([
+        ['password', false],
+        ['api_key', false],
+      ]);
+      expect(plan.groups).toEqual([['password', 'api_key']]);
+      expect(missingMoveCredential(plan, new Set())).toBe(
+        'Enter the password or the API key: the new bridge needs it to watch the printer.'
+      );
+      expect(missingMoveCredential(plan, new Set(['api_key']))).toBeNull();
+    });
+
+    it('carries a Moonraker API key that was set, and nothing when none was', () => {
+      const plan = moveCredentialPlan(
+        'moonraker',
+        ['moonraker_api_key'],
+        ['moonraker_api_key']
+      );
+      expect(plan.groups).toEqual([['moonraker_api_key']]);
+      expect(missingMoveCredential(plan, new Set())).toContain('API key');
+      const none = moveCredentialPlan('bambu', ['access_code'], []);
+      expect(none.fields).toEqual([]);
+      expect(missingMoveCredential(none, new Set())).toBeNull();
+    });
+
+    it('adds fields the API asked for that the entry did not list', () => {
+      const plan = moveCredentialPlan(
+        'bambu',
+        ['access_code'],
+        [],
+        ['access_code']
+      );
+      expect(plan.fields.map((f) => [f.field, f.required])).toEqual([
+        ['access_code', true],
+      ]);
+    });
+
+    it('reads the fields of a problem', () => {
+      expect(
+        problemFields(
+          problem(400, 'secrets_required', { fields: ['password', 3] })
+        )
+      ).toEqual(['password']);
+      expect(problemFields(problem(400, 'secrets_required'))).toEqual([]);
+      expect(problemFields('nope')).toEqual([]);
     });
   });
 });

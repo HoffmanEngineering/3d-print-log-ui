@@ -14,7 +14,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import {
   Observable,
@@ -45,7 +45,20 @@ import {
   BridgeCardComponent,
   BridgeRename,
 } from '../bridge-card/bridge-card.component';
-import { openBridgeConnectDialog } from '../bridge-connect-dialog/bridge-connect-dialog.component';
+import {
+  isConnectMoveRequest,
+  openBridgeConnectDialog,
+} from '../bridge-connect-dialog/bridge-connect-dialog.component';
+import {
+  BridgeSnapshot,
+  Sighting,
+  crossBridge,
+  sharedJobNotice,
+} from '../bridge-grouping';
+import {
+  BridgeMoveDialogData,
+  openBridgeMoveDialog,
+} from '../bridge-move-dialog/bridge-move-dialog.component';
 import {
   bridgeErrorCode,
   bridgeErrorMessage,
@@ -71,12 +84,8 @@ export const BRIDGES_POLLING = new InjectionToken<BridgesPolling>(
  */
 type Phase = 'idle' | 'ready' | 'error' | 'unavailable';
 
-interface BridgeState {
-  bridge: Bridge;
-  /** Null when its request failed. */
-  discovered: DiscoveredPrinter[] | null;
-  printers: BridgePrinter[] | null;
-}
+/** One bridge with its lists; a list is null when its request failed. */
+type BridgeState = BridgeSnapshot;
 
 /**
  * The Bridges screen (printlog-bridge#100, #103): every paired printlog-bridge, what it found on
@@ -104,6 +113,12 @@ export class BridgesPageComponent {
   private readonly polling = inject(BRIDGES_POLLING);
   private readonly pins = inject(BridgeKeyPinsService);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  /** `?move=<printer id>` (from a printer's Connections): open its move once loaded. */
+  private pendingMove: number | null = parseId(
+    this.route.snapshot?.queryParamMap?.get('move') ?? null
+  );
   private readonly skeleton = new DeferredSkeletonController();
   private readonly reload$ = new Subject<void>();
   private pollHandle: ReturnType<typeof setTimeout> | null = null;
@@ -121,6 +136,18 @@ export class BridgesPageComponent {
   protected readonly showSkeleton = computed(
     () => this.phase() === 'idle' && this.skeleton.visible()
   );
+  /** When the lists were last loaded, for the age of the shared-jobs warning. */
+  private readonly loadedAt = signal(Date.now());
+  /** How each card shows printers several bridges found (printlog-bridge#103). */
+  protected readonly cross = computed(() => crossBridge(this.states()));
+  protected readonly canMove = computed(() => this.states().length > 1);
+  protected readonly sharedJobs = computed(() => {
+    const states = this.states();
+    const now = this.loadedAt();
+    return new Map(
+      states.map((s) => [s.bridge.id, sharedJobNotice(s.bridge, states, now)])
+    );
+  });
   /** Printers connected from the app on any bridge: printer id to bridge id. */
   private readonly watchedBy = computed(() => {
     const map = new Map<number, number>();
@@ -150,8 +177,10 @@ export class BridgesPageComponent {
       .subscribe(({ states, error }) => {
         this.skeleton.stop();
         if (states) {
+          this.loadedAt.set(Date.now());
           this.states.set(states);
           this.phase.set('ready');
+          this.openPendingMove();
           if (!this.viewed) {
             this.viewed = true;
             this.logging.logEvent('Bridges_Viewed', { count: states.length });
@@ -282,7 +311,95 @@ export class BridgesPageComponent {
     })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        // A conflict offered to move the printer here from the bridge that watches it.
+        if (isConnectMoveRequest(result)) {
+          const from = this.entryFor(result.printerId, result.moveFrom);
+          if (from) {
+            this.move(from.bridge, from.entry, {
+              toBridgeId: bridge.id,
+              discovered: found,
+            });
+            return;
+          }
+          this.toastr.error(
+            "That printer isn't connected in the app on the other bridge: it may be in that bridge's config file. Remove it there first."
+          );
+        }
+        this.load();
+      });
+  }
+
+  /** Connect a found printer with another bridge that found it too. */
+  protected connectVia(sighting: Sighting): void {
+    const state = this.states().find((s) => s.bridge.id === sighting.bridgeId);
+    if (state) {
+      this.connect(state.bridge, sighting.printer);
+    }
+  }
+
+  /** Move a connected printer to another of the user's bridges, with its credentials. */
+  protected move(
+    bridge: Bridge,
+    entry: BridgePrinter,
+    extra: Pick<BridgeMoveDialogData, 'toBridgeId' | 'discovered'> = {}
+  ): void {
+    openBridgeMoveDialog(this.dialog, {
+      entry,
+      from: this.current(bridge),
+      bridges: this.states().map((s) => s.bridge),
+      sightings:
+        this.cross().get(bridge.id)?.entrySightings.get(entry.id) ?? [],
+      ...extra,
+    })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.load());
+  }
+
+  /** The app entry for a 3D Print Log printer, on one bridge or any. */
+  private entryFor(
+    printerId: number,
+    bridgeId?: number
+  ): { bridge: Bridge; entry: BridgePrinter } | null {
+    for (const s of this.states()) {
+      if (bridgeId !== undefined && s.bridge.id !== bridgeId) {
+        continue;
+      }
+      const entry = (s.printers ?? []).find((p) => p.printerId === printerId);
+      if (entry) {
+        return { bridge: s.bridge, entry };
+      }
+    }
+    return null;
+  }
+
+  private openPendingMove(): void {
+    const printerId = this.pendingMove;
+    if (printerId === null) {
+      return;
+    }
+    this.pendingMove = null;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { move: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    const found = this.entryFor(printerId);
+    if (!found) {
+      this.toastr.error(
+        "That printer isn't connected to a bridge in the app, so it can't be moved from here. A printer in a bridge's config file moves by editing that file."
+      );
+      return;
+    }
+    if (!this.canMove()) {
+      this.toastr.error(
+        'You have one bridge. Pair another one first, then move the printer to it.'
+      );
+      return;
+    }
+    this.move(found.bridge, found.entry);
   }
 
   protected ignore(bridge: Bridge, found: DiscoveredPrinter): void {
@@ -472,6 +589,10 @@ async function servedFingerprint(bridge: Bridge): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+function parseId(text: string | null): number | null {
+  return text && /^\d{1,15}$/.test(text) ? Number(text) : null;
 }
 
 function isUnavailable(error: unknown): boolean {

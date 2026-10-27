@@ -1,4 +1,5 @@
 import { Clipboard } from '@angular/cdk/clipboard';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -66,6 +67,27 @@ export interface BridgeConnectDialogData {
   watchedBy: ReadonlyMap<number, number>;
 }
 
+/**
+ * What the dialog closes with when the user chose to move the printer here instead, after
+ * `printer_connected_elsewhere`: the page opens the move from that bridge to this one.
+ */
+export interface BridgeConnectMove {
+  moveFrom: number;
+  printerId: number;
+}
+
+export function isConnectMoveRequest(
+  value: unknown
+): value is BridgeConnectMove {
+  const v = value as Partial<BridgeConnectMove> | null | undefined;
+  return (
+    !!v &&
+    typeof v === 'object' &&
+    typeof v.moveFrom === 'number' &&
+    typeof v.printerId === 'number'
+  );
+}
+
 /** A 3D Print Log printer the user can log to. */
 interface PrinterOption {
   id: number;
@@ -117,9 +139,12 @@ export class BridgeConnectDialogComponent {
   private readonly catalog = inject(PrinterCatalogService);
   private readonly dialog = inject(MatDialog);
   private readonly dialogRef =
-    inject<MatDialogRef<BridgeConnectDialogComponent, BridgePrinter>>(
-      MatDialogRef
-    );
+    inject<
+      MatDialogRef<
+        BridgeConnectDialogComponent,
+        BridgePrinter | BridgeConnectMove
+      >
+    >(MatDialogRef);
   private readonly toastr = inject(ToastrService);
   private readonly logging = inject(LoggingService);
   private readonly clipboard = inject(Clipboard);
@@ -167,6 +192,11 @@ export class BridgeConnectDialogComponent {
   private readonly matchedModelId = signal<string | null>(null);
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** After `printer_connected_elsewhere`: the bridge watching the printer, to move it here. */
+  protected readonly moveFrom = signal<{
+    bridgeId: number;
+    printerId: number;
+  } | null>(null);
   /** Set once connected; a printer that needs a credential then asks for it. */
   protected readonly connected = signal<BridgePrinter | null>(null);
   private createdPrinter = false;
@@ -310,6 +340,7 @@ export class BridgeConnectDialogComponent {
     }
     this.submitting.set(true);
     this.error.set(null);
+    this.moveFrom.set(null);
     this.bridges
       .connect(this.data.bridge.id, body)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -333,6 +364,14 @@ export class BridgeConnectDialogComponent {
         error: (error: unknown) => {
           this.submitting.set(false);
           this.error.set(bridgeErrorMessage(error, (id) => this.nameOf(id)));
+          const other = conflictBridgeId(error);
+          if (
+            bridgeErrorCode(error) === 'printer_connected_elsewhere' &&
+            other !== null &&
+            other !== this.data.bridge.id
+          ) {
+            this.moveFrom.set({ bridgeId: other, printerId: body.printerId });
+          }
           this.logging.logEvent('BridgeConnect_Failed', {
             code: bridgeErrorCode(error) ?? 'unknown',
           });
@@ -363,6 +402,19 @@ export class BridgeConnectDialogComponent {
       });
   }
 
+  /** Close and let the page open the move from the bridge that watches it. */
+  protected moveHere(): void {
+    const from = this.moveFrom();
+    if (!from) {
+      return;
+    }
+    this.logging.logEvent('BridgeConnect_MoveOffered', {});
+    this.dialogRef.close({
+      moveFrom: from.bridgeId,
+      printerId: from.printerId,
+    });
+  }
+
   protected done(): void {
     this.dialogRef.close(this.connected() ?? undefined);
   }
@@ -371,6 +423,14 @@ export class BridgeConnectDialogComponent {
     const bridge = this.data.bridges.find((b) => b.id === bridgeId);
     return bridge ? bridgeLabel(bridge) : null;
   }
+}
+
+function conflictBridgeId(error: unknown): number | null {
+  if (!(error instanceof HttpErrorResponse)) {
+    return null;
+  }
+  const id = (error.error as { bridgeId?: unknown } | null)?.bridgeId;
+  return typeof id === 'number' ? id : null;
 }
 
 /**
@@ -394,7 +454,10 @@ const PHONE_QUERY = '(max-width: 599.98px)';
 export function openBridgeConnectDialog(
   dialog: MatDialog,
   data: BridgeConnectDialogData
-): MatDialogRef<BridgeConnectDialogComponent, BridgePrinter | undefined> {
+): MatDialogRef<
+  BridgeConnectDialogComponent,
+  BridgePrinter | BridgeConnectMove | undefined
+> {
   const phone =
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&

@@ -176,7 +176,7 @@ export class MetaTagService {
   }
 
   /**
-   * The description, Open Graph and Twitter tags. Optional tags (the image and its size and
+   * The description, canonical link, Open Graph and Twitter tags. Optional tags (the image and its size and
    * alt) are removed when not given, so they never describe the previous page.
    */
   public setSocialMediaTags(
@@ -218,6 +218,11 @@ export class MetaTagService {
     for (const selector of LEGACY_TAGS) {
       this.metaService.removeTag(selector);
     }
+
+    // The document may have booted from another page (the home page's canonical and Markdown
+    // twin). setSeoTags puts a twin back when the page has one.
+    this.setCanonical(url);
+    this.setMarkdownAlternate(undefined);
   }
 
   private set(tag: MetaDefinition): void {

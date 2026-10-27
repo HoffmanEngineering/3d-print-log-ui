@@ -219,6 +219,30 @@ describe('MetaTagService social tags (aligned with the SEO Worker)', () => {
     );
   });
 
+  // The client-side fallback for a public page (an API without /seo) must not keep the home
+  // page's canonical or Markdown twin from the document it booted from.
+  it('points the canonical link at the page and drops a Markdown twin link', () => {
+    doc.head.insertAdjacentHTML(
+      'beforeend',
+      '<link rel="canonical" href="https://www.3dprintlog.com/">' +
+        '<link rel="alternate" type="text/markdown" href="https://www.3dprintlog.com/index.md">'
+    );
+    service.setSocialMediaTags(
+      'https://www.3dprintlog.com/prints/1',
+      't',
+      'd',
+      ''
+    );
+    const canonicals = doc.querySelectorAll('link[rel="canonical"]');
+    expect(canonicals.length).toBe(1);
+    expect(canonicals[0].getAttribute('href')).toBe(
+      'https://www.3dprintlog.com/prints/1'
+    );
+    expect(
+      doc.querySelector('link[rel="alternate"][type="text/markdown"]')
+    ).toBeNull();
+  });
+
   it('drops a previous page image size and alt rather than leaving them on the next one', () => {
     service.setSocialMediaTags('https://x/', 't', 'd', 'https://img/1.jpg', {
       image: { width: 1200, height: 630, alt: 'A boat' },

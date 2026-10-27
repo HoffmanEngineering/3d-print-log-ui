@@ -28,6 +28,7 @@ class StubScannerComponent {
   readonly ownLabel = output<string>();
   readonly barcodesChanged = output<Barcode[]>();
   readonly photo = output<{ barcodes: Barcode[]; ocr: LabelOcrResult }>();
+  readonly photoFailed = output<Barcode[]>();
   readonly unavailable = output<CameraUnavailableReason>();
 }
 
@@ -288,6 +289,69 @@ describe('ScanLabelPanelComponent', () => {
         kind: 'label-new',
         read: {
           reading: { ...EMPTY_READING, materialType: 'PLA+', netWeightG: 1000 },
+          catalogMatch: null,
+          barcodes: [{ value: 'X004N86WD5', format: 'code128' }],
+        },
+      },
+    ]);
+  });
+
+  it('opens your own label even while a barcode lookup is pending', async () => {
+    await setUp();
+    const pending = new Subject<LabelReadResponse>();
+    filaments.readLabel.and.returnValue(pending);
+    scanner()!.barcodesChanged.emit([
+      { value: '02540924A', format: 'code128' },
+    ]);
+    await settle();
+
+    scanner()!.ownLabel.emit('f1');
+    pending.next(
+      response({
+        catalogMatch: {
+          id: 'e1',
+          confidence: 1,
+          spoolWeightG: null,
+          colorName: null,
+          name: 'x',
+          manufacturer: 'y',
+          source: 'SpoolmanDB',
+        },
+      })
+    );
+    await settle();
+
+    expect(outcomes).toEqual([{ kind: 'known', id: 'f1' }]);
+  });
+
+  it('keeps at most 4 barcodes for the new spool', async () => {
+    await setUp();
+    const barcodes = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6'].map((value) => ({
+      value,
+      format: 'code128',
+    }));
+    filaments.readLabel.and.returnValue(of(response({ barcodes })));
+
+    scanner()!.photo.emit({ barcodes, ocr: OCR });
+    await settle();
+
+    const read = (outcomes[0] as { read: { barcodes: unknown[] } }).read;
+    expect(read.barcodes).toEqual(barcodes.slice(0, 4));
+  });
+
+  it('offers Continue anyway when the photo could not be read', async () => {
+    await setUp();
+
+    scanner()!.photoFailed.emit([{ value: 'X004N86WD5', format: 'code128' }]);
+    await settle();
+    await click('label-continue');
+
+    expect(filaments.readLabel).not.toHaveBeenCalled();
+    expect(outcomes).toEqual([
+      {
+        kind: 'label-new',
+        read: {
+          reading: EMPTY_READING,
           catalogMatch: null,
           barcodes: [{ value: 'X004N86WD5', format: 'code128' }],
         },

@@ -76,9 +76,19 @@
         (ownLabel)="ownLabel($event)"
         (barcodesChanged)="barcodes($event)"
         (photo)="photo($event)"
+        (photoFailed)="photoFailed($event)"
         (unavailable)="unavailable.emit($event)"
       />
-      @if (phase() === 'need-photo') {
+      @if (phase() === 'unread') {
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="label-continue"
+          (click)="continueAnyway()"
+        >
+          Continue anyway
+        </button>
+      } @else if (phase() === 'need-photo') {
         <p class="label-panel__title" role="status">
           New product: take a photo of the label
         </p>

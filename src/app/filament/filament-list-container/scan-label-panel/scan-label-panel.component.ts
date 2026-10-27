@@ -39,7 +39,16 @@ export type LabelScanOutcome =
   | { kind: 'known'; id: string }
   | { kind: 'label-new'; read: ScannedLabelRead };
 
-type LabelPhase = 'scanning' | 'resolving' | 'need-photo' | 'own' | 'error';
+type LabelPhase =
+  | 'scanning'
+  | 'resolving'
+  | 'need-photo'
+  | 'unread'
+  | 'own'
+  | 'error';
+
+/** What the API stores per spool; a scan that saw more keeps the first ones. */
+const MAX_BARCODES = 4;
 
 /**
  * The camera half of the Materials list's "Scan spool". A barcode a spool of yours already has
@@ -87,11 +96,13 @@ export class ScanLabelPanelComponent {
 
   protected ownLabel(id: string): void {
     this.logging.logEvent('LabelScan_OwnLabel');
+    // It names the spool outright, so a lookup still running must not answer after it.
+    this.resolution?.unsubscribe();
     this.outcome.emit({ kind: 'known', id });
   }
 
   protected barcodes(barcodes: Barcode[]): void {
-    if (this.phase() !== 'scanning' && this.phase() !== 'need-photo') return;
+    if (!['scanning', 'need-photo', 'unread'].includes(this.phase())) return;
     this.resolve({ barcodes }, false);
   }
 
@@ -108,6 +119,12 @@ export class ScanLabelPanelComponent {
       },
       true
     );
+  }
+
+  /** The photo gave no words: the user may still continue with the barcodes. */
+  protected photoFailed(barcodes: Barcode[]): void {
+    this.lastRequest = { barcodes };
+    this.setPhase('unread');
   }
 
   protected retry(): void {
@@ -190,7 +207,10 @@ export class ScanLabelPanelComponent {
 
   private newSpool(read: ScannedLabelRead): void {
     this.logging.logEvent('LabelScan_NewChosen');
-    this.outcome.emit({ kind: 'label-new', read });
+    this.outcome.emit({
+      kind: 'label-new',
+      read: { ...read, barcodes: read.barcodes.slice(0, MAX_BARCODES) },
+    });
   }
 
   private toRead(response: LabelReadResponse): ScannedLabelRead {

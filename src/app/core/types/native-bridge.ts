@@ -2,6 +2,13 @@ import type { ReaderConfig } from './tag-reading';
 
 export type PushPermissionState = 'granted' | 'denied' | 'default';
 
+/**
+ * How the app shell reads tags. `passive`: whenever a screen is listening (Android reader
+ * mode). `session`: only when the page calls scanTag(), which shows a system sheet for one read
+ * (iOS Core NFC); a screen must offer a Scan button.
+ */
+export type TagReadingMode = 'passive' | 'session';
+
 /** Whether the phone can read tags right now. */
 export type NfcStatus = 'unsupported' | 'off' | 'ready';
 
@@ -38,7 +45,7 @@ export interface PendingTap {
  * to hijack a device registration.
  */
 export interface PrintLogNativeBridge {
-  platform: 'android';
+  platform: 'android' | 'ios';
   appVersion: string;
   pushPermission: PushPermissionState;
   requestPushPermission(): Promise<PushPermissionState>;
@@ -65,6 +72,13 @@ export interface PrintLogNativeBridge {
    */
   startTagReading?(config?: ReaderConfig | null): Promise<NfcStatus>;
   stopTagReading?(): Promise<void>;
+  /** Absent before the iOS app, whose shells all read passively. */
+  tagReadingMode?: TagReadingMode;
+  /**
+   * Session mode: shows the system scan sheet for one read while a session is open. Call it
+   * from a user tap; the tag still arrives through onTag/consumeTag.
+   */
+  scanTag?(): Promise<NfcStatus>;
   /** The latest tag read, claimed once, or null. */
   consumeTag?(): Promise<TagRead | null>;
   openNfcSettings?(): Promise<void>;

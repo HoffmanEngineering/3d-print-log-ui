@@ -89,6 +89,7 @@ export class FilamentSearchModalComponent {
   /** Whether this app shell can read tags; every NFC control hides without it. */
   readonly tagAvailable = this.tagReader.available;
   readonly nfcStatus = this.tagReader.status;
+  readonly scansOnDemand = this.tagReader.scansOnDemand;
 
   /**
    * A tag no spool has yet. While set, the next spool picked is offered the tag. One tag links
@@ -157,6 +158,10 @@ export class FilamentSearchModalComponent {
   dismissPendingTag() {
     this.pendingTagUid.set(null);
     this.pendingTagReading = null;
+  }
+
+  scanTag() {
+    void this.tagReader.scan();
   }
 
   openNfcSettings() {

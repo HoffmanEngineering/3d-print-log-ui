@@ -252,6 +252,9 @@ export class FilamentTagUidsComponent
         }
         this.checkHolder(read);
       });
+    // On iOS the read is user-started: this tap opens the phone's scan sheet. Elsewhere it
+    // does nothing, and the listener above picks the tag up on its own.
+    void this.tagReader.scan();
   }
 
   private stopScanning(): void {

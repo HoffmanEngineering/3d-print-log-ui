@@ -6,6 +6,7 @@ import {
   PrintLogNativeBridge,
   PushPermissionState,
   TagRead,
+  TagReadingMode,
 } from '../types/native-bridge';
 import { ReaderConfig } from '../types/tag-reading';
 
@@ -96,6 +97,19 @@ export class NativeBridgeService {
   async startTagReading(config: ReaderConfig | null): Promise<NfcStatus> {
     try {
       return (await this.bridge?.startTagReading?.(config)) ?? 'unsupported';
+    } catch {
+      return 'unsupported';
+    }
+  }
+
+  /** `passive` unless the app shell says otherwise; shells before the iOS app never do. */
+  tagReadingMode(): TagReadingMode {
+    return this.bridge?.tagReadingMode === 'session' ? 'session' : 'passive';
+  }
+
+  async scanTag(): Promise<NfcStatus> {
+    try {
+      return (await this.bridge?.scanTag?.()) ?? 'unsupported';
     } catch {
       return 'unsupported';
     }

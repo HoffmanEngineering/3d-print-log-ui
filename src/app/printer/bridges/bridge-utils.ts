@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Bridge } from 'src/app/core/services/bridges.service';
+import { Bridge, BridgePrinter } from 'src/app/core/services/bridges.service';
 import {
   BRIDGE_SETUPS,
   BridgeSetupKind,
@@ -185,6 +185,53 @@ export function credentialIssueMessage(
     default:
       return `The bridge reported a problem with the ${noun}.`;
   }
+}
+
+/**
+ * One line about an entry's credentials for its row on the card, or null for a kind that takes
+ * none (or an API that doesn't list them). `attention` when the user needs to act.
+ */
+export function credentialSummary(
+  entry: Pick<
+    BridgePrinter,
+    'kind' | 'secretFields' | 'secrets' | 'credentialIssues'
+  >
+): { text: string; attention: boolean } | null {
+  const fields = entry.secretFields ?? [];
+  if (fields.length === 0) {
+    return null;
+  }
+  const issue = entry.credentialIssues?.find((i) => fields.includes(i.field));
+  if (issue) {
+    return {
+      text: credentialIssueMessage(entry.kind, issue.field, issue.code),
+      attention: true,
+    };
+  }
+  const secrets = (entry.secrets ?? []).filter((s) => fields.includes(s.field));
+  const stale = secrets.find((s) => s.stale);
+  if (stale) {
+    return {
+      text: `Enter the ${credentialNoun(stale.field)} again: the bridge's encryption key changed.`,
+      attention: true,
+    };
+  }
+  if (secrets.length === 0) {
+    return {
+      text:
+        fields.length === 1
+          ? `No ${credentialNoun(fields[0])} entered in the app.`
+          : 'No credentials entered in the app.',
+      attention: false,
+    };
+  }
+  const labels = fields
+    .filter((f) => secrets.some((s) => s.field === f))
+    .map((f, i) => (i === 0 ? credentialFieldLabel(f) : credentialNoun(f)));
+  return {
+    text: `${labels.join(' and ')} set, encrypted to the bridge.`,
+    attention: false,
+  };
 }
 
 /** Why what the user typed can't be sealed. Never repeats the value. */

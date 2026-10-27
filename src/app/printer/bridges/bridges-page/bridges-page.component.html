@@ -67,6 +67,7 @@
             [bridge]="s.bridge"
             [discovered]="s.discovered"
             [printers]="s.printers"
+            [confirming]="confirming() === s.bridge.id"
             (rename)="rename(s.bridge, $event)"
             (scan)="scan(s.bridge)"
             (connect)="connect(s.bridge, $event)"
@@ -74,6 +75,9 @@
             (unignore)="unignore(s.bridge, $event)"
             (disconnect)="confirmDisconnect(s.bridge, $event)"
             (retry)="load()"
+            (confirmKey)="confirmKey(s.bridge, $event)"
+            (entryChange)="replaceEntry(s.bridge, $event)"
+            (reloadBridge)="load()"
           />
         }
       </div>

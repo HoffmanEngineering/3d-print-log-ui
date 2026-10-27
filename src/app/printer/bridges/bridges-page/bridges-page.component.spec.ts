@@ -17,7 +17,14 @@ import {
 } from 'src/app/core/services/bridges.service';
 import { ConnectionStatus } from 'src/app/core/services/connection.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { bridge, bridgePrinter, discovered } from '../testing/bridge-fixtures';
+import { By } from '@angular/platform-browser';
+import { BridgeCardComponent } from '../bridge-card/bridge-card.component';
+import {
+  OTHER_BRIDGE_KEY,
+  bridge,
+  bridgePrinter,
+  discovered,
+} from '../testing/bridge-fixtures';
 import {
   BRIDGES_POLLING,
   BridgesPageComponent,
@@ -57,6 +64,7 @@ describe('BridgesPageComponent', () => {
       'ignore',
       'unignore',
       'disconnect',
+      'confirmKey',
     ]);
     service.list.and.returnValue(of([garage, attic]));
     service.discovered.and.callFake((id: number) =>
@@ -265,4 +273,88 @@ describe('BridgesPageComponent', () => {
     expect(service.list).toHaveBeenCalledTimes(2);
     discardPeriodicTasks();
   }));
+
+  function card(index = 0): BridgeCardComponent {
+    return fixture.debugElement.queryAll(By.directive(BridgeCardComponent))[
+      index
+    ].componentInstance as BridgeCardComponent;
+  }
+
+  it('confirms a pending key with the fingerprint the card computed, then reloads', async () => {
+    const pending = bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey });
+    service.list.and.returnValue(of([pending]));
+    service.confirmKey.and.returnValue(
+      of(bridge({ publicKey: OTHER_BRIDGE_KEY.publicKey }))
+    );
+    await create();
+    card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
+    fixture.detectChanges();
+    expect(service.confirmKey).toHaveBeenCalledOnceWith(
+      42,
+      OTHER_BRIDGE_KEY.fingerprint
+    );
+    expect(toastr.success).toHaveBeenCalledWith(
+      jasmine.stringContaining('credentials again')
+    );
+    expect(logging.logEvent).toHaveBeenCalledWith('Bridges_KeyConfirmed', {
+      hadKey: true,
+      throttled: false,
+    });
+    expect(service.list).toHaveBeenCalledTimes(2);
+  });
+
+  for (const code of ['pending_key_changed', 'no_pending_key']) {
+    it(`explains ${code} and reloads to compare again`, async () => {
+      service.list.and.returnValue(
+        of([bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey })])
+      );
+      service.confirmKey.and.returnValue(
+        throwError(() => httpError(409, code))
+      );
+      await create();
+      card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
+      fixture.detectChanges();
+      expect(toastr.error).toHaveBeenCalled();
+      expect(toastr.error.calls.mostRecent().args[0]).not.toContain(
+        'Something went wrong'
+      );
+      expect(logging.logEvent).toHaveBeenCalledWith('Bridges_ActionFailed', {
+        action: 'confirm-key',
+        code,
+      });
+      expect(service.list).toHaveBeenCalledTimes(2);
+    });
+  }
+
+  it('shows a credential change in the row before the next refresh', async () => {
+    service.list.and.returnValue(of([garage]));
+    service.printers.and.returnValue(of([bridgePrinter()]));
+    await create();
+    expect(one('bridge-credential-summary')!.textContent).toContain(
+      'No access code'
+    );
+    card().entryChange.emit(
+      bridgePrinter({
+        secrets: [
+          {
+            field: 'access_code',
+            keyFingerprint: 'a'.repeat(64),
+            updatedAt: '2026-10-27T18:05:00Z',
+            stale: false,
+          },
+        ],
+      })
+    );
+    fixture.detectChanges();
+    expect(one('bridge-credential-summary')!.textContent).toContain(
+      'Access code set'
+    );
+    expect(service.list).toHaveBeenCalledTimes(1);
+  });
+
+  it('reloads when a credential found the key changed', async () => {
+    await create();
+    card().reloadBridge.emit();
+    expect(service.list).toHaveBeenCalledTimes(2);
+  });
 });

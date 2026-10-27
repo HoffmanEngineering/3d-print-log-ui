@@ -6,6 +6,7 @@ import {
   credentialFieldLabel,
   credentialIssueMessage,
   credentialProblemMessage,
+  credentialSummary,
   formatAddress,
   isKeyErrorCode,
   isScanning,
@@ -228,6 +229,67 @@ describe('bridge-utils', () => {
         credentialProblemMessage('control_character', 'password')
       ).toContain('line break');
       expect(credentialProblemMessage('invalid_text', 'password')).toBeTruthy();
+    });
+  });
+
+  describe('credentialSummary', () => {
+    const secret = (field: string, stale = false) => ({
+      field,
+      keyFingerprint: 'a'.repeat(64),
+      updatedAt: '2026-10-27T18:05:00Z',
+      stale,
+    });
+
+    it('is null for a kind without credentials or an older API', () => {
+      expect(credentialSummary({ kind: 'sdcp', secretFields: [] })).toBeNull();
+      expect(credentialSummary({ kind: 'bambu' })).toBeNull();
+    });
+
+    it('puts an issue first', () => {
+      expect(
+        credentialSummary({
+          kind: 'bambu',
+          secretFields: ['access_code'],
+          secrets: [secret('access_code')],
+          credentialIssues: [
+            { field: 'access_code', code: 'rejected_by_printer' },
+          ],
+        })
+      ).toEqual({
+        text: jasmine.stringContaining('refused this access code'),
+        attention: true,
+      });
+    });
+
+    it('asks again for a stale value', () => {
+      expect(
+        credentialSummary({
+          kind: 'bambu',
+          secretFields: ['access_code'],
+          secrets: [secret('access_code', true)],
+          credentialIssues: [],
+        })!.text
+      ).toContain('Enter the access code again');
+    });
+
+    it('says what is set, or that nothing is', () => {
+      expect(
+        credentialSummary({
+          kind: 'bambu',
+          secretFields: ['access_code'],
+          secrets: [],
+        })
+      ).toEqual({
+        text: 'No access code entered in the app.',
+        attention: false,
+      });
+      expect(
+        credentialSummary({
+          kind: 'prusalink',
+          secretFields: ['password', 'username', 'api_key'],
+          secrets: [secret('username'), secret('password')],
+        })!.text
+      ).toBe('Password and username set, encrypted to the bridge.');
     });
   });
 });

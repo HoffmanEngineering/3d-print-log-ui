@@ -107,6 +107,8 @@ export class BridgesPageComponent {
 
   protected readonly phase = signal<Phase>('idle');
   protected readonly states = signal<BridgeState[]>([]);
+  /** The bridge whose new key is being confirmed. */
+  protected readonly confirming = signal<number | null>(null);
   protected readonly showSkeleton = computed(
     () => this.phase() === 'idle' && this.skeleton.visible()
   );
@@ -344,6 +346,59 @@ export class BridgesPageComponent {
           this.load();
         },
       });
+  }
+
+  /**
+   * Confirms a bridge's pending key. `fingerprint` is what the card computed from
+   * `pendingPublicKey` and showed the user, never the API's `pendingPublicKeyFingerprint`.
+   */
+  protected confirmKey(bridge: Bridge, fingerprint: string): void {
+    if (this.confirming() !== null) {
+      return;
+    }
+    const before = this.current(bridge);
+    const hadKey = !!before.publicKey;
+    this.confirming.set(bridge.id);
+    this.service
+      .confirmKey(bridge.id, fingerprint)
+      .pipe(
+        finalize(() => this.confirming.set(null)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (updated) => {
+          this.replaceBridge(updated);
+          this.toastr.success(
+            hadKey
+              ? "New key confirmed. Enter the printers' credentials again: the bridge can't read the old ones."
+              : 'Key confirmed. You can enter printer credentials in the app now.'
+          );
+          this.logging.logEvent('Bridges_KeyConfirmed', {
+            hadKey,
+            throttled: before.keyChangesThrottled === true,
+          });
+          this.load();
+        },
+        error: (error: unknown) => {
+          this.failed('confirm-key', error);
+          // The pending key moved or went away: show what the bridge has now, to compare again.
+          this.load();
+        },
+      });
+  }
+
+  /** An entry after a credential changed, so its row shows the new state before the next poll. */
+  protected replaceEntry(bridge: Bridge, entry: BridgePrinter): void {
+    this.states.update((list) =>
+      list.map((s) =>
+        s.bridge.id !== bridge.id || !s.printers
+          ? s
+          : {
+              ...s,
+              printers: s.printers.map((p) => (p.id === entry.id ? entry : p)),
+            }
+      )
+    );
   }
 
   /** The bridge as it is now, after any local change (a scan request). */

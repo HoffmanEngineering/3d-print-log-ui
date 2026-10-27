@@ -19,7 +19,7 @@ export type PrefillControl =
   | 'recommendedTemp'
   | 'recommendedBedTemp';
 
-export type PrefillSource = 'tag' | 'catalog';
+export type PrefillSource = 'tag' | 'catalog' | 'label';
 
 export interface TagPrefill {
   values: Partial<Record<PrefillControl, unknown>>;

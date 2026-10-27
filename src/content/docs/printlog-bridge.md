@@ -6,8 +6,8 @@ navLabel: Log prints from Klipper
 group: integrations
 order: 42
 mode: explanation
-updated: 2026-10-15
-related: [printlog-bridge-install, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
+updated: 2026-10-27
+related: [printlog-bridge-install, printlog-bridge-bambu, printlog-bridge-prusalink, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
 ---
 
 ## printlog-bridge
@@ -16,7 +16,7 @@ related: [printlog-bridge-install, klipper-spoolman, printlog-bridge-docker, pri
 
 printlog-bridge is a small open-source program that watches your Klipper printers through Moonraker and logs every print to 3D Print Log by itself. You don't type anything in, and you don't have to edit the printer's configuration by hand.
 
-It runs either on the printer's own host or in a Docker container on another computer on your network, and one bridge can watch several printers. The source is on GitHub under the MIT license: [HoffmanEngineering/printlog-bridge](https://github.com/HoffmanEngineering/printlog-bridge). For a short overview to share, see [Automatic print logging for Klipper](/klipper).
+It runs either on the printer's own host or in a Docker container on another computer on your network, and one bridge can watch several printers. It also watches [Bambu Lab](/docs/printlog-bridge-bambu) and [Prusa](/docs/printlog-bridge-prusalink) printers over your network: see [Supported printers](#printers). The source is on GitHub under the MIT license: [HoffmanEngineering/printlog-bridge](https://github.com/HoffmanEngineering/printlog-bridge). For a short overview to share, see [Automatic print logging for Klipper](/klipper).
 
 <doc-callout kind="note" heading="The bridge is new">
   <p>
@@ -26,10 +26,24 @@ It runs either on the printer's own host or in a Docker container on another com
   </p>
 </doc-callout>
 
+### Supported printers {#printers}
+
+| Printer | How the bridge reads it | Filament usage | Guide |
+| --- | --- | --- | --- |
+| Klipper with Moonraker (Voron, Snapmaker U1, Creality and others running Klipper) | Moonraker, on the printer or over the network | What Klipper measured, per tool | [Install on the printer](/docs/printlog-bridge-install) or [run it in Docker](/docs/printlog-bridge-docker) |
+| Bambu Lab X1, P1, A1, H2 | The printer's LAN connection (LAN Only Mode and Developer Mode) | The slicer's estimate per AMS tray | [Bambu Lab printers](/docs/printlog-bridge-bambu) |
+| Prusa MK4/MK4S, MK3.5/3.9, Core One, MINI, XL | PrusaLink, built into the firmware | The slicer's estimate per tool | [Prusa printers (PrusaLink)](/docs/printlog-bridge-prusalink) |
+
+The Bambu and PrusaLink adapters are new: they're built from the printers' documented protocols and haven't been checked on real printers yet. Neither printer measures the filament it feeds, so their usage is the slicer's estimate, marked with a `*` on the print and left out of the accuracy stats. Elegoo printers (SDCP), OctoPrint and others are planned.
+
+The printer's **Edit Page** in 3D Print Log shows the steps and a config section for its type under **Connections**, with its number filled in.
+
 ### In this guide {#pages}
 
 - [Install on the printer (local mode)](/docs/printlog-bridge-install): run the bridge as a service on the printer's own host and connect it to your account.
 - [Run it in Docker (remote mode)](/docs/printlog-bridge-docker): one container on a NAS, home server or Pi watches your printers over the network.
+- [Bambu Lab printers](/docs/printlog-bridge-bambu): log an X1, P1, A1 or H2 over its LAN connection, with grams per AMS tray.
+- [Prusa printers (PrusaLink)](/docs/printlog-bridge-prusalink): log an MK4, MK3.5, Core One, MINI or XL through PrusaLink, with the slicer's estimate per tool.
 - [Assign spools with PRINTLOG_SET_SPOOL](/docs/printlog-bridge-spools): tell 3D Print Log which spool is in each tool from Klipper's console or a macro.
 - [Snapmaker U1](/docs/snapmaker-u1): filament per tool on all four tools, with spools assigned from their RFID tags.
 - [Troubleshooting](/docs/printlog-bridge-troubleshooting): the `doctor` and `status` commands, logs, traces and common problems.

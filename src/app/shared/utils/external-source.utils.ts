@@ -6,6 +6,10 @@
 const SOURCE_LABELS: Record<string, string> = {
   moonraker: 'Klipper (Moonraker)',
   octoprint: 'OctoPrint',
+  prusalink: 'PrusaLink',
+  // The bridge's LAN adapter; `bambu-cloud` below is a different integration.
+  bambu: 'Bambu Lab (LAN)',
+  sdcp: 'Elegoo (SDCP)',
   'moonraker-notifier': 'Moonraker notifier',
   'octoprint-webhook': 'OctoPrint webhook',
   'bambu-cloud': 'Bambu Cloud',

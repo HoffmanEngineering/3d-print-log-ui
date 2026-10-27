@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { CAN_PURCHASE_PRO } from '../pricing/pro-purchase';
 
 export interface SubscriptionDto {
   status: 'none' | 'active' | 'past_due' | 'canceled';
@@ -23,6 +24,7 @@ export interface SubscriptionDto {
 })
 export class SubscriptionService {
   private readonly http = inject(HttpClient);
+  private readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
   private readonly baseApiUrl = `${environment.printLogApiUrl}/api/Subscription`;
 
   private readonly _subscription = signal<SubscriptionDto | null>(null);
@@ -82,12 +84,29 @@ export class SubscriptionService {
   }
 
   createCheckoutSession(planId: string): Observable<{ url: string }> {
+    if (!this.canPurchasePro) {
+      return purchaseUnavailable();
+    }
     return this.http.post<{ url: string }>(`${this.baseApiUrl}/checkout`, {
       planId,
     });
   }
 
+  /** The billing portal changes plans too, so it is a purchase surface like checkout. */
   createPortalSession(): Observable<{ url: string }> {
+    if (!this.canPurchasePro) {
+      return purchaseUnavailable();
+    }
     return this.http.post<{ url: string }>(`${this.baseApiUrl}/portal`, {});
   }
+}
+
+/**
+ * The backstop behind CAN_PURCHASE_PRO: in the iOS app no request is made, so a call to
+ * action a template forgot to hide still cannot send the user to Stripe.
+ */
+function purchaseUnavailable(): Observable<never> {
+  return throwError(
+    () => new Error('Pro cannot be purchased in the iOS app (App Store 3.1.1).')
+  );
 }

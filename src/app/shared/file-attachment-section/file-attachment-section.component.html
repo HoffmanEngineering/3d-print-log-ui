@@ -63,10 +63,17 @@
     <div class="pro-teaser">
       <mat-icon>attach_file</mat-icon>
       <span>Attach gcode, STL, and 3MF files</span>
-      <a [routerLink]="['/subscription']" class="pro-badge">
-        <mat-icon>star</mat-icon>
-        Pro
-      </a>
+      @if (canPurchasePro) {
+        <a [routerLink]="['/subscription']" class="pro-badge">
+          <mat-icon>star</mat-icon>
+          Pro
+        </a>
+      } @else {
+        <span class="pro-badge">
+          <mat-icon>star</mat-icon>
+          Pro
+        </span>
+      }
     </div>
   }
 </section>

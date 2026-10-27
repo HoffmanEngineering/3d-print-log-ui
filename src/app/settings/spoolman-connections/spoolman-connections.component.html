@@ -57,8 +57,10 @@
     @if (anyPaused()) {
       <p class="meta">
         Paused connections are waiting on Pro: Free includes 1 Spoolman printer.
-        <a routerLink="/subscription">Upgrade to Pro</a> to resume them with no
-        change on the printer.
+        @if (canPurchasePro) {
+          <a routerLink="/subscription">Upgrade to Pro</a> to resume them with
+          no change on the printer.
+        }
       </p>
     }
   }

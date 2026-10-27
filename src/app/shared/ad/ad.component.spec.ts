@@ -3,6 +3,7 @@ import { NO_ERRORS_SCHEMA, signal, computed } from '@angular/core';
 import { AdsenseModule } from 'ng2-adsense';
 import { AdComponent } from './ad.component';
 import { SubscriptionService } from '../../core/services/subscription.service';
+import { IS_CORDOVA_IOS } from '../../core/utils/platform';
 
 describe('AdComponent', () => {
   let component: AdComponent;
@@ -65,6 +66,32 @@ describe('AdComponent', () => {
       'aside[aria-label="Advertisement"]'
     );
     expect(aside).toBeTruthy();
+  });
+
+  it('renders no ad in the iOS app, even for a free user', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [
+        AdComponent,
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+      providers: [
+        {
+          provide: SubscriptionService,
+          useValue: { isPro: computed(() => false) },
+        },
+        { provide: IS_CORDOVA_IOS, useValue: true },
+      ],
+    });
+    const iosFixture = TestBed.createComponent(AdComponent);
+    iosFixture.detectChanges();
+
+    expect(
+      iosFixture.nativeElement.querySelector(
+        'aside[aria-label="Advertisement"]'
+      )
+    ).toBeNull();
   });
 
   it('should not render the ad aside when user is Pro', () => {

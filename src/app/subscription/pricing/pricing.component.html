@@ -11,9 +11,19 @@
               You're on the <strong>Pro</strong> plan. Thank you for your
               support!
             </p>
-            <p>
-              Manage your billing in
-              <a routerLink="/settings">Settings</a>.
+            @if (canPurchasePro) {
+              <p>
+                Manage your billing in
+                <a routerLink="/settings">Settings</a>.
+              </p>
+            }
+          </mat-card-content>
+        </mat-card>
+      } @else if (!canPurchasePro) {
+        <mat-card appearance="outlined" class="current-plan-card">
+          <mat-card-content>
+            <p data-testid="pro-unavailable">
+              Pro can't be purchased in the iOS app.
             </p>
           </mat-card-content>
         </mat-card>

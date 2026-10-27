@@ -35,6 +35,7 @@ import {
 } from 'src/app/core/services/spoolman-connection.service';
 import { HumanizePipe } from 'src/app/shared/pipes/humanize.pipe';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
 
 /** The two printer categories that extrude filament, which is all Spoolman tracks. */
 const FDM_CATEGORIES = new Set(['FFF', 'FDM']);
@@ -67,6 +68,9 @@ type Phase = 'idle' | 'ready' | 'error';
   imports: [MatButtonModule, MatIconModule, RouterLink],
 })
 export class PrinterSpoolmanComponent {
+  /** False in the iOS app, where Pro is never sold (#366). */
+  readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
+
   private readonly spoolman = inject(SpoolmanConnectionService);
   private readonly dialog = inject(MatDialog);
   private readonly toastr = inject(ToastrService);

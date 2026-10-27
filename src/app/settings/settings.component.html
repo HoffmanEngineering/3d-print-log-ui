@@ -698,19 +698,23 @@
                 period.
               </p>
             }
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="manageSubscription()"
-            >
-              Manage Billing
-            </button>
+            @if (canPurchasePro) {
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="manageSubscription()"
+              >
+                Manage Billing
+              </button>
+            }
           </div>
         } @else {
           <p>You're on the free plan.</p>
-          <button mat-raised-button color="accent" routerLink="/subscription">
-            Upgrade to Pro
-          </button>
+          @if (canPurchasePro) {
+            <button mat-raised-button color="accent" routerLink="/subscription">
+              Upgrade to Pro
+            </button>
+          }
         }
       </div>
       <hr />

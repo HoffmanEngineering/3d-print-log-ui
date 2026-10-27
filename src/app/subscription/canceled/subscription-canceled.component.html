@@ -7,11 +7,15 @@
   >
     <mat-card-content>
       <h1>No worries!</h1>
-      <p>You can upgrade to Pro anytime you're ready.</p>
+      @if (canPurchasePro) {
+        <p>You can upgrade to Pro anytime you're ready.</p>
+      }
       <div fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="center">
-        <button mat-raised-button color="primary" routerLink="/subscription">
-          View Plans
-        </button>
+        @if (canPurchasePro) {
+          <button mat-raised-button color="primary" routerLink="/subscription">
+            View Plans
+          </button>
+        }
         <button mat-raised-button routerLink="/prints">Go to My Prints</button>
       </div>
     </mat-card-content>

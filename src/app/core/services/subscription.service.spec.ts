@@ -6,6 +6,7 @@ import {
 import { provideHttpClient } from '@angular/common/http';
 import { SubscriptionService, SubscriptionDto } from './subscription.service';
 import { environment } from 'src/environments/environment';
+import { CAN_PURCHASE_PRO } from '../pricing/pro-purchase';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
@@ -126,5 +127,45 @@ describe('SubscriptionService', () => {
       expect(req.request.method).toBe('POST');
       req.flush({ url: 'https://billing.stripe.com/test' });
     });
+  });
+});
+
+describe('SubscriptionService in the iOS app', () => {
+  let service: SubscriptionService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: CAN_PURCHASE_PRO, useValue: false },
+      ],
+    });
+    service = TestBed.inject(SubscriptionService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  // The backstop behind every hidden button: App Store 3.1.1 (#366).
+  it('refuses to open a Stripe checkout without making a request', () => {
+    let failed = false;
+    service.createCheckoutSession('pro_monthly').subscribe({
+      error: () => (failed = true),
+    });
+
+    expect(failed).toBeTrue();
+    httpMock.expectNone(() => true);
+  });
+
+  it('refuses to open the billing portal without making a request', () => {
+    let failed = false;
+    service.createPortalSession().subscribe({ error: () => (failed = true) });
+
+    expect(failed).toBeTrue();
+    httpMock.expectNone(() => true);
   });
 });

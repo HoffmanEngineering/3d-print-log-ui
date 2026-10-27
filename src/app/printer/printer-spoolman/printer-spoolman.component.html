@@ -95,12 +95,19 @@
         <p>
           Free includes {{ l.limit }} Spoolman
           {{ l.limit === 1 ? 'printer' : 'printers' }}, and another printer is
-          using it. Upgrade to Pro to connect this one too, or disconnect the
-          other printer first.
+          using it.
+          @if (canPurchasePro) {
+            Upgrade to Pro to connect this one too, or disconnect the other
+            printer first.
+          } @else {
+            Disconnect the other printer first to connect this one.
+          }
         </p>
-        <a mat-raised-button color="accent" routerLink="/subscription"
-          >Upgrade to Pro</a
-        >
+        @if (canPurchasePro) {
+          <a mat-raised-button color="accent" routerLink="/subscription"
+            >Upgrade to Pro</a
+          >
+        }
       </div>
     }
 
@@ -123,8 +130,10 @@
           @if (c.state === 'disabled') {
             <span class="meta paused" data-testid="spoolman-paused">
               Paused: Free includes 1 Spoolman printer.
-              <a routerLink="/subscription">Upgrade to Pro</a> to resume it,
-              with no change on the printer.
+              @if (canPurchasePro) {
+                <a routerLink="/subscription">Upgrade to Pro</a> to resume it,
+                with no change on the printer.
+              }
             </span>
           } @else {
             <span class="meta" data-testid="spoolman-status">{{

@@ -50,6 +50,12 @@ export interface Connection {
   /** The software on the printer's host, such as `Moonraker` or `PrusaLink`; none for Bambu. */
   hostSoftwareName?: string | null;
   hostSoftwareVersion?: string | null;
+  /**
+   * The bridge whose heartbeats this connection gets (`BridgeDto.id`, api#288), or null for an
+   * agent that hasn't checked in as a bridge. Absent on an older API.
+   */
+  bridgeId?: number | null;
+
   /** Legacy: what a bridge from before api#282 sends instead of the generic fields. */
   klipperVersion?: string | null;
   moonrakerVersion?: string | null;

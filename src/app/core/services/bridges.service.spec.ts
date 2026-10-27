@@ -77,4 +77,42 @@ describe('BridgesService', () => {
     expect(scan.request.method).toBe('POST');
     scan.flush({ scanRequestedAt: '2026-10-27T18:03:00+00:00' });
   });
+
+  it('reads one bridge', () => {
+    service.get(42).subscribe();
+    const req = http.expectOne(`${base}/42`);
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
+
+  it('puts a sealed credential with the fingerprint it was sealed to', () => {
+    service
+      .setSecret(42, 7, 'access_code', {
+        sealed: 'v1.abc',
+        keyFingerprint: 'f'.repeat(64),
+      })
+      .subscribe();
+    const req = http.expectOne(`${base}/42/printers/7/secrets/access_code`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({
+      sealed: 'v1.abc',
+      keyFingerprint: 'f'.repeat(64),
+    });
+    req.flush({});
+  });
+
+  it('clears a credential with DELETE', () => {
+    service.clearSecret(42, 7, 'password').subscribe();
+    const req = http.expectOne(`${base}/42/printers/7/secrets/password`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
+
+  it('confirms a pending key with the fingerprint the app computed', () => {
+    service.confirmKey(42, 'a'.repeat(64)).subscribe();
+    const req = http.expectOne(`${base}/42/public-key/confirm`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ fingerprint: 'a'.repeat(64) });
+    req.flush({});
+  });
 });

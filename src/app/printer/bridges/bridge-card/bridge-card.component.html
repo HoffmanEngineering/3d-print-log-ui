@@ -140,6 +140,13 @@
     </div>
   </dl>
 
+  <app-bridge-key
+    [bridge]="bridge()"
+    [busy]="confirming()"
+    [keyMismatch]="keyMismatch()"
+    (confirm)="confirmKey.emit($event)"
+  />
+
   @if (loadFailed()) {
     <p class="notice" data-testid="bridge-load-failed">
       We couldn't load this bridge's printers.
@@ -176,6 +183,15 @@
                     }
                     · app printer {{ row.entry.id }}
                   </span>
+                  @if (row.summary; as summary) {
+                    <span
+                      class="meta"
+                      [class.warn]="summary.attention"
+                      data-testid="bridge-credential-summary"
+                    >
+                      {{ summary.text }}
+                    </span>
+                  }
                   @if (row.inConfigToo) {
                     <span class="meta warn" data-testid="bridge-config-wins">
                       Its config file has this printer too, and the file wins.
@@ -183,17 +199,16 @@
                   }
                 </div>
                 <div class="actions">
-                  @if (row.snippet) {
+                  @if (row.fields.length || row.snippet) {
                     <button
                       mat-button
                       type="button"
-                      data-testid="bridge-snippet-toggle"
-                      [attr.aria-expanded]="openSnippet() === row.entry.id"
-                      (click)="toggleSnippet(row.entry.id)"
+                      data-testid="bridge-credentials-toggle"
+                      [attr.aria-expanded]="openCredentials() === row.entry.id"
+                      (click)="toggleCredentials(row.entry.id)"
                     >
-                      {{
-                        row.entry.kind === 'bambu' ? 'Access code' : 'Password'
-                      }}
+                      <mat-icon>key</mat-icon>
+                      {{ row.credentialsLabel }}
                     </button>
                   }
                   <button
@@ -209,17 +224,29 @@
                   </button>
                 </div>
               </div>
-              @if (row.snippet && openSnippet() === row.entry.id) {
-                <div class="snippet" data-testid="bridge-snippet">
-                  <p>
-                    Until the app can send it, add the printer's
-                    {{
-                      row.entry.kind === 'bambu' ? 'access code' : 'password'
-                    }}
-                    to the bridge's <code>printlog-bridge.cfg</code>:
-                  </p>
-                  <pre><code>{{ row.snippet }}</code></pre>
-                </div>
+              @if (openCredentials() === row.entry.id) {
+                @if (row.fields.length) {
+                  <app-bridge-credentials
+                    class="credentials"
+                    data-testid="bridge-credentials"
+                    [bridge]="bridge()"
+                    [entry]="row.entry"
+                    [keyWarningAbove]="true"
+                    (entryChange)="entryChange.emit($event)"
+                    (reloadBridge)="reloadBridge.emit()"
+                  />
+                } @else if (row.snippet) {
+                  <div class="snippet" data-testid="bridge-snippet">
+                    <p>
+                      Add the printer's
+                      {{
+                        row.entry.kind === 'bambu' ? 'access code' : 'password'
+                      }}
+                      to the bridge's <code>printlog-bridge.cfg</code>:
+                    </p>
+                    <pre><code>{{ row.snippet }}</code></pre>
+                  </div>
+                }
               }
             </li>
           }

@@ -247,6 +247,10 @@ $dark-stale-fg: #ffcdd2;
   }
 }
 
+.credentials {
+  padding: 0 0 16px 36px;
+}
+
 .ignored summary {
   cursor: pointer;
   font-weight: 500;
@@ -269,7 +273,8 @@ time[title] {
     padding: 12px;
   }
 
-  .snippet {
+  .snippet,
+  .credentials {
     padding-left: 0;
   }
 

@@ -23,6 +23,7 @@ import {
   filter,
   finalize,
   forkJoin,
+  from,
   map,
   of,
   switchMap,
@@ -34,6 +35,8 @@ import {
   DiscoveredPrinter,
   DiscoveredPrinterState,
 } from 'src/app/core/services/bridges.service';
+import { importBridgeKey } from 'src/app/core/crypto/credential-sealing';
+import { BridgeKeyPinsService } from 'src/app/core/services/bridge-key-pins.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
@@ -99,6 +102,7 @@ export class BridgesPageComponent {
   private readonly logging = inject(LoggingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly polling = inject(BRIDGES_POLLING);
+  private readonly pins = inject(BridgeKeyPinsService);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly skeleton = new DeferredSkeletonController();
   private readonly reload$ = new Subject<void>();
@@ -107,6 +111,13 @@ export class BridgesPageComponent {
 
   protected readonly phase = signal<Phase>('idle');
   protected readonly states = signal<BridgeState[]>([]);
+  /** The bridge whose new key is being confirmed. */
+  protected readonly confirming = signal<number | null>(null);
+  /**
+   * Bridges whose last confirmation came back with a different key than the one confirmed. Kept
+   * for this page only, so the card says so after the toast is gone.
+   */
+  protected readonly mismatched = signal<ReadonlySet<number>>(new Set());
   protected readonly showSkeleton = computed(
     () => this.phase() === 'idle' && this.skeleton.visible()
   );
@@ -346,6 +357,84 @@ export class BridgesPageComponent {
       });
   }
 
+  /**
+   * Confirms a bridge's pending key. `fingerprint` is what the card computed from
+   * `pendingPublicKey` and showed the user, never the API's `pendingPublicKeyFingerprint`.
+   */
+  protected confirmKey(bridge: Bridge, fingerprint: string): void {
+    if (this.confirming() !== null) {
+      return;
+    }
+    const before = this.current(bridge);
+    const hadKey = !!before.publicKey;
+    this.confirming.set(bridge.id);
+    this.service
+      .confirmKey(bridge.id, fingerprint)
+      .pipe(
+        // Check the key that came back is the one the user compared, from its own bytes.
+        switchMap((updated) =>
+          from(servedFingerprint(updated)).pipe(
+            map((served) => ({ updated, served }))
+          )
+        ),
+        finalize(() => this.confirming.set(null)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: ({ updated, served }) => {
+          // The user compared this fingerprint with the bridge: it is the one to trust here.
+          this.pins.pin(bridge.id, fingerprint);
+          this.mismatched.update((ids) => {
+            const next = new Set(ids);
+            if (served === fingerprint) {
+              next.delete(bridge.id);
+            } else {
+              next.add(bridge.id);
+            }
+            return next;
+          });
+          if (served !== fingerprint) {
+            this.toastr.error(
+              "3D Print Log returned a different key than the one you confirmed. Don't enter any credentials: compare the key on the card with printlog-bridge status."
+            );
+            this.logging.logEvent('Bridges_KeyConfirmMismatch', {});
+            this.load();
+            return;
+          }
+          this.replaceBridge(updated);
+          this.toastr.success(
+            hadKey
+              ? "New key confirmed. Enter the printers' credentials again: the bridge can't read the old ones."
+              : 'Key confirmed. You can enter printer credentials in the app now.'
+          );
+          this.logging.logEvent('Bridges_KeyConfirmed', {
+            hadKey,
+            throttled: before.keyChangesThrottled === true,
+          });
+          this.load();
+        },
+        error: (error: unknown) => {
+          this.failed('confirm-key', error);
+          // The pending key moved or went away: show what the bridge has now, to compare again.
+          this.load();
+        },
+      });
+  }
+
+  /** An entry after a credential changed, so its row shows the new state before the next poll. */
+  protected replaceEntry(bridge: Bridge, entry: BridgePrinter): void {
+    this.states.update((list) =>
+      list.map((s) =>
+        s.bridge.id !== bridge.id || !s.printers
+          ? s
+          : {
+              ...s,
+              printers: s.printers.map((p) => (p.id === entry.id ? entry : p)),
+            }
+      )
+    );
+  }
+
   /** The bridge as it is now, after any local change (a scan request). */
   private current(bridge: Bridge): Bridge {
     return (
@@ -370,6 +459,18 @@ export class BridgesPageComponent {
             }
       )
     );
+  }
+}
+
+/** The fingerprint of the key a bridge now serves, computed here, or null when it has none. */
+async function servedFingerprint(bridge: Bridge): Promise<string | null> {
+  if (!bridge.publicKey) {
+    return null;
+  }
+  try {
+    return (await importBridgeKey(bridge.publicKey)).fingerprint;
+  } catch {
+    return null;
   }
 }
 

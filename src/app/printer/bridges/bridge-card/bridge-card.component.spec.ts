@@ -1,14 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import {
   Bridge,
   BridgePrinter,
+  BridgesService,
   DiscoveredPrinter,
   DiscoveredPrinterState,
 } from 'src/app/core/services/bridges.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import { ConnectionStatus } from 'src/app/core/services/connection.service';
-import { bridge, bridgePrinter, discovered } from '../testing/bridge-fixtures';
+import {
+  OTHER_BRIDGE_KEY,
+  bridge,
+  bridgePrinter,
+  discovered,
+} from '../testing/bridge-fixtures';
+import { By } from '@angular/platform-browser';
+import { BridgeCredentialsComponent } from '../bridge-credentials/bridge-credentials.component';
 import { BridgeCardComponent } from './bridge-card.component';
 
 describe('BridgeCardComponent', () => {
@@ -76,7 +86,24 @@ describe('BridgeCardComponent', () => {
   ) {
     await TestBed.configureTestingModule({
       imports: [BridgeCardComponent, NoopAnimationsModule],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        {
+          provide: BridgesService,
+          useValue: jasmine.createSpyObj('BridgesService', [
+            'setSecret',
+            'clearSecret',
+          ]),
+        },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+        },
+        {
+          provide: ToastrService,
+          useValue: jasmine.createSpyObj('ToastrService', ['success', 'error']),
+        },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(BridgeCardComponent);
     fixture.componentRef.setInput('bridge', b);
@@ -179,12 +206,49 @@ describe('BridgeCardComponent', () => {
     ]);
   });
 
-  it('shows the [app_printer] section of a connected PrusaLink printer on demand', async () => {
-    await create();
+  it('shows the [app_printer] section on demand when the API lists no credential fields', async () => {
+    await create(bridge(), found, [
+      { ...entries[0], secretFields: undefined, secrets: undefined },
+    ]);
     expect(one('bridge-snippet')).toBeNull();
-    one('bridge-snippet-toggle')!.click();
+    one('bridge-credentials-toggle')!.click();
     fixture.detectChanges();
     expect(one('bridge-snippet')!.textContent).toContain('[app_printer 7]');
+    expect(one('bridge-credentials')).toBeNull();
+  });
+
+  it('opens the credentials of a connected printer and says their state in its row', async () => {
+    await create(bridge(), found, [
+      {
+        ...entries[0],
+        secretFields: ['password', 'username', 'api_key'],
+        secrets: [],
+        credentialIssues: [{ field: 'password', code: 'missing' }],
+      },
+    ]);
+    const summary = one('bridge-credential-summary')!;
+    expect(summary.textContent).toContain('needs the password');
+    expect(summary.classList).toContain('warn');
+    const toggle = one('bridge-credentials-toggle')!;
+    expect(toggle.textContent).toContain('Credentials');
+    toggle.click();
+    fixture.detectChanges();
+    expect(one('bridge-credentials')).not.toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('passes a key confirmation, entry changes and reloads up', async () => {
+    await create(bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey }));
+    const events: string[] = [];
+    const card = fixture.componentInstance;
+    card.confirmKey.subscribe((f) => events.push(`confirm:${f}`));
+    card.reloadBridge.subscribe(() => events.push('reload'));
+    for (let i = 0; i < 100 && !one('bridge-key-confirm'); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      fixture.detectChanges();
+    }
+    one('bridge-key-confirm')!.click();
+    expect(events).toEqual([`confirm:${OTHER_BRIDGE_KEY.fingerprint}`]);
   });
 
   it('shows Scanning while a requested scan is not done', async () => {
@@ -218,5 +282,15 @@ describe('BridgeCardComponent', () => {
     await create(bridge(), null, null);
     expect(one('bridge-load-failed')).not.toBeNull();
     expect(one('bridge-new-row')).toBeNull();
+  });
+
+  it('tells its inline editor the full key warning is shown above', async () => {
+    await create();
+    one('bridge-credentials-toggle')!.click();
+    fixture.detectChanges();
+    const editor = fixture.debugElement.query(
+      By.directive(BridgeCredentialsComponent)
+    ).componentInstance as BridgeCredentialsComponent;
+    expect(editor.keyWarningAbove()).toBeTrue();
   });
 });

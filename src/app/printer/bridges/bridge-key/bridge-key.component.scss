@@ -1,0 +1,145 @@
+// The theme is Material 2: colors come from the --app-* tokens and --mat-divider-color.
+
+:host {
+  display: block;
+  margin-top: 16px;
+}
+
+p {
+  margin: 0 0 8px;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+.fingerprint {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.full {
+  font-size: 0.875rem;
+
+  summary {
+    cursor: pointer;
+    color: var(--app-text-secondary);
+  }
+
+  .fingerprint {
+    display: block;
+    margin-top: 4px;
+    font-weight: 400;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+
+  > mat-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: var(--app-text-secondary);
+  }
+
+  &.muted {
+    align-items: flex-start;
+    font-size: 0.875rem;
+    color: var(--app-text-secondary);
+  }
+
+  .full {
+    flex-basis: 100%;
+    padding-left: 28px;
+  }
+}
+
+.pending {
+  padding: 12px 16px;
+  border: 1px solid var(--app-accent-warn-text);
+  border-radius: 8px;
+  background: var(--app-surface-container);
+
+  &.throttled {
+    border-color: var(--app-error-text);
+  }
+
+  .full + p {
+    margin-top: 12px;
+  }
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: 1rem;
+    font-weight: 500;
+
+    mat-icon {
+      color: var(--app-accent-warn-text);
+    }
+  }
+}
+
+.danger {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--app-error-text);
+
+  mat-icon {
+    flex: none;
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+.prints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 12px 0 4px;
+
+  dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-text-secondary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 1.125rem;
+  }
+
+  .new {
+    color: var(--app-primary);
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.throttled-alert {
+  margin-bottom: 12px;
+}
+
+.key-changed {
+  display: block;
+  margin-bottom: 12px;
+}

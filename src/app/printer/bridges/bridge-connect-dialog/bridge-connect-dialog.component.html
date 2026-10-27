@@ -1,54 +1,83 @@
 @if (connected(); as entry) {
-  <h2 mat-dialog-title>One more step on the bridge</h2>
-  <mat-dialog-content>
-    <p data-testid="connect-done">
-      <strong>{{ entry.printerName }}</strong> is connected to {{ bridgeName }}.
-      The bridge needs the printer's {{ credential() }}, which isn't sent from
-      the app yet.
-    </p>
-    <p>
-      Add this section to the bridge's config file,
-      <code>printlog-bridge.cfg</code> (in Docker, in the bridge's data folder),
-      with the
-      {{ credential() }}
-      @if (entry.kind === 'bambu') {
-        from the printer's LAN Only Mode page
-      } @else {
-        from the printer's Settings &gt; Network &gt; PrusaLink screen
-      }
-      in place of the example:
-    </p>
-    <pre data-testid="connect-snippet"><code>{{ snippet() }}</code></pre>
-    <p class="hint">
-      Save the file and the bridge starts watching within a few seconds, with no
-      restart. Until then, <code>printlog-bridge status</code> says “App printer
-      {{ entry.id }} needs credentials”. A later release sends the
-      {{ credential() }} from the app, encrypted to the bridge.
-      <a routerLink="/docs/printlog-bridge-bridges" fragment="credentials"
-        >More about this</a
-      >.
-    </p>
-  </mat-dialog-content>
-  <mat-dialog-actions align="end">
-    <button
-      mat-stroked-button
-      type="button"
-      data-testid="connect-copy"
-      (click)="copySnippet()"
-    >
-      <mat-icon>content_copy</mat-icon>
-      Copy
-    </button>
-    <button
-      mat-flat-button
-      color="primary"
-      type="button"
-      data-testid="connect-finish"
-      (click)="done()"
-    >
-      Done
-    </button>
-  </mat-dialog-actions>
+  @if (sealsCredentials()) {
+    <h2 mat-dialog-title>One more step: the {{ credentialsTitle() }}</h2>
+    <mat-dialog-content>
+      <p data-testid="connect-done">
+        <strong>{{ entry.printerName }}</strong> is connected to
+        {{ bridgeName }}. The bridge needs the printer's
+        {{ credentialsTitle() }} to watch it.
+      </p>
+      <app-bridge-credentials
+        context="connect"
+        data-testid="connect-credentials"
+        [bridge]="bridge()"
+        [entry]="entry"
+        (entryChange)="connected.set($event)"
+        (reloadBridge)="reloadBridge()"
+      />
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        data-testid="connect-finish"
+        (click)="done()"
+      >
+        Done
+      </button>
+    </mat-dialog-actions>
+  } @else {
+    <h2 mat-dialog-title>One more step on the bridge</h2>
+    <mat-dialog-content>
+      <p data-testid="connect-done">
+        <strong>{{ entry.printerName }}</strong> is connected to
+        {{ bridgeName }}. The bridge needs the printer's {{ credential() }},
+        which isn't sent from the app yet.
+      </p>
+      <p>
+        Add this section to the bridge's config file,
+        <code>printlog-bridge.cfg</code> (in Docker, in the bridge's data
+        folder), with the
+        {{ credential() }}
+        @if (entry.kind === 'bambu') {
+          from the printer's LAN Only Mode page
+        } @else {
+          from the printer's Settings &gt; Network &gt; PrusaLink screen
+        }
+        in place of the example:
+      </p>
+      <pre data-testid="connect-snippet"><code>{{ snippet() }}</code></pre>
+      <p class="hint">
+        Save the file and the bridge starts watching within a few seconds, with
+        no restart. Until then, <code>printlog-bridge status</code> says “App
+        printer {{ entry.id }} needs credentials”.
+        <a routerLink="/docs/printlog-bridge-bridges" fragment="credentials"
+          >More about this</a
+        >.
+      </p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button
+        mat-stroked-button
+        type="button"
+        data-testid="connect-copy"
+        (click)="copySnippet()"
+      >
+        <mat-icon>content_copy</mat-icon>
+        Copy
+      </button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        data-testid="connect-finish"
+        (click)="done()"
+      >
+        Done
+      </button>
+    </mat-dialog-actions>
+  }
 } @else {
   <h2 mat-dialog-title>
     @if (discovered) {

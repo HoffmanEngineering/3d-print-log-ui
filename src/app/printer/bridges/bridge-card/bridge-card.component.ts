@@ -24,9 +24,13 @@ import { ConnectionStatus } from 'src/app/core/services/connection.service';
 import { HumanizePipe } from 'src/app/shared/pipes/humanize.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { externalSourceLabel } from 'src/app/shared/utils/external-source.utils';
+import { BridgeCredentialsComponent } from '../bridge-credentials/bridge-credentials.component';
+import { BridgeKeyComponent } from '../bridge-key/bridge-key.component';
 import {
   appPrinterSnippet,
   bridgeLabel,
+  credentialFieldLabel,
+  credentialSummary,
   formatAddress,
   isConnectableKind,
   isScanning,
@@ -40,7 +44,13 @@ interface ConnectedRow {
   /** The bridge's config file has it too, and wins. */
   inConfigToo: boolean;
   address: string;
+  /** The `[app_printer N]` section, for an API that doesn't list `secretFields`. */
   snippet: string | null;
+  /** The fields the app can seal for it; empty for an older API or a kind without any. */
+  fields: string[];
+  /** The toggle's label: the one field's name, or "Credentials". */
+  credentialsLabel: string;
+  summary: { text: string; attention: boolean } | null;
 }
 
 /** A printer the bridge found, for display. */
@@ -76,6 +86,8 @@ export interface BridgeRename {
     MatInputModule,
     MatProgressSpinnerModule,
     RouterLink,
+    BridgeCredentialsComponent,
+    BridgeKeyComponent,
     HumanizePipe,
     LocaleDatePipe,
   ],
@@ -86,6 +98,10 @@ export class BridgeCardComponent {
   readonly discovered = input<DiscoveredPrinter[] | null>([]);
   /** Null when they couldn't be loaded. */
   readonly printers = input<BridgePrinter[] | null>([]);
+  /** A key confirmation is in flight. */
+  readonly confirming = input(false);
+  /** The last confirmation came back with a different key than the one confirmed. */
+  readonly keyMismatch = input(false);
 
   readonly rename = output<BridgeRename>();
   readonly scan = output<void>();
@@ -95,6 +111,12 @@ export class BridgeCardComponent {
   readonly unignore = output<DiscoveredPrinter>();
   readonly disconnect = output<BridgePrinter>();
   readonly retry = output<void>();
+  /** Confirm the pending key, with the fingerprint computed from it. */
+  readonly confirmKey = output<string>();
+  /** An entry after one of its credentials was set or cleared. */
+  readonly entryChange = output<BridgePrinter>();
+  /** The bridge's key changed under a credential: reload. */
+  readonly reloadBridge = output<void>();
 
   protected readonly kindLabel = externalSourceLabel;
   protected readonly ConnectionStatus = ConnectionStatus;
@@ -128,6 +150,16 @@ export class BridgeCardComponent {
         inConfigToo: match?.state === DiscoveredPrinterState.Configured,
         address: formatAddress(entry.host, entry.port),
         snippet: appPrinterSnippet(entry.kind, entry.id),
+        fields: entry.secretFields ?? [],
+        credentialsLabel:
+          entry.secretFields?.length === 1
+            ? credentialFieldLabel(entry.secretFields[0])
+            : entry.secretFields?.length
+              ? 'Credentials'
+              : entry.kind === 'bambu'
+                ? 'Access code'
+                : 'Password',
+        summary: credentialSummary(entry),
       };
     });
   });
@@ -142,8 +174,8 @@ export class BridgeCardComponent {
   );
 
   protected readonly editing = signal(false);
-  /** The connected entry whose `[app_printer]` section is showing. */
-  protected readonly openSnippet = signal<number | null>(null);
+  /** The connected entry whose credentials are showing. */
+  protected readonly openCredentials = signal<number | null>(null);
 
   readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', Validators.maxLength(100)],
@@ -181,7 +213,7 @@ export class BridgeCardComponent {
     this.editing.set(false);
   }
 
-  protected toggleSnippet(entryId: number): void {
-    this.openSnippet.update((open) => (open === entryId ? null : entryId));
+  protected toggleCredentials(entryId: number): void {
+    this.openCredentials.update((open) => (open === entryId ? null : entryId));
   }
 }

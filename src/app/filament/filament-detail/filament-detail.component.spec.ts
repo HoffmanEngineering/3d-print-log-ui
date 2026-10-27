@@ -1686,6 +1686,29 @@ describe('FilamentDetailComponent scanned label', () => {
     expect(sent.displayName).toBe('PLA+ Silver');
   });
 
+  it('saves a barcode-only catalog read without any edits', async () => {
+    await setup({
+      scannedLabelRead: {
+        reading: EMPTY_READING,
+        catalogMatch: {
+          ...MATCH,
+          material: 'PLA+',
+          weightG: 1000,
+          diameterMm: 1.75,
+        },
+        barcodes: [BARCODE],
+      },
+    });
+
+    fixture.componentInstance.onSubmit();
+
+    expect(fixture.componentInstance.filamentForm.valid).toBeTrue();
+    const sent = service.addFilament.calls.mostRecent().args[0];
+    expect(sent.materialType).toBe('PLA+');
+    expect(sent.catalogEntryId).toBe('sunlu_pla+_silver');
+    expect(sent.barcodes).toEqual([BARCODE]);
+  });
+
   it('sends no catalog entry once the name was edited', async () => {
     await setup({ scannedLabelRead: labelRead({ catalogMatch: MATCH }) });
     control('materialDensityGramPerCubicCm').setValue(1.24);

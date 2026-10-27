@@ -45,6 +45,10 @@ export interface CatalogMatch {
   extruderTempMaxC?: number | null;
   extruderTempC?: number | null;
   bedTempC?: number | null;
+  /** The product's material, net weight (g) and diameter (mm). Absent from an older API. */
+  material?: string | null;
+  weightG?: number | null;
+  diameterMm?: number | null;
 }
 
 export type TagSuggestionReason =

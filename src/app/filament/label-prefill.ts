@@ -51,6 +51,10 @@ export function labelPrefill(read: ScannedLabelRead): TagPrefill {
 
   if (match) {
     fill('brand', text(match.manufacturer), 'catalog');
+    // A barcode alone reads nothing from the label: the entry supplies what the form requires.
+    fill('materialType', text(match.material), 'catalog');
+    fill('initialNominalWeightG', num(match.weightG), 'catalog');
+    fill('diameterMm', num(match.diameterMm), 'catalog');
     set('displayName', text(match.name), 'catalog');
     set('colorName', text(match.colorName), 'catalog');
     set('spoolWeightG', num(match.spoolWeightG), 'catalog');

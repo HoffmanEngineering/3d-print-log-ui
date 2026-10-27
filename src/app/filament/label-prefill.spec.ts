@@ -117,6 +117,30 @@ describe('labelPrefill', () => {
     expect(sources.brand).toBe('catalog');
   });
 
+  it('takes material, weight and diameter from the catalog when the label has none', () => {
+    const match = {
+      ...MATCH,
+      material: 'PLA+',
+      weightG: 1000,
+      diameterMm: 1.75,
+    };
+    const { values, sources } = labelPrefill(read({ catalogMatch: match }));
+
+    expect(values.materialType).toBe('PLA+');
+    expect(values.initialNominalWeightG).toBe(1000);
+    expect(values.diameterMm).toBe(1.75);
+    expect(sources.materialType).toBe('catalog');
+
+    const labelled = labelPrefill(
+      read({
+        reading: { ...EMPTY, materialType: 'PLA', netWeightG: 500 },
+        catalogMatch: match,
+      })
+    );
+    expect(labelled.values.materialType).toBe('PLA');
+    expect(labelled.values.initialNominalWeightG).toBe(500);
+  });
+
   it('leaves absent values out', () => {
     expect(labelPrefill(read()).values).toEqual({});
   });

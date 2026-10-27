@@ -12,7 +12,7 @@
                 @if (c.agentVersion) {
                   · <span class="version">version {{ c.agentVersion }}</span>
                 }
-                @if (c.bridgeId != null) {
+                @if (c.bridgeId) {
                   · via
                   <a
                     routerLink="/printers/bridges"

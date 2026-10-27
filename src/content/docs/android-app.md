@@ -6,7 +6,7 @@ navLabel: Log prints from your phone
 group: integrations
 order: 10
 mode: how-to
-updated: 2026-10-16
+updated: 2026-10-26
 related: [getting-started]
 ---
 
@@ -31,6 +31,9 @@ On a phone with NFC, the app (version 1.3.0 or later) can also read the RFID or
 NFC tag on a spool: hold the phone to it to pick that material, link the tag to
 a material, or find the spool from the Materials list. See
 [RFID / NFC tags in the Android app](/docs/materials#tags-android).
+
+The phone's camera can also read the label a spool came with, to add that spool
+or find it. See [Scan a label](/docs/materials#labels).
 
 <div fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px">
     <div fxFlex>

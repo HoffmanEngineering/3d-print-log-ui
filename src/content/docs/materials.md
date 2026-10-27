@@ -6,7 +6,7 @@ navLabel: Materials
 group: features
 order: 30
 mode: how-to
-updated: 2026-10-16
+updated: 2026-10-26
 related: [materials-reference, prints]
 aliases: [filaments]
 ---
@@ -224,11 +224,13 @@ When selecting a material (for example, when editing a Print or Printer), you
 can scan a QR code label instead of searching manually:
 
 1. Click to select a material to open the search dialog.
-2. Click the <mat-icon inline>qr_code_scanner</mat-icon> icon in the dialog header to switch to scanner mode.
+2. Click the <mat-icon inline>photo_camera</mat-icon> icon in the dialog header to switch to scanner mode.
 3. Grant camera permission when prompted by your browser.
 4. Point your camera at a material's QR code label. The material will be automatically looked up and selected.
-5. Use the camera dropdown to switch between cameras if your device has multiple cameras.
-6. Click the <mat-icon inline>list</mat-icon> icon to return to the search list view.
+5. Click the <mat-icon inline>list</mat-icon> icon to return to the search list view.
+
+The same camera also reads the label the spool came with, so a spool without a
+3D Print Log label can be found too. See [Scan a label](#labels).
 
 In the Android app on a phone with NFC, you can also hold the phone to a
 spool's RFID or NFC tag while the dialog is open. See
@@ -321,6 +323,64 @@ can't read. On a phone that can't, the app links those tags by UID only, the
 same as any other tag, and doesn't show what they say.
 
 3D Print Log is not affiliated with Snapmaker, Anycubic or Bambu Lab.
+
+---
+
+### Scan a label {#labels}
+
+Point your phone's camera at the label printed on a spool, and 3D Print Log
+reads it to add the spool or to find it. It works in any browser with a camera
+and in the [Android app](/docs/android-app).
+
+#### Add a spool from its label {#labels-add}
+
+1. On the **Materials** list, tap **Scan spool**.
+2. Fit the spool's label in the box on the screen.
+3. If the label has a barcode, it is read on its own:
+   - **A barcode you already have:** the page says **You have 2 of these**.
+     Tap **Add another** for a new spool of the same product, or **Open** to go
+     to the one you have.
+   - **A barcode 3D Print Log knows:** a new material opens, already filled in.
+   - **A new barcode:** the page asks for a photo of the label.
+4. Tap **Read label** to take a photo. The new material opens with what the
+   label says: material, color, weight, diameter and temperatures, and the
+   brand when it can be read.
+
+Fields that came from the label say **From label**, and fields that came from
+the filament database say **From SpoolmanDB**. Check them, change anything that
+is wrong, then save. If the brand wasn't read, type it: 3D Print Log looks the
+product up again and offers **Looks like SUNLU PLA+ Silver (SpoolmanDB).
+Fill details**. Filling never changes a field you have already edited.
+
+If the phone has no camera, or camera access is blocked, **Scan spool** works
+with NFC tags only, or says the camera is unavailable so you can search by
+name instead.
+
+#### Find a spool by its label {#labels-find}
+
+In the material search dialog, tap the <mat-icon inline>photo_camera</mat-icon>
+icon and point the camera at the spool. A barcode only one of your spools has
+selects it at once. Otherwise take a photo of the label, and the dialog lists
+the spools it may be, each with why (same barcode, same color, same brand, same
+material or same weight). If you pick one that doesn't have the barcode yet,
+**Remember this barcode for this spool** is checked, so the next scan finds it
+straight away.
+
+#### Barcodes {#labels-barcodes}
+
+A material keeps up to four barcodes, listed under **Barcodes** on its page.
+Click the <mat-icon inline>cancel</mat-icon> icon on one to remove it. Several
+of your spools can share a barcode: that is what lets a scan say you have two of
+these.
+
+When enough people link the same barcode to the same SpoolmanDB entry, that
+barcode starts filling in new materials for everyone.
+
+#### What leaves your phone {#labels-privacy}
+
+The photo never leaves your phone. The label is read on the phone itself, and
+only the text it read and the barcodes are sent to 3D Print Log to look the
+product up.
 
 ---
 

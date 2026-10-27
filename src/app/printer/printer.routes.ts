@@ -24,6 +24,15 @@ export const PRINTER_ROUTES: Routes = [
         resolve: { printerList: printerListResolver },
       },
       {
+        // Before ':id'. Lazy: only bridge owners open it (printlog-bridge#100).
+        path: 'bridges',
+        loadComponent: () =>
+          import('./bridges/bridges-page/bridges-page.component').then(
+            (m) => m.BridgesPageComponent
+          ),
+        canActivate: [authGuard],
+      },
+      {
         path: ':id',
         component: PrinterDetailComponent,
         canActivate: [authGuard],

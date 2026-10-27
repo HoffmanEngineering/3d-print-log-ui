@@ -23,6 +23,7 @@ import { LocalStorageService } from './local-storage.service';
 import { LoggingService } from './logging.service';
 import { SubscriptionService } from './subscription.service';
 import { UserSettingService, UserSettingType } from './user-setting.service';
+import { CAN_PURCHASE_PRO } from '../pricing/pro-purchase';
 
 /**
  * What the dialog and the unread indicator read, generated from
@@ -69,6 +70,12 @@ on Patreon.com
 </p>
 <p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!</p>`;
 
+/**
+ * For free users in the iOS app: no Pro link and no tip links, because App Store guideline
+ * 3.1.1 allows neither outside in-app purchase (#366). Just the closing line.
+ */
+export const IOS_APP_FOOTER = `<p>Share <strong>3D Print Log</strong> with a friend, and Happy Printing!</p>`;
+
 /** For Pro members, who already support development: thanks, not an ask. */
 export const PRO_FOOTER = `<p>
 Thank you for supporting 3D Print Log with Pro! Share <strong>3D Print Log</strong> with a friend, and Happy Printing!
@@ -86,6 +93,7 @@ export class VersionReleaseNoteDialogService {
   private readonly subscription = inject(SubscriptionService);
   private readonly data = inject(RELEASE_NOTE_DATA);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
 
   /** The newest version whose notes the dialog has shown in this browser. */
   private readonly DIALOG_KEY = 'LastLoggedInVersion';
@@ -320,6 +328,13 @@ export class VersionReleaseNoteDialogService {
     );
   }
 
+  private footer(isPro: boolean): string {
+    if (isPro) {
+      return PRO_FOOTER;
+    }
+    return this.canPurchasePro ? SUPPORT_FOOTER : IOS_APP_FOOTER;
+  }
+
   private showReleaseNotes(
     notes: DialogReleaseNote[],
     releases: string[],
@@ -343,7 +358,7 @@ export class VersionReleaseNoteDialogService {
           shown.length === 1
             ? shown[0].title
             : "What's new since your last visit",
-        body: dialogBody(shown, releases, isPro ? PRO_FOOTER : SUPPORT_FOOTER),
+        body: dialogBody(shown, releases, this.footer(isPro)),
         yesText: 'Ok',
         yesColor: 'primary',
         noText: '',

@@ -76,7 +76,7 @@
     indigo toolbar but only ~1.5:1 on the menu's light surface, and it is the
     one item worth keeping one tap away. Below the breakpoint the label is
     dropped and the star carries it. -->
-    @if (auth.isLoggedIn() && !isPro()) {
+    @if (auth.isLoggedIn() && !isPro() && canPurchasePro) {
       <a
         mat-button
         class="link upgrade-link"

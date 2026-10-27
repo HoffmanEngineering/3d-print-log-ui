@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { LoggingService } from '../../core/services/logging.service';
+import { CAN_PURCHASE_PRO } from '../../core/pricing/pro-purchase';
 import {
   annualPricePerMonth,
   annualSavingsPercent,
@@ -52,6 +53,9 @@ import { MatButton } from '@angular/material/button';
 export class PricingComponent implements OnInit {
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly loggingService = inject(LoggingService);
+
+  /** False in the iOS app: no prices, no Subscribe buttons, no billing pointer (#366). */
+  readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
 
   readonly isPro = this.subscriptionService.isPro;
   readonly plan = this.subscriptionService.plan;

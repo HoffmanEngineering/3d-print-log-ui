@@ -7,6 +7,7 @@ import {
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { PricingComponent } from './pricing.component';
+import { CAN_PURCHASE_PRO } from '../../core/pricing/pro-purchase';
 import { SharedModule } from '../../shared/shared.module';
 import { LoggingService } from '../../core/services/logging.service';
 import {
@@ -89,5 +90,40 @@ describe('PricingComponent', () => {
       .toBeFalse();
 
     httpMock.verify();
+  });
+});
+
+describe('PricingComponent in the iOS app', () => {
+  let fixture: ComponentFixture<PricingComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        SharedModule,
+        NoopAnimationsModule,
+        RouterTestingModule,
+        PricingComponent,
+      ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+        },
+        { provide: CAN_PURCHASE_PRO, useValue: false },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PricingComponent);
+    fixture.detectChanges();
+  });
+
+  // App Store 3.1.1 (#366): no prices and nothing to press.
+  it('shows no prices and no Subscribe buttons', () => {
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.textContent).not.toContain(`$${proPlan('pro_monthly').price}`);
+    expect(page.querySelectorAll('button').length).toBe(0);
+    expect(page.querySelector('[data-testid="pro-unavailable"]')).toBeTruthy();
   });
 });

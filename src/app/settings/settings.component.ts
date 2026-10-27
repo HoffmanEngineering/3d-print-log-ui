@@ -62,6 +62,7 @@ import { ConnectedAgentsComponent } from './connected-agents/connected-agents.co
 import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
 
 @Component({
   selector: 'app-settings',
@@ -93,6 +94,9 @@ import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
   ],
 })
 export class SettingsComponent implements OnInit {
+  /** False in the iOS app, where Pro is never sold (#366). */
+  readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
+
   private activatedRoute = inject(ActivatedRoute);
   private userService = inject(UserService);
   private authService = inject(AuthService);

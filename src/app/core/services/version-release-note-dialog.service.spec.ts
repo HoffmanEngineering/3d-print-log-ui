@@ -15,6 +15,7 @@ import {
 } from './user-setting.service';
 
 import {
+  IOS_APP_FOOTER,
   PRO_FOOTER,
   RELEASE_NOTE_DATA,
   ReleaseNoteData,
@@ -58,6 +59,7 @@ const HISTORY: ReleaseNoteData = {
 /** Lets the account writes, which callers do not await, finish. */
 const settle = () => new Promise((resolve) => setTimeout(resolve));
 
+import { CAN_PURCHASE_PRO } from '../pricing/pro-purchase';
 describe('VersionReleaseNoteDialogService', () => {
   let storage: Map<string, string>;
   let account: Map<UserSettingType, string>;
@@ -209,6 +211,18 @@ describe('VersionReleaseNoteDialogService', () => {
     const body = shownDialog().body;
     expect(body.endsWith(PRO_FOOTER)).toBeTrue();
     expect(body).not.toContain('Support development');
+  });
+
+  it('offers no Pro or tip links to a free user in the iOS app', async () => {
+    TestBed.overrideProvider(CAN_PURCHASE_PRO, { useValue: false });
+
+    await create({ [DIALOG_KEY]: '2.2.0' }).checkLastLoggedInVersion();
+
+    const body = shownDialog().body;
+    expect(body.endsWith(IOS_APP_FOOTER)).toBeTrue();
+    expect(body).not.toContain('/subscription');
+    expect(body).not.toContain('paypal');
+    expect(body).not.toContain('patreon');
   });
 
   it('caps the dialog at three notes and links to the oldest missed release', async () => {

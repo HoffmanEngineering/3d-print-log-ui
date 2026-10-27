@@ -1,4 +1,4 @@
-@if (!isPro()) {
+@if (showAd()) {
   <aside aria-label="Advertisement" class="ad-wrapper">
     <ng-adsense
       [adSlot]="adSlot()"

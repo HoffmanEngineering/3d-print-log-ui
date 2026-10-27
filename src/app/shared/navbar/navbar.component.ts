@@ -16,6 +16,7 @@ import { SubscriptionService } from 'src/app/core/services/subscription.service'
 import { VersionReleaseNoteDialogService } from 'src/app/core/services/version-release-note-dialog.service';
 import { environment } from 'src/environments/environment';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
 
 @Component({
   selector: 'app-navbar',
@@ -33,6 +34,9 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent {
+  /** False in the iOS app, where Pro is never sold (#366). */
+  readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
+
   auth = inject(AuthService);
 
   public versionNumber = environment.version;

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { AdsenseLoaderService } from './adsense-loader.service';
+import { IS_CORDOVA_IOS } from '../utils/platform';
 
 describe('AdsenseLoaderService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
@@ -37,5 +38,19 @@ describe('AdsenseLoaderService', () => {
     );
     expect(script.getAttribute('data-adsense-loader')).toBe('');
     expect(script.src).toContain('adsbygoogle.js');
+  });
+
+  it('never injects the loader in the iOS app', () => {
+    document
+      .querySelectorAll('script[data-adsense-loader]')
+      .forEach((s) => s.remove());
+    const appendSpy = spyOn(document.head, 'appendChild').and.callFake(
+      <T extends Node>(node: T): T => node
+    );
+    TestBed.overrideProvider(IS_CORDOVA_IOS, { useValue: true });
+
+    TestBed.inject(AdsenseLoaderService).load();
+
+    expect(appendSpy).not.toHaveBeenCalled();
   });
 });

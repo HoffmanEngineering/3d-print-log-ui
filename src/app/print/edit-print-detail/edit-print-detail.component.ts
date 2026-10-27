@@ -97,6 +97,7 @@ import {
 } from 'src/app/core/resolvers/currencies.resolver';
 import { GoogleAnalyticsService } from 'src/app/core/services/google-analytics.service';
 import { isCordovaAndroid } from 'src/app/core/utils/platform';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import {
   ProjectService,
@@ -339,6 +340,14 @@ export class EditPrintDetailComponent
    * adds Camera to the chooser, while on iOS capture drops the photo library.
    */
   public useCaptureInput = isCordovaAndroid;
+
+  /** False in the iOS app, where Pro is never sold (#366). */
+  private readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
+
+  private freeImageLimitMessage(): string {
+    const limit = `Free accounts allow ${this.maxImages()} images per print.`;
+    return this.canPurchasePro ? `${limit} Upgrade to Pro for more.` : limit;
+  }
 
   public readonly preferredFilamentUnit =
     signal<PrintFilamentSourceMeasurement>(
@@ -1377,10 +1386,7 @@ export class EditPrintDetailComponent
             'Limit Reached'
           );
         } else {
-          this.toastr.info(
-            `Free accounts allow ${this.maxImages()} images per print. Upgrade to Pro for more.`,
-            'Image Limit Reached'
-          );
+          this.toastr.info(this.freeImageLimitMessage(), 'Image Limit Reached');
           this.loggingService.logEvent('EditPrint_ImageLimitUpgradePrompt', {
             currentCount: this.images.length,
             maxImages: this.maxImages(),
@@ -1561,10 +1567,7 @@ export class EditPrintDetailComponent
           'Limit Reached'
         );
       } else {
-        this.toastr.info(
-          `Free accounts allow ${this.maxImages()} images per print. Upgrade to Pro for more.`,
-          'Image Limit Reached'
-        );
+        this.toastr.info(this.freeImageLimitMessage(), 'Image Limit Reached');
         this.loggingService.logEvent('EditPrint_ImageLimitUpgradePrompt', {
           currentCount: this.images.length,
           maxImages: this.maxImages(),

@@ -24,6 +24,7 @@ import {
   FileAttachmentListComponent,
   FileAttachmentItem,
 } from '../file-attachment-list/file-attachment-list.component';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
 
 type TrackedFileItem = FileAttachmentItem & { trackingId?: string };
 
@@ -42,6 +43,9 @@ type TrackedFileItem = FileAttachmentItem & { trackingId?: string };
   ],
 })
 export class FileAttachmentSectionComponent implements OnInit {
+  /** False in the iOS app, where Pro is never sold (#366). */
+  readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
+
   readonly printId = input.required<number>();
   readonly editable = input(false);
   readonly allowFileDownloads = input(false);

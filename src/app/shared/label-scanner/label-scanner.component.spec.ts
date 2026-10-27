@@ -128,6 +128,87 @@ describe('LabelScannerComponent', () => {
     expect(seen).toEqual([]);
   });
 
+  it('still opens your own QR label while paused', async () => {
+    await setup();
+    fixture.componentRef.setInput('paused', true);
+    fixture.detectChanges();
+    const ids: string[] = [];
+    fixture.componentInstance.ownLabel.subscribe((id) => ids.push(id));
+
+    decode(
+      'https://www.3dprintlog.com/materials/3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      'QR_CODE'
+    );
+
+    expect(ids).toEqual(['3fa85f64-5717-4562-b3fc-2c963f66afa6']);
+  });
+
+  it('sends a photo only the barcodes seen lately, not an earlier spool', async () => {
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date(2026, 9, 27, 12));
+    try {
+      await setup();
+      decode('0849344041764', 'EAN_13');
+      jasmine.clock().tick(30_000);
+      decode('02540924A', 'CODE_128');
+      const photos: { barcodes: Barcode[] }[] = [];
+      fixture.componentInstance.photo.subscribe((p) => photos.push(p));
+
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="label-shutter"]'
+        ) as HTMLButtonElement
+      ).click();
+      await fixture.whenStable();
+
+      expect(photos[0].barcodes).toEqual([
+        { value: '02540924A', format: 'code128' },
+      ]);
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('reports a photo it could not read, with the barcodes seen', async () => {
+    await setup();
+    ocr.recognize.and.rejectWith(new Error('offline'));
+    decode('02540924A', 'CODE_128');
+    const failed: Barcode[][] = [];
+    fixture.componentInstance.photoFailed.subscribe((b) => failed.push(b));
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="label-shutter"]'
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+
+    expect(failed).toEqual([[{ value: '02540924A', format: 'code128' }]]);
+  });
+
+  it('treats a photo with no words as unread', async () => {
+    await setup();
+    ocr.recognize.and.resolveTo({ ...ocrResult, text: '', words: 0 });
+    const photos: unknown[] = [];
+    const failed: Barcode[][] = [];
+    fixture.componentInstance.photo.subscribe((p) => photos.push(p));
+    fixture.componentInstance.photoFailed.subscribe((b) => failed.push(b));
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="label-shutter"]'
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(photos).toEqual([]);
+    expect(failed).toEqual([[]]);
+    expect(fixture.nativeElement.textContent).toContain(
+      "Couldn't read much from that photo"
+    );
+  });
+
   it('reads a photo of the guide box and emits it with the barcodes seen', async () => {
     await setup();
     decode('02540924A', 'CODE_128');
@@ -166,7 +247,7 @@ describe('LabelScannerComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain(
-      "Couldn't read that photo"
+      "Couldn't read much from that photo"
     );
   });
 

@@ -29,6 +29,8 @@ export type CameraUnavailableReason = 'denied' | 'no-camera' | 'error';
 /** The guide box: this share of the frame's width, at 3:2. */
 const GUIDE_WIDTH = 0.85;
 const GUIDE_RATIO = 3 / 2;
+/** A barcode not seen for this long is left out of a photo: it was probably another spool. */
+const RECENT_MS = 20_000;
 
 let nextId = 0;
 
@@ -58,6 +60,8 @@ export class LabelScannerComponent {
   readonly barcodesChanged = output<Barcode[]>();
   /** A photo of the label was read. */
   readonly photo = output<{ barcodes: Barcode[]; ocr: LabelOcrResult }>();
+  /** The shutter was pressed but the photo gave no words; carries the recent barcodes. */
+  readonly photoFailed = output<Barcode[]>();
   /** The camera could not start. */
   readonly unavailable = output<CameraUnavailableReason>();
 
@@ -69,6 +73,8 @@ export class LabelScannerComponent {
   protected readonly showSpinner = this.busy.visible;
 
   private barcodes: Barcode[] = [];
+  /** When each barcode value was last decoded. */
+  private readonly lastSeen = new Map<string, number>();
 
   constructor() {
     afterNextRender(() => void this.start());
@@ -91,11 +97,18 @@ export class LabelScannerComponent {
     this.busy.start();
     try {
       const ocr = await this.ocr.recognize(cropToGuide(frame));
-      this.photo.emit({ barcodes: [...this.barcodes], ocr });
+      if (ocr.words === 0 || !ocr.text.trim()) {
+        this.logging.logEvent('LabelScan_Error', { stage: 'ocr-empty' });
+        this.photoError.set(true);
+        this.photoFailed.emit(this.recentBarcodes());
+        return;
+      }
+      this.photo.emit({ barcodes: this.recentBarcodes(), ocr });
     } catch (err) {
       this.logging.logEvent('LabelScan_Error', { stage: 'ocr' });
       this.logging.logException(err as Error);
       this.photoError.set(true);
+      this.photoFailed.emit(this.recentBarcodes());
     } finally {
       this.reading.set(false);
       this.busy.stop();
@@ -114,19 +127,28 @@ export class LabelScannerComponent {
     }
   }
 
-  private decoded(text: string, format: string): void {
-    if (this.paused()) return;
+  private recentBarcodes(): Barcode[] {
+    const since = Date.now() - RECENT_MS;
+    return this.barcodes.filter(
+      (b) => (this.lastSeen.get(b.value) ?? 0) >= since
+    );
+  }
 
+  private decoded(text: string, format: string): void {
+    // Your own label wins even mid-lookup: it names the spool outright.
     const own = this.scanner.parseFilamentUrl(text);
     if (own.success && own.filamentId) {
       this.ownLabel.emit(own.filamentId);
       return;
     }
+    if (this.paused()) return;
     // Other QR codes on labels are marketing links, not product codes.
     if (/^https?:\/\//i.test(text.trim())) return;
 
     const value = text.trim().toUpperCase();
-    if (!value || this.barcodes.some((b) => b.value === value)) return;
+    if (!value) return;
+    this.lastSeen.set(value, Date.now());
+    if (this.barcodes.some((b) => b.value === value)) return;
     this.barcodes = [
       ...this.barcodes,
       { value, format: format.toLowerCase().replace(/[^a-z0-9]/g, '') },

@@ -25,7 +25,6 @@ import { Observable, Subscription, of } from 'rxjs';
 import {
   catchError,
   debounceTime,
-  distinctUntilChanged,
   filter,
   map,
   startWith,
@@ -704,12 +703,13 @@ export class FilamentDetailComponent
     this.catalogMatchSubscription = this.filamentForm
       .get('brand')!
       .valueChanges.pipe(
+        // An offer is for the brand it was found with: withdraw it on any change.
+        tap(() => this.catalogOffer.set(null)),
         debounceTime(400),
         map((brand: unknown) =>
           typeof brand === 'string' ? brand.trim() : ''
         ),
         filter((brand) => brand !== ''),
-        distinctUntilChanged(),
         switchMap((brand) =>
           this.filamentService
             .catalogMatch({

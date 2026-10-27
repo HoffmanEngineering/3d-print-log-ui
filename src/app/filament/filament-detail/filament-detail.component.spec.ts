@@ -1803,6 +1803,20 @@ describe('FilamentDetailComponent scanned label', () => {
       ).toBe('sunlu_pla+_silver');
     });
 
+    it('withdraws the offer as soon as the brand changes', async () => {
+      await setup({ scannedLabelRead: labelRead() });
+      service.catalogMatch.and.returnValue(of(MATCH));
+      control('brand').setValue('SUNLU');
+      jasmine.clock().tick(400);
+      fixture.detectChanges();
+      expect(offer()).toContain('SUNLU');
+
+      control('brand').setValue('Elegoo');
+      fixture.detectChanges();
+
+      expect(offer()).toBeUndefined();
+    });
+
     it('shows nothing when the lookup fails', async () => {
       await setup({ scannedLabelRead: labelRead() });
       service.catalogMatch.and.returnValue(throwError(() => new Error('x')));

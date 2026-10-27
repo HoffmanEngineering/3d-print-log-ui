@@ -28,6 +28,9 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ComponentRef } from '@angular/core';
 import { DEFERRED_SKELETON_DELAY_MS } from 'src/app/shared/skeleton/deferred-skeleton';
 import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
+import { By } from '@angular/platform-browser';
+import { PrintImageComponent } from 'src/app/shared/print-image/print-image.component';
+import { ProjectImageComponent } from 'src/app/shared/project-image/project-image.component';
 
 function makePagedList<T>(items: T[]): PagedList<T> {
   return {
@@ -545,6 +548,61 @@ describe('PrintGroupedViewComponent', () => {
     expect(
       fixture.nativeElement.querySelector('app-printer-avatar')
     ).toBeTruthy();
+
+    discardPeriodicTasks();
+  }));
+
+  // #281: the API reports a thumbnail per default image; small slots should use it. An API
+  // without the fields leaves them undefined and the image components fetch the full image.
+  it('passes the thumbnail paths to the project and print images', fakeAsync(() => {
+    // The image components render for real here and fetch their image.
+    (mockProjectService as any).getProjectImage = jasmine
+      .createSpy('getProjectImage')
+      .and.returnValue(of(''));
+    (mockPrintService as any).getPrintImage = jasmine
+      .createSpy('getPrintImage')
+      .and.returnValue(of(''));
+    mockProjectService.getGroupedFeed.and.returnValue(
+      of(
+        makePagedList([
+          {
+            ...mockProjectItem,
+            defaultProjectImageId: 3,
+            defaultProjectImageThumbnailUrl:
+              '/api/Projects/proj-1/images/3/thumbnail',
+          },
+          {
+            ...mockPrintItem,
+            print: {
+              ...mockPrintItem.print,
+              defaultPrintImageId: 9,
+              defaultPrintImageThumbnailUrl: '/api/Prints/42/image/9/thumbnail',
+            },
+          },
+        ])
+      )
+    );
+    fixture.detectChanges();
+    tick(500);
+    fixture.detectChanges();
+
+    const projectImages = fixture.debugElement
+      .queryAll(By.directive(ProjectImageComponent))
+      .map((d) =>
+        (d.componentInstance as ProjectImageComponent).thumbnailUrl()
+      );
+    const printImages = fixture.debugElement
+      .queryAll(By.directive(PrintImageComponent))
+      .map((d) => (d.componentInstance as PrintImageComponent).thumbnailUrl());
+
+    expect(projectImages.length).toBeGreaterThan(0);
+    expect(printImages.length).toBeGreaterThan(0);
+    expect(projectImages).toEqual(
+      projectImages.map(() => '/api/Projects/proj-1/images/3/thumbnail')
+    );
+    expect(printImages).toEqual(
+      printImages.map(() => '/api/Prints/42/image/9/thumbnail')
+    );
 
     discardPeriodicTasks();
   }));

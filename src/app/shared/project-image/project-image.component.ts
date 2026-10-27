@@ -24,15 +24,20 @@ export class ProjectImageComponent {
 
   readonly projectId = input.required<string>();
   readonly imageId = input<number | undefined>();
+  /** The DTO's thumbnail path; absent or null fetches the full image. */
+  readonly thumbnailUrl = input<string | null | undefined>();
 
   readonly imageData = signal('');
 
   constructor() {
     effect(() => {
       const id = this.imageId();
+      const thumbnail = this.thumbnailUrl();
       if (id) {
-        this.projectService
-          .getProjectImage(this.projectId(), id)
+        (thumbnail
+          ? this.projectService.getProjectImage(this.projectId(), id, thumbnail)
+          : this.projectService.getProjectImage(this.projectId(), id)
+        )
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((data) => this.imageData.set(data));
       } else {

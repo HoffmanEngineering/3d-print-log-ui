@@ -23,6 +23,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { parseDurationAsSeconds } from 'src/app/core/utils/duration';
 import { environment } from 'src/environments/environment';
+import { apiUrl } from 'src/app/core/utils/api-url';
 
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
@@ -174,6 +175,8 @@ export const PRINTER_DETECTION_TIMEOUT_MS = 3000;
 export interface PrintImageValue {
   id?: number;
   url?: string;
+  /** Absolute URL of a saved image's thumbnail, when the API reports one (#281). */
+  thumbnailUrl?: string;
   file?: File;
   isDefault?: boolean;
   displayOrder?: number;
@@ -1062,6 +1065,7 @@ export class EditPrintDetailComponent
           url: image.id
             ? `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`
             : image.url,
+          thumbnailUrl: image.id ? apiUrl(image.thumbnailUrl) : undefined,
           file: null,
           isDefault: image.isDefault,
           displayOrder: image.displayOrder,
@@ -1646,6 +1650,7 @@ export class EditPrintDetailComponent
       .map((ctrl, index) => ({
         id: ctrl.value.id,
         url: ctrl.value.url,
+        thumbnailUrl: ctrl.value.thumbnailUrl,
         isDefault: ctrl.value.isDefault,
         displayOrder: ctrl.value.displayOrder,
         _index: index, // Keep track of original index for stable sorting

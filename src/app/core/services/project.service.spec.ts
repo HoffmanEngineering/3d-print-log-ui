@@ -160,4 +160,48 @@ describe('ProjectService', () => {
       req.flush({});
     });
   });
+
+  describe('getProjectImage', () => {
+    const api = environment.printLogApiUrl;
+    const png = () => new Blob(['x'], { type: 'image/png' });
+    const read = (source: ReturnType<ProjectService['getProjectImage']>) =>
+      new Promise<string>((resolve) => source.subscribe(resolve));
+
+    it('fetches the full image when no thumbnail is given', async () => {
+      const result = read(service.getProjectImage('abc', 7));
+      httpMock.expectOne(`${api}/api/Projects/abc/images/7`).flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+
+    it('fetches the thumbnail when the API reported one', async () => {
+      const result = read(
+        service.getProjectImage(
+          'abc',
+          7,
+          '/api/Projects/abc/images/7/thumbnail'
+        )
+      );
+      const req = httpMock.expectOne(
+        `${api}/api/Projects/abc/images/7/thumbnail`
+      );
+      expect(req.request.headers.get('allow-anonymous-request')).toBe('true');
+      req.flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+
+    it('falls back to the full image when the thumbnail fails', async () => {
+      const result = read(
+        service.getProjectImage(
+          'abc',
+          7,
+          '/api/Projects/abc/images/7/thumbnail'
+        )
+      );
+      httpMock
+        .expectOne(`${api}/api/Projects/abc/images/7/thumbnail`)
+        .flush(null, { status: 500, statusText: 'Error' });
+      httpMock.expectOne(`${api}/api/Projects/abc/images/7`).flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+  });
 });

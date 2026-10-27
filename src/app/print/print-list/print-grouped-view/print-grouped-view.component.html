@@ -57,6 +57,7 @@
                 <app-project-image
                   [projectId]="row.item.projectId!"
                   [imageId]="row.item.defaultProjectImageId"
+                  [thumbnailUrl]="row.item.defaultProjectImageThumbnailUrl"
                 />
               </div>
               <div class="card-content">
@@ -174,6 +175,7 @@
                   <app-print-image
                     [printId]="p.id"
                     [imageId]="p.defaultPrintImageId"
+                    [thumbnailUrl]="p.defaultPrintImageThumbnailUrl"
                   />
                 </div>
                 <div class="card-content">
@@ -371,6 +373,7 @@
                 <app-print-image
                   [printId]="ep.id"
                   [imageId]="ep.defaultPrintImageId"
+                  [thumbnailUrl]="ep.defaultPrintImageThumbnailUrl"
                 />
               </div>
               <div class="card-content">
@@ -574,6 +577,7 @@
             <app-project-image
               [projectId]="row.item.projectId!"
               [imageId]="row.item.defaultProjectImageId"
+              [thumbnailUrl]="row.item.defaultProjectImageThumbnailUrl"
             />
           </div>
         } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
@@ -588,6 +592,11 @@
                 row.kind === 'expanded-print'
                   ? row.print.defaultPrintImageId
                   : row.item.print?.defaultPrintImageId
+              "
+              [thumbnailUrl]="
+                row.kind === 'expanded-print'
+                  ? row.print.defaultPrintImageThumbnailUrl
+                  : row.item.print?.defaultPrintImageThumbnailUrl
               "
             />
           </div>
@@ -604,6 +613,7 @@
             <app-project-image
               [projectId]="row.item.projectId!"
               [imageId]="row.item.defaultProjectImageId"
+              [thumbnailUrl]="row.item.defaultProjectImageThumbnailUrl"
             />
           </div>
         } @else if (row.kind === 'expanded-print' || row.kind === 'print') {
@@ -618,6 +628,11 @@
                 row.kind === 'expanded-print'
                   ? row.print.defaultPrintImageId
                   : row.item.print?.defaultPrintImageId
+              "
+              [thumbnailUrl]="
+                row.kind === 'expanded-print'
+                  ? row.print.defaultPrintImageThumbnailUrl
+                  : row.item.print?.defaultPrintImageThumbnailUrl
               "
             />
           </div>

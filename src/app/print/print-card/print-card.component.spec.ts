@@ -6,6 +6,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { PrintCardComponent } from './print-card.component';
+import { PrintImageComponent } from 'src/app/shared/print-image/print-image.component';
 import {
   PrintSummary,
   PrintStatus,
@@ -56,6 +57,18 @@ describe('PrintCardComponent', () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput('print', mockPrint);
     fixture.detectChanges();
+  });
+
+  it('gives its image the thumbnail path when the API reports one', () => {
+    fixture.componentRef.setInput('print', {
+      ...mockPrint,
+      defaultPrintImageId: 5,
+      defaultPrintImageThumbnailUrl: '/api/Prints/42/image/5/thumbnail',
+    });
+    fixture.detectChanges();
+    const image = fixture.debugElement.query(By.directive(PrintImageComponent))
+      .componentInstance as PrintImageComponent;
+    expect(image.thumbnailUrl()).toBe('/api/Prints/42/image/5/thumbnail');
   });
 
   it('should render the print title', () => {

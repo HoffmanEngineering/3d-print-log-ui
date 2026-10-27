@@ -111,6 +111,36 @@ describe('ImageThumbnailStripComponent', () => {
 
       httpMock.expectOne('/api/Prints/1/image/1').flush(new Blob());
     });
+
+    // Prints report a /thumbnail path (#281); the strip's 64px slots should not pull every
+    // full-size original through AuthImagePipe.
+    it('fetches thumbnailUrl rather than url through AuthImagePipe when present', () => {
+      httpMock.match(() => true);
+      fixture.componentRef.setInput('images', [
+        {
+          id: 1,
+          url: '/api/Prints/1/image/1',
+          thumbnailUrl: '/api/Prints/1/image/1/thumbnail',
+          isDefault: true,
+          displayOrder: 0,
+        },
+        {
+          id: 2,
+          url: '/api/Prints/1/image/2',
+          isDefault: false,
+          displayOrder: 1,
+        },
+      ]);
+      fixture.detectChanges();
+
+      const req = httpMock.expectOne('/api/Prints/1/image/1/thumbnail');
+      // Public prints are viewed logged out; without this the interceptor rejects the request.
+      expect(req.request.headers.get('allow-anonymous-request')).toBe('true');
+      req.flush(new Blob());
+      httpMock.expectNone('/api/Prints/1/image/1');
+      // No thumbnail reported (an older API): the full image, as before.
+      httpMock.expectOne('/api/Prints/1/image/2').flush(new Blob());
+    });
   });
 
   it('should create', () => {

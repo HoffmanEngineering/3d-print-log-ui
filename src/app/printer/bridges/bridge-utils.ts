@@ -133,7 +133,7 @@ export function credentialFieldLabel(field: string): string {
 }
 
 /** The field inside a sentence: "the access code", "the API key". */
-function credentialNoun(field: string): string {
+export function credentialNoun(field: string): string {
   const label = credentialFieldLabel(field);
   return label.startsWith('API') ? label : label.toLowerCase();
 }

@@ -18,7 +18,13 @@ import {
   PrinterService,
   PrinterSummarySimple,
 } from 'src/app/core/services/printer.service';
-import { bridge, bridgePrinter, discovered } from '../testing/bridge-fixtures';
+import {
+  OTHER_BRIDGE_KEY,
+  TEST_BRIDGE_KEY,
+  bridge,
+  bridgePrinter,
+  discovered,
+} from '../testing/bridge-fixtures';
 import {
   BridgeConnectDialogComponent,
   BridgeConnectDialogData,
@@ -112,6 +118,9 @@ describe('BridgeConnectDialogComponent', () => {
   beforeEach(() => {
     bridges = jasmine.createSpyObj<BridgesService>('BridgesService', [
       'connect',
+      'get',
+      'setSecret',
+      'clearSecret',
     ]);
     printers = jasmine.createSpyObj<PrinterService>('PrinterService', [
       'getCurrentUserPrinterSummaries',
@@ -158,8 +167,89 @@ describe('BridgeConnectDialogComponent', () => {
     expect(component().form.controls.printerId.value).toBe(5);
   });
 
-  it('connects a discovered Bambu Lab printer and shows its [app_printer] section', async () => {
+  /** WebCrypto's promises aren't tracked by Angular: render until the condition holds. */
+  async function until(condition: () => boolean): Promise<void> {
+    for (let i = 0; i < 100; i++) {
+      fixture.detectChanges();
+      if (condition()) {
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    fail('timed out');
+  }
+
+  it('connects a discovered Bambu Lab printer, then asks for its access code sealed to the bridge', async () => {
     bridges.connect.and.returnValue(of(bridgePrinter({ id: 7 })));
+    await create();
+    submit();
+
+    expect(bridges.connect).toHaveBeenCalledWith(42, {
+      printerId: 5,
+      discoveredPrinterId: 12,
+    });
+    expect(el().querySelector('h2')!.textContent).toContain('access code');
+    await until(() => !!byTestId('credential-access_code'));
+    expect(byTestId('credentials-fingerprint')!.textContent).toContain(
+      TEST_BRIDGE_KEY.short
+    );
+    expect(byTestId('connect-snippet')).toBeNull();
+    expect(dialogRef.close).not.toHaveBeenCalled();
+
+    byTestId('connect-finish')!.click();
+    expect(dialogRef.close).toHaveBeenCalledWith(
+      jasmine.objectContaining({ id: 7 })
+    );
+  });
+
+  it('shows the config-file section for a bridge without a key', async () => {
+    bridges.connect.and.returnValue(of(bridgePrinter({ id: 7 })));
+    await create({ bridge: bridge({ publicKey: null }) });
+    submit();
+    await until(() => !!byTestId('credentials-snippet'));
+    expect(byTestId('credentials-snippet')!.textContent).toContain(
+      '[app_printer 7]'
+    );
+  });
+
+  it('reads the bridge again when its key changed under a credential', async () => {
+    const entry = bridgePrinter({ id: 7 });
+    bridges.connect.and.returnValue(of(entry));
+    bridges.get.and.returnValue(
+      of(bridge({ publicKey: OTHER_BRIDGE_KEY.publicKey }))
+    );
+    bridges.setSecret.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: { code: 'bridge_key_changed' },
+          })
+      )
+    );
+    await create();
+    submit();
+    await until(() => !!byTestId('credential-access_code'));
+    const input = el().querySelector(
+      '[data-testid="credential-input"]'
+    ) as HTMLInputElement;
+    input.value = '12345678';
+    input.dispatchEvent(new Event('input'));
+    byTestId('credential-save')!.click();
+    await until(() => bridges.get.calls.count() === 1);
+    await until(
+      () =>
+        !!byTestId('credentials-fingerprint')?.textContent?.includes(
+          OTHER_BRIDGE_KEY.short
+        )
+    );
+    expect(bridges.get).toHaveBeenCalledWith(42);
+  });
+
+  it('connects through an older API that lists no fields and shows its [app_printer] section', async () => {
+    bridges.connect.and.returnValue(
+      of(bridgePrinter({ id: 7, secretFields: undefined, secrets: undefined }))
+    );
     await create();
     submit();
 
@@ -180,7 +270,11 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('closes right away for a Moonraker printer, which needs no credential', async () => {
-    const entry = bridgePrinter({ kind: 'moonraker', id: 8 });
+    const entry = bridgePrinter({
+      kind: 'moonraker',
+      id: 8,
+      secretFields: ['moonraker_api_key'],
+    });
     bridges.connect.and.returnValue(of(entry));
     await create({
       discovered: discovered({ kind: 'moonraker', model: 'Voron 2.4' }),
@@ -238,7 +332,13 @@ describe('BridgeConnectDialogComponent', () => {
 
   it('sends the port of a printer added by address', async () => {
     bridges.connect.and.returnValue(
-      of(bridgePrinter({ kind: 'prusalink', id: 4 }))
+      of(
+        bridgePrinter({
+          kind: 'prusalink',
+          id: 4,
+          secretFields: ['password', 'username', 'api_key'],
+        })
+      )
     );
     await create({ discovered: null });
     component().form.patchValue({
@@ -254,7 +354,8 @@ describe('BridgeConnectDialogComponent', () => {
       host: 'mk4.local',
       port: 8080,
     });
-    expect(byTestId('connect-snippet')!.textContent).toContain('password');
+    expect(el().querySelector('h2')!.textContent).toContain('credentials');
+    await until(() => !!byTestId('credential-password'));
   });
 
   it('creates a new printer from the catalog match and selects it', async () => {

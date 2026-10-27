@@ -43,6 +43,7 @@ import { PrinterCatalogService } from 'src/app/core/services/printer-catalog.ser
 import { PrinterService } from 'src/app/core/services/printer.service';
 import { openQuickAddPrinterDialog } from 'src/app/onboarding/quick-add-printer/quick-add-printer-dialog.component';
 import { externalSourceLabel } from 'src/app/shared/utils/external-source.utils';
+import { BridgeCredentialsComponent } from '../bridge-credentials/bridge-credentials.component';
 import {
   BRIDGE_KINDS,
   appPrinterSnippet,
@@ -50,6 +51,7 @@ import {
   bridgeErrorMessage,
   bridgeLabel,
   credentialName,
+  credentialNoun,
   formatAddress,
 } from '../bridge-utils';
 
@@ -85,8 +87,9 @@ const serialWhenBambu: ValidatorFn = (group) => {
 /**
  * Connects a printer to a bridge: one it found on the network, or one added by address (Docker
  * Desktop can't discover). The user logs it to one of their printers or creates one, prefilled
- * from the catalog. For a printer that needs a LAN credential, the dialog then shows the
- * `[app_printer N]` section to add on the bridge, until the app can send it (story 14).
+ * from the catalog. For a printer that needs a LAN credential, the dialog then asks for it and
+ * seals it to the bridge's key (story 14c), or, for a bridge the app can't seal to, shows the
+ * `[app_printer N]` section to add to its config file.
  */
 @Component({
   selector: 'app-bridge-connect-dialog',
@@ -105,6 +108,7 @@ const serialWhenBambu: ValidatorFn = (group) => {
     MatInputModule,
     MatSelectModule,
     RouterLink,
+    BridgeCredentialsComponent,
   ],
 })
 export class BridgeConnectDialogComponent {
@@ -126,6 +130,8 @@ export class BridgeConnectDialogComponent {
   protected readonly kindLabel = externalSourceLabel;
   protected readonly discovered = this.data.discovered;
   protected readonly bridgeName = bridgeLabel(this.data.bridge);
+  /** The bridge, reloaded when its key changed under a credential. */
+  protected readonly bridge = signal(this.data.bridge);
   protected readonly discoveredAddress = this.discovered
     ? formatAddress(this.discovered.address, this.discovered.port)
     : null;
@@ -161,13 +167,21 @@ export class BridgeConnectDialogComponent {
   private readonly matchedModelId = signal<string | null>(null);
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
-  /** Set once connected; a printer that needs a credential then shows its snippet. */
+  /** Set once connected; a printer that needs a credential then asks for it. */
   protected readonly connected = signal<BridgePrinter | null>(null);
   private createdPrinter = false;
 
+  /** The second step seals credentials; an API that lists no fields gets the old snippet. */
+  protected readonly sealsCredentials = computed(
+    () => !!this.connected()?.secretFields?.length
+  );
   protected readonly snippet = computed(() => {
     const entry = this.connected();
     return entry ? appPrinterSnippet(entry.kind, entry.id) : null;
+  });
+  protected readonly credentialsTitle = computed(() => {
+    const fields = this.connected()?.secretFields ?? [];
+    return fields.length === 1 ? credentialNoun(fields[0]) : 'credentials';
   });
   protected readonly credential = computed(() =>
     credentialName(this.connected()?.kind ?? '')
@@ -307,7 +321,7 @@ export class BridgeConnectDialogComponent {
             fromDiscovery: this.discovered !== null,
             newPrinter: this.createdPrinter,
           });
-          if (appPrinterSnippet(entry.kind, entry.id)) {
+          if (needsCredentialStep(entry)) {
             this.connected.set(entry);
             return;
           }
@@ -338,6 +352,17 @@ export class BridgeConnectDialogComponent {
     });
   }
 
+  /** The bridge's key changed under a credential: read it again, so the step seals to the new one. */
+  protected reloadBridge(): void {
+    this.bridges
+      .get(this.data.bridge.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (bridge) => this.bridge.set(bridge),
+        error: (error: unknown) => this.logging.logException(error as Error),
+      });
+  }
+
   protected done(): void {
     this.dialogRef.close(this.connected() ?? undefined);
   }
@@ -346,6 +371,21 @@ export class BridgeConnectDialogComponent {
     const bridge = this.data.bridges.find((b) => b.id === bridgeId);
     return bridge ? bridgeLabel(bridge) : null;
   }
+}
+
+/**
+ * A kind whose credential is optional (a Moonraker API key, only with `[authorization]`) is
+ * connected without the second step; its key can be set from the card.
+ */
+const OPTIONAL_CREDENTIAL_KINDS: ReadonlySet<string> = new Set(['moonraker']);
+
+function needsCredentialStep(entry: BridgePrinter): boolean {
+  if (OPTIONAL_CREDENTIAL_KINDS.has(entry.kind)) {
+    return false;
+  }
+  return entry.secretFields
+    ? entry.secretFields.length > 0
+    : appPrinterSnippet(entry.kind, entry.id) !== null;
 }
 
 const PHONE_QUERY = '(max-width: 599.98px)';

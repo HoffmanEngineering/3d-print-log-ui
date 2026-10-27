@@ -1,0 +1,80 @@
+@if (phase() !== 'unavailable' && (phase() !== 'idle' || showSkeleton())) {
+  <h3>Paired devices</h3>
+  <p class="intro">
+    Bridges you paired with <code>printlog-bridge pair</code>. Each one has its
+    own token that works only for what's listed under it, not for the rest of
+    your account.
+  </p>
+
+  @if (showSkeleton()) {
+    <div
+      class="device-skeleton app-skeleton-immediate"
+      aria-busy="true"
+      aria-label="Loading paired devices"
+    >
+      <app-skeleton height="64px" />
+      <app-skeleton height="64px" />
+    </div>
+  } @else if (phase() === 'error') {
+    <p>We couldn't load your paired devices.</p>
+    <button
+      mat-stroked-button
+      type="button"
+      data-testid="devices-retry"
+      (click)="load()"
+    >
+      Retry
+    </button>
+  } @else if (rows().length === 0) {
+    <p data-testid="devices-empty">
+      No paired devices. To pair printlog-bridge, run
+      <code>printlog-bridge pair</code> on the computer it runs on and approve
+      it with your phone.
+      <a routerLink="/docs/printlog-bridge" fragment="account"
+        >How pairing works</a
+      >.
+    </p>
+  } @else {
+    <ul class="device-list">
+      @for (row of rows(); track row.grant.id) {
+        <li data-testid="device-row">
+          <mat-icon class="device-icon" aria-hidden="true">router</mat-icon>
+          <div class="identity">
+            <span class="name">{{ row.grant.name }}</span>
+            <span class="meta">
+              Paired
+              <time
+                [attr.datetime]="row.grant.createdAt"
+                [attr.title]="row.grant.createdAt | localeDate: 'datetime'"
+                >{{ row.grant.createdAt | localeDate }}</time
+              >
+              ·
+              @if (row.grant.lastUsedAt) {
+                Last used
+                <time
+                  data-testid="device-last-used"
+                  [attr.datetime]="row.grant.lastUsedAt"
+                  [attr.title]="row.grant.lastUsedAt | localeDate: 'datetime'"
+                  >{{ row.grant.lastUsedAt | humanize }}</time
+                >
+              } @else {
+                Not used yet
+              }
+            </span>
+            <span class="meta scopes">{{ row.scopes }}</span>
+          </div>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            data-testid="device-revoke"
+            [attr.aria-label]="'Revoke ' + row.grant.name"
+            (click)="confirmRevoke(row.grant)"
+          >
+            Revoke
+          </button>
+        </li>
+      }
+    </ul>
+  }
+}

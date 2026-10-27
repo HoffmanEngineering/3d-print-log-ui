@@ -35,6 +35,52 @@ function makeFu(
 }
 
 describe('getFilamentPreferredDisplay', () => {
+  // api#282: a bridge on a printer that can't measure reports the slicer's figure as the actual.
+  describe('an actual figure marked as an estimate', () => {
+    const fu = makeFu({
+      amountMg: 12340,
+      lengthInM: 4.1,
+      actualIsEstimate: true,
+      filament: STANDARD_FILAMENT as PrintFilamentSummaryDto['filament'],
+    });
+
+    it('shows the actual figure, marked as estimated', () => {
+      const result = getFilamentPreferredDisplay(
+        fu,
+        PrintFilamentSourceMeasurement.Weight
+      )!;
+      expect(result.displayString).toBe('12.3g');
+      expect(result.isEstimated).toBeTrue();
+    });
+
+    it('stays marked when shown as recorded or converted', () => {
+      expect(
+        getFilamentPreferredDisplay(
+          fu,
+          PrintFilamentSourceMeasurement.AsRecorded
+        )!.isEstimated
+      ).toBeTrue();
+      expect(
+        getFilamentPreferredDisplay(fu, PrintFilamentSourceMeasurement.Volume)!
+          .isEstimated
+      ).toBeTrue();
+      expect(
+        getActualPreferredDisplay(fu, PrintFilamentSourceMeasurement.Weight)!
+          .isEstimated
+      ).toBeTrue();
+    });
+
+    it('leaves a measured figure unmarked', () => {
+      const measured = { ...fu, actualIsEstimate: false };
+      expect(
+        getFilamentPreferredDisplay(
+          measured,
+          PrintFilamentSourceMeasurement.Weight
+        )!.isEstimated
+      ).toBeFalse();
+    });
+  });
+
   describe('preferred unit matches actual data', () => {
     it('returns weight when preferred=Weight and amountMg is set', () => {
       const fu = makeFu({

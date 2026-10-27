@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-10-15
+updated: 2026-10-27
 related: [prints]
 ---
 
@@ -134,13 +134,23 @@ A connection is a program on your printer, such as the 3D Print Log bridge,
 that logs your prints automatically. A printer's **Edit Page** lists its
 connections, with:
 
-- **Name and type**, such as "Klipper (Moonraker)", and the version it runs.
+- **Name and type**, such as "Klipper (Moonraker)", "Bambu Lab (LAN)" or
+  "PrusaLink", and the version it runs.
+- **The printer's software**, as the connection last reported it: the firmware
+  (such as Klipper or Prusa-Firmware-Buddy) and the software on the printer's
+  host (such as Moonraker or PrusaLink), with their versions.
 - **Status** — **Online** while the connection checks in, or **Stale** after
   15 minutes without hearing from it. If it stays stale, check that the
   printer and the program are running and online.
 - **Last seen** — when it last checked in.
 - **A newer version**, when one is out: "printlog-bridge 0.2.0 is available",
   linking to [how to update it](/docs/printlog-bridge#update).
+
+A filament printer with no connections shows **Connect this printer**
+instead. Pick the kind of printer (Klipper / Moonraker, Bambu Lab, or Prusa
+with PrusaLink) to see the steps and a config section for
+[printlog-bridge](/docs/printlog-bridge) with the printer's number filled in,
+ready to copy.
 
 To remove a connection, click its <mat-icon inline="true">delete</mat-icon>
 button and confirm. The prints it already logged are kept. Only the link to the

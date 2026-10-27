@@ -16,7 +16,7 @@ export enum ConnectionStatus {
 export interface Connection {
   /** GUID */
   id: string;
-  /** Lower-case connector type: `moonraker`, `octoprint`. */
+  /** Lower-case connector type: `moonraker`, `octoprint`, `prusalink`, `bambu`, `sdcp`. */
   kind: string;
   /** The agent's own stable id for this printer; the API addresses connections by it. */
   instanceId: string;
@@ -40,6 +40,19 @@ export interface Connection {
   notifierNoticeDismissedAt: Date | null;
   /** Events were dropped and the user has not dismissed the notice about it. */
   showNotifierNotice: boolean;
+
+  // The agent's health as of its last heartbeat (printlog-bridge#37, api#282). Each is null until
+  // the agent reports it, and absent on an older API.
+
+  /** The printer's firmware, such as `Klipper`, `Prusa-Firmware-Buddy` or `Bambu`. */
+  firmwareName?: string | null;
+  firmwareVersion?: string | null;
+  /** The software on the printer's host, such as `Moonraker` or `PrusaLink`; none for Bambu. */
+  hostSoftwareName?: string | null;
+  hostSoftwareVersion?: string | null;
+  /** Legacy: what a bridge from before api#282 sends instead of the generic fields. */
+  klipperVersion?: string | null;
+  moonrakerVersion?: string | null;
 }
 
 type ConnectionDto = Omit<

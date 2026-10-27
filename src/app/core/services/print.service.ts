@@ -103,6 +103,12 @@ export interface PrintFilamentSummaryDto {
   source: PrintFilamentSourceMeasurement;
   estimatedSource: PrintFilamentSourceMeasurement;
 
+  /**
+   * The actual figure is the slicer's estimate, not a measurement: a printer that can't measure
+   * what it feeds (Bambu, PrusaLink) reports it this way (api#282). Absent on older APIs.
+   */
+  actualIsEstimate?: boolean;
+
   notes?: string;
 }
 
@@ -126,6 +132,12 @@ export interface PutPrintFilamentSummaryDto {
 
   source: PrintFilamentSourceMeasurement;
   estimatedSource: PrintFilamentSourceMeasurement;
+
+  /**
+   * The actual figure is the slicer's estimate, not a measurement: a printer that can't measure
+   * what it feeds (Bambu, PrusaLink) reports it this way (api#282). Absent on older APIs.
+   */
+  actualIsEstimate?: boolean;
 
   notes?: string;
 }
@@ -244,6 +256,8 @@ export function toPutPrintFilamentSummary(
     lengthInM: pf.lengthInM,
     volumeMl: pf.volumeMl,
     source: pf.source,
+    // PATCH and PUT replace every row and reset the flag unless it is sent back (api#282).
+    actualIsEstimate: pf.actualIsEstimate ?? false,
     notes: pf.notes,
   };
 }

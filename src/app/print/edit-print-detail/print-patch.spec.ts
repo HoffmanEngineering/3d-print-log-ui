@@ -194,9 +194,91 @@ describe('buildPrintPatch', () => {
         lengthInM: null,
         volumeMl: null,
         source: PrintFilamentSourceMeasurement.Weight,
+        actualIsEstimate: false,
         notes: '',
       },
     ]);
+  });
+
+  // api#282: PATCH replaces every usage row and resets actualIsEstimate unless it is sent back.
+  describe('actualIsEstimate (printlog-bridge#82)', () => {
+    const estimatedRow = {
+      ...usageRow,
+      amountMg: 18_000,
+      actualIsEstimate: true,
+    };
+    const otherRow = {
+      ...usageRow,
+      id: 'a3f1c2d4-0000-4000-8000-000000000002',
+      slot: 3,
+      amountMg: 4_000,
+      actualIsEstimate: true,
+    };
+
+    it('sends the flag back on rows the user did not change', () => {
+      const patch = buildPrintPatch(
+        loadedPrint({ filamentUsage: [estimatedRow, otherRow] }),
+        loadedPrint({
+          filamentUsage: [estimatedRow, { ...otherRow, notes: 'tray B1' }],
+        })
+      );
+
+      expect(patch.filamentUsage?.map((r) => r.actualIsEstimate)).toEqual([
+        true,
+        true,
+      ]);
+    });
+
+    it('sends a row whose actual amount the user changed as measured', () => {
+      const patch = buildPrintPatch(
+        loadedPrint({ filamentUsage: [estimatedRow, otherRow] }),
+        loadedPrint({
+          filamentUsage: [{ ...estimatedRow, amountMg: 17_250 }, otherRow],
+        })
+      );
+
+      expect(patch.filamentUsage?.map((r) => r.actualIsEstimate)).toEqual([
+        false,
+        true,
+      ]);
+    });
+
+    it('sends a row whose measure the user switched as measured', () => {
+      const patch = buildPrintPatch(
+        loadedPrint({ filamentUsage: [estimatedRow] }),
+        loadedPrint({
+          filamentUsage: [
+            {
+              ...estimatedRow,
+              source: PrintFilamentSourceMeasurement.Length,
+              lengthInM: 6.1,
+            },
+          ],
+        })
+      );
+
+      expect(patch.filamentUsage?.[0].actualIsEstimate).toBeFalse();
+    });
+
+    it('sends a measured row as measured', () => {
+      const patch = buildPrintPatch(
+        loadedPrint({ filamentUsage: [{ ...usageRow, amountMg: 3_000 }] }),
+        loadedPrint({
+          filamentUsage: [{ ...usageRow, amountMg: 3_000, notes: 'x' }],
+        })
+      );
+
+      expect(patch.filamentUsage?.[0].actualIsEstimate).toBeFalse();
+    });
+
+    it('sends nothing when only the flag would be resent', () => {
+      expect(
+        buildPrintPatch(
+          loadedPrint({ filamentUsage: [estimatedRow] }),
+          loadedPrint({ filamentUsage: [estimatedRow] })
+        )
+      ).toEqual({});
+    });
   });
 
   it('sends an empty usage list when every row was removed', () => {

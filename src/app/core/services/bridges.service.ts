@@ -43,6 +43,28 @@ export interface Bridge {
   discoveredCount: number;
   /** Found and not connected, configured or ignored. */
   discoveredNotConnectedCount: number;
+  /**
+   * Its P-256 public key for sealed credentials (padded base64 of the DER SPKI), or null when it
+   * has reported none: an older bridge, which can't take credentials from the app. Missing from
+   * an API older than api#289.
+   *
+   * The API also sends `publicKeyFingerprint` and `pendingPublicKeyFingerprint`. They are left
+   * out of this type on purpose: the app computes every fingerprint it shows or sends from the
+   * key bytes itself (docs/bridge-credential-sealing.md in the API repo), so a key swapped by the
+   * server can't hide behind the real bridge's fingerprint.
+   */
+  publicKey?: string | null;
+  /** When `publicKey` became the key values are sealed to. */
+  publicKeyChangedAt?: string | null;
+  /** A different key the bridge reported since, waiting for the owner to confirm it, or null. */
+  pendingPublicKey?: string | null;
+  /** When the pending key was first reported. */
+  pendingPublicKeyAt?: string | null;
+  /**
+   * The bridge reported more new keys today than the daily cap, so the API holds the pending key
+   * (it stops replacing it) until the UTC day ends.
+   */
+  keyChangesThrottled?: boolean;
 }
 
 /** Where a printer a bridge found stands (`DiscoveredPrinterState`). */
@@ -92,6 +114,42 @@ export interface BridgePrinter {
   identityKey: string | null;
   macs: string[] | null;
   createdAt: string;
+  /** The credentials its kind takes, such as `access_code`. Missing from an older API. */
+  secretFields?: string[] | null;
+  /** Its sealed credentials, without the sealed values (the owner never gets those). */
+  secrets?: BridgePrinterSecret[] | null;
+  /** What the bridge last reported it can't use. */
+  credentialIssues?: CredentialIssue[] | null;
+}
+
+/** One sealed credential of an entry, as the owner sees it. */
+export interface BridgePrinterSecret {
+  field: string;
+  /**
+   * The fingerprint of the key the API says it was sealed to. Only ever compared with the
+   * fingerprint the app computed from the bridge's key; never shown (it is the API's word).
+   */
+  keyFingerprint: string | null;
+  updatedAt: string;
+  /** Sealed to a key the bridge no longer has: it isn't sent, and must be entered again. */
+  stale: boolean;
+}
+
+/**
+ * A credential the bridge can't use: `missing`, `undecryptable`, `invalid_plaintext` or
+ * `rejected_by_printer`.
+ */
+export interface CredentialIssue {
+  field: string;
+  code: string;
+}
+
+/** The body of `PUT …/secrets/{field}`. Never the plaintext. */
+export interface SetBridgePrinterSecret {
+  /** `v1.…`, sealed in the browser to the bridge's `publicKey`. */
+  sealed: string;
+  /** The fingerprint the app computed over the key bytes it sealed to. */
+  keyFingerprint: string;
 }
 
 /**
@@ -124,6 +182,10 @@ export class BridgesService {
   /** Oldest first. A paired bridge is listed only after its first check-in. */
   list(): Observable<Bridge[]> {
     return this.http.get<Bridge[]>(this.baseUrl);
+  }
+
+  get(id: number): Observable<Bridge> {
+    return this.http.get<Bridge>(this.url(id));
   }
 
   update(id: number, body: UpdateBridge): Observable<Bridge> {
@@ -159,6 +221,37 @@ export class BridgesService {
     );
   }
 
+  /**
+   * Stores one credential sealed to the bridge's current key and returns the entry. Check the
+   * field's `stale` in the answer: a seal that raced a key confirmation is stored but stale.
+   */
+  setSecret(
+    id: number,
+    entryId: number,
+    field: string,
+    body: SetBridgePrinterSecret
+  ): Observable<BridgePrinter> {
+    return this.http.put<BridgePrinter>(
+      this.secretUrl(id, entryId, field),
+      body
+    );
+  }
+
+  /** Clears one credential (also when there was none). */
+  clearSecret(id: number, entryId: number, field: string): Observable<void> {
+    return this.http.delete<void>(this.secretUrl(id, entryId, field));
+  }
+
+  /**
+   * Makes the bridge's pending key current. `fingerprint` must be the one the app computed from
+   * `pendingPublicKey`, which the user compared with the bridge's own.
+   */
+  confirmKey(id: number, fingerprint: string): Observable<Bridge> {
+    return this.http.post<Bridge>(`${this.url(id)}/public-key/confirm`, {
+      fingerprint,
+    });
+  }
+
   /** Asks the bridge for one active sweep. Repeats within a minute return the same time. */
   scan(id: number): Observable<{ scanRequestedAt: string }> {
     return this.http.post<{ scanRequestedAt: string }>(
@@ -169,6 +262,10 @@ export class BridgesService {
 
   private url(id: number): string {
     return `${this.baseUrl}/${encodeURIComponent(id)}`;
+  }
+
+  private secretUrl(id: number, entryId: number, field: string): string {
+    return `${this.url(id)}/printers/${encodeURIComponent(entryId)}/secrets/${encodeURIComponent(field)}`;
   }
 
   private ignoreUrl(id: number, discoveredId: number): string {

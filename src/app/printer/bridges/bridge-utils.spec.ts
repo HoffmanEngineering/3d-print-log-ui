@@ -3,7 +3,11 @@ import {
   appPrinterSnippet,
   bridgeErrorCode,
   bridgeErrorMessage,
+  credentialFieldLabel,
+  credentialIssueMessage,
+  credentialProblemMessage,
   formatAddress,
+  isKeyErrorCode,
   isScanning,
 } from './bridge-utils';
 
@@ -138,5 +142,92 @@ describe('bridge-utils', () => {
     expect(formatAddress('192.168.1.60', 8883)).toBe('192.168.1.60:8883');
     expect(formatAddress('mk4.local', null)).toBe('mk4.local');
     expect(formatAddress('fd00::5', 80)).toBe('[fd00::5]:80');
+  });
+
+  describe('sealed credential errors', () => {
+    const codes = [
+      'invalid_secret_field',
+      'invalid_sealed_value',
+      'invalid_key_fingerprint',
+      'bridge_key_missing',
+      'bridge_key_unconfirmed',
+      'bridge_key_changed',
+      'no_pending_key',
+      'pending_key_changed',
+    ];
+    for (const code of codes) {
+      it(`has its own sentence for ${code}`, () => {
+        const message = bridgeErrorMessage(problem(409, code), nameOf);
+        expect(message).not.toBe('Something went wrong. Please try again.');
+      });
+    }
+
+    it('never repeats a fingerprint the problem carries', () => {
+      const message = bridgeErrorMessage(
+        problem(409, 'bridge_key_changed', { keyFingerprint: 'ab'.repeat(32) }),
+        nameOf
+      );
+      expect(message).not.toContain('abab');
+    });
+
+    it('treats the three key problems as "reload the bridge"', () => {
+      expect(isKeyErrorCode('bridge_key_changed')).toBeTrue();
+      expect(isKeyErrorCode('bridge_key_unconfirmed')).toBeTrue();
+      expect(isKeyErrorCode('bridge_key_missing')).toBeTrue();
+      expect(isKeyErrorCode('invalid_sealed_value')).toBeFalse();
+      expect(isKeyErrorCode(null)).toBeFalse();
+    });
+  });
+
+  describe('credential labels and issues', () => {
+    it('labels each field', () => {
+      expect(credentialFieldLabel('access_code')).toBe('Access code');
+      expect(credentialFieldLabel('password')).toBe('Password');
+      expect(credentialFieldLabel('username')).toBe('Username');
+      expect(credentialFieldLabel('api_key')).toBe('API key');
+      expect(credentialFieldLabel('moonraker_api_key')).toBe('API key');
+    });
+
+    it('says a refused access code in plain words', () => {
+      expect(
+        credentialIssueMessage('bambu', 'access_code', 'rejected_by_printer')
+      ).toContain('The printer refused this access code');
+    });
+
+    it('says PrusaLink takes a password or an API key when missing', () => {
+      expect(
+        credentialIssueMessage('prusalink', 'password', 'missing')
+      ).toContain('or an API key');
+    });
+
+    it('asks again for undecryptable and invalid values', () => {
+      expect(
+        credentialIssueMessage(
+          'moonraker',
+          'moonraker_api_key',
+          'undecryptable'
+        )
+      ).toContain('Enter it again');
+      expect(
+        credentialIssueMessage('octoprint', 'api_key', 'invalid_plaintext')
+      ).toContain('Enter it again');
+    });
+
+    it('still says something for a code it does not know', () => {
+      expect(
+        credentialIssueMessage('bambu', 'access_code', 'new_code')
+      ).toContain('access code');
+    });
+
+    it('explains each refused input without repeating it', () => {
+      expect(credentialProblemMessage('empty', 'access_code')).toContain(
+        'access code'
+      );
+      expect(credentialProblemMessage('too_long', 'password')).toContain('256');
+      expect(
+        credentialProblemMessage('control_character', 'password')
+      ).toContain('line break');
+      expect(credentialProblemMessage('invalid_text', 'password')).toBeTruthy();
+    });
   });
 });

@@ -67,6 +67,12 @@ function seoFor(
   return value;
 }
 
+const API_HOSTS = new Set([new URL(API).host, 'api.example.test']);
+
+function isApi(req: Request): boolean {
+  return API_HOSTS.has(new URL(req.url).host);
+}
+
 /**
  * Mocks outbound fetch: requests to the API host get `api`, everything else gets the
  * origin response.
@@ -82,10 +88,7 @@ function mockFetch(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const req = new Request(input as RequestInfo, init);
       calls.push(req);
-      if (
-        req.url.startsWith(API) ||
-        req.url.startsWith('https://api.example.test')
-      ) {
+      if (isApi(req)) {
         const reply =
           typeof opts.api === 'function'
             ? opts.api(req)
@@ -109,19 +112,8 @@ function mockFetch(
   );
   return {
     calls,
-    apiCalls: () =>
-      calls.filter(
-        (c) =>
-          c.url.startsWith(API) || c.url.startsWith('https://api.example.test')
-      ),
-    originCalls: () =>
-      calls.filter(
-        (c) =>
-          !(
-            c.url.startsWith(API) ||
-            c.url.startsWith('https://api.example.test')
-          )
-      ),
+    apiCalls: () => calls.filter(isApi),
+    originCalls: () => calls.filter((c) => !isApi(c)),
   };
 }
 
@@ -154,7 +146,7 @@ function metaContent(
   key: string
 ): string {
   const re = new RegExp(
-    `<meta\\b[^>]*\\b${attr}="${key.replace(/[.:]/g, '\\$&')}"[^>]*>`,
+    `<meta\\b[^>]*\\b${attr}="${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^>]*>`,
     'g'
   );
   const tags = html.match(re) ?? [];

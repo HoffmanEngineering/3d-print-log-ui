@@ -78,7 +78,10 @@ export default {
     // If this code throws, Cloudflare sends the request to the origin instead of an error page.
     ctx.passThroughOnException();
 
-    const seoUrl = `${env.API_BASE_URL.replace(/\/+$/, '')}${route.seoPath}`;
+    const apiBase = env.API_BASE_URL.endsWith('/')
+      ? env.API_BASE_URL
+      : `${env.API_BASE_URL}/`;
+    const seoUrl = new URL(route.seoPath.slice(1), apiBase).href;
     const [origin, seo] = await Promise.all([
       fetch(rewriteRequest(request, env)),
       fetchSeo(seoUrl, { timeoutMs: timeoutMs(env), ctx }),

@@ -112,7 +112,7 @@ export class BridgeCardComponent {
       case 'remote':
         return 'Remote mode';
       case 'local':
-        return 'Local mode, on the printer';
+        return 'Local mode';
       default:
         return this.bridge().mode;
     }

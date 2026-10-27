@@ -101,7 +101,7 @@ $dark-stale-fg: #ffcdd2;
 
 .facts {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 8px 24px;
   margin: 16px 0 0;
 
@@ -118,6 +118,7 @@ $dark-stale-fg: #ffcdd2;
   }
 }
 
+[data-testid='bridge-counts'] span,
 .update {
   display: block;
   font-size: 0.875rem;

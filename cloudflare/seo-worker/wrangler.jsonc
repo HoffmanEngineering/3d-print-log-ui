@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "printlog-seo",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+
+  // The Worker only makes sense in front of the site, so there is no workers.dev URL.
+  "workers_dev": false,
+
+  // Routes are deliberately NOT declared here. They are added by hand in the Cloudflare
+  // dashboard (Workers Routes) once the Worker is deployed and checked, and removing them
+  // there is the rollback. Keeping them out of this file means a redeploy never puts back
+  // a route someone removed on purpose. The routes to add:
+  //   www.3dprintlog.com/prints/*
+  //   www.3dprintlog.com/projects/*
+  //   www.3dprintlog.com/users/*
+  // See README.md, "Manual setup checklist".
+
+  "vars": {
+    // Where /api/{Prints,Projects,Users}/{id}/seo lives.
+    "API_BASE_URL": "https://api.3dprintlog.com",
+    // The canonical site origin. Used for fallback canonical URLs.
+    "SITE_ORIGIN": "https://www.3dprintlog.com",
+    // How long to wait for /seo before serving the shell unchanged.
+    "SEO_TIMEOUT_MS": "1500"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

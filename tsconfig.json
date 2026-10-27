@@ -28,5 +28,5 @@
     "strictTemplates": true,
     "strictInjectionParameters": true
   },
-  "exclude": ["./cypress.config.ts"]
+  "exclude": ["./cypress.config.ts", "./cloudflare/**"]
 }

@@ -1,1 +1,4 @@
 src/well-known/agent-skills/** -text
+
+# The SEO Worker tests compare against this real built shell byte for byte.
+cloudflare/seo-worker/test/fixtures/** -text

@@ -57,7 +57,6 @@
     "@ngx-loading-bar/core": "^7.0.1",
     "@ngx-loading-bar/http-client": "^7.0.1",
     "@ngx-loading-bar/router": "^7.0.1",
-    "@tesseract.js-data/eng": "^1.0.0",
     "@types/lodash": "^4.17.24",
     "ajv": "^8.20.0",
     "currency.js": "^2.0.4",

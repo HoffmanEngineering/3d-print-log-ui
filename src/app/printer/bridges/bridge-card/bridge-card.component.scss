@@ -299,6 +299,9 @@ time[title] {
   }
 
   .actions {
+    // Shrink to the row and wrap: a connected printer can have three buttons.
+    flex: 1 1 auto;
+    min-width: 0;
     margin-left: 36px;
   }
 }

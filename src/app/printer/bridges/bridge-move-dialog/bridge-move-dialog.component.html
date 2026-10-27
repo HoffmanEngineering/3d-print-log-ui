@@ -119,8 +119,13 @@
           <h3 id="move-credentials-title">Credentials</h3>
           <p class="hint">
             {{ targetName() }} can't read what was encrypted for {{ fromName }},
-            so enter {{ plan().fields.length === 1 ? 'it' : 'them' }} again.
-            They move together with the printer.
+            so enter
+            {{
+              plan().fields.length === 1
+                ? 'it again. It moves'
+                : 'them again. They move'
+            }}
+            together with the printer.
           </p>
           @switch (keyState().status) {
             @case ('loading') {}

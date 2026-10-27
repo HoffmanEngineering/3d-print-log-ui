@@ -4,9 +4,20 @@
     @if (!unavailableReason()) {
       <div class="label-scanner__guide" aria-hidden="true"></div>
     }
+    @if (reading()) {
+      <p
+        class="label-scanner__reading"
+        role="status"
+        data-testid="label-reading"
+      >
+        Reading the label…
+      </p>
+    }
   </div>
   @if (!unavailableReason()) {
-    <p class="label-scanner__hint">Fit the label in the box</p>
+    <p class="label-scanner__hint">
+      Point at the barcode, or tap Read label on the printed specs
+    </p>
     @if (photoError()) {
       <p class="label-scanner__error" role="alert">
         Couldn't read much from that photo. Hold the phone steady and try again.

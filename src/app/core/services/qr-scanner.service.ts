@@ -105,7 +105,16 @@ export class QrScannerService {
 
     await scanner.start(
       { facingMode: 'environment' },
-      { fps: 10 },
+      {
+        fps: 10,
+        // Without a size Chrome opens the camera at 640x480, too coarse for a label's small print
+        // or a 1D barcode beyond a hand's width. Takes precedence over the first argument.
+        videoConstraints: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+      },
       (text, result) =>
         onDecoded(text, result?.result?.format?.formatName ?? 'UNKNOWN'),
       () => {
@@ -136,6 +145,21 @@ export class QrScannerService {
   }
 
   /**
+   * Holds the camera on its current frame and stops decoding, while a photo of it is read: the
+   * user sees the picture that was taken, and OCR gets the CPU.
+   */
+  pauseLabelScanning(): void {
+    // Html5QrcodeScannerState.SCANNING
+    if (this.html5QrCode?.getState() === 2) this.html5QrCode.pause(true);
+  }
+
+  /** Back to the live camera after pauseLabelScanning. */
+  resumeLabelScanning(): void {
+    // Html5QrcodeScannerState.PAUSED
+    if (this.html5QrCode?.getState() === 3) this.html5QrCode.resume();
+  }
+
+  /**
    * Stops the current scanning session.
    */
   async stopScanning(): Promise<void> {
@@ -144,8 +168,8 @@ export class QrScannerService {
     if (!scanner) return;
     this.html5QrCode = null;
     try {
-      // Html5QrcodeScannerState.SCANNING; one still starting stops itself once it has.
-      if (scanner.getState() === 2) {
+      // SCANNING or PAUSED (a photo being read); one still starting stops itself once it has.
+      if (scanner.getState() === 2 || scanner.getState() === 3) {
         await scanner.stop();
       }
     } catch {

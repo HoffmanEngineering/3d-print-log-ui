@@ -31,6 +31,8 @@ const GUIDE_WIDTH = 0.85;
 const GUIDE_RATIO = 3 / 2;
 /** A barcode not seen for this long is left out of a photo: it was probably another spool. */
 const RECENT_MS = 20_000;
+/** A barcode is trusted once this many frames have decoded the same value. */
+const CONFIRM_READS = 2;
 
 let nextId = 0;
 
@@ -75,6 +77,8 @@ export class LabelScannerComponent {
   private barcodes: Barcode[] = [];
   /** When each barcode value was last decoded. */
   private readonly lastSeen = new Map<string, number>();
+  /** How many frames decoded each value not yet trusted. */
+  private readonly reads = new Map<string, number>();
 
   constructor() {
     afterNextRender(() => void this.start());
@@ -92,6 +96,10 @@ export class LabelScannerComponent {
       this.photoError.set(true);
       return;
     }
+    // Taken at the shutter: OCR can outlast RECENT_MS, and the barcode belongs to this photo.
+    const barcodes = this.recentBarcodes();
+    // The preview holds the photo, so it is plain that it was taken and the phone can move.
+    this.scanner.pauseLabelScanning();
     this.photoError.set(false);
     this.reading.set(true);
     this.busy.start();
@@ -100,16 +108,17 @@ export class LabelScannerComponent {
       if (ocr.words === 0 || !ocr.text.trim()) {
         this.logging.logEvent('LabelScan_Error', { stage: 'ocr-empty' });
         this.photoError.set(true);
-        this.photoFailed.emit(this.recentBarcodes());
+        this.photoFailed.emit(barcodes);
         return;
       }
-      this.photo.emit({ barcodes: this.recentBarcodes(), ocr });
+      this.photo.emit({ barcodes, ocr });
     } catch (err) {
       this.logging.logEvent('LabelScan_Error', { stage: 'ocr' });
       this.logging.logException(err as Error);
       this.photoError.set(true);
-      this.photoFailed.emit(this.recentBarcodes());
+      this.photoFailed.emit(barcodes);
     } finally {
+      this.scanner.resumeLabelScanning();
       this.reading.set(false);
       this.busy.stop();
     }
@@ -149,6 +158,12 @@ export class LabelScannerComponent {
     if (!value) return;
     this.lastSeen.set(value, Date.now());
     if (this.barcodes.some((b) => b.value === value)) return;
+    // A 1D misread often passes its check digit, but almost never repeats: a barcode held in
+    // view decodes on many frames, so a value seen on only one is dropped.
+    const reads = (this.reads.get(value) ?? 0) + 1;
+    this.reads.set(value, reads);
+    if (reads < CONFIRM_READS) return;
+    this.reads.delete(value);
     this.barcodes = [
       ...this.barcodes,
       { value, format: format.toLowerCase().replace(/[^a-z0-9]/g, '') },

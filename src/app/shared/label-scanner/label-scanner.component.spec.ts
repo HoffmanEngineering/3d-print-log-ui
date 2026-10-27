@@ -13,6 +13,11 @@ describe('LabelScannerComponent', () => {
   let scanner: jasmine.SpyObj<QrScannerService>;
   let ocr: jasmine.SpyObj<LabelOcr>;
   let decode: (text: string, format: string) => void;
+  /** A barcode held in view: decoded on two frames, which is what makes it trusted. */
+  const seen = (text: string, format: string) => {
+    decode(text, format);
+    decode(text, format);
+  };
 
   const ocrResult: LabelOcrResult = {
     text: 'PLA+ Silver',
@@ -30,6 +35,8 @@ describe('LabelScannerComponent', () => {
       'stopScanning',
       'captureFrame',
       'parseFilamentUrl',
+      'pauseLabelScanning',
+      'resumeLabelScanning',
     ]);
     scanner.startLabelScanning.and.callFake(async (_id, onDecoded) => {
       decode = onDecoded;
@@ -88,21 +95,47 @@ describe('LabelScannerComponent', () => {
     expect(ids).toEqual(['3fa85f64-5717-4562-b3fc-2c963f66afa6']);
   });
 
-  it('emits each new product barcode once, with a lowercase format', async () => {
+  it('emits each new product barcode once, on its second read, with a lowercase format', async () => {
     await setup();
-    const seen: Barcode[][] = [];
-    fixture.componentInstance.barcodesChanged.subscribe((b) => seen.push(b));
+    const emitted: Barcode[][] = [];
+    fixture.componentInstance.barcodesChanged.subscribe((b) => emitted.push(b));
 
+    decode('0849344041764', 'EAN_13');
     decode('0849344041764', 'EAN_13');
     decode('0849344041764', 'EAN_13');
     decode('x004n86wd5', 'CODE_128');
+    decode('x004n86wd5', 'CODE_128');
 
-    expect(seen).toEqual([
+    expect(emitted).toEqual([
       [{ value: '0849344041764', format: 'ean13' }],
       [
         { value: '0849344041764', format: 'ean13' },
         { value: 'X004N86WD5', format: 'code128' },
       ],
+    ]);
+  });
+
+  it('drops a barcode read on only one frame, which is how misreads show up', async () => {
+    await setup();
+    const emitted: Barcode[][] = [];
+    fixture.componentInstance.barcodesChanged.subscribe((b) => emitted.push(b));
+    const photos: { barcodes: Barcode[] }[] = [];
+    fixture.componentInstance.photo.subscribe((p) => photos.push(p));
+
+    // Seen on a real spool: one barcode held in view, two one-frame misreads of it.
+    seen('849344041764', 'UPC_A');
+    decode('493400041764', 'UPC_A');
+    decode('4779300045764', 'EAN_13');
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="label-shutter"]'
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+
+    expect(emitted).toEqual([[{ value: '849344041764', format: 'upca' }]]);
+    expect(photos[0].barcodes).toEqual([
+      { value: '849344041764', format: 'upca' },
     ]);
   });
 
@@ -148,9 +181,9 @@ describe('LabelScannerComponent', () => {
     jasmine.clock().mockDate(new Date(2026, 9, 27, 12));
     try {
       await setup();
-      decode('0849344041764', 'EAN_13');
+      seen('0849344041764', 'EAN_13');
       jasmine.clock().tick(30_000);
-      decode('02540924A', 'CODE_128');
+      seen('02540924A', 'CODE_128');
       const photos: { barcodes: Barcode[] }[] = [];
       fixture.componentInstance.photo.subscribe((p) => photos.push(p));
 
@@ -169,10 +202,81 @@ describe('LabelScannerComponent', () => {
     }
   });
 
+  it('keeps the barcodes seen when the shutter was pressed, however long OCR takes', async () => {
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date(2026, 9, 27, 12));
+    try {
+      await setup();
+      let finish!: (r: LabelOcrResult) => void;
+      ocr.recognize.and.returnValue(new Promise((r) => (finish = r)));
+      seen('849300041739', 'UPC_A');
+      jasmine.clock().tick(11_000);
+      const photos: { barcodes: Barcode[] }[] = [];
+      fixture.componentInstance.photo.subscribe((p) => photos.push(p));
+
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="label-shutter"]'
+        ) as HTMLButtonElement
+      ).click();
+      // A sideways label took 36 seconds on a Pixel 7.
+      jasmine.clock().tick(36_000);
+      finish(ocrResult);
+      await fixture.whenStable();
+
+      expect(photos[0].barcodes).toEqual([
+        { value: '849300041739', format: 'upca' },
+      ]);
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('holds the photo on screen while it is read, then goes back to the live camera', async () => {
+    await setup();
+    let finish!: (r: LabelOcrResult) => void;
+    ocr.recognize.and.returnValue(new Promise((r) => (finish = r)));
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="label-shutter"]'
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+
+    // Frozen on the frame that was taken, and saying so.
+    expect(scanner.pauseLabelScanning).toHaveBeenCalled();
+    expect(scanner.captureFrame).toHaveBeenCalledBefore(
+      scanner.pauseLabelScanning
+    );
+    expect(scanner.resumeLabelScanning).not.toHaveBeenCalled();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="label-reading"]')
+        ?.textContent
+    ).toContain('Reading the label');
+
+    finish({ ...ocrResult, text: '', words: 0 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(scanner.resumeLabelScanning).toHaveBeenCalled();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="label-reading"]')
+    ).toBeNull();
+  });
+
+  it('tells you to aim at the barcode or photograph the printed specs', async () => {
+    await setup();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Point at the barcode, or tap Read label on the printed specs'
+    );
+  });
+
   it('reports a photo it could not read, with the barcodes seen', async () => {
     await setup();
     ocr.recognize.and.rejectWith(new Error('offline'));
-    decode('02540924A', 'CODE_128');
+    seen('02540924A', 'CODE_128');
     const failed: Barcode[][] = [];
     fixture.componentInstance.photoFailed.subscribe((b) => failed.push(b));
 
@@ -211,7 +315,7 @@ describe('LabelScannerComponent', () => {
 
   it('reads a photo of the guide box and emits it with the barcodes seen', async () => {
     await setup();
-    decode('02540924A', 'CODE_128');
+    seen('02540924A', 'CODE_128');
     const photos: { barcodes: Barcode[]; ocr: LabelOcrResult }[] = [];
     fixture.componentInstance.photo.subscribe((p) => photos.push(p));
 

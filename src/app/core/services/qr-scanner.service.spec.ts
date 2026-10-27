@@ -219,4 +219,94 @@ describe('QrScannerService', () => {
       expect(FakeScanner.instances[1].stop).toHaveBeenCalled();
     });
   });
+
+  describe('freezing a label scan while a photo is read', () => {
+    class FakeScanner {
+      state = 2;
+      readonly pause = jasmine
+        .createSpy('pause')
+        .and.callFake(() => void (this.state = 3));
+      readonly resume = jasmine
+        .createSpy('resume')
+        .and.callFake(() => void (this.state = 2));
+      readonly stop = jasmine
+        .createSpy('stop')
+        .and.callFake(async () => void (this.state = 1));
+      start() {
+        return Promise.resolve();
+      }
+      getState() {
+        return this.state;
+      }
+    }
+    let scanner: FakeScanner;
+
+    beforeEach(async () => {
+      (service as unknown as { html5QrcodeModule: unknown }).html5QrcodeModule =
+        Promise.resolve({
+          Html5Qrcode: class extends FakeScanner {
+            constructor() {
+              super();
+              scanner = this;
+            }
+          },
+          Html5QrcodeSupportedFormats: {},
+        });
+      await service.startLabelScanning('reader', () => undefined);
+    });
+
+    it('pauses the video and decoding, then resumes them', () => {
+      service.pauseLabelScanning();
+      expect(scanner.pause).toHaveBeenCalledWith(true);
+
+      service.resumeLabelScanning();
+      expect(scanner.resume).toHaveBeenCalled();
+    });
+
+    it('does nothing when the scan is not in the matching state', () => {
+      service.resumeLabelScanning();
+      service.pauseLabelScanning();
+      service.pauseLabelScanning();
+
+      expect(scanner.resume).not.toHaveBeenCalled();
+      expect(scanner.pause).toHaveBeenCalledTimes(1);
+    });
+
+    it('still releases the camera when stopped while paused', async () => {
+      service.pauseLabelScanning();
+
+      await service.stopScanning();
+
+      expect(scanner.stop).toHaveBeenCalled();
+    });
+  });
+
+  describe('label scan camera', () => {
+    it('asks the back camera for HD, since Chrome defaults to 640x480 and OCR needs the detail', async () => {
+      const start = jasmine.createSpy('start').and.resolveTo();
+      class FakeScanner {
+        start = start;
+        getState() {
+          return 2;
+        }
+        stop() {
+          return Promise.resolve();
+        }
+      }
+      (service as unknown as { html5QrcodeModule: unknown }).html5QrcodeModule =
+        Promise.resolve({
+          Html5Qrcode: FakeScanner,
+          Html5QrcodeSupportedFormats: {},
+        });
+
+      await service.startLabelScanning('reader', () => undefined);
+
+      const config = start.calls.mostRecent().args[1];
+      expect(config.videoConstraints).toEqual({
+        facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      });
+    });
+  });
 });

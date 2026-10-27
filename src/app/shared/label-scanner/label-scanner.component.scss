@@ -6,10 +6,14 @@
   width: 100%;
 }
 
+// A fixed 4:3 window, so the shutter stays on screen under a tall portrait stream. The video
+// covers it, cropping top and bottom only (the stream is taller than 4:3), so the guide box is
+// still the centered 85% of the frame's width that cropToGuide reads.
 .label-scanner__view {
   position: relative;
   width: 100%;
   max-width: 480px;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: 8px;
   background: #000;
@@ -17,13 +21,35 @@
 
 .label-scanner__video {
   width: 100%;
+  height: 100%;
 
-  // html5-qrcode renders its own <video>; make it fill the box.
-  video {
+  // html5-qrcode adds its own elements, outside this component's template, with inline sizes.
+  ::ng-deep video {
     display: block;
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
+    object-fit: cover;
   }
+
+  // Its "Scanner paused" strip; the reading chip below says what is happening instead.
+  ::ng-deep > div {
+    display: none !important;
+  }
+}
+
+.label-scanner__reading {
+  position: absolute;
+  left: 50%;
+  // Below the guide box: 85% wide at 3:2 and centered, it ends about 12% above a 4:3 view's bottom.
+  bottom: 4px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 // Matches GUIDE_WIDTH and GUIDE_RATIO in the component: 85% wide, 3:2, centered.

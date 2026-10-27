@@ -15,7 +15,7 @@ import {
 } from '@angular/material/bottom-sheet';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { Observable, Subscription, catchError, forkJoin, map, of } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import {
   FilamentService,
   FilamentSummary,
@@ -30,7 +30,13 @@ import {
   TagSuggestion,
   TagSuggestionReason,
 } from 'src/app/core/types/tag-reading';
-import { filamentDetailToSummary } from 'src/app/core/utils/filament-summary';
+import { CAMERA_AVAILABLE } from 'src/app/core/utils/camera-available';
+import { ScannedLabelRead } from 'src/app/core/types/label-reading';
+import {
+  LabelScanOutcome,
+  ScanLabelPanelComponent,
+} from '../scan-label-panel/scan-label-panel.component';
+import { SuggestionRow, suggestionRows } from '../suggestion-rows';
 import { FilamentColorSwatchComponent } from 'src/app/shared/filament-color-swatch/filament-color-swatch.component';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import { formatLabel } from '../../tag-format-label';
@@ -46,7 +52,8 @@ export type ScanSpoolResult =
       uid: string;
       reading: TagReading | null;
       catalogMatch: CatalogMatch | null;
-    };
+    }
+  | { kind: 'label-new'; read: ScannedLabelRead };
 
 /** What the Materials list hands the sheet. */
 export interface ScanSpoolSheetData {
@@ -58,13 +65,6 @@ export interface ScanSpoolSheetData {
 }
 
 type Phase = 'waiting' | 'reading' | 'resolving' | 'unknown' | 'error';
-
-interface SuggestionRow {
-  filamentId: string;
-  /** Null when the spool could not be loaded; the row still links. */
-  filament: FilamentSummary | null;
-  reasons: string[];
-}
 
 const REASON_LABELS: Record<TagSuggestionReason, string> = {
   untagged: 'No tag yet',
@@ -98,6 +98,7 @@ const READING_WATCHDOG_MS = 4000;
     MatIcon,
     MatProgressSpinner,
     FilamentColorSwatchComponent,
+    ScanLabelPanelComponent,
   ],
 })
 export class ScanSpoolSheetComponent {
@@ -109,7 +110,7 @@ export class ScanSpoolSheetComponent {
   private readonly filamentService = inject(FilamentService);
   private readonly loggingService = inject(LoggingService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly knownFilaments = new Map(
+  protected readonly knownFilaments = new Map(
     (
       inject<ScanSpoolSheetData | null>(MAT_BOTTOM_SHEET_DATA, {
         optional: true,
@@ -122,6 +123,13 @@ export class ScanSpoolSheetComponent {
   protected readonly showSpinner = this.busy.visible;
 
   protected readonly status = this.tagReader.status;
+  protected readonly nfcAvailable = this.tagReader.available;
+  /** Label scanning: this browser has a camera and it has not failed to start. */
+  private readonly camera = inject(CAMERA_AVAILABLE);
+  protected readonly cameraFailed = signal(false);
+  protected readonly showLabelPanel = computed(
+    () => this.camera && !this.cameraFailed()
+  );
   /** iOS: nothing is read until a scan() opens the phone's sheet. */
   protected readonly scansOnDemand = this.tagReader.scansOnDemand;
   protected readonly phase = signal<Phase>('waiting');
@@ -183,13 +191,25 @@ export class ScanSpoolSheetComponent {
 
   constructor() {
     // The sheet opens from a tap, so on iOS that tap also opens the phone's scan sheet.
-    // Elsewhere this does nothing: the listener above reads on its own.
-    void this.tagReader.scan();
+    // Elsewhere this does nothing: the listener above reads on its own. With a camera the sheet
+    // shows the label scanner instead, which the phone's sheet would cover; Scan opens it.
+    if (!this.camera) {
+      void this.tagReader.scan();
+    }
     inject(DestroyRef).onDestroy(() => {
       this.stopListening();
       this.resolution?.unsubscribe();
       this.busy.destroy();
     });
+  }
+
+  /** A label scan found a spool, or read a new one to add. */
+  protected labelOutcome(outcome: LabelScanOutcome): void {
+    this.sheetRef.dismiss(
+      outcome.kind === 'known'
+        ? { kind: 'known', id: outcome.id }
+        : { kind: 'label-new', read: outcome.read }
+    );
   }
 
   protected scanAgain(): void {
@@ -379,35 +399,13 @@ export class ScanSpoolSheetComponent {
     );
   }
 
-  /**
-   * The suggested spools with what the rows show. The list's own spools cover most; the rest
-   * (another page, inactive) are fetched. The API caps suggestions at five.
-   */
+  /** The suggested spools with what the rows show. The API caps suggestions at five. */
   private rowsFor(suggestions: TagSuggestion[]): Observable<SuggestionRow[]> {
-    if (suggestions.length === 0) {
-      return of([]);
-    }
-    return forkJoin(
-      suggestions.map((s) => {
-        const known = this.knownFilaments.get(s.filamentId);
-        const filament$: Observable<FilamentSummary | null> = known
-          ? of(known)
-          : this.filamentService.getFilamentDetail(s.filamentId).pipe(
-              map(filamentDetailToSummary),
-              catchError(() => of(null))
-            );
-        return filament$.pipe(
-          map(
-            (filament): SuggestionRow => ({
-              filamentId: s.filamentId,
-              filament,
-              reasons: (s.reasons ?? []).map(
-                (r) => REASON_LABELS[r] ?? String(r)
-              ),
-            })
-          )
-        );
-      })
+    return suggestionRows(
+      suggestions,
+      this.knownFilaments,
+      this.filamentService,
+      REASON_LABELS
     );
   }
 

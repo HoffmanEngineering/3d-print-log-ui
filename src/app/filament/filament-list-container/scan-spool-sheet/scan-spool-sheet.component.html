@@ -112,32 +112,50 @@
       </button>
     </div>
   } @else {
-    @if (showSpinner()) {
-      <mat-spinner diameter="40" aria-label="Reading the tag"></mat-spinner>
-    } @else {
-      <mat-icon class="scan-sheet__icon" aria-hidden="true">nfc</mat-icon>
+    @if (showLabelPanel()) {
+      <app-scan-label-panel
+        [filaments]="knownFilaments"
+        (outcome)="labelOutcome($event)"
+        (unavailable)="cameraFailed.set(true)"
+      />
+      @if (!nfcAvailable()) {
+        <p class="scan-sheet__title">Point the camera at the spool's label</p>
+      }
+    } @else if (!nfcAvailable()) {
+      <p class="scan-sheet__hint" role="status">
+        Camera unavailable. Search by name instead.
+      </p>
     }
-    @switch (phase()) {
-      @case ('reading') {
-        <p class="scan-sheet__title" role="status">Reading tag, hold still…</p>
+    @if (nfcAvailable()) {
+      @if (showSpinner()) {
+        <mat-spinner diameter="40" aria-label="Reading the tag"></mat-spinner>
+      } @else {
+        <mat-icon class="scan-sheet__icon" aria-hidden="true">nfc</mat-icon>
       }
-      @case ('resolving') {
-        <p class="scan-sheet__title" role="status">Looking up the tag…</p>
-      }
-      @default {
-        @if (scansOnDemand()) {
-          <p class="scan-sheet__title">Scan a spool's tag</p>
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            data-testid="scan-on-demand"
-            (click)="scanAgain()"
-          >
-            Scan
-          </button>
-        } @else {
-          <p class="scan-sheet__title">Hold your phone to a spool…</p>
+      @switch (phase()) {
+        @case ('reading') {
+          <p class="scan-sheet__title" role="status">
+            Reading tag, hold still…
+          </p>
+        }
+        @case ('resolving') {
+          <p class="scan-sheet__title" role="status">Looking up the tag…</p>
+        }
+        @default {
+          @if (scansOnDemand()) {
+            <p class="scan-sheet__title">Scan a spool's tag</p>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              data-testid="scan-on-demand"
+              (click)="scanAgain()"
+            >
+              Scan
+            </button>
+          } @else {
+            <p class="scan-sheet__title">Hold your phone to a spool…</p>
+          }
         }
       }
     }

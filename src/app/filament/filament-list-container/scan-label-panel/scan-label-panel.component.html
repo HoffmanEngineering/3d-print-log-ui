@@ -1,0 +1,93 @@
+<div class="label-panel">
+  @switch (phase()) {
+    @case ('own') {
+      <p class="label-panel__title" role="status">
+        You have {{ rows().length }} of these
+      </p>
+      <ul class="label-panel__rows" aria-label="Your spools with this barcode">
+        @for (row of rows(); track row.filamentId) {
+          <li>
+            <button
+              type="button"
+              class="label-panel__row"
+              data-testid="label-own-row"
+              (click)="open(row.filamentId)"
+            >
+              @if (row.filament; as filament) {
+                <app-filament-color-swatch
+                  [filament]="filament"
+                  [decorative]="true"
+                />
+              }
+              <span>{{ row.filament?.displayName ?? 'Material' }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+      <div class="label-panel__actions">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          data-testid="label-add-another"
+          (click)="addAnother()"
+        >
+          Add another
+        </button>
+        @if (rows().length === 1) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="label-open"
+            (click)="open(rows()[0].filamentId)"
+          >
+            Open
+          </button>
+        }
+      </div>
+    }
+    @case ('error') {
+      <p class="label-panel__error" role="alert">
+        Couldn't look up that label. Check your connection.
+      </p>
+      <div class="label-panel__actions">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          data-testid="label-retry"
+          (click)="retry()"
+        >
+          Retry
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="label-continue"
+          (click)="continueAnyway()"
+        >
+          Continue anyway
+        </button>
+      </div>
+    }
+    @default {
+      <app-label-scanner
+        [paused]="phase() === 'resolving'"
+        (ownLabel)="ownLabel($event)"
+        (barcodesChanged)="barcodes($event)"
+        (photo)="photo($event)"
+        (unavailable)="unavailable.emit($event)"
+      />
+      @if (phase() === 'need-photo') {
+        <p class="label-panel__title" role="status">
+          New product: take a photo of the label
+        </p>
+      } @else if (phase() === 'resolving' && showSpinner()) {
+        <p class="label-panel__status" role="status">
+          <mat-spinner diameter="18" aria-hidden="true" />
+          Looking up the label…
+        </p>
+      }
+    }
+  }
+</div>

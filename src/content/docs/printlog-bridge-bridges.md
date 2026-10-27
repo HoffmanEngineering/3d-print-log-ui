@@ -72,14 +72,17 @@ Then choose **Connect**. A printer can be watched by one bridge at a time; if an
 
 A Bambu Lab printer needs its access code and a PrusaLink printer its password (or an API key), an OctoPrint server its API key, and a Klipper printer whose Moonraker uses `[authorization]` an API key. After you connect one, the app asks for it. Later, choose **Access code** (or **Password**, or **Credentials**) next to the connected printer to set, replace or clear it.
 
-**What you type is encrypted in your browser, to your bridge's own key, before it is sent.** 3D Print Log stores and forwards only the encrypted value and can't read it; only that bridge can. Each value is locked to its bridge, printer and field, so it can't be moved to another printer or another bridge. The app never shows a credential again after you save it: to change one, type the new value.
+**Before you enter the first one, compare the key.** Above the fields, the app shows the [fingerprint](#encryption-key) of the key it encrypts to. Run `printlog-bridge status` on the bridge and check it shows the same fingerprint. If it doesn't, don't enter anything.
 
-Above the fields, the app shows the [fingerprint](#encryption-key) of the key it encrypts to. Next to each field it shows whether it's set, and what the bridge reported, in plain words:
+**What you type is encrypted in your browser, to that key, before it is sent.** When the fingerprint you compared matches the bridge's, only your bridge can read it: 3D Print Log stores and forwards only the encrypted value and can't. Each value is locked to its bridge, printer and field, so it can't be moved to another printer or another bridge. The app never shows a credential again after you save it: to change one, type the new value.
+
+Next to each field the app shows whether it's set, and what the bridge reported, in plain words:
 
 - **The bridge needs it and has none it can use**: enter it.
 - **The printer refused it**: the printer said no. For a Bambu Lab printer, check the access code on its screen; it changes when LAN Only Mode is turned off and on.
 - **The bridge couldn't decrypt it**, or **it isn't valid**: enter it again.
 - **Encrypted to an old key**: the bridge's key changed since you entered it. Enter it again.
+- **Encrypted to a different key than this one**: compare the key with the bridge first, then enter it again.
 
 The bridge picks a new value up within a minute.
 
@@ -101,6 +104,8 @@ Put the printer's real access code in place of the example. A PrusaLink printer 
 Each bridge makes its own encryption key and keeps it on the device. Its card on the Bridges screen shows the key's **fingerprint**, the first 16 characters in groups of four, such as `aed0 3e9a 8282 33b2`. The app computes it in your browser from the key it actually encrypts to.
 
 On the bridge, `printlog-bridge status` (in Docker, `docker exec printlog-bridge printlog-bridge status`) shows the same fingerprint, and so does its log. **If they match, what you enter goes to your bridge and nobody else.** If they don't, don't enter anything, and [contact us](/docs/contact).
+
+This browser remembers the last key you confirmed, compared or encrypted to for each bridge. If the bridge's key is ever different without you confirming it here, the card, the credentials and the connect step say **This bridge's key changed without your confirmation in this browser**, and the app won't take credentials until you compare it with `printlog-bridge status` and choose **It matches**. In another browser, or after clearing site data, there's nothing to compare yet, so compare the fingerprint again before entering anything.
 
 #### A new key {#new-key}
 

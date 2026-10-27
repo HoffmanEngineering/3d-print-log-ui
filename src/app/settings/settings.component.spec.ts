@@ -23,6 +23,7 @@ import { LoggingService } from '../core/services/logging.service';
 import { ConnectedAgentsComponent } from './connected-agents/connected-agents.component';
 import { AchievementSettingsComponent } from './achievement-settings/achievement-settings.component';
 import { ConnectedAgentsService } from '../core/services/connected-agents.service';
+import { DeviceGrantsService } from '../core/services/device-grants.service';
 import { SpoolmanConnectionService } from '../core/services/spoolman-connection.service';
 import { SpoolmanConnectionsComponent } from './spoolman-connections/spoolman-connections.component';
 import { NativeBridgeService } from '../core/services/native-bridge.service';
@@ -171,6 +172,10 @@ describe('SettingsComponent', () => {
             getConnectedAgents: () => of([]),
             revoke: () => of(undefined),
           },
+        },
+        {
+          provide: DeviceGrantsService,
+          useValue: { list: () => of([]), revoke: () => of(undefined) },
         },
         {
           provide: SpoolmanConnectionService,

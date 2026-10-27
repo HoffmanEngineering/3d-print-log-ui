@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 44
 mode: how-to
-updated: 2026-10-15
+updated: 2026-10-27
 related: [printlog-bridge, printlog-bridge-install, snapmaker-u1, printlog-bridge-troubleshooting]
 ---
 
@@ -39,6 +39,7 @@ Everything the bridge keeps is in one folder on the host, mounted at `/data`:
 | Path | What it is |
 | --- | --- |
 | `/data/printlog-bridge.cfg` | The config, which you write |
+| `/data/state/device_token`, `/data/state/device_id` | The bridge's device token and its id, once you pair it |
 | `/data/state/api_key` | The API key, if you store it with `store-key` |
 | `/data/state/outbox.sqlite3`, `/data/state/images/` | Job events and pictures not sent yet |
 | `/data/state/printers/`, `/data/state/status.json` | What has been logged, and what `status` shows |
@@ -107,7 +108,21 @@ docker run -d --name printlog-bridge --restart unless-stopped \
 
 #### 5. Connect to your account {#connect}
 
-Until one-step pairing arrives (it's planned), the bridge signs in with a [personal API key](/docs/api#api-keys). Create one on the [Personal API Keys](/api-keys) page, then give it to the bridge in one of two ways:
+Pair the bridge with your account. Over SSH, run:
+
+```
+docker run --rm -it --user 1026:100 \
+  -v /volume1/docker/printlog-bridge:/data \
+  ghcr.io/hoffmanengineering/printlog-bridge:latest pair
+```
+
+It shows a QR code and a short code. Scan the QR code with your phone (or open the address it shows and type the code), sign in to 3D Print Log and approve the bridge. It stores the bridge's device token in `/data/state/device_token`, readable only by the container's user, and lists your printers for any `[printer]` without a `printer_id`, so you can set it. Next to the Compose file, `docker compose run --rm printlog-bridge pair` does the same. Then restart the container.
+
+You can also skip this step. Started with no device token or API key, the container pairs by itself: its log (`docker logs -f printlog-bridge`, or **Container Manager**, then **Container**, then **printlog-bridge**, then **Log** on a Synology) shows the QR code and the code, and a new one each time one expires, and the bridge carries on once you approve it. Set `PRINTLOG_BRIDGE_NAME` on the container to choose the name 3D Print Log shows for the bridge (otherwise `printlog-bridge on <container id>`).
+
+The bridge then shows up under **Paired devices** in [Settings](/settings), where you can revoke it. [Signing in](/docs/printlog-bridge#account) says what its token can do and what revoking does.
+
+**With an API key instead.** For a scripted setup, or when `pair` says pairing isn't available, the bridge signs in with a [personal API key](/docs/api#api-keys). Create one on the [Personal API Keys](/api-keys) page, then give it to the bridge in one of two ways:
 
 - **Store it in the folder**, where only the container's user can read it. Over SSH, run this and paste the key when asked:
 
@@ -132,7 +147,7 @@ docker exec printlog-bridge printlog-bridge doctor
 docker exec printlog-bridge printlog-bridge status
 ```
 
-`doctor` checks the config, the key and every printer, and leaves a support bundle in the folder at `state/printlog-bridge-support.zip`. [Troubleshooting](/docs/printlog-bridge-troubleshooting) explains both commands.
+`doctor` checks the config, the device token or key, and every printer, and leaves a support bundle in the folder at `state/printlog-bridge-support.zip`. [Troubleshooting](/docs/printlog-bridge-troubleshooting) explains both commands.
 
 If the config needs fixing (no key, a printer without `printer_id`), the bridge says what to fix in the container's log and exits, and the restart policy tries again every few seconds. After editing `printlog-bridge.cfg`, restart the container.
 

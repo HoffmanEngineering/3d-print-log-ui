@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 48
 mode: reference
-updated: 2026-10-15
+updated: 2026-10-27
 related: [printlog-bridge, printlog-bridge-troubleshooting, privacy-policy, api]
 ---
 
@@ -27,6 +27,8 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 
 | Call | When | What it carries |
 | --- | --- | --- |
+| `GET /api/device-grants/pairing` | `pair`, or `run` with no key or device token | Nothing. Reads the sign-in service's address for pairing. |
+| `POST /api/device-grants` | Once you approve the bridge while pairing | `deviceId` (a random id made once per install, so pairing again replaces the same entry) and `name` (`printlog-bridge on <host name>`, or the name you chose) |
 | `GET /api/Users/me` | `doctor` | Nothing. Checks the key. |
 | `GET /api/Printers/{id}` | `doctor`; at start and every 5 minutes; when a print starts and ends | Nothing. Checks `printer_id`, and reads which spool is loaded in each slot. |
 | `GET /api/Users/me/user-settings` | The first print after a start | Nothing. Reads your default visibility and comment settings. |
@@ -45,7 +47,7 @@ The bridge makes exactly these calls to 3D Print Log, and no others:
 | `DELETE /api/Printers/{id}/slots/{slot}` | `PRINTLOG_CLEAR_SPOOL` | Nothing |
 | `PUT /api/Printers/{id}` | A spool is assigned to a tool beyond the printer's slot count | The printer as 3D Print Log returned it, with only `slotCount` raised to the printer's tool count |
 
-Every request also carries the API key (`X-Api-Key`) and `User-Agent: printlog-bridge/<version>`.
+Every request also carries `User-Agent: printlog-bridge/<version>` and one credential, never both: the device token (`Authorization: Bearer`) once the bridge is paired, or else the API key (`X-Api-Key`).
 
 That is all. In particular:
 
@@ -65,7 +67,8 @@ The bridge only makes outbound connections, to:
 
 1. **Moonraker**: its local socket in local mode, or the `url` you set in remote mode (HTTP and WebSocket, on your network). In remote mode it also downloads the thumbnail from Moonraker's file API, and the two parts of the G-code file that hold its header and settings (unless `slicer_settings = false`). It reads the server address in `[spoolman]` and the active spool, to see whether Spoolman points at 3D Print Log, and it sets the active spool on tool changes and when you load a spool in the app. The `[spoolman]` address contains the Spoolman secret. The bridge keeps only its host name, and never stores or sends the secret.
 2. **The webcam's snapshot URL**, as Mainsail or Fluidd have it set in Moonraker (usually the printer itself), when a print ends.
-3. **3D Print Log**, at `api_url` (`https://api.3dprintlog.com` by default), **over HTTPS only.** The config refuses a plain `http` address, except to the computer the bridge runs on (`localhost`, `127.0.0.1`, `::1`). With `allow_http_on_lan` set, it also accepts plain `http` to a private-network IP address, for a development API on your own network; the API key then travels unencrypted on that network.
+3. **3D Print Log**, at `api_url` (`https://api.3dprintlog.com` by default), **over HTTPS only.** The config refuses a plain `http` address, except to the computer the bridge runs on (`localhost`, `127.0.0.1`, `::1`). With `allow_http_on_lan` set, it also accepts plain `http` to a private-network IP address, for a development API on your own network; the API key or device token then travels unencrypted on that network.
+4. **3D Print Log's sign-in service**, while pairing only, over HTTPS: the bridge asks it for the code it shows you, then waits for your approval. It sends the bridge's app id and the permissions it asks for, never your password, and keeps nothing it gets back except the device token 3D Print Log then issues.
 
 **It never checks for updates anywhere else.** The latest version comes back in the answer to its check-in. 3D Print Log reads it from the bridge's GitHub repository, so the bridge never contacts GitHub. `update_check = false` only stops the bridge from telling you: it sends the same thing either way.
 
@@ -73,9 +76,9 @@ It **never listens on a port**, so nothing can connect to the bridge.
 
 ### Your keys and passwords {#keys}
 
-The bridge holds up to three secrets: your 3D Print Log API key, Moonraker's API key (`moonraker_api_key`, remote mode only), and any password or token in a Moonraker or webcam URL.
+The bridge holds up to three secrets: its 3D Print Log device token or your API key, Moonraker's API key (`moonraker_api_key`, remote mode only), and any password or token in a Moonraker or webcam URL.
 
-**The API key is kept out of the folder Moonraker serves.** In local mode, `printlog-bridge.cfg` sits in Klipper's config folder, and Moonraker lets anyone who can open Mainsail or Fluidd read and download every file in it. So:
+**The device token and the API key are kept out of the folder Moonraker serves.** `pair` stores the device token in `device_token` in the state directory (`~/.local/share/printlog-bridge`, or `/data/state` in Docker), readable only by you (mode 600), and never in the config. In local mode, `printlog-bridge.cfg` sits in Klipper's config folder, and Moonraker lets anyone who can open Mainsail or Fluidd read and download every file in it. So:
 
 - `install.sh` stores the key in `~/.local/share/printlog-bridge/api_key`, readable only by you (mode 600), and never writes it into `printlog-bridge.cfg`.
 - `printlog-bridge store-key` stores or replaces the key there. On an older install, it moves `api_key` out of `printlog-bridge.cfg`.
@@ -86,7 +89,7 @@ The bridge holds up to three secrets: your 3D Print Log API key, Moonraker's API
 
 ### What it keeps on the printer {#stored}
 
-In the state directory (`~/.local/share/printlog-bridge` by default): the key file, which job it logged as which print, the outbox of events, pictures and slicer settings (already scrubbed) not yet sent, kept only until they are sent, `status.json` and `bridge.log`, and with tracing on, the traces. An event still unsent after 30 days is dropped. `uninstall.sh --purge` removes all of it.
+In the state directory (`~/.local/share/printlog-bridge` by default): the device token or key file, which job it logged as which print, the outbox of events, pictures and slicer settings (already scrubbed) not yet sent, kept only until they are sent, `status.json` and `bridge.log`, and with tracing on, the traces. An event still unsent after 30 days is dropped. `uninstall.sh --purge` removes all of it.
 
 #### Traces {#traces}
 
@@ -103,5 +106,5 @@ It holds no G-code, and none of the header or settings read for the slicer setti
 
 ### Not covered yet {#not-covered}
 
-- **Pairing** will replace the personal API key with a device token that can only log prints. Until then, the bridge uses an API key with your account's full API access, so keep it to yourself, and delete it on the [Personal API Keys](/api-keys) page if it leaks.
+- **A personal API key has your account's full API access.** A paired bridge's device token works only for what the bridge does, and you can revoke it under **Paired devices** in [Settings](/settings). If the bridge uses a key instead, keep it to yourself, and delete it on the [Personal API Keys](/api-keys) page if it leaks.
 - **Traffic on your network is as secure as Moonraker's.** Remote mode talks to Moonraker over the URL you give it, usually plain HTTP on your network, as Mainsail and Fluidd do.

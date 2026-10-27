@@ -1,10 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { of, Subject, throwError } from 'rxjs';
 import {
   ConnectedAgent,
   ConnectedAgentsService,
 } from '../../core/services/connected-agents.service';
+import { DeviceGrantsService } from '../../core/services/device-grants.service';
 import { LoggingService } from '../../core/services/logging.service';
 import { ConnectedAgentsComponent } from './connected-agents.component';
 
@@ -31,6 +35,13 @@ describe('ConnectedAgentsComponent', () => {
       providers: [
         { provide: ConnectedAgentsService, useValue: service },
         { provide: LoggingService, useValue: logging },
+        {
+          provide: DeviceGrantsService,
+          useValue: { list: () => of([]), revoke: () => of(undefined) },
+        },
+        provideRouter([]),
+        { provide: MatDialog, useValue: {} },
+        { provide: ToastrService, useValue: {} },
       ],
     }).compileComponents();
   });
@@ -61,6 +72,15 @@ describe('ConnectedAgentsComponent', () => {
     service.getConnectedAgents.and.returnValue(new Subject<ConnectedAgent[]>());
     create();
     expect(fixture.nativeElement.querySelector('mat-spinner')).toBeTruthy();
+  });
+
+  it('heads the two lists so they read as separate', () => {
+    service.getConnectedAgents.and.returnValue(of([]));
+    create();
+    const headings = Array.from(
+      fixture.nativeElement.querySelectorAll('h3') as NodeListOf<HTMLElement>
+    ).map((h) => h.textContent?.trim());
+    expect(headings).toEqual(['AI assistants', 'Paired devices']);
   });
 
   it('renders the empty state when there are no agents', () => {

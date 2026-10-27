@@ -1,4 +1,5 @@
 import {
+  computed,
   ChangeDetectionStrategy,
   Component,
   OnDestroy,
@@ -36,6 +37,7 @@ import { SortDirection } from 'src/app/core/types/sort-request';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
+import { CAMERA_AVAILABLE } from 'src/app/core/utils/camera-available';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import {
   ScanSpoolResult,
@@ -138,7 +140,15 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   private readonly loggingService = inject(LoggingService);
 
   /** Scan spool shows only in an app shell that can read tags. */
-  readonly canScan = inject(TagReaderService).available;
+  private readonly tagsAvailable = inject(TagReaderService).available;
+  private readonly cameraAvailable = inject(CAMERA_AVAILABLE);
+  /** Scan spool reads NFC tags where the phone can, and labels wherever there is a camera. */
+  readonly canScan = computed(
+    () => this.tagsAvailable() || this.cameraAvailable
+  );
+  readonly scanIcon = computed(() =>
+    this.tagsAvailable() ? 'nfc' : 'photo_camera'
+  );
 
   readonly filaments = signal<FilamentSummary[]>([]);
 
@@ -692,6 +702,11 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
             break;
           case 'link':
             this.linkScannedTag(result.uid, result.reading);
+            break;
+          case 'label-new':
+            void this.router.navigate(['/materials', 'new'], {
+              state: { scannedLabelRead: result.read },
+            });
             break;
         }
       });

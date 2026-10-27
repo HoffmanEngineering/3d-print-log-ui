@@ -21,8 +21,16 @@ import {
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Observable, Subscription } from 'rxjs';
-import { map, startWith, tap } from 'rxjs/operators';
+import { Observable, Subscription, of } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  filter,
+  map,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
@@ -51,6 +59,9 @@ import {
   MatChipListboxChange,
   MatChipListbox,
   MatChipOption,
+  MatChip,
+  MatChipRemove,
+  MatChipSet,
 } from '@angular/material/chips';
 import {
   QrLabelDialogComponent,
@@ -74,12 +85,19 @@ import {
   readTagUidConflict,
   tagUidKey,
 } from '../tag-uid';
-import type { TagReading } from 'src/app/core/types/tag-reading';
+import type { CatalogMatch, TagReading } from 'src/app/core/types/tag-reading';
+import type {
+  Barcode,
+  FilamentBarcode,
+  ScannedLabelRead,
+} from 'src/app/core/types/label-reading';
+import { labelPrefill, parseScannedLabelRead } from '../label-prefill';
 import {
   PrefillControl,
   PrefillSource,
   knownMaterialFor,
   ScannedTagRead,
+  TagPrefill,
   parseScannedTagRead,
   tagPrefill,
 } from '../tag-prefill';
@@ -227,6 +245,9 @@ function toServerAdjustmentRows(
     MatIcon,
     MatChipListbox,
     MatChipOption,
+    MatChipSet,
+    MatChip,
+    MatChipRemove,
     MaterialIconComponent,
     MatCheckbox,
     FilamentTagUidsComponent,
@@ -285,6 +306,18 @@ export class FilamentDetailComponent
   /** What the fields that say which product this is held once the scan filled the form. */
   private scannedIdentity: Record<IdentityControl, unknown> | null = null;
   private tagSourcesSubscription: Subscription | undefined;
+
+  /** The scanned label a new material was opened with: its reading, match and barcodes. */
+  private scannedLabel: ScannedLabelRead | null = null;
+  /**
+   * The spool's barcodes: stored ones on a saved spool (removed through the API), or the
+   * scanned ones a new spool sends on create (removed locally).
+   */
+  protected readonly barcodes = signal<(Barcode | FilamentBarcode)[]>([]);
+  protected readonly barcodeError = signal<string | null>(null);
+  /** A SpoolmanDB entry the brand re-match found, until the user fills from it. */
+  protected readonly catalogOffer = signal<CatalogMatch | null>(null);
+  private catalogMatchSubscription: Subscription | undefined;
 
   protected readonly imagesPanel = viewChild(EntityImagesPanelComponent);
 
@@ -496,7 +529,26 @@ export class FilamentDetailComponent
     if (!read) return;
 
     this.scannedTag = { uid: result.uid, ...read };
-    const { values, sources } = tagPrefill(read.reading, read.catalogMatch);
+    this.applyPrefill(tagPrefill(read.reading, read.catalogMatch));
+  }
+
+  /** A label scan from the Materials list: fills the form and keeps the barcodes to send. */
+  private prefillScannedLabel(): void {
+    const state: unknown =
+      typeof history === 'undefined' ? null : history.state;
+    if (!state || typeof state !== 'object' || !('scannedLabelRead' in state)) {
+      return;
+    }
+    // history.state is untrusted: an implausible read is ignored, as if there were none.
+    const read = parseScannedLabelRead(state.scannedLabelRead);
+    if (!read) return;
+
+    this.scannedLabel = read;
+    this.barcodes.set(read.barcodes);
+    this.applyPrefill(labelPrefill(read));
+  }
+
+  private applyPrefill({ values, sources }: TagPrefill): void {
     if (typeof values.materialType === 'string') {
       // Name it as the list does, so it gets the list's density when the catalog has none.
       const known = knownMaterialFor(
@@ -595,6 +647,7 @@ export class FilamentDetailComponent
    */
   private watchPrefilledFields(): void {
     this.tagSourcesSubscription?.unsubscribe();
+    this.catalogMatchSubscription?.unsubscribe();
     const subscription = new Subscription();
     const drop = (...names: PrefillControl[]) =>
       this.tagSources.update((sources) => {
@@ -621,6 +674,133 @@ export class FilamentDetailComponent
       );
     }
     this.tagSourcesSubscription = subscription;
+  }
+
+  /** The hint under a pre-filled field that has no SpoolmanDB link. */
+  protected sourceHint(control: PrefillControl): string {
+    const source = this.tagSources()[control];
+    return source === 'label'
+      ? 'From label'
+      : source === 'catalog'
+        ? 'From SpoolmanDB'
+        : 'From tag';
+  }
+
+  /**
+   * A label read with no catalog match re-runs the match whenever the user settles on a brand,
+   * since the brand is what OCR most often misses. A failed lookup offers nothing.
+   */
+  private watchBrandForCatalogMatch(): void {
+    this.catalogMatchSubscription?.unsubscribe();
+    this.catalogOffer.set(null);
+    if (!this.scannedLabel || this.scannedLabel.catalogMatch) return;
+
+    const value = (name: string) => {
+      const v: unknown = this.filamentForm.get(name)?.value;
+      if (typeof v === 'string') return v.trim() || null;
+      return typeof v === 'number' && Number.isFinite(v) ? v : null;
+    };
+    this.catalogMatchSubscription = this.filamentForm
+      .get('brand')!
+      .valueChanges.pipe(
+        // An offer is for the brand it was found with: withdraw it on any change.
+        tap(() => this.catalogOffer.set(null)),
+        debounceTime(400),
+        map((brand: unknown) =>
+          typeof brand === 'string' ? brand.trim() : ''
+        ),
+        filter((brand) => brand !== ''),
+        switchMap((brand) =>
+          this.filamentService
+            .catalogMatch({
+              brand,
+              materialType: value('materialType') as string | null,
+              colorName: value('colorName') as string | null,
+              netWeightG: value('initialNominalWeightG') as number | null,
+              diameterMm: value('diameterMm') as number | null,
+            })
+            .pipe(catchError(() => of(null)))
+        )
+      )
+      .subscribe((match) => this.catalogOffer.set(match?.id ? match : null));
+  }
+
+  /**
+   * Fills from the offered entry, but only fields that are empty or still hold what the scan
+   * put there: a value the user typed is never overwritten. Save then links the entry.
+   */
+  protected fillFromCatalogOffer(): void {
+    const match = this.catalogOffer();
+    if (!match || !this.scannedLabel) return;
+
+    const num = (v: number | null | undefined) =>
+      typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+    const offered: Partial<Record<PrefillControl, unknown>> = {
+      displayName: match.name?.trim() || undefined,
+      colorName: match.colorName?.trim() || undefined,
+      spoolWeightG: num(match.spoolWeightG),
+      materialDensityGramPerCubicCm:
+        (num(match.densityGramPerCubicCm) ?? 0) > 0
+          ? match.densityGramPerCubicCm
+          : undefined,
+      tempRangeStart: num(match.extruderTempMinC),
+      tempRangeEnd: num(match.extruderTempMaxC),
+      recommendedTemp: num(match.extruderTempC),
+      recommendedBedTemp: num(match.bedTempC),
+    };
+    const isEmpty = (name: PrefillControl, v: unknown) =>
+      v == null ||
+      v === '' ||
+      (typeof v === 'number' &&
+        (Number.isNaN(v) ||
+          (name === 'materialDensityGramPerCubicCm' && v <= 0)));
+
+    const fills: [PrefillControl, unknown][] = [];
+    const sources = { ...this.tagSources() };
+    for (const [name, value] of Object.entries(offered) as [
+      PrefillControl,
+      unknown,
+    ][]) {
+      const control = this.filamentForm.get(name);
+      if (value === undefined || !control) continue;
+      if (!isEmpty(name, control.value) && !sources[name]) continue;
+      fills.push([name, value]);
+      this.prefilledValues[name] = value;
+      sources[name] = 'catalog';
+    }
+    this.tagSources.set(sources);
+    // Watch the new values before setting them, so filling does not count as an edit.
+    this.watchPrefilledFields();
+    fills.forEach(([name, value]) => {
+      const control = this.filamentForm.get(name)!;
+      control.setValue(value);
+      control.markAsDirty();
+    });
+
+    this.loggingService.logEvent('LabelScan_CatalogFilled', {
+      fields: fills.length,
+    });
+    this.scannedLabel = { ...this.scannedLabel, catalogMatch: match };
+    this.scannedIdentity = this.identityValues();
+    this.catalogMatchSubscription?.unsubscribe();
+    this.catalogOffer.set(null);
+  }
+
+  /** Drops a barcode: through the API on a saved spool, locally before the first save. */
+  protected removeBarcode(barcode: Barcode | FilamentBarcode): void {
+    this.barcodeError.set(null);
+    const filamentId = this.loadedFilament?.id;
+    const drop = () =>
+      this.barcodes.update((list) => list.filter((b) => b !== barcode));
+    if (!('id' in barcode) || !filamentId) {
+      drop();
+      return;
+    }
+    this.filamentService.removeBarcode(filamentId, barcode.id).subscribe({
+      next: drop,
+      error: () =>
+        this.barcodeError.set("Couldn't remove that barcode. Try again."),
+    });
   }
 
   /** A material picked by name brings its density, unless one is already set. */
@@ -673,6 +853,8 @@ export class FilamentDetailComponent
       this.filamentForm = this.buildFormFromFilamentDetail(data.filament);
       this.loadedFilament = (data.filament as FilamentDetail) ?? null;
       this.scannedTag = null;
+      this.scannedLabel = null;
+      this.barcodeError.set(null);
       this.prefilledValues = {};
       this.scannedIdentity = null;
       this.pageScanReadings = [];
@@ -683,6 +865,7 @@ export class FilamentDetailComponent
       // spool has yet. Only on a new material: an existing one keeps its own tags.
       if (!this.loadedFilament) {
         this.prefillScannedTag();
+        if (!this.scannedTag) this.prefillScannedLabel();
       }
 
       // `AsRecorded` is 0, so `|| Weight` would silently coerce a valid
@@ -701,6 +884,12 @@ export class FilamentDetailComponent
       // is the same saved check canShowSpoolCalculator already uses.
       const filamentId = this.loadedFilament?.id;
       this.showUsagePanels.set(!!filamentId && filamentId !== EMPTY_GUID);
+      // A copy's barcodes belong to the spool it was copied from.
+      if (!this.scannedLabel) {
+        this.barcodes.set(
+          this.showUsagePanels() ? (this.loadedFilament?.barcodes ?? []) : []
+        );
+      }
 
       this.formValue.set(this.filamentForm.getRawValue());
       this.formValueSubscription?.unsubscribe();
@@ -738,6 +927,7 @@ export class FilamentDetailComponent
         });
 
       this.watchPrefilledFields();
+      this.watchBrandForCatalogMatch();
 
       this.filteredMaterials = this.filamentForm
         .get('materialType')
@@ -852,6 +1042,7 @@ export class FilamentDetailComponent
     this.formValueSubscription?.unsubscribe();
     this.tagUidsSubscription?.unsubscribe();
     this.tagSourcesSubscription?.unsubscribe();
+    this.catalogMatchSubscription?.unsubscribe();
   }
 
   private computeNormalizedColors(): string[] {
@@ -1221,8 +1412,16 @@ export class FilamentDetailComponent
     }
     // The catalog entry goes only while the name, brand and material are still the ones the
     // scan gave.
-    if (wasNew && this.scannedTag?.catalogMatch && this.keptScannedIdentity()) {
-      newFilament.catalogEntryId = this.scannedTag.catalogMatch.id;
+    const scannedMatch =
+      this.scannedTag?.catalogMatch ?? this.scannedLabel?.catalogMatch;
+    if (wasNew && scannedMatch && this.keptScannedIdentity()) {
+      newFilament.catalogEntryId = scannedMatch.id;
+    }
+    if (wasNew && this.scannedLabel && this.barcodes().length > 0) {
+      newFilament.barcodes = this.barcodes().map(({ value, format }) => ({
+        value,
+        format,
+      }));
     }
 
     if (newFilament.id === null) {

@@ -26,13 +26,12 @@ import { TagRead } from 'src/app/core/types/native-bridge';
 import { TagReading } from 'src/app/core/types/tag-reading';
 import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { ToastrService } from 'ngx-toastr';
-import { Observable, finalize, map, of } from 'rxjs';
+import { Observable, Subscription, finalize, map, of } from 'rxjs';
 import {
   readTagUidConflict,
   tagUidConflictMessage,
 } from 'src/app/filament/tag-uid';
 import { openSimpleDialog } from '../simple-dialog/simple-dialog.component';
-import { QrScanResult } from 'src/app/core/services/qr-scanner.service';
 import { filamentDetailToSummary } from 'src/app/core/utils/filament-summary';
 import { MatIconButton, MatButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
@@ -40,7 +39,20 @@ import { MatIcon } from '@angular/material/icon';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { FilamentListComponent } from '../filament-list/filament-list.component';
-import { QrScannerComponent } from '../qr-scanner/qr-scanner.component';
+import { MatCheckbox } from '@angular/material/checkbox';
+import {
+  Barcode,
+  LabelReadRequest,
+  LabelReadResponse,
+} from 'src/app/core/types/label-reading';
+import {
+  LABEL_REASON_LABELS,
+  SuggestionRow,
+  suggestionRows,
+} from 'src/app/filament/filament-list-container/suggestion-rows';
+import { LabelOcrResult } from '../label-scanner/label-ocr';
+import { LabelScannerComponent } from '../label-scanner/label-scanner.component';
+import { FilamentColorSwatchComponent } from '../filament-color-swatch/filament-color-swatch.component';
 
 export interface DialogData {
   otherFilamentOption: any;
@@ -55,7 +67,7 @@ export interface DialogData {
   pendingTagReading?: TagReading | null;
 }
 
-export type ViewMode = 'list' | 'scanner';
+export type ViewMode = 'list' | 'scanner' | 'matches';
 
 @Component({
   selector: 'app-filament-search-modal',
@@ -72,7 +84,9 @@ export type ViewMode = 'list' | 'scanner';
     MatProgressSpinner,
     FilamentListComponent,
     MatButton,
-    QrScannerComponent,
+    LabelScannerComponent,
+    MatCheckbox,
+    FilamentColorSwatchComponent,
     MatDialogActions,
   ],
 })
@@ -106,6 +120,16 @@ export class FilamentSearchModalComponent {
   readonly viewMode = signal<ViewMode>('list');
   readonly scanError = signal<string | null>(null);
   readonly loading = signal(false);
+  /** A note under the camera, such as a barcode no spool has yet. */
+  readonly labelHint = signal<string | null>(null);
+  /** The spools a label scan may be, shown in the matches view. */
+  readonly labelMatches = signal<SuggestionRow[]>([]);
+  /** A picked match without the scanned barcode, waiting on the remember choice. */
+  readonly rememberFor = signal<SuggestionRow | null>(null);
+  readonly remember = signal(true);
+  /** The last label read's barcodes, as the API normalized them. */
+  private labelBarcodes: Barcode[] = [];
+  private labelLookup: Subscription | null = null;
   /**
    * A tag is being handled: its lookup, the check or link dialog it opened, or the link save.
    * Reads are dropped until it is done, so one tag never races another's dialog or save.
@@ -382,11 +406,12 @@ export class FilamentSearchModalComponent {
     const newMode = this.viewMode() === 'list' ? 'scanner' : 'list';
     this.viewMode.set(newMode);
     this.scanError.set(null);
+    this.labelHint.set(null);
     this.loggingService.logEvent('FilamentSearchModal_ToggleViewMode', {
       mode: newMode,
     });
     if (newMode === 'scanner') {
-      this.loggingService.logEvent('QrScanner_Opened');
+      this.loggingService.logEvent('LabelScan_Opened', { surface: 'search' });
     }
   }
 
@@ -395,77 +420,198 @@ export class FilamentSearchModalComponent {
     this.loggingService.logEvent('FilamentSearchModal_RetryScan');
   }
 
-  handleQrScanned(result: QrScanResult) {
-    this.loggingService.logEvent('FilamentSearchModal_QrScanned', {
-      success: result.success,
-    });
+  /** Back from the matches to the search list. */
+  backToSearch() {
+    this.labelMatches.set([]);
+    this.rememberFor.set(null);
+    this.viewMode.set('list');
+  }
 
-    if (!result.success) {
-      this.loggingService.logEvent('QrScanner_Error', {
-        errorType: 'invalid_qr',
-        error: result.error || 'Not a 3D Print Log filament label',
-      });
-      this.scanError.set(
-        result.error || 'This QR code is not a 3D Print Log filament label'
-      );
+  /** A 3D Print Log QR label: the spool it names, as picking its row would. */
+  handleOwnLabel(filamentId: string) {
+    this.loggingService.logEvent('LabelScan_OwnLabel');
+    // It names the spool outright, so a lookup still running must not answer after it.
+    this.labelLookup?.unsubscribe();
+    this.loading.set(false);
+    this.pickById(filamentId, false);
+  }
+
+  /** The camera would not start: say so, rather than leave an empty box. */
+  cameraUnavailable() {
+    this.scanError.set('Camera unavailable. Search by name instead.');
+  }
+
+  handleLabelBarcodes(barcodes: Barcode[]) {
+    if (this.loading() || this.viewMode() !== 'scanner') return;
+    this.lookUpLabel({ barcodes }, false);
+  }
+
+  handleLabelPhoto(event: { barcodes: Barcode[]; ocr: LabelOcrResult }) {
+    this.loggingService.logEvent('LabelScan_Photo', {
+      ms: event.ocr.ms,
+      fieldsFound: Object.keys(event.ocr.fields).length,
+    });
+    this.lookUpLabel(
+      {
+        barcodes: event.barcodes,
+        ocrText: event.ocr.text,
+        fields: event.ocr.fields,
+      },
+      true
+    );
+  }
+
+  /** A matched row: picked at once when it has the barcode, else after the remember choice. */
+  pickLabelMatch(row: SuggestionRow) {
+    if (!row.filament) return;
+    if (
+      this.labelBarcodes.length > 0 &&
+      !row.reasons.includes(LABEL_REASON_LABELS['same-barcode'])
+    ) {
+      this.remember.set(true);
+      this.rememberFor.set(row);
       return;
     }
+    this.loggingService.logEvent('LabelScan_MatchPicked', {
+      remembered: false,
+    });
+    this.select(row.filament);
+  }
 
-    if (!result.filamentId) {
-      this.loggingService.logEvent('QrScanner_Error', {
-        errorType: 'no_filament_id',
-        error: 'Could not extract filament ID',
-      });
-      this.scanError.set('Could not extract filament ID from QR code');
+  /** Picks the spool the remember prompt is about, saving the barcode first when checked. */
+  confirmLabelMatch() {
+    const row = this.rememberFor();
+    if (!row?.filament) return;
+    const filament = row.filament;
+    this.rememberFor.set(null);
+    this.loggingService.logEvent('LabelScan_MatchPicked', {
+      remembered: this.remember(),
+    });
+    if (!this.remember()) {
+      this.select(filament);
       return;
     }
 
     this.loading.set(true);
+    // Not tied to the picker's lifetime, like a tag link: the user asked for it.
+    this.filamentService
+      .addBarcode(filament.id, this.labelBarcodes[0])
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: () => this.select(filament),
+        error: () => {
+          // The pick still stands; only remembering failed.
+          this.loggingService.logEvent('LabelScan_Error', {
+            stage: 'remember',
+          });
+          this.select(filament);
+        },
+      });
+  }
+
+  private lookUpLabel(request: LabelReadRequest, fromPhoto: boolean) {
+    this.loading.set(true);
+    this.scanError.set(null);
+    this.labelHint.set(null);
+    this.labelLookup?.unsubscribe();
+    this.labelLookup = this.filamentService
+      .readLabel(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.loading.set(false);
+          this.labelResolved(response, fromPhoto);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.loggingService.logEvent('LabelScan_Error', { stage: 'lookup' });
+          this.scanError.set(
+            "Couldn't look up that label. Check your connection."
+          );
+        },
+      });
+  }
+
+  private labelResolved(response: LabelReadResponse, fromPhoto: boolean) {
+    this.labelBarcodes = response.barcodes;
+    const matches = response.ownMatches;
+    const sameBarcode = matches.filter((m) =>
+      m.reasons.includes('same-barcode')
+    );
+    this.loggingService.logEvent('LabelScan_Resolved', {
+      ownMatches: matches.length,
+      catalogMatch: response.catalogMatch !== null,
+      barcodeKnown: sameBarcode.length > 0,
+    });
+
+    if (sameBarcode.length === 1) {
+      // As for a tag: an inactive spool or another category is confirmed first.
+      this.pickById(sameBarcode[0].filamentId, true);
+      return;
+    }
+    if (matches.length === 0 && !fromPhoto) {
+      // A barcode alone ranks nothing else: the label's words can.
+      this.labelHint.set(
+        'No spool has this barcode yet. Take a photo of the label to match it by name.'
+      );
+      return;
+    }
+
+    this.loading.set(true);
+    suggestionRows(
+      matches,
+      new Map(),
+      this.filamentService,
+      LABEL_REASON_LABELS
+    )
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false))
+      )
+      .subscribe((rows) => {
+        this.labelMatches.set(rows);
+        this.rememberFor.set(null);
+        this.viewMode.set('matches');
+      });
+  }
+
+  /** Loads a spool by id and picks it. Used by QR labels and a single barcode match. */
+  private pickById(filamentId: string, confirm: boolean) {
+    this.loading.set(true);
     this.scanError.set(null);
 
-    this.filamentService.getFilamentDetail(result.filamentId).subscribe({
+    this.filamentService.getFilamentDetail(filamentId).subscribe({
       next: (filament: FilamentDetail) => {
         this.loading.set(false);
-        this.loggingService.logEvent('QrScanner_Success', {
-          filamentId: filament.id,
-        });
-        this.loggingService.logEvent('FilamentSearchModal_QrFilamentSelected', {
-          filamentId: filament.id,
-        });
-
+        this.loggingService.logEvent(
+          'FilamentSearchModal_LabelFilamentSelected',
+          {
+            filamentId: filament.id,
+          }
+        );
         // Map FilamentDetail to the FilamentSummary shape the picker expects,
         // including the server-computed remaining values.
-        const summary = filamentDetailToSummary(filament);
-
-        if (this.data.multiSelect) {
-          // In multi-select mode: add to selection and switch back to list
-          // so the user can confirm or add more filaments
-          this.selectedFilaments.update((current) => {
-            if (current.some((f) => f.id === summary.id)) return current;
-            return [...current, summary];
-          });
-          this.viewMode.set('list');
-        } else {
-          this.close(summary);
+        if (!confirm) {
+          this.select(filamentDetailToSummary(filament));
+          return;
         }
+        this.confirmTagPick(filament)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((pick) => {
+            if (pick) this.select(filamentDetailToSummary(filament));
+          });
       },
       error: (err) => {
         this.loading.set(false);
-        if (err.status === 404) {
-          this.loggingService.logEvent('QrScanner_Error', {
-            errorType: 'filament_not_found',
-            filamentId: result.filamentId,
-          });
-          this.scanError.set('Filament not found. It may have been deleted.');
-        } else {
-          this.loggingService.logEvent('QrScanner_Error', {
-            errorType: 'api_error',
-            status: err.status,
-          });
-          this.scanError.set(
-            'Unable to look up filament. Please check your connection.'
-          );
-        }
+        this.loggingService.logEvent('LabelScan_Error', {
+          stage: 'open',
+          status: err?.status ?? 0,
+        });
+        this.scanError.set(
+          err?.status === 404
+            ? 'Filament not found. It may have been deleted.'
+            : 'Unable to look up filament. Please check your connection.'
+        );
         this.loggingService.logException(err);
       },
     });

@@ -1,5 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { NO_ERRORS_SCHEMA, WritableSignal, signal } from '@angular/core';
+import {
+  Component,
+  NO_ERRORS_SCHEMA,
+  WritableSignal,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { Barcode, LabelReadResponse } from 'src/app/core/types/label-reading';
+import { LabelOcrResult } from 'src/app/shared/label-scanner/label-ocr';
+import {
+  CameraUnavailableReason,
+  LabelScannerComponent,
+} from 'src/app/shared/label-scanner/label-scanner.component';
 import { FilamentListComponent } from '../filament-list/filament-list.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
@@ -114,7 +128,7 @@ describe('FilamentSearchModalComponent', () => {
       ],
     })
       .overrideComponent(FilamentSearchModalComponent, {
-        remove: { imports: [FilamentListComponent] },
+        remove: { imports: [FilamentListComponent, LabelScannerComponent] },
         add: { schemas: [NO_ERRORS_SCHEMA] },
       })
       .compileComponents();
@@ -130,15 +144,11 @@ describe('FilamentSearchModalComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('handleQrScanned', () => {
+  describe('handleOwnLabel', () => {
     it('keeps the remaining filament values from the scanned material', () => {
       mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
 
-      component.handleQrScanned({
-        success: true,
-        filamentId: 'filament-1',
-        rawText: 'https://www.3dprintlog.com/materials/filament-1',
-      });
+      component.handleOwnLabel('filament-1');
 
       expect(mockDialogRef.close).toHaveBeenCalled();
       const selected = mockDialogRef.close.calls.mostRecent().args[0];
@@ -151,26 +161,10 @@ describe('FilamentSearchModalComponent', () => {
       component.data.multiSelect = true;
       mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
 
-      component.handleQrScanned({
-        success: true,
-        filamentId: 'filament-1',
-        rawText: 'https://www.3dprintlog.com/materials/filament-1',
-      });
+      component.handleOwnLabel('filament-1');
 
       expect(component.selectedFilaments()[0].filamentRemaining).toBe(750000);
     });
-  });
-
-  it('shows why a scanned label was rejected', () => {
-    component.toggleViewMode();
-    fixture.detectChanges();
-
-    component.handleQrScanned({ success: false, rawText: 'hello' });
-    fixture.detectChanges();
-
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'This QR code is not a 3D Print Log filament label'
-    );
   });
 
   describe('owning the selection', () => {
@@ -188,22 +182,14 @@ describe('FilamentSearchModalComponent', () => {
     it('a QR pick in multi-select is part of the selection the list shows', () => {
       mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
 
-      component.handleQrScanned({
-        success: true,
-        filamentId: 'filament-1',
-        rawText: 'https://www.3dprintlog.com/materials/filament-1',
-      });
+      component.handleOwnLabel('filament-1');
 
       expect(component.selectedIds().has('filament-1')).toBeTrue();
     });
 
     it('a QR pick survives a later checkbox click on another row', () => {
       mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
-      component.handleQrScanned({
-        success: true,
-        filamentId: 'filament-1',
-        rawText: 'https://www.3dprintlog.com/materials/filament-1',
-      });
+      component.handleOwnLabel('filament-1');
 
       component.toggleFilament(summary('filament-2'));
 
@@ -852,5 +838,333 @@ describe('FilamentSearchModalComponent NFC tags', () => {
   it('starts in the unknown-tag state with a pending tag', async () => {
     await setUp({ pendingTagUid: '04A23F11' });
     expect(text()).toContain('New tag 04A23F11');
+  });
+});
+
+@Component({ selector: 'app-label-scanner', template: '' })
+class StubLabelScannerComponent {
+  readonly paused = input(false);
+  readonly ownLabel = output<string>();
+  readonly barcodesChanged = output<Barcode[]>();
+  readonly photo = output<{ barcodes: Barcode[]; ocr: LabelOcrResult }>();
+  readonly photoFailed = output<Barcode[]>();
+  readonly unavailable = output<CameraUnavailableReason>();
+}
+
+describe('FilamentSearchModalComponent label scanning', () => {
+  let fixture: ComponentFixture<FilamentSearchModalComponent>;
+  let component: FilamentSearchModalComponent;
+  let service: jasmine.SpyObj<FilamentService>;
+  let dialogRef: jasmine.SpyObj<MatDialogRef<FilamentSearchModalComponent>>;
+  let logger: jasmine.SpyObj<LoggingService>;
+  let dialog: jasmine.SpyObj<MatDialog>;
+  let dialogAnswer: boolean;
+
+  const BARCODE: Barcode = { value: '0849344041764', format: 'ean13' };
+  const OCR: LabelOcrResult = {
+    text: 'SUNLU PLA+ Silver 1kg',
+    fields: { materialType: 'PLA+', weightG: 1000 },
+    ms: 700,
+    words: 12,
+  };
+  const response = (
+    ownMatches: LabelReadResponse['ownMatches'],
+    barcodes: Barcode[] = [BARCODE]
+  ): LabelReadResponse => ({
+    reading: {
+      brand: 'SUNLU',
+      materialType: 'PLA+',
+      colorName: 'Silver',
+      netWeightG: 1000,
+      diameterMm: null,
+      hotendMinC: null,
+      hotendMaxC: null,
+      bedMinC: null,
+      bedMaxC: null,
+    },
+    catalogMatch: null,
+    ownMatches,
+    barcodes,
+  });
+
+  beforeEach(async () => {
+    logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
+      'logEvent',
+      'logException',
+    ]);
+    service = jasmine.createSpyObj<FilamentService>('FilamentService', [
+      'getFilamentDetail',
+      'readLabel',
+      'addBarcode',
+    ]);
+    service.getFilamentDetail.and.callFake((id: string) =>
+      of({ ...buildDetail(), id, displayName: `Spool ${id}` })
+    );
+    dialogAnswer = true;
+    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    dialog.open.and.callFake(
+      () =>
+        ({ afterClosed: () => of(dialogAnswer) }) as unknown as ReturnType<
+          MatDialog['open']
+        >
+    );
+    dialogRef = jasmine.createSpyObj<
+      MatDialogRef<FilamentSearchModalComponent>
+    >('MatDialogRef', ['close']);
+
+    await TestBed.configureTestingModule({
+      imports: [MatDialogModule, FilamentSearchModalComponent],
+      providers: [
+        { provide: LoggingService, useValue: logger },
+        { provide: MatDialog, useValue: dialog },
+        { provide: FilamentService, useValue: service },
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: MAT_DIALOG_DATA, useValue: {} },
+        {
+          provide: ToastrService,
+          useValue: jasmine.createSpyObj<ToastrService>('ToastrService', [
+            'error',
+            'warning',
+          ]),
+        },
+      ],
+    })
+      .overrideComponent(FilamentSearchModalComponent, {
+        remove: { imports: [FilamentListComponent, LabelScannerComponent] },
+        add: {
+          imports: [StubLabelScannerComponent],
+          schemas: [NO_ERRORS_SCHEMA],
+        },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(FilamentSearchModalComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    component.toggleViewMode();
+    fixture.detectChanges();
+  });
+
+  const root = () => fixture.nativeElement as HTMLElement;
+  const scanner = () =>
+    fixture.debugElement.query(By.directive(StubLabelScannerComponent))
+      .componentInstance as StubLabelScannerComponent;
+  const click = (testId: string, index = 0) => {
+    (
+      root().querySelectorAll(`[data-testid="${testId}"]`)[index] as HTMLElement
+    ).click();
+    fixture.detectChanges();
+  };
+  const closedWith = () =>
+    dialogRef.close.calls.mostRecent().args[0] as FilamentSummary;
+
+  it('selects the spool behind a 3D Print Log QR label', () => {
+    scanner().ownLabel.emit('filament-1');
+
+    expect(service.getFilamentDetail).toHaveBeenCalledWith('filament-1');
+    expect(closedWith().id).toBe('filament-1');
+    expect(closedWith().filamentRemaining).toBe(750000);
+  });
+
+  it('looks up the barcodes the camera sees', () => {
+    service.readLabel.and.returnValue(of(response([])));
+
+    scanner().barcodesChanged.emit([BARCODE]);
+
+    expect(service.readLabel).toHaveBeenCalledOnceWith({ barcodes: [BARCODE] });
+  });
+
+  it('looks up a photo with its text and fields', () => {
+    service.readLabel.and.returnValue(of(response([])));
+
+    scanner().photo.emit({ barcodes: [BARCODE], ocr: OCR });
+
+    expect(service.readLabel).toHaveBeenCalledOnceWith({
+      barcodes: [BARCODE],
+      ocrText: OCR.text,
+      fields: OCR.fields,
+    });
+  });
+
+  it('selects the one spool with that barcode directly', () => {
+    service.readLabel.and.returnValue(
+      of(response([{ filamentId: 'f1', score: 1, reasons: ['same-barcode'] }]))
+    );
+
+    scanner().barcodesChanged.emit([BARCODE]);
+
+    expect(closedWith().id).toBe('f1');
+  });
+
+  it('lists several matches with why each one matched', () => {
+    service.readLabel.and.returnValue(
+      of(
+        response([
+          {
+            filamentId: 'f1',
+            score: 0.9,
+            reasons: ['same-material', 'same-color-name', 'same-brand'],
+          },
+          { filamentId: 'f2', score: 0.6, reasons: ['same-weight'] },
+        ])
+      )
+    );
+
+    scanner().photo.emit({ barcodes: [BARCODE], ocr: OCR });
+    fixture.detectChanges();
+
+    const rows = root().querySelectorAll('[data-testid="label-match-row"]');
+    expect(rows.length).toBe(2);
+    expect(rows[0].textContent).toContain('Spool f1');
+    expect(rows[0].textContent).toContain('Same material');
+    expect(rows[0].textContent).toContain('Same color');
+    expect(rows[0].textContent).toContain('Same brand');
+    expect(rows[1].textContent).toContain('Same weight');
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
+  describe('remembering the barcode', () => {
+    beforeEach(() => {
+      service.readLabel.and.returnValue(
+        of(
+          response([
+            { filamentId: 'f1', score: 0.9, reasons: ['same-material'] },
+            { filamentId: 'f2', score: 0.6, reasons: ['same-brand'] },
+          ])
+        )
+      );
+      scanner().photo.emit({ barcodes: [BARCODE], ocr: OCR });
+      fixture.detectChanges();
+      click('label-match-row', 1);
+    });
+
+    const checkbox = () =>
+      root().querySelector(
+        '[data-testid="label-remember"] input[type="checkbox"]'
+      ) as HTMLInputElement;
+
+    it('offers to remember the barcode, checked by default', () => {
+      expect(root().textContent).toContain(
+        'Remember this barcode for this spool'
+      );
+      expect(checkbox().checked).toBeTrue();
+      expect(dialogRef.close).not.toHaveBeenCalled();
+    });
+
+    it('saves the barcode, then selects the spool', () => {
+      service.addBarcode.and.returnValue(of({ id: 1, ...BARCODE }));
+
+      click('label-remember-confirm');
+
+      expect(service.addBarcode).toHaveBeenCalledOnceWith('f2', BARCODE);
+      expect(closedWith().id).toBe('f2');
+    });
+
+    it('selects without saving when unchecked', () => {
+      checkbox().click();
+      fixture.detectChanges();
+
+      click('label-remember-confirm');
+
+      expect(service.addBarcode).not.toHaveBeenCalled();
+      expect(closedWith().id).toBe('f2');
+    });
+
+    it('still selects the spool when saving the barcode fails', () => {
+      service.addBarcode.and.returnValue(throwError(() => new Error('x')));
+
+      click('label-remember-confirm');
+
+      expect(closedWith().id).toBe('f2');
+      expect(logger.logEvent).toHaveBeenCalledWith('LabelScan_Error', {
+        stage: 'remember',
+      });
+    });
+  });
+
+  it('selects a same-barcode match without asking to remember', () => {
+    service.readLabel.and.returnValue(
+      of(
+        response([
+          { filamentId: 'f1', score: 1, reasons: ['same-barcode'] },
+          { filamentId: 'f2', score: 1, reasons: ['same-barcode'] },
+        ])
+      )
+    );
+    scanner().barcodesChanged.emit([BARCODE]);
+    fixture.detectChanges();
+
+    click('label-match-row', 0);
+
+    expect(service.addBarcode).not.toHaveBeenCalled();
+    expect(closedWith().id).toBe('f1');
+  });
+
+  it('says so when no spool matches the photo, and goes back to search', () => {
+    service.readLabel.and.returnValue(of(response([])));
+
+    scanner().photo.emit({ barcodes: [], ocr: OCR });
+    fixture.detectChanges();
+
+    expect(root().textContent).toContain('No matching spools');
+    click('label-back');
+    expect(component.viewMode()).toBe('list');
+  });
+
+  it('keeps scanning when no spool has the barcode yet', () => {
+    service.readLabel.and.returnValue(of(response([])));
+
+    scanner().barcodesChanged.emit([BARCODE]);
+    fixture.detectChanges();
+
+    expect(component.viewMode()).toBe('scanner');
+    expect(root().textContent).toContain('Take a photo of the label');
+  });
+
+  it('shows an error when the lookup fails', () => {
+    service.readLabel.and.returnValue(throwError(() => new Error('offline')));
+
+    scanner().photo.emit({ barcodes: [], ocr: OCR });
+    fixture.detectChanges();
+
+    expect(root().textContent).toContain("Couldn't look up that label");
+  });
+
+  it('says the camera is unavailable instead of showing a blank box', () => {
+    scanner().unavailable.emit('denied');
+    fixture.detectChanges();
+
+    expect(root().textContent).toContain(
+      'Camera unavailable. Search by name instead.'
+    );
+  });
+
+  it('picks your own label even while a barcode lookup is pending', () => {
+    const pending = new Subject<LabelReadResponse>();
+    service.readLabel.and.returnValue(pending);
+    scanner().barcodesChanged.emit([BARCODE]);
+
+    scanner().ownLabel.emit('filament-9');
+    pending.next(
+      response([{ filamentId: 'f1', score: 1, reasons: ['same-barcode'] }])
+    );
+
+    expect(dialogRef.close).toHaveBeenCalledTimes(1);
+    expect(closedWith().id).toBe('filament-9');
+  });
+
+  it('asks before picking an inactive spool by its barcode', () => {
+    service.getFilamentDetail.and.callFake((id: string) =>
+      of({ ...buildDetail(), id, isActive: false })
+    );
+    service.readLabel.and.returnValue(
+      of(response([{ filamentId: 'f1', score: 1, reasons: ['same-barcode'] }]))
+    );
+    dialogAnswer = false;
+
+    scanner().barcodesChanged.emit([BARCODE]);
+
+    expect(dialog.open).toHaveBeenCalled();
+    expect(dialogRef.close).not.toHaveBeenCalled();
   });
 });

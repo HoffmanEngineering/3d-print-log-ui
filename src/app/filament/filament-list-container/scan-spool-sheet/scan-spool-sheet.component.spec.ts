@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { WritableSignal, signal } from '@angular/core';
+import {
+  Component,
+  WritableSignal,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { By } from '@angular/platform-browser';
 import {
   ComponentFixture,
   TestBed,
@@ -25,7 +32,20 @@ import {
   TagReading,
   TagSuggestion,
 } from 'src/app/core/types/tag-reading';
+import { CAMERA_AVAILABLE } from 'src/app/core/utils/camera-available';
+import { CameraUnavailableReason } from 'src/app/shared/label-scanner/label-scanner.component';
+import {
+  LabelScanOutcome,
+  ScanLabelPanelComponent,
+} from '../scan-label-panel/scan-label-panel.component';
 import { ScanSpoolSheetComponent } from './scan-spool-sheet.component';
+
+@Component({ selector: 'app-scan-label-panel', template: '' })
+class StubLabelPanelComponent {
+  readonly filaments = input<ReadonlyMap<string, FilamentSummary>>(new Map());
+  readonly outcome = output<LabelScanOutcome>();
+  readonly unavailable = output<CameraUnavailableReason>();
+}
 
 const CLASSIC_KEY = 'printlog.tagHint.classicUnsupported';
 
@@ -83,7 +103,10 @@ describe('ScanSpoolSheetComponent', () => {
   let sheetRef: jasmine.SpyObj<MatBottomSheetRef<ScanSpoolSheetComponent>>;
   let logger: jasmine.SpyObj<LoggingService>;
 
-  async function setUp(data: { filaments: FilamentSummary[] } | null = null) {
+  async function setUp(
+    data: { filaments: FilamentSummary[] } | null = null,
+    camera = false
+  ) {
     tags = new Subject<TagRead>();
     started = new Subject<void>();
     reader = {
@@ -117,8 +140,14 @@ describe('ScanSpoolSheetComponent', () => {
         { provide: MatBottomSheetRef, useValue: sheetRef },
         { provide: LoggingService, useValue: logger },
         { provide: MAT_BOTTOM_SHEET_DATA, useValue: data },
+        { provide: CAMERA_AVAILABLE, useValue: camera },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(ScanSpoolSheetComponent, {
+        remove: { imports: [ScanLabelPanelComponent] },
+        add: { imports: [StubLabelPanelComponent] },
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(ScanSpoolSheetComponent);
     el = fixture.nativeElement;
@@ -143,6 +172,95 @@ describe('ScanSpoolSheetComponent', () => {
     tags.next({ uid, tech: 'nfca', ...extra });
     fixture.detectChanges();
   }
+
+  describe('with a camera', () => {
+    const panel = () =>
+      fixture.debugElement.query(By.directive(StubLabelPanelComponent))
+        ?.componentInstance as StubLabelPanelComponent | undefined;
+
+    it('shows the label scanner beside the NFC prompt', async () => {
+      await setUp(null, true);
+
+      expect(panel()).toBeDefined();
+      expect(el.textContent).toContain('Hold your phone to a spool');
+    });
+
+    it('shows only the label scanner without NFC', async () => {
+      await setUp(null, true);
+      reader.available.set(false);
+      fixture.detectChanges();
+
+      expect(panel()).toBeDefined();
+      expect(el.textContent).not.toContain('Hold your phone to a spool');
+      expect(el.textContent).toContain("Point the camera at the spool's label");
+    });
+
+    it('opens the spool a label scan found', async () => {
+      await setUp(null, true);
+
+      panel()!.outcome.emit({ kind: 'known', id: 'f1' });
+
+      expect(sheetRef.dismiss).toHaveBeenCalledWith({
+        kind: 'known',
+        id: 'f1',
+      });
+    });
+
+    it('starts a new spool from a label read', async () => {
+      await setUp(null, true);
+      const read = {
+        reading: {
+          brand: 'SUNLU',
+          materialType: 'PLA+',
+          colorName: null,
+          netWeightG: 1000,
+          diameterMm: 1.75,
+          hotendMinC: null,
+          hotendMaxC: null,
+          bedMinC: null,
+          bedMaxC: null,
+        },
+        catalogMatch: null,
+        barcodes: [{ value: '02540924A', format: 'code128' }],
+      };
+
+      panel()!.outcome.emit({ kind: 'label-new', read });
+
+      expect(sheetRef.dismiss).toHaveBeenCalledWith({
+        kind: 'label-new',
+        read,
+      });
+    });
+
+    it('falls back to NFC when the camera is denied', async () => {
+      await setUp(null, true);
+
+      panel()!.unavailable.emit('denied');
+      fixture.detectChanges();
+
+      expect(panel()).toBeUndefined();
+      expect(el.textContent).toContain('Hold your phone to a spool');
+    });
+
+    it('says the camera is unavailable when there is no NFC either', async () => {
+      await setUp(null, true);
+      reader.available.set(false);
+      fixture.detectChanges();
+
+      panel()!.unavailable.emit('denied');
+      fixture.detectChanges();
+
+      expect(el.textContent).toContain(
+        'Camera unavailable. Search by name instead.'
+      );
+    });
+
+    it('does not open the phone scan sheet over the camera on iOS', async () => {
+      await setUp(null, true);
+
+      expect(reader.scan).not.toHaveBeenCalled();
+    });
+  });
 
   it('asks for a spool and listens', async () => {
     await setUp();

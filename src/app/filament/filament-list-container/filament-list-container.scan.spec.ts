@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { Injector, runInInjectionContext, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,6 +12,7 @@ import {
 } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
+import { CAMERA_AVAILABLE } from 'src/app/core/utils/camera-available';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
 import { FilamentListContainerComponent } from './filament-list-container.component';
 import { ScanSpoolResult } from './scan-spool-sheet/scan-spool-sheet.component';
@@ -63,6 +64,7 @@ describe('FilamentListContainerComponent Scan spool', () => {
           provide: TagReaderService,
           useValue: { available, status: signal('ready') },
         },
+        { provide: CAMERA_AVAILABLE, useValue: false },
       ],
     });
     component = TestBed.runInInjectionContext(
@@ -74,6 +76,51 @@ describe('FilamentListContainerComponent Scan spool', () => {
     expect(component.canScan()).toBeTrue();
     available.set(false);
     expect(component.canScan()).toBeFalse();
+  });
+
+  it('offers Scan spool with only a camera, for label scanning', () => {
+    available.set(false);
+    const withCamera = Injector.create({
+      providers: [{ provide: CAMERA_AVAILABLE, useValue: true }],
+      parent: TestBed.inject(Injector),
+    });
+
+    const list = runInInjectionContext(
+      withCamera,
+      () => new FilamentListContainerComponent()
+    );
+
+    expect(list.canScan()).toBeTrue();
+    expect(list.scanIcon()).toBe('photo_camera');
+  });
+
+  it('shows the NFC icon where tags can be read', () => {
+    expect(component.scanIcon()).toBe('nfc');
+  });
+
+  it('a label read starts a material with it in navigation state', () => {
+    const read = {
+      reading: {
+        brand: 'SUNLU',
+        materialType: 'PLA+',
+        colorName: 'Silver',
+        netWeightG: 1000,
+        diameterMm: 1.75,
+        hotendMinC: 200,
+        hotendMaxC: 230,
+        bedMinC: 50,
+        bedMaxC: 60,
+      },
+      catalogMatch: null,
+      barcodes: [{ value: '02540924A', format: 'code128' }],
+    };
+    sheetAnswers({ kind: 'label-new', read });
+
+    component.openScanSpool();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/materials', 'new'], {
+      state: { scannedLabelRead: read },
+    });
   });
 
   it('a known tag opens that spool', () => {

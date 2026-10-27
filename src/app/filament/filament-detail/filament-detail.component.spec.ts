@@ -1536,3 +1536,392 @@ describe('FilamentDetailComponent scanned tag', () => {
     });
   });
 });
+
+/**
+ * Scan spool's label path opens /materials/new with what the label said in navigation state,
+ * never in the URL.
+ */
+describe('FilamentDetailComponent scanned label', () => {
+  let fixture: ComponentFixture<FilamentDetailComponent>;
+  let service: jasmine.SpyObj<FilamentService>;
+
+  const EMPTY_READING = {
+    brand: null,
+    materialType: null,
+    colorName: null,
+    netWeightG: null,
+    diameterMm: null,
+    hotendMinC: null,
+    hotendMaxC: null,
+    bedMinC: null,
+    bedMaxC: null,
+  };
+  const BARCODE = { value: '0849344041764', format: 'ean13' };
+  const MATCH: CatalogMatch = {
+    id: 'sunlu_pla+_silver',
+    confidence: 0.8,
+    spoolWeightG: 160,
+    colorName: 'Silver',
+    name: 'PLA+ Silver',
+    manufacturer: 'SUNLU',
+    densityGramPerCubicCm: 1.24,
+    source: 'SpoolmanDB',
+    extruderTempMinC: 200,
+    extruderTempMaxC: 230,
+    extruderTempC: 215,
+    bedTempC: 60,
+  };
+  const labelRead = (over: Record<string, unknown> = {}) => ({
+    reading: {
+      ...EMPTY_READING,
+      materialType: 'PLA+',
+      colorName: 'Grey',
+      netWeightG: 1000,
+      diameterMm: 1.75,
+    },
+    catalogMatch: null,
+    barcodes: [BARCODE],
+    ...over,
+  });
+
+  afterEach(() => history.replaceState(null, ''));
+
+  async function setup(state: unknown, filament: unknown = null) {
+    history.replaceState(state, '');
+    service = jasmine.createSpyObj<FilamentService>('FilamentService', {
+      getFilamentBrands: of({ brands: [] }),
+      getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
+      getFilamentStorageLocations: of({ storageLocations: [] }),
+      addFilament: of({} as FilamentDetail),
+      updateFilament: of({} as FilamentDetail),
+      catalogMatch: of(null),
+      removeBarcode: of(undefined),
+    });
+    stubImageTarget(service);
+
+    await TestBed.configureTestingModule({
+      imports: [
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
+        RouterTestingModule,
+        MatNativeDateModule,
+        FilamentDetailComponent,
+      ],
+      providers: [
+        { provide: FilamentService, useValue: service },
+        {
+          provide: ToastrService,
+          useValue: jasmine.createSpyObj('ToastrService', ['success']),
+        },
+        {
+          provide: UserSettingService,
+          useValue: jasmine.createSpyObj('UserSettingService', [
+            'updateUserSetting',
+          ]),
+        },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', [
+            'logException',
+            'logEvent',
+          ]),
+        },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({
+              filament,
+              materials: [],
+              materialCategories: [],
+              defaultFilamentDiameterMmSetting: null,
+              defaultFilamentPriceSetting: null,
+            }),
+            snapshot: { queryParamMap: convertToParamMap({}) },
+          },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(FilamentDetailComponent);
+    fixture.detectChanges();
+  }
+
+  const root = () => fixture.nativeElement as HTMLElement;
+  const control = (name: string) =>
+    fixture.componentInstance.filamentForm.get(name)!;
+  const hintOf = (id: string) =>
+    root()
+      .querySelector(`#${id}`)!
+      .closest('mat-form-field')!
+      .querySelector('mat-hint')
+      ?.textContent?.replace(/\s+/g, ' ')
+      .trim();
+  const type = (id: string, value: string) => {
+    const input = root().querySelector(`#${id}`) as HTMLInputElement;
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+  };
+
+  it('fills the form from the label and marks the fields', async () => {
+    await setup({ scannedLabelRead: labelRead() });
+    fixture.detectChanges();
+
+    expect(control('materialType').value).toBe('PLA+');
+    expect(control('colorName').value).toBe('Grey');
+    expect(control('initialNominalWeightG').value).toBe(1000);
+    expect(control('diameterMm').value).toBe(1.75);
+    expect(hintOf('edit-filament-material-type')).toBe('From label');
+    expect(hintOf('edit-filament-color')).toBe('From label');
+  });
+
+  it('sends the barcodes and the catalog entry on save', async () => {
+    await setup({ scannedLabelRead: labelRead({ catalogMatch: MATCH }) });
+    control('materialDensityGramPerCubicCm').setValue(1.24);
+
+    fixture.componentInstance.onSubmit();
+
+    const sent = service.addFilament.calls.mostRecent().args[0];
+    expect(sent.barcodes).toEqual([BARCODE]);
+    expect(sent.catalogEntryId).toBe('sunlu_pla+_silver');
+    expect(sent.displayName).toBe('PLA+ Silver');
+  });
+
+  it('saves a barcode-only catalog read without any edits', async () => {
+    await setup({
+      scannedLabelRead: {
+        reading: EMPTY_READING,
+        catalogMatch: {
+          ...MATCH,
+          material: 'PLA+',
+          weightG: 1000,
+          diameterMm: 1.75,
+        },
+        barcodes: [BARCODE],
+      },
+    });
+
+    fixture.componentInstance.onSubmit();
+
+    expect(fixture.componentInstance.filamentForm.valid).toBeTrue();
+    const sent = service.addFilament.calls.mostRecent().args[0];
+    expect(sent.materialType).toBe('PLA+');
+    expect(sent.catalogEntryId).toBe('sunlu_pla+_silver');
+    expect(sent.barcodes).toEqual([BARCODE]);
+  });
+
+  it('sends no catalog entry once the name was edited', async () => {
+    await setup({ scannedLabelRead: labelRead({ catalogMatch: MATCH }) });
+    control('materialDensityGramPerCubicCm').setValue(1.24);
+    control('displayName').setValue('My spool');
+
+    fixture.componentInstance.onSubmit();
+
+    const sent = service.addFilament.calls.mostRecent().args[0];
+    expect(sent.barcodes).toEqual([BARCODE]);
+    expect(sent.catalogEntryId).toBeUndefined();
+  });
+
+  it('gives a blank add form for forged state', async () => {
+    await setup({ scannedLabelRead: { reading: 'PLA', barcodes: 'x' } });
+    fixture.detectChanges();
+
+    expect(control('materialType').value).toBe('');
+    expect(root().querySelectorAll('.tag-source-hint').length).toBe(0);
+    expect(root().querySelector('[data-testid="barcode-chip"]')).toBeNull();
+
+    control('displayName').setValue('X');
+    control('materialType').setValue('PLA');
+    control('materialDensityGramPerCubicCm').setValue(1.24);
+    fixture.componentInstance.onSubmit();
+    expect(
+      service.addFilament.calls.mostRecent().args[0].barcodes
+    ).toBeUndefined();
+  });
+
+  describe('brand re-match', () => {
+    beforeEach(() => {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(new Date(2026, 9, 26));
+    });
+    afterEach(() => jasmine.clock().uninstall());
+
+    const offer = () =>
+      root()
+        .querySelector('[data-testid="catalog-offer"]')
+        ?.textContent?.replace(/\s+/g, ' ')
+        .trim();
+
+    it('looks the brand up once typing stops, and offers the match', async () => {
+      await setup({ scannedLabelRead: labelRead() });
+      service.catalogMatch.and.returnValue(of(MATCH));
+
+      control('brand').setValue('SUN');
+      jasmine.clock().tick(200);
+      control('brand').setValue('SUNLU');
+      jasmine.clock().tick(399);
+      expect(service.catalogMatch).not.toHaveBeenCalled();
+      jasmine.clock().tick(1);
+      fixture.detectChanges();
+
+      expect(service.catalogMatch).toHaveBeenCalledOnceWith({
+        brand: 'SUNLU',
+        materialType: 'PLA+',
+        colorName: 'Grey',
+        netWeightG: 1000,
+        diameterMm: 1.75,
+      });
+      expect(offer()).toContain('Looks like SUNLU PLA+ Silver (SpoolmanDB)');
+    });
+
+    it('fills only the fields the user has not edited', async () => {
+      await setup({ scannedLabelRead: labelRead() });
+      fixture.detectChanges();
+      service.catalogMatch.and.returnValue(of(MATCH));
+      type('edit-filament-color', 'Moon Grey');
+      control('brand').setValue('SUNLU');
+      jasmine.clock().tick(400);
+      fixture.detectChanges();
+
+      (
+        root().querySelector(
+          '[data-testid="catalog-offer-fill"]'
+        ) as HTMLButtonElement
+      ).click();
+      fixture.detectChanges();
+
+      expect(control('colorName').value).toBe('Moon Grey');
+      expect(control('displayName').value).toBe('PLA+ Silver');
+      expect(control('spoolWeightG').value).toBe(160);
+      expect(control('materialDensityGramPerCubicCm').value).toBe(1.24);
+      expect(control('tempRangeStart').value).toBe(200);
+      expect(hintOf('edit-filament-spool-weight')).toBe('From SpoolmanDB');
+      expect(offer()).toBeUndefined();
+
+      fixture.componentInstance.onSubmit();
+      expect(
+        service.addFilament.calls.mostRecent().args[0].catalogEntryId
+      ).toBe('sunlu_pla+_silver');
+    });
+
+    it('withdraws the offer as soon as the brand changes', async () => {
+      await setup({ scannedLabelRead: labelRead() });
+      service.catalogMatch.and.returnValue(of(MATCH));
+      control('brand').setValue('SUNLU');
+      jasmine.clock().tick(400);
+      fixture.detectChanges();
+      expect(offer()).toContain('SUNLU');
+
+      control('brand').setValue('Elegoo');
+      fixture.detectChanges();
+
+      expect(offer()).toBeUndefined();
+    });
+
+    it('shows nothing when the lookup fails', async () => {
+      await setup({ scannedLabelRead: labelRead() });
+      service.catalogMatch.and.returnValue(throwError(() => new Error('x')));
+
+      control('brand').setValue('SUNLU');
+      jasmine.clock().tick(400);
+      fixture.detectChanges();
+
+      expect(offer()).toBeUndefined();
+      // A later brand still gets a lookup.
+      service.catalogMatch.and.returnValue(of(MATCH));
+      control('brand').setValue('SUNLU2');
+      jasmine.clock().tick(400);
+      expect(service.catalogMatch).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not look up when the label already had a catalog match', async () => {
+      await setup({ scannedLabelRead: labelRead({ catalogMatch: MATCH }) });
+
+      control('brand').setValue('Other');
+      jasmine.clock().tick(400);
+
+      expect(service.catalogMatch).not.toHaveBeenCalled();
+    });
+
+    it('does not look up on a plain add', async () => {
+      await setup(null);
+
+      control('brand').setValue('SUNLU');
+      jasmine.clock().tick(400);
+
+      expect(service.catalogMatch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('barcodes row', () => {
+    const filament = () => ({
+      id: 'filament-1',
+      displayName: 'Test',
+      materialType: 'PLA',
+      materialDensityGramPerCubicCm: 1.24,
+      filamentAdjustments: [],
+      colors: [],
+      barcodes: [
+        { id: 7, value: '0849344041764', format: 'ean13' },
+        { id: 8, value: 'X004N86WD5', format: 'code128' },
+      ],
+    });
+    const chips = () =>
+      Array.from(root().querySelectorAll('[data-testid="barcode-chip"]')).map(
+        (c) => c.textContent?.replace(/\s+/g, ' ').trim()
+      );
+    const remove = (i: number) => {
+      (
+        root().querySelectorAll('[data-testid="barcode-remove"]')[
+          i
+        ] as HTMLButtonElement
+      ).click();
+      fixture.detectChanges();
+    };
+
+    it('lists the spool barcodes', async () => {
+      await setup(null, filament());
+      fixture.detectChanges();
+
+      expect(chips().length).toBe(2);
+      expect(chips()[0]).toContain('0849344041764');
+    });
+
+    it('removes a barcode', async () => {
+      await setup(null, filament());
+      fixture.detectChanges();
+
+      remove(0);
+
+      expect(service.removeBarcode).toHaveBeenCalledOnceWith('filament-1', 7);
+      expect(chips().length).toBe(1);
+      expect(chips()[0]).toContain('X004N86WD5');
+    });
+
+    it('keeps the chip and says so when removing fails', async () => {
+      await setup(null, filament());
+      service.removeBarcode.and.returnValue(throwError(() => new Error('x')));
+      fixture.detectChanges();
+
+      remove(0);
+
+      expect(chips().length).toBe(2);
+      expect(root().textContent).toContain("Couldn't remove that barcode.");
+    });
+
+    it('shows the scanned barcodes on a new spool, and drops one locally', async () => {
+      await setup({ scannedLabelRead: labelRead() });
+      fixture.detectChanges();
+      expect(chips().length).toBe(1);
+
+      remove(0);
+      control('displayName').setValue('X');
+      control('materialDensityGramPerCubicCm').setValue(1.24);
+      fixture.componentInstance.onSubmit();
+
+      expect(service.removeBarcode).not.toHaveBeenCalled();
+      expect(
+        service.addFilament.calls.mostRecent().args[0].barcodes
+      ).toBeUndefined();
+    });
+  });
+});

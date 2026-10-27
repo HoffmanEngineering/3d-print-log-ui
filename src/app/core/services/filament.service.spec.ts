@@ -252,4 +252,76 @@ describe('FilamentServiceService', () => {
       expect(result).toEqual({ formats: [] });
     });
   });
+
+  describe('labels', () => {
+    const base = () => `${environment.printLogApiUrl}/api/Filaments`;
+
+    it('readLabel posts barcodes, OCR text and fields', () => {
+      let result: unknown;
+      const body = {
+        barcodes: [{ value: '02540924A', format: 'code128' }],
+        ocrText: 'PLA+ Silver',
+        fields: { materialType: 'PLA+', weightG: 1000 },
+      };
+      service.readLabel(body).subscribe((r) => (result = r));
+
+      const req = httpMock.expectOne(`${base()}/label-reads`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(body);
+      req.flush({ ownMatches: [], barcodes: [], catalogMatch: null });
+      expect(result).toEqual(jasmine.objectContaining({ ownMatches: [] }));
+    });
+
+    it('catalogMatch returns the match on 200', () => {
+      let result: unknown = 'unset';
+      service
+        .catalogMatch({ brand: 'SUNLU', materialType: 'PLA+' })
+        .subscribe((r) => (result = r));
+
+      const req = httpMock.expectOne(`${base()}/catalog-match`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        brand: 'SUNLU',
+        materialType: 'PLA+',
+      });
+      req.flush({ id: 'e1', name: 'PLA+ Silver' });
+      expect(result).toEqual(jasmine.objectContaining({ id: 'e1' }));
+    });
+
+    it('catalogMatch returns null on 204', () => {
+      let result: unknown = 'unset';
+      service.catalogMatch({ brand: 'X' }).subscribe((r) => (result = r));
+
+      httpMock
+        .expectOne(`${base()}/catalog-match`)
+        .flush(null, { status: 204, statusText: 'No Content' });
+      expect(result).toBeNull();
+    });
+
+    it('addBarcode posts to the spool', () => {
+      let result: unknown;
+      service
+        .addBarcode('f1', { value: 'X004N86WD5', format: 'code128' })
+        .subscribe((r) => (result = r));
+
+      const req = httpMock.expectOne(`${base()}/f1/barcodes`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        value: 'X004N86WD5',
+        format: 'code128',
+      });
+      req.flush({ id: 7, value: 'X004N86WD5', format: 'code128' });
+      expect(result).toEqual(jasmine.objectContaining({ id: 7 }));
+    });
+
+    it('removeBarcode deletes it', () => {
+      let done = false;
+      service.removeBarcode('f1', 7).subscribe(() => (done = true));
+
+      const req = httpMock.expectOne(`${base()}/f1/barcodes/7`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null, { status: 204, statusText: 'No Content' });
+      expect(done).toBeTrue();
+    });
+  });
 });

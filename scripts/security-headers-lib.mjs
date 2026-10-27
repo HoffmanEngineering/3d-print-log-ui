@@ -256,6 +256,8 @@ export const REQUIRED_CSP_SOURCES = {
     'https://www.google.com',
     // documentation.component.ts injects https://www.youtube.com/iframe_api.
     'https://www.youtube.com',
+    // Label scanning runs Tesseract's WebAssembly build on the phone (label-ocr.ts).
+    "'wasm-unsafe-eval'",
   ],
   'style-src': [
     "'self'",

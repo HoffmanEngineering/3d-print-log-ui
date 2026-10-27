@@ -117,3 +117,75 @@ app-filament-list[hidden] {
     font-weight: 500;
   }
 }
+
+.label-hint {
+  margin: 8px 0 0;
+  color: var(--app-text-secondary);
+  text-align: center;
+}
+
+.label-matches,
+.label-remember {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.label-matches__title {
+  margin: 4px 0 0;
+  font-weight: 500;
+  text-align: center;
+}
+
+.label-matches__rows {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.label-matches__rows li + li {
+  margin-top: 8px;
+}
+
+.label-match {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--mat-divider-color);
+  border-radius: 8px;
+  background: none;
+  color: var(--app-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.label-match:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.label-match__reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+}
+
+.label-match__reason {
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--app-surface-container);
+  color: var(--app-text-secondary);
+  font-size: 12px;
+}
+
+.label-matches__actions {
+  display: flex;
+  gap: 8px;
+}

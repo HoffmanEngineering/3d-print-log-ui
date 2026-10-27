@@ -3,12 +3,11 @@
   <button
     mat-icon-button
     (click)="toggleViewMode()"
-    [matTooltip]="viewMode() === 'list' ? 'Scan QR Code' : 'Show List'"
+    [matTooltip]="viewMode() === 'list' ? 'Scan a label' : 'Show List'"
+    [attr.aria-label]="viewMode() === 'list' ? 'Scan a label' : 'Show List'"
     class="scan-toggle-button"
   >
-    <mat-icon>{{
-      viewMode() === 'list' ? 'qr_code_scanner' : 'list'
-    }}</mat-icon>
+    <mat-icon>{{ viewMode() === 'list' ? 'photo_camera' : 'list' }}</mat-icon>
   </button>
 </div>
 
@@ -91,7 +90,100 @@
       </div>
     }
     @if (!scanError()) {
-      <app-qr-scanner (scanned)="handleQrScanned($event)"></app-qr-scanner>
+      <app-label-scanner
+        [paused]="loading()"
+        (ownLabel)="handleOwnLabel($event)"
+        (barcodesChanged)="handleLabelBarcodes($event)"
+        (photo)="handleLabelPhoto($event)"
+        (unavailable)="cameraUnavailable()"
+      />
+      @if (labelHint(); as hint) {
+        <p class="label-hint" role="status">{{ hint }}</p>
+      }
+    }
+  }
+  @if (viewMode() === 'matches') {
+    @if (rememberFor(); as row) {
+      <div class="label-remember">
+        <p class="label-matches__title">
+          {{ row.filament?.displayName ?? 'Material' }}
+        </p>
+        <mat-checkbox
+          data-testid="label-remember"
+          [checked]="remember()"
+          (change)="remember.set($event.checked)"
+          >Remember this barcode for this spool</mat-checkbox
+        >
+        <div class="label-matches__actions">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            data-testid="label-remember-confirm"
+            (click)="confirmLabelMatch()"
+          >
+            Select
+          </button>
+          <button mat-button type="button" (click)="rememberFor.set(null)">
+            Back
+          </button>
+        </div>
+      </div>
+    } @else if (labelMatches().length === 0) {
+      <div class="label-matches label-matches--empty">
+        <p class="label-matches__title" role="status">No matching spools</p>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="label-back"
+          (click)="backToSearch()"
+        >
+          Back to search
+        </button>
+      </div>
+    } @else {
+      <div class="label-matches">
+        <p class="label-matches__title">Is it one of these?</p>
+        <ul
+          class="label-matches__rows"
+          aria-label="Spools that match the label"
+        >
+          @for (row of labelMatches(); track row.filamentId) {
+            <li>
+              <button
+                type="button"
+                class="label-match"
+                data-testid="label-match-row"
+                [disabled]="!row.filament"
+                (click)="pickLabelMatch(row)"
+              >
+                @if (row.filament; as filament) {
+                  <app-filament-color-swatch
+                    [filament]="filament"
+                    [decorative]="true"
+                  />
+                }
+                <span class="label-match__name">{{
+                  row.filament?.displayName ?? 'Material'
+                }}</span>
+                <span class="label-match__reasons">
+                  @for (reason of row.reasons; track reason) {
+                    <span class="label-match__reason">{{ reason }}</span>
+                  }
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+        <button
+          mat-button
+          type="button"
+          data-testid="label-back"
+          (click)="backToSearch()"
+        >
+          Back to search
+        </button>
+      </div>
     }
   }
   @if (loading()) {

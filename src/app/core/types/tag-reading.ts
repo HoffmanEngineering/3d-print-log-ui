@@ -40,6 +40,15 @@ export interface CatalogMatch {
   /** g/cm³. Absent from an API older than the density field. */
   densityGramPerCubicCm?: number | null;
   source: 'SpoolmanDB';
+  /** °C, when SpoolmanDB has them. Absent from an API older than label scanning. */
+  extruderTempMinC?: number | null;
+  extruderTempMaxC?: number | null;
+  extruderTempC?: number | null;
+  bedTempC?: number | null;
+  /** The product's material, net weight (g) and diameter (mm). Absent from an older API. */
+  material?: string | null;
+  weightG?: number | null;
+  diameterMm?: number | null;
 }
 
 export type TagSuggestionReason =

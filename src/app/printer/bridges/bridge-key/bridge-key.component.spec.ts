@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { BRIDGE_KEY_PINS_STORAGE_KEY } from 'src/app/core/services/bridge-key-pins.service';
 import { Bridge } from 'src/app/core/services/bridges.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   OTHER_BRIDGE_KEY,
   TEST_BRIDGE_KEY,
@@ -15,13 +17,29 @@ describe('BridgeKeyComponent', () => {
   async function create(b: Bridge, ready: string) {
     await TestBed.configureTestingModule({
       imports: [BridgeKeyComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+        },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(BridgeKeyComponent);
     fixture.componentRef.setInput('bridge', b);
     confirmed = [];
     fixture.componentInstance.confirm.subscribe((f) => confirmed.push(f));
     await until(() => !!byTestId(ready));
+  }
+
+  beforeEach(() => localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY));
+  afterEach(() => localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY));
+
+  function pinBefore(fingerprint: string): void {
+    localStorage.setItem(
+      BRIDGE_KEY_PINS_STORAGE_KEY,
+      JSON.stringify({ '42': fingerprint })
+    );
   }
 
   async function until(condition: () => boolean): Promise<void> {
@@ -140,5 +158,41 @@ describe('BridgeKeyComponent', () => {
     fixture.detectChanges();
     byTestId('bridge-key-confirm')!.click();
     expect(confirmed).toEqual([]);
+  });
+
+  it('warns when the key changed without confirmation in this browser', async () => {
+    pinBefore(OTHER_BRIDGE_KEY.fingerprint);
+    await create(bridge(), 'key-changed');
+    expect(byTestId('key-changed-now')!.textContent).toContain(
+      TEST_BRIDGE_KEY.short
+    );
+    byTestId('key-changed-accept')!.click();
+    fixture.detectChanges();
+    expect(byTestId('key-changed')).toBeNull();
+  });
+
+  it('does not warn without a pin, or with a matching one', async () => {
+    pinBefore(TEST_BRIDGE_KEY.fingerprint);
+    await create(bridge(), 'bridge-key-current');
+    expect(byTestId('key-changed')).toBeNull();
+  });
+
+  it('keeps warning about a throttled bridge with no key pending', async () => {
+    await create(bridge({ keyChangesThrottled: true }), 'bridge-key-throttled');
+    expect(byTestId('bridge-key-throttled')!.textContent).toContain(
+      'keeps changing'
+    );
+    expect(byTestId('bridge-key-pending')).toBeNull();
+  });
+
+  it('says this browser cannot encrypt here, not that the key is invalid', async () => {
+    spyOnProperty(Crypto.prototype, 'subtle', 'get').and.returnValue(
+      undefined as unknown as SubtleCrypto
+    );
+    await create(bridge(), 'bridge-key-unavailable');
+    expect(byTestId('bridge-key-unavailable')!.textContent).toContain(
+      "can't encrypt here"
+    );
+    expect(byTestId('bridge-key-invalid')).toBeNull();
   });
 });

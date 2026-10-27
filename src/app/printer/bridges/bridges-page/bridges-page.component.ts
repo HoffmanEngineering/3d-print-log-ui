@@ -23,6 +23,7 @@ import {
   filter,
   finalize,
   forkJoin,
+  from,
   map,
   of,
   switchMap,
@@ -34,6 +35,8 @@ import {
   DiscoveredPrinter,
   DiscoveredPrinterState,
 } from 'src/app/core/services/bridges.service';
+import { importBridgeKey } from 'src/app/core/crypto/credential-sealing';
+import { BridgeKeyPinsService } from 'src/app/core/services/bridge-key-pins.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
@@ -99,6 +102,7 @@ export class BridgesPageComponent {
   private readonly logging = inject(LoggingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly polling = inject(BRIDGES_POLLING);
+  private readonly pins = inject(BridgeKeyPinsService);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly skeleton = new DeferredSkeletonController();
   private readonly reload$ = new Subject<void>();
@@ -362,11 +366,27 @@ export class BridgesPageComponent {
     this.service
       .confirmKey(bridge.id, fingerprint)
       .pipe(
+        // Check the key that came back is the one the user compared, from its own bytes.
+        switchMap((updated) =>
+          from(servedFingerprint(updated)).pipe(
+            map((served) => ({ updated, served }))
+          )
+        ),
         finalize(() => this.confirming.set(null)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (updated) => {
+        next: ({ updated, served }) => {
+          // The user compared this fingerprint with the bridge: it is the one to trust here.
+          this.pins.pin(bridge.id, fingerprint);
+          if (served !== fingerprint) {
+            this.toastr.error(
+              "3D Print Log returned a different key than the one you confirmed. Don't enter any credentials: compare the key on the card with printlog-bridge status."
+            );
+            this.logging.logEvent('Bridges_KeyConfirmMismatch', {});
+            this.load();
+            return;
+          }
           this.replaceBridge(updated);
           this.toastr.success(
             hadKey
@@ -425,6 +445,18 @@ export class BridgesPageComponent {
             }
       )
     );
+  }
+}
+
+/** The fingerprint of the key a bridge now serves, computed here, or null when it has none. */
+async function servedFingerprint(bridge: Bridge): Promise<string | null> {
+  if (!bridge.publicKey) {
+    return null;
+  }
+  try {
+    return (await importBridgeKey(bridge.publicKey)).fingerprint;
+  } catch {
+    return null;
   }
 }
 

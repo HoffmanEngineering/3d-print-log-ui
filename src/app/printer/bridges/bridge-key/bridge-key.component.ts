@@ -27,8 +27,10 @@ import {
   importBridgeKey,
   shortFingerprint,
 } from 'src/app/core/crypto/credential-sealing';
+import { BridgeKeyPinsService } from 'src/app/core/services/bridge-key-pins.service';
 import { Bridge } from 'src/app/core/services/bridges.service';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
+import { BridgeKeyChangedComponent } from '../bridge-key-changed/bridge-key-changed.component';
 import { bridgeLabel } from '../bridge-utils';
 
 /** A key as this page computed it: the fingerprint of its own bytes, or why there is none. */
@@ -36,6 +38,8 @@ type KeyInfo =
   | { status: 'loading' }
   | { status: 'none' }
   | { status: 'invalid' }
+  /** No WebCrypto here: an insecure context or a very old browser. */
+  | { status: 'unavailable' }
   | { status: 'ready'; fingerprint: string; short: string; full: string };
 
 function keyInfo(publicKey: string | null): Observable<KeyInfo> {
@@ -43,7 +47,7 @@ function keyInfo(publicKey: string | null): Observable<KeyInfo> {
     return of({ status: 'none' as const });
   }
   if (!canSealCredentials()) {
-    return of({ status: 'invalid' as const });
+    return of({ status: 'unavailable' as const });
   }
   return from(importBridgeKey(publicKey)).pipe(
     map(({ fingerprint }) => ({
@@ -72,10 +76,17 @@ function ready(info: KeyInfo) {
   templateUrl: './bridge-key.component.html',
   styleUrl: './bridge-key.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, RouterLink, LocaleDatePipe],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    RouterLink,
+    LocaleDatePipe,
+    BridgeKeyChangedComponent,
+  ],
 })
 export class BridgeKeyComponent {
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly pins = inject(BridgeKeyPinsService);
 
   readonly bridge = input.required<Bridge>();
   /** A confirmation is in flight. */
@@ -98,6 +109,17 @@ export class BridgeKeyComponent {
   /** The computed fingerprints, when the key imported. */
   protected readonly currentPrint = computed(() => ready(this.current()));
   protected readonly pendingPrint = computed(() => ready(this.pending()));
+
+  /**
+   * The served key's fingerprint when it isn't the one this browser last confirmed or sealed to
+   * (and so didn't change through this browser's confirmation), else null. No pin: nothing to
+   * compare.
+   */
+  protected readonly keyChanged = computed(() => {
+    const served = this.currentPrint()?.fingerprint;
+    const pinned = this.pins.pinned(this.bridge().id);
+    return served && pinned && served !== pinned ? served : null;
+  });
 
   protected readonly hasPending = computed(
     () => !!this.bridge().pendingPublicKey

@@ -11,6 +11,7 @@ import { provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of, throwError } from 'rxjs';
 import { BridgesService } from 'src/app/core/services/bridges.service';
+import { BRIDGE_KEY_PINS_STORAGE_KEY } from 'src/app/core/services/bridge-key-pins.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterCatalogService } from 'src/app/core/services/printer-catalog.service';
 import {
@@ -200,6 +201,25 @@ describe('BridgeConnectDialogComponent', () => {
     expect(dialogRef.close).toHaveBeenCalledWith(
       jasmine.objectContaining({ id: 7 })
     );
+  });
+
+  it('holds the credential step back when the key changed without confirmation here', async () => {
+    localStorage.setItem(
+      BRIDGE_KEY_PINS_STORAGE_KEY,
+      JSON.stringify({ '42': OTHER_BRIDGE_KEY.fingerprint })
+    );
+    bridges.connect.and.returnValue(of(bridgePrinter({ id: 7 })));
+    await create();
+    submit();
+    await until(() => !!byTestId('key-changed'));
+    expect(byTestId('key-changed')!.textContent).toContain(
+      'changed without your confirmation in this browser'
+    );
+    expect(byTestId('credential-access_code')).toBeNull();
+    byTestId('key-changed-accept')!.click();
+    fixture.detectChanges();
+    expect(byTestId('credential-access_code')).not.toBeNull();
+    localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY);
   });
 
   it('shows the config-file section for a bridge without a key', async () => {

@@ -1,3 +1,33 @@
+@if (throttled()) {
+  <p
+    class="danger throttled-alert"
+    role="alert"
+    data-testid="bridge-key-throttled"
+  >
+    <mat-icon aria-hidden="true">gpp_maybe</mat-icon>
+    <span>
+      <strong>This bridge's key keeps changing.</strong> It reported more new
+      keys today than 3D Print Log accepts, so
+      @if (hasPending()) {
+        the new key below is held
+      } @else {
+        any new key it reports is held
+      }
+      until tomorrow. A bridge doesn't do that by itself: someone else may have
+      its device token. Check the bridge before you confirm anything, and if you
+      don't recognize this, revoke it under
+      <a routerLink="/settings" fragment="paired-devices">Paired devices</a>.
+    </span>
+  </p>
+}
+@if (keyChanged(); as fingerprint) {
+  <app-bridge-key-changed
+    class="key-changed"
+    context="card"
+    [bridgeId]="bridge().id"
+    [fingerprint]="fingerprint"
+  />
+}
 @if (hasPending()) {
   <section
     class="pending"
@@ -23,21 +53,6 @@
         Printer credentials can be entered in the app once you do.
       }
     </p>
-
-    @if (throttled()) {
-      <p class="danger" role="alert" data-testid="bridge-key-throttled">
-        <mat-icon aria-hidden="true">gpp_maybe</mat-icon>
-        <span>
-          <strong>This bridge's key keeps changing.</strong> It reported more
-          new keys today than 3D Print Log accepts, so the key below is held
-          until tomorrow. A bridge doesn't do that by itself: someone else may
-          have its device token. Check the bridge before you confirm anything,
-          and if you don't recognize this, revoke it under
-          <a routerLink="/settings" fragment="paired-devices">Paired devices</a
-          >.
-        </span>
-      </p>
-    }
 
     @switch (pending().status) {
       @case ('ready') {
@@ -95,6 +110,15 @@
           </button>
         </div>
       }
+      @case ('unavailable') {
+        <p class="danger" data-testid="bridge-key-unavailable">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span
+            >This browser can't encrypt here, so the new key can't be checked or
+            confirmed. Use an up-to-date browser over https.</span
+          >
+        </p>
+      }
       @case ('invalid') {
         <p class="danger" data-testid="bridge-key-invalid">
           <mat-icon aria-hidden="true">error_outline</mat-icon>
@@ -135,6 +159,15 @@
           >
           to enter them in the app.
         </span>
+      </p>
+    }
+    @case ('unavailable') {
+      <p class="line muted" data-testid="bridge-key-unavailable">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <span
+          >This browser can't encrypt here, so it can't check this bridge's key
+          or send credentials. Use an up-to-date browser over https.</span
+        >
       </p>
     }
     @case ('invalid') {

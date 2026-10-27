@@ -49,7 +49,9 @@ import {
   BridgePrinterSecret,
   BridgesService,
 } from 'src/app/core/services/bridges.service';
+import { BridgeKeyPinsService } from 'src/app/core/services/bridge-key-pins.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { BridgeKeyChangedComponent } from '../bridge-key-changed/bridge-key-changed.component';
 import {
   appPrinterSnippet,
   bridgeErrorCode,
@@ -89,6 +91,8 @@ interface FieldRow {
   issue: string | null;
   /** A username isn't secret; everything else is a password input. */
   secretInput: boolean;
+  /** Steers password managers away: never offer to save a printer's secret as a login. */
+  autocomplete: 'one-time-code' | 'new-password' | 'off';
 }
 
 /**
@@ -141,6 +145,7 @@ export function sealingKeyState(
     MatIconModule,
     MatInputModule,
     RouterLink,
+    BridgeKeyChangedComponent,
   ],
 })
 export class BridgeCredentialsComponent {
@@ -150,6 +155,7 @@ export class BridgeCredentialsComponent {
   private readonly clipboard = inject(Clipboard);
   private readonly destroyRef = inject(DestroyRef);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly pins = inject(BridgeKeyPinsService);
 
   readonly bridge = input.required<Bridge>();
   readonly entry = input.required<BridgePrinter>();
@@ -195,6 +201,15 @@ export class BridgeCredentialsComponent {
     return key ? groupedFingerprint(key.fingerprint) : '';
   });
   protected readonly bridgeName = computed(() => bridgeLabel(this.bridge()));
+  /**
+   * The computed fingerprint when it isn't the one this browser last confirmed or sealed to;
+   * entry waits until the user compares it and says it matches. No pin: nothing to compare.
+   */
+  protected readonly keyChanged = computed(() => {
+    const served = this.key()?.fingerprint;
+    const pinned = this.pins.pinned(this.bridge().id);
+    return served && pinned && served !== pinned ? served : null;
+  });
   protected readonly hasPendingKey = computed(
     () => !!this.bridge().pendingPublicKey
   );
@@ -229,6 +244,12 @@ export class BridgeCredentialsComponent {
           ? credentialIssueMessage(entry.kind, field, issue.code)
           : null,
         secretInput: field !== 'username',
+        autocomplete:
+          field === 'access_code'
+            ? 'one-time-code'
+            : field === 'username'
+              ? 'off'
+              : 'new-password',
       };
     });
   });
@@ -254,15 +275,15 @@ export class BridgeCredentialsComponent {
     return `credential-${this.bridge().id}-${this.entry().id}-${field}`;
   }
 
-  /** A plain form (no form directive), so the browser must not submit it itself. */
-  protected submit(event: Event, field: string): void {
+  /** Enter in a field saves it (there is no form to submit). */
+  protected enter(event: Event, field: string): void {
     event.preventDefault();
     this.save(field);
   }
 
   protected save(field: string): void {
     const key = this.key();
-    if (!key || this.busy() !== null) {
+    if (!key || this.keyChanged() || this.busy() !== null) {
       return;
     }
     const control = this.controlFor(field);
@@ -322,6 +343,7 @@ export class BridgeCredentialsComponent {
             this.reloadBridge.emit();
             return;
           }
+          this.pins.pin(bridge.id, keyFingerprint);
           this.setMessage(
             field,
             null,

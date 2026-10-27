@@ -16,11 +16,16 @@ import {
   DiscoveredPrinterState,
 } from 'src/app/core/services/bridges.service';
 import { ConnectionStatus } from 'src/app/core/services/connection.service';
+import {
+  BRIDGE_KEY_PINS_STORAGE_KEY,
+  BridgeKeyPinsService,
+} from 'src/app/core/services/bridge-key-pins.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { By } from '@angular/platform-browser';
 import { BridgeCardComponent } from '../bridge-card/bridge-card.component';
 import {
   OTHER_BRIDGE_KEY,
+  TEST_BRIDGE_KEY,
   bridge,
   bridgePrinter,
   discovered,
@@ -54,7 +59,10 @@ describe('BridgesPageComponent', () => {
     });
   }
 
+  afterEach(() => localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY));
+
   beforeEach(() => {
+    localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY);
     service = jasmine.createSpyObj<BridgesService>('BridgesService', [
       'list',
       'discovered',
@@ -280,7 +288,19 @@ describe('BridgesPageComponent', () => {
     ].componentInstance as BridgeCardComponent;
   }
 
-  it('confirms a pending key with the fingerprint the card computed, then reloads', async () => {
+  /** WebCrypto's promises aren't tracked by Angular: render until the condition holds. */
+  async function until(condition: () => boolean): Promise<void> {
+    for (let i = 0; i < 100; i++) {
+      fixture.detectChanges();
+      if (condition()) {
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    fail('timed out');
+  }
+
+  it('confirms a pending key with the fingerprint the card computed, checks what came back, pins it and reloads', async () => {
     const pending = bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey });
     service.list.and.returnValue(of([pending]));
     service.confirmKey.and.returnValue(
@@ -288,7 +308,7 @@ describe('BridgesPageComponent', () => {
     );
     await create();
     card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
-    fixture.detectChanges();
+    await until(() => toastr.success.calls.count() === 1);
     expect(service.confirmKey).toHaveBeenCalledOnceWith(
       42,
       OTHER_BRIDGE_KEY.fingerprint
@@ -300,6 +320,36 @@ describe('BridgesPageComponent', () => {
       hadKey: true,
       throttled: false,
     });
+    expect(TestBed.inject(BridgeKeyPinsService).pinned(42)).toBe(
+      OTHER_BRIDGE_KEY.fingerprint
+    );
+    expect(service.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('refuses a confirmation answer that carries a different key than the one confirmed', async () => {
+    service.list.and.returnValue(
+      of([bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey })])
+    );
+    service.confirmKey.and.returnValue(
+      of(bridge({ publicKey: TEST_BRIDGE_KEY.publicKey }))
+    );
+    await create();
+    card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
+    await until(() => toastr.error.calls.count() === 1);
+    expect(toastr.error.calls.mostRecent().args[0]).toContain('different key');
+    expect(toastr.success).not.toHaveBeenCalled();
+    expect(logging.logEvent).toHaveBeenCalledWith(
+      'Bridges_KeyConfirmMismatch',
+      {}
+    );
+    expect(logging.logEvent).not.toHaveBeenCalledWith(
+      'Bridges_KeyConfirmed',
+      jasmine.anything()
+    );
+    // The user compared OTHER with the bridge: pin that, so the key served instead is flagged.
+    expect(TestBed.inject(BridgeKeyPinsService).pinned(42)).toBe(
+      OTHER_BRIDGE_KEY.fingerprint
+    );
     expect(service.list).toHaveBeenCalledTimes(2);
   });
 

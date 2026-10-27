@@ -1,0 +1,44 @@
+<section class="changed" role="alert" data-testid="key-changed">
+  <p class="title">
+    <mat-icon aria-hidden="true">gpp_maybe</mat-icon>
+    <strong
+      >This bridge's key changed without your confirmation in this
+      browser.</strong
+    >
+  </p>
+  <p>
+    Compare it with <code>printlog-bridge status</code> before entering
+    anything.
+  </p>
+  <dl class="prints">
+    @if (previous(); as old) {
+      <div>
+        <dt>Last confirmed here</dt>
+        <dd class="fingerprint">{{ old }}</dd>
+      </div>
+    }
+    <div>
+      <dt>Key now</dt>
+      <dd class="fingerprint" data-testid="key-changed-now">{{ short() }}</dd>
+    </div>
+  </dl>
+  <details class="full">
+    <summary>The whole fingerprint</summary>
+    <span class="fingerprint">{{ full() }}</span>
+  </details>
+  <p class="hint">
+    If the bridge shows something else, don't enter anything, and revoke it
+    under Paired devices in Settings.
+  </p>
+  <div class="actions">
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      data-testid="key-changed-accept"
+      (click)="accept()"
+    >
+      It matches
+    </button>
+  </div>
+</section>

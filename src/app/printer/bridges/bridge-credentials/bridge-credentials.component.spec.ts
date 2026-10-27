@@ -18,6 +18,10 @@ import {
   BridgePrinter,
   BridgesService,
 } from 'src/app/core/services/bridges.service';
+import {
+  BRIDGE_KEY_PINS_STORAGE_KEY,
+  BridgeKeyPinsService,
+} from 'src/app/core/services/bridge-key-pins.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   OTHER_BRIDGE_KEY,
@@ -65,6 +69,14 @@ describe('BridgeCredentialsComponent', () => {
     await until(
       () =>
         !!byTestId('credentials-key') || !!byTestId('credentials-unavailable')
+    );
+  }
+
+  /** A pin from an earlier visit, for bridge 42. */
+  function pinBefore(fingerprint: string): void {
+    localStorage.setItem(
+      BRIDGE_KEY_PINS_STORAGE_KEY,
+      JSON.stringify({ '42': fingerprint })
     );
   }
 
@@ -128,6 +140,7 @@ describe('BridgeCredentialsComponent', () => {
   }
 
   beforeEach(() => {
+    localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY);
     service = jasmine.createSpyObj<BridgesService>('BridgesService', [
       'setSecret',
       'clearSecret',
@@ -152,7 +165,7 @@ describe('BridgeCredentialsComponent', () => {
     expect(el().textContent).not.toContain('dead');
   });
 
-  it('uses password inputs with autocomplete off, a text input for the username', async () => {
+  it('keeps secrets away from password managers, a text input for the username', async () => {
     await create(
       bridge(),
       bridgePrinter({
@@ -163,9 +176,67 @@ describe('BridgeCredentialsComponent', () => {
     expect(input('password').type).toBe('password');
     expect(input('api_key').type).toBe('password');
     expect(input('username').type).toBe('text');
-    for (const name of ['password', 'username', 'api_key']) {
-      expect(input(name).getAttribute('autocomplete')).toBe('off');
-    }
+    expect(input('password').getAttribute('autocomplete')).toBe('new-password');
+    expect(input('api_key').getAttribute('autocomplete')).toBe('new-password');
+    expect(input('username').getAttribute('autocomplete')).toBe('off');
+    // No <form>: a submitted form with a password field is what prompts "save password".
+    expect(el().querySelector('form')).toBeNull();
+  });
+
+  it('uses a one-time-code input for a Bambu access code', async () => {
+    await create();
+    expect(input('access_code').type).toBe('password');
+    expect(input('access_code').getAttribute('autocomplete')).toBe(
+      'one-time-code'
+    );
+  });
+
+  it('saves on Enter in the input', async () => {
+    service.setSecret.and.returnValue(
+      of(stored(bridgePrinter(), 'access_code'))
+    );
+    await create();
+    type('access_code', '12345678');
+    input('access_code').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+    );
+    await until(() => service.setSecret.calls.count() === 1);
+    expect(input('access_code').value).toBe('');
+  });
+
+  it('pins the fingerprint it sealed to', async () => {
+    service.setSecret.and.returnValue(
+      of(stored(bridgePrinter(), 'access_code'))
+    );
+    await create();
+    type('access_code', '12345678');
+    save('access_code');
+    await until(() => !!byTestId('credential-saved'));
+    expect(TestBed.inject(BridgeKeyPinsService).pinned(42)).toBe(
+      TEST_BRIDGE_KEY.fingerprint
+    );
+  });
+
+  it('holds entry back until the user compares a key that changed without confirmation here', async () => {
+    pinBefore(OTHER_BRIDGE_KEY.fingerprint);
+    await create();
+    expect(byTestId('key-changed')).not.toBeNull();
+    expect(el().querySelector('[data-testid="credential-input"]')).toBeNull();
+
+    byTestId('key-changed-accept')!.click();
+    fixture.detectChanges();
+    expect(byTestId('key-changed')).toBeNull();
+    expect(input('access_code')).not.toBeNull();
+    expect(TestBed.inject(BridgeKeyPinsService).pinned(42)).toBe(
+      TEST_BRIDGE_KEY.fingerprint
+    );
+  });
+
+  it('shows no warning when the pin matches, or there is none', async () => {
+    pinBefore(TEST_BRIDGE_KEY.fingerprint);
+    await create();
+    expect(byTestId('key-changed')).toBeNull();
+    expect(input('access_code')).not.toBeNull();
   });
 
   it('seals what was typed (trimmed) to the bridge key, sends the computed fingerprint and forgets the value', async () => {
@@ -305,7 +376,8 @@ describe('BridgeCredentialsComponent', () => {
       byTestId('credential-state', field(name))!.textContent!.trim();
     expect(state('password')).toBe('Set');
     expect(state('username')).toContain('old key');
-    expect(state('api_key')).toContain('another key');
+    expect(state('api_key')).toContain('compare the key');
+    expect(state('api_key')).not.toContain('enter it again');
     expect(
       byTestId('credential-issue', field('password'))!.textContent
     ).toContain('The printer refused this password');
@@ -364,4 +436,5 @@ describe('BridgeCredentialsComponent', () => {
     const other = await importBridgeKey(OTHER_BRIDGE_KEY.publicKey);
     expect(other.fingerprint).toBe(OTHER_BRIDGE_KEY.fingerprint);
   });
+  afterEach(() => localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY));
 });

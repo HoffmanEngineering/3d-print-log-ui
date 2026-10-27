@@ -106,7 +106,12 @@ describe('PairedDevicesComponent', () => {
   }
 
   it('lists each device with its name, dates and scopes in plain words', () => {
-    service.list.and.returnValue(of([voron, ender]));
+    // Stamped here, not at module load: the suite can take minutes to reach this test.
+    const recent = {
+      ...voron,
+      lastUsedAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+    };
+    service.list.and.returnValue(of([recent, ender]));
     create();
 
     expect(el().textContent).toContain('Paired devices');

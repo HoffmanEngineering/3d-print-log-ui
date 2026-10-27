@@ -150,8 +150,18 @@ export function buildConversionFallbackTooltip(
   return `${cap} unavailable — showing source unit (${sourceLabel})`;
 }
 
-/** Preferred-unit display for the actual (non-estimated) filament data only. */
+/**
+ * Preferred-unit display for the actual filament data only. Marked estimated when the actual
+ * figure itself is the slicer's estimate (`actualIsEstimate`, api#282).
+ */
 export function getActualPreferredDisplay(
+  fu: PrintFilamentSummaryDto,
+  preferredUnit: PrintFilamentSourceMeasurement
+): FilamentPreferredDisplayResult | null {
+  return markEstimatedActual(fu, actualPreferredDisplay(fu, preferredUnit));
+}
+
+function actualPreferredDisplay(
   fu: PrintFilamentSummaryDto,
   preferredUnit: PrintFilamentSourceMeasurement
 ): FilamentPreferredDisplayResult | null {
@@ -265,6 +275,27 @@ export function getEstimatedPreferredDisplay(
 }
 
 export function getFilamentPreferredDisplay(
+  fu: PrintFilamentSummaryDto,
+  preferredUnit: PrintFilamentSourceMeasurement
+): FilamentPreferredDisplayResult | null {
+  return markEstimatedActual(fu, preferredDisplay(fu, preferredUnit));
+}
+
+/**
+ * Every result built from the actual figure is `isEstimated: false`, and every one built from
+ * the estimate is `true`, so an actual figure a connector reported as an estimate only needs the
+ * flag turned on.
+ */
+function markEstimatedActual(
+  fu: PrintFilamentSummaryDto,
+  result: FilamentPreferredDisplayResult | null
+): FilamentPreferredDisplayResult | null {
+  return result && !result.isEstimated && fu.actualIsEstimate === true
+    ? { ...result, isEstimated: true }
+    : result;
+}
+
+function preferredDisplay(
   fu: PrintFilamentSummaryDto,
   preferredUnit: PrintFilamentSourceMeasurement
 ): FilamentPreferredDisplayResult | null {

@@ -12,6 +12,14 @@
                 @if (c.agentVersion) {
                   · <span class="version">version {{ c.agentVersion }}</span>
                 }
+                @if (c.bridgeId) {
+                  · via
+                  <a
+                    routerLink="/printers/bridges"
+                    data-testid="connection-bridge"
+                    >{{ bridgeName(c.bridgeId) }}</a
+                  >
+                }
               </span>
               @if (software(c); as parts) {
                 @if (parts.length) {
@@ -71,6 +79,12 @@
       <p class="hint intro">
         Log this printer's prints automatically with printlog-bridge, a small
         program that runs on the printer or on another computer on your network.
+      </p>
+      <p class="hint">
+        Already running a bridge? Connect this printer from
+        <a routerLink="/printers/bridges" data-testid="bridge-setup-bridges"
+          >Bridges</a
+        >, where it lists the printers it found on your network.
       </p>
       @if (!setupOpen()) {
         <button

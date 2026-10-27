@@ -1,0 +1,215 @@
+@if (connected(); as entry) {
+  <h2 mat-dialog-title>One more step on the bridge</h2>
+  <mat-dialog-content>
+    <p data-testid="connect-done">
+      <strong>{{ entry.printerName }}</strong> is connected to {{ bridgeName }}.
+      The bridge needs the printer's {{ credential() }}, which isn't sent from
+      the app yet.
+    </p>
+    <p>
+      Add this section to the bridge's config file,
+      <code>printlog-bridge.cfg</code> (in Docker, in the bridge's data folder),
+      with the
+      {{ credential() }}
+      @if (entry.kind === 'bambu') {
+        from the printer's LAN Only Mode page
+      } @else {
+        from the printer's Settings &gt; Network &gt; PrusaLink screen
+      }
+      in place of the example:
+    </p>
+    <pre data-testid="connect-snippet"><code>{{ snippet() }}</code></pre>
+    <p class="hint">
+      Save the file and the bridge starts watching within a few seconds, with no
+      restart. Until then, <code>printlog-bridge status</code> says “App printer
+      {{ entry.id }} needs credentials”. A later release sends the
+      {{ credential() }} from the app, encrypted to the bridge.
+      <a routerLink="/docs/printlog-bridge-bridges" fragment="credentials"
+        >More about this</a
+      >.
+    </p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button
+      mat-stroked-button
+      type="button"
+      data-testid="connect-copy"
+      (click)="copySnippet()"
+    >
+      <mat-icon>content_copy</mat-icon>
+      Copy
+    </button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      data-testid="connect-finish"
+      (click)="done()"
+    >
+      Done
+    </button>
+  </mat-dialog-actions>
+} @else {
+  <h2 mat-dialog-title>
+    @if (discovered) {
+      Connect {{ discovered.name || discovered.model || 'this printer' }}
+    } @else {
+      Add a printer by address
+    }
+  </h2>
+  <form [formGroup]="form" (ngSubmit)="connect()">
+    <mat-dialog-content>
+      @if (discovered) {
+        <div class="found" data-testid="connect-found">
+          <mat-icon aria-hidden="true">print</mat-icon>
+          <div>
+            <div class="found-name">
+              {{ discovered.name || discovered.model || discovered.address }}
+            </div>
+            <div class="meta">
+              {{ kindLabel(discovered.kind) }}
+              @if (discovered.model && discovered.name) {
+                · {{ discovered.model }}
+              }
+              · {{ discoveredAddress }}
+            </div>
+            @if (discovered.serial) {
+              <div class="meta">Serial {{ discovered.serial }}</div>
+            }
+          </div>
+        </div>
+        <p class="hint">Found by {{ bridgeName }}.</p>
+      } @else {
+        <p class="hint">
+          For a printer {{ bridgeName }} can't find by itself, such as from
+          Docker Desktop or on another network it can reach.
+        </p>
+        <mat-form-field appearance="outline">
+          <mat-label>Printer type</mat-label>
+          <mat-select formControlName="kind" data-testid="connect-kind">
+            @for (k of kinds; track k.kind) {
+              <mat-option [value]="k.kind">{{ k.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <div class="address-row">
+          <mat-form-field appearance="outline" class="host">
+            <mat-label>Address</mat-label>
+            <input
+              matInput
+              formControlName="host"
+              data-testid="connect-host"
+              autocomplete="off"
+              placeholder="192.168.1.60 or mk4.local"
+            />
+            @if (form.controls.host.hasError('required')) {
+              <mat-error>Enter the printer's address.</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="port">
+            <mat-label>Port</mat-label>
+            <input
+              matInput
+              type="number"
+              inputmode="numeric"
+              formControlName="port"
+              data-testid="connect-port"
+              placeholder="Default"
+            />
+            @if (form.controls.port.invalid) {
+              <mat-error>1 to 65535</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        @if (kind() === 'bambu') {
+          <mat-form-field appearance="outline">
+            <mat-label>Serial number</mat-label>
+            <input
+              matInput
+              formControlName="serial"
+              data-testid="connect-serial"
+              autocomplete="off"
+            />
+            <mat-hint
+              >On the printer's sticker, or in Bambu Studio's device
+              list.</mat-hint
+            >
+            @if (form.controls.serial.invalid) {
+              <mat-error
+                >Letters, digits and . _ : - only (up to 64).</mat-error
+              >
+            }
+          </mat-form-field>
+          @if (
+            form.hasError('serialRequired') && form.controls.serial.touched
+          ) {
+            <p class="error-text" data-testid="connect-serial-required">
+              A Bambu Lab printer needs its serial number.
+            </p>
+          }
+        }
+      }
+
+      <p class="label" id="connect-printer-label">Log its prints to</p>
+      @if (printersPhase() === 'error') {
+        <p class="error-text">
+          We couldn't load your printers. Create a new one, or close this and
+          try again.
+        </p>
+      }
+      <div class="printer-row">
+        <mat-form-field appearance="outline" class="printer">
+          <mat-label>Your printer</mat-label>
+          <mat-select
+            formControlName="printerId"
+            data-testid="connect-printer"
+            aria-labelledby="connect-printer-label"
+          >
+            @for (o of printerOptions(); track o.id) {
+              <mat-option [value]="o.id">
+                {{ o.label }}
+                @if (o.watchedBy) {
+                  <span class="option-note">· on {{ o.watchedBy }}</span>
+                }
+              </mat-option>
+            }
+          </mat-select>
+          @if (form.controls.printerId.hasError('required')) {
+            <mat-error>Pick a printer, or create one.</mat-error>
+          }
+        </mat-form-field>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="connect-new-printer"
+          (click)="newPrinter()"
+        >
+          <mat-icon>add</mat-icon>
+          New printer
+        </button>
+      </div>
+      <p class="hint">
+        A printer can be watched by one bridge at a time. The prints it logs go
+        to the printer you pick here.
+      </p>
+
+      @if (error(); as message) {
+        <p class="error-text" role="alert" data-testid="connect-error">
+          {{ message }}
+        </p>
+      }
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" mat-dialog-close>Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        data-testid="connect-submit"
+        [disabled]="submitting()"
+      >
+        Connect
+      </button>
+    </mat-dialog-actions>
+  </form>
+}

@@ -446,4 +446,48 @@ describe('PrinterConnectionsComponent', () => {
         ?.getAttribute('type')
     ).toBe('button');
   });
+
+  describe('which bridge watches it', () => {
+    const bridges = `${environment.printLogApiUrl}/api/bridges`;
+
+    it('names the bridge and links to the Bridges screen', () => {
+      render([connection({ bridgeId: 42 })]);
+      httpMock
+        .expectOne(bridges)
+        .flush([{ id: 42, displayName: 'Garage NAS', deviceName: 'nas' }]);
+      fixture.detectChanges();
+
+      const via = rows()[0].querySelector('[data-testid="connection-bridge"]');
+      expect(squash(via)).toContain('Garage NAS');
+      expect(via?.getAttribute('href')).toBe('/printers/bridges');
+    });
+
+    it('says "a bridge" when the bridges cannot be loaded', () => {
+      render([connection({ bridgeId: 42 })]);
+      httpMock
+        .expectOne(bridges)
+        .flush('nope', { status: 404, statusText: 'Not Found' });
+      fixture.detectChanges();
+
+      const via = rows()[0].querySelector('[data-testid="connection-bridge"]');
+      expect(squash(via)).toContain('a bridge');
+    });
+
+    it('does not ask for bridges when no connection has one', () => {
+      render([connection({ bridgeId: null }), connection({ instanceId: 'b' })]);
+      httpMock.expectNone(bridges);
+      expect(
+        rows()[0].querySelector('[data-testid="connection-bridge"]')
+      ).toBeNull();
+    });
+
+    it('points a printer with no connection to the Bridges screen too', () => {
+      fixture.componentRef.setInput('category', fff);
+      render([]);
+      const link = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="bridge-setup-bridges"]'
+      );
+      expect(link?.getAttribute('href')).toBe('/printers/bridges');
+    });
+  });
 });

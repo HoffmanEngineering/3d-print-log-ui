@@ -60,6 +60,7 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [3D Print Log for Home Assistant](https://www.3dprintlog.com/docs/home-assistant): A HACS integration with printer, filament, maintenance and account entities, print events and actions.
 - [Install printlog-bridge on the printer](https://www.3dprintlog.com/docs/printlog-bridge-install): Local mode, as a systemd service, and connecting it with an API key.
 - [Run printlog-bridge in Docker](https://www.3dprintlog.com/docs/printlog-bridge-docker): Remote mode on a NAS, home server or Pi.
+- [printlog-bridge Bridges screen](https://www.3dprintlog.com/docs/printlog-bridge-bridges): Printers a bridge found on your network, connected in the app; adding by address; the interim access code section.
 - [printlog-bridge spool macros](https://www.3dprintlog.com/docs/printlog-bridge-spools): PRINTLOG_SET_SPOOL and PRINTLOG_CLEAR_SPOOL, by spool id or tag.
 - [Snapmaker U1](https://www.3dprintlog.com/docs/snapmaker-u1): Per-tool usage and spools from RFID tags with printlog-bridge.
 - [printlog-bridge for Bambu Lab](https://www.3dprintlog.com/docs/printlog-bridge-bambu): X1, P1, A1 and H2 over the printer's LAN connection, with the slicer's grams per AMS tray.

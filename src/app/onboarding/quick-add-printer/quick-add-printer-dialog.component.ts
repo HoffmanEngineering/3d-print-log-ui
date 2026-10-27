@@ -10,10 +10,14 @@ import { PrinterDetail } from '../../core/services/printer.service';
 import { QuickAddPrinterComponent } from './quick-add-printer.component';
 
 export interface QuickAddPrinterDialogData {
-  source: 'print-form' | 'checklist';
+  source: 'print-form' | 'checklist' | 'bridges';
   showEmailNotice: boolean;
   /** A catalog model to preselect, such as one detected from a slicer file. */
   initialModelId?: string;
+  /** A nickname to start with. */
+  initialName?: string;
+  /** Search text to start with when there is no `initialModelId`. */
+  initialSearch?: string;
 }
 
 const PHONE_QUERY = '(max-width: 599.98px)';
@@ -30,6 +34,8 @@ const PHONE_QUERY = '(max-width: 599.98px)';
         [showEmailNotice]="data.showEmailNotice"
         mode="dialog"
         [initialModelId]="data.initialModelId ?? null"
+        [initialName]="data.initialName ?? null"
+        [initialSearch]="data.initialSearch ?? null"
         (saved)="onSaved($event)"
       />
     </mat-dialog-content>

@@ -1,0 +1,279 @@
+// The theme is Material 2: colors come from the --app-* tokens and --mat-divider-color.
+
+// The printer page's Connections pills (print-status-badge's success/failed pairs).
+$online-bg: #e8f5e9;
+$online-fg: #2e7d32;
+$stale-bg: #ffebee;
+$stale-fg: #c62828;
+$dark-online-bg: rgba(46, 125, 50, 0.2);
+$dark-online-fg: #a5d6a7;
+$dark-stale-bg: rgba(198, 40, 40, 0.2);
+$dark-stale-fg: #ffcdd2;
+
+:host {
+  display: block;
+}
+
+.bridge {
+  padding: 16px;
+  border: 1px solid var(--mat-divider-color);
+  border-radius: 12px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.bridge-icon {
+  flex: none;
+  color: var(--app-primary);
+}
+
+.title {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.location {
+  color: var(--app-text-secondary);
+}
+
+.status {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: $online-bg;
+  color: $online-fg;
+
+  &.stale {
+    background: $stale-bg;
+    color: $stale-fg;
+  }
+}
+
+:host-context(html.dark-theme) .status {
+  background: $dark-online-bg;
+  color: $dark-online-fg;
+
+  &.stale {
+    background: $dark-stale-bg;
+    color: $dark-stale-fg;
+  }
+}
+
+.edit {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+
+  mat-form-field {
+    flex: 1 1 12rem;
+  }
+}
+
+.edit-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.notice {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--app-surface-container);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 8px 24px;
+  margin: 16px 0 0;
+
+  dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-text-secondary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+[data-testid='bridge-counts'] span,
+.update {
+  display: block;
+  font-size: 0.875rem;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+.group {
+  margin-top: 20px;
+
+  h3 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+.group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.scanning {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  color: var(--app-text-secondary);
+}
+
+.empty {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+.rows {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+
+  > li {
+    border-bottom: 1px solid var(--mat-divider-color);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 8px 0;
+}
+
+.row-icon {
+  flex: none;
+  color: var(--app-text-secondary);
+
+  &.new {
+    color: var(--app-primary);
+  }
+}
+
+.identity {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+  overflow-wrap: anywhere;
+
+  &.warn {
+    color: var(--app-error-text);
+  }
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-left: auto;
+}
+
+.snippet {
+  padding: 0 0 12px 36px;
+  font-size: 0.875rem;
+
+  p {
+    margin: 0 0 8px;
+  }
+
+  pre {
+    margin: 0;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--app-surface-container);
+    overflow-x: auto;
+  }
+}
+
+.ignored summary {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.foot {
+  margin: 20px 0 0;
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+time[title] {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  cursor: help;
+}
+
+@media (max-width: 599.98px) {
+  .bridge {
+    padding: 12px;
+  }
+
+  .snippet {
+    padding-left: 0;
+  }
+
+  .actions {
+    margin-left: 36px;
+  }
+}

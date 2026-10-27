@@ -1,0 +1,82 @@
+<div class="page">
+  <header class="page-head">
+    <h1>Bridges</h1>
+    <p class="intro">
+      printlog-bridge logs your printers' prints by itself. Each bridge you
+      paired is listed here with the printers it found on its network. It never
+      logs a printer you haven't connected.
+      <a routerLink="/docs/printlog-bridge-bridges">How this works</a>
+    </p>
+  </header>
+
+  @if (showSkeleton()) {
+    <div
+      class="skeleton app-skeleton-immediate"
+      aria-busy="true"
+      aria-label="Loading bridges"
+    >
+      <app-skeleton height="220px" />
+    </div>
+  } @else if (phase() === 'unavailable') {
+    <p class="notice" data-testid="bridges-unavailable">
+      The Bridges screen isn't available yet. Printers you log with
+      printlog-bridge show their connection on their own page.
+    </p>
+  } @else if (phase() === 'error') {
+    <div class="notice" data-testid="bridges-error">
+      <p>We couldn't load your bridges.</p>
+      <button mat-stroked-button type="button" (click)="load()">Retry</button>
+    </div>
+  } @else if (phase() === 'ready') {
+    @if (states().length === 0) {
+      <section class="empty" data-testid="bridges-empty">
+        <mat-icon class="empty-icon" aria-hidden="true">router</mat-icon>
+        <h2>No bridges yet</h2>
+        <p>
+          Run printlog-bridge on a NAS, home server or Raspberry Pi on your
+          printers' network (or on a Klipper printer), and pair it with
+          <code>printlog-bridge pair</code>. It shows up here after it first
+          checks in, with the printers it found.
+        </p>
+        <p>
+          In Docker, give it the host's network (<code>network_mode: host</code
+          >) so it can find printers. Docker Desktop can't, but you can still
+          add printers by address.
+        </p>
+        <p class="hint">
+          Already paired one? It checks in once it runs a release that finds
+          printers: update it, and it pairs again once by itself.
+        </p>
+        <div class="empty-actions">
+          <a
+            mat-flat-button
+            color="primary"
+            routerLink="/docs/printlog-bridge-docker"
+            >Set up a bridge</a
+          >
+          <a mat-button routerLink="/docs/printlog-bridge-bridges"
+            >About this screen</a
+          >
+        </div>
+      </section>
+    } @else {
+      <div class="cards">
+        @for (s of states(); track s.bridge.id) {
+          <app-bridge-card
+            data-testid="bridges-card"
+            [bridge]="s.bridge"
+            [discovered]="s.discovered"
+            [printers]="s.printers"
+            (rename)="rename(s.bridge, $event)"
+            (scan)="scan(s.bridge)"
+            (connect)="connect(s.bridge, $event)"
+            (ignore)="ignore(s.bridge, $event)"
+            (unignore)="unignore(s.bridge, $event)"
+            (disconnect)="confirmDisconnect(s.bridge, $event)"
+            (retry)="load()"
+          />
+        }
+      </div>
+    }
+  }
+</div>

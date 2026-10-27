@@ -1,0 +1,65 @@
+// The theme is Material 2: colors come from the --app-* tokens and --mat-divider-color.
+
+:host {
+  display: block;
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.page-head h1 {
+  margin: 0 0 8px;
+}
+
+.intro {
+  margin: 0 0 24px;
+  color: var(--app-text-secondary);
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.notice {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--app-surface-container);
+
+  p {
+    margin: 0 0 8px;
+  }
+}
+
+.empty {
+  padding: 24px;
+  border: 1px dashed var(--mat-divider-color);
+  border-radius: 12px;
+
+  h2 {
+    margin: 8px 0;
+  }
+}
+
+.empty-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 40px;
+  color: var(--app-primary);
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}

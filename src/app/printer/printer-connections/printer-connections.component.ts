@@ -20,12 +20,14 @@ import {
   ConnectionService,
   ConnectionStatus,
 } from 'src/app/core/services/connection.service';
+import { Bridge, BridgesService } from 'src/app/core/services/bridges.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { externalSourceLabel } from 'src/app/shared/utils/external-source.utils';
 import { isFdmCategory } from '../printer-spoolman/printer-spoolman.component';
+import { bridgeLabel } from '../bridges/bridge-utils';
 import {
   BRIDGE_SETUPS,
   BridgeSetupKind,
@@ -57,6 +59,7 @@ export class PrinterConnectionsComponent {
   private readonly logging = inject(LoggingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly clipboard = inject(Clipboard);
+  private readonly bridges = inject(BridgesService);
 
   readonly printerId = input.required<number>();
   /** The saved printer's category: only filament printers are offered the bridge. */
@@ -70,6 +73,10 @@ export class PrinterConnectionsComponent {
   protected readonly ConnectionStatus = ConnectionStatus;
   protected readonly kindLabel = externalSourceLabel;
   protected readonly software = connectionSoftware;
+
+  /** Bridge names by id, once asked for; a failed lookup leaves it empty ("a bridge"). */
+  private readonly bridgeNames = signal<ReadonlyMap<number, string>>(new Map());
+  private bridgeNamesRequested = false;
 
   protected readonly setups = BRIDGE_SETUPS;
   protected readonly offerSetup = computed(
@@ -109,7 +116,32 @@ export class PrinterConnectionsComponent {
       .subscribe((connections) => {
         this.connections.set(connections ?? []);
         this.loaded.set(connections !== null);
+        if (connections?.some((c) => c.bridgeId != null)) {
+          this.loadBridgeNames();
+        }
       });
+  }
+
+  /** The name of the bridge watching a connection, or "a bridge" when it isn't known. */
+  protected bridgeName(bridgeId: number): string {
+    return this.bridgeNames().get(bridgeId) ?? 'a bridge';
+  }
+
+  /** Once per page: bridges change rarely, and the name is only a label. */
+  private loadBridgeNames(): void {
+    if (this.bridgeNamesRequested) {
+      return;
+    }
+    this.bridgeNamesRequested = true;
+    this.bridges
+      .list()
+      .pipe(
+        catchError(() => of([] as Bridge[])),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((list) =>
+        this.bridgeNames.set(new Map(list.map((b) => [b.id, bridgeLabel(b)])))
+      );
   }
 
   protected openSetup(): void {

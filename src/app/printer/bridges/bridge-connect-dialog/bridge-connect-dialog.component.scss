@@ -1,0 +1,77 @@
+// The theme is Material 2: colors come from the --app-* tokens and --mat-divider-color.
+
+mat-form-field {
+  width: 100%;
+}
+
+.found {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--app-surface-container);
+
+  mat-icon {
+    flex: none;
+    color: var(--app-text-secondary);
+  }
+}
+
+.found-name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.meta,
+.hint,
+.option-note {
+  color: var(--app-text-secondary);
+}
+
+.meta,
+.hint {
+  font-size: 0.875rem;
+}
+
+.label {
+  margin: 16px 0 8px;
+  font-weight: 500;
+}
+
+.address-row,
+.printer-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.address-row .port {
+  flex: 0 0 7rem;
+  width: 7rem;
+}
+
+.printer-row {
+  flex-wrap: wrap;
+
+  .printer {
+    flex: 1 1 14rem;
+    width: auto;
+  }
+
+  button {
+    margin-top: 10px;
+  }
+}
+
+.error-text {
+  color: var(--app-error-text);
+}
+
+pre {
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--app-surface-container);
+  overflow-x: auto;
+}

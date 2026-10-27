@@ -91,9 +91,13 @@ describe('QuickAddPrinterComponent', () => {
     showEmailNotice = false,
     initialModelId: string | null = null,
     mode: QuickAddMode = 'dialog',
-    hasSavedPrinters = false
+    hasSavedPrinters = false,
+    inputs: Record<string, unknown> = {}
   ) {
     fixture = TestBed.createComponent(QuickAddPrinterComponent);
+    for (const [name, value] of Object.entries(inputs)) {
+      fixture.componentRef.setInput(name, value);
+    }
     fixture.componentRef.setInput('source', 'welcome');
     fixture.componentRef.setInput('showEmailNotice', showEmailNotice);
     fixture.componentRef.setInput('mode', mode);
@@ -1331,6 +1335,28 @@ describe('QuickAddPrinterComponent', () => {
 
       expect(component.form.controls.search.value).toBe('');
       expect(byTestId('spec-summary')).toBeNull();
+    });
+  });
+
+  describe('initialName and initialSearch', () => {
+    it('keeps the given nickname over the model a pick fills in', async () => {
+      catalog.get.and.returnValue(of(P1S));
+      await setup(false, 'bambu-lab-p1s', 'dialog', false, {
+        initialName: 'Workshop P1S',
+      });
+
+      expect(component.form.controls.model.value).toBe('P1S');
+      expect(component.form.controls.name.value).toBe('Workshop P1S');
+      await component.save();
+      expect(sent().name).toBe('Workshop P1S');
+    });
+
+    it('starts the search with the given text when there is no catalog id', async () => {
+      await setup(false, null, 'dialog', false, {
+        initialSearch: 'Voron 2.4',
+      });
+
+      expect(component.form.controls.search.value).toBe('Voron 2.4');
     });
   });
 });

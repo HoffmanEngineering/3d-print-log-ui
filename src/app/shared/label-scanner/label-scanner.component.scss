@@ -1,0 +1,60 @@
+.label-scanner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.label-scanner__view {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000;
+}
+
+.label-scanner__video {
+  width: 100%;
+
+  // html5-qrcode renders its own <video>; make it fill the box.
+  video {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+  }
+}
+
+// Matches GUIDE_WIDTH and GUIDE_RATIO in the component: 85% wide, 3:2, centered.
+.label-scanner__guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 85%;
+  aspect-ratio: 3 / 2;
+  transform: translate(-50%, -50%);
+  border: 2px solid #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.label-scanner__hint {
+  margin: 0;
+  color: var(--app-text-secondary);
+  font-size: 0.875rem;
+}
+
+.label-scanner__error {
+  margin: 0;
+  color: var(--app-error-text);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.label-scanner__shutter mat-spinner {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}

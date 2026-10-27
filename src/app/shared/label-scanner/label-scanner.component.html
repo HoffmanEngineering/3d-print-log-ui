@@ -1,0 +1,32 @@
+<div class="label-scanner">
+  <div class="label-scanner__view">
+    <div [id]="elementId" class="label-scanner__video"></div>
+    @if (!unavailableReason()) {
+      <div class="label-scanner__guide" aria-hidden="true"></div>
+    }
+  </div>
+  @if (!unavailableReason()) {
+    <p class="label-scanner__hint">Fit the label in the box</p>
+    @if (photoError()) {
+      <p class="label-scanner__error" role="alert">
+        Couldn't read that photo. Hold the phone steady and try again.
+      </p>
+    }
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      class="label-scanner__shutter"
+      data-testid="label-shutter"
+      [disabled]="reading() || paused()"
+      (click)="readLabel()"
+    >
+      @if (showSpinner()) {
+        <mat-spinner diameter="18" aria-label="Reading the label" />
+      } @else {
+        <mat-icon>photo_camera</mat-icon>
+      }
+      Read label
+    </button>
+  }
+</div>

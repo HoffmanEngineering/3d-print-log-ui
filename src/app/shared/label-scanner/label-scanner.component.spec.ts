@@ -1,0 +1,198 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { QrScannerService } from 'src/app/core/services/qr-scanner.service';
+import { Barcode } from 'src/app/core/types/label-reading';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import { LabelOcr, LabelOcrResult } from './label-ocr';
+import {
+  LABEL_OCR_FACTORY,
+  LabelScannerComponent,
+} from './label-scanner.component';
+
+describe('LabelScannerComponent', () => {
+  let fixture: ComponentFixture<LabelScannerComponent>;
+  let scanner: jasmine.SpyObj<QrScannerService>;
+  let ocr: jasmine.SpyObj<LabelOcr>;
+  let decode: (text: string, format: string) => void;
+
+  const ocrResult: LabelOcrResult = {
+    text: 'PLA+ Silver',
+    fields: { materialType: 'PLA+' },
+    ms: 900,
+    words: 14,
+  };
+
+  async function setup(
+    start?: () => Promise<void>,
+    beforeRender?: (c: LabelScannerComponent) => void
+  ) {
+    scanner = jasmine.createSpyObj<QrScannerService>('QrScannerService', [
+      'startLabelScanning',
+      'stopScanning',
+      'captureFrame',
+      'parseFilamentUrl',
+    ]);
+    scanner.startLabelScanning.and.callFake(async (_id, onDecoded) => {
+      decode = onDecoded;
+      if (start) await start();
+    });
+    scanner.stopScanning.and.resolveTo();
+    scanner.captureFrame.and.callFake(() => {
+      const c = document.createElement('canvas');
+      c.width = 300;
+      c.height = 400;
+      return c;
+    });
+    scanner.parseFilamentUrl.and.callFake(
+      QrScannerService.prototype.parseFilamentUrl
+    );
+    ocr = jasmine.createSpyObj<LabelOcr>('LabelOcr', [
+      'recognize',
+      'terminate',
+    ]);
+    ocr.recognize.and.resolveTo(ocrResult);
+    ocr.terminate.and.resolveTo();
+
+    await TestBed.configureTestingModule({
+      imports: [LabelScannerComponent],
+      providers: [
+        { provide: QrScannerService, useValue: scanner },
+        { provide: LABEL_OCR_FACTORY, useValue: () => ocr },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', [
+            'logEvent',
+            'logException',
+          ]),
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(LabelScannerComponent);
+    beforeRender?.(fixture.componentInstance);
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  afterEach(() => fixture?.destroy());
+
+  it('emits ownLabel for a 3D Print Log QR label', async () => {
+    await setup();
+    const ids: string[] = [];
+    fixture.componentInstance.ownLabel.subscribe((id) => ids.push(id));
+
+    decode(
+      'https://www.3dprintlog.com/materials/3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      'QR_CODE'
+    );
+
+    expect(ids).toEqual(['3fa85f64-5717-4562-b3fc-2c963f66afa6']);
+  });
+
+  it('emits each new product barcode once, with a lowercase format', async () => {
+    await setup();
+    const seen: Barcode[][] = [];
+    fixture.componentInstance.barcodesChanged.subscribe((b) => seen.push(b));
+
+    decode('0849344041764', 'EAN_13');
+    decode('0849344041764', 'EAN_13');
+    decode('x004n86wd5', 'CODE_128');
+
+    expect(seen).toEqual([
+      [{ value: '0849344041764', format: 'ean13' }],
+      [
+        { value: '0849344041764', format: 'ean13' },
+        { value: 'X004N86WD5', format: 'code128' },
+      ],
+    ]);
+  });
+
+  it('ignores marketing links in QR codes', async () => {
+    await setup();
+    const seen: Barcode[][] = [];
+    fixture.componentInstance.barcodesChanged.subscribe((b) => seen.push(b));
+
+    decode('https://snapmaker.com/materials', 'QR_CODE');
+
+    expect(seen).toEqual([]);
+  });
+
+  it('ignores decodes while paused', async () => {
+    await setup();
+    fixture.componentRef.setInput('paused', true);
+    fixture.detectChanges();
+    const seen: Barcode[][] = [];
+    fixture.componentInstance.barcodesChanged.subscribe((b) => seen.push(b));
+
+    decode('0849344041764', 'EAN_13');
+
+    expect(seen).toEqual([]);
+  });
+
+  it('reads a photo of the guide box and emits it with the barcodes seen', async () => {
+    await setup();
+    decode('02540924A', 'CODE_128');
+    const photos: { barcodes: Barcode[]; ocr: LabelOcrResult }[] = [];
+    fixture.componentInstance.photo.subscribe((p) => photos.push(p));
+
+    const shutter = fixture.nativeElement.querySelector(
+      '[data-testid="label-shutter"]'
+    ) as HTMLButtonElement;
+    shutter.click();
+    await fixture.whenStable();
+
+    expect(scanner.captureFrame).toHaveBeenCalled();
+    const cropped = ocr.recognize.calls.mostRecent().args[0];
+    // The guide box: 85% of the frame's width, 3:2.
+    expect(cropped.width).toBe(255);
+    expect(cropped.height).toBe(170);
+    expect(photos).toEqual([
+      {
+        barcodes: [{ value: '02540924A', format: 'code128' }],
+        ocr: ocrResult,
+      },
+    ]);
+  });
+
+  it('shows an inline error when the photo cannot be read', async () => {
+    await setup();
+    ocr.recognize.and.rejectWith(new Error('offline'));
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="label-shutter"]'
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      "Couldn't read that photo"
+    );
+  });
+
+  it('reports a denied camera', async () => {
+    const reasons: string[] = [];
+    await setup(
+      () =>
+        Promise.reject(
+          Object.assign(new Error('Permission denied'), {
+            name: 'NotAllowedError',
+          })
+        ),
+      (c) => c.unavailable.subscribe((r) => reasons.push(r))
+    );
+    await fixture.whenStable();
+
+    expect(reasons).toEqual(['denied']);
+    expect(fixture.componentInstance.unavailableReason()).toBe('denied');
+  });
+
+  it('stops the camera and the OCR worker when destroyed', async () => {
+    await setup();
+
+    fixture.destroy();
+
+    expect(scanner.stopScanning).toHaveBeenCalled();
+    expect(ocr.terminate).toHaveBeenCalled();
+  });
+});

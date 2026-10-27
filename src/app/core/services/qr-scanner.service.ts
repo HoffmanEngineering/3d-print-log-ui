@@ -13,6 +13,7 @@ export interface QrScanResult {
 })
 export class QrScannerService {
   private html5QrCode: Html5Qrcode | null = null;
+  private labelElementId: string | null = null;
 
   // Cache the import *promise* (not the resolved module) so concurrent first
   // calls share one dynamic import instead of racing two.
@@ -69,6 +70,64 @@ export class QrScannerService {
         errorCallback
       );
     }
+  }
+
+  /**
+   * Starts the back camera reading spool labels: QR codes plus the product and batch barcodes
+   * labels carry, over the whole frame. Uses the browser's own BarcodeDetector where there is one
+   * (Chrome on Android), which reads 1D codes far better than the JS fallback.
+   * @param onDecoded Called with each decoded value and html5-qrcode's format name (EAN_13…)
+   */
+  async startLabelScanning(
+    elementId: string,
+    onDecoded: (text: string, format: string) => void
+  ): Promise<void> {
+    await this.stopScanning();
+
+    const { Html5Qrcode, Html5QrcodeSupportedFormats: F } =
+      await this.loadHtml5Qrcode();
+    this.html5QrCode = new Html5Qrcode(elementId, {
+      verbose: false,
+      formatsToSupport: [
+        F.QR_CODE,
+        F.EAN_13,
+        F.EAN_8,
+        F.UPC_A,
+        F.UPC_E,
+        F.CODE_128,
+        F.CODE_39,
+      ],
+      useBarCodeDetectorIfSupported: true,
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+    });
+    this.labelElementId = elementId;
+
+    await this.html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10 },
+      (text, result) =>
+        onDecoded(text, result?.result?.format?.formatName ?? 'UNKNOWN'),
+      () => {
+        // Expected on every frame without a code.
+      }
+    );
+  }
+
+  /** The camera's current frame at full resolution, or null when no label scan is running. */
+  captureFrame(): HTMLCanvasElement | null {
+    const video = this.labelElementId
+      ? document
+          .getElementById(this.labelElementId)
+          ?.querySelector<HTMLVideoElement>('video')
+      : null;
+    if (!video || video.videoWidth === 0) {
+      return null;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video, 0, 0);
+    return canvas;
   }
 
   /**

@@ -95,6 +95,7 @@
         (ownLabel)="handleOwnLabel($event)"
         (barcodesChanged)="handleLabelBarcodes($event)"
         (photo)="handleLabelPhoto($event)"
+        (unavailable)="cameraUnavailable()"
       />
       @if (labelHint(); as hint) {
         <p class="label-hint" role="status">{{ hint }}</p>

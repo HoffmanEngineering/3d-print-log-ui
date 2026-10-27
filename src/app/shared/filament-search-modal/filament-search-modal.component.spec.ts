@@ -847,6 +847,7 @@ class StubLabelScannerComponent {
   readonly ownLabel = output<string>();
   readonly barcodesChanged = output<Barcode[]>();
   readonly photo = output<{ barcodes: Barcode[]; ocr: LabelOcrResult }>();
+  readonly photoFailed = output<Barcode[]>();
   readonly unavailable = output<CameraUnavailableReason>();
 }
 
@@ -856,6 +857,8 @@ describe('FilamentSearchModalComponent label scanning', () => {
   let service: jasmine.SpyObj<FilamentService>;
   let dialogRef: jasmine.SpyObj<MatDialogRef<FilamentSearchModalComponent>>;
   let logger: jasmine.SpyObj<LoggingService>;
+  let dialog: jasmine.SpyObj<MatDialog>;
+  let dialogAnswer: boolean;
 
   const BARCODE: Barcode = { value: '0849344041764', format: 'ean13' };
   const OCR: LabelOcrResult = {
@@ -897,6 +900,14 @@ describe('FilamentSearchModalComponent label scanning', () => {
     service.getFilamentDetail.and.callFake((id: string) =>
       of({ ...buildDetail(), id, displayName: `Spool ${id}` })
     );
+    dialogAnswer = true;
+    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    dialog.open.and.callFake(
+      () =>
+        ({ afterClosed: () => of(dialogAnswer) }) as unknown as ReturnType<
+          MatDialog['open']
+        >
+    );
     dialogRef = jasmine.createSpyObj<
       MatDialogRef<FilamentSearchModalComponent>
     >('MatDialogRef', ['close']);
@@ -905,6 +916,7 @@ describe('FilamentSearchModalComponent label scanning', () => {
       imports: [MatDialogModule, FilamentSearchModalComponent],
       providers: [
         { provide: LoggingService, useValue: logger },
+        { provide: MatDialog, useValue: dialog },
         { provide: FilamentService, useValue: service },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: MAT_DIALOG_DATA, useValue: {} },
@@ -1116,5 +1128,43 @@ describe('FilamentSearchModalComponent label scanning', () => {
     fixture.detectChanges();
 
     expect(root().textContent).toContain("Couldn't look up that label");
+  });
+
+  it('says the camera is unavailable instead of showing a blank box', () => {
+    scanner().unavailable.emit('denied');
+    fixture.detectChanges();
+
+    expect(root().textContent).toContain(
+      'Camera unavailable. Search by name instead.'
+    );
+  });
+
+  it('picks your own label even while a barcode lookup is pending', () => {
+    const pending = new Subject<LabelReadResponse>();
+    service.readLabel.and.returnValue(pending);
+    scanner().barcodesChanged.emit([BARCODE]);
+
+    scanner().ownLabel.emit('filament-9');
+    pending.next(
+      response([{ filamentId: 'f1', score: 1, reasons: ['same-barcode'] }])
+    );
+
+    expect(dialogRef.close).toHaveBeenCalledTimes(1);
+    expect(closedWith().id).toBe('filament-9');
+  });
+
+  it('asks before picking an inactive spool by its barcode', () => {
+    service.getFilamentDetail.and.callFake((id: string) =>
+      of({ ...buildDetail(), id, isActive: false })
+    );
+    service.readLabel.and.returnValue(
+      of(response([{ filamentId: 'f1', score: 1, reasons: ['same-barcode'] }]))
+    );
+    dialogAnswer = false;
+
+    scanner().barcodesChanged.emit([BARCODE]);
+
+    expect(dialog.open).toHaveBeenCalled();
+    expect(dialogRef.close).not.toHaveBeenCalled();
   });
 });

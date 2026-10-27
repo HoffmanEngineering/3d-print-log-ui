@@ -26,7 +26,7 @@ import { TagRead } from 'src/app/core/types/native-bridge';
 import { TagReading } from 'src/app/core/types/tag-reading';
 import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { ToastrService } from 'ngx-toastr';
-import { Observable, finalize, map, of } from 'rxjs';
+import { Observable, Subscription, finalize, map, of } from 'rxjs';
 import {
   readTagUidConflict,
   tagUidConflictMessage,
@@ -129,6 +129,7 @@ export class FilamentSearchModalComponent {
   readonly remember = signal(true);
   /** The last label read's barcodes, as the API normalized them. */
   private labelBarcodes: Barcode[] = [];
+  private labelLookup: Subscription | null = null;
   /**
    * A tag is being handled: its lookup, the check or link dialog it opened, or the link save.
    * Reads are dropped until it is done, so one tag never races another's dialog or save.
@@ -429,7 +430,15 @@ export class FilamentSearchModalComponent {
   /** A 3D Print Log QR label: the spool it names, as picking its row would. */
   handleOwnLabel(filamentId: string) {
     this.loggingService.logEvent('LabelScan_OwnLabel');
-    this.pickById(filamentId);
+    // It names the spool outright, so a lookup still running must not answer after it.
+    this.labelLookup?.unsubscribe();
+    this.loading.set(false);
+    this.pickById(filamentId, false);
+  }
+
+  /** The camera would not start: say so, rather than leave an empty box. */
+  cameraUnavailable() {
+    this.scanError.set('Camera unavailable. Search by name instead.');
   }
 
   handleLabelBarcodes(barcodes: Barcode[]) {
@@ -504,7 +513,8 @@ export class FilamentSearchModalComponent {
     this.loading.set(true);
     this.scanError.set(null);
     this.labelHint.set(null);
-    this.filamentService
+    this.labelLookup?.unsubscribe();
+    this.labelLookup = this.filamentService
       .readLabel(request)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -535,7 +545,8 @@ export class FilamentSearchModalComponent {
     });
 
     if (sameBarcode.length === 1) {
-      this.pickById(sameBarcode[0].filamentId);
+      // As for a tag: an inactive spool or another category is confirmed first.
+      this.pickById(sameBarcode[0].filamentId, true);
       return;
     }
     if (matches.length === 0 && !fromPhoto) {
@@ -565,7 +576,7 @@ export class FilamentSearchModalComponent {
   }
 
   /** Loads a spool by id and picks it. Used by QR labels and a single barcode match. */
-  private pickById(filamentId: string) {
+  private pickById(filamentId: string, confirm: boolean) {
     this.loading.set(true);
     this.scanError.set(null);
 
@@ -580,7 +591,15 @@ export class FilamentSearchModalComponent {
         );
         // Map FilamentDetail to the FilamentSummary shape the picker expects,
         // including the server-computed remaining values.
-        this.select(filamentDetailToSummary(filament));
+        if (!confirm) {
+          this.select(filamentDetailToSummary(filament));
+          return;
+        }
+        this.confirmTagPick(filament)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((pick) => {
+            if (pick) this.select(filamentDetailToSummary(filament));
+          });
       },
       error: (err) => {
         this.loading.set(false);

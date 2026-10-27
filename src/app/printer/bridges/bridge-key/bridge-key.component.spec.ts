@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { BRIDGE_KEY_PINS_STORAGE_KEY } from 'src/app/core/services/bridge-key-pins.service';
+import {
+  BRIDGE_KEY_PINS_STORAGE_KEY,
+  BridgeKeyPinsService,
+} from 'src/app/core/services/bridge-key-pins.service';
 import { Bridge } from 'src/app/core/services/bridges.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
@@ -194,5 +197,49 @@ describe('BridgeKeyComponent', () => {
       "can't encrypt here"
     );
     expect(byTestId('bridge-key-invalid')).toBeNull();
+  });
+
+  it('does not flash the warning while a just-confirmed key is imported', async () => {
+    pinBefore(TEST_BRIDGE_KEY.fingerprint);
+    await create(
+      bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey }),
+      'bridge-key-new'
+    );
+    // The page pins the confirmed key and swaps in the confirmed bridge.
+    TestBed.inject(BridgeKeyPinsService).pin(42, OTHER_BRIDGE_KEY.fingerprint);
+    fixture.componentRef.setInput(
+      'bridge',
+      bridge({ publicKey: OTHER_BRIDGE_KEY.publicKey })
+    );
+    fixture.detectChanges();
+    expect(byTestId('key-changed')).toBeNull();
+    await until(
+      () =>
+        !!byTestId('bridge-key-current')?.textContent?.includes(
+          OTHER_BRIDGE_KEY.short
+        )
+    );
+    expect(byTestId('key-changed')).toBeNull();
+  });
+
+  it('says the server returned a different key after a confirmation mismatch', async () => {
+    pinBefore(OTHER_BRIDGE_KEY.fingerprint);
+    await TestBed.configureTestingModule({
+      imports: [BridgeKeyComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+        },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(BridgeKeyComponent);
+    fixture.componentRef.setInput('bridge', bridge());
+    fixture.componentRef.setInput('keyMismatch', true);
+    await until(() => !!byTestId('key-changed'));
+    expect(byTestId('key-changed')!.textContent).toContain(
+      '3D Print Log returned a different key than the one you confirmed. Compare it with the bridge before entering anything.'
+    );
   });
 });

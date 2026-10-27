@@ -1,10 +1,17 @@
 <section class="changed" role="alert" data-testid="key-changed">
   <p class="title">
     <mat-icon aria-hidden="true">gpp_maybe</mat-icon>
-    <strong
-      >This bridge's key changed without your confirmation in this
-      browser.</strong
-    >
+    @if (mismatch()) {
+      <strong
+        >3D Print Log returned a different key than the one you confirmed.
+        Compare it with the bridge before entering anything.</strong
+      >
+    } @else {
+      <strong
+        >This bridge's key changed without your confirmation in this
+        browser.</strong
+      >
+    }
   </p>
   <p>
     Compare it with <code>printlog-bridge status</code> before entering

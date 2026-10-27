@@ -24,6 +24,7 @@
   <app-bridge-key-changed
     class="key-changed"
     context="card"
+    [mismatch]="keyMismatch()"
     [bridgeId]="bridge().id"
     [fingerprint]="fingerprint"
   />

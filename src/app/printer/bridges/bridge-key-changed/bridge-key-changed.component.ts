@@ -36,6 +36,8 @@ export class BridgeKeyChangedComponent {
   readonly fingerprint = input.required<string>();
   /** Where it is shown, for analytics. */
   readonly context = input.required<'card' | 'bridges' | 'connect'>();
+  /** The last confirmation came back with a different key than the one confirmed. */
+  readonly mismatch = input(false);
 
   protected readonly short = computed(() =>
     shortFingerprint(this.fingerprint())

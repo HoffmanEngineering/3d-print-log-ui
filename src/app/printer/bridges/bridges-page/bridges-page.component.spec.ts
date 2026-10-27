@@ -407,4 +407,19 @@ describe('BridgesPageComponent', () => {
     card().reloadBridge.emit();
     expect(service.list).toHaveBeenCalledTimes(2);
   });
+
+  it('keeps a confirmation mismatch on the card, not only in a toast', async () => {
+    service.list.and.returnValue(
+      of([bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey })])
+    );
+    service.confirmKey.and.returnValue(
+      of(bridge({ publicKey: TEST_BRIDGE_KEY.publicKey }))
+    );
+    await create();
+    expect(card().keyMismatch()).toBeFalse();
+    card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
+    await until(() => toastr.error.calls.count() === 1);
+    fixture.detectChanges();
+    expect(card().keyMismatch()).toBeTrue();
+  });
 });

@@ -40,7 +40,14 @@ type KeyInfo =
   | { status: 'invalid' }
   /** No WebCrypto here: an insecure context or a very old browser. */
   | { status: 'unavailable' }
-  | { status: 'ready'; fingerprint: string; short: string; full: string };
+  | {
+      status: 'ready';
+      /** The base64 key this was computed from. */
+      source: string;
+      fingerprint: string;
+      short: string;
+      full: string;
+    };
 
 function keyInfo(publicKey: string | null): Observable<KeyInfo> {
   if (!publicKey) {
@@ -52,6 +59,7 @@ function keyInfo(publicKey: string | null): Observable<KeyInfo> {
   return from(importBridgeKey(publicKey)).pipe(
     map(({ fingerprint }) => ({
       status: 'ready' as const,
+      source: publicKey,
       fingerprint,
       short: shortFingerprint(fingerprint),
       full: groupedFingerprint(fingerprint),
@@ -91,6 +99,11 @@ export class BridgeKeyComponent {
   readonly bridge = input.required<Bridge>();
   /** A confirmation is in flight. */
   readonly busy = input(false);
+  /**
+   * The last confirmation came back with a different key than the one confirmed: the key-changed
+   * warning then says so.
+   */
+  readonly keyMismatch = input(false);
   /** Confirm the pending key: the fingerprint this page computed from `pendingPublicKey`. */
   readonly confirm = output<string>();
 
@@ -116,9 +129,16 @@ export class BridgeKeyComponent {
    * compare.
    */
   protected readonly keyChanged = computed(() => {
-    const served = this.currentPrint()?.fingerprint;
+    const current = this.currentPrint();
+    // Only judge the key in hand once it is imported: right after a confirmation the bridge
+    // already carries the new key while the old one's fingerprint is still on screen.
+    if (!current || current.source !== (this.bridge().publicKey ?? null)) {
+      return null;
+    }
     const pinned = this.pins.pinned(this.bridge().id);
-    return served && pinned && served !== pinned ? served : null;
+    return pinned && current.fingerprint !== pinned
+      ? current.fingerprint
+      : null;
   });
 
   protected readonly hasPending = computed(

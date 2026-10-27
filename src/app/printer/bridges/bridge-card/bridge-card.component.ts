@@ -100,6 +100,8 @@ export class BridgeCardComponent {
   readonly printers = input<BridgePrinter[] | null>([]);
   /** A key confirmation is in flight. */
   readonly confirming = input(false);
+  /** The last confirmation came back with a different key than the one confirmed. */
+  readonly keyMismatch = input(false);
 
   readonly rename = output<BridgeRename>();
   readonly scan = output<void>();

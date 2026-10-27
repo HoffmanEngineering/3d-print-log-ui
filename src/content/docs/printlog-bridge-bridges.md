@@ -105,7 +105,7 @@ Each bridge makes its own encryption key and keeps it on the device. Its card on
 
 On the bridge, `printlog-bridge status` (in Docker, `docker exec printlog-bridge printlog-bridge status`) shows the same fingerprint, and so does its log. **If they match, what you enter goes to your bridge and nobody else.** If they don't, don't enter anything, and [contact us](/docs/contact).
 
-This browser remembers the last key you confirmed, compared or encrypted to for each bridge. If the bridge's key is ever different without you confirming it here, the card, the credentials and the connect step say **This bridge's key changed without your confirmation in this browser**, and the app won't take credentials until you compare it with `printlog-bridge status` and choose **It matches**. In another browser, or after clearing site data, there's nothing to compare yet, so compare the fingerprint again before entering anything.
+This browser remembers the last key you confirmed, accepted with **It matches**, or encrypted to, for each bridge. If the bridge's key is ever different without you confirming it here, the card, the credentials and the connect step say **This bridge's key changed without your confirmation in this browser**, and the app won't take credentials until you compare it with `printlog-bridge status` and choose **It matches**. If you confirm a new key and 3D Print Log answers with a different one, the card says **3D Print Log returned a different key than the one you confirmed** instead. In another browser, or after clearing site data, there's nothing to compare yet, so compare the fingerprint again before entering anything.
 
 #### A new key {#new-key}
 

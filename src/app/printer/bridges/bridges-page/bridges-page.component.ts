@@ -113,6 +113,11 @@ export class BridgesPageComponent {
   protected readonly states = signal<BridgeState[]>([]);
   /** The bridge whose new key is being confirmed. */
   protected readonly confirming = signal<number | null>(null);
+  /**
+   * Bridges whose last confirmation came back with a different key than the one confirmed. Kept
+   * for this page only, so the card says so after the toast is gone.
+   */
+  protected readonly mismatched = signal<ReadonlySet<number>>(new Set());
   protected readonly showSkeleton = computed(
     () => this.phase() === 'idle' && this.skeleton.visible()
   );
@@ -379,6 +384,15 @@ export class BridgesPageComponent {
         next: ({ updated, served }) => {
           // The user compared this fingerprint with the bridge: it is the one to trust here.
           this.pins.pin(bridge.id, fingerprint);
+          this.mismatched.update((ids) => {
+            const next = new Set(ids);
+            if (served === fingerprint) {
+              next.delete(bridge.id);
+            } else {
+              next.add(bridge.id);
+            }
+            return next;
+          });
           if (served !== fingerprint) {
             this.toastr.error(
               "3D Print Log returned a different key than the one you confirmed. Don't enter any credentials: compare the key on the card with printlog-bridge status."

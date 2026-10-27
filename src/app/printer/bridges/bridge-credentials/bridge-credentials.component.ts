@@ -71,7 +71,7 @@ import {
  */
 export type SealingKeyState =
   | { status: 'loading' }
-  | { status: 'ready'; key: BridgeKey }
+  | { status: 'ready'; key: BridgeKey; source: string }
   | { status: 'none' }
   | { status: 'pending_only' }
   | { status: 'invalid' }
@@ -114,7 +114,7 @@ export function sealingKeyState(
     return of({ status: 'unavailable' as const });
   }
   return from(importBridgeKey(publicKey)).pipe(
-    map((key) => ({ status: 'ready' as const, key })),
+    map((key) => ({ status: 'ready' as const, key, source: publicKey })),
     catchError((error: unknown) =>
       of(
         error instanceof CredentialSealingError &&
@@ -161,6 +161,11 @@ export class BridgeCredentialsComponent {
   readonly entry = input.required<BridgePrinter>();
   /** Where it is shown, for analytics and wording. */
   readonly context = input<'bridges' | 'connect'>('bridges');
+  /**
+   * The bridge card above already shows the full key-changed warning: show a short pointer to
+   * it instead of a second copy (entry stays held either way).
+   */
+  readonly keyWarningAbove = input(false);
 
   /** The entry after a credential was set or cleared. */
   readonly entryChange = output<BridgePrinter>();
@@ -206,9 +211,17 @@ export class BridgeCredentialsComponent {
    * entry waits until the user compares it and says it matches. No pin: nothing to compare.
    */
   protected readonly keyChanged = computed(() => {
-    const served = this.key()?.fingerprint;
+    const state = this.keyState();
+    // Only judge the key in hand once it is imported (a just-confirmed key is still importing).
+    if (
+      state.status !== 'ready' ||
+      state.source !== (this.bridge().publicKey ?? null)
+    ) {
+      return null;
+    }
+    const served = state.key.fingerprint;
     const pinned = this.pins.pinned(this.bridge().id);
-    return served && pinned && served !== pinned ? served : null;
+    return pinned && served !== pinned ? served : null;
   });
   protected readonly hasPendingKey = computed(
     () => !!this.bridge().pendingPublicKey
@@ -310,6 +323,7 @@ export class BridgeCredentialsComponent {
     const bridge = this.bridge();
     const entry = this.entry();
     const replaced = entry.secrets?.some((s) => s.field === field) ?? false;
+    const pinBefore = this.pins.pinned(bridge.id);
     this.busy.set(field);
     this.setMessage(field, null, null);
     from(
@@ -343,7 +357,12 @@ export class BridgeCredentialsComponent {
             this.reloadBridge.emit();
             return;
           }
-          this.pins.pin(bridge.id, keyFingerprint);
+          // Pin what was sealed to, unless the pin moved meanwhile (a confirmation here or in
+          // another tab): never put back a key the user has since replaced.
+          const pinNow = this.pins.pinned(bridge.id);
+          if (pinNow === pinBefore || pinNow === keyFingerprint) {
+            this.pins.pin(bridge.id, keyFingerprint);
+          }
           this.setMessage(
             field,
             null,

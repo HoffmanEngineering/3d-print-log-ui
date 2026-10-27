@@ -40,7 +40,8 @@ describe('BridgeCredentialsComponent', () => {
 
   async function create(
     b: Bridge = bridge(),
-    entry: BridgePrinter = bridgePrinter()
+    entry: BridgePrinter = bridgePrinter(),
+    keyWarningAbove = false
   ) {
     await TestBed.configureTestingModule({
       imports: [BridgeCredentialsComponent, NoopAnimationsModule],
@@ -61,6 +62,7 @@ describe('BridgeCredentialsComponent', () => {
     fixture = TestBed.createComponent(BridgeCredentialsComponent);
     fixture.componentRef.setInput('bridge', b);
     fixture.componentRef.setInput('entry', entry);
+    fixture.componentRef.setInput('keyWarningAbove', keyWarningAbove);
     changes = [];
     reloads = 0;
     fixture.componentInstance.entryChange.subscribe((e) => changes.push(e));
@@ -437,4 +439,50 @@ describe('BridgeCredentialsComponent', () => {
     expect(other.fingerprint).toBe(OTHER_BRIDGE_KEY.fingerprint);
   });
   afterEach(() => localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY));
+
+  it('does not overwrite a pin that changed while the seal was in flight', async () => {
+    pinBefore(TEST_BRIDGE_KEY.fingerprint);
+    const answer = new Subject<BridgePrinter>();
+    service.setSecret.and.returnValue(answer);
+    await create();
+    type('access_code', '12345678');
+    save('access_code');
+    await until(() => service.setSecret.calls.count() === 1);
+    // Meanwhile the user confirmed another key (here, or in another tab).
+    TestBed.inject(BridgeKeyPinsService).pin(42, OTHER_BRIDGE_KEY.fingerprint);
+    answer.next(stored(bridgePrinter(), 'access_code'));
+    answer.complete();
+    fixture.detectChanges();
+    expect(TestBed.inject(BridgeKeyPinsService).pinned(42)).toBe(
+      OTHER_BRIDGE_KEY.fingerprint
+    );
+  });
+
+  it('points at the warning above instead of repeating it on the card', async () => {
+    pinBefore(OTHER_BRIDGE_KEY.fingerprint);
+    await create(bridge(), bridgePrinter(), true);
+    expect(byTestId('key-changed')).toBeNull();
+    expect(byTestId('key-changed-pointer')!.textContent).toContain(
+      'Confirm the key above first'
+    );
+    expect(el().querySelector('[data-testid="credential-input"]')).toBeNull();
+  });
+
+  it('does not warn while the key in hand is still being imported', async () => {
+    pinBefore(OTHER_BRIDGE_KEY.fingerprint);
+    await create(bridge({ publicKey: OTHER_BRIDGE_KEY.publicKey }));
+    expect(byTestId('key-changed')).toBeNull();
+    // The bridge now carries the key the user just confirmed elsewhere; the pin moves first.
+    TestBed.inject(BridgeKeyPinsService).pin(42, TEST_BRIDGE_KEY.fingerprint);
+    fixture.componentRef.setInput('bridge', bridge());
+    fixture.detectChanges();
+    expect(byTestId('key-changed')).toBeNull();
+    await until(
+      () =>
+        !!byTestId('credentials-fingerprint')?.textContent?.includes(
+          TEST_BRIDGE_KEY.short
+        )
+    );
+    expect(byTestId('key-changed')).toBeNull();
+  });
 });

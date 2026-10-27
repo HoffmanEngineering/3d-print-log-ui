@@ -78,4 +78,60 @@ describe('BridgeKeyPinsService', () => {
     expect(get).not.toHaveBeenCalled();
     expect(localStorage.getItem(BRIDGE_KEY_PINS_STORAGE_KEY)).toBeNull();
   });
+
+  it("keeps another tab's pin written after this tab loaded", () => {
+    const pins = create();
+    // Another tab pins bridge 5 after this one loaded {}.
+    localStorage.setItem(
+      BRIDGE_KEY_PINS_STORAGE_KEY,
+      JSON.stringify({ '5': b })
+    );
+    pins.pin(7, a);
+    const stored = JSON.parse(
+      localStorage.getItem(BRIDGE_KEY_PINS_STORAGE_KEY)!
+    ) as Record<string, string>;
+    expect(stored).toEqual({ '5': b, '7': a });
+    expect(pins.pinned(5)).toBe(b);
+    expect(pins.pinned(7)).toBe(a);
+  });
+
+  it('drops invalid entries another tab left when merging', () => {
+    const pins = create();
+    localStorage.setItem(
+      BRIDGE_KEY_PINS_STORAGE_KEY,
+      JSON.stringify({ '5': 'junk', x: b })
+    );
+    pins.pin(7, a);
+    expect(
+      JSON.parse(localStorage.getItem(BRIDGE_KEY_PINS_STORAGE_KEY)!)
+    ).toEqual({ '7': a });
+  });
+
+  it('refreshes when another tab changes the pins', () => {
+    const pins = create();
+    expect(pins.pinned(42)).toBeNull();
+    localStorage.setItem(
+      BRIDGE_KEY_PINS_STORAGE_KEY,
+      JSON.stringify({ '42': b })
+    );
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: BRIDGE_KEY_PINS_STORAGE_KEY })
+    );
+    expect(pins.pinned(42)).toBe(b);
+  });
+
+  it('ignores storage events for other keys and stops listening when destroyed', () => {
+    const pins = create();
+    localStorage.setItem(
+      BRIDGE_KEY_PINS_STORAGE_KEY,
+      JSON.stringify({ '42': b })
+    );
+    window.dispatchEvent(new StorageEvent('storage', { key: 'theme-mode' }));
+    expect(pins.pinned(42)).toBeNull();
+    TestBed.resetTestingModule();
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: BRIDGE_KEY_PINS_STORAGE_KEY })
+    );
+    expect(pins.pinned(42)).toBeNull();
+  });
 });

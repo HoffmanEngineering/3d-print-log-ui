@@ -68,6 +68,7 @@
             [discovered]="s.discovered"
             [printers]="s.printers"
             [confirming]="confirming() === s.bridge.id"
+            [keyMismatch]="mismatched().has(s.bridge.id)"
             (rename)="rename(s.bridge, $event)"
             (scan)="scan(s.bridge)"
             (connect)="connect(s.bridge, $event)"

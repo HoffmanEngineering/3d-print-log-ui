@@ -17,6 +17,8 @@ import {
   bridgePrinter,
   discovered,
 } from '../testing/bridge-fixtures';
+import { By } from '@angular/platform-browser';
+import { BridgeCredentialsComponent } from '../bridge-credentials/bridge-credentials.component';
 import { BridgeCardComponent } from './bridge-card.component';
 
 describe('BridgeCardComponent', () => {
@@ -280,5 +282,15 @@ describe('BridgeCardComponent', () => {
     await create(bridge(), null, null);
     expect(one('bridge-load-failed')).not.toBeNull();
     expect(one('bridge-new-row')).toBeNull();
+  });
+
+  it('tells its inline editor the full key warning is shown above', async () => {
+    await create();
+    one('bridge-credentials-toggle')!.click();
+    fixture.detectChanges();
+    const editor = fixture.debugElement.query(
+      By.directive(BridgeCredentialsComponent)
+    ).componentInstance as BridgeCredentialsComponent;
+    expect(editor.keyWarningAbove()).toBeTrue();
   });
 });

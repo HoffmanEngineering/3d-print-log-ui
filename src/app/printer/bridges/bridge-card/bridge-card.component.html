@@ -143,6 +143,7 @@
   <app-bridge-key
     [bridge]="bridge()"
     [busy]="confirming()"
+    [keyMismatch]="keyMismatch()"
     (confirm)="confirmKey.emit($event)"
   />
 
@@ -230,6 +231,7 @@
                     data-testid="bridge-credentials"
                     [bridge]="bridge()"
                     [entry]="row.entry"
+                    [keyWarningAbove]="true"
                     (entryChange)="entryChange.emit($event)"
                     (reloadBridge)="reloadBridge.emit()"
                   />

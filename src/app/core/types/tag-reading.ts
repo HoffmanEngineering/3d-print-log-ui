@@ -40,6 +40,11 @@ export interface CatalogMatch {
   /** g/cm³. Absent from an API older than the density field. */
   densityGramPerCubicCm?: number | null;
   source: 'SpoolmanDB';
+  /** °C, when SpoolmanDB has them. Absent from an API older than label scanning. */
+  extruderTempMinC?: number | null;
+  extruderTempMaxC?: number | null;
+  extruderTempC?: number | null;
+  bedTempC?: number | null;
 }
 
 export type TagSuggestionReason =

@@ -10,11 +10,19 @@ import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
 import { TagRead } from '../types/native-bridge';
 import {
+  CatalogMatch,
   FilamentTagDetail,
   ReaderConfig,
   TagReadResponse,
   TagReading,
 } from '../types/tag-reading';
+import {
+  Barcode,
+  CatalogMatchRequest,
+  FilamentBarcode,
+  LabelReadRequest,
+  LabelReadResponse,
+} from '../types/label-reading';
 import { SortDirection } from '../types/sort-request';
 import { EMPTY_GUID } from './print.service';
 import { PrinterSummary } from './printer.service';
@@ -119,6 +127,12 @@ export interface FilamentDetail {
 
   /** Request-only: applies each reading to a UID that is in `tagUids`. */
   tagReadings?: { uid: string; reading: TagReading }[];
+
+  /**
+   * Barcodes from the spool's label, oldest first. Read-only on a PUT (use
+   * addBarcode/removeBarcode); on create, sent to store them with the spool.
+   */
+  barcodes?: (Barcode | FilamentBarcode)[];
 
   /**
    * Server-computed remaining filament weight in mg (nominal − print usage +
@@ -522,6 +536,44 @@ export class FilamentService {
       body.memory = read.memory;
     }
     return this.http.post<TagReadResponse>(url, body);
+  }
+
+  /**
+   * Sends what the phone read from a spool label (barcodes, OCR text, extracted fields; never
+   * the photo) and gets back the reading, the user's spools it may be, and its catalog match.
+   */
+  readLabel(request: LabelReadRequest): Observable<LabelReadResponse> {
+    return this.http.post<LabelReadResponse>(
+      `${this.baseApi}/api/Filaments/label-reads`,
+      request
+    );
+  }
+
+  /** The SpoolmanDB entry a label-scanned spool is, by brand, material and color name; null when none. */
+  catalogMatch(request: CatalogMatchRequest): Observable<CatalogMatch | null> {
+    return this.http
+      .post<CatalogMatch | null>(
+        `${this.baseApi}/api/Filaments/catalog-match`,
+        request
+      )
+      .pipe(map((match) => match ?? null));
+  }
+
+  /** Remembers a barcode on a spool, so a later scan finds it. */
+  addBarcode(
+    filamentId: string,
+    barcode: Barcode
+  ): Observable<FilamentBarcode> {
+    return this.http.post<FilamentBarcode>(
+      `${this.baseApi}/api/Filaments/${filamentId}/barcodes`,
+      barcode
+    );
+  }
+
+  removeBarcode(filamentId: string, barcodeId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseApi}/api/Filaments/${filamentId}/barcodes/${barcodeId}`
+    );
   }
 
   /** How the phone should read each tag format (key schemes and parameters). */

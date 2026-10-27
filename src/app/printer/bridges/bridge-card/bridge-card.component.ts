@@ -25,6 +25,7 @@ import { HumanizePipe } from 'src/app/shared/pipes/humanize.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { externalSourceLabel } from 'src/app/shared/utils/external-source.utils';
 import { BridgeCredentialsComponent } from '../bridge-credentials/bridge-credentials.component';
+import { CrossBridge, SharedJobNotice, Sighting } from '../bridge-grouping';
 import { BridgeKeyComponent } from '../bridge-key/bridge-key.component';
 import {
   appPrinterSnippet,
@@ -51,6 +52,8 @@ interface ConnectedRow {
   /** The toggle's label: the one field's name, or "Credentials". */
   credentialsLabel: string;
   summary: { text: string; attention: boolean } | null;
+  /** Other bridges that found this printer too (New there). */
+  alsoFoundBy: Sighting[];
 }
 
 /** A printer the bridge found, for display. */
@@ -61,6 +64,8 @@ interface FoundRow {
   connectable: boolean;
   /** For a config-file printer: the app entry that matches it too. */
   entry: BridgePrinter | null;
+  /** Other bridges that found it too; Connect can use one of them instead. */
+  alternatives: Sighting[];
 }
 
 export interface BridgeRename {
@@ -102,11 +107,21 @@ export class BridgeCardComponent {
   readonly confirming = input(false);
   /** The last confirmation came back with a different key than the one confirmed. */
   readonly keyMismatch = input(false);
+  /** What the other bridges found and watch, for a printer seen by several. */
+  readonly cross = input<CrossBridge | null>(null);
+  /** The user has another bridge to move a printer to. */
+  readonly canMove = input(false);
+  /** Another bridge watches a printer this one recently reported jobs for. */
+  readonly sharedJob = input<SharedJobNotice | null>(null);
 
   readonly rename = output<BridgeRename>();
   readonly scan = output<void>();
   /** A found printer, or null to add one by address. */
   readonly connect = output<DiscoveredPrinter | null>();
+  /** Connect a printer with another bridge that found it too. */
+  readonly connectVia = output<Sighting>();
+  /** Move a connected printer to another bridge. */
+  readonly move = output<BridgePrinter>();
   readonly ignore = output<DiscoveredPrinter>();
   readonly unignore = output<DiscoveredPrinter>();
   readonly disconnect = output<BridgePrinter>();
@@ -160,12 +175,28 @@ export class BridgeCardComponent {
                 ? 'Access code'
                 : 'Password',
         summary: credentialSummary(entry),
+        alsoFoundBy: this.cross()?.entrySightings.get(entry.id) ?? [],
       };
     });
   });
-  protected readonly newOnes = computed(() =>
-    this.rows(DiscoveredPrinterState.New)
-  );
+  protected readonly newOnes = computed(() => {
+    const elsewhere = this.cross()?.listedElsewhere;
+    return this.rows(DiscoveredPrinterState.New).filter(
+      (row) => !elsewhere?.has(row.printer.id)
+    );
+  });
+  /** The bridges listing printers this one found too, for a line under the list. */
+  protected readonly listedElsewhere = computed(() => {
+    const elsewhere = [...(this.cross()?.listedElsewhere.values() ?? [])];
+    if (elsewhere.length === 0) {
+      return null;
+    }
+    const names = [...new Set(elsewhere.map((e) => e.bridgeName))];
+    return {
+      count: elsewhere.length,
+      names: names.map((n) => `“${n}”`).join(', '),
+    };
+  });
   protected readonly configured = computed(() =>
     this.rows(DiscoveredPrinterState.Configured)
   );
@@ -195,6 +226,7 @@ export class BridgeCardComponent {
           printer.printerEntryId === null
             ? null
             : (entries.find((e) => e.id === printer.printerEntryId) ?? null),
+        alternatives: this.cross()?.alsoFoundBy.get(printer.id) ?? [],
       }));
   }
 
@@ -211,6 +243,10 @@ export class BridgeCardComponent {
     const v = this.form.getRawValue();
     this.rename.emit({ name: v.name.trim(), location: v.location.trim() });
     this.editing.set(false);
+  }
+
+  protected names(sightings: readonly Sighting[]): string {
+    return sightings.map((s) => s.bridgeName).join(', ');
   }
 
   protected toggleCredentials(entryId: number): void {

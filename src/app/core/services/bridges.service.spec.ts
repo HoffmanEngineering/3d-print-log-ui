@@ -115,4 +115,32 @@ describe('BridgesService', () => {
     expect(req.request.body).toEqual({ fingerprint: 'a'.repeat(64) });
     req.flush({});
   });
+
+  it('moves a printer to another bridge with POST, sealed values included', () => {
+    let result: unknown;
+    service
+      .move(42, 7, {
+        toBridgeId: 9,
+        discoveredPrinterId: 118,
+        secrets: { access_code: 'v1.abc' },
+        keyFingerprint: 'b'.repeat(64),
+      })
+      .subscribe((r) => (result = r));
+    const req = http.expectOne(`${base}/42/printers/7/move`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      toBridgeId: 9,
+      discoveredPrinterId: 118,
+      secrets: { access_code: 'v1.abc' },
+      keyFingerprint: 'b'.repeat(64),
+    });
+    const answer = {
+      printer: { id: 7 },
+      fromBridgeId: 42,
+      toBridgeId: 9,
+      droppedSecretFields: [],
+    };
+    req.flush(answer);
+    expect(result).toEqual(answer);
+  });
 });

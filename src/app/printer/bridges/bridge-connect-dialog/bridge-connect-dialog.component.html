@@ -226,6 +226,17 @@
         <p class="error-text" role="alert" data-testid="connect-error">
           {{ message }}
         </p>
+        @if (moveFrom()) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="connect-move"
+            (click)="moveHere()"
+          >
+            <mat-icon>swap_horiz</mat-icon>
+            Move it to {{ bridgeName }}
+          </button>
+        }
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">

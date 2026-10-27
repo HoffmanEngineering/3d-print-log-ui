@@ -35,7 +35,7 @@ export class BridgeKeyChangedComponent {
   /** The served key's fingerprint, computed from its bytes. */
   readonly fingerprint = input.required<string>();
   /** Where it is shown, for analytics. */
-  readonly context = input.required<'card' | 'bridges' | 'connect'>();
+  readonly context = input.required<'card' | 'bridges' | 'connect' | 'move'>();
   /** The last confirmation came back with a different key than the one confirmed. */
   readonly mismatch = input(false);
 

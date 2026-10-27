@@ -42,6 +42,15 @@
                   >printlog-bridge {{ c.latestAgentVersion }} is available</a
                 >
               }
+              @if (c.bridgeId && canMove()) {
+                <a
+                  class="update"
+                  data-testid="connection-move"
+                  routerLink="/printers/bridges"
+                  [queryParams]="{ move: printerId() }"
+                  >Move to another bridge</a
+                >
+              }
             </div>
             <div class="state">
               <span

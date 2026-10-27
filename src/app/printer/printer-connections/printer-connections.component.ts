@@ -77,6 +77,8 @@ export class PrinterConnectionsComponent {
   /** Bridge names by id, once asked for; a failed lookup leaves it empty ("a bridge"). */
   private readonly bridgeNames = signal<ReadonlyMap<number, string>>(new Map());
   private bridgeNamesRequested = false;
+  /** The user has more than one bridge, so a bridge's printer can move to another one. */
+  protected readonly canMove = computed(() => this.bridgeNames().size > 1);
 
   protected readonly setups = BRIDGE_SETUPS;
   protected readonly offerSetup = computed(

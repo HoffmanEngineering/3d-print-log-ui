@@ -53,6 +53,10 @@ import { ColumnDefinition } from '../print-list.component';
 import { PrintListSkeletonComponent } from '../print-list-skeleton/print-list-skeleton.component';
 import { PrintTableLayoutComponent } from '../print-table-layout/print-table-layout.component';
 import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
+import {
+  volumeTotalLabel,
+  volumeUsageLabel,
+} from 'src/app/shared/utils/filament-display.utils';
 
 export type GroupedRow =
   | { kind: 'project'; item: GroupedFeedItemDto }
@@ -114,6 +118,11 @@ export class PrintGroupedViewComponent implements OnInit {
   readonly preferredUnit = input<PrintFilamentSourceMeasurement>(
     PrintFilamentSourceMeasurement.Weight
   );
+
+  /** A resin row's usage in mL; null for rows the chips show in grams (printlog-bridge#97). */
+  protected readonly volumeUsageLabel = volumeUsageLabel;
+  /** A resin print's total in mL; null for prints totaled in grams. */
+  protected readonly volumeTotalLabel = volumeTotalLabel;
 
   // ---- Internal state ----
   readonly feed = signal<PagedList<GroupedFeedItemDto> | null>(null);

@@ -8,8 +8,17 @@ import {
   convertFilamentValue,
   getActualPreferredDisplay,
   getEstimatedPreferredDisplay,
+  formatVolumeTotal,
   getFilamentPreferredDisplay,
+  isVolumeUsage,
+  volumeUsageTotal,
 } from './filament-display.utils';
+import {
+  estimateOnlyResinUsageRow,
+  resinUsageRow,
+  resinUsageRowWithGrams,
+  unlinkedResinUsageRow,
+} from 'src/app/print/testing/resin-print-fixtures';
 
 const STANDARD_FILAMENT = {
   materialDensityGramPerCubicCm: 1.24,
@@ -119,7 +128,7 @@ describe('getFilamentPreferredDisplay', () => {
         fu,
         PrintFilamentSourceMeasurement.Volume
       )!;
-      expect(result.displayString).toBe('12.1ml');
+      expect(result.displayString).toBe('12.1mL');
     });
   });
 
@@ -429,5 +438,118 @@ describe('getFilamentPreferredDisplay', () => {
         getEstimatedPreferredDisplay(fu, PrintFilamentSourceMeasurement.Weight)
       ).toBeNull();
     });
+  });
+});
+
+// printlog-bridge#97: a resin row is measured in mL. Whatever unit the reader prefers, it shows
+// mL and never a weight or length converted through the bottle's density or a filament diameter.
+describe('volume-sourced (resin) usage', () => {
+  const ALL_UNITS = [
+    PrintFilamentSourceMeasurement.AsRecorded,
+    PrintFilamentSourceMeasurement.Weight,
+    PrintFilamentSourceMeasurement.Length,
+    PrintFilamentSourceMeasurement.Volume,
+  ];
+
+  const variants: [string, PrintFilamentSummaryDto][] = [
+    ['linked to a bottle', resinUsageRow()],
+    ['with no bottle linked', unlinkedResinUsageRow()],
+    ['with grams the API filled from density', resinUsageRowWithGrams()],
+  ];
+
+  for (const [name, fu] of variants) {
+    describe(name, () => {
+      for (const unit of ALL_UNITS) {
+        it(`shows the actual in mL, marked estimated, for preferred unit ${unit}`, () => {
+          const result = getFilamentPreferredDisplay(fu, unit)!;
+          expect(result.displayString).toBe('42.5mL');
+          expect(result.isEstimated).toBeTrue();
+          expect(result.isFallback).toBeFalse();
+          expect(result.fallbackTooltip).toBeNull();
+        });
+
+        it(`shows each side in mL for preferred unit ${unit}`, () => {
+          expect(getActualPreferredDisplay(fu, unit)!.displayString).toBe(
+            '42.5mL'
+          );
+          const estimate = getEstimatedPreferredDisplay(fu, unit)!;
+          expect(estimate.displayString).toBe('40.0mL');
+          expect(estimate.isFallback).toBeFalse();
+        });
+      }
+    });
+  }
+
+  it('shows an estimate-only row as its estimate in mL', () => {
+    for (const unit of ALL_UNITS) {
+      const result = getFilamentPreferredDisplay(
+        estimateOnlyResinUsageRow(),
+        unit
+      )!;
+      expect(result.displayString).toBe('40.0mL');
+      expect(result.isEstimated).toBeTrue();
+      expect(result.isFallback).toBeFalse();
+    }
+  });
+
+  it('still converts a weight-sourced row to the preferred unit', () => {
+    const fu = makeFu({
+      amountMg: 12400,
+      filament: STANDARD_FILAMENT as PrintFilamentSummaryDto['filament'],
+    });
+    expect(
+      getFilamentPreferredDisplay(fu, PrintFilamentSourceMeasurement.Volume)!
+        .displayString
+    ).toBe('10.0mL');
+  });
+});
+
+describe('isVolumeUsage', () => {
+  it('is true for a resin row, linked or not, actual or estimate-only', () => {
+    expect(isVolumeUsage(resinUsageRow())).toBeTrue();
+    expect(isVolumeUsage(unlinkedResinUsageRow())).toBeTrue();
+    expect(isVolumeUsage(estimateOnlyResinUsageRow())).toBeTrue();
+  });
+
+  it('is false for a filament row', () => {
+    expect(isVolumeUsage(makeFu({ amountMg: 1000 }))).toBeFalse();
+  });
+});
+
+describe('volumeUsageTotal', () => {
+  it('sums the actual of each resin row, marked estimated when any is', () => {
+    expect(
+      volumeUsageTotal([resinUsageRow(), unlinkedResinUsageRow()])
+    ).toEqual({ ml: 85, isEstimated: true });
+  });
+
+  it('takes the estimate of a row with no actual', () => {
+    expect(
+      volumeUsageTotal([
+        resinUsageRow({ actualIsEstimate: false }),
+        estimateOnlyResinUsageRow(),
+      ])
+    ).toEqual({ ml: 82.5, isEstimated: true });
+  });
+
+  it('is not estimated when every actual was measured', () => {
+    expect(
+      volumeUsageTotal([resinUsageRow({ actualIsEstimate: false })])
+    ).toEqual({ ml: 42.5, isEstimated: false });
+  });
+
+  it('is null for no rows, or when any row is not volume-sourced', () => {
+    expect(volumeUsageTotal([])).toBeNull();
+    expect(volumeUsageTotal(undefined)).toBeNull();
+    expect(
+      volumeUsageTotal([resinUsageRow(), makeFu({ amountMg: 1000 })])
+    ).toBeNull();
+  });
+});
+
+describe('formatVolumeTotal', () => {
+  it('formats mL with one decimal and an estimate marker', () => {
+    expect(formatVolumeTotal({ ml: 85, isEstimated: true })).toBe('85.0 mL*');
+    expect(formatVolumeTotal({ ml: 42.5, isEstimated: false })).toBe('42.5 mL');
   });
 });

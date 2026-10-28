@@ -426,8 +426,21 @@
                         </div>
                         <!-- An untracked spool (no starting weight) has null
                              remaining: "Not tracked" on the weight line, no
-                             length line. -->
-                        @if (printFilament.get('filament').value !== null) {
+                             length line. A resin bottle in the vat shows mL
+                             only (printlog-bridge#97). -->
+                        @if (
+                          isMeasuredInMl(printFilament.get('filament').value)
+                        ) {
+                          <div fxFlex="grow">
+                            {{
+                              printFilament.get('filament').value
+                                ?.filamentVolumeRemainingInMl
+                                | remaining: { unit: ' (mL) remaining' }
+                            }}
+                          </div>
+                        } @else if (
+                          printFilament.get('filament').value !== null
+                        ) {
                           <div fxFlex="grow">
                             {{
                               printFilament.get('filament').value

@@ -2574,6 +2574,9 @@ export class EditPrintDetailComponent
     const preferred = this.preferredFilamentUnit();
 
     if (source === preferred) return null;
+    // A resin row is shown in mL only: a weight or length would go through the bottle's
+    // density or a filament diameter it does not have (printlog-bridge#97).
+    if (source === PrintFilamentSourceMeasurement.Volume) return null;
 
     // Get the source value in its native unit (weight stored as grams in form)
     let sourceValueNative: number | null = null;
@@ -2608,7 +2611,7 @@ export class EditPrintDetailComponent
     if (preferred === PrintFilamentSourceMeasurement.Length) {
       return `≈ ${converted.toFixed(1)}m`;
     }
-    return `≈ ${converted.toFixed(1)}ml`;
+    return `≈ ${converted.toFixed(1)}mL`;
   }
 
   public setStartDateToNow() {

@@ -538,7 +538,13 @@
             Total Material (g)
           </th>
           <td mat-cell *matCellDef="let print">
-            {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+            <!-- A resin print's rows are in mL, which the server's gram total
+                 converts through density (printlog-bridge#97). -->
+            @if (volumeTotalLabel(print.filamentUsage); as volume) {
+              {{ volume }}
+            } @else {
+              {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+            }
           </td>
         </ng-container>
         <ng-container matColumnDef="totalCost">

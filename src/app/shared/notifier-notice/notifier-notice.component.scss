@@ -11,10 +11,16 @@
   border-radius: 8px;
   background: var(--app-surface-container);
   color: var(--app-text-primary);
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 320px;
 
   p {
     margin: 0;
-    flex: 1 1 320px;
   }
 }
 

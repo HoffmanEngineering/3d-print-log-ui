@@ -29,10 +29,18 @@ import {
 import { LoggingService } from '../../core/services/logging.service';
 
 /**
- * Suggests removing the Moonraker `[notifier]` section once the bridge logs the same printer
- * (#254). The API drops the notifier's events for such a printer so nothing is logged twice, and
- * raises `showNotifierNotice` on the connection; dismissing it is stored there too, so it stays
- * dismissed on every browser.
+ * The connection kinds with an older integration the API drops events from once the bridge logs
+ * the same printer: the Moonraker `[notifier]` (#254) and OctoPrint's Webhooks plugin (#385,
+ * api#292). Any other kind has nothing for the user to turn off, so it gets no notice.
+ */
+const NOTICE_KINDS: ReadonlySet<string> = new Set(['moonraker', 'octoprint']);
+
+/**
+ * Suggests turning off the older integration once the bridge logs the same printer: the Moonraker
+ * `[notifier]` section, or the 3D Print Log hook in OctoPrint's Webhooks plugin. The API drops
+ * that integration's events for such a printer so nothing is logged twice, and raises
+ * `showNotifierNotice` on the bridge's connection; dismissing it is stored there too, so it stays
+ * dismissed on every browser. Each kind is worded for its own printers, under one dismiss button.
  */
 @Component({
   selector: 'app-notifier-notice',
@@ -48,13 +56,10 @@ export class NotifierNoticeComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  /** The connections whose printer still has the notifier sending events. */
+  /** The connections whose printer still has the notifier or the webhook sending events. */
   protected readonly connections = signal<Connection[]>([]);
-  protected readonly names = computed(() =>
-    this.connections()
-      .map((c) => c.displayName)
-      .join(', ')
-  );
+  protected readonly moonrakerNames = computed(() => this.namesOf('moonraker'));
+  protected readonly octoprintNames = computed(() => this.namesOf('octoprint'));
 
   ngOnInit(): void {
     if (!this.isBrowser) {
@@ -79,8 +84,19 @@ export class NotifierNoticeComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((connections) =>
-        this.connections.set(connections.filter((c) => c.showNotifierNotice))
+        this.connections.set(
+          connections.filter(
+            (c) => c.showNotifierNotice && NOTICE_KINDS.has(c.kind)
+          )
+        )
       );
+  }
+
+  private namesOf(kind: string): string {
+    return this.connections()
+      .filter((c) => c.kind === kind)
+      .map((c) => c.displayName)
+      .join(', ');
   }
 
   dismiss(): void {

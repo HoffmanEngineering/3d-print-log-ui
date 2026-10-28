@@ -14,11 +14,17 @@ import { ToastrService } from 'ngx-toastr';
 import { Subject, of, throwError } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
+  PrintFilamentSourceMeasurement,
   PrintService,
   PrintStatus,
   PrintSummary,
   PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
+import {
+  resinPrintSummary,
+  resinUsageRow,
+  unlinkedResinUsageRow,
+} from 'src/app/print/testing/resin-print-fixtures';
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
@@ -298,6 +304,65 @@ describe('PrintListComponent', () => {
     const row = fixture.debugElement.query(By.css('tr[mat-row]'))
       .nativeElement as HTMLElement;
     expect(row.textContent).toContain('Benchy');
+  });
+
+  // printlog-bridge#97: the server's gram total converts a resin print's mL through the bottle's
+  // density (and is 0 with no bottle), so the Total Material cell shows the rows' mL instead.
+  it('totals a resin print in mL in the Total Material column', () => {
+    TestBed.inject(ActivatedRoute).data = of({
+      printList: {
+        items: [resinPrintSummary([resinUsageRow(), unlinkedResinUsageRow()])],
+        paging: { currentPage: 1, pageSize: 10, totalCount: 1, totalPages: 1 },
+      } as PagedList<PrintSummary>,
+      printers: [],
+      filaments: [],
+    });
+    localStorage.setItem(
+      'print_table_displayed_columns',
+      JSON.stringify(['title', 'totalFilamentUsage', 'more'])
+    );
+
+    fixture.detectChanges();
+
+    const cell = fixture.debugElement.query(
+      By.css('td.mat-column-totalFilamentUsage')
+    ).nativeElement as HTMLElement;
+    expect(cell.textContent.trim()).toBe('85.0 mL*');
+  });
+
+  it('keeps the gram total for a filament print', () => {
+    TestBed.inject(ActivatedRoute).data = of({
+      printList: {
+        items: [
+          resinPrintSummary(
+            [
+              {
+                id: 'pla',
+                filament: null,
+                amountMg: 12000,
+                source: PrintFilamentSourceMeasurement.Weight,
+                estimatedSource: PrintFilamentSourceMeasurement.Weight,
+              },
+            ],
+            { totalFilamentWeightMg: 12000 }
+          ),
+        ],
+        paging: { currentPage: 1, pageSize: 10, totalCount: 1, totalPages: 1 },
+      } as PagedList<PrintSummary>,
+      printers: [],
+      filaments: [],
+    });
+    localStorage.setItem(
+      'print_table_displayed_columns',
+      JSON.stringify(['title', 'totalFilamentUsage', 'more'])
+    );
+
+    fixture.detectChanges();
+
+    const cell = fixture.debugElement.query(
+      By.css('td.mat-column-totalFilamentUsage')
+    ).nativeElement as HTMLElement;
+    expect(cell.textContent.trim()).toBe('12');
   });
 
   it('sorts by start date whichever of its three columns is clicked', () => {

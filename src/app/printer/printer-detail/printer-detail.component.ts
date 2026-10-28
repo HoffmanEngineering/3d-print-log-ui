@@ -190,6 +190,18 @@ export class PrinterDetailComponent
   /** False for a spool with no starting weight, whose remaining is null. */
   protected readonly isRemainingTracked = isRemainingTracked;
 
+  /**
+   * A resin bottle, shown in mL only (printlog-bridge#97). The summary carries no measurement
+   * source, but a bottle has no diameter and so no length remaining, while a filament spool
+   * tracked by weight always has one.
+   */
+  protected isMeasuredInMl(filament: FilamentSummary | null): boolean {
+    return (
+      isRemainingTracked(filament?.filamentVolumeRemainingInMl) &&
+      !isRemainingTracked(filament?.filamentLengthRemainingInM)
+    );
+  }
+
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
   private formBuilder = inject(UntypedFormBuilder);

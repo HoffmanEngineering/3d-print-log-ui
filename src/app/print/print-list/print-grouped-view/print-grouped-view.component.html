@@ -95,10 +95,15 @@
                                 "
                               ></div>
                               <span class="material-name"
-                                >{{ fu.filament.displayName }} ({{
-                                  (fu.amountMg ?? 0) / 1000 | number: '1.0-1'
-                                }}g)</span
-                              >
+                                >{{ fu.filament.displayName }}
+                                @if (volumeUsageLabel(fu); as volume) {
+                                  {{ '(' + volume + ')' }}
+                                } @else {
+                                  ({{
+                                    (fu.amountMg ?? 0) / 1000 | number: '1.0-1'
+                                  }}g)
+                                }
+                              </span>
                             }
                           </div>
                         }
@@ -229,7 +234,9 @@
                                 ></div>
                                 <span class="material-name">
                                   {{ fu.filament.displayName }}
-                                  @if (
+                                  @if (volumeUsageLabel(fu); as volume) {
+                                    {{ '(' + volume + ')' }}
+                                  } @else if (
                                     fu.amountMg !== null && fu.amountMg > 0
                                   ) {
                                     ({{
@@ -427,7 +434,11 @@
                               ></div>
                               <span class="material-name">
                                 {{ fu.filament.displayName }}
-                                @if (fu.amountMg !== null && fu.amountMg > 0) {
+                                @if (volumeUsageLabel(fu); as volume) {
+                                  {{ '(' + volume + ')' }}
+                                } @else if (
+                                  fu.amountMg !== null && fu.amountMg > 0
+                                ) {
                                   ({{ fu.amountMg / 1000 | number: '1.0-1' }}g)
                                 } @else if (
                                   fu.estimatedAmountMg !== null &&
@@ -907,12 +918,26 @@
     <ng-container matColumnDef="totalFilamentUsage">
       <th mat-header-cell *matHeaderCellDef>Total Material (g)</th>
       <td mat-cell *matCellDef="let row">
+        <!-- A resin print's rows are in mL, which the server's gram total
+             converts through density (printlog-bridge#97). -->
         @if (row.kind === 'project') {
-          {{ (row.item.totalFilamentWeightMg ?? 0) / 1000 | number: '1.0-1' }}
+          @if (volumeTotalLabel(row.item.filamentUsage); as volume) {
+            {{ volume }}
+          } @else {
+            {{ (row.item.totalFilamentWeightMg ?? 0) / 1000 | number: '1.0-1' }}
+          }
         } @else if (row.kind === 'expanded-print') {
-          {{ row.print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+          @if (volumeTotalLabel(row.print.filamentUsage); as volume) {
+            {{ volume }}
+          } @else {
+            {{ row.print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+          }
         } @else if (row.kind === 'print') {
-          {{ row.item.print?.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+          @if (volumeTotalLabel(row.item.print?.filamentUsage); as volume) {
+            {{ volume }}
+          } @else {
+            {{ row.item.print?.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+          }
         }
       </td>
     </ng-container>

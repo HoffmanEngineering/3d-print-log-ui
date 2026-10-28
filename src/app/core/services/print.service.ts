@@ -253,6 +253,21 @@ export interface PatchPrintDTO {
   clear?: PrintClearableField[];
 }
 
+/**
+ * True when a usage row records an actual figure, checked in the measurement the row is sourced
+ * from. A Volume-sourced (resin) row records `volumeMl` and leaves `amountMg` null, so testing
+ * `amountMg` alone treats it as estimate-only and prices or shows its estimate instead.
+ */
+export function hasActualUsage(fu: PrintFilamentSummaryDto): boolean {
+  if (fu.source == PrintFilamentSourceMeasurement.Length) {
+    return (fu.lengthInM ?? 0) > 0;
+  }
+  if (fu.source == PrintFilamentSourceMeasurement.Volume) {
+    return (fu.volumeMl ?? 0) > 0;
+  }
+  return (fu.amountMg ?? 0) > 0;
+}
+
 /** One usage row in the shape the API takes on write (PATCH and the legacy PUT). */
 export function toPutPrintFilamentSummary(
   pf: PrintFilamentSummaryDto
@@ -726,14 +741,7 @@ export class PrintService {
       // null, so testing amountMg alone sent it down the estimated path and — when there was no
       // estimate — reported a confident $0.00 instead of its real cost.
       // Pinned by print-cost-fixtures.spec.ts against the shared corpus.
-      const hasActual =
-        fu.source == PrintFilamentSourceMeasurement.Length
-          ? (fu.lengthInM ?? 0) > 0
-          : fu.source == PrintFilamentSourceMeasurement.Volume
-            ? (fu.volumeMl ?? 0) > 0
-            : (fu.amountMg ?? 0) > 0;
-
-      if (hasActual) {
+      if (hasActualUsage(fu)) {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,

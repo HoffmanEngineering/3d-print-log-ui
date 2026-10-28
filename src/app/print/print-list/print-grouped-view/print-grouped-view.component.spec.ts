@@ -31,6 +31,11 @@ import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-sto
 import { By } from '@angular/platform-browser';
 import { PrintImageComponent } from 'src/app/shared/print-image/print-image.component';
 import { ProjectImageComponent } from 'src/app/shared/project-image/project-image.component';
+import {
+  resinPrintSummary,
+  resinUsageRow,
+  unlinkedResinUsageRow,
+} from 'src/app/print/testing/resin-print-fixtures';
 
 function makePagedList<T>(items: T[]): PagedList<T> {
   return {
@@ -606,4 +611,45 @@ describe('PrintGroupedViewComponent', () => {
 
     discardPeriodicTasks();
   }));
+
+  // printlog-bridge#97: a resin print reports mL. The server's gram total converts that through
+  // the bottle's density (and is 0 with no bottle), so the list must not show it for resin.
+  describe('a resin print', () => {
+    const resinItem: GroupedFeedItemDto = {
+      type: 'print',
+      projectStartDate: null,
+      sortDate: new Date('2026-10-20'),
+      print: resinPrintSummary([resinUsageRow(), unlinkedResinUsageRow()]),
+    };
+
+    function renderedText(): string {
+      // A print with usage rows renders their per-row prices.
+      (mockPrintService as unknown as Record<string, unknown>)[
+        'calculatePrintCost'
+      ] = jasmine
+        .createSpy('calculatePrintCost')
+        .and.returnValue({ valid: false, message: 'No price' });
+      mockProjectService.getGroupedFeed.and.returnValue(
+        of(makePagedList([resinItem]))
+      );
+      fixture.detectChanges();
+      tick(500);
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).textContent ?? '';
+    }
+
+    it('shows the bottle chip in mL, marked estimated', fakeAsync(() => {
+      expect(renderedText()).toContain('(42.5mL*)');
+      discardPeriodicTasks();
+    }));
+
+    it('totals the rows in mL instead of the gram total', fakeAsync(() => {
+      component.displayedColumns.set(['title', 'totalFilamentUsage', 'more']);
+      const text = renderedText();
+      expect(text).toContain('85.0 mL*');
+      expect(text).not.toContain('46.8');
+      expect(text).not.toContain('0.0g');
+      discardPeriodicTasks();
+    }));
+  });
 });

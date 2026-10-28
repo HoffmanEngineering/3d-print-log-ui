@@ -22,7 +22,12 @@ import {
   WritableSignal,
   signal,
 } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -39,6 +44,7 @@ import {
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
 import { EditPrintDetailComponent } from './edit-print-detail.component';
+import { RESIN_BOTTLE } from 'src/app/print/testing/resin-print-fixtures';
 import { OTHER_FILAMENT } from 'src/app/core/services/file-parsers/core/print-detail-defaults';
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 
@@ -247,6 +253,50 @@ describe('EditPrintDetailComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   }, 10000);
+
+  // printlog-bridge#97: a resin row is edited in mL; no "≈ g" hint converted through density.
+  describe('preferred-unit hint for a volume-sourced row', () => {
+    const resinGroup = () =>
+      new FormGroup({
+        source: new FormControl(PrintFilamentSourceMeasurement.Volume),
+        estimatedSource: new FormControl(PrintFilamentSourceMeasurement.Volume),
+        volumeMl: new FormControl(42.5),
+        estimatedVolumeMl: new FormControl(40),
+        filament: new FormControl(RESIN_BOTTLE),
+      }) as never;
+
+    it('shows no converted weight or length', () => {
+      for (const unit of [
+        PrintFilamentSourceMeasurement.Weight,
+        PrintFilamentSourceMeasurement.Length,
+      ]) {
+        component.preferredFilamentUnit.set(unit);
+        expect(
+          component.getPreferredUnitSecondaryDisplay(resinGroup(), false)
+        ).toBeNull();
+        expect(
+          component.getPreferredUnitSecondaryDisplay(resinGroup(), true)
+        ).toBeNull();
+      }
+    });
+
+    it('still shows a filament row converted to mL', () => {
+      component.preferredFilamentUnit.set(
+        PrintFilamentSourceMeasurement.Volume
+      );
+      const group = new FormGroup({
+        source: new FormControl(PrintFilamentSourceMeasurement.Weight),
+        amountG: new FormControl(12.4),
+        filament: new FormControl({
+          materialDensityGramPerCubicCm: 1.24,
+          diameterMm: 1.75,
+        }),
+      }) as never;
+      expect(component.getPreferredUnitSecondaryDisplay(group, false)).toBe(
+        '≈ 10.0mL'
+      );
+    });
+  });
 
   it('should use maxImagesPerPrint from subscription service', () => {
     expect(component.maxImages()).toBe(20);
@@ -940,7 +990,7 @@ describe('EditPrintDetailComponent', () => {
         expect(text.match(/Not tracked/g)?.length).toBe(1);
         expect(text).not.toContain('(g) remaining');
         expect(text).not.toContain('(m) remaining');
-        expect(text).not.toContain('(ml) remaining');
+        expect(text).not.toContain('(mL) remaining');
       });
 
       it('shows grams, meters and milliliters for a tracked spool', () => {
@@ -952,7 +1002,7 @@ describe('EditPrintDetailComponent', () => {
 
         expect(text).toContain('250 (g) remaining');
         expect(text).toContain('84 (m) remaining');
-        expect(text).toContain('201 (ml) remaining');
+        expect(text).toContain('201 (mL) remaining');
         expect(text).not.toContain('Not tracked');
       });
     });

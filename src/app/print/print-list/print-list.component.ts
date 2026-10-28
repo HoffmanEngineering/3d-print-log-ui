@@ -31,6 +31,7 @@ import {
   PrinterSummary,
 } from 'src/app/core/services/printer.service';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
+import { volumeTotalLabel } from 'src/app/shared/utils/filament-display.utils';
 import {
   UserSetting,
   UserSettingService,
@@ -198,6 +199,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private readonly newPrintStoreService = inject(NewPrintStoreService);
 
   readonly prints = signal<PrintSummary[]>([]);
+
+  /** A resin print's total in mL; null for prints totaled in grams (printlog-bridge#97). */
+  protected readonly volumeTotalLabel = volumeTotalLabel;
   readonly printers = signal<PrinterSummary[]>([]);
   public filaments: FilamentSummary[] = [];
   readonly pageSize = signal<number | undefined>(undefined);

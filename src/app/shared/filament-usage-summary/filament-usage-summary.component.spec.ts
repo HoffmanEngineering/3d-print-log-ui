@@ -8,6 +8,11 @@ import {
   PrintFilamentSummaryDto,
   PrintService,
 } from 'src/app/core/services/print.service';
+import {
+  estimateOnlyResinUsageRow,
+  resinUsageRow,
+  unlinkedResinUsageRow,
+} from 'src/app/print/testing/resin-print-fixtures';
 
 describe('FilamentUsageSummaryComponent', () => {
   let fixture: ComponentFixture<FilamentUsageSummaryComponent>;
@@ -41,6 +46,57 @@ describe('FilamentUsageSummaryComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  // printlog-bridge#97: the resin print a bridge reports, on the print detail page.
+  describe('a resin print', () => {
+    let printService: jasmine.SpyObj<PrintService>;
+
+    beforeEach(() => {
+      printService = TestBed.inject(
+        PrintService
+      ) as jasmine.SpyObj<PrintService>;
+    });
+
+    function render(rows: PrintFilamentSummaryDto[]): string {
+      fixture.componentRef.setInput('filamentUsage', rows);
+      fixture.componentRef.setInput('showPrices', true);
+      fixture.componentRef.setInput(
+        'preferredUnit',
+        PrintFilamentSourceMeasurement.Weight
+      );
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).textContent ?? '';
+    }
+
+    it('shows mL, not grams, for a linked and an unlinked row', () => {
+      const text = render([resinUsageRow(), unlinkedResinUsageRow()]);
+      expect(text).toContain('42.5mL');
+      expect(text).not.toMatch(/\d(\.\d+)?\s?g\b/);
+    });
+
+    it('prices a row by its actual volume, not its estimate', () => {
+      render([resinUsageRow()]);
+      expect(printService.calculatePrintCost).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          source: PrintFilamentSourceMeasurement.Volume,
+          volumeMl: 42.5,
+        })
+      );
+      expect(printService.calculatePrintCost).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ volumeMl: 40 })
+      );
+    });
+
+    it('prices an estimate-only row by its estimate', () => {
+      render([estimateOnlyResinUsageRow()]);
+      expect(printService.calculatePrintCost).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          source: PrintFilamentSourceMeasurement.Volume,
+          volumeMl: 40,
+        })
+      );
+    });
   });
 
   describe('slots', () => {

@@ -8,6 +8,10 @@ import {
   PrintSummary,
 } from 'src/app/core/services/print.service';
 import { FilamentPrintRowComponent } from './filament-print-row.component';
+import {
+  RESIN_BOTTLE,
+  resinUsageRow,
+} from 'src/app/print/testing/resin-print-fixtures';
 
 const FILAMENT_ID = 'aaaaaaaa-0000-0000-0000-000000000001';
 
@@ -71,6 +75,34 @@ describe('FilamentPrintRowComponent', () => {
   it('links to the print', () => {
     const el = render(printWith([usage(12_000)]));
     expect(el.querySelector('a')?.getAttribute('href')).toContain('/prints/7');
+  });
+
+  // printlog-bridge#97: a resin bottle's print rail shows mL, not grams via its density.
+  it('shows a resin print in mL, marked estimated', () => {
+    fixture.componentRef.setInput('filamentId', RESIN_BOTTLE.id);
+    fixture.componentRef.setInput(
+      'preferredUnit',
+      PrintFilamentSourceMeasurement.Weight
+    );
+    fixture.componentRef.setInput('print', printWith([resinUsageRow()]));
+    fixture.detectChanges();
+    const usageText = (fixture.nativeElement as HTMLElement)
+      .querySelector('.usage')!
+      .textContent!.replace(/\s+/g, '');
+    expect(usageText).toBe('42.5mL*');
+  });
+
+  it('sums two resin rows for one bottle in mL', () => {
+    fixture.componentRef.setInput('filamentId', RESIN_BOTTLE.id);
+    fixture.componentRef.setInput(
+      'print',
+      printWith([resinUsageRow(), resinUsageRow({ id: 'second' })])
+    );
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.usage')!
+        .textContent
+    ).toContain('85.0mL');
   });
 
   it('sums every usage row for this filament, not just the first', () => {

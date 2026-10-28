@@ -591,6 +591,7 @@ describe('PrinterDetailComponent', () => {
     const loadedWith = (remaining: {
       filamentRemaining: number | null;
       filamentLengthRemainingInM: number | null;
+      filamentVolumeRemainingInMl?: number | null;
     }) =>
       aPrinterDetail({
         loadedFilaments: [
@@ -633,6 +634,51 @@ describe('PrinterDetailComponent', () => {
       expect(text()).toContain('250 (g) remaining');
       expect(text()).toContain('84 (m) remaining');
       expect(text()).not.toContain('Not tracked');
+    });
+
+    // printlog-bridge#97: a resin printer's vat holds a bottle measured in mL.
+    it('shows mL remaining for a loaded resin bottle', async () => {
+      await setUp(
+        loadedWith({
+          filamentRemaining: 935_000,
+          filamentLengthRemainingInM: null,
+          filamentVolumeRemainingInMl: 850,
+        }),
+        { zone: true }
+      );
+
+      expect(text()).toContain('850 (mL) remaining');
+      expect(text()).not.toContain('(g) remaining');
+      expect(text()).not.toContain('(m) remaining');
+    });
+
+    it('keeps grams and meters, without mL, for a filament spool', async () => {
+      await setUp(
+        loadedWith({
+          filamentRemaining: 250_000,
+          filamentLengthRemainingInM: 84,
+          filamentVolumeRemainingInMl: 201,
+        }),
+        { zone: true }
+      );
+
+      expect(text()).toContain('250 (g) remaining');
+      expect(text()).toContain('84 (m) remaining');
+      expect(text()).not.toContain('(mL) remaining');
+    });
+
+    it('says Not tracked, with no mL line, for an untracked spool', async () => {
+      await setUp(
+        loadedWith({
+          filamentRemaining: null,
+          filamentLengthRemainingInM: null,
+          filamentVolumeRemainingInMl: null,
+        }),
+        { zone: true }
+      );
+
+      expect(text()).toContain('Not tracked');
+      expect(text()).not.toContain('(mL) remaining');
     });
 
     it('lists a spool picked in the filament dialog', async () => {

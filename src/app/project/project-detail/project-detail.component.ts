@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  LOCALE_ID,
   OnInit,
   computed,
   effect,
@@ -11,6 +12,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { formatNumber } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -56,6 +58,7 @@ import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { environment } from 'src/environments/environment';
+import { withMilliliters } from 'src/app/shared/utils/filament-display.utils';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
   SEO_PENDING,
@@ -109,6 +112,7 @@ export class ProjectDetailComponent implements OnInit {
   private readonly metaTagService = inject(MetaTagService);
   private readonly seoService = inject(SeoService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly locale = inject(LOCALE_ID);
   private readonly loggingService = inject(LoggingService);
   private readonly http = inject(HttpClient);
   private readonly sanitizer = inject(DomSanitizer);
@@ -214,6 +218,19 @@ export class ProjectDetailComponent implements OnInit {
     if (!p) return 0;
     return Math.max(0, p.printCount - this.prints().length);
   });
+
+  /**
+   * The project's material: grams, with its resin in mL beside them when it has any, or mL
+   * alone when it has no grams (3d-print-log-api#294). See withMilliliters.
+   */
+  materialUsed(p: ProjectDetailDto): string {
+    const grams = p.totalFilamentWeightMg / 1000;
+    return withMilliliters(
+      `${formatNumber(grams, this.locale, '1.0-1')}g`,
+      grams,
+      p.totalFilamentVolumeMl
+    );
+  }
 
   private emptyProject(): ProjectDetailDto {
     return {

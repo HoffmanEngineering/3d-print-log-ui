@@ -27,6 +27,7 @@ const response = (
       count: 2,
       durationSeconds: 7200,
       materialMg: 40000,
+      materialMl: 0,
       cost: 3.5,
     },
     {
@@ -35,6 +36,7 @@ const response = (
       count: 1,
       durationSeconds: 3600,
       materialMg: 20000,
+      materialMl: 0,
       cost: 1.5,
     },
   ],
@@ -114,6 +116,7 @@ describe('ActivityTabComponent', () => {
               count: 1,
               durationSeconds: 3600,
               materialMg: 20000,
+              materialMl: 0,
               cost: 1.5,
             },
             {
@@ -122,6 +125,7 @@ describe('ActivityTabComponent', () => {
               count: 2,
               durationSeconds: 7200,
               materialMg: 40000,
+              materialMl: 0,
               cost: 3.5,
             },
           ],
@@ -167,6 +171,7 @@ describe('ActivityTabComponent', () => {
               count: 2,
               durationSeconds: 7200,
               materialMg: 40000,
+              materialMl: 0,
               cost: null,
             },
           ],
@@ -190,4 +195,81 @@ describe('ActivityTabComponent', () => {
 
     expect(component.streakSummary()).toContain('2');
   }));
+
+  // 3d-print-log-api#294: resin is plotted in mL, never folded into grams.
+  describe('resin', () => {
+    const withResin = () =>
+      response({
+        series: [
+          {
+            index: 0,
+            localStart: '2026-07-01',
+            count: 2,
+            durationSeconds: 7200,
+            materialMg: 40000,
+            materialMl: 0,
+            cost: 3.5,
+          },
+          {
+            index: 1,
+            localStart: '2026-07-02',
+            count: 1,
+            durationSeconds: 3600,
+            materialMg: 0,
+            materialMl: 42.5,
+            cost: 1.5,
+          },
+        ],
+      });
+    const toggles = () =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll(
+          'mat-button-toggle'
+        ) as NodeListOf<HTMLElement>
+      ).map((t) => t.textContent?.trim());
+
+    it('offers no resin metric to a filament-only user', fakeAsync(() => {
+      setup();
+
+      expect(component.resinAvailable()).toBeFalse();
+      expect(toggles()).not.toContain('Resin');
+    }));
+
+    it('plots each bucket in mL under the resin metric', fakeAsync(() => {
+      analytics.getActivity.and.returnValue(of(withResin()));
+      setup();
+
+      expect(toggles()).toContain('Resin');
+      component.setMetric('resin');
+      fixture.detectChanges();
+
+      expect(component.seriesData().map((d) => d.values['value'])).toEqual([
+        0, 42.5,
+      ]);
+      expect(component.seriesLabels.resin).toBe('Resin (mL)');
+    }));
+
+    it('falls back to filament when the resin metric has nothing to plot', fakeAsync(() => {
+      setup();
+      component.setMetric('resin');
+
+      expect(component.plottedMetric()).toBe('filament');
+    }));
+
+    it('appends the mL column to the series CSV', fakeAsync(() => {
+      analytics.getActivity.and.returnValue(of(withResin()));
+      setup();
+
+      const csv = component.seriesCsv();
+      expect(csv.columns).toEqual([
+        'Period',
+        'Prints',
+        'Print time (s)',
+        'Filament (g)',
+        'Cost',
+        'Filament (mL)',
+      ]);
+      expect(csv.rows.map((row) => row.at(-1))).toEqual([0, 42.5]);
+    }));
+  });
 });

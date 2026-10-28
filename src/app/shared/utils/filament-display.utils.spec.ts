@@ -8,10 +8,12 @@ import {
   convertFilamentValue,
   getActualPreferredDisplay,
   getEstimatedPreferredDisplay,
+  formatMilliliters,
   formatVolumeTotal,
   getFilamentPreferredDisplay,
   isVolumeUsage,
   volumeUsageTotal,
+  withMilliliters,
 } from './filament-display.utils';
 import {
   estimateOnlyResinUsageRow,
@@ -551,5 +553,39 @@ describe('formatVolumeTotal', () => {
   it('formats mL with one decimal and an estimate marker', () => {
     expect(formatVolumeTotal({ ml: 85, isEstimated: true })).toBe('85.0 mL*');
     expect(formatVolumeTotal({ ml: 42.5, isEstimated: false })).toBe('42.5 mL');
+  });
+});
+
+// 3d-print-log-api#294: the server's mL totals beside its gram totals.
+describe('formatMilliliters', () => {
+  it('formats mL with one decimal and a thousands separator', () => {
+    expect(formatMilliliters(20)).toBe('20.0 mL');
+    expect(formatMilliliters(72.75)).toBe('72.8 mL');
+    expect(formatMilliliters(1234.5)).toBe('1,234.5 mL');
+  });
+});
+
+describe('withMilliliters', () => {
+  it('keeps the gram text alone when there is no resin', () => {
+    expect(withMilliliters('34.0 kg', 34000, 0)).toBe('34.0 kg');
+    expect(withMilliliters('34.0 kg', 34000, null)).toBe('34.0 kg');
+    expect(withMilliliters('34.0 kg', 34000, undefined)).toBe('34.0 kg');
+  });
+
+  it('shows both when grams and mL are both recorded', () => {
+    expect(withMilliliters('34.0 kg', 34000, 20)).toBe('34.0 kg · 20.0 mL');
+  });
+
+  it('shows mL only when there are no grams', () => {
+    expect(withMilliliters('0 g', 0, 72.75)).toBe('72.8 mL');
+    expect(withMilliliters('—', null, 72.75)).toBe('72.8 mL');
+  });
+
+  it('shows mL only when the caller knows the grams are the resin itself', () => {
+    expect(withMilliliters('80 g', 80, 72.75, true)).toBe('72.8 mL');
+  });
+
+  it('keeps grams for a resin-only figure with no mL recorded', () => {
+    expect(withMilliliters('80 g', 80, 0, true)).toBe('80 g');
   });
 });

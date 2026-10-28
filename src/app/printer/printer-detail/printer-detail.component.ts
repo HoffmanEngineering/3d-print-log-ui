@@ -33,7 +33,10 @@ import {
   switchMap,
 } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
-import { FilamentSummary } from 'src/app/core/services/filament.service';
+import {
+  FilamentSourceMeasurement,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { EMPTY_GUID } from 'src/app/core/services/print.service';
 import {
@@ -191,11 +194,15 @@ export class PrinterDetailComponent
   protected readonly isRemainingTracked = isRemainingTracked;
 
   /**
-   * A resin bottle, shown in mL only (printlog-bridge#97). The summary carries no measurement
-   * source, but a bottle has no diameter and so no length remaining, while a filament spool
-   * tracked by weight always has one.
+   * A resin bottle, shown in mL only (printlog-bridge#97). The summary's `source` says so
+   * (3d-print-log-api#294). An API older than that sends none, and then a bottle is told by
+   * its remaining figures: it has no diameter and so no length remaining, while a filament
+   * spool tracked by weight always has one.
    */
   protected isMeasuredInMl(filament: FilamentSummary | null): boolean {
+    if (filament?.source != null) {
+      return filament.source === FilamentSourceMeasurement.Volume;
+    }
     return (
       isRemainingTracked(filament?.filamentVolumeRemainingInMl) &&
       !isRemainingTracked(filament?.filamentLengthRemainingInM)

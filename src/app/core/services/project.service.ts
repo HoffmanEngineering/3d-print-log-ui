@@ -70,6 +70,11 @@ export interface ProjectSummaryDto {
   totalPrintTimeInSeconds: number;
   totalEstimatedPrintTimeInSeconds: number;
   totalFilamentWeightMg: number;
+  /**
+   * Resin used, in mL (3d-print-log-api#294), beside the gram total and never added to it.
+   * Absent from APIs older than #294.
+   */
+  totalFilamentVolumeMl?: number;
   defaultImageId: number;
   /** Thumbnail path relative to the API base URL; absent from APIs older than #281. */
   defaultImageThumbnailUrl?: string | null;
@@ -104,6 +109,11 @@ export interface ProjectDetailDto {
   totalPrintTimeInSeconds: number;
   totalEstimatedPrintTimeInSeconds: number;
   totalFilamentWeightMg: number;
+  /**
+   * Resin used, in mL (3d-print-log-api#294), beside the gram total and never added to it.
+   * Absent from APIs older than #294.
+   */
+  totalFilamentVolumeMl?: number;
   images: ProjectImageDto[];
 
   /**
@@ -176,6 +186,8 @@ export interface GroupedFeedItemDto {
   totalPrintTimeInSeconds?: number;
   totalEstimatedPrintTimeInSeconds?: number;
   totalFilamentWeightMg?: number;
+  /** Resin used, in mL (3d-print-log-api#294). Null on print rows. */
+  totalFilamentVolumeMl?: number | null;
   defaultProjectImageId?: number;
   /**
    * Thumbnail path of the project's default image, relative to the API base URL. Null on print

@@ -79,6 +79,11 @@ export interface OverviewTiles {
   printCount: Metric;
   successRatePercent: Metric;
   filamentGrams: Metric;
+  /**
+   * Resin used, in mL (3d-print-log-api#294): usage recorded as a volume only, beside
+   * filamentGrams and never added to it. Absent from APIs older than #294.
+   */
+  filamentMl?: Metric;
   printTimeSeconds: Metric;
   totalCost: MoneyMetric;
   avgPrintTimeSeconds: Metric;
@@ -106,6 +111,8 @@ export interface ActivitySeriesBucket {
   count: number;
   durationSeconds: number;
   materialMg: number;
+  /** Resin in mL (3d-print-log-api#294), beside materialMg. Absent from older APIs. */
+  materialMl?: number;
   /** Null for the whole series when the server's cost row cap was exceeded. */
   cost: number | null;
 }
@@ -164,6 +171,11 @@ export interface PrinterRow {
   successRatePercent: number | null;
   printTimeSeconds: number;
   materialMg: number;
+  /**
+   * Resin in mL (3d-print-log-api#294), 0 when none. A resin row with a bottle linked also
+   * counts in materialMg, through the bottle's density. Absent from older APIs.
+   */
+  materialMl?: number;
   avgDurationSeconds: number | null;
   cost: number | null;
   maintenanceCost: number | null;

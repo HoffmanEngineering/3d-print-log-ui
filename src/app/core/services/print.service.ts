@@ -170,6 +170,8 @@ export interface PrintSummary {
   sumActualFilamentWeightMg: number;
   sumEstimatedFilamentWeightMg: number;
   totalFilamentWeightMg: number;
+  /** Resin used, in mL (3d-print-log-api#294). Absent from older APIs. */
+  totalFilamentVolumeMl?: number;
   filamentUsage: PrintFilamentSummaryDto[];
 
   /**

@@ -270,6 +270,50 @@ describe('ProjectDetailComponent', () => {
     expect(sidebarAd).toBeTruthy();
   });
 
+  // 3d-print-log-api#294: a project's resin total is in mL.
+  describe('material used', () => {
+    const stat = () =>
+      (
+        fixture.nativeElement.querySelector(
+          '[data-cy="project-material-used"]'
+        ) as HTMLElement
+      ).textContent!.trim();
+
+    it('shows grams alone for a filament-only project', () => {
+      component.project.set({ ...mockProject, totalFilamentVolumeMl: 0 });
+      fixture.detectChanges();
+
+      expect(stat()).toBe('250g');
+      expect(fixture.nativeElement.textContent).toContain('Filament Used');
+    });
+
+    it('shows grams alone against an API without the mL total', () => {
+      component.project.set({ ...mockProject });
+      fixture.detectChanges();
+
+      expect(stat()).toBe('250g');
+    });
+
+    it('shows both for a project with filament and resin', () => {
+      component.project.set({ ...mockProject, totalFilamentVolumeMl: 20 });
+      fixture.detectChanges();
+
+      expect(stat()).toBe('250g · 20.0 mL');
+      expect(fixture.nativeElement.textContent).toContain('Material Used');
+    });
+
+    it('shows mL alone for a resin project with no grams', () => {
+      component.project.set({
+        ...mockProject,
+        totalFilamentWeightMg: 0,
+        totalFilamentVolumeMl: 72.75,
+      });
+      fixture.detectChanges();
+
+      expect(stat()).toBe('72.8 mL');
+    });
+  });
+
   describe('project dates', () => {
     const baseFormValue = {
       name: 'Test Voron Build',

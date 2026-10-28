@@ -13,7 +13,10 @@ import { OverviewResponse } from 'src/app/analytics/models/analytics.models';
 import { AnalyticsService } from 'src/app/analytics/services/analytics.service';
 import { OverviewTabComponent } from './overview-tab.component';
 
-function response(printCount: number): OverviewResponse {
+function response(
+  printCount: number,
+  material: { grams?: number | null; ml?: number | null } = {}
+): OverviewResponse {
   const coverage = {
     population: 'prints',
     counted: printCount,
@@ -31,7 +34,10 @@ function response(printCount: number): OverviewResponse {
     tiles: {
       printCount: metric(printCount),
       successRatePercent: metric(91),
-      filamentGrams: metric(3200),
+      filamentGrams: metric(
+        material.grams === undefined ? 3200 : material.grams
+      ),
+      filamentMl: metric(material.ml ?? 0),
       printTimeSeconds: metric(9000),
       totalCost: {
         value: 48.1,
@@ -249,4 +255,67 @@ describe('OverviewTabComponent', () => {
 
     expect(fixture.componentInstance.state()).toBe('empty');
   }));
+
+  // 3d-print-log-api#294: resin is in mL, beside the grams or instead of them.
+  describe('filament tile', () => {
+    const filamentTile = () =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('app-stat-tile')
+      ).find((tile) => tile.textContent?.includes('used')) as HTMLElement;
+
+    const load = (overview: OverviewResponse) => {
+      const subject = new Subject<OverviewResponse>();
+      analytics.getOverview.and.returnValue(subject);
+      fixture.detectChanges();
+      tick(300);
+      subject.next(overview);
+      fixture.detectChanges();
+    };
+
+    it('shows grams alone for a filament-only user', fakeAsync(() => {
+      load(response(4));
+
+      expect(filamentTile().textContent).toContain('3.2 kg');
+      expect(filamentTile().textContent).not.toContain('mL');
+    }));
+
+    it('shows both when the range has filament and resin', fakeAsync(() => {
+      load(response(4, { grams: 34000, ml: 20 }));
+
+      expect(filamentTile().textContent).toContain('34.0 kg · 20.0 mL');
+    }));
+
+    it('shows mL alone, labeled as material, when the range has no grams', fakeAsync(() => {
+      load(response(4, { grams: 0, ml: 72.75 }));
+
+      expect(filamentTile().textContent).toContain('72.8 mL');
+      expect(filamentTile().textContent).toContain('Material used');
+      expect(filamentTile().textContent).not.toContain(' g');
+    }));
+
+    it('keeps the grams tile against an API without filamentMl', fakeAsync(() => {
+      const older = response(4);
+      delete (older.tiles as Partial<typeof older.tiles>).filamentMl;
+      load(older);
+
+      expect(filamentTile().textContent).toContain('3.2 kg');
+      expect(filamentTile().textContent).not.toContain('mL');
+    }));
+
+    it('appends the mL row to the tab CSV after the existing tiles', fakeAsync(() => {
+      load(response(4, { grams: 34000, ml: 20 }));
+
+      const rows = fixture.componentInstance.tileRows();
+      expect(rows.map((row) => row[0])).toEqual([
+        'Prints',
+        'Success rate (%)',
+        'Filament (g)',
+        'Print time (s)',
+        'Total cost',
+        'Average print time (s)',
+        'Filament (mL)',
+      ]);
+      expect(rows.at(-1)).toEqual(['Filament (mL)', 20, null]);
+    }));
+  });
 });

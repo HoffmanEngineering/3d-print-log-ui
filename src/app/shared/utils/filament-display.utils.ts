@@ -96,6 +96,42 @@ export function formatVolumeTotal(total: VolumeUsageTotal): string {
   return `${total.ml.toFixed(1)} mL${total.isEstimated ? '*' : ''}`;
 }
 
+const ML_FORMAT = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+/** "20.0 mL", "1,234.5 mL": a server mL total (3d-print-log-api#294). */
+export function formatMilliliters(ml: number): string {
+  return `${ML_FORMAT.format(ml)} mL`;
+}
+
+/**
+ * A server material total with its resin (3d-print-log-api#294). The server sums grams and
+ * mL separately and never folds one into the other, and a resin row with a bottle linked
+ * counts in both (its grams through the bottle's density). So:
+ *
+ * - no mL: the gram text, unchanged, so a filament-only user never sees "0 mL";
+ * - mL and no grams, or grams the caller knows are the resin itself (`gramsAreResin`): mL only;
+ * - otherwise both, "34.0 kg · 20.0 mL".
+ *
+ * `gramsText` is the caller's own formatting of `grams`, so each view keeps its gram style.
+ */
+export function withMilliliters(
+  gramsText: string,
+  grams: number | null | undefined,
+  ml: number | null | undefined,
+  gramsAreResin = false
+): string {
+  if (!ml || ml <= 0) {
+    return gramsText;
+  }
+  if (gramsAreResin || !grams || grams <= 0) {
+    return formatMilliliters(ml);
+  }
+  return `${gramsText} · ${formatMilliliters(ml)}`;
+}
+
 /** {@link volumeUsageTotal} formatted, or null for a print the caller totals in grams. */
 export function volumeTotalLabel(
   rows: readonly PrintFilamentSummaryDto[] | null | undefined

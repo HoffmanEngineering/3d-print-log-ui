@@ -27,7 +27,7 @@ import { AnalyticsService } from '../../services/analytics.service';
 import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
 
-export type ActivityMetric = 'count' | 'time' | 'filament' | 'cost';
+export type ActivityMetric = 'count' | 'time' | 'filament' | 'resin' | 'cost';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = Array.from({ length: 24 }, (_, hour) => `${hour}`);
@@ -73,6 +73,7 @@ export class ActivityTabComponent {
     count: 'Prints',
     time: 'Print time (seconds)',
     filament: 'Filament (grams)',
+    resin: 'Resin (mL)',
     cost: 'Cost',
   };
 
@@ -85,11 +86,26 @@ export class ActivityTabComponent {
     (this.data()?.series ?? []).some((bucket) => bucket.cost !== null)
   );
 
+  /**
+   * Resin is plotted on its own, in mL (3d-print-log-api#294): one axis cannot hold grams and
+   * mL. The toggle exists only for a range with resin, so a filament-only user never sees it.
+   */
+  readonly resinAvailable = computed(() =>
+    (this.data()?.series ?? []).some((bucket) => (bucket.materialMl ?? 0) > 0)
+  );
+
+  /** The chosen metric, or filament when resin was chosen and the new range has none. */
+  readonly plottedMetric = computed<ActivityMetric>(() =>
+    this.metric() === 'resin' && !this.resinAvailable()
+      ? 'filament'
+      : this.metric()
+  );
+
   readonly seriesData = computed<BarDatum[]>(() => {
     const response = this.data();
     if (!response) return [];
 
-    const metric = this.metric();
+    const metric = this.plottedMetric();
     return (
       [...response.series]
         // API response order is not display order (spec §11). Sort by the civil localStart.
@@ -107,7 +123,9 @@ export class ActivityTabComponent {
                 ? bucket.durationSeconds
                 : metric === 'filament'
                   ? bucket.materialMg / 1000
-                  : (bucket.cost ?? 0);
+                  : metric === 'resin'
+                    ? (bucket.materialMl ?? 0)
+                    : (bucket.cost ?? 0);
 
           return {
             label: formatTickDate(date, response.granularity, true),
@@ -179,7 +197,15 @@ export class ActivityTabComponent {
 
   readonly seriesCsv = computed<CsvExport>(() => ({
     filename: 'analytics-activity-series.csv',
-    columns: ['Period', 'Prints', 'Print time (s)', 'Filament (g)', 'Cost'],
+    columns: [
+      'Period',
+      'Prints',
+      'Print time (s)',
+      'Filament (g)',
+      'Cost',
+      // 3d-print-log-api#294: after every existing column.
+      'Filament (mL)',
+    ],
     rows: [...(this.data()?.series ?? [])]
       .sort((left, right) => left.localStart.localeCompare(right.localStart))
       .map((bucket) => [
@@ -188,6 +214,7 @@ export class ActivityTabComponent {
         bucket.durationSeconds,
         bucket.materialMg / 1000,
         bucket.cost,
+        bucket.materialMl ?? 0,
       ]),
   }));
 
@@ -221,7 +248,7 @@ export class ActivityTabComponent {
   readonly seriesAriaSummary = computed(() => {
     const response = this.data();
     if (!response) return '';
-    return `${this.seriesLabels[this.metric()]} across ${response.series.length} ${response.granularity.toLowerCase()} periods`;
+    return `${this.seriesLabels[this.plottedMetric()]} across ${response.series.length} ${response.granularity.toLowerCase()} periods`;
   });
 
   setMetric(metric: ActivityMetric): void {

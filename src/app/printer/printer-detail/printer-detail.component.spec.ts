@@ -23,6 +23,7 @@ import {
   PrinterDetail,
   PrinterService,
 } from 'src/app/core/services/printer.service';
+import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
 import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -592,6 +593,7 @@ describe('PrinterDetailComponent', () => {
       filamentRemaining: number | null;
       filamentLengthRemainingInM: number | null;
       filamentVolumeRemainingInMl?: number | null;
+      source?: FilamentSourceMeasurement | null;
     }) =>
       aPrinterDetail({
         loadedFilaments: [
@@ -665,6 +667,52 @@ describe('PrinterDetailComponent', () => {
       expect(text()).toContain('250 (g) remaining');
       expect(text()).toContain('84 (m) remaining');
       expect(text()).not.toContain('(mL) remaining');
+    });
+
+    // 3d-print-log-api#294: the summary's source says which it is, so no guessing.
+    it('shows mL for a bottle whose source is Volume, even with a length remaining', async () => {
+      await setUp(
+        loadedWith({
+          filamentRemaining: 935_000,
+          filamentLengthRemainingInM: 12,
+          filamentVolumeRemainingInMl: 850,
+          source: FilamentSourceMeasurement.Volume,
+        }),
+        { zone: true }
+      );
+
+      expect(text()).toContain('850 (mL) remaining');
+      expect(text()).not.toContain('(g) remaining');
+    });
+
+    it('shows grams for a spool tracked by weight, even with no length remaining', async () => {
+      await setUp(
+        loadedWith({
+          filamentRemaining: 250_000,
+          filamentLengthRemainingInM: null,
+          filamentVolumeRemainingInMl: 201,
+          source: FilamentSourceMeasurement.Weight,
+        }),
+        { zone: true }
+      );
+
+      expect(text()).toContain('250 (g) remaining');
+      expect(text()).not.toContain('(mL) remaining');
+    });
+
+    it('falls back to the remaining figures when an older API sends no source', async () => {
+      await setUp(
+        loadedWith({
+          filamentRemaining: 935_000,
+          filamentLengthRemainingInM: null,
+          filamentVolumeRemainingInMl: 850,
+          source: null,
+        }),
+        { zone: true }
+      );
+
+      expect(text()).toContain('850 (mL) remaining');
+      expect(text()).not.toContain('(g) remaining');
     });
 
     it('says Not tracked, with no mL line, for an untracked spool', async () => {

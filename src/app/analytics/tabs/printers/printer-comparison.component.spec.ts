@@ -12,6 +12,7 @@ const row = (overrides: Partial<PrinterRow>): PrinterRow => ({
   successRatePercent: 80,
   printTimeSeconds: 3600,
   materialMg: 50000,
+  materialMl: 0,
   avgDurationSeconds: 720,
   cost: 12.5,
   maintenanceCost: 5,
@@ -136,5 +137,75 @@ describe('PrinterComparisonComponent', () => {
     expect(
       fixture.nativeElement.querySelector('th app-printer-avatar')
     ).toBeTruthy();
+  });
+
+  // 3d-print-log-api#294: a resin printer's material is in mL.
+  describe('material column', () => {
+    const cells = () =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll(
+          'tbody td'
+        ) as NodeListOf<HTMLElement>
+      ).map((td) => td.textContent?.trim());
+    const headers = () =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll(
+          'thead th'
+        ) as NodeListOf<HTMLElement>
+      ).map((th) => th.textContent?.trim());
+
+    it('keeps grams, and the Filament header, for a filament-only fleet', () => {
+      fixture.componentRef.setInput('rows', [row({ materialMg: 50000 })]);
+      fixture.detectChanges();
+
+      expect(cells()).toContain('50 g');
+      expect(fixture.nativeElement.textContent).not.toContain('mL');
+      expect(headers()).toContain('Filament');
+    });
+
+    it('shows mL only for a resin printer', () => {
+      fixture.componentRef.setInput('rows', [
+        row({ printerId: 3, materialMg: 80025, materialMl: 72.75 }),
+      ]);
+      fixture.componentRef.setInput('resinPrinterIds', new Set([3]));
+      fixture.detectChanges();
+
+      expect(cells()).toContain('72.8 mL');
+      expect(fixture.nativeElement.textContent).not.toContain('80 g');
+      expect(headers()).toContain('Material');
+    });
+
+    it('shows mL only when a printer has no grams (an unlinked vat)', () => {
+      fixture.componentRef.setInput('rows', [
+        row({ materialMg: 0, materialMl: 7.5 }),
+      ]);
+      fixture.detectChanges();
+
+      expect(cells()).toContain('7.5 mL');
+      expect(fixture.nativeElement.textContent).not.toContain('0 g');
+    });
+
+    it('shows both for a printer that is not a resin printer', () => {
+      fixture.componentRef.setInput('rows', [
+        row({ materialMg: 34_000_000, materialMl: 20 }),
+      ]);
+      fixture.detectChanges();
+
+      expect(cells()).toContain('34,000 g · 20.0 mL');
+    });
+
+    it('shows the same figure on the phone cards', () => {
+      fixture.componentRef.setInput('layout', 'cards');
+      fixture.componentRef.setInput('rows', [
+        row({ printerId: 3, materialMg: 80025, materialMl: 72.75 }),
+      ]);
+      fixture.componentRef.setInput('resinPrinterIds', new Set([3]));
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('72.8 mL');
+      expect(text).toContain('Material');
+      expect(text).not.toContain('80 g');
+    });
   });
 });

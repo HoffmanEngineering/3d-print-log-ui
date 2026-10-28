@@ -27,9 +27,16 @@ import {
   DonutChartComponent,
   DonutSlice,
 } from 'src/app/shared/charts/donut-chart.component';
-import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
+import {
+  StatFormat,
+  StatTileComponent,
+} from 'src/app/shared/charts/stat-tile.component';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
-import { HighlightRef, OverviewResponse } from '../../models/analytics.models';
+import {
+  HighlightRef,
+  Metric,
+  OverviewResponse,
+} from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
 import { CsvSection, buildTabCsv, sectionOf } from '../tab-csv';
 import { createTabData } from '../tab-data';
@@ -191,6 +198,39 @@ export class OverviewTabComponent {
     }
   }
 
+  /**
+   * The material tile (3d-print-log-api#294). Grams alone for a filament-only range; mL alone,
+   * with its own delta and coverage, when the range has resin and no grams; otherwise grams
+   * with the mL beside them. The server cannot say how much of the grams is resin, so a range
+   * whose grams are all resin weighed through a bottle's density still shows both.
+   */
+  readonly filamentTile = computed<{
+    label: string;
+    format: StatFormat;
+    metric: Metric | null;
+    volumeMl: number | null;
+  }>(() => {
+    const tiles = this.data()?.tiles;
+    const grams = tiles?.filamentGrams ?? null;
+    const ml = tiles?.filamentMl ?? null;
+    const mlValue = ml?.value ?? 0;
+
+    if (ml && mlValue > 0 && !((grams?.value ?? 0) > 0)) {
+      return {
+        label: 'Material used',
+        format: 'milliliters',
+        metric: ml,
+        volumeMl: null,
+      };
+    }
+    return {
+      label: mlValue > 0 ? 'Material used' : 'Filament used',
+      format: 'grams',
+      metric: grams,
+      volumeMl: mlValue > 0 ? mlValue : null,
+    };
+  });
+
   /** The six tiles, flattened for the tab-level CSV. */
   readonly tileRows = computed<(string | number | null)[][]>(() => {
     const tiles = this.data()?.tiles;
@@ -214,6 +254,13 @@ export class OverviewTabComponent {
         'Average print time (s)',
         tiles.avgPrintTimeSeconds.value,
         tiles.avgPrintTimeSeconds.previous,
+      ],
+      // 3d-print-log-api#294: after every existing row, so a sheet reading them by position
+      // keeps working.
+      [
+        'Filament (mL)',
+        tiles.filamentMl?.value ?? 0,
+        tiles.filamentMl?.previous ?? null,
       ],
     ];
   });

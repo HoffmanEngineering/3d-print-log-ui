@@ -180,6 +180,11 @@ export interface FilamentSummary {
   storageLocation: string;
   materialCategory: MaterialCategory;
   defaultImageThumbnailUrl?: string | null;
+  /**
+   * How the spool is tracked (3d-print-log-api#294): Volume for a resin bottle. Null or
+   * absent from APIs older than #294. Read-only: ignored on write.
+   */
+  source?: FilamentSourceMeasurement | null;
 }
 
 export interface FilamentStorageLocations {

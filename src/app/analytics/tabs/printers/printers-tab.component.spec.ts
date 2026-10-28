@@ -11,6 +11,8 @@ import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
 import { PrintersResponse } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
 import { PrintersTabComponent } from './printers-tab.component';
+import { AnalyticsFilterOptionsService } from '../../filters/analytics-filter-options.service';
+import { signal } from '@angular/core';
 
 const emptyCoverage = {
   population: 'printers',
@@ -37,6 +39,7 @@ const response = (
       successRatePercent: 75,
       printTimeSeconds: 7200,
       materialMg: 60000,
+      materialMl: 12.5,
       avgDurationSeconds: 1800,
       cost: 10,
       maintenanceCost: 4,
@@ -101,6 +104,10 @@ describe('PrintersTabComponent', () => {
         provideRouter([]),
         AnalyticsFilterStore,
         { provide: AnalyticsService, useValue: analytics },
+        {
+          provide: AnalyticsFilterOptionsService,
+          useValue: { resinPrinterIds: signal(new Set([1])) },
+        },
       ],
     }).compileComponents();
   });
@@ -217,5 +224,22 @@ describe('PrintersTabComponent', () => {
     setup();
 
     expect(component.state()).toBe('error');
+  }));
+
+  // 3d-print-log-api#294: the mL column comes after every existing one.
+  it('appends the resin mL to the comparison CSV', fakeAsync(() => {
+    setup();
+
+    const csv = component.comparisonCsv();
+    expect(csv.columns[4]).toBe('Filament (g)');
+    expect(csv.columns.at(-1)).toBe('Filament (mL)');
+    expect(csv.rows[0][4]).toBe(60);
+    expect(csv.rows[0].at(-1)).toBe(12.5);
+  }));
+
+  it('passes the resin printers to the comparison', fakeAsync(() => {
+    setup();
+
+    expect(component.resinPrinterIds()).toEqual(new Set([1]));
   }));
 });

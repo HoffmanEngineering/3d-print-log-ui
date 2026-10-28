@@ -6,7 +6,7 @@ navLabel: Log prints from OctoPrint
 group: integrations
 order: 40
 mode: how-to
-updated: 2026-10-13
+updated: 2026-10-28
 related: [prints]
 ---
 
@@ -20,6 +20,18 @@ href="https://plugins.octoprint.org/plugins/webhooks/" rel="noreferrer noopener"
 target="_blank" >OctoPrint-Webhooks</a > plugin by <a
 href="https://plugins.octoprint.org/by_author/#blane-townsend" rel="noreferrer
 noopener" target="_blank" >Blane Townsend</a >.
+
+<doc-callout kind="note" heading="printlog-bridge can watch OctoPrint too">
+  <p>
+    <a routerLink="/docs/printlog-bridge">printlog-bridge</a> now watches
+    printers run by OctoPrint, over OctoPrint's own API, with no plugin to
+    install. It logs the slicer's estimated filament per tool and the file's
+    thumbnail, and keeps events while 3D Print Log is out of reach. The webhook
+    below keeps working if you don't run a bridge. Already using the webhook?
+    See <a routerLink="/docs/switch-from-octoprint-webhook">switching from the
+    webhook to the bridge</a>.
+  </p>
+</doc-callout>
 
 <doc-callout kind="warning" heading="Settings do not always save the first time">
   <p>

@@ -107,6 +107,93 @@ describe('NotifierNoticeComponent', () => {
     expect(link?.getAttribute('href')).toBe('/docs/switch-from-notifier');
   });
 
+  describe('on an OctoPrint connection', () => {
+    const octoprint = (overrides: Record<string, unknown> = {}) =>
+      dropping({
+        kind: 'octoprint',
+        instanceId: 'ender-1',
+        displayName: 'Ender on the shelf',
+        ...overrides,
+      });
+
+    it("suggests turning off OctoPrint's Webhooks plugin hook", async () => {
+      await render();
+      answer([octoprint()]);
+
+      const text = banner()?.textContent ?? '';
+      expect(text).toContain('Ender on the shelf');
+      expect(text).toContain('Webhooks');
+      expect(text).not.toContain('[notifier');
+      expect(text).not.toContain('moonraker.conf');
+    });
+
+    it('links to the instructions for switching from the webhook', async () => {
+      await render();
+      answer([octoprint()]);
+
+      const links = Array.from(banner()?.querySelectorAll('a') ?? []).map((a) =>
+        a.getAttribute('href')
+      );
+      expect(links).toEqual(['/docs/switch-from-octoprint-webhook']);
+    });
+
+    it('words each kind for its own printers when both are dropping', async () => {
+      await render();
+      answer([dropping(), octoprint()]);
+
+      const moonraker = banner()!.querySelector(
+        '[data-testid="notifier-notice-moonraker"]'
+      );
+      const webhook = banner()!.querySelector(
+        '[data-testid="notifier-notice-octoprint"]'
+      );
+      expect(moonraker?.textContent).toContain('Voron in the garage');
+      expect(moonraker?.textContent).not.toContain('Ender on the shelf');
+      expect(webhook?.textContent).toContain('Ender on the shelf');
+      expect(webhook?.textContent).not.toContain('Voron in the garage');
+    });
+
+    it('dismisses both kinds with one button', async () => {
+      await render();
+      answer([dropping(), octoprint()]);
+
+      (
+        banner()!.querySelector(
+          '[data-testid="notifier-notice-dismiss"]'
+        ) as HTMLButtonElement
+      ).click();
+      fixture.detectChanges();
+
+      expect(banner()).toBeNull();
+      for (const id of ['voron-1', 'ender-1']) {
+        httpMock
+          .expectOne(`${base}/${id}/notifier-notice/dismiss`)
+          .flush(null, { status: 204, statusText: 'No Content' });
+      }
+    });
+  });
+
+  it('keeps the Moonraker wording off a Moonraker-only notice', async () => {
+    await render();
+    answer([dropping()]);
+
+    expect(banner()?.textContent).not.toContain('Webhooks');
+    expect(
+      banner()!.querySelector('[data-testid="notifier-notice-octoprint"]')
+    ).toBeNull();
+  });
+
+  // Only the Moonraker notifier and OctoPrint's Webhooks plugin have an older integration the
+  // API drops events from; any other kind has nothing to tell the user to turn off.
+  it('stays hidden for a kind it has no instructions for', async () => {
+    await render();
+    answer([
+      dropping({ kind: 'prusalink', instanceId: 'mk4', displayName: 'MK4' }),
+    ]);
+
+    expect(banner()).toBeNull();
+  });
+
   it('stays hidden without dropped notifier events', async () => {
     await render();
     answer([connection()]);

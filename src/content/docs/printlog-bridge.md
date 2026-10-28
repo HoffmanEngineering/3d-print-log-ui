@@ -6,8 +6,8 @@ navLabel: Log prints from Klipper
 group: integrations
 order: 42
 mode: explanation
-updated: 2026-10-27
-related: [printlog-bridge-install, printlog-bridge-bambu, printlog-bridge-prusalink, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier]
+updated: 2026-10-28
+related: [printlog-bridge-install, printlog-bridge-bambu, printlog-bridge-prusalink, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier, switch-from-octoprint-webhook]
 ---
 
 ## printlog-bridge
@@ -33,8 +33,9 @@ It runs either on the printer's own host or in a Docker container on another com
 | Klipper with Moonraker (Voron, Snapmaker U1, Creality and others running Klipper) | Moonraker, on the printer or over the network | What Klipper measured, per tool | [Install on the printer](/docs/printlog-bridge-install) or [run it in Docker](/docs/printlog-bridge-docker) |
 | Bambu Lab X1, P1, A1, H2 | The printer's LAN connection (LAN Only Mode and Developer Mode) | The slicer's estimate per AMS tray | [Bambu Lab printers](/docs/printlog-bridge-bambu) |
 | Prusa MK4/MK4S, MK3.5/3.9, Core One, MINI, XL | PrusaLink, built into the firmware | The slicer's estimate per tool | [Prusa printers (PrusaLink)](/docs/printlog-bridge-prusalink) |
+| Printers run by OctoPrint (an OctoPi, or OctoPrint on any computer) | OctoPrint's API, over the network | The slicer's estimate per tool | [Switch from the OctoPrint webhook](/docs/switch-from-octoprint-webhook) |
 
-The Bambu and PrusaLink adapters are new: they're built from the printers' documented protocols and haven't been checked on real printers yet. Neither printer measures the filament it feeds, so their usage is the slicer's estimate, marked with a `*` on the print and left out of the accuracy stats. Elegoo printers (SDCP), OctoPrint and others are planned.
+The Bambu and PrusaLink adapters are new: they're built from the printers' documented protocols and haven't been checked on real printers yet. Neither printer measures the filament it feeds, and neither does OctoPrint, so their usage is the slicer's estimate, marked with a `*` on the print and left out of the accuracy stats. Elegoo printers (SDCP) and others are planned.
 
 A paired bridge also finds the printers on its network and lists them on the [Bridges](/printers/bridges) screen, where you connect them to 3D Print Log with no config file to edit: see [Bridges and printers found on your network](/docs/printlog-bridge-bridges). It never logs a printer you haven't connected. To set a printer up in the config file instead, the printer's **Edit Page** shows the steps and a config section for its type under **Connections**, with its number filled in.
 
@@ -50,6 +51,7 @@ A paired bridge also finds the printers on its network and lists them on the [Br
 - [Troubleshooting](/docs/printlog-bridge-troubleshooting): the `doctor` and `status` commands, logs, traces and common problems.
 - [Privacy and security](/docs/printlog-bridge-privacy): every connection the bridge makes, what it sends, and how it keeps your key.
 - [Switch from the Moonraker notifier](/docs/switch-from-notifier): move a printer from the notifier to the bridge, and how the two run side by side.
+- [Switch from the OctoPrint webhook](/docs/switch-from-octoprint-webhook): set the bridge up for a printer run by OctoPrint, then turn off the Webhooks plugin's 3D Print Log hook.
 - [Connect Klipper via Spoolman](/docs/klipper-spoolman): your 3D Print Log spools in the Mainsail, Fluidd and KlipperScreen spool pickers, with nothing to install.
 - [Moonraker notifier (legacy)](/docs/klipper): the older way to log Klipper prints, for printers that still use it.
 

@@ -34,7 +34,10 @@ export interface Connection {
   lastSeenAt: Date;
   /** Computed by the API: stale after 15 minutes without a heartbeat. */
   status: ConnectionStatus;
-  /** Moonraker notifier events dropped because this connection logs the same printer. */
+  /**
+   * Events from the older integration (the Moonraker notifier, or OctoPrint's Webhooks plugin for an
+   * `octoprint` connection) dropped because this connection logs the same printer.
+   */
   droppedNotifierEventCount: number;
   lastDroppedNotifierEventAt: Date | null;
   notifierNoticeDismissedAt: Date | null;

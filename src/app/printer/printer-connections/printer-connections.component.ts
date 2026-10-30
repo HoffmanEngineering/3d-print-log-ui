@@ -42,8 +42,10 @@ import { connectionSoftware } from './connection-software';
  * what the printer runs, and a way to remove it.
  *
  * A filament printer with no connections gets a way to set one up instead (printlog-bridge#82):
- * pick the printer type (Klipper, Bambu Lab, PrusaLink, OctoPrint, Elegoo SDCP), see its steps and a config section with
- * this printer's id. Anything else with no connections renders nothing.
+ * pick the printer type (Klipper, Bambu Lab, PrusaLink, OctoPrint, Elegoo SDCP, Duet, FlashForge,
+ * Anycubic), see its steps and a config section with this printer's id. A resin printer gets it
+ * only when it is an Anycubic Photon P1 (or P1 Max), with Anycubic as its one type. Anything else
+ * with no connections renders nothing.
  */
 @Component({
   selector: 'app-printer-connections',
@@ -62,11 +64,14 @@ export class PrinterConnectionsComponent {
   private readonly bridges = inject(BridgesService);
 
   readonly printerId = input.required<number>();
-  /** The saved printer's category: only filament printers are offered the bridge. */
+  /** The saved printer's category: filament printers, and the Photon P1, are offered the bridge. */
   readonly category = input<PrinterCategory | null>(null);
   /** The saved printer's make, to start the setup on the matching printer type. */
   readonly make = input<string | null>(null);
-  /** The saved printer's model: of Elegoo's printers only the Centauri Carbon speaks SDCP. */
+  /**
+   * The saved printer's model: of Elegoo's printers only the Centauri Carbon speaks SDCP, and of
+   * Anycubic's only the Kobra S1, the Kobra 3 and the Photon P1 speak LAN mode.
+   */
   readonly model = input<string | null>(null);
 
   protected readonly connections = signal<Connection[]>([]);
@@ -82,12 +87,18 @@ export class PrinterConnectionsComponent {
   /** The user has more than one bridge, so a bridge's printer can move to another one. */
   protected readonly canMove = computed(() => this.bridgeNames().size > 1);
 
-  protected readonly setups = BRIDGE_SETUPS;
+  /** A resin printer: only the types that watch resin printers (Anycubic's Photon P1) apply. */
+  private readonly resin = computed(() => isResinCategory(this.category()));
+  protected readonly setups = computed(() =>
+    this.resin() ? BRIDGE_SETUPS.filter((s) => s.resin) : BRIDGE_SETUPS
+  );
   protected readonly offerSetup = computed(
     () =>
       this.loaded() &&
       this.connections().length === 0 &&
-      isFdmCategory(this.category())
+      (isFdmCategory(this.category()) ||
+        (this.resin() &&
+          bridgeKindForMake(this.make(), this.model()) === 'anycubic'))
   );
   protected readonly setupOpen = signal(false);
   /** The type the user picked, or null to follow the printer's make. */
@@ -98,23 +109,38 @@ export class PrinterConnectionsComponent {
   protected readonly setupGuide = computed(
     () => BRIDGE_SETUPS.find((s) => s.kind === this.setupKind())!.guide
   );
-  /** The credential the config section holds, and the folder to keep it out of; none for Klipper or SDCP. */
+  /** The credential the config section holds, and the folder to keep it out of; none for Klipper, SDCP or Anycubic. */
   protected readonly setupSecret = computed(() => {
     switch (this.setupKind()) {
       case 'bambu':
         return {
           name: "printer's access code",
           folder: "Klipper's config folder",
+          checked: "hasn't been checked on every model yet",
         };
       case 'prusalink':
         return {
           name: "printer's password",
           folder: "Klipper's config folder",
+          checked: "hasn't been checked on every model yet",
         };
       case 'octoprint':
         return {
           name: 'OctoPrint API key',
           folder: "OctoPrint's uploads folder",
+          checked: "hasn't been checked on every model yet",
+        };
+      case 'duet':
+        return {
+          name: "board's password, if it has one",
+          folder: 'a shared folder',
+          checked: "hasn't been checked on a real printer yet",
+        };
+      case 'flashforge':
+        return {
+          name: "printer's check code",
+          folder: 'a shared folder',
+          checked: "hasn't been checked on a real printer yet",
         };
       default:
         return null;
@@ -234,4 +260,15 @@ export class PrinterConnectionsComponent {
         },
       });
   }
+}
+
+/** A printer that prints in resin, by its category (SLA, or any whose material is resin). */
+function isResinCategory(
+  category: PrinterCategory | null | undefined
+): boolean {
+  return (
+    category != null &&
+    (category.materialCategory?.nickname === 'resin' ||
+      category.nickname === 'SLA')
+  );
 }

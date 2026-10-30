@@ -67,6 +67,9 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [printlog-bridge for Prusa (PrusaLink)](https://www.3dprintlog.com/docs/printlog-bridge-prusalink): MK4, MK3.5, Core One, MINI and XL through PrusaLink, with the slicer's estimate per tool.
 - [printlog-bridge for OctoPrint](https://www.3dprintlog.com/docs/printlog-bridge-octoprint): an OctoPi or any OctoPrint server, with the slicer's estimate per tool and a webcam snapshot.
 - [printlog-bridge for Elegoo Centauri Carbon (SDCP)](https://www.3dprintlog.com/docs/printlog-bridge-sdcp): the Centauri Carbon over SDCP, its local protocol, with the slicer's filament estimate.
+- [printlog-bridge for Duet / RepRapFirmware](https://www.3dprintlog.com/docs/printlog-bridge-duet): Duet 2 and Duet 3 boards, standalone or with a Raspberry Pi, with the filament each tool measured.
+- [printlog-bridge for FlashForge](https://www.3dprintlog.com/docs/printlog-bridge-flashforge): the Adventurer 5M, 5M Pro and AD5X over the LAN API, with the slicer's estimate per IFS slot.
+- [printlog-bridge for Anycubic (LAN mode)](https://www.3dprintlog.com/docs/printlog-bridge-anycubic): the Kobra S1, Kobra 3 and Photon P1 Max in LAN mode, with filament or resin in mL.
 - [printlog-bridge troubleshooting](https://www.3dprintlog.com/docs/printlog-bridge-troubleshooting): The status and doctor commands, logs, traces and common problems.
 - [printlog-bridge privacy](https://www.3dprintlog.com/docs/printlog-bridge-privacy): Every call and field the bridge sends, and how it keeps keys.
 - [Switch from the Moonraker notifier](https://www.3dprintlog.com/docs/switch-from-notifier): Move a Klipper printer from the notifier to printlog-bridge, and how the two run side by side.

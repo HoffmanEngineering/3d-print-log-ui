@@ -16,7 +16,7 @@ export enum ConnectionStatus {
 export interface Connection {
   /** GUID */
   id: string;
-  /** Lower-case connector type: `moonraker`, `octoprint`, `prusalink`, `bambu`, `sdcp`. */
+  /** Lower-case connector type: `moonraker`, `octoprint`, `prusalink`, `bambu`, `sdcp`, `duet`, `flashforge`, `anycubic`. */
   kind: string;
   /** The agent's own stable id for this printer; the API addresses connections by it. */
   instanceId: string;

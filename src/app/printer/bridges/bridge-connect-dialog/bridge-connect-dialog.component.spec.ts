@@ -330,6 +330,111 @@ describe('BridgeConnectDialogComponent', () => {
     expect(toastr.success).toHaveBeenCalled();
   });
 
+  // A Duet takes a password only when config.g sets one with M551: it is set from the card.
+  it('closes right away for a Duet, whose password is optional', async () => {
+    const entry = bridgePrinter({
+      kind: 'duet',
+      id: 14,
+      port: 80,
+      serial: null,
+      secretFields: ['password'],
+    });
+    bridges.connect.and.returnValue(of(entry));
+    await create({
+      discovered: discovered({ kind: 'duet', model: 'Duet 3', port: 80 }),
+    });
+    component().form.controls.printerId.setValue(6);
+    submit();
+
+    expect(dialogRef.close).toHaveBeenCalledWith(entry);
+  });
+
+  // In LAN mode the printer hands the bridge its own login.
+  it('closes right away for an Anycubic printer, which takes no credential', async () => {
+    const entry = bridgePrinter({
+      kind: 'anycubic',
+      id: 15,
+      port: 18910,
+      serial: null,
+      secretFields: [],
+    });
+    bridges.connect.and.returnValue(of(entry));
+    await create({
+      discovered: discovered({
+        kind: 'anycubic',
+        model: 'Photon P1 Max',
+        port: 18910,
+      }),
+    });
+    component().form.controls.printerId.setValue(6);
+    submit();
+
+    expect(dialogRef.close).toHaveBeenCalledWith(entry);
+  });
+
+  it('adds a FlashForge by address, then asks for its check code', async () => {
+    bridges.connect.and.returnValue(
+      of(
+        bridgePrinter({
+          kind: 'flashforge',
+          id: 16,
+          port: 8898,
+          serial: null,
+          secretFields: ['check_code'],
+        })
+      )
+    );
+    await create({ discovered: null });
+    component().form.patchValue({
+      kind: 'flashforge',
+      host: '192.168.1.60',
+      port: null,
+      printerId: 6,
+    });
+    submit();
+
+    // No serial: the bridge asks the printer for it.
+    expect(bridges.connect).toHaveBeenCalledWith(42, {
+      printerId: 6,
+      kind: 'flashforge',
+      host: '192.168.1.60',
+    });
+    expect(el().querySelector('h2')!.textContent).toContain('check code');
+    await until(() => !!byTestId('credential-check_code'));
+  });
+
+  it('shows a FlashForge [app_printer] section with the check code through an older API', async () => {
+    bridges.connect.and.returnValue(
+      of(
+        bridgePrinter({
+          kind: 'flashforge',
+          id: 16,
+          secretFields: undefined,
+          secrets: undefined,
+        })
+      )
+    );
+    await create({
+      discovered: discovered({ kind: 'flashforge', model: 'AD5X', port: 8898 }),
+    });
+    component().form.controls.printerId.setValue(6);
+    submit();
+
+    expect(byTestId('connect-snippet')!.textContent).toContain(
+      'check_code = the-code-the-printer-shows'
+    );
+    expect(el().textContent).toContain('LAN-only mode');
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
+  it('offers Duet, FlashForge and Anycubic when adding by address', async () => {
+    await create({ discovered: null });
+    const kinds = component()['kinds'].map((k) => k.kind);
+    expect(kinds).toContain('duet');
+    expect(kinds).toContain('flashforge');
+    expect(kinds).toContain('anycubic');
+  });
+
   it('offers OctoPrint and Elegoo SDCP when adding by address', async () => {
     await create({ discovered: null });
     const kinds = component()['kinds'].map((k) => k.kind);

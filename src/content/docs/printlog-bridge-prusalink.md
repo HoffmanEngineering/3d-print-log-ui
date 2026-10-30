@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 46
 mode: how-to
-updated: 2026-10-27
+updated: 2026-10-30
 aliases: [printlog-bridge/prusalink]
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-troubleshooting, printlog-bridge-privacy]
 ---
@@ -84,7 +84,7 @@ docker exec printlog-bridge printlog-bridge doctor
 ### What gets logged {#what-it-logs}
 
 - **When a print starts.** Its start time comes from the printer's own print time, so it's right even if the bridge noticed late.
-- **When it ends**: completed, cancelled (stopped on the printer), or failed (an error, with the printer's message in the print's notes).
+- **When it ends**: completed, canceled (stopped on the printer), or failed (an error, with the printer's message in the print's notes).
 - **The slicer's estimated grams per tool**, scaled by how far an unfinished print got. The printer doesn't measure what it feeds, so these are **marked as estimates** in 3D Print Log: the print shows them with a `*`, and the accuracy stats leave them out.
 - **The file's thumbnail, the slicer settings and the printer model.**
 
@@ -110,6 +110,6 @@ The estimates, thumbnail and settings come from the job's file.
 ### Limits {#limits}
 
 - **A print that starts and ends while the bridge is down is missed.** PrusaLink keeps no job history. One that ends while the bridge is down is logged when it's back, since a finished or stopped print stays on the printer's screen until someone dismisses it.
-- **A print cancelled at the printer's "wrong filament?" question**, before it prints anything, isn't logged.
+- **A print canceled at the printer's "wrong filament?" question**, before it prints anything, isn't logged.
 - **No camera snapshots.** Prusa's camera is only reachable through Prusa Connect.
 - **PrusaLink is plain HTTP on your network.** The password login (HTTP Digest) keeps the password itself off the wire; an API key is sent as it is.

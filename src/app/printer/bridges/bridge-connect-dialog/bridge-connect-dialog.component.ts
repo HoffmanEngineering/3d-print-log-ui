@@ -438,10 +438,14 @@ function conflictBridgeId(error: unknown): number | null {
 }
 
 /**
- * A kind whose credential is optional (a Moonraker API key, only with `[authorization]`) is
- * connected without the second step; its key can be set from the card.
+ * A kind whose credential is optional (a Moonraker API key, only with `[authorization]`; a Duet
+ * password, only when config.g sets one with M551) is connected without the second step; its
+ * credential can be set from the card.
  */
-const OPTIONAL_CREDENTIAL_KINDS: ReadonlySet<string> = new Set(['moonraker']);
+const OPTIONAL_CREDENTIAL_KINDS: ReadonlySet<string> = new Set([
+  'moonraker',
+  'duet',
+]);
 
 function needsCredentialStep(entry: BridgePrinter): boolean {
   if (OPTIONAL_CREDENTIAL_KINDS.has(entry.kind)) {

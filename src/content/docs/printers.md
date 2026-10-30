@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-10-29
+updated: 2026-10-30
 related: [prints]
 ---
 
@@ -148,7 +148,7 @@ connections, with:
 
 A filament printer with no connections shows **Connect this printer**
 instead. Pick the kind of printer (Klipper / Moonraker, Bambu Lab, Prusa
-with PrusaLink, OctoPrint, or Elegoo Centauri Carbon) to see the steps and a config section for
+with PrusaLink, OctoPrint, Elegoo Centauri Carbon, Duet, FlashForge, or Anycubic) to see the steps and a config section for
 [printlog-bridge](/docs/printlog-bridge) with the printer's number filled in,
 ready to copy.
 

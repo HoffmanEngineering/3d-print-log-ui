@@ -6,8 +6,8 @@ navLabel: Log prints from Klipper
 group: integrations
 order: 42
 mode: explanation
-updated: 2026-10-29
-related: [printlog-bridge-install, printlog-bridge-bambu, printlog-bridge-prusalink, printlog-bridge-octoprint, printlog-bridge-sdcp, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier, switch-from-octoprint-webhook]
+updated: 2026-10-30
+related: [printlog-bridge-install, printlog-bridge-bambu, printlog-bridge-prusalink, printlog-bridge-octoprint, printlog-bridge-sdcp, printlog-bridge-duet, printlog-bridge-flashforge, printlog-bridge-anycubic, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier, switch-from-octoprint-webhook]
 ---
 
 ## printlog-bridge
@@ -16,7 +16,7 @@ related: [printlog-bridge-install, printlog-bridge-bambu, printlog-bridge-prusal
 
 printlog-bridge is a small open-source program that watches your Klipper printers through Moonraker and logs every print to 3D Print Log by itself. You don't type anything in, and you don't have to edit the printer's configuration by hand.
 
-It runs either on the printer's own host or in a Docker container on another computer on your network, and one bridge can watch several printers. It also watches [Bambu Lab](/docs/printlog-bridge-bambu), [Prusa](/docs/printlog-bridge-prusalink), [OctoPrint](/docs/printlog-bridge-octoprint) and [Elegoo Centauri Carbon](/docs/printlog-bridge-sdcp) printers over your network: see [Supported printers](#printers). The source is on GitHub under the MIT license: [HoffmanEngineering/printlog-bridge](https://github.com/HoffmanEngineering/printlog-bridge). For a short overview to share, see [Automatic print logging for Klipper](/klipper).
+It runs either on the printer's own host or in a Docker container on another computer on your network, and one bridge can watch several printers. It also watches [Bambu Lab](/docs/printlog-bridge-bambu), [Prusa](/docs/printlog-bridge-prusalink), [OctoPrint](/docs/printlog-bridge-octoprint), [Elegoo Centauri Carbon](/docs/printlog-bridge-sdcp), [Duet](/docs/printlog-bridge-duet), [FlashForge](/docs/printlog-bridge-flashforge) and [Anycubic](/docs/printlog-bridge-anycubic) printers over your network: see [Supported printers](#printers). The source is on GitHub under the MIT license: [HoffmanEngineering/printlog-bridge](https://github.com/HoffmanEngineering/printlog-bridge). For a short overview to share, see [Automatic print logging for Klipper](/klipper).
 
 <doc-callout kind="note" heading="The bridge is new">
   <p>
@@ -35,8 +35,11 @@ It runs either on the printer's own host or in a Docker container on another com
 | Prusa MK4/MK4S, MK3.5/3.9, Core One, MINI, XL | PrusaLink, built into the firmware | The slicer's estimate per tool | [Prusa printers (PrusaLink)](/docs/printlog-bridge-prusalink) |
 | Printers run by OctoPrint (an OctoPi, or OctoPrint on any computer) | OctoPrint's API, over the network | The slicer's estimate per tool | [OctoPrint](/docs/printlog-bridge-octoprint) |
 | Elegoo Centauri Carbon | SDCP, the printer's local protocol | The slicer's estimate | [Elegoo Centauri Carbon (SDCP)](/docs/printlog-bridge-sdcp) |
+| Duet 2 and Duet 3 boards running RepRapFirmware (Railcore, E3D ToolChanger, Jubilee and custom builds) | The HTTP API Duet Web Control uses, standalone or with a Raspberry Pi | What RepRapFirmware measured, per tool | [Duet / RepRapFirmware](/docs/printlog-bridge-duet) |
+| FlashForge Adventurer 5M, 5M Pro, AD5X | The printer's LAN API (LAN-only mode) | The slicer's estimate, per IFS slot on an AD5X | [FlashForge](/docs/printlog-bridge-flashforge) |
+| Anycubic Kobra S1, Kobra 3, Photon P1 Max (resin) | The printer's LAN mode | What the printer reports, marked estimated: filament, or resin in mL | [Anycubic (LAN mode)](/docs/printlog-bridge-anycubic) |
 
-The Bambu, PrusaLink and Elegoo adapters are new: they're built from the printers' documented protocols and haven't been checked on real printers yet. None of these printers measures the filament it feeds, and neither does OctoPrint, so their usage is the slicer's estimate, marked with a `*` on the print and left out of the accuracy stats. Elegoo's resin printers and other brands are planned.
+The Bambu, PrusaLink, Elegoo, Duet and FlashForge adapters are new: they're built from the printers' documented protocols and haven't been checked on real printers yet. The Anycubic adapter has been checked on an idle Kobra S1, not yet through a print. A Duet measures the filament each tool feeds, as Klipper does. The other printers don't, and neither does OctoPrint, so their usage is an estimate, marked with a `*` on the print and left out of the accuracy stats. Elegoo's resin printers and other brands are planned.
 
 A paired bridge also finds the printers on its network and lists them on the [Bridges](/printers/bridges) screen, where you connect them to 3D Print Log with no config file to edit: see [Bridges and printers found on your network](/docs/printlog-bridge-bridges). It never logs a printer you haven't connected. To set a printer up in the config file instead, the printer's **Edit Page** shows the steps and a config section for its type under **Connections**, with its number filled in.
 
@@ -49,6 +52,9 @@ A paired bridge also finds the printers on its network and lists them on the [Br
 - [Prusa printers (PrusaLink)](/docs/printlog-bridge-prusalink): log an MK4, MK3.5, Core One, MINI or XL through PrusaLink, with the slicer's estimate per tool.
 - [OctoPrint](/docs/printlog-bridge-octoprint): log a printer run by an OctoPi or any OctoPrint server, with the slicer's estimate per tool and a webcam snapshot.
 - [Elegoo Centauri Carbon (SDCP)](/docs/printlog-bridge-sdcp): log a Centauri Carbon over its local protocol, with the slicer's filament estimate.
+- [Duet / RepRapFirmware](/docs/printlog-bridge-duet): log a Duet 2 or Duet 3, standalone or with a Raspberry Pi, with the filament each tool measured.
+- [FlashForge](/docs/printlog-bridge-flashforge): log an Adventurer 5M, 5M Pro or AD5X over its LAN API, with the slicer's estimate per IFS slot.
+- [Anycubic (LAN mode)](/docs/printlog-bridge-anycubic): log a Kobra S1, Kobra 3 or Photon P1 Max in LAN mode, with filament or resin in mL.
 - [Assign spools with PRINTLOG_SET_SPOOL](/docs/printlog-bridge-spools): tell 3D Print Log which spool is in each tool from Klipper's console or a macro.
 - [Snapmaker U1](/docs/snapmaker-u1): filament per tool on all four tools, with spools assigned from their RFID tags.
 - [Troubleshooting](/docs/printlog-bridge-troubleshooting): the `doctor` and `status` commands, logs, traces and common problems.

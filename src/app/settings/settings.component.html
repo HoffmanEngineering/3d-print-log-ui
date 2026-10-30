@@ -1,23 +1,12 @@
-<div fxLayout="row" fxLayoutAlign="center">
-  <mat-card
-    appearance="outlined"
-    fxFlex="1000px"
-    fxFlex.lt-md="100%"
-    fxFlex.xs="100%"
-  >
-    <div
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
-      style="padding: 16px"
-    >
-      <div fxFlex="grow" fxFlexFill>
+<div class="page">
+  <mat-card class="settings-card" appearance="outlined">
+    <div class="settings" style="padding: 16px">
+      <div class="section">
         <h1>General Settings</h1>
         <hr />
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
+        class="section"
         [class.mat-elevation-z5]="
           profileViewStatus() !== userDetailsOnLoad().viewStatus
         "
@@ -53,12 +42,7 @@
         </div>
         @if (profileViewStatus() !== userDetailsOnLoad().viewStatus) {
           <div>
-            <div
-              style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
-            >
+            <div class="actions" style="margin-top: 10px">
               <button
                 mat-raised-button
                 type="submit"
@@ -81,8 +65,7 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
+        class="section"
         [class.mat-elevation-z5]="
           printViewStatus()?.toString() !==
           defaultPrintViewStatusSettingOnLoad()?.value.toString()
@@ -122,12 +105,7 @@
           defaultPrintViewStatusSettingOnLoad()?.value?.toString()
         ) {
           <div>
-            <div
-              style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
-            >
+            <div class="actions" style="margin-top: 10px">
               <button
                 mat-raised-button
                 type="submit"
@@ -150,8 +128,7 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
+        class="section"
         [class.mat-elevation-z5]="
           preferredCurrency()?.toString() !==
           preferredCurrencyNameSettingOnLoad()?.value.toString()
@@ -190,12 +167,7 @@
           preferredCurrencyNameSettingOnLoad()?.value?.toString()
         ) {
           <div>
-            <div
-              style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
-            >
+            <div class="actions" style="margin-top: 10px">
               <button
                 mat-raised-button
                 type="submit"
@@ -218,8 +190,7 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
+        class="section"
         [class.mat-elevation-z5]="
           defaultFilamentDiameterMm()?.toString() !==
           defaultFilamentDiameterMmSettingOnLoad()?.value.toString()
@@ -251,12 +222,7 @@
           defaultFilamentDiameterMmSettingOnLoad()?.value?.toString()
         ) {
           <div>
-            <div
-              style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
-            >
+            <div class="actions" style="margin-top: 10px">
               <button
                 mat-raised-button
                 type="submit"
@@ -281,8 +247,7 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
+        class="section"
         [class.mat-elevation-z5]="
           defaultFilamentPrice()?.toString() !==
           defaultFilamentPriceSettingOnLoad()?.value.toString()
@@ -314,12 +279,7 @@
           defaultFilamentPriceSettingOnLoad()?.value?.toString()
         ) {
           <div>
-            <div
-              style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
-            >
+            <div class="actions" style="margin-top: 10px">
               <button
                 mat-raised-button
                 type="submit"
@@ -342,8 +302,7 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
+        class="section"
         [class.mat-elevation-z5]="
           preferredFilamentDisplayUnit()?.toString() !==
           preferredFilamentDisplayUnitSettingOnLoad()?.value?.toString()
@@ -395,12 +354,7 @@
           preferredFilamentDisplayUnitSettingOnLoad()?.value?.toString()
         ) {
           <div>
-            <div
-              style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
-            >
+            <div class="actions" style="margin-top: 10px">
               <button
                 mat-raised-button
                 type="submit"
@@ -426,7 +380,7 @@
           </div>
         }
       </div>
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <label
           for="theme-mode"
           style="margin-right: 10px"
@@ -447,7 +401,7 @@
         </mat-button-toggle-group>
       </div>
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <h2>Electricity Cost</h2>
         <p>
           Track the electricity cost of each print based on your kWh rate and
@@ -455,8 +409,7 @@
         </p>
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
+        class="section"
         [class.mat-elevation-z5]="
           defaultElectricityKwhRate()?.toString() !==
           defaultElectricityKwhRateSettingOnLoad()?.value?.toString()
@@ -491,12 +444,7 @@
           defaultElectricityKwhRateSettingOnLoad()?.value?.toString()
         ) {
           <div>
-            <div
-              style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
-            >
+            <div class="actions" style="margin-top: 10px">
               <button
                 mat-raised-button
                 type="submit"
@@ -525,8 +473,7 @@
         }
       </div>
       <div
-        fxFlex="grow"
-        fxFlexFill
+        class="section"
         [class.mat-elevation-z5]="
           defaultElectricityWattageW()?.toString() !==
           defaultElectricityWattageSettingOnLoad()?.value?.toString()
@@ -560,12 +507,7 @@
           defaultElectricityWattageSettingOnLoad()?.value?.toString()
         ) {
           <div>
-            <div
-              style="margin-top: 10px"
-              fxLayout
-              fxLayoutAlign="center center"
-              fxLayoutGap="15px"
-            >
+            <div class="actions" style="margin-top: 10px">
               <button
                 mat-raised-button
                 type="submit"
@@ -595,7 +537,7 @@
       </div>
       @if (pushAvailable()) {
         <hr />
-        <div fxFlex="grow" fxFlexFill data-testid="push-notifications-section">
+        <div class="section" data-testid="push-notifications-section">
           <h2>Push notifications</h2>
           <p>Choose what your phone notifies you about.</p>
 
@@ -664,17 +606,17 @@
       }
 
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <app-email-settings />
       </div>
 
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <app-achievement-settings />
       </div>
 
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <h2>Subscription</h2>
         @if (subscriptionService.isPro()) {
           <div>
@@ -718,7 +660,7 @@
         }
       </div>
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <h2>Export Data</h2>
         <p>Save your prints as a csv file.</p>
         <button
@@ -732,15 +674,15 @@
         </button>
       </div>
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <app-connected-agents />
       </div>
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <app-spoolman-connections />
       </div>
       <hr />
-      <div fxFlex="grow" fxFlexFill>
+      <div class="section">
         <h2>Danger Zone</h2>
         <details style="border: 1px solid red; padding: 5px">
           <summary>

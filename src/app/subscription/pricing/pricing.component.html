@@ -1,6 +1,6 @@
-<div fxLayout="row" fxLayoutAlign="center">
-  <div fxFlex="900px" fxFlex.lt-md="100%" style="padding: 16px">
-    <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="16px">
+<div class="page">
+  <div class="pricing">
+    <div class="pricing-stack">
       <h1>3D Print Log Pro</h1>
       <p class="subtitle">Remove ads and unlock premium features</p>
 
@@ -28,13 +28,8 @@
           </mat-card-content>
         </mat-card>
       } @else {
-        <div
-          fxLayout="row"
-          fxLayout.lt-sm="column"
-          fxLayoutGap="16px"
-          fxLayoutAlign="center stretch"
-        >
-          <mat-card appearance="outlined" class="plan-card" fxFlex="300px">
+        <div class="plans">
+          <mat-card appearance="outlined" class="plan-card">
             <mat-card-header>
               <mat-card-title>Monthly</mat-card-title>
             </mat-card-header>
@@ -62,11 +57,7 @@
             </mat-card-actions>
           </mat-card>
 
-          <mat-card
-            appearance="outlined"
-            class="plan-card recommended"
-            fxFlex="300px"
-          >
+          <mat-card appearance="outlined" class="plan-card recommended">
             <mat-card-header>
               <mat-card-title>Annual</mat-card-title>
               <mat-card-subtitle

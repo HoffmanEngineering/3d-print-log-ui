@@ -1,11 +1,5 @@
-<div fxLayout="column" fxLayoutAlign="center">
-  <div
-    class="header"
-    fxFlex="grow"
-    fxLayout
-    fxLayoutAlign="start center"
-    fxLayoutGap="5px"
-  >
+<div class="page">
+  <div class="header">
     <button
       mat-raised-button
       (click)="addEntry()"
@@ -15,7 +9,7 @@
     >
       Add Entry
     </button>
-    <div fxLayoutGap="10px">
+    <div class="filter-fields">
       <mat-form-field>
         <mat-label> Search: </mat-label
         ><input
@@ -46,14 +40,7 @@
       </mat-form-field>
     </div>
     <button
-      fxFlex="120px"
-      fxFlex.xs="80px"
-      style="height: 36px"
-      [ngStyle.xs]="{
-        height: 'auto',
-        'white-space': 'normal',
-        'line-height': '26px',
-      }"
+      class="reset-filters"
       mat-raised-button
       (click)="resetFilters()"
       [disabled]="editId() !== null"
@@ -62,7 +49,7 @@
     </button>
   </div>
   <table
-    fxFlex="grow"
+    class="entries"
     aria-label="Print List"
     aria-live="polite"
     mat-table
@@ -93,7 +80,7 @@
       </th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === editId()) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="edit-field">
             <input
               matInput
               [matDatepicker]="picker"
@@ -129,7 +116,7 @@
       <th mat-header-cell *matHeaderCellDef>Printer</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === editId()) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="edit-field">
             <mat-label> Printer </mat-label>
             <mat-select
               [(ngModel)]="entry.printerId"
@@ -170,7 +157,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Category</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === editId()) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="edit-field">
             <input
               matInput
               [(ngModel)]="entry.category"
@@ -198,7 +185,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Description</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === editId()) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="edit-field">
             <input
               matInput
               [(ngModel)]="entry.description"
@@ -217,7 +204,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Price</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === editId()) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="edit-field">
             <input
               name="maintenance-price"
               matInput
@@ -242,7 +229,7 @@
       <th scope="col" mat-header-cell *matHeaderCellDef>Notes</th>
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === editId()) {
-          <mat-form-field style="width: 100%" [ngStyle.xs]="{ width: 'auto' }">
+          <mat-form-field class="edit-field">
             <input
               matInput
               [(ngModel)]="entry.notes"

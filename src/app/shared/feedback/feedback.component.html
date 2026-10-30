@@ -1,20 +1,9 @@
-<section fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
+<section class="page">
+  <mat-card appearance="outlined" class="feedback-card">
     <h1>Send Feedback</h1>
-    <form
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
-    >
-      <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
-      >
-        <mat-form-field fxFlex="grow" fxFlexFill>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="feedback-form">
+      <mat-card-content class="feedback-fields">
+        <mat-form-field class="feedback-field">
           <mat-label> Type</mat-label>
           <mat-select formControlName="type" required>
             <mat-option [value]="feedbackTypes.Suggestion"
@@ -25,7 +14,7 @@
             <mat-option [value]="feedbackTypes.Other">Other</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="feedback-field">
           <mat-label>Feedback</mat-label>
           <textarea
             matInput
@@ -39,7 +28,7 @@
             <mat-error> A Note is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="feedback-field">
           <mat-label>Email (optional)</mat-label>
           <input
             matInput
@@ -50,11 +39,7 @@
           />
         </mat-form-field>
       </mat-card-content>
-      <mat-card-actions
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
-      >
+      <mat-card-actions class="feedback-actions">
         <button
           mat-raised-button
           type="submit"

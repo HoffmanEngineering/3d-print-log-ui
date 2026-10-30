@@ -39,13 +39,6 @@ import {
   MatRow,
 } from '@angular/material/table';
 import { SignedImageComponent } from '../../shared/signed-image/signed-image.component';
-import {
-  DefaultGridColumnsDirective,
-  DefaultGridRowsDirective,
-  DefaultGridGapDirective,
-  DefaultGridColumnDirective,
-  DefaultGridRowDirective,
-} from '@ngbracket/ngx-layout/grid';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatChipListbox, MatChipOption } from '@angular/material/chips';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -74,11 +67,6 @@ import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-
     MatCellDef,
     MatCell,
     SignedImageComponent,
-    DefaultGridColumnsDirective,
-    DefaultGridRowsDirective,
-    DefaultGridGapDirective,
-    DefaultGridColumnDirective,
-    DefaultGridRowDirective,
     MatTooltip,
     MatChipListbox,
     MatChipOption,

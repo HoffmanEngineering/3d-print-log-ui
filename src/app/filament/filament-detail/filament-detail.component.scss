@@ -158,3 +158,147 @@ mat-card-title {
   font-size: 12px;
   color: var(--app-text-hint);
 }
+
+// ---- Form layout. Below 960px, the side-by-side rows stack.
+
+.material-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  > :not(:last-child) {
+    margin-bottom: 0;
+  }
+}
+
+.grow {
+  flex: 1 1 100%;
+  max-height: 100%;
+}
+
+.material-fields {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+// One field per row, full width.
+.material-fields,
+.field {
+  flex: 1 1 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+}
+
+// A field with a button beside it.
+.inline-row {
+  display: flex;
+}
+
+.share {
+  flex: 1 1 0%;
+}
+
+.share-column {
+  flex: 1 1 0;
+}
+
+.row-fill {
+  flex: 1 1 100%;
+  max-width: 100%;
+  width: 100%;
+  height: 100%;
+}
+
+// Nominal amount and its unit.
+.dimension-row,
+.adjustment-row {
+  display: flex;
+
+  @media (max-width: 959.98px) {
+    flex-direction: column;
+  }
+}
+
+.nominal-field {
+  flex: 1 1 0%;
+  margin-left: 0;
+}
+
+.measure-field {
+  flex: 1 1 120px;
+  min-width: 120px;
+  max-width: 120px;
+  margin-right: 0;
+}
+
+.adjustment-field {
+  flex: 1 1 100%;
+  max-width: 100%;
+}
+
+.adjustment-measure {
+  flex: 1 1 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+@media (max-width: 959.98px) {
+  .nominal-field,
+  .measure-field,
+  .adjustment-measure {
+    flex: 1 1 100%;
+    min-width: auto;
+    max-width: none;
+  }
+
+  .nominal-field,
+  .measure-field {
+    margin-inline: 0;
+  }
+}
+
+// An adjustment: its fields, then Delete. (mat-card is a column on its own.)
+.adjustment {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 100%;
+  max-width: 100%;
+  width: 100%;
+  height: 100%;
+
+  > :not(:last-child) {
+    margin-right: 0;
+  }
+}
+
+.adjustment-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 100%;
+  max-width: 100%;
+
+  > :not(:last-child) {
+    margin-bottom: 0;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.action-group {
+  display: flex;
+  gap: 10px;
+}

@@ -42,40 +42,32 @@
 
   <mat-card appearance="outlined" class="form-card">
     <form
+      class="material-form"
       [formGroup]="filamentForm"
       (ngSubmit)="onSubmit()"
       autocomplete="off"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
     >
-      <mat-card-title fxFlex="grow"
+      <mat-card-title class="grow"
         >{{
           this.filamentForm.get('id').value !== null ? 'Edit' : 'Add'
         }}
         Material</mat-card-title
       >
-      <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
-      >
-        <div fxFlex="grow" fxFlexFill>
+      <mat-card-content class="material-fields">
+        <div class="field">
           <h2 style="text-align: start">Photos</h2>
         </div>
         <app-entity-images-panel
-          fxFlex="grow"
-          fxFlexFill
+          class="field"
           [target]="imageTarget()"
           [images]="loadedFilament?.images ?? []"
           [maxImages]="maxImages()"
           imageAlt="Material photo"
         />
-        <div fxFlex="grow" fxFlexFill>
+        <div class="field">
           <h2 style="text-align: start">General</h2>
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Name</mat-label>
           <input
             id="edit-filament-name"
@@ -104,7 +96,7 @@
             >
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Category</mat-label>
           <mat-select formControlName="materialCategoryNickname">
             @for (type of materialCategories; track type) {
@@ -125,7 +117,7 @@
             <mat-error> A category is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Material Type</mat-label>
           <input
             id="edit-filament-material-type"
@@ -159,7 +151,7 @@
             }
           </mat-autocomplete>
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Material Density (grams/cm<sup>3</sup>)</mat-label>
           <input
             id="edit-filament-density"
@@ -178,7 +170,7 @@
           }
         </mat-form-field>
         <!-- Color pattern selector -->
-        <div fxFlex="grow" fxFlexFill>
+        <div class="field">
           <h3 style="margin-bottom: 8px">Color</h3>
           <mat-button-toggle-group
             formControlName="colorPattern"
@@ -204,7 +196,7 @@
         @if (
           filamentForm.get('colorPattern')!.value === ColorPatternType.Rainbow
         ) {
-          <div fxFlex="grow" fxFlexFill style="margin-bottom: 8px">
+          <div class="field">
             <div style="display: flex; flex-wrap: wrap; gap: 6px">
               @for (preset of rainbowPresets; track preset.label) {
                 <button
@@ -220,7 +212,7 @@
         }
 
         <!-- Dynamic color pickers -->
-        <div fxFlex="grow" fxFlexFill formArrayName="colors">
+        <div class="field" formArrayName="colors">
           @for (ctrl of colorsFormArray.controls; track ctrl) {
             <div
               style="
@@ -298,7 +290,7 @@
         }
 
         <!-- Finish type -->
-        <div fxFlex="grow" fxFlexFill>
+        <div class="field">
           <h3 style="margin-bottom: 8px">Finish</h3>
           <mat-button-toggle-group
             formControlName="finishType"
@@ -317,7 +309,7 @@
         </div>
 
         <!-- Effects chips -->
-        <div fxFlex="grow" fxFlexFill>
+        <div class="field">
           <h3 style="margin-bottom: 8px">Effects</h3>
           <mat-chip-listbox
             multiple
@@ -346,11 +338,7 @@
         </div>
 
         <!-- Live spool preview -->
-        <div
-          fxFlex="grow"
-          fxFlexFill
-          style="display: flex; justify-content: center; margin: 12px 0"
-        >
+        <div class="field" style="display: flex; justify-content: center">
           <app-material-icon
             style="width: 120px; height: 120px"
             [color]="normalizedColors[0] ?? ''"
@@ -365,7 +353,7 @@
         </div>
 
         <!-- Color Name -->
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Color Name</mat-label>
           <input
             id="edit-filament-color"
@@ -384,7 +372,7 @@
             <mat-hint class="tag-source-hint">From tag</mat-hint>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Brand</mat-label>
           <input
             id="edit-filament-brand"
@@ -411,8 +399,8 @@
           }
         </mat-form-field>
         @if (this.filamentForm.get('diameterMm').enabled) {
-          <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-            <mat-form-field style="margin: 0" fxFlex>
+          <div class="field inline-row">
+            <mat-form-field class="share" style="margin: 0">
               <mat-label>Diameter (mm)</mat-label>
               <input
                 id="edit-filament-diameter"
@@ -435,7 +423,7 @@
                   defaultFilamentDiameterMmSetting().value.toString())
             ) {
               <button
-                fxFlex
+                class="share"
                 style="margin-left: 10px; height: 72%"
                 mat-raised-button
                 type="button"
@@ -451,7 +439,7 @@
             }
           </div>
         }
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Storage Location</mat-label>
           <input
             id="edit-filament-storage-location"
@@ -478,7 +466,7 @@
             >
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Notes</mat-label>
           <textarea
             id="edit-filament-description"
@@ -495,15 +483,14 @@
             >
           }
         </mat-form-field>
-        <mat-checkbox fxFlex="grow" formControlName="isActive"
+        <mat-checkbox class="grow" formControlName="isActive"
           >Is Active</mat-checkbox
         >
-        <mat-checkbox fxFlex="grow" formControlName="isFavorite"
+        <mat-checkbox class="grow" formControlName="isFavorite"
           >Is Favorite</mat-checkbox
         >
         <app-filament-tag-uids
-          fxFlex="grow"
-          fxFlexFill
+          class="field"
           formControlName="tagUids"
           [conflict]="tagUidConflict()"
           [filamentId]="loadedFilament?.id ?? null"
@@ -511,10 +498,10 @@
           [catalogEntryId]="loadedFilament?.catalogEntryId ?? null"
           (readingsChange)="onTagReadings($event)"
         ></app-filament-tag-uids>
-        <div fxFlex="grow" fxFlexFill>
+        <div class="field">
           <h2 style="text-align: start">Weights</h2>
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Initial Total Weight (g)</mat-label>
           <input
             id="edit-filament-total-weight"
@@ -527,23 +514,12 @@
             material.</mat-hint
           >
         </mat-form-field>
-        <div
-          fxFlex="grow"
-          fxFlexFill
-          fxLayout="row"
-          fxLayout.lt-md="column"
-          style="margin-inline: 10px"
-        >
+        <div class="field dimension-row" style="margin-inline: 10px">
           @if (
             this.filamentForm.get('source').value ===
             filamentSourceMeasurement.Weight
           ) {
-            <mat-form-field
-              fxFlex
-              fxFlex.lt-md="100%"
-              style="margin-left: 0"
-              ngStyle.lt-md="margin-inline: 0"
-            >
+            <mat-form-field class="nominal-field">
               <mat-label> Initial Nominal Weight (g)</mat-label>
               <input
                 id="filament-inital-nominal-weight"
@@ -572,12 +548,7 @@
             this.filamentForm.get('source').value ===
             filamentSourceMeasurement.Length
           ) {
-            <mat-form-field
-              fxFlex
-              fxFlex.lt-md="100%"
-              style="margin-left: 0"
-              ngStyle.lt-md="margin-inline: 0"
-            >
+            <mat-form-field class="nominal-field">
               <mat-label> Initial Nominal Length (m)</mat-label>
               <input
                 id="filament-initial-nominal-length"
@@ -605,12 +576,7 @@
             this.filamentForm.get('source').value ===
             filamentSourceMeasurement.Volume
           ) {
-            <mat-form-field
-              fxFlex
-              fxFlex.lt-md="100%"
-              style="margin-left: 0"
-              ngStyle.lt-md="margin-inline: 0"
-            >
+            <mat-form-field class="nominal-field">
               <mat-label> Initial Nominal Volume (ml)</mat-label>
               <input
                 id="filament-initial-nominal-volume"
@@ -628,12 +594,7 @@
               <mat-hint>The nominal, or expected, volume of material</mat-hint>
             </mat-form-field>
           }
-          <mat-form-field
-            fxFlex="120px"
-            fxFlex.lt-md="100%"
-            style="margin-right: 0"
-            ngStyle.lt-md="margin-inline: 0"
-          >
+          <mat-form-field class="measure-field">
             <mat-label>Measure</mat-label>
             <mat-select formControlName="source">
               <mat-option [value]="filamentSourceMeasurement.Weight">
@@ -649,7 +610,7 @@
           </mat-form-field>
         </div>
 
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label
             >{{
               filamentForm.get('materialCategoryNickname').value ===
@@ -677,7 +638,7 @@
             <mat-hint class="tag-source-hint">From tag</mat-hint>
           }
         </mat-form-field>
-        <div fxFlex="grow" fxFlexFill>
+        <div class="field">
           <h3 style="margin-block-end: 5px">
             Adjustments:
             <a routerLink="/docs/materials-reference" fragment="add-adjustments"
@@ -716,7 +677,7 @@
             }
           </div>
         </div>
-        <div formArrayName="filamentAdjustments" fxFlex="grow" fxFlexFill>
+        <div class="field" formArrayName="filamentAdjustments">
           @for (
             adjustment of filamentAdjustments.controls;
             track adjustment;
@@ -726,31 +687,15 @@
               <div [formGroupName]="adjustmentIndex">
                 <mat-card
                   appearance="outlined"
-                  class="mat-elevation-z4"
-                  fxFlex="grow"
-                  fxFlexFill
-                  fxLayout="row"
-                  fxLayoutAlign="space-evenly center"
-                  fxLayoutGap="10px"
+                  class="mat-elevation-z4 adjustment"
                 >
-                  <div
-                    fxFlex="grow"
-                    fxLayout="column"
-                    fxLayoutAlign="start center"
-                    fxLayoutGap="10px"
-                    style="padding: 5px"
-                  >
-                    <div
-                      fxFlex="grow"
-                      fxFlexFill
-                      fxLayout="row"
-                      fxLayout.lt-md="column"
-                    >
+                  <div class="adjustment-body" style="padding: 5px">
+                    <div class="field adjustment-row">
                       @if (
                         adjustment.get('source').value ===
                         filamentAdjustmentSourceMeasurement.Weight
                       ) {
-                        <mat-form-field fxFlex="grow">
+                        <mat-form-field class="adjustment-field">
                           <mat-label> Material Used (g)</mat-label>
                           <input
                             id="filament-adjustment-used-gram-{{
@@ -772,7 +717,7 @@
                         adjustment.get('source').value ===
                         filamentAdjustmentSourceMeasurement.Length
                       ) {
-                        <mat-form-field fxFlex="grow">
+                        <mat-form-field class="adjustment-field">
                           <mat-label> Material Used (m)</mat-label>
                           <input
                             id="filament-adjustment-used-meter-{{
@@ -793,7 +738,7 @@
                         adjustment.get('source').value ===
                         filamentAdjustmentSourceMeasurement.Volume
                       ) {
-                        <mat-form-field fxFlex="grow">
+                        <mat-form-field class="adjustment-field">
                           <mat-label> Material Used (ml)</mat-label>
                           <input
                             id="filament-adjustment-used-ml-{{
@@ -810,7 +755,7 @@
                           }
                         </mat-form-field>
                       }
-                      <mat-form-field fxFlex="120px" fxFlex.lt-md="100%">
+                      <mat-form-field class="adjustment-measure">
                         <mat-label>Measure</mat-label>
                         <mat-select formControlName="source">
                           <mat-option
@@ -831,8 +776,8 @@
                         </mat-select>
                       </mat-form-field>
                     </div>
-                    <div fxFlex="grow" fxFlexFill>
-                      <mat-form-field fxFlex="grow" fxFlexFill>
+                    <div class="field inline-row">
+                      <mat-form-field class="row-fill">
                         <mat-label> Notes</mat-label>
                         <input
                           id="adjustment-note-{{ adjustmentIndex }}"
@@ -843,7 +788,7 @@
                         />
                       </mat-form-field>
                     </div>
-                    <div fxFlex style="padding-bottom: 10px">
+                    <div class="share-column" style="padding-bottom: 10px">
                       <button
                         type="button"
                         mat-raised-button
@@ -873,12 +818,12 @@
           this.filamentForm.get('materialRefreshRatio').enabled ||
           this.filamentForm.get('inertGas').enabled
         ) {
-          <div fxFlex="grow" fxFlexFill>
+          <div class="field">
             <h2 style="text-align: start">Print Settings</h2>
           </div>
         }
         @if (this.filamentForm.get('tempRangeStart').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Hotend Temperature Range Start (C)</mat-label>
             <input
               id="edit-filament-hotend-temp-range-start"
@@ -892,7 +837,7 @@
           </mat-form-field>
         }
         @if (this.filamentForm.get('tempRangeEnd').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Hotend Temperature Range End (C)</mat-label>
             <input
               id="edit-filament-hotend-temperature-range-end"
@@ -906,7 +851,7 @@
           </mat-form-field>
         }
         @if (this.filamentForm.get('recommendedTemp').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Recommended Hotend Temperature (C)</mat-label>
             <input
               id="edit-filament-recommended-hotend-temp"
@@ -920,7 +865,7 @@
           </mat-form-field>
         }
         @if (this.filamentForm.get('recommendedBedTemp').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Recommended Bed Temperature (C)</mat-label>
             <input
               id="edit-filament-recommended-bed-temp"
@@ -934,7 +879,7 @@
           </mat-form-field>
         }
         @if (this.filamentForm.get('meltingTemperature').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Melting Temperature (C)</mat-label>
             <input
               id="edit-filament-melting-temperature"
@@ -945,7 +890,7 @@
           </mat-form-field>
         }
         @if (this.filamentForm.get('initialLayerTimeS').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Initial Layer Timer (s)</mat-label>
             <input
               id="edit-filament-initial-layer-time"
@@ -956,7 +901,7 @@
           </mat-form-field>
         }
         @if (this.filamentForm.get('layerTimeS').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Layer Timer (s)</mat-label>
             <input
               id="edit-filament-layer-time"
@@ -967,7 +912,7 @@
           </mat-form-field>
         }
         @if (this.filamentForm.get('materialRefreshRatio').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Material Refresh Ratio</mat-label>
             <input
               id="edit-filament-material-refresh-ratio"
@@ -992,7 +937,7 @@
           </mat-form-field>
         }
         @if (this.filamentForm.get('inertGas').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label>Inert Gas</mat-label>
             <input
               id="edit-filament-inert-gas"
@@ -1003,10 +948,10 @@
             />
           </mat-form-field>
         }
-        <div fxFlex="grow" fxFlexFill>
+        <div class="field">
           <h2 style="text-align: start">Purchase Details</h2>
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Purchase Date</mat-label>
           <input
             matInput
@@ -1021,7 +966,7 @@
           ></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Purchase Location</mat-label>
           <input
             id="edit-filament-purchase-location"
@@ -1042,8 +987,8 @@
             }
           </mat-autocomplete>
         </mat-form-field>
-        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-          <mat-form-field style="margin: 0" fxFlex>
+        <div class="field inline-row">
+          <mat-form-field class="share" style="margin: 0">
             <mat-label>Purchase Price</mat-label>
             <span matPrefix>{{ this.preferredCurrencySymbol }}&nbsp;</span>
             <input
@@ -1073,7 +1018,7 @@
                 defaultFilamentPriceSetting().value.toString())
           ) {
             <button
-              fxFlex
+              class="share"
               style="margin-left: 10px; height: 72%"
               mat-raised-button
               type="button"
@@ -1088,7 +1033,7 @@
             </button>
           }
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label>Purchase Notes</mat-label>
           <textarea
             id="purchase-notes-text"
@@ -1106,12 +1051,8 @@
           }
         </mat-form-field>
       </mat-card-content>
-      <mat-card-actions
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
-      >
-        <div fxLayout fxLayoutGap="10px">
+      <mat-card-actions class="actions">
+        <div class="action-group">
           <button
             mat-raised-button
             type="submit"

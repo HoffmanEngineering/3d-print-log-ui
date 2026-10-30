@@ -92,13 +92,6 @@ import {
   MatCardContent,
   MatCardActions,
 } from '@angular/material/card';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultLayoutGapDirective,
-  DefaultFlexDirective,
-  FlexFillDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { EntityImagesPanelComponent as EntityImagesPanelComponent_1 } from '../../shared/entity-images-panel/entity-images-panel.component';
 import {
   MatFormField,
@@ -124,7 +117,6 @@ import { MatIcon } from '@angular/material/icon';
 import { MaterialIconComponent } from '../../shared/material-icon/material-icon.component';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { FilamentTagUidsComponent } from './filament-tag-uids/filament-tag-uids.component';
-import { DefaultStyleDirective } from '@ngbracket/ngx-layout/extended';
 import {
   MatDatepickerInput,
   MatDatepickerToggle,
@@ -201,14 +193,9 @@ function toServerAdjustmentRows(
     SidebarAdComponent,
     MatCard,
     FormsModule,
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    DefaultLayoutGapDirective,
     ReactiveFormsModule,
     MatCardTitle,
-    DefaultFlexDirective,
     MatCardContent,
-    FlexFillDirective,
     EntityImagesPanelComponent_1,
     MatFormField,
     MatLabel,
@@ -230,7 +217,6 @@ function toServerAdjustmentRows(
     MaterialIconComponent,
     MatCheckbox,
     FilamentTagUidsComponent,
-    DefaultStyleDirective,
     RouterLink,
     MatDatepickerInput,
     MatDatepickerToggle,

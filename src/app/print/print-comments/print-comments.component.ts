@@ -8,7 +8,6 @@ import {
   ChangeDetectionStrategy,
   computed,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Comment } from 'src/app/core/services/comment.service';
@@ -46,9 +45,7 @@ export class PrintCommentsComponent {
 
   readonly notLoggedIn = viewChild<ElementRef>('notLoggedIn');
 
-  private readonly user = toSignal(this.authService.userProfile$, {
-    initialValue: null,
-  });
+  private readonly user = this.authService.userProfile;
 
   readonly isLoggedIn = computed(() => this.user() !== null);
   readonly currentUserId = computed(() => this.user()?.id ?? null);

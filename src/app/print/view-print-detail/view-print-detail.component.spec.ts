@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -220,7 +221,7 @@ describe('ViewPrintDetailComponent', () => {
         {
           provide: AuthService,
           useValue: {
-            userProfile$: of(viewerId === null ? null : { id: viewerId }),
+            userProfile: signal(viewerId === null ? null : { id: viewerId }),
           },
         },
         {

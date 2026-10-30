@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { RouterTestingModule } from '@angular/router/testing';
-import { BehaviorSubject } from 'rxjs';
 import {
   AuthService,
   UserProfileInfo,
@@ -25,15 +24,15 @@ class NotificationBellStubComponent {}
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
-  let profile$: BehaviorSubject<UserProfileInfo | null>;
+  let profile: WritableSignal<UserProfileInfo | null>;
   let loggedIn: WritableSignal<boolean | null>;
   let hasUnread: WritableSignal<boolean>;
 
   beforeEach(waitForAsync(() => {
-    profile$ = new BehaviorSubject<UserProfileInfo | null>(null);
+    profile = signal<UserProfileInfo | null>(null);
     loggedIn = signal<boolean | null>(false);
     const mockAuthService: Partial<AuthService> = {
-      userProfile$: profile$.asObservable(),
+      userProfile: profile,
       isLoggedIn: loggedIn,
     };
     const mockSubscriptionService = {
@@ -117,7 +116,7 @@ describe('NavbarComponent', () => {
     const host = () => fixture.nativeElement as HTMLElement;
     const signIn = () => {
       loggedIn.set(true);
-      profile$.next({
+      profile.set({
         id: 3,
         profilePicture: 'https://example.com/me.png',
       } as UserProfileInfo);
@@ -154,7 +153,7 @@ describe('NavbarComponent', () => {
 
       it('points at the user even when they have no profile picture', async () => {
         loggedIn.set(true);
-        profile$.next({ id: 5 } as UserProfileInfo);
+        profile.set({ id: 5 } as UserProfileInfo);
         fixture.detectChanges();
 
         await openProfileMenu();
@@ -164,7 +163,7 @@ describe('NavbarComponent', () => {
 
       it('is absent while the profile has not loaded', async () => {
         loggedIn.set(true);
-        profile$.next(null);
+        profile.set(null);
         fixture.detectChanges();
 
         await openProfileMenu();
@@ -177,7 +176,7 @@ describe('NavbarComponent', () => {
       signIn();
 
       loggedIn.set(false);
-      profile$.next(null);
+      profile.set(null);
       fixture.detectChanges();
 
       expect(host().querySelector('#loginButton')).not.toBeNull();

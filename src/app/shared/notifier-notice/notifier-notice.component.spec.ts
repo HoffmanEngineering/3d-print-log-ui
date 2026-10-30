@@ -1,4 +1,4 @@
-import { PLATFORM_ID } from '@angular/core';
+import { PLATFORM_ID, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -6,7 +6,6 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { LoggingService } from '../../core/services/logging.service';
@@ -16,7 +15,7 @@ import { NotifierNoticeComponent } from './notifier-notice.component';
 describe('NotifierNoticeComponent', () => {
   let fixture: ComponentFixture<NotifierNoticeComponent>;
   let httpMock: HttpTestingController;
-  let user$: BehaviorSubject<unknown>;
+  let user: WritableSignal<unknown>;
   let logging: jasmine.SpyObj<LoggingService>;
 
   const base = `${environment.printLogApiUrl}/api/Connections`;
@@ -62,7 +61,7 @@ describe('NotifierNoticeComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: PLATFORM_ID, useValue: platform },
-        { provide: AuthService, useValue: { userProfile$: user$ } },
+        { provide: AuthService, useValue: { userProfile: user } },
         { provide: LoggingService, useValue: logging },
       ],
     }).compileComponents();
@@ -85,7 +84,7 @@ describe('NotifierNoticeComponent', () => {
   }
 
   beforeEach(() => {
-    user$ = new BehaviorSubject<unknown>({ id: 1 });
+    user = signal<unknown>({ id: 1 });
   });
 
   afterEach(() => httpMock.verify());
@@ -251,7 +250,7 @@ describe('NotifierNoticeComponent', () => {
   });
 
   it('stays hidden and asks nothing when signed out', async () => {
-    user$.next(null);
+    user.set(null);
     await render();
 
     httpMock.expectNone(base);
@@ -262,7 +261,7 @@ describe('NotifierNoticeComponent', () => {
     await render();
     answer([dropping()]);
 
-    user$.next(null);
+    user.set(null);
     fixture.detectChanges();
 
     expect(banner()).toBeNull();

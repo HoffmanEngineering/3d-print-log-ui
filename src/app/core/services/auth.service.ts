@@ -6,19 +6,18 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
 
 import {
-  BehaviorSubject,
   combineLatest,
   EMPTY,
   firstValueFrom,
   from,
   Observable,
   of,
+  Subject,
   throwError,
 } from 'rxjs';
 import {
@@ -26,6 +25,7 @@ import {
   concatMap,
   filter,
   shareReplay,
+  startWith,
   tap,
   timeout,
 } from 'rxjs/operators';
@@ -123,19 +123,15 @@ export class AuthService {
     concatMap((client: Auth0Client) => from(client.handleRedirectCallback()))
   );
 
-  // Create subject and public observable of user profile data
-  private userProfileSubject$ = new BehaviorSubject<UserProfileInfo | null>(
-    null
-  );
-  userProfile$ = this.userProfileSubject$.asObservable();
+  /** The signed-in user's profile; `null` until it loads, and when signed out. */
+  private readonly userProfileState = signal<UserProfileInfo | null>(null);
+  readonly userProfile = this.userProfileState.asReadonly();
   /**
-   * The same profile as a signal. The subject stays the source: several
-   * subscribers rely on `userProfile$` emitting synchronously on subscribe,
-   * which `toObservable` over a signal would not.
+   * Every profile set, as it happens, for logSignupIfNewOnceProfileLoads.
+   * Not `toObservable`: that emits only when the app next runs change
+   * detection, and the auth callback should not depend on one.
    */
-  readonly userProfile = toSignal(this.userProfileSubject$, {
-    requireSync: true,
-  });
+  private readonly userProfileSet$ = new Subject<UserProfileInfo | null>();
   /** Login status: `null` until setup has run, then true or false. */
   private readonly loggedInState = signal<boolean | null>(null);
   readonly isLoggedIn = this.loggedInState.asReadonly();
@@ -202,55 +198,58 @@ export class AuthService {
 
             this.userService.updateCurrentUserDetail(userInfo).subscribe({
               next: (updatedUser) => {
-                // TODO: Save this updated user back to the userProfile$ object.
-                this.userProfileSubject$.next(updatedUser);
+                // TODO: Save this updated user back to the userProfile signal.
+                this.setUserProfile(updatedUser);
                 this.setTelemetryUser(updatedUser.id);
               },
               // A rejected PUT used to surface as an unhandled error; record it instead.
               error: (error) => this.logException(error),
             });
           } else {
-            this.userProfileSubject$.next(currentUser);
+            this.setUserProfile(currentUser);
             this.setTelemetryUser(currentUser.id);
           }
         });
       })
     );
-
-    // this.userProfileSubject$.next(user))
   }
 
   updateCurrentUserCoverPicture(newUrl: string) {
-    const profile = this.userProfileSubject$.value;
+    const profile = this.userProfileState();
     if (!profile) {
       return;
     }
 
-    this.userProfileSubject$.next({ ...profile, coverPicture: newUrl });
+    this.setUserProfile({ ...profile, coverPicture: newUrl });
   }
 
   updateCurrentUserDeactivationDate(deactivationDate: Date | null) {
-    const profile = this.userProfileSubject$.value;
+    const profile = this.userProfileState();
     if (!profile) {
       return;
     }
 
-    this.userProfileSubject$.next({
+    this.setUserProfile({
       ...profile,
       deactivationDateTime: deactivationDate,
     });
   }
 
   updateCurrentUserProfilePicture(newUrl: string) {
-    const profile = this.userProfileSubject$.value;
+    const profile = this.userProfileState();
     if (!profile) {
       return;
     }
 
-    this.userProfileSubject$.next({
+    this.setUserProfile({
       ...profile,
       profilePicture: newUrl,
     });
+  }
+
+  private setUserProfile(profile: UserProfileInfo | null): void {
+    this.userProfileState.set(profile);
+    this.userProfileSet$.next(profile);
   }
 
   getTokenSilently$(options?): Observable<string> {
@@ -298,7 +297,7 @@ export class AuthService {
         return;
       }
       this.loggedIn = true;
-      this.userProfileSubject$.next(this.devMockProfile);
+      this.setUserProfile(this.devMockProfile);
       this.setTelemetryUser(this.devMockProfile.id);
       return;
     }
@@ -411,7 +410,8 @@ export class AuthService {
   ): Promise<void> {
     try {
       const profile = await firstValueFrom(
-        this.userProfile$.pipe(
+        this.userProfileSet$.pipe(
+          startWith(this.userProfile()),
           filter((p) => p !== null),
           timeout(SIGNUP_LOG_TIMEOUT_MS)
         )

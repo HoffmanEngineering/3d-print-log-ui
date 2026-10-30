@@ -140,7 +140,9 @@ export class ProjectDetailComponent implements OnInit {
   imageIdsToDelete: number[] = [];
   private defaultImageIdOnLoad: number | null = null;
 
-  private readonly currentUserId = signal<number | null>(null);
+  private readonly currentUserId = computed(
+    () => this.authService.userProfile()?.id ?? null
+  );
 
   /** The API's `/seo` answer for this project; never waited on. */
   private readonly seoLookup = signal<SeoLookupState>(SEO_PENDING);
@@ -256,10 +258,6 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.authService.userProfile$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => this.currentUserId.set(user?.id ?? null));
-
     const id = this.route.snapshot.params['id'];
 
     if (id === 'new') {

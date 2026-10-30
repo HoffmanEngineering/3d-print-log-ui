@@ -123,8 +123,10 @@ mat-card-title {
 }
 
 // A loaded material: swatch, name and remaining amounts, then Unload.
+// (mat-card is a column on its own.)
 .loaded-material {
   display: flex;
+  flex-direction: row;
   flex: 1 1 100%;
   max-width: 100%;
   width: 100%;

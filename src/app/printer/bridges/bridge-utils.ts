@@ -149,6 +149,9 @@ const CARRIED_GROUPS: Readonly<Record<string, readonly string[][]>> = {
   prusalink: [['password', 'api_key']],
   octoprint: [['api_key']],
   moonraker: [['moonraker_api_key']],
+  // Set only when RepRapFirmware has one (M551), and then the board refuses the bridge without it.
+  duet: [['password']],
+  flashforge: [['check_code']],
 };
 
 /** One credential to type again for a move. */
@@ -223,6 +226,8 @@ export function credentialFieldLabel(field: string): string {
     case 'api_key':
     case 'moonraker_api_key':
       return 'API key';
+    case 'check_code':
+      return 'Check code';
     default:
       return field;
   }
@@ -252,6 +257,10 @@ export function credentialFieldHint(
       return 'Only when Moonraker uses [authorization].';
     case 'octoprint:api_key':
       return 'In OctoPrint under Settings > Application Keys.';
+    case 'duet:password':
+      return 'Only when config.g sets one with M551.';
+    case 'flashforge:check_code':
+      return "On the printer's screen under Settings > Network, with LAN-only mode on.";
     default:
       return null;
   }
@@ -368,8 +377,8 @@ export function isScanning(
  * The section the user adds to the bridge's config for a printer that needs a LAN credential,
  * keyed by the app entry's id: the fallback for a bridge the app can't seal to (one with no
  * confirmed key, an older release). A value there wins over one sealed in the app.
- * Null for a kind that needs none by default (a Moonraker without `[authorization]`, or SDCP,
- * which has no authentication).
+ * Null for a kind that needs none by default (a Moonraker without `[authorization]`, SDCP,
+ * which has no authentication, or Anycubic, whose printer hands the bridge its own login).
  */
 export function appPrinterSnippet(
   kind: string,
@@ -388,6 +397,18 @@ export function appPrinterSnippet(
         `[app_printer ${entryId}]`,
         'api_key = a-key-from-octoprint',
       ].join('\n');
+    case 'duet':
+      return [
+        `[app_printer ${entryId}]`,
+        'password = the-password-from-M551',
+      ].join('\n');
+    case 'flashforge':
+      // The bridge asks the printer for its serial; `serial` is for when it can't.
+      return [
+        `[app_printer ${entryId}]`,
+        'check_code = the-code-the-printer-shows',
+        '# serial = SN...   only when doctor asks for it',
+      ].join('\n');
     default:
       return null;
   }
@@ -400,6 +421,8 @@ export function credentialName(kind: string): string {
       return 'access code';
     case 'octoprint':
       return 'API key';
+    case 'flashforge':
+      return 'check code';
     default:
       return 'password';
   }
@@ -412,6 +435,10 @@ export function credentialSource(kind: string): string {
       return "from the printer's LAN Only Mode page";
     case 'octoprint':
       return "from OctoPrint's Settings > Application Keys";
+    case 'duet':
+      return "that the board's config.g sets with M551";
+    case 'flashforge':
+      return "from the printer's Settings > Network screen, with LAN-only mode on";
     default:
       return "from the printer's Settings > Network > PrusaLink screen";
   }

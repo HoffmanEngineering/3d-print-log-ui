@@ -10,6 +10,10 @@ const SOURCE_LABELS: Record<string, string> = {
   // The bridge's LAN adapter; `bambu-cloud` below is a different integration.
   bambu: 'Bambu Lab (LAN)',
   sdcp: 'Elegoo (SDCP)',
+  // PrintSource Duet = 10, FlashForge = 11, Anycubic = 12 (3d-print-log-api#298).
+  duet: 'Duet (RepRapFirmware)',
+  flashforge: 'FlashForge',
+  anycubic: 'Anycubic (LAN)',
   'moonraker-notifier': 'Moonraker notifier',
   'octoprint-webhook': 'OctoPrint webhook',
   'bambu-cloud': 'Bambu Cloud',

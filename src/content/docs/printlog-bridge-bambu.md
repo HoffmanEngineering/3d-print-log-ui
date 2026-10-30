@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 46
 mode: how-to
-updated: 2026-10-27
+updated: 2026-10-30
 aliases: [printlog-bridge/bambu]
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-troubleshooting, printlog-bridge-privacy]
 ---
@@ -99,8 +99,8 @@ It checks the printer's status connection ("Printer x1c") and its files ("Printe
 ### What gets logged {#what-it-logs}
 
 - **When a print starts printing**, after the printer has heated and leveled. Its start time is the printer's, so the preparation counts.
-- **When it ends**: completed, cancelled (from the screen or the slicer), or failed, with the printer's error code (such as `0700-8011`) in the print's notes.
-- **The slicer's grams per AMS tray**, from the job's 3MF, scaled by how far a cancelled or failed print got. The printer doesn't measure what it feeds, so these are **marked as estimates** in 3D Print Log: the print shows them with a `*`, and the accuracy stats leave them out.
+- **When it ends**: completed, canceled (from the screen or the slicer), or failed, with the printer's error code (such as `0700-8011`) in the print's notes.
+- **The slicer's grams per AMS tray**, from the job's 3MF, scaled by how far a canceled or failed print got. The printer doesn't measure what it feeds, so these are **marked as estimates** in 3D Print Log: the print shows them with a `*`, and the accuracy stats leave them out.
 - **The plate's thumbnail and the slicer settings.**
 - **AMS RFID tags.** A Bambu spool's tag, material and color are read from the AMS, and a spool with that tag in 3D Print Log is assigned to its tray.
 

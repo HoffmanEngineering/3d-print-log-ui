@@ -263,6 +263,8 @@ function fallbackField(kind: string): string {
       return 'access_code';
     case 'octoprint':
       return 'api_key';
+    case 'flashforge':
+      return 'check_code';
     default:
       return 'password';
   }

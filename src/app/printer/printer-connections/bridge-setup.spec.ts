@@ -5,13 +5,23 @@ import {
 } from './bridge-setup';
 
 describe('bridge setup', () => {
-  it('offers Klipper, Bambu Lab, PrusaLink, OctoPrint and Elegoo SDCP', () => {
+  it('offers Klipper, Bambu Lab, PrusaLink, OctoPrint, Elegoo SDCP, Duet, FlashForge and Anycubic', () => {
     expect(BRIDGE_SETUPS.map((s) => s.kind)).toEqual([
       'moonraker',
       'bambu',
       'prusalink',
       'octoprint',
       'sdcp',
+      'duet',
+      'flashforge',
+      'anycubic',
+    ]);
+  });
+
+  // The Photon P1 Max is a resin printer; every other adapter logs filament printers only.
+  it('marks only Anycubic as watching resin printers too', () => {
+    expect(BRIDGE_SETUPS.filter((s) => s.resin).map((s) => s.kind)).toEqual([
+      'anycubic',
     ]);
   });
 
@@ -22,6 +32,9 @@ describe('bridge setup', () => {
       '/docs/printlog-bridge-prusalink',
       '/docs/printlog-bridge-octoprint',
       '/docs/printlog-bridge-sdcp',
+      '/docs/printlog-bridge-duet',
+      '/docs/printlog-bridge-flashforge',
+      '/docs/printlog-bridge-anycubic',
     ]);
   });
 
@@ -75,6 +88,45 @@ describe('bridge setup', () => {
       );
     });
 
+    // A Duet takes a password only when config.g sets one with M551.
+    it('writes a Duet section with the password commented out', () => {
+      expect(bridgeConfigSnippet('duet', 48)).toBe(
+        [
+          '[printer duet]',
+          'adapter = duet',
+          'printer_id = 48',
+          'host = 192.168.1.88',
+          '# password = only-when-config.g-sets-one-with-M551',
+        ].join('\n')
+      );
+    });
+
+    // The bridge learns the serial from the printer; `serial` is the fallback when it can't.
+    it('writes a FlashForge section with the check code, and the serial as a fallback', () => {
+      expect(bridgeConfigSnippet('flashforge', 50)).toBe(
+        [
+          '[printer flashforge]',
+          'adapter = flashforge',
+          'printer_id = 50',
+          'host = 192.168.1.60',
+          'check_code = the-code-the-printer-shows',
+          '# serial = SN...   only when doctor asks for it',
+        ].join('\n')
+      );
+    });
+
+    // In LAN mode the printer hands the bridge its own login, so there is nothing to add.
+    it('writes an Anycubic section with no credential', () => {
+      expect(bridgeConfigSnippet('anycubic', 49)).toBe(
+        [
+          '[printer anycubic]',
+          'adapter = anycubic',
+          'printer_id = 49',
+          'host = 192.168.1.89',
+        ].join('\n')
+      );
+    });
+
     // The Klipper path stays as the Docker guide shows it: no adapter line, Moonraker's url.
     it('writes the Klipper remote-mode section the Docker guide shows', () => {
       expect(bridgeConfigSnippet('moonraker', 41)).toBe(
@@ -110,6 +162,38 @@ describe('bridge setup', () => {
         'moonraker'
       );
       expect(bridgeKindForMake('Elegoo')).toBe('moonraker');
+    });
+
+    it('picks Duet for a Duet or RepRap printer', () => {
+      expect(bridgeKindForMake('Duet3D')).toBe('duet');
+      expect(bridgeKindForMake('Duet')).toBe('duet');
+      expect(bridgeKindForMake('RepRap')).toBe('duet');
+    });
+
+    it('picks FlashForge for a FlashForge printer', () => {
+      expect(bridgeKindForMake('FlashForge', 'Adventurer 5M Pro')).toBe(
+        'flashforge'
+      );
+      expect(bridgeKindForMake('Flashforge')).toBe('flashforge');
+    });
+
+    it('picks Anycubic for a Kobra S1, Kobra 3 or Photon P1', () => {
+      expect(bridgeKindForMake('Anycubic', 'Kobra S1')).toBe('anycubic');
+      expect(bridgeKindForMake('Anycubic', 'Kobra S1 Combo')).toBe('anycubic');
+      expect(bridgeKindForMake('ANYCUBIC', 'kobra 3 combo')).toBe('anycubic');
+      expect(bridgeKindForMake('Anycubic', 'Photon P1 Max')).toBe('anycubic');
+      expect(bridgeKindForMake('Anycubic', 'Photon P1')).toBe('anycubic');
+    });
+
+    // The Kobra 3 family (a Kobra 3 Max too) speaks LAN mode; other Anycubic printers start on Klipper.
+    it('picks Klipper for other Anycubic printers', () => {
+      expect(bridgeKindForMake('Anycubic', 'Kobra 2 Max')).toBe('moonraker');
+      expect(bridgeKindForMake('Anycubic', 'Kobra S2')).toBe('moonraker');
+      expect(bridgeKindForMake('Anycubic', 'Kobra 3 Max')).toBe('anycubic');
+      expect(bridgeKindForMake('Anycubic', 'Photon Mono M5s')).toBe(
+        'moonraker'
+      );
+      expect(bridgeKindForMake('Anycubic')).toBe('moonraker');
     });
 
     it('picks Klipper for anything else, or no make', () => {

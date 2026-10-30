@@ -92,7 +92,7 @@ export enum DiscoveredPrinterState {
 /** A printer a bridge recognized on its network (`DiscoveredPrinterDto`). */
 export interface DiscoveredPrinter {
   id: number;
-  /** `moonraker`, `prusalink`, `bambu`, `octoprint` or `sdcp`. */
+  /** `moonraker`, `prusalink`, `bambu`, `octoprint`, `sdcp`, `duet`, `flashforge` or `anycubic`. */
   kind: string;
   address: string;
   port: number | null;

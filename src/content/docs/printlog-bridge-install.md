@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 43
 mode: how-to
-updated: 2026-10-29
+updated: 2026-10-30
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-spools, printlog-bridge-troubleshooting]
 ---
 
@@ -144,7 +144,7 @@ The installer writes `~/printer_data/config/printlog-bridge.cfg`, with one `[pri
 | `[printer <name>]` | `url` | | Moonraker's address, such as `http://192.168.1.50:7125`, in remote mode. Set `url` or `socket`, not both. |
 | `[printer <name>]` | `moonraker_api_key` | | Remote mode only, when Moonraker has `[authorization]` on and doesn't trust the bridge's computer. |
 | `[printer <name>]` | `snapshots` | `true` | `false` never asks the webcam for anything. |
-| `[printer <name>]` | `adapter` | `moonraker` | The kind of printer: `moonraker`, or `bambu`, `prusalink`, `octoprint` and `sdcp` for the printers in [Bambu Lab printers](/docs/printlog-bridge-bambu), [Prusa printers](/docs/printlog-bridge-prusalink), [OctoPrint](/docs/printlog-bridge-octoprint) and [Elegoo Centauri Carbon](/docs/printlog-bridge-sdcp), which have options of their own. |
+| `[printer <name>]` | `adapter` | `moonraker` | The kind of printer: `moonraker`, or `bambu`, `prusalink`, `octoprint`, `sdcp`, `duet`, `flashforge` and `anycubic` for the printers in [Bambu Lab printers](/docs/printlog-bridge-bambu), [Prusa printers](/docs/printlog-bridge-prusalink), [OctoPrint](/docs/printlog-bridge-octoprint), [Elegoo Centauri Carbon](/docs/printlog-bridge-sdcp), [Duet](/docs/printlog-bridge-duet), [FlashForge](/docs/printlog-bridge-flashforge) and [Anycubic](/docs/printlog-bridge-anycubic), which have options of their own. |
 
 The bridge looks for its config in this order: `--config` on the command line, the `PRINTLOG_BRIDGE_CONFIG` environment variable, `~/printer_data/config/printlog-bridge.cfg`, then `~/.config/printlog-bridge/printlog-bridge.cfg`. Every option is described in [printlog-bridge.example.cfg](https://github.com/HoffmanEngineering/printlog-bridge/blob/main/printlog-bridge.example.cfg).
 

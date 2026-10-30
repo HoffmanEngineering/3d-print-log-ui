@@ -7,8 +7,8 @@ nav: false
 group: integrations
 order: 49
 mode: how-to
-updated: 2026-10-29
-related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-bambu, printlog-bridge-prusalink, printlog-bridge-octoprint, printlog-bridge-sdcp]
+updated: 2026-10-30
+related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-bambu, printlog-bridge-prusalink, printlog-bridge-octoprint, printlog-bridge-sdcp, printlog-bridge-duet, printlog-bridge-flashforge, printlog-bridge-anycubic]
 ---
 ## Bridges and printers found on your network
 
@@ -50,10 +50,10 @@ Finding printers needs the host's network. Printers announce themselves with mul
 #### Not seeing a printer? {#not-found}
 
 - Tap **Scan now**, and wait for it to finish.
-- Check it's on: Moonraker's `[zeroconf]` for a Klipper printer that isn't found until a scan, PrusaLink turned on for a Prusa, LAN Only Mode for a Bambu Lab printer.
+- Check it's on: Moonraker's `[zeroconf]` for a Klipper printer that isn't found until a scan, PrusaLink turned on for a Prusa, LAN Only Mode for a Bambu Lab printer, LAN-only mode for a FlashForge, LAN mode for an Anycubic.
+- Elegoo, FlashForge and Anycubic printers only answer a scan: tap **Scan now**. A Duet is found only when it announces itself (one on Ethernet does; one on Wi-Fi or behind a Raspberry Pi may not).
 - On another network (a printer VLAN), or with a bridge in Docker Desktop, [add it by address](#by-address).
 - Check you didn't ignore it: open **Ignored** and choose **Unignore**.
-- OctoPrint and Elegoo (SDCP) printers aren't found yet: the bridge can't log them yet.
 
 ### Connect a printer {#connect}
 
@@ -66,11 +66,11 @@ Then choose **Connect**. A printer can be watched by one bridge at a time; if an
 
 #### A printer it can't find: add it by address {#by-address}
 
-**Add by address** connects a printer the bridge can't find by itself. Enter its type (Klipper, Bambu Lab, PrusaLink, OctoPrint or Elegoo Centauri Carbon), its IP address or local name (`192.168.1.60`, `mk4.local`), and, for a Bambu Lab printer, its serial number (on its sticker, or in Bambu Studio's device list). Leave the port empty for the usual one. The address must be on your local network. Give the printer a fixed address in your router so it stays right.
+**Add by address** connects a printer the bridge can't find by itself. Enter its type (Klipper, Bambu Lab, PrusaLink, OctoPrint, Elegoo Centauri Carbon, Duet, FlashForge or Anycubic), its IP address or local name (`192.168.1.60`, `mk4.local`), and, for a Bambu Lab printer, its serial number (on its sticker, or in Bambu Studio's device list). A FlashForge printer's serial isn't needed: the bridge asks the printer for it. Leave the port empty for the usual one. The address must be on your local network. Give the printer a fixed address in your router so it stays right.
 
 #### Access codes and passwords {#credentials}
 
-A Bambu Lab printer needs its access code and a PrusaLink printer its password (or an API key), an OctoPrint server its API key, and a Klipper printer whose Moonraker uses `[authorization]` an API key. An Elegoo Centauri Carbon needs nothing: SDCP has no authentication. After you connect one, the app asks for it. Later, choose **Access code** (or **Password**, or **Credentials**) next to the connected printer to set, replace or clear it.
+A Bambu Lab printer needs its access code and a PrusaLink printer its password (or an API key), an OctoPrint server its API key, and a Klipper printer whose Moonraker uses `[authorization]` an API key. A FlashForge printer needs the check code its screen shows in LAN-only mode, and a Duet its password only when `config.g` sets one with `M551`. An Elegoo Centauri Carbon needs nothing (SDCP has no authentication), and neither does an Anycubic printer (in LAN mode it hands the bridge its own login). After you connect one that needs a credential, the app asks for it. Later, choose **Access code** (or **Password**, **Check code** or **Credentials**) next to the connected printer to set, replace or clear it. A Duet's password, like a Moonraker API key, is set that way, since the app doesn't ask for it.
 
 **Before you enter the first one, compare the key.** Above the fields, the app shows the [fingerprint](#encryption-key) of the key it encrypts to. Run `printlog-bridge status` on the bridge and check it shows the same fingerprint. If it doesn't, don't enter anything.
 

@@ -115,7 +115,7 @@
             role="group"
             aria-labelledby="bridge-setup-kind-label"
           >
-            @for (s of setups; track s.kind) {
+            @for (s of setups(); track s.kind) {
               <button
                 mat-stroked-button
                 type="button"
@@ -228,6 +228,80 @@
                 </li>
               </ol>
             }
+            @case ('duet') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the board's network.
+                  It works with the board on its own or with a Raspberry Pi
+                  (SBC).
+                </li>
+                <li>
+                  Use the address you open Duet Web Control at, and give the
+                  board a fixed IP address in your router.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your board's
+                  address. Add the <strong>password</strong> only when
+                  <code>config.g</code> sets one with <code>M551</code>. Then
+                  restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+            }
+            @case ('flashforge') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the printer's
+                  network. It watches the Adventurer 5M, 5M Pro and AD5X.
+                </li>
+                <li>
+                  On the printer, open <strong>Settings &gt; Network</strong>,
+                  turn on <strong>LAN-only mode</strong>, and note the
+                  <strong>check code</strong> it shows. Give the printer a fixed
+                  IP address in your router.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your printer's
+                  address and check code, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>. The bridge asks the
+                  printer for its serial; add <code>serial = …</code> only if
+                  <code>doctor</code> asks for it.
+                </li>
+              </ol>
+              <p class="hint">
+                Running Klipper Mod, Forge-X or ZMOD? Pick Klipper / Moonraker
+                instead: it measures the filament.
+              </p>
+            }
+            @case ('anycubic') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the printer's
+                  network. It watches the Kobra S1, the Kobra 3 and the Photon
+                  P1 Max.
+                </li>
+                <li>
+                  On the printer's screen, turn on <strong>LAN mode</strong>,
+                  and give the printer a fixed IP address in your router. There
+                  is no password: the printer hands the bridge its own login.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your printer's
+                  address, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+              <p class="hint">
+                A Photon takes one LAN client at a time: close Photon Workshop's
+                printer page while the bridge runs.
+              </p>
+            }
             @default {
               <ol class="steps">
                 <li>
@@ -273,11 +347,16 @@
             <p class="hint">
               Keep the config where nothing serves it, not in
               {{ secret.folder }}: it holds the {{ secret.name }}. This adapter
-              is new and hasn't been checked on every model yet.
+              is new and {{ secret.checked }}.
             </p>
           } @else if (setupKind() === 'sdcp') {
             <p class="hint">
               This adapter is new and hasn't been checked on a real printer yet.
+            </p>
+          } @else if (setupKind() === 'anycubic') {
+            <p class="hint">
+              This adapter is new: it has been checked on an idle Kobra S1, not
+              yet through a print.
             </p>
           }
           <p class="hint">

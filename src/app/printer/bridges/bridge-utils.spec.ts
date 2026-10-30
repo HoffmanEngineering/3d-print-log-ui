@@ -7,7 +7,9 @@ import {
   isConnectableKind,
   bridgeErrorCode,
   bridgeErrorMessage,
+  credentialFieldHint,
   credentialFieldLabel,
+  credentialNoun,
   credentialIssueMessage,
   credentialProblemMessage,
   credentialSummary,
@@ -168,9 +170,27 @@ describe('bridge-utils', () => {
       );
     });
 
-    it('needs nothing for Moonraker by default, or for SDCP', () => {
+    it('asks for a Duet password, only for a board that has one', () => {
+      expect(appPrinterSnippet('duet', 8)).toBe(
+        '[app_printer 8]\npassword = the-password-from-M551'
+      );
+    });
+
+    // The bridge learns the serial from the printer; `serial` is there for when it can't.
+    it('asks for a FlashForge check code, with the serial as a fallback', () => {
+      expect(appPrinterSnippet('flashforge', 9)).toBe(
+        [
+          '[app_printer 9]',
+          'check_code = the-code-the-printer-shows',
+          '# serial = SN...   only when doctor asks for it',
+        ].join('\n')
+      );
+    });
+
+    it('needs nothing for Moonraker by default, for SDCP or for Anycubic', () => {
       expect(appPrinterSnippet('moonraker', 3)).toBeNull();
       expect(appPrinterSnippet('sdcp', 3)).toBeNull();
+      expect(appPrinterSnippet('anycubic', 3)).toBeNull();
     });
   });
 
@@ -179,27 +199,38 @@ describe('bridge-utils', () => {
       expect(credentialName('bambu')).toBe('access code');
       expect(credentialName('prusalink')).toBe('password');
       expect(credentialName('octoprint')).toBe('API key');
+      expect(credentialName('duet')).toBe('password');
+      expect(credentialName('flashforge')).toBe('check code');
     });
 
     it('says where each kind’s credential is found', () => {
       expect(credentialSource('bambu')).toContain('LAN Only Mode');
       expect(credentialSource('prusalink')).toContain('PrusaLink');
       expect(credentialSource('octoprint')).toContain('Application Keys');
+      expect(credentialSource('duet')).toContain('M551');
+      expect(credentialSource('flashforge')).toContain('LAN-only mode');
     });
   });
 
   describe('connectable kinds', () => {
-    it('offers OctoPrint and Elegoo SDCP for Connect', () => {
+    it('offers OctoPrint, Elegoo SDCP, Duet, FlashForge and Anycubic for Connect', () => {
       expect(BRIDGE_KINDS.map((k) => k.kind)).toEqual([
         'moonraker',
         'bambu',
         'prusalink',
         'octoprint',
         'sdcp',
+        'duet',
+        'flashforge',
+        'anycubic',
       ]);
       expect(isConnectableKind('octoprint')).toBeTrue();
       expect(isConnectableKind('sdcp')).toBeTrue();
-      expect(isConnectableKind('duet')).toBeFalse();
+      expect(isConnectableKind('duet')).toBeTrue();
+      expect(isConnectableKind('flashforge')).toBeTrue();
+      expect(isConnectableKind('anycubic')).toBeTrue();
+      // A kind with no adapter in this build.
+      expect(isConnectableKind('creality')).toBeFalse();
     });
   });
 
@@ -251,6 +282,15 @@ describe('bridge-utils', () => {
       expect(credentialFieldLabel('username')).toBe('Username');
       expect(credentialFieldLabel('api_key')).toBe('API key');
       expect(credentialFieldLabel('moonraker_api_key')).toBe('API key');
+      expect(credentialFieldLabel('check_code')).toBe('Check code');
+    });
+
+    it('says where a Duet password and a FlashForge check code are found', () => {
+      expect(credentialFieldHint('duet', 'password')).toContain('M551');
+      expect(credentialFieldHint('flashforge', 'check_code')).toContain(
+        'LAN-only mode'
+      );
+      expect(credentialNoun('check_code')).toBe('check code');
     });
 
     it('says a refused access code in plain words', () => {
@@ -399,6 +439,23 @@ describe('bridge-utils', () => {
       const none = moveCredentialPlan('bambu', ['access_code'], []);
       expect(none.fields).toEqual([]);
       expect(missingMoveCredential(none, new Set())).toBeNull();
+    });
+
+    // The API's CarriedGroups: a Duet password once set, a FlashForge check code always.
+    it('carries a Duet password that was set, and a FlashForge check code', () => {
+      const duet = moveCredentialPlan('duet', ['password'], ['password']);
+      expect(duet.groups).toEqual([['password']]);
+      expect(missingMoveCredential(duet, new Set())).toContain('password');
+      expect(moveCredentialPlan('duet', ['password'], []).fields).toEqual([]);
+      const ff = moveCredentialPlan(
+        'flashforge',
+        ['check_code'],
+        ['check_code']
+      );
+      expect(ff.fields.map((f) => [f.field, f.required])).toEqual([
+        ['check_code', true],
+      ]);
+      expect(missingMoveCredential(ff, new Set())).toContain('check code');
     });
 
     it('adds fields the API asked for that the entry did not list', () => {

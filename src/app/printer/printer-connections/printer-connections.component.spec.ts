@@ -369,6 +369,101 @@ describe('PrinterConnectionsComponent', () => {
       expect(snippet()).toContain('adapter = sdcp');
     });
 
+    it('shows the Duet steps, with the password only for a board that has one', () => {
+      render([]);
+      open();
+      choose('duet');
+
+      expect(snippet()).toContain('adapter = duet');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('# password =');
+      expect(squash(setup())).toContain('M551');
+      expect(squash(setup())).toContain('Keep the config where');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-duet');
+    });
+
+    it('shows the FlashForge steps, with the check code and no serial to find', () => {
+      render([]);
+      open();
+      choose('flashforge');
+
+      expect(snippet()).toContain('adapter = flashforge');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('check_code =');
+      expect(snippet()).toContain('# serial =');
+      expect(squash(setup())).toContain('LAN-only mode');
+      expect(squash(setup())).toContain('check code');
+      expect(squash(setup())).toContain('Keep the config where');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-flashforge');
+    });
+
+    it('shows the Anycubic steps and a config with no credential', () => {
+      render([]);
+      open();
+      choose('anycubic');
+
+      expect(snippet()).toContain('adapter = anycubic');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).not.toContain('password');
+      expect(squash(setup())).toContain('LAN mode');
+      expect(squash(setup())).not.toContain('Keep the config where');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-anycubic');
+    });
+
+    it('starts on the matching type for a Duet, a FlashForge and an Anycubic Kobra S1', () => {
+      fixture.componentRef.setInput('make', 'Duet3D');
+      render([]);
+      open();
+      expect(snippet()).toContain('adapter = duet');
+
+      fixture.componentRef.setInput('make', 'FlashForge');
+      fixture.detectChanges();
+      expect(snippet()).toContain('adapter = flashforge');
+
+      fixture.componentRef.setInput('make', 'Anycubic');
+      fixture.componentRef.setInput('model', 'Kobra S1');
+      fixture.detectChanges();
+      expect(snippet()).toContain('adapter = anycubic');
+    });
+
+    // The Photon P1 Max is a resin printer: it gets the setup, with Anycubic as its only type.
+    it('offers an Anycubic Photon P1 Max, a resin printer, the Anycubic setup only', () => {
+      fixture.componentRef.setInput('category', sla);
+      fixture.componentRef.setInput('make', 'Anycubic');
+      fixture.componentRef.setInput('model', 'Photon P1 Max');
+      render([]);
+      open();
+
+      expect(snippet()).toContain('adapter = anycubic');
+      const kinds = Array.from(
+        setup()!.querySelectorAll('[data-testid^="bridge-setup-kind-"]')
+      ).map((b) => b.getAttribute('data-testid'));
+      expect(kinds).toEqual(['bridge-setup-kind-anycubic']);
+      expect(squash(setup())).toContain('Photon Workshop');
+    });
+
+    // Any other resin printer has no adapter yet.
+    it('offers nothing for another resin printer', () => {
+      fixture.componentRef.setInput('category', sla);
+      fixture.componentRef.setInput('make', 'Elegoo');
+      fixture.componentRef.setInput('model', 'Saturn 4 Ultra');
+      const el = render([]);
+
+      expect(el.querySelector('section')).toBeNull();
+    });
+
     it('copies the config section', () => {
       render([]);
       open();

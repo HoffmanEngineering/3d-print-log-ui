@@ -148,6 +148,8 @@ Pair the bridge with your account: run `printlog-bridge pair` on the computer it
 
 Each paired bridge is listed under **Paired devices** in the **Connected Agents** section of [Settings](/settings), with when it was paired, when it was last used and what it may do. **Revoke** one you no longer use, or one you've lost track of: it stops logging prints at once. Prints it finishes after that wait on the bridge, which says `re-pair needed` in its log, `status` and `doctor`. Run `printlog-bridge pair` again and it logs them and carries on. Pairing the same bridge again replaces its token instead of adding a second entry.
 
+With two or more paired, **Revoke all devices** revokes every one at once, for example after you lose track of where they run. Their bridges and the printers connected to them on the [Bridges](/printers/bridges) screen are removed too, and your past prints are kept. Pair each bridge again to bring it back.
+
 Instead of pairing, the bridge can sign in with a [personal API key](/docs/api#api-keys), which you create on the [Personal API Keys](/api-keys) page and store with `printlog-bridge store-key`. Use one for a scripted install, or when `pair` says pairing isn't available. Each install page's **Connect to your account** section has the steps for both.
 
 #### Already using the Moonraker notifier? {#notifier}

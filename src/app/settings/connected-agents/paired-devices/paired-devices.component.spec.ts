@@ -54,6 +54,7 @@ describe('PairedDevicesComponent', () => {
     service = jasmine.createSpyObj<DeviceGrantsService>('DeviceGrantsService', [
       'list',
       'revoke',
+      'revokeAll',
     ]);
     dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
     dialogAnswer = true;
@@ -284,5 +285,137 @@ describe('PairedDevicesComponent', () => {
       'ConnectedAgents_DeviceRevokeFailed',
       { status: 500 }
     );
+  });
+
+  describe('revoke all', () => {
+    const prusa: DeviceGrant = {
+      ...ender,
+      id: 3,
+      deviceId: '5e5e5e5e-2222-4c5b-9a43-0a3a2f7d1e33',
+      name: 'printlog-bridge on prusa',
+    };
+
+    function revokeAllButton(): HTMLButtonElement | null {
+      return el().querySelector('[data-testid="devices-revoke-all"]');
+    }
+
+    function clickRevokeAll(): void {
+      (revokeAllButton() as HTMLButtonElement).click();
+      fixture.detectChanges();
+    }
+
+    for (const [label, grants] of [
+      ['no devices', []],
+      ['one device', [voron]],
+    ] as [string, DeviceGrant[]][]) {
+      it(`is not offered with ${label}`, () => {
+        service.list.and.returnValue(of(grants));
+        create();
+
+        expect(revokeAllButton()).toBeNull();
+      });
+    }
+
+    it('is offered with two or more devices', () => {
+      service.list.and.returnValue(of([voron, ender, prusa]));
+      create();
+
+      expect(revokeAllButton()).toBeTruthy();
+      expect(revokeAllButton()?.textContent).toContain('Revoke all devices');
+    });
+
+    it('asks first, with the count and what happens, and does nothing on cancel', () => {
+      service.list.and.returnValue(of([voron, ender, prusa]));
+      dialogAnswer = false;
+      create();
+
+      clickRevokeAll();
+
+      expect(dialog.open).toHaveBeenCalledTimes(1);
+      const data = dialog.open.calls.mostRecent().args[1]?.data as {
+        title: string;
+        body: string;
+        yesText: string;
+        yesColor: string;
+      };
+      expect(data.title).toContain('3');
+      expect(data.body).toContain('3 paired devices');
+      expect(data.body).toContain('stops logging');
+      expect(data.body).toContain('printlog-bridge pair');
+      expect(data.body).toContain('bridges');
+      expect(data.body).toContain('printers connected to them');
+      expect(data.body).toContain('past prints are kept');
+      expect(data.yesColor).toBe('warn');
+      expect(service.revokeAll).not.toHaveBeenCalled();
+      expect(rows().length).toBe(3);
+    });
+
+    it('empties the list, reports the count and logs it', () => {
+      service.list.and.returnValue(of([voron, ender, prusa]));
+      const result = new Subject<{ revoked: number }>();
+      service.revokeAll.and.returnValue(result);
+      create();
+
+      clickRevokeAll();
+
+      expect(service.revokeAll).toHaveBeenCalledTimes(1);
+      // Not optimistic: the rows stay until the API answers, and the button can't be pressed twice.
+      expect(rows().length).toBe(3);
+      expect(revokeAllButton()?.disabled).toBeTrue();
+
+      result.next({ revoked: 3 });
+      result.complete();
+      fixture.detectChanges();
+
+      expect(rows().length).toBe(0);
+      expect(el().textContent).toContain('No paired devices.');
+      expect(toastr.success).toHaveBeenCalled();
+      expect(toastr.success.calls.mostRecent().args[0]).toContain(
+        '3 paired devices'
+      );
+      expect(logging.logEvent).toHaveBeenCalledWith(
+        'ConnectedAgents_AllDevicesRevoked',
+        { count: 3 }
+      );
+    });
+
+    for (const status of [404, 405]) {
+      it(`says the server can't do it yet on ${status}, and keeps the list`, () => {
+        service.list.and.returnValue(of([voron, ender]));
+        service.revokeAll.and.returnValue(throwError(() => httpError(status)));
+        create();
+
+        clickRevokeAll();
+
+        expect(rows().length).toBe(2);
+        expect(revokeAllButton()?.disabled).toBeFalse();
+        expect(toastr.error).toHaveBeenCalled();
+        expect(toastr.error.calls.mostRecent().args[0]).toContain(
+          'doesn’t support'
+        );
+        expect(logging.logEvent).toHaveBeenCalledWith(
+          'ConnectedAgents_AllDevicesRevokeFailed',
+          { status }
+        );
+        expect(logging.logException).not.toHaveBeenCalled();
+      });
+    }
+
+    it('keeps the list and shows an error when it fails otherwise', () => {
+      service.list.and.returnValue(of([voron, ender]));
+      service.revokeAll.and.returnValue(throwError(() => httpError(500)));
+      create();
+
+      clickRevokeAll();
+
+      expect(rows().length).toBe(2);
+      expect(toastr.error).toHaveBeenCalled();
+      expect(toastr.error.calls.mostRecent().args[0]).toContain('still paired');
+      expect(logging.logEvent).toHaveBeenCalledWith(
+        'ConnectedAgents_AllDevicesRevokeFailed',
+        { status: 500 }
+      );
+      expect(logging.logException).toHaveBeenCalled();
+    });
   });
 });

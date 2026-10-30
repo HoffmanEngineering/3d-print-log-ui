@@ -68,6 +68,7 @@
             color="warn"
             type="button"
             data-testid="device-revoke"
+            [disabled]="revokingAll()"
             [attr.aria-label]="'Revoke ' + row.grant.name"
             (click)="confirmRevoke(row.grant)"
           >
@@ -76,5 +77,17 @@
         </li>
       }
     </ul>
+    @if (canRevokeAll()) {
+      <button
+        mat-raised-button
+        color="warn"
+        type="button"
+        data-testid="devices-revoke-all"
+        [disabled]="revokingAll()"
+        (click)="confirmRevokeAll()"
+      >
+        Revoke all devices
+      </button>
+    }
   }
 }

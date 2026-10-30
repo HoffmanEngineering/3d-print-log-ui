@@ -76,6 +76,9 @@ export class PairedDevicesComponent {
   protected readonly showSkeleton = computed(
     () => this.phase() === 'idle' && this.skeleton.visible()
   );
+  /** One device has its own Revoke; "all" is for two or more. */
+  protected readonly canRevokeAll = computed(() => this.rows().length >= 2);
+  protected readonly revokingAll = signal(false);
 
   constructor() {
     this.destroyRef.onDestroy(() => this.skeleton.destroy());
@@ -163,6 +166,73 @@ export class PairedDevicesComponent {
           this.logging.logEvent('ConnectedAgents_DeviceRevokeFailed', {
             status: status ?? 0,
           });
+          this.logging.logException(error as Error);
+        },
+      });
+  }
+
+  protected confirmRevokeAll(): void {
+    const count = this.grants().length;
+    const dialogRef = openSimpleDialog(
+      this.dialog,
+      {
+        title: `Revoke all ${count} paired devices?`,
+        body:
+          `<p>All ${count} paired devices stop logging prints right away. Each one stops ` +
+          'logging until you pair it again with <code>printlog-bridge pair</code>.</p>' +
+          '<p>Their bridges are removed, along with the printers connected to them in ' +
+          '3D Print Log. Your printers and past prints are kept.</p>',
+        yesText: 'Revoke all',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '420px' }
+    );
+
+    dialogRef
+      .afterClosed()
+      .pipe(
+        filter((confirmed) => confirmed === true),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.revokeAll());
+  }
+
+  private revokeAll(): void {
+    // Not optimistic: the API does it in one transaction, so on failure nothing changed.
+    this.revokingAll.set(true);
+    this.deviceGrants
+      .revokeAll()
+      .pipe(
+        finalize(() => this.revokingAll.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: ({ revoked }) => {
+          this.grants.set([]);
+          this.toastr.success(
+            `Revoked ${revoked} paired ${revoked === 1 ? 'device' : 'devices'}.`
+          );
+          this.logging.logEvent('ConnectedAgents_AllDevicesRevoked', {
+            count: revoked,
+          });
+        },
+        error: (error: unknown) => {
+          const status =
+            error instanceof HttpErrorResponse ? error.status : undefined;
+          this.logging.logEvent('ConnectedAgents_AllDevicesRevokeFailed', {
+            status: status ?? 0,
+          });
+          if (status === 404 || status === 405) {
+            // An API from before #299: expected, not an exception.
+            this.toastr.error(
+              'The server doesn’t support revoking all devices yet. Revoke them one at a time.'
+            );
+            return;
+          }
+          this.toastr.error(
+            'Couldn’t revoke your devices. They are all still paired; try again.'
+          );
           this.logging.logException(error as Error);
         },
       });

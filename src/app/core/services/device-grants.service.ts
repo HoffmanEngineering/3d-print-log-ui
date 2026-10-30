@@ -45,4 +45,20 @@ export class DeviceGrantsService {
       `${this.baseApi}/api/device-grants/${encodeURIComponent(id)}`
     );
   }
+
+  /**
+   * Revokes every paired device at once (3d-print-log-api#299). Their bridges, with the
+   * printers found and connected through them, go too; connections and prints are kept.
+   * An API from before #299 answers 404 or 405.
+   */
+  public revokeAll(): Observable<RevokeAllResult> {
+    return this.httpClient.delete<RevokeAllResult>(
+      `${this.baseApi}/api/device-grants`
+    );
+  }
+}
+
+/** `DELETE /api/device-grants`: how many grants it revoked (0 when there were none). */
+export interface RevokeAllResult {
+  revoked: number;
 }

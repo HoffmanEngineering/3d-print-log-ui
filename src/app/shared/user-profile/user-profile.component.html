@@ -1,4 +1,4 @@
-@if (auth.userProfile$ | async; as profile) {
+@if (auth.userProfile(); as profile) {
   <pre>
     <code>{{ profile | json }}</code>
   </pre>

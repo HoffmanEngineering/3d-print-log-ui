@@ -11,7 +11,6 @@ import { buildSlicerHowTo } from '../core/structured-data/slicer-schema';
 import { SLICER_CONFIGS, siteUrl, ogImage } from './slicer-configs';
 
 @Component({
-  // standalone is the Angular 21 default; per repo convention do NOT set `standalone: true`.
   selector: 'app-slicer-landing',
   imports: [RouterLink],
   templateUrl: './slicer-landing.component.html',

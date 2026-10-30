@@ -6,6 +6,7 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
@@ -127,6 +128,14 @@ export class AuthService {
     null
   );
   userProfile$ = this.userProfileSubject$.asObservable();
+  /**
+   * The same profile as a signal. The subject stays the source: several
+   * subscribers rely on `userProfile$` emitting synchronously on subscribe,
+   * which `toObservable` over a signal would not.
+   */
+  readonly userProfile = toSignal(this.userProfileSubject$, {
+    requireSync: true,
+  });
   /** Login status: `null` until setup has run, then true or false. */
   private readonly loggedInState = signal<boolean | null>(null);
   readonly isLoggedIn = this.loggedInState.asReadonly();

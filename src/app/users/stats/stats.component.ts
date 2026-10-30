@@ -1,11 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  OnChanges,
-  SimpleChanges,
+  effect,
   input,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
 import {
@@ -31,7 +31,7 @@ import { StatPanelComponent } from '../../shared/panels/stat-panel/stat-panel.co
     DefaultGridRowDirective,
   ],
 })
-export class StatsComponent implements OnChanges {
+export class StatsComponent {
   private readonly userPrintsService = inject(UsersPrintsStatsService);
 
   readonly userId = input<number>();
@@ -47,20 +47,26 @@ export class StatsComponent implements OnChanges {
 
   public readonly MIN_DATE = new Date('1910-01-01');
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.userId) {
-      this.resetStats();
+  constructor() {
+    effect(() => {
+      this.userId();
+      // The loaders read userId() and write the stat signals; neither should
+      // become a dependency of this effect.
+      untracked(() => {
+        this.resetStats();
 
-      this.calculatePrintCount();
-      this.calculatePrintCountLast30Days();
+        this.calculatePrintCount();
+        this.calculatePrintCountLast30Days();
 
-      this.calculateTotalPrintTime();
-      this.calculateTotalPrintTimeLast30Days();
+        this.calculateTotalPrintTime();
+        this.calculateTotalPrintTimeLast30Days();
 
-      this.calculatePrintCountTotalFilamentUsage();
-      this.calculateTotalFilamentUsageLast30Days();
-    }
+        this.calculatePrintCountTotalFilamentUsage();
+        this.calculateTotalFilamentUsageLast30Days();
+      });
+    });
   }
+
   calculateTotalFilamentUsageLast30Days() {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);

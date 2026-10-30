@@ -40,11 +40,7 @@
         <code>printlog-bridge.cfg</code> (in Docker, in the bridge's data
         folder), with the
         {{ credential() }}
-        @if (entry.kind === 'bambu') {
-          from the printer's LAN Only Mode page
-        } @else {
-          from the printer's Settings &gt; Network &gt; PrusaLink screen
-        }
+        {{ credentialSource() }}
         in place of the example:
       </p>
       <pre data-testid="connect-snippet"><code>{{ snippet() }}</code></pre>

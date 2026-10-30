@@ -306,6 +306,91 @@ describe('BridgeConnectDialogComponent', () => {
     expect(toastr.success).toHaveBeenCalled();
   });
 
+  // SDCP has no authentication, so there is nothing to ask for.
+  it('closes right away for an Elegoo SDCP printer, which takes no credential', async () => {
+    const entry = bridgePrinter({
+      kind: 'sdcp',
+      id: 11,
+      port: 3030,
+      serial: null,
+      secretFields: [],
+    });
+    bridges.connect.and.returnValue(of(entry));
+    await create({
+      discovered: discovered({
+        kind: 'sdcp',
+        model: 'Centauri Carbon',
+        port: 3030,
+      }),
+    });
+    component().form.controls.printerId.setValue(6);
+    submit();
+
+    expect(dialogRef.close).toHaveBeenCalledWith(entry);
+    expect(toastr.success).toHaveBeenCalled();
+  });
+
+  it('offers OctoPrint and Elegoo SDCP when adding by address', async () => {
+    await create({ discovered: null });
+    const kinds = component()['kinds'].map((k) => k.kind);
+    expect(kinds).toContain('octoprint');
+    expect(kinds).toContain('sdcp');
+  });
+
+  it('adds an OctoPrint by address, then asks for its API key', async () => {
+    bridges.connect.and.returnValue(
+      of(
+        bridgePrinter({
+          kind: 'octoprint',
+          id: 13,
+          port: 80,
+          serial: null,
+          secretFields: ['api_key'],
+        })
+      )
+    );
+    await create({ discovered: null });
+    component().form.patchValue({
+      kind: 'octoprint',
+      host: 'octopi.local',
+      port: null,
+      printerId: 6,
+    });
+    submit();
+
+    expect(bridges.connect).toHaveBeenCalledWith(42, {
+      printerId: 6,
+      kind: 'octoprint',
+      host: 'octopi.local',
+    });
+    expect(el().querySelector('h2')!.textContent).toContain('API key');
+    await until(() => !!byTestId('credential-api_key'));
+  });
+
+  it('shows an OctoPrint [app_printer] section with the API key through an older API', async () => {
+    bridges.connect.and.returnValue(
+      of(
+        bridgePrinter({
+          kind: 'octoprint',
+          id: 13,
+          secretFields: undefined,
+          secrets: undefined,
+        })
+      )
+    );
+    await create({
+      discovered: discovered({ kind: 'octoprint', model: null, port: 80 }),
+    });
+    component().form.controls.printerId.setValue(6);
+    submit();
+
+    expect(byTestId('connect-snippet')!.textContent).toContain(
+      'api_key = a-key-from-octoprint'
+    );
+    expect(el().textContent).toContain('Application Keys');
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
   it('names the other bridge when the printer is watched elsewhere', async () => {
     bridges.connect.and.returnValue(
       throwError(

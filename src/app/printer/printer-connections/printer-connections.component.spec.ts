@@ -321,13 +321,52 @@ describe('PrinterConnectionsComponent', () => {
       ).toBe('/docs/printlog-bridge-prusalink');
     });
 
-    it('does not offer Elegoo SDCP yet', () => {
+    it('shows the OctoPrint steps and config when OctoPrint is picked', () => {
+      render([]);
+      open();
+      choose('octoprint');
+
+      expect(snippet()).toContain('adapter = octoprint');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('api_key =');
+      expect(squash(setup())).toContain('Application Keys');
+      expect(squash(setup())).toContain('API key');
+      const links = Array.from(setup()!.querySelectorAll('a')).map((a) =>
+        a.getAttribute('href')
+      );
+      expect(links).toContain('/docs/switch-from-octoprint-webhook');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-octoprint');
+    });
+
+    it('shows the SDCP steps and a config with no credential when Elegoo is picked', () => {
+      render([]);
+      open();
+      choose('sdcp');
+
+      expect(snippet()).toContain('adapter = sdcp');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).not.toContain('password');
+      expect(squash(setup())).toContain('no password');
+      // Nothing secret in this section, so no warning about where to keep it.
+      expect(squash(setup())).not.toContain('Keep the config where');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-sdcp');
+    });
+
+    it('starts on SDCP for an Elegoo Centauri Carbon', () => {
+      fixture.componentRef.setInput('make', 'Elegoo');
+      fixture.componentRef.setInput('model', 'Centauri Carbon');
       render([]);
       open();
 
-      expect(
-        setup()!.querySelector('[data-testid="bridge-setup-kind-sdcp"]')
-      ).toBeNull();
+      expect(snippet()).toContain('adapter = sdcp');
     });
 
     it('copies the config section', () => {

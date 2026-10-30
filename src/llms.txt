@@ -65,6 +65,8 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [Snapmaker U1](https://www.3dprintlog.com/docs/snapmaker-u1): Per-tool usage and spools from RFID tags with printlog-bridge.
 - [printlog-bridge for Bambu Lab](https://www.3dprintlog.com/docs/printlog-bridge-bambu): X1, P1, A1 and H2 over the printer's LAN connection, with the slicer's grams per AMS tray.
 - [printlog-bridge for Prusa (PrusaLink)](https://www.3dprintlog.com/docs/printlog-bridge-prusalink): MK4, MK3.5, Core One, MINI and XL through PrusaLink, with the slicer's estimate per tool.
+- [printlog-bridge for OctoPrint](https://www.3dprintlog.com/docs/printlog-bridge-octoprint): an OctoPi or any OctoPrint server, with the slicer's estimate per tool and a webcam snapshot.
+- [printlog-bridge for Elegoo Centauri Carbon (SDCP)](https://www.3dprintlog.com/docs/printlog-bridge-sdcp): the Centauri Carbon over SDCP, its local protocol, with the slicer's filament estimate.
 - [printlog-bridge troubleshooting](https://www.3dprintlog.com/docs/printlog-bridge-troubleshooting): The status and doctor commands, logs, traces and common problems.
 - [printlog-bridge privacy](https://www.3dprintlog.com/docs/printlog-bridge-privacy): Every call and field the bridge sends, and how it keeps keys.
 - [Switch from the Moonraker notifier](https://www.3dprintlog.com/docs/switch-from-notifier): Move a Klipper printer from the notifier to printlog-bridge, and how the two run side by side.

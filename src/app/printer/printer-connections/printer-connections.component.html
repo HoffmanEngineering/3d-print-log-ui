@@ -181,6 +181,53 @@
                 </li>
               </ol>
             }
+            @case ('octoprint') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or another computer on OctoPrint's
+                  network.
+                </li>
+                <li>
+                  In OctoPrint, open
+                  <strong>Settings &gt; Application Keys</strong> and make an
+                  <strong>API key</strong> for the bridge.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with the address you
+                  open OctoPrint at and the key, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+              <p class="hint">
+                Using the OctoPrint webhook today?
+                <a routerLink="/docs/switch-from-octoprint-webhook"
+                  >Switch from the webhook</a
+                >
+                once the bridge logs a print.
+              </p>
+            }
+            @case ('sdcp') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the printer's
+                  network.
+                </li>
+                <li>
+                  Find the printer's IP address in its network settings, or with
+                  <code>printlog-bridge discover</code>, and give it a fixed one
+                  in your router. There is no password: SDCP has none.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your printer's
+                  address, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+            }
             @default {
               <ol class="steps">
                 <li>
@@ -222,12 +269,15 @@
               >Read the setup guide</a
             >
           </div>
-          @if (setupKind() !== 'moonraker') {
+          @if (setupSecret(); as secret) {
             <p class="hint">
-              Keep the config where nothing serves it, not in Klipper's config
-              folder: it holds the printer's
-              {{ setupKind() === 'bambu' ? 'access code' : 'password' }}. This
-              adapter is new and hasn't been checked on every model yet.
+              Keep the config where nothing serves it, not in
+              {{ secret.folder }}: it holds the {{ secret.name }}. This adapter
+              is new and hasn't been checked on every model yet.
+            </p>
+          } @else if (setupKind() === 'sdcp') {
+            <p class="hint">
+              This adapter is new and hasn't been checked on a real printer yet.
             </p>
           }
           <p class="hint">

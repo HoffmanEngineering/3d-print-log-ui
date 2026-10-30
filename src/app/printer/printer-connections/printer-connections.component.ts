@@ -42,7 +42,7 @@ import { connectionSoftware } from './connection-software';
  * what the printer runs, and a way to remove it.
  *
  * A filament printer with no connections gets a way to set one up instead (printlog-bridge#82):
- * pick the printer type (Klipper, Bambu Lab, PrusaLink), see its steps and a config section with
+ * pick the printer type (Klipper, Bambu Lab, PrusaLink, OctoPrint, Elegoo SDCP), see its steps and a config section with
  * this printer's id. Anything else with no connections renders nothing.
  */
 @Component({
@@ -66,6 +66,8 @@ export class PrinterConnectionsComponent {
   readonly category = input<PrinterCategory | null>(null);
   /** The saved printer's make, to start the setup on the matching printer type. */
   readonly make = input<string | null>(null);
+  /** The saved printer's model: of Elegoo's printers only the Centauri Carbon speaks SDCP. */
+  readonly model = input<string | null>(null);
 
   protected readonly connections = signal<Connection[]>([]);
   /** False until the list loads, so the setup offer never flashes before the rows. */
@@ -91,11 +93,33 @@ export class PrinterConnectionsComponent {
   /** The type the user picked, or null to follow the printer's make. */
   private readonly pickedKind = signal<BridgeSetupKind | null>(null);
   protected readonly setupKind = computed(
-    () => this.pickedKind() ?? bridgeKindForMake(this.make())
+    () => this.pickedKind() ?? bridgeKindForMake(this.make(), this.model())
   );
   protected readonly setupGuide = computed(
     () => BRIDGE_SETUPS.find((s) => s.kind === this.setupKind())!.guide
   );
+  /** The credential the config section holds, and the folder to keep it out of; none for Klipper or SDCP. */
+  protected readonly setupSecret = computed(() => {
+    switch (this.setupKind()) {
+      case 'bambu':
+        return {
+          name: "printer's access code",
+          folder: "Klipper's config folder",
+        };
+      case 'prusalink':
+        return {
+          name: "printer's password",
+          folder: "Klipper's config folder",
+        };
+      case 'octoprint':
+        return {
+          name: 'OctoPrint API key',
+          folder: "OctoPrint's uploads folder",
+        };
+      default:
+        return null;
+    }
+  });
   protected readonly setupSnippet = computed(() =>
     bridgeConfigSnippet(this.setupKind(), this.printerId())
   );

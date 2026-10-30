@@ -60,8 +60,9 @@ describe('BridgeCardComponent', () => {
     }),
     discovered({
       id: 5,
-      kind: 'octoprint',
-      name: 'OctoPi',
+      // A kind the bridge reports but has no adapter for in this build.
+      kind: 'duet',
+      name: 'Duet 3',
       address: '192.168.1.70',
       port: 80,
       serial: null,

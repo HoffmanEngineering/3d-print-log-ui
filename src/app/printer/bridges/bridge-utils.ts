@@ -6,8 +6,8 @@ import {
 } from '../printer-connections/bridge-setup';
 
 /**
- * The printer types a bridge can watch (the bridge has adapters for these; OctoPrint and SDCP
- * come with their adapters), with the labels the printer page's setup uses.
+ * The printer types a bridge can watch (the bridge has adapters for these), with the labels the
+ * printer page's setup uses.
  */
 export const BRIDGE_KINDS = BRIDGE_SETUPS.map(({ kind, label }) => ({
   kind,
@@ -368,7 +368,8 @@ export function isScanning(
  * The section the user adds to the bridge's config for a printer that needs a LAN credential,
  * keyed by the app entry's id: the fallback for a bridge the app can't seal to (one with no
  * confirmed key, an older release). A value there wins over one sealed in the app.
- * Null for a kind that needs none by default (a Moonraker without `[authorization]`).
+ * Null for a kind that needs none by default (a Moonraker without `[authorization]`, or SDCP,
+ * which has no authentication).
  */
 export function appPrinterSnippet(
   kind: string,
@@ -382,6 +383,11 @@ export function appPrinterSnippet(
         `[app_printer ${entryId}]`,
         'password = the-password-the-printer-shows',
       ].join('\n');
+    case 'octoprint':
+      return [
+        `[app_printer ${entryId}]`,
+        'api_key = a-key-from-octoprint',
+      ].join('\n');
     default:
       return null;
   }
@@ -389,7 +395,26 @@ export function appPrinterSnippet(
 
 /** What the credential in the snippet is called, for the sentence around it. */
 export function credentialName(kind: string): string {
-  return kind === 'bambu' ? 'access code' : 'password';
+  switch (kind) {
+    case 'bambu':
+      return 'access code';
+    case 'octoprint':
+      return 'API key';
+    default:
+      return 'password';
+  }
+}
+
+/** Where the user finds the credential in the snippet, to follow its name in a sentence. */
+export function credentialSource(kind: string): string {
+  switch (kind) {
+    case 'bambu':
+      return "from the printer's LAN Only Mode page";
+    case 'octoprint':
+      return "from OctoPrint's Settings > Application Keys";
+    default:
+      return "from the printer's Settings > Network > PrusaLink screen";
+  }
 }
 
 /** `host:port`, with brackets around an IPv6 address; the host alone without a port. */

@@ -117,6 +117,14 @@
       "route": "/docs/printlog-bridge/prusalink",
       "rewrite": "/shells/app-shell.html"
     },
+    {
+      "route": "/docs/printlog-bridge/octoprint",
+      "rewrite": "/shells/app-shell.html"
+    },
+    {
+      "route": "/docs/printlog-bridge/sdcp",
+      "rewrite": "/shells/app-shell.html"
+    },
     { "route": "/shells/*", "headers": { "cache-control": "no-cache" } }
   ],
   "responseOverrides": { "404": { "rewrite": "/404.html" } },

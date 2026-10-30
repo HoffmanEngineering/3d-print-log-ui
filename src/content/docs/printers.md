@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-10-27
+updated: 2026-10-29
 related: [prints]
 ---
 
@@ -147,8 +147,8 @@ connections, with:
   linking to [how to update it](/docs/printlog-bridge#update).
 
 A filament printer with no connections shows **Connect this printer**
-instead. Pick the kind of printer (Klipper / Moonraker, Bambu Lab, or Prusa
-with PrusaLink) to see the steps and a config section for
+instead. Pick the kind of printer (Klipper / Moonraker, Bambu Lab, Prusa
+with PrusaLink, OctoPrint, or Elegoo Centauri Carbon) to see the steps and a config section for
 [printlog-bridge](/docs/printlog-bridge) with the printer's number filled in,
 ready to copy.
 

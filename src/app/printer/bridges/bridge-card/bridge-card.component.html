@@ -295,11 +295,8 @@
                 } @else if (row.snippet) {
                   <div class="snippet" data-testid="bridge-snippet">
                     <p>
-                      Add the printer's
-                      {{
-                        row.entry.kind === 'bambu' ? 'access code' : 'password'
-                      }}
-                      to the bridge's <code>printlog-bridge.cfg</code>:
+                      Add the printer's {{ row.credentialName }} to the bridge's
+                      <code>printlog-bridge.cfg</code>:
                     </p>
                     <pre><code>{{ row.snippet }}</code></pre>
                   </div>

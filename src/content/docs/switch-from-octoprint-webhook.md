@@ -7,8 +7,8 @@ nav: false
 group: integrations
 order: 41
 mode: how-to
-updated: 2026-10-28
-related: [octoprint-webhook, printlog-bridge, printlog-bridge-docker, printers]
+updated: 2026-10-29
+related: [octoprint-webhook, printlog-bridge-octoprint, printlog-bridge, printlog-bridge-docker, printers]
 ---
 
 ## Switch from the OctoPrint Webhook to printlog-bridge
@@ -25,7 +25,7 @@ You don't have to switch in one go. Set up the bridge first, check that it logs 
 
 ### Step 1: Set up the bridge {#install}
 
-The bridge runs [in Docker](/docs/printlog-bridge-docker) on a computer on the same network as OctoPrint: a NAS, a home server or another Raspberry Pi.
+The bridge runs [in Docker](/docs/printlog-bridge-docker) on a computer on the same network as OctoPrint: a NAS, a home server or another Raspberry Pi. [OctoPrint](/docs/printlog-bridge-octoprint) has the full setup, including connecting OctoPrint from the Bridges screen instead of the config file, and what the bridge logs.
 
 1. In OctoPrint, open **Settings > Application Keys** and make a key for the bridge (or copy your user's key from **Settings > API Key**). The user it belongs to needs the Status, File List, File Download and Settings Read permissions; an admin has them all.
 2. Add a section for the printer to `printlog-bridge.cfg`:

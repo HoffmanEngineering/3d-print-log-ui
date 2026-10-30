@@ -5,11 +5,13 @@ import {
 } from './bridge-setup';
 
 describe('bridge setup', () => {
-  it('offers Klipper, Bambu Lab and PrusaLink, and not Elegoo SDCP yet', () => {
+  it('offers Klipper, Bambu Lab, PrusaLink, OctoPrint and Elegoo SDCP', () => {
     expect(BRIDGE_SETUPS.map((s) => s.kind)).toEqual([
       'moonraker',
       'bambu',
       'prusalink',
+      'octoprint',
+      'sdcp',
     ]);
   });
 
@@ -18,6 +20,8 @@ describe('bridge setup', () => {
       '/docs/printlog-bridge',
       '/docs/printlog-bridge-bambu',
       '/docs/printlog-bridge-prusalink',
+      '/docs/printlog-bridge-octoprint',
+      '/docs/printlog-bridge-sdcp',
     ]);
   });
 
@@ -47,6 +51,30 @@ describe('bridge setup', () => {
       );
     });
 
+    it('writes an OctoPrint section with its url and API key', () => {
+      expect(bridgeConfigSnippet('octoprint', 46)).toBe(
+        [
+          '[printer octoprint]',
+          'adapter = octoprint',
+          'printer_id = 46',
+          'url = http://octopi.local',
+          'api_key = a-key-from-octoprint',
+        ].join('\n')
+      );
+    });
+
+    // SDCP has no authentication, so the section has no credential.
+    it('writes an SDCP section with no credential', () => {
+      expect(bridgeConfigSnippet('sdcp', 47)).toBe(
+        [
+          '[printer centauri]',
+          'adapter = sdcp',
+          'printer_id = 47',
+          'host = 192.168.1.77',
+        ].join('\n')
+      );
+    });
+
     // The Klipper path stays as the Docker guide shows it: no adapter line, Moonraker's url.
     it('writes the Klipper remote-mode section the Docker guide shows', () => {
       expect(bridgeConfigSnippet('moonraker', 41)).toBe(
@@ -68,6 +96,20 @@ describe('bridge setup', () => {
     it('picks PrusaLink for a Prusa printer', () => {
       expect(bridgeKindForMake('Prusa Research')).toBe('prusalink');
       expect(bridgeKindForMake('Prusa')).toBe('prusalink');
+    });
+
+    it('picks SDCP for an Elegoo Centauri Carbon', () => {
+      expect(bridgeKindForMake('Elegoo', 'Centauri Carbon')).toBe('sdcp');
+      expect(bridgeKindForMake('ELEGOO', 'centauri carbon')).toBe('sdcp');
+    });
+
+    // The Neptune 4 runs Klipper, and the Centauri Carbon 2 speaks MQTT, not SDCP.
+    it('picks Klipper for other Elegoo printers', () => {
+      expect(bridgeKindForMake('Elegoo', 'Neptune 4 Pro')).toBe('moonraker');
+      expect(bridgeKindForMake('Elegoo', 'Centauri Carbon 2')).toBe(
+        'moonraker'
+      );
+      expect(bridgeKindForMake('Elegoo')).toBe('moonraker');
     });
 
     it('picks Klipper for anything else, or no make', () => {

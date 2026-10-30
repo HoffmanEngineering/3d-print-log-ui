@@ -1,4 +1,4 @@
-import { Location, AsyncPipe } from '@angular/common';
+import { Location } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,6 +9,7 @@ import {
   inject,
   signal,
   viewChild,
+  WritableSignal,
 } from '@angular/core';
 import {
   UntypedFormArray,
@@ -22,7 +23,6 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Observable, Subscription } from 'rxjs';
-import { map, startWith, tap } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
@@ -225,7 +225,6 @@ function toServerAdjustmentRows(
     MatPrefix,
     MatCardActions,
     AdComponent,
-    AsyncPipe,
     MaterialNamePipe_1,
     FilamentColorSwatchStylePipe,
   ],
@@ -293,7 +292,9 @@ export class FilamentDetailComponent
   private isSelfNavigating = false;
 
   public materials: Material[] = [];
-  public filteredMaterials: Observable<Material[]> = null;
+  /** The material types matching what is typed, for the autocomplete. */
+  readonly filteredMaterials = signal<Material[]>([]);
+  private materialTypeSubscription: Subscription;
 
   public materialNamePipe: MaterialNamePipe = new MaterialNamePipe();
 
@@ -306,15 +307,12 @@ export class FilamentDetailComponent
 
   public filamentPurchaseLocations: string[] = [];
 
-  readonly filteredFilamentStorageLocations = signal<Observable<
-    string[]
-  > | null>(null);
-
-  readonly filteredFilamentPurchaseLocations = signal<Observable<
-    string[]
-  > | null>(null);
+  // Each list is empty until its options load, then follows what is typed.
+  readonly filteredFilamentStorageLocations = signal<string[]>([]);
+  readonly filteredFilamentPurchaseLocations = signal<string[]>([]);
   filamentBrands: string[];
-  readonly filteredFilamentBrands = signal<Observable<string[]> | null>(null);
+  readonly filteredFilamentBrands = signal<string[]>([]);
+  private optionFilterSubscriptions: Subscription[] = [];
 
   materialCategorySubscription: Subscription;
 
@@ -725,44 +723,47 @@ export class FilamentDetailComponent
 
       this.watchPrefilledFields();
 
-      this.filteredMaterials = this.filamentForm
+      // Every list starts unfiltered, whatever the field holds, and narrows as
+      // the user types.
+      this.filteredMaterials.set(this._filter(''));
+      this.materialTypeSubscription?.unsubscribe();
+      this.materialTypeSubscription = this.filamentForm
         .get('materialType')
-        .valueChanges.pipe(
-          startWith(''),
-          tap((value: string) => this.applyDefaultDensity(value)),
-          map((value) => this._filter(value))
-        );
+        .valueChanges.subscribe((value: string) => {
+          this.applyDefaultDensity(value);
+          this.filteredMaterials.set(this._filter(value));
+        });
+
+      this.optionFilterSubscriptions.forEach((s) => s.unsubscribe());
+      this.optionFilterSubscriptions = [];
+      this.filteredFilamentStorageLocations.set([]);
+      this.filteredFilamentPurchaseLocations.set([]);
+      this.filteredFilamentBrands.set([]);
 
       this.filamentService.getFilamentStorageLocations().subscribe((dto) => {
         this.filamentStorageLocations = dto.storageLocations;
-
-        this.filteredFilamentStorageLocations.set(
-          this.filamentForm.get('storageLocation').valueChanges.pipe(
-            startWith(''),
-            map((value) => this._filterStorageLocations(value))
-          )
+        this.filterOptionsAsTyped(
+          'storageLocation',
+          this.filteredFilamentStorageLocations,
+          (value) => this._filterStorageLocations(value)
         );
       });
 
       this.filamentService.getFilamentPurchaseLocations().subscribe((dto) => {
         this.filamentPurchaseLocations = dto.purchaseLocations;
-
-        this.filteredFilamentPurchaseLocations.set(
-          this.filamentForm.get('purchaseLocation').valueChanges.pipe(
-            startWith(''),
-            map((value) => this._filterPurchaseLocations(value))
-          )
+        this.filterOptionsAsTyped(
+          'purchaseLocation',
+          this.filteredFilamentPurchaseLocations,
+          (value) => this._filterPurchaseLocations(value)
         );
       });
 
       this.filamentService.getFilamentBrands().subscribe((dto) => {
         this.filamentBrands = dto.brands;
-
-        this.filteredFilamentBrands.set(
-          this.filamentForm.get('brand').valueChanges.pipe(
-            startWith(''),
-            map((value) => this._filterBrands(value))
-          )
+        this.filterOptionsAsTyped(
+          'brand',
+          this.filteredFilamentBrands,
+          (value) => this._filterBrands(value)
         );
       });
     });
@@ -832,7 +833,23 @@ export class FilamentDetailComponent
     }
   }
 
+  /** Fills `target` with every option, then with those matching what is typed. */
+  private filterOptionsAsTyped(
+    control: string,
+    target: WritableSignal<string[]>,
+    filter: (value: string) => string[]
+  ): void {
+    target.set(filter(''));
+    this.optionFilterSubscriptions.push(
+      this.filamentForm
+        .get(control)
+        .valueChanges.subscribe((value: string) => target.set(filter(value)))
+    );
+  }
+
   ngOnDestroy(): void {
+    this.materialTypeSubscription?.unsubscribe();
+    this.optionFilterSubscriptions.forEach((s) => s.unsubscribe());
     this.materialCategorySubscription?.unsubscribe();
     this.colorsSubscription?.unsubscribe();
     this.formValueSubscription?.unsubscribe();

@@ -7,8 +7,8 @@ nav: false
 group: integrations
 order: 49
 mode: how-to
-updated: 2026-10-27
-related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-bambu, printlog-bridge-prusalink]
+updated: 2026-10-29
+related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-bambu, printlog-bridge-prusalink, printlog-bridge-octoprint, printlog-bridge-sdcp]
 ---
 ## Bridges and printers found on your network
 
@@ -66,11 +66,11 @@ Then choose **Connect**. A printer can be watched by one bridge at a time; if an
 
 #### A printer it can't find: add it by address {#by-address}
 
-**Add by address** connects a printer the bridge can't find by itself. Enter its type (Klipper, Bambu Lab or PrusaLink), its IP address or local name (`192.168.1.60`, `mk4.local`), and, for a Bambu Lab printer, its serial number (on its sticker, or in Bambu Studio's device list). Leave the port empty for the usual one. The address must be on your local network. Give the printer a fixed address in your router so it stays right.
+**Add by address** connects a printer the bridge can't find by itself. Enter its type (Klipper, Bambu Lab, PrusaLink, OctoPrint or Elegoo Centauri Carbon), its IP address or local name (`192.168.1.60`, `mk4.local`), and, for a Bambu Lab printer, its serial number (on its sticker, or in Bambu Studio's device list). Leave the port empty for the usual one. The address must be on your local network. Give the printer a fixed address in your router so it stays right.
 
 #### Access codes and passwords {#credentials}
 
-A Bambu Lab printer needs its access code and a PrusaLink printer its password (or an API key), an OctoPrint server its API key, and a Klipper printer whose Moonraker uses `[authorization]` an API key. After you connect one, the app asks for it. Later, choose **Access code** (or **Password**, or **Credentials**) next to the connected printer to set, replace or clear it.
+A Bambu Lab printer needs its access code and a PrusaLink printer its password (or an API key), an OctoPrint server its API key, and a Klipper printer whose Moonraker uses `[authorization]` an API key. An Elegoo Centauri Carbon needs nothing: SDCP has no authentication. After you connect one, the app asks for it. Later, choose **Access code** (or **Password**, or **Credentials**) next to the connected printer to set, replace or clear it.
 
 **Before you enter the first one, compare the key.** Above the fields, the app shows the [fingerprint](#encryption-key) of the key it encrypts to. Run `printlog-bridge status` on the bridge and check it shows the same fingerprint. If it doesn't, don't enter anything.
 
@@ -95,7 +95,7 @@ A bridge without an encryption key (a release from before this, or one without i
 access_code = 12345678
 ```
 
-Put the printer's real access code in place of the example. A PrusaLink printer takes `password = …` instead (and `username = …` when it isn't `maker`), and a Klipper printer `moonraker_api_key = …`. Save the file and the bridge starts watching within a few seconds, with no restart.
+Put the printer's real access code in place of the example. A PrusaLink printer takes `password = …` instead (and `username = …` when it isn't `maker`), an OctoPrint server `api_key = …`, and a Klipper printer `moonraker_api_key = …`. Save the file and the bridge starts watching within a few seconds, with no restart.
 
 **A value in the config file wins** over one entered in the app, so you can keep using the file if you prefer. `printlog-bridge status` says which one the bridge uses. The bridge doesn't report a problem with a value from the file, so the app may show a credential as set while the printer uses the file's.
 

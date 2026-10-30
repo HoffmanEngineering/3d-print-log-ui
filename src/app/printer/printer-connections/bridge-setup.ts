@@ -1,9 +1,13 @@
 /**
  * The printer types the printer page offers to connect with printlog-bridge (printlog-bridge#82).
- * Each `kind` is the connection kind the bridge registers for it. Elegoo SDCP (`sdcp`) is left out
- * until the bridge has that adapter.
+ * Each `kind` is the connection kind the bridge registers for it.
  */
-export type BridgeSetupKind = 'moonraker' | 'bambu' | 'prusalink';
+export type BridgeSetupKind =
+  | 'moonraker'
+  | 'bambu'
+  | 'prusalink'
+  | 'octoprint'
+  | 'sdcp';
 
 export interface BridgeSetup {
   kind: BridgeSetupKind;
@@ -24,6 +28,16 @@ export const BRIDGE_SETUPS: readonly BridgeSetup[] = [
     kind: 'prusalink',
     label: 'Prusa (PrusaLink)',
     guide: '/docs/printlog-bridge-prusalink',
+  },
+  {
+    kind: 'octoprint',
+    label: 'OctoPrint',
+    guide: '/docs/printlog-bridge-octoprint',
+  },
+  {
+    kind: 'sdcp',
+    label: 'Elegoo Centauri Carbon',
+    guide: '/docs/printlog-bridge-sdcp',
   },
 ];
 
@@ -54,6 +68,22 @@ export function bridgeConfigSnippet(
         'host = 192.168.1.60',
         'password = the-password-the-printer-shows',
       ].join('\n');
+    case 'octoprint':
+      return [
+        '[printer octoprint]',
+        'adapter = octoprint',
+        `printer_id = ${printerId}`,
+        'url = http://octopi.local',
+        'api_key = a-key-from-octoprint',
+      ].join('\n');
+    case 'sdcp':
+      // SDCP has no authentication: there is no credential to add.
+      return [
+        '[printer centauri]',
+        'adapter = sdcp',
+        `printer_id = ${printerId}`,
+        'host = 192.168.1.77',
+      ].join('\n');
     case 'moonraker':
       return [
         '[printer voron]',
@@ -63,9 +93,14 @@ export function bridgeConfigSnippet(
   }
 }
 
-/** The type to show first, from the printer's make. The user can pick another. */
+/**
+ * The type to show first, from the printer's make and model. The user can pick another. An
+ * OctoPrint printer can be any make, so nothing picks it. Of Elegoo's printers only the
+ * Centauri Carbon speaks SDCP: the Neptune 4 runs Klipper, and the Centauri Carbon 2 speaks MQTT.
+ */
 export function bridgeKindForMake(
-  make: string | null | undefined
+  make: string | null | undefined,
+  model?: string | null
 ): BridgeSetupKind {
   const m = (make ?? '').toLowerCase();
   if (m.includes('bambu')) {
@@ -73,6 +108,9 @@ export function bridgeKindForMake(
   }
   if (m.includes('prusa')) {
     return 'prusalink';
+  }
+  if (m.includes('elegoo') && /centauri\s*carbon(?!\s*2)/i.test(model ?? '')) {
+    return 'sdcp';
   }
   return 'moonraker';
 }

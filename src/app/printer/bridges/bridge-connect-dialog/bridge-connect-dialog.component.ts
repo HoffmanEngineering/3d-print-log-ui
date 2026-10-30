@@ -53,6 +53,7 @@ import {
   bridgeLabel,
   credentialName,
   credentialNoun,
+  credentialSource,
   formatAddress,
 } from '../bridge-utils';
 
@@ -215,6 +216,9 @@ export class BridgeConnectDialogComponent {
   });
   protected readonly credential = computed(() =>
     credentialName(this.connected()?.kind ?? '')
+  );
+  protected readonly credentialSource = computed(() =>
+    credentialSource(this.connected()?.kind ?? '')
   );
 
   constructor() {

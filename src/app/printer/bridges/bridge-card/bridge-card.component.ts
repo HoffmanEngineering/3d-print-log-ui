@@ -31,6 +31,7 @@ import {
   appPrinterSnippet,
   bridgeLabel,
   credentialFieldLabel,
+  credentialName,
   credentialSummary,
   formatAddress,
   isConnectableKind,
@@ -51,6 +52,8 @@ interface ConnectedRow {
   fields: string[];
   /** The toggle's label: the one field's name, or "Credentials". */
   credentialsLabel: string;
+  /** The snippet's credential in a sentence: "access code", "password", "API key". */
+  credentialName: string;
   summary: { text: string; attention: boolean } | null;
   /** Other bridges that found this printer too (New there). */
   alsoFoundBy: Sighting[];
@@ -171,9 +174,8 @@ export class BridgeCardComponent {
             ? credentialFieldLabel(entry.secretFields[0])
             : entry.secretFields?.length
               ? 'Credentials'
-              : entry.kind === 'bambu'
-                ? 'Access code'
-                : 'Password',
+              : credentialFieldLabel(fallbackField(entry.kind)),
+        credentialName: credentialName(entry.kind),
         summary: credentialSummary(entry),
         alsoFoundBy: this.cross()?.entrySightings.get(entry.id) ?? [],
       };
@@ -251,5 +253,17 @@ export class BridgeCardComponent {
 
   protected toggleCredentials(entryId: number): void {
     this.openCredentials.update((open) => (open === entryId ? null : entryId));
+  }
+}
+
+/** The field an older API's entry (one that lists no fields) needs, for its label. */
+function fallbackField(kind: string): string {
+  switch (kind) {
+    case 'bambu':
+      return 'access_code';
+    case 'octoprint':
+      return 'api_key';
+    default:
+      return 'password';
   }
 }

@@ -1,6 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+  BRIDGE_KINDS,
   appPrinterSnippet,
+  credentialName,
+  credentialSource,
+  isConnectableKind,
   bridgeErrorCode,
   bridgeErrorMessage,
   credentialFieldLabel,
@@ -158,8 +162,44 @@ describe('bridge-utils', () => {
       expect(appPrinterSnippet('prusalink', 3)).toContain('password = ');
     });
 
-    it('needs nothing for Moonraker by default', () => {
+    it('asks for an OctoPrint API key', () => {
+      expect(appPrinterSnippet('octoprint', 5)).toBe(
+        '[app_printer 5]\napi_key = a-key-from-octoprint'
+      );
+    });
+
+    it('needs nothing for Moonraker by default, or for SDCP', () => {
       expect(appPrinterSnippet('moonraker', 3)).toBeNull();
+      expect(appPrinterSnippet('sdcp', 3)).toBeNull();
+    });
+  });
+
+  describe('credentialName and credentialSource', () => {
+    it('names each kind’s credential', () => {
+      expect(credentialName('bambu')).toBe('access code');
+      expect(credentialName('prusalink')).toBe('password');
+      expect(credentialName('octoprint')).toBe('API key');
+    });
+
+    it('says where each kind’s credential is found', () => {
+      expect(credentialSource('bambu')).toContain('LAN Only Mode');
+      expect(credentialSource('prusalink')).toContain('PrusaLink');
+      expect(credentialSource('octoprint')).toContain('Application Keys');
+    });
+  });
+
+  describe('connectable kinds', () => {
+    it('offers OctoPrint and Elegoo SDCP for Connect', () => {
+      expect(BRIDGE_KINDS.map((k) => k.kind)).toEqual([
+        'moonraker',
+        'bambu',
+        'prusalink',
+        'octoprint',
+        'sdcp',
+      ]);
+      expect(isConnectableKind('octoprint')).toBeTrue();
+      expect(isConnectableKind('sdcp')).toBeTrue();
+      expect(isConnectableKind('duet')).toBeFalse();
     });
   });
 

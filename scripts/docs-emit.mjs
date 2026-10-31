@@ -103,8 +103,10 @@ export function emitRoutesTs(manifest) {
 }
 
 /**
- * The generated page components, as one list for the spec that renders every
- * page (docs-pages.spec.ts). A `component:` page is hand-written and imported
+ * The generated page components, keyed by class name, for the spec that renders
+ * every page (docs-pages.spec.ts). The keys are written out because a class's
+ * runtime `name` is not its source name once esbuild has bundled it (it emits
+ * `_DocsPrintsComponent`). A `component:` page is hand-written and imported
  * there by name, so it is left out.
  */
 export function emitDeclarationsTs(manifest) {
@@ -117,9 +119,9 @@ export function emitDeclarationsTs(manifest) {
         `import { ${page.className} } from './pages/docs-${page.slug}.component';`
     ),
     '',
-    'export const DOCS_PAGE_COMPONENTS = [',
+    'export const DOCS_PAGE_COMPONENTS = {',
     ...generated.map((page) => `  ${page.className},`),
-    '];',
+    '};',
     '',
   ].join('\n');
 }

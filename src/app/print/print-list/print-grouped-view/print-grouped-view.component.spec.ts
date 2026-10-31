@@ -23,7 +23,6 @@ import {
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { PagedList } from 'src/app/core/types/paging';
-import { SharedModule } from 'src/app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ComponentRef } from '@angular/core';
 import { DEFERRED_SKELETON_DELAY_MS } from 'src/app/shared/skeleton/deferred-skeleton';
@@ -139,7 +138,6 @@ describe('PrintGroupedViewComponent', () => {
       imports: [
         PrintGroupedViewComponent,
         NoopAnimationsModule,
-        SharedModule,
         RouterTestingModule,
       ],
       providers: [

@@ -45,7 +45,8 @@ import {
   UserSettingService,
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { AdComponent } from 'src/app/shared/ad/ad.component';
+import { SidebarAdComponent } from 'src/app/shared/ad/sidebar-ad.component';
 import { FileAttachmentSectionComponent } from 'src/app/shared/file-attachment-section/file-attachment-section.component';
 import { withDeferredSkeleton } from 'src/app/shared/skeleton/deferred-skeleton';
 import { SkeletonComponent } from 'src/app/shared/skeleton/skeleton.component';
@@ -92,7 +93,8 @@ const LOADING_STATE: PrintDetailState = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
-    SharedModule,
+    AdComponent,
+    SidebarAdComponent,
     FileAttachmentSectionComponent,
     PrintCommentsComponent,
     PrintDetailHeroComponent,

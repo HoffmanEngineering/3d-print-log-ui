@@ -8,13 +8,13 @@ import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { of, Subject } from 'rxjs';
 
-import { SharedModule } from 'src/app/shared/shared.module';
 import {
   PrinterMaintenanceDto,
   PrinterMaintenanceService,
 } from 'src/app/core/services/printer-maintenance.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
+import { provideSectionProviders } from 'src/app/shared/section-providers';
 import { PrinterMaintenanceComponent } from './printer-maintenance.component';
 import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
 import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
@@ -103,7 +103,6 @@ describe('PrinterMaintenanceComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        SharedModule,
         FormsModule,
         NoopAnimationsModule,
         PrinterAvatarComponent,
@@ -112,6 +111,8 @@ describe('PrinterMaintenanceComponent', () => {
         PrinterMaintenanceComponent,
       ],
       providers: [
+        // The section route's providers: the datepickers need its DateAdapter.
+        ...provideSectionProviders(),
         ...(later ? [provideZoneChangeDetection()] : []),
         // Stubbed: the real store would issue its own authenticated fetch.
         {

@@ -3,7 +3,8 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { YouTubePlayerModule } from '@angular/youtube-player';
 import { AdsenseModule } from 'ng2-adsense';
-import { SharedModule } from '../shared/shared.module';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { DocSidebarComponent } from './doc-sidebar/doc-sidebar.component';
 import { DocsGettingStartedComponent } from './docs/docs-getting-started/docs-getting-started.component';
 import { DocsReleaseNotesComponent } from './docs/docs-release-notes/docs-release-notes.component';
@@ -37,7 +38,8 @@ import { DOCS_PAGE_COMPONENTS } from './generated/docs-declarations';
   ],
   imports: [
     CommonModule,
-    SharedModule,
+    MatButtonModule,
+    MatIconModule,
     DocumentationRoutingModule,
     AdsenseModule,
     YouTubePlayerModule,

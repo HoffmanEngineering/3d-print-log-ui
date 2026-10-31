@@ -53,7 +53,9 @@ import { todayUtcCivilDate } from 'src/app/core/utils/civil-date';
 import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { AdComponent } from 'src/app/shared/ad/ad.component';
+import { SidebarAdComponent } from 'src/app/shared/ad/sidebar-ad.component';
+import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.component';
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
@@ -93,7 +95,9 @@ function readSaveError(err: unknown): string {
     MatMenuModule,
     MatSelectModule,
     MatProgressSpinnerModule,
-    SharedModule,
+    AdComponent,
+    SidebarAdComponent,
+    DurationPipe,
     ProjectEditFormComponent,
     ImageCarouselComponent,
     ImageThumbnailStripComponent,

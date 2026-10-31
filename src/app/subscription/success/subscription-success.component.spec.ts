@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { SharedModule } from '../../shared/shared.module';
 import { SubscriptionSuccessComponent } from './subscription-success.component';
 import { LoggingService } from '../../core/services/logging.service';
 
@@ -12,11 +11,7 @@ describe('SubscriptionSuccessComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        SharedModule,
-        RouterTestingModule,
-        SubscriptionSuccessComponent,
-      ],
+      imports: [RouterTestingModule, SubscriptionSuccessComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),

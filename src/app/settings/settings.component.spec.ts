@@ -6,7 +6,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 
 import { SettingsComponent } from './settings.component';
 import { ThemeService, ThemeMode } from '../core/services/theme.service';
-import { SharedModule } from '../shared/shared.module';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { AuthService, UserProfileInfo } from '../core/services/auth.service';
@@ -157,7 +156,6 @@ describe('SettingsComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [
-        SharedModule,
         NoopAnimationsModule,
         RouterTestingModule,
         ConnectedAgentsComponent,

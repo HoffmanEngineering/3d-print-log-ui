@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
@@ -179,6 +180,7 @@ export function resetAddPrinterToastShown(): void {
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private printerService = inject(PrinterService);
   private toastrService = inject(ToastrService);
   private titleService = inject(Title);
@@ -625,6 +627,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.filterByFilamentIds,
         params.getAll('filterByFilamentId')
       );
+
+      // searchText and the sort are plain fields, and the params change after
+      // first render too (back and forward): nothing else would mark this view.
+      this.changeDetector.markForCheck();
     });
 
     this.activatedRoute.data.subscribe((data) => {

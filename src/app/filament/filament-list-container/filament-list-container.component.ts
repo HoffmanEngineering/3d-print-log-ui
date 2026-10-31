@@ -5,6 +5,7 @@ import {
   OnInit,
   inject,
   signal,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
@@ -129,6 +130,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   protected readonly isRemainingTracked = isRemainingTracked;
 
   private activatedRoute = inject(ActivatedRoute);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private filamentService = inject(FilamentService);
   private titleService = inject(Title);
   private readonly router = inject(Router);
@@ -288,6 +290,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       this.filterByEffects = params
         .getAll('effects')
         .map((v) => +v as FilamentEffect);
+
+      // Plain fields, and the params change after first render too (back and
+      // forward): nothing else would mark this view for check.
+      this.changeDetector.markForCheck();
     });
 
     this.activatedRoute.data.subscribe((data) => {

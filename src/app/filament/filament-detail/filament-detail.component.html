@@ -144,7 +144,7 @@
             >
           }
           <mat-autocomplete #materialAuto="matAutocomplete">
-            @for (material of filteredMaterials | async; track material) {
+            @for (material of filteredMaterials(); track material) {
               <mat-option [value]="materialNamePipe.transform(material)">
                 {{ material | materialName }}
               </mat-option>
@@ -383,7 +383,7 @@
             [matAutocomplete]="autoBrands"
           />
           <mat-autocomplete #autoBrands="matAutocomplete">
-            @for (option of filteredFilamentBrands() | async; track option) {
+            @for (option of filteredFilamentBrands(); track option) {
               <mat-option [value]="option">
                 {{ option }}
               </mat-option>
@@ -450,10 +450,7 @@
             [matAutocomplete]="autoStorageLocations"
           />
           <mat-autocomplete #autoStorageLocations="matAutocomplete">
-            @for (
-              option of filteredFilamentStorageLocations() | async;
-              track option
-            ) {
+            @for (option of filteredFilamentStorageLocations(); track option) {
               <mat-option [value]="option">
                 {{ option }}
               </mat-option>
@@ -977,10 +974,7 @@
             [matAutocomplete]="autoPurchaseLocations"
           />
           <mat-autocomplete #autoPurchaseLocations="matAutocomplete">
-            @for (
-              option of filteredFilamentPurchaseLocations() | async;
-              track option
-            ) {
+            @for (option of filteredFilamentPurchaseLocations(); track option) {
               <mat-option [value]="option">
                 {{ option }}
               </mat-option>

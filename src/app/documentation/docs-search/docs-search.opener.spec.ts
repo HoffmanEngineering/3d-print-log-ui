@@ -1,3 +1,4 @@
+import { Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
@@ -40,6 +41,15 @@ describe('DocsSearchOpener', () => {
       jasmine.any(Object)
     );
     expect(opener.isOpen).toBe(true);
+  });
+
+  it('opens the dialog with its own injector, so the palette sees what /docs provides', () => {
+    // MatDialog is root's; without this the palette cannot find DocsSearchService,
+    // which only the /docs route provides, and opens empty.
+    opener.open();
+
+    const config = dialog.open.calls.mostRecent().args[1]!;
+    expect(config.injector).toBe(TestBed.inject(Injector));
   });
 
   it('does not stack a second dialog on the first', () => {

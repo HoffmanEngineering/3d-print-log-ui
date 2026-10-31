@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 import { DocsSearchDialogComponent } from './docs-search-dialog.component';
@@ -13,6 +13,7 @@ import { DocsSearchDialogComponent } from './docs-search-dialog.component';
 @Injectable()
 export class DocsSearchOpener {
   private readonly dialog = inject(MatDialog);
+  private readonly injector = inject(Injector);
   private ref: MatDialogRef<DocsSearchDialogComponent> | null = null;
 
   /**
@@ -32,6 +33,9 @@ export class DocsSearchOpener {
 
     this.ref = this.dialog.open(DocsSearchDialogComponent, {
       data: query ? { query } : null,
+      // The palette injects DocsSearchService, which /docs provides, not root.
+      // MatDialog is root's, so without this the dialog cannot see it.
+      injector: this.injector,
       width: 'min(40rem, 100vw - 2rem)',
       maxWidth: '100vw',
       // Top-anchored, the way every command palette is: centring it makes the

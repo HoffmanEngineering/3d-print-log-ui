@@ -41,8 +41,20 @@ jobs:
       - name: Install the unit tests' browser
         run: npx playwright install --with-deps chromium
 
-      - name: Test
-        run: npm run test:ci
+      - name: Test, with coverage
+        run: npm run test:coverage
+
+      # The totals go on the run's summary page; the HTML report, file by file and
+      # line by line (templates included), is downloadable from the run.
+      - name: Coverage summary
+        run: node scripts/coverage-summary.mjs
+
+      - name: Upload the coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/print-log-ui/
+          retention-days: 14
 
       - name: Script unit tests (sitemap, security headers)
         run: npm run test:scripts

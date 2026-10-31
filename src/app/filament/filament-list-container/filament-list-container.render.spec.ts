@@ -1,4 +1,3 @@
-import { provideZoneChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -45,8 +44,8 @@ const page = (items: FilamentSummary[]): PagedList<FilamentSummary> =>
 
 /**
  * Renders the real template on a real route. The service answers only when a test
- * says so, the way HTTP does, and the app's zone change detection runs, so a view
- * that is not repainted after a response shows up as stale.
+ * says so, the way HTTP does, under zoneless change detection like the app's, so a
+ * view that is not repainted after a response shows up as stale.
  */
 describe('FilamentListContainerComponent (rendered)', () => {
   let harness: RouterTestingHarness;
@@ -70,7 +69,6 @@ describe('FilamentListContainerComponent (rendered)', () => {
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
       ],
       providers: [
-        provideZoneChangeDetection(),
         provideRouter([
           {
             path: 'materials',

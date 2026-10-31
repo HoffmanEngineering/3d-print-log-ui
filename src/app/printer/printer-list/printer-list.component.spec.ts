@@ -1,4 +1,3 @@
-import { provideZoneChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -56,8 +55,8 @@ describe('PrinterListComponent', () => {
 
   /**
    * `later` makes the service answer only when the test says so, the way HTTP
-   * does. Those tests run under zone change detection like the app, with startup
-   * settled first, so a view that is not repainted shows up as stale.
+   * does. Those tests settle startup first (the TestBed is zoneless, like the app),
+   * so a view that is not repainted shows up as stale.
    */
   const setUp = async (
     items: Partial<PrinterSummarySimple>[],
@@ -90,7 +89,6 @@ describe('PrinterListComponent', () => {
         PrinterListComponent,
       ],
       providers: [
-        ...(later ? [provideZoneChangeDetection()] : []),
         { provide: PrinterService, useValue: printerService },
         { provide: ToastrService, useValue: toastr },
         { provide: MatDialog, useValue: dialog },

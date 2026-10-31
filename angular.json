@@ -22,7 +22,6 @@
               "base": "dist/print-log-ui"
             },
             "index": "src/index.html",
-            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon_1293b2036.ico",
@@ -32,8 +31,16 @@
               "src/llms.txt",
               "src/auth.md",
               "src/index.md",
-              { "glob": "**/*", "input": "src/well-known", "output": ".well-known" },
-              { "glob": "**/*", "input": "src/app/documentation/generated/twins", "output": "/" },
+              {
+                "glob": "**/*",
+                "input": "src/well-known",
+                "output": ".well-known"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/app/documentation/generated/twins",
+                "output": "/"
+              },
               "src/404.html",
               "src/staticwebapp.config.json"
             ],
@@ -59,8 +66,16 @@
                 "src/llms.txt",
                 "src/auth.md",
                 "src/index.md",
-                { "glob": "**/*", "input": "src/well-known", "output": ".well-known" },
-                { "glob": "**/*", "input": "src/app/documentation/generated/twins", "output": "/" },
+                {
+                  "glob": "**/*",
+                  "input": "src/well-known",
+                  "output": ".well-known"
+                },
+                {
+                  "glob": "**/*",
+                  "input": "src/app/documentation/generated/twins",
+                  "output": "/"
+                },
                 "src/404.html",
                 "src/staticwebapp.config.json"
               ],
@@ -162,7 +177,7 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "assets": ["src/favicon_1293b2036.ico", "src/assets"],

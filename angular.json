@@ -204,7 +204,13 @@
               "src/**/*.spec.ts",
               "src/test-setup.ts",
               "src/test-providers.ts"
-            ]
+            ],
+            "coverageThresholds": {
+              "statements": 87,
+              "branches": 79,
+              "functions": 74,
+              "lines": 83
+            }
           }
         },
         "lint": {

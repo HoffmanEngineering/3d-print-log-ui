@@ -39,6 +39,17 @@ describe('LazyCelebrationPresenter', () => {
     for (let i = 0; i < 20; i++) await Promise.resolve();
   };
 
+  /**
+   * Waits for `done`, up to a second. The toast's component is a lazily imported
+   * chunk, which the test build loads with a real fetch, so it lands after a
+   * macrotask rather than after a fixed number of microtasks.
+   */
+  const until = async (done: () => boolean) => {
+    for (let i = 0; i < 100 && !done(); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  };
+
   beforeEach(() => {
     dialog = {
       openDialogs: [],
@@ -99,7 +110,7 @@ describe('LazyCelebrationPresenter', () => {
 
     dialog.openDialogs = [];
     dialog.afterAllClosed.next();
-    await flush();
+    await until(() => overlayCreate.calls.count() > 0);
     expect(overlayCreate).toHaveBeenCalledTimes(1);
 
     toastClosed.next();
@@ -142,10 +153,7 @@ describe('LazyCelebrationPresenter', () => {
   it('does not wait for navigation before a toast', async () => {
     router.currentNavigation.set({} as Navigation);
     const shown = presenter.toast([ITEM], { quiet: false });
-    // The first import() of the toast component can take longer than a run of microtasks.
-    for (let i = 0; i < 100 && overlayCreate.calls.count() === 0; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
+    await until(() => overlayCreate.calls.count() > 0);
     expect(overlayCreate).toHaveBeenCalledTimes(1);
 
     toastClosed.next();

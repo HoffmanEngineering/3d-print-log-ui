@@ -22,9 +22,7 @@ describe('/docs pages', () => {
 
   /** Every routed page's component class, generated or hand-written. */
   const componentsByName = new Map<string, Type<unknown>>([
-    ...DOCS_PAGE_COMPONENTS.map(
-      (component) => [component.name, component] as [string, Type<unknown>]
-    ),
+    ...Object.entries<Type<unknown>>(DOCS_PAGE_COMPONENTS),
     ['DocsGettingStartedComponent', DocsGettingStartedComponent],
     ['DocsReleaseNotesComponent', DocsReleaseNotesComponent],
   ]);

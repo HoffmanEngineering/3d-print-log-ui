@@ -221,5 +221,41 @@ describe('PrinterMaintenanceComponent', () => {
         .withContext('editing')
         .toBeNull();
     });
+
+    it('saves what was typed, with its printer', () => {
+      const other = aPrinter({ id: 9, name: 'Ender 3' });
+      component.printers.set([aPrinter(), other]);
+      const entry = component.entries()[0];
+      component.editEntry(entry);
+      component.editForm.patchValue({
+        printerId: 9,
+        category: 'Belts',
+        description: 'Tension belts',
+      });
+
+      component.saveEntry(entry);
+
+      const sent =
+        maintenanceService.updatePrinterMaintenanceEntry.calls.mostRecent()
+          .args[0] as PrinterMaintenanceDto;
+      expect(sent.id).toBe(entry.id);
+      expect(sent.category).toBe('Belts');
+      expect(sent.description).toBe('Tension belts');
+      expect(sent.printerId).toBe(9);
+      expect(sent.printer).toBe(other);
+    });
+
+    it('leaves the row as it was on cancel', () => {
+      const entry = component.entries()[0];
+      component.editEntry(entry);
+      component.editForm.patchValue({ description: 'Typed, then cancelled' });
+
+      component.cancelEdit();
+      fixture.detectChanges();
+
+      expect(component.entries()[0]).toBe(entry);
+      expect(entry.description).toBe('Replace nozzle');
+      expect(text()).toContain('Replace nozzle');
+    });
   });
 });

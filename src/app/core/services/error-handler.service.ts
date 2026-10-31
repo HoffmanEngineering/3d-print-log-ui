@@ -9,8 +9,9 @@ export class ErrorHandlerService extends ErrorHandler {
   override handleError(error: Error) {
     if (environment.production) {
       this.loggingService.logException(error); // Manually log exception
-    } else {
-      super.handleError(error);
     }
+    // The console too in production: without it, a click handler that throws looks like a
+    // button that does nothing, and nothing in the browser says why.
+    super.handleError(error);
   }
 }

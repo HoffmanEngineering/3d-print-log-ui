@@ -31,7 +31,7 @@ describe('/docs pages', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [...componentsByName.values()],
+      imports: [...componentsByName.values()],
       providers: [
         // docs-getting-started is auth-aware on a public route; docs-release-notes
         // reads the route fragment to decide whether to expand its archive. The

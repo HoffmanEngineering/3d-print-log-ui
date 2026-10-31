@@ -80,8 +80,8 @@ export const appRoutes: Routes = [
   {
     path: 'docs',
     loadChildren: () =>
-      import('./documentation/documentation.module').then(
-        (m) => m.DocumentationModule
+      import('./documentation/documentation.routes').then(
+        (m) => m.DOCUMENTATION_ROUTES
       ),
   },
   {

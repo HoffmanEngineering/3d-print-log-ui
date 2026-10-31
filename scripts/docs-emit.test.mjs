@@ -28,12 +28,17 @@ const page = (over = {}) => ({
   ...over,
 });
 
-test('a generated page component is declared, not standalone, so it keeps module scope', () => {
-  // A routed standalone component would not inherit RouterModule/MatIcon from
-  // DocumentationModule, and strictTemplates turns that into a build error.
+test('a generated page component is standalone and imports the docs page scope', () => {
+  // Every page imports the whole scope: an attribute directive (routerLink,
+  // mat-button) that no import supplies would be dropped without a build error.
   const ts = emitPageComponentTs(buildManifest([page()]).pages[0]);
 
-  assert.match(ts, /standalone: false/);
+  assert.match(ts, /imports: \[DOCS_PAGE_IMPORTS\]/);
+  assert.match(
+    ts,
+    /import \{ DOCS_PAGE_IMPORTS \} from '\.\.\/\.\.\/docs-page-imports';/
+  );
+  assert.doesNotMatch(ts, /standalone: false/);
   assert.match(ts, /changeDetection: ChangeDetectionStrategy\.OnPush/);
   assert.match(ts, /selector: 'app-docs-prints'/);
   assert.match(ts, /export class DocsPrintsComponent \{\s*\}/);
@@ -456,7 +461,7 @@ test('the declarations barrel lists every generated page component', () => {
 });
 
 test('the declarations barrel omits a hand-written component, which declares itself', () => {
-  // DocumentationModule already declares it; declaring it twice is a compile error.
+  // docs-pages.spec.ts imports it by name; the barrel lists generated pages only.
   const ts = emitDeclarationsTs(
     buildManifest([
       page({ component: { className: 'DocsPrintsComponent', path: '../x' } }),

@@ -143,8 +143,8 @@ constants:
 ```
 
 **`component:`** — the page needs real behavior (injected services, event handlers). The
-generator compiles only the template and the manifest entry; you own the class, and you
-declare it in `documentation.module.ts` yourself:
+generator compiles only the template and the manifest entry; you own the class, which
+imports `DOCS_PAGE_IMPORTS` like every generated page:
 
 ```yaml
 component:
@@ -153,7 +153,7 @@ component:
 ```
 
 Only `getting-started` uses this today, because it is auth-aware on a **public** route. If
-you write one: `standalone: false`, `ChangeDetectionStrategy.OnPush`, and SSR-safe — no
+you write one: `imports: [DOCS_PAGE_IMPORTS]`, `ChangeDetectionStrategy.OnPush`, and SSR-safe — no
 `window`/`document`/`localStorage` during construction or init, since the page prerenders in
 Node and must also render logged out (see the public-route notes in AGENTS.md).
 

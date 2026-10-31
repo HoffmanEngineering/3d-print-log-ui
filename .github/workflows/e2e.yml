@@ -143,6 +143,14 @@ jobs:
           ConnectionString__PrintLogDb: 'Server=localhost,1433;Database=PrintLogDb_E2E;User Id=sa;Password=E2ePassw0rd!Local;TrustServerCertificate=True'
           AZURE_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true'
           Feed__AllowedUserIds__0: '1'
+          # The whole suite runs as dev user 1, so the per-user "api" budget
+          # (300/min by default) is shared by every spec, and a fast run hits it
+          # (a 429 in a cleanup hook skips the rest of that spec and leaves its
+          # data behind for the next). Off, as in the API's
+          # appsettings.E2ETesting.example.json.
+          Api__RateLimitPerMinute: '0'
+          Api__AnonymousRateLimitPerMinute: '0'
+          Api__MediaRateLimitPerMinute: '0'
         run: |
           nohup dotnet run \
             --project api/PrintLogApi/PrintLogApi.csproj \

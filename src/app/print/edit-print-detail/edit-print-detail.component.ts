@@ -111,14 +111,6 @@ import {
   ProjectSelection,
 } from 'src/app/shared/project-selector/project-selector.component';
 import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultLayoutGapDirective,
-  DefaultFlexDirective,
-  FlexFillDirective,
-  DefaultFlexOffsetDirective,
-} from '@ngbracket/ngx-layout/flex';
-import {
   MatCard,
   MatCardTitle,
   MatCardContent,
@@ -146,18 +138,10 @@ import {
 } from '@angular/material/datepicker';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
-import {
-  DefaultGridColumnsDirective,
-  DefaultGridRowsDirective,
-  DefaultGridGapDirective,
-  DefaultGridColumnDirective,
-  DefaultGridRowDirective,
-} from '@ngbracket/ngx-layout/grid';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { FileAttachmentSectionComponent } from '../../shared/file-attachment-section/file-attachment-section.component';
 import { AdComponent } from '../../shared/ad/ad.component';
-import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
 import { TitleCasePipe } from '@angular/common';
 import {
@@ -282,11 +266,7 @@ function invalidControlPaths(control: AbstractControl, path = ''): string[] {
     '(window:beforeunload)': 'canDeactivate()',
   },
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    DefaultLayoutGapDirective,
     MatCard,
-    DefaultFlexDirective,
     FormsModule,
     ReactiveFormsModule,
     MatCardTitle,
@@ -296,7 +276,6 @@ function invalidControlPaths(control: AbstractControl, path = ''): string[] {
     PrintImageComponent,
     ImageThumbnailStripComponent,
     MatCardContent,
-    FlexFillDirective,
     MatFormField,
     MatLabel,
     MatInput,
@@ -317,19 +296,12 @@ function invalidControlPaths(control: AbstractControl, path = ''): string[] {
     MatMenuTrigger,
     MatMenu,
     MatMenuItem,
-    DefaultGridColumnsDirective,
-    DefaultGridRowsDirective,
-    DefaultGridGapDirective,
-    DefaultGridColumnDirective,
-    DefaultGridRowDirective,
     CdkTextareaAutosize,
     MatHint,
     MatCheckbox,
     FileAttachmentSectionComponent,
     MatCardActions,
-    DefaultFlexOffsetDirective,
     AdComponent,
-    DefaultShowHideDirective,
     SidebarAdComponent,
     RemainingPipe,
     TitleCasePipe,

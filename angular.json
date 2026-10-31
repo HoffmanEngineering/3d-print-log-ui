@@ -196,8 +196,7 @@
               "html",
               "lcovonly",
               "text-summary",
-              "json-summary",
-              "cobertura"
+              "json-summary"
             ],
             "coverageExclude": [
               "**/*.json",

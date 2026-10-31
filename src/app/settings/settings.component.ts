@@ -39,13 +39,6 @@ import {
   PushPreferencesService,
 } from '../core/services/push-preferences.service';
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-  FlexFillDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatCard } from '@angular/material/card';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
@@ -70,12 +63,7 @@ import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatCard,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
-    FlexFillDirective,
     MatTooltip,
     MatIcon,
     FormsModule,

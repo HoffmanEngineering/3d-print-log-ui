@@ -5,6 +5,7 @@ import { CuraSettingServiceService } from './cura-setting-service.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 
 describe('CuraSettingServiceService', () => {
@@ -14,7 +15,7 @@ describe('CuraSettingServiceService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

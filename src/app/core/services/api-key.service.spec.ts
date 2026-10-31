@@ -9,6 +9,7 @@ import { ApiKeyService, UserApiKeySummary } from './api-key.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 
 describe('ApiKeyService', () => {
@@ -18,7 +19,7 @@ describe('ApiKeyService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

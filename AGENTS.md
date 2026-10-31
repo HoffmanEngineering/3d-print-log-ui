@@ -4,7 +4,7 @@ This file provides guidance to AI Agents like Claude Code (claude.ai/code) or Co
 
 ## Project Overview
 
-3D Print Log UI - An Angular 21 web application for tracking 3D prints, printers, filaments, and print statistics. Uses Auth0 for authentication and communicates with a backend API at `printLogApiUrl`.
+3D Print Log UI - An Angular 22 web application for tracking 3D prints, printers, filaments, and print statistics. Uses Auth0 for authentication and communicates with a backend API at `printLogApiUrl`.
 
 ## Commands
 
@@ -47,6 +47,8 @@ Never add a `Claude-Session:` trailer or a `claude.ai/code/session_…` link to 
 ## Architecture
 
 `core/` holds singleton services, guards, resolvers, HTTP interceptors and stores; `shared/` holds reusable components and pipes. Each feature is a lazy-loaded route array in `<feature>.routes.ts`, named for its route. A section's `''` route provides `provideSectionProviders()` (`shared/section-providers.ts`): the native `DateAdapter` and a section-scoped `MatDialog`, without which a page fails only at runtime. There is no shared NgModule: a component imports what its template uses, and an attribute directive no import supplies (`matTooltip`, `routerLink`) is dropped silently, not reported. Every /docs page, generated or hand-written, imports `DOCS_PAGE_IMPORTS` (`documentation/docs-page-imports.ts`). Slicer G-code parsers (Cura, PrusaSlicer, OrcaSlicer, Creality Print, Anycubic) live in `core/services/file-parsers/`.
+
+**`overrides` in `package.json` lets ngx-toastr 20 accept Angular 22.** Its newest release declares `@angular/core ^21` only, though it uses nothing Angular 22 removed (19.x did: `ComponentFactoryResolver`, which fails the build). Drop the override once a release declares 22.
 
 ### Authentication Flow
 
@@ -210,8 +212,7 @@ Vitest, through Angular's `@angular/build:unit-test` builder, in headless Chromi
 - **Shared setup:** `src/test-providers.ts` gives every TestBed its providers (noop animations). `src/test-setup.ts` runs before each file, and its `afterEach` restores every `vi.spyOn` spy and the real timers.
 - **Spec files share pages.** Vitest runs a few pages in parallel, and the files it sends to one page all run in it (`isolate: false`, the builder's default), as every spec shared Karma's. A spec that changes the document (an `<html>` class, a `<meta>` tag, `localStorage`) must put it back.
 - **Coverage is its own run** (`npm run test:coverage`), and CI runs it: the totals go on the run's summary page (`scripts/coverage-summary.mjs`), and CI uploads the HTML report as the `coverage-report` artifact. It covers our TypeScript and component templates (`.html`): V8 coverage maps template code back to the template, so an `@if` branch no test renders shows as uncovered. Karma's coverage counted TypeScript only, so the totals are not comparable with old Karma reports. JSON is excluded in `angular.json`.
-- **Coverage has floors** (`coverageThresholds` in `angular.json`: statements 87%, branches 79%, functions 74%, lines 83%, about a point under where they stood when set). A run below any of them fails, in CI and in deploy. Raise them as coverage improves; lowering one is a decision to make in review, not a fix for a red build.
-- **`patches/@angular+build+*.patch` is load-bearing for coverage** (applied by `postinstall` through patch-package). @angular/build 21 wraps setup files in a stub when coverage is on, the browser caches the stub's import after the first spec file in a page, and from then on the TestBed is never reset and `src/test-setup.ts`'s `afterEach` never runs: about 200 files fail. @angular/build 22.2 fixes it upstream; delete the patch with that upgrade. If `npm install` reports the patch failed to apply, coverage runs are broken until it's fixed.
+- **Coverage has floors** (`coverageThresholds` in `angular.json`: statements 87%, branches 77%, functions 74%, lines 83%, about a point under where they stood when set). Branches was re-based from 79% with the Angular 22 upgrade: the 22 compiler stopped emitting about 1,100 always-taken branches, so the percentage fell while uncovered branches went down (2,938 to 2,901). A run below any of them fails, in CI and in deploy. Raise them as coverage improves; lowering one is a decision to make in review, not a fix for a red build.
 
 Components are standalone and go in TestBed `imports`. Mock a service as an object of `vi.fn()`s cast to `MockedObject<T>` (`{ getX: vi.fn() } as unknown as MockedObject<XService>`), and read calls from `.mock.calls` / `.mock.lastCall`. Async work needs `fixture.detectChanges()` then `await fixture.whenStable()`.
 

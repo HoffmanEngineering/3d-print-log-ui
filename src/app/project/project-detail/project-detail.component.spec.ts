@@ -1,7 +1,11 @@
 import type { Mock, MockedObject } from 'vitest';
 import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  provideHttpClient,
+  withXhr,
+} from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { ADSENSE_TOKEN } from 'ng2-adsense';
@@ -104,7 +108,7 @@ describe('ProjectDetailComponent', () => {
           provide: ADSENSE_TOKEN,
           useValue: { adClient: 'ca-pub-0', adSlot: 0 },
         },
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
       ],
     }).compileComponents();
@@ -570,7 +574,7 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
           provide: ADSENSE_TOKEN,
           useValue: { adClient: 'ca-pub-0', adSlot: 0 },
         },
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
       ],
     }).compileComponents();
@@ -758,7 +762,7 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
           provide: ADSENSE_TOKEN,
           useValue: { adClient: 'ca-pub-0', adSlot: 0 },
         },
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
       ],
     }).compileComponents();

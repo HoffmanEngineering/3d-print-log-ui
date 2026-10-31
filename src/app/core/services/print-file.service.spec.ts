@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { PrintFileService, PrintFileAttachment } from './print-file.service';
 import { environment } from 'src/environments/environment';
 
@@ -14,7 +14,7 @@ describe('PrintFileService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(PrintFileService);
     httpMock = TestBed.inject(HttpTestingController);

@@ -92,7 +92,9 @@
               }
               <app-image-thumbnail-strip
                 [images]="images()"
-                [selectedId]="images()[selectedImageIndex()]?.id"
+                [selectedId]="
+                  $safeNavigationMigration(images()[selectedImageIndex()]?.id)
+                "
                 [editable]="true"
                 [maxImages]="5"
                 (imageSelected)="onImageSelected($event)"
@@ -136,7 +138,11 @@
                 </app-image-carousel>
                 <app-image-thumbnail-strip
                   [images]="carouselImages()"
-                  [selectedId]="carouselImages()[selectedImageIndex()]?.id"
+                  [selectedId]="
+                    $safeNavigationMigration(
+                      carouselImages()[selectedImageIndex()]?.id
+                    )
+                  "
                   [editable]="false"
                   (imageSelected)="onImageSelected($event)"
                 />

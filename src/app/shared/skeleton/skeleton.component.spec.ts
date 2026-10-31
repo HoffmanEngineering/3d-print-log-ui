@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { SkeletonComponent } from './skeleton.component';
 
@@ -8,6 +8,7 @@ import { SkeletonComponent } from './skeleton.component';
     [height]="'2rem'"
     [radius]="'999px'"
   />`,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [SkeletonComponent],
 })
 class HostComponent {}

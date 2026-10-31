@@ -1,7 +1,14 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "./",
+    // TypeScript 6 turns strict on by default; this project has never been strict
+    // (strictNullChecks is enforced for gated folders by tsconfig.strict.json).
+    "strict": false,
+    // Non-relative imports like 'src/app/...' resolve from the workspace root.
+    // This replaces baseUrl, which TypeScript 6 deprecates.
+    "paths": {
+      "src/*": ["./src/*"]
+    },
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
@@ -12,17 +19,19 @@
     "importHelpers": true,
     "target": "ES2022",
     "resolveJsonModule": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "lib": [
-      "esnext",
-      "dom"
-    ],
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["esnext", "dom"],
     "useDefineForClassFields": false,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
+  },
+  // Read only by ts-node, which Cypress 13 uses to load cypress.config.ts. It forces
+  // moduleResolution node10, which TypeScript 6 rejects as deprecated.
+  "ts-node": {
+    "compilerOptions": {
+      "ignoreDeprecations": "6.0"
+    }
   },
   "angularCompilerOptions": {
     "strictTemplates": true,

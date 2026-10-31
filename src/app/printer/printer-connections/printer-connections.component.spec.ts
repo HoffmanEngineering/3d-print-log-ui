@@ -1,7 +1,7 @@
 import type { MockedObject } from 'vitest';
 import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -78,7 +78,7 @@ describe('PrinterConnectionsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PrinterConnectionsComponent, NoopAnimationsModule],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: MatDialog, useValue: dialog },

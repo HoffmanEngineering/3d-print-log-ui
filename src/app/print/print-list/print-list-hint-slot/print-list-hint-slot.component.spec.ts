@@ -1,10 +1,16 @@
 import type { Mock, MockedObject } from 'vitest';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { Component, input, output, signal } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -34,14 +40,22 @@ function achievementsWith(earned: string[]): MyAchievements {
   } as unknown as MyAchievements;
 }
 
-@Component({ selector: 'app-getting-started-checklist', template: 'checklist' })
+@Component({
+  selector: 'app-getting-started-checklist',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: 'checklist',
+})
 class StubChecklistComponent {
   readonly me = input.required<MyAchievements>();
   readonly dismissed = output<void>();
   readonly printerAdded = output<void>();
 }
 
-@Component({ selector: 'app-next-achievement-hint', template: 'hint' })
+@Component({
+  selector: 'app-next-achievement-hint',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: 'hint',
+})
 class StubHintComponent {
   readonly me = input<MyAchievements | undefined>(undefined);
 }
@@ -243,7 +257,7 @@ describe('PrintListHintSlotComponent with the real services', () => {
     TestBed.configureTestingModule({
       imports: [PrintListHintSlotComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideRouter([]),
         {
@@ -300,7 +314,7 @@ describe('PrintListHintSlotComponent with the real services', () => {
     TestBed.configureTestingModule({
       imports: [PrintListHintSlotComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideRouter([]),
         {

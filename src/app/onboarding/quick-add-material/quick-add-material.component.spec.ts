@@ -1,6 +1,6 @@
 import type { MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
@@ -52,6 +52,7 @@ const MATERIALS: Material[] = [
 
 @Component({
   imports: [QuickAddMaterialComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<app-quick-add-material>
     <button type="button" quickAddSecondary data-testid="secondary">
       Skip

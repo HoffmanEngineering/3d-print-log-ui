@@ -1,6 +1,11 @@
 import type { Mock, MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, WritableSignal, signal } from '@angular/core';
+import {
+  Component,
+  WritableSignal,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { provideRouter } from '@angular/router';
@@ -24,6 +29,7 @@ const FORMAT_HINT = 'Any format, like 04:A2:3F:11 or 04A23F11';
 
 @Component({
   imports: [FilamentTagUidsComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<app-filament-tag-uids
     [formControl]="control"
     [conflict]="conflict()"
@@ -209,6 +215,7 @@ describe('FilamentTagUidsComponent', () => {
 
 @Component({
   imports: [FilamentTagUidsComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<app-filament-tag-uids
     [formControl]="control"
     [filamentId]="filamentId"
@@ -540,6 +547,7 @@ describe('FilamentTagUidsComponent scanning', () => {
 
 @Component({
   imports: [FilamentTagUidsComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<app-filament-tag-uids
     [formControl]="control"
     [tagDetails]="details()"

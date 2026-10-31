@@ -6,7 +6,7 @@ Most feature work spans both this repo and the API — see [3d-print-log-api](ht
 
 ## Prerequisites
 
-- [Node.js 20+](https://nodejs.org/)
+- [Node.js 22.22.3+ or 24.15+](https://nodejs.org/) (Angular 22's minimum)
 - The API running locally — see [3d-print-log-api](https://github.com/HoffmanEngineering/3d-print-log-api) for setup
 
 ## Local Setup

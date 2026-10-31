@@ -194,7 +194,6 @@
             "browserViewport": "800x600",
             "coverageReporters": ["html", "lcovonly", "text-summary"],
             "coverageExclude": [
-              "**/*.html",
               "**/*.json",
               "src/**/*.spec.ts",
               "src/test-setup.ts",
